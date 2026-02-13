@@ -190,7 +190,6 @@ class TestCircuitBreakerPattern:
     def test_breaker_resets_after_success(self) -> None:
         """Circuit breaker resets after successful calls."""
         # Simulate successful call sequence
-        consecutive_failures = 0
         consecutive_successes = 3
         success_threshold = 2
 

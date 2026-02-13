@@ -927,9 +927,7 @@ def integrate_sample(
     # TEXT SCOPE
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = (
-            content_type if content_type else "handwritten"
-        )
+        data["text_scope_content_type"] = content_type or "handwritten"
     else:
         data["text_scope_content_type"] = "handwritten"
     data["text_scope"] = "word"

@@ -25,6 +25,7 @@ import csv
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Increase CSV field size limit for base64-encoded images
 csv.field_size_limit(sys.maxsize)
@@ -45,6 +46,10 @@ YARMOUK_PATH = BASE_DATA_PATH / "language/yarmouk_ocr"
 CC_OCR_PATH = BASE_DATA_PATH / "language/huggingface_downloads/CC-OCR"
 OHR_BENCH_PATH = BENCHMARK_PATH / "ohr-bench"
 FINANCEBENCH_PATH = BENCHMARK_PATH / "financebench"
+
+# Common string constants (S1192: avoid duplicate string literals)
+PYMUPDF_NOT_INSTALLED = "PyMuPDF (fitz) not installed. Run: pip install pymupdf"
+PDF_GLOB = "*.pdf"
 
 
 def convert_yarmouk_pdfs(
@@ -67,13 +72,13 @@ def convert_yarmouk_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0}
 
     # Find all PDF files
-    pdf_files = list(input_path.rglob("*.pdf"))
+    pdf_files = list(input_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:
@@ -133,6 +138,46 @@ def convert_yarmouk_pdfs(
     return stats
 
 
+def _extract_single_ccor_row(
+    row: dict[str, str],
+    output_dir: Path,
+    stats: dict[str, int],
+) -> None:
+    """Extract a single base64-encoded image row from a CC-OCR TSV file.
+
+    Args:
+        row: TSV row dict with image, image_name, and index fields.
+        output_dir: Output directory for extracted images.
+        stats: Statistics dict to update in-place.
+    """
+    image_b64 = row.get("image", "")
+    image_name = row.get("image_name", f"image_{stats['found']}")
+    index = row.get("index", stats["found"])
+
+    if not image_b64:
+        logger.warning(f"No image data for index {index}")
+        stats["errors"] += 1
+        return
+
+    clean_name = Path(image_name).name if image_name else f"{index}.jpg"
+    if not clean_name.lower().endswith((".jpg", ".jpeg", ".png")):
+        clean_name = f"{clean_name}.jpg"
+
+    output_path = output_dir / clean_name
+
+    if output_path.exists():
+        stats["skipped"] += 1
+        return
+
+    image_data = base64.b64decode(image_b64)
+    with open(output_path, "wb") as img_file:
+        img_file.write(image_data)
+
+    stats["extracted"] += 1
+    if stats["extracted"] % 1000 == 0:
+        logger.info(f"Extracted {stats['extracted']}/{stats['found']} images...")
+
+
 def extract_ccor_images(
     input_path: Path = CC_OCR_PATH,
     output_subdir: str = "extracted_images",
@@ -150,12 +195,10 @@ def extract_ccor_images(
     """
     stats = {"found": 0, "extracted": 0, "skipped": 0, "errors": 0}
 
-    # Find all TSV files
     tsv_files = list(input_path.rglob("*.tsv"))
     logger.info(f"Found {len(tsv_files)} TSV files in CC-OCR")
 
     if dry_run:
-        # Count records in each file
         for tsv_path in tsv_files:
             try:
                 with open(tsv_path, encoding="utf-8") as f:
@@ -169,56 +212,18 @@ def extract_ccor_images(
 
     for tsv_path in tsv_files:
         try:
-            # Create output directory based on TSV location
             rel_path = tsv_path.relative_to(input_path)
             output_dir = input_path / output_subdir / rel_path.parent / tsv_path.stem
             output_dir.mkdir(parents=True, exist_ok=True)
 
             with open(tsv_path, encoding="utf-8") as f:
                 reader = csv.DictReader(f, delimiter="\t")
-
                 for row in reader:
                     stats["found"] += 1
-
                     try:
-                        # Get image data and name
-                        image_b64 = row.get("image", "")
-                        image_name = row.get("image_name", f"image_{stats['found']}")
-                        index = row.get("index", stats["found"])
-
-                        if not image_b64:
-                            logger.warning(f"No image data for index {index}")
-                            stats["errors"] += 1
-                            continue
-
-                        # Determine output filename
-                        # Clean image_name if it has path components
-                        clean_name = (
-                            Path(image_name).name if image_name else f"{index}.jpg"
-                        )
-                        if not clean_name.lower().endswith((".jpg", ".jpeg", ".png")):
-                            clean_name = f"{clean_name}.jpg"
-
-                        output_path = output_dir / clean_name
-
-                        # Skip if already extracted
-                        if output_path.exists():
-                            stats["skipped"] += 1
-                            continue
-
-                        # Decode and save image
-                        image_data = base64.b64decode(image_b64)
-                        with open(output_path, "wb") as img_file:
-                            img_file.write(image_data)
-
-                        stats["extracted"] += 1
-
-                        if stats["extracted"] % 1000 == 0:
-                            logger.info(
-                                f"Extracted {stats['extracted']}/{stats['found']} images..."
-                            )
-
+                        _extract_single_ccor_row(row, output_dir, stats)
                     except Exception as e:
+                        index = row.get("index", stats["found"])
                         logger.error(f"Error extracting image at index {index}: {e}")
                         stats["errors"] += 1
 
@@ -233,6 +238,63 @@ def extract_ccor_images(
         f"{stats['errors']} errors"
     )
     return stats
+
+
+def _render_pdf_pages(
+    doc: Any,
+    pdf_path: Path,
+    output_dir: Path,
+    target_dpi: int,
+    stats: dict[str, int],
+) -> None:
+    """Render all pages of a PDF document to PNG images.
+
+    Args:
+        doc: Opened fitz document.
+        pdf_path: Path to the PDF file (for naming).
+        output_dir: Directory to save rendered images.
+        target_dpi: Target DPI for rendering.
+        stats: Statistics dict to update in-place (pages, skipped).
+    """
+    import fitz
+
+    for page_num in range(len(doc)):
+        if len(doc) == 1:
+            output_path = output_dir / f"{pdf_path.stem}.png"
+        else:
+            output_path = output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
+
+        if output_path.exists():
+            stats["skipped"] += 1
+            continue
+
+        page = doc[page_num]
+        zoom = target_dpi / 72
+        mat = fitz.Matrix(zoom, zoom)
+        pix = page.get_pixmap(matrix=mat)
+        pix.save(str(output_path))
+        stats["pages"] += 1
+
+
+def _count_pdf_pages_dry_run(
+    pdf_files: list[Path],
+    stats: dict[str, int],
+) -> None:
+    """Count total pages across PDF files for dry-run reporting.
+
+    Args:
+        pdf_files: List of PDF file paths.
+        stats: Statistics dict to update in-place.
+    """
+    import fitz
+
+    for pdf_path in pdf_files:
+        try:
+            doc = fitz.open(pdf_path)
+            stats["pages"] += len(doc)
+            doc.close()
+        except Exception as e:
+            logger.warning(f"Error counting pages in {pdf_path}: {e}")
 
 
 def convert_ohr_bench_pdfs(
@@ -258,30 +320,21 @@ def convert_ohr_bench_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0, "pages": 0}
 
-    # PDFs are in the pdfs/ subdirectory
     pdfs_path = input_path / "pdfs"
     if not pdfs_path.exists():
         logger.error(f"OHR-Bench pdfs directory not found at {pdfs_path}")
         return {"error": "path_not_found"}
 
-    # Find all PDF files
-    pdf_files = list(pdfs_path.rglob("*.pdf"))
+    pdf_files = list(pdfs_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:
-        # Count total pages
-        for pdf_path in pdf_files:
-            try:
-                doc = fitz.open(pdf_path)
-                stats["pages"] += len(doc)
-                doc.close()
-            except Exception as e:
-                logger.warning(f"Error counting pages in {pdf_path}: {e}")
+        _count_pdf_pages_dry_run(pdf_files, stats)
         logger.info(
             f"[DRY RUN] Found {len(pdf_files)} PDF files "
             f"with {stats['pages']} total pages to convert"
@@ -292,43 +345,17 @@ def convert_ohr_bench_pdfs(
 
     for pdf_path in pdf_files:
         try:
-            # Create output directory mirroring input structure
             rel_path = pdf_path.relative_to(pdfs_path)
             output_dir = input_path / output_subdir / rel_path.parent
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Open PDF
             doc = fitz.open(pdf_path)
             if len(doc) == 0:
                 logger.warning(f"Empty PDF: {pdf_path}")
                 stats["errors"] += 1
                 continue
 
-            # Convert each page
-            for page_num in range(len(doc)):
-                # Output filename includes page number for multi-page PDFs
-                if len(doc) == 1:
-                    output_path = output_dir / f"{pdf_path.stem}.png"
-                else:
-                    output_path = (
-                        output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
-                    )
-
-                # Skip if already converted
-                if output_path.exists():
-                    stats["skipped"] += 1
-                    continue
-
-                # Render page at target DPI
-                page = doc[page_num]
-                zoom = target_dpi / 72
-                mat = fitz.Matrix(zoom, zoom)
-                pix = page.get_pixmap(matrix=mat)
-
-                # Save as PNG
-                pix.save(str(output_path))
-                stats["pages"] += 1
-
+            _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
             doc.close()
             stats["converted"] += 1
 
@@ -374,30 +401,21 @@ def convert_financebench_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0, "pages": 0}
 
-    # PDFs are in the pdfs/ subdirectory
     pdfs_path = input_path / "pdfs"
     if not pdfs_path.exists():
         logger.error(f"FinanceBench pdfs directory not found at {pdfs_path}")
         return {"error": "path_not_found"}
 
-    # Find all PDF files
-    pdf_files = list(pdfs_path.rglob("*.pdf"))
+    pdf_files = list(pdfs_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:
-        # Count total pages
-        for pdf_path in pdf_files:
-            try:
-                doc = fitz.open(pdf_path)
-                stats["pages"] += len(doc)
-                doc.close()
-            except Exception as e:
-                logger.warning(f"Error counting pages in {pdf_path}: {e}")
+        _count_pdf_pages_dry_run(pdf_files, stats)
         logger.info(
             f"[DRY RUN] Found {len(pdf_files)} PDF files "
             f"with {stats['pages']} total pages to convert"
@@ -408,42 +426,16 @@ def convert_financebench_pdfs(
 
     for pdf_path in pdf_files:
         try:
-            # Create output directory (flat structure since PDFs are in single dir)
             output_dir = input_path / output_subdir
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Open PDF
             doc = fitz.open(pdf_path)
             if len(doc) == 0:
                 logger.warning(f"Empty PDF: {pdf_path}")
                 stats["errors"] += 1
                 continue
 
-            # Convert each page
-            for page_num in range(len(doc)):
-                # Output filename includes page number for multi-page PDFs
-                if len(doc) == 1:
-                    output_path = output_dir / f"{pdf_path.stem}.png"
-                else:
-                    output_path = (
-                        output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
-                    )
-
-                # Skip if already converted
-                if output_path.exists():
-                    stats["skipped"] += 1
-                    continue
-
-                # Render page at target DPI
-                page = doc[page_num]
-                zoom = target_dpi / 72
-                mat = fitz.Matrix(zoom, zoom)
-                pix = page.get_pixmap(matrix=mat)
-
-                # Save as PNG
-                pix.save(str(output_path))
-                stats["pages"] += 1
-
+            _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
             doc.close()
             stats["converted"] += 1
 

@@ -230,7 +230,7 @@ class BaseParser:
         """Parse labels for multiple images. Override for batch optimization."""
         return [self.parse(dataset_path, p, config) for p in image_paths]
 
-    def validate_config(self, config: dict[str, Any]) -> list[str]:
+    def validate_config(self, _config: dict[str, Any]) -> list[str]:
         """Validate configuration. Override to add specific checks."""
         return []
 

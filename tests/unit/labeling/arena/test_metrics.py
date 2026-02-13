@@ -59,7 +59,7 @@ class TestComputePLCC:
         predictions = [0.5, 0.5, 0.5]
         ground_truth = [0.1, 0.2, 0.3]
         plcc = compute_plcc(predictions, ground_truth)
-        assert plcc == 0.0
+        assert plcc == pytest.approx(0.0)
 
     def test_insufficient_samples_raises(self) -> None:
         """Test that less than 2 samples raises ValueError."""
@@ -148,10 +148,10 @@ class TestDimensionMetrics:
         )
         d = metrics.to_dict()
 
-        assert d["plcc"] == 0.95
-        assert d["srcc"] == 0.93
-        assert d["mae"] == 0.05
-        assert d["rmse"] == 0.07
+        assert d["plcc"] == pytest.approx(0.95)
+        assert d["srcc"] == pytest.approx(0.93)
+        assert d["mae"] == pytest.approx(0.05)
+        assert d["rmse"] == pytest.approx(0.07)
         assert d["num_samples"] == 100
 
 

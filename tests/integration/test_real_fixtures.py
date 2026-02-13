@@ -274,7 +274,6 @@ class TestIQADetectionAccuracy:
         assert len(pages) > 0, "No pages extracted"
 
         # Check skew detection runs and produces valid results
-        skewed_pages = 0
         for page_img in pages:
             result = detect_skew(page_img.image)
 
@@ -284,10 +283,8 @@ class TestIQADetectionAccuracy:
             assert hasattr(result, "confidence")
             assert 0.0 <= result.confidence <= 1.0
 
-            # Track pages with detected skew
+            # Validate detection quality for skewed pages
             if result.is_skewed:
-                skewed_pages += 1
-                # Validate detection quality
                 assert result.confidence > 0.0, "Confidence should be positive"
 
         # Log results for monitoring (no strict assertion on detection)

@@ -727,7 +727,7 @@ class DocumentRenderer:
         script_code: str,
         language_code: str,
         layout_type: LayoutType = LayoutType.STACKED,
-        text_density: TextDensity = TextDensity.MEDIUM,  # noqa: ARG002
+        _text_density: TextDensity = TextDensity.MEDIUM,
         include_header: bool = True,
         header_text: str | None = None,
     ) -> tuple[Image.Image, list[TextBlock]]:
@@ -738,7 +738,7 @@ class DocumentRenderer:
             script_code: ISO 15924 script code
             language_code: ISO 639-1/3 language code
             layout_type: Layout type to use
-            text_density: Text density level
+            _text_density: Text density level (reserved for future use)
             include_header: Whether to include a header
             header_text: Custom header text (optional)
 

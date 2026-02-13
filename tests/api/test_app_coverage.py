@@ -121,7 +121,7 @@ class TestAuthMiddlewareEnabled:
     def test_auth_middleware_logs_key_count(self, auth_settings: APISettings) -> None:
         """Auth middleware logs number of API keys on startup."""
         with patch("image_preprocessing_detector.api.app.logger") as mock_logger:
-            app = create_app(settings=auth_settings)
+            create_app(settings=auth_settings)
             # Check that auth_middleware_enabled was logged
             mock_logger.info.assert_any_call(
                 "auth_middleware_enabled",
@@ -149,7 +149,7 @@ class TestRateLimitMiddlewareConfig:
     ) -> None:
         """Rate limit middleware uses configured values."""
         with patch("image_preprocessing_detector.api.app.logger") as mock_logger:
-            app = create_app(settings=rate_limit_settings)
+            create_app(settings=rate_limit_settings)
             mock_logger.info.assert_any_call(
                 "rate_limit_middleware_enabled",
                 requests_per_window=50,

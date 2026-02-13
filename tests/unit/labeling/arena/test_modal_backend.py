@@ -8,6 +8,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 from image_preprocessing_detector.labeling.arena.inference.base import (
     InferenceConfig,
     ModelNotLoadedError,
@@ -89,7 +91,7 @@ class TestModalBackend:
     def test_predict_requires_load(self) -> None:
         """Test predict raises when not loaded."""
         backend = ModalBackend()
-        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
 
         with pytest.raises(ModelNotLoadedError):
             backend.predict(image)
@@ -97,7 +99,7 @@ class TestModalBackend:
     def test_predict_batch_requires_load(self) -> None:
         """Test predict_batch raises when not loaded."""
         backend = ModalBackend()
-        images = [np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)]
+        images = [rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)]
 
         with pytest.raises(ModelNotLoadedError):
             backend.predict_batch(images)
@@ -117,7 +119,7 @@ class TestModalBackend:
             backend = ModalBackend()
             backend.load(model_spec, inference_config)
 
-            image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+            image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
             prediction = backend.predict(image)
 
             assert prediction is not None
@@ -134,8 +136,7 @@ class TestModalBackend:
             backend.load(model_spec, inference_config)
 
             images = [
-                np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
-                for _ in range(3)
+                rng.integers(0, 255, (224, 224, 3), dtype=np.uint8) for _ in range(3)
             ]
             predictions = backend.predict_batch(images)
 
@@ -185,8 +186,8 @@ The document shows moderate quality with some artifacts."""
         scores = backend._parse_vlm_response(response_text)
 
         assert scores["overall"] == pytest.approx(0.75, abs=0.01)
-        assert scores["sharpness"] == 0.5  # Default
-        assert scores["color"] == 0.5  # Default
+        assert scores["sharpness"] == pytest.approx(0.5)  # Default
+        assert scores["color"] == pytest.approx(0.5)  # Default
 
     def test_parse_vlm_response_clamps_values(self) -> None:
         """Test parsing VLM response clamps values to [0, 1]."""
@@ -198,8 +199,8 @@ Color: 0.8"""
 
         scores = backend._parse_vlm_response(response_text)
 
-        assert scores["overall"] == 1.0  # Clamped
-        assert scores["sharpness"] == 0.0  # Clamped
+        assert scores["overall"] == pytest.approx(1.0)  # Clamped
+        assert scores["sharpness"] == pytest.approx(0.0)  # Clamped
         assert scores["color"] == pytest.approx(0.8, abs=0.01)
 
     def test_parse_vlm_response_case_insensitive(self) -> None:

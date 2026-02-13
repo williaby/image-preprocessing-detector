@@ -92,7 +92,7 @@ echo ""
 
 # 6. Validate Requirements Sync
 echo "📦 Validating requirements.txt sync..."
-if [ -f "requirements.txt" ]; then
+if [[ -f "requirements.txt" ]]; then
     echo "Generating fresh requirements.txt..."
     poetry export -f requirements.txt --output requirements-check.txt --without-hashes
     if diff -q requirements.txt requirements-check.txt > /dev/null 2>&1; then
@@ -151,7 +151,7 @@ required_files=(
 
 missing_dirs=0
 for dir in "${required_dirs[@]}"; do
-    if [ -d "$dir" ]; then
+    if [[ -d "$dir" ]]; then
         echo "  ✅ $dir"
     else
         echo "  ❌ $dir (missing)"
@@ -161,7 +161,7 @@ done
 
 missing_files=0
 for file in "${required_files[@]}"; do
-    if [ -f "$file" ]; then
+    if [[ -f "$file" ]]; then
         echo "  ✅ $file"
     else
         echo "  ⚠️  $file (missing)"
@@ -169,9 +169,9 @@ for file in "${required_files[@]}"; do
     fi
 done
 
-if [ $missing_dirs -eq 0 ] && [ $missing_files -eq 0 ]; then
+if [[ $missing_dirs -eq 0 ]] && [[ $missing_files -eq 0 ]]; then
     echo -e "${GREEN}✅ Project structure validation passed${NC}"
-elif [ $missing_dirs -gt 0 ]; then
+elif [[ $missing_dirs -gt 0 ]]; then
     echo -e "${RED}❌ Required directories missing${NC}"
     FAILURES=$((FAILURES + 1))
 else
@@ -184,7 +184,7 @@ echo "VALIDATION SUMMARY"
 echo "=========================================="
 echo ""
 
-if [ $FAILURES -eq 0 ]; then
+if [[ $FAILURES -eq 0 ]]; then
     echo -e "${GREEN}✅ ALL WORKFLOW VALIDATIONS PASSED${NC}"
     echo ""
     echo "Your code is ready to push to GitHub!"

@@ -312,8 +312,8 @@ class LeaderboardGenerator:
             agg = entry.metrics.aggregate
             lines.append(
                 f"| {entry.rank} | {entry.model_name} | {entry.variant} | "
-                f"{agg.plcc:.{dp}f} | {agg.srcc:.{dp}f} | "
-                f"{agg.mae:.{dp}f} | {agg.rmse:.{dp}f} |"
+                + f"{agg.plcc:.{dp}f} | {agg.srcc:.{dp}f} | "
+                + f"{agg.mae:.{dp}f} | {agg.rmse:.{dp}f} |"
             )
 
         # Detailed metrics per dimension
@@ -346,22 +346,30 @@ class LeaderboardGenerator:
                     "",
                     "| Dimension | PLCC | SRCC | MAE | RMSE |",
                     "|-----------|------|------|-----|------|",
-                    f"| Overall | {entry.metrics.overall.plcc:.{dp}f} | "
-                    f"{entry.metrics.overall.srcc:.{dp}f} | "
-                    f"{entry.metrics.overall.mae:.{dp}f} | "
-                    f"{entry.metrics.overall.rmse:.{dp}f} |",
-                    f"| Sharpness | {entry.metrics.sharpness.plcc:.{dp}f} | "
-                    f"{entry.metrics.sharpness.srcc:.{dp}f} | "
-                    f"{entry.metrics.sharpness.mae:.{dp}f} | "
-                    f"{entry.metrics.sharpness.rmse:.{dp}f} |",
-                    f"| Color | {entry.metrics.color.plcc:.{dp}f} | "
-                    f"{entry.metrics.color.srcc:.{dp}f} | "
-                    f"{entry.metrics.color.mae:.{dp}f} | "
-                    f"{entry.metrics.color.rmse:.{dp}f} |",
-                    f"| **Aggregate** | **{entry.metrics.aggregate.plcc:.{dp}f}** | "
-                    f"**{entry.metrics.aggregate.srcc:.{dp}f}** | "
-                    f"**{entry.metrics.aggregate.mae:.{dp}f}** | "
-                    f"**{entry.metrics.aggregate.rmse:.{dp}f}** |",
+                    (
+                        f"| Overall | {entry.metrics.overall.plcc:.{dp}f} | "
+                        f"{entry.metrics.overall.srcc:.{dp}f} | "
+                        f"{entry.metrics.overall.mae:.{dp}f} | "
+                        f"{entry.metrics.overall.rmse:.{dp}f} |"
+                    ),
+                    (
+                        f"| Sharpness | {entry.metrics.sharpness.plcc:.{dp}f} | "
+                        f"{entry.metrics.sharpness.srcc:.{dp}f} | "
+                        f"{entry.metrics.sharpness.mae:.{dp}f} | "
+                        f"{entry.metrics.sharpness.rmse:.{dp}f} |"
+                    ),
+                    (
+                        f"| Color | {entry.metrics.color.plcc:.{dp}f} | "
+                        f"{entry.metrics.color.srcc:.{dp}f} | "
+                        f"{entry.metrics.color.mae:.{dp}f} | "
+                        f"{entry.metrics.color.rmse:.{dp}f} |"
+                    ),
+                    (
+                        f"| **Aggregate** | **{entry.metrics.aggregate.plcc:.{dp}f}** | "
+                        f"**{entry.metrics.aggregate.srcc:.{dp}f}** | "
+                        f"**{entry.metrics.aggregate.mae:.{dp}f}** | "
+                        f"**{entry.metrics.aggregate.rmse:.{dp}f}** |"
+                    ),
                     "",
                 ]
             )

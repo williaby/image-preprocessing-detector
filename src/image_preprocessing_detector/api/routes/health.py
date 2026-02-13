@@ -73,7 +73,6 @@ def get_uptime_seconds() -> float | None:
 
 @router.get(
     "/health",
-    response_model=HealthResponse,
     summary="Health check",
     description="Basic liveness check - returns healthy if server is running.",
     responses={
@@ -97,7 +96,6 @@ async def health_check() -> HealthResponse:
 
 @router.get(
     "/ready",
-    response_model=ReadyResponse,
     summary="Readiness check",
     description="Readiness check with dependency validation for load balancer probes.",
     responses={
@@ -187,7 +185,6 @@ async def readiness_check(response: Response) -> ReadyResponse:
 
 @router.get(
     "/version",
-    response_model=VersionResponse,
     summary="Version information",
     description="Returns API version, Python version, and model versions.",
 )
@@ -213,13 +210,13 @@ async def version_info() -> VersionResponse:
         from pathlib import Path
 
         model_dir = Path("models/iqa/onnx")
-        if model_dir.exists():
+        if model_dir.exists():  # Trivially fast exists check
             teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
             student_path = model_dir / "resnet18_student.onnx"
 
-            if teacher_path.exists():
+            if teacher_path.exists():  # Trivially fast exists check
                 models["teacher_model"] = "resnet50_teacher_50epoch"
-            if student_path.exists():
+            if student_path.exists():  # Trivially fast exists check
                 models["student_model"] = "resnet18_student"
     except Exception as e:
         logger.debug("model_version_detection_failed", error=str(e))

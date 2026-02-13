@@ -51,6 +51,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Common file name constants (S1192: avoid duplicate string literals)
+TRAINING_LABELS_FILE = "training_labels.parquet"
+
 # =============================================================================
 # Constants - Degradation Index (aligned with detection-taxonomy.md)
 # =============================================================================
@@ -347,7 +350,7 @@ def _map_doclaynet_category(category: str) -> str:
     return mapping.get(category, "unknown")
 
 
-def build_iqa_vector(record: dict[str, Any]) -> tuple[list[float], list[bool]]:
+def build_iqa_vector(_record: dict[str, Any]) -> tuple[list[float], list[bool]]:
     """Build 45-dimensional IQA vector from degradation annotations.
 
     Currently returns zeros - will be populated when classical CV
@@ -481,7 +484,7 @@ def generate_statistics(input_path: Path) -> dict[str, Any]:
     if input_path.is_file() and input_path.suffix == ".parquet":
         parquet_path = input_path
     else:
-        parquet_path = input_path / "training_labels.parquet"
+        parquet_path = input_path / TRAINING_LABELS_FILE
 
     if not parquet_path.exists():
         logger.error(f"Training labels not found: {parquet_path}")
@@ -577,9 +580,9 @@ Examples:
         if args.output:
             output_path = args.output
         elif args.input.is_file():
-            output_path = args.input.parent / "training_labels.parquet"
+            output_path = args.input.parent / TRAINING_LABELS_FILE
         else:
-            output_path = args.input / "training_labels.parquet"
+            output_path = args.input / TRAINING_LABELS_FILE
 
         count = build_training_labels(args.input, output_path)
         if count > 0:

@@ -624,6 +624,7 @@ class TestTempFileCleanup:
         try:
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 tmp.write(b"test data")
+                tmp.flush()
                 tmp_path = Path(tmp.name)
 
             # Verify file exists
@@ -778,7 +779,7 @@ class TestCorrelationIDMiddleware:
         from image_preprocessing_detector.api.middleware import CorrelationIDMiddleware
 
         # Just verify the class exists and is importable
-        assert CorrelationIDMiddleware is not None
+        assert callable(CorrelationIDMiddleware)
 
 
 class TestMiddlewareIntegration:

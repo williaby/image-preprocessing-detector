@@ -538,6 +538,69 @@ def compute_detector_intercorrelation(
     return _compute_pairwise_srcc(scores, list(detectors.keys()))
 
 
+def _load_diqa_images(
+    metadata_path: Path,
+    image_dir: Path,
+    splits: list[str],
+    limit: int,
+) -> tuple[list[np.ndarray], list[dict[str, Any]]]:
+    """Load and filter DIQA-5000 images.
+
+    Returns:
+        Tuple of (images, valid_samples).
+    """
+    diqa_samples = load_diqa5000_metadata(metadata_path)
+    diqa_samples = [s for s in diqa_samples if s["split"] in splits]
+    log.info("Using %d DIQA-5000 samples (splits: %s)", len(diqa_samples), splits)
+
+    if limit > 0:
+        diqa_samples = diqa_samples[:limit]
+        log.info("Limited to %d samples", len(diqa_samples))
+
+    log.info("Loading DIQA-5000 images...")
+    images: list[np.ndarray] = []
+    valid_samples: list[dict[str, Any]] = []
+    for sample in diqa_samples:
+        img = load_diqa5000_image(sample, image_dir)
+        if img is not None:
+            images.append(img)
+            valid_samples.append(sample)
+
+    log.info("Loaded %d/%d DIQA-5000 images", len(images), len(diqa_samples))
+    return images, valid_samples
+
+
+def _run_and_save_classical(
+    images: list[np.ndarray],
+    mos_scores: list[dict[str, Any]],
+    output_dir: Path,
+    all_results: dict[str, Any],
+) -> None:
+    """Run classical detector benchmarks and save results."""
+    log.info("=" * 60)
+    log.info("CLASSICAL DETECTOR BENCHMARKS")
+    log.info("=" * 60)
+
+    classical_results = benchmark_classical_detectors(images, mos_scores)
+
+    intercorr_images = images[:500] if len(images) > 500 else images
+    intercorr_matrix = compute_detector_intercorrelation(intercorr_images)
+
+    classical_output = {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "num_images": len(images),
+        "results": [asdict(r) for r in classical_results],
+        "intercorrelation_matrix": intercorr_matrix,
+    }
+
+    classical_path = output_dir / "classical_correlations.json"
+    with open(classical_path, "w") as fh:
+        json.dump(classical_output, fh, indent=2)
+    log.info("Classical results saved to %s", classical_path)
+
+    all_results["classical"] = classical_output
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -623,34 +686,14 @@ def main() -> int:
         },
     }
 
-    # -----------------------------------------------------------------------
     # Load DIQA-5000
-    # -----------------------------------------------------------------------
-    diqa_samples = load_diqa5000_metadata(args.diqa_metadata)
-    diqa_samples = [s for s in diqa_samples if s["split"] in args.splits]
-    log.info("Using %d DIQA-5000 samples (splits: %s)", len(diqa_samples), args.splits)
-
-    if args.limit > 0:
-        diqa_samples = diqa_samples[: args.limit]
-        log.info("Limited to %d samples", len(diqa_samples))
-
-    # Load images
-    log.info("Loading DIQA-5000 images...")
-    diqa_images: list[np.ndarray] = []
-    diqa_valid_samples: list[dict[str, Any]] = []
-    for sample in diqa_samples:
-        img = load_diqa5000_image(sample, args.diqa_dir)
-        if img is not None:
-            diqa_images.append(img)
-            diqa_valid_samples.append(sample)
-
-    log.info("Loaded %d/%d DIQA-5000 images", len(diqa_images), len(diqa_samples))
-
+    diqa_images, diqa_valid_samples = _load_diqa_images(
+        args.diqa_metadata, args.diqa_dir, args.splits, args.limit
+    )
     if not diqa_images:
         log.error("No DIQA-5000 images loaded, cannot benchmark")
         return 1
 
-    # Normalize MOS to 0-1 for pyiqa comparison
     diqa_gt_normalized = [(s["mos_overall"] - 1.0) / 4.0 for s in diqa_valid_samples]
     diqa_mos_scores = [
         {
@@ -661,33 +704,11 @@ def main() -> int:
         for s in diqa_valid_samples
     ]
 
-    # -----------------------------------------------------------------------
     # Phase 0a: Classical detector benchmarks
-    # -----------------------------------------------------------------------
     if not args.skip_classical:
-        log.info("=" * 60)
-        log.info("CLASSICAL DETECTOR BENCHMARKS")
-        log.info("=" * 60)
-
-        classical_results = benchmark_classical_detectors(diqa_images, diqa_mos_scores)
-
-        # Inter-correlation matrix (use subset for speed)
-        intercorr_images = diqa_images[:500] if len(diqa_images) > 500 else diqa_images
-        intercorr_matrix = compute_detector_intercorrelation(intercorr_images)
-
-        classical_output = {
-            "timestamp": datetime.now(UTC).isoformat(),
-            "num_images": len(diqa_images),
-            "results": [asdict(r) for r in classical_results],
-            "intercorrelation_matrix": intercorr_matrix,
-        }
-
-        classical_path = args.output_dir / "classical_correlations.json"
-        with open(classical_path, "w") as fh:
-            json.dump(classical_output, fh, indent=2)
-        log.info("Classical results saved to %s", classical_path)
-
-        all_results["classical"] = classical_output
+        _run_and_save_classical(
+            diqa_images, diqa_mos_scores, args.output_dir, all_results
+        )
 
     if args.classical_only:
         log.info("Classical-only mode, skipping pyiqa benchmarks")
@@ -696,9 +717,7 @@ def main() -> int:
             json.dump(all_results, fh, indent=2)
         return 0
 
-    # -----------------------------------------------------------------------
     # Phase 0b: PyIQA model benchmarks on DIQA-5000
-    # -----------------------------------------------------------------------
     diqa_results = _run_pyiqa_benchmarks(
         "DIQA-5000",
         args.models,
@@ -722,9 +741,7 @@ def main() -> int:
 
     all_results["diqa5000"] = diqa_output
 
-    # -----------------------------------------------------------------------
     # Phase 0c: PyIQA model benchmarks on OHR-Bench
-    # -----------------------------------------------------------------------
     if not args.skip_ohrbench:
         ohrbench_output = _run_ohrbench_benchmarks(
             args.ohrbench_dir,
@@ -739,9 +756,7 @@ def main() -> int:
             log.info("OHR-Bench results saved to %s", ohrbench_path)
             all_results["ohrbench"] = ohrbench_output
 
-    # -----------------------------------------------------------------------
     # Summary report
-    # -----------------------------------------------------------------------
     _log_ranking_table(diqa_results)
 
     summary_path = args.output_dir / "summary_report.json"

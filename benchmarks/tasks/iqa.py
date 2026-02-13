@@ -136,7 +136,6 @@ def run_skew_benchmark(adapter: Any, scorer: Any) -> None:
         try:
             correction_result = correct_skew(image, result.angle, result.confidence)
             corrected = correction_result.corrected_image
-            correction_metadata = correction_result.parameters
 
             corrected_result = detector.detect(corrected)
             corrected_angle = corrected_result.angle
@@ -234,8 +233,6 @@ def run_noise_benchmark(adapter: Any, scorer: Any) -> None:
                 )
             else:
                 denoised = cv2.fastNlMeansDenoising(noisy_image, None, 10, 7, 21)
-            denoise_metadata = {"method": "fastNlMeans", "h": 10}
-
             # Calculate metrics (using original as "clean" for demonstration)
             # In real scenario, you'd have clean reference images
             psnr_value = psnr(noisy_image, denoised)
@@ -291,7 +288,6 @@ def run_contrast_benchmark(adapter: Any, scorer: Any) -> None:
             # Apply contrast enhancement
             correction_result = enhance_contrast(image, result.score, result.severity)
             enhanced = correction_result.corrected_image
-            enhance_metadata = correction_result.parameters
 
             # Calculate enhancement ratio
             enhancement_ratio = contrast_enhancement_ratio(image, enhanced)

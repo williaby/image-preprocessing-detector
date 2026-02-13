@@ -61,6 +61,19 @@ OHRBENCH_DATASET_DIR = Path("/mnt/e/image_detection/02_benchmark_only/ohr-bench"
 OUTPUT_DIR = Path("results/iqa_vlm_labeling")
 
 
+def _assign_quintiles(
+    samples: list[dict[str, Any]], value_key: str, quintile_key: str
+) -> None:
+    """Assign quintile labels (1-5) to samples in-place based on a numeric field."""
+    values = [s[value_key] for s in samples]
+    edges = np.quantile(values, [0.2, 0.4, 0.6, 0.8])
+    for sample in samples:
+        # np.searchsorted returns 0-3 for values <= edges, so add 1 for 1-indexed quintile
+        sample[quintile_key] = (
+            int(np.searchsorted(edges, sample[value_key], side="right")) + 1
+        )
+
+
 def load_diqa5000_for_selection(
     metadata_path: Path,
     splits: list[str] | None = None,
@@ -109,22 +122,7 @@ def load_diqa5000_for_selection(
             }
         )
 
-    # Assign MOS quintiles
-    mos_values = [s["mos_overall"] for s in samples]
-    quintile_edges = np.quantile(mos_values, [0.2, 0.4, 0.6, 0.8])
-
-    for sample in samples:
-        mos = sample["mos_overall"]
-        if mos <= quintile_edges[0]:
-            sample["mos_quintile"] = 1
-        elif mos <= quintile_edges[1]:
-            sample["mos_quintile"] = 2
-        elif mos <= quintile_edges[2]:
-            sample["mos_quintile"] = 3
-        elif mos <= quintile_edges[3]:
-            sample["mos_quintile"] = 4
-        else:
-            sample["mos_quintile"] = 5
+    _assign_quintiles(samples, "mos_overall", "mos_quintile")
 
     log.info("Loaded %d DIQA-5000 samples (splits: %s)", len(samples), splits)
     return samples
@@ -194,21 +192,7 @@ def load_ohrbench_for_selection(
                 }
             )
 
-        # Assign quality quintiles
-        scores = [s["quality_score"] for s in samples]
-        quintile_edges = np.quantile(scores, [0.2, 0.4, 0.6, 0.8])
-        for sample in samples:
-            q = sample["quality_score"]
-            if q <= quintile_edges[0]:
-                sample["quality_quintile"] = 1
-            elif q <= quintile_edges[1]:
-                sample["quality_quintile"] = 2
-            elif q <= quintile_edges[2]:
-                sample["quality_quintile"] = 3
-            elif q <= quintile_edges[3]:
-                sample["quality_quintile"] = 4
-            else:
-                sample["quality_quintile"] = 5
+        _assign_quintiles(samples, "quality_score", "quality_quintile")
 
         log.info("Loaded %d OHR-Bench samples", len(samples))
         return samples

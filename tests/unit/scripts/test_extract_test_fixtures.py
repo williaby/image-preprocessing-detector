@@ -229,7 +229,7 @@ class TestSampleFromQuartiles:
             f.write_bytes(b"x" * int(size_mb * MB_TO_BYTES))
             files_with_size.append((f, size_mb))
 
-        sampled, total_size = _sample_from_quartiles(
+        _, total_size = _sample_from_quartiles(
             files_with_size, count=4, max_size_mb=1.0
         )
 
@@ -248,7 +248,7 @@ class TestFillRemainingSamples:
             files_with_size.append((f, 100 / MB_TO_BYTES))
 
         initial = [files_with_size[0][0]]
-        sampled, total = _fill_remaining_samples(
+        sampled, _ = _fill_remaining_samples(
             files_with_size, initial, count=5, total_size=0.0001, max_size_mb=1.0
         )
 
@@ -358,7 +358,7 @@ class TestExtractFixturesForDataset:
                 }
             },
         ):
-            result = extract_fixtures_for_dataset("test_dataset", dry_run=True)
+            extract_fixtures_for_dataset("test_dataset", dry_run=True)
 
             assert not target_dir.exists()
 

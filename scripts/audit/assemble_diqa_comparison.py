@@ -374,6 +374,55 @@ def extract_field_values(
 # ---------------------------------------------------------------------------
 # Agreement Metrics
 # ---------------------------------------------------------------------------
+def _compute_field_gt_stats(
+    field_name: str,
+    all_comparisons: list[dict[str, Any]],
+    source_correct: dict[str, int],
+    source_total: dict[str, int],
+) -> dict[str, Any]:
+    """Compute per-source accuracy vs GT for a single field."""
+    field_stats: dict[str, dict[str, int]] = {}
+    gt_values_present = 0
+
+    for comp in all_comparisons:
+        field_data = comp.get("fields", {}).get(field_name, {})
+        sources = field_data.get("sources", {})
+        gt_val = sources.get("E")
+
+        if gt_val is None:
+            continue
+        gt_values_present += 1
+
+        for src_label, src_val in sources.items():
+            if src_label == "E":
+                continue
+            if src_label not in field_stats:
+                field_stats[src_label] = {"matches": 0, "total": 0}
+            field_stats[src_label]["total"] += 1
+            if _values_match(src_val, gt_val):
+                field_stats[src_label]["matches"] += 1
+                source_correct[src_label] += 1
+            source_total[src_label] += 1
+
+    best_source = None
+    best_accuracy = -1.0
+    source_accuracies: dict[str, float] = {}
+    for src_label, stats in field_stats.items():
+        if stats["total"] > 0:
+            accuracy = stats["matches"] / stats["total"]
+            source_accuracies[src_label] = round(accuracy, 4)
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_source = src_label
+
+    return {
+        "gt_values_present": gt_values_present,
+        "source_accuracies": source_accuracies,
+        "best_source": best_source,
+        "best_accuracy": round(best_accuracy, 4) if best_accuracy >= 0 else None,
+    }
+
+
 def compute_agreement_metrics(
     all_comparisons: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -381,59 +430,16 @@ def compute_agreement_metrics(
 
     Returns a dict with ``per_field`` and ``per_source`` sections.
     """
-    # Per-field: for each source, count matches with E
-    per_field: dict[str, dict[str, Any]] = {}
-    # Per-source: across all fields, count matches with E
     source_correct: dict[str, int] = defaultdict(int)
     source_total: dict[str, int] = defaultdict(int)
 
-    for field_name in COMPARISON_FIELDS:
-        field_stats: dict[str, dict[str, int]] = {}
-        total_samples = 0
-        gt_values_present = 0
+    per_field = {
+        field_name: _compute_field_gt_stats(
+            field_name, all_comparisons, source_correct, source_total
+        )
+        for field_name in COMPARISON_FIELDS
+    }
 
-        for comp in all_comparisons:
-            field_data = comp.get("fields", {}).get(field_name, {})
-            sources = field_data.get("sources", {})
-            gt_val = sources.get("E")
-
-            if gt_val is None:
-                continue
-            gt_values_present += 1
-            total_samples += 1
-
-            for src_label, src_val in sources.items():
-                if src_label == "E":
-                    continue
-                if src_label not in field_stats:
-                    field_stats[src_label] = {"matches": 0, "total": 0}
-
-                field_stats[src_label]["total"] += 1
-                if _values_match(src_val, gt_val):
-                    field_stats[src_label]["matches"] += 1
-                    source_correct[src_label] += 1
-                source_total[src_label] += 1
-
-        # Determine most accurate source for this field
-        best_source = None
-        best_accuracy = -1.0
-        source_accuracies: dict[str, float] = {}
-        for src_label, stats in field_stats.items():
-            if stats["total"] > 0:
-                accuracy = stats["matches"] / stats["total"]
-                source_accuracies[src_label] = round(accuracy, 4)
-                if accuracy > best_accuracy:
-                    best_accuracy = accuracy
-                    best_source = src_label
-
-        per_field[field_name] = {
-            "gt_values_present": gt_values_present,
-            "source_accuracies": source_accuracies,
-            "best_source": best_source,
-            "best_accuracy": round(best_accuracy, 4) if best_accuracy >= 0 else None,
-        }
-
-    # Overall per-source accuracy
     per_source: dict[str, dict[str, Any]] = {}
     for src_label in sorted(set(source_correct.keys()) | set(source_total.keys())):
         total = source_total[src_label]
@@ -529,6 +535,60 @@ def _docling_content_flags(docling_rec: dict[str, Any]) -> dict[str, bool]:
 # ---------------------------------------------------------------------------
 # Main Assembly
 # ---------------------------------------------------------------------------
+_CONTENT_FLAGS = ("has_table", "has_formula", "has_figure", "has_handwriting")
+
+
+def _augment_content_flags(
+    base_fields: dict[str, dict[str, Any]],
+    egret_rec: dict[str, Any],
+    docling_rec: dict[str, Any],
+) -> None:
+    """Augment base_fields content flags with derived values from Egret and Docling."""
+    if egret_rec:
+        b_flags = _egret_content_flags(egret_rec)
+        for flag in _CONTENT_FLAGS:
+            base_fields[flag]["B"] = b_flags[flag]
+    if docling_rec:
+        c_flags = _docling_content_flags(docling_rec)
+        for flag in _CONTENT_FLAGS:
+            base_fields[flag]["C"] = c_flags[flag]
+
+
+def _build_diqa_sample_comparison(
+    image_id: str,
+    base_fields: dict[str, dict[str, Any]],
+    source_lookup: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, Any]:
+    """Build a per-sample comparison record for the DIQA comparison."""
+    sample_comparison: dict[str, Any] = {
+        "image_id": image_id,
+        "sources_available": {
+            name: image_id in data for name, data in source_lookup.items()
+        },
+        "fields": {},
+    }
+
+    for field_name in COMPARISON_FIELDS:
+        sources = base_fields.get(field_name, {})
+        gt_val = sources.get("E")
+
+        matches: dict[str, bool | None] = {}
+        for src_label, src_val in sources.items():
+            if src_label == "E":
+                continue
+            if src_val is None or gt_val is None:
+                matches[src_label] = None
+            else:
+                matches[src_label] = _values_match(src_val, gt_val)
+
+        sample_comparison["fields"][field_name] = {
+            "sources": sources,
+            "matches_gt": matches,
+        }
+
+    return sample_comparison
+
+
 def assemble_comparison() -> dict[str, Any]:
     """Load all sources and assemble the full comparison report."""
     print("Loading data sources...")
@@ -554,13 +614,19 @@ def assemble_comparison() -> dict[str, Any]:
     ss = load_sample_set()
     print(f"     Sample Set:          {len(ss):>6,} records")
 
-    # Get the 36 audit sample image_ids
     audit_ids = sorted(gt.keys())
     print(f"\nAudit samples: {len(audit_ids)}")
 
-    # Build per-sample comparisons
-    all_comparisons: list[dict[str, Any]] = []
+    source_lookup: dict[str, dict[str, dict[str, Any]]] = {
+        "A": l2,
+        "B": egret,
+        "C": docling,
+        "D": llm,
+        "E": gt,
+        "lang": lang,
+    }
 
+    all_comparisons: list[dict[str, Any]] = []
     for image_id in audit_ids:
         base_fields = extract_field_values(
             image_id,
@@ -572,57 +638,13 @@ def assemble_comparison() -> dict[str, Any]:
             lang=lang,
             sample_set=ss,
         )
+        _augment_content_flags(
+            base_fields, egret.get(image_id, {}), docling.get(image_id, {})
+        )
+        all_comparisons.append(
+            _build_diqa_sample_comparison(image_id, base_fields, source_lookup)
+        )
 
-        # Augment content flags with derived values from B and C
-        b_rec = egret.get(image_id, {})
-        c_rec = docling.get(image_id, {})
-
-        if b_rec:
-            b_flags = _egret_content_flags(b_rec)
-            for flag in ("has_table", "has_formula", "has_figure", "has_handwriting"):
-                base_fields[flag]["B"] = b_flags[flag]
-
-        if c_rec:
-            c_flags = _docling_content_flags(c_rec)
-            for flag in ("has_table", "has_formula", "has_figure", "has_handwriting"):
-                base_fields[flag]["C"] = c_flags[flag]
-
-        # Structure per-sample output
-        sample_comparison: dict[str, Any] = {
-            "image_id": image_id,
-            "sources_available": {
-                "A": image_id in l2,
-                "B": image_id in egret,
-                "C": image_id in docling,
-                "D": image_id in llm,
-                "E": image_id in gt,
-                "lang": image_id in lang,
-            },
-            "fields": {},
-        }
-
-        for field_name in COMPARISON_FIELDS:
-            sources = base_fields.get(field_name, {})
-            gt_val = sources.get("E")
-
-            # Per-source match assessment
-            matches: dict[str, bool | None] = {}
-            for src_label, src_val in sources.items():
-                if src_label == "E":
-                    continue
-                if src_val is None or gt_val is None:
-                    matches[src_label] = None
-                else:
-                    matches[src_label] = _values_match(src_val, gt_val)
-
-            sample_comparison["fields"][field_name] = {
-                "sources": sources,
-                "matches_gt": matches,
-            }
-
-        all_comparisons.append(sample_comparison)
-
-    # Compute aggregate metrics
     metrics = compute_agreement_metrics(all_comparisons)
     disagreements = find_disagreements(all_comparisons)
 

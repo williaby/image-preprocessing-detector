@@ -345,7 +345,7 @@ class LanguageDetectionProvider:
                 "Install with: uv add fasttext huggingface_hub"
             ) from e
 
-    def supports(self, image_path: Path) -> bool:
+    def supports(self, _image_path: Path) -> bool:
         """Check if this provider should process the given image.
 
         Always returns True - language detection is applicable to all documents.

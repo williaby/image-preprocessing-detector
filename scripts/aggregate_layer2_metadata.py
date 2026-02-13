@@ -215,6 +215,170 @@ def extract_quality_info(data: dict[str, Any]) -> tuple[float | None, list[dict]
     return (data.get("overall_score"), data.get("degradations", []))
 
 
+def _accumulate_sample_stats(data: dict[str, Any], stats: dict[str, Any]) -> None:
+    """Accumulate statistics from a single sample's enrichment data into stats.
+
+    Args:
+        data: Enrichment data dict from a sample's latest version.
+        stats: Mutable stats dict to update in place.
+    """
+    # Simple single-value extractions mapped to their counter key
+    _single_extractions: list[tuple[str, Any]] = [
+        ("capture_methods", extract_capture_method(data)),
+        ("domains", extract_domain(data)),
+        ("layout_types", extract_layout_type(data)),
+        ("text_densities", extract_text_density(data)),
+    ]
+    for key, value in _single_extractions:
+        if value:
+            stats[key][value] += 1
+
+    # Language/Script (multiple return values)
+    lang_code, script_code, script_family = extract_language_info(data)
+    for key, value in [
+        ("language_codes", lang_code),
+        ("script_codes", script_code),
+        ("script_families", script_family),
+    ]:
+        if value:
+            stats[key][value] += 1
+
+    # Content flags
+    for flag_name in extract_content_flags(data):
+        stats["content_flags"][flag_name] += 1
+
+    # Text scope and content type
+    scope, content_type = extract_text_scope(data)
+    if scope:
+        stats["text_scopes"][scope] += 1
+    if content_type:
+        stats["content_types"][content_type] += 1
+
+    # Paper size and orientation
+    paper_size, orientation = extract_paper_size(data)
+    if paper_size:
+        stats["paper_sizes"][paper_size] += 1
+    if orientation:
+        stats["paper_orientations"][orientation] += 1
+
+    # Quality info
+    quality_score, degradations = extract_quality_info(data)
+    if quality_score is not None:
+        stats["quality_scores"].append(quality_score)
+
+    _accumulate_degradations(degradations, stats)
+
+
+def _accumulate_degradations(degradations: list[Any], stats: dict[str, Any]) -> None:
+    """Process degradation entries and accumulate into stats."""
+    if not degradations:
+        return
+    for deg in degradations:
+        if not isinstance(deg, dict):
+            continue
+        deg_type = deg.get("type")
+        if not deg_type:
+            continue
+        stats["degradation_types"][deg_type] += 1
+        severity = deg.get("severity_numeric")
+        if severity is not None:
+            stats["degradation_severities"][deg_type].append(severity)
+
+
+def _compute_quality_summary(quality_scores: list[float]) -> dict[str, Any] | None:
+    """Compute quality score summary statistics."""
+    if not quality_scores:
+        return None
+    return {
+        "min": round(min(quality_scores), 3),
+        "max": round(max(quality_scores), 3),
+        "mean": round(statistics.mean(quality_scores), 3),
+        "median": round(statistics.median(quality_scores), 3),
+        "stdev": round(statistics.stdev(quality_scores), 3)
+        if len(quality_scores) > 1
+        else 0,
+    }
+
+
+def _compute_degradation_summaries(
+    degradation_severities: dict[str, list[float]],
+) -> dict[str, dict[str, float]]:
+    """Compute per-degradation-type severity summaries."""
+    summaries: dict[str, dict[str, float]] = {}
+    for deg_type, severities in degradation_severities.items():
+        if severities:
+            summaries[deg_type] = {
+                "mean_severity": round(statistics.mean(severities), 3),
+                "max_severity": round(max(severities), 3),
+            }
+    return summaries
+
+
+def _compute_counter_percentages(stats: dict[str, Any], total: int) -> None:
+    """Convert counter fields and content flags to percentage dicts in-place."""
+    _counter_keys = [
+        "capture_methods",
+        "degradation_types",
+        "domains",
+        "layout_types",
+        "text_densities",
+        "script_codes",
+        "script_families",
+        "language_codes",
+        "text_scopes",
+        "content_types",
+        "paper_sizes",
+        "paper_orientations",
+    ]
+    for key in _counter_keys:
+        counter = stats[key]
+        stats[f"{key}_pct"] = (
+            {k: round(v / total * 100, 1) for k, v in counter.items()}
+            if counter
+            else {}
+        )
+
+    stats["content_flags_pct"] = (
+        {k: round(v / total * 100, 1) for k, v in stats["content_flags"].items()}
+        if stats["content_flags"]
+        else {}
+    )
+
+
+def _compute_top_n_list(
+    counter: Counter,
+    total: int,
+    n: int,
+    key_name: str,
+    extra_data: dict[str, dict[str, float]] | None = None,
+) -> list[dict[str, Any]]:
+    """Build a top-N list from a Counter with percentages.
+
+    Args:
+        counter: The Counter to extract top items from.
+        total: Total sample count for percentage calculation.
+        n: Number of top items.
+        key_name: Name of the key field in output dicts.
+        extra_data: Optional dict mapping item names to extra fields to merge.
+
+    Returns:
+        List of dicts with name, count, percentage, and optional extra fields.
+    """
+    if not counter:
+        return []
+    result = []
+    for item, count in counter.most_common(n):
+        entry: dict[str, Any] = {
+            key_name: item,
+            "count": count,
+            "percentage": round(count / total * 100, 1),
+        }
+        if extra_data and item in extra_data:
+            entry.update(extra_data[item])
+        result.append(entry)
+    return result
+
+
 def aggregate_dataset_metadata(
     dataset_name: str,
     layer2_dir: Path,
@@ -282,82 +446,12 @@ def aggregate_dataset_metadata(
 
     for sample in samples:
         try:
-            # Extract latest enrichment version data
             enrichments = sample.get("enrichments", {})
             versions = enrichments.get("versions", [])
             if not versions:
                 continue
-
-            # Get latest version (last in array)
-            latest = versions[-1]
-            data = latest.get("data", {})
-
-            # Capture method (handles both nested and flat formats)
-            method = extract_capture_method(data)
-            if method:
-                stats["capture_methods"][method] += 1
-
-            # Domain (handles both nested and flat formats)
-            domain = extract_domain(data)
-            if domain:
-                stats["domains"][domain] += 1
-
-            # Layout type (handles both nested and flat formats)
-            layout_type = extract_layout_type(data)
-            if layout_type:
-                stats["layout_types"][layout_type] += 1
-
-            # Text density (handles both nested and flat formats)
-            text_density = extract_text_density(data)
-            if text_density:
-                stats["text_densities"][text_density] += 1
-
-            # Language/Script (handles both nested and flat formats)
-            lang_code, script_code, script_family = extract_language_info(data)
-            if lang_code:
-                stats["language_codes"][lang_code] += 1
-            if script_code:
-                stats["script_codes"][script_code] += 1
-            if script_family:
-                stats["script_families"][script_family] += 1
-
-            # Content flags (handles both nested and flat formats)
-            flags = extract_content_flags(data)
-            for flag_name in flags:
-                stats["content_flags"][flag_name] += 1
-
-            # Text scope and content type (handles both nested and flat formats)
-            scope, content_type = extract_text_scope(data)
-            if scope:
-                stats["text_scopes"][scope] += 1
-            if content_type:
-                stats["content_types"][content_type] += 1
-
-            # Paper size (handles both nested and flat formats)
-            paper_size, orientation = extract_paper_size(data)
-            if paper_size:
-                stats["paper_sizes"][paper_size] += 1
-            if orientation:
-                stats["paper_orientations"][orientation] += 1
-
-            # Quality info (handles both nested and flat formats)
-            quality_score, degradations = extract_quality_info(data)
-            if quality_score is not None:
-                stats["quality_scores"].append(quality_score)
-
-            # Process degradations if present
-            if degradations:
-                for deg in degradations:
-                    if isinstance(deg, dict):
-                        deg_type = deg.get("type")
-                        severity = deg.get("severity_numeric")
-                        if deg_type:
-                            stats["degradation_types"][deg_type] += 1
-                            if severity is not None:
-                                stats["degradation_severities"][deg_type].append(
-                                    severity
-                                )
-
+            data = versions[-1].get("data", {})
+            _accumulate_sample_stats(data, stats)
         except Exception as e:
             if verbose:
                 sample_id = sample.get("id", "unknown")
@@ -365,111 +459,40 @@ def aggregate_dataset_metadata(
             continue
 
     # Compute summary statistics
-    if stats["quality_scores"]:
-        stats["quality_summary"] = {
-            "min": round(min(stats["quality_scores"]), 3),
-            "max": round(max(stats["quality_scores"]), 3),
-            "mean": round(statistics.mean(stats["quality_scores"]), 3),
-            "median": round(statistics.median(stats["quality_scores"]), 3),
-            "stdev": round(statistics.stdev(stats["quality_scores"]), 3)
-            if len(stats["quality_scores"]) > 1
-            else 0,
-        }
-    else:
-        stats["quality_summary"] = None
+    stats["quality_summary"] = _compute_quality_summary(stats["quality_scores"])
 
-    # Degradation severity summaries
-    degradation_summaries = {}
-    for deg_type, severities in stats["degradation_severities"].items():
-        if severities:
-            degradation_summaries[deg_type] = {
-                "mean_severity": round(statistics.mean(severities), 3),
-                "max_severity": round(max(severities), 3),
-            }
+    degradation_summaries = _compute_degradation_summaries(
+        stats["degradation_severities"]
+    )
     stats["degradation_summaries"] = degradation_summaries
 
     # Convert counters to percentages
     total = stats["total_samples"]
-    for key in [
-        "capture_methods",
-        "degradation_types",
-        "domains",
-        "layout_types",
-        "text_densities",
-        "script_codes",
-        "script_families",
-        "language_codes",
-        "text_scopes",
-        "content_types",
-        "paper_sizes",
-        "paper_orientations",
-    ]:
-        counter = stats[key]
-        if counter:
-            stats[f"{key}_pct"] = {
-                k: round(v / total * 100, 1) for k, v in counter.items()
-            }
-        else:
-            stats[f"{key}_pct"] = {}
+    _compute_counter_percentages(stats, total)
 
-    # Content flags as percentages
-    if stats["content_flags"]:
-        stats["content_flags_pct"] = {
-            k: round(v / total * 100, 1) for k, v in stats["content_flags"].items()
-        }
-    else:
-        stats["content_flags_pct"] = {}
-
-    # Top degradations (by frequency)
-    if stats["degradation_types"]:
-        top_degradations = stats["degradation_types"].most_common(5)
-        stats["top_degradations"] = [
-            {
-                "type": deg_type,
-                "count": count,
-                "percentage": round(count / total * 100, 1),
-                "mean_severity": degradation_summaries.get(deg_type, {}).get(
-                    "mean_severity", 0
-                ),
-            }
-            for deg_type, count in top_degradations
-        ]
-    else:
-        stats["top_degradations"] = []
+    # Top degradations (by frequency) - include mean_severity from summaries
+    deg_extra = {
+        k: {"mean_severity": v.get("mean_severity", 0)}
+        for k, v in degradation_summaries.items()
+    }
+    stats["top_degradations"] = _compute_top_n_list(
+        stats["degradation_types"], total, 5, "type", deg_extra
+    )
 
     # Top scripts (by frequency)
-    if stats["script_codes"]:
-        top_scripts = stats["script_codes"].most_common(10)
-        stats["top_scripts"] = [
-            {
-                "script": script,
-                "count": count,
-                "percentage": round(count / total * 100, 1),
-            }
-            for script, count in top_scripts
-        ]
-    else:
-        stats["top_scripts"] = []
+    stats["top_scripts"] = _compute_top_n_list(
+        stats["script_codes"], total, 10, "script"
+    )
 
     # Top languages (by frequency)
-    if stats["language_codes"]:
-        top_languages = stats["language_codes"].most_common(10)
-        stats["top_languages"] = [
-            {
-                "language": lang,
-                "count": count,
-                "percentage": round(count / total * 100, 1),
-            }
-            for lang, count in top_languages
-        ]
-    else:
-        stats["top_languages"] = []
+    stats["top_languages"] = _compute_top_n_list(
+        stats["language_codes"], total, 10, "language"
+    )
 
     # Script family summary
-    if stats["script_families"]:
-        stats["script_family_summary"] = dict(stats["script_families"].most_common())
-    else:
-        stats["script_family_summary"] = {}
+    stats["script_family_summary"] = (
+        dict(stats["script_families"].most_common()) if stats["script_families"] else {}
+    )
 
     return stats
 

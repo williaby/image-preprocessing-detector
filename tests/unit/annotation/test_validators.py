@@ -96,17 +96,17 @@ class TestConfidenceValidator:
     def test_valid_confidence_zero(self) -> None:
         """Valid confidence score at lower bound."""
         validator = ConfidenceValidator(confidence=0.0)
-        assert validator.confidence == 0.0
+        assert validator.confidence == pytest.approx(0.0)
 
     def test_valid_confidence_one(self) -> None:
         """Valid confidence score at upper bound."""
         validator = ConfidenceValidator(confidence=1.0)
-        assert validator.confidence == 1.0
+        assert validator.confidence == pytest.approx(1.0)
 
     def test_valid_confidence_middle(self) -> None:
         """Valid confidence score in middle."""
         validator = ConfidenceValidator(confidence=0.5)
-        assert validator.confidence == 0.5
+        assert validator.confidence == pytest.approx(0.5)
 
     def test_negative_confidence(self) -> None:
         """Negative confidence rejected."""
@@ -130,7 +130,7 @@ class TestBboxValidator:
     def test_zero_origin(self) -> None:
         """Bbox at origin (0, 0)."""
         validator = BboxValidator(bbox=[0.0, 0.0, 100.0, 200.0])
-        assert validator.bbox[0] == 0.0
+        assert validator.bbox[0] == pytest.approx(0.0)
 
     def test_negative_x(self) -> None:
         """Negative x coordinate rejected."""
@@ -242,17 +242,17 @@ class TestMosScoreValidator:
     def test_valid_mos_min(self) -> None:
         """Valid MOS at minimum (1.0)."""
         validator = MosScoreValidator(mos=1.0)
-        assert validator.mos == 1.0
+        assert validator.mos == pytest.approx(1.0)
 
     def test_valid_mos_max(self) -> None:
         """Valid MOS at maximum (5.0)."""
         validator = MosScoreValidator(mos=5.0)
-        assert validator.mos == 5.0
+        assert validator.mos == pytest.approx(5.0)
 
     def test_valid_mos_middle(self) -> None:
         """Valid MOS in middle range."""
         validator = MosScoreValidator(mos=3.5)
-        assert validator.mos == 3.5
+        assert validator.mos == pytest.approx(3.5)
 
     def test_too_low_mos(self) -> None:
         """MOS < 1.0 rejected."""

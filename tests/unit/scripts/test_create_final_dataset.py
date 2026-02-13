@@ -191,7 +191,7 @@ class TestSplitDataset:
                 sample_labels,
                 train_ratio=0.5,
                 val_ratio=0.3,
-                test_ratio=0.3,  # Total = 1.1
+                test_ratio=0.3,  # ratios sum to 1.1, exceeding 1.0
             )
 
     def test_split_reproducibility(self, sample_labels: list[dict]) -> None:

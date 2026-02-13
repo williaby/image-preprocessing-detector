@@ -202,6 +202,30 @@ def estimate_dpi(image: np.ndarray) -> float:
     return float(estimated_dpi)
 
 
+_CLASS_TO_METRIC_KEY: dict[str, str] = {
+    "Table": "table_count",
+    "Formula": "formula_count",
+    "Picture": "picture_count",
+    "Text": "text_blocks",
+}
+
+
+def _estimate_column_count(text_boxes: list[list], image_width: int) -> int:
+    """Estimate column count from text block x-positions."""
+    if len(text_boxes) <= 5:
+        return 1
+
+    x_positions = sorted(bbox[0] for bbox in text_boxes)
+    threshold = image_width * 0.1
+    clusters = 1
+    prev_x = x_positions[0]
+    for x in x_positions[1:]:
+        if x - prev_x >= threshold:
+            clusters += 1
+        prev_x = x
+    return clusters
+
+
 def calculate_structural_complexity(
     annotations: list[dict], image_width: int
 ) -> dict[str, int]:
@@ -215,50 +239,25 @@ def calculate_structural_complexity(
     Returns:
         Dict with complexity metrics
     """
-    metrics = {
+    metrics: dict[str, int] = {
         "table_count": 0,
         "formula_count": 0,
         "picture_count": 0,
         "text_blocks": 0,
-        "column_count": 1,  # Default to single column
+        "column_count": 1,
     }
 
-    # Count layout elements
-    text_boxes = []
+    text_boxes: list[list] = []
     for ann in annotations:
         cat_id = ann["category_id"]
         class_name = DOCLAYNET_CLASSES.get(cat_id, "Unknown")
+        metric_key = _CLASS_TO_METRIC_KEY.get(class_name)
+        if metric_key is not None:
+            metrics[metric_key] += 1
+            if class_name == "Text":
+                text_boxes.append(ann["bbox"])
 
-        if class_name == "Table":
-            metrics["table_count"] += 1
-        elif class_name == "Formula":
-            metrics["formula_count"] += 1
-        elif class_name == "Picture":
-            metrics["picture_count"] += 1
-        elif class_name == "Text":
-            metrics["text_blocks"] += 1
-            # Store bbox for column detection
-            bbox = ann["bbox"]  # [x, y, width, height]
-            text_boxes.append(bbox)
-
-    # Estimate column count from text block positions
-    if len(text_boxes) > 5:
-        # Sort by x-coordinate
-        x_positions = sorted([bbox[0] for bbox in text_boxes])
-
-        # Find clusters in x-positions (columns)
-        clusters = []
-        current_cluster = [x_positions[0]]
-        for x in x_positions[1:]:
-            if x - current_cluster[-1] < image_width * 0.1:  # 10% threshold
-                current_cluster.append(x)
-            else:
-                clusters.append(current_cluster)
-                current_cluster = [x]
-        clusters.append(current_cluster)
-
-        metrics["column_count"] = len(clusters)
-
+    metrics["column_count"] = _estimate_column_count(text_boxes, image_width)
     return metrics
 
 

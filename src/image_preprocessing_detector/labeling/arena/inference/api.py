@@ -36,6 +36,9 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger(__name__)
 
+# Common error messages (S1192: avoid duplicate string literals)
+API_NOT_INITIALIZED_MSG = "API client not initialized"
+
 
 class APIBackend(InferenceBackend):
     """Inference backend for API-based models.
@@ -201,7 +204,7 @@ No other text or explanation."""
     def predict(self, image: NDArray[np.uint8] | Image.Image) -> DIQAPrediction:
         """Run inference on a single image via API."""
         if not self.is_loaded():
-            msg = "API client not initialized"
+            msg = API_NOT_INITIALIZED_MSG
             raise ModelNotLoadedError(msg)
 
         results = self.predict_batch([image])
@@ -216,7 +219,7 @@ No other text or explanation."""
         Note: API calls are made sequentially to respect rate limits.
         """
         if not self.is_loaded():
-            msg = "API client not initialized"
+            msg = API_NOT_INITIALIZED_MSG
             raise ModelNotLoadedError(msg)
 
         predictions = []
@@ -397,7 +400,7 @@ No other text or explanation."""
     def get_provenance(self) -> ProvenanceInfo:
         """Get provenance information for API model."""
         if not self.is_loaded() or self._spec is None:
-            msg = "API client not initialized"
+            msg = API_NOT_INITIALIZED_MSG
             raise ModelNotLoadedError(msg)
 
         # API models don't have checksums, but we record the config

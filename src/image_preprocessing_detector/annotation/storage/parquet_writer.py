@@ -50,6 +50,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Common file name constants (S1192: avoid duplicate string literals)
+DEFAULT_PARTITION = "part-0000.parquet"
+
 
 # ============================================================================
 # Schema Definition
@@ -195,7 +198,7 @@ class PartitionedParquetWriter:
         table = self._samples_to_table(samples)
 
         # Write atomically
-        output_path = partition_dir / "part-0000.parquet"
+        output_path = partition_dir / DEFAULT_PARTITION
         try:
             with atomic_write(output_path, fsync=False) as temp_path:
                 pq.write_table(
@@ -232,7 +235,7 @@ class PartitionedParquetWriter:
         partition_dir = self._get_partition_dir(dataset_name)
         partition_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = partition_dir / "part-0000.parquet"
+        output_path = partition_dir / DEFAULT_PARTITION
         total_written = 0
 
         # Use ParquetWriter for streaming row groups
@@ -459,7 +462,7 @@ class PartitionedParquetWriter:
         # Write compacted file with a temporary name first
         # We use a different name pattern to avoid conflicts
         output_path = partition_dir / "part-0000-compacted.parquet"
-        final_path = partition_dir / "part-0000.parquet"
+        final_path = partition_dir / DEFAULT_PARTITION
 
         try:
             # Step 1: WRITE new compacted file

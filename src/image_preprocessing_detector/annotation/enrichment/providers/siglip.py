@@ -267,12 +267,12 @@ class SigLIPProvider:
 
             logger.info(f"Loading SigLIP model from {self.model_path}")
 
-            # Load processor and model
-            self._processor = AutoProcessor.from_pretrained(
+            # Load processor and model (from LOCAL path, not remote download)
+            self._processor = AutoProcessor.from_pretrained(  # nosec B615
                 str(self.model_path),
                 trust_remote_code=True,
             )
-            model = AutoModel.from_pretrained(
+            model = AutoModel.from_pretrained(  # nosec B615
                 str(self.model_path),
                 trust_remote_code=True,
             )

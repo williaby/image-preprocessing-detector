@@ -103,6 +103,12 @@ SCRIPT_VERSION = "2.0.0"
 # Common file extensions (S1192: avoid duplicate string literals)
 _JSON_EXT = ".json"
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+JPG_GLOB = "**/*.jpg"
+PNG_GLOB = "**/*.png"
+TRAIN_JSON = "train.json"
+SAMPLES_PARQUET = "samples.parquet"
+
 
 class CaptureMethod(str, Enum):
     """Capture method taxonomy (Axis 4 from detection-taxonomy.md)."""
@@ -182,7 +188,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Benchmark datasets ===
     "diqa-5000": {
         "path": BENCHMARK_ONLY / "diqa-5000",
-        "pattern": "**/*.jpg",  # All images: ori (original) + res (enhanced)
+        "pattern": JPG_GLOB,  # All images: ori (original) + res (enhanced)
         "capture_method": CaptureMethod.UNKNOWN,  # Per-image: ori=camera_smartphone, res=synthetic (set by parser)
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": True,
@@ -232,7 +238,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "historical_degraded": {
         "path": BASE_DATA / "degraded/historical_degraded",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -250,7 +256,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "doclaynet": {
         "path": BASE_DATA / "documents/doclaynet",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -259,7 +265,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist-sd2": {
         "path": BASE_DATA / "forms/nist-sd2",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -272,7 +278,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist_sd6": {
         "path": BASE_DATA / "forms/nist_sd6",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.TAX,
         "has_human_mos": False,
@@ -296,7 +302,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "funsd_plus": {
         "path": BASE_DATA / "forms/funsd_plus",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_ADF,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
@@ -309,7 +315,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "sroie": {
         "path": BASE_DATA / "forms/sroie_icdar2019",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -337,7 +343,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "pubtabnet": {
         "path": BASE_DATA / "tables/pubtabnet",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.SCIENTIFIC,
         "has_human_mos": False,
@@ -352,7 +358,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "fintabnet": {
         "path": BASE_DATA / "tables/fintabnet",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -367,7 +373,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist_sd19": {
         "path": BASE_DATA / "handwriting/nist-sd19",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,
         "has_human_mos": False,
@@ -382,7 +388,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "signatr6k": {
         "path": BASE_DATA / "handwriting/signatr6k",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,
         "has_human_mos": False,
@@ -397,7 +403,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "maths_handwriting": {
         "path": BASE_DATA / "handwriting/maths_handwriting",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -427,7 +433,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "im2latex": {
         "path": BASE_DATA / "formulas/im2latex",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.SCIENTIFIC,
         "has_human_mos": False,
@@ -487,7 +493,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === NEW: Multilingual/Script Detection Datasets ===
     "pucit_ohul": {
         "path": BASE_DATA / "language/pucit-ohul",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -512,7 +518,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "multilingual_scripts": {
         "path": BASE_DATA / "language/multilingual_scripts",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -531,7 +537,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Unlabeled real-world documents (for inference/testing) ===
     "bhutan_financial": {
         "path": BASE_DATA / "documents/bhutan_financial",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -544,7 +550,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Phase 10B Script Detection Datasets ===
     "mdiw13": {
         "path": BASE_DATA / "language/mdiw13",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed domains (newspapers, letters)
         "has_human_mos": False,
@@ -556,7 +562,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "cc_ocr": {
         "path": BASE_DATA / "language/cc-ocr",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         "domain": DomainLevel1.UNKNOWN,  # Multiple domains
         "has_human_mos": False,
@@ -566,7 +572,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "tibhcr": {
         "path": BASE_DATA / "language/huggingface_downloads/TibHCR/TibHCR",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,  # Handwritten characters
         "has_human_mos": False,
@@ -577,7 +583,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "mlt19": {
         "path": BASE_DATA / "language/mlt19",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text from various sources
         "has_human_mos": False,
@@ -589,7 +595,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === HierText (hierarchical scene text) ===
     "hiertext": {
         "path": BASE_DATA / "text_detection/hiertext",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,  # Natural scene images (Open Images)
         "domain": DomainLevel1.UNKNOWN,  # Scene text from various sources
         "has_human_mos": False,
@@ -612,7 +618,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Additional Kaggle Script Detection Datasets ===
     "arabic_docs_ocr": {
         "path": BASE_DATA / "language/arabic_docs_ocr",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed documents
         "has_human_mos": False,
@@ -623,7 +629,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "hindi_ocr_synthetic": {
         "path": BASE_DATA / "language/hindi_ocr_synthetic",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,  # Synthetic
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -646,7 +652,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "yarmouk_ocr": {
         "path": BASE_DATA / "language/yarmouk",  # Converted from PDFs
-        "pattern": "**/*.png",  # PNG format from conversion
+        "pattern": PNG_GLOB,  # PNG format from conversion
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed Arabic documents
         "has_human_mos": False,
@@ -658,7 +664,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Script Identification Datasets ===
     "cvsi": {
         "path": BASE_DATA / "language/cvsi",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -669,7 +675,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "siw13": {
         "path": BASE_DATA / "language/siw13",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -680,7 +686,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "mle2e": {
         "path": BASE_DATA / "language/mle2e",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -1231,6 +1237,29 @@ def load_doclayout_yolo():
     return None
 
 
+def _yolo_unavailable_result(error_msg: str) -> dict[str, Any]:
+    """Return a default result when DocLayout-YOLO is unavailable or fails."""
+    return {
+        "has_table": None,
+        "has_formula": None,
+        "has_figure": None,
+        "has_handwriting": None,
+        "layout_detections": [],
+        "error": error_msg,
+    }
+
+
+def _classify_yolo_detection(class_lower: str) -> str | None:
+    """Map a YOLO class name (lowercased) to a content flag key, or None."""
+    if "table" in class_lower:
+        return "has_table"
+    if "formula" in class_lower or "equation" in class_lower:
+        return "has_formula"
+    if "picture" in class_lower or "figure" in class_lower or "image" in class_lower:
+        return "has_figure"
+    return None
+
+
 def run_doclayout_yolo(
     image_path: Path, conf_threshold: float = 0.25
 ) -> dict[str, Any]:
@@ -1241,19 +1270,12 @@ def run_doclayout_yolo(
     """
     model = load_doclayout_yolo()
     if model is None:
-        return {
-            "has_table": None,
-            "has_formula": None,
-            "has_figure": None,
-            "has_handwriting": None,
-            "layout_detections": [],
-            "error": "Model not available",
-        }
+        return _yolo_unavailable_result("Model not available")
 
     try:
         results = model(str(image_path), conf=conf_threshold, verbose=False)
 
-        detections = {
+        detections: dict[str, Any] = {
             "has_table": False,
             "has_formula": False,
             "has_figure": False,
@@ -1267,44 +1289,72 @@ def run_doclayout_yolo(
                 class_name = model.names.get(class_id, f"class_{class_id}")
                 confidence = float(box.conf)
 
-                detection = {
-                    "class_name": class_name,
-                    "bbox": box.xyxy[0].tolist(),
-                    "confidence": confidence,
-                    "source": "doclayout_yolo",
-                }
-                detections["layout_detections"].append(detection)
+                detections["layout_detections"].append(
+                    {
+                        "class_name": class_name,
+                        "bbox": box.xyxy[0].tolist(),
+                        "confidence": confidence,
+                        "source": "doclayout_yolo",
+                    }
+                )
 
-                # Map class names to content flags
-                class_lower = class_name.lower()
-                if "table" in class_lower:
-                    detections["has_table"] = True
-                elif "formula" in class_lower or "equation" in class_lower:
-                    detections["has_formula"] = True
-                elif (
-                    "picture" in class_lower
-                    or "figure" in class_lower
-                    or "image" in class_lower
-                ):
-                    detections["has_figure"] = True
+                flag_key = _classify_yolo_detection(class_name.lower())
+                if flag_key:
+                    detections[flag_key] = True
 
         return detections
 
     except Exception as e:
         logger.warning(f"DocLayout-YOLO inference failed for {image_path}: {e}")
-        return {
-            "has_table": None,
-            "has_formula": None,
-            "has_figure": None,
-            "has_handwriting": None,
-            "layout_detections": [],
-            "error": str(e),
-        }
+        return _yolo_unavailable_result(str(e))
 
 
 # =============================================================================
 # Label Parsers (Per-Dataset Original Label Extraction)
 # =============================================================================
+
+
+def _detect_split_from_path_parts(path_str: str, splits: list[str]) -> str | None:
+    """Detect dataset split from path string by checking for /{split}/ patterns."""
+    for s in splits:
+        if f"/{s}/" in path_str:
+            return s
+    return None
+
+
+def _apply_diqa_row(labels: OriginalLabels, row: dict[str, str]) -> None:
+    """Apply DIQA CSV row values to labels (3-dimension quality scores)."""
+    if "overall" in row:
+        labels.diqa_overall = float(row["overall"])
+        labels.diqa_mos = float(row["overall"])  # Backward compat
+    if "sharpness" in row:
+        labels.diqa_sharpness = float(row["sharpness"])
+    if "color_fidelity" in row:
+        labels.diqa_color_fidelity = float(row["color_fidelity"])
+    if "ori" in row:
+        labels.diqa_original_image = row["ori"]
+
+
+def _search_diqa_csv(
+    dataset_path: Path, csv_files: list[str], image_name: str, labels: OriginalLabels
+) -> bool:
+    """Search DIQA CSV files for a matching image row. Returns True if found."""
+    import csv
+
+    for csv_file in csv_files:
+        csv_path = dataset_path / csv_file
+        if not csv_path.exists():
+            continue
+        try:
+            with open(csv_path, newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get("res") == image_name:
+                        _apply_diqa_row(labels, row)
+                        return True
+        except Exception as e:
+            logger.debug(f"Failed to parse DIQA labels from {csv_path}: {e}")
+    return False
 
 
 def parse_diqa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -1327,15 +1377,9 @@ def parse_diqa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     labels = OriginalLabels()
     labels.raw_labels = {}
 
-    # Determine which split based on image path
-    # Images are in train/ori/, val/ori/, test/ori/ subdirectories
     image_name = image_path.name
     path_str = str(image_path)
-    split = None
-    for s in ["train", "val", "test"]:
-        if f"/{s}/" in path_str:
-            split = s
-            break
+    split = _detect_split_from_path_parts(path_str, ["train", "val", "test"])
 
     # Store split in raw_labels for downstream extraction
     if split:
@@ -1355,35 +1399,7 @@ def parse_diqa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         # Prioritize the matching split
         csv_files = [f"{split}/{split}.csv"] + [f for f in csv_files if split not in f]
 
-    for csv_file in csv_files:
-        csv_path = dataset_path / csv_file
-        if csv_path.exists():
-            try:
-                import csv
-
-                with open(csv_path, newline="") as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        # Match by 'res' (restored image) filename
-                        # DIQA-5000 uses res/ori pairs
-                        if row.get("res") == image_name:
-                            # 3-dimension quality scores
-                            if "overall" in row:
-                                labels.diqa_overall = float(row["overall"])
-                                labels.diqa_mos = float(
-                                    row["overall"]
-                                )  # Backward compat
-                            if "sharpness" in row:
-                                labels.diqa_sharpness = float(row["sharpness"])
-                            if "color_fidelity" in row:
-                                labels.diqa_color_fidelity = float(
-                                    row["color_fidelity"]
-                                )
-                            if "ori" in row:
-                                labels.diqa_original_image = row["ori"]
-                            return labels  # Found match, return early
-            except Exception as e:
-                logger.debug(f"Failed to parse DIQA labels from {csv_path}: {e}")
+    _search_diqa_csv(dataset_path, csv_files, image_name, labels)
 
     return labels
 
@@ -1587,8 +1603,7 @@ def parse_ocr_quality_labels(dataset_path: Path, image_path: Path) -> OriginalLa
     """Parse OCR-Quality labels (human scores 1-4)."""
     labels = OriginalLabels()
 
-    # Load from JSON or Parquet
-    json_path = dataset_path / "OCR-Quality.json"
+    # Load from Parquet
     parquet_path = dataset_path / "OCR-Quality.parquet"
 
     if parquet_path.exists():
@@ -1687,6 +1702,52 @@ def derive_content_flags_from_coco(annotations: list[dict]) -> dict[str, bool]:
     return flags
 
 
+_DOCLAYNET_COLLECTION_LANG_MAP = {
+    "german_laws": ("de", "Latn"),
+    "japanese_laws": ("ja", "Jpan"),
+    "russian_laws": ("ru", "Cyrl"),
+    "patents_cn": ("zh", "Hans"),
+    "philippine_laws": ("en", "Latn"),  # English/Filipino, primarily English
+}
+
+_DOCLAYNET_PREFIX_LANG_MAP = {
+    "DE-": ("de", "Latn"),
+    "FR-": ("fr", "Latn"),
+    "EN-": ("en", "Latn"),
+    "JA-": ("ja", "Jpan"),
+    "ZH-": ("zh", "Hans"),
+}
+
+
+def _detect_doclaynet_language(
+    image_meta: dict[str, Any], labels: OriginalLabels
+) -> None:
+    """Detect language from DocLayNet image metadata (collection or prefix)."""
+    collection = image_meta.get("collection", "")
+    doc_name = image_meta.get("doc_name", "")
+    doc_category = image_meta.get("doc_category", "")
+
+    labels.raw_labels["collection"] = collection
+    labels.raw_labels["doc_name"] = doc_name
+    labels.raw_labels["doc_category"] = doc_category
+
+    # Check collection for language
+    if collection in _DOCLAYNET_COLLECTION_LANG_MAP:
+        labels.language_code, labels.script_name = _DOCLAYNET_COLLECTION_LANG_MAP[
+            collection
+        ]
+        labels.raw_labels["language_source"] = "collection"
+        return
+
+    # Check doc_name prefix for language
+    for prefix, (lang, script) in _DOCLAYNET_PREFIX_LANG_MAP.items():
+        if doc_name.startswith(prefix):
+            labels.language_code = lang
+            labels.script_name = script
+            labels.raw_labels["language_source"] = "filename_prefix"
+            return
+
+
 def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse DocLayNet COCO annotations with per-document language detection.
 
@@ -1704,33 +1765,15 @@ def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Language mapping by collection name
-    collection_lang_map = {
-        "german_laws": ("de", "Latn"),
-        "japanese_laws": ("ja", "Jpan"),
-        "russian_laws": ("ru", "Cyrl"),
-        "patents_cn": ("zh", "Hans"),
-        "philippine_laws": ("en", "Latn"),  # English/Filipino, primarily English
-    }
-
-    # Language mapping by doc_name prefix
-    prefix_lang_map = {
-        "DE-": ("de", "Latn"),
-        "FR-": ("fr", "Latn"),
-        "EN-": ("en", "Latn"),
-        "JA-": ("ja", "Jpan"),
-        "ZH-": ("zh", "Hans"),
-    }
-
     # Look for COCO annotations in various locations
     coco_paths = [
-        dataset_path / "ground_truth" / "coco" / "train.json",
+        dataset_path / "ground_truth" / "coco" / TRAIN_JSON,
         dataset_path / "ground_truth" / "coco" / "val.json",
         dataset_path / "ground_truth" / "coco" / "test.json",
-        dataset_path / "COCO" / "train.json",
+        dataset_path / "COCO" / TRAIN_JSON,
         dataset_path / "COCO" / "val.json",
         dataset_path / "COCO" / "test.json",
-        dataset_path / "annotations" / "train.json",
+        dataset_path / "annotations" / TRAIN_JSON,
         dataset_path / "annotations" / "instances_train.json",
     ]
 
@@ -1755,34 +1798,12 @@ def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
 
     # Try to find image metadata for language detection
     images_data = coco_data.get("images", [])
-    image_meta = None
-    for img in images_data:
-        if img.get("file_name") == filename:
-            image_meta = img
-            break
+    image_meta = next(
+        (img for img in images_data if img.get("file_name") == filename), None
+    )
 
     if image_meta:
-        # Extract collection and doc_name
-        collection = image_meta.get("collection", "")
-        doc_name = image_meta.get("doc_name", "")
-        doc_category = image_meta.get("doc_category", "")
-
-        labels.raw_labels["collection"] = collection
-        labels.raw_labels["doc_name"] = doc_name
-        labels.raw_labels["doc_category"] = doc_category
-
-        # Check collection for language
-        if collection in collection_lang_map:
-            labels.language_code, labels.script_name = collection_lang_map[collection]
-            labels.raw_labels["language_source"] = "collection"
-        else:
-            # Check doc_name prefix for language
-            for prefix, (lang, script) in prefix_lang_map.items():
-                if doc_name.startswith(prefix):
-                    labels.language_code = lang
-                    labels.script_name = script
-                    labels.raw_labels["language_source"] = "filename_prefix"
-                    break
+        _detect_doclaynet_language(image_meta, labels)
 
     # Default to English if no language detected (95% of DocLayNet is English)
     if not labels.language_code:
@@ -1812,8 +1833,8 @@ def parse_tablebank_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
         / "Detection"
         / "annotations"
         / "tablebank_word_train.json",
-        dataset_path / "Detection" / "annotations" / "train.json",
-        dataset_path / "annotations" / "train.json",
+        dataset_path / "Detection" / "annotations" / TRAIN_JSON,
+        dataset_path / "annotations" / TRAIN_JSON,
     ]
 
     coco_data = None
@@ -1833,6 +1854,45 @@ def parse_tablebank_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
         labels.tablebank_annotations = annotations
 
     return labels
+
+
+_FUNSD_CATEGORY_MAP = {
+    "question": "form_field_question",
+    "answer": "form_field_answer",
+    "header": "header",
+    "other": "text",
+}
+
+
+def _convert_funsd_form_to_coco(raw_annotations: dict) -> list[dict[str, Any]]:
+    """Convert FUNSD form entities to COCO-like annotation dicts."""
+    return [
+        {
+            "bbox": entity.get("box", []),
+            "category_name": _FUNSD_CATEGORY_MAP.get(
+                entity.get("label", "other"), "text"
+            ),
+            "text": entity.get("text", ""),
+            "original_label": entity.get("label", "other"),
+        }
+        for entity in raw_annotations["form"]
+    ]
+
+
+def _load_funsd_annotations(json_paths: list[Path]) -> list | dict | None:
+    """Try loading FUNSD annotations from candidate paths. Returns annotations or None."""
+    for json_path in json_paths:
+        if not json_path.exists():
+            continue
+        try:
+            with open(json_path) as f:
+                raw_annotations = json.load(f)
+            if "form" in raw_annotations:
+                return _convert_funsd_form_to_coco(raw_annotations)
+            return raw_annotations
+        except Exception as e:
+            logger.debug(f"Failed to parse FUNSD annotations from {json_path}: {e}")
+    return None
 
 
 def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -1860,50 +1920,16 @@ def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
 
     # Try multiple possible annotation locations
     json_paths = [
-        # Alongside image
         image_path.with_suffix(_JSON_EXT),
-        # Current structure: {train,test}/annotations/*.json
         dataset_path / split / "annotations" / f"{image_path.stem}.json",
-        # Standard FUNSD training structure (legacy)
         dataset_path / "training_data" / "annotations" / f"{image_path.stem}.json",
-        # Standard FUNSD testing structure (legacy)
         dataset_path / "testing_data" / "annotations" / f"{image_path.stem}.json",
-        # Alternative annotation folder
         dataset_path / "annotations" / f"{image_path.stem}.json",
     ]
 
-    for json_path in json_paths:
-        if json_path.exists():
-            try:
-                with open(json_path) as f:
-                    raw_annotations = json.load(f)
-                # Convert FUNSD format to COCO-like format for compatibility
-                # FUNSD: {"form": [{"box": [x,y,w,h], "text": "...", "label": "question"}, ...]}
-                # COCO-like: [{"bbox": [x,y,w,h], "category_name": "form_field", ...}, ...]
-                if "form" in raw_annotations:
-                    labels.funsd_annotations = []
-                    for entity in raw_annotations["form"]:
-                        # Map FUNSD labels to semantic category names
-                        label = entity.get("label", "other")
-                        category_map = {
-                            "question": "form_field_question",
-                            "answer": "form_field_answer",
-                            "header": "header",
-                            "other": "text",
-                        }
-                        labels.funsd_annotations.append(
-                            {
-                                "bbox": entity.get("box", []),
-                                "category_name": category_map.get(label, "text"),
-                                "text": entity.get("text", ""),
-                                "original_label": label,
-                            }
-                        )
-                else:
-                    labels.funsd_annotations = raw_annotations
-                break  # Found annotations, stop searching
-            except Exception as e:
-                logger.debug(f"Failed to parse FUNSD annotations from {json_path}: {e}")
+    annotations = _load_funsd_annotations(json_paths)
+    if annotations is not None:
+        labels.funsd_annotations = annotations
 
     # Even without annotations, we know it's a form dataset (Tier 0)
     if labels.raw_labels is None:
@@ -1999,6 +2025,36 @@ def _load_pucit_excel(excel_file: Path) -> dict[str, tuple[str | None, str | Non
     return label_map
 
 
+def _find_pucit_dir(image_path: Path) -> Path | None:
+    """Find the Pucit directory containing Excel label files."""
+    for parent in image_path.parents:
+        if (parent / "train_labels_v2.xlsx").exists():
+            return parent
+        if (parent / "Pucit" / "train_labels_v2.xlsx").exists():
+            return parent / "Pucit"
+    return None
+
+
+def _apply_pucit_labels(
+    labels: OriginalLabels, pucit_path: Path, split: str, image_path: Path
+) -> None:
+    """Look up and apply PUCIT-OHUL labels from cached Excel data."""
+    excel_file = pucit_path / f"{split}_labels_v2.xlsx"
+    if not excel_file.exists():
+        return
+
+    label_map = _load_pucit_excel(excel_file)
+    match = label_map.get(image_path.stem) or label_map.get(image_path.name)
+    if not match:
+        return
+
+    transcription, writer_id = match
+    if transcription:
+        labels.transcription = transcription
+    if writer_id:
+        labels.writer_id = writer_id
+
+
 def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse PUCIT-OHUL Urdu handwriting labels from cached Excel data.
 
@@ -2031,30 +2087,106 @@ def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     if split:
         labels.raw_labels["split"] = split
 
-    # Find Pucit directory with Excel files
-    pucit_path = None
-    for parent in image_path.parents:
-        if (parent / "train_labels_v2.xlsx").exists():
-            pucit_path = parent
-            break
-        if (parent / "Pucit" / "train_labels_v2.xlsx").exists():
-            pucit_path = parent / "Pucit"
-            break
-
+    pucit_path = _find_pucit_dir(image_path)
     if pucit_path and split:
-        excel_file = pucit_path / f"{split}_labels_v2.xlsx"
-        if excel_file.exists():
-            label_map = _load_pucit_excel(excel_file)
-            # O(1) dict lookup instead of iterating all rows
-            match = label_map.get(image_path.stem) or label_map.get(image_path.name)
-            if match:
-                transcription, writer_id = match
-                if transcription:
-                    labels.transcription = transcription
-                if writer_id:
-                    labels.writer_id = writer_id
+        _apply_pucit_labels(labels, pucit_path, split, image_path)
 
     return labels
+
+
+_MULTILINGUAL_SCRIPT_MAPPINGS = {
+    "arabic_ocr": {
+        "script": "Arab",
+        "language": "ar",
+        "script_name": "Arabic",
+        "labeled": True,
+    },
+    "dzongkha_digits": {
+        "script": "Tibt",
+        "language": "dz",
+        "script_name": "Tibetan",
+        "labeled": True,
+    },
+    "jssoda": {
+        "script": "Jpan",
+        "language": "ja",
+        "script_name": "Japanese",
+        "labeled": True,
+    },
+    "nepal_devanagari": {
+        "script": "Deva",
+        "language": "ne",
+        "script_name": "Devanagari",
+        "labeled": False,
+    },
+    # MDIW-13 has 13 scripts - would need filename parsing
+}
+
+
+def _detect_multilingual_subdataset(path_parts: tuple[str, ...]) -> str | None:
+    """Detect multilingual scripts subdataset from path parts."""
+    for part in path_parts:
+        if part in _MULTILINGUAL_SCRIPT_MAPPINGS:
+            return part
+        if part == "mdiw13" or "mdiw" in part.lower():
+            return "mdiw13"
+    return None
+
+
+def _apply_multilingual_script_mapping(
+    labels: OriginalLabels, subdataset: str, image_path: Path
+) -> None:
+    """Apply script/language mapping for a known subdataset."""
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    if subdataset in _MULTILINGUAL_SCRIPT_MAPPINGS:
+        mapping = _MULTILINGUAL_SCRIPT_MAPPINGS[subdataset]
+        labels.script_name = mapping["script_name"]
+        labels.language_code = mapping["language"]
+        labels.raw_labels["iso15924_script"] = mapping["script"]
+        labels.raw_labels["subdataset"] = subdataset
+        labels.raw_labels["has_ground_truth_labels"] = mapping.get("labeled", True)
+
+        # Special handling for nepal_devanagari: extract document type from filename
+        if subdataset == "nepal_devanagari":
+            _apply_nepal_doc_type(labels, image_path.stem)
+    elif subdataset == "mdiw13":
+        labels.script_name = "Indic"  # Generic
+        labels.raw_labels["subdataset"] = "mdiw13"
+        labels.raw_labels["note"] = (
+            "13 Indic scripts - specific script needs filename parsing"
+        )
+
+
+def _apply_nepal_doc_type(labels: OriginalLabels, filename: str) -> None:
+    """Extract document type from nepal_devanagari filename."""
+    if filename.startswith("nepal_book"):
+        labels.raw_labels["document_type"] = "book"
+    elif filename.startswith("nepal_newspaper"):
+        labels.raw_labels["document_type"] = "newspaper"
+    labels.raw_labels["note"] = "Unlabeled real-world Nepali documents"
+
+
+def _search_manifest_for_image(
+    manifest_paths: list[Path | None], image_name: str, labels: OriginalLabels
+) -> None:
+    """Search manifest files for image metadata."""
+    for manifest_path in manifest_paths:
+        if not manifest_path or not manifest_path.exists():
+            continue
+        try:
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+            for sample in manifest.get("samples", []):
+                if sample.get("filename") == image_name:
+                    if labels.raw_labels is None:
+                        labels.raw_labels = {}
+                    labels.raw_labels["manifest_source"] = sample.get("source")
+                    labels.raw_labels["manifest_index"] = sample.get("index")
+                    return
+        except Exception as e:
+            logger.debug(f"Failed to parse manifest at {manifest_path}: {e}")
 
 
 def parse_multilingual_scripts_labels(
@@ -2088,98 +2220,18 @@ def parse_multilingual_scripts_labels(
     """
     labels = OriginalLabels()
 
-    # Script/language mapping based on subdataset
-    SCRIPT_MAPPINGS = {
-        "arabic_ocr": {
-            "script": "Arab",
-            "language": "ar",
-            "script_name": "Arabic",
-            "labeled": True,
-        },
-        "dzongkha_digits": {
-            "script": "Tibt",
-            "language": "dz",
-            "script_name": "Tibetan",
-            "labeled": True,
-        },
-        "jssoda": {
-            "script": "Jpan",
-            "language": "ja",
-            "script_name": "Japanese",
-            "labeled": True,
-        },
-        "nepal_devanagari": {
-            "script": "Deva",
-            "language": "ne",
-            "script_name": "Devanagari",
-            "labeled": False,
-        },
-        # MDIW-13 has 13 scripts - would need filename parsing
-    }
+    subdataset = _detect_multilingual_subdataset(image_path.parts)
 
-    # Determine subdataset from path
-    path_parts = image_path.parts
-    subdataset = None
-
-    for part in path_parts:
-        if part in SCRIPT_MAPPINGS:
-            subdataset = part
-            break
-        # Check for mdiw13 (13 Indic scripts)
-        if part == "mdiw13" or "mdiw" in part.lower():
-            subdataset = "mdiw13"
-            break
-
-    if subdataset and subdataset in SCRIPT_MAPPINGS:
-        mapping = SCRIPT_MAPPINGS[subdataset]
-        labels.script_name = mapping["script_name"]
-        labels.language_code = mapping["language"]
-        if labels.raw_labels is None:
-            labels.raw_labels = {}
-        labels.raw_labels["iso15924_script"] = mapping["script"]
-        labels.raw_labels["subdataset"] = subdataset
-        labels.raw_labels["has_ground_truth_labels"] = mapping.get("labeled", True)
-
-        # Special handling for nepal_devanagari: extract document type from filename
-        if subdataset == "nepal_devanagari":
-            filename = image_path.stem
-            if filename.startswith("nepal_book"):
-                labels.raw_labels["document_type"] = "book"
-            elif filename.startswith("nepal_newspaper"):
-                labels.raw_labels["document_type"] = "newspaper"
-            labels.raw_labels["note"] = "Unlabeled real-world Nepali documents"
-    elif subdataset == "mdiw13":
-        # MDIW-13 has 13 Indic scripts - requires further parsing
-        labels.script_name = "Indic"  # Generic
-        if labels.raw_labels is None:
-            labels.raw_labels = {}
-        labels.raw_labels["subdataset"] = "mdiw13"
-        labels.raw_labels["note"] = (
-            "13 Indic scripts - specific script needs filename parsing"
-        )
+    if subdataset:
+        _apply_multilingual_script_mapping(labels, subdataset, image_path)
 
     # Try to parse manifest for additional metadata
-    manifest_paths = [
+    manifest_paths: list[Path | None] = [
         dataset_path / subdataset / "manifest.json" if subdataset else None,
         dataset_path / "combined_manifest.json",
     ]
 
-    for manifest_path in manifest_paths:
-        if manifest_path and manifest_path.exists():
-            try:
-                with open(manifest_path) as f:
-                    manifest = json.load(f)
-                    # Look for this specific image in manifest
-                    image_name = image_path.name
-                    for sample in manifest.get("samples", []):
-                        if sample.get("filename") == image_name:
-                            if labels.raw_labels is None:
-                                labels.raw_labels = {}
-                            labels.raw_labels["manifest_source"] = sample.get("source")
-                            labels.raw_labels["manifest_index"] = sample.get("index")
-                            break
-            except Exception as e:
-                logger.debug(f"Failed to parse manifest at {manifest_path}: {e}")
+    _search_manifest_for_image(manifest_paths, image_path.name, labels)
 
     return labels
 
@@ -2640,6 +2692,46 @@ def parse_mdiw13_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+_CC_OCR_TRACKS = frozenset({"doc_parsing", "kie", "multi_lan_ocr", "multi_scene_ocr"})
+
+
+def _apply_cc_ocr_row(
+    labels: OriginalLabels, row: dict[str, str], track: str, tsv_name: str
+) -> None:
+    """Apply CC-OCR TSV row data and track-based language inference to labels."""
+    labels.transcription = row.get("answer", "")
+    labels.raw_labels["category"] = row.get("category", "")
+    labels.raw_labels["l2_category"] = row.get("l2-category", "")
+    labels.raw_labels["split"] = row.get("split", "test")
+    labels.raw_labels["question"] = row.get("question", "")
+    labels.raw_labels["subset_file"] = tsv_name
+
+    # Infer language from track
+    if track == "multi_lan_ocr":
+        labels.raw_labels["multilingual"] = True
+    elif track in ("doc_parsing", "kie", "multi_scene_ocr"):
+        labels.language_code = "zh"
+
+
+def _search_cc_ocr_tsvs(
+    tsv_files: list[Path], image_name: str, labels: OriginalLabels, track: str
+) -> bool:
+    """Search CC-OCR TSV files for a matching image. Returns True if found."""
+    import csv
+
+    for tsv_file in tsv_files:
+        try:
+            with open(tsv_file, encoding="utf-8") as f:
+                reader = csv.DictReader(f, delimiter="\t")
+                for row in reader:
+                    if row.get("image_name") == image_name:
+                        _apply_cc_ocr_row(labels, row, track, tsv_file.name)
+                        return True
+        except Exception as e:
+            logger.debug(f"Failed to parse TSV {tsv_file}: {e}")
+    return False
+
+
 def parse_cc_ocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse CC-OCR benchmark labels from TSV files.
 
@@ -2661,8 +2753,6 @@ def parse_cc_ocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         - language_code: Inferred from track/category
         - raw_labels: track, subset, split
     """
-    import csv
-
     labels = OriginalLabels()
 
     # Default to Chinese (Simplified) - can be overridden by track detection
@@ -2674,61 +2764,27 @@ def parse_cc_ocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         labels.raw_labels = {}
 
     # Parse track from path
-    path_parts = image_path.parts
     track = None
-    for part in path_parts:
-        if part in ("doc_parsing", "kie", "multi_lan_ocr", "multi_scene_ocr"):
+    for part in image_path.parts:
+        if part in _CC_OCR_TRACKS:
             track = part
             labels.raw_labels["track"] = track
             break
 
-    # Find TSV file containing this image
-    # TSV files are in the track directory (not per-image)
-    if track:
-        track_dir = dataset_path / track
-        if not track_dir.exists():
-            logger.warning(f"Track directory not found: {track_dir}")
-            return labels
+    if not track:
+        return labels
 
-        tsv_files = list(track_dir.glob("*.tsv"))
+    track_dir = dataset_path / track
+    if not track_dir.exists():
+        logger.warning(f"Track directory not found: {track_dir}")
+        return labels
 
-        # Search all TSV files for matching image_name
-        image_name = image_path.name
-        for tsv_file in tsv_files:
-            try:
-                with open(tsv_file, encoding="utf-8") as f:
-                    reader = csv.DictReader(f, delimiter="\t")
-                    for row in reader:
-                        if row.get("image_name") == image_name:
-                            # Found matching row
-                            labels.transcription = row.get("answer", "")
-                            labels.raw_labels["category"] = row.get("category", "")
-                            labels.raw_labels["l2_category"] = row.get(
-                                "l2-category", ""
-                            )
-                            labels.raw_labels["split"] = row.get("split", "test")
-                            labels.raw_labels["question"] = row.get("question", "")
-                            labels.raw_labels["subset_file"] = tsv_file.name
+    tsv_files = list(track_dir.glob("*.tsv"))
+    image_name = image_path.name
 
-                            # Infer language from track
-                            if track == "multi_lan_ocr":
-                                # Multilingual - would need subcategory analysis
-                                labels.raw_labels["multilingual"] = True
-                            elif track in ("doc_parsing", "kie"):
-                                # Assume Chinese
-                                labels.language_code = "zh"
-                            elif track == "multi_scene_ocr":
-                                # Mixed Chinese/English - default Chinese
-                                labels.language_code = "zh"
+    if not _search_cc_ocr_tsvs(tsv_files, image_name, labels, track):
+        logger.warning(f"No TSV annotation found for {image_name} in track {track}")
 
-                            return labels  # Found match, return
-
-            except Exception as e:
-                logger.debug(f"Failed to parse TSV {tsv_file}: {e}")
-                continue
-
-    # If no TSV match found, return minimal labels
-    logger.warning(f"No TSV annotation found for {image_name} in track {track}")
     return labels
 
 
@@ -2777,6 +2833,83 @@ def parse_tibhcr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+_MLT19_LANG_TO_ISO = {
+    "Arabic": "ar",
+    "Latin": "en",  # Default for Latin
+    "Chinese": "zh",
+    "Japanese": "ja",
+    "Korean": "ko",
+    "Bangla": "bn",
+    "Hindi": "hi",
+    "Symbols": None,
+    "Mixed": None,
+    "None": None,
+}
+
+
+def _find_mlt19_gt_file(dataset_path: Path, image_stem: str) -> Path | None:
+    """Find the MLT-19 ground truth file for a given image stem."""
+    gt_dirs = [
+        dataset_path / "TrainGT" / "TrainGT",  # Actual structure
+        dataset_path / "train_gt",
+        dataset_path / "val_gt",
+        dataset_path / "test_gt",
+        dataset_path / "gt",
+    ]
+    for gt_dir in gt_dirs:
+        for candidate in [
+            gt_dir / f"gt_{image_stem}.txt",
+            gt_dir / f"{image_stem}.txt",
+        ]:
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def _parse_mlt19_gt_file(gt_file: Path) -> tuple[list[dict], set[str]]:
+    """Parse MLT-19 ground truth file. Returns (text_instances, languages_found)."""
+    text_instances: list[dict] = []
+    languages_found: set[str] = set()
+
+    with open(gt_file, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(",", 9)  # 8 coords + language + transcription
+            if len(parts) < 10:
+                continue
+            coords = [float(x) for x in parts[:8]]
+            language = parts[8]
+            transcription = parts[9] if len(parts) > 9 else ""
+
+            languages_found.add(language)
+            text_instances.append(
+                {
+                    "bbox": coords,
+                    "language": language,
+                    "transcription": transcription,
+                }
+            )
+
+    return text_instances, languages_found
+
+
+def _infer_mlt19_language(languages_found: set[str]) -> str | None:
+    """Infer ISO 639 language code from MLT-19 language set."""
+    linguistic_langs = {
+        lang
+        for lang in languages_found
+        if lang in _MLT19_LANG_TO_ISO and _MLT19_LANG_TO_ISO[lang] is not None
+    }
+
+    if len(linguistic_langs) == 1:
+        return _MLT19_LANG_TO_ISO[next(iter(linguistic_langs))]
+    if len(linguistic_langs) > 1:
+        return "mul"  # ISO 639-3 for multiple languages
+    return None
+
+
 def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse MLT-19 multilingual scene text labels from annotations.
 
@@ -2805,94 +2938,17 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Language name to ISO 639 code
-    lang_to_iso = {
-        "Arabic": "ar",
-        "Latin": "en",  # Default for Latin
-        "Chinese": "zh",
-        "Japanese": "ja",
-        "Korean": "ko",
-        "Bangla": "bn",
-        "Hindi": "hi",
-        "Symbols": None,
-        "Mixed": None,
-        "None": None,
-    }
-
-    # Try to find ground truth file
-    # MLT-19 structure: TrainGT/TrainGT/tr_img_{id}.txt or train_gt/gt_{stem}.txt
-    gt_dirs = [
-        dataset_path / "TrainGT" / "TrainGT",  # Actual structure
-        dataset_path / "train_gt",
-        dataset_path / "val_gt",
-        dataset_path / "test_gt",
-        dataset_path / "gt",
-    ]
-
-    gt_file = None
-    for gt_dir in gt_dirs:
-        # Try multiple filename patterns
-        candidates = [
-            gt_dir / f"gt_{image_path.stem}.txt",
-            gt_dir / f"{image_path.stem}.txt",  # tr_img_00001.txt
-        ]
-        for candidate in candidates:
-            if candidate.exists():
-                gt_file = candidate
-                break
-        if gt_file:
-            break
+    gt_file = _find_mlt19_gt_file(dataset_path, image_path.stem)
 
     if gt_file:
         try:
-            text_instances = []
-            languages_found = set()
-
-            with open(gt_file, encoding="utf-8", errors="replace") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split(",", 9)  # 8 coords + language + transcription
-                    if len(parts) >= 10:
-                        coords = [float(x) for x in parts[:8]]
-                        language = parts[8]
-                        transcription = parts[9] if len(parts) > 9 else ""
-
-                        languages_found.add(language)
-                        text_instances.append(
-                            {
-                                "bbox": coords,
-                                "language": language,
-                                "transcription": transcription,
-                            }
-                        )
-
+            text_instances, languages_found = _parse_mlt19_gt_file(gt_file)
             labels.text_instances = text_instances
             labels.raw_labels["languages"] = list(languages_found)
-
-            # Set language code based on languages found
-            # Filter out non-linguistic markers (Symbols, Mixed, None)
-            linguistic_langs = {
-                lang
-                for lang in languages_found
-                if lang in lang_to_iso and lang_to_iso[lang] is not None
-            }
-
-            if len(linguistic_langs) == 1:
-                # Single language - set that language
-                lang = next(iter(linguistic_langs))
-                labels.language_code = lang_to_iso[lang]
-            elif len(linguistic_langs) > 1:
-                # Multiple languages in same document - use 'mul' (ISO 639-3)
-                labels.language_code = "mul"
-            # If no linguistic languages found (only Symbols/Mixed/None), leave empty
-
+            labels.language_code = _infer_mlt19_language(languages_found)
         except Exception as e:
             logger.debug(f"Failed to parse MLT-19 GT file {gt_file}: {e}")
     else:
-        # No GT file found - mark as undetermined for test images
-        # MLT-19 test set GT was never released (ICDAR competition holdout)
         labels.raw_labels["gt_available"] = False
 
     # Determine split from path
@@ -2904,7 +2960,6 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     elif "test" in path_str:
         labels.raw_labels["split"] = "test"
         # Test images without GT - mark as undetermined baseline
-        # Language can be enriched later via visual detection
         if not gt_file and not labels.language_code:
             labels.language_code = "und"  # ISO 639-2 undetermined
             labels.raw_labels["language_source"] = "baseline_und"
@@ -3136,6 +3191,83 @@ def parse_financebench_labels(dataset_path: Path, image_path: Path) -> OriginalL
     return labels
 
 
+_MIDV500_COUNTRY_LANG_SCRIPT = {
+    "alb": ("sq", "Latn"),  # Albania - Albanian
+    "aut": ("de", "Latn"),  # Austria - German
+    "aze": ("az", "Latn"),  # Azerbaijan - Azerbaijani
+    "bra": ("pt", "Latn"),  # Brazil - Portuguese
+    "chl": ("es", "Latn"),  # Chile - Spanish
+    "chn": ("zh", "Hans"),  # China - Chinese
+    "cze": ("cs", "Latn"),  # Czech Republic - Czech
+    "deu": ("de", "Latn"),  # Germany - German
+    "dza": ("ar", "Arab"),  # Algeria - Arabic
+    "esp": ("es", "Latn"),  # Spain - Spanish
+    "est": ("et", "Latn"),  # Estonia - Estonian
+    "fin": ("fi", "Latn"),  # Finland - Finnish
+    "grc": ("el", "Grek"),  # Greece - Greek
+    "hrv": ("hr", "Latn"),  # Croatia - Croatian
+    "hun": ("hu", "Latn"),  # Hungary - Hungarian
+    "irn": ("fa", "Arab"),  # Iran - Persian
+    "ita": ("it", "Latn"),  # Italy - Italian
+    "jpn": ("ja", "Jpan"),  # Japan - Japanese
+    "ltu": ("lt", "Latn"),  # Lithuania - Lithuanian
+    "lva": ("lv", "Latn"),  # Latvia - Latvian
+    "mys": ("ms", "Latn"),  # Malaysia - Malay
+    "nld": ("nl", "Latn"),  # Netherlands - Dutch
+    "nor": ("no", "Latn"),  # Norway - Norwegian
+    "pol": ("pl", "Latn"),  # Poland - Polish
+    "prt": ("pt", "Latn"),  # Portugal - Portuguese
+    "rou": ("ro", "Latn"),  # Romania - Romanian
+    "rus": ("ru", "Cyrl"),  # Russia - Russian
+    "srb": ("sr", "Cyrl"),  # Serbia - Serbian
+    "svk": ("sk", "Latn"),  # Slovakia - Slovak
+    "svn": ("sl", "Latn"),  # Slovenia - Slovenian
+    "swe": ("sv", "Latn"),  # Sweden - Swedish
+    "tur": ("tr", "Latn"),  # Turkey - Turkish
+    "ukr": ("uk", "Cyrl"),  # Ukraine - Ukrainian
+    "usa": ("en", "Latn"),  # USA - English
+    "zaf": ("en", "Latn"),  # South Africa - English (primary)
+    "mac": ("zh", "Hans"),  # Macau - Chinese
+    "mda": ("ro", "Latn"),  # Moldova - Romanian
+    "ury": ("es", "Latn"),  # Uruguay - Spanish
+    "xpo": ("en", "Latn"),  # Synthetic/placeholder - default English
+}
+
+_MIDV500_DOC_TYPES = frozenset(
+    {"id", "passport", "drvlic", "homereturn", "internalpassport"}
+)
+
+
+def _parse_midv500_dir_part(part: str, labels: OriginalLabels) -> bool:
+    """Parse a MIDV-500 directory name (e.g. '01_alb_id'). Returns True if matched."""
+    if "_" not in part:
+        return False
+
+    subparts = part.lower().split("_")
+    if len(subparts) < 2:
+        return False
+
+    country_code = subparts[1] if subparts[0].isdigit() else subparts[0]
+    if len(country_code) != 3:
+        return False
+
+    labels.raw_labels["country_code"] = country_code.upper()
+
+    if country_code in _MIDV500_COUNTRY_LANG_SCRIPT:
+        labels.language_code, labels.script_name = _MIDV500_COUNTRY_LANG_SCRIPT[
+            country_code
+        ]
+
+    # Extract document type from remaining parts
+    for subpart in subparts[2:]:
+        if subpart in _MIDV500_DOC_TYPES:
+            labels.raw_labels["document_type"] = subpart
+            labels.document_type = subpart.replace("drvlic", "Driving License").title()
+            break
+
+    return True
+
+
 def parse_midv500_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse MIDV-500 ID document labels from path structure.
 
@@ -3148,84 +3280,9 @@ def parse_midv500_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # ISO 3166-1 alpha-3 to language/script mapping
-    country_to_lang_script = {
-        "alb": ("sq", "Latn"),  # Albania - Albanian
-        "aut": ("de", "Latn"),  # Austria - German
-        "aze": ("az", "Latn"),  # Azerbaijan - Azerbaijani
-        "bra": ("pt", "Latn"),  # Brazil - Portuguese
-        "chl": ("es", "Latn"),  # Chile - Spanish
-        "chn": ("zh", "Hans"),  # China - Chinese
-        "cze": ("cs", "Latn"),  # Czech Republic - Czech
-        "deu": ("de", "Latn"),  # Germany - German
-        "dza": ("ar", "Arab"),  # Algeria - Arabic
-        "esp": ("es", "Latn"),  # Spain - Spanish
-        "est": ("et", "Latn"),  # Estonia - Estonian
-        "fin": ("fi", "Latn"),  # Finland - Finnish
-        "grc": ("el", "Grek"),  # Greece - Greek
-        "hrv": ("hr", "Latn"),  # Croatia - Croatian
-        "hun": ("hu", "Latn"),  # Hungary - Hungarian
-        "irn": ("fa", "Arab"),  # Iran - Persian
-        "ita": ("it", "Latn"),  # Italy - Italian
-        "jpn": ("ja", "Jpan"),  # Japan - Japanese
-        "ltu": ("lt", "Latn"),  # Lithuania - Lithuanian
-        "lva": ("lv", "Latn"),  # Latvia - Latvian
-        "mys": ("ms", "Latn"),  # Malaysia - Malay
-        "nld": ("nl", "Latn"),  # Netherlands - Dutch
-        "nor": ("no", "Latn"),  # Norway - Norwegian
-        "pol": ("pl", "Latn"),  # Poland - Polish
-        "prt": ("pt", "Latn"),  # Portugal - Portuguese
-        "rou": ("ro", "Latn"),  # Romania - Romanian
-        "rus": ("ru", "Cyrl"),  # Russia - Russian
-        "srb": ("sr", "Cyrl"),  # Serbia - Serbian
-        "svk": ("sk", "Latn"),  # Slovakia - Slovak
-        "svn": ("sl", "Latn"),  # Slovenia - Slovenian
-        "swe": ("sv", "Latn"),  # Sweden - Swedish
-        "tur": ("tr", "Latn"),  # Turkey - Turkish
-        "ukr": ("uk", "Cyrl"),  # Ukraine - Ukrainian
-        "usa": ("en", "Latn"),  # USA - English
-        "zaf": ("en", "Latn"),  # South Africa - English (primary)
-        # Additional country codes found in MIDV-500
-        "mac": ("zh", "Hans"),  # Macau - Chinese
-        "mda": ("ro", "Latn"),  # Moldova - Romanian
-        "ury": ("es", "Latn"),  # Uruguay - Spanish
-        "xpo": ("en", "Latn"),  # Synthetic/placeholder - default English
-    }
-
-    path_parts = image_path.parts
-
-    # Extract country code from directory name like "01_alb_id"
-    for part in path_parts:
-        if "_" in part:
-            subparts = part.lower().split("_")
-            if len(subparts) >= 2:
-                # Format: {num}_{country}_{doctype}[_variant]
-                country_code = subparts[1] if subparts[0].isdigit() else subparts[0]
-                if len(country_code) == 3:
-                    labels.raw_labels["country_code"] = country_code.upper()
-
-                    # Map to language and script
-                    if country_code in country_to_lang_script:
-                        labels.language_code, labels.script_name = (
-                            country_to_lang_script[country_code]
-                        )
-
-                    # Extract document type
-                    doc_types = {
-                        "id",
-                        "passport",
-                        "drvlic",
-                        "homereturn",
-                        "internalpassport",
-                    }
-                    for subpart in subparts[2:]:
-                        if subpart in doc_types:
-                            labels.raw_labels["document_type"] = subpart
-                            labels.document_type = subpart.replace(
-                                "drvlic", "Driving License"
-                            ).title()
-                            break
-                    break
+    for part in image_path.parts:
+        if _parse_midv500_dir_part(part, labels):
+            break
 
     return labels
 
@@ -3503,6 +3560,72 @@ def parse_siw13_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+_MLE2E_SCRIPT_MAPPING = {
+    "latin": ("en", "Latn", "Latin"),
+    "chinese": ("zh", "Hans", "Chinese"),
+    "kannada": ("kn", "Knda", "Kannada"),
+    "korean": ("ko", "Hang", "Korean"),
+}
+
+_MLE2E_SPLIT_MAP = {"Training": "train", "Testing": "test"}
+
+
+def _apply_mle2e_script(labels: OriginalLabels, script_key: str) -> None:
+    """Apply MLE2E script mapping to labels if key is known."""
+    if script_key not in _MLE2E_SCRIPT_MAPPING:
+        return
+    lang_code, iso15924, human_name = _MLE2E_SCRIPT_MAPPING[script_key]
+    labels.language_code = lang_code
+    labels.script_name = human_name
+    labels.iso15924_script_code = iso15924
+
+
+def _extract_mle2e_split_and_script(labels: OriginalLabels, image_path: Path) -> None:
+    """Extract split and path-based script from MLE2E directory structure."""
+    path_parts = image_path.parts
+    for i, part in enumerate(path_parts):
+        if part not in _MLE2E_SPLIT_MAP:
+            continue
+        labels.raw_labels["split"] = _MLE2E_SPLIT_MAP[part]
+        if i + 1 < len(path_parts):
+            lang_dir = path_parts[i + 1].lower()
+            _apply_mle2e_script(labels, lang_dir)
+            if lang_dir in _MLE2E_SCRIPT_MAPPING:
+                labels.raw_labels["script_from_path"] = lang_dir
+        break
+
+
+def _parse_mle2e_annotation_file(txt_path: Path, labels: OriginalLabels) -> None:
+    """Parse MLE2E companion annotation file and update labels."""
+    try:
+        with open(txt_path, encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+    except Exception as e:
+        logger.debug(f"Failed to parse MLE2E annotation: {e}")
+        return
+
+    scripts_found: set[str] = set()
+    text_instances: list[dict[str, str]] = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(",")
+        if len(parts) < 5:
+            continue
+        script = parts[4].lower()
+        scripts_found.add(script)
+        if len(parts) >= 6:
+            text_instances.append({"script": script, "text": parts[5]})
+
+    if scripts_found:
+        labels.raw_labels["scripts"] = list(scripts_found)
+        _apply_mle2e_script(labels, next(iter(scripts_found)))
+    if text_instances:
+        labels.text_instances = text_instances[:5]  # Sample
+
+
 def parse_mle2e_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse MLE2E (Multi-Language End-to-End) labels.
 
@@ -3516,81 +3639,83 @@ def parse_mle2e_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Script to ISO mappings: script -> (language_code, iso15924, human_readable_name)
-    script_mapping = {
-        "latin": ("en", "Latn", "Latin"),
-        "chinese": ("zh", "Hans", "Chinese"),
-        "kannada": ("kn", "Knda", "Kannada"),
-        "korean": ("ko", "Hang", "Korean"),
-    }
-
-    # Extract split and language from path
-    # Structure: {Training,Testing}/{language}/*.jpg
-    path_parts = image_path.parts
-    for i, part in enumerate(path_parts):
-        if part == "Training":
-            labels.raw_labels["split"] = "train"
-            # Check next part for language
-            if i + 1 < len(path_parts):
-                lang_dir = path_parts[i + 1].lower()
-                if lang_dir in script_mapping:
-                    lang_code, iso15924, human_name = script_mapping[lang_dir]
-                    labels.language_code = lang_code
-                    labels.script_name = human_name  # Human-readable name
-                    labels.iso15924_script_code = iso15924  # ISO 15924 code
-                    labels.raw_labels["script_from_path"] = lang_dir
-            break
-        if part == "Testing":
-            labels.raw_labels["split"] = "test"
-            # Check next part for language
-            if i + 1 < len(path_parts):
-                lang_dir = path_parts[i + 1].lower()
-                if lang_dir in script_mapping:
-                    lang_code, iso15924, human_name = script_mapping[lang_dir]
-                    labels.language_code = lang_code
-                    labels.script_name = human_name  # Human-readable name
-                    labels.iso15924_script_code = iso15924  # ISO 15924 code
-                    labels.raw_labels["script_from_path"] = lang_dir
-            break
+    _extract_mle2e_split_and_script(labels, image_path)
 
     # Try to find and parse companion annotation file (may override path-based language)
     txt_path = image_path.with_suffix(".txt")
     if txt_path.exists():
-        try:
-            with open(txt_path, encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                scripts_found: set[str] = set()
-                text_instances: list[dict[str, str]] = []
-                for line in lines:
-                    line = line.strip()
-                    if line:
-                        parts = line.split(",")
-                        if len(parts) >= 5:
-                            script = parts[4].lower()
-                            scripts_found.add(script)
-                            if len(parts) >= 6:
-                                text_instances.append(
-                                    {
-                                        "script": script,
-                                        "text": parts[5],
-                                    }
-                                )
-
-                if scripts_found:
-                    labels.raw_labels["scripts"] = list(scripts_found)
-                    # Set primary script based on first found
-                    primary_script = next(iter(scripts_found))
-                    if primary_script in script_mapping:
-                        lang_code, iso15924, human_name = script_mapping[primary_script]
-                        labels.language_code = lang_code
-                        labels.script_name = human_name  # Human-readable name
-                        labels.iso15924_script_code = iso15924  # ISO 15924 code
-                if text_instances:
-                    labels.text_instances = text_instances[:5]  # Sample
-        except Exception as e:
-            logger.debug(f"Failed to parse MLE2E annotation: {e}")
+        _parse_mle2e_annotation_file(txt_path, labels)
 
     return labels
+
+
+_OMNIDOCBENCH_DOC_TYPE_MAPPING = {
+    "PPT": ("presentation", None, None),
+    "book_en": ("book", "en", "Latn"),
+    "book_eng": ("book", "en", "Latn"),
+    "book_zh": ("book", "zh", "Hans"),
+    "color": ("document", None, None),
+    "data": ("spreadsheet", None, None),
+    "docstructbench": ("document", None, None),
+    "eastmoney": ("financial", "zh", "Hans"),
+    "exam": ("examination", None, None),
+    "jiaocai": ("textbook", "zh", "Hans"),  # 教材 = Chinese textbook
+    "jiaocaineedrop": ("textbook", "zh", "Hans"),
+    "dianzishu": ("ebook", "zh", "Hans"),  # 电子书 = Chinese e-book
+    "magazine": ("magazine", None, None),
+    "newspaper": ("newspaper", None, None),
+    "notes": ("notes", None, None),
+    "paper": ("scientific", "en", "Latn"),  # Academic papers, typically English
+    "scihub": ("scientific", "en", "Latn"),
+    "show": ("presentation", None, None),
+    "textbook": ("textbook", "en", "Latn"),  # Generic textbook, default English
+    "yanbaopptmerge": ("research_report", "zh", "Hans"),
+    "yanbaor2": ("research_report", "zh", "Hans"),
+    "pdf": ("document", None, None),  # Generic PDF
+}
+
+# Patterns indicating English or Chinese in filenames
+_EN_FILENAME_MARKERS = ("_en_", "_eng_", "_english")
+_EN_FILENAME_STARTS = ("en_", "eng_")
+_ZH_FILENAME_MARKERS = ("_zh_", "_chi_", "_chn_", "_chinese")
+_ZH_FILENAME_STARTS = ("zh_", "chi_")
+
+
+def _detect_omnidocbench_language_from_filename(
+    filename_lower: str, labels: OriginalLabels
+) -> None:
+    """Detect language from OmniDocBench filename patterns."""
+    if any(
+        m in filename_lower for m in _EN_FILENAME_MARKERS
+    ) or filename_lower.startswith(_EN_FILENAME_STARTS):
+        labels.language_code = "en"
+        labels.script_name = "Latn"
+    elif any(
+        m in filename_lower for m in _ZH_FILENAME_MARKERS
+    ) or filename_lower.startswith(_ZH_FILENAME_STARTS):
+        labels.language_code = "zh"
+        labels.script_name = "Hans"
+
+
+def _extract_omnidocbench_page_number(
+    filename: str, raw_labels: dict[str, Any]
+) -> None:
+    """Extract page number and doc name from OmniDocBench filename."""
+    import re
+
+    page_match = re.search(r"_page_(\d+)$", filename)
+    if page_match:
+        raw_labels["page_num"] = int(page_match.group(1))
+        doc_name_end = filename.rfind("_page_")
+        if doc_name_end > 0:
+            raw_labels["doc_name"] = filename[:doc_name_end]
+        return
+
+    # Try alternate pattern: _XXXX at end (3-4 digits)
+    page_match = re.search(r"_(\d{3,4})$", filename)
+    if page_match:
+        raw_labels["page_num"] = int(page_match.group(1))
+        raw_labels["doc_name"] = filename[: filename.rfind("_")]
 
 
 def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -3600,23 +3725,6 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
         omnidocbench/
             extracted_images/
                 {doc_type}_{doc_name}_page_{pagenum}.png
-
-    Document types:
-        - PPT: PowerPoint presentations
-        - book_en: English books
-        - color: Colored documents
-        - data: Data/spreadsheet documents
-        - docstructbench: Document structure benchmark images
-        - eastmoney: Financial documents (eastmoney.com)
-        - exam: Examination papers
-        - jiaocai: Textbook materials (Chinese)
-        - magazine: Magazine pages
-        - newspaper: Newspaper articles
-        - notes: Handwritten/typed notes
-        - scihub: Scientific papers
-        - show: Presentation slides
-        - yanbaopptmerge: Research report PPTs
-        - yanbaor2: Research reports v2
 
     Extracts:
         - raw_labels.doc_type: Document type prefix
@@ -3631,36 +3739,8 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
 
     filename = image_path.stem
 
-    # Document type to domain/language/script mapping
-    # Format: prefix -> (doc_type, language_code, script_name)
-    doc_type_mapping = {
-        "PPT": ("presentation", None, None),
-        "book_en": ("book", "en", "Latn"),
-        "book_eng": ("book", "en", "Latn"),
-        "book_zh": ("book", "zh", "Hans"),
-        "color": ("document", None, None),
-        "data": ("spreadsheet", None, None),
-        "docstructbench": ("document", None, None),
-        "eastmoney": ("financial", "zh", "Hans"),
-        "exam": ("examination", None, None),
-        "jiaocai": ("textbook", "zh", "Hans"),  # 教材 = Chinese textbook
-        "jiaocaineedrop": ("textbook", "zh", "Hans"),
-        "dianzishu": ("ebook", "zh", "Hans"),  # 电子书 = Chinese e-book
-        "magazine": ("magazine", None, None),
-        "newspaper": ("newspaper", None, None),
-        "notes": ("notes", None, None),
-        "paper": ("scientific", "en", "Latn"),  # Academic papers, typically English
-        "scihub": ("scientific", "en", "Latn"),
-        "show": ("presentation", None, None),
-        "textbook": ("textbook", "en", "Latn"),  # Generic textbook, default English
-        "yanbaopptmerge": ("research_report", "zh", "Hans"),
-        "yanbaor2": ("research_report", "zh", "Hans"),
-        "pdf": ("document", None, None),  # Generic PDF
-    }
-
     # Try to extract document type from filename prefix
-    remainder = filename
-    for prefix, (doc_type, lang, script) in doc_type_mapping.items():
+    for prefix, (doc_type, lang, script) in _OMNIDOCBENCH_DOC_TYPE_MAPPING.items():
         if filename.startswith(prefix):
             labels.raw_labels["doc_type"] = doc_type
             labels.raw_labels["doc_type_prefix"] = prefix
@@ -3668,62 +3748,61 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
                 labels.language_code = lang
             if script:
                 labels.script_name = script
-            # Extract remaining parts after prefix
-            remainder = filename[len(prefix) :].lstrip("_")
             break
     else:
-        # Unknown prefix
         labels.raw_labels["doc_type"] = "unknown"
 
     # Check for language codes in filename if not already set from prefix
-    # Patterns: _en_, _eng_, _zh_, _chi_, _chn_, etc.
     if not labels.language_code:
-        filename_lower = filename.lower()
-        if (
-            "_en_" in filename_lower
-            or "_eng_" in filename_lower
-            or "_english" in filename_lower
-        ):
-            labels.language_code = "en"
-            labels.script_name = "Latn"
-        elif (
-            "_zh_" in filename_lower
-            or "_chi_" in filename_lower
-            or "_chn_" in filename_lower
-            or "_chinese" in filename_lower
-        ):
-            labels.language_code = "zh"
-            labels.script_name = "Hans"
-        elif filename_lower.startswith(("en_", "eng_")):
-            labels.language_code = "en"
-            labels.script_name = "Latn"
-        elif filename_lower.startswith(("zh_", "chi_")):
-            labels.language_code = "zh"
-            labels.script_name = "Hans"
+        _detect_omnidocbench_language_from_filename(filename.lower(), labels)
 
-    # Default to English for certain document types known to be English-majority
-    # Note: OmniDocBench has ~30% English, ~60% Chinese, ~10% mixed
-    # Only apply defaults to clearly English document types
-
-    # Try to extract page number
-    # Pattern: ..._page_XXX or _XXXX at end
-    import re
-
-    page_match = re.search(r"_page_(\d+)$", filename)
-    if page_match:
-        labels.raw_labels["page_num"] = int(page_match.group(1))
-        # Document name is everything before _page_
-        doc_name_end = filename.rfind("_page_")
-        if doc_name_end > 0:
-            labels.raw_labels["doc_name"] = filename[:doc_name_end]
-    else:
-        # Try alternate pattern: _XXXX at end (4 digits)
-        page_match = re.search(r"_(\d{3,4})$", filename)
-        if page_match:
-            labels.raw_labels["page_num"] = int(page_match.group(1))
-            labels.raw_labels["doc_name"] = filename[: filename.rfind("_")]
+    _extract_omnidocbench_page_number(filename, labels.raw_labels)
 
     return labels
+
+
+def _extract_realdae_task_info(
+    path_parts: tuple[str, ...], raw_labels: dict[str, Any]
+) -> None:
+    """Extract task type and split from RealDAE directory name."""
+    for part in path_parts:
+        if not part.startswith("task_"):
+            continue
+        parts = part.split("_")
+        if len(parts) >= 3:
+            raw_labels["task_type"] = parts[1]  # bleed, color, shadow
+            raw_labels["split"] = parts[2]  # train, test
+        break
+
+
+def _extract_realdae_file_pair(
+    filename: str, image_path: Path, raw_labels: dict[str, Any]
+) -> None:
+    """Extract input/gt pair info and origin/sample_id from RealDAE filename."""
+    # Parse filename pattern: {origin}_{number}_{gt|in}.jpg
+    if filename.endswith("_in"):
+        raw_labels["is_input"] = True
+        raw_labels["is_ground_truth"] = False
+        paired = image_path.parent / f"{filename[:-3]}_gt.jpg"
+        if paired.exists():
+            raw_labels["paired_file"] = str(paired)
+    elif filename.endswith("_gt"):
+        raw_labels["is_input"] = False
+        raw_labels["is_ground_truth"] = True
+        paired = image_path.parent / f"{filename[:-3]}_in.jpg"
+        if paired.exists():
+            raw_labels["paired_file"] = str(paired)
+
+    # Extract origin and sample ID
+    if "_" not in filename:
+        return
+    name_parts = filename.rsplit("_", 2)  # Split from right, max 2 splits
+    if len(name_parts) >= 2:
+        raw_labels["origin"] = name_parts[0]
+        try:
+            raw_labels["sample_id"] = int(name_parts[1])
+        except ValueError:
+            raw_labels["sample_id"] = name_parts[1]
 
 
 def parse_realdae_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -3751,46 +3830,8 @@ def parse_realdae_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Extract task type and split from directory name
-    # Pattern: task_{type}_{split} (e.g., task_bleed_train, task_shadow_test)
-    path_parts = image_path.parts
-    for part in path_parts:
-        if part.startswith("task_"):
-            parts = part.split("_")
-            if len(parts) >= 3:
-                labels.raw_labels["task_type"] = parts[1]  # bleed, color, shadow
-                labels.raw_labels["split"] = parts[2]  # train, test
-            break
-
-    # Parse filename pattern: {origin}_{number}_{gt|in}.jpg
-    filename = image_path.stem
-    if filename.endswith("_in"):
-        labels.raw_labels["is_input"] = True
-        labels.raw_labels["is_ground_truth"] = False
-        base_name = filename[:-3]  # Remove _in
-        gt_file = image_path.parent / f"{base_name}_gt.jpg"
-        if gt_file.exists():
-            labels.raw_labels["paired_file"] = str(gt_file)
-    elif filename.endswith("_gt"):
-        labels.raw_labels["is_input"] = False
-        labels.raw_labels["is_ground_truth"] = True
-        base_name = filename[:-3]  # Remove _gt
-        in_file = image_path.parent / f"{base_name}_in.jpg"
-        if in_file.exists():
-            labels.raw_labels["paired_file"] = str(in_file)
-
-    # Extract origin and sample ID from base name
-    # Pattern: origin1000_103 -> origin="origin1000", sample_id="103"
-    if "_" in filename:
-        name_parts = filename.rsplit("_", 2)  # Split from right, max 2 splits
-        if len(name_parts) >= 2:
-            labels.raw_labels["origin"] = name_parts[0]
-            # Sample ID is the number before _gt/_in
-            if len(name_parts) >= 2:
-                try:
-                    labels.raw_labels["sample_id"] = int(name_parts[1])
-                except ValueError:
-                    labels.raw_labels["sample_id"] = name_parts[1]
+    _extract_realdae_task_info(image_path.parts, labels.raw_labels)
+    _extract_realdae_file_pair(image_path.stem, image_path, labels.raw_labels)
 
     return labels
 
@@ -3897,7 +3938,7 @@ LABEL_PARSERS = {
 
 def get_enrichment_tier(
     dataset_name: str,
-    config: dict[str, Any],
+    _config: dict[str, Any],
     original_labels: OriginalLabels,
     use_yolo: bool,
 ) -> tuple[EnrichmentTier, str]:
@@ -3936,12 +3977,186 @@ def get_enrichment_tier(
     return EnrichmentTier.TIER_3_HEURISTIC, "Dataset-level defaults (fallback)"
 
 
+def _resolve_capture_method(
+    original_labels: OriginalLabels, config_capture: Any
+) -> tuple[str, float, str]:
+    """Resolve capture method, confidence, and detection method.
+
+    Returns (capture_method_value, capture_confidence, capture_detection_method).
+    """
+    parser_capture = (
+        original_labels.raw_labels.get("capture_method")
+        if original_labels.raw_labels
+        else None
+    )
+    if parser_capture:
+        return parser_capture, 0.95, "parser_ground_truth"
+    if config_capture != CaptureMethod.UNKNOWN:
+        return config_capture.value, 0.95, "dataset_config"
+    return config_capture.value, 0.5, "dataset_config"
+
+
+def _apply_tier_content_flags(
+    enrichment: EnrichmentData,
+    tier: EnrichmentTier,
+    dataset_name: str,
+    original_labels: OriginalLabels,
+    image_path: Path,
+    config: dict[str, Any],
+) -> None:
+    """Apply tier-specific content flags to enrichment data."""
+    if tier == EnrichmentTier.TIER_0_EXACT:
+        tier0_flags = TIER_0_DATASETS.get(dataset_name, {})
+        enrichment.has_table = tier0_flags.get("has_table", False)
+        enrichment.has_formula = tier0_flags.get("has_formula", False)
+        enrichment.has_handwriting = tier0_flags.get("has_handwriting", False)
+        enrichment.has_signature = tier0_flags.get("has_signature", False)
+        enrichment.has_figure = False
+        enrichment.content_flags_source = "tier_0_exact_by_construction"
+    elif tier == EnrichmentTier.TIER_1_ANNOTATION:
+        _apply_tier1_annotation_flags(enrichment, original_labels)
+    elif tier == EnrichmentTier.TIER_2_MODEL:
+        _apply_tier2_yolo_flags(enrichment, image_path)
+    else:  # TIER_3_HEURISTIC
+        enrichment.has_table = config.get("has_table")
+        enrichment.has_formula = config.get("has_formula")
+        enrichment.has_handwriting = config.get("has_handwriting")
+        enrichment.has_signature = config.get("has_signature")
+        enrichment.has_figure = None
+        enrichment.content_flags_source = "dataset_heuristic"
+
+
+def _apply_tier1_annotation_flags(
+    enrichment: EnrichmentData, original_labels: OriginalLabels
+) -> None:
+    """Apply Tier 1 content flags from COCO annotations."""
+    annotations = (
+        original_labels.doclaynet_annotations
+        or original_labels.tablebank_annotations
+        or original_labels.funsd_annotations
+        or []
+    )
+    flags = derive_content_flags_from_coco(annotations)
+    enrichment.has_table = flags["has_table"]
+    enrichment.has_formula = flags["has_formula"]
+    enrichment.has_figure = flags["has_figure"]
+    enrichment.has_handwriting = flags["has_handwriting"]
+    enrichment.content_flags_source = "coco_annotation"
+    enrichment.layout_detections = [
+        {
+            "class_name": ann.get("category_name", "unknown"),
+            "bbox": ann.get("bbox", []),
+            "confidence": 1.0,
+            "source": "coco_annotation",
+        }
+        for ann in annotations
+    ]
+
+
+def _apply_tier2_yolo_flags(enrichment: EnrichmentData, image_path: Path) -> None:
+    """Apply Tier 2 content flags from DocLayout-YOLO inference."""
+    yolo_results = run_doclayout_yolo(image_path)
+    enrichment.has_table = yolo_results.get("has_table", False)
+    enrichment.has_formula = yolo_results.get("has_formula", False)
+    enrichment.has_figure = yolo_results.get("has_figure", False)
+    enrichment.has_handwriting = yolo_results.get("has_handwriting", False)
+    enrichment.layout_detections = yolo_results.get("layout_detections", [])
+    enrichment.content_flags_source = "doclayout_yolo"
+
+
+# Map script names to ISO 15924 codes (module-level for reuse)
+_SCRIPT_NAME_TO_ISO = {
+    "Arabic": "Arab",
+    "Tibetan": "Tibt",
+    "Japanese": "Jpan",
+    "Devanagari": "Deva",
+    "Latin": "Latn",
+    "Chinese": "Hans",
+    "Korean": "Kore",
+    "Cyrillic": "Cyrl",
+    "Greek": "Grek",
+    "Hebrew": "Hebr",
+    "Thai": "Thai",
+    "Tamil": "Taml",
+    "Telugu": "Telu",
+    "Bengali": "Beng",
+    "Gujarati": "Gujr",
+    "Kannada": "Knda",
+    "Malayalam": "Mlym",
+    "Oriya": "Orya",
+    "Punjabi": "Guru",
+    "Urdu": "Arab",  # Urdu uses Arabic script
+}
+
+
+def _apply_language_priority(
+    enrichment: EnrichmentData,
+    config: dict[str, Any],
+    original_labels: OriginalLabels,
+    existing_openlid: dict[str, Any] | None,
+) -> None:
+    """Apply language with priority hierarchy (config > parser > openlid > default)."""
+    if config.get("iso639_language"):
+        enrichment.iso639_language = config.get("iso639_language")
+        enrichment.text_scope_detection_method = "dataset_config"
+    elif original_labels.language_code:
+        enrichment.iso639_language = original_labels.language_code
+        enrichment.text_scope_detection_method = "parser_ground_truth"
+    elif existing_openlid and existing_openlid.get("iso639_language"):
+        enrichment.iso639_language = existing_openlid["iso639_language"]
+        enrichment.text_scope_detection_method = existing_openlid.get(
+            "text_scope_detection_method", "openlid_v2"
+        )
+    elif not config.get("is_multilingual"):
+        enrichment.iso639_language = config.get("default_language_code")
+        enrichment.text_scope_detection_method = "dataset_default"
+    else:
+        enrichment.iso639_language = None
+        enrichment.text_scope_detection_method = "pending_per_image_detection"
+
+
+def _apply_script_priority(
+    enrichment: EnrichmentData,
+    config: dict[str, Any],
+    original_labels: OriginalLabels,
+    existing_openlid: dict[str, Any] | None,
+) -> None:
+    """Apply script with priority hierarchy (config > parser > openlid > default)."""
+    if config.get("iso15924_script"):
+        enrichment.iso15924_script = config.get("iso15924_script")
+    elif original_labels.script_name:
+        enrichment.iso15924_script = _SCRIPT_NAME_TO_ISO.get(
+            original_labels.script_name, original_labels.script_name
+        )
+    elif existing_openlid and existing_openlid.get("iso15924_script"):
+        enrichment.iso15924_script = existing_openlid["iso15924_script"]
+        enrichment.bcp47_tag = existing_openlid.get("bcp47_tag")
+        enrichment.primary_language = existing_openlid.get("primary_language")
+        enrichment.language_confidence = existing_openlid.get("language_confidence")
+    elif not config.get("is_multilingual"):
+        enrichment.iso15924_script = config.get("default_script_name")
+    else:
+        enrichment.iso15924_script = None
+
+
+def _apply_document_age(enrichment: EnrichmentData, dataset_name: str) -> None:
+    """Auto-derive document_age for known historical/degraded datasets."""
+    if enrichment.document_age is not None:
+        return
+    _HISTORICAL = {"dibco", "historical_degraded"}
+    _AGED = {"tobacco800", "rvl_cdip"}
+    if dataset_name in _HISTORICAL:
+        enrichment.document_age = "historical"
+    elif dataset_name in _AGED:
+        enrichment.document_age = "aged"
+
+
 def apply_tiered_enrichment(
     sample: SampleMetadata,
     config: dict[str, Any],
     image_path: Path,
     use_yolo: bool,
-    git_sha: str,
+    _git_sha: str,
     existing_openlid: dict[str, Any] | None = None,
 ) -> EnrichmentData:
     """Apply tiered enrichment logic to determine content flags.
@@ -3961,35 +4176,17 @@ def apply_tiered_enrichment(
         config: Dataset configuration
         image_path: Path to the image file
         use_yolo: Whether to use DocLayout-YOLO inference
-        git_sha: Current git SHA for provenance
+        _git_sha: Current git SHA for provenance (reserved for future use)
         existing_openlid: Optional existing OpenLID-detected language data to preserve
     """
     dataset_name = sample.dataset_name
     original_labels = sample.original_labels
 
-    tier, tier_description = get_enrichment_tier(
-        dataset_name, config, original_labels, use_yolo
-    )
+    tier, _ = get_enrichment_tier(dataset_name, config, original_labels, use_yolo)
 
-    # Determine capture_method: prefer parser-derived value over config default
-    config_capture = config["capture_method"]
-    parser_capture = (
-        original_labels.raw_labels.get("capture_method")
-        if original_labels.raw_labels
-        else None
+    capture_method_value, capture_confidence, capture_detection_method = (
+        _resolve_capture_method(original_labels, config["capture_method"])
     )
-    if parser_capture:
-        capture_method_value = parser_capture
-        capture_confidence = 0.95
-        capture_detection_method = "parser_ground_truth"
-    elif config_capture != CaptureMethod.UNKNOWN:
-        capture_method_value = config_capture.value
-        capture_confidence = 0.95
-        capture_detection_method = "dataset_config"
-    else:
-        capture_method_value = config_capture.value
-        capture_confidence = 0.5
-        capture_detection_method = "dataset_config"
 
     enrichment = EnrichmentData(
         capture_method=capture_method_value,
@@ -4006,61 +4203,10 @@ def apply_tiered_enrichment(
         content_flags_tier=tier.value,
     )
 
-    # Apply tier-specific logic
-    if tier == EnrichmentTier.TIER_0_EXACT:
-        # Use exact values from TIER_0_DATASETS
-        tier0_flags = TIER_0_DATASETS.get(dataset_name, {})
-        enrichment.has_table = tier0_flags.get("has_table", False)
-        enrichment.has_formula = tier0_flags.get("has_formula", False)
-        enrichment.has_handwriting = tier0_flags.get("has_handwriting", False)
-        enrichment.has_signature = tier0_flags.get("has_signature", False)
-        enrichment.has_figure = False
-        enrichment.content_flags_source = "tier_0_exact_by_construction"
-
-    elif tier == EnrichmentTier.TIER_1_ANNOTATION:
-        # Derive from COCO annotations
-        annotations = (
-            original_labels.doclaynet_annotations
-            or original_labels.tablebank_annotations
-            or original_labels.funsd_annotations
-            or []
-        )
-        flags = derive_content_flags_from_coco(annotations)
-        enrichment.has_table = flags["has_table"]
-        enrichment.has_formula = flags["has_formula"]
-        enrichment.has_figure = flags["has_figure"]
-        enrichment.has_handwriting = flags["has_handwriting"]
-        enrichment.content_flags_source = "coco_annotation"
-
-        # Store layout detections
-        enrichment.layout_detections = [
-            {
-                "class_name": ann.get("category_name", "unknown"),
-                "bbox": ann.get("bbox", []),
-                "confidence": 1.0,
-                "source": "coco_annotation",
-            }
-            for ann in annotations
-        ]
-
-    elif tier == EnrichmentTier.TIER_2_MODEL:
-        # Run DocLayout-YOLO inference
-        yolo_results = run_doclayout_yolo(image_path)
-        enrichment.has_table = yolo_results.get("has_table", False)
-        enrichment.has_formula = yolo_results.get("has_formula", False)
-        enrichment.has_figure = yolo_results.get("has_figure", False)
-        enrichment.has_handwriting = yolo_results.get("has_handwriting", False)
-        enrichment.layout_detections = yolo_results.get("layout_detections", [])
-        enrichment.content_flags_source = "doclayout_yolo"
-
-    else:  # TIER_3_HEURISTIC
-        # Fallback to dataset-level defaults
-        enrichment.has_table = config.get("has_table")
-        enrichment.has_formula = config.get("has_formula")
-        enrichment.has_handwriting = config.get("has_handwriting")
-        enrichment.has_signature = config.get("has_signature")
-        enrichment.has_figure = None
-        enrichment.content_flags_source = "dataset_heuristic"
+    # Apply tier-specific content flags
+    _apply_tier_content_flags(
+        enrichment, tier, dataset_name, original_labels, image_path, config
+    )
 
     # === Apply new schema v2.1 fields ===
 
@@ -4070,105 +4216,20 @@ def apply_tiered_enrichment(
     if enrichment.has_handwriting:
         enrichment.text_scope_content_type = "handwritten"
     elif enrichment.has_formula:
-        enrichment.text_scope_content_type = (
-            "printed"  # Most formulas are printed/rendered
-        )
+        enrichment.text_scope_content_type = "printed"
     else:
         enrichment.text_scope_content_type = config.get(
             "text_scope_content_type", "printed"
         )
     enrichment.text_scope_detection_method = "dataset_metadata"
 
-    # Language/Script Priority Hierarchy:
-    # 1. Ground truth from parser (original_labels) - highest priority
-    # 2. Existing OpenLID detection - preserve if no ground truth
-    # 3. Dataset defaults - only if no other data available
-
-    # Map script names to ISO 15924 codes
-    script_to_iso = {
-        "Arabic": "Arab",
-        "Tibetan": "Tibt",
-        "Japanese": "Jpan",
-        "Devanagari": "Deva",
-        "Latin": "Latn",
-        "Chinese": "Hans",
-        "Korean": "Kore",
-        "Cyrillic": "Cyrl",
-        "Greek": "Grek",
-        "Hebrew": "Hebr",
-        "Thai": "Thai",
-        "Tamil": "Taml",
-        "Telugu": "Telu",
-        "Bengali": "Beng",
-        "Gujarati": "Gujr",
-        "Kannada": "Knda",
-        "Malayalam": "Mlym",
-        "Oriya": "Orya",
-        "Punjabi": "Guru",
-        "Urdu": "Arab",  # Urdu uses Arabic script
-    }
-
-    # Check for ground truth from parser (Priority 1 - highest)
-    has_ground_truth_language = bool(
-        config.get("iso639_language") or original_labels.language_code
-    )
-    has_ground_truth_script = bool(
-        config.get("iso15924_script") or original_labels.script_name
-    )
-
-    # Apply language with priority hierarchy
-    if config.get("iso639_language"):
-        # Config override (explicit dataset-level ground truth)
-        enrichment.iso639_language = config.get("iso639_language")
-        enrichment.text_scope_detection_method = "dataset_config"
-    elif original_labels.language_code:
-        # Parser-extracted ground truth (Priority 1)
-        enrichment.iso639_language = original_labels.language_code
-        enrichment.text_scope_detection_method = "parser_ground_truth"
-    elif existing_openlid and existing_openlid.get("iso639_language"):
-        # Preserve existing OpenLID detection (Priority 2)
-        enrichment.iso639_language = existing_openlid["iso639_language"]
-        enrichment.text_scope_detection_method = existing_openlid.get(
-            "text_scope_detection_method", "openlid_v2"
-        )
-    else:
-        # Dataset default fallback (Priority 3 - lowest)
-        # Skip default for multilingual datasets - requires per-image detection
-        if not config.get("is_multilingual"):
-            enrichment.iso639_language = config.get("default_language_code")
-            enrichment.text_scope_detection_method = "dataset_default"
-        else:
-            enrichment.iso639_language = None
-            enrichment.text_scope_detection_method = "pending_per_image_detection"
-
-    # Apply script with priority hierarchy
-    if config.get("iso15924_script"):
-        # Config override (explicit dataset-level ground truth)
-        enrichment.iso15924_script = config.get("iso15924_script")
-    elif original_labels.script_name:
-        # Parser-extracted ground truth (Priority 1)
-        enrichment.iso15924_script = script_to_iso.get(
-            original_labels.script_name, original_labels.script_name
-        )
-    elif existing_openlid and existing_openlid.get("iso15924_script"):
-        # Preserve existing OpenLID detection (Priority 2)
-        enrichment.iso15924_script = existing_openlid["iso15924_script"]
-        # Also preserve related OpenLID fields
-        enrichment.bcp47_tag = existing_openlid.get("bcp47_tag")
-        enrichment.primary_language = existing_openlid.get("primary_language")
-        enrichment.language_confidence = existing_openlid.get("language_confidence")
-    else:
-        # Dataset default fallback (Priority 3 - lowest)
-        # Skip default for multilingual datasets - requires per-image detection
-        if not config.get("is_multilingual"):
-            enrichment.iso15924_script = config.get("default_script_name")
-        else:
-            enrichment.iso15924_script = None
+    # Language/Script Priority Hierarchy
+    _apply_language_priority(enrichment, config, original_labels, existing_openlid)
+    _apply_script_priority(enrichment, config, original_labels, existing_openlid)
 
     # Script family (from config, with auto-derivation from ISO 15924)
     enrichment.script_family = config.get("script_family")
     if enrichment.script_family is None and enrichment.iso15924_script:
-        # Centralised lookup from iso_language_script module
         enrichment.script_family = _get_script_family(enrichment.iso15924_script)
 
     # Paper size (from config if specified)
@@ -4181,13 +4242,13 @@ def apply_tiered_enrichment(
     # Dataset short code (standardized identifier)
     enrichment.dataset_short_code = dataset_name.replace("_", "-")
 
-    # === v2.1.0 fields (geometric, physical degradation, ML IQA, code, image properties) ===
+    # === v2.1.0 fields ===
 
     # Code detection: derive from layout detections if available
+    _CODE_CLASSES = {"code", "source_code", "listing"}
     if enrichment.layout_detections:
-        code_classes = {"code", "source_code", "listing"}
         enrichment.has_code = any(
-            det.get("class_name", "").lower() in code_classes
+            det.get("class_name", "").lower() in _CODE_CLASSES
             for det in enrichment.layout_detections
         )
         enrichment.code_confidence = (
@@ -4200,22 +4261,13 @@ def apply_tiered_enrichment(
     # Resolution enhancement: effective_dpi mirrors resolution_dpi until resampling detection
     enrichment.effective_dpi = sample.original_file.dpi
 
-    # Image properties: color_mode from config or auto-detect, document_age from config
+    # Image properties
     enrichment.color_mode = config.get("color_mode")
     enrichment.document_age = config.get("document_age")
-
-    # Auto-derive document_age for known historical/degraded datasets
-    if enrichment.document_age is None:
-        historical_datasets = {"dibco", "historical_degraded"}
-        aged_datasets = {"tobacco800", "rvl_cdip"}
-        if dataset_name in historical_datasets:
-            enrichment.document_age = "historical"
-        elif dataset_name in aged_datasets:
-            enrichment.document_age = "aged"
+    _apply_document_age(enrichment, dataset_name)
 
     # Geometric, physical degradation, ML IQA, OCR impact:
     # Left as None -- populated by dedicated enrichment passes
-    # (production pipeline inference, orientation detection, shadow/warping models)
 
     return enrichment
 
@@ -4280,6 +4332,79 @@ def extract_omnidocbench_images(output_dir: Path | None = None) -> int:
 # =============================================================================
 
 
+_IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"})
+
+
+def _resolve_sample_split(sample: SampleMetadata, image_path: Path) -> None:
+    """Set sample.split from raw_labels or fallback to path detection."""
+    original_labels = sample.original_labels
+    if original_labels.raw_labels and "split" in original_labels.raw_labels:
+        sample.split = original_labels.raw_labels["split"]
+
+    if sample.split != "unknown":
+        return
+
+    path_str_lower = str(image_path).lower()
+    for split_name in ["train", "val", "test"]:
+        if f"/{split_name}/" in path_str_lower:
+            sample.split = split_name
+            return
+
+
+def _process_single_image(
+    image_path: Path,
+    dataset_name: str,
+    dataset_path: Path,
+    config: dict[str, Any],
+    label_parser: Any,
+    use_yolo: bool,
+    git_sha: str,
+    existing_openlid_data: dict[str, dict[str, Any]],
+) -> SampleMetadata:
+    """Process a single image file and return its SampleMetadata."""
+    file_hash = compute_sha256(image_path)
+    file_metadata = extract_file_metadata(image_path)
+
+    original_labels = (
+        label_parser(dataset_path, image_path) if label_parser else OriginalLabels()
+    )
+
+    sample = SampleMetadata(
+        id=str(uuid.uuid4()),
+        file_hash=file_hash,
+        dataset_name=dataset_name,
+        dataset_version="1.0",
+        original_path=str(image_path.relative_to(dataset_path)),
+        original_filename=image_path.name,
+        download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+        original_labels=original_labels,
+        original_file=file_metadata,
+    )
+
+    _resolve_sample_split(sample, image_path)
+
+    tier, tier_desc = get_enrichment_tier(
+        dataset_name, config, original_labels, use_yolo
+    )
+    existing_openlid = existing_openlid_data.get(file_hash)
+    enrichment = apply_tiered_enrichment(
+        sample, config, image_path, use_yolo, git_sha, existing_openlid
+    )
+
+    sample.add_enrichment(
+        data=enrichment,
+        created_by=f"annotate_base_metadata.py_v{SCRIPT_VERSION}",
+        method=tier.value,
+        description=tier_desc,
+        git_sha=git_sha,
+        model_checkpoint="doclayout_yolo"
+        if tier == EnrichmentTier.TIER_2_MODEL
+        else None,
+    )
+
+    return sample
+
+
 def scan_dataset(
     dataset_name: str,
     config: dict[str, Any],
@@ -4297,7 +4422,6 @@ def scan_dataset(
         existing_openlid_data: Optional dict mapping file_hash to existing
             OpenLID-detected language/script data to preserve
     """
-    samples: list[SampleMetadata] = []
     existing_openlid_data = existing_openlid_data or {}
 
     dataset_path = config["path"]
@@ -4305,7 +4429,7 @@ def scan_dataset(
 
     if not dataset_path.exists():
         logger.warning(f"Dataset path not found: {dataset_path}")
-        return samples
+        return []
 
     # Check for arrow format (special handling)
     if config.get("arrow_format"):
@@ -4314,7 +4438,7 @@ def scan_dataset(
             logger.warning(
                 f"{dataset_name} requires extraction. Run --extract-omnidocbench first."
             )
-            return samples
+            return []
 
     # Find all images
     image_files = sorted(dataset_path.glob(pattern))
@@ -4323,94 +4447,150 @@ def scan_dataset(
 
     if not image_files:
         logger.warning(f"No images found for {dataset_name} with pattern {pattern}")
-        return samples
+        return []
 
     logger.info(f"Scanning {dataset_name}: {len(image_files)} files (YOLO: {use_yolo})")
 
-    # Get git SHA for reproducibility
     git_sha = get_git_sha()
-
-    # Get label parser if specified
     parser_name = config.get("original_labels_parser")
     label_parser = LABEL_PARSERS.get(parser_name) if parser_name else None
 
+    samples: list[SampleMetadata] = []
     for image_path in tqdm(image_files, desc=f"  {dataset_name}", leave=False):
-        # Skip non-image files
-        if image_path.suffix.lower() not in {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".tif",
-            ".tiff",
-            ".bmp",
-        }:
+        if image_path.suffix.lower() not in _IMAGE_EXTENSIONS:
             continue
 
-        # Generate unique ID
-        sample_id = str(uuid.uuid4())
-
-        # Compute file hash
-        file_hash = compute_sha256(image_path)
-
-        # Extract file metadata
-        file_metadata = extract_file_metadata(image_path)
-
-        # Parse original labels if parser available
-        if label_parser:
-            original_labels = label_parser(dataset_path, image_path)
-        else:
-            original_labels = OriginalLabels()
-
-        # Create sample metadata
-        sample = SampleMetadata(
-            id=sample_id,
-            file_hash=file_hash,
-            dataset_name=dataset_name,
-            dataset_version="1.0",
-            original_path=str(image_path.relative_to(dataset_path)),
-            original_filename=image_path.name,
-            download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
-            original_labels=original_labels,
-            original_file=file_metadata,
+        sample = _process_single_image(
+            image_path,
+            dataset_name,
+            dataset_path,
+            config,
+            label_parser,
+            use_yolo,
+            git_sha,
+            existing_openlid_data,
         )
-
-        # Extract split from raw_labels if available
-        if original_labels.raw_labels and "split" in original_labels.raw_labels:
-            sample.split = original_labels.raw_labels["split"]
-
-        # Fallback: detect split from image path if not set by parser
-        if sample.split == "unknown":
-            path_str_lower = str(image_path).lower()
-            for split_name in ["train", "val", "test"]:
-                if f"/{split_name}/" in path_str_lower:
-                    sample.split = split_name
-                    break
-
-        # Apply tiered enrichment
-        tier, tier_desc = get_enrichment_tier(
-            dataset_name, config, original_labels, use_yolo
-        )
-        # Check for existing OpenLID data to preserve
-        existing_openlid = existing_openlid_data.get(file_hash)
-        enrichment = apply_tiered_enrichment(
-            sample, config, image_path, use_yolo, git_sha, existing_openlid
-        )
-
-        # Add enrichment with reproducibility fields
-        sample.add_enrichment(
-            data=enrichment,
-            created_by=f"annotate_base_metadata.py_v{SCRIPT_VERSION}",
-            method=tier.value,
-            description=tier_desc,
-            git_sha=git_sha,
-            model_checkpoint="doclayout_yolo"
-            if tier == EnrichmentTier.TIER_2_MODEL
-            else None,
-        )
-
         samples.append(sample)
 
     return samples
+
+
+def _enrichment_field(enrichment: Any, field_name: str) -> Any:
+    """Safely get an enrichment field, returning None if enrichment is None."""
+    return getattr(enrichment, field_name, None) if enrichment else None
+
+
+def _json_or_none(data: Any) -> str | None:
+    """Serialize data to JSON string, or return None if falsy."""
+    return json.dumps(data) if data else None
+
+
+def _build_enrichment_fields(enrichment: Any) -> dict[str, Any]:
+    """Build enrichment-related fields for a Parquet record."""
+    _ENRICHMENT_KEYS = [
+        "content_flags_tier",
+        "content_flags_source",
+        "capture_method",
+        "capture_confidence",
+        "domain_level1",
+        "resolution_category",
+        "has_table",
+        "has_formula",
+        "has_handwriting",
+        "has_signature",
+        "has_figure",
+        "iso639_language",
+        "iso15924_script",
+        "script_family",
+        "bcp47_tag",
+        "text_scope",
+        "text_scope_content_type",
+        "text_scope_estimated_chars",
+        "text_scope_estimated_words",
+        "paper_size",
+        "paper_size_standard",
+        "paper_size_orientation",
+        "dataset_short_code",
+    ]
+    # Map enrichment attribute names to record key names where they differ
+    _KEY_RENAMES = {
+        "content_flags_tier": "enrichment_tier",
+        "content_flags_source": "enrichment_source",
+    }
+    fields: dict[str, Any] = {}
+    for attr in _ENRICHMENT_KEYS:
+        record_key = _KEY_RENAMES.get(attr, attr)
+        fields[record_key] = _enrichment_field(enrichment, attr)
+    return fields
+
+
+def _build_annotation_fields(sample: SampleMetadata, enrichment: Any) -> dict[str, Any]:
+    """Build annotation JSON and derived count fields for a Parquet record."""
+    ol = sample.original_labels
+    doclaynet = ol.doclaynet_annotations or []
+    return {
+        "doclaynet_annotations_json": _json_or_none(ol.doclaynet_annotations),
+        "tablebank_annotations_json": _json_or_none(ol.tablebank_annotations),
+        "funsd_annotations_json": _json_or_none(ol.funsd_annotations),
+        "layout_detections_json": (
+            _json_or_none(enrichment.layout_detections) if enrichment else None
+        ),
+        "table_count": (
+            sum(1 for a in doclaynet if a.get("category_name") == "Table")
+            + len(ol.tablebank_annotations or [])
+        ),
+        "formula_count": sum(
+            1 for a in doclaynet if a.get("category_name") == "Formula"
+        ),
+    }
+
+
+def _build_parquet_record(sample: SampleMetadata) -> dict[str, Any]:
+    """Build a flat Parquet record dict from a SampleMetadata instance."""
+    enrichment = sample.get_current_enrichment()
+    version_info = (
+        sample.enrichment_versions[-1] if sample.enrichment_versions else None
+    )
+
+    record: dict[str, Any] = {
+        # Identity
+        "sample_id": sample.id,
+        "file_hash": sample.file_hash,
+        "dataset_name": sample.dataset_name,
+        "original_path": sample.original_path,
+        "original_filename": sample.original_filename,
+        # File metadata
+        "width_px": sample.original_file.width_px,
+        "height_px": sample.original_file.height_px,
+        "file_size_bytes": sample.original_file.file_size_bytes,
+        "dpi": sample.original_file.dpi,
+        "format": sample.original_file.format,
+        # Original labels
+        "diqa_mos": sample.original_labels.diqa_mos,
+        "ocr_quality_score": sample.original_labels.ocr_quality_score,
+        "smartdoc_mos": sample.original_labels.smartdoc_mos,
+        "writer_id": sample.original_labels.writer_id,
+        "transcription": sample.original_labels.transcription,
+        "original_language_code": sample.original_labels.language_code,
+        "original_script_name": sample.original_labels.script_name,
+        # Enrichment version
+        "enrichment_version": sample.current_version,
+        # Reproducibility
+        "git_sha": version_info.git_sha if version_info else None,
+        "model_checkpoint": version_info.model_checkpoint if version_info else None,
+        "script_version": version_info.script_version if version_info else None,
+        # Timestamps
+        "created_at": sample.created_at,
+        "schema_version": sample.schema_version,
+    }
+
+    # Add enrichment fields
+    record.update(_build_enrichment_fields(enrichment))
+
+    # Add annotation JSON and derived counts
+    record.update(_build_annotation_fields(sample, enrichment))
+
+    return record
 
 
 def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> None:
@@ -4419,137 +4599,10 @@ def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> N
         logger.warning("No samples to save")
         return
 
-    # Build flat records for Parquet
-    records = []
-    for sample in samples:
-        enrichment = sample.get_current_enrichment()
-        version_info = (
-            sample.enrichment_versions[-1] if sample.enrichment_versions else None
-        )
+    records = [_build_parquet_record(sample) for sample in samples]
 
-        record = {
-            "sample_id": sample.id,
-            "file_hash": sample.file_hash,
-            "dataset_name": sample.dataset_name,
-            "original_path": sample.original_path,
-            "original_filename": sample.original_filename,
-            # File metadata
-            "width_px": sample.original_file.width_px,
-            "height_px": sample.original_file.height_px,
-            "file_size_bytes": sample.original_file.file_size_bytes,
-            "dpi": sample.original_file.dpi,
-            "format": sample.original_file.format,
-            # Original labels (human MOS)
-            "diqa_mos": sample.original_labels.diqa_mos,
-            "ocr_quality_score": sample.original_labels.ocr_quality_score,
-            "smartdoc_mos": sample.original_labels.smartdoc_mos,
-            # Original labels (handwriting)
-            "writer_id": sample.original_labels.writer_id,
-            "transcription": sample.original_labels.transcription,
-            # Original labels (multilingual)
-            "original_language_code": sample.original_labels.language_code,
-            "original_script_name": sample.original_labels.script_name,
-            # Enrichment data
-            "enrichment_version": sample.current_version,
-            "enrichment_tier": enrichment.content_flags_tier if enrichment else None,
-            "enrichment_source": enrichment.content_flags_source
-            if enrichment
-            else None,
-            "capture_method": enrichment.capture_method if enrichment else None,
-            "capture_confidence": enrichment.capture_confidence if enrichment else None,
-            "domain_level1": enrichment.domain_level1 if enrichment else None,
-            "resolution_category": enrichment.resolution_category
-            if enrichment
-            else None,
-            # Content flags
-            "has_table": enrichment.has_table if enrichment else None,
-            "has_formula": enrichment.has_formula if enrichment else None,
-            "has_handwriting": enrichment.has_handwriting if enrichment else None,
-            "has_signature": enrichment.has_signature if enrichment else None,
-            "has_figure": enrichment.has_figure if enrichment else None,
-            # Language/Script (ISO-compliant)
-            "iso639_language": enrichment.iso639_language if enrichment else None,
-            "iso15924_script": enrichment.iso15924_script if enrichment else None,
-            "script_family": enrichment.script_family if enrichment else None,
-            "bcp47_tag": enrichment.bcp47_tag if enrichment else None,
-            # Text Scope
-            "text_scope": enrichment.text_scope if enrichment else None,
-            "text_scope_content_type": (
-                enrichment.text_scope_content_type if enrichment else None
-            ),
-            "text_scope_estimated_chars": (
-                enrichment.text_scope_estimated_chars if enrichment else None
-            ),
-            "text_scope_estimated_words": (
-                enrichment.text_scope_estimated_words if enrichment else None
-            ),
-            # Paper Size
-            "paper_size": enrichment.paper_size if enrichment else None,
-            "paper_size_standard": enrichment.paper_size_standard
-            if enrichment
-            else None,
-            "paper_size_orientation": (
-                enrichment.paper_size_orientation if enrichment else None
-            ),
-            # Dataset Source
-            "dataset_short_code": (
-                enrichment.dataset_short_code if enrichment else None
-            ),
-            # Reproducibility
-            "git_sha": version_info.git_sha if version_info else None,
-            "model_checkpoint": version_info.model_checkpoint if version_info else None,
-            "script_version": version_info.script_version if version_info else None,
-            # Element annotations (JSON-serialized for bbox preservation)
-            "doclaynet_annotations_json": (
-                json.dumps(sample.original_labels.doclaynet_annotations)
-                if sample.original_labels.doclaynet_annotations
-                else None
-            ),
-            "tablebank_annotations_json": (
-                json.dumps(sample.original_labels.tablebank_annotations)
-                if sample.original_labels.tablebank_annotations
-                else None
-            ),
-            "funsd_annotations_json": (
-                json.dumps(sample.original_labels.funsd_annotations)
-                if sample.original_labels.funsd_annotations
-                else None
-            ),
-            "layout_detections_json": (
-                json.dumps(enrichment.layout_detections)
-                if enrichment and enrichment.layout_detections
-                else None
-            ),
-            # Derived element counts (for quick filtering)
-            "table_count": (
-                len(
-                    [
-                        a
-                        for a in (sample.original_labels.doclaynet_annotations or [])
-                        if a.get("category_name") == "Table"
-                    ]
-                )
-                + len(sample.original_labels.tablebank_annotations or [])
-            ),
-            "formula_count": (
-                len(
-                    [
-                        a
-                        for a in (sample.original_labels.doclaynet_annotations or [])
-                        if a.get("category_name") == "Formula"
-                    ]
-                )
-            ),
-            # Timestamps
-            "created_at": sample.created_at,
-            "schema_version": sample.schema_version,
-        }
-        records.append(record)
-
-    # Create PyArrow table
+    # Create PyArrow table and save
     table = pa.Table.from_pylist(records)
-
-    # Save to Parquet
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(table, output_path, compression="snappy")
 
@@ -4624,6 +4677,34 @@ def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
         logger.info(f"Saved {len(dataset_samples)} samples to {output_file}{disk_info}")
 
 
+_OPENLID_PRESERVE_KEYS = (
+    "iso639_language",
+    "iso15924_script",
+    "script_family",
+    "bcp47_tag",
+    "primary_language",
+    "language_confidence",
+)
+
+
+def _extract_openlid_data(sample: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract OpenLID language data from a sample dict, or None if not present."""
+    enrichment_versions = sample.get("enrichment_versions", [])
+    current_version = sample.get("current_version", 0)
+
+    for version in enrichment_versions:
+        if version.get("version") != current_version:
+            continue
+        enrichment_data = version.get("data", {})
+        detection_method = enrichment_data.get("text_scope_detection_method", "")
+        if "openlid" not in detection_method.lower():
+            return None
+        result = {key: enrichment_data.get(key) for key in _OPENLID_PRESERVE_KEYS}
+        result["text_scope_detection_method"] = detection_method
+        return result
+    return None
+
+
 def load_existing_metadata(
     output_dir: Path,
 ) -> dict[str, dict[str, Any]]:
@@ -4653,37 +4734,9 @@ def load_existing_metadata(
                 file_hash = sample.get("file_hash")
                 if not file_hash:
                     continue
-
-                # Extract current enrichment data if available
-                enrichment_versions = sample.get("enrichment_versions", [])
-                current_version = sample.get("current_version", 0)
-
-                for version in enrichment_versions:
-                    if version.get("version") == current_version:
-                        enrichment_data = version.get("data", {})
-                        # Check if this has OpenLID-detected language data
-                        detection_method = enrichment_data.get(
-                            "text_scope_detection_method", ""
-                        )
-                        if "openlid" in detection_method.lower():
-                            existing[file_hash] = {
-                                "iso639_language": enrichment_data.get(
-                                    "iso639_language"
-                                ),
-                                "iso15924_script": enrichment_data.get(
-                                    "iso15924_script"
-                                ),
-                                "script_family": enrichment_data.get("script_family"),
-                                "bcp47_tag": enrichment_data.get("bcp47_tag"),
-                                "primary_language": enrichment_data.get(
-                                    "primary_language"
-                                ),
-                                "language_confidence": enrichment_data.get(
-                                    "language_confidence"
-                                ),
-                                "text_scope_detection_method": detection_method,
-                            }
-                        break
+                openlid = _extract_openlid_data(sample)
+                if openlid:
+                    existing[file_hash] = openlid
 
         except Exception as e:
             logger.warning(f"Failed to load existing metadata from {json_file}: {e}")
@@ -4694,6 +4747,32 @@ def load_existing_metadata(
         )
 
     return existing
+
+
+def _increment_counter(counters: dict[str, int], key: str) -> None:
+    """Increment a counter in a dict, initializing to 0 if absent."""
+    counters[key] = counters.get(key, 0) + 1
+
+
+def _tally_enrichment_stats(enrichment: Any, stats: dict[str, Any]) -> None:
+    """Tally enrichment-derived statistics for a single sample."""
+    _increment_counter(
+        stats["by_capture_method"], enrichment.capture_method or "unknown"
+    )
+    _increment_counter(stats["by_domain"], enrichment.domain_level1 or "unknown")
+    _increment_counter(
+        stats["by_resolution_category"], enrichment.resolution_category or "unknown"
+    )
+    _increment_counter(
+        stats["by_enrichment_tier"], enrichment.content_flags_tier or "unknown"
+    )
+
+    if enrichment.has_table:
+        stats["with_tables"] += 1
+    if enrichment.has_formula:
+        stats["with_formulas"] += 1
+    if enrichment.has_handwriting:
+        stats["with_handwriting"] += 1
 
 
 def generate_statistics(samples: list[SampleMetadata]) -> dict[str, Any]:
@@ -4712,45 +4791,11 @@ def generate_statistics(samples: list[SampleMetadata]) -> dict[str, Any]:
     }
 
     for sample in samples:
-        # By dataset
-        ds = sample.dataset_name
-        if ds not in stats["by_dataset"]:
-            stats["by_dataset"][ds] = 0
-        stats["by_dataset"][ds] += 1
+        _increment_counter(stats["by_dataset"], sample.dataset_name)
 
         enrichment = sample.get_current_enrichment()
         if enrichment:
-            # By capture method
-            cm = enrichment.capture_method or "unknown"
-            if cm not in stats["by_capture_method"]:
-                stats["by_capture_method"][cm] = 0
-            stats["by_capture_method"][cm] += 1
-
-            # By domain
-            domain = enrichment.domain_level1 or "unknown"
-            if domain not in stats["by_domain"]:
-                stats["by_domain"][domain] = 0
-            stats["by_domain"][domain] += 1
-
-            # By DPI category
-            res_cat = enrichment.resolution_category or "unknown"
-            if res_cat not in stats["by_resolution_category"]:
-                stats["by_resolution_category"][res_cat] = 0
-            stats["by_resolution_category"][res_cat] += 1
-
-            # By enrichment tier
-            tier = enrichment.content_flags_tier or "unknown"
-            if tier not in stats["by_enrichment_tier"]:
-                stats["by_enrichment_tier"][tier] = 0
-            stats["by_enrichment_tier"][tier] += 1
-
-            # Content flags
-            if enrichment.has_table:
-                stats["with_tables"] += 1
-            if enrichment.has_formula:
-                stats["with_formulas"] += 1
-            if enrichment.has_handwriting:
-                stats["with_handwriting"] += 1
+            _tally_enrichment_stats(enrichment, stats)
 
         # Human MOS
         labels = sample.original_labels
@@ -4763,6 +4808,108 @@ def generate_statistics(samples: list[SampleMetadata]) -> dict[str, Any]:
 # =============================================================================
 # CLI Entry Point
 # =============================================================================
+
+
+def _get_dataset_tier_label(name: str) -> str:
+    """Return a human-readable tier label for a dataset."""
+    if name in TIER_0_DATASETS:
+        return "Tier 0"
+    if name in TIER_1_DATASETS:
+        return "Tier 1"
+    return "Tier 2/3"
+
+
+def _run_scan(args: Any, use_yolo: bool) -> list[SampleMetadata]:
+    """Execute the --scan workflow and return all collected samples."""
+    logger.info("=" * 70)
+    logger.info("BASE DATASET METADATA ANNOTATION")
+    logger.info(f"Schema Version: {SCHEMA_VERSION}")
+    logger.info(f"Script Version: {SCRIPT_VERSION}")
+    logger.info(f"Git SHA: {get_git_sha()}")
+    logger.info(f"DocLayout-YOLO: {'ENABLED' if use_yolo else 'DISABLED'}")
+    logger.info("=" * 70)
+
+    datasets_to_scan = (
+        {args.dataset: DATASET_CONFIGS[args.dataset]}
+        if args.dataset and args.dataset in DATASET_CONFIGS
+        else DATASET_CONFIGS
+    )
+
+    if args.dry_run:
+        logger.info("DRY RUN - would scan:")
+        for name, config in datasets_to_scan.items():
+            logger.info(f"  {name}: {config['path']} ({_get_dataset_tier_label(name)})")
+        return []
+
+    existing_openlid_data = load_existing_metadata(args.output)
+
+    all_samples: list[SampleMetadata] = []
+    for dataset_name, config in datasets_to_scan.items():
+        samples = scan_dataset(
+            dataset_name,
+            config,
+            limit=args.limit,
+            use_yolo=use_yolo,
+            existing_openlid_data=existing_openlid_data,
+        )
+        all_samples.extend(samples)
+        logger.info(f"  {dataset_name}: {len(samples)} samples")
+
+    # Save metadata
+    logger.info("\nSaving metadata...")
+    save_metadata_json(all_samples, args.output / "json")
+    save_metadata_parquet(all_samples, args.output / SAMPLES_PARQUET)
+
+    return all_samples
+
+
+def _load_or_generate_stats(
+    parquet_path: Path, all_samples: list[SampleMetadata]
+) -> dict[str, Any] | None:
+    """Load stats from parquet or generate from samples. Returns None on failure."""
+    if parquet_path.exists():
+        table = pq.read_table(parquet_path)
+        logger.info(f"Loaded {table.num_rows} samples from {parquet_path}")
+        df = table.to_pandas()
+        return {
+            "total_samples": len(df),
+            "by_dataset": df["dataset_name"].value_counts().to_dict(),
+            "by_capture_method": df["capture_method"].value_counts().to_dict(),
+            "by_domain": df["domain_level1"].value_counts().to_dict(),
+            "by_enrichment_tier": df["enrichment_tier"].value_counts().to_dict(),
+            "with_human_mos": (
+                df["diqa_mos"].notna().sum() + df["ocr_quality_score"].notna().sum()
+            ),
+            "with_tables": df["has_table"].sum() if "has_table" in df else 0,
+            "with_formulas": df["has_formula"].sum() if "has_formula" in df else 0,
+        }
+    if all_samples:
+        return generate_statistics(all_samples)
+    logger.error("No metadata found. Run --scan first.")
+    return None
+
+
+def _display_stats(stats: dict[str, Any]) -> None:
+    """Log a formatted statistics report."""
+    logger.info("\n" + "=" * 70)
+    logger.info("METADATA STATISTICS")
+    logger.info("=" * 70)
+    logger.info(f"Total samples: {stats['total_samples']:,}")
+
+    _STAT_SECTIONS = [
+        ("By Dataset", "by_dataset"),
+        ("By Enrichment Tier", "by_enrichment_tier"),
+        ("By Capture Method", "by_capture_method"),
+        ("By Domain", "by_domain"),
+    ]
+    for title, key in _STAT_SECTIONS:
+        logger.info(f"\n{title}:")
+        for name, count in sorted(stats.get(key, {}).items(), key=lambda x: -x[1]):
+            logger.info(f"  {name}: {count:,}")
+
+    logger.info(f"\nWith Human MOS: {stats.get('with_human_mos', 0):,}")
+    logger.info(f"With Tables: {stats.get('with_tables', 0):,}")
+    logger.info(f"With Formulas: {stats.get('with_formulas', 0):,}")
 
 
 def main():
@@ -4832,7 +4979,6 @@ Enrichment Tiers:
         parser.print_help()
         return
 
-    # Ensure output directory exists
     args.output.mkdir(parents=True, exist_ok=True)
 
     # Handle OmniDocBench extraction
@@ -4849,115 +4995,17 @@ Enrichment Tiers:
     use_yolo = not args.no_yolo
 
     if args.scan:
-        logger.info("=" * 70)
-        logger.info("BASE DATASET METADATA ANNOTATION")
-        logger.info(f"Schema Version: {SCHEMA_VERSION}")
-        logger.info(f"Script Version: {SCRIPT_VERSION}")
-        logger.info(f"Git SHA: {get_git_sha()}")
-        logger.info(f"DocLayout-YOLO: {'ENABLED' if use_yolo else 'DISABLED'}")
-        logger.info("=" * 70)
-
-        datasets_to_scan = (
-            {args.dataset: DATASET_CONFIGS[args.dataset]}
-            if args.dataset and args.dataset in DATASET_CONFIGS
-            else DATASET_CONFIGS
-        )
-
-        if args.dry_run:
-            logger.info("DRY RUN - would scan:")
-            for name, config in datasets_to_scan.items():
-                tier = (
-                    "Tier 0"
-                    if name in TIER_0_DATASETS
-                    else "Tier 1"
-                    if name in TIER_1_DATASETS
-                    else "Tier 2/3"
-                )
-                logger.info(f"  {name}: {config['path']} ({tier})")
-            return
-
-        # Load existing metadata to preserve OpenLID language/script data
-        existing_openlid_data = load_existing_metadata(args.output)
-
-        for dataset_name, config in datasets_to_scan.items():
-            samples = scan_dataset(
-                dataset_name,
-                config,
-                limit=args.limit,
-                use_yolo=use_yolo,
-                existing_openlid_data=existing_openlid_data,
-            )
-            all_samples.extend(samples)
-            logger.info(f"  {dataset_name}: {len(samples)} samples")
-
-        # Save metadata
-        logger.info("\nSaving metadata...")
-
-        # JSON (full detail, per dataset)
-        save_metadata_json(all_samples, args.output / "json")
-
-        # Parquet (flat, efficient)
-        save_metadata_parquet(all_samples, args.output / "samples.parquet")
+        all_samples = _run_scan(args, use_yolo)
 
     if args.stats:
-        # Load existing metadata
-        parquet_path = args.output / "samples.parquet"
-        if parquet_path.exists():
-            table = pq.read_table(parquet_path)
-            logger.info(f"Loaded {table.num_rows} samples from {parquet_path}")
-
-            # Generate stats from parquet
-            df = table.to_pandas()
-            stats = {
-                "total_samples": len(df),
-                "by_dataset": df["dataset_name"].value_counts().to_dict(),
-                "by_capture_method": df["capture_method"].value_counts().to_dict(),
-                "by_domain": df["domain_level1"].value_counts().to_dict(),
-                "by_enrichment_tier": df["enrichment_tier"].value_counts().to_dict(),
-                "with_human_mos": df["diqa_mos"].notna().sum()
-                + df["ocr_quality_score"].notna().sum(),
-                "with_tables": df["has_table"].sum() if "has_table" in df else 0,
-                "with_formulas": df["has_formula"].sum() if "has_formula" in df else 0,
-            }
-        elif all_samples:
-            stats = generate_statistics(all_samples)
-        else:
-            logger.error("No metadata found. Run --scan first.")
+        parquet_path = args.output / SAMPLES_PARQUET
+        stats = _load_or_generate_stats(parquet_path, all_samples)
+        if stats is None:
             return
-
-        logger.info("\n" + "=" * 70)
-        logger.info("METADATA STATISTICS")
-        logger.info("=" * 70)
-        logger.info(f"Total samples: {stats['total_samples']:,}")
-
-        logger.info("\nBy Dataset:")
-        for ds, count in sorted(stats["by_dataset"].items(), key=lambda x: -x[1]):
-            logger.info(f"  {ds}: {count:,}")
-
-        logger.info("\nBy Enrichment Tier:")
-        for tier, count in sorted(
-            stats.get("by_enrichment_tier", {}).items(), key=lambda x: -x[1]
-        ):
-            logger.info(f"  {tier}: {count:,}")
-
-        logger.info("\nBy Capture Method:")
-        for cm, count in sorted(
-            stats.get("by_capture_method", {}).items(), key=lambda x: -x[1]
-        ):
-            logger.info(f"  {cm}: {count:,}")
-
-        logger.info("\nBy Domain:")
-        for domain, count in sorted(
-            stats.get("by_domain", {}).items(), key=lambda x: -x[1]
-        ):
-            logger.info(f"  {domain}: {count:,}")
-
-        logger.info(f"\nWith Human MOS: {stats.get('with_human_mos', 0):,}")
-        logger.info(f"With Tables: {stats.get('with_tables', 0):,}")
-        logger.info(f"With Formulas: {stats.get('with_formulas', 0):,}")
+        _display_stats(stats)
 
     if args.export:
-        parquet_path = args.output / "samples.parquet"
+        parquet_path = args.output / SAMPLES_PARQUET
         if parquet_path.exists():
             logger.info(f"Parquet export already exists: {parquet_path}")
         elif all_samples:

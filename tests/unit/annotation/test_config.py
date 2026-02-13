@@ -40,7 +40,7 @@ class TestAnnotationSettings:
         assert settings.checkpoint_interval == 100
         assert settings.hash_full_file is True  # P0-1 fix - always True
         assert settings.atomic_fsync is False
-        assert settings.yolo_confidence_threshold == 0.25
+        assert settings.yolo_confidence_threshold == pytest.approx(0.25)
         assert settings.siglip_batch_size == 32
 
     def test_custom_values(self) -> None:
@@ -53,7 +53,7 @@ class TestAnnotationSettings:
 
         assert settings.batch_size == 200
         assert settings.workers == 8
-        assert settings.yolo_confidence_threshold == 0.5
+        assert settings.yolo_confidence_threshold == pytest.approx(0.5)
 
     def test_frozen_dataclass(self) -> None:
         """Test that settings are immutable."""
@@ -102,7 +102,7 @@ class TestAnnotationSettingsFromEnv:
         assert settings.batch_size == 200
         assert settings.workers == 8
         assert settings.cache_size_limit == 5000
-        assert settings.yolo_confidence_threshold == 0.35
+        assert settings.yolo_confidence_threshold == pytest.approx(0.35)
         assert settings.atomic_fsync is True
 
     def test_from_env_paths(self) -> None:
@@ -179,7 +179,7 @@ class TestAnnotationSettingsFromYaml:
 
         assert settings.batch_size == 150
         assert settings.workers == 6
-        assert settings.yolo_confidence_threshold == 0.4
+        assert settings.yolo_confidence_threshold == pytest.approx(0.4)
         assert settings.yolo_model_path == Path("/models/yolo.pt")
 
     def test_from_yaml_file_not_found(self, tmp_path: Path) -> None:
@@ -254,8 +254,9 @@ class TestTierDefinitions:
             assert isinstance(dataset, str)
             assert isinstance(flags, dict)
             # At least one content flag should be True
-            content_flags = [flags.get(k, False) for k in CONTENT_FLAG_KEYS]
-            assert any(content_flags), f"No content flag set for {dataset}"
+            assert any(flags.get(k, False) for k in CONTENT_FLAG_KEYS), (
+                f"No content flag set for {dataset}"
+            )
 
     def test_tier_1_datasets_structure(self) -> None:
         """Test TIER_1_DATASETS has expected structure."""

@@ -22,6 +22,99 @@ from image_preprocessing_detector.ingestion.pdf_loader import load_pdf
 random.seed(42)
 
 
+def _process_pdf_sample(
+    pdf_path, text_gate, blur_detector, contrast_detector, skew_detector
+):
+    """Process a single PDF and return page result dict, or None on failure."""
+    pages = load_pdf(str(pdf_path))
+    if not pages:
+        return None
+
+    page = pages[0]
+    image = page.image
+
+    text_result = text_gate.detect(image)
+    blur_result = blur_detector.detect(image)
+    contrast_result = contrast_detector.detect(image)
+    skew_result = skew_detector.detect(image)
+
+    return {
+        "pdf_file": pdf_path.name,
+        "page_number": 1,
+        "has_text": text_result.has_text,
+        "text_confidence": float(text_result.confidence),
+        "is_blurred": blur_result.is_blurred,
+        "blur_score": float(blur_result.score),
+        "blur_severity": blur_result.severity,
+        "is_low_contrast": contrast_result.is_low_contrast,
+        "contrast_score": float(contrast_result.score),
+        "contrast_severity": contrast_result.severity,
+        "is_skewed": skew_result.is_skewed,
+        "skew_angle": float(skew_result.angle),
+        "skew_severity": skew_result.severity,
+    }
+
+
+def _update_issue_counts(page_result, issue_counts):
+    """Update issue counters from a page result."""
+    issue_counts["total_pages"] += 1
+    if page_result["has_text"]:
+        issue_counts["has_text"] += 1
+    if page_result["is_blurred"]:
+        issue_counts["is_blurred"] += 1
+    if page_result["is_low_contrast"]:
+        issue_counts["is_low_contrast"] += 1
+    if page_result["is_skewed"]:
+        issue_counts["is_skewed"] += 1
+
+
+def _print_score_distribution(label, scores, fmt=".2f"):
+    """Print statistical summary for a list of scores."""
+    print(f"{label}:")
+    print(f"  Mean:   {np.mean(scores):{fmt}}")
+    print(f"  Median: {np.median(scores):{fmt}}")
+    print(f"  Min:    {np.min(scores):{fmt}}")
+    print(f"  Max:    {np.max(scores):{fmt}}")
+    print(f"  Std:    {np.std(scores):{fmt}}")
+    print()
+
+
+def _print_recommendations(stats):
+    """Print threshold recommendations based on detection rates."""
+    print()
+    print("RECOMMENDATIONS")
+    print("=" * 80)
+    print()
+
+    if stats["blur_detection_rate"] > 0.2:
+        print("High blur detection rate (>20%) - may indicate conservative thresholds")
+        print("   Consider reviewing blur threshold settings")
+    else:
+        print("Blur detection rate within normal range")
+
+    if stats["low_contrast_rate"] > 0.3:
+        print(
+            "High low-contrast rate (>30%) - may indicate threshold adjustment needed"
+        )
+        print("   Review contrast threshold settings")
+    else:
+        print("Contrast detection rate within normal range")
+
+    if stats["skew_detection_rate"] > 0.1:
+        print("Elevated skew detection (>10%) - review skew threshold")
+    else:
+        print("Skew detection rate within normal range")
+
+    print()
+    print("Next Steps:")
+    print("  1. Review detailed results in JSON file")
+    print("  2. Spot-check flagged images manually")
+    print("  3. Adjust detector thresholds if needed")
+    print("  4. Update VALIDATION_RESULTS.md with findings")
+    print()
+    print("=" * 80)
+
+
 def main():
     """Run validation on DocLayNet sample."""
     print("=" * 80)
@@ -29,29 +122,25 @@ def main():
     print("=" * 80)
     print()
 
-    # Check DocLayNet availability
     doclaynet_path = Path(
         "/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/documents/pdf"
     )
 
     if not doclaynet_path.exists():
-        print("❌ DocLayNet dataset not found at expected location")
+        print("DocLayNet dataset not found at expected location")
         print(f"   Expected: {doclaynet_path}")
         print()
         print("Please ensure DocLayNet is downloaded and available.")
         return
 
-    # Get all PDFs
     all_pdfs = list(doclaynet_path.glob("*.pdf"))
     print(f"Found {len(all_pdfs)} PDFs in DocLayNet dataset")
 
-    # Sample PDFs
     sample_size = min(100, len(all_pdfs))
     sample_pdfs = random.sample(all_pdfs, sample_size)
     print(f"Sampling {sample_size} random PDFs for validation")
     print()
 
-    # Initialize detectors
     print("Initializing detectors...")
     text_gate = TextGate()
     blur_detector = BlurDetector()
@@ -59,7 +148,6 @@ def main():
     skew_detector = SkewDetector()
     print()
 
-    # Process samples
     results = []
     issue_counts = {
         "has_text": 0,
@@ -74,55 +162,15 @@ def main():
 
     for i, pdf_path in enumerate(sample_pdfs, 1):
         try:
-            # Load PDF
-            pages = load_pdf(str(pdf_path))
-
-            if not pages:
+            page_result = _process_pdf_sample(
+                pdf_path, text_gate, blur_detector, contrast_detector, skew_detector
+            )
+            if page_result is None:
                 continue
 
-            # Use first page only for speed
-            page = pages[0]
-            image = page.image
-
-            # Run text gate
-            text_result = text_gate.detect(image)
-
-            # Run IQA detectors
-            blur_result = blur_detector.detect(image)
-            contrast_result = contrast_detector.detect(image)
-            skew_result = skew_detector.detect(image)
-
-            # Record results
-            page_result = {
-                "pdf_file": pdf_path.name,
-                "page_number": 1,
-                "has_text": text_result.has_text,
-                "text_confidence": float(text_result.confidence),
-                "is_blurred": blur_result.is_blurred,
-                "blur_score": float(blur_result.score),
-                "blur_severity": blur_result.severity,
-                "is_low_contrast": contrast_result.is_low_contrast,
-                "contrast_score": float(contrast_result.score),
-                "contrast_severity": contrast_result.severity,
-                "is_skewed": skew_result.is_skewed,
-                "skew_angle": float(skew_result.angle),
-                "skew_severity": skew_result.severity,
-            }
-
             results.append(page_result)
+            _update_issue_counts(page_result, issue_counts)
 
-            # Update counts
-            issue_counts["total_pages"] += 1
-            if text_result.has_text:
-                issue_counts["has_text"] += 1
-            if blur_result.is_blurred:
-                issue_counts["is_blurred"] += 1
-            if contrast_result.is_low_contrast:
-                issue_counts["is_low_contrast"] += 1
-            if skew_result.is_skewed:
-                issue_counts["is_skewed"] += 1
-
-            # Progress indicator
             if i % 10 == 0:
                 print(
                     f"  Processed {i}/{sample_size} PDFs "
@@ -132,16 +180,15 @@ def main():
                 )
 
         except Exception as e:
-            print(f"  ⚠️  Error processing {pdf_path.name}: {e}")
+            print(f"  Error processing {pdf_path.name}: {e}")
             continue
 
     print("-" * 80)
     print()
 
-    # Calculate statistics
     total = issue_counts["total_pages"]
     if total == 0:
-        print("❌ No pages processed successfully")
+        print("No pages processed successfully")
         return
 
     stats = {
@@ -154,19 +201,10 @@ def main():
         "issue_counts": issue_counts,
     }
 
-    # Save detailed results
     output_file = Path("validation/doclaynet_validation_results.json")
     with open(output_file, "w") as f:
-        json.dump(
-            {
-                "summary": stats,
-                "detailed_results": results,
-            },
-            f,
-            indent=2,
-        )
+        json.dump({"summary": stats, "detailed_results": results}, f, indent=2)
 
-    # Print summary
     print("=" * 80)
     print("VALIDATION SUMMARY")
     print("=" * 80)
@@ -191,78 +229,25 @@ def main():
     print(f"Results saved to: {output_file}")
     print("=" * 80)
 
-    # Quality distribution analysis
     print()
     print("QUALITY DISTRIBUTION ANALYSIS")
     print("=" * 80)
     print()
 
-    # Analyze blur scores
-    blur_scores = [r["blur_score"] for r in results]
-    print("Blur Scores (Laplacian Variance):")
-    print(f"  Mean:   {np.mean(blur_scores):.2f}")
-    print(f"  Median: {np.median(blur_scores):.2f}")
-    print(f"  Min:    {np.min(blur_scores):.2f}")
-    print(f"  Max:    {np.max(blur_scores):.2f}")
-    print(f"  Std:    {np.std(blur_scores):.2f}")
-    print()
-
-    # Analyze contrast scores
-    contrast_scores = [r["contrast_score"] for r in results]
-    print("Contrast Scores (RMS Contrast):")
-    print(f"  Mean:   {np.mean(contrast_scores):.4f}")
-    print(f"  Median: {np.median(contrast_scores):.4f}")
-    print(f"  Min:    {np.min(contrast_scores):.4f}")
-    print(f"  Max:    {np.max(contrast_scores):.4f}")
-    print(f"  Std:    {np.std(contrast_scores):.4f}")
-    print()
-
-    # Analyze skew angles
-    skew_angles = [abs(r["skew_angle"]) for r in results]
-    print("Skew Angles (Absolute Degrees):")
-    print(f"  Mean:   {np.mean(skew_angles):.2f}°")
-    print(f"  Median: {np.median(skew_angles):.2f}°")
-    print(f"  Min:    {np.min(skew_angles):.2f}°")
-    print(f"  Max:    {np.max(skew_angles):.2f}°")
-    print(f"  Std:    {np.std(skew_angles):.2f}°")
-    print()
+    _print_score_distribution(
+        "Blur Scores (Laplacian Variance)", [r["blur_score"] for r in results]
+    )
+    _print_score_distribution(
+        "Contrast Scores (RMS Contrast)",
+        [r["contrast_score"] for r in results],
+        fmt=".4f",
+    )
+    _print_score_distribution(
+        "Skew Angles (Absolute Degrees)", [abs(r["skew_angle"]) for r in results]
+    )
     print("=" * 80)
 
-    # Recommendations
-    print()
-    print("RECOMMENDATIONS")
-    print("=" * 80)
-    print()
-
-    if stats["blur_detection_rate"] > 0.2:
-        print(
-            "⚠️  High blur detection rate (>20%) - may indicate conservative thresholds"
-        )
-        print("   Consider reviewing blur threshold settings")
-    else:
-        print("✅ Blur detection rate within normal range")
-
-    if stats["low_contrast_rate"] > 0.3:
-        print(
-            "⚠️  High low-contrast rate (>30%) - may indicate threshold adjustment needed"
-        )
-        print("   Review contrast threshold settings")
-    else:
-        print("✅ Contrast detection rate within normal range")
-
-    if stats["skew_detection_rate"] > 0.1:
-        print("⚠️  Elevated skew detection (>10%) - review skew threshold")
-    else:
-        print("✅ Skew detection rate within normal range")
-
-    print()
-    print("Next Steps:")
-    print("  1. Review detailed results in JSON file")
-    print("  2. Spot-check flagged images manually")
-    print("  3. Adjust detector thresholds if needed")
-    print("  4. Update VALIDATION_RESULTS.md with findings")
-    print()
-    print("=" * 80)
+    _print_recommendations(stats)
 
 
 if __name__ == "__main__":

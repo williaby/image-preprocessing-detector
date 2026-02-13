@@ -70,6 +70,62 @@ def bootstrap_correlation_ci(
     }
 
 
+def _extract_dim_values(
+    successful: list[dict[str, Any]], dim: str
+) -> tuple[list[float], list[float]]:
+    """Extract ground truth and predicted values for a single dimension."""
+    gt_values: list[float] = []
+    pred_values: list[float] = []
+    for r in successful:
+        gt = r["ground_truth"].get(dim)
+        pred = r["predicted"].get(dim) if r["predicted"] else None
+        if gt is not None and pred is not None:
+            gt_values.append(gt)
+            pred_values.append(pred)
+    return gt_values, pred_values
+
+
+def _compute_dim_metrics(
+    gt_values: list[float], pred_values: list[float]
+) -> dict[str, Any]:
+    """Compute correlation metrics for a single quality dimension."""
+    from scipy import stats
+
+    n = len(gt_values)
+    if n < 3:
+        return {
+            "plcc": None,
+            "srcc": None,
+            "mae": None,
+            "rmse": None,
+            "num_valid": n,
+            "error": "Insufficient valid predictions",
+        }
+
+    plcc, _ = stats.pearsonr(gt_values, pred_values)
+    srcc, _ = stats.spearmanr(gt_values, pred_values)
+    mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / n
+    mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / n
+    rmse = mse**0.5
+
+    result: dict[str, Any] = {
+        "plcc": plcc,
+        "srcc": srcc,
+        "mae": mae,
+        "rmse": rmse,
+        "num_valid": n,
+    }
+
+    if n >= 30:
+        ci = bootstrap_correlation_ci(gt_values, pred_values)
+        result["plcc_ci_lower"] = ci["plcc_ci"]["lower"]
+        result["plcc_ci_upper"] = ci["plcc_ci"]["upper"]
+        result["srcc_ci_lower"] = ci["srcc_ci"]["lower"]
+        result["srcc_ci_upper"] = ci["srcc_ci"]["upper"]
+
+    return result
+
+
 def compute_metrics(
     results: list[dict[str, Any]],
     model_id: str,
@@ -87,8 +143,6 @@ def compute_metrics(
     Returns:
         Dictionary with comprehensive metrics including timing and correlations.
     """
-    from scipy import stats
-
     successful = [r for r in results if r["success"]]
     failed = [r for r in results if not r["success"]]
 
@@ -110,70 +164,8 @@ def compute_metrics(
         }
 
     for dim in ["overall", "sharpness", "color"]:
-        gt_values = []
-        pred_values = []
-
-        for r in successful:
-            gt = r["ground_truth"].get(dim)
-            pred = r["predicted"].get(dim) if r["predicted"] else None
-
-            if gt is not None and pred is not None:
-                gt_values.append(gt)
-                pred_values.append(pred)
-
-        if len(gt_values) >= 30:  # Need sufficient samples for bootstrap
-            plcc, _ = stats.pearsonr(gt_values, pred_values)
-            srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
-                gt_values
-            )
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
-                gt_values
-            )
-            rmse = mse**0.5
-
-            # Compute bootstrapped confidence intervals
-            ci = bootstrap_correlation_ci(gt_values, pred_values)
-
-            metrics[dim] = {
-                "plcc": plcc,
-                "plcc_ci_lower": ci["plcc_ci"]["lower"],
-                "plcc_ci_upper": ci["plcc_ci"]["upper"],
-                "srcc": srcc,
-                "srcc_ci_lower": ci["srcc_ci"]["lower"],
-                "srcc_ci_upper": ci["srcc_ci"]["upper"],
-                "mae": mae,
-                "rmse": rmse,
-                "num_valid": len(gt_values),
-            }
-        elif len(gt_values) >= 3:
-            # Fallback without bootstrap for small samples
-            plcc, _ = stats.pearsonr(gt_values, pred_values)
-            srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
-                gt_values
-            )
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
-                gt_values
-            )
-            rmse = mse**0.5
-
-            metrics[dim] = {
-                "plcc": plcc,
-                "srcc": srcc,
-                "mae": mae,
-                "rmse": rmse,
-                "num_valid": len(gt_values),
-            }
-        else:
-            metrics[dim] = {
-                "plcc": None,
-                "srcc": None,
-                "mae": None,
-                "rmse": None,
-                "num_valid": len(gt_values),
-                "error": "Insufficient valid predictions",
-            }
+        gt_values, pred_values = _extract_dim_values(successful, dim)
+        metrics[dim] = _compute_dim_metrics(gt_values, pred_values)
 
     return metrics
 

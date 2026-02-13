@@ -730,7 +730,7 @@ def integrate_sample(
     # Text scope
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "unknown"
+        data["text_scope_content_type"] = content_type or "unknown"
     else:
         data["text_scope_content_type"] = v1_data.get(
             "text_scope_content_type", "unknown"

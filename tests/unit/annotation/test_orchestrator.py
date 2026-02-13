@@ -123,7 +123,7 @@ class TestDatasetResult:
         assert result.samples_processed == 100
         assert result.samples_failed == 5
         assert len(result.errors) == 2
-        assert result.duration_seconds == 10.5
+        assert result.duration_seconds == pytest.approx(10.5)
 
     def test_create_failure_result(self):
         """Test creating a failed result."""
@@ -147,7 +147,7 @@ class TestDatasetResult:
 
         assert result.samples_failed == 0
         assert result.errors == []
-        assert result.duration_seconds == 0.0
+        assert result.duration_seconds == pytest.approx(0.0)
 
 
 # ============================================================================

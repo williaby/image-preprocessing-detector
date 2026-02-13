@@ -431,7 +431,6 @@ class TestLayoutLiteAnalyzer:
     def test_analyzer_initialization(self) -> None:
         """Test analyzer can be initialized with default settings."""
         analyzer = LayoutLiteAnalyzer()
-        assert analyzer is not None
         assert analyzer.enable_table_detection is True
         assert analyzer.enable_column_detection is True
         assert analyzer.enable_figure_detection is True

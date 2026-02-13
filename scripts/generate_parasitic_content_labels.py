@@ -435,10 +435,10 @@ def generate_dataset(
         "statistics": {
             "total_parasitic_elements": len(parasitic_annotations),
             "total_documents": len(
-                set(ann["document"] for ann in parasitic_annotations.values())
+                {ann["document"] for ann in parasitic_annotations.values()}
             ),
             "total_pages": len(
-                set(ann["page_number"] for ann in parasitic_annotations.values())
+                {ann["page_number"] for ann in parasitic_annotations.values()}
             ),
         },
     }

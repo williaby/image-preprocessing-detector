@@ -225,6 +225,35 @@ def process_batch(
     return results
 
 
+_ANGLE_BINS: list[tuple[str, float, float]] = [
+    ("near_zero (|a|<0.5)", 0.0, 0.5),
+    ("mild (0.5<=|a|<2)", 0.5, 2.0),
+    ("moderate (2<=|a|<5)", 2.0, 5.0),
+    ("large (5<=|a|<15)", 5.0, 15.0),
+    ("extreme (|a|>=15)", 15.0, float("inf")),
+]
+
+
+def _compute_angle_distribution(angles: list[float]) -> dict[str, int]:
+    """Bin angles into named distribution buckets."""
+    abs_angles = [abs(a) for a in angles]
+    return {
+        label: sum(1 for a in abs_angles if low <= a < high)
+        for label, low, high in _ANGLE_BINS
+    }
+
+
+def _descriptive_stats(values: list[float]) -> dict[str, float]:
+    """Compute descriptive statistics for a list of values."""
+    return {
+        "mean": round(float(np.mean(values)), 4),
+        "median": round(float(np.median(values)), 4),
+        "std": round(float(np.std(values)), 4),
+        "min": round(float(min(values)), 4),
+        "max": round(float(max(values)), 4),
+    }
+
+
 def generate_report(
     results: list[dict[str, Any]], confidence_threshold: float
 ) -> dict[str, Any]:
@@ -241,15 +270,6 @@ def generate_report(
 
     method_dist = Counter(r["method"] for r in results if r["error"] is None)
 
-    # Angle distribution bins
-    angle_bins = {
-        "near_zero (|a|<0.5)": sum(1 for a in angles if abs(a) < 0.5),
-        "mild (0.5<=|a|<2)": sum(1 for a in angles if 0.5 <= abs(a) < 2),
-        "moderate (2<=|a|<5)": sum(1 for a in angles if 2 <= abs(a) < 5),
-        "large (5<=|a|<15)": sum(1 for a in angles if 5 <= abs(a) < 15),
-        "extreme (|a|>=15)": sum(1 for a in angles if abs(a) >= 15),
-    }
-
     report: dict[str, Any] = {
         "total": total,
         "successful": successful,
@@ -258,26 +278,14 @@ def generate_report(
         "low_confidence": low_conf,
         "confidence_threshold": confidence_threshold,
         "method_distribution": dict(method_dist),
-        "angle_distribution": angle_bins,
+        "angle_distribution": _compute_angle_distribution(angles),
     }
 
     if confidences:
-        report["confidence_stats"] = {
-            "mean": round(float(np.mean(confidences)), 4),
-            "median": round(float(np.median(confidences)), 4),
-            "std": round(float(np.std(confidences)), 4),
-            "min": round(float(min(confidences)), 4),
-            "max": round(float(max(confidences)), 4),
-        }
+        report["confidence_stats"] = _descriptive_stats(confidences)
 
     if angles:
-        report["angle_stats"] = {
-            "mean": round(float(np.mean(angles)), 4),
-            "median": round(float(np.median(angles)), 4),
-            "std": round(float(np.std(angles)), 4),
-            "min": round(float(min(angles)), 4),
-            "max": round(float(max(angles)), 4),
-        }
+        report["angle_stats"] = _descriptive_stats(angles)
 
     return report
 

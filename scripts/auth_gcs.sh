@@ -24,32 +24,39 @@ chmod 600 "$TEMP_SA_FILE"  # Restrict to owner only
 
 # Helper functions
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    local message="$1"
+    echo -e "${GREEN}[INFO]${NC} $message"
+    return 0
 }
 
 log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+    local message="$1"
+    echo -e "${YELLOW}[WARN]${NC} $message"
+    return 0
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    local message="$1"
+    echo -e "${RED}[ERROR]${NC} $message" >&2
+    return 0
 }
 
 # Cleanup function
 cleanup() {
-    if [ -f "$TEMP_SA_FILE" ]; then
+    if [[ -f "$TEMP_SA_FILE" ]]; then
         rm -f "$TEMP_SA_FILE"
         log_info "Cleaned up temporary service account file"
     fi
+    return 0
 }
 
 # Register cleanup on exit if --cleanup flag is provided
-if [ "$1" == "--cleanup" ]; then
+if [[ "$1" == "--cleanup" ]]; then
     trap cleanup EXIT
 fi
 
 # Check if .env file exists
-if [ ! -f "$ENV_FILE" ]; then
+if [[ ! -f "$ENV_FILE" ]]; then
     log_error ".env file not found at: $ENV_FILE"
     exit 1
 fi
@@ -141,7 +148,7 @@ log_info "  GCS_BUCKET=$GCS_BUCKET"
 echo ""
 
 # If sourced, don't cleanup automatically
-if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
     log_info "Script was sourced. Use 'cleanup' function to remove temp file when done."
     log_info "Or run: rm $TEMP_SA_FILE"
 fi

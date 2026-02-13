@@ -186,7 +186,6 @@ def save_batch(
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/language/mlt19")
     gt_dir = base_dir / "TrainGT" / "TrainGT"
-    img_dir = base_dir / "TrainImages" / "TrainImages"
     output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/mlt19")
 
     dry_run = "--dry-run" in sys.argv

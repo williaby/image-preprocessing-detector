@@ -23,34 +23,39 @@ import shutil
 from pathlib import Path
 
 
-def find_all_images(input_dir: Path) -> list[tuple[Path, Path]]:
+def _find_image_in_subdirs(subdirs: list[Path], filename: str) -> Path | None:
+    """Search subdirectories for a file by name, returning the first match."""
+    for subdir in subdirs:
+        image_path = subdir / filename
+        if image_path.exists():
+            return image_path
+    return None
+
+
+def find_all_images(input_dir: Path) -> list[tuple[Path, Path, dict[str, str]]]:
     """
     Find all images and their corresponding CSV rows.
 
     Returns:
-        List of (image_path, csv_path) tuples
+        List of (image_path, csv_path, row_dict) tuples
     """
     image_csv_pairs = []
 
-    # Find all CSV files
     csv_files = list(input_dir.rglob("*.csv"))
 
     for csv_file in csv_files:
-        # Read CSV and get image mappings
+        image_dir = csv_file.parent
+        batch_subdirs = [d for d in image_dir.iterdir() if d.is_dir()]
+
         with open(csv_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 filename = row.get("File Name", "")
-                if filename:
-                    # Find corresponding image file
-                    image_dir = csv_file.parent
-                    batch_subdirs = [d for d in image_dir.iterdir() if d.is_dir()]
-
-                    for subdir in batch_subdirs:
-                        image_path = subdir / filename
-                        if image_path.exists():
-                            image_csv_pairs.append((image_path, csv_file, row))
-                            break
+                if not filename:
+                    continue
+                image_path = _find_image_in_subdirs(batch_subdirs, filename)
+                if image_path is not None:
+                    image_csv_pairs.append((image_path, csv_file, row))
 
     return image_csv_pairs
 

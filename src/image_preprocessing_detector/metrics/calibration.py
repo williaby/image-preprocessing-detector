@@ -319,13 +319,13 @@ def generate_reliability_diagram_data(
 
 if __name__ == "__main__":
     # Example usage
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
 
     # Simulate well-calibrated predictions
     n_samples = 1000
-    true_probs = np.random.uniform(0, 1, n_samples)
-    labels = (np.random.random(n_samples) < true_probs).astype(float)
-    predictions = true_probs + np.random.normal(0, 0.1, n_samples)
+    true_probs = rng.uniform(0, 1, n_samples)
+    labels = (rng.random(n_samples) < true_probs).astype(float)
+    predictions = true_probs + rng.normal(0, 0.1, n_samples)
     predictions = np.clip(predictions, 0, 1)
 
     result = compute_ece(predictions, labels)

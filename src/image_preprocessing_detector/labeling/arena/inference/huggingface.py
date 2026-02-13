@@ -111,21 +111,21 @@ class HuggingFaceBackend(InferenceBackend):
             start_time = time.perf_counter()
 
             try:
-                # Try loading as vision-language model first
-                self._processor = AutoProcessor.from_pretrained(
+                # Try loading as vision-language model first (revision= parameter provided)
+                self._processor = AutoProcessor.from_pretrained(  # nosec B615
                     spec.id,
                     revision=spec.revision,
                     trust_remote_code=True,
                 )
             except Exception:
-                # Fall back to tokenizer
-                self._tokenizer = AutoTokenizer.from_pretrained(
+                # Fall back to tokenizer (revision= parameter provided)
+                self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
                     spec.id,
                     revision=spec.revision,
                     trust_remote_code=True,
                 )
 
-            self._model = AutoModel.from_pretrained(spec.id, **load_kwargs)
+            self._model = AutoModel.from_pretrained(spec.id, **load_kwargs)  # nosec B615
 
             # Move to device
             if device != "cpu" and not spec.is_quantized:

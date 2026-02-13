@@ -13,6 +13,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 from image_preprocessing_detector.drift import (
     DEFAULT_NUM_BINS,
     FEATURE_BOUNDS,
@@ -63,8 +65,8 @@ class TestComputeHistogram:
 
     def test_uniform_distribution(self) -> None:
         """Test histogram of uniform distribution."""
-        values = list(np.random.uniform(0, 1, 10000))
-        histogram, bin_edges = compute_histogram(values)
+        values = list(rng.uniform(0, 1, 10000))
+        histogram, _ = compute_histogram(values)
 
         assert len(histogram) == DEFAULT_NUM_BINS
         assert sum(histogram) == pytest.approx(1.0)
@@ -75,8 +77,8 @@ class TestComputeHistogram:
 
     def test_normal_distribution(self) -> None:
         """Test histogram of normal distribution."""
-        values = list(np.random.normal(0.5, 0.1, 10000))
-        histogram, bin_edges = compute_histogram(values, bounds=(0, 1))
+        values = list(rng.normal(0.5, 0.1, 10000))
+        histogram, _ = compute_histogram(values, bounds=(0, 1))
 
         assert len(histogram) == DEFAULT_NUM_BINS
         assert sum(histogram) == pytest.approx(1.0)
@@ -97,7 +99,7 @@ class TestComputeHistogram:
     def test_with_bounds(self) -> None:
         """Test histogram with explicit bounds."""
         values = [0.0, 0.25, 0.5, 0.75, 1.0]
-        histogram, bin_edges = compute_histogram(values, bounds=(0, 1))
+        _, bin_edges = compute_histogram(values, bounds=(0, 1))
 
         assert bin_edges[0] == pytest.approx(0.0)
         assert bin_edges[-1] == pytest.approx(1.0)
@@ -105,7 +107,7 @@ class TestComputeHistogram:
     def test_values_outside_bounds_clipped(self) -> None:
         """Test values outside bounds are clipped."""
         values = [-0.5, 0.5, 1.5]
-        histogram, bin_edges = compute_histogram(values, bounds=(0, 1))
+        histogram, _ = compute_histogram(values, bounds=(0, 1))
 
         # Should still produce valid histogram
         assert sum(histogram) == pytest.approx(1.0)
@@ -113,7 +115,7 @@ class TestComputeHistogram:
     def test_all_same_values(self) -> None:
         """Test histogram when all values are identical."""
         values = [0.5] * 100
-        histogram, bin_edges = compute_histogram(values)
+        histogram, _ = compute_histogram(values)
 
         # All values should be in one bin
         assert max(histogram) == pytest.approx(1.0)
@@ -121,7 +123,7 @@ class TestComputeHistogram:
 
     def test_reproducibility(self) -> None:
         """Test histogram computation is deterministic."""
-        values = list(np.random.uniform(0, 1, 1000))
+        values = list(rng.uniform(0, 1, 1000))
 
         h1, e1 = compute_histogram(values)
         h2, e2 = compute_histogram(values)
@@ -233,8 +235,8 @@ class TestKLDivergence:
     def test_non_negative(self) -> None:
         """Test KL divergence is always non-negative."""
         for _ in range(100):
-            p = list(np.random.dirichlet(np.ones(10)))
-            q = list(np.random.dirichlet(np.ones(10)))
+            p = list(rng.dirichlet(np.ones(10)))
+            q = list(rng.dirichlet(np.ones(10)))
             kl = kl_divergence(p, q)
 
             assert kl >= 0
@@ -328,8 +330,8 @@ class TestPSI:
     def test_non_negative(self) -> None:
         """Test PSI is always non-negative."""
         for _ in range(100):
-            expected = list(np.random.dirichlet(np.ones(10)))
-            actual = list(np.random.dirichlet(np.ones(10)))
+            expected = list(rng.dirichlet(np.ones(10)))
+            actual = list(rng.dirichlet(np.ones(10)))
             psi_value = psi(expected, actual)
 
             assert psi_value >= 0
@@ -435,7 +437,7 @@ class TestDistributionTracker:
         for i in range(100):
             tracker.add_sample(FeatureType.QUALITY_SCORE, i / 100.0)
 
-        histogram, bin_edges = tracker.compute_histogram(FeatureType.QUALITY_SCORE)
+        histogram, _ = tracker.compute_histogram(FeatureType.QUALITY_SCORE)
 
         assert len(histogram) == DEFAULT_NUM_BINS
         assert sum(histogram) == pytest.approx(1.0)
@@ -968,7 +970,7 @@ class TestMetricRobustness:
         """Test histogram handles outliers."""
         values = [0.5] * 100 + [1000.0]  # One extreme outlier
 
-        histogram, bin_edges = compute_histogram(values, bounds=(0, 1))
+        histogram, _ = compute_histogram(values, bounds=(0, 1))
         assert sum(histogram) == pytest.approx(1.0)
 
     def test_stats_with_extreme_values(self) -> None:
@@ -981,8 +983,8 @@ class TestMetricRobustness:
 
     def test_large_histogram(self) -> None:
         """Test histogram with large number of bins."""
-        values = list(np.random.uniform(0, 1, 10000))
-        histogram, bin_edges = compute_histogram(values, num_bins=1000)
+        values = list(rng.uniform(0, 1, 10000))
+        histogram, _ = compute_histogram(values, num_bins=1000)
 
         assert len(histogram) == 1000
         assert sum(histogram) == pytest.approx(1.0)
@@ -991,8 +993,8 @@ class TestMetricRobustness:
         """Test tracker handles high throughput."""
         tracker = DistributionTracker(sample_rate=0.01, max_samples=1000)
 
-        for i in range(100000):
-            tracker.add_sample("test", np.random.random())
+        for _ in range(100000):
+            tracker.add_sample("test", rng.random())
 
         assert tracker.get_stored_count("test") <= 1000
         assert tracker.get_sample_count("test") == 100000

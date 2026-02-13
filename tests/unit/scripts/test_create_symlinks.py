@@ -102,7 +102,7 @@ class TestCreateSymlink:
         self, mock_paths: tuple[Path, Path]
     ) -> None:
         """Test symlink creation when NFS target doesn't exist."""
-        project_root, nfs_root = mock_paths
+        _, _ = mock_paths
 
         success, message = create_symlink(
             "data/benchmarks/missing", "benchmarks/missing"
@@ -150,9 +150,7 @@ class TestCreateSymlink:
         wrong_target.mkdir()
         local_path.symlink_to(wrong_target)
 
-        success, message = create_symlink(
-            "data/benchmarks/dataset", "benchmarks/dataset"
-        )
+        success, _ = create_symlink("data/benchmarks/dataset", "benchmarks/dataset")
 
         assert success is True
         assert local_path.is_symlink()
@@ -172,9 +170,7 @@ class TestCreateSymlink:
         local_path = project_root / "data" / "benchmarks" / "dataset"
         local_path.mkdir(parents=True)
 
-        success, message = create_symlink(
-            "data/benchmarks/dataset", "benchmarks/dataset"
-        )
+        success, _ = create_symlink("data/benchmarks/dataset", "benchmarks/dataset")
 
         assert success is True
         assert local_path.is_symlink()
@@ -212,9 +208,7 @@ class TestCreateSymlink:
         nfs_target.mkdir(parents=True)
 
         # Don't create local parent directories
-        success, message = create_symlink(
-            "data/nested/path/dataset", "nested/path/dataset"
-        )
+        success, _ = create_symlink("data/nested/path/dataset", "nested/path/dataset")
 
         assert success is True
         local_path = project_root / "data" / "nested" / "path" / "dataset"
@@ -321,7 +315,7 @@ class TestVerifySymlinks:
         self, mock_paths_for_verify: tuple[Path, Path, list]
     ) -> None:
         """Test that verify_symlinks returns correct structure."""
-        project_root, nfs_root, mappings = mock_paths_for_verify
+        _, nfs_root, mappings = mock_paths_for_verify
 
         # Create minimal setup
         (nfs_root / "benchmarks" / "valid").mkdir(parents=True)
@@ -364,7 +358,7 @@ class TestCreateSymlinkEdgeCases:
         nfs_target = nfs_root / "file.txt"
         nfs_target.write_text("content")
 
-        success, message = create_symlink("data/file.txt", "file.txt")
+        success, _ = create_symlink("data/file.txt", "file.txt")
 
         assert success is True
         local_path = project_root / "data" / "file.txt"
@@ -374,15 +368,13 @@ class TestCreateSymlinkEdgeCases:
         self, mock_paths: tuple[Path, Path]
     ) -> None:
         """Test symlink with special characters in path."""
-        project_root, nfs_root = mock_paths
+        _, nfs_root = mock_paths
 
         # Create NFS target with hyphen
         nfs_target = nfs_root / "benchmarks" / "diqa-5000"
         nfs_target.mkdir(parents=True)
 
-        success, message = create_symlink(
-            "data/benchmarks/diqa-5000", "benchmarks/diqa-5000"
-        )
+        success, _ = create_symlink("data/benchmarks/diqa-5000", "benchmarks/diqa-5000")
 
         assert success is True
 
@@ -394,7 +386,7 @@ class TestCreateSymlinkEdgeCases:
         nfs_target = nfs_root / "a" / "b" / "c" / "d" / "dataset"
         nfs_target.mkdir(parents=True)
 
-        success, message = create_symlink("data/a/b/c/d/dataset", "a/b/c/d/dataset")
+        success, _ = create_symlink("data/a/b/c/d/dataset", "a/b/c/d/dataset")
 
         assert success is True
         local_path = project_root / "data" / "a" / "b" / "c" / "d" / "dataset"

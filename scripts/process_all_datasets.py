@@ -245,6 +245,53 @@ def print_processing_plan(
     print("=" * 60 + "\n")
 
 
+def _filter_pending_datasets(
+    orchestrator: AnnotationOrchestrator,
+    datasets: Sequence[str],
+    resume: bool,
+) -> list[str]:
+    """Filter datasets to only those pending processing (if resume enabled)."""
+    if not resume:
+        return list(datasets)
+
+    pending = orchestrator.get_pending_datasets()
+    datasets_to_process = [d for d in datasets if d in pending]
+    skipped = len(datasets) - len(datasets_to_process)
+    if skipped > 0:
+        logger.info(f"Skipping {skipped} already-completed datasets (resume=True)")
+    return datasets_to_process
+
+
+def _process_single_dataset(
+    orchestrator: AnnotationOrchestrator,
+    dataset_name: str,
+    prefix: str,
+    use_yolo: bool,
+    max_samples: int | None,
+) -> tuple[int, int]:
+    """Process one dataset and log results. Returns (images, errors)."""
+    start = time.perf_counter()
+    result: DatasetResult = orchestrator.process_dataset(
+        dataset_name,
+        use_yolo=use_yolo,
+        max_samples=max_samples,
+    )
+    elapsed = time.perf_counter() - start
+
+    status = "+" if result.success else "x"
+    rate = format_rate(result.samples_processed, elapsed)
+    logger.info(
+        f"{prefix} {dataset_name}: {result.samples_processed:,} images "
+        f"({rate}) {status}"
+    )
+
+    if result.errors:
+        for err in result.errors[:3]:
+            logger.warning(f"  Error: {err}")
+
+    return result.samples_processed, result.samples_failed
+
+
 def process_tier(
     orchestrator: AnnotationOrchestrator,
     datasets: Sequence[str],
@@ -272,20 +319,7 @@ def process_tier(
         print_processing_plan(datasets, tier, use_yolo, max_samples, resume)
         return 0, 0, 0.0
 
-    tier_start = time.perf_counter()
-    total_images = 0
-    total_errors = 0
-
-    # Get pending datasets if resume enabled
-    if resume:
-        pending = orchestrator.get_pending_datasets()
-        datasets_to_process = [d for d in datasets if d in pending]
-        skipped = len(datasets) - len(datasets_to_process)
-        if skipped > 0:
-            logger.info(f"Skipping {skipped} already-completed datasets (resume=True)")
-    else:
-        datasets_to_process = list(datasets)
-
+    datasets_to_process = _filter_pending_datasets(orchestrator, datasets, resume)
     if not datasets_to_process:
         logger.info("No datasets to process (all completed)")
         return 0, 0, 0.0
@@ -295,34 +329,24 @@ def process_tier(
     print(f"Processing {tier_label}: {len(datasets_to_process)} datasets")
     print("=" * 60 + "\n")
 
+    tier_start = time.perf_counter()
+    total_images = 0
+    total_errors = 0
+
     for i, dataset_name in enumerate(datasets_to_process, 1):
         prefix = f"[{i}/{len(datasets_to_process)}]"
         logger.info(f"{prefix} Processing {dataset_name}...")
-
-        start = time.perf_counter()
-        result: DatasetResult = orchestrator.process_dataset(
+        images, errors = _process_single_dataset(
+            orchestrator,
             dataset_name,
-            use_yolo=use_yolo,
-            max_samples=max_samples,
+            prefix,
+            use_yolo,
+            max_samples,
         )
-        elapsed = time.perf_counter() - start
-
-        total_images += result.samples_processed
-        total_errors += result.samples_failed
-
-        status = "✓" if result.success else "✗"
-        rate = format_rate(result.samples_processed, elapsed)
-        logger.info(
-            f"{prefix} {dataset_name}: {result.samples_processed:,} images "
-            f"({rate}) {status}"
-        )
-
-        if result.errors:
-            for err in result.errors[:3]:  # Show first 3 errors
-                logger.warning(f"  Error: {err}")
+        total_images += images
+        total_errors += errors
 
     tier_elapsed = time.perf_counter() - tier_start
-
     print(
         f"\n{tier_label} complete: {total_images:,} images in {format_duration(tier_elapsed)}"
     )

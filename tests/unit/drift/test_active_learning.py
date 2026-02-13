@@ -225,7 +225,7 @@ class TestPrivacyChecker:
             metadata={"quality": 0.85},
         )
 
-        status, notes = checker.check_sample(sample)
+        status, _ = checker.check_sample(sample)
 
         assert status == PrivacyStatus.APPROVED
 
@@ -280,7 +280,7 @@ class TestPrivacyChecker:
             entropy=0.995,  # Above 0.99
         )
 
-        status, notes = checker.check_sample(sample)
+        status, _ = checker.check_sample(sample)
 
         assert status == PrivacyStatus.REQUIRES_REVIEW
 

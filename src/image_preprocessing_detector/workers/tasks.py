@@ -269,6 +269,7 @@ def process_single_document(
         ext = Path(filename).suffix.lower()
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
             tmp_file.write(file_content)
+            tmp_file.flush()
             tmp_path = Path(tmp_file.name)
 
         try:

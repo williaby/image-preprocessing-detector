@@ -584,7 +584,7 @@ class TestEscalationDecisionLogic:
                 "contrast": 0.70,
                 "skew": 0.68,
                 "compression": 0.62,
-            },  # Mean = 0.65 < 0.75
+            },
             model_type=ModelType.STUDENT,
             device=Device.CPU,
             inference_time_ms=10.0,
@@ -650,11 +650,11 @@ class TestDiscrepancyEscalationLogic:
             inference_time_ms=10.0,
         )
         classical_scores = ClassicalIQAScores(
-            blur_score=0.82,  # Discrepancy = 0.02
-            contrast_score=0.78,  # Discrepancy = 0.03
-            skew_score=0.88,  # Discrepancy = 0.02
-            noise_score=0.68,  # Discrepancy = 0.02
-            compression_score=0.87,  # Discrepancy = 0.02
+            blur_score=0.82,  # small discrepancy
+            contrast_score=0.78,  # small discrepancy
+            skew_score=0.88,  # small discrepancy
+            noise_score=0.68,  # small discrepancy
+            compression_score=0.87,  # small discrepancy
         )
 
         decision = detector.should_escalate_due_to_discrepancy(
@@ -711,7 +711,7 @@ class TestDiscrepancyEscalationLogic:
         )
         classical_scores = ClassicalIQAScores(
             blur_score=0.8,
-            contrast_score=0.6,  # Discrepancy = 0.3
+            contrast_score=0.6,  # large discrepancy triggers escalation
             skew_score=0.85,
         )
 
@@ -741,7 +741,7 @@ class TestDiscrepancyEscalationLogic:
         classical_scores = ClassicalIQAScores(
             blur_score=0.8,
             contrast_score=0.75,
-            skew_score=0.6,  # Discrepancy = 0.35
+            skew_score=0.6,  # large discrepancy triggers escalation
         )
 
         decision = detector.should_escalate_due_to_discrepancy(
@@ -771,7 +771,7 @@ class TestDiscrepancyEscalationLogic:
             blur_score=0.8,
             contrast_score=0.75,
             skew_score=0.9,
-            noise_score=0.5,  # Discrepancy = 0.35
+            noise_score=0.5,  # large discrepancy triggers escalation
         )
 
         decision = detector.should_escalate_due_to_discrepancy(
@@ -801,7 +801,7 @@ class TestDiscrepancyEscalationLogic:
             blur_score=0.8,
             contrast_score=0.75,
             skew_score=0.9,
-            compression_score=0.55,  # Discrepancy = 0.35
+            compression_score=0.55,  # large discrepancy triggers escalation
         )
 
         decision = detector.should_escalate_due_to_discrepancy(
@@ -832,10 +832,10 @@ class TestDiscrepancyEscalationLogic:
             inference_time_ms=10.0,
         )
         classical_scores = ClassicalIQAScores(
-            blur_score=0.6,  # Discrepancy = 0.3
-            contrast_score=0.6,  # Discrepancy = 0.3
+            blur_score=0.6,  # large discrepancy
+            contrast_score=0.6,  # large discrepancy
             skew_score=0.95,
-            noise_score=0.55,  # Discrepancy = 0.3
+            noise_score=0.55,  # large discrepancy
         )
 
         decision = detector.should_escalate_due_to_discrepancy(

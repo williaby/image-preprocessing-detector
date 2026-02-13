@@ -49,6 +49,9 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SCHEMA = PROJECT_ROOT / "docs" / "schema" / "layer2_enrichment_v2.schema.json"
 
+# Common string constants (S1192: avoid duplicate string literals)
+PREDICTED_MOS_KEY = "llm_scores.predicted_mos"
+
 # Defect classification taxonomy.
 DEFECT_TYPES = (
     "wrong_value",
@@ -515,6 +518,134 @@ def _validate_pixels(
 # ---------------------------------------------------------------------------
 # Main validation logic
 # ---------------------------------------------------------------------------
+def _track_field(
+    field_path: str,
+    is_populated: bool,
+    defects: list[FieldDefect],
+    total_fields_report: dict[str, FieldReport],
+    all_defects: list[FieldDefect],
+) -> None:
+    """Track field validation results in reports."""
+    if field_path not in total_fields_report:
+        total_fields_report[field_path] = FieldReport(field_path=field_path)
+    rpt = total_fields_report[field_path]
+    rpt.total_samples += 1
+    if is_populated:
+        rpt.populated_count += 1
+        if not defects:
+            rpt.valid_count += 1
+    rpt.defects.extend(defects)
+    all_defects.extend(defects)
+
+
+def _validate_iso_string(
+    sample_id: str,
+    field_path: str,
+    value: Any,
+    expected_len: int | tuple[int, int],
+    label: str,
+) -> list[FieldDefect]:
+    """Validate an ISO code string (language or script)."""
+    if value is None:
+        return []
+    if not isinstance(value, str):
+        return [
+            FieldDefect(
+                sample_id=sample_id,
+                field_path=field_path,
+                defect_type=DefectType.WRONG_FORMAT,
+                message=f"{label} must be a string",
+                actual_value=value,
+            )
+        ]
+    if isinstance(expected_len, tuple):
+        min_len, max_len = expected_len
+        if len(value) < min_len or len(value) > max_len:
+            return [
+                FieldDefect(
+                    sample_id=sample_id,
+                    field_path=field_path,
+                    defect_type=DefectType.WRONG_FORMAT,
+                    message=f"{label} must be {min_len}-{max_len} chars",
+                    actual_value=value,
+                )
+            ]
+    elif len(value) != expected_len:
+        return [
+            FieldDefect(
+                sample_id=sample_id,
+                field_path=field_path,
+                defect_type=DefectType.WRONG_FORMAT,
+                message=f"{label} must be {expected_len} chars",
+                actual_value=value,
+            )
+        ]
+    return []
+
+
+def _validate_predicted_mos(
+    sample_id: str,
+    data: dict[str, Any],
+) -> tuple[bool, list[FieldDefect]]:
+    """Validate llm_scores.predicted_mos field."""
+    llm = data.get("llm_scores")
+    if not isinstance(llm, dict):
+        return False, []
+    mos = llm.get("predicted_mos")
+    if mos is None:
+        return False, []
+    if not isinstance(mos, (int, float)):
+        return True, [
+            FieldDefect(
+                sample_id=sample_id,
+                field_path=PREDICTED_MOS_KEY,
+                defect_type=DefectType.WRONG_FORMAT,
+                message="predicted_mos must be numeric",
+                actual_value=mos,
+            )
+        ]
+    if not (1 <= mos <= 5):
+        return True, [
+            FieldDefect(
+                sample_id=sample_id,
+                field_path=PREDICTED_MOS_KEY,
+                defect_type=DefectType.WRONG_VALUE,
+                message=f"predicted_mos must be 1-5, got {mos}",
+                actual_value=mos,
+            )
+        ]
+    return True, []
+
+
+def _validate_reliability_summary(
+    sample_id: str,
+    data: dict[str, Any],
+) -> tuple[bool, list[FieldDefect]]:
+    """Validate sample_reliability_summary field."""
+    srs = data.get("sample_reliability_summary")
+    if not isinstance(srs, dict):
+        return srs is not None, []
+    valid_cats = [
+        "hard_label",
+        "soft_label",
+        "active_learning",
+        "unreliable",
+        "unassessed",
+    ]
+    cat = srs.get("min_confidence_category")
+    if cat is not None and cat not in valid_cats:
+        return True, [
+            FieldDefect(
+                sample_id=sample_id,
+                field_path="sample_reliability_summary.min_confidence_category",
+                defect_type=DefectType.WRONG_ENUM,
+                message=f"Invalid category '{cat}'",
+                actual_value=cat,
+            )
+        ]
+    return True, []
+
+
 def validate_sample(
     sample_id: str,
     data: dict[str, Any],
@@ -540,45 +671,64 @@ def validate_sample(
         is_populated: bool,
         defects: list[FieldDefect],
     ) -> None:
-        if field_path not in total_fields_report:
-            total_fields_report[field_path] = FieldReport(field_path=field_path)
-        rpt = total_fields_report[field_path]
-        rpt.total_samples += 1
-        if is_populated:
-            rpt.populated_count += 1
-            if not defects:
-                rpt.valid_count += 1
-        rpt.defects.extend(defects)
-        all_defects.extend(defects)
+        _track_field(
+            field_path, is_populated, defects, total_fields_report, all_defects
+        )
 
-    # -- capture_method ---------------------------------------------------
-    cm = _get_value(data, "capture_method", "capture_method", "method")
-    _track(
-        "capture_method",
-        cm is not None,
-        _validate_enum(sample_id, "capture_method", cm, _CAPTURE_ENUMS),
-    )
-
-    # -- capture_confidence -----------------------------------------------
-    cc = _get_value(data, "capture_method", "capture_confidence", "confidence")
-    _track(
-        "capture_confidence",
-        cc is not None,
-        _validate_confidence(sample_id, "capture_confidence", cc),
-    )
-
-    # -- resolution_category ----------------------------------------------
-    rc = _get_value(data, "resolution", "resolution_category", "category")
-    _track(
-        "resolution_category",
-        rc is not None,
-        _validate_enum(
-            sample_id,
+    # -- Enum-validated fields (data-driven) ------------------------------
+    _enum_fields: list[tuple[str, str, str, str, list[str]]] = [
+        (
+            "capture_method",
+            "capture_method",
+            "capture_method",
+            "method",
+            _CAPTURE_ENUMS,
+        ),
+        (
             "resolution_category",
-            rc,
+            "resolution",
+            "resolution_category",
+            "category",
             _RESOLUTION_CATEGORIES,
         ),
-    )
+        ("domain_level1", "domain", "domain_level1", "level1", _DOMAIN_LEVEL1),
+        (
+            "script_family",
+            "language",
+            "script_family",
+            "script_family",
+            ["latin", "cjk", "arabic", "indic", "cyrillic", "other"],
+        ),
+        ("text_scope", "text_scope", "text_scope", "scope", _TEXT_SCOPE_ENUMS),
+        (
+            "text_scope_content_type",
+            "text_scope",
+            "text_scope_content_type",
+            "content_type",
+            _CONTENT_TYPE_ENUMS,
+        ),
+    ]
+    for field_path, group, flat_key, nested_key, enums in _enum_fields:
+        val = _get_value(data, group, flat_key, nested_key)
+        _track(
+            field_path,
+            val is not None,
+            _validate_enum(sample_id, field_path, val, enums),
+        )
+
+    # -- Confidence-validated fields (data-driven) ------------------------
+    _conf_fields: list[tuple[str, str, str, str]] = [
+        ("capture_confidence", "capture_method", "capture_confidence", "confidence"),
+        ("domain_confidence", "domain", "domain_confidence", "confidence"),
+        ("quality_overall_score", "quality", "quality_overall_score", "overall_score"),
+    ]
+    for field_path, group, flat_key, nested_key in _conf_fields:
+        val = _get_value(data, group, flat_key, nested_key)
+        _track(
+            field_path,
+            val is not None,
+            _validate_confidence(sample_id, field_path, val),
+        )
 
     # -- resolution_pixels ------------------------------------------------
     rp = _get_value(data, "resolution", "resolution_pixels", "pixels")
@@ -588,109 +738,22 @@ def validate_sample(
         _validate_pixels(sample_id, "resolution_pixels", rp),
     )
 
-    # -- domain_level1 ----------------------------------------------------
-    dl = _get_value(data, "domain", "domain_level1", "level1")
-    _track(
-        "domain_level1",
-        dl is not None,
-        _validate_enum(sample_id, "domain_level1", dl, _DOMAIN_LEVEL1),
-    )
-
-    # -- domain_confidence ------------------------------------------------
-    dc = _get_value(data, "domain", "domain_confidence", "confidence")
-    _track(
-        "domain_confidence",
-        dc is not None,
-        _validate_confidence(sample_id, "domain_confidence", dc),
-    )
-
     # -- iso639_language --------------------------------------------------
     lang = _get_value(data, "language", "iso639_language", "language_code")
-    lang_defects: list[FieldDefect] = []
-    if lang is not None and not isinstance(lang, str):
-        lang_defects.append(
-            FieldDefect(
-                sample_id=sample_id,
-                field_path="iso639_language",
-                defect_type=DefectType.WRONG_FORMAT,
-                message="language_code must be a string",
-                actual_value=lang,
-            )
-        )
-    elif isinstance(lang, str) and (len(lang) < 2 or len(lang) > 3):
-        lang_defects.append(
-            FieldDefect(
-                sample_id=sample_id,
-                field_path="iso639_language",
-                defect_type=DefectType.WRONG_FORMAT,
-                message=("language_code must be 2-3 chars (ISO 639)"),
-                actual_value=lang,
-            )
-        )
-    _track("iso639_language", lang is not None, lang_defects)
+    _track(
+        "iso639_language",
+        lang is not None,
+        _validate_iso_string(
+            sample_id, "iso639_language", lang, (2, 3), "language_code"
+        ),
+    )
 
     # -- iso15924_script --------------------------------------------------
     script = _get_value(data, "language", "iso15924_script", "script_code")
-    script_defects: list[FieldDefect] = []
-    if script is not None and not isinstance(script, str):
-        script_defects.append(
-            FieldDefect(
-                sample_id=sample_id,
-                field_path="iso15924_script",
-                defect_type=DefectType.WRONG_FORMAT,
-                message="script_code must be a string",
-                actual_value=script,
-            )
-        )
-    elif isinstance(script, str) and len(script) != 4:
-        script_defects.append(
-            FieldDefect(
-                sample_id=sample_id,
-                field_path="iso15924_script",
-                defect_type=DefectType.WRONG_FORMAT,
-                message=("script_code must be 4 chars (ISO 15924)"),
-                actual_value=script,
-            )
-        )
-    _track("iso15924_script", script is not None, script_defects)
-
-    # -- script_family ----------------------------------------------------
-    sf = _get_value(data, "language", "script_family", "script_family")
     _track(
-        "script_family",
-        sf is not None,
-        _validate_enum(
-            sample_id,
-            "script_family",
-            sf,
-            ["latin", "cjk", "arabic", "indic", "cyrillic", "other"],
-        ),
-    )
-
-    # -- text_scope -------------------------------------------------------
-    ts = _get_value(data, "text_scope", "text_scope", "scope")
-    _track(
-        "text_scope",
-        ts is not None,
-        _validate_enum(sample_id, "text_scope", ts, _TEXT_SCOPE_ENUMS),
-    )
-
-    # -- text_scope_content_type ------------------------------------------
-    tsct = _get_value(
-        data,
-        "text_scope",
-        "text_scope_content_type",
-        "content_type",
-    )
-    _track(
-        "text_scope_content_type",
-        tsct is not None,
-        _validate_enum(
-            sample_id,
-            "text_scope_content_type",
-            tsct,
-            _CONTENT_TYPE_ENUMS,
-        ),
+        "iso15924_script",
+        script is not None,
+        _validate_iso_string(sample_id, "iso15924_script", script, 4, "script_code"),
     )
 
     # -- content_flags (boolean flags) ------------------------------------
@@ -699,77 +762,13 @@ def validate_sample(
     # -- layout_detections ------------------------------------------------
     _validate_layout_detections(sample_id, data, total_fields_report, all_defects)
 
-    # -- quality.overall_score --------------------------------------------
-    qos = _get_value(data, "quality", "quality_overall_score", "overall_score")
-    _track(
-        "quality_overall_score",
-        qos is not None,
-        _validate_confidence(sample_id, "quality_overall_score", qos),
-    )
-
-    # -- llm_scores -------------------------------------------------------
-    llm = data.get("llm_scores")
-    if isinstance(llm, dict):
-        mos = llm.get("predicted_mos")
-        mos_defects: list[FieldDefect] = []
-        if mos is not None:
-            if not isinstance(mos, (int, float)):
-                mos_defects.append(
-                    FieldDefect(
-                        sample_id=sample_id,
-                        field_path="llm_scores.predicted_mos",
-                        defect_type=DefectType.WRONG_FORMAT,
-                        message="predicted_mos must be numeric",
-                        actual_value=mos,
-                    )
-                )
-            elif not (1 <= mos <= 5):
-                mos_defects.append(
-                    FieldDefect(
-                        sample_id=sample_id,
-                        field_path="llm_scores.predicted_mos",
-                        defect_type=DefectType.WRONG_VALUE,
-                        message=(f"predicted_mos must be 1-5, got {mos}"),
-                        actual_value=mos,
-                    )
-                )
-        _track(
-            "llm_scores.predicted_mos",
-            mos is not None,
-            mos_defects,
-        )
-    else:
-        _track("llm_scores.predicted_mos", False, [])
+    # -- llm_scores.predicted_mos -----------------------------------------
+    mos_populated, mos_defects = _validate_predicted_mos(sample_id, data)
+    _track(PREDICTED_MOS_KEY, mos_populated, mos_defects)
 
     # -- sample_reliability_summary ---------------------------------------
-    srs = data.get("sample_reliability_summary")
-    srs_populated = srs is not None and isinstance(srs, dict)
-    srs_defects: list[FieldDefect] = []
-    if srs_populated:
-        assert isinstance(srs, dict)  # for type narrowing
-        cat = srs.get("min_confidence_category")
-        valid_cats = [
-            "hard_label",
-            "soft_label",
-            "active_learning",
-            "unreliable",
-            "unassessed",
-        ]
-        if cat is not None and cat not in valid_cats:
-            srs_defects.append(
-                FieldDefect(
-                    sample_id=sample_id,
-                    field_path=("sample_reliability_summary.min_confidence_category"),
-                    defect_type=DefectType.WRONG_ENUM,
-                    message=(f"Invalid category '{cat}'"),
-                    actual_value=cat,
-                )
-            )
-    _track(
-        "sample_reliability_summary",
-        srs_populated,
-        srs_defects,
-    )
+    srs_populated, srs_defects = _validate_reliability_summary(sample_id, data)
+    _track("sample_reliability_summary", srs_populated, srs_defects)
 
     return all_defects
 
@@ -1038,8 +1037,9 @@ def run_compliance_audit(
     Raises:
         FileNotFoundError: If the metadata file does not exist.
     """
-    if schema_path is None:
-        schema_path = DEFAULT_SCHEMA
+    # schema_path is accepted for future schema-driven validation;
+    # currently the audit uses hard-coded field definitions.
+    _ = schema_path or DEFAULT_SCHEMA
 
     if not metadata_path.exists():
         msg = f"Metadata file not found: {metadata_path}"

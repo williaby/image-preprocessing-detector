@@ -29,9 +29,7 @@ on:
       - develop
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pull-requests: write  # Required for PR decoration
+permissions: {}
 
 jobs:
   # Check if SONAR_TOKEN is configured before running analysis
@@ -64,6 +62,9 @@ jobs:
     needs: check-secrets
     if: needs.check-secrets.outputs.has-token == 'true'
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write  # Required for PR decoration
 
     steps:
       - name: Checkout repository

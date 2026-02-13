@@ -178,6 +178,76 @@ def _show_distribution_plan(
     print("=" * 70)
 
 
+def _update_composition_stats(stats: dict[str, Any], sample: Any) -> None:
+    """Update multi-script composition and vertical text tracking stats.
+
+    Args:
+        stats: Worker statistics dict to update in-place.
+        sample: Generated sample with scripts and text_directions.
+    """
+    if len(sample.scripts) > 1:
+        stats["multi_script_count"] += 1
+        comp = f"{len(sample.scripts)}_script"
+        stats["per_composition"][comp] += 1
+        if "Latn" in sample.scripts:
+            stats["english_secondary_count"] += 1
+    else:
+        stats["per_composition"]["single"] += 1
+
+    if sample.text_directions:
+        for _sc, direction in sample.text_directions.items():
+            if direction == "ttb":
+                stats["vertical_text_count"] += 1
+                break
+
+
+def _save_sample(
+    sample: Any,
+    output: Path,
+    generator: Any,
+    augmenter: str,
+    registry: Any,
+    json_mod: Any,
+) -> Path:
+    """Save a single generated sample (image + metadata) and register in split registry.
+
+    Args:
+        sample: Generated sample to save.
+        output: Base output directory.
+        generator: Generator instance for building metadata.
+        augmenter: Augmentation library name.
+        registry: Split registry instance.
+        json_mod: JSON module reference.
+
+    Returns:
+        Path to saved image file.
+    """
+    primary_script = sorted(sample.scripts)[0]
+    script_dir = output / primary_script
+    script_dir.mkdir(parents=True, exist_ok=True)
+
+    image_path = script_dir / f"{sample.sample_id}.{IMAGE_FORMAT}"
+    sample.image.save(image_path, format="JPEG", quality=JPEG_QUALITY)
+
+    metadata = generator.schema_adapter.build_enrichment_metadata(
+        sample, augmentation_source=augmenter
+    )
+    metadata["generation_params"] = sample.generation_params
+    metadata_path = script_dir / f"{sample.sample_id}.json"
+    with open(metadata_path, "w") as f:
+        json_mod.dump(metadata, f, indent=2, default=str)
+
+    sha256 = sample.generation_params.get("base_image_sha256", "")
+    if sha256:
+        registry.assign_split(
+            sha256_hex=sha256,
+            source_dataset="synth_multiscript_v3",
+            source_path=str(image_path),
+        )
+
+    return image_path
+
+
 def _generate_worker_batch(
     worker_id: int,
     scripts: list[str],
@@ -233,19 +303,17 @@ def _generate_worker_batch(
         "start_time": time.time(),
     }
 
-    # Initialize split registry
     registry = SplitRegistry(split_registry_path)
 
-    # Configure generator with all v2.3 features enabled
     config = GenerationConfig(
         scripts=scripts,
         samples_per_script=samples_per_script,
-        output_dir=None,  # We handle saving ourselves for JPEG q95
+        output_dir=None,
         save_images=False,
         save_metadata=False,
         image_format=IMAGE_FORMAT,
         seed=worker_seed,
-        pristine_ratio=0.2,  # 20% pristine, 80% degraded
+        pristine_ratio=0.2,
         augmenter=augmenter,
         color_mode_enabled=True,
         skew_augmentation=True,
@@ -263,41 +331,10 @@ def _generate_worker_batch(
         stats["error"] = f"Initialization error: {e}"
         return stats
 
-    # Generate samples
     for sample in generator.generate():
         try:
-            # Determine primary script for directory structure
-            primary_script = sorted(sample.scripts)[0]
+            _save_sample(sample, output, generator, augmenter, registry, json_mod)
 
-            # Create script directory
-            script_dir = output / primary_script
-            script_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save image as JPEG q95
-            image_path = script_dir / f"{sample.sample_id}.{IMAGE_FORMAT}"
-            sample.image.save(image_path, format="JPEG", quality=JPEG_QUALITY)
-
-            # Build and save Layer 2 metadata + generation provenance
-            metadata = generator.schema_adapter.build_enrichment_metadata(
-                sample, augmentation_source=augmenter
-            )
-            # Add generation_params as top-level provenance (not in L2 schema
-            # but essential for reproducibility, font audit, split registry)
-            metadata["generation_params"] = sample.generation_params
-            metadata_path = script_dir / f"{sample.sample_id}.json"
-            with open(metadata_path, "w") as f:
-                json_mod.dump(metadata, f, indent=2, default=str)
-
-            # Register in split registry using SHA256 from generation_params
-            sha256 = sample.generation_params.get("base_image_sha256", "")
-            if sha256:
-                registry.assign_split(
-                    sha256_hex=sha256,
-                    source_dataset="synth_multiscript_v3",
-                    source_path=str(image_path),
-                )
-
-            # Update stats
             stats["generated"] += 1
             for sc in sample.scripts:
                 stats["per_script"][sc] = stats["per_script"].get(sc, 0) + 1
@@ -306,25 +343,8 @@ def _generate_worker_batch(
             stats["per_resolution_tier"][sample.resolution_tier] += 1
             stats["per_quality_tier"][sample.quality_tier] += 1
 
-            # Track multi-script composition
-            if len(sample.scripts) > 1:
-                stats["multi_script_count"] += 1
-                comp = f"{len(sample.scripts)}_script"
-                stats["per_composition"][comp] += 1
-                # Check if English is secondary
-                if "Latn" in sample.scripts and len(sample.scripts) > 1:
-                    stats["english_secondary_count"] += 1
-            else:
-                stats["per_composition"]["single"] += 1
+            _update_composition_stats(stats, sample)
 
-            # Track vertical text
-            if sample.text_directions:
-                for _sc, direction in sample.text_directions.items():
-                    if direction == "ttb":
-                        stats["vertical_text_count"] += 1
-                        break
-
-            # Progress logging every 500 samples
             if stats["generated"] % 500 == 0:
                 elapsed = time.time() - stats["start_time"]
                 rate = stats["generated"] / elapsed if elapsed > 0 else 0
@@ -480,8 +500,12 @@ def _check_resume(output_dir: Path) -> int:
     return count
 
 
-def main() -> int:
-    """Main entry point for base dataset generation."""
+def _parse_main_args() -> argparse.Namespace:
+    """Parse command-line arguments for base dataset generation.
+
+    Returns:
+        Parsed argument namespace.
+    """
     parser = argparse.ArgumentParser(
         description="Generate synth-multiscript v3 base dataset (350K pristine images)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -540,10 +564,15 @@ def main() -> int:
         action="store_true",
         help="Skip confirmation prompt",
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
 
-    # Setup logging
+def _setup_logging(args: argparse.Namespace) -> None:
+    """Configure logging handlers for the generation run.
+
+    Args:
+        args: Parsed command-line arguments.
+    """
     log_handlers: list[logging.Handler] = [logging.StreamHandler()]
     if not args.dry_run:
         args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -555,6 +584,132 @@ def main() -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=log_handlers,
     )
+
+
+def _run_workers(
+    args: argparse.Namespace,
+    scripts: list[str],
+    samples_per_script: int,
+    split_registry_path: Path,
+) -> list[dict[str, Any]]:
+    """Dispatch generation work to single or multiple worker processes.
+
+    Args:
+        args: Parsed command-line arguments.
+        scripts: List of script codes to generate.
+        samples_per_script: Number of samples per script.
+        split_registry_path: Path to the split registry JSONL file.
+
+    Returns:
+        List of per-worker statistics dicts.
+    """
+    all_stats: list[dict[str, Any]] = []
+
+    if args.workers == 1:
+        result = _generate_worker_batch(
+            worker_id=0,
+            scripts=scripts,
+            samples_per_script=samples_per_script,
+            output_dir=str(args.output_dir),
+            seed=args.seed,
+            augmenter=args.augmenter,
+            split_registry_path=str(split_registry_path),
+        )
+        all_stats.append(result)
+        return all_stats
+
+    from concurrent.futures import ProcessPoolExecutor
+
+    scripts_per_worker: list[list[str]] = [[] for _ in range(args.workers)]
+    for i, script in enumerate(scripts):
+        scripts_per_worker[i % args.workers].append(script)
+
+    futures = []
+    with ProcessPoolExecutor(max_workers=args.workers) as executor:
+        for worker_id, worker_scripts in enumerate(scripts_per_worker):
+            if not worker_scripts:
+                continue
+            future = executor.submit(
+                _generate_worker_batch,
+                worker_id=worker_id,
+                scripts=worker_scripts,
+                samples_per_script=samples_per_script,
+                output_dir=str(args.output_dir),
+                seed=args.seed,
+                augmenter=args.augmenter,
+                split_registry_path=str(split_registry_path),
+            )
+            futures.append(future)
+
+        for future in futures:
+            try:
+                result = future.result()
+                all_stats.append(result)
+            except Exception as e:
+                logger.error("Worker failed: %s", e)
+                all_stats.append({"error": str(e), "generated": 0, "failed": 0})
+
+    return all_stats
+
+
+def _print_summary(
+    all_stats: list[dict[str, Any]],
+    manifest_path: Path,
+    split_registry_path: Path,
+    elapsed: float,
+) -> int:
+    """Print generation summary and return exit code.
+
+    Args:
+        all_stats: Per-worker statistics.
+        manifest_path: Path to the written manifest.
+        split_registry_path: Path to the split registry.
+        elapsed: Total elapsed time in seconds.
+
+    Returns:
+        Exit code (0 for success, 1 if failure rate exceeds 1%).
+    """
+    from image_preprocessing_detector.schema_utils.split_registry import SplitRegistry
+
+    total_generated = sum(s.get("generated", 0) for s in all_stats)
+    total_failed = sum(s.get("failed", 0) for s in all_stats)
+    rate = total_generated / elapsed if elapsed > 0 else 0
+
+    print()
+    print("=" * 70)
+    print("Generation Complete!")
+    print("=" * 70)
+    print(f"  Total generated: {total_generated:,}")
+    print(f"  Failed:          {total_failed:,}")
+    print(f"  Duration:        {elapsed / 3600:.1f} hours ({elapsed:.0f}s)")
+    print(f"  Rate:            {rate:.1f} img/s")
+    print(f"  Output:          {manifest_path.parent}")
+    print(f"  Manifest:        {manifest_path}")
+    print(f"  Split registry:  {split_registry_path}")
+
+    registry = SplitRegistry(str(split_registry_path))
+    split_stats = registry.stats
+    print("\n  Split distribution:")
+    for split_name, count in sorted(split_stats.items()):
+        pct = count / total_generated * 100 if total_generated > 0 else 0
+        print(f"    {split_name}: {count:,} ({pct:.1f}%)")
+
+    vertical = sum(s.get("vertical_text_count", 0) for s in all_stats)
+    eng_sec = sum(s.get("english_secondary_count", 0) for s in all_stats)
+    multi = sum(s.get("multi_script_count", 0) for s in all_stats)
+    print("\n  v2.3 metadata:")
+    print(f"    Vertical text (TTB): {vertical:,}")
+    print(f"    English secondary:   {eng_sec:,}")
+    print(f"    Multi-script:        {multi:,}")
+    print("=" * 70)
+
+    return 1 if total_failed > total_generated * 0.01 else 0
+
+
+def main() -> int:
+    """Main entry point for base dataset generation."""
+    args = _parse_main_args()
+    _setup_logging(args)
 
     # Parse scripts
     scripts = ALL_SCRIPTS
@@ -570,7 +725,6 @@ def main() -> int:
         return 0
 
     # Resume check
-    existing_count = 0
     if args.resume:
         existing_count = _check_resume(args.output_dir)
         if existing_count > 0:
@@ -592,20 +746,10 @@ def main() -> int:
             print("Aborted.")
             return 0
 
-    # Create output directory
+    # Create output directory and run generation
     args.output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Split registry path
     split_registry_path = args.output_dir / "splits.jsonl"
-
-    # Distribute scripts across workers
-    scripts_per_worker: list[list[str]] = [[] for _ in range(args.workers)]
-    for i, script in enumerate(scripts):
-        scripts_per_worker[i % args.workers].append(script)
-
-    # Calculate samples per script per worker
-    # Each worker handles its assigned scripts with the full per-script count
-    samples_per_script = distribution[scripts[0]]  # All scripts get ~equal count
+    samples_per_script = distribution[scripts[0]]
 
     print("=" * 70)
     print(f"Starting generation: {total:,} images across {args.workers} workers")
@@ -614,96 +758,14 @@ def main() -> int:
     print("=" * 70)
 
     start_time = time.time()
-    all_stats: list[dict[str, Any]] = []
+    all_stats = _run_workers(args, scripts, samples_per_script, split_registry_path)
 
-    if args.workers == 1:
-        # Single worker (simpler, better for debugging)
-        result = _generate_worker_batch(
-            worker_id=0,
-            scripts=scripts,
-            samples_per_script=samples_per_script,
-            output_dir=str(args.output_dir),
-            seed=args.seed,
-            augmenter=args.augmenter,
-            split_registry_path=str(split_registry_path),
-        )
-        all_stats.append(result)
-    else:
-        # Multi-worker parallel generation
-        # Note: ProcessPoolExecutor with fork may not work well with GPU libs.
-        # For this script, each worker does CPU rendering + augmentation, so fork is fine.
-        from concurrent.futures import ProcessPoolExecutor
-
-        futures = []
-        with ProcessPoolExecutor(max_workers=args.workers) as executor:
-            for worker_id, worker_scripts in enumerate(scripts_per_worker):
-                if not worker_scripts:
-                    continue
-                future = executor.submit(
-                    _generate_worker_batch,
-                    worker_id=worker_id,
-                    scripts=worker_scripts,
-                    samples_per_script=samples_per_script,
-                    output_dir=str(args.output_dir),
-                    seed=args.seed,
-                    augmenter=args.augmenter,
-                    split_registry_path=str(split_registry_path),
-                )
-                futures.append(future)
-
-            for future in futures:
-                try:
-                    result = future.result()
-                    all_stats.append(result)
-                except Exception as e:
-                    logger.error("Worker failed: %s", e)
-                    all_stats.append({"error": str(e), "generated": 0, "failed": 0})
-
-    # Write manifest
     manifest_path = _write_manifest(
         args.output_dir, all_stats, args.total_images, args.seed, args.augmenter
     )
 
-    # Summary
-    total_generated = sum(s.get("generated", 0) for s in all_stats)
-    total_failed = sum(s.get("failed", 0) for s in all_stats)
     elapsed = time.time() - start_time
-    rate = total_generated / elapsed if elapsed > 0 else 0
-
-    print()
-    print("=" * 70)
-    print("Generation Complete!")
-    print("=" * 70)
-    print(f"  Total generated: {total_generated:,}")
-    print(f"  Failed:          {total_failed:,}")
-    print(f"  Duration:        {elapsed / 3600:.1f} hours ({elapsed:.0f}s)")
-    print(f"  Rate:            {rate:.1f} img/s")
-    print(f"  Output:          {args.output_dir}")
-    print(f"  Manifest:        {manifest_path}")
-    print(f"  Split registry:  {split_registry_path}")
-
-    # Show split distribution
-    from image_preprocessing_detector.schema_utils.split_registry import SplitRegistry
-
-    registry = SplitRegistry(str(split_registry_path))
-    split_stats = registry.stats
-    print("\n  Split distribution:")
-    for split_name, count in sorted(split_stats.items()):
-        pct = count / total_generated * 100 if total_generated > 0 else 0
-        print(f"    {split_name}: {count:,} ({pct:.1f}%)")
-
-    # Show v2.3 metadata stats
-    vertical = sum(s.get("vertical_text_count", 0) for s in all_stats)
-    eng_sec = sum(s.get("english_secondary_count", 0) for s in all_stats)
-    multi = sum(s.get("multi_script_count", 0) for s in all_stats)
-    print("\n  v2.3 metadata:")
-    print(f"    Vertical text (TTB): {vertical:,}")
-    print(f"    English secondary:   {eng_sec:,}")
-    print(f"    Multi-script:        {multi:,}")
-
-    print("=" * 70)
-
-    return 1 if total_failed > total_generated * 0.01 else 0
+    return _print_summary(all_stats, manifest_path, split_registry_path, elapsed)
 
 
 if __name__ == "__main__":

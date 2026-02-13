@@ -55,6 +55,9 @@ E_DRIVE_ROOT = Path("/mnt/e/image_detection")
 BASE_DATA = E_DRIVE_ROOT / "01_base_data"
 METADATA_REGISTRY = E_DRIVE_ROOT / "metadata_registry/json"
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+JSON_GLOB = "*.json"
+
 # Dataset configurations with ground truth text locations
 DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
     # === COCO-style annotations with text ===
@@ -489,7 +492,7 @@ def extract_text_funsd(annotation_dir: Path) -> dict[str, str]:
 
     image_texts: dict[str, str] = {}
 
-    for json_file in annotation_dir.glob("*.json"):
+    for json_file in annotation_dir.glob(JSON_GLOB):
         with open(json_file) as f:
             data = json.load(f)
 
@@ -604,6 +607,55 @@ def extract_text_cc_ocr(annotation_file: Path) -> dict[str, str]:
     return image_texts
 
 
+def _count_scripts_in_subdirs(parent_dir: Path) -> dict[str, int]:
+    """Count images per script folder under a parent directory.
+
+    Iterates over subdirectories of parent_dir, treating each as a script
+    category and counting files matching ``*.*``.
+
+    Returns:
+        Mapping of script_name -> image count.
+    """
+    folder_scripts: dict[str, int] = {}
+    for script_dir in parent_dir.iterdir():
+        if not script_dir.is_dir():
+            continue
+        script_name = script_dir.name
+        img_count = sum(1 for _ in script_dir.glob("*.*"))
+        folder_scripts[script_name] = folder_scripts.get(script_name, 0) + img_count
+    return folder_scripts
+
+
+def _get_folder_label_parent_dirs(
+    annotation_dir: Path, dataset_name: str
+) -> list[Path] | None:
+    """Return parent directories whose children are script folders.
+
+    Returns None if the expected base path does not exist.
+    """
+    if dataset_name == "mdiw13":
+        base_path = annotation_dir / "SIW_Database" / "SIW_MultiscriptDatabase"
+        if not base_path.exists():
+            logger.warning(f"MDIW13 path not found: {base_path}")
+            return None
+        return [d for d in base_path.iterdir() if d.is_dir()]
+
+    if dataset_name == "siw13":
+        base_path = annotation_dir / "SIW-13"
+        if not base_path.exists():
+            logger.warning(f"SIW-13 path not found: {base_path}")
+            return None
+        return [d for d in base_path.iterdir() if d.is_dir()]
+
+    if dataset_name == "cvsi":
+        valid_splits = {"Training", "Testing", "Validation"}
+        return [
+            d for d in annotation_dir.iterdir() if d.is_dir() and d.name in valid_splits
+        ]
+
+    return []
+
+
 def extract_folder_based_labels(
     annotation_dir: Path, dataset_name: str
 ) -> dict[str, str]:
@@ -614,60 +666,14 @@ def extract_folder_based_labels(
     """
     logger.info(f"Extracting folder-based labels from {annotation_dir}")
 
-    folder_scripts: dict[str, str] = {}
+    parent_dirs = _get_folder_label_parent_dirs(annotation_dir, dataset_name)
+    if parent_dirs is None:
+        return {}
 
-    # Dataset-specific paths
-    if dataset_name == "mdiw13":
-        # MDIW13 has: SIW_Database/SIW_MultiscriptDatabase/{type}/{script}/
-        base_path = annotation_dir / "SIW_Database" / "SIW_MultiscriptDatabase"
-        if not base_path.exists():
-            logger.warning(f"MDIW13 path not found: {base_path}")
-            return {}
-
-        # Count images in each script folder across all types
-        for type_dir in base_path.iterdir():
-            if type_dir.is_dir():
-                for script_dir in type_dir.iterdir():
-                    if script_dir.is_dir():
-                        script_name = script_dir.name
-                        # Count images
-                        img_count = sum(1 for _ in script_dir.glob("*.*"))
-                        if script_name not in folder_scripts:
-                            folder_scripts[script_name] = 0
-                        folder_scripts[script_name] += img_count
-
-    elif dataset_name == "siw13":
-        # SIW-13 has: SIW-13/{split}/{script}/
-        base_path = annotation_dir / "SIW-13"
-        if not base_path.exists():
-            logger.warning(f"SIW-13 path not found: {base_path}")
-            return {}
-
-        for split_dir in base_path.iterdir():
-            if split_dir.is_dir():
-                for script_dir in split_dir.iterdir():
-                    if script_dir.is_dir():
-                        script_name = script_dir.name
-                        img_count = sum(1 for _ in script_dir.glob("*.*"))
-                        if script_name not in folder_scripts:
-                            folder_scripts[script_name] = 0
-                        folder_scripts[script_name] += img_count
-
-    elif dataset_name == "cvsi":
-        # CVSI has: {split}/{script}/
-        for split_dir in annotation_dir.iterdir():
-            if split_dir.is_dir() and split_dir.name in (
-                "Training",
-                "Testing",
-                "Validation",
-            ):
-                for script_dir in split_dir.iterdir():
-                    if script_dir.is_dir():
-                        script_name = script_dir.name
-                        img_count = sum(1 for _ in script_dir.glob("*.*"))
-                        if script_name not in folder_scripts:
-                            folder_scripts[script_name] = 0
-                        folder_scripts[script_name] += img_count
+    folder_scripts: dict[str, int] = {}
+    for parent in parent_dirs:
+        for script_name, count in _count_scripts_in_subdirs(parent).items():
+            folder_scripts[script_name] = folder_scripts.get(script_name, 0) + count
 
     logger.info(
         f"Found {len(folder_scripts)} script categories: {dict(folder_scripts)}"
@@ -683,7 +689,7 @@ def extract_text_fintabnet_dir(annotation_dir: Path) -> dict[str, str]:
     logger.info(f"Loading FinTabNet JSONs from {annotation_dir}")
 
     image_texts: dict[str, str] = {}
-    json_files = list(annotation_dir.glob("*.json"))
+    json_files = list(annotation_dir.glob(JSON_GLOB))
 
     logger.info(f"Processing {len(json_files)} JSON files...")
 
@@ -757,7 +763,7 @@ def extract_text_sroie_voxel51(annotation_dir: Path) -> dict[str, str]:
 
     image_texts: dict[str, str] = {}
 
-    for json_file in annotation_dir.glob("*.json"):
+    for json_file in annotation_dir.glob(JSON_GLOB):
         try:
             with open(json_file) as f:
                 data = json.load(f)
@@ -996,14 +1002,98 @@ SCRIPT_FOLDER_MAPPING: dict[str, tuple[str, str]] = {
 # =============================================================================
 
 
-def process_dataset(
-    dataset_name: str,
-    config: dict[str, Any],
-    dry_run: bool = False,
-    batch_size: int = 1000,
-) -> dict[str, int]:
-    """Process a single dataset for language enrichment."""
+def _extract_text_by_format(fmt: str, config: dict[str, Any]) -> dict[str, str] | None:
+    """Dispatch text extraction to the appropriate format handler.
 
+    Returns:
+        Extracted image_texts dict, or None if the format is unsupported.
+    """
+    # Formats that use annotation_file
+    file_extractors: dict[str, Any] = {
+        "coco_text": lambda: extract_text_coco(
+            config["annotation_file"], config.get("text_field", "utf8_string")
+        ),
+        "hiertext_json": lambda: extract_text_hiertext(config["annotation_file"]),
+        "hiertext_jsonl": lambda: extract_text_hiertext(config["annotation_file"]),
+        "pubtabnet_jsonl": lambda: extract_text_pubtabnet(config["annotation_file"]),
+        "fintabnet_jsonl": lambda: extract_text_pubtabnet(config["annotation_file"]),
+        "iam_words": lambda: extract_text_iam(config["annotation_file"]),
+        "cc_ocr_tsv": lambda: extract_text_cc_ocr(config["annotation_file"]),
+        "synth_multiscript": lambda: extract_text_synth_multiscript(
+            config["annotation_file"]
+        ),
+        "invoices_kg_json": lambda: extract_text_invoices_kg(config["annotation_file"]),
+        "ocr_quality_json": lambda: extract_text_ocr_quality(config["annotation_file"]),
+    }
+
+    # Formats that use annotation_dir
+    dir_extractors: dict[str, Any] = {
+        "funsd_json": lambda: extract_text_funsd(config["annotation_dir"]),
+        "mlt19_gt": lambda: extract_text_mlt19(config["annotation_dir"]),
+        "sroie_box": lambda: extract_text_sroie(config["annotation_dir"]),
+        "docling_ocr": lambda: extract_text_docling_ocr(config["annotation_dir"]),
+        "fintabnet_dir": lambda: extract_text_fintabnet_dir(config["annotation_dir"]),
+        "midv500_json": lambda: extract_text_midv500(config["annotation_dir"]),
+        "sroie_voxel51_json": lambda: extract_text_sroie_voxel51(
+            config["annotation_dir"]
+        ),
+        "ohr_bench_arrow": lambda: extract_text_ohr_bench_arrow(
+            config["annotation_dir"]
+        ),
+    }
+
+    extractor = file_extractors.get(fmt) or dir_extractors.get(fmt)
+    if extractor:
+        return extractor()
+    return None
+
+
+def _process_known_language(
+    dataset_name: str, config: dict[str, Any], dry_run: bool
+) -> dict[str, int]:
+    """Handle datasets with a known mono-script language."""
+    known_lang = config["known_language"]
+    known_script = config["known_script"]
+    image_count = config.get("images", 0)
+
+    logger.info(
+        f"Dataset {dataset_name} has known language: {known_lang}/{known_script}"
+    )
+    if not dry_run:
+        update_registry_known_language(
+            dataset_name, known_lang, known_script, image_count
+        )
+
+    return {
+        "total": image_count,
+        "processed": 0,
+        "known_language": image_count,
+        "detected": 0,
+        "undetermined": 0,
+    }
+
+
+def _process_doclaynet_coco(
+    dataset_name: str, config: dict[str, Any], dry_run: bool
+) -> dict[str, int]:
+    """Handle DocLayNet COCO format (no text, mark as English)."""
+    logger.info("DocLayNet has no text in COCO - using known language en/Latn")
+    image_count = config.get("images", 0)
+    if not dry_run:
+        update_registry_known_language(dataset_name, "en", "Latn", image_count)
+    return {
+        "total": image_count,
+        "processed": 0,
+        "known_language": image_count,
+        "detected": 0,
+        "undetermined": 0,
+    }
+
+
+def _process_folder_based(
+    dataset_name: str, config: dict[str, Any], dry_run: bool
+) -> dict[str, int]:
+    """Handle folder-based script identification datasets."""
     stats = {
         "total": 0,
         "processed": 0,
@@ -1011,121 +1101,52 @@ def process_dataset(
         "detected": 0,
         "undetermined": 0,
     }
-
-    # Check for known language (mono-script datasets)
-    known_lang = config.get("known_language")
-    known_script = config.get("known_script")
-
-    if known_lang and known_script:
-        logger.info(
-            f"Dataset {dataset_name} has known language: {known_lang}/{known_script}"
-        )
-        stats["known_language"] = config.get("images", 0)
-        stats["total"] = stats["known_language"]
-
-        # Update metadata registry with known language
+    folder_scripts = extract_folder_based_labels(config["annotation_dir"], dataset_name)
+    if folder_scripts:
         if not dry_run:
-            update_registry_known_language(
-                dataset_name, known_lang, known_script, config.get("images", 0)
-            )
+            save_folder_based_results(dataset_name, folder_scripts)
+        total_images = sum(folder_scripts.values())
+        stats["known_language"] = total_images
+        stats["total"] = total_images
+    return stats
 
-        return stats
 
-    # Extract text based on format
-    fmt = config.get("format", "")
-    image_texts: dict[str, str] = {}
+def _process_multilingual_scripts(
+    dataset_name: str, config: dict[str, Any], dry_run: bool
+) -> dict[str, int]:
+    """Handle multilingual scripts manifest datasets."""
+    stats = {
+        "total": 0,
+        "processed": 0,
+        "known_language": 0,
+        "detected": 0,
+        "undetermined": 0,
+    }
+    scripts = extract_multilingual_scripts_labels(config["annotation_dir"])
+    if scripts:
+        if not dry_run:
+            save_multilingual_scripts_results(dataset_name, scripts)
+        total_images = sum(scripts.values())
+        stats["known_language"] = total_images
+        stats["total"] = total_images
+    return stats
 
-    try:
-        if fmt == "coco_text":
-            image_texts = extract_text_coco(
-                config["annotation_file"], config.get("text_field", "utf8_string")
-            )
-        elif fmt in ("hiertext_json", "hiertext_jsonl"):
-            image_texts = extract_text_hiertext(config["annotation_file"])
-        elif fmt in ("pubtabnet_jsonl", "fintabnet_jsonl"):
-            image_texts = extract_text_pubtabnet(config["annotation_file"])
-        elif fmt == "funsd_json":
-            image_texts = extract_text_funsd(config["annotation_dir"])
-        elif fmt == "mlt19_gt":
-            image_texts = extract_text_mlt19(config["annotation_dir"])
-        elif fmt == "iam_words":
-            image_texts = extract_text_iam(config["annotation_file"])
-        elif fmt == "sroie_box":
-            image_texts = extract_text_sroie(config["annotation_dir"])
-        elif fmt == "cc_ocr_tsv":
-            image_texts = extract_text_cc_ocr(config["annotation_file"])
-        elif fmt == "doclaynet_coco":
-            # DocLayNet COCO format doesn't contain text, just layout boxes
-            # Mark as English since it's primarily English documents
-            logger.info("DocLayNet has no text in COCO - using known language en/Latn")
-            if not dry_run:
-                update_registry_known_language(
-                    dataset_name, "en", "Latn", config.get("images", 0)
-                )
-            stats["known_language"] = config.get("images", 0)
-            stats["total"] = stats["known_language"]
-            return stats
-        elif fmt == "docling_ocr":
-            image_texts = extract_text_docling_ocr(config["annotation_dir"])
-        elif fmt == "fintabnet_dir":
-            image_texts = extract_text_fintabnet_dir(config["annotation_dir"])
-        elif fmt == "midv500_json":
-            image_texts = extract_text_midv500(config["annotation_dir"])
-        elif fmt == "synth_multiscript":
-            image_texts = extract_text_synth_multiscript(config["annotation_file"])
-        elif fmt in ("mdiw13", "siw13", "cvsi"):
-            # Folder-based script identification - process as known languages
-            folder_scripts = extract_folder_based_labels(
-                config["annotation_dir"], dataset_name
-            )
-            if folder_scripts:
-                # Save folder-based results
-                if not dry_run:
-                    save_folder_based_results(dataset_name, folder_scripts)
-                total_images = sum(folder_scripts.values())
-                stats["known_language"] = total_images
-                stats["total"] = total_images
-            return stats
-        elif fmt == "multilingual_scripts":
-            # Use manifest.json for script labels
-            scripts = extract_multilingual_scripts_labels(config["annotation_dir"])
-            if scripts:
-                if not dry_run:
-                    save_multilingual_scripts_results(dataset_name, scripts)
-                total_images = sum(scripts.values())
-                stats["known_language"] = total_images
-                stats["total"] = total_images
-            return stats
-        elif fmt == "sroie_voxel51_json":
-            image_texts = extract_text_sroie_voxel51(config["annotation_dir"])
-        elif fmt == "invoices_kg_json":
-            image_texts = extract_text_invoices_kg(config["annotation_file"])
-        elif fmt == "ocr_quality_json":
-            image_texts = extract_text_ocr_quality(config["annotation_file"])
-        elif fmt == "ohr_bench_arrow":
-            image_texts = extract_text_ohr_bench_arrow(config["annotation_dir"])
-        else:
-            logger.warning(f"Unsupported format: {fmt}")
-            return stats
-    except FileNotFoundError as e:
-        logger.error(f"Annotation file not found: {e}")
-        return stats
-    except Exception as e:
-        logger.error(f"Error extracting text: {e}")
-        return stats
 
-    stats["total"] = len(image_texts)
+def _run_openlid_detection(
+    dataset_name: str,
+    image_texts: dict[str, str],
+    batch_size: int,
+    dry_run: bool,
+) -> dict[str, int]:
+    """Run OpenLID on extracted text and return stats."""
+    stats = {
+        "total": len(image_texts),
+        "processed": 0,
+        "known_language": 0,
+        "detected": 0,
+        "undetermined": 0,
+    }
 
-    if not image_texts:
-        logger.warning(f"No text extracted for {dataset_name}")
-        return stats
-
-    # Check for existing language field (e.g., cocotext has language)
-    if config.get("language_field"):
-        logger.info(f"Dataset {dataset_name} has existing language annotations")
-        # TODO: Use existing language annotations
-
-    # Run OpenLID on extracted text
     logger.info(f"Running OpenLID on {len(image_texts)} texts...")
 
     results: list[tuple[str, LanguageResult]] = []
@@ -1141,7 +1162,6 @@ def process_dataset(
 
         stats["processed"] += 1
 
-        # Progress update
         if stats["processed"] % batch_size == 0:
             logger.info(
                 f"Processed {stats['processed']}/{stats['total']} | "
@@ -1159,11 +1179,65 @@ def process_dataset(
         pct = count / max(1, stats["detected"]) * 100
         logger.info(f"  {lang}: {count:,} ({pct:.1f}%)")
 
-    # Save results
     if not dry_run and results:
         save_language_results(dataset_name, results)
 
     return stats
+
+
+def process_dataset(
+    dataset_name: str,
+    config: dict[str, Any],
+    dry_run: bool = False,
+    batch_size: int = 1000,
+) -> dict[str, int]:
+    """Process a single dataset for language enrichment."""
+    _empty_stats = {
+        "total": 0,
+        "processed": 0,
+        "known_language": 0,
+        "detected": 0,
+        "undetermined": 0,
+    }
+
+    # Check for known language (mono-script datasets)
+    if config.get("known_language") and config.get("known_script"):
+        return _process_known_language(dataset_name, config, dry_run)
+
+    fmt = config.get("format", "")
+
+    # Special-case formats that return early
+    if fmt == "doclaynet_coco":
+        return _process_doclaynet_coco(dataset_name, config, dry_run)
+    if fmt in ("mdiw13", "siw13", "cvsi"):
+        return _process_folder_based(dataset_name, config, dry_run)
+    if fmt == "multilingual_scripts":
+        return _process_multilingual_scripts(dataset_name, config, dry_run)
+
+    # Extract text via format dispatch
+    try:
+        image_texts = _extract_text_by_format(fmt, config)
+    except FileNotFoundError as e:
+        logger.error(f"Annotation file not found: {e}")
+        return _empty_stats
+    except Exception as e:
+        logger.error(f"Error extracting text: {e}")
+        return _empty_stats
+
+    if image_texts is None:
+        logger.warning(f"Unsupported format: {fmt}")
+        return _empty_stats
+
+    if not image_texts:
+        logger.warning(f"No text extracted for {dataset_name}")
+        return {**_empty_stats, "total": len(image_texts)}
+
+    # Check for existing language field (e.g., cocotext has language)
+    if config.get("language_field"):
+        logger.info(f"Dataset {dataset_name} has existing language annotations")
+        # TODO: Use existing language annotations
+
+    return _run_openlid_detection(dataset_name, image_texts, batch_size, dry_run)
 
 
 def update_registry_known_language(

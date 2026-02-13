@@ -73,7 +73,7 @@ class TestBleedThroughMLIQAIntegration:
             blur_score=detect_blur(img).blur_score,
             contrast_score=detect_contrast(img).score,
             skew_score=max(0.0, 1.0 - (abs(detect_skew(img).angle) / 45.0)),
-            bleed_through_score=bleed_through_score,  # 0-1, higher = better
+            bleed_through_score=bleed_through_score,  # range 0-1, higher is better
         )
 
         # Run ML IQA pipeline

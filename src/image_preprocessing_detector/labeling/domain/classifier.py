@@ -168,13 +168,13 @@ class MetadataEnricher:
     def _enrich_from_text(
         self,
         text: str,
-        text_source: str,  # noqa: ARG002
+        _text_source: str,
     ) -> EnrichmentResult:
         """Classify using text-only models with escalation.
 
         Args:
             text: Document text.
-            text_source: How text was obtained.
+            _text_source: How text was obtained (reserved for future routing).
 
         Returns:
             EnrichmentResult from text classification.

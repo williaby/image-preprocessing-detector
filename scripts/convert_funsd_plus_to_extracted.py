@@ -13,6 +13,7 @@ Output format matches process_datasets.py output:
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import pyarrow.ipc as ipc
 
@@ -149,6 +150,66 @@ def save_batch(
         json.dump(layout_data, f, indent=2)
 
 
+def _process_arrow_table(
+    table: Any,
+    split: str,
+    batch_results: list[dict],
+    batch_num: int,
+    output_dir: Path,
+    dry_run: bool,
+    total_processed: int,
+    total_annotations: int,
+) -> tuple[list[dict], int, int, int]:
+    """Process all rows from a single Arrow table.
+
+    Args:
+        table: PyArrow table with image, words, bboxes, labels columns.
+        split: Split name ("train" or "test").
+        batch_results: Current batch accumulator to extend.
+        batch_num: Current batch number.
+        output_dir: Output directory for saved batches.
+        dry_run: Whether this is a dry run.
+        total_processed: Running total of processed forms.
+        total_annotations: Running total of annotations.
+
+    Returns:
+        Tuple of (batch_results, batch_num, total_processed, total_annotations).
+    """
+    num_rows = len(table)
+    print(f"  {num_rows} forms")
+
+    for row_idx in range(num_rows):
+        image_info = table["image"][row_idx].as_py()
+        image_path = image_info.get("path", f"form_{row_idx}.png")
+        image_name = Path(image_path).name
+
+        words = table["words"][row_idx].as_py()
+        bboxes = table["bboxes"][row_idx].as_py()
+        labels = table["labels"][row_idx].as_py()
+
+        text = reconstruct_page_text(words, bboxes)
+        annotations = build_annotations(words, bboxes, labels)
+        total_annotations += len(annotations)
+
+        batch_results.append(
+            {
+                "filename": image_name,
+                "split": split,
+                "text": text,
+                "annotations": annotations,
+            }
+        )
+
+        if len(batch_results) >= BATCH_SIZE:
+            if not dry_run:
+                save_batch(batch_results, batch_num, output_dir, "funsd_plus")
+            total_processed += len(batch_results)
+            batch_results = []
+            batch_num += 1
+
+    return batch_results, batch_num, total_processed, total_annotations
+
+
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/forms/funsd_plus")
     output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/funsd_plus")
@@ -174,37 +235,18 @@ def main() -> None:
                 reader = ipc.open_stream(f)
                 table = reader.read_all()
 
-            num_rows = len(table)
-            print(f"  {num_rows} forms")
-
-            for row_idx in range(num_rows):
-                image_info = table["image"][row_idx].as_py()
-                image_path = image_info.get("path", f"form_{row_idx}.png")
-                image_name = Path(image_path).name
-
-                words = table["words"][row_idx].as_py()
-                bboxes = table["bboxes"][row_idx].as_py()
-                labels = table["labels"][row_idx].as_py()
-
-                text = reconstruct_page_text(words, bboxes)
-                annotations = build_annotations(words, bboxes, labels)
-                total_annotations += len(annotations)
-
-                batch_results.append(
-                    {
-                        "filename": image_name,
-                        "split": split,
-                        "text": text,
-                        "annotations": annotations,
-                    }
+            batch_results, batch_num, total_processed, total_annotations = (
+                _process_arrow_table(
+                    table,
+                    split,
+                    batch_results,
+                    batch_num,
+                    output_dir,
+                    dry_run,
+                    total_processed,
+                    total_annotations,
                 )
-
-                if len(batch_results) >= BATCH_SIZE:
-                    if not dry_run:
-                        save_batch(batch_results, batch_num, output_dir, "funsd_plus")
-                    total_processed += len(batch_results)
-                    batch_results = []
-                    batch_num += 1
+            )
 
     if batch_results:
         if not dry_run:

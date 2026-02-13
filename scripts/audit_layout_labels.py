@@ -149,6 +149,32 @@ def _get_latest_enrichment_data(
     return versions[-1].get("data") if versions else None
 
 
+def _accumulate_detection(stats: DatasetStats, det: dict[str, Any]) -> None:
+    """Accumulate a single detection's fields into dataset stats (in-place)."""
+    class_name = det.get("class_name", "")
+    if class_name:
+        stats.class_counts[class_name] += 1
+
+    canonical = det.get("canonical_class")
+    if canonical:
+        stats.has_canonical = True
+        stats.canonical_counts[canonical] += 1
+
+    source_schema = det.get("source_schema")
+    if source_schema:
+        stats.source_schemas.add(source_schema)
+
+    is_lossy = det.get("is_lossy")
+    if is_lossy is True:
+        stats.lossy_count += 1
+    elif is_lossy is False:
+        stats.lossless_count += 1
+
+    source = det.get("source", "")
+    if source:
+        stats.detection_sources[source] += 1
+
+
 def scan_dataset(
     dataset_dir: Path,
     dataset_name: str,
@@ -187,28 +213,7 @@ def scan_dataset(
         stats.total_detections += len(detections)
 
         for det in detections:
-            class_name = det.get("class_name", "")
-            if class_name:
-                stats.class_counts[class_name] += 1
-
-            canonical = det.get("canonical_class")
-            if canonical:
-                stats.has_canonical = True
-                stats.canonical_counts[canonical] += 1
-
-            source_schema = det.get("source_schema")
-            if source_schema:
-                stats.source_schemas.add(source_schema)
-
-            is_lossy = det.get("is_lossy")
-            if is_lossy is True:
-                stats.lossy_count += 1
-            elif is_lossy is False:
-                stats.lossless_count += 1
-
-            source = det.get("source", "")
-            if source:
-                stats.detection_sources[source] += 1
+            _accumulate_detection(stats, det)
 
     return stats
 
@@ -299,18 +304,9 @@ def _build_coverage_matrix(
     return dict(coverage)
 
 
-def format_report(report: AuditReport) -> str:
-    """Format the complete audit report as a readable string.
-
-    Args:
-        report: Complete AuditReport from run_audit().
-
-    Returns:
-        Multi-line formatted report string.
-    """
+def _format_report_header(report: AuditReport) -> list[str]:
+    """Format the summary header section of the audit report."""
     lines: list[str] = []
-
-    # Header
     lines.append("Layout Label Audit Report")
     lines.append("=" * 60)
     lines.append("")
@@ -330,18 +326,17 @@ def format_report(report: AuditReport) -> str:
     lines.append(
         f"Total layout annotations:       ~{total_annotations:,} bounding boxes"
     )
+    return lines
 
-    # Schema Distribution
-    lines.append("")
-    lines.append("Schema Distribution:")
-    lines.append("-" * 40)
+
+def _format_schema_distribution(report: AuditReport) -> list[str]:
+    """Format the schema distribution section."""
+    lines: list[str] = ["", "Schema Distribution:", "-" * 40]
 
     schema_datasets: dict[str, list[DatasetStats]] = defaultdict(list)
     for stats in report.dataset_stats:
-        label = stats.schema_label
-        schema_datasets[label].append(stats)
+        schema_datasets[stats.schema_label].append(stats)
 
-    # Also count datasets with no schema detected
     no_schema_stats = [
         s for s in report.dataset_stats if not s.source_schemas and not s.has_canonical
     ]
@@ -349,7 +344,6 @@ def format_report(report: AuditReport) -> str:
     for schema_label, ds_list in sorted(schema_datasets.items()):
         ds_count = len(ds_list)
         img_count = sum(s.files_with_layout for s in ds_list)
-        # Count unique classes in this schema
         all_classes: set[str] = set()
         for stats in ds_list:
             all_classes.update(stats.class_counts.keys())
@@ -365,14 +359,13 @@ def format_report(report: AuditReport) -> str:
             f"  {'(no schema detected)':30s} {len(no_schema_stats)} dataset(s)"
         )
 
-    lines.append(f"  {'(none)':30s} {datasets_without} dataset(s)")
+    lines.append(f"  {'(none)':30s} {len(report.datasets_without_layout)} dataset(s)")
+    return lines
 
-    # Per-Dataset Breakdown
-    lines.append("")
-    lines.append("Per-Dataset Breakdown:")
-    lines.append("-" * 100)
 
-    # Header row
+def _format_dataset_breakdown(report: AuditReport) -> list[str]:
+    """Format the per-dataset breakdown table."""
+    lines: list[str] = ["", "Per-Dataset Breakdown:", "-" * 100]
     lines.append(
         f"  {'Dataset':<20s} | {'Schema':<18s} | "
         f"{'Images':>8s} | {'Avg Elem':>8s} | Top Classes"
@@ -392,18 +385,19 @@ def format_report(report: AuditReport) -> str:
             f"{stats.avg_elements_per_page:>8.1f} | "
             f"{top_cls}"
         )
+    return lines
+
+
+def _format_lossless_section(report: AuditReport) -> list[str]:
+    """Format lossless DocLayNet conversion and related sections."""
+    lines: list[str] = []
 
     # Canonical Coverage Matrix
     coverage = _build_coverage_matrix(report.dataset_stats)
     if coverage:
-        lines.append("")
-        lines.append("Canonical Coverage (classes present across datasets):")
-        lines.append("-" * 60)
-
+        lines += ["", "Canonical Coverage (classes present across datasets):", "-" * 60]
         for cls, ds_names in sorted(
-            coverage.items(),
-            key=lambda x: len(x[1]),
-            reverse=True,
+            coverage.items(), key=lambda x: len(x[1]), reverse=True
         ):
             lines.append(
                 f"  {cls:<25s} {len(ds_names):>2} dataset(s): "
@@ -413,14 +407,9 @@ def format_report(report: AuditReport) -> str:
     # Lossless DocLayNet Conversion
     standardized_stats = [s for s in report.dataset_stats if s.has_canonical]
     if standardized_stats:
-        lines.append("")
-        lines.append("Lossless DocLayNet Conversion:")
-        lines.append("-" * 60)
-
+        lines += ["", "Lossless DocLayNet Conversion:", "-" * 60]
         for stats in sorted(
-            standardized_stats,
-            key=lambda s: s.lossless_count,
-            reverse=True,
+            standardized_stats, key=lambda s: s.lossless_count, reverse=True
         ):
             total_classified = stats.lossless_count + stats.lossy_count
             if total_classified == 0:
@@ -436,42 +425,60 @@ def format_report(report: AuditReport) -> str:
     # Inconsistencies
     inconsistent = [s for s in report.dataset_stats if len(s.source_schemas) > 1]
     if inconsistent:
-        lines.append("")
-        lines.append("Inconsistencies (multiple schemas in same dataset):")
-        lines.append("-" * 60)
+        lines += ["", "Inconsistencies (multiple schemas in same dataset):", "-" * 60]
         for stats in inconsistent:
             lines.append(f"  {stats.dataset}: schemas = {sorted(stats.source_schemas)}")
 
-    # Datasets WITHOUT layout labels
+    return lines
+
+
+def _format_footer_sections(report: AuditReport) -> list[str]:
+    """Format the datasets-without-layout and errors footer sections."""
+    lines: list[str] = []
+
     if report.datasets_without_layout:
         lines.append("")
         lines.append(
             f"Datasets WITHOUT layout labels ({len(report.datasets_without_layout)}):"
         )
         lines.append("-" * 60)
-        # Wrap at ~4 names per line
         chunk_size = 4
         names = sorted(report.datasets_without_layout)
         for i in range(0, len(names), chunk_size):
             chunk = names[i : i + chunk_size]
             lines.append(f"  {', '.join(chunk)}")
 
-    # Errors
-    all_errors = []
-    for stats in report.dataset_stats:
-        for err in stats.errors:
-            all_errors.append(f"{stats.dataset}: {err}")
-
+    all_errors = [
+        f"{stats.dataset}: {err}"
+        for stats in report.dataset_stats
+        for err in stats.errors
+    ]
     if all_errors:
-        lines.append("")
-        lines.append(f"Errors ({len(all_errors)}):")
-        lines.append("-" * 60)
+        lines += ["", f"Errors ({len(all_errors)}):", "-" * 60]
         for err in all_errors[:20]:
             lines.append(f"  - {err}")
         if len(all_errors) > 20:
             lines.append(f"  ... and {len(all_errors) - 20} more")
 
     lines.append("")
+    return lines
+
+
+def format_report(report: AuditReport) -> str:
+    """Format the complete audit report as a readable string.
+
+    Args:
+        report: Complete AuditReport from run_audit().
+
+    Returns:
+        Multi-line formatted report string.
+    """
+    lines: list[str] = []
+    lines += _format_report_header(report)
+    lines += _format_schema_distribution(report)
+    lines += _format_dataset_breakdown(report)
+    lines += _format_lossless_section(report)
+    lines += _format_footer_sections(report)
     return "\n".join(lines)
 
 

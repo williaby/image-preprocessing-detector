@@ -62,15 +62,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ "$MODE" = "extract" ]; then
+if [[ "$MODE" = "extract" ]]; then
     echo "📊 Extracting Workstream LOC Counts..."
     echo "Project Root: ${PROJECT_ROOT}"
     echo ""
-elif [ "$MODE" = "validate-tables" ]; then
+elif [[ "$MODE" = "validate-tables" ]]; then
     echo "🔍 Validating Level 2 Traceability Table: ${WORKSTREAM}"
     echo "Project Root: ${PROJECT_ROOT}"
     echo ""
-elif [ "$MODE" = "validate-swimlane" ]; then
+elif [[ "$MODE" = "validate-swimlane" ]]; then
     echo "🔍 Validating Level 3 Swimlane Diagram: ${WORKSTREAM}"
     echo "Project Root: ${PROJECT_ROOT}"
     echo ""
@@ -78,10 +78,10 @@ fi
 
 # Function to count LOC in a directory (excluding comments, blanks, tests)
 count_loc() {
-    local dir=$1
+    local dir="$1"
     local total=0
 
-    if [ -d "$dir" ]; then
+    if [[ -d "$dir" ]]; then
         # Count Python files only, excluding __pycache__, tests, and .pyc files
         total=$(find "$dir" -name "*.py" \
             -not -path "*/tests/*" \
@@ -94,6 +94,13 @@ count_loc() {
     fi
 
     echo "$total"
+    return 0
+}
+
+# Function to count LOC in a single file
+count_file_loc() {
+    local file_path="$1"
+    wc -l "$file_path" 2>/dev/null | awk '{print $1}' || echo "0"
 }
 
 # Define workstream source directories
@@ -126,12 +133,12 @@ for workstream in "${!WORKSTREAMS[@]}"; do
     # Sum LOC across all directories/files for this workstream
     for path in $dirs; do
         full_path="${PROJECT_ROOT}/${path}"
-        if [ -e "$full_path" ]; then
-            if [ -d "$full_path" ]; then
+        if [[ -e "$full_path" ]]; then
+            if [[ -d "$full_path" ]]; then
                 loc=$(count_loc "$full_path")
             else
                 # Single file
-                loc=$(wc -l "$full_path" 2>/dev/null | awk '{print $1}' || echo "0")
+                loc=$(count_file_loc "$full_path")
             fi
             total_loc=$((total_loc + loc))
             echo "  - ${path}: ${loc} lines"
@@ -144,7 +151,7 @@ for workstream in "${!WORKSTREAMS[@]}"; do
     echo ""
 
     # Add to JSON (handle comma for all but last entry)
-    if [ "$first" = true ]; then
+    if [[ "$first" = true ]]; then
         first=false
     else
         echo "," >> "$OUTPUT_FILE"
@@ -169,7 +176,7 @@ cat "$OUTPUT_FILE" | python3 -m json.tool 2>/dev/null || cat "$OUTPUT_FILE"
 echo ""
 
 # Extract key metrics for Level 1 update
-if [ "$MODE" = "extract" ]; then
+if [[ "$MODE" = "extract" ]]; then
     echo "📝 Suggested Level 1 updates:"
     echo ""
     python3 << 'EOF'
@@ -216,7 +223,7 @@ fi
 # ============================================================================
 # VALIDATION MODE: --validate-tables
 # ============================================================================
-if [ "$MODE" = "validate-tables" ]; then
+if [[ "$MODE" = "validate-tables" ]]; then
     # Map workstream names to Level 2 index.md paths
     declare -A LEVEL2_DOCS=(
         ["monitoring_drift"]="docs/architecture/diagrams/level-2/monitoring-drift/index.md"
@@ -228,14 +235,14 @@ if [ "$MODE" = "validate-tables" ]; then
         ["synthetic_generation"]="docs/architecture/diagrams/level-2/synthetic-generation/index.md"
     )
 
-    if [ -z "${LEVEL2_DOCS[$WORKSTREAM]:-}" ]; then
+    if [[ -z "${LEVEL2_DOCS[$WORKSTREAM]:-}" ]]; then
         echo -e "${RED}❌ Unknown workstream: ${WORKSTREAM}${NC}"
         exit 1
     fi
 
     level2_doc="${PROJECT_ROOT}/${LEVEL2_DOCS[$WORKSTREAM]}"
 
-    if [ ! -f "$level2_doc" ]; then
+    if [[ ! -f "$level2_doc" ]]; then
         echo -e "${RED}❌ Level 2 doc not found: ${level2_doc}${NC}"
         exit 1
     fi
@@ -245,7 +252,7 @@ if [ "$MODE" = "validate-tables" ]; then
     # Extract LOC from "Workstream Total" line in traceability table
     table_total=$(grep -i "Workstream Total" "$level2_doc" | grep -oP '\d{1,3}(,\d{3})*' | head -1 | tr -d ',')
 
-    if [ -z "$table_total" ]; then
+    if [[ -z "$table_total" ]]; then
         echo -e "${RED}❌ Could not find 'Workstream Total' in traceability table${NC}"
         echo -e "${YELLOW}Hint: Ensure the table has a line like:**Workstream Total**: 5,353 lines ✅${NC}"
         exit 1
@@ -262,11 +269,11 @@ if [ "$MODE" = "validate-tables" ]; then
 
     for path in $dirs; do
         full_path="${PROJECT_ROOT}/${path}"
-        if [ -e "$full_path" ]; then
-            if [ -d "$full_path" ]; then
+        if [[ -e "$full_path" ]]; then
+            if [[ -d "$full_path" ]]; then
                 loc=$(count_loc "$full_path")
             else
-                loc=$(wc -l "$full_path" 2>/dev/null | awk '{print $1}' || echo "0")
+                loc=$(count_file_loc "$full_path")
             fi
             total_loc=$((total_loc + loc))
             echo "  - ${path}: ${loc} lines"
@@ -287,10 +294,10 @@ if [ "$MODE" = "validate-tables" ]; then
     echo "  Difference:   ${diff} lines (${percent_diff}%)"
     echo ""
 
-    if [ "$abs_diff" -eq 0 ]; then
+    if [[ "$abs_diff" -eq 0 ]]; then
         echo -e "${GREEN}✅ PERFECT MATCH - Table is accurate!${NC}"
         exit 0
-    elif [ "$abs_diff" -le 50 ] && [ "$(echo "$percent_diff < 2" | bc -l)" -eq 1 ]; then
+    elif [[ "$abs_diff" -le 50 ]] && [[ "$(echo "$percent_diff < 2" | bc -l)" -eq 1 ]]; then
         echo -e "${YELLOW}⚠️  MINOR VARIANCE - Within acceptable range (±2%)${NC}"
         echo -e "${YELLOW}   Consider updating table if variance grows${NC}"
         exit 0
@@ -308,7 +315,7 @@ fi
 # ============================================================================
 # VALIDATION MODE: --validate-swimlane
 # ============================================================================
-if [ "$MODE" = "validate-swimlane" ]; then
+if [[ "$MODE" = "validate-swimlane" ]]; then
     # Map workstream names to Level 3 swimlane paths
     declare -A SWIMLANES=(
         ["monitoring_drift"]="docs/architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.puml"
@@ -317,7 +324,7 @@ if [ "$MODE" = "validate-swimlane" ]; then
         ["data_preparation"]="docs/architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.puml"
     )
 
-    if [ -z "${SWIMLANES[$WORKSTREAM]:-}" ]; then
+    if [[ -z "${SWIMLANES[$WORKSTREAM]:-}" ]]; then
         echo -e "${RED}❌ No swimlane diagram found for: ${WORKSTREAM}${NC}"
         echo -e "${YELLOW}Available swimlanes: ${!SWIMLANES[@]}${NC}"
         exit 1
@@ -325,7 +332,7 @@ if [ "$MODE" = "validate-swimlane" ]; then
 
     swimlane_file="${PROJECT_ROOT}/${SWIMLANES[$WORKSTREAM]}"
 
-    if [ ! -f "$swimlane_file" ]; then
+    if [[ ! -f "$swimlane_file" ]]; then
         echo -e "${RED}❌ Swimlane file not found: ${swimlane_file}${NC}"
         exit 1
     fi
@@ -338,7 +345,7 @@ if [ "$MODE" = "validate-swimlane" ]; then
         tr -d ',' | \
         awk '{sum += $1} END {print sum}')
 
-    if [ -z "$swimlane_total" ] || [ "$swimlane_total" -eq 0 ]; then
+    if [[ -z "$swimlane_total" ]] || [[ "$swimlane_total" -eq 0 ]]; then
         echo -e "${RED}❌ Could not find LOC annotations in swimlane${NC}"
         echo -e "${YELLOW}Hint: Ensure annotations use format: 'filename.py (XXX lines)'${NC}"
         exit 1
@@ -349,10 +356,10 @@ if [ "$MODE" = "validate-swimlane" ]; then
     # Extract total from legend (format: "Total LOC**: 5,348")
     legend_total=$(grep -i "Total LOC" "$swimlane_file" | grep -oP '\d{1,3}(,\d{3})*' | head -1 | tr -d ',')
 
-    if [ -n "$legend_total" ]; then
+    if [[ -n "$legend_total" ]]; then
         echo -e "${GREEN}  Legend Total:   ${legend_total} lines${NC}"
 
-        if [ "$swimlane_total" -ne "$legend_total" ]; then
+        if [[ "$swimlane_total" -ne "$legend_total" ]]; then
             echo -e "${YELLOW}⚠️  Warning: Annotation sum (${swimlane_total}) != Legend total (${legend_total})${NC}"
         fi
     fi
@@ -366,11 +373,11 @@ if [ "$MODE" = "validate-swimlane" ]; then
 
     for path in $dirs; do
         full_path="${PROJECT_ROOT}/${path}"
-        if [ -e "$full_path" ]; then
-            if [ -d "$full_path" ]; then
+        if [[ -e "$full_path" ]]; then
+            if [[ -d "$full_path" ]]; then
                 loc=$(count_loc "$full_path")
             else
-                loc=$(wc -l "$full_path" 2>/dev/null | awk '{print $1}' || echo "0")
+                loc=$(count_file_loc "$full_path")
             fi
             total_loc=$((total_loc + loc))
             echo "  - ${path}: ${loc} lines"
@@ -391,10 +398,10 @@ if [ "$MODE" = "validate-swimlane" ]; then
     echo "  Difference:     ${diff} lines (${percent_diff}%)"
     echo ""
 
-    if [ "$abs_diff" -eq 0 ]; then
+    if [[ "$abs_diff" -eq 0 ]]; then
         echo -e "${GREEN}✅ PERFECT MATCH - Swimlane annotations are accurate!${NC}"
         exit 0
-    elif [ "$abs_diff" -le 50 ] && [ "$(echo "$percent_diff < 2" | bc -l)" -eq 1 ]; then
+    elif [[ "$abs_diff" -le 50 ]] && [[ "$(echo "$percent_diff < 2" | bc -l)" -eq 1 ]]; then
         echo -e "${YELLOW}⚠️  MINOR VARIANCE - Within acceptable range (±2%)${NC}"
         echo -e "${YELLOW}   Consider updating annotations if variance grows${NC}"
         exit 0

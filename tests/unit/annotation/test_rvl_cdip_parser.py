@@ -257,14 +257,14 @@ class TestRvlCdipParser:
         assert text_detection["bbox"] == [100.0, 200.0, 300.0, 50.0]
         assert text_detection["category_id"] == 9
         assert text_detection["category_name"] == "Text"
-        assert text_detection["confidence"] == 0.95
-        assert text_detection["area"] == 15000.0
+        assert text_detection["confidence"] == pytest.approx(0.95)
+        assert text_detection["area"] == pytest.approx(15000.0)
         assert text_detection["source"] == "doclayout_yolo"
 
         # Check second detection (Table element)
         table_detection = detections[1]
         assert table_detection["category_name"] == "Table"
-        assert table_detection["confidence"] == 0.88
+        assert table_detection["confidence"] == pytest.approx(0.88)
 
     def test_parse_layout_multiple_images(
         self, parser: RvlCdipParser, dataset_path: Path
@@ -321,9 +321,9 @@ class TestRvlCdipParser:
 
         # Check metadata
         assert text_content["source_type"] == "ocr_tesseract"
-        assert text_content["confidence"] == 1.0
+        assert text_content["confidence"] == pytest.approx(1.0)
         assert text_content["tables_found"] == 0
-        assert text_content["processing_time_ms"] == 1234.56
+        assert text_content["processing_time_ms"] == pytest.approx(1234.56)
 
         # Check text statistics
         assert text_content["character_count"] > 0

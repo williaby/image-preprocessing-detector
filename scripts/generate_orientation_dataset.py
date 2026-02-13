@@ -32,7 +32,6 @@ import argparse
 import hashlib  # nosemgrep: python.lang.security.audit.insecure-hash-algorithms  # Uses SHA256, not MD5
 import json
 import logging
-import random
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -42,6 +41,9 @@ from typing import Any
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
+
+# Module-level seeded RNG (re-initialized in main() with user-supplied seed)
+_rng: np.random.Generator = np.random.default_rng(seed=0)
 
 # Configure logging
 logging.basicConfig(
@@ -53,16 +55,23 @@ logger = logging.getLogger(__name__)
 # Base data path
 BASE_DATA_PATH = Path("/mnt/e/image_detection/01_base_data")
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+DOCLAYNET_DIR = "documents/doclaynet"
+PNG_GLOB = "**/*.png"
+ALL_FILES_GLOB = "**/*.*"
+JPG_GLOB = "**/*.jpg"
+
 # Dataset composition configuration
 DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "scientific_papers": {
         "count": 2000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "scientific" in str(p).lower()
-                or random.random() < 0.3,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "scientific" in str(p).lower() or _rng.random() < 0.3
+                ),
             }
         ],
         "doc_type": "scientific",
@@ -71,10 +80,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1500,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "financial" in str(p).lower()
-                or random.random() < 0.2,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "financial" in str(p).lower() or _rng.random() < 0.2
+                ),
             }
         ],
         "doc_type": "financial",
@@ -82,25 +92,25 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "forms": {
         "count": 1500,
         "sources": [
-            {"path": BASE_DATA_PATH / "forms/funsd", "pattern": "**/*.png"},
-            {"path": BASE_DATA_PATH / "forms/funsd_plus", "pattern": "**/*.png"},
-            {"path": BASE_DATA_PATH / "forms/nist-sd2", "pattern": "**/*.*"},
-            {"path": BASE_DATA_PATH / "forms/nist_sd6", "pattern": "**/*.*"},
+            {"path": BASE_DATA_PATH / "forms/funsd", "pattern": PNG_GLOB},
+            {"path": BASE_DATA_PATH / "forms/funsd_plus", "pattern": PNG_GLOB},
+            {"path": BASE_DATA_PATH / "forms/nist-sd2", "pattern": ALL_FILES_GLOB},
+            {"path": BASE_DATA_PATH / "forms/nist_sd6", "pattern": ALL_FILES_GLOB},
         ],
         "doc_type": "form",
     },
     "receipts": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "forms/sroie_icdar2019", "pattern": "**/*.jpg"},
+            {"path": BASE_DATA_PATH / "forms/sroie_icdar2019", "pattern": JPG_GLOB},
         ],
         "doc_type": "receipt",
     },
     "tables": {
         "count": 1500,
         "sources": [
-            {"path": BASE_DATA_PATH / "tables/tablebank", "pattern": "**/*.jpg"},
-            {"path": BASE_DATA_PATH / "tables/pubtabnet", "pattern": "**/*.png"},
+            {"path": BASE_DATA_PATH / "tables/tablebank", "pattern": JPG_GLOB},
+            {"path": BASE_DATA_PATH / "tables/pubtabnet", "pattern": PNG_GLOB},
         ],
         "doc_type": "table",
     },
@@ -108,10 +118,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "law" in str(p).lower()
-                or random.random() < 0.15,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "law" in str(p).lower() or _rng.random() < 0.15
+                ),
             }
         ],
         "doc_type": "legal",
@@ -119,7 +130,10 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "handwritten_pages": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "handwriting/nist-sd19", "pattern": "**/*.*"},
+            {
+                "path": BASE_DATA_PATH / "handwriting/nist-sd19",
+                "pattern": ALL_FILES_GLOB,
+            },
         ],
         "doc_type": "handwritten",
     },
@@ -127,9 +141,9 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: random.random() < 0.15,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: _rng.random() < 0.15,
             }
         ],
         "doc_type": "mixed",
@@ -139,11 +153,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "sources": [
             {
                 "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
-                "pattern": "**/*.jpg",
+                "pattern": JPG_GLOB,
             },
             {
                 "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
-                "pattern": "**/*.png",
+                "pattern": PNG_GLOB,
             },
         ],
         "doc_type": "arabic",
@@ -154,7 +168,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH
                 / "language/multilingual_scripts/nepal_devanagari",
-                "pattern": "**/*.png",
+                "pattern": PNG_GLOB,
             },
         ],
         "doc_type": "devanagari",
@@ -162,8 +176,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "japanese_vertical": {
         "count": 1050,
         "sources": [
-            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": "**/*.jpg"},
-            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": "**/*.png"},
+            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": JPG_GLOB},
+            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": PNG_GLOB},
         ],
         "doc_type": "japanese",
     },
@@ -263,7 +277,7 @@ def collect_source_files(category: str, config: dict[str, Any]) -> list[Document
         return samples
 
     # Shuffle and sample
-    random.shuffle(all_files)
+    _rng.shuffle(all_files)
     selected = all_files[:target_count]
 
     logger.info(f"{category}: Found {len(all_files)} files, selected {len(selected)}")
@@ -296,7 +310,7 @@ def split_by_document_id(
     test_samples: list[DocumentSample] = []
 
     for doc_type, type_samples in by_type.items():
-        random.shuffle(type_samples)
+        _rng.shuffle(type_samples)
         n = len(type_samples)
 
         train_end = int(n * train_ratio)
@@ -430,9 +444,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Set random seed
-    random.seed(args.seed)
-    np.random.seed(args.seed)
+    # Set random seed (uses numpy Generator API for SonarCloud compliance)
+    global _rng
+    _rng = np.random.default_rng(args.seed)
 
     logger.info("=" * 60)
     logger.info("Orientation Dataset Generation")
@@ -522,9 +536,7 @@ def main() -> int:
                     "2": "180° (inverted)",
                     "3": "270° clockwise",
                 },
-                "composition": {
-                    doc_type: count for doc_type, count in type_counts.items()
-                },
+                "composition": dict(type_counts.items()),
                 "samples": all_metadata,
             },
             f,

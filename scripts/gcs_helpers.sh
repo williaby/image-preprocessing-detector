@@ -18,15 +18,21 @@ NC='\033[0m' # No Color
 
 # Helper function for colored output
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    local message="$1"
+    echo -e "${GREEN}[INFO]${NC} $message"
+    return 0
 }
 
 log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+    local message="$1"
+    echo -e "${YELLOW}[WARN]${NC} $message"
+    return 0
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    local message="$1"
+    echo -e "${RED}[ERROR]${NC} $message" >&2
+    return 0
 }
 
 # Verify gcloud authentication
@@ -39,6 +45,7 @@ check_auth() {
     # Set project
     gcloud config set project "$PROJECT_ID" &>/dev/null
     log_info "Authenticated as: $(gcloud config get-value account)"
+    return 0
 }
 
 # Upload config files
@@ -50,13 +57,14 @@ upload_configs() {
     gsutil -m cp configs/models/doclayout_yolo.yaml "$BUCKET/configs/models/" || true
 
     log_info "✓ Configs uploaded"
+    return 0
 }
 
 # Upload Phase 2 dataset
 upload_phase2_dataset() {
     local dataset_dir="$LOCAL_ROOT/datasets/iqa_phase2"
 
-    if [ ! -d "$dataset_dir" ]; then
+    if [[ ! -d "$dataset_dir" ]]; then
         log_error "Dataset directory not found: $dataset_dir"
         log_info "Run: python scripts/prepare_phase2_data.py first"
         exit 1
@@ -77,6 +85,7 @@ upload_phase2_dataset() {
     gsutil du -sh "$BUCKET/datasets/iqa_phase2/"
 
     log_info "✓ Phase 2 dataset uploaded"
+    return 0
 }
 
 # Download Phase 2 dataset from GCS
@@ -94,6 +103,7 @@ download_phase2_dataset() {
         "$dataset_dir/"
 
     log_info "✓ Phase 2 dataset downloaded to: $dataset_dir"
+    return 0
 }
 
 # Sync local checkpoints to GCS
@@ -101,7 +111,7 @@ sync_checkpoints() {
     local phase="${1:-phase2}"
     local checkpoint_dir="$LOCAL_ROOT/checkpoints/${phase}_iqa"
 
-    if [ ! -d "$checkpoint_dir" ]; then
+    if [[ ! -d "$checkpoint_dir" ]]; then
         log_warn "No checkpoints found at: $checkpoint_dir"
         return
     fi
@@ -110,6 +120,7 @@ sync_checkpoints() {
     gsutil -m rsync -r -d "$checkpoint_dir" "$BUCKET/checkpoints/${phase}_iqa/"
 
     log_info "✓ Checkpoints synced"
+    return 0
 }
 
 # Download checkpoints from GCS
@@ -123,6 +134,7 @@ download_checkpoints() {
     gsutil -m rsync -r "$BUCKET/checkpoints/${phase}_iqa/" "$checkpoint_dir"
 
     log_info "✓ Checkpoints downloaded to: $checkpoint_dir"
+    return 0
 }
 
 # Upload final models
@@ -130,7 +142,7 @@ upload_models() {
     local phase="${1:-phase2}"
     local model_dir="$LOCAL_ROOT/models/${phase}_iqa"
 
-    if [ ! -d "$model_dir" ]; then
+    if [[ ! -d "$model_dir" ]]; then
         log_error "Model directory not found: $model_dir"
         exit 1
     fi
@@ -139,12 +151,14 @@ upload_models() {
     gsutil -m cp -r "$model_dir/*" "$BUCKET/models/${phase}_iqa/"
 
     log_info "✓ Models uploaded"
+    return 0
 }
 
 # List GCS bucket contents
 list_bucket() {
     log_info "Bucket contents:"
     gsutil ls -lh "$BUCKET/" | head -50
+    return 0
 }
 
 # Show bucket size and costs
@@ -161,6 +175,7 @@ show_storage_info() {
     total_gb=$(gsutil du -s "$BUCKET" | awk '{print $1/1024/1024/1024}')
     cost=$(echo "$total_gb * 0.020" | bc -l)
     printf "%.2f GB × \$0.020 = \$%.2f/month\n" "$total_gb" "$cost"
+    return 0
 }
 
 # Main menu
@@ -182,6 +197,7 @@ show_menu() {
     echo ""
     echo "Usage: $0 <command> [args]"
     echo ""
+    return 0
 }
 
 # Main script
@@ -225,6 +241,7 @@ main() {
             exit 1
             ;;
     esac
+    return 0
 }
 
 # Run main function

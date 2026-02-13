@@ -128,9 +128,9 @@ class TestOriginalLabels:
             diqa_original_image="ori/img001.jpg",
         )
 
-        assert labels.diqa_overall == 4.5
-        assert labels.diqa_sharpness == 4.2
-        assert labels.diqa_color_fidelity == 4.8
+        assert labels.diqa_overall == pytest.approx(4.5)
+        assert labels.diqa_sharpness == pytest.approx(4.2)
+        assert labels.diqa_color_fidelity == pytest.approx(4.8)
 
     def test_funsd_annotations_is_dict(self) -> None:
         """Test P0-4 fix: FUNSD annotations are dict, not list."""
@@ -166,7 +166,7 @@ class TestLayoutDetection:
 
         assert detection.class_name == "table"
         assert detection.bbox == [100.0, 200.0, 300.0, 400.0]
-        assert detection.confidence == 0.95
+        assert detection.confidence == pytest.approx(0.95)
         assert detection.source == "doclayout_yolo"
 
 
@@ -371,7 +371,7 @@ class TestSampleMetadata:
 
         assert result["id"] == sample_metadata.id
         assert result["source"]["dataset_name"] == "diqa-5000"
-        assert result["original_labels"]["diqa_overall"] == 4.5
+        assert result["original_labels"]["diqa_overall"] == pytest.approx(4.5)
         assert result["original_file"]["format"] == "png"
         assert result["enrichments"]["current_version"] == 1
         assert len(result["enrichments"]["versions"]) == 1

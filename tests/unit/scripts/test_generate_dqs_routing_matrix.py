@@ -21,6 +21,8 @@ import cv2
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 # Scripts directory added to sys.path via tests/conftest.py
 from generate_dqs_routing_matrix import (
     DOCLAYNET_CLASSES,
@@ -123,7 +125,7 @@ class TestCalculateNoiseScore:
         """Test noise score for noisy image."""
         # Create image with noise
         image = np.full((100, 100), 128, dtype=np.uint8)
-        noise = np.random.randint(-50, 50, (100, 100), dtype=np.int16)
+        noise = rng.integers(-50, 50, (100, 100), dtype=np.int16)
         noisy = np.clip(image.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
         score = calculate_noise_score(noisy)

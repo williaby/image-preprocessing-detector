@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Common log messages (S1192: avoid duplicate string literals)
+PROCESSING_COMPLETE_MSG = "=== Processing complete ==="
+
 # Dataset registry
 DATASETS = {
     "pubtabnet": "datasets/pubtabnet",
@@ -603,7 +606,7 @@ class UnifiedProcessor:
             local_pq.unlink(missing_ok=True)
             logger.info(f"Cleaned up {local_pq.name}")
 
-        logger.info("=== Processing complete ===")
+        logger.info(PROCESSING_COMPLETE_MSG)
         logger.info(f"Total: {total_success} success, {total_failed} failed")
         total_images = total_success + total_failed
         if total_images > 0:
@@ -722,7 +725,7 @@ class UnifiedProcessor:
             local_arrow.unlink(missing_ok=True)
             logger.info(f"Cleaned up {local_arrow.name}")
 
-        logger.info("=== Processing complete ===")
+        logger.info(PROCESSING_COMPLETE_MSG)
         logger.info(f"Total: {total_success} success, {total_failed} failed")
         total_images = total_success + total_failed
         if total_images > 0:
@@ -820,7 +823,7 @@ class UnifiedProcessor:
         # Cleanup extracted files
         shutil.rmtree(str(extract_dir), ignore_errors=True)
 
-        logger.info("=== Processing complete ===")
+        logger.info(PROCESSING_COMPLETE_MSG)
         logger.info(f"Total: {total_success} success, {total_failed} failed")
         if all_files:
             logger.info(
@@ -900,7 +903,7 @@ class UnifiedProcessor:
             )
 
         # Final summary
-        logger.info("=== Processing complete ===")
+        logger.info(PROCESSING_COMPLETE_MSG)
         logger.info(f"Total: {total_success} success, {total_failed} failed")
         logger.info(
             f"Total time: {total_time / 1000:.1f}s, avg {total_time / len(all_files):.0f}ms/file"

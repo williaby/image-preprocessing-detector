@@ -12,45 +12,41 @@ from pathlib import Path
 
 import frontmatter
 
+# Mapping of path keywords to tags. Each entry is (keywords, tag) where
+# keywords is a tuple -- ALL keywords must be present for the tag to apply.
+_PATH_TAG_RULES: list[tuple[tuple[str, ...], str]] = [
+    (("architecture",), "architecture"),
+    (("diagram",), "documentation"),
+    (("planning",), "planning"),
+    (("reference",), "reference"),
+    (("benchmark",), "benchmarking"),
+    (("model", "training"), "training"),
+    (("dataset",), "datasets"),
+    (("labeling",), "labeling"),
+    (("iqa",), "iqa"),
+    (("quality",), "iqa"),
+    (("workflow",), "pipeline"),
+    (("pseudo",), "weak_supervision"),
+    (("production",), "production"),
+    (("runtime",), "production"),
+    (("monitoring",), "monitoring"),
+    (("drift",), "monitoring"),
+]
 
-def infer_tags(path: Path, content: str) -> list[str]:  # noqa: ARG001
+
+def infer_tags(path: Path, _content: str) -> list[str]:
     """Infer appropriate tags based on file path and content."""
-    tags = []
     path_str = str(path).lower()
 
-    # Path-based tags
-    if "architecture" in path_str:
-        tags.append("architecture")
-    if "diagram" in path_str:
-        tags.append("documentation")
-    if "planning" in path_str:
-        tags.append("planning")
-    if "reference" in path_str:
-        tags.append("reference")
-    if "benchmark" in path_str:
-        tags.append("benchmarking")
-    if "model" in path_str and "training" in path_str:
-        tags.append("training")
-    if "dataset" in path_str:
-        tags.append("datasets")
-    if "labeling" in path_str:
-        tags.append("labeling")
-    if "iqa" in path_str or "quality" in path_str:
-        tags.append("iqa")
-    if "workflow" in path_str:
-        tags.append("pipeline")
-    if "pseudo" in path_str:
-        tags.append("weak_supervision")
-    if "production" in path_str or "runtime" in path_str:
-        tags.append("production")
-    if "monitoring" in path_str or "drift" in path_str:
-        tags.append("monitoring")
+    tags: list[str] = []
+    for keywords, tag in _PATH_TAG_RULES:
+        if all(kw in path_str for kw in keywords) and tag not in tags:
+            tags.append(tag)
 
-    # Content-based fallback
     if not tags:
         tags.append("documentation")
 
-    return tags[:4]  # Max 4 tags
+    return tags[:4]
 
 
 def extract_title(content: str) -> str:
@@ -77,14 +73,12 @@ def infer_purpose(title: str, path: Path) -> str:
     return f"Documentation for {title}."
 
 
-def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
-    """Add front matter to a file that's missing schema_type.
+def _parse_existing_front_matter(text: str) -> tuple[dict, str]:
+    """Parse existing front matter and extract content body.
 
-    Returns True if changes were made.
+    Returns:
+        Tuple of (metadata_dict, content_body).
     """
-    text = path.read_text(encoding="utf-8")
-
-    # Check if file already has front matter
     try:
         post = frontmatter.loads(text)
         meta = post.metadata if isinstance(post.metadata, dict) else {}
@@ -92,11 +86,6 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         meta = {}
         post = frontmatter.Post(text)
 
-    # Check if already has valid schema_type
-    if meta.get("schema_type") in ("common", "script", "knowledge", "planning"):
-        return False
-
-    # Extract existing content
     content = post.content if hasattr(post, "content") else text
 
     # Remove existing front matter from content if partial
@@ -105,15 +94,17 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         if match:
             content = text[match.end() :]
 
-    # Extract title and create purpose
+    return meta, content
+
+
+def _build_new_meta(meta: dict, content: str, path: Path) -> dict:
+    """Build new front matter metadata from existing meta and content."""
     title = meta.get("title") or extract_title(content)
     purpose = meta.get("purpose") or infer_purpose(title, path)
 
-    # Ensure purpose ends with punctuation
     if purpose and not purpose.strip().endswith((".", "!", "?")):
         purpose = purpose.strip() + "."
 
-    # Build new front matter
     new_meta = {
         "schema_type": "common",
         "title": title,
@@ -123,11 +114,26 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         "tags": meta.get("tags") or infer_tags(path, content),
     }
 
-    # Preserve other existing fields that are valid
     if meta.get("description"):
         new_meta["description"] = meta["description"]
 
-    # Remove redundant H1 from content (since title is in front matter)
+    return new_meta
+
+
+def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
+    """Add front matter to a file that's missing schema_type.
+
+    Returns True if changes were made.
+    """
+    text = path.read_text(encoding="utf-8")
+    meta, content = _parse_existing_front_matter(text)
+
+    if meta.get("schema_type") in ("common", "script", "knowledge", "planning"):
+        return False
+
+    new_meta = _build_new_meta(meta, content, path)
+    title = new_meta["title"]
+
     content_cleaned = re.sub(
         r"^\s*#\s+" + re.escape(title) + r"\s*$\n?",
         "",
@@ -136,7 +142,6 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         flags=re.MULTILINE,
     )
 
-    # Create new post
     new_post = frontmatter.Post(content_cleaned.lstrip(), **new_meta)
     new_text = frontmatter.dumps(new_post)
 
@@ -151,11 +156,21 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
     return True
 
 
+def _has_schema_type_error(item: dict) -> bool:
+    """Check if a validation item has a schema_type-related error."""
+    if item["ok"]:
+        return False
+    return any(
+        "schema_type" in err or "Unable to extract tag using discriminator" in err
+        for err in item.get("errors", [])
+    )
+
+
 def main() -> int:
     """Process all markdown files in docs/ that have front matter issues."""
+    import json
     import subprocess
 
-    # Get list of files with issues
     result = subprocess.run(
         [  # noqa: S607
             "uv",
@@ -170,34 +185,20 @@ def main() -> int:
         cwd=Path(__file__).parent.parent,
     )
 
-    import json
-
     try:
         data = json.loads(result.stdout)
     except json.JSONDecodeError:
         print("Failed to get validation results")
         return 1
 
-    # Find files with schema_type issues
-    files_to_fix = []
-    for item in data:
-        if not item["ok"]:
-            errors = item.get("errors", [])
-            for err in errors:
-                if (
-                    "schema_type" in err
-                    or "Unable to extract tag using discriminator" in err
-                ):
-                    files_to_fix.append(Path(item["file"]))
-                    break
-
+    files_to_fix = [Path(item["file"]) for item in data if _has_schema_type_error(item)]
     print(f"Found {len(files_to_fix)} files with schema_type issues")
 
-    fixed = 0
-    for path in files_to_fix:
-        if path.exists() and add_front_matter_to_file(path, dry_run=False):
-            fixed += 1
-
+    fixed = sum(
+        1
+        for path in files_to_fix
+        if path.exists() and add_front_matter_to_file(path, dry_run=False)
+    )
     print(f"Fixed {fixed} files")
     return 0
 

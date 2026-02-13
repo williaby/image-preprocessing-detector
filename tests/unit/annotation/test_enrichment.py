@@ -302,7 +302,7 @@ class TestYOLOProvider:
         assert len(detections) == 1
         assert detections[0]["class_name"] == "table"
         assert detections[0]["bbox"] == [10.0, 20.0, 100.0, 200.0]  # COCO format
-        assert detections[0]["confidence"] == 0.95
+        assert detections[0]["confidence"] == pytest.approx(0.95)
         assert detections[0]["source"] == "doclayout_yolo"
 
 

@@ -92,6 +92,37 @@ DATASET_CONFIGS = {
 }
 
 
+def _load_hf_dataset(
+    config: dict[str, Any],
+) -> tuple[Any, Any, int]:
+    """Load a HuggingFace dataset and flatten splits if needed.
+
+    Args:
+        config: Dataset configuration dict.
+
+    Returns:
+        Tuple of (original_dataset, all_data_iterable, total_samples).
+    """
+    load_kwargs = {}
+    if "split" in config:
+        load_kwargs["name"] = config["split"]
+
+    dataset = load_dataset(config["hf_name"], **load_kwargs)
+
+    if isinstance(dataset, dict):
+        logger.info(f"Dataset splits: {list(dataset.keys())}")
+        all_data = []
+        for split_name, split_data in dataset.items():
+            logger.info(f"  {split_name}: {len(split_data)} samples")
+            all_data.extend(split_data)
+        total_samples = sum(len(split) for split in dataset.values())
+    else:
+        all_data = dataset
+        total_samples = len(dataset)
+
+    return dataset, all_data, total_samples
+
+
 def convert_dataset_to_images(
     dataset_name: str,
     output_dir: Path | None = None,
@@ -129,7 +160,7 @@ def convert_dataset_to_images(
     logger.info(f"Loading dataset: {config['hf_name']}")
     logger.info(f"Description: {config['description']}")
 
-    stats = {
+    stats: dict[str, Any] = {
         "dataset": dataset_name,
         "found": 0,
         "converted": 0,
@@ -138,28 +169,7 @@ def convert_dataset_to_images(
     }
 
     try:
-        # Load dataset from HuggingFace
-        load_kwargs = {}
-        if "split" in config:
-            load_kwargs["name"] = config["split"]
-
-        dataset = load_dataset(config["hf_name"], **load_kwargs)
-
-        # Handle different dataset structures
-        if isinstance(dataset, dict):
-            # Dataset has splits (train/val/test)
-            logger.info(f"Dataset splits: {list(dataset.keys())}")
-            # Combine all splits for conversion
-            all_data = []
-            for split_name, split_data in dataset.items():
-                logger.info(f"  {split_name}: {len(split_data)} samples")
-                all_data.extend(split_data)
-            total_samples = sum(len(split) for split in dataset.values())
-        else:
-            # Single dataset
-            all_data = dataset
-            total_samples = len(dataset)
-
+        dataset, all_data, total_samples = _load_hf_dataset(config)
         stats["found"] = total_samples
         logger.info(f"Total samples to process: {total_samples}")
 
@@ -170,31 +180,21 @@ def convert_dataset_to_images(
             logger.info(f"  Chunked: {chunked}")
             if chunked:
                 num_chunks = (total_samples + chunk_size - 1) // chunk_size
-                logger.info(f"  Chunks: {num_chunks} × {chunk_size} images")
+                logger.info(f"  Chunks: {num_chunks} x {chunk_size} images")
             return stats
 
-        # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Output directory: {output_dir}")
 
-        # Process dataset
+        data_source = dataset if not isinstance(dataset, dict) else all_data
         if chunked:
             logger.info(f"Processing in chunks of {chunk_size}")
             _convert_chunked(
-                dataset if not isinstance(dataset, dict) else all_data,
-                output_dir,
-                image_column,
-                image_format,
-                chunk_size,
-                stats,
+                data_source, output_dir, image_column, image_format, chunk_size, stats
             )
         else:
             _convert_standard(
-                dataset if not isinstance(dataset, dict) else all_data,
-                output_dir,
-                image_column,
-                image_format,
-                stats,
+                data_source, output_dir, image_column, image_format, stats
             )
 
         logger.info(
@@ -270,6 +270,71 @@ def _convert_chunked(
         )
 
 
+def _decode_image_data(
+    image_data: Any,
+    idx: int,
+) -> Image.Image | None:
+    """Decode image data from various formats to a PIL Image.
+
+    Args:
+        image_data: Image data in any supported format (PIL Image, str, bytes, dict).
+        idx: Sample index for error reporting.
+
+    Returns:
+        PIL Image, or None if decoding failed.
+    """
+    if isinstance(image_data, Image.Image):
+        return image_data
+
+    if isinstance(image_data, str):
+        import base64
+
+        try:
+            if image_data.startswith("data:image"):
+                image_data = image_data.split(",", 1)[1]
+            image_bytes = base64.b64decode(image_data)
+            return Image.open(BytesIO(image_bytes))
+        except Exception as e:
+            logger.error(f"Failed to decode base64 image at index {idx}: {e}")
+            return None
+
+    if isinstance(image_data, bytes):
+        return Image.open(BytesIO(image_data))
+
+    if isinstance(image_data, dict) and "bytes" in image_data:
+        return Image.open(BytesIO(image_data["bytes"]))
+
+    logger.warning(f"Unknown image data type at index {idx}: {type(image_data)}")
+    return None
+
+
+def _save_image_to_disk(
+    image: Image.Image,
+    output_path: Path,
+    image_format: str,
+) -> None:
+    """Convert mode if needed and save a PIL Image to disk.
+
+    Args:
+        image: PIL Image to save.
+        output_path: Destination file path.
+        image_format: Output format string (png, jpg, jpeg).
+    """
+    if image.mode not in ("RGB", "L"):
+        image = image.convert("RGB")
+
+    save_kwargs: dict[str, Any] = {}
+    save_format = image_format.upper()
+    if save_format == "JPG":
+        save_format = "JPEG"
+
+    if image_format.lower() in ("jpg", "jpeg"):
+        save_kwargs["quality"] = 95
+        save_kwargs["optimize"] = True
+
+    image.save(output_path, format=save_format, **save_kwargs)
+
+
 def _convert_sample(
     sample: dict[str, Any],
     idx: int,
@@ -280,71 +345,25 @@ def _convert_sample(
 ) -> None:
     """Convert a single sample."""
     try:
-        # Get image from sample
         image_data = sample.get(image_column)
-
         if image_data is None:
             logger.warning(f"No image data at index {idx}")
             stats["errors"] += 1
             return
 
-        # Handle different image data types
-        if isinstance(image_data, Image.Image):
-            # Already a PIL Image
-            image = image_data
-        elif isinstance(image_data, str):
-            # Base64-encoded image (common in HuggingFace datasets)
-            import base64
-
-            try:
-                # Remove data URI prefix if present
-                if image_data.startswith("data:image"):
-                    image_data = image_data.split(",", 1)[1]
-                # Decode base64
-                image_bytes = base64.b64decode(image_data)
-                image = Image.open(BytesIO(image_bytes))
-            except Exception as e:
-                logger.error(f"Failed to decode base64 image at index {idx}: {e}")
-                stats["errors"] += 1
-                return
-        elif isinstance(image_data, bytes):
-            # Raw bytes
-            image = Image.open(BytesIO(image_data))
-        elif isinstance(image_data, dict) and "bytes" in image_data:
-            # Bytes in dictionary
-            image = Image.open(BytesIO(image_data["bytes"]))
-        else:
-            logger.warning(
-                f"Unknown image data type at index {idx}: {type(image_data)}"
-            )
+        image = _decode_image_data(image_data, idx)
+        if image is None:
             stats["errors"] += 1
             return
 
-        # Generate output filename
-        # Use dataset index or image_id if available
         image_id = sample.get("image_id", sample.get("id", idx))
         output_path = output_dir / f"{image_id:08d}.{image_format}"
 
-        # Skip if already exists
         if output_path.exists():
             stats["skipped"] += 1
             return
 
-        # Convert and save
-        if image.mode not in ("RGB", "L"):
-            image = image.convert("RGB")
-
-        # Save with appropriate quality
-        save_kwargs = {}
-        save_format = image_format.upper()
-        if save_format == "JPG":
-            save_format = "JPEG"  # PIL requires JPEG not JPG
-
-        if image_format.lower() in ("jpg", "jpeg"):
-            save_kwargs["quality"] = 95
-            save_kwargs["optimize"] = True
-
-        image.save(output_path, format=save_format, **save_kwargs)
+        _save_image_to_disk(image, output_path, image_format)
         stats["converted"] += 1
 
     except Exception as e:

@@ -828,6 +828,86 @@ def integrate_sample(
 # ===================================================================
 # Integration runner
 # ===================================================================
+def _track_match_counts(
+    stats: dict[str, Any],
+    filename: str,
+    filename_stem: str,
+    llm_index: dict[str, dict[str, Any]],
+    lang_index: dict[str, dict[str, Any]],
+    layout_index: dict[str, list[dict[str, Any]]],
+    ocr_index: dict[str, dict[str, Any]],
+    vlm_index: dict[str, dict[str, Any]] | None,
+) -> None:
+    """Increment source match counters for a single sample."""
+    if filename_stem in llm_index:
+        stats["llm_matched"] += 1
+    if filename_stem in lang_index:
+        stats["lang_matched"] += 1
+    if filename in layout_index:
+        stats["layout_matched"] += 1
+    if filename in ocr_index:
+        stats["ocr_matched"] += 1
+    if vlm_index and filename_stem in vlm_index:
+        stats["vlm_matched"] += 1
+
+
+def _track_distributions(
+    stats: dict[str, Any],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Update distribution counters and content flag counts from integrated data."""
+    if integrated_data.get("text_has_content"):
+        stats["has_text_content_count"] += 1
+
+    _dist_fields = {
+        "domain_dist": ("domain_level1", "UNK"),
+        "split_dist": ("split", "unknown"),
+        "lang_dist": ("iso639_language", "und"),
+        "script_family_dist": ("script_family", "unknown"),
+        "lang_method_dist": ("text_scope_detection_method", "unknown"),
+        "capture_method_dist": ("capture_method", "unknown"),
+        "content_type_dist": ("text_scope_content_type", "unknown"),
+    }
+    for stat_key, (data_key, default) in _dist_fields.items():
+        stats[stat_key][integrated_data.get(data_key, default)] += 1
+
+    _flag_fields = ["has_table", "has_formula", "has_handwriting", "has_figure"]
+    for flag in _flag_fields:
+        if integrated_data.get(flag):
+            stats[f"{flag}_count"] += 1
+
+
+def _write_enrichment_version(
+    sample: dict[str, Any],
+    integrated_data: dict[str, Any],
+    now: str,
+) -> None:
+    """Write or replace the enrichment version on a sample (mutates sample)."""
+    new_version = {
+        "version": ENRICHMENT_VERSION_NUMBER,
+        "created_at": now,
+        "created_by": "integrate_bhutan_afs_enrichments.py",
+        "method": "tier_2_model",
+        "description": (
+            f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
+            "Docling layout + Docling OCR + VLM Phase 6 corrections "
+            "(bilingual dzo+eng, figure FP fix, signature detection)"
+        ),
+        "script_version": SCRIPT_VERSION,
+        "data": integrated_data,
+    }
+    versions = sample["enrichments"]["versions"]
+    replaced = False
+    for i, ver in enumerate(versions):
+        if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
+            versions[i] = new_version
+            replaced = True
+            break
+    if not replaced:
+        versions.append(new_version)
+    sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+
+
 def run_integration(
     metadata: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -889,71 +969,21 @@ def run_integration(
             vlm_index,
         )
 
-        # ----- Track statistics -----
         stats["integrated"] += 1
-        if filename_stem in llm_index:
-            stats["llm_matched"] += 1
-        if filename_stem in lang_index:
-            stats["lang_matched"] += 1
-        if filename in layout_index:
-            stats["layout_matched"] += 1
-        if filename in ocr_index:
-            stats["ocr_matched"] += 1
-        if vlm_index and filename_stem in vlm_index:
-            stats["vlm_matched"] += 1
-        if integrated_data.get("text_has_content"):
-            stats["has_text_content_count"] += 1
+        _track_match_counts(
+            stats,
+            filename,
+            filename_stem,
+            llm_index,
+            lang_index,
+            layout_index,
+            ocr_index,
+            vlm_index,
+        )
+        _track_distributions(stats, integrated_data)
 
-        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
-        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
-        stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][
-            integrated_data.get("script_family", "unknown")
-        ] += 1
-        stats["lang_method_dist"][
-            integrated_data.get("text_scope_detection_method", "unknown")
-        ] += 1
-        stats["capture_method_dist"][
-            integrated_data.get("capture_method", "unknown")
-        ] += 1
-        stats["content_type_dist"][
-            integrated_data.get("text_scope_content_type", "unknown")
-        ] += 1
-
-        if integrated_data.get("has_table"):
-            stats["has_table_count"] += 1
-        if integrated_data.get("has_formula"):
-            stats["has_formula_count"] += 1
-        if integrated_data.get("has_handwriting"):
-            stats["has_handwriting_count"] += 1
-        if integrated_data.get("has_figure"):
-            stats["has_figure_count"] += 1
-
-        # ----- Write enrichment version -----
         if not dry_run:
-            new_version = {
-                "version": ENRICHMENT_VERSION_NUMBER,
-                "created_at": now,
-                "created_by": "integrate_bhutan_afs_enrichments.py",
-                "method": "tier_2_model",
-                "description": (
-                    f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
-                    "Docling layout + Docling OCR + VLM Phase 6 corrections "
-                    "(bilingual dzo+eng, figure FP fix, signature detection)"
-                ),
-                "script_version": SCRIPT_VERSION,
-                "data": integrated_data,
-            }
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for i, ver in enumerate(versions):
-                if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
-                    versions[i] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            _write_enrichment_version(sample, integrated_data, now)
 
     return stats
 

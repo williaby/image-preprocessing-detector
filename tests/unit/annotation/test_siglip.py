@@ -88,12 +88,12 @@ class TestSigLIPProviderProperties:
     def test_default_min_confidence(self):
         """Test default min confidence threshold."""
         provider = SigLIPProvider()
-        assert provider.min_confidence_threshold == 0.5
+        assert provider.min_confidence_threshold == pytest.approx(0.5)
 
     def test_custom_min_confidence(self):
         """Test custom min confidence threshold."""
         provider = SigLIPProvider(min_confidence_threshold=0.8)
-        assert provider.min_confidence_threshold == 0.8
+        assert provider.min_confidence_threshold == pytest.approx(0.8)
 
 
 # ============================================================================
@@ -152,7 +152,7 @@ class TestSigLIPProviderAvailability:
             with patch.dict("sys.modules", {"transformers": None}):
                 provider = SigLIPProvider(model_path=str(mock_model_path))
                 # The import check should fail
-                result = provider.is_available()
+                provider.is_available()
                 # Note: This depends on whether transformers is truly unavailable
                 # In test environment it might still be importable
         finally:
@@ -268,7 +268,7 @@ class TestSigLIPProviderInference:
         result = provider.enrich(Path("test.jpg"))
 
         assert isinstance(result, EnrichmentData)
-        assert result.llm_predicted_mos == 4.0
+        assert result.llm_predicted_mos == pytest.approx(4.0)
         assert result.llm_model_name == "siglip_iqa"
         mock_load.assert_called_once()
         mock_process.assert_called_once()
@@ -300,8 +300,8 @@ class TestSigLIPProviderInference:
         results = provider.enrich_batch(paths)
 
         assert len(results) == 2
-        assert results[0].llm_predicted_mos == 4.0
-        assert results[1].llm_predicted_mos == 3.5
+        assert results[0].llm_predicted_mos == pytest.approx(4.0)
+        assert results[1].llm_predicted_mos == pytest.approx(3.5)
         mock_load.assert_called_once()
 
     @patch.object(SigLIPProvider, "_ensure_loaded")
@@ -602,7 +602,7 @@ class TestSigLIPProviderIntegration:
         assert len(results) == 1
         assert results[0].success
         assert "siglip_iqa" in results[0].providers_used
-        assert results[0].data.llm_predicted_mos == 4.2
+        assert results[0].data.llm_predicted_mos == pytest.approx(4.2)
 
     def test_manager_handles_siglip_unavailable(self, mock_model_path: Path):
         """Test EnrichmentManager handles unavailable SigLIPProvider gracefully."""

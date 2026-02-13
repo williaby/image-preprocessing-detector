@@ -11,6 +11,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from migrate_layer2_schema_to_full import (
     is_already_migrated,
@@ -43,7 +45,7 @@ class TestMigrateCaptureMethod:
 
         assert result is not None
         assert result["method"] == "born_digital"
-        assert result["confidence"] == 0.95
+        assert result["confidence"] == pytest.approx(0.95)
         assert result["detection_method"] == "dataset_config"
 
     def test_minimal_data(self):
@@ -54,7 +56,7 @@ class TestMigrateCaptureMethod:
 
         assert result is not None
         assert result["method"] == "scanner_flatbed"
-        assert result["confidence"] == 0.5  # default
+        assert result["confidence"] == pytest.approx(0.5)  # default
         assert result["detection_method"] == "unknown"  # default
 
     def test_missing_capture_method(self):
@@ -125,7 +127,7 @@ class TestMigrateDomain:
         assert result["level1"] == "FIN"
         assert result["level2"] == "banking"
         assert result["level3"] == "statements"
-        assert result["confidence"] == 0.9
+        assert result["confidence"] == pytest.approx(0.9)
 
     def test_minimal_data_classified(self):
         """Test with only level1 (classified domain)."""
@@ -136,7 +138,7 @@ class TestMigrateDomain:
         assert result is not None
         assert result["level1"] == "TAX"
         assert result["level2"] is None
-        assert result["confidence"] == 0.8  # default for classified
+        assert result["confidence"] == pytest.approx(0.8)  # default for classified
 
     def test_unk_domain_default_confidence(self):
         """Test UNK domain gets lower default confidence."""
@@ -146,7 +148,7 @@ class TestMigrateDomain:
 
         assert result is not None
         assert result["level1"] == "UNK"
-        assert result["confidence"] == 0.3  # default for UNK
+        assert result["confidence"] == pytest.approx(0.3)  # default for UNK
 
     def test_no_domain(self):
         """Test with no domain fields."""
@@ -208,7 +210,7 @@ class TestMigrateQuality:
 
         result = migrate_quality(flat)
 
-        assert result["overall_score"] == 0.85
+        assert result["overall_score"] == pytest.approx(0.85)
         assert len(result["degradations"]) == 1
 
 

@@ -227,17 +227,14 @@ class TestDatasetConfigCoverage:
         for dataset_name in registered_datasets:
             # Check if dataset or a variant exists in DATASET_CONFIGS
             # Some parsers register multiple names (e.g., 'diqa-5000' and 'diqa')
-            found = False
             for config_name in DATASET_CONFIGS:
                 # Check exact match or common variants
                 if dataset_name == config_name:
-                    found = True
                     break
                 # Handle name variants (underscores vs hyphens)
                 normalized = dataset_name.replace("-", "_").replace("_", "-")
                 config_normalized = config_name.replace("-", "_").replace("_", "-")
                 if normalized == config_normalized:
-                    found = True
                     break
 
             # Note: Some parsers may register alias names not in DATASET_CONFIGS

@@ -543,7 +543,7 @@ class DocLayoutYOLODetector:
         try:
             # Load model from HuggingFace
             start_time = time.perf_counter()
-            self._model = YOLOv10.from_pretrained(self._model_id)
+            self._model = YOLOv10.from_pretrained(self._model_id)  # nosec B615
             load_time = (time.perf_counter() - start_time) * 1000
 
             self._model_loaded = True

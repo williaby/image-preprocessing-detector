@@ -285,8 +285,6 @@ class TestDeviceFallbackChain:
         # Mock ONNX Runtime to not have CUDA provider
         import onnxruntime as ort
 
-        original_providers = ort.get_available_providers
-
         def mock_providers():
             return ["CPUExecutionProvider"]
 
@@ -306,6 +304,7 @@ class TestDeviceFallbackChain:
         """Test that inference works correctly with CPU device."""
         if ml_detector is None:
             pytest.skip("ML detector not available")
+            return  # Unreachable, but helps static analysis understand control flow
 
         # Create test image
         img = np.ones((224, 224, 3), dtype=np.uint8) * 128
@@ -420,15 +419,13 @@ class TestDevicePriorityPipeline:
             img[y : y + 30, 50:550] = 50
 
         # Run full pipeline
-        student_scores, teacher_scores, escalation_reason = ml_detector.run_pipeline(
-            img
-        )
+        student_scores, _, _ = ml_detector.run_pipeline(img)
 
         assert student_scores is not None
         assert student_scores.inference_time_ms > 0
         # Device should be reported correctly
         assert (
-            student_scores.device in [ml_detector.device]
+            student_scores.device == ml_detector.device
             or student_scores.device is not None
         )
 
@@ -480,6 +477,7 @@ class TestDevicePriorityPipeline:
         """Test that multiple inference calls maintain consistent device."""
         if ml_detector is None:
             pytest.skip("ML detector not available")
+            return  # Unreachable, but helps static analysis understand control flow
 
         rng = np.random.default_rng(42)
 
@@ -487,6 +485,7 @@ class TestDevicePriorityPipeline:
         for _ in range(5):
             img = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
             scores = ml_detector.run_student_inference(img)
+            assert scores is not None, "Student inference should return scores"
             devices_used.append(scores.device)
 
         # All inferences should use same device
@@ -502,6 +501,7 @@ class TestDevicePriorityPerformance:
         """Test student inference latency on CPU (target: <100ms acceptable)."""
         if ml_detector is None:
             pytest.skip("ML detector not available")
+            return  # Unreachable, but helps static analysis understand control flow
 
         from image_preprocessing_detector.detection.iqa_ml import Device
 
@@ -519,10 +519,10 @@ class TestDevicePriorityPerformance:
         latencies = []
         for _ in range(10):
             scores = ml_detector.run_student_inference(img)
+            assert scores is not None, "Student inference should return scores"
             latencies.append(scores.inference_time_ms)
 
         avg_latency = np.mean(latencies)
-        max_latency = np.max(latencies)
 
         # Assert acceptable latency (<100ms CPU acceptable, <40ms target)
         assert avg_latency < 100, f"Average latency {avg_latency:.1f}ms exceeds 100ms"

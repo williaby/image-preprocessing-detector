@@ -110,7 +110,7 @@ class TestReadinessCheckFailures:
                 client = TestClient(app)
 
                 response = client.get("/ready")
-                data = response.json()
+                response.json()
 
                 # The endpoint should return 503 if any check fails
                 assert response.status_code in (200, 503)

@@ -96,6 +96,7 @@ class TestStudentModelLatency:
         """Test student CPU latency meets acceptable target (<100ms)."""
         if ml_detector_for_benchmark is None:
             pytest.skip("ML detector not available")
+            return  # Unreachable, but helps static analysis understand control flow
 
         detector = ml_detector_for_benchmark
 
@@ -108,6 +109,7 @@ class TestStudentModelLatency:
         latencies = []
         for img in test_images[:10]:
             scores = detector.run_student_inference(img)
+            assert scores is not None, "Student inference should return scores"
             latencies.append(scores.inference_time_ms)
 
         avg_latency = statistics.mean(latencies)
@@ -222,6 +224,7 @@ class TestThroughput:
         """Test CPU throughput meets target (>2 pages/sec)."""
         if ml_detector_for_benchmark is None:
             pytest.skip("ML detector not available")
+            return  # Unreachable, but helps static analysis understand control flow
 
         import time
 

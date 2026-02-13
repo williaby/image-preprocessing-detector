@@ -32,9 +32,7 @@ def reset_metrics_collector() -> None:
     # Clean up Prometheus registry if available
     if PROMETHEUS_AVAILABLE and REGISTRY is not None:
         # Get all collector names that start with our namespace prefixes
-        collectors_to_remove = []
-        for collector in list(REGISTRY._names_to_collectors.values()):
-            collectors_to_remove.append(collector)
+        collectors_to_remove = [*REGISTRY._names_to_collectors.values()]
 
         # Unregister each collector
         for collector in collectors_to_remove:

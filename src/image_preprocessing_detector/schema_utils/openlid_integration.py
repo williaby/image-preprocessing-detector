@@ -28,6 +28,7 @@ Notes:
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -457,9 +458,9 @@ ISO639_3_TO_1: dict[str, str] = {
 }
 
 # Reverse mapping for reference
-ISO639_1_TO_3: dict[str, list[str]] = {}
+ISO639_1_TO_3: defaultdict[str, list[str]] = defaultdict(list)
 for code_3, code_1 in ISO639_3_TO_1.items():
-    ISO639_1_TO_3.setdefault(code_1, []).append(code_3)
+    ISO639_1_TO_3[code_1].append(code_3)
 
 
 # =============================================================================
@@ -572,7 +573,7 @@ class OpenLIDDetector:
         logger.info("Downloading OpenLID-v2 model from HuggingFace...")
         self._model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        downloaded_path = hf_hub_download(
+        downloaded_path = hf_hub_download(  # nosec B615
             repo_id="laurievb/OpenLID-v2",
             filename="model.bin",
             local_dir=self._model_path.parent,

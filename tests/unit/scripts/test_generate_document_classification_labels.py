@@ -127,7 +127,7 @@ class TestClassifyDocumentType:
             {"image_id": 1, "category_id": 10},  # Text
         ]
 
-        classification, class_counts = classify_document_type(1, annotations)
+        _, class_counts = classify_document_type(1, annotations)
 
         assert class_counts["Text"] == 3
 

@@ -29,7 +29,7 @@ from image_preprocessing_detector.annotation.storage.cache import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 
 # ============================================================================
@@ -176,7 +176,7 @@ class TestBoundedCache:
         assert stats.hits == 0
         assert stats.misses == 0
         assert stats.evictions == 0
-        assert stats.hit_rate == 0.0
+        assert stats.hit_rate == pytest.approx(0.0)
 
         # Add items and access
         cache.put("a", 1)
@@ -188,7 +188,7 @@ class TestBoundedCache:
         assert stats.size == 2
         assert stats.hits == 1
         assert stats.misses == 1
-        assert stats.hit_rate == 0.5
+        assert stats.hit_rate == pytest.approx(0.5)
 
         # Trigger eviction
         cache.put("c", 3)
@@ -251,18 +251,18 @@ class TestCacheStats:
     def test_hit_rate_calculation(self) -> None:
         """Test hit rate calculation."""
         stats = CacheStats(hits=75, misses=25)
-        assert stats.hit_rate == 0.75
+        assert stats.hit_rate == pytest.approx(0.75)
 
         stats = CacheStats(hits=0, misses=0)
-        assert stats.hit_rate == 0.0
+        assert stats.hit_rate == pytest.approx(0.0)
 
     def test_utilization_calculation(self) -> None:
         """Test utilization calculation."""
         stats = CacheStats(size=50, max_size=100)
-        assert stats.utilization == 0.5
+        assert stats.utilization == pytest.approx(0.5)
 
         stats = CacheStats(size=0, max_size=0)
-        assert stats.utilization == 0.0
+        assert stats.utilization == pytest.approx(0.0)
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
@@ -280,8 +280,8 @@ class TestCacheStats:
         assert result["hits"] == 75
         assert result["misses"] == 25
         assert result["evictions"] == 10
-        assert result["hit_rate"] == 0.75
-        assert result["utilization"] == 0.5
+        assert result["hit_rate"] == pytest.approx(0.75)
+        assert result["utilization"] == pytest.approx(0.5)
 
 
 # ============================================================================
@@ -351,7 +351,7 @@ class TestStreamingJSONLReader:
         assert entry is not None
         assert entry["filename"] == "image_003.png"
         assert entry["label"] == "figure"
-        assert entry["score"] == 0.92
+        assert entry["score"] == pytest.approx(0.92)
 
     def test_get_nonexistent_entry(self, sample_jsonl_file: Path) -> None:
         """Test retrieving non-existent entry."""
@@ -449,7 +449,7 @@ class TestStreamingJSONLReader:
         assert stats["is_indexed"] is True
         assert stats["cache_hits"] == 1
         assert stats["cache_misses"] == 1
-        assert stats["cache_hit_rate"] == 0.5
+        assert stats["cache_hit_rate"] == pytest.approx(0.5)
 
     def test_handles_empty_lines(self, tmp_path: Path) -> None:
         """Test reader handles empty lines in JSONL."""

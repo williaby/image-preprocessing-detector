@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 from image_preprocessing_detector.detection.orientation_detector import (
     OrientationConfig,
     OrientationDetector,
@@ -79,7 +81,7 @@ class TestOrientationDetector:
             cv2.line(img, (50, y), (550, y), (0, 0, 0), 1)
             # Add some shorter lines like words
             for x in range(50, 500, 80):
-                length = np.random.randint(40, 70)
+                length = rng.integers(40, 70)
                 cv2.line(img, (x, y + 5), (x + length, y + 5), (30, 30, 30), 1)
 
         return img
@@ -162,7 +164,7 @@ class TestOrientationDetector:
         assert detector._normalize_angle(260) == 270
         assert detector._normalize_angle(350) == 0
         assert detector._normalize_angle(360) == 0
-        assert detector._normalize_angle(450) == 90  # 450 % 360 = 90
+        assert detector._normalize_angle(450) == 90  # wraps around to 90
 
     def test_angle_to_enum(self, detector: OrientationDetector) -> None:
         """Test integer angle to enum conversion."""
@@ -323,7 +325,7 @@ class TestOrientationCorrectorIntegration:
 
         # Detect and correct
         detection = detect_orientation(img)
-        corrected, was_corrected = correct_orientation(img, detection)
+        corrected, _ = correct_orientation(img, detection)
 
         # Should not change an upright image
         assert isinstance(corrected, np.ndarray)

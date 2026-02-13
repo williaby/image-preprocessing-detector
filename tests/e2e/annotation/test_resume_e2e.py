@@ -25,7 +25,7 @@ from image_preprocessing_detector.annotation.integrity.checkpointing import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 
 @pytest.mark.e2e

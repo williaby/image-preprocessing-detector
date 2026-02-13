@@ -33,15 +33,15 @@ class TestDIQAPrediction:
             image_id="img_001",
             inference_time_ms=25.5,
         )
-        assert pred.overall == 0.85
-        assert pred.sharpness == 0.78
-        assert pred.color == 0.92
+        assert pred.overall == pytest.approx(0.85)
+        assert pred.sharpness == pytest.approx(0.78)
+        assert pred.color == pytest.approx(0.92)
 
     def test_boundary_values(self) -> None:
         """Test boundary values [0, 1]."""
         pred = DIQAPrediction(overall=0.0, sharpness=1.0, color=0.5)
-        assert pred.overall == 0.0
-        assert pred.sharpness == 1.0
+        assert pred.overall == pytest.approx(0.0)
+        assert pred.sharpness == pytest.approx(1.0)
 
     def test_invalid_value_raises(self) -> None:
         """Test that out-of-range values raise ValueError."""
@@ -62,11 +62,11 @@ class TestDIQAPrediction:
         )
         d = pred.to_dict()
 
-        assert d["overall"] == 0.85
-        assert d["sharpness"] == 0.78
-        assert d["color"] == 0.92
+        assert d["overall"] == pytest.approx(0.85)
+        assert d["sharpness"] == pytest.approx(0.78)
+        assert d["color"] == pytest.approx(0.92)
         assert d["image_id"] == "img_001"
-        assert d["inference_time_ms"] == 25.5
+        assert d["inference_time_ms"] == pytest.approx(25.5)
 
 
 class TestDIQAGroundTruth:
@@ -81,7 +81,7 @@ class TestDIQAGroundTruth:
             image_id="img_001",
             image_path="/path/to/img.png",
         )
-        assert gt.overall == 0.85
+        assert gt.overall == pytest.approx(0.85)
         assert gt.image_id == "img_001"
 
 

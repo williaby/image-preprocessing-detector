@@ -213,7 +213,7 @@ class TestSaveCheckpoint:
             )
 
         # Load checkpoint and verify scheduler state was saved
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, weights_only=True)
         assert "scheduler_state_dict" in checkpoint
 
     def test_save_checkpoint_with_extra_state(
@@ -233,7 +233,7 @@ class TestSaveCheckpoint:
                 extra_state=extra,
             )
 
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, weights_only=True)
         assert checkpoint["extra_state"] == extra
 
     def test_save_checkpoint_creates_metadata_json(

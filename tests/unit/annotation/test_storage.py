@@ -136,7 +136,7 @@ class TestWriterInitialization:
         parquet_root = tmp_path / "new_parquet_dir"
         assert not parquet_root.exists()
 
-        writer = PartitionedParquetWriter(parquet_root)
+        PartitionedParquetWriter(parquet_root)
 
         assert parquet_root.exists()
 
@@ -400,8 +400,8 @@ class TestDataIntegrity:
         labels_json = table.column("original_labels_json").to_pylist()[0]
         labels = json.loads(labels_json)
 
-        assert labels["diqa_overall"] == 4.2
-        assert labels["diqa_sharpness"] == 4.0
+        assert labels["diqa_overall"] == pytest.approx(4.2)
+        assert labels["diqa_sharpness"] == pytest.approx(4.0)
 
 
 # ============================================================================

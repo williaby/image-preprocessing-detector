@@ -29,7 +29,7 @@ def download_docbank(output_dir: Path, use_cache: bool = True) -> None:
 
     Args:
         output_dir: Directory to save dataset
-        use_cache: Use HuggingFace cache (default: True) - reserved for future use
+        use_cache: Use HuggingFace cache (default: True). When False, forces re-download.
     """
     logger.info(f"Downloading DocBank dataset to {output_dir}")
     logger.info("Dataset size: 500K pages (train: 400K, val: 50K, test: 50K)")
@@ -48,6 +48,7 @@ def download_docbank(output_dir: Path, use_cache: bool = True) -> None:
             local_dir_use_symlinks=False,  # Don't use symlinks
             resume_download=True,  # Resume if interrupted
             max_workers=4,  # Parallel downloads
+            force_download=not use_cache,
         )
 
         logger.info(f"✅ DocBank dataset downloaded successfully to {output_dir}")

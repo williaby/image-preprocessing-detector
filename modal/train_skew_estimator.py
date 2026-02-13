@@ -69,6 +69,9 @@ gcs_secret = modal.Secret.from_name("gcs-credentials")
 GCS_BUCKET = "image_detection_b"
 GCS_TAR_BLOB = "skew_training.tar"
 
+# Common file name constants (S1192: avoid duplicate string literals)
+LABELS_FILE = "labels.json"
+
 training_image = modal.Image.debian_slim(python_version="3.12").pip_install(
     "torch==2.5.1",
     "torchvision==0.20.1",
@@ -164,7 +167,7 @@ def build_skew_dataset(
 
     split_dir = Path(data_dir) / split
     images_dir = split_dir / "images"
-    labels_path = split_dir / "labels.json"
+    labels_path = split_dir / LABELS_FILE
 
     with labels_path.open() as f:
         all_labels = json.load(f)
@@ -328,7 +331,7 @@ def _auto_batch_size(backbone: str, input_size: int) -> int:
 def _benchmark_cpu_inference(
     model: torch.nn.Module,
     config: TrainingConfig,
-    run_id: str,
+    _run_id: str,
 ) -> dict[str, float]:
     """Time CPU inference for the trained model.
 
@@ -379,6 +382,416 @@ def _benchmark_cpu_inference(
 
 
 # ---------------------------------------------------------------------------
+# Training helper functions
+# ---------------------------------------------------------------------------
+
+
+def _build_skew_config(
+    test: bool, backbone: str, input_size: int, epochs: int, batch_size: int
+) -> TrainingConfig:
+    """Build TrainingConfig with CLI overrides applied."""
+    config = TrainingConfig(test_mode=test)
+    if test:
+        config.epochs = 2
+        config.batch_size = 8
+        config.warmup_epochs = 0
+
+    if backbone:
+        config.backbone = backbone
+    if input_size > 0:
+        config.input_size = input_size
+    if epochs > 0:
+        config.epochs = epochs
+    if batch_size > 0:
+        config.batch_size = batch_size
+    elif not test:
+        config.batch_size = _auto_batch_size(config.backbone, config.input_size)
+
+    return config
+
+
+def _load_skew_data(test: bool) -> str:
+    """Load or download training data. Returns data_dir path."""
+    if test:
+        data_dir = "/tmp/skew_test"  # nosec B108
+        _download_gcs_individual(data_dir, test_mode=True)
+        return data_dir
+
+    data_dir = "/tmp/skew_training"  # nosec B108
+    labels_check = Path(data_dir) / "train" / LABELS_FILE
+
+    if not labels_check.exists():
+        tar_on_volume = Path("/data/skew_training.tar")
+        if not tar_on_volume.exists():
+            msg = (
+                "Tar archive not found on volume. "
+                "Run with --prepare-data first:\n"
+                "  uv run modal run modal/train_skew_estimator.py --prepare-data"
+            )
+            raise FileNotFoundError(msg)
+
+        print(f"Extracting tar from volume to {data_dir}...")
+        Path(data_dir).mkdir(parents=True, exist_ok=True)
+        start_extract = time.monotonic()
+        subprocess.run(  # nosec B603 B607
+            ["tar", "xf", str(tar_on_volume), "-C", data_dir],
+            check=True,
+        )
+        print(f"Extracted in {time.monotonic() - start_extract:.0f}s")
+
+    img_dir = Path(data_dir) / "train" / "images"
+    count = sum(1 for f in img_dir.iterdir() if f.is_file())
+    print(f"Dataset ready: {count:,} train images")
+    return data_dir
+
+
+def _build_skew_model(config: TrainingConfig, num_bins: int, device: Any) -> tuple:
+    """Build SkewEstimatorNet and return (model_instance, model_class)."""
+    import timm
+    import torch
+    import torch.nn as nn
+
+    class SkewEstimatorNet(nn.Module):
+        """MobileNetV4-Conv-S with 3 heads for skew estimation."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.backbone = timm.create_model(
+                config.backbone,
+                pretrained=config.pretrained,
+                num_classes=0,
+                global_pool="avg",
+            )
+            with torch.no_grad():
+                dummy = torch.randn(2, 3, config.input_size, config.input_size)
+                feat_dim = self.backbone(dummy).shape[-1]
+
+            self.orientation_head = nn.Sequential(
+                nn.Dropout(p=0.2), nn.Linear(feat_dim, 4)
+            )
+            self.skew_bin_head = nn.Sequential(
+                nn.Dropout(p=0.2), nn.Linear(feat_dim, num_bins)
+            )
+            self.skew_regression_head = nn.Sequential(
+                nn.Dropout(p=0.1),
+                nn.Linear(feat_dim, 128),
+                nn.ReLU(inplace=True),
+                nn.Linear(128, 1),
+            )
+
+        def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
+            features = self.backbone(x)
+            return {
+                "orientation_logits": self.orientation_head(features),
+                "skew_bin_logits": self.skew_bin_head(features),
+                "skew_regression": self.skew_regression_head(features),
+            }
+
+    model = SkewEstimatorNet().to(device)
+    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+    return model, SkewEstimatorNet
+
+
+def _build_skew_loaders(data_dir: str, config: TrainingConfig) -> tuple:
+    """Build train and val DataLoaders."""
+    from torch.utils.data import DataLoader
+
+    train_dataset = build_skew_dataset(
+        data_dir, "train", config.input_size, augment=True
+    )
+    val_dataset = build_skew_dataset(data_dir, "val", config.input_size, augment=False)
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=config.num_workers,
+        pin_memory=True,
+        drop_last=True,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=config.num_workers,
+        pin_memory=True,
+    )
+    return train_loader, val_loader
+
+
+def _build_skew_optimizer(
+    model: Any, config: TrainingConfig, steps_per_epoch: int
+) -> tuple:
+    """Build optimizer and OneCycleLR scheduler."""
+    import torch
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=config.learning_rate, weight_decay=0.01
+    )
+    total_steps = config.epochs * steps_per_epoch
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=config.learning_rate,
+        total_steps=max(1, total_steps),
+        pct_start=min(config.warmup_epochs / max(config.epochs, 1), 0.3),
+        anneal_strategy="cos",
+    )
+    return optimizer, scheduler
+
+
+def _maybe_resume_skew(model, optimizer, scheduler, resume_run_id, device):
+    """Load checkpoint if resuming. Returns state dict."""
+    import torch
+
+    state = {
+        "start_epoch": 0,
+        "best_val_mae": float("inf"),
+        "patience_counter": 0,
+        "history": [],
+        "run_id": resume_run_id or datetime.now().strftime("%Y%m%d_%H%M%S"),
+    }
+    if not resume_run_id:
+        return state
+
+    ckpt_path = f"/results/{resume_run_id}/last_checkpoint.pt"
+    if not Path(ckpt_path).exists():
+        print(f"WARNING: Checkpoint not found at {ckpt_path}, starting fresh")
+        return state
+
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
+    model.load_state_dict(ckpt["model_state_dict"], strict=False)
+    try:
+        optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+    except (ValueError, KeyError):
+        print("  Optimizer/scheduler state mismatch (QAT), resetting")
+    state["start_epoch"] = ckpt["epoch"] + 1
+    state["best_val_mae"] = ckpt["best_val_mae"]
+    state["patience_counter"] = ckpt.get("patience_counter", 0)
+    state["history"] = ckpt.get("history", [])
+    print(
+        f"Resumed from epoch {state['start_epoch']} (best MAE={state['best_val_mae']:.4f})"
+    )
+    return state
+
+
+def _run_skew_training_loop(
+    model,
+    train_loader,
+    val_loader,
+    optimizer,
+    scheduler,
+    config,
+    bin_centers_tensor,
+    bin_half_widths_tensor,
+    device,
+    test,
+    state,
+):
+    """Execute the training loop and return updated state."""
+    import torch
+    import torch.nn.functional as F
+
+    run_id = state["run_id"]
+    best_val_mae = state["best_val_mae"]
+    patience_counter = state["patience_counter"]
+    history = state["history"]
+
+    for epoch in range(state["start_epoch"], config.epochs):
+        model.train()
+
+        # QAT transition
+        if epoch == config.qat_start_epoch and not test:
+            print(f"Epoch {epoch}: Enabling QAT")
+            model.cpu()
+            model.qconfig = torch.ao.quantization.get_default_qat_qconfig("x86")  # type: ignore[attr-defined]
+            torch.ao.quantization.prepare_qat(model, inplace=True)
+            model.to(device)
+
+        train_loss_sum = 0.0
+        train_samples = 0
+
+        for batch in train_loader:
+            images = batch["image"].to(device)
+            angles = batch["angle"].to(device)
+            orientations = batch["orientation"].to(device)
+
+            with torch.no_grad():
+                diffs = (angles.unsqueeze(1) - bin_centers_tensor.unsqueeze(0)).abs()
+                bin_labels = diffs.argmin(dim=1)
+
+            outputs = model(images)
+
+            orient_loss = F.cross_entropy(outputs["orientation_logits"], orientations)
+            bin_loss = F.cross_entropy(outputs["skew_bin_logits"], bin_labels)
+
+            gt_bin_centers = bin_centers_tensor[bin_labels]
+            target_residuals = angles - gt_bin_centers
+            pred_residuals = outputs["skew_regression"].squeeze(-1)
+            per_sample_loss = F.smooth_l1_loss(
+                pred_residuals, target_residuals, reduction="none"
+            )
+
+            weights = torch.ones_like(angles)
+            weights[angles.abs() < 2.0] = config.critical_zone_weight
+            reg_loss = (per_sample_loss * weights).mean()
+
+            total_loss = (
+                config.loss_weights["orientation"] * orient_loss
+                + config.loss_weights["skew_classification"] * bin_loss
+                + config.loss_weights["skew_regression"] * reg_loss
+            )
+
+            optimizer.zero_grad()
+            total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            scheduler.step()
+
+            train_loss_sum += total_loss.item() * images.size(0)
+            train_samples += images.size(0)
+
+        avg_train_loss = train_loss_sum / max(train_samples, 1)
+        val_metrics = _evaluate(
+            model, val_loader, bin_centers_tensor, bin_half_widths_tensor, device
+        )
+        val_mae = val_metrics["mae"]
+
+        history.append(
+            {
+                "epoch": epoch,
+                "train_loss": round(avg_train_loss, 5),
+                "val_mae": round(val_mae, 4),
+                "val_srcc": round(val_metrics["srcc"], 4),
+                "val_orient_acc": round(val_metrics["orient_acc"], 4),
+                "val_within_05": round(val_metrics["within_05"], 4),
+                "val_synth_mae": round(val_metrics["synth_mae"], 4),
+                "val_natural_mae": round(val_metrics["natural_mae"], 4),
+                "lr": optimizer.param_groups[0]["lr"],
+            }
+        )
+
+        domain_info = ""
+        if val_metrics["natural_count"] > 0:
+            domain_info = f" | synth={val_metrics['synth_mae']:.3f} nat={val_metrics['natural_mae']:.3f}"
+
+        print(
+            f"Epoch {epoch:3d}/{config.epochs} | loss={avg_train_loss:.4f} | "
+            f"MAE={val_mae:.3f} | SRCC={val_metrics['srcc']:.3f} | "
+            f"orient_acc={val_metrics['orient_acc']:.3f} | within_0.5={val_metrics['within_05']:.3f}"
+            f"{domain_info}"
+        )
+
+        ckpt_dir = Path(f"/results/{run_id}")
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+                "best_val_mae": best_val_mae,
+                "patience_counter": patience_counter,
+                "history": history,
+                "config": asdict(config),
+            },
+            str(ckpt_dir / "last_checkpoint.pt"),
+        )
+
+        if val_mae < best_val_mae:
+            best_val_mae = val_mae
+            patience_counter = 0
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "val_mae": val_mae,
+                    "config": asdict(config),
+                },
+                str(ckpt_dir / "best_model.pt"),
+            )
+            print(f"  -> Saved best model (MAE={val_mae:.4f})")
+        else:
+            patience_counter += 1
+            if patience_counter >= config.patience and not test:
+                print(f"Early stopping at epoch {epoch} (patience={config.patience})")
+                break
+
+        results_volume.commit()
+
+    state["best_val_mae"] = best_val_mae
+    state["patience_counter"] = patience_counter
+    state["history"] = history
+    return state
+
+
+def _run_skew_post_training(
+    skew_estimator_cls,
+    data_dir,
+    config,
+    bin_centers,
+    bin_half_widths,
+    bin_centers_tensor,
+    bin_half_widths_tensor,
+    device,
+    state,
+):
+    """Post-training: test eval, ONNX export, benchmark, save results."""
+    import torch
+
+    run_id = state["run_id"]
+
+    eval_model = skew_estimator_cls().to(device)
+    best_ckpt_path = f"/results/{run_id}/best_model.pt"
+    if Path(best_ckpt_path).exists():
+        ckpt = torch.load(best_ckpt_path, map_location=device, weights_only=True)
+        eval_model.load_state_dict(ckpt["model_state_dict"])
+
+    test_metrics = _run_test_evaluation(
+        eval_model,
+        data_dir,
+        config,
+        bin_centers,
+        bin_half_widths,
+        bin_centers_tensor,
+        bin_half_widths_tensor,
+        device,
+        run_id,
+    )
+
+    fp32_path = _export_onnx(eval_model, config, run_id)
+    cpu_bench = _benchmark_cpu_inference(eval_model, config, run_id)
+
+    history_path = f"/results/{run_id}/training_history.json"
+    with open(history_path, "w") as f:
+        json.dump(
+            {
+                "config": asdict(config),
+                "history": state["history"],
+                "best_val_mae": state["best_val_mae"],
+                "test_metrics": test_metrics,
+                "cpu_benchmark": cpu_bench,
+                "bin_centers": bin_centers,
+                "bin_half_widths": bin_half_widths,
+                "run_id": run_id,
+            },
+            f,
+            indent=2,
+        )
+
+    results_volume.commit()
+
+    return {
+        "run_id": run_id,
+        "best_val_mae": state["best_val_mae"],
+        "test_metrics": test_metrics,
+        "cpu_benchmark": cpu_bench,
+        "epochs_trained": len(state["history"]),
+        "fp32_onnx": fp32_path,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Training loop
 # ---------------------------------------------------------------------------
 
@@ -418,343 +831,50 @@ def train(
         Dict with training metrics and model paths.
     """
     import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-    from torch.utils.data import DataLoader
 
-    config = TrainingConfig(test_mode=test)
-    if test:
-        config.epochs = 2
-        config.batch_size = 8
-        config.warmup_epochs = 0
-
-    # Apply CLI overrides for ablation runs
-    if backbone:
-        config.backbone = backbone
-    if input_size > 0:
-        config.input_size = input_size
-    if epochs > 0:
-        config.epochs = epochs
-    if batch_size > 0:
-        config.batch_size = batch_size
-    elif not test:
-        # Auto-scale batch size for larger models/resolutions
-        config.batch_size = _auto_batch_size(config.backbone, config.input_size)
+    config = _build_skew_config(test, backbone, input_size, epochs, batch_size)
 
     print(f"Training config: epochs={config.epochs}, batch={config.batch_size}")
     print(f"Backbone: {config.backbone} @ {config.input_size}px")
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-    # --- Load data ---
-    if test:
-        # Test mode: download small subset directly from GCS (no volume)
-        data_dir = "/tmp/skew_test"  # nosec B108
-        _download_gcs_individual(data_dir, test_mode=True)
-    else:
-        data_dir = "/tmp/skew_training"  # nosec B108
-        labels_check = Path(data_dir) / "train" / "labels.json"
+    data_dir = _load_skew_data(test)
 
-        if not labels_check.exists():
-            # Extract from Volume-cached tar (single 2GB file)
-            tar_on_volume = Path("/data/skew_training.tar")
-            if not tar_on_volume.exists():
-                msg = (
-                    "Tar archive not found on volume. "
-                    "Run with --prepare-data first:\n"
-                    "  uv run modal run modal/train_skew_estimator.py "
-                    "--prepare-data"
-                )
-                raise FileNotFoundError(msg)
-
-            print(f"Extracting tar from volume to {data_dir}...")
-            Path(data_dir).mkdir(parents=True, exist_ok=True)
-            start_extract = time.monotonic()
-            subprocess.run(  # nosec B603 B607
-                ["tar", "xf", str(tar_on_volume), "-C", data_dir],
-                check=True,
-            )
-            extract_time = time.monotonic() - start_extract
-            print(f"Extracted in {extract_time:.0f}s")
-
-        img_dir = Path(data_dir) / "train" / "images"
-        count = sum(1 for f in img_dir.iterdir() if f.is_file())
-        print(f"Dataset ready: {count:,} train images")
-
-    # Build bin config
     bin_centers = _compute_bin_centers()
     bin_half_widths = _compute_bin_half_widths()
     num_bins = len(bin_centers)
     print(f"Bin config: {num_bins} bins")
 
-    # Build model
-    import timm
-
-    class SkewEstimatorNet(nn.Module):
-        """MobileNetV4-Conv-S with 3 heads for skew estimation."""
-
-        def __init__(self) -> None:
-            super().__init__()
-            self.backbone = timm.create_model(
-                config.backbone,
-                pretrained=config.pretrained,
-                num_classes=0,
-                global_pool="avg",
-            )
-            # Probe actual output dim (num_features may differ from conv_head)
-            with torch.no_grad():
-                dummy = torch.randn(2, 3, config.input_size, config.input_size)
-                feat_dim = self.backbone(dummy).shape[-1]
-
-            self.orientation_head = nn.Sequential(
-                nn.Dropout(p=0.2),
-                nn.Linear(feat_dim, 4),
-            )
-            self.skew_bin_head = nn.Sequential(
-                nn.Dropout(p=0.2),
-                nn.Linear(feat_dim, num_bins),
-            )
-            # SmoothL1 regression: single output (residual from bin center)
-            self.skew_regression_head = nn.Sequential(
-                nn.Dropout(p=0.1),
-                nn.Linear(feat_dim, 128),
-                nn.ReLU(inplace=True),
-                nn.Linear(128, 1),
-            )
-
-        def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
-            features = self.backbone(x)
-            return {
-                "orientation_logits": self.orientation_head(features),
-                "skew_bin_logits": self.skew_bin_head(features),
-                "skew_regression": self.skew_regression_head(features),
-            }
-
     device = torch.device("cuda")
-    model = SkewEstimatorNet().to(device)
-    param_count = sum(p.numel() for p in model.parameters())
-    print(f"Model parameters: {param_count:,}")
+    model, skew_estimator_cls = _build_skew_model(config, num_bins, device)
 
-    # Build datasets
-    train_dataset = build_skew_dataset(
-        data_dir, "train", config.input_size, augment=True
-    )
-    val_dataset = build_skew_dataset(data_dir, "val", config.input_size, augment=False)
+    train_loader, val_loader = _build_skew_loaders(data_dir, config)
 
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=config.num_workers,
-        pin_memory=True,
-        drop_last=True,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        shuffle=False,
-        num_workers=config.num_workers,
-        pin_memory=True,
-    )
-
-    # Optimizer and scheduler
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=config.learning_rate, weight_decay=0.01
-    )
-    total_steps = config.epochs * len(train_loader)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=config.learning_rate,
-        total_steps=max(1, total_steps),
-        pct_start=min(config.warmup_epochs / max(config.epochs, 1), 0.3),
-        anneal_strategy="cos",
-    )
+    optimizer, scheduler = _build_skew_optimizer(model, config, len(train_loader))
 
     bin_centers_tensor = torch.tensor(bin_centers, dtype=torch.float32, device=device)
     bin_half_widths_tensor = torch.tensor(
         bin_half_widths, dtype=torch.float32, device=device
     )
 
-    # Resume from checkpoint if requested
-    start_epoch = 0
-    best_val_mae = float("inf")
-    patience_counter = 0
-    history: list[dict[str, float]] = []
-    run_id = resume_run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
+    train_state = _maybe_resume_skew(model, optimizer, scheduler, resume_run_id, device)
 
-    if resume_run_id:
-        ckpt_path = f"/results/{resume_run_id}/last_checkpoint.pt"
-        if Path(ckpt_path).exists():
-            ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
-            # Use strict=False: checkpoint may have QAT keys the fresh model lacks
-            model.load_state_dict(ckpt["model_state_dict"], strict=False)
-            try:
-                optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-                scheduler.load_state_dict(ckpt["scheduler_state_dict"])
-            except (ValueError, KeyError):
-                print("  Optimizer/scheduler state mismatch (QAT), resetting")
-            start_epoch = ckpt["epoch"] + 1
-            best_val_mae = ckpt["best_val_mae"]
-            patience_counter = ckpt.get("patience_counter", 0)
-            history = ckpt.get("history", [])
-            print(f"Resumed from epoch {start_epoch} (best MAE={best_val_mae:.4f})")
-        else:
-            print(f"WARNING: Checkpoint not found at {ckpt_path}, starting fresh")
+    train_state = _run_skew_training_loop(
+        model,
+        train_loader,
+        val_loader,
+        optimizer,
+        scheduler,
+        config,
+        bin_centers_tensor,
+        bin_half_widths_tensor,
+        device,
+        test,
+        train_state,
+    )
 
-    # Training loop
-    for epoch in range(start_epoch, config.epochs):
-        # --- Train ---
-        model.train()
-
-        # QAT transition (must be in training mode)
-        if epoch == config.qat_start_epoch and not test:
-            print(f"Epoch {epoch}: Enabling QAT")
-            model.cpu()
-            model.qconfig = torch.ao.quantization.get_default_qat_qconfig(  # type: ignore[attr-defined]
-                "x86"
-            )
-            torch.ao.quantization.prepare_qat(model, inplace=True)
-            model.to(device)
-        train_loss_sum = 0.0
-        train_samples = 0
-
-        for batch in train_loader:
-            images = batch["image"].to(device)
-            angles = batch["angle"].to(device)
-            orientations = batch["orientation"].to(device)
-
-            # Compute bin labels from angles
-            with torch.no_grad():
-                diffs = (angles.unsqueeze(1) - bin_centers_tensor.unsqueeze(0)).abs()
-                bin_labels = diffs.argmin(dim=1)
-
-            outputs = model(images)
-
-            # Multi-task loss
-            orient_loss = F.cross_entropy(outputs["orientation_logits"], orientations)
-            bin_loss = F.cross_entropy(outputs["skew_bin_logits"], bin_labels)
-
-            # SmoothL1 regression on residual from nearest bin center
-            gt_bin_centers = bin_centers_tensor[bin_labels]
-            target_residuals = angles - gt_bin_centers
-            pred_residuals = outputs["skew_regression"].squeeze(-1)
-
-            per_sample_loss = F.smooth_l1_loss(
-                pred_residuals, target_residuals, reduction="none"
-            )
-
-            # Critical zone reweighting (higher weight for |angle| < 2 deg)
-            weights = torch.ones_like(angles)
-            weights[angles.abs() < 2.0] = config.critical_zone_weight
-            reg_loss = (per_sample_loss * weights).mean()
-
-            total_loss = (
-                config.loss_weights["orientation"] * orient_loss
-                + config.loss_weights["skew_classification"] * bin_loss
-                + config.loss_weights["skew_regression"] * reg_loss
-            )
-
-            optimizer.zero_grad()
-            total_loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
-            scheduler.step()
-
-            train_loss_sum += total_loss.item() * images.size(0)
-            train_samples += images.size(0)
-
-        avg_train_loss = train_loss_sum / max(train_samples, 1)
-
-        # --- Validate ---
-        val_metrics = _evaluate(
-            model,
-            val_loader,
-            bin_centers_tensor,
-            bin_half_widths_tensor,
-            device,
-        )
-        val_mae = val_metrics["mae"]
-
-        epoch_metrics = {
-            "epoch": epoch,
-            "train_loss": round(avg_train_loss, 5),
-            "val_mae": round(val_mae, 4),
-            "val_srcc": round(val_metrics["srcc"], 4),
-            "val_orient_acc": round(val_metrics["orient_acc"], 4),
-            "val_within_05": round(val_metrics["within_05"], 4),
-            "val_synth_mae": round(val_metrics["synth_mae"], 4),
-            "val_natural_mae": round(val_metrics["natural_mae"], 4),
-            "lr": optimizer.param_groups[0]["lr"],
-        }
-        history.append(epoch_metrics)
-
-        # Per-domain MAE breakdown
-        domain_info = ""
-        if val_metrics["natural_count"] > 0:
-            domain_info = (
-                f" | synth={val_metrics['synth_mae']:.3f}"
-                f" nat={val_metrics['natural_mae']:.3f}"
-            )
-
-        print(
-            f"Epoch {epoch:3d}/{config.epochs} | "
-            f"loss={avg_train_loss:.4f} | "
-            f"MAE={val_mae:.3f} | "
-            f"SRCC={val_metrics['srcc']:.3f} | "
-            f"orient_acc={val_metrics['orient_acc']:.3f} | "
-            f"within_0.5={val_metrics['within_05']:.3f}"
-            f"{domain_info}"
-        )
-
-        # Save checkpoint every epoch (for resume)
-        ckpt_dir = Path(f"/results/{run_id}")
-        ckpt_dir.mkdir(parents=True, exist_ok=True)
-        torch.save(
-            {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "scheduler_state_dict": scheduler.state_dict(),
-                "best_val_mae": best_val_mae,
-                "patience_counter": patience_counter,
-                "history": history,
-                "config": asdict(config),
-            },
-            str(ckpt_dir / "last_checkpoint.pt"),
-        )
-
-        # Early stopping on best MAE
-        if val_mae < best_val_mae:
-            best_val_mae = val_mae
-            patience_counter = 0
-            torch.save(
-                {
-                    "epoch": epoch,
-                    "model_state_dict": model.state_dict(),
-                    "val_mae": val_mae,
-                    "config": asdict(config),
-                },
-                str(ckpt_dir / "best_model.pt"),
-            )
-            print(f"  -> Saved best model (MAE={val_mae:.4f})")
-        else:
-            patience_counter += 1
-            if patience_counter >= config.patience and not test:
-                print(f"Early stopping at epoch {epoch} (patience={config.patience})")
-                break
-
-        results_volume.commit()
-
-    # --- Build eval model (fresh, non-QAT) for test + ONNX + benchmark ---
-    # best_model.pt may be from pre-QAT epochs, so load into a clean model
-    eval_model = SkewEstimatorNet().to(device)
-    best_ckpt_path = f"/results/{run_id}/best_model.pt"
-    if Path(best_ckpt_path).exists():
-        ckpt = torch.load(best_ckpt_path, map_location=device, weights_only=True)
-        eval_model.load_state_dict(ckpt["model_state_dict"])
-
-    # --- Test set evaluation ---
-    test_metrics = _run_test_evaluation(
-        eval_model,
+    return _run_skew_post_training(
+        skew_estimator_cls,
         data_dir,
         config,
         bin_centers,
@@ -762,43 +882,8 @@ def train(
         bin_centers_tensor,
         bin_half_widths_tensor,
         device,
-        run_id,
+        train_state,
     )
-
-    # --- Export ONNX ---
-    fp32_path = _export_onnx(eval_model, config, run_id)
-
-    # --- CPU inference benchmark ---
-    cpu_bench = _benchmark_cpu_inference(eval_model, config, run_id)
-
-    # Save training history
-    history_path = f"/results/{run_id}/training_history.json"
-    with open(history_path, "w") as f:
-        json.dump(
-            {
-                "config": asdict(config),
-                "history": history,
-                "best_val_mae": best_val_mae,
-                "test_metrics": test_metrics,
-                "cpu_benchmark": cpu_bench,
-                "bin_centers": bin_centers,
-                "bin_half_widths": bin_half_widths,
-                "run_id": run_id,
-            },
-            f,
-            indent=2,
-        )
-
-    results_volume.commit()
-
-    return {
-        "run_id": run_id,
-        "best_val_mae": best_val_mae,
-        "test_metrics": test_metrics,
-        "cpu_benchmark": cpu_bench,
-        "epochs_trained": len(history),
-        "fp32_onnx": fp32_path,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -899,12 +984,12 @@ def _run_test_evaluation(
     model: torch.nn.Module,
     data_dir: str,
     config: TrainingConfig,
-    bin_centers: list[float],
-    bin_half_widths: list[float],
+    _bin_centers: list[float],
+    _bin_half_widths: list[float],
     bin_centers_tensor: torch.Tensor,
     bin_half_widths_tensor: torch.Tensor,
     device: torch.device,
-    run_id: str,
+    _run_id: str,
 ) -> dict[str, Any]:
     """Run test set evaluation using best checkpoint.
 
@@ -914,7 +999,7 @@ def _run_test_evaluation(
     from torch.utils.data import DataLoader
 
     test_dir = Path(data_dir) / "test"
-    if not (test_dir / "labels.json").exists():
+    if not (test_dir / LABELS_FILE).exists():
         print("\nNo test set found, skipping test evaluation.")
         return {}
 
@@ -1075,7 +1160,7 @@ def _download_gcs_individual(data_dir: str, test_mode: bool = False) -> None:
 
         # Download labels.json
         labels_blob = bucket.blob(f"{split_prefix}labels.json")
-        labels_local = local_split / "labels.json"
+        labels_local = local_split / LABELS_FILE
         if labels_blob.exists():
             labels_blob.download_to_filename(str(labels_local))
             print(f"  Downloaded {split}/labels.json")

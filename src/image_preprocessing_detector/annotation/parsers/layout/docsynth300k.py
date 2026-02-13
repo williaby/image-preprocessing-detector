@@ -157,7 +157,7 @@ def _build_parquet_index(dataset_path: Path) -> dict[str, list[dict[str, Any]]] 
         _PARQUET_INDEX[cache_key] = index
         logger.info(f"Built parquet index for {dataset_path}: {len(index)} images")
 
-    return index if index else None
+    return index or None
 
 
 class DocSynth300KParser(BaseParser):

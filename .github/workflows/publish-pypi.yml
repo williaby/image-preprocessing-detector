@@ -28,7 +28,8 @@ on:
         default: true
         type: boolean
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   build:

@@ -152,13 +152,13 @@ class TestScanProgress:
     def test_percent_complete(self) -> None:
         """Test percent completion calculation."""
         progress = ScanProgress(total_files=100, files_processed=50)
-        assert progress.percent_complete == 50.0
+        assert progress.percent_complete == pytest.approx(50.0)
 
         progress = ScanProgress(total_files=100, files_processed=0)
-        assert progress.percent_complete == 0.0
+        assert progress.percent_complete == pytest.approx(0.0)
 
         progress = ScanProgress(total_files=0, files_processed=0)
-        assert progress.percent_complete == 0.0
+        assert progress.percent_complete == pytest.approx(0.0)
 
     def test_all_fields(self) -> None:
         """Test all progress fields."""
@@ -172,8 +172,8 @@ class TestScanProgress:
             estimated_remaining=10.2,
             throughput=2.5,
         )
-        assert progress.percent_complete == 75.0
-        assert progress.throughput == 2.5
+        assert progress.percent_complete == pytest.approx(75.0)
+        assert progress.throughput == pytest.approx(2.5)
 
 
 # ============================================================================

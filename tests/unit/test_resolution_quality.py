@@ -42,12 +42,12 @@ class TestPiecewiseQualityScore:
 
     def test_negative_height_returns_zero(self) -> None:
         """Negative pixel heights should clamp to 0."""
-        assert piecewise_quality_score(-5.0) == 0.0
-        assert piecewise_quality_score(-0.1) == 0.0
+        assert piecewise_quality_score(-5.0) == pytest.approx(0.0)
+        assert piecewise_quality_score(-0.1) == pytest.approx(0.0)
 
     def test_zero_height_returns_zero(self) -> None:
         """Zero height maps to 0."""
-        assert piecewise_quality_score(0.0) == 0.0
+        assert piecewise_quality_score(0.0) == pytest.approx(0.0)
 
     def test_boundary_at_16px(self) -> None:
         """At 16px, score should be 0.15 (top of needs_major_upscale)."""
@@ -158,7 +158,7 @@ class TestClassifyCoarseBucket:
     def test_bucket_thresholds_are_contiguous(self) -> None:
         """Bucket ranges cover 0 to infinity without gaps."""
         boundaries = sorted((low, high) for low, high in BUCKET_THRESHOLDS.values())
-        assert boundaries[0][0] == 0.0
+        assert boundaries[0][0] == pytest.approx(0.0)
         for i in range(1, len(boundaries)):
             assert boundaries[i][0] == boundaries[i - 1][1], (
                 f"Gap between {boundaries[i - 1]} and {boundaries[i]}"
@@ -230,10 +230,10 @@ class TestAggregateMeasurements:
         """No regions -> flagged, confidence=0, default bucket."""
         result = aggregate_measurements([], [], [], [])
         assert result.flagged_for_review is True
-        assert result.confidence_pct == 0.0
+        assert result.confidence_pct == pytest.approx(0.0)
         assert result.num_text_regions == 0
         assert result.measurement_method == "none"
-        assert result.resolution_quality_score == 0.5
+        assert result.resolution_quality_score == pytest.approx(0.5)
 
     def test_single_region(self) -> None:
         """Single region should work but be flagged (< 3 regions)."""
@@ -390,10 +390,10 @@ class TestResolutionQualityResultToDict:
         )
         serialized = result.to_dict()
 
-        assert serialized["resolution_quality_score"] == 0.6235
-        assert serialized["confidence_pct"] == 0.8535
-        assert serialized["char_height_px"] == 38.57
-        assert serialized["height_cv"] == 0.1235
+        assert serialized["resolution_quality_score"] == pytest.approx(0.6235)
+        assert serialized["confidence_pct"] == pytest.approx(0.8535)
+        assert serialized["char_height_px"] == pytest.approx(38.57)
+        assert serialized["height_cv"] == pytest.approx(0.1235)
 
     def test_to_dict_range_is_list(self) -> None:
         """Ranges should serialize as lists (JSON-compatible), not tuples."""
@@ -471,7 +471,7 @@ class TestExtractLineHeightFromPolygon:
         """Non-4-point polygon should fall back to bounding rect height."""
         polygon = [[10, 10], [100, 10], [100, 30]]  # Triangle
         height = extract_line_height_from_polygon(polygon)
-        # max_y - min_y = 30 - 10 = 20
+        # Fallback: bounding rect height is 20
         assert height == pytest.approx(20.0, abs=0.1)
 
     def test_zero_height_polygon(self) -> None:
@@ -627,7 +627,7 @@ class TestMeasureCharHeightInRegion:
     def test_blank_region_returns_none(self) -> None:
         """All-white region with no text should return None."""
         blank = np.ones((50, 200), dtype=np.uint8) * 255
-        median_h, heights = measure_char_height_in_region(blank)
+        median_h, _ = measure_char_height_in_region(blank)
         assert median_h is None
 
     def test_custom_min_components(self) -> None:
@@ -635,7 +635,7 @@ class TestMeasureCharHeightInRegion:
         region = self._create_text_region(char_height=20, num_chars=5)
 
         # With low threshold, should succeed
-        median_h, heights = measure_char_height_in_region(region, min_components=2)
+        median_h, _ = measure_char_height_in_region(region, min_components=2)
         assert median_h is not None
 
     def test_returns_component_heights_list(self) -> None:

@@ -70,6 +70,25 @@ def get_metadata_sample_count(dataset_name: str) -> int | None:
     return None
 
 
+def _determine_dataset_status(
+    path_exists: bool,
+    image_count: int,
+    metadata_count: int | None,
+) -> str:
+    """Determine reconciliation status for a single dataset."""
+    if not path_exists:
+        return "NO_PATH"
+    if image_count == 0:
+        return "NO_IMAGES"
+    if metadata_count is None:
+        return "NO_METADATA"
+    if metadata_count == 0:
+        return "EMPTY_METADATA"
+    if abs(metadata_count - image_count) / max(image_count, 1) > 0.05:
+        return "COUNT_MISMATCH"
+    return "OK"
+
+
 def reconcile_all(
     dataset_filter: str | None = None,
 ) -> list[dict]:
@@ -91,21 +110,8 @@ def reconcile_all(
         image_count = count_images(dataset_path, pattern) if path_exists else 0
         metadata_count = get_metadata_sample_count(name)
 
-        # Determine status
-        if not path_exists:
-            status = "NO_PATH"
-        elif image_count == 0:
-            status = "NO_IMAGES"
-        elif metadata_count is None:
-            status = "NO_METADATA"
-        elif metadata_count == 0:
-            status = "EMPTY_METADATA"
-        elif abs(metadata_count - image_count) / max(image_count, 1) > 0.05:
-            status = "COUNT_MISMATCH"
-        else:
-            status = "OK"
+        status = _determine_dataset_status(path_exists, image_count, metadata_count)
 
-        # Infer canonical name from path
         path_suffix = str(dataset_path.relative_to(dataset_path.parents[1]))
         leaf_folder = dataset_path.name
         name_matches_path = name == leaf_folder or name.replace(
@@ -128,20 +134,50 @@ def reconcile_all(
     return results
 
 
+_STATUS_ICONS = {
+    "OK": "  OK ",
+    "NO_PATH": " MISS",
+    "NO_IMAGES": " EMPT",
+    "NO_METADATA": " META",
+    "EMPTY_METADATA": " STUB",
+    "COUNT_MISMATCH": " DIFF",
+}
+
+
+def _format_row_gap(r: dict) -> str:
+    """Format the gap column for a reconciliation row."""
+    if r["metadata_count"] is not None and r["image_count"] > 0:
+        diff = r["image_count"] - r["metadata_count"]
+        if diff != 0:
+            return f"{diff:+,}"
+    return ""
+
+
+def _print_table_issues(results: list[dict]) -> None:
+    """Print issue breakdown and name mismatch sections."""
+    by_status: dict[str, list[str]] = {}
+    for r in results:
+        if r["status"] != "OK":
+            by_status.setdefault(r["status"], []).append(r["dataset"])
+
+    if by_status:
+        print()
+        for status, names in sorted(by_status.items()):
+            print(f"  {status} ({len(names)}): {', '.join(names)}")
+
+    mismatches = [r for r in results if not r["name_matches_path"]]
+    if mismatches:
+        print(f"\nName-path mismatches ({len(mismatches)}):")
+        for r in mismatches:
+            print(f"  {r['dataset']:<28} -> {r['path_suffix']}")
+
+    print()
+
+
 def print_table(results: list[dict], missing_only: bool = False) -> None:
     """Print a formatted reconciliation table."""
     if missing_only:
         results = [r for r in results if r["status"] != "OK"]
-
-    # Status icons
-    status_icons = {
-        "OK": "  OK ",
-        "NO_PATH": " MISS",
-        "NO_IMAGES": " EMPT",
-        "NO_METADATA": " META",
-        "EMPTY_METADATA": " STUB",
-        "COUNT_MISMATCH": " DIFF",
-    }
 
     print()
     print("=" * 100)
@@ -155,16 +191,10 @@ def print_table(results: list[dict], missing_only: bool = False) -> None:
 
     totals = {"disk": 0, "metadata": 0, "ok": 0, "issues": 0}
     for r in results:
-        status = status_icons.get(r["status"], r["status"])
+        status = _STATUS_ICONS.get(r["status"], r["status"])
         disk = f"{r['image_count']:,}" if r["image_count"] else "-"
         meta = f"{r['metadata_count']:,}" if r["metadata_count"] is not None else "-"
-
-        gap = ""
-        if r["metadata_count"] is not None and r["image_count"] > 0:
-            diff = r["image_count"] - r["metadata_count"]
-            if diff != 0:
-                gap = f"{diff:+,}"
-
+        gap = _format_row_gap(r)
         name_ok = "yes" if r["name_matches_path"] else "NO"
 
         print(
@@ -186,31 +216,12 @@ def print_table(results: list[dict], missing_only: bool = False) -> None:
     )
     print()
 
-    # Summary
     total = len(results)
     print(
         f"Datasets: {total} total, {totals['ok']} OK, {totals['issues']} need attention"
     )
 
-    # Breakdown of issues
-    by_status: dict[str, list[str]] = {}
-    for r in results:
-        if r["status"] != "OK":
-            by_status.setdefault(r["status"], []).append(r["dataset"])
-
-    if by_status:
-        print()
-        for status, names in sorted(by_status.items()):
-            print(f"  {status} ({len(names)}): {', '.join(names)}")
-
-    # Name mismatches
-    mismatches = [r for r in results if not r["name_matches_path"]]
-    if mismatches:
-        print(f"\nName-path mismatches ({len(mismatches)}):")
-        for r in mismatches:
-            print(f"  {r['dataset']:<28} -> {r['path_suffix']}")
-
-    print()
+    _print_table_issues(results)
 
 
 def main() -> None:

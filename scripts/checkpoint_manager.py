@@ -233,7 +233,7 @@ class CheckpointManager:
         print(f"📂 Loading checkpoint: {resolved_path.name}")
         # nosec B614 - torch.load uses pickle, but loading our own trusted checkpoints from local filesystem
         # WARNING: Only load checkpoints from trusted sources (our own training runs)
-        checkpoint = torch.load(resolved_path, map_location="cpu")  # nosec
+        checkpoint = torch.load(resolved_path, map_location="cpu", weights_only=True)  # nosec
 
         # Load model state
         model.load_state_dict(checkpoint["model_state_dict"])

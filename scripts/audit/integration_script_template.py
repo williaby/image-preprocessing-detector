@@ -457,8 +457,8 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     # Script-specific character patterns
     # {FILL_IN}: Uncomment/add patterns for your dataset's script(s)
     deva_chars = len(re.findall(r"[\u0900-\u097f]", clean_text))
-    # cjk_chars = len(re.findall(r"[\u4e00-\u9fff\u3400-\u4dbf]", clean_text))
-    # arabic_chars = len(re.findall(r"[\u0600-\u06ff]", clean_text))
+    # {FILL_IN}: Add CJK character counting for range U+4E00-U+9FFF, U+3400-U+4DBF
+    # {FILL_IN}: Add Arabic character counting for range U+0600-U+06FF
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
 
     avg_line_len = 0.0
@@ -602,6 +602,73 @@ def standardize_class_name(class_name: str) -> str:
     return class_name
 
 
+def _try_parser_gt_language(
+    sample: dict[str, Any],
+) -> tuple[str, str, float, str] | None:
+    """Attempt to resolve language from parser ground truth (confidence 0.95)."""
+    original_labels = sample.get("original_labels", {})
+    parser_lang = original_labels.get("language_code", "")
+    if not parser_lang or parser_lang == "und":
+        return None
+    parser_script = original_labels.get("iso15924_script_code", "") or "Zyyy"
+    return (parser_lang, parser_script, 0.95, "parser_gt")
+
+
+def _try_train_gt_language(
+    train_gt: dict[str, Any] | None,
+) -> tuple[str, str, float, str] | None:
+    """Attempt to resolve language from train GT file (confidence 0.90)."""
+    if not train_gt:
+        return None
+    gt_lang = train_gt.get("iso639_language")
+    if not gt_lang or gt_lang == "und":
+        return None
+    gt_script = train_gt.get("iso15924_script")
+    gt_conf = train_gt.get("language_confidence", 0.90)
+    return (gt_lang, gt_script or "Zyyy", gt_conf, "train_gt")
+
+
+def _try_vlm_language(
+    vlm: dict[str, Any] | None,
+) -> tuple[str, str, float, str] | None:
+    """Attempt to resolve language from VLM contact sheet (confidence 0.75)."""
+    if not vlm:
+        return None
+    vlm_lang = vlm.get("iso639_language")
+    if not vlm_lang or vlm_lang == "und":
+        return None
+    vlm_script = vlm.get("iso15924_script")
+    vlm_conf = vlm.get("language_confidence", 0.75)
+    return (vlm_lang, vlm_script or "Zyyy", vlm_conf, "vlm_contact_sheet")
+
+
+def _try_openlid_language(
+    lang_enrichment: dict[str, Any] | None,
+) -> tuple[str, str, float, str] | None:
+    """Attempt to resolve language from OpenLID (confidence capped at 0.70)."""
+    if not lang_enrichment:
+        return None
+    le_lang = lang_enrichment.get("language")
+    if not le_lang or le_lang == "und":
+        return None
+    le_script = lang_enrichment.get("script")
+    le_conf = lang_enrichment.get("confidence", 0.5)
+    return (le_lang, le_script or "Zyyy", min(le_conf, 0.70), "openlid_v2")
+
+
+def _try_llm_language(
+    llm: dict[str, Any] | None,
+) -> tuple[str, str, float, str] | None:
+    """Attempt to resolve language from LLM vision (confidence 0.65)."""
+    if not llm:
+        return None
+    llm_lang = llm.get("iso639_language")
+    if not llm_lang or llm_lang == "und":
+        return None
+    llm_script = llm.get("iso15924_script")
+    return (llm_lang, llm_script or "Zyyy", 0.65, "llm_vision")
+
+
 def resolve_language(
     sample: dict[str, Any],
     llm: dict[str, Any] | None,
@@ -614,31 +681,11 @@ def resolve_language(
     Six-level priority chain (highest to lowest confidence):
 
       1. Parser GT (confidence 0.95)
-         From sample["original_labels"]["language_code"] or
-         sample["source"]["split"] ground truth annotations.
-         Highest confidence because parser reads annotation files
-         directly.
-
       2. Train GT file (confidence 0.90)
-         From dataset-specific ground truth enrichment file.
-         High confidence from curated annotation data.
-
       3. VLM contact sheet (confidence 0.75)
-         From visual language model inspection of image tiles.
-         Good confidence from visual script identification.
-
       4. Language enrichment / OpenLID (confidence 0.70)
-         From automated language identification on OCR text.
-         Moderate confidence from statistical text analysis.
-
       5. LLM vision (confidence 0.65)
-         From LLM enrichment pipeline (text-only or vision).
-         Lower confidence; LLM can confuse scripts on low-quality
-         images.
-
       6. Dataset documentation fallback (confidence varies)
-         Known language/script from dataset documentation.
-         {FILL_IN}: Set fallback values for your dataset.
 
     Args:
         sample: The full sample dict from L2 metadata.
@@ -651,64 +698,20 @@ def resolve_language(
         Tuple of (iso639_language, iso15924_script, confidence,
         detection_method).
     """
-    # --- Source 1: Parser ground truth (highest confidence) ----------
-    # {FILL_IN}: Customize based on your dataset's parser output.
-    # Some datasets store language in original_labels, others in source.
-    original_labels = sample.get("original_labels", {})
-    parser_lang = original_labels.get("language_code", "")
-    if parser_lang and parser_lang not in ("", "und"):
-        parser_script = original_labels.get("iso15924_script_code", "")
-        if not parser_script:
-            parser_script = "Zyyy"  # {FILL_IN}: default script
-        return (parser_lang, parser_script, 0.95, "parser_gt")
+    # Try sources in priority order; first non-None result wins.
+    resolvers = [
+        _try_parser_gt_language(sample),
+        _try_train_gt_language(train_gt),
+        _try_vlm_language(vlm),
+        _try_openlid_language(lang_enrichment),
+        _try_llm_language(llm),
+    ]
+    for result in resolvers:
+        if result is not None:
+            return result
 
-    # --- Source 2: Train GT file (high confidence) -------------------
-    if train_gt:
-        gt_lang = train_gt.get("iso639_language")
-        gt_script = train_gt.get("iso15924_script")
-        if gt_lang and gt_lang != "und":
-            gt_conf = train_gt.get("language_confidence", 0.90)
-            return (gt_lang, gt_script or "Zyyy", gt_conf, "train_gt")
-
-    # --- Source 3: VLM contact sheet (good confidence) ---------------
-    if vlm:
-        vlm_lang = vlm.get("iso639_language")
-        vlm_script = vlm.get("iso15924_script")
-        if vlm_lang and vlm_lang != "und":
-            vlm_conf = vlm.get("language_confidence", 0.75)
-            return (vlm_lang, vlm_script or "Zyyy", vlm_conf, "vlm_contact_sheet")
-
-    # --- Source 4: Language enrichment / OpenLID --------------------
-    if lang_enrichment:
-        le_lang = lang_enrichment.get("language")
-        le_script = lang_enrichment.get("script")
-        le_conf = lang_enrichment.get("confidence", 0.5)
-        if le_lang and le_lang != "und":
-            return (
-                le_lang,
-                le_script or "Zyyy",
-                min(le_conf, 0.70),
-                "openlid_v2",
-            )
-
-    # --- Source 5: LLM vision / text enrichment --------------------
-    if llm:
-        llm_lang = llm.get("iso639_language")
-        llm_script = llm.get("iso15924_script")
-        if llm_lang and llm_lang != "und":
-            return (
-                llm_lang,
-                llm_script or "Zyyy",
-                0.65,
-                "llm_vision",
-            )
-
-    # --- Source 6: Dataset documentation fallback -------------------
-    # {FILL_IN}: Set dataset-level defaults if the language is known
-    # from documentation (e.g., monolingual datasets).
-    # Example for a known-Japanese dataset:
-    #   return ("ja", "Jpan", 1.0, "dataset_documentation")
-
+    # {FILL_IN}: Dataset documentation fallback.
+    # Example: return ("ja", "Jpan", 1.0, "dataset_documentation")
     return ("und", "Zyyy", 0.1, "none")
 
 
@@ -751,6 +754,138 @@ def resolve_capture_method(
     return ("unknown", 0.3, "none")
 
 
+def _integrate_layout(
+    v1_data: dict[str, Any],
+    data: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Standardize layout detections (KI-001) and populate data dict.
+
+    Returns the standardized layout list for downstream use.
+    """
+    v1_layout = v1_data.get("layout_detections", [])
+    standardized: list[dict[str, Any]] = []
+    for det in v1_layout:
+        new_det = dict(det)
+        original_class = det.get("class_name", "")
+        new_det["class_name"] = standardize_class_name(original_class)
+        if not new_det.get("source_label"):
+            new_det["source_label"] = original_class
+        standardized.append(new_det)
+
+    data["layout_detections"] = standardized
+    data["layout_source"] = "docling_gpu"
+    data["layout_confidence"] = 0.85
+    data["layout_detection_count"] = len(standardized)
+    return standardized
+
+
+def _integrate_domain(
+    llm: dict[str, Any] | None,
+    v1_data: dict[str, Any],
+    data: dict[str, Any],
+) -> None:
+    """Populate domain fields from LLM enrichment or v1 fallback."""
+    if llm:
+        data["domain_level1"] = llm.get("domain_level1", "UNK")
+        data["domain_confidence"] = llm.get("domain_confidence", 0.5)
+        data["domain_detection_method"] = "llm_vision"
+        data["domain_content_type"] = llm.get("content_type", "")
+    else:
+        data["domain_level1"] = v1_data.get("domain_level1", "UNK")
+        data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
+        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
+
+
+def _integrate_content_flags(
+    filename_stem: str,
+    standardized_layout: list[dict[str, Any]],
+    data: dict[str, Any],
+) -> None:
+    """Populate content flags with KI-002 through KI-006 overrides."""
+    flags = derive_content_flags(standardized_layout)
+
+    data["has_table"] = filename_stem in VLM_TABLE_TRUE_POSITIVES
+    data["has_figure"] = filename_stem in VLM_FIGURE_TRUE_POSITIVES
+    data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
+    data["has_handwriting"] = (
+        False
+        if IS_SYNTHETIC_DATASET
+        else filename_stem in VLM_HANDWRITING_TRUE_POSITIVES
+    )
+    data["has_signature"] = False
+    data["has_code"] = flags["has_code"]
+    data["content_flags_tier"] = "tier_2_model"
+    data["content_flags_source"] = "vlm_corrected+docling_gpu+llm_vision"
+    data["content_flags_confidence"] = 0.95
+    data["handwriting_present"] = data["has_handwriting"]
+
+
+def _integrate_orientation(
+    skew_rec: dict[str, Any] | None,
+    llm: dict[str, Any] | None,
+    data: dict[str, Any],
+) -> None:
+    """Populate orientation fields from skew pipeline, LLM, or default."""
+    if skew_rec:
+        data["orientation_class"] = skew_rec.get("orientation_class", 0)
+        data["orientation_confidence"] = skew_rec.get("orientation_confidence", 0.9)
+        data["orientation_detection_method"] = "mobilenetv4_skew_estimator_v1"
+    elif llm and llm.get("orientation") is not None:
+        data["orientation_class"] = llm.get("orientation", 0)
+        data["orientation_confidence"] = 0.5
+        data["orientation_detection_method"] = "llm_vision"
+    else:
+        data["orientation_class"] = 0
+        data["orientation_confidence"] = 0.5
+        data["orientation_detection_method"] = "default_upright"
+
+
+def _integrate_resolution(
+    resolution_rec: dict[str, Any] | None,
+    v1_data: dict[str, Any],
+    data: dict[str, Any],
+) -> None:
+    """Populate resolution quality fields from pipeline or v1 fallback."""
+    if resolution_rec:
+        data["resolution_quality_score"] = resolution_rec.get("quality_score")
+        data["resolution_quality_bucket"] = resolution_rec.get("bucket")
+        data["resolution_char_height_px"] = resolution_rec.get("median_char_height_px")
+        data["resolution_detection_method"] = resolution_rec.get(
+            "method", "paddleocr_cc_v1"
+        )
+        return
+
+    for field_name in (
+        "resolution_category",
+        "resolution_pixels",
+        "resolution_quality_score",
+        "resolution_quality_bucket",
+        "resolution_char_height_px",
+    ):
+        if field_name in v1_data:
+            data[field_name] = v1_data[field_name]
+
+
+def _integrate_text_content(
+    text_label: dict[str, Any] | None,
+    data: dict[str, Any],
+) -> None:
+    """Populate text content fields from VLM text labels or defaults."""
+    if text_label and text_label.get("transcription"):
+        transcription = text_label["transcription"]
+        data["text_has_content"] = True
+        data["text_content"] = transcription
+        data["text_content_confidence"] = text_label.get("confidence", 0.8)
+        data["text_content_source"] = "vlm_manual_transcription"
+        data["text_statistics"] = compute_text_statistics(transcription)
+    else:
+        data["text_has_content"] = False
+        data["text_content"] = ""
+        data["text_content_confidence"] = 0.0
+        data["text_content_source"] = "none"
+        data["text_statistics"] = compute_text_statistics("")
+
+
 # ===================================================================
 # Per-sample integration
 #
@@ -790,12 +925,10 @@ def integrate_sample(
     filename_stem = Path(filename).stem
     filename_full = Path(filename).name
 
-    # Get existing enrichment data (latest version) for fallback
     v1_data: dict[str, Any] = {}
     if sample["enrichments"]["versions"]:
         v1_data = sample["enrichments"]["versions"][-1].get("data", {})
 
-    # Look up all enrichment sources for this sample
     llm = llm_index.get(filename_stem)
     lang_enrichment = lang_index.get(filename_stem)
     skew_rec = (skew_index or {}).get(filename_full)
@@ -806,35 +939,8 @@ def integrate_sample(
 
     data: dict[str, Any] = {}
 
-    # -------------------------------------------------------------------
-    # LAYOUT DETECTIONS (with KI-001 casing fix)
-    #
-    # Standardizes class_name from layout extractor output to DocLayNet
-    # PascalCase. Preserves original label in source_label field.
-    # -------------------------------------------------------------------
-    v1_layout = v1_data.get("layout_detections", [])
-    standardized_layout: list[dict[str, Any]] = []
-    for det in v1_layout:
-        new_det = dict(det)
-        original_class = det.get("class_name", "")
-        new_det["class_name"] = standardize_class_name(original_class)
-        # Preserve original label for traceability
-        if not new_det.get("source_label"):
-            new_det["source_label"] = original_class
-        standardized_layout.append(new_det)
+    standardized_layout = _integrate_layout(v1_data, data)
 
-    data["layout_detections"] = standardized_layout
-    data["layout_source"] = (
-        "docling_gpu"  # {FILL_IN}: "docling_gpu" or "doclayout_yolo"
-    )
-    data["layout_confidence"] = (
-        0.85  # {FILL_IN}: 0.85 for Docling, 0.6 for DocLayout-YOLO
-    )
-    data["layout_detection_count"] = len(standardized_layout)
-
-    # -------------------------------------------------------------------
-    # CAPTURE METHOD (with KI-005 synthetic override)
-    # -------------------------------------------------------------------
     capture, capture_conf, capture_method_src = resolve_capture_method(
         sample, llm, IS_SYNTHETIC_DATASET
     )
@@ -842,25 +948,8 @@ def integrate_sample(
     data["capture_confidence"] = capture_conf
     data["capture_detection_method"] = capture_method_src
 
-    # -------------------------------------------------------------------
-    # DOMAIN (from LLM enrichment)
-    #
-    # KI-007: UNK is acceptable for generic content. Do not force
-    # reclassification.
-    # -------------------------------------------------------------------
-    if llm:
-        data["domain_level1"] = llm.get("domain_level1", "UNK")
-        data["domain_confidence"] = llm.get("domain_confidence", 0.5)
-        data["domain_detection_method"] = "llm_vision"
-        data["domain_content_type"] = llm.get("content_type", "")
-    else:
-        data["domain_level1"] = v1_data.get("domain_level1", "UNK")
-        data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
-        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
+    _integrate_domain(llm, v1_data, data)
 
-    # -------------------------------------------------------------------
-    # LANGUAGE / SCRIPT (from priority chain)
-    # -------------------------------------------------------------------
     lang, script, lang_conf, lang_method = resolve_language(
         sample, llm, lang_enrichment, vlm_rec, train_gt
     )
@@ -868,172 +957,35 @@ def integrate_sample(
     data["iso15924_script"] = script
     data["language_confidence"] = lang_conf
     data["text_scope_detection_method"] = lang_method
-
-    # -------------------------------------------------------------------
-    # SCRIPT FAMILY (derived from iso15924_script)
-    # -------------------------------------------------------------------
     data["script_family"] = _get_script_family(script)
 
-    # -------------------------------------------------------------------
-    # CONTENT FLAGS (with KI-002, KI-003, KI-004, KI-006 overrides)
-    #
-    # Baseline: derive from standardized layout canonical_class.
-    # Then apply VLM corrections per known issue mitigations.
-    # -------------------------------------------------------------------
-    flags = derive_content_flags(standardized_layout)
+    _integrate_content_flags(filename_stem, standardized_layout, data)
+    _integrate_orientation(skew_rec, llm, data)
 
-    # KI-002: has_table -- only VLM-confirmed true positives
-    data["has_table"] = filename_stem in VLM_TABLE_TRUE_POSITIVES
-
-    # KI-003: has_figure -- only VLM-confirmed true positives
-    data["has_figure"] = filename_stem in VLM_FIGURE_TRUE_POSITIVES
-
-    # KI-006: has_formula -- only VLM-confirmed true positives
-    data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
-
-    # KI-004: has_handwriting
-    if IS_SYNTHETIC_DATASET:
-        # Synthetic datasets: LLM handwriting detection is unreliable
-        data["has_handwriting"] = False
-    else:
-        # Non-synthetic: use VLM-confirmed set, or fall back to layout
-        data["has_handwriting"] = filename_stem in VLM_HANDWRITING_TRUE_POSITIVES
-
-    data["has_signature"] = False  # {FILL_IN}: override if signatures exist
-    data["has_code"] = flags["has_code"]
-
-    data["content_flags_tier"] = "tier_2_model"
-    data["content_flags_source"] = (
-        "vlm_corrected+docling_gpu+llm_vision"  # {FILL_IN}: adjust sources
-    )
-    data["content_flags_confidence"] = 0.95  # {FILL_IN}: adjust if no VLM verification
-
-    # Alias used by prescreening checks
-    data["handwriting_present"] = data["has_handwriting"]
-
-    # -------------------------------------------------------------------
-    # ORIENTATION (from skew/orientation pipeline if available)
-    #
-    # Priority:
-    #   1. Skew estimator pipeline (MobileNetV4, MAE=0.956)
-    #   2. LLM enrichment orientation (lower confidence)
-    #   3. Default upright (0 degrees, low confidence)
-    # -------------------------------------------------------------------
-    if skew_rec:
-        data["orientation_class"] = skew_rec.get("orientation_class", 0)
-        data["orientation_confidence"] = skew_rec.get("orientation_confidence", 0.9)
-        data["orientation_detection_method"] = "mobilenetv4_skew_estimator_v1"
-    elif llm and llm.get("orientation") is not None:
-        data["orientation_class"] = llm.get("orientation", 0)
-        data["orientation_confidence"] = 0.5
-        data["orientation_detection_method"] = "llm_vision"
-    else:
-        # {FILL_IN}: Customize default. If dataset documentation says
-        # all images are upright, use confidence=1.0 and method=
-        # "dataset_documentation".
-        data["orientation_class"] = 0
-        data["orientation_confidence"] = 0.5
-        data["orientation_detection_method"] = "default_upright"
-
-    # -------------------------------------------------------------------
-    # SKEW (from skew/orientation pipeline)
-    # -------------------------------------------------------------------
     if skew_rec:
         data["skew_angle_degrees"] = skew_rec.get("skew_angle_degrees")
         data["skew_confidence"] = skew_rec.get("skew_bin_confidence")
         data["skew_detection_method"] = "mobilenetv4_skew_estimator_v1"
-    # If no skew data, fields are simply omitted (not set to defaults)
 
-    # -------------------------------------------------------------------
-    # SPLIT (from parser / manifest / source)
-    # -------------------------------------------------------------------
-    # {FILL_IN}: Customize split resolution. Common patterns:
-    #   - sample["source"]["split"] (if parser populates it)
-    #   - From manifest file lookup
-    #   - Inferred from filename convention
     data["split"] = sample.get("source", {}).get("split", "unknown")
 
-    # -------------------------------------------------------------------
-    # TEXT SCOPE (from LLM content_type)
-    # -------------------------------------------------------------------
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "unknown"
+        data["text_scope_content_type"] = content_type or "unknown"
     else:
         data["text_scope_content_type"] = v1_data.get(
             "text_scope_content_type", "unknown"
         )
 
-    # {FILL_IN}: Set text_scope based on dataset characteristics.
-    # Common values: "printed", "handwritten", "scene_text", "mixed",
-    # "phrase".
     data["text_scope"] = v1_data.get("text_scope", "printed")
-
-    # -------------------------------------------------------------------
-    # IMAGE PROPERTIES
-    # -------------------------------------------------------------------
-    # {FILL_IN}: Set color_mode based on dataset characteristics.
-    # Common values: "color", "grayscale", "binarized".
     data["image_properties_color_mode"] = v1_data.get(
         "image_properties_color_mode", "color"
     )
 
-    # -------------------------------------------------------------------
-    # RESOLUTION QUALITY (if available)
-    # -------------------------------------------------------------------
-    if resolution_rec:
-        data["resolution_quality_score"] = resolution_rec.get("quality_score")
-        data["resolution_quality_bucket"] = resolution_rec.get("bucket")
-        data["resolution_char_height_px"] = resolution_rec.get("median_char_height_px")
-        data["resolution_detection_method"] = resolution_rec.get(
-            "method", "paddleocr_cc_v1"
-        )
-    else:
-        # Preserve v1 resolution fields if they exist
-        for field in (
-            "resolution_category",
-            "resolution_pixels",
-            "resolution_quality_score",
-            "resolution_quality_bucket",
-            "resolution_char_height_px",
-        ):
-            if field in v1_data:
-                data[field] = v1_data[field]
+    _integrate_resolution(resolution_rec, v1_data, data)
+    _integrate_text_content(text_label, data)
 
-    # -------------------------------------------------------------------
-    # TEXT CONTENT (Phase 6.5: VLM text labeling)
-    #
-    # Populated when VLM text transcription labels are available.
-    # Only a subset of samples will have transcriptions (typically
-    # max(ceil(1% of dataset), 10) samples at >75% confidence).
-    # -------------------------------------------------------------------
-    if text_label and text_label.get("transcription"):
-        transcription = text_label["transcription"]
-        confidence = text_label.get("confidence", 0.8)
-        data["text_has_content"] = True
-        data["text_content"] = transcription
-        data["text_content_confidence"] = confidence
-        data["text_content_source"] = "vlm_manual_transcription"
-        data["text_statistics"] = compute_text_statistics(transcription)
-    else:
-        data["text_has_content"] = False
-        data["text_content"] = ""
-        data["text_content_confidence"] = 0.0
-        data["text_content_source"] = "none"
-        data["text_statistics"] = compute_text_statistics("")
-
-    # -------------------------------------------------------------------
-    # ADDITIONAL DERIVED FIELDS
-    # -------------------------------------------------------------------
     data["dataset_short_code"] = DATASET_NAME
-
-    # {FILL_IN}: Add any dataset-specific fields here. Examples:
-    #   data["is_vertical"] = manifest_rec.get("is_vertical", False)
-    #   data["num_columns"] = manifest_rec.get("num_columns", 1)
-
-    # -------------------------------------------------------------------
-    # RELIABILITY SUMMARY (must be last -- uses confidence fields above)
-    # -------------------------------------------------------------------
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -1042,6 +994,120 @@ def integrate_sample(
 # ===================================================================
 # Integration runner
 # ===================================================================
+def _init_stats() -> dict[str, Any]:
+    """Create an empty statistics dict for run_integration."""
+    return {
+        "total": 0,
+        "integrated": 0,
+        "llm_matched": 0,
+        "lang_matched": 0,
+        "vlm_matched": 0,
+        "train_gt_matched": 0,
+        "skew_matched": 0,
+        "resolution_matched": 0,
+        "text_labels_matched": 0,
+        "has_text_content_count": 0,
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
+        "lang_method_dist": Counter(),
+        "capture_method_dist": Counter(),
+        "content_type_dist": Counter(),
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
+    }
+
+
+def _track_source_matches(
+    stats: dict[str, Any],
+    filename_stem: str,
+    filename_full: str,
+    llm_index: dict[str, dict[str, Any]],
+    lang_index: dict[str, dict[str, Any]],
+    vlm_index: dict[str, dict[str, Any]] | None,
+    train_gt_index: dict[str, dict[str, Any]] | None,
+    skew_index: dict[str, dict[str, Any]] | None,
+    resolution_index: dict[str, dict[str, Any]] | None,
+    text_labels_index: dict[str, dict[str, Any]] | None,
+) -> None:
+    """Increment source-match counters in stats dict."""
+    source_checks: list[tuple[str, dict[str, Any] | None, str]] = [
+        ("llm_matched", llm_index, filename_stem),
+        ("lang_matched", lang_index, filename_stem),
+        ("vlm_matched", vlm_index, filename_stem),
+        ("train_gt_matched", train_gt_index, filename_stem),
+        ("skew_matched", skew_index, filename_full),
+        ("resolution_matched", resolution_index, filename_full),
+        ("text_labels_matched", text_labels_index, filename_stem),
+    ]
+    for stat_key, index, key in source_checks:
+        if index and key in index:
+            stats[stat_key] += 1
+
+
+def _track_distributions(
+    stats: dict[str, Any],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Update distribution counters and content flag counts."""
+    dist_fields: list[tuple[str, str, str]] = [
+        ("domain_dist", "domain_level1", "UNK"),
+        ("split_dist", "split", "unknown"),
+        ("lang_dist", "iso639_language", "und"),
+        ("script_family_dist", "script_family", "unknown"),
+        ("lang_method_dist", "text_scope_detection_method", "unknown"),
+        ("capture_method_dist", "capture_method", "unknown"),
+        ("content_type_dist", "text_scope_content_type", "unknown"),
+    ]
+    for counter_key, data_key, default in dist_fields:
+        stats[counter_key][integrated_data.get(data_key, default)] += 1
+
+    if integrated_data.get("text_has_content"):
+        stats["has_text_content_count"] += 1
+
+    flag_keys: list[tuple[str, str]] = [
+        ("has_table_count", "has_table"),
+        ("has_formula_count", "has_formula"),
+        ("has_handwriting_count", "has_handwriting"),
+        ("has_figure_count", "has_figure"),
+    ]
+    for stat_key, data_key in flag_keys:
+        if integrated_data.get(data_key):
+            stats[stat_key] += 1
+
+
+def _write_enrichment_version(
+    sample: dict[str, Any],
+    integrated_data: dict[str, Any],
+    now: str,
+) -> None:
+    """Write (or replace) an enrichment version into sample."""
+    new_version = {
+        "version": ENRICHMENT_VERSION_NUMBER,
+        "created_at": now,
+        "created_by": f"integrate_{DATASET_NAME}_enrichments.py",
+        "method": "tier_2_model",
+        "description": (
+            f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
+            "LLM vision + layout + language enrichment + "
+            "dataset documentation"
+        ),
+        "script_version": SCRIPT_VERSION,
+        "data": integrated_data,
+    }
+    versions = sample["enrichments"]["versions"]
+    for i, ver in enumerate(versions):
+        if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
+            versions[i] = new_version
+            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            return
+    versions.append(new_version)
+    sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+
+
 def run_integration(
     metadata: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -1073,30 +1139,7 @@ def run_integration(
     Returns:
         Stats dict with counts and distribution Counters.
     """
-    stats: dict[str, Any] = {
-        "total": 0,
-        "integrated": 0,
-        "llm_matched": 0,
-        "lang_matched": 0,
-        "vlm_matched": 0,
-        "train_gt_matched": 0,
-        "skew_matched": 0,
-        "resolution_matched": 0,
-        "text_labels_matched": 0,
-        "has_text_content_count": 0,
-        "domain_dist": Counter(),
-        "split_dist": Counter(),
-        "lang_dist": Counter(),
-        "script_family_dist": Counter(),
-        "lang_method_dist": Counter(),
-        "capture_method_dist": Counter(),
-        "content_type_dist": Counter(),
-        "has_table_count": 0,
-        "has_formula_count": 0,
-        "has_handwriting_count": 0,
-        "has_figure_count": 0,
-    }
-
+    stats = _init_stats()
     now = datetime.now(UTC).isoformat()
 
     for sample in metadata["samples"]:
@@ -1116,77 +1159,23 @@ def run_integration(
             text_labels_index,
         )
 
-        # ----- Track statistics -----
         stats["integrated"] += 1
-        if filename_stem in llm_index:
-            stats["llm_matched"] += 1
-        if filename_stem in lang_index:
-            stats["lang_matched"] += 1
-        if vlm_index and filename_stem in vlm_index:
-            stats["vlm_matched"] += 1
-        if train_gt_index and filename_stem in train_gt_index:
-            stats["train_gt_matched"] += 1
-        if skew_index and filename_full in skew_index:
-            stats["skew_matched"] += 1
-        if resolution_index and filename_full in resolution_index:
-            stats["resolution_matched"] += 1
-        if text_labels_index and filename_stem in text_labels_index:
-            stats["text_labels_matched"] += 1
-        if integrated_data.get("text_has_content"):
-            stats["has_text_content_count"] += 1
+        _track_source_matches(
+            stats,
+            filename_stem,
+            filename_full,
+            llm_index,
+            lang_index,
+            vlm_index,
+            train_gt_index,
+            skew_index,
+            resolution_index,
+            text_labels_index,
+        )
+        _track_distributions(stats, integrated_data)
 
-        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
-        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
-        stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][
-            integrated_data.get("script_family", "unknown")
-        ] += 1
-        stats["lang_method_dist"][
-            integrated_data.get("text_scope_detection_method", "unknown")
-        ] += 1
-        stats["capture_method_dist"][
-            integrated_data.get("capture_method", "unknown")
-        ] += 1
-        stats["content_type_dist"][
-            integrated_data.get("text_scope_content_type", "unknown")
-        ] += 1
-
-        if integrated_data.get("has_table"):
-            stats["has_table_count"] += 1
-        if integrated_data.get("has_formula"):
-            stats["has_formula_count"] += 1
-        if integrated_data.get("has_handwriting"):
-            stats["has_handwriting_count"] += 1
-        if integrated_data.get("has_figure"):
-            stats["has_figure_count"] += 1
-
-        # ----- Write enrichment version -----
         if not dry_run:
-            new_version = {
-                "version": ENRICHMENT_VERSION_NUMBER,
-                "created_at": now,
-                "created_by": (f"integrate_{DATASET_NAME}_enrichments.py"),
-                "method": "tier_2_model",
-                "description": (
-                    f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
-                    # {FILL_IN}: List all sources used.
-                    "LLM vision + layout + language enrichment + "
-                    "dataset documentation"
-                ),
-                "script_version": SCRIPT_VERSION,
-                "data": integrated_data,
-            }
-            # Replace existing version if present, otherwise append
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for i, ver in enumerate(versions):
-                if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
-                    versions[i] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            _write_enrichment_version(sample, integrated_data, now)
 
     return stats
 

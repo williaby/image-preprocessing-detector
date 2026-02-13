@@ -158,17 +158,6 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         openapi_url="/openapi.json",
     )
 
-    # Add CORS middleware if enabled
-    if settings.cors_enabled:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.cors_origins,
-            allow_credentials=settings.cors_allow_credentials,
-            allow_methods=settings.cors_allow_methods,
-            allow_headers=settings.cors_allow_headers,
-        )
-        logger.info("cors_middleware_enabled", origins=settings.cors_origins)
-
     # Add request logging middleware
     app.add_middleware(
         RequestLoggingMiddleware,
@@ -205,6 +194,17 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
             num_api_keys=len(settings.api_keys),
             num_internal_callers=len(settings.internal_callers),
         )
+
+    # Add CORS middleware last (executes first in the chain, must be outermost)
+    if settings.cors_enabled:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_origins,
+            allow_credentials=settings.cors_allow_credentials,
+            allow_methods=settings.cors_allow_methods,
+            allow_headers=settings.cors_allow_headers,
+        )
+        logger.info("cors_middleware_enabled", origins=settings.cors_origins)
 
     # Include routers
     app.include_router(health_router)

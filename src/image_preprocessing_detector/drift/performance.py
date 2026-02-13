@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -35,6 +36,7 @@ MAP_DROP_WARNING_THRESHOLD = 0.03  # 3%
 MAP_DROP_CRITICAL_THRESHOLD = 0.05  # 5%
 F1_DROP_WARNING_THRESHOLD = 0.03
 F1_DROP_CRITICAL_THRESHOLD = 0.05
+EVALUATION_HISTORY_FILE = "evaluation_history.json"
 
 
 class MetricType(Enum):
@@ -308,7 +310,7 @@ class MetricsStore:
 
     def _load_results(self) -> None:
         """Load historical results from storage."""
-        results_file = self.storage_path / "evaluation_history.json"
+        results_file = self.storage_path / EVALUATION_HISTORY_FILE
 
         if results_file.exists():
             try:
@@ -326,12 +328,12 @@ class MetricsStore:
                     f"Loaded {len(self._results)} historical evaluation results"
                 )
 
-            except (json.JSONDecodeError, KeyError, ValueError):
+            except (KeyError, ValueError):
                 logger.exception("Error loading evaluation history")
 
     def _save_results(self) -> None:
         """Save results to storage."""
-        results_file = self.storage_path / "evaluation_history.json"
+        results_file = self.storage_path / EVALUATION_HISTORY_FILE
 
         data = [r.to_dict() for r in self._results]
         with open(results_file, "w") as f:
@@ -395,11 +397,9 @@ class MetricsStore:
             return None
 
         # Compute average metrics
-        avg_metrics: dict[str, list[float]] = {}
+        avg_metrics: defaultdict[str, list[float]] = defaultdict(list)
         for result in filtered:
             for metric, value in result.metrics.items():
-                if metric not in avg_metrics:
-                    avg_metrics[metric] = []
                 avg_metrics[metric].append(value)
 
         aggregated_metrics: dict[str, float] = {
@@ -492,7 +492,7 @@ class MetricsStore:
     def clear(self) -> None:
         """Clear all stored results."""
         self._results.clear()
-        results_file = self.storage_path / "evaluation_history.json"
+        results_file = self.storage_path / EVALUATION_HISTORY_FILE
         if results_file.exists():
             results_file.unlink()
 
@@ -580,14 +580,15 @@ class PerformanceEvaluator:
 
     def _generate_stub_metrics(self) -> dict[str, float]:
         """Generate stub metrics for testing."""
+        rng = np.random.default_rng()
         return {
-            MetricType.MAP.value: 0.85 + np.random.normal(0, 0.02),
-            MetricType.MAP_50.value: 0.90 + np.random.normal(0, 0.02),
-            MetricType.MAP_75.value: 0.80 + np.random.normal(0, 0.02),
-            MetricType.F1.value: 0.88 + np.random.normal(0, 0.02),
-            MetricType.PRECISION.value: 0.87 + np.random.normal(0, 0.02),
-            MetricType.RECALL.value: 0.89 + np.random.normal(0, 0.02),
-            MetricType.ACCURACY.value: 0.92 + np.random.normal(0, 0.01),
+            MetricType.MAP.value: 0.85 + rng.normal(0, 0.02),
+            MetricType.MAP_50.value: 0.90 + rng.normal(0, 0.02),
+            MetricType.MAP_75.value: 0.80 + rng.normal(0, 0.02),
+            MetricType.F1.value: 0.88 + rng.normal(0, 0.02),
+            MetricType.PRECISION.value: 0.87 + rng.normal(0, 0.02),
+            MetricType.RECALL.value: 0.89 + rng.normal(0, 0.02),
+            MetricType.ACCURACY.value: 0.92 + rng.normal(0, 0.01),
         }
 
     def _get_dataset_sample_count(self) -> int:

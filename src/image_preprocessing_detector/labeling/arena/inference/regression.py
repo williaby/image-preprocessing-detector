@@ -192,7 +192,7 @@ class RegressionBackend(InferenceBackend):
         if (model_path / "processor_config.json").exists():
             from transformers import AutoProcessor
 
-            self._processor = AutoProcessor.from_pretrained(
+            self._processor = AutoProcessor.from_pretrained(  # nosec B615
                 model_path,
                 trust_remote_code=True,
             )
@@ -212,14 +212,14 @@ class RegressionBackend(InferenceBackend):
         from transformers import AutoModel, AutoProcessor
 
         # For regression models, we expect a custom model class
-        # that includes the regression head
-        self._processor = AutoProcessor.from_pretrained(
+        # that includes the regression head (revision= parameter provided)
+        self._processor = AutoProcessor.from_pretrained(  # nosec B615
             spec.id,
             revision=spec.revision,
             trust_remote_code=True,
         )
 
-        self._model = AutoModel.from_pretrained(
+        self._model = AutoModel.from_pretrained(  # nosec B615
             spec.id,
             revision=spec.revision,
             trust_remote_code=True,

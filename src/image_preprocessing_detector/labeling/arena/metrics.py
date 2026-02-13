@@ -28,6 +28,9 @@ from scipy import stats
 # Type alias for values that can be converted to arrays
 ArrayInput: TypeAlias = ArrayLike | Sequence[float] | list[float]  # noqa: UP040
 
+# Common error messages (S1192: avoid duplicate string literals)
+NAN_INPUTS_MSG = "Inputs contain NaN values"
+
 
 def compute_plcc(
     predictions: ArrayLike,
@@ -62,7 +65,7 @@ def compute_plcc(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     if len(preds) < 2:
@@ -110,7 +113,7 @@ def compute_srcc(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     if len(preds) < 2:
@@ -158,7 +161,7 @@ def compute_mae(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     return float(np.mean(np.abs(preds - gt)))
@@ -198,7 +201,7 @@ def compute_rmse(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     return float(np.sqrt(np.mean((preds - gt) ** 2)))
@@ -378,15 +381,23 @@ class ArenaMetrics:
             "",
             f"{'Dimension':<12} {'PLCC':>8} {'SRCC':>8} {'MAE':>8} {'RMSE':>8}",
             "-" * 60,
-            f"{'Overall':<12} {self.overall.plcc:>8.4f} {self.overall.srcc:>8.4f} "
-            f"{self.overall.mae:>8.4f} {self.overall.rmse:>8.4f}",
-            f"{'Sharpness':<12} {self.sharpness.plcc:>8.4f} {self.sharpness.srcc:>8.4f} "
-            f"{self.sharpness.mae:>8.4f} {self.sharpness.rmse:>8.4f}",
-            f"{'Color':<12} {self.color.plcc:>8.4f} {self.color.srcc:>8.4f} "
-            f"{self.color.mae:>8.4f} {self.color.rmse:>8.4f}",
+            (
+                f"{'Overall':<12} {self.overall.plcc:>8.4f} {self.overall.srcc:>8.4f} "
+                f"{self.overall.mae:>8.4f} {self.overall.rmse:>8.4f}"
+            ),
+            (
+                f"{'Sharpness':<12} {self.sharpness.plcc:>8.4f} {self.sharpness.srcc:>8.4f} "
+                f"{self.sharpness.mae:>8.4f} {self.sharpness.rmse:>8.4f}"
+            ),
+            (
+                f"{'Color':<12} {self.color.plcc:>8.4f} {self.color.srcc:>8.4f} "
+                f"{self.color.mae:>8.4f} {self.color.rmse:>8.4f}"
+            ),
             "-" * 60,
-            f"{'Aggregate':<12} {self.aggregate.plcc:>8.4f} {self.aggregate.srcc:>8.4f} "
-            f"{self.aggregate.mae:>8.4f} {self.aggregate.rmse:>8.4f}",
+            (
+                f"{'Aggregate':<12} {self.aggregate.plcc:>8.4f} {self.aggregate.srcc:>8.4f} "
+                f"{self.aggregate.mae:>8.4f} {self.aggregate.rmse:>8.4f}"
+            ),
             "",
             f"Samples: {self.overall.num_samples}",
         ]
@@ -403,14 +414,22 @@ class ArenaMetrics:
             "",
             "| Dimension | PLCC | SRCC | MAE | RMSE |",
             "|-----------|------|------|-----|------|",
-            f"| Overall | {self.overall.plcc:.4f} | {self.overall.srcc:.4f} | "
-            f"{self.overall.mae:.4f} | {self.overall.rmse:.4f} |",
-            f"| Sharpness | {self.sharpness.plcc:.4f} | {self.sharpness.srcc:.4f} | "
-            f"{self.sharpness.mae:.4f} | {self.sharpness.rmse:.4f} |",
-            f"| Color | {self.color.plcc:.4f} | {self.color.srcc:.4f} | "
-            f"{self.color.mae:.4f} | {self.color.rmse:.4f} |",
-            f"| **Aggregate** | **{self.aggregate.plcc:.4f}** | **{self.aggregate.srcc:.4f}** | "
-            f"**{self.aggregate.mae:.4f}** | **{self.aggregate.rmse:.4f}** |",
+            (
+                f"| Overall | {self.overall.plcc:.4f} | {self.overall.srcc:.4f} | "
+                f"{self.overall.mae:.4f} | {self.overall.rmse:.4f} |"
+            ),
+            (
+                f"| Sharpness | {self.sharpness.plcc:.4f} | {self.sharpness.srcc:.4f} | "
+                f"{self.sharpness.mae:.4f} | {self.sharpness.rmse:.4f} |"
+            ),
+            (
+                f"| Color | {self.color.plcc:.4f} | {self.color.srcc:.4f} | "
+                f"{self.color.mae:.4f} | {self.color.rmse:.4f} |"
+            ),
+            (
+                f"| **Aggregate** | **{self.aggregate.plcc:.4f}** | **{self.aggregate.srcc:.4f}** | "
+                f"**{self.aggregate.mae:.4f}** | **{self.aggregate.rmse:.4f}** |"
+            ),
             "",
             f"*Samples: {self.overall.num_samples}*",
         ]

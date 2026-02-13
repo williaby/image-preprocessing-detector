@@ -17,6 +17,8 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
+rng = np.random.default_rng()
+
 # Scripts directory added to sys.path via tests/conftest.py
 from validate_dqs_correlation import (
     pearson_correlation,
@@ -32,7 +34,7 @@ class TestPearsonCorrelation:
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [1.0, 2.0, 3.0, 4.0, 5.0]
 
-        correlation, p_value = pearson_correlation(x, y)
+        correlation, _ = pearson_correlation(x, y)
 
         assert abs(correlation - 1.0) < 0.001
 
@@ -41,7 +43,7 @@ class TestPearsonCorrelation:
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [5.0, 4.0, 3.0, 2.0, 1.0]
 
-        correlation, p_value = pearson_correlation(x, y)
+        correlation, _ = pearson_correlation(x, y)
 
         assert abs(correlation - (-1.0)) < 0.001
 
@@ -50,7 +52,7 @@ class TestPearsonCorrelation:
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [3.0, 1.0, 4.0, 1.0, 5.0]  # Random-ish
 
-        correlation, p_value = pearson_correlation(x, y)
+        correlation, _ = pearson_correlation(x, y)
 
         # Correlation should be relatively low
         assert abs(correlation) < 0.8
@@ -60,7 +62,7 @@ class TestPearsonCorrelation:
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [1.0, 2.0, 3.0, 4.0, 5.0]
 
-        correlation, p_value = pearson_correlation(x, y)
+        _, p_value = pearson_correlation(x, y)
 
         assert isinstance(p_value, float)
         assert 0.0 <= p_value <= 1.0
@@ -68,18 +70,18 @@ class TestPearsonCorrelation:
     def test_scaled_linear_relationship(self) -> None:
         """Test scaled linear relationship has high correlation."""
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
-        y = [10.0, 20.0, 30.0, 40.0, 50.0]  # y = 10*x
+        y = [10.0, 20.0, 30.0, 40.0, 50.0]  # scaled by 10
 
-        correlation, p_value = pearson_correlation(x, y)
+        correlation, _ = pearson_correlation(x, y)
 
         assert abs(correlation - 1.0) < 0.001
 
     def test_shifted_relationship(self) -> None:
         """Test shifted relationship has high correlation."""
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
-        y = [101.0, 102.0, 103.0, 104.0, 105.0]  # y = x + 100
+        y = [101.0, 102.0, 103.0, 104.0, 105.0]  # shifted by 100
 
-        correlation, p_value = pearson_correlation(x, y)
+        correlation, _ = pearson_correlation(x, y)
 
         assert abs(correlation - 1.0) < 0.001
 
@@ -121,8 +123,8 @@ class TestSimulateOCRAccuracy:
         mock_dqs_complex.degradation_score = 0.8
         mock_dqs_complex.structural_complexity_score = 0.9
 
-        accuracy_simple = simulate_ocr_accuracy(mock_dqs_simple)
-        accuracy_complex = simulate_ocr_accuracy(mock_dqs_complex)
+        simulate_ocr_accuracy(mock_dqs_simple)
+        simulate_ocr_accuracy(mock_dqs_complex)
 
         # Complex should be lower (on average, with noise it might vary)
         # Run multiple times to get average
@@ -139,8 +141,8 @@ class TestSimulateOCRAccuracy:
         """Test accuracy is always in 0-1 range."""
         for _ in range(50):
             mock_dqs = MagicMock()
-            mock_dqs.degradation_score = np.random.random()
-            mock_dqs.structural_complexity_score = np.random.random()
+            mock_dqs.degradation_score = rng.random()
+            mock_dqs.structural_complexity_score = rng.random()
 
             accuracy = simulate_ocr_accuracy(mock_dqs)
 

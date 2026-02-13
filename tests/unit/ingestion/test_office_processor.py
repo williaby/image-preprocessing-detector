@@ -296,6 +296,7 @@ class TestOfficeProcessor:
         """Test processing unsupported format raises ValueError."""
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             f.write(b"test content")
+            f.flush()
             with pytest.raises(ValueError, match="Unsupported file type"):
                 processor.process(f.name)
 
@@ -303,6 +304,7 @@ class TestOfficeProcessor:
         """Test processing corrupted ZIP archive."""
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
             f.write(b"not a valid zip file")
+            f.flush()
 
         result = processor.process(f.name)
 

@@ -438,7 +438,7 @@ class DistributionTracker:
         self.max_samples = max_samples
         self._samples: dict[str, list[tuple[float, str]]] = defaultdict(list)
         self._counts: dict[str, int] = defaultdict(int)
-        self._rng = np.random.default_rng()
+        self._rng = np.random.default_rng(seed=42)
 
     def add_sample(
         self,
@@ -611,7 +611,7 @@ class ReferenceStore:
                 self._references[ref.feature] = ref
                 logger.debug(f"Loaded reference distribution: {ref.feature}")
 
-            except (json.JSONDecodeError, KeyError, ValueError):
+            except (KeyError, ValueError):
                 logger.exception(f"Error loading reference from {filepath}")
 
     def save_reference(
@@ -692,7 +692,9 @@ class ReferenceStore:
             List of expired feature names that were removed
         """
         expired = []
-        for feature_name, ref in list(self._references.items()):
+        for feature_name, ref in list(
+            self._references.items()
+        ):  # list() required: dict modified during iteration
             if ref.is_expired():
                 expired.append(feature_name)
                 del self._references[feature_name]

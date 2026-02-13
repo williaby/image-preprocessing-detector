@@ -130,6 +130,84 @@ def save_image(
         return str(image_id), False, f"Save error: {e}"
 
 
+def _process_conversion_result(
+    filename: str,
+    success: bool,
+    error: str | None,
+    output_dir: Path,
+    skip_existing: bool,
+    errors: dict[str, int],
+    counts: dict[str, int],
+) -> None:
+    """Process a single conversion result, updating counts and error tracking.
+
+    Args:
+        filename: Output filename.
+        success: Whether the conversion succeeded.
+        error: Error message if failed.
+        output_dir: Output directory for existence check.
+        skip_existing: Whether skip-existing mode is active.
+        errors: Error type counter dict to update in-place.
+        counts: Dict with 'success', 'skip', 'fail' keys to update in-place.
+    """
+    if success:
+        if skip_existing and (output_dir / filename).exists():
+            counts["skip"] += 1
+        else:
+            counts["success"] += 1
+        return
+
+    counts["fail"] += 1
+    error_type = error.split(":")[0] if error else "Unknown"
+    errors[error_type] = errors.get(error_type, 0) + 1
+    if counts["fail"] <= 10:
+        logger.warning(f"Failed: {filename} - {error}")
+
+
+def _log_final_statistics(
+    counts: dict[str, int],
+    errors: dict[str, int],
+    output_dir: Path,
+    total_images: int,
+) -> None:
+    """Log final conversion statistics and verify output.
+
+    Args:
+        counts: Dict with 'success', 'skip', 'fail' keys.
+        errors: Error type counter dict.
+        output_dir: Output directory for verification.
+        total_images: Expected total image count.
+    """
+    logger.info("=" * 80)
+    logger.info("Conversion Complete!")
+    logger.info(f"  Successfully converted: {counts['success']:,} images")
+    if counts["skip"] > 0:
+        logger.info(f"  Skipped (existing):    {counts['skip']:,} images")
+    if counts["fail"] > 0:
+        logger.warning(f"  Failed:               {counts['fail']:,} images")
+        logger.warning("  Error breakdown:")
+        for error_type, count in sorted(
+            errors.items(), key=lambda x: x[1], reverse=True
+        ):
+            logger.warning(f"    - {error_type}: {count} images")
+
+    jpg_count = len(list(output_dir.glob("*.jpg")))
+    logger.info(f"  Total JPG files:      {jpg_count:,}")
+
+    if jpg_count < total_images:
+        logger.warning(f"  Missing images:       {total_images - jpg_count:,}")
+    else:
+        logger.info("  All images converted successfully!")
+
+    sample_files = list(output_dir.glob("COCO_*.jpg"))[:5]
+    if sample_files:
+        logger.info("Sample filenames:")
+        for f in sample_files:
+            logger.info(f"    {f.name}")
+
+    logger.info("=" * 80)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Convert COCO-Text HuggingFace dataset to filesystem JPG files"
@@ -165,25 +243,20 @@ def main():
     )
     args = parser.parse_args()
 
-    # Create output directory
     if not args.dry_run:
         args.output_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Output directory: {args.output_dir}")
     else:
         logger.info("DRY RUN MODE - no files will be written")
 
-    # Load HuggingFace dataset
     logger.info("Loading COCO-Text dataset from HuggingFace...")
-    dataset, dataset_name = load_huggingface_dataset()
+    dataset, _ = load_huggingface_dataset()
 
-    # Count total images
     total_images = sum(len(dataset[split]) for split in dataset.keys())
     logger.info(f"Found {total_images:,} total images across {len(dataset)} splits")
-
     for split_name in dataset.keys():
         logger.info(f"  - {split_name}: {len(dataset[split_name]):,} images")
 
-    # Check disk space (rough estimate: 320 KB per image average)
     estimated_size_gb = (total_images * 320 * 1024) / (1024**3)
     logger.info(f"Estimated storage required: ~{estimated_size_gb:.1f} GB")
 
@@ -191,96 +264,47 @@ def main():
         logger.info("Dry run complete - exiting without conversion")
         sys.exit(0)
 
-    # Collect all examples from all splits
     logger.info("Collecting examples from all splits...")
     all_examples = []
     for split_name, split_data in dataset.items():
         logger.info(f"Processing split: {split_name} ({len(split_data):,} images)")
         all_examples.extend(list(split_data))
-
     logger.info(f"Total examples collected: {len(all_examples):,}")
 
-    # Process with parallel workers
-    success_count = 0
-    fail_count = 0
-    skip_count = 0
+    counts = {"success": 0, "skip": 0, "fail": 0}
     errors: dict[str, int] = {}
 
     logger.info(f"Starting conversion with {args.num_workers} workers...")
-
     with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
         futures = [
             executor.submit(save_image, example, args.output_dir, args.skip_existing)
             for example in all_examples
         ]
-
-        # Progress tracking with tqdm
         with tqdm(total=len(futures), desc="Converting images", unit="img") as pbar:
             for future in as_completed(futures):
                 filename, success, error = future.result()
-
-                if success:
-                    if args.skip_existing and (args.output_dir / filename).exists():
-                        skip_count += 1
-                    else:
-                        success_count += 1
-                else:
-                    fail_count += 1
-                    # Track error types
-                    error_type = error.split(":")[0] if error else "Unknown"
-                    errors[error_type] = errors.get(error_type, 0) + 1
-
-                    # Log first few errors for debugging
-                    if fail_count <= 10:
-                        logger.warning(f"Failed: {filename} - {error}")
-
+                _process_conversion_result(
+                    filename,
+                    success,
+                    error,
+                    args.output_dir,
+                    args.skip_existing,
+                    errors,
+                    counts,
+                )
                 pbar.update(1)
-
-                # Update progress display
                 pbar.set_postfix(
                     {
-                        "success": success_count,
-                        "skipped": skip_count,
-                        "failed": fail_count,
+                        "success": counts["success"],
+                        "skipped": counts["skip"],
+                        "failed": counts["fail"],
                     }
                 )
 
-    # Final statistics
-    logger.info("=" * 80)
-    logger.info("Conversion Complete!")
-    logger.info(f"  ✅ Successfully converted: {success_count:,} images")
-    if skip_count > 0:
-        logger.info(f"  ⏭️  Skipped (existing):    {skip_count:,} images")
-    if fail_count > 0:
-        logger.warning(f"  ❌ Failed:               {fail_count:,} images")
-        logger.warning("  Error breakdown:")
-        for error_type, count in sorted(
-            errors.items(), key=lambda x: x[1], reverse=True
-        ):
-            logger.warning(f"    - {error_type}: {count} images")
+    _log_final_statistics(counts, errors, args.output_dir, total_images)
 
-    # Verify output
-    jpg_count = len(list(args.output_dir.glob("*.jpg")))
-    logger.info(f"  📁 Total JPG files:      {jpg_count:,}")
-
-    if jpg_count < total_images:
-        missing = total_images - jpg_count
-        logger.warning(f"  ⚠️  Missing images:       {missing:,}")
-    else:
-        logger.info("  ✅ All images converted successfully!")
-
-    # Show sample filenames
-    sample_files = list(args.output_dir.glob("COCO_*.jpg"))[:5]
-    if sample_files:
-        logger.info("Sample filenames:")
-        for f in sample_files:
-            logger.info(f"    {f.name}")
-
-    logger.info("=" * 80)
-
-    # Exit code based on success
-    if fail_count > 0:
-        logger.error(f"Conversion completed with {fail_count} failures")
+    if counts["fail"] > 0:
+        logger.error(f"Conversion completed with {counts['fail']} failures")
         sys.exit(1)
     else:
         logger.info("Conversion completed successfully!")

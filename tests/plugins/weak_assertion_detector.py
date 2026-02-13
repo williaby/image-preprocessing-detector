@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 
+# Common string constants (S1192: avoid duplicate string literals)
+TRUTHINESS_CHECK_MSG = "Checks truthiness only, not specific value"
+
+
 @dataclass
 class WeakAssertionInfo:
     """Information about a weak assertion pattern detected."""
@@ -94,12 +98,12 @@ class WeakAssertionVisitor(ast.NodeVisitor):
 
     # Patterns that may indicate weak assertions (warnings)
     SUSPICIOUS_PATTERNS: ClassVar[dict[str, str]] = {
-        "assert result": "Checks truthiness only, not specific value",
-        "assert response": "Checks truthiness only, not specific value",
-        "assert data": "Checks truthiness only, not specific value",
-        "assert output": "Checks truthiness only, not specific value",
-        "assert ret": "Checks truthiness only, not specific value",
-        "assert value": "Checks truthiness only, not specific value",
+        "assert result": TRUTHINESS_CHECK_MSG,
+        "assert response": TRUTHINESS_CHECK_MSG,
+        "assert data": TRUTHINESS_CHECK_MSG,
+        "assert output": TRUTHINESS_CHECK_MSG,
+        "assert ret": TRUTHINESS_CHECK_MSG,
+        "assert value": TRUTHINESS_CHECK_MSG,
     }
 
     def __init__(self, source_lines: list[str]):
@@ -219,6 +223,99 @@ def analyze_test_function(item: Item) -> TestAssertionStats | None:
     return stats
 
 
+def _write_report_header(terminalreporter: TerminalReporter) -> None:
+    """Write the report header section."""
+    terminalreporter.write_line("")
+    terminalreporter.write_line("=" * 60, bold=True)
+    terminalreporter.write_line("WEAK ASSERTION REPORT", bold=True)
+    terminalreporter.write_line("=" * 60)
+
+
+def _write_no_assertion_section(
+    terminalreporter: TerminalReporter,
+    no_assertion_tests: list[TestAssertionStats],
+) -> None:
+    """Write the 'tests with no assertions' section."""
+    if not no_assertion_tests:
+        return
+    terminalreporter.write_line("")
+    terminalreporter.write_line(
+        f"Tests with NO assertions ({len(no_assertion_tests)}):",
+        red=True,
+        bold=True,
+    )
+    for stats in no_assertion_tests:
+        rel_path = Path(stats.file_path).name
+        terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
+
+
+def _write_weak_assertion_section(
+    terminalreporter: TerminalReporter,
+    weak_assertion_tests: list[TestAssertionStats],
+) -> None:
+    """Write the 'tests with weak assertions' section."""
+    if not weak_assertion_tests:
+        return
+    terminalreporter.write_line("")
+    terminalreporter.write_line(
+        f"Tests with WEAK assertions ({len(weak_assertion_tests)}):",
+        red=True,
+        bold=True,
+    )
+    for stats in weak_assertion_tests:
+        rel_path = Path(stats.file_path).name
+        terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
+        for pattern in stats.patterns_found:
+            if pattern.severity == "error":
+                terminalreporter.write_line(
+                    f"      Line {pattern.line_number}: {pattern.pattern} - {pattern.message}"
+                )
+
+
+def _write_warning_section(
+    terminalreporter: TerminalReporter,
+    warning_tests: list[TestAssertionStats],
+) -> None:
+    """Write the 'tests with suspicious patterns' section."""
+    if not warning_tests:
+        return
+    terminalreporter.write_line("")
+    terminalreporter.write_line(
+        f"Tests with SUSPICIOUS patterns ({len(warning_tests)}):",
+        yellow=True,
+    )
+    for stats in warning_tests:
+        rel_path = Path(stats.file_path).name
+        terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
+        for pattern in stats.patterns_found:
+            if pattern.severity == "warning":
+                terminalreporter.write_line(
+                    f"      Line {pattern.line_number}: {pattern.pattern} - {pattern.message}"
+                )
+
+
+def _write_report_footer(
+    terminalreporter: TerminalReporter,
+    no_assertion_tests: list[TestAssertionStats],
+    weak_assertion_tests: list[TestAssertionStats],
+    warning_tests: list[TestAssertionStats],
+    fail_on_weak: bool,
+) -> None:
+    """Write the report footer with summary and optional failure message."""
+    terminalreporter.write_line("")
+    terminalreporter.write_line("-" * 60)
+    total_issues = len(no_assertion_tests) + len(weak_assertion_tests)
+    terminalreporter.write_line(
+        f"Total: {total_issues} tests with issues, {len(warning_tests)} warnings"
+    )
+    if fail_on_weak and (no_assertion_tests or weak_assertion_tests):
+        terminalreporter.write_line(
+            "FAILED: --fail-on-weak is enabled",
+            red=True,
+            bold=True,
+        )
+
+
 class WeakAssertionPlugin:
     """Pytest plugin for weak assertion detection."""
 
@@ -243,7 +340,7 @@ class WeakAssertionPlugin:
             self.stats.append(stats)
 
     def pytest_terminal_summary(
-        self, terminalreporter: TerminalReporter, exitstatus: int
+        self, terminalreporter: TerminalReporter, _exitstatus: int
     ) -> None:
         """Print summary of weak assertions."""
         if not self.enabled or not self.stats:
@@ -268,78 +365,19 @@ class WeakAssertionPlugin:
             )
             return
 
-        terminalreporter.write_line("")
-        terminalreporter.write_line(
-            "=" * 60,
-            bold=True,
-        )
-        terminalreporter.write_line(
-            "WEAK ASSERTION REPORT",
-            bold=True,
-        )
-        terminalreporter.write_line("=" * 60)
-
-        # Report tests with no assertions
-        if no_assertion_tests:
-            terminalreporter.write_line("")
-            terminalreporter.write_line(
-                f"Tests with NO assertions ({len(no_assertion_tests)}):",
-                red=True,
-                bold=True,
-            )
-            for stats in no_assertion_tests:
-                rel_path = Path(stats.file_path).name
-                terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
-
-        # Report tests with weak assertions (errors)
-        if weak_assertion_tests:
-            terminalreporter.write_line("")
-            terminalreporter.write_line(
-                f"Tests with WEAK assertions ({len(weak_assertion_tests)}):",
-                red=True,
-                bold=True,
-            )
-            for stats in weak_assertion_tests:
-                rel_path = Path(stats.file_path).name
-                terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
-                for pattern in stats.patterns_found:
-                    if pattern.severity == "error":
-                        terminalreporter.write_line(
-                            f"      Line {pattern.line_number}: {pattern.pattern} - {pattern.message}"
-                        )
-
-        # Report tests with suspicious patterns (warnings)
-        if warning_tests:
-            terminalreporter.write_line("")
-            terminalreporter.write_line(
-                f"Tests with SUSPICIOUS patterns ({len(warning_tests)}):",
-                yellow=True,
-            )
-            for stats in warning_tests:
-                rel_path = Path(stats.file_path).name
-                terminalreporter.write_line(f"  - {rel_path}::{stats.test_name}")
-                for pattern in stats.patterns_found:
-                    if pattern.severity == "warning":
-                        terminalreporter.write_line(
-                            f"      Line {pattern.line_number}: {pattern.pattern} - {pattern.message}"
-                        )
-
-        # Summary
-        terminalreporter.write_line("")
-        terminalreporter.write_line("-" * 60)
-        total_issues = len(no_assertion_tests) + len(weak_assertion_tests)
-        terminalreporter.write_line(
-            f"Total: {total_issues} tests with issues, {len(warning_tests)} warnings"
+        _write_report_header(terminalreporter)
+        _write_no_assertion_section(terminalreporter, no_assertion_tests)
+        _write_weak_assertion_section(terminalreporter, weak_assertion_tests)
+        _write_warning_section(terminalreporter, warning_tests)
+        _write_report_footer(
+            terminalreporter,
+            no_assertion_tests,
+            weak_assertion_tests,
+            warning_tests,
+            self.fail_on_weak,
         )
 
-        if self.fail_on_weak and (no_assertion_tests or weak_assertion_tests):
-            terminalreporter.write_line(
-                "FAILED: --fail-on-weak is enabled",
-                red=True,
-                bold=True,
-            )
-
-    def pytest_sessionfinish(self, session, exitstatus: int) -> None:
+    def pytest_sessionfinish(self, session, _exitstatus: int) -> None:
         """Modify exit status if fail_on_weak is enabled."""
         if not self.enabled or not self.fail_on_weak:
             return

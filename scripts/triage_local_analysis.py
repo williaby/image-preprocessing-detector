@@ -277,7 +277,7 @@ def detect_language_lingua(text: str, detector) -> tuple[str | None, float]:
 
 def compute_consensus(
     scripts: list[str],
-    script_counts: dict[str, int],
+    _script_counts: dict[str, int],
     ft_lang: str | None,
     ft_conf: float,
     lingua_lang: str | None,
@@ -375,7 +375,7 @@ def analyze_sample(
     # Detect scripts
     scripts, script_counts = detect_scripts(text)
     primary_script = scripts[0] if scripts else None
-    script_conf = 0.9 if primary_script and primary_script not in {"Latn"} else 0.5
+    script_conf = 0.9 if primary_script and primary_script != "Latn" else 0.5
 
     # Detect language
     ft_lang, ft_conf = detect_language_fasttext(text, models.get("fasttext"))
@@ -409,65 +409,74 @@ def analyze_sample(
     )
 
 
+def _counter_table(
+    header: str,
+    columns: str,
+    divider: str,
+    counter: Counter,
+    total: int,
+    top_n: int | None = None,
+) -> list[str]:
+    """Build a markdown counter-distribution table section.
+
+    Args:
+        header: Section heading (e.g., '## Script Distribution').
+        columns: Markdown table header row.
+        divider: Markdown table divider row.
+        counter: Counter of items.
+        total: Total count for percentage calculation.
+        top_n: If set, limit to top N entries.
+
+    Returns:
+        List of report lines.
+    """
+    lines = [header, "", columns, divider]
+    items = counter.most_common(top_n) if top_n else counter.most_common()
+    for item, count in items:
+        pct = 100 * count / total if total else 0
+        lines.append(f"| {item} | {count} | {pct:.1f}% |")
+    lines.append("")
+    return lines
+
+
 def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
     """Generate confidence-stratified report."""
+    total = len(results)
+    needs_escalation = sum(1 for r in results if r.needs_vision_escalation)
+    no_escalation = total - needs_escalation
 
     report_lines = [
         f"# Language Triage Analysis Report: {dataset}",
         f"Generated: {datetime.now(UTC).isoformat()}",
-        f"Total samples analyzed: {len(results)}",
+        f"Total samples analyzed: {total}",
         "",
         "## Executive Summary",
         "",
+        f"- **Can be labeled locally**: {no_escalation} ({100 * no_escalation / total:.1f}%)",
+        f"- **Needs vision escalation**: {needs_escalation} ({100 * needs_escalation / total:.1f}%)",
+        "",
     ]
 
-    # Overall stats
-    needs_escalation = sum(1 for r in results if r.needs_vision_escalation)
-    no_escalation = len(results) - needs_escalation
-
-    report_lines.extend(
-        [
-            f"- **Can be labeled locally**: {no_escalation} ({100 * no_escalation / len(results):.1f}%)",
-            f"- **Needs vision escalation**: {needs_escalation} ({100 * needs_escalation / len(results):.1f}%)",
-            "",
-        ]
-    )
-
     # Script distribution
-    script_counts = Counter()
-    for r in results:
-        script_counts[r.primary_script or "None"] += 1
-
-    report_lines.extend(
-        [
-            "## Script Distribution",
-            "",
-            "| Script | Count | % |",
-            "|--------|-------|---|",
-        ]
+    script_counts = Counter(r.primary_script or "None" for r in results)
+    report_lines += _counter_table(
+        "## Script Distribution",
+        "| Script | Count | % |",
+        "|--------|-------|---|",
+        script_counts,
+        total,
     )
-    for script, count in script_counts.most_common():
-        pct = 100 * count / len(results)
-        report_lines.append(f"| {script} | {count} | {pct:.1f}% |")
-    report_lines.append("")
 
     # Language distribution
-    lang_counts = Counter()
-    for r in results:
-        lang_counts[r.consensus_language] += 1
-
-    report_lines.extend(
-        [
-            "## Language Distribution (Consensus)",
-            "",
-            "| Language | Count | % |",
-            "|----------|-------|---|",
-        ]
+    lang_counts = Counter(r.consensus_language for r in results)
+    report_lines += _counter_table(
+        "## Language Distribution (Consensus)",
+        "| Language | Count | % |",
+        "|----------|-------|---|",
+        lang_counts,
+        total,
+        top_n=15,
     )
-    for lang, count in lang_counts.most_common(15):
-        pct = 100 * count / len(results)
-        report_lines.append(f"| {lang} | {count} | {pct:.1f}% |")
-    report_lines.append("")
 
     # Confidence stratification
     report_lines.extend(
@@ -478,11 +487,10 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
             "|------------|-------|---|------------------|",
         ]
     )
-
     for low, high, label in CONFIDENCE_BINS:
         in_bin = [r for r in results if low <= r.consensus_confidence < high]
         count = len(in_bin)
-        pct = 100 * count / len(results) if results else 0
+        pct = 100 * count / total if total else 0
         esc_count = sum(1 for r in in_bin if r.needs_vision_escalation)
         esc_pct = 100 * esc_count / count if count else 0
         report_lines.append(
@@ -491,19 +499,10 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
     report_lines.append("")
 
     # Escalation reasons
-    reason_counts = Counter()
-    for r in results:
-        if r.escalation_reason:
-            reason_counts[r.escalation_reason] += 1
-
+    reason_counts = Counter(r.escalation_reason for r in results if r.escalation_reason)
     if reason_counts:
         report_lines.extend(
-            [
-                "## Escalation Reasons",
-                "",
-                "| Reason | Count |",
-                "|--------|-------|",
-            ]
+            ["## Escalation Reasons", "", "| Reason | Count |", "|--------|-------|"]
         )
         for reason, count in reason_counts.most_common():
             report_lines.append(f"| {reason} | {count} |")
@@ -511,19 +510,14 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
 
     # Detector agreement
     agree_count = sum(1 for r in results if r.detector_agreement)
+    disagree_count = total - agree_count
     report_lines.extend(
         [
             "## Detector Agreement",
             "",
-            f"- **Detectors agree**: {agree_count} ({100 * agree_count / len(results):.1f}%)",
-            f"- **Detectors disagree**: {len(results) - agree_count} ({100 * (len(results) - agree_count) / len(results):.1f}%)",
+            f"- **Detectors agree**: {agree_count} ({100 * agree_count / total:.1f}%)",
+            f"- **Detectors disagree**: {disagree_count} ({100 * disagree_count / total:.1f}%)",
             "",
-        ]
-    )
-
-    # Cost estimate
-    report_lines.extend(
-        [
             "## Cost Estimate (if using vision API)",
             "",
             f"- Samples needing vision: {needs_escalation}",

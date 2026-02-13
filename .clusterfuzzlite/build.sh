@@ -15,8 +15,8 @@ PYTHON_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)')
 
 echo "Python version: $PYTHON_VERSION"
 
-if [ "$PYTHON_MAJOR" -ne 3 ] || [ "$PYTHON_MINOR" -lt 8 ] || [ "$PYTHON_MINOR" -gt 11 ]; then
-    echo "ERROR: Python $PYTHON_VERSION is not compatible with Atheris"
+if [[ "$PYTHON_MAJOR" -ne 3 ]] || [[ "$PYTHON_MINOR" -lt 8 ]] || [[ "$PYTHON_MINOR" -gt 11 ]]; then
+    echo "ERROR: Python $PYTHON_VERSION is not compatible with Atheris" >&2
     echo "Atheris requires Python 3.8-3.11 (not 3.12+ due to PRECALL opcode changes)"
     echo "Base image should provide Python 3.11.13"
     exit 1
@@ -82,6 +82,6 @@ fi
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"
 for f in "$OUT"/fuzz_*; do
-    [ -e "$f" ] && ls -la "$f"
+    [[ -e "$f" ]] && ls -la "$f"
 done
 echo "================================"

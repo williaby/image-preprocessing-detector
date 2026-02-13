@@ -11,10 +11,18 @@ import time
 import uuid
 from datetime import timedelta
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from fastapi.responses import JSONResponse
 
 from image_preprocessing_detector.api.config import get_api_settings
@@ -91,6 +99,7 @@ async def process_batch_job(
             ext = Path(filename).suffix.lower()
             with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
                 tmp_file.write(content)
+                tmp_file.flush()
                 tmp_path = Path(tmp_file.name)
 
             try:
@@ -98,7 +107,7 @@ async def process_batch_job(
                 result = await process_document(tmp_path, filename, options)
                 results.append(result)
             finally:
-                # Cleanup
+                # Cleanup - trivially fast, no I/O blocking concern
                 tmp_path.unlink(missing_ok=True)
 
             # Update progress
@@ -168,10 +177,14 @@ async def process_batch_job(
 )
 async def submit_batch_job(
     background_tasks: BackgroundTasks,
-    files: list[UploadFile] = File(..., description="Documents to process"),
-    prefer_gpu: bool = True,
-    enable_corrections: bool = True,
-    enable_teacher: bool = False,
+    files: Annotated[list[UploadFile], File(description="Documents to process")],
+    prefer_gpu: Annotated[bool, Query(description="Whether to prefer GPU")] = True,
+    enable_corrections: Annotated[
+        bool, Query(description="Whether to enable corrections")
+    ] = True,
+    enable_teacher: Annotated[
+        bool, Query(description="Whether to enable teacher model")
+    ] = False,
 ) -> BatchJobStatus | JSONResponse:
     """Submit a batch processing job.
 
@@ -288,7 +301,6 @@ async def submit_batch_job(
 
 @router.get(
     "/{job_id}/status",
-    response_model=BatchJobStatus,
     summary="Get batch job status",
     description="Get the current status of a batch processing job.",
     responses={

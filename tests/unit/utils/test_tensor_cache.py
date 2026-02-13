@@ -5,6 +5,7 @@
 """Tests for tensor and page render caching."""
 
 import time
+from collections.abc import Iterator
 from unittest.mock import patch
 
 import numpy as np
@@ -25,7 +26,7 @@ from image_preprocessing_detector.utils.tensor_cache import (
 
 
 @pytest.fixture(autouse=True)
-def reset_caches() -> None:
+def reset_caches() -> Iterator[None]:
     """Reset cache instances before each test."""
     reset_cache_instances()
     yield
@@ -38,32 +39,32 @@ class TestCacheMetrics:
     def test_hit_rate_no_accesses(self) -> None:
         """Test hit rate is 0% with no accesses."""
         metrics = CacheMetrics()
-        assert metrics.hit_rate == 0.0
+        assert metrics.hit_rate == pytest.approx(0.0)
 
     def test_hit_rate_all_hits(self) -> None:
         """Test hit rate is 100% with all hits."""
         metrics = CacheMetrics(hits=10, misses=0)
-        assert metrics.hit_rate == 100.0
+        assert metrics.hit_rate == pytest.approx(100.0)
 
     def test_hit_rate_mixed(self) -> None:
         """Test hit rate calculation with mixed hits/misses."""
         metrics = CacheMetrics(hits=75, misses=25)
-        assert metrics.hit_rate == 75.0
+        assert metrics.hit_rate == pytest.approx(75.0)
 
     def test_utilization_empty(self) -> None:
         """Test utilization is 0% for empty cache."""
         metrics = CacheMetrics(current_size_bytes=0, max_size_bytes=1024)
-        assert metrics.utilization == 0.0
+        assert metrics.utilization == pytest.approx(0.0)
 
     def test_utilization_full(self) -> None:
         """Test utilization is 100% for full cache."""
         metrics = CacheMetrics(current_size_bytes=1024, max_size_bytes=1024)
-        assert metrics.utilization == 100.0
+        assert metrics.utilization == pytest.approx(100.0)
 
     def test_utilization_no_max_size(self) -> None:
         """Test utilization is 0% when max_size is 0."""
         metrics = CacheMetrics(current_size_bytes=100, max_size_bytes=0)
-        assert metrics.utilization == 0.0
+        assert metrics.utilization == pytest.approx(0.0)
 
     def test_to_dict(self) -> None:
         """Test metrics serialization to dictionary."""
@@ -81,9 +82,9 @@ class TestCacheMetrics:
         assert result["misses"] == 50
         assert result["evictions"] == 10
         assert result["hit_rate_pct"] == pytest.approx(66.67, rel=0.01)
-        assert result["current_size_mb"] == 0.5
-        assert result["max_size_mb"] == 1.0
-        assert result["utilization_pct"] == 50.0
+        assert result["current_size_mb"] == pytest.approx(0.5)
+        assert result["max_size_mb"] == pytest.approx(1.0)
+        assert result["utilization_pct"] == pytest.approx(50.0)
         assert result["total_items"] == 5
 
 

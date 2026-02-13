@@ -33,7 +33,7 @@ class TestDownloadDocbank:
         """Test that download creates output directory."""
         output_dir = tmp_path / "docbank"
 
-        with patch("download_docbank.snapshot_download") as mock_download:
+        with patch("download_docbank.snapshot_download"):
             download_docbank(output_dir)
 
         assert output_dir.exists()

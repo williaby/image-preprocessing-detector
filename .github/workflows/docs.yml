@@ -18,7 +18,8 @@ on:
       - "tools/**"
       - "src/**"
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   validate:

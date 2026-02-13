@@ -59,6 +59,10 @@ COMPOSITION = {
     "multimodal_textbook": 648,  # Educational (1,113 available)
 }
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+PNG_GLOB = "**/*.png"
+JPG_GLOB_FLAT = "*.jpg"
+
 # Source paths (E: drive reorganized 2025-12-16)
 # Structure: 01_base_data/{category}/{dataset}/ and 02_benchmark_only/{dataset}/
 # File extensions verified 2025-12-16
@@ -68,25 +72,28 @@ SOURCE_PATHS: dict[str, tuple[Path, str]] = {
     "dibco": (BENCHMARK_ONLY / "dibco", "**/*.*"),
     # === 01_base_data/degraded (real degradation) ===
     "tobacco_800": (BASE_DATA / "degraded/tobacco800/images", "*.png"),
-    "historical_degraded": (BASE_DATA / "degraded/historical_degraded", "**/*.png"),
+    "historical_degraded": (BASE_DATA / "degraded/historical_degraded", PNG_GLOB),
     # === 01_base_data/documents (multi-category) ===
-    "rvl_cdip": (BASE_DATA / "documents/rvl_cdip/images", "*.jpg"),
-    "doclaynet": (BASE_DATA / "documents/doclaynet", "**/*.png"),
+    "rvl_cdip": (BASE_DATA / "documents/rvl_cdip/images", JPG_GLOB_FLAT),
+    "doclaynet": (BASE_DATA / "documents/doclaynet", PNG_GLOB),
     # === 01_base_data/forms (structured forms) ===
-    "nist-sd2": (BASE_DATA / "forms/nist-sd2", "**/*.png"),
-    "nist_sd6": (BASE_DATA / "forms/nist_sd6", "**/*.png"),
-    "funsd_plus": (BASE_DATA / "forms/funsd_plus/images", "*.jpg"),
+    "nist-sd2": (BASE_DATA / "forms/nist-sd2", PNG_GLOB),
+    "nist_sd6": (BASE_DATA / "forms/nist_sd6", PNG_GLOB),
+    "funsd_plus": (BASE_DATA / "forms/funsd_plus/images", JPG_GLOB_FLAT),
     "sroie": (BASE_DATA / "forms/sroie_icdar2019", "**/*.jpg"),
     # === 01_base_data/tables (tabular data) ===
-    "tablebank": (BASE_DATA / "tables/tablebank/TableBank/Detection/images", "*.jpg"),
-    "pubtabnet": (BASE_DATA / "tables/pubtabnet", "**/*.png"),
+    "tablebank": (
+        BASE_DATA / "tables/tablebank/TableBank/Detection/images",
+        JPG_GLOB_FLAT,
+    ),
+    "pubtabnet": (BASE_DATA / "tables/pubtabnet", PNG_GLOB),
     # === 01_base_data/handwriting ===
-    "nist_sd19": (BASE_DATA / "handwriting/nist-sd19", "**/*.png"),
-    "maths_handwriting": (BASE_DATA / "handwriting/maths_handwriting", "**/*.png"),
+    "nist_sd19": (BASE_DATA / "handwriting/nist-sd19", PNG_GLOB),
+    "maths_handwriting": (BASE_DATA / "handwriting/maths_handwriting", PNG_GLOB),
     # === 01_base_data/formulas (math content) ===
-    "mathverse": (BASE_DATA / "formulas/mathverse/images", "*.jpg"),
+    "mathverse": (BASE_DATA / "formulas/mathverse/images", JPG_GLOB_FLAT),
     # === 01_base_data/educational ===
-    "multimodal_textbook": (BASE_DATA / "educational/sample_100_images", "*.jpg"),
+    "multimodal_textbook": (BASE_DATA / "educational/sample_100_images", JPG_GLOB_FLAT),
 }
 
 

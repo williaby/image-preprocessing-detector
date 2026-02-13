@@ -419,8 +419,6 @@ def compute_sample_summary(
 
     hard_count = sum(1 for a in assessments if a.category == "hard_label")
     soft_count = sum(1 for a in assessments if a.category == "soft_label")
-    active_count = sum(1 for a in assessments if a.category == "active_learning")
-    unreliable_count = sum(1 for a in assessments if a.category == "unreliable")
 
     field_summary = [
         {
@@ -498,6 +496,53 @@ def compute_dataset_bottlenecks(
     return result
 
 
+def _get_current_enrichment_data(sample: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract the current enrichment data dict from a sample.
+
+    Returns:
+        The data dict, or None if no enrichment versions exist.
+    """
+    enrichments = sample.get("enrichments", {})
+    versions = enrichments.get("versions", [])
+    if not versions:
+        return None
+
+    current_ver = enrichments.get("current_version", 1)
+    data = versions[-1].get("data", {})
+    for v in versions:
+        if v.get("version") == current_ver:
+            data = v.get("data", {})
+            break
+    return data
+
+
+def _write_reliability_metadata(
+    metadata: dict[str, Any],
+    metadata_path: Path,
+    stats: dict[str, Any],
+) -> None:
+    """Write reliability summary metadata back to the JSON file."""
+    metadata.setdefault("backfill_history", [])
+    metadata["backfill_history"].append(
+        {
+            "operation": "reliability_summary_materialization",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "stats": {
+                "materialized": stats["materialized"],
+                "already_had_summary": stats["already_has_summary"],
+                "bottlenecks": stats["bottlenecks"],
+            },
+        }
+    )
+    metadata["reliability_bottlenecks"] = stats["bottlenecks"]
+    metadata["reliability_avg_min_confidence"] = stats["avg_min_confidence"]
+    metadata["reliability_category_distribution"] = stats["category_distribution"]
+
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+    logger.info(f"  Written: {metadata_path}")
+
+
 def process_dataset(
     dataset_name: str,
     metadata_dir: Path,
@@ -545,22 +590,11 @@ def process_dataset(
     min_confidences: list[float] = []
 
     for sample in samples:
-        enrichments = sample.get("enrichments", {})
-        versions = enrichments.get("versions", [])
-        if not versions:
+        data = _get_current_enrichment_data(sample)
+        if data is None:
             stats["skipped_no_enrichment"] += 1
             continue
 
-        # Use the latest version (current_version index, or last in list)
-        current_ver = enrichments.get("current_version", 1)
-        # Find version matching current_version, or default to last
-        data = versions[-1].get("data", {})
-        for v in versions:
-            if v.get("version") == current_ver:
-                data = v.get("data", {})
-                break
-
-        # Check if already materialized
         existing = data.get("sample_reliability_summary")
         if existing is not None and not force:
             stats["already_has_summary"] += 1
@@ -568,14 +602,11 @@ def process_dataset(
 
         summary, assessments = compute_sample_summary(data)
         all_assessments.append(assessments)
-
         data["sample_reliability_summary"] = summary
         stats["materialized"] += 1
-
         category_dist[summary["min_confidence_category"]] += 1
         min_confidences.append(summary["min_confidence"])
 
-    # Compute dataset-level bottlenecks
     bottlenecks = compute_dataset_bottlenecks(all_assessments, stats["materialized"])
     stats["bottlenecks"] = [asdict(b) for b in bottlenecks]
     stats["category_distribution"] = dict(category_dist)
@@ -585,29 +616,8 @@ def process_dataset(
             sum(min_confidences) / len(min_confidences), 4
         )
 
-    # Write updated metadata
     if not dry_run and stats["materialized"] > 0:
-        metadata.setdefault("backfill_history", [])
-        metadata["backfill_history"].append(
-            {
-                "operation": "reliability_summary_materialization",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "stats": {
-                    "materialized": stats["materialized"],
-                    "already_had_summary": stats["already_has_summary"],
-                    "bottlenecks": stats["bottlenecks"],
-                },
-            }
-        )
-
-        # Store dataset-level bottleneck info at metadata root
-        metadata["reliability_bottlenecks"] = stats["bottlenecks"]
-        metadata["reliability_avg_min_confidence"] = stats["avg_min_confidence"]
-        metadata["reliability_category_distribution"] = stats["category_distribution"]
-
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=2, ensure_ascii=False)
-        logger.info(f"  Written: {metadata_path}")
+        _write_reliability_metadata(metadata, metadata_path, stats)
     elif dry_run:
         logger.info(f"  DRY RUN: would write {metadata_path}")
 
@@ -726,6 +736,72 @@ def find_all_datasets(metadata_dir: Path) -> list[str]:
     return datasets
 
 
+def _accumulate_dataset_stats(
+    total_stats: dict[str, int],
+    stats: dict[str, Any],
+) -> None:
+    """Add per-dataset stats into the running total."""
+    for key in (
+        "total",
+        "materialized",
+        "already_has_summary",
+        "skipped_no_enrichment",
+    ):
+        total_stats[key] += stats[key]
+
+
+def _log_dataset_progress(
+    dataset_name: str,
+    stats: dict[str, Any],
+) -> None:
+    """Log per-dataset processing summary."""
+    bottleneck_str = ""
+    if stats["bottlenecks"]:
+        top = stats["bottlenecks"][0]
+        bottleneck_str = (
+            f" top_bottleneck={top['field_name']}({top['bottleneck_pct']}%)"
+        )
+    logger.info(
+        f"  {dataset_name}: total={stats['total']} "
+        f"materialized={stats['materialized']} "
+        f"already={stats['already_has_summary']} "
+        f"avg_min_conf={stats['avg_min_confidence']:.3f}"
+        f"{bottleneck_str}"
+    )
+
+
+def _print_final_summary(
+    total_stats: dict[str, int],
+    all_bottlenecks: list[dict[str, Any]],
+    show_docs: bool,
+) -> None:
+    """Print the final materialization summary."""
+    print(f"\n{'=' * 60}")
+    print("RELIABILITY MATERIALIZATION SUMMARY")
+    print(f"{'=' * 60}")
+    print(f"Total samples:           {total_stats['total']:>8,}")
+    print(f"Materialized:            {total_stats['materialized']:>8,}")
+    print(f"Already had summary:     {total_stats['already_has_summary']:>8,}")
+    print(f"Skipped (no enrichment): {total_stats['skipped_no_enrichment']:>8,}")
+    if show_docs:
+        print(f"Docs updated:            {total_stats['docs_updated']:>8,}")
+
+    if not all_bottlenecks:
+        return
+
+    print(f"\n{'─' * 60}")
+    print("CROSS-DATASET BOTTLENECK SUMMARY")
+    print(f"{'─' * 60}")
+
+    field_bottleneck_counts: Counter[str] = Counter()
+    for entry in all_bottlenecks:
+        for b in entry["bottlenecks"]:
+            field_bottleneck_counts[b["field_name"]] += b["bottleneck_count"]
+
+    for field_name, count in field_bottleneck_counts.most_common(5):
+        print(f"  {field_name:25s} {count:8,} samples")
+
+
 def main() -> None:
     """Run the reliability summary materialization."""
     parser = argparse.ArgumentParser(
@@ -749,14 +825,10 @@ def main() -> None:
         help="Directory containing per-dataset documentation",
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report changes without writing files",
+        "--dry-run", action="store_true", help="Report changes without writing files"
     )
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Process all datasets with metadata files",
+        "--all", action="store_true", help="Process all datasets with metadata files"
     )
     parser.add_argument(
         "--update-docs",
@@ -790,46 +862,19 @@ def main() -> None:
         "skipped_no_enrichment": 0,
         "docs_updated": 0,
     }
-
     all_bottlenecks: list[dict[str, Any]] = []
 
     for dataset_name in datasets:
         logger.info(f"Processing: {dataset_name}")
         stats = process_dataset(
-            dataset_name,
-            args.metadata_dir,
-            args.dry_run,
-            args.force,
+            dataset_name, args.metadata_dir, args.dry_run, args.force
         )
 
-        total_stats["total"] += stats["total"]
-        total_stats["materialized"] += stats["materialized"]
-        total_stats["already_has_summary"] += stats["already_has_summary"]
-        total_stats["skipped_no_enrichment"] += stats["skipped_no_enrichment"]
+        _accumulate_dataset_stats(total_stats, stats)
+        _log_dataset_progress(dataset_name, stats)
 
-        # Per-dataset summary
-        bottleneck_str = ""
-        if stats["bottlenecks"]:
-            top = stats["bottlenecks"][0]
-            bottleneck_str = (
-                f" top_bottleneck={top['field_name']}({top['bottleneck_pct']}%)"
-            )
-
-        logger.info(
-            f"  {dataset_name}: total={stats['total']} "
-            f"materialized={stats['materialized']} "
-            f"already={stats['already_has_summary']} "
-            f"avg_min_conf={stats['avg_min_confidence']:.3f}"
-            f"{bottleneck_str}"
-        )
-
-        # Update docs if requested
         if args.update_docs and not args.dry_run and stats["bottlenecks"]:
-            updated = update_dataset_doc(
-                dataset_name,
-                stats,
-                args.docs_dir,
-            )
+            updated = update_dataset_doc(dataset_name, stats, args.docs_dir)
             if updated:
                 total_stats["docs_updated"] += 1
                 all_bottlenecks.append(
@@ -839,30 +884,7 @@ def main() -> None:
                     }
                 )
 
-    # Final summary
-    print(f"\n{'=' * 60}")
-    print("RELIABILITY MATERIALIZATION SUMMARY")
-    print(f"{'=' * 60}")
-    print(f"Total samples:           {total_stats['total']:>8,}")
-    print(f"Materialized:            {total_stats['materialized']:>8,}")
-    print(f"Already had summary:     {total_stats['already_has_summary']:>8,}")
-    print(f"Skipped (no enrichment): {total_stats['skipped_no_enrichment']:>8,}")
-    if args.update_docs:
-        print(f"Docs updated:            {total_stats['docs_updated']:>8,}")
-
-    if all_bottlenecks:
-        print(f"\n{'─' * 60}")
-        print("CROSS-DATASET BOTTLENECK SUMMARY")
-        print(f"{'─' * 60}")
-
-        # Aggregate bottleneck counts across datasets
-        field_bottleneck_counts: Counter[str] = Counter()
-        for entry in all_bottlenecks:
-            for b in entry["bottlenecks"]:
-                field_bottleneck_counts[b["field_name"]] += b["bottleneck_count"]
-
-        for field_name, count in field_bottleneck_counts.most_common(5):
-            print(f"  {field_name:25s} {count:8,} samples")
+    _print_final_summary(total_stats, all_bottlenecks, args.update_docs)
 
 
 if __name__ == "__main__":

@@ -566,6 +566,102 @@ def create_phase7_dataloader(
     )
 
 
+def _run_inference_loop(
+    model: torch.nn.Module,
+    loader: DataLoader,
+    device: str,
+    supports_uncertainty: bool,
+    num_heads: int = 5,
+) -> tuple[list[list[float]], list[list[float]], list[list[float]], list[float]]:
+    """Run inference on all batches and collect per-head predictions/targets.
+
+    Returns:
+        Tuple of (all_predictions, all_targets, all_uncertainties, inference_times)
+        where each of the first three is a list of num_heads lists.
+    """
+    all_predictions: list[list[float]] = [[] for _ in range(num_heads)]
+    all_targets: list[list[float]] = [[] for _ in range(num_heads)]
+    all_uncertainties: list[list[float]] = [[] for _ in range(num_heads)]
+    inference_times: list[float] = []
+
+    with torch.no_grad():
+        for images, labels in loader:
+            images = images.to(device)
+            labels = labels.cpu().numpy()
+
+            start_time = time.perf_counter()
+            output = model(images)
+            inference_times.append((time.perf_counter() - start_time) * 1000)
+
+            if supports_uncertainty:
+                mu, log_var = output
+                outputs = mu.cpu().numpy()
+                uncertainties = np.sqrt(np.exp(log_var.cpu().numpy()))
+            else:
+                outputs = output.cpu().numpy()
+                uncertainties = None
+
+            for h in range(num_heads):
+                all_predictions[h].extend(outputs[:, h].tolist())
+                all_targets[h].extend(labels[:, h].tolist())
+                if uncertainties is not None:
+                    all_uncertainties[h].extend(uncertainties[:, h].tolist())
+
+    return all_predictions, all_targets, all_uncertainties, inference_times
+
+
+def _compute_head_metrics(
+    name: str,
+    preds: NDArray[np.floating[Any]],
+    targs: NDArray[np.floating[Any]],
+    uncertainty: NDArray[np.floating[Any]] | None,
+    num_ece_bins: int,
+    has_real_uncertainty: bool,
+) -> HeadMetrics:
+    """Compute all metrics for a single prediction head.
+
+    Args:
+        name: Head name (e.g., 'blur', 'noise').
+        preds: Predictions array.
+        targs: Targets array.
+        uncertainty: Uncertainty array (real or None).
+        num_ece_bins: Number of bins for ECE/ENCE.
+        has_real_uncertainty: Whether uncertainty is from the model (not proxy).
+
+    Returns:
+        HeadMetrics for this head.
+    """
+    spearman, _ = stats.spearmanr(preds, targs)
+    pearson, _ = stats.pearsonr(preds, targs)
+    mae = float(np.abs(preds - targs).mean())
+    rmse = float(np.sqrt(((preds - targs) ** 2).mean()))
+
+    ece_result = compute_ece_for_regression(preds, targs, num_ece_bins)
+
+    # For ENCE, use real uncertainty if available, otherwise use proxy
+    unc_for_ence = uncertainty if uncertainty is not None else np.abs(preds - 0.5) + 0.1
+    ence_result = compute_ence(preds, unc_for_ence, targs, num_ece_bins)
+
+    unc_corr: float | None = None
+    if has_real_uncertainty and uncertainty is not None:
+        errors = np.abs(preds - targs)
+        unc_corr_val, _ = stats.spearmanr(uncertainty, errors)
+        unc_corr = float(unc_corr_val) if not np.isnan(unc_corr_val) else None
+
+    return HeadMetrics(
+        name=name,
+        spearman=float(spearman) if not np.isnan(spearman) else 0.0,
+        pearson=float(pearson) if not np.isnan(pearson) else 0.0,
+        mae=mae,
+        rmse=rmse,
+        ece=ece_result["ece"],
+        ence=ence_result["ence"],
+        mce=ece_result["mce"],
+        num_samples=len(preds),
+        uncertainty_correlation=unc_corr,
+    )
+
+
 def evaluate_phase7(
     model: torch.nn.Module,
     config: BenchmarkConfig,
@@ -590,45 +686,15 @@ def evaluate_phase7(
     print(f"Batch size: {config.batch_size}")
     print(f"Device: {config.device}")
 
-    # Head names in order
     head_names = ["blur", "noise", "compression", "contrast", "geometric"]
-
-    all_predictions: list[list[float]] = [[] for _ in range(5)]
-    all_targets: list[list[float]] = [[] for _ in range(5)]
-    all_uncertainties: list[list[float]] = [[] for _ in range(5)]
-    inference_times: list[float] = []
-
-    # Check if model supports uncertainty estimation
     supports_uncertainty = getattr(model, "supports_uncertainty", False)
     if supports_uncertainty:
         print("Model supports uncertainty estimation (Gaussian heads)")
 
-    with torch.no_grad():
-        for images, labels in loader:
-            images = images.to(config.device)
-            labels = labels.cpu().numpy()
+    all_predictions, all_targets, all_uncertainties, inference_times = (
+        _run_inference_loop(model, loader, config.device, supports_uncertainty)
+    )
 
-            start_time = time.perf_counter()
-            output = model(images)
-            inference_times.append((time.perf_counter() - start_time) * 1000)
-
-            if supports_uncertainty:
-                # Gaussian model returns (mu, log_var)
-                mu, log_var = output
-                outputs = mu.cpu().numpy()
-                # Convert log_var to std (uncertainty)
-                uncertainties = np.sqrt(np.exp(log_var.cpu().numpy()))
-            else:
-                outputs = output.cpu().numpy()
-                uncertainties = None
-
-            for h in range(5):
-                all_predictions[h].extend(outputs[:, h].tolist())
-                all_targets[h].extend(labels[:, h].tolist())
-                if uncertainties is not None:
-                    all_uncertainties[h].extend(uncertainties[:, h].tolist())
-
-    # Convert to numpy
     predictions_np = [np.array(p) for p in all_predictions]
     targets_np = [np.array(t) for t in all_targets]
     uncertainties_np = (
@@ -638,51 +704,14 @@ def evaluate_phase7(
     # Compute per-head metrics
     per_head_metrics: list[HeadMetrics] = []
     for h, name in enumerate(head_names):
-        preds = predictions_np[h]
-        targs = targets_np[h]
-
-        # Correlation metrics
-        spearman, _ = stats.spearmanr(preds, targs)
-        pearson, _ = stats.pearsonr(preds, targs)
-
-        # Error metrics
-        mae = float(np.abs(preds - targs).mean())
-        rmse = float(np.sqrt(((preds - targs) ** 2).mean()))
-
-        # Calibration metrics
-        ece_result = compute_ece_for_regression(preds, targs, config.num_ece_bins)
-
-        # For ENCE, use real uncertainty if available, otherwise use proxy
-        if uncertainties_np is not None:
-            uncertainty = uncertainties_np[h]
-        else:
-            # Proxy uncertainty for models without uncertainty estimation
-            uncertainty = np.abs(preds - 0.5) + 0.1
-        ence_result = compute_ence(
-            preds,
-            uncertainty,
-            targs,
+        unc = uncertainties_np[h] if uncertainties_np is not None else None
+        head_metrics = _compute_head_metrics(
+            name,
+            predictions_np[h],
+            targets_np[h],
+            unc,
             config.num_ece_bins,
-        )
-
-        # Compute uncertainty-error correlation (only for models with real uncertainty)
-        unc_corr: float | None = None
-        if uncertainties_np is not None:
-            errors = np.abs(preds - targs)
-            unc_corr_val, _ = stats.spearmanr(uncertainty, errors)
-            unc_corr = float(unc_corr_val) if not np.isnan(unc_corr_val) else None
-
-        head_metrics = HeadMetrics(
-            name=name,
-            spearman=float(spearman) if not np.isnan(spearman) else 0.0,
-            pearson=float(pearson) if not np.isnan(pearson) else 0.0,
-            mae=mae,
-            rmse=rmse,
-            ece=ece_result["ece"],
-            ence=ence_result["ence"],
-            mce=ece_result["mce"],
-            num_samples=len(preds),
-            uncertainty_correlation=unc_corr,
+            supports_uncertainty,
         )
         per_head_metrics.append(head_metrics)
 
@@ -690,8 +719,10 @@ def evaluate_phase7(
         print(f"  SRCC={head_metrics.spearman:.4f}, PLCC={head_metrics.pearson:.4f}")
         print(f"  MAE={head_metrics.mae:.4f}, RMSE={head_metrics.rmse:.4f}")
         print(f"  ECE={head_metrics.ece:.4f}, ENCE={head_metrics.ence:.4f}")
-        if unc_corr is not None:
-            print(f"  Uncertainty-Error Corr={unc_corr:.4f}")
+        if head_metrics.uncertainty_correlation is not None:
+            print(
+                f"  Uncertainty-Error Corr={head_metrics.uncertainty_correlation:.4f}"
+            )
 
     # Compute macro metrics
     macro_spearman = np.mean([m.spearman for m in per_head_metrics])
@@ -702,7 +733,6 @@ def evaluate_phase7(
     macro_ence = np.mean([m.ence for m in per_head_metrics])
     macro_mce = max(m.mce for m in per_head_metrics)
 
-    # Compute macro uncertainty correlation (only for models with real uncertainty)
     macro_unc_corr: float | None = None
     if supports_uncertainty:
         unc_corrs = [
@@ -894,6 +924,125 @@ def evaluate_diqa5000(
     )
 
 
+def _load_smartdoc_transform(config: BenchmarkConfig):
+    """Load SmartDoc-QA image transform from model checkpoint config."""
+    import albumentations as albu
+    from albumentations.pytorch import ToTensorV2
+
+    # S6985: weights_only=False required to load config dict from checkpoint
+    checkpoint = torch.load(  # nosec B614
+        config.model_path, map_location="cpu", weights_only=False
+    )
+    model_config = checkpoint.get("config", {})
+    input_resolution = model_config.get("input_resolution", 384)
+
+    return albu.Compose(
+        [
+            albu.Resize(input_resolution, input_resolution),
+            albu.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
+
+
+def _collect_smartdoc_predictions(
+    model: torch.nn.Module,
+    dataset_root: Path,
+    transform,
+    config: BenchmarkConfig,
+) -> tuple[list[float], list[float], list[float]]:
+    """Collect IQA predictions and OCR accuracies from SmartDoc-QA phone dirs."""
+    import re
+
+    def parse_ocr_accuracy(filepath: Path) -> float | None:
+        """Parse character/word accuracy from SmartDoc-QA OCR report."""
+        if not filepath.exists():
+            return None
+        try:
+            content = filepath.read_text()
+            match = re.search(r"(\d+\.\d+)%\s{1,10}Accuracy", content)
+            if match:
+                return float(match.group(1))
+        except Exception:
+            pass
+        return None
+
+    all_predictions: list[float] = []
+    all_cacc: list[float] = []
+    all_wacc: list[float] = []
+    supports_uncertainty = getattr(model, "supports_uncertainty", False)
+
+    for phone in ["Nokia_phone", "Samsung_phone"]:
+        phone_dir = dataset_root / "Captured_Images" / phone
+        images_dir = phone_dir / "Images"
+        cacc_dir = phone_dir / "OCR_Accuracy_Tesseract"
+
+        if not images_dir.exists():
+            continue
+
+        image_files = list(images_dir.glob("*.jpg"))
+        print(f"  {phone}: {len(image_files)} images")
+
+        with torch.no_grad():
+            for img_path in image_files:
+                base_name = img_path.stem
+                cacc = parse_ocr_accuracy(cacc_dir / f"{base_name}.cacc.txt")
+                wacc = parse_ocr_accuracy(cacc_dir / f"{base_name}.wacc.txt")
+
+                if cacc is None or wacc is None:
+                    continue
+
+                try:
+                    image = np.array(Image.open(img_path).convert("RGB"))
+                    transformed = transform(image=image)
+                    image_tensor = transformed["image"].unsqueeze(0).to(config.device)
+
+                    output = model(image_tensor)
+
+                    if supports_uncertainty:
+                        mu, _ = output
+                        outputs = mu.cpu().numpy()[0]
+                    else:
+                        outputs = output.cpu().numpy()[0]
+
+                    all_predictions.append(float(outputs.mean()))
+                    all_cacc.append(cacc)
+                    all_wacc.append(wacc)
+                except Exception:
+                    continue
+
+    return all_predictions, all_cacc, all_wacc
+
+
+def _compute_smartdoc_correlations(
+    predictions: list[float],
+    cacc: list[float],
+    wacc: list[float],
+) -> dict[str, float]:
+    """Compute OCR correlation metrics from predictions and accuracy lists."""
+    predictions_np = np.array(predictions)
+    cacc_np = np.array(cacc)
+    wacc_np = np.array(wacc)
+
+    # Invert: our model outputs degradation (higher = worse), accuracy is higher = better
+    quality_predictions = 1.0 - predictions_np
+
+    cer_corr, _ = stats.spearmanr(quality_predictions, cacc_np)
+    wer_corr, _ = stats.spearmanr(quality_predictions, wacc_np)
+
+    # Ranking agreement: bottom 10%
+    n_worst = max(1, len(predictions_np) // 10)
+    iqa_worst_idx = np.argsort(predictions_np)[-n_worst:]
+    ocr_worst_idx = np.argsort(cacc_np)[:n_worst]
+    ranking_agreement = len(set(iqa_worst_idx) & set(ocr_worst_idx)) / n_worst
+
+    return {
+        "cer": float(cer_corr) if not np.isnan(cer_corr) else 0.0,
+        "wer": float(wer_corr) if not np.isnan(wer_corr) else 0.0,
+        "ranking": float(ranking_agreement),
+    }
+
+
 def evaluate_smartdoc_qa_ocr(
     model: torch.nn.Module,
     config: BenchmarkConfig,
@@ -928,145 +1077,25 @@ def evaluate_smartdoc_qa_ocr(
         print(f"SmartDoc-QA dataset root not found: {dataset_root}")
         return None
 
-    import albumentations as albu
-    from albumentations.pytorch import ToTensorV2
-    import re
+    transform = _load_smartdoc_transform(config)
 
-    # Get input resolution from model checkpoint config
-    # S6985: weights_only=False required to load config dict from checkpoint
-    checkpoint = torch.load(  # nosec B614
-        config.model_path, map_location="cpu", weights_only=False
+    all_predictions, all_cacc, all_wacc = _collect_smartdoc_predictions(
+        model, dataset_root, transform, config
     )
-    model_config = checkpoint.get("config", {})
-    input_resolution = model_config.get("input_resolution", 384)
-
-    transform = albu.Compose(
-        [
-            albu.Resize(input_resolution, input_resolution),
-            albu.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ToTensorV2(),
-        ]
-    )
-
-    def parse_ocr_accuracy(filepath: Path) -> float | None:
-        """Parse character/word accuracy from SmartDoc-QA OCR report."""
-        if not filepath.exists():
-            return None
-        try:
-            content = filepath.read_text()
-            # Look for "XX.XX%  Accuracy" pattern
-
-            match = re.search(r"(\d+\.\d+)%\s{1,10}Accuracy", content)
-            if match:
-                return float(match.group(1))
-        except Exception:
-            pass
-        return None
-
-    # Collect samples from both phones
-    all_predictions: list[float] = []
-    all_cacc: list[float] = []  # Character accuracy
-    all_wacc: list[float] = []  # Word accuracy
-
-    # Check if model supports uncertainty estimation
-    supports_uncertainty = getattr(model, "supports_uncertainty", False)
-
-    phones = ["Nokia_phone", "Samsung_phone"]
-
-    for phone in phones:
-        phone_dir = dataset_root / "Captured_Images" / phone
-        images_dir = phone_dir / "Images"
-        cacc_dir = phone_dir / "OCR_Accuracy_Tesseract"
-
-        if not images_dir.exists():
-            continue
-
-        image_files = list(images_dir.glob("*.jpg"))
-        print(f"  {phone}: {len(image_files)} images")
-
-        with torch.no_grad():
-            for img_path in image_files:
-                # Get OCR accuracy files
-                base_name = img_path.stem
-                cacc_file = cacc_dir / f"{base_name}.cacc.txt"
-                wacc_file = cacc_dir / f"{base_name}.wacc.txt"
-
-                cacc = parse_ocr_accuracy(cacc_file)
-                wacc = parse_ocr_accuracy(wacc_file)
-
-                if cacc is None or wacc is None:
-                    continue
-
-                # Load and preprocess image
-                try:
-                    image = np.array(Image.open(img_path).convert("RGB"))
-                    transformed = transform(image=image)
-                    image_tensor = transformed["image"].unsqueeze(0).to(config.device)
-
-                    # Predict
-                    output = model(image_tensor)
-
-                    # Handle Gaussian vs simple model outputs
-                    if supports_uncertainty:
-                        mu, _ = output
-                        outputs = mu.cpu().numpy()[0]
-                    else:
-                        outputs = output.cpu().numpy()[0]
-
-                    quality_score = float(outputs.mean())
-
-                    all_predictions.append(quality_score)
-                    all_cacc.append(cacc)
-                    all_wacc.append(wacc)
-                except Exception:
-                    continue
 
     if len(all_predictions) < 50:
         print(f"Insufficient samples: {len(all_predictions)}")
         return None
 
-    predictions_np = np.array(all_predictions)
-    cacc_np = np.array(all_cacc)
-    wacc_np = np.array(all_wacc)
-
-    # Convert accuracy to error rate
-    cer_np = 100.0 - cacc_np  # Character error rate (higher = worse)
-    wer_np = 100.0 - wacc_np  # Word error rate (higher = worse)
-
-    # Our models output degradation scores (higher = more degradation = worse quality)
-    # Error rates: higher = worse OCR performance
-    # Therefore: higher degradation should correlate with higher error rate
-    # This means we want POSITIVE correlation between degradation and error
-    # To report in standard IQA format (higher quality = lower error), we invert our predictions
-    quality_predictions = 1.0 - predictions_np
-
-    # Compute correlations: quality vs accuracy (both: higher = better)
-    # This gives positive correlation if model correctly identifies quality issues
-    cer_corr, _ = stats.spearmanr(quality_predictions, cacc_np)
-    wer_corr, _ = stats.spearmanr(quality_predictions, wacc_np)
-
-    # Ranking agreement: do worst quality images have worst OCR?
-    n_samples = len(predictions_np)
-    n_worst = max(1, n_samples // 10)  # Bottom 10%
-
-    # Highest degradation = worst quality
-    iqa_worst_idx = np.argsort(predictions_np)[-n_worst:]
-    # Lowest accuracy = worst OCR
-    ocr_worst_idx = np.argsort(cacc_np)[:n_worst]
-
-    ranking_agreement = len(set(iqa_worst_idx) & set(ocr_worst_idx)) / n_worst
+    results = _compute_smartdoc_correlations(all_predictions, all_cacc, all_wacc)
 
     print("\n[SMARTDOC-QA OCR CORRELATION]")
     print(f"  Samples: {len(all_predictions)}")
-    print(f"  CER Correlation: {cer_corr:.4f}")
-    print(f"  WER Correlation: {wer_corr:.4f}")
-    print(f"  Ranking Agreement (10%): {ranking_agreement:.4f}")
+    print(f"  CER Correlation: {results['cer']:.4f}")
+    print(f"  WER Correlation: {results['wer']:.4f}")
+    print(f"  Ranking Agreement (10%): {results['ranking']:.4f}")
 
-    return {
-        "cer": float(cer_corr) if not np.isnan(cer_corr) else 0.0,
-        "wer": float(wer_corr) if not np.isnan(wer_corr) else 0.0,
-        "ranking": float(ranking_agreement),
-    }
+    return results
 
 
 def compute_cross_dataset_gap(
@@ -1092,25 +1121,16 @@ def compute_cross_dataset_gap(
     return float(gap)
 
 
-def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> None:
-    """Update the IQA_MODEL_BENCHMARK_TRACKER.csv with new results.
+def _build_csv_row_data(results: BenchmarkResults) -> dict[str, str]:
+    """Build the CSV row data dict from benchmark results.
 
     Args:
-        results: Complete benchmark results
-        config: Benchmark configuration with CSV path
+        results: Complete benchmark results.
+
+    Returns:
+        Dict mapping CSV column names to formatted string values.
     """
-    if not config.csv_path.exists():
-        print(f"CSV tracker not found: {config.csv_path}")
-        return
-
-    # Read existing CSV
-    with open(config.csv_path, newline="") as f:
-        reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames or []
-        rows = list(reader)
-
-    # Prepare new row data
-    new_data = {
+    new_data: dict[str, str] = {
         "Model": results.model_name,
         "Type": results.model_type,
         "Source": results.source,
@@ -1128,21 +1148,21 @@ def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> No
                 "Phase7_MVP_RMSE": f"{p7.macro_rmse:.3f}",
                 "Phase7_MVP_ENCE": f"{p7.macro_ence:.3f}",
                 "Phase7_MVP_MCE": f"{p7.macro_mce:.3f}",
+                "Inference_ms": f"{p7.inference_time_ms:.1f}",
             }
         )
 
-        # Per-degradation breakdown
+        # Per-degradation breakdown via dict dispatch
+        _head_to_column = {
+            "blur": "Blur_Spearman",
+            "noise": "Noise_Spearman",
+            "compression": "Compress_Spearman",
+            "contrast": "Contrast_Spearman",
+        }
         for head in p7.per_head_metrics:
-            if head.name == "blur":
-                new_data["Blur_Spearman"] = f"{head.spearman:.3f}"
-            elif head.name == "noise":
-                new_data["Noise_Spearman"] = f"{head.spearman:.3f}"
-            elif head.name == "compression":
-                new_data["Compress_Spearman"] = f"{head.spearman:.3f}"
-            elif head.name == "contrast":
-                new_data["Contrast_Spearman"] = f"{head.spearman:.3f}"
-
-        new_data["Inference_ms"] = f"{p7.inference_time_ms:.1f}"
+            col = _head_to_column.get(head.name)
+            if col:
+                new_data[col] = f"{head.spearman:.3f}"
 
     # DIQA-5000 metrics
     if results.diqa5000_results:
@@ -1160,11 +1180,9 @@ def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> No
             }
         )
 
-    # Cross-dataset gap
     if results.cross_dataset_gap is not None:
         new_data["CrossDataset_SRCC_Gap"] = f"{results.cross_dataset_gap:.3f}"
 
-    # OCR correlation (if available)
     if results.ocr_correlation:
         new_data.update(
             {
@@ -1176,6 +1194,26 @@ def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> No
 
     new_data["Training_Seeds"] = results.training_seeds
     new_data["Notes"] = results.notes
+    return new_data
+
+
+def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> None:
+    """Update the IQA_MODEL_BENCHMARK_TRACKER.csv with new results.
+
+    Args:
+        results: Complete benchmark results
+        config: Benchmark configuration with CSV path
+    """
+    if not config.csv_path.exists():
+        print(f"CSV tracker not found: {config.csv_path}")
+        return
+
+    with open(config.csv_path, newline="") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames or []
+        rows = list(reader)
+
+    new_data = _build_csv_row_data(results)
 
     # Find existing row or append
     model_found = False
@@ -1186,12 +1224,10 @@ def update_csv_tracker(results: BenchmarkResults, config: BenchmarkConfig) -> No
             break
 
     if not model_found:
-        # Add as new row
         new_row = dict.fromkeys(fieldnames, "pending")
         new_row.update(new_data)
         rows.append(new_row)
 
-    # Write back to CSV
     with open(config.csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()

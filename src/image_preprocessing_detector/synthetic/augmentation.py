@@ -46,7 +46,7 @@ from PIL import Image
 from image_preprocessing_detector.synthetic.schema_adapter import IQALabels
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 logger = logging.getLogger(__name__)
 

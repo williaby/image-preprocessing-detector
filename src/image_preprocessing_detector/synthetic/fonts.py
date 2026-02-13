@@ -32,6 +32,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Common log messages (S1192: avoid duplicate string literals)
+FONT_LOAD_ERROR = "Failed to load font %s: %s"
+
 # Common font search directories across platforms
 FONT_SEARCH_PATHS: list[Path] = [
     # Project-bundled fonts (highest priority for reproducibility)
@@ -438,7 +441,7 @@ class FontManager:
             self._font_objects[cache_key] = font
             return font
         except OSError as e:
-            logger.error("Failed to load font %s: %s", font_info.path, e)
+            logger.error(FONT_LOAD_ERROR, font_info.path, e)
             return None
 
     def get_random_font(
@@ -476,7 +479,7 @@ class FontManager:
             self._font_objects[cache_key] = font
             return font
         except OSError as e:
-            logger.error("Failed to load font %s: %s", font_info.path, e)
+            logger.error(FONT_LOAD_ERROR, font_info.path, e)
             return None
 
     def get_available_scripts(self) -> list[str]:
@@ -614,7 +617,7 @@ class FontManager:
             )
             return font
         except OSError as e:
-            logger.error("Failed to load font %s: %s", font_info.path, e)
+            logger.error(FONT_LOAD_ERROR, font_info.path, e)
             return self.get_random_font(script_code, size)
 
     def _select_tier(self, tier_weights: dict[str, float]) -> str:

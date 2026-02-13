@@ -25,12 +25,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Constant for separator line (avoid duplication)
+SEPARATOR_LINE="=========================================="
+
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
 
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    local message="$1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $message" | tee -a "$LOG_FILE"
+    return 0
 }
 
 # Upload function with progress
@@ -63,29 +68,31 @@ upload_dataset() {
         log "ERROR: Failed to upload $description"
         return 1
     fi
+    return 0
 }
 
 # ============================================================================
 # TIER 1: DIQA-5000 (Benchmark - Currently Working On)
 # ============================================================================
 upload_tier1() {
-    log "=========================================="
+    log "$SEPARATOR_LINE"
     log "TIER 1: DIQA-5000 Benchmark Dataset"
-    log "=========================================="
+    log "$SEPARATOR_LINE"
 
     upload_dataset \
         "${LOCAL_BASE}/02_benchmark_only/diqa-5000" \
         "diqa-5000" \
         "DIQA-5000 IQA Calibration Benchmark (5.3GB)"
+    return 0
 }
 
 # ============================================================================
 # TIER 2: Language & Script Detection Datasets
 # ============================================================================
 upload_tier2() {
-    log "=========================================="
+    log "$SEPARATOR_LINE"
     log "TIER 2: Language & Script Detection"
-    log "=========================================="
+    log "$SEPARATOR_LINE"
 
     # Priority order by size and importance
 
@@ -164,15 +171,16 @@ upload_tier2() {
         "${LOCAL_BASE}/01_base_data/documents/midv500" \
         "midv500" \
         "MIDV-500 ID Documents (12GB)"
+    return 0
 }
 
 # ============================================================================
 # TIER 3: Remaining Core Training Datasets
 # ============================================================================
 upload_tier3() {
-    log "=========================================="
+    log "$SEPARATOR_LINE"
     log "TIER 3: Remaining Core Training Data"
-    log "=========================================="
+    log "$SEPARATOR_LINE"
 
     # Documents
     upload_dataset \
@@ -245,18 +253,19 @@ upload_tier3() {
         "${LOCAL_BASE}/02_benchmark_only/smartdoc-qa" \
         "smartdoc-qa" \
         "SmartDoc-QA Mobile Capture (39GB)"
+    return 0
 }
 
 # ============================================================================
 # Main Execution
 # ============================================================================
 main() {
-    log "=========================================="
+    log "$SEPARATOR_LINE"
     log "GCS Dataset Upload Script Started"
     log "Bucket: $GCS_BUCKET"
     log "Dry Run: $DRY_RUN"
     log "Tier Filter: ${TIER_FILTER:-all}"
-    log "=========================================="
+    log "$SEPARATOR_LINE"
 
     # Verify GCS access
     if ! gsutil ls "$GCS_BUCKET" > /dev/null 2>&1; then
@@ -279,10 +288,11 @@ main() {
             ;;
     esac
 
-    log "=========================================="
+    log "$SEPARATOR_LINE"
     log "Upload Complete!"
     log "Log file: $LOG_FILE"
-    log "=========================================="
+    log "$SEPARATOR_LINE"
+    return 0
 }
 
 main "$@"

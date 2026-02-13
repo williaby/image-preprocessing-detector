@@ -48,6 +48,10 @@ logger = logging.getLogger(__name__)
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 REVIEW_QUEUE_PATH = Path("/mnt/e/image_detection/metadata_registry/review_queue")
 
+# Common string constants (S1192: avoid duplicate string literals)
+GEMINI_PRO_MODEL = "google/gemini-2.5-pro"
+JPEG_MIME_TYPE = "image/jpeg"
+
 # Tier 1b: FREE vision models for initial image-based detection
 FREE_VISION_MODELS = [
     "qwen/qwen-2.5-vl-7b-instruct:free",  # Best: explicit multilingual text recognition
@@ -57,7 +61,7 @@ FREE_VISION_MODELS = [
 
 # Tier 2: PAID vision models for escalation when free tier uncertain
 PAID_VISION_MODELS = [
-    "google/gemini-2.5-pro",  # Best multilingual, 1M context
+    GEMINI_PRO_MODEL,  # Best multilingual, 1M context
     "qwen/qwen3-vl-235b-a22b-instruct",  # Strong vision-language
     "openai/gpt-5.1",  # Excellent vision understanding
 ]
@@ -193,7 +197,7 @@ class EscalationConfig:
     tier1b_confidence_threshold: float = 0.7  # Escalate to Tier 2 if below
 
     # Tier 2: PAID vision model settings (escalation)
-    paid_vision_model: str = "google/gemini-2.5-pro"
+    paid_vision_model: str = GEMINI_PRO_MODEL
     paid_fallback_models: list[str] = field(
         default_factory=lambda: PAID_VISION_MODELS[1:]
     )
@@ -347,13 +351,13 @@ def get_image_media_type(image_path: Path) -> str:
     """Determine MIME type from file extension."""
     suffix = image_path.suffix.lower()
     return {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
+        ".jpg": JPEG_MIME_TYPE,
+        ".jpeg": JPEG_MIME_TYPE,
         ".png": "image/png",
         ".gif": "image/gif",
         ".webp": "image/webp",
         ".bmp": "image/bmp",
-    }.get(suffix, "image/jpeg")
+    }.get(suffix, JPEG_MIME_TYPE)
 
 
 def detect_via_vision_llm(
@@ -449,7 +453,7 @@ def estimate_cost(model: str, usage: dict[str, int] | None) -> float:
 
     # Approximate pricing per 1K tokens (as of 2026)
     pricing = {
-        "google/gemini-2.5-pro": {"input": 0.00125, "output": 0.005},
+        GEMINI_PRO_MODEL: {"input": 0.00125, "output": 0.005},
         "qwen/qwen3-vl-235b-a22b-instruct": {"input": 0.001, "output": 0.003},
         "openai/gpt-5.1": {"input": 0.005, "output": 0.015},
     }
@@ -578,68 +582,34 @@ class EscalationManager:
 
         return (self._daily_spend + estimated_cost) <= self.config.daily_budget
 
-    def detect(
+    def _try_tier1b(
         self,
         image_path: Path,
-        local_result: Any,  # MultiLanguageResult from Tier 1a
-    ) -> EscalationResult:
-        """Run detection with automatic tiered escalation.
-
-        Architecture:
-        - Tier 1a: Script detection via Unicode (in local_result)
-        - Tier 1b: FREE vision LLM + script validation
-        - Tier 2: PAID vision LLM (escalation)
-        - Tier 3: Human review queue
-
-        Args:
-            image_path: Path to the image file
-            local_result: Result from local detection (Tier 1a script + statistical)
+        local_result: Any,
+        metrics: ConfidenceMetrics,
+    ) -> tuple[
+        EscalationResult | None,
+        dict[str, Any] | None,
+        str | None,
+        list[str],
+        list[str],
+        float,
+    ]:
+        """Attempt Tier 1b (free vision LLM) detection.
 
         Returns:
-            EscalationResult with final detection and metadata
+            (result_if_accepted, raw_response, model_used,
+             languages, scripts, confidence)
+            result_if_accepted is non-None only if Tier 1b is accepted.
         """
-        # Calculate confidence metrics from Tier 1a
-        metrics = calculate_confidence_metrics(local_result)
-
-        # Validate script-language match from Tier 1a
-        script_validation = None
-        if self.config.validate_script_match:
-            script_validation = validate_language_script_match(
-                local_result.primary_language,
-                local_result.detected_scripts,
-            )
-            if not script_validation.is_valid:
-                logger.warning(f"Script mismatch: {script_validation.mismatch_reason}")
-                metrics.needs_escalation = True
-                metrics.escalation_reason = "script_language_mismatch"
-
-        # Check if Tier 1a is sufficient (high confidence, no mismatch)
-        if not metrics.needs_escalation:
-            return EscalationResult(
-                tier=1,  # Tier 1a
-                primary_language=local_result.primary_language,
-                primary_script=local_result.primary_script,
-                detected_languages=local_result.detected_languages,
-                detected_scripts=local_result.detected_scripts,
-                confidence=local_result.confidence,
-                confidence_metrics=metrics,
-                method=f"tier1a_{local_result.method}",
-                script_validation=script_validation,
-            )
-
-        # =================================================================
-        # Tier 1b: FREE Vision LLM
-        # =================================================================
         logger.info(
             f"Escalating to Tier 1b ({self.config.free_vision_model}) - "
             f"reason: {metrics.escalation_reason}"
         )
 
+        free_models = [self.config.free_vision_model, *self.config.free_fallback_models]
         tier1b_result = None
         model_used = None
-
-        # Try free models (no cost)
-        free_models = [self.config.free_vision_model, *self.config.free_fallback_models]
 
         for model in free_models[: self.config.max_retries + 1]:
             tier1b_result = detect_via_vision_llm(image_path, model)
@@ -647,93 +617,84 @@ class EscalationManager:
                 model_used = model
                 break
 
-        if tier1b_result:
-            tier1b_confidence = tier1b_result.get("total_confidence", 0.7)
-            tier1b_languages = [
-                lang["code"] for lang in tier1b_result.get("languages", [])
-            ]
-            tier1b_scripts = [
-                lang.get("script")
-                for lang in tier1b_result.get("languages", [])
-                if lang.get("script")
-            ]
-            tier1b_primary_lang = tier1b_result.get("primary_language", "und")
+        if not tier1b_result:
+            return None, None, None, [], [], 0.0
 
-            # Validate Tier 1b result against Tier 1a scripts
-            tier1b_validation = None
-            if self.config.validate_script_match and local_result.detected_scripts:
-                tier1b_validation = validate_language_script_match(
-                    tier1b_primary_lang,
-                    local_result.detected_scripts,  # Use Tier 1a scripts
-                )
+        tier1b_confidence = tier1b_result.get("total_confidence", 0.7)
+        tier1b_languages = [lang["code"] for lang in tier1b_result.get("languages", [])]
+        tier1b_scripts = [
+            lang.get("script")
+            for lang in tier1b_result.get("languages", [])
+            if lang.get("script")
+        ]
+        tier1b_primary_lang = tier1b_result.get("primary_language", "und")
 
-            # Check if Tier 1b is confident AND passes script validation
-            if tier1b_confidence >= self.config.tier1b_confidence_threshold and (
-                tier1b_validation is None or tier1b_validation.is_valid
-            ):
-                return EscalationResult(
-                    tier=1,  # Tier 1b (still "free tier")
-                    primary_language=tier1b_primary_lang,
-                    primary_script=tier1b_result.get("primary_script"),
-                    detected_languages=tier1b_languages,
-                    detected_scripts=tier1b_scripts or local_result.detected_scripts,
-                    confidence=tier1b_confidence,
-                    confidence_metrics=metrics,
-                    method="tier1b_free_vision",
-                    model_used=model_used,
-                    cost_usd=0.0,  # Free!
-                    raw_response=tier1b_result,
-                    script_validation=tier1b_validation,
-                )
-
-            # Tier 1b uncertain or script mismatch - escalate to Tier 2
-            logger.info(
-                f"Tier 1b uncertain (conf={tier1b_confidence:.2f}, "
-                f"script_valid={tier1b_validation.is_valid if tier1b_validation else 'N/A'}) - "
-                f"escalating to Tier 2"
+        tier1b_validation = None
+        if self.config.validate_script_match and local_result.detected_scripts:
+            tier1b_validation = validate_language_script_match(
+                tier1b_primary_lang,
+                local_result.detected_scripts,
             )
 
-        # =================================================================
-        # Tier 2: PAID Vision LLM
-        # =================================================================
-        # Check budget before Tier 2
-        estimated_cost = 0.01
-        if not self._check_budget(estimated_cost):
-            logger.warning("Daily budget exceeded, using Tier 1b result")
-            if tier1b_result:
-                return EscalationResult(
-                    tier=1,
-                    primary_language=tier1b_result.get("primary_language", "und"),
-                    primary_script=tier1b_result.get("primary_script"),
-                    detected_languages=tier1b_languages,
-                    detected_scripts=tier1b_scripts or local_result.detected_scripts,
-                    confidence=tier1b_confidence * 0.8,
-                    confidence_metrics=metrics,
-                    method="tier1b_budget_exceeded",
-                    model_used=model_used,
-                    cost_usd=0.0,
-                )
-            # Fall back to Tier 1a
-            return EscalationResult(
+        is_confident = tier1b_confidence >= self.config.tier1b_confidence_threshold
+        is_valid = tier1b_validation is None or tier1b_validation.is_valid
+
+        if is_confident and is_valid:
+            result = EscalationResult(
                 tier=1,
-                primary_language=local_result.primary_language,
-                primary_script=local_result.primary_script,
-                detected_languages=local_result.detected_languages,
-                detected_scripts=local_result.detected_scripts,
-                confidence=local_result.confidence * 0.7,
+                primary_language=tier1b_primary_lang,
+                primary_script=tier1b_result.get("primary_script"),
+                detected_languages=tier1b_languages,
+                detected_scripts=tier1b_scripts or local_result.detected_scripts,
+                confidence=tier1b_confidence,
                 confidence_metrics=metrics,
-                method="tier1a_budget_exceeded",
-                script_validation=script_validation,
+                method="tier1b_free_vision",
+                model_used=model_used,
+                cost_usd=0.0,
+                raw_response=tier1b_result,
+                script_validation=tier1b_validation,
+            )
+            return (
+                result,
+                tier1b_result,
+                model_used,
+                tier1b_languages,
+                tier1b_scripts,
+                tier1b_confidence,
             )
 
+        logger.info(
+            f"Tier 1b uncertain (conf={tier1b_confidence:.2f}, "
+            f"script_valid={tier1b_validation.is_valid if tier1b_validation else 'N/A'}) - "
+            f"escalating to Tier 2"
+        )
+        return (
+            None,
+            tier1b_result,
+            model_used,
+            tier1b_languages,
+            tier1b_scripts,
+            tier1b_confidence,
+        )
+
+    def _try_tier2(
+        self,
+        image_path: Path,
+        local_result: Any,
+        metrics: ConfidenceMetrics,
+    ) -> tuple[EscalationResult | None, dict[str, Any] | None, str | None, float]:
+        """Attempt Tier 2 (paid vision LLM) detection.
+
+        Returns:
+            (result_if_resolved, raw_response, model_used, cost)
+            result_if_resolved is non-None if Tier 2 produced a definitive result.
+        """
         logger.info(f"Escalating to Tier 2 ({self.config.paid_vision_model})")
 
+        paid_models = [self.config.paid_vision_model, *self.config.paid_fallback_models]
         tier2_result = None
         tier2_model = None
         cost = 0.0
-
-        # Try paid models
-        paid_models = [self.config.paid_vision_model, *self.config.paid_fallback_models]
 
         for model in paid_models[: self.config.max_retries + 1]:
             tier2_result = detect_via_vision_llm(image_path, model)
@@ -743,75 +704,122 @@ class EscalationManager:
                 self._daily_spend += cost
                 break
 
-        if tier2_result:
-            tier2_confidence = tier2_result.get("total_confidence", 0.8)
-            tier2_languages = [
-                lang["code"] for lang in tier2_result.get("languages", [])
-            ]
-            tier2_scripts = [
-                lang.get("script")
-                for lang in tier2_result.get("languages", [])
-                if lang.get("script")
-            ]
-            tier2_primary_lang = tier2_result.get("primary_language", "und")
+        if not tier2_result:
+            return None, None, None, 0.0
 
-            # Validate against Tier 1a scripts
-            tier2_validation = None
-            if self.config.validate_script_match and local_result.detected_scripts:
-                tier2_validation = validate_language_script_match(
-                    tier2_primary_lang,
-                    local_result.detected_scripts,
-                )
+        tier2_confidence = tier2_result.get("total_confidence", 0.8)
+        tier2_languages = [lang["code"] for lang in tier2_result.get("languages", [])]
+        tier2_scripts = [
+            lang.get("script")
+            for lang in tier2_result.get("languages", [])
+            if lang.get("script")
+        ]
+        tier2_primary_lang = tier2_result.get("primary_language", "und")
 
-            # Check if Tier 2 is confident enough
-            if tier2_confidence >= self.config.tier2_confidence_threshold:
-                return EscalationResult(
-                    tier=2,
-                    primary_language=tier2_primary_lang,
-                    primary_script=tier2_result.get("primary_script"),
-                    detected_languages=tier2_languages,
-                    detected_scripts=tier2_scripts or local_result.detected_scripts,
-                    confidence=tier2_confidence,
-                    confidence_metrics=metrics,
-                    method="tier2_paid_vision",
-                    model_used=tier2_model,
-                    cost_usd=cost,
-                    raw_response=tier2_result,
-                    script_validation=tier2_validation,
-                )
+        tier2_validation = None
+        if self.config.validate_script_match and local_result.detected_scripts:
+            tier2_validation = validate_language_script_match(
+                tier2_primary_lang,
+                local_result.detected_scripts,
+            )
 
-            # Tier 2 uncertain - queue for human review
-            if self.config.queue_if_tier2_uncertain:
-                queue_for_review(
-                    image_path,
-                    local_result,
-                    tier2_result,
-                    reason=f"tier2_low_confidence_{tier2_confidence:.2f}",
-                    config=self.config,
-                )
+        if tier2_confidence >= self.config.tier2_confidence_threshold:
+            result = EscalationResult(
+                tier=2,
+                primary_language=tier2_primary_lang,
+                primary_script=tier2_result.get("primary_script"),
+                detected_languages=tier2_languages,
+                detected_scripts=tier2_scripts or local_result.detected_scripts,
+                confidence=tier2_confidence,
+                confidence_metrics=metrics,
+                method="tier2_paid_vision",
+                model_used=tier2_model,
+                cost_usd=cost,
+                raw_response=tier2_result,
+                script_validation=tier2_validation,
+            )
+            return result, tier2_result, tier2_model, cost
 
-                return EscalationResult(
-                    tier=3,
-                    primary_language=tier2_primary_lang,
-                    primary_script=tier2_result.get("primary_script"),
-                    detected_languages=tier2_languages,
-                    detected_scripts=tier2_scripts or local_result.detected_scripts,
-                    confidence=tier2_confidence,
-                    confidence_metrics=metrics,
-                    method="tier3_queued_for_review",
-                    model_used=tier2_model,
-                    cost_usd=cost,
-                    queued_for_review=True,
-                    raw_response=tier2_result,
-                    script_validation=tier2_validation,
-                )
+        # Tier 2 uncertain - queue for human review
+        if self.config.queue_if_tier2_uncertain:
+            queue_for_review(
+                image_path,
+                local_result,
+                tier2_result,
+                reason=f"tier2_low_confidence_{tier2_confidence:.2f}",
+                config=self.config,
+            )
 
-        # =================================================================
-        # Tier 2 failed - fall back to best available
-        # =================================================================
+        result = EscalationResult(
+            tier=3,
+            primary_language=tier2_primary_lang,
+            primary_script=tier2_result.get("primary_script"),
+            detected_languages=tier2_languages,
+            detected_scripts=tier2_scripts or local_result.detected_scripts,
+            confidence=tier2_confidence,
+            confidence_metrics=metrics,
+            method="tier3_queued_for_review",
+            model_used=tier2_model,
+            cost_usd=cost,
+            queued_for_review=True,
+            raw_response=tier2_result,
+            script_validation=tier2_validation,
+        )
+        return result, tier2_result, tier2_model, cost
+
+    def _budget_exceeded_fallback(
+        self,
+        local_result: Any,
+        metrics: ConfidenceMetrics,
+        script_validation: ScriptValidation | None,
+        tier1b_result: dict[str, Any] | None,
+        tier1b_languages: list[str],
+        tier1b_scripts: list[str],
+        tier1b_confidence: float,
+        model_used: str | None,
+    ) -> EscalationResult:
+        """Return the best available result when budget is exceeded."""
+        logger.warning("Daily budget exceeded, using Tier 1b result")
+        if tier1b_result:
+            return EscalationResult(
+                tier=1,
+                primary_language=tier1b_result.get("primary_language", "und"),
+                primary_script=tier1b_result.get("primary_script"),
+                detected_languages=tier1b_languages,
+                detected_scripts=tier1b_scripts or local_result.detected_scripts,
+                confidence=tier1b_confidence * 0.8,
+                confidence_metrics=metrics,
+                method="tier1b_budget_exceeded",
+                model_used=model_used,
+                cost_usd=0.0,
+            )
+        return EscalationResult(
+            tier=1,
+            primary_language=local_result.primary_language,
+            primary_script=local_result.primary_script,
+            detected_languages=local_result.detected_languages,
+            detected_scripts=local_result.detected_scripts,
+            confidence=local_result.confidence * 0.7,
+            confidence_metrics=metrics,
+            method="tier1a_budget_exceeded",
+            script_validation=script_validation,
+        )
+
+    def _all_vision_failed_fallback(
+        self,
+        image_path: Path,
+        local_result: Any,
+        metrics: ConfidenceMetrics,
+        script_validation: ScriptValidation | None,
+        tier1b_result: dict[str, Any] | None,
+        tier1b_languages: list[str],
+        tier1b_scripts: list[str],
+        tier1b_confidence: float,
+        model_used: str | None,
+    ) -> EscalationResult:
+        """Return the best available result when Tier 2 API failed."""
         logger.warning("Tier 2 detection failed")
 
-        # Use Tier 1b if available
         if tier1b_result:
             if self.config.queue_if_tier2_uncertain:
                 queue_for_review(
@@ -835,7 +843,6 @@ class EscalationManager:
                 queued_for_review=self.config.queue_if_tier2_uncertain,
             )
 
-        # Fall back to Tier 1a
         if self.config.queue_if_tier2_uncertain:
             queue_for_review(
                 image_path,
@@ -856,6 +863,99 @@ class EscalationManager:
             method="tier1a_all_vision_failed",
             queued_for_review=self.config.queue_if_tier2_uncertain,
             script_validation=script_validation,
+        )
+
+    def detect(
+        self,
+        image_path: Path,
+        local_result: Any,  # MultiLanguageResult from Tier 1a
+    ) -> EscalationResult:
+        """Run detection with automatic tiered escalation.
+
+        Architecture:
+        - Tier 1a: Script detection via Unicode (in local_result)
+        - Tier 1b: FREE vision LLM + script validation
+        - Tier 2: PAID vision LLM (escalation)
+        - Tier 3: Human review queue
+
+        Args:
+            image_path: Path to the image file
+            local_result: Result from local detection (Tier 1a script + statistical)
+
+        Returns:
+            EscalationResult with final detection and metadata
+        """
+        metrics = calculate_confidence_metrics(local_result)
+
+        script_validation = None
+        if self.config.validate_script_match:
+            script_validation = validate_language_script_match(
+                local_result.primary_language,
+                local_result.detected_scripts,
+            )
+            if not script_validation.is_valid:
+                logger.warning(f"Script mismatch: {script_validation.mismatch_reason}")
+                metrics.needs_escalation = True
+                metrics.escalation_reason = "script_language_mismatch"
+
+        if not metrics.needs_escalation:
+            return EscalationResult(
+                tier=1,
+                primary_language=local_result.primary_language,
+                primary_script=local_result.primary_script,
+                detected_languages=local_result.detected_languages,
+                detected_scripts=local_result.detected_scripts,
+                confidence=local_result.confidence,
+                confidence_metrics=metrics,
+                method=f"tier1a_{local_result.method}",
+                script_validation=script_validation,
+            )
+
+        # Tier 1b: FREE Vision LLM
+        (
+            tier1b_accepted,
+            tier1b_result,
+            model_used,
+            tier1b_languages,
+            tier1b_scripts,
+            tier1b_confidence,
+        ) = self._try_tier1b(image_path, local_result, metrics)
+        if tier1b_accepted:
+            return tier1b_accepted
+
+        # Budget check before Tier 2
+        if not self._check_budget(0.01):
+            return self._budget_exceeded_fallback(
+                local_result,
+                metrics,
+                script_validation,
+                tier1b_result,
+                tier1b_languages,
+                tier1b_scripts,
+                tier1b_confidence,
+                model_used,
+            )
+
+        # Tier 2: PAID Vision LLM
+        tier2_accepted, tier2_result, tier2_model, cost = self._try_tier2(
+            image_path,
+            local_result,
+            metrics,
+        )
+        if tier2_accepted:
+            return tier2_accepted
+
+        # Tier 2 failed - fall back to best available
+        return self._all_vision_failed_fallback(
+            image_path,
+            local_result,
+            metrics,
+            script_validation,
+            tier1b_result,
+            tier1b_languages,
+            tier1b_scripts,
+            tier1b_confidence,
+            model_used,
         )
 
 
@@ -899,7 +999,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Test language detection escalation")
     parser.add_argument("image", type=Path, help="Image file to analyze")
-    parser.add_argument("--model", default="google/gemini-2.5-pro", help="Vision model")
+    parser.add_argument("--model", default=GEMINI_PRO_MODEL, help="Vision model")
     parser.add_argument(
         "--force-tier2", action="store_true", help="Force Tier 2 escalation"
     )

@@ -806,7 +806,7 @@ class MultiScriptDocumentGenerator:
                 script_code=script_code,
                 language_code=language_code or "",
                 layout_type=layout_type,
-                text_density=text_density,
+                _text_density=text_density,
             )
         except Exception as e:
             logger.error("Rendering failed for %s: %s", script_code, e)
@@ -910,8 +910,9 @@ class MultiScriptDocumentGenerator:
                 degraded_image = image
                 iqa_labels = IQALabels(overall_quality=1.0)
         else:
+            # No augmentation available/configured - use original image
             degraded_image = image
-            iqa_labels = IQALabels(overall_quality=1.0)
+            iqa_labels = IQALabels(overall_quality=1.0, noise=0.0, blur=0.0)
 
         # Create sample
         sample_id = str(uuid.uuid4())
@@ -1417,8 +1418,9 @@ class MultiScriptDocumentGenerator:
                 degraded_image = image
                 iqa_labels = IQALabels(overall_quality=1.0)
         else:
+            # No augmentation available/configured - use original image
             degraded_image = image
-            iqa_labels = IQALabels(overall_quality=1.0)
+            iqa_labels = IQALabels(overall_quality=1.0, noise=0.0, blur=0.0)
 
         # Create sample
         sample_id = str(uuid.uuid4())

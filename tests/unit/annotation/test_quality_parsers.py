@@ -111,10 +111,10 @@ class TestDIQAParser:
         image_path = dataset_path / "train" / "ori" / "img001.jpg"
         labels = parser.parse(dataset_path, image_path, {})
 
-        assert labels.diqa_overall == 4.2
-        assert labels.diqa_mos == 4.2  # Backward compatibility
-        assert labels.diqa_sharpness == 4.5
-        assert labels.diqa_color_fidelity == 3.8
+        assert labels.diqa_overall == pytest.approx(4.2)
+        assert labels.diqa_mos == pytest.approx(4.2)  # Backward compatibility
+        assert labels.diqa_sharpness == pytest.approx(4.5)
+        assert labels.diqa_color_fidelity == pytest.approx(3.8)
         assert labels.diqa_original_image == "img001.jpg"
 
     def test_parse_val_split(self, parser: DIQAParser, dataset_path: Path) -> None:
@@ -122,10 +122,10 @@ class TestDIQAParser:
         image_path = dataset_path / "val" / "ori" / "val001.jpg"
         labels = parser.parse(dataset_path, image_path, {})
 
-        assert labels.diqa_overall == 4.8
-        assert labels.diqa_mos == 4.8
-        assert labels.diqa_sharpness == 4.9
-        assert labels.diqa_color_fidelity == 4.7
+        assert labels.diqa_overall == pytest.approx(4.8)
+        assert labels.diqa_mos == pytest.approx(4.8)
+        assert labels.diqa_sharpness == pytest.approx(4.9)
+        assert labels.diqa_color_fidelity == pytest.approx(4.7)
 
     def test_parse_no_match(self, parser: DIQAParser, dataset_path: Path) -> None:
         """Test parsing when no matching entry found."""
@@ -245,10 +245,10 @@ class TestSmartDocParser:
         labels = parser.parse(dataset_path, image_path, {})
 
         # 99.56% accuracy should map to 5.0 MOS
-        assert labels.smartdoc_mos == 5.0
+        assert labels.smartdoc_mos == pytest.approx(5.0)
         assert labels.raw_labels is not None
-        assert labels.raw_labels["character_accuracy_percent"] == 99.56
-        assert labels.raw_labels["word_accuracy_percent"] == 98.23
+        assert labels.raw_labels["character_accuracy_percent"] == pytest.approx(99.56)
+        assert labels.raw_labels["word_accuracy_percent"] == pytest.approx(98.23)
 
     def test_parse_motion_blur_variant(
         self, parser: SmartDocParser, tmp_path: Path

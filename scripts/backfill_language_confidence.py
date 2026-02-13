@@ -243,6 +243,69 @@ def backfill_no_enrichment(
     return {"language_confidence": None, "language_detection_method": "none"}
 
 
+def _backfill_sample_by_type(
+    enrichment_type: str,
+    data: dict[str, Any],
+    enrichment: dict[str, Any],
+    openlid_result: dict[str, Any] | None,
+    openlid_index: dict[str, dict[str, Any]],
+    stats: dict[str, int],
+) -> None:
+    """Apply the correct backfill strategy for a single sample based on enrichment type.
+
+    Mutates ``data`` and ``stats`` in place.
+    """
+    if enrichment_type == "known_language":
+        backfill_known_language(data, enrichment, openlid_result)
+        stats["known_language"] += 1
+        if openlid_result:
+            stats["openlid_secondary"] += 1
+            stats["openlid_matched"] += 1
+        elif openlid_index:
+            stats["openlid_unmatched"] += 1
+        return
+
+    if enrichment_type in ("folder_based_labels", "manifest_labels"):
+        backfill_folder_based(data, openlid_result)
+        stats["folder_based"] += 1
+        if openlid_result:
+            stats["openlid_secondary"] += 1
+        return
+
+    if enrichment_type == "openlid_detection":
+        _backfill_openlid_sample(data, enrichment, openlid_result, stats)
+        return
+
+    backfill_no_enrichment(data)
+    stats["no_enrichment"] += 1
+
+
+def _backfill_openlid_sample(
+    data: dict[str, Any],
+    enrichment: dict[str, Any],
+    openlid_result: dict[str, Any] | None,
+    stats: dict[str, int],
+) -> None:
+    """Handle openlid_detection enrichment type for a single sample."""
+    if openlid_result:
+        backfill_openlid_detection(data, openlid_result)
+        stats["openlid_primary"] += 1
+        stats["openlid_matched"] += 1
+        return
+
+    avg_conf = enrichment.get("avg_confidence")
+    if avg_conf is not None:
+        data["language_confidence"] = round(avg_conf, 3)
+        data["language_detection_method"] = "openlid_v2_dataset_avg"
+        data["language_provenance_tier"] = "tier_2_model"
+        data["language_is_soft_label"] = True
+        stats["openlid_primary"] += 1
+    else:
+        backfill_no_enrichment(data)
+        stats["no_enrichment"] += 1
+    stats["openlid_unmatched"] += 1
+
+
 def process_dataset(
     dataset_name: str,
     metadata_dir: Path,
@@ -271,14 +334,12 @@ def process_dataset(
         "already_has_confidence": 0,
     }
 
-    # Resolve metadata file
     metadata_name = dataset_name.replace("-", "_")
     metadata_path = metadata_dir / f"{metadata_name}_metadata.json"
     if not metadata_path.exists():
         logger.warning(f"No metadata file for {dataset_name}: {metadata_path}")
         return stats
 
-    # Load enrichment file
     enrichment_path = metadata_dir / f"{metadata_name}_language_enrichment.json"
     enrichment = load_enrichment(enrichment_path)
     if enrichment is None:
@@ -291,11 +352,9 @@ def process_dataset(
         f"total_samples={enrichment.get('total_samples', 'N/A')}"
     )
 
-    # Build OpenLID per-sample index
     openlid_index = build_openlid_index(enrichment)
     logger.info(f"  OpenLID per-sample index: {len(openlid_index)} entries")
 
-    # Load metadata
     with open(metadata_path) as f:
         metadata = json.load(f)
 
@@ -303,66 +362,29 @@ def process_dataset(
     stats["total"] = len(samples)
 
     for sample in samples:
-        enrichments = sample.get("enrichments", {})
-        versions = enrichments.get("versions", [])
+        versions = sample.get("enrichments", {}).get("versions", [])
         if not versions:
             stats["no_enrichment"] += 1
             continue
 
         data = versions[0].get("data", {})
-
-        # Skip if already backfilled
         if data.get("language_confidence") is not None:
             stats["already_has_confidence"] += 1
             continue
 
-        # Match to OpenLID per-sample result
         image_id = extract_image_id(sample)
         openlid_result = openlid_index.get(image_id) if image_id else None
 
-        if enrichment_type == "known_language":
-            backfill_known_language(data, enrichment, openlid_result)
-            stats["known_language"] += 1
-            if openlid_result:
-                stats["openlid_secondary"] += 1
-                stats["openlid_matched"] += 1
-            elif openlid_index:
-                stats["openlid_unmatched"] += 1
+        _backfill_sample_by_type(
+            enrichment_type,
+            data,
+            enrichment,
+            openlid_result,
+            openlid_index,
+            stats,
+        )
 
-        elif enrichment_type in ("folder_based_labels", "manifest_labels"):
-            backfill_folder_based(data, openlid_result)
-            stats["folder_based"] += 1
-            if openlid_result:
-                stats["openlid_secondary"] += 1
-
-        elif enrichment_type == "openlid_detection":
-            if openlid_result:
-                backfill_openlid_detection(data, openlid_result)
-                stats["openlid_primary"] += 1
-                stats["openlid_matched"] += 1
-            else:
-                # No per-sample match: use dataset-level avg_confidence
-                # as a fallback (e.g., mismatched ID namespaces or
-                # sample cap at 1000)
-                avg_conf = enrichment.get("avg_confidence")
-                if avg_conf is not None:
-                    data["language_confidence"] = round(avg_conf, 3)
-                    data["language_detection_method"] = "openlid_v2_dataset_avg"
-                    data["language_provenance_tier"] = "tier_2_model"
-                    data["language_is_soft_label"] = True
-                    stats["openlid_primary"] += 1
-                else:
-                    backfill_no_enrichment(data)
-                    stats["no_enrichment"] += 1
-                stats["openlid_unmatched"] += 1
-
-        else:
-            backfill_no_enrichment(data)
-            stats["no_enrichment"] += 1
-
-    # Write updated metadata
     if not dry_run:
-        # Add backfill provenance to metadata root
         metadata.setdefault("backfill_history", [])
         metadata["backfill_history"].append(
             {
@@ -372,7 +394,6 @@ def process_dataset(
                 "stats": stats,
             }
         )
-
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         logger.info(f"  Written: {metadata_path}")

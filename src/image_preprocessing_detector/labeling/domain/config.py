@@ -52,6 +52,10 @@ VALID_CAPTURE_METHODS: frozenset[str] = frozenset(
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
+# Common model ID constants (S1192: avoid duplicate string literals)
+GEMINI_FLASH_MODEL = "google/gemini-2.0-flash-001"
+GEMINI_FLASH_LITE_MODEL = "google/gemini-2.0-flash-lite-001"
+
 
 @dataclass(frozen=True)
 class DomainModelConfig:
@@ -97,26 +101,26 @@ class DomainPipelineConfig:
 
     primary_text_model: DomainModelConfig = field(
         default_factory=lambda: DomainModelConfig(
-            model_id="google/gemini-2.0-flash-001",
+            model_id=GEMINI_FLASH_MODEL,
             role="primary_text",
         )
     )
     secondary_text_model: DomainModelConfig = field(
         default_factory=lambda: DomainModelConfig(
-            model_id="google/gemini-2.0-flash-lite-001",
+            model_id=GEMINI_FLASH_LITE_MODEL,
             role="secondary_text",
         )
     )
     primary_vision_model: DomainModelConfig = field(
         default_factory=lambda: DomainModelConfig(
-            model_id="google/gemini-2.0-flash-001",
+            model_id=GEMINI_FLASH_MODEL,
             role="primary_vision",
             supports_vision=True,
         )
     )
     secondary_vision_model: DomainModelConfig = field(
         default_factory=lambda: DomainModelConfig(
-            model_id="google/gemini-2.0-flash-lite-001",
+            model_id=GEMINI_FLASH_LITE_MODEL,
             role="secondary_vision",
             supports_vision=True,
         )
@@ -227,12 +231,12 @@ AVAILABLE_TEXT_MODELS: list[DomainModelConfig] = [
 # Available vision models (paid)
 AVAILABLE_VISION_MODELS: list[DomainModelConfig] = [
     DomainModelConfig(
-        model_id="google/gemini-2.0-flash-001",
+        model_id=GEMINI_FLASH_MODEL,
         role="primary_vision",
         supports_vision=True,
     ),
     DomainModelConfig(
-        model_id="google/gemini-2.0-flash-lite-001",
+        model_id=GEMINI_FLASH_LITE_MODEL,
         role="alternate_vision",
         supports_vision=True,
     ),

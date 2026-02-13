@@ -44,7 +44,7 @@ def reconstruct_page_text(text_regions: list[dict]) -> str:
         text = region.get("text", "").strip()
         bbox_quad = region.get("bbox_quad")
         if text and bbox_quad:
-            x, y, w, h = quad_to_coco_bbox(bbox_quad)
+            x, y, _, _ = quad_to_coco_bbox(bbox_quad)
             valid.append({"text": text, "y": y, "x": x})
 
     if not valid:

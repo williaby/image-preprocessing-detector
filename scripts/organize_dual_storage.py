@@ -369,25 +369,19 @@ def main():
     if args.command != "status" and not check_prerequisites():
         sys.exit(1)
 
-    # Execute command
-    if args.command == "pull-from-gcs":
+    # Commands that require a dataset argument
+    _dataset_commands = {
+        "pull-from-gcs": pull_from_gcs,
+        "create-symlink": create_symlink,
+        "sync-to-gcs": sync_to_gcs,
+    }
+
+    if args.command in _dataset_commands:
         if not args.dataset:
-            print("❌ Dataset name required for pull-from-gcs")
+            print(f"❌ Dataset name required for {args.command}")
             parser.print_help()
             sys.exit(1)
-        success = pull_from_gcs(args.dataset)
-    elif args.command == "create-symlink":
-        if not args.dataset:
-            print("❌ Dataset name required for create-symlink")
-            parser.print_help()
-            sys.exit(1)
-        success = create_symlink(args.dataset)
-    elif args.command == "sync-to-gcs":
-        if not args.dataset:
-            print("❌ Dataset name required for sync-to-gcs")
-            parser.print_help()
-            sys.exit(1)
-        success = sync_to_gcs(args.dataset)
+        success = _dataset_commands[args.command](args.dataset)
     elif args.command == "status":
         show_status()
         success = True

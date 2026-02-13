@@ -47,7 +47,6 @@ from __future__ import annotations
 import json
 import random
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -66,6 +65,9 @@ diqa5000_volume = modal.Volume.from_name("diqa5000-original", create_if_missing=
 GCS_BUCKET = "image_detection_b"
 GCS_PREFIX = "datasets/diqa-5000-original"
 DIQA5000_SPLITS = ["train", "val", "test"]
+
+# Common file name constants (S1192: avoid duplicate string literals)
+BEST_MODEL_FILE = "siglip2_iqa_best.pt"
 
 # Docker image with all dependencies
 training_image = (
@@ -160,204 +162,36 @@ def compute_vquala(
     return 0.5 * srcc_overall + 0.25 * srcc_sharpness + 0.25 * srcc_color
 
 
-@app.function(
-    image=training_image,
-    gpu="A10G",  # 24GB VRAM - comfortable for SigLIP 2 Base NaFlex
-    timeout=3600 * 24,  # 24 hours max
-    secrets=[modal.Secret.from_name("gcs-credentials")],
-    volumes={
-        "/results": results_volume,
-        "/data": diqa5000_volume,
-    },
-)
-def train_siglip2_iqa(
-    config_dict: dict[str, Any] | None = None,
-    test_mode: bool = False,
-) -> dict[str, Any]:
-    """Train SigLIP 2 Base NaFlex for document IQA on DIQA-5000.
+# IQA quality dimensions used across all heads
+_IQA_DIMS = ("overall", "sharpness", "color")
 
-    Args:
-        config_dict: Optional config overrides.
-        test_mode: If True, run quick validation (2 epochs).
+
+def _create_siglip2_model(config: SigLIP2TrainingConfig, device: Any) -> tuple:
+    """Create SigLIP 2 model and processor.
 
     Returns:
-        Training results summary.
+        Tuple of (model, processor).
     """
     import torch
     import torch.nn as nn
-    from PIL import Image, ImageOps
-    from scipy.optimize import minimize_scalar
-    from scipy.stats import spearmanr
-    from torch.utils.data import DataLoader, Dataset
-    from tqdm import tqdm
     from transformers import AutoModel, AutoProcessor
-
-    # PCGrad implementation (inline to avoid dependency issues)
-    # Reference: Yu et al., "Gradient Surgery for Multi-Task Learning", NeurIPS 2020
-    class PCGrad:
-        """Projected Conflicting Gradients optimizer wrapper.
-
-        Projects conflicting gradients to mitigate negative transfer in multi-task learning.
-        """
-
-        def __init__(self, optimizer):
-            self.optimizer = optimizer
-            self._reduction = "mean"
-
-        @property
-        def param_groups(self):
-            return self.optimizer.param_groups
-
-        def zero_grad(self):
-            return self.optimizer.zero_grad()
-
-        def step(self):
-            return self.optimizer.step()
-
-        def pc_backward(self, losses: list[torch.Tensor]):
-            """Backward with gradient projection for conflicting tasks."""
-            # Compute gradients for each task
-            task_grads = []
-            for i, loss in enumerate(losses):
-                self.optimizer.zero_grad()
-                loss.backward(retain_graph=(i < len(losses) - 1))
-                grads = []
-                for group in self.optimizer.param_groups:
-                    for p in group["params"]:
-                        if p.grad is not None:
-                            grads.append(p.grad.clone().flatten())
-                        else:
-                            grads.append(torch.zeros_like(p).flatten())
-                task_grads.append(torch.cat(grads))
-
-            # Project conflicting gradients
-            projected_grads = self._project_gradients(task_grads)
-
-            # Apply projected gradients
-            self.optimizer.zero_grad()
-            offset = 0
-            for group in self.optimizer.param_groups:
-                for p in group["params"]:
-                    numel = p.numel()
-                    # Always assign projected gradient (PCGrad accumulates from all tasks)
-                    p.grad = projected_grads[offset : offset + numel].view_as(p)
-                    offset += numel
-
-        def _project_gradients(self, grads: list[torch.Tensor]) -> torch.Tensor:
-            """Project gradients to remove conflicting components."""
-            num_tasks = len(grads)
-            projected = [g.clone() for g in grads]
-
-            for i in range(num_tasks):
-                for j in range(num_tasks):
-                    if i != j:
-                        dot = torch.dot(projected[i], grads[j])
-                        if dot < 0:
-                            # Project out the conflicting component
-                            projected[i] -= (
-                                dot / (torch.dot(grads[j], grads[j]) + 1e-8)
-                            ) * grads[j]
-
-            # Average the projected gradients
-            return torch.stack(projected).mean(dim=0)
-
-    pcgrad_available = True
-    print("PCGrad optimizer available (inline implementation)")
-
-    # Load configuration
-    config = SigLIP2TrainingConfig(**(config_dict or {}))
-    if test_mode:
-        config.phase1_epochs = 1
-        config.phase2_epochs = 1
-        config.total_epochs = 2
-        config.batch_size = 4
-        print("[TEST MODE] Running quick validation with 2 epochs")
-
-    print("=" * 70)
-    print("SigLIP 2 Base NaFlex IQA Training")
-    print("=" * 70)
-    print(f"Model: {config.model_id}")
-    print(f"Max Patches: {config.max_num_patches}")
-    print(f"Total Epochs: {config.total_epochs}")
-    print(f"Batch Size: {config.batch_size}")
-    print(f"PCGrad: {config.use_pcgrad and pcgrad_available}")
-    print(f"NormInNorm Loss: {config.use_norm_in_norm}")
-    print(f"Uncertainty Output: {config.uncertainty}")
-    print(f"Target SRCC: {config.target_srcc}")
-    print(f"Target VQualA: {config.target_vquala}")
-    print("=" * 70)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
-    if torch.cuda.is_available():
-        print(f"GPU: {torch.cuda.get_device_name()}")
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-
-    # ========================================================================
-    # Loss Functions
-    # ========================================================================
-
-    class NormInNormLoss(nn.Module):
-        """Norm-in-Norm loss for 10x faster convergence than MSE."""
-
-        def __init__(self, p: float = 1.0, q: float = 2.0):
-            super().__init__()
-            self.p = p
-            self.q = q
-
-        def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-            pred_norm = (pred - pred.mean()) / (pred.std() + 1e-8)
-            target_norm = (target - target.mean()) / (target.std() + 1e-8)
-            diff = torch.abs(pred_norm - target_norm)
-            return torch.pow(torch.pow(diff, self.p).mean(), self.q / self.p)
-
-    class GaussianNLLLoss(nn.Module):
-        """Gaussian Negative Log-Likelihood for uncertainty estimation."""
-
-        def forward(
-            self, mu: torch.Tensor, sigma_sq: torch.Tensor, target: torch.Tensor
-        ) -> torch.Tensor:
-            sigma_sq = torch.clamp(sigma_sq, min=1e-6)
-            loss = 0.5 * torch.log(sigma_sq) + (target - mu) ** 2 / (2 * sigma_sq)
-            return loss.mean()
-
-    # ========================================================================
-    # Model Definition
-    # ========================================================================
 
     class SigLIP2DocumentIQA(nn.Module):
         """SigLIP 2 NaFlex with multi-task IQA regression heads + uncertainty."""
 
-        def __init__(
-            self,
-            model_id: str = "google/siglip2-base-patch16-naflex",
-            uncertainty: bool = True,
-        ):
+        def __init__(self, model_id, uncertainty=True):
             super().__init__()
-
-            # Load pretrained vision encoder
             self.backbone = AutoModel.from_pretrained(model_id)
-            embed_dim = self.backbone.config.vision_config.hidden_size  # 768 for Base
+            embed_dim = self.backbone.config.vision_config.hidden_size
             self.uncertainty = uncertainty
-
-            # Output dimension: 2 for (mu, log sigma^2) or 1 for direct regression
             head_output_dim = 2 if uncertainty else 1
-
-            # Multi-task regression heads
             self.heads = nn.ModuleDict(
-                {
-                    "overall": self._make_head(embed_dim, head_output_dim),
-                    "sharpness": self._make_head(embed_dim, head_output_dim),
-                    "color": self._make_head(embed_dim, head_output_dim),
-                }
+                {dim: self._make_head(embed_dim, head_output_dim) for dim in _IQA_DIMS}
             )
+            for dim in _IQA_DIMS:
+                self.register_buffer(f"temp_{dim}", torch.tensor(1.0))
 
-            # Calibration temperatures (set during post-hoc calibration)
-            self.register_buffer("temp_overall", torch.tensor(1.0))
-            self.register_buffer("temp_sharpness", torch.tensor(1.0))
-            self.register_buffer("temp_color", torch.tensor(1.0))
-
-        def _make_head(self, in_dim: int, out_dim: int) -> nn.Module:
+        def _make_head(self, in_dim, out_dim):
             return nn.Sequential(
                 nn.Linear(in_dim, 256),
                 nn.ReLU(),
@@ -374,328 +208,230 @@ def train_siglip2_iqa(
                 param.requires_grad = True
 
         def forward(
-            self,
-            pixel_values: torch.Tensor,
-            spatial_shapes: torch.Tensor | None = None,
-            _pixel_attention_mask: torch.Tensor | None = None,
-        ) -> dict[str, dict | torch.Tensor]:
-            # Extract vision features (NaFlex requires spatial_shapes)
+            self, pixel_values, spatial_shapes=None, _pixel_attention_mask=None
+        ):
             outputs = self.backbone.get_image_features(
-                pixel_values=pixel_values,
-                spatial_shapes=spatial_shapes,
+                pixel_values=pixel_values, spatial_shapes=spatial_shapes
             )
-
             results = {}
             for head_name, head in self.heads.items():
                 head_output = head(outputs)
-
                 if self.uncertainty:
                     mu = head_output[:, 0]
                     log_sigma_sq = head_output[:, 1]
                     sigma_sq = torch.exp(log_sigma_sq)
-
-                    # Apply calibration temperature
                     temp = getattr(self, f"temp_{head_name}")
-                    sigma_sq_calibrated = temp * sigma_sq
-
                     results[head_name] = {
                         "mu": mu,
-                        "sigma_sq": sigma_sq_calibrated,
+                        "sigma_sq": temp * sigma_sq,
                         "logits": head_output,
                     }
                 else:
                     results[head_name] = head_output.squeeze(-1)
-
             return results
 
-        def set_calibration_temps(self, temps: dict[str, float]):
+        def set_calibration_temps(self, temps):
             for head_name, temp in temps.items():
                 setattr(self, f"temp_{head_name}", torch.tensor(temp))
 
-    # ========================================================================
-    # GCS Download Functions
-    # ========================================================================
-
-    def download_diqa5000_from_gcs(data_dir: Path) -> bool:
-        """Download original DIQA-5000 dataset from GCS.
-
-        Downloads all splits (train, val, test) with images and CSV labels.
-
-        Args:
-            data_dir: Local directory to store dataset.
-
-        Returns:
-            True if download was successful or data already exists.
-        """
-        import os
-
-        from google.cloud import storage
-
-        # Set GCS credentials from Modal secret
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
-
-        # Check if already downloaded - validate CSV files exist
-        marker_file = data_dir / ".download_complete"
-        if marker_file.exists():
-            # Validate that CSVs actually exist
-            all_csvs_exist = all(
-                (data_dir / split / f"{split}.csv").exists()
-                for split in DIQA5000_SPLITS
-            )
-            if all_csvs_exist:
-                print("DIQA-5000 already downloaded and validated, skipping...")
-                return True
-            print("Marker file exists but CSVs missing, re-downloading...")
-            marker_file.unlink()  # Remove stale marker
-
-        print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
-        start_time = time.time()
-
-        client = storage.Client()
-        bucket = client.bucket(GCS_BUCKET)
-
-        data_dir.mkdir(parents=True, exist_ok=True)
-        downloaded = 0
-
-        for split in DIQA5000_SPLITS:
-            split_dir = data_dir / split
-            split_dir.mkdir(exist_ok=True)
-            (split_dir / "res").mkdir(exist_ok=True)
-            (split_dir / "ori").mkdir(exist_ok=True)
-
-            # List blobs for this split (with GCS_PREFIX)
-            prefix = f"{GCS_PREFIX}/{split}/"
-            blobs = bucket.list_blobs(prefix=prefix)
-
-            for blob in blobs:
-                # Skip directory markers
-                if blob.name.endswith("/"):
-                    continue
-
-                relative_path = blob.name[len(prefix) :]
-                if not relative_path:
-                    continue
-
-                local_file = split_dir / relative_path
-                local_file.parent.mkdir(parents=True, exist_ok=True)
-
-                blob.download_to_filename(str(local_file))
-                downloaded += 1
-
-                if downloaded % 500 == 0:
-                    print(f"  Downloaded {downloaded} files...")
-
-        elapsed = time.time() - start_time
-        print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
-
-        # Validate download before creating marker
-        if downloaded < 100:
-            print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
-            return False
-
-        # Verify CSVs exist
-        for split in DIQA5000_SPLITS:
-            csv_path = data_dir / split / f"{split}.csv"
-            if not csv_path.exists():
-                print(f"ERROR: Missing CSV at {csv_path}")
-                return False
-            print(f"  Verified: {csv_path}")
-
-        # Create marker file
-        marker_file.touch()
-        return True
-
-    # ========================================================================
-    # Dataset
-    # ========================================================================
-
-    class DIQA5000Dataset(Dataset):
-        """Original DIQA-5000 dataset with human MOS labels.
-
-        Loads directly from the original DIQA-5000 structure:
-            diqa-5000/
-            ├── train/
-            │   ├── train.csv  (res,ori,overall,sharpness,color_fidelity)
-            │   ├── res/       (degraded images)
-            │   └── ori/       (original images)
-            ├── val/
-            │   ├── val.csv
-            │   ├── res/
-            │   └── ori/
-            └── test/
-                ├── test.csv
-                ├── res/
-                └── ori/
-
-        CSV columns: res,ori,overall,sharpness,color_fidelity
-        Scores are MOS on 1-5 scale, normalized to 0-1.
-        """
-
-        def __init__(
-            self,
-            split: str,
-            data_dir: str | Path,
-            processor: AutoProcessor,
-            max_num_patches: int = 576,
-            use_augmentation: bool = False,
-            horizontal_flip_prob: float = 0.5,
-            random_crop_prob: float = 0.3,
-        ):
-            import csv
-
-            self.split = split
-            self.data_dir = Path(data_dir)
-            self.processor = processor
-            self.max_num_patches = max_num_patches
-            self.use_augmentation = use_augmentation and split == "train"
-            self.horizontal_flip_prob = horizontal_flip_prob
-            self.random_crop_prob = random_crop_prob
-            self.samples = []
-
-            # Load from CSV
-            split_dir = self.data_dir / split
-            csv_path = split_dir / f"{split}.csv"
-            res_dir = split_dir / "res"
-
-            if not csv_path.exists():
-                raise FileNotFoundError(f"CSV not found: {csv_path}")
-
-            with open(csv_path, newline="") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    image_filename = row["res"]
-                    image_path = res_dir / image_filename
-
-                    if not image_path.exists():
-                        continue
-
-                    # Parse MOS scores (1-5 scale)
-                    self.samples.append(
-                        {
-                            "image_path": str(image_path),
-                            "image_id": image_filename.replace(".jpg", ""),
-                            "overall": float(row["overall"]),
-                            "sharpness": float(row["sharpness"]),
-                            "color_fidelity": float(row["color_fidelity"]),
-                        }
-                    )
-
-            print(f"  {split}: {len(self.samples)} samples loaded")
-
-        def __len__(self) -> int:
-            return len(self.samples)
-
-        def _normalize_mos(self, score: float) -> float:
-            """Normalize MOS score from 1-5 to 0-1 range."""
-            return (score - 1.0) / 4.0
-
-        def _apply_safe_augmentations(self, image: Image.Image) -> Image.Image:
-            """Apply quality-preserving augmentations only.
-
-            IMPORTANT: No blur, noise, or color jitter - these affect IQA labels!
-            Only geometric transforms that preserve quality.
-            """
-            # Horizontal flip (quality-preserving)
-            if random.random() < self.horizontal_flip_prob:
-                image = ImageOps.mirror(image)
-
-            # Random crop and resize (multi-scale learning)
-            if random.random() < self.random_crop_prob:
-                w, h = image.size
-                crop_scale = random.choice([0.8, 0.9, 1.0])
-                new_w, new_h = int(w * crop_scale), int(h * crop_scale)
-                if new_w > 0 and new_h > 0:
-                    left = random.randint(0, max(0, w - new_w))
-                    top = random.randint(0, max(0, h - new_h))
-                    image = image.crop((left, top, left + new_w, top + new_h))
-                    image = image.resize((w, h), Image.LANCZOS)
-
-            return image
-
-        def __getitem__(self, idx: int) -> dict[str, Any]:
-            sample = self.samples[idx]
-
-            # Load image
-            image = Image.open(sample["image_path"]).convert("RGB")
-
-            # Apply safe augmentations
-            if self.use_augmentation:
-                image = self._apply_safe_augmentations(image)
-
-            # Process with SigLIP 2 processor (handles NaFlex resizing)
-            inputs = self.processor(
-                images=[image],
-                return_tensors="pt",
-                max_num_patches=self.max_num_patches,
-                padding="max_length",
-            )
-
-            # Normalize MOS scores from 1-5 to 0-1
-            labels = {
-                "overall": self._normalize_mos(sample["overall"]),
-                "sharpness": self._normalize_mos(sample["sharpness"]),
-                "color": self._normalize_mos(sample["color_fidelity"]),
-            }
-
-            return {
-                "pixel_values": inputs["pixel_values"].squeeze(0),
-                "spatial_shapes": inputs["spatial_shapes"].squeeze(0),
-                "pixel_attention_mask": inputs["pixel_attention_mask"].squeeze(0),
-                "labels": labels,
-                "image_id": sample["image_id"],
-            }
-
-    # ========================================================================
-    # Training Setup
-    # ========================================================================
-
-    # Load processor and model
     print("\nLoading SigLIP 2 processor and model...")
     processor = AutoProcessor.from_pretrained(config.model_id)
-    model = SigLIP2DocumentIQA(
-        model_id=config.model_id,
-        uncertainty=config.uncertainty,
-    )
+    model = SigLIP2DocumentIQA(model_id=config.model_id, uncertainty=config.uncertainty)
     model = model.to(device)
 
-    # Count parameters
     total_params = sum(p.numel() for p in model.parameters())
     backbone_params = sum(p.numel() for p in model.backbone.parameters())
-    head_params = total_params - backbone_params
     print(f"Total parameters: {total_params:,}")
     print(f"Backbone parameters: {backbone_params:,}")
-    print(f"Head parameters: {head_params:,}")
+    print(f"Head parameters: {total_params - backbone_params:,}")
 
-    # Download DIQA-5000 from GCS
-    print("\nDownloading DIQA-5000 dataset from GCS...")
+    return model, processor
+
+
+def _create_loss_fn(config: SigLIP2TrainingConfig) -> Any:
+    """Create appropriate loss function based on config."""
+    import torch.nn as nn
+
+    class NormInNormLoss(nn.Module):
+        def __init__(self, p=1.0, q=2.0):
+            super().__init__()
+            self.p, self.q = p, q
+
+        def forward(self, pred, target):
+            pred_norm = (pred - pred.mean()) / (pred.std() + 1e-8)
+            target_norm = (target - target.mean()) / (target.std() + 1e-8)
+            diff = (pred_norm - target_norm).abs()
+            return diff.pow(self.p).mean().pow(self.q / self.p)
+
+    class GaussianNLLLoss(nn.Module):
+        def forward(self, mu, sigma_sq, target):
+            import torch
+
+            sigma_sq = torch.clamp(sigma_sq, min=1e-6)
+            return (
+                0.5 * torch.log(sigma_sq) + (target - mu) ** 2 / (2 * sigma_sq)
+            ).mean()
+
+    if config.uncertainty:
+        return GaussianNLLLoss()
+    if config.use_norm_in_norm:
+        return NormInNormLoss(p=1.0, q=2.0)
+    return nn.MSELoss()
+
+
+def _create_pcgrad_wrapper_v1(optimizer: Any) -> Any:
+    """Create PCGrad optimizer wrapper (v1 inline implementation)."""
+    import torch
+
+    class PCGrad:
+        def __init__(self, opt):
+            self.optimizer = opt
+            self._reduction = "mean"
+
+        @property
+        def param_groups(self):
+            return self.optimizer.param_groups
+
+        def zero_grad(self):
+            return self.optimizer.zero_grad()
+
+        def step(self):
+            return self.optimizer.step()
+
+        def pc_backward(self, losses):
+            task_grads = []
+            for i, loss in enumerate(losses):
+                self.optimizer.zero_grad()
+                loss.backward(retain_graph=(i < len(losses) - 1))
+                grads = []
+                for group in self.optimizer.param_groups:
+                    for p in group["params"]:
+                        grads.append(
+                            p.grad.clone().flatten()
+                            if p.grad is not None
+                            else torch.zeros_like(p).flatten()
+                        )
+                task_grads.append(torch.cat(grads))
+
+            projected = _project(task_grads)
+            self.optimizer.zero_grad()
+            offset = 0
+            for group in self.optimizer.param_groups:
+                for p in group["params"]:
+                    numel = p.numel()
+                    p.grad = projected[offset : offset + numel].view_as(p)
+                    offset += numel
+
+    def _project(grads):
+        projected = [g.clone() for g in grads]
+        for i in range(len(grads)):
+            for j in range(len(grads)):
+                if i != j:
+                    dot = torch.dot(projected[i], grads[j])
+                    if dot < 0:
+                        projected[i] -= (
+                            dot / (torch.dot(grads[j], grads[j]) + 1e-8)
+                        ) * grads[j]
+        return torch.stack(projected).mean(dim=0)
+
+    return PCGrad(optimizer)
+
+
+def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
+    """Download original DIQA-5000 dataset from GCS."""
+    import os
+
+    from google.cloud import storage
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+
+    marker_file = data_dir / ".download_complete"
+    if marker_file.exists():
+        all_csvs_exist = all(
+            (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
+        )
+        if all_csvs_exist:
+            print("DIQA-5000 already downloaded and validated, skipping...")
+            return True
+        marker_file.unlink()
+
+    print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
+    start_time = time.time()
+
+    client = storage.Client()
+    bucket = client.bucket(GCS_BUCKET)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    downloaded = 0
+
+    for split in DIQA5000_SPLITS:
+        split_dir = data_dir / split
+        split_dir.mkdir(exist_ok=True)
+        (split_dir / "res").mkdir(exist_ok=True)
+        (split_dir / "ori").mkdir(exist_ok=True)
+
+        prefix = f"{GCS_PREFIX}/{split}/"
+        for blob in bucket.list_blobs(prefix=prefix):
+            if blob.name.endswith("/"):
+                continue
+            relative_path = blob.name[len(prefix) :]
+            if not relative_path:
+                continue
+            local_file = split_dir / relative_path
+            local_file.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(str(local_file))
+            downloaded += 1
+            if downloaded % 500 == 0:
+                print(f"  Downloaded {downloaded} files...")
+
+    elapsed = time.time() - start_time
+    print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
+
+    if downloaded < 100:
+        print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
+        return False
+
+    for split in DIQA5000_SPLITS:
+        csv_path = data_dir / split / f"{split}.csv"
+        if not csv_path.exists():
+            print(f"ERROR: Missing CSV at {csv_path}")
+            return False
+        print(f"  Verified: {csv_path}")
+
+    marker_file.touch()
+    return True
+
+
+def _prepare_datasets(
+    config: SigLIP2TrainingConfig, processor: Any, test_mode: bool
+) -> tuple:
+    """Download data, create datasets and loaders.
+
+    Returns:
+        Tuple of (train_loader, val_loader, test_dataset, collate_fn).
+    """
+    import torch
+    from torch.utils.data import DataLoader
+
     data_dir = Path("/data/diqa5000")
-    download_diqa5000_from_gcs(data_dir)
-
-    # Commit volume after download (persist for future runs)
+    print("\nDownloading DIQA-5000 dataset from GCS...")
+    _download_diqa5000_from_gcs(data_dir)
     diqa5000_volume.commit()
 
-    # Create datasets
     print("\nLoading DIQA-5000 dataset...")
-    train_dataset = DIQA5000Dataset(
-        split="train",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
-        use_augmentation=config.use_augmentation,
-        horizontal_flip_prob=config.horizontal_flip_prob,
-        random_crop_prob=config.random_crop_prob,
+    train_dataset = _create_diqa_dataset(
+        "train",
+        data_dir,
+        processor,
+        config.max_num_patches,
+        config.use_augmentation,
+        config.horizontal_flip_prob,
+        config.random_crop_prob,
     )
-    val_dataset = DIQA5000Dataset(
-        split="val",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
+    val_dataset = _create_diqa_dataset(
+        "val", data_dir, processor, config.max_num_patches
     )
-    test_dataset = DIQA5000Dataset(
-        split="test",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
+    test_dataset = _create_diqa_dataset(
+        "test", data_dir, processor, config.max_num_patches
     )
 
     if test_mode:
@@ -704,21 +440,17 @@ def train_siglip2_iqa(
         test_dataset.samples = test_dataset.samples[:25]
 
     def custom_collate_fn(batch):
-        """Custom collate function to properly handle labels dict."""
         pixel_values = torch.stack([item["pixel_values"] for item in batch])
         spatial_shapes = torch.stack([item["spatial_shapes"] for item in batch])
         pixel_attention_mask = torch.stack(
             [item["pixel_attention_mask"] for item in batch]
         )
-        # Keep labels as list of dicts (not dict of lists)
-        labels = [item["labels"] for item in batch]
-        image_ids = [item["image_id"] for item in batch]
         return {
             "pixel_values": pixel_values,
             "spatial_shapes": spatial_shapes,
             "pixel_attention_mask": pixel_attention_mask,
-            "labels": labels,
-            "image_ids": image_ids,
+            "labels": [item["labels"] for item in batch],
+            "image_ids": [item["image_id"] for item in batch],
         }
 
     train_loader = DataLoader(
@@ -738,114 +470,202 @@ def train_siglip2_iqa(
         collate_fn=custom_collate_fn,
     )
 
-    # Loss function
-    if config.uncertainty:
-        criterion = GaussianNLLLoss()
-    elif config.use_norm_in_norm:
-        criterion = NormInNormLoss(p=1.0, q=2.0)
-    else:
-        criterion = nn.MSELoss()
+    return train_loader, val_loader, test_dataset, custom_collate_fn
 
-    # ========================================================================
-    # Training Loop
-    # ========================================================================
 
-    def compute_loss(outputs: dict, labels: dict) -> tuple[torch.Tensor, list]:
-        """Compute loss for all dimensions."""
-        losses = []
-        for dim in ["overall", "sharpness", "color"]:
-            target = torch.tensor(
-                [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
+def _create_diqa_dataset(
+    split: str,
+    data_dir: Path,
+    processor: Any,
+    max_num_patches: int = 576,
+    use_augmentation: bool = False,
+    horizontal_flip_prob: float = 0.5,
+    random_crop_prob: float = 0.3,
+) -> Any:
+    """Create a DIQA5000 Dataset instance."""
+    import csv
+
+    from PIL import Image, ImageOps
+    from torch.utils.data import Dataset
+
+    class DIQA5000Dataset(Dataset):
+        def __init__(
+            self,
+            split_name,
+            data_directory,
+            proc,
+            max_patches,
+            augment,
+            h_flip_prob,
+            crop_prob,
+        ):
+            self.split = split_name
+            self.data_dir = Path(data_directory)
+            self.processor = proc
+            self.max_num_patches = max_patches
+            self.use_augmentation = augment and split_name == "train"
+            self.horizontal_flip_prob = h_flip_prob
+            self.random_crop_prob = crop_prob
+            self.samples: list[dict[str, Any]] = []
+
+            split_dir = self.data_dir / split_name
+            csv_path = split_dir / f"{split_name}.csv"
+            res_dir = split_dir / "res"
+            if not csv_path.exists():
+                raise FileNotFoundError(f"CSV not found: {csv_path}")
+
+            with open(csv_path, newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    image_path = res_dir / row["res"]
+                    if not image_path.exists():
+                        continue
+                    self.samples.append(
+                        {
+                            "image_path": str(image_path),
+                            "image_id": row["res"].replace(".jpg", ""),
+                            "overall": float(row["overall"]),
+                            "sharpness": float(row["sharpness"]),
+                            "color_fidelity": float(row["color_fidelity"]),
+                        }
+                    )
+            print(f"  {split_name}: {len(self.samples)} samples loaded")
+
+        def __len__(self):
+            return len(self.samples)
+
+        def _normalize_mos(self, score):
+            return (score - 1.0) / 4.0
+
+        def _apply_safe_augmentations(self, image):
+            if random.random() < self.horizontal_flip_prob:
+                image = ImageOps.mirror(image)
+            if random.random() < self.random_crop_prob:
+                w, h = image.size
+                crop_scale = random.choice([0.8, 0.9, 1.0])
+                new_w, new_h = int(w * crop_scale), int(h * crop_scale)
+                if new_w > 0 and new_h > 0:
+                    left = random.randint(0, max(0, w - new_w))
+                    top = random.randint(0, max(0, h - new_h))
+                    image = image.crop((left, top, left + new_w, top + new_h))
+                    image = image.resize((w, h), Image.LANCZOS)
+            return image
+
+        def __getitem__(self, idx):
+            sample = self.samples[idx]
+            image = Image.open(sample["image_path"]).convert("RGB")
+            if self.use_augmentation:
+                image = self._apply_safe_augmentations(image)
+            inputs = self.processor(
+                images=[image],
+                return_tensors="pt",
+                max_num_patches=self.max_num_patches,
+                padding="max_length",
             )
+            labels = {
+                "overall": self._normalize_mos(sample["overall"]),
+                "sharpness": self._normalize_mos(sample["sharpness"]),
+                "color": self._normalize_mos(sample["color_fidelity"]),
+            }
+            return {
+                "pixel_values": inputs["pixel_values"].squeeze(0),
+                "spatial_shapes": inputs["spatial_shapes"].squeeze(0),
+                "pixel_attention_mask": inputs["pixel_attention_mask"].squeeze(0),
+                "labels": labels,
+                "image_id": sample["image_id"],
+            }
 
-            if config.uncertainty:
-                pred = outputs[dim]
-                loss = criterion(pred["mu"], pred["sigma_sq"], target)
-            else:
-                loss = criterion(outputs[dim], target)
+    return DIQA5000Dataset(
+        split,
+        data_dir,
+        processor,
+        max_num_patches,
+        use_augmentation,
+        horizontal_flip_prob,
+        random_crop_prob,
+    )
 
-            losses.append(loss)
 
-        total_loss = sum(losses) / len(losses)
-        return total_loss, losses
+def _compute_loss_v1(outputs, labels, criterion, config, device):
+    """Compute loss for all IQA dimensions."""
+    import torch
 
-    def validate(loader: DataLoader) -> dict[str, float]:
-        """Validate model and compute metrics."""
-        model.eval()
-        all_preds = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        all_labels = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        total_loss = 0.0
+    losses = []
+    for dim in _IQA_DIMS:
+        target = torch.tensor(
+            [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
+        )
+        if config.uncertainty:
+            loss = criterion(outputs[dim]["mu"], outputs[dim]["sigma_sq"], target)
+        else:
+            loss = criterion(outputs[dim], target)
+        losses.append(loss)
+    return sum(losses) / len(losses), losses
 
-        with torch.no_grad():
-            for batch in loader:
-                pixel_values = batch["pixel_values"].to(device)
-                spatial_shapes = batch["spatial_shapes"].to(device)
-                # pixel_attention_mask not needed for get_image_features
-                labels_list = batch["labels"]
 
-                outputs = model(pixel_values, spatial_shapes)
+def _validate_v1(model, loader, criterion, config, device):
+    """Validate model and compute SRCC metrics."""
+    import numpy as np
+    import torch
+    from scipy.stats import spearmanr
 
-                # Compute loss
-                loss, _ = compute_loss(outputs, labels_list)
-                total_loss += loss.item()
+    model.eval()
+    all_preds = {dim: [] for dim in _IQA_DIMS}
+    all_labels = {dim: [] for dim in _IQA_DIMS}
+    total_loss = 0.0
 
-                # Collect predictions
-                for i, dim in enumerate(["overall", "sharpness", "color"]):
-                    if config.uncertainty:
-                        preds = outputs[dim]["mu"].cpu().numpy()
-                    else:
-                        preds = outputs[dim].cpu().numpy()
+    with torch.no_grad():
+        for batch in loader:
+            pixel_values = batch["pixel_values"].to(device)
+            spatial_shapes = batch["spatial_shapes"].to(device)
+            labels_list = batch["labels"]
+            outputs = model(pixel_values, spatial_shapes)
+            loss, _ = _compute_loss_v1(outputs, labels_list, criterion, config, device)
+            total_loss += loss.item()
 
-                    all_preds[dim].extend(preds)
-                    all_labels[dim].extend([lbl[dim] for lbl in labels_list])
+            for dim in _IQA_DIMS:
+                preds = (
+                    outputs[dim]["mu"].cpu().numpy()
+                    if config.uncertainty
+                    else outputs[dim].cpu().numpy()
+                )
+                all_preds[dim].extend(preds)
+                all_labels[dim].extend([lbl[dim] for lbl in labels_list])
 
-        # Compute SRCC
-        import numpy as np
+    srcc = {}
+    for dim in _IQA_DIMS:
+        srcc[dim], _ = spearmanr(all_preds[dim], all_labels[dim])
+        if np.isnan(srcc[dim]):
+            srcc[dim] = 0.0
 
-        srcc = {}
-        for dim in ["overall", "sharpness", "color"]:
-            srcc[dim], _ = spearmanr(all_preds[dim], all_labels[dim])
-            if np.isnan(srcc[dim]):
-                srcc[dim] = 0.0
+    return {
+        "loss": total_loss / len(loader),
+        "srcc_overall": srcc["overall"],
+        "srcc_sharpness": srcc["sharpness"],
+        "srcc_color": srcc["color"],
+        "vquala": compute_vquala(srcc["overall"], srcc["sharpness"], srcc["color"]),
+    }
 
-        vquala = compute_vquala(srcc["overall"], srcc["sharpness"], srcc["color"])
 
-        return {
-            "loss": total_loss / len(loader),
-            "srcc_overall": srcc["overall"],
-            "srcc_sharpness": srcc["sharpness"],
-            "srcc_color": srcc["color"],
-            "vquala": vquala,
-        }
-
-    # Training history
-    history = []
-    best_vquala = 0.0
-    best_checkpoint = None
-    patience_counter = 0
-
-    output_dir = Path(config.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # ========================================================================
-    # Phase 1: Head Warmup (Frozen Backbone)
-    # ========================================================================
+def _run_phase1(config, model, train_loader, val_loader, criterion, device, state):
+    """Phase 1: Head Warmup with frozen backbone."""
+    import torch
+    from tqdm import tqdm
 
     print("\n" + "=" * 70)
     print("Phase 1: Head Warmup (Frozen Backbone)")
     print("=" * 70)
 
     model.freeze_backbone()
-
-    # Optimizer for heads only
     optimizer = torch.optim.AdamW(
         [p for p in model.parameters() if p.requires_grad],
         lr=config.phase1_lr,
         weight_decay=config.weight_decay,
     )
-
-    if config.use_pcgrad and pcgrad_available:
-        optimizer = PCGrad(optimizer)
+    pcgrad_optimizer = (
+        _create_pcgrad_wrapper_v1(optimizer) if config.use_pcgrad else None
+    )
+    active_optimizer = pcgrad_optimizer or optimizer
 
     for epoch in range(config.phase1_epochs):
         epoch_start = time.time()
@@ -857,17 +677,14 @@ def train_siglip2_iqa(
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
-            # Note: pixel_attention_mask loaded but not passed to get_image_features
-            # (NaFlex uses spatial_shapes for resolution handling)
             labels_list = batch["labels"]
 
-            optimizer.zero_grad()
+            active_optimizer.zero_grad()
             outputs = model(pixel_values, spatial_shapes)
 
-            if config.use_pcgrad and pcgrad_available:
-                # PCGrad: separate losses per dimension
+            if pcgrad_optimizer:
                 losses = []
-                for dim in ["overall", "sharpness", "color"]:
+                for dim in _IQA_DIMS:
                     target = torch.tensor(
                         [lbl[dim] for lbl in labels_list],
                         device=device,
@@ -880,28 +697,24 @@ def train_siglip2_iqa(
                     else:
                         loss = criterion(outputs[dim], target)
                     losses.append(loss)
-
-                optimizer.pc_backward(losses)
-                train_loss += sum(loss_item.item() for loss_item in losses) / len(
-                    losses
-                )
+                pcgrad_optimizer.pc_backward(losses)
+                train_loss += sum(loss_i.item() for loss_i in losses) / len(losses)
             else:
-                loss, _ = compute_loss(outputs, labels_list)
+                loss, _ = _compute_loss_v1(
+                    outputs, labels_list, criterion, config, device
+                )
                 loss.backward()
                 train_loss += loss.item()
 
             if config.gradient_clip > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
-
-            optimizer.step()
+            active_optimizer.step()
 
         train_loss /= len(train_loader)
-
-        # Validation
-        val_metrics = validate(val_loader)
+        val_metrics = _validate_v1(model, val_loader, criterion, config, device)
         epoch_time = time.time() - epoch_start
 
-        history.append(
+        state["history"].append(
             {
                 "phase": 1,
                 "epoch": epoch + 1,
@@ -912,43 +725,29 @@ def train_siglip2_iqa(
             }
         )
 
-        print(f"\nPhase 1 - Epoch {epoch + 1}/{config.phase1_epochs}:")
-        print(f"  Train Loss: {train_loss:.4f}")
-        print(f"  Val Loss: {val_metrics['loss']:.4f}")
-        print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
-        print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
-        print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
-        print(f"  VQualA: {val_metrics['vquala']:.4f}")
-        print(f"  Time: {epoch_time:.1f}s")
+        _log_epoch(
+            1,
+            epoch + 1,
+            config.phase1_epochs,
+            train_loss,
+            val_metrics,
+            config.phase1_lr,
+            epoch_time,
+        )
+        _update_best(model, val_metrics, epoch + 1, 1, config, state)
 
-        # Save best
-        if val_metrics["vquala"] > best_vquala:
-            best_vquala = val_metrics["vquala"]
-            best_checkpoint = {
-                "epoch": epoch + 1,
-                "phase": 1,
-                "model_state_dict": model.state_dict(),
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-            }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print("  ✓ New best VQualA! Saved checkpoint.")
-            patience_counter = 0
-        else:
-            patience_counter += 1
 
-    # ========================================================================
-    # Phase 2: Full Fine-Tuning
-    # ========================================================================
+def _run_phase2(config, model, train_loader, val_loader, criterion, device, state):
+    """Phase 2: Full Fine-Tuning with different LR for backbone vs heads."""
+    import torch
+    from tqdm import tqdm
 
     print("\n" + "=" * 70)
     print("Phase 2: Full Fine-Tuning")
     print("=" * 70)
 
     model.unfreeze_backbone()
-
-    # Optimizer with different LR for backbone vs heads
-    optimizer = torch.optim.AdamW(
+    base_optimizer = torch.optim.AdamW(
         [
             {
                 "params": model.backbone.parameters(),
@@ -956,23 +755,16 @@ def train_siglip2_iqa(
             },
             {"params": model.heads.parameters(), "lr": config.phase2_lr},
         ],
+        lr=config.phase2_lr,
         weight_decay=config.weight_decay,
     )
 
-    # Keep reference to base optimizer for scheduler
-    # Note: PCGrad wrapping disabled in Phase 2 to avoid OOM with full backbone unfrozen
-    base_optimizer = optimizer
-
-    # OneCycleLR scheduler (uses base optimizer, not PCGrad wrapper)
     if config.use_onecycle:
         from torch.optim.lr_scheduler import OneCycleLR
 
         scheduler = OneCycleLR(
             base_optimizer,
-            max_lr=[
-                config.phase2_lr * config.backbone_lr_multiplier,
-                config.phase2_lr,
-            ],
+            max_lr=[config.phase2_lr * config.backbone_lr_multiplier, config.phase2_lr],
             epochs=config.phase2_epochs,
             steps_per_epoch=len(train_loader),
             pct_start=0.1,
@@ -997,40 +789,33 @@ def train_siglip2_iqa(
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
-            # Note: pixel_attention_mask not needed for get_image_features
             labels_list = batch["labels"]
 
             base_optimizer.zero_grad()
             outputs = model(pixel_values, spatial_shapes)
-
-            # Phase 2: Don't use PCGrad (OOM with full backbone unfrozen)
-            # Standard loss averaging is sufficient after Phase 1 PCGrad warmup
-            loss, _ = compute_loss(outputs, labels_list)
+            loss, _ = _compute_loss_v1(outputs, labels_list, criterion, config, device)
             loss.backward()
             train_loss += loss.item()
 
             if config.gradient_clip > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
-
             base_optimizer.step()
-
             if config.use_onecycle:
                 scheduler.step()
 
         train_loss /= len(train_loader)
-
         if not config.use_onecycle:
             scheduler.step()
 
-        # Validation
-        val_metrics = validate(val_loader)
+        val_metrics = _validate_v1(model, val_loader, criterion, config, device)
         epoch_time = time.time() - epoch_start
         current_lr = base_optimizer.param_groups[0]["lr"]
+        global_epoch = config.phase1_epochs + epoch + 1
 
-        history.append(
+        state["history"].append(
             {
                 "phase": 2,
-                "epoch": config.phase1_epochs + epoch + 1,
+                "epoch": global_epoch,
                 "train_loss": train_loss,
                 **val_metrics,
                 "lr": current_lr,
@@ -1038,145 +823,151 @@ def train_siglip2_iqa(
             }
         )
 
-        print(f"\nPhase 2 - Epoch {epoch + 1}/{config.phase2_epochs}:")
-        print(f"  Train Loss: {train_loss:.4f}")
-        print(f"  Val Loss: {val_metrics['loss']:.4f}")
-        print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
-        print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
-        print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
-        print(f"  VQualA: {val_metrics['vquala']:.4f}")
-        print(f"  LR: {current_lr:.2e}, Time: {epoch_time:.1f}s")
+        _log_epoch(
+            2,
+            epoch + 1,
+            config.phase2_epochs,
+            train_loss,
+            val_metrics,
+            current_lr,
+            epoch_time,
+        )
+        _update_best(model, val_metrics, global_epoch, 2, config, state)
 
-        # Save best
-        if val_metrics["vquala"] > best_vquala:
-            best_vquala = val_metrics["vquala"]
-            best_checkpoint = {
-                "epoch": config.phase1_epochs + epoch + 1,
-                "phase": 2,
-                "model_state_dict": model.state_dict(),
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-            }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print("  ✓ New best VQualA! Saved checkpoint.")
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        # Periodic checkpoint
         if (epoch + 1) % config.save_every_n_epochs == 0:
-            checkpoint = {
-                "epoch": config.phase1_epochs + epoch + 1,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": base_optimizer.state_dict(),
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-            }
             torch.save(
-                checkpoint,
-                output_dir / f"siglip2_iqa_epoch{config.phase1_epochs + epoch + 1}.pt",
+                {
+                    "epoch": global_epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": base_optimizer.state_dict(),
+                    "config": config.to_dict(),
+                    "metrics": val_metrics,
+                },
+                Path(config.output_dir) / f"siglip2_iqa_epoch{global_epoch}.pt",
             )
 
-        # Early stopping (only if no improvement for many epochs)
-        # Note: We don't stop early just because we hit targets - we want to see how high we can go
-        if patience_counter >= config.early_stopping_patience:
+        if state["patience_counter"] >= config.early_stopping_patience:
             print(
-                f"\nEarly stopping triggered after {patience_counter} epochs without improvement."
+                f"\nEarly stopping triggered after {state['patience_counter']} epochs without improvement."
             )
-            print(f"Best VQualA achieved: {best_vquala:.4f}")
+            print(f"Best VQualA achieved: {state['best_vquala']:.4f}")
             break
 
-        # Log if target achieved but continue training
         if (
             val_metrics["vquala"] >= config.target_vquala
             and val_metrics["srcc_overall"] >= config.target_srcc
         ):
-            print("  ✓ Target metrics achieved! Continuing to maximize performance...")
+            print("  -> Target metrics achieved! Continuing to maximize performance...")
 
-    # ========================================================================
-    # Post-hoc Calibration (if uncertainty enabled)
-    # ========================================================================
 
-    if config.uncertainty:
-        print("\n" + "=" * 70)
-        print("Post-hoc STD Scaling Calibration")
-        print("=" * 70)
+def _log_epoch(phase, epoch, total, train_loss, val_metrics, lr, epoch_time):
+    """Print epoch training metrics."""
+    print(f"\nPhase {phase} - Epoch {epoch}/{total}:")
+    print(f"  Train Loss: {train_loss:.4f}")
+    print(f"  Val Loss: {val_metrics['loss']:.4f}")
+    print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
+    print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
+    print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
+    print(f"  VQualA: {val_metrics['vquala']:.4f}")
+    print(f"  LR: {lr:.2e}, Time: {epoch_time:.1f}s")
 
-        # Load best model
-        best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
-        model.load_state_dict(best_state["model_state_dict"])
-        model.eval()
 
-        # Collect predictions and uncertainties
-        import numpy as np
+def _update_best(model, val_metrics, epoch, phase, config, state):
+    """Update best checkpoint if VQualA improved."""
+    import torch
 
-        predictions = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        uncertainties = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        targets = {dim: [] for dim in ["overall", "sharpness", "color"]}
+    if val_metrics["vquala"] > state["best_vquala"]:
+        state["best_vquala"] = val_metrics["vquala"]
+        state["best_checkpoint"] = {
+            "epoch": epoch,
+            "phase": phase,
+            "model_state_dict": model.state_dict(),
+            "config": config.to_dict(),
+            "metrics": val_metrics,
+        }
+        torch.save(state["best_checkpoint"], Path(config.output_dir) / BEST_MODEL_FILE)
+        print("  -> New best VQualA! Saved checkpoint.")
+        state["patience_counter"] = 0
+    else:
+        state["patience_counter"] += 1
 
-        with torch.no_grad():
-            for batch in val_loader:
-                pixel_values = batch["pixel_values"].to(device)
-                spatial_shapes = batch["spatial_shapes"].to(device)
-                # pixel_attention_mask not needed for get_image_features
-                labels_list = batch["labels"]
-                outputs = model(pixel_values, spatial_shapes)
 
-                for dim in ["overall", "sharpness", "color"]:
-                    predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
-                    uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
-                    targets[dim].extend([lbl[dim] for lbl in labels_list])
+def _run_calibration(config, model, val_loader, device, state):
+    """Post-hoc STD scaling calibration on validation set."""
+    import numpy as np
+    import torch
+    from scipy.optimize import minimize_scalar
+    from scipy.stats import spearmanr
 
-        # Optimize temperature for each head
-        def make_nll_func(
-            preds_arr: np.ndarray, uncerts_arr: np.ndarray, targs_arr: np.ndarray
-        ) -> Callable[[float], float]:
-            """Create NLL function with captured arrays to avoid closure issues."""
+    print("\n" + "=" * 70)
+    print("Post-hoc STD Scaling Calibration")
+    print("=" * 70)
 
-            def negative_log_likelihood(temp: float) -> float:
-                scaled_sigma_sq = temp * uncerts_arr
-                return float(
-                    np.mean(
-                        0.5 * np.log(scaled_sigma_sq + 1e-8)
-                        + (targs_arr - preds_arr) ** 2 / (2 * scaled_sigma_sq + 1e-8)
-                    )
+    output_dir = Path(config.output_dir)
+    best_state = torch.load(output_dir / BEST_MODEL_FILE, weights_only=True)
+    model.load_state_dict(best_state["model_state_dict"])
+    model.eval()
+
+    predictions = {dim: [] for dim in _IQA_DIMS}
+    uncertainties = {dim: [] for dim in _IQA_DIMS}
+    targets = {dim: [] for dim in _IQA_DIMS}
+
+    with torch.no_grad():
+        for batch in val_loader:
+            pixel_values = batch["pixel_values"].to(device)
+            spatial_shapes = batch["spatial_shapes"].to(device)
+            labels_list = batch["labels"]
+            outputs = model(pixel_values, spatial_shapes)
+            for dim in _IQA_DIMS:
+                predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
+                uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
+                targets[dim].extend([lbl[dim] for lbl in labels_list])
+
+    def _make_nll(preds_arr, uncerts_arr, targs_arr):
+        def nll(temp):
+            s = temp * uncerts_arr
+            return float(
+                np.mean(
+                    0.5 * np.log(s + 1e-8)
+                    + (targs_arr - preds_arr) ** 2 / (2 * s + 1e-8)
                 )
+            )
 
-            return negative_log_likelihood
+        return nll
 
-        calibration_temps = {}
-        for dim in ["overall", "sharpness", "color"]:
-            preds_arr = np.array(predictions[dim])
-            uncerts_arr = np.array(uncertainties[dim])
-            targs_arr = np.array(targets[dim])
+    calibration_temps = {}
+    for dim in _IQA_DIMS:
+        preds_arr = np.array(predictions[dim])
+        uncerts_arr = np.array(uncertainties[dim])
+        targs_arr = np.array(targets[dim])
+        result = minimize_scalar(
+            _make_nll(preds_arr, uncerts_arr, targs_arr),
+            bounds=(0.1, 10.0),
+            method="bounded",
+        )
+        calibration_temps[dim] = result.x
+        srcc, _ = spearmanr(preds_arr, targs_arr)
+        print(f"  {dim}: T={result.x:.3f}, SRCC={srcc:.4f}")
 
-            nll_func = make_nll_func(preds_arr, uncerts_arr, targs_arr)
-            result = minimize_scalar(nll_func, bounds=(0.1, 10.0), method="bounded")
-            optimal_temp = result.x
-            calibration_temps[dim] = optimal_temp
+    model.set_calibration_temps(calibration_temps)
+    state["best_checkpoint"]["model_state_dict"] = model.state_dict()
+    state["best_checkpoint"]["calibration_temps"] = calibration_temps
+    state["calibration_temps"] = calibration_temps
+    torch.save(state["best_checkpoint"], output_dir / BEST_MODEL_FILE)
+    print("  -> Saved calibrated model")
 
-            srcc, _ = spearmanr(preds_arr, targs_arr)
-            print(f"  {dim}: T={optimal_temp:.3f}, SRCC={srcc:.4f}")
 
-        # Apply calibration
-        model.set_calibration_temps(calibration_temps)
-
-        # Update best checkpoint with calibration
-        best_checkpoint["model_state_dict"] = model.state_dict()
-        best_checkpoint["calibration_temps"] = calibration_temps
-        torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-        print("  ✓ Saved calibrated model")
-
-    # ========================================================================
-    # Final Test Evaluation
-    # ========================================================================
+def _run_test_eval(config, model, test_dataset, criterion, device, collate_fn, state):
+    """Evaluate best model on test set and return results."""
+    import torch
+    from torch.utils.data import DataLoader
 
     print("\n" + "=" * 70)
     print("Final Evaluation on Test Set")
     print("=" * 70)
 
-    # Load best model
-    best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
+    output_dir = Path(config.output_dir)
+    best_state = torch.load(output_dir / BEST_MODEL_FILE, weights_only=True)
     model.load_state_dict(best_state["model_state_dict"])
 
     test_loader = DataLoader(
@@ -1184,10 +975,9 @@ def train_siglip2_iqa(
         batch_size=config.batch_size,
         shuffle=False,
         num_workers=4,
-        collate_fn=custom_collate_fn,
+        collate_fn=collate_fn,
     )
-
-    test_metrics = validate(test_loader)
+    test_metrics = _validate_v1(model, test_loader, criterion, config, device)
 
     print("\nTest Set Results:")
     print(f"  SRCC Overall:   {test_metrics['srcc_overall']:.4f}")
@@ -1199,19 +989,20 @@ def train_siglip2_iqa(
         test_metrics["srcc_overall"] >= config.target_srcc
         and test_metrics["vquala"] >= config.target_vquala
     )
-
     if target_achieved:
-        print("\n✓ TARGET ACHIEVED! Model ready for pseudo-label generation.")
+        print("\n-> TARGET ACHIEVED! Model ready for pseudo-label generation.")
     else:
-        print(f"\n✗ Target not achieved. Best VQualA: {best_vquala:.4f}")
+        print(f"\n-> Target not achieved. Best VQualA: {state['best_vquala']:.4f}")
 
-    # ========================================================================
-    # Save Results
-    # ========================================================================
+    return test_metrics, target_achieved
 
-    results = {
+
+def _save_results(config, state, test_metrics, target_achieved):
+    """Serialize training results to JSON and return results dict."""
+    output_dir = Path(config.output_dir)
+    results: dict[str, Any] = {
         "config": config.to_dict(),
-        "best_vquala": best_vquala,
+        "best_vquala": state["best_vquala"],
         "test_results": {
             "srcc_overall": test_metrics["srcc_overall"],
             "srcc_sharpness": test_metrics["srcc_sharpness"],
@@ -1219,24 +1010,100 @@ def train_siglip2_iqa(
             "vquala": test_metrics["vquala"],
         },
         "target_achieved": target_achieved,
-        "history": history,
-        "checkpoint_path": str(output_dir / "siglip2_iqa_best.pt"),
+        "history": state["history"],
+        "checkpoint_path": str(output_dir / BEST_MODEL_FILE),
         "timestamp": datetime.now().isoformat(),
     }
-
-    if config.uncertainty:
-        results["calibration_temps"] = calibration_temps
+    if state.get("calibration_temps"):
+        results["calibration_temps"] = state["calibration_temps"]
 
     results_path = output_dir / "training_results.json"
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\nResults saved to: {results_path}")
-    print(f"Best checkpoint: {output_dir / 'siglip2_iqa_best.pt'}")
+    print(f"Best checkpoint: {output_dir / BEST_MODEL_FILE}")
+    return results
 
-    # Commit volume
+
+@app.function(
+    image=training_image,
+    gpu="A10G",
+    timeout=3600 * 24,
+    secrets=[modal.Secret.from_name("gcs-credentials")],
+    volumes={"/results": results_volume, "/data": diqa5000_volume},
+)
+def train_siglip2_iqa(
+    config_dict: dict[str, Any] | None = None,
+    test_mode: bool = False,
+) -> dict[str, Any]:
+    """Train SigLIP 2 Base NaFlex for document IQA on DIQA-5000.
+
+    Args:
+        config_dict: Optional config overrides.
+        test_mode: If True, run quick validation (2 epochs).
+
+    Returns:
+        Training results summary.
+    """
+    import torch
+
+    config = SigLIP2TrainingConfig(**(config_dict or {}))
+    if test_mode:
+        config.phase1_epochs = 1
+        config.phase2_epochs = 1
+        config.total_epochs = 2
+        config.batch_size = 4
+        print("[TEST MODE] Running quick validation with 2 epochs")
+
+    print("=" * 70)
+    print("SigLIP 2 Base NaFlex IQA Training")
+    print("=" * 70)
+    print(f"Model: {config.model_id}")
+    print(f"Max Patches: {config.max_num_patches}")
+    print(f"Total Epochs: {config.total_epochs}")
+    print(f"Batch Size: {config.batch_size}")
+    print(f"PCGrad: {config.use_pcgrad}")
+    print(f"NormInNorm Loss: {config.use_norm_in_norm}")
+    print(f"Uncertainty Output: {config.uncertainty}")
+    print(f"Target SRCC: {config.target_srcc}")
+    print(f"Target VQualA: {config.target_vquala}")
+    print("=" * 70)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}")
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name()}")
+        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+
+    model, processor = _create_siglip2_model(config, device)
+    criterion = _create_loss_fn(config)
+    train_loader, val_loader, test_dataset, collate_fn = _prepare_datasets(
+        config, processor, test_mode
+    )
+
+    output_dir = Path(config.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    state: dict[str, Any] = {
+        "history": [],
+        "best_vquala": 0.0,
+        "best_checkpoint": None,
+        "patience_counter": 0,
+    }
+
+    _run_phase1(config, model, train_loader, val_loader, criterion, device, state)
+    _run_phase2(config, model, train_loader, val_loader, criterion, device, state)
+
+    if config.uncertainty:
+        _run_calibration(config, model, val_loader, device, state)
+
+    test_metrics, target_achieved = _run_test_eval(
+        config, model, test_dataset, criterion, device, collate_fn, state
+    )
+
+    results = _save_results(config, state, test_metrics, target_achieved)
     results_volume.commit()
-
     return results
 
 

@@ -261,6 +261,35 @@ def build_strata(
     return strata
 
 
+def _distribute_shortfall(
+    allocation: dict[str, int],
+    proportions: dict[str, float],
+    shortfall: int,
+) -> None:
+    """Add shortfall samples to strata with the largest fractional remainders."""
+    remainders = {key: proportions[key] - allocation[key] for key in proportions}
+    sorted_keys = sorted(remainders, key=lambda k: remainders[k], reverse=True)
+    for key in sorted_keys[:shortfall]:
+        allocation[key] += 1
+
+
+def _reduce_surplus(
+    allocation: dict[str, int],
+    proportions: dict[str, float],
+    surplus: int,
+) -> None:
+    """Remove surplus samples from strata with the smallest fractional parts."""
+    remainders = {key: proportions[key] - int(proportions[key]) for key in proportions}
+    sorted_keys = sorted(remainders, key=lambda k: remainders[k])
+    remaining = surplus
+    for key in sorted_keys:
+        if remaining <= 0:
+            break
+        if allocation[key] > 1:
+            allocation[key] -= 1
+            remaining -= 1
+
+
 def allocate_proportional(
     strata: dict[str, list[SampleRecord]],
     target: int,
@@ -282,42 +311,19 @@ def allocate_proportional(
     if total_population == 0:
         return {}
 
-    # Initial float proportions
     proportions: dict[str, float] = {
         key: (len(recs) / total_population) * target for key, recs in strata.items()
     }
 
-    # Floor allocation (each stratum gets at least 1 if non-empty)
-    allocation: dict[str, int] = {}
-    for key in proportions:
-        allocation[key] = max(1, int(proportions[key]))
+    allocation: dict[str, int] = {
+        key: max(1, int(prop)) for key, prop in proportions.items()
+    }
 
-    # Adjust if we over- or under-allocated
     allocated = sum(allocation.values())
     if allocated < target:
-        # Distribute remainder by largest fractional part
-        remainders = {key: proportions[key] - allocation[key] for key in proportions}
-        sorted_keys = sorted(
-            remainders,
-            key=lambda k: remainders[k],
-            reverse=True,
-        )
-        shortfall = target - allocated
-        for key in sorted_keys[:shortfall]:
-            allocation[key] += 1
+        _distribute_shortfall(allocation, proportions, target - allocated)
     elif allocated > target:
-        # Shrink strata with smallest fractional parts first
-        remainders = {
-            key: proportions[key] - int(proportions[key]) for key in proportions
-        }
-        sorted_keys = sorted(remainders, key=lambda k: remainders[k])
-        surplus = allocated - target
-        for key in sorted_keys:
-            if surplus <= 0:
-                break
-            if allocation[key] > 1:
-                allocation[key] -= 1
-                surplus -= 1
+        _reduce_surplus(allocation, proportions, allocated - target)
 
     return allocation
 

@@ -323,7 +323,7 @@ import torch
 from torchvision import transforms
 
 # Load model
-model = torch.load("model_final.pth")
+model = torch.load("model_final.pth", weights_only=True)
 model.eval()
 
 # Prepare image
@@ -537,6 +537,56 @@ def list_available_runs(bucket_name: str, project_name: str, model_name: str) ->
     print("=" * 80)
 
 
+def _validate_promotion_args(parser: argparse.ArgumentParser, args) -> str:
+    """Validate required arguments for promotion mode and return HF token."""
+    if not args.run_id:
+        parser.error("--run-id is required for promotion")
+    if not args.hf_repo and not args.dry_run:
+        parser.error("--hf-repo is required for promotion")
+    if not args.version:
+        parser.error("--version is required for promotion")
+
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token and not args.dry_run:
+        print("ERROR: HF_TOKEN environment variable not set")
+        print("Set it with: export HF_TOKEN=your_token_here")
+        sys.exit(1)
+
+    return hf_token or ""
+
+
+def _run_promotion(args, hf_token: str) -> None:
+    """Download, validate, and push model artifacts."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        artifact_dir = download_run_artifacts(
+            bucket_name=args.gcs_bucket,
+            project_name=args.project,
+            model_name=args.model,
+            run_id=args.run_id,
+            local_dir=tmpdir,
+        )
+
+        metadata = validate_artifacts(artifact_dir)
+        criteria_met = check_promotion_criteria(metadata)
+
+        if not criteria_met and not args.dry_run:
+            response = input("\nPromotion criteria not fully met. Continue? [y/N]: ")
+            if response.lower() != "y":
+                print("Promotion cancelled")
+                sys.exit(1)
+
+        if args.hf_repo or args.dry_run:
+            push_to_huggingface(
+                artifact_dir=artifact_dir,
+                hf_repo=args.hf_repo or "dummy/repo",
+                version=args.version,
+                metadata=metadata,
+                token=hf_token,
+                private=args.private,
+                dry_run=args.dry_run,
+            )
+
+
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -591,60 +641,12 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # List runs mode
     if args.list_runs:
         list_available_runs(args.gcs_bucket, args.project, args.model)
         return
 
-    # Validate required arguments for promotion
-    if not args.run_id:
-        parser.error("--run-id is required for promotion")
-    if not args.hf_repo and not args.dry_run:
-        parser.error("--hf-repo is required for promotion")
-    if not args.version:
-        parser.error("--version is required for promotion")
-
-    # Check for HF token
-    hf_token = os.environ.get("HF_TOKEN")
-    if not hf_token and not args.dry_run:
-        print("❌ ERROR: HF_TOKEN environment variable not set")
-        print("Set it with: export HF_TOKEN=your_token_here")
-        sys.exit(1)
-
-    # Create temp directory for download
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # Download artifacts
-        artifact_dir = download_run_artifacts(
-            bucket_name=args.gcs_bucket,
-            project_name=args.project,
-            model_name=args.model,
-            run_id=args.run_id,
-            local_dir=tmpdir,
-        )
-
-        # Validate artifacts
-        metadata = validate_artifacts(artifact_dir)
-
-        # Check promotion criteria
-        criteria_met = check_promotion_criteria(metadata)
-
-        if not criteria_met and not args.dry_run:
-            response = input("\n⚠️  Promotion criteria not fully met. Continue? [y/N]: ")
-            if response.lower() != "y":
-                print("❌ Promotion cancelled")
-                sys.exit(1)
-
-        # Push to Hugging Face
-        if args.hf_repo or args.dry_run:
-            push_to_huggingface(
-                artifact_dir=artifact_dir,
-                hf_repo=args.hf_repo or "dummy/repo",
-                version=args.version,
-                metadata=metadata,
-                token=hf_token or "",
-                private=args.private,
-                dry_run=args.dry_run,
-            )
+    hf_token = _validate_promotion_args(parser, args)
+    _run_promotion(args, hf_token)
 
 
 if __name__ == "__main__":

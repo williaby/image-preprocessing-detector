@@ -7,6 +7,9 @@ import time
 from unittest.mock import patch
 
 import numpy as np
+import pytest
+
+rng = np.random.default_rng()
 
 from image_preprocessing_detector.labeling.arena.modal_client import (
     ArenaInferenceRequest,
@@ -26,7 +29,7 @@ class TestCircuitBreakerConfig:
 
         assert config.failure_threshold == 3
         assert config.success_threshold == 2
-        assert config.timeout_seconds == 60.0
+        assert config.timeout_seconds == pytest.approx(60.0)
         assert config.request_timeout_ms == 30000
         assert config.max_retries == 2
         assert config.base_backoff_ms == 2000
@@ -42,7 +45,7 @@ class TestCircuitBreakerConfig:
 
         assert config.failure_threshold == 5
         assert config.success_threshold == 3
-        assert config.timeout_seconds == 120.0
+        assert config.timeout_seconds == pytest.approx(120.0)
 
 
 class TestArenaInferenceRequest:
@@ -50,7 +53,7 @@ class TestArenaInferenceRequest:
 
     def test_minimal_request(self) -> None:
         """Test request with minimal fields."""
-        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         request = ArenaInferenceRequest(
             image=image,
             prompt="Rate this image",
@@ -59,12 +62,12 @@ class TestArenaInferenceRequest:
         assert request.prompt == "Rate this image"
         assert request.model_id == "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit"
         assert request.max_new_tokens == 256
-        assert request.temperature == 0.1
+        assert request.temperature == pytest.approx(0.1)
         assert request.request_id is None
 
     def test_full_request(self) -> None:
         """Test request with all fields."""
-        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         request = ArenaInferenceRequest(
             image=image,
             prompt="Rate this image",
@@ -76,7 +79,7 @@ class TestArenaInferenceRequest:
 
         assert request.model_id == "custom/model"
         assert request.max_new_tokens == 512
-        assert request.temperature == 0.5
+        assert request.temperature == pytest.approx(0.5)
         assert request.request_id == "test-123"
 
 
@@ -93,7 +96,7 @@ class TestArenaInferenceResponse:
         )
 
         assert "Overall: 0.75" in response.text
-        assert response.inference_time_ms == 150.0
+        assert response.inference_time_ms == pytest.approx(150.0)
         assert response.model_id == "test/model"
         assert response.device == "T4"
 
@@ -125,7 +128,7 @@ class TestArenaModalClient:
     def test_mock_response_format(self) -> None:
         """Test mock response has expected format."""
         client = ArenaModalClient()
-        image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         request = ArenaInferenceRequest(
             image=image,
             prompt="Rate this image",
@@ -146,7 +149,7 @@ class TestArenaModalClient:
         """Test predict returns mock response when modal unavailable."""
         with patch.dict(os.environ, {"ARENA_MODAL_MOCK": "true"}):
             client = ArenaModalClient()
-            image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+            image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
             request = ArenaInferenceRequest(
                 image=image,
                 prompt="Rate this image",
@@ -300,7 +303,7 @@ class TestArenaModalClient:
         client = ArenaModalClient()
 
         # Test with numpy array
-        image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
         encoded = client._encode_image(image)
 
         assert isinstance(encoded, str)
@@ -321,8 +324,7 @@ class TestArenaModalClient:
             client = ArenaModalClient()
 
             images = [
-                np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
-                for _ in range(3)
+                rng.integers(0, 255, (224, 224, 3), dtype=np.uint8) for _ in range(3)
             ]
             requests = [
                 ArenaInferenceRequest(

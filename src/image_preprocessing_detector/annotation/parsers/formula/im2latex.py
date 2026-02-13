@@ -77,6 +77,9 @@ from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
+# Common file name constants (S1192: avoid duplicate string literals)
+FORMULAS_FILE = "im2latex_formulas.lst"
+
 
 class Im2latexParser(BaseParser):
     """Parser for im2latex-100k LaTeX formula dataset.
@@ -121,9 +124,9 @@ class Im2latexParser(BaseParser):
 
         # Try different possible locations for formulas file
         formula_paths = [
-            dataset_path / "im2latex_formulas.lst",
+            dataset_path / FORMULAS_FILE,
             dataset_path / "formulas.lst",
-            dataset_path / "formula_images" / "im2latex_formulas.lst",
+            dataset_path / "formula_images" / FORMULAS_FILE,
         ]
 
         formula_file = None
@@ -326,7 +329,7 @@ class Im2latexParser(BaseParser):
                 labels.raw_labels["text_content"] = {
                     "full_text": latex_source,
                     "source_type": "dataset_provided",
-                    "source_file": "im2latex_formulas.lst",
+                    "source_file": FORMULAS_FILE,
                     "extraction_method": "Im2latexParser.parse",
                 }
 
@@ -358,7 +361,7 @@ class Im2latexParser(BaseParser):
                 labels.raw_labels["text_content"] = {
                     "full_text": latex_source,
                     "source_type": "dataset_provided",
-                    "source_file": "im2latex_formulas.lst",
+                    "source_file": FORMULAS_FILE,
                     "extraction_method": "Im2latexParser.parse",
                 }
             else:

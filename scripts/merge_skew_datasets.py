@@ -64,6 +64,262 @@ def process_natural_image(args: tuple[Any, ...]) -> dict[str, Any]:
         return {"filename": output_filename, "success": False, "error": str(exc)}
 
 
+def _load_and_filter_natural_scans(
+    nscan_path: Path,
+    min_confidence: float,
+) -> tuple[list[dict[str, Any]], int]:
+    """Load natural scan labels and filter by confidence threshold.
+
+    Args:
+        nscan_path: Path to natural_scan_skew_labels.json.
+        min_confidence: Minimum classical skew confidence to include.
+
+    Returns:
+        Tuple of (high-confidence images list, low-confidence excluded count).
+    """
+    with nscan_path.open() as f:
+        nscan_data = json.load(f)
+
+    nscan_images = nscan_data["images"]
+    logger.info("Loaded %d natural scan labels", len(nscan_images))
+
+    high_conf = [
+        img
+        for img in nscan_images
+        if img.get("classical_skew_confidence", 0) >= min_confidence
+        and img.get("classical_skew_error") is None
+    ]
+    low_conf = len(nscan_images) - len(high_conf)
+    logger.info(
+        "After confidence filter (>= %.2f): %d kept, %d excluded",
+        min_confidence,
+        len(high_conf),
+        low_conf,
+    )
+    return high_conf, low_conf
+
+
+def _load_synth_labels(skew_dir: Path) -> dict[str, dict[str, Any]]:
+    """Load existing synthetic labels for all splits.
+
+    Args:
+        skew_dir: Root skew dataset directory.
+
+    Returns:
+        Dict mapping split name to labels dict.
+    """
+    synth_labels: dict[str, dict[str, Any]] = {}
+    for split in ["train", "val", "test"]:
+        labels_path = skew_dir / split / "labels.json"
+        if labels_path.exists():
+            with labels_path.open() as f:
+                synth_labels[split] = json.load(f)
+        else:
+            synth_labels[split] = {}
+    return synth_labels
+
+
+def _print_merge_plan(
+    high_conf: list[dict[str, Any]],
+    nscan_total: int,
+    splits: dict[str, list[dict[str, Any]]],
+    synth_labels: dict[str, dict[str, Any]],
+) -> None:
+    """Print merge plan statistics.
+
+    Args:
+        high_conf: High-confidence natural scan images.
+        nscan_total: Total natural scan images before filtering.
+        splits: Natural scan images grouped by split.
+        synth_labels: Existing synthetic labels by split.
+    """
+    print("\n=== Merge Plan ===")
+    print(f"Natural scan labels: {len(high_conf)} (filtered from {nscan_total})")
+    for split in ["train", "val", "test"]:
+        synth_count = len(synth_labels[split])
+        nscan_count = len(splits[split])
+        total = synth_count + nscan_count
+        nscan_pct = 100 * nscan_count / max(total, 1)
+        print(
+            f"  {split:5s}: {synth_count:6,d} synthetic + {nscan_count:5,d} natural = "
+            f"{total:6,d} total ({nscan_pct:.1f}% natural)"
+        )
+
+    grand_synth = sum(len(synth_labels[s]) for s in synth_labels)
+    grand_nscan = len(high_conf)
+    print(
+        f"\n  Total: {grand_synth:,d} synthetic + {grand_nscan:,d} natural = {grand_synth + grand_nscan:,d}"
+    )
+
+    script_counts: dict[str, int] = {}
+    capture_counts: dict[str, int] = {}
+    for img in high_conf:
+        sc = img.get("script", "unknown")
+        script_counts[sc] = script_counts.get(sc, 0) + 1
+        cm = img.get("capture_method", "unknown")
+        capture_counts[cm] = capture_counts.get(cm, 0) + 1
+
+    print("\n--- Natural Scan Script Distribution ---")
+    for code, count in sorted(script_counts.items(), key=lambda x: -x[1]):
+        pct = 100 * count / len(high_conf)
+        print(f"  {code:5s}: {count:5,d} ({pct:5.1f}%)")
+
+    print("\n--- Natural Scan Capture Method ---")
+    for method, count in sorted(capture_counts.items(), key=lambda x: -x[1]):
+        pct = 100 * count / len(high_conf)
+        print(f"  {method:20s}: {count:5,d} ({pct:5.1f}%)")
+
+
+def _build_natural_scan_label(record: dict[str, Any]) -> dict[str, Any]:
+    """Build a label entry from a natural scan record.
+
+    Args:
+        record: Natural scan image record.
+
+    Returns:
+        Label dict for the labels.json file.
+    """
+    return {
+        "angle": record["classical_skew_angle"],
+        "orientation": 0,
+        "skew_bin": -1,
+        "script": record.get("script", "Latn"),
+        "degradation": "natural",
+        "source": record.get("filename", "unknown"),
+        "source_type": "natural_scan",
+        "dataset": record.get("dataset", "unknown"),
+        "text_direction": record.get("text_direction", "ltr"),
+        "capture_method": record.get("capture_method", "unknown"),
+        "classical_confidence": record.get("classical_skew_confidence", 0),
+        "classical_method": record.get("classical_skew_method", "unknown"),
+    }
+
+
+def _process_natural_scans_for_split(
+    split: str,
+    split_imgs: list[dict[str, Any]],
+    skew_dir: Path,
+    synth_labels: dict[str, dict[str, Any]],
+    nscan_idx: int,
+    workers: int,
+    start_time: float,
+) -> tuple[int, int, int]:
+    """Process natural scan images for a single split.
+
+    Args:
+        split: Split name.
+        split_imgs: Natural scan images for this split.
+        skew_dir: Root skew dataset directory.
+        synth_labels: Labels dict to update in-place.
+        nscan_idx: Starting index for natural scan filenames.
+        workers: Number of parallel workers.
+        start_time: Start time for rate calculation.
+
+    Returns:
+        Tuple of (success_count, error_count, updated nscan_idx).
+    """
+    split_img_dir = skew_dir / split / "images"
+    split_img_dir.mkdir(parents=True, exist_ok=True)
+
+    work_items = []
+    nscan_meta: list[tuple[dict[str, Any], int]] = []
+    for img_record in split_imgs:
+        work_items.append((img_record["path"], str(split_img_dir), nscan_idx))
+        nscan_meta.append((img_record, nscan_idx))
+        nscan_idx += 1
+
+    logger.info("[%s] Processing %d natural scan images...", split, len(work_items))
+    success_count = 0
+    error_count = 0
+    completed = 0
+
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        for result, (record, _idx) in zip(
+            executor.map(process_natural_image, work_items, chunksize=50),
+            nscan_meta,
+            strict=True,
+        ):
+            if result["success"]:
+                synth_labels[split][result["filename"]] = _build_natural_scan_label(
+                    record
+                )
+                success_count += 1
+            else:
+                error_count += 1
+                logger.warning("Failed: %s — %s", record.get("path"), result["error"])
+
+            completed += 1
+            if completed % 2000 == 0:
+                elapsed = time.monotonic() - start_time
+                rate = (success_count + error_count) / max(elapsed, 0.01)
+                logger.info(
+                    "[%s] Progress: %d/%d (%.1f img/s)",
+                    split,
+                    completed,
+                    len(work_items),
+                    rate,
+                )
+
+    logger.info("[%s] Complete: %d natural scan images added", split, completed)
+    return success_count, error_count, nscan_idx
+
+
+def _write_merge_outputs(
+    skew_dir: Path,
+    synth_labels: dict[str, dict[str, Any]],
+    success_count: int,
+    error_count: int,
+    low_conf: int,
+    elapsed: float,
+) -> None:
+    """Write updated labels and merge manifest.
+
+    Args:
+        skew_dir: Root skew dataset directory.
+        synth_labels: Updated labels by split.
+        success_count: Total successfully processed natural scans.
+        error_count: Total processing errors.
+        low_conf: Number of low-confidence images excluded.
+        elapsed: Total elapsed time in seconds.
+    """
+    for split in ["train", "val", "test"]:
+        labels_path = skew_dir / split / "labels.json"
+        with labels_path.open("w") as f:
+            json.dump(synth_labels[split], f, indent=2)
+        logger.info(
+            "Wrote %d total labels to %s", len(synth_labels[split]), labels_path
+        )
+
+    manifest = {
+        "merged_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "natural_scans_processed": success_count,
+        "natural_scans_errors": error_count,
+        "natural_scans_excluded_low_conf": low_conf,
+        "elapsed_seconds": round(elapsed, 1),
+        "splits": {
+            split: {
+                "synthetic": len(synth_labels[split])
+                - sum(
+                    1
+                    for v in synth_labels[split].values()
+                    if v.get("source_type") == "natural_scan"
+                ),
+                "natural_scan": sum(
+                    1
+                    for v in synth_labels[split].values()
+                    if v.get("source_type") == "natural_scan"
+                ),
+                "total": len(synth_labels[split]),
+            }
+            for split in ["train", "val", "test"]
+        },
+    }
+    manifest_path = skew_dir / "merge_manifest.json"
+    with manifest_path.open("w") as f:
+        json.dump(manifest, f, indent=2)
+    logger.info("Wrote merge manifest to %s", manifest_path)
+
+
 def main() -> None:
     """CLI entry point for merging skew datasets."""
     parser = argparse.ArgumentParser(
@@ -76,10 +332,7 @@ def main() -> None:
         help="Root skew dataset directory (contains train/val/test and natural_scan_skew_labels.json)",
     )
     parser.add_argument(
-        "--workers",
-        type=int,
-        default=4,
-        help="Number of parallel workers (default: 4)",
+        "--workers", type=int, default=4, help="Number of parallel workers (default: 4)"
     )
     parser.add_argument(
         "--dry-run",
@@ -100,90 +353,24 @@ def main() -> None:
         datefmt="%H:%M:%S",
     )
 
-    skew_dir = args.skew_dir
-    nscan_path = skew_dir / "natural_scan_skew_labels.json"
-
+    nscan_path = args.skew_dir / "natural_scan_skew_labels.json"
     if not nscan_path.exists():
         logger.error("Natural scan labels not found: %s", nscan_path)
         return
 
-    # Load natural scan labels
-    with nscan_path.open() as f:
-        nscan_data = json.load(f)
-
-    nscan_images = nscan_data["images"]
-    logger.info("Loaded %d natural scan labels", len(nscan_images))
-
-    # Filter by confidence
-    high_conf = [
-        img
-        for img in nscan_images
-        if img.get("classical_skew_confidence", 0) >= args.min_confidence
-        and img.get("classical_skew_error") is None
-    ]
-    low_conf = len(nscan_images) - len(high_conf)
-    logger.info(
-        "After confidence filter (>= %.2f): %d kept, %d excluded",
-        args.min_confidence,
-        len(high_conf),
-        low_conf,
+    high_conf, low_conf = _load_and_filter_natural_scans(
+        nscan_path, args.min_confidence
     )
 
     # Group by split
-    splits = {"train": [], "val": [], "test": []}
+    splits: dict[str, list[dict[str, Any]]] = {"train": [], "val": [], "test": []}
     for img in high_conf:
         split = img.get("split", "train")
         if split in splits:
             splits[split].append(img)
 
-    # Load existing synthetic labels
-    synth_labels: dict[str, dict[str, Any]] = {}
-    for split in ["train", "val", "test"]:
-        labels_path = skew_dir / split / "labels.json"
-        if labels_path.exists():
-            with labels_path.open() as f:
-                synth_labels[split] = json.load(f)
-        else:
-            synth_labels[split] = {}
-
-    # Print statistics
-    print("\n=== Merge Plan ===")
-    print(f"Natural scan labels: {len(high_conf)} (filtered from {len(nscan_images)})")
-    for split in ["train", "val", "test"]:
-        synth_count = len(synth_labels[split])
-        nscan_count = len(splits[split])
-        total = synth_count + nscan_count
-        nscan_pct = 100 * nscan_count / max(total, 1)
-        print(
-            f"  {split:5s}: {synth_count:6,d} synthetic + {nscan_count:5,d} natural = "
-            f"{total:6,d} total ({nscan_pct:.1f}% natural)"
-        )
-
-    grand_synth = sum(len(synth_labels[s]) for s in synth_labels)
-    grand_nscan = len(high_conf)
-    grand_total = grand_synth + grand_nscan
-    print(
-        f"\n  Total: {grand_synth:,d} synthetic + {grand_nscan:,d} natural = {grand_total:,d}"
-    )
-
-    # Natural scan dataset composition
-    script_counts: dict[str, int] = {}
-    capture_counts: dict[str, int] = {}
-    for img in high_conf:
-        sc = img.get("script", "unknown")
-        script_counts[sc] = script_counts.get(sc, 0) + 1
-        cm = img.get("capture_method", "unknown")
-        capture_counts[cm] = capture_counts.get(cm, 0) + 1
-
-    print("\n--- Natural Scan Script Distribution ---")
-    for code, count in sorted(script_counts.items(), key=lambda x: -x[1]):
-        pct = 100 * count / len(high_conf)
-        print(f"  {code:5s}: {count:5,d} ({pct:5.1f}%)")
-
-    print("\n--- Natural Scan Capture Method ---")
-    for method, count in sorted(capture_counts.items(), key=lambda x: -x[1]):
-        pct = 100 * count / len(high_conf)
-        print(f"  {method:20s}: {count:5,d} ({pct:5.1f}%)")
+    synth_labels = _load_synth_labels(args.skew_dir)
+    _print_merge_plan(high_conf, len(high_conf) + low_conf, splits, synth_labels)
 
     if args.dry_run:
         print("\n[DRY RUN] No images processed.")
@@ -191,133 +378,37 @@ def main() -> None:
 
     # Process natural scan images
     start_time = time.monotonic()
-    success_count = 0
-    error_count = 0
+    total_success = 0
+    total_errors = 0
     nscan_idx = 0
 
     for split in ["train", "val", "test"]:
-        split_imgs = splits[split]
-        if not split_imgs:
+        if not splits[split]:
             continue
-
-        split_img_dir = skew_dir / split / "images"
-        split_img_dir.mkdir(parents=True, exist_ok=True)
-
-        # Build work items
-        work_items = []
-        nscan_meta: list[tuple[dict[str, Any], int]] = []
-        for img_record in split_imgs:
-            work_items.append(
-                (
-                    img_record["path"],
-                    str(split_img_dir),
-                    nscan_idx,
-                )
-            )
-            nscan_meta.append((img_record, nscan_idx))
-            nscan_idx += 1
-
-        # Process in parallel
-        logger.info("[%s] Processing %d natural scan images...", split, len(work_items))
-        completed = 0
-        with ProcessPoolExecutor(max_workers=args.workers) as executor:
-            for result, (record, _idx) in zip(
-                executor.map(process_natural_image, work_items, chunksize=50),
-                nscan_meta,
-                strict=True,
-            ):
-                if result["success"]:
-                    # Add to labels with natural scan metadata
-                    synth_labels[split][result["filename"]] = {
-                        "angle": record["classical_skew_angle"],
-                        "orientation": 0,  # Natural scans: unknown orientation, assume 0
-                        "skew_bin": -1,  # Will be computed during training
-                        "script": record.get("script", "Latn"),
-                        "degradation": "natural",
-                        "source": record.get("filename", "unknown"),
-                        "source_type": "natural_scan",
-                        "dataset": record.get("dataset", "unknown"),
-                        "text_direction": record.get("text_direction", "ltr"),
-                        "capture_method": record.get("capture_method", "unknown"),
-                        "classical_confidence": record.get(
-                            "classical_skew_confidence", 0
-                        ),
-                        "classical_method": record.get(
-                            "classical_skew_method", "unknown"
-                        ),
-                    }
-                    success_count += 1
-                else:
-                    error_count += 1
-                    logger.warning(
-                        "Failed: %s — %s", record.get("path"), result["error"]
-                    )
-
-                completed += 1
-                if completed % 2000 == 0:
-                    elapsed = time.monotonic() - start_time
-                    rate = (success_count + error_count) / max(elapsed, 0.01)
-                    logger.info(
-                        "[%s] Progress: %d/%d (%.1f img/s)",
-                        split,
-                        completed,
-                        len(work_items),
-                        rate,
-                    )
-
-        logger.info("[%s] Complete: %d natural scan images added", split, completed)
-
-    # Write updated labels
-    for split in ["train", "val", "test"]:
-        labels_path = skew_dir / split / "labels.json"
-        with labels_path.open("w") as f:
-            json.dump(synth_labels[split], f, indent=2)
-        logger.info(
-            "Wrote %d total labels to %s", len(synth_labels[split]), labels_path
+        s_count, e_count, nscan_idx = _process_natural_scans_for_split(
+            split,
+            splits[split],
+            args.skew_dir,
+            synth_labels,
+            nscan_idx,
+            args.workers,
+            start_time,
         )
+        total_success += s_count
+        total_errors += e_count
 
-    # Write merge manifest
     elapsed = time.monotonic() - start_time
-    manifest = {
-        "merged_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "natural_scans_processed": success_count,
-        "natural_scans_errors": error_count,
-        "natural_scans_excluded_low_conf": low_conf,
-        "elapsed_seconds": round(elapsed, 1),
-        "splits": {
-            split: {
-                "synthetic": len(synth_labels[split])
-                - len(
-                    [
-                        v
-                        for v in synth_labels[split].values()
-                        if v.get("source_type") == "natural_scan"
-                    ]
-                ),
-                "natural_scan": len(
-                    [
-                        v
-                        for v in synth_labels[split].values()
-                        if v.get("source_type") == "natural_scan"
-                    ]
-                ),
-                "total": len(synth_labels[split]),
-            }
-            for split in ["train", "val", "test"]
-        },
-    }
-    manifest_path = skew_dir / "merge_manifest.json"
-    with manifest_path.open("w") as f:
-        json.dump(manifest, f, indent=2)
-    logger.info("Wrote merge manifest to %s", manifest_path)
+    _write_merge_outputs(
+        args.skew_dir, synth_labels, total_success, total_errors, low_conf, elapsed
+    )
 
     print("\n=== Merge Complete ===")
-    print(f"Natural scans added: {success_count:,d} ({error_count} errors)")
+    print(f"Natural scans added: {total_success:,d} ({total_errors} errors)")
     print(f"Time: {elapsed:.1f}s")
     for split in ["train", "val", "test"]:
         total = len(synth_labels[split])
         print(f"  {split}: {total:,d} total labels")
-    print(f"Output: {skew_dir}")
+    print(f"Output: {args.skew_dir}")
 
 
 if __name__ == "__main__":

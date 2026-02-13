@@ -35,7 +35,7 @@ from image_preprocessing_detector.synthetic.config import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 logger = logging.getLogger(__name__)
 
@@ -575,7 +575,7 @@ class TextCorpusManager:
 
         try:
             # Load dataset (streaming to avoid full download)
-            dataset = load_dataset(
+            dataset = load_dataset(  # nosec B615
                 OPENLID_DATASET,
                 OPENLID_CONFIG,
                 split="train",
