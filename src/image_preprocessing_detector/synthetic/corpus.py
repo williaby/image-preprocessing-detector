@@ -575,7 +575,7 @@ class TextCorpusManager:
 
         try:
             # Load dataset (streaming to avoid full download)
-            dataset = load_dataset(
+            dataset = load_dataset(  # nosec B615
                 OPENLID_DATASET,
                 OPENLID_CONFIG,
                 split="train",

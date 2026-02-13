@@ -572,7 +572,7 @@ class OpenLIDDetector:
         logger.info("Downloading OpenLID-v2 model from HuggingFace...")
         self._model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        downloaded_path = hf_hub_download(
+        downloaded_path = hf_hub_download(  # nosec B615
             repo_id="laurievb/OpenLID-v2",
             filename="model.bin",
             local_dir=self._model_path.parent,

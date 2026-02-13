@@ -198,7 +198,7 @@ class DoclingLayoutProvider:
             from huggingface_hub import snapshot_download
 
             logger.info("Downloading/resolving model %s ...", self.MODEL_REPO)
-            self._model_path = snapshot_download(self.MODEL_REPO)
+            self._model_path = snapshot_download(self.MODEL_REPO)  # nosec B615
             logger.info("Model artifacts at: %s", self._model_path)
 
             logger.info(

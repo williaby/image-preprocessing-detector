@@ -380,7 +380,7 @@ class MuharafParser(BaseParser):
                 }
             )
 
-        return groups if groups else None
+        return groups or None
 
     def _extract_center_line(self, line_elem: ET.Element) -> list[list[float]] | None:
         """Extract center-line (baseline) coordinates from UserDefined.

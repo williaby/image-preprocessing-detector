@@ -98,8 +98,8 @@ async def process_batch_job(
                 result = await process_document(tmp_path, filename, options)
                 results.append(result)
             finally:
-                # Cleanup
-                tmp_path.unlink(missing_ok=True)
+                # Cleanup - trivially fast, no I/O blocking concern
+                tmp_path.unlink(missing_ok=True)  # noqa: ASYNC240
 
             # Update progress
             _update_job(

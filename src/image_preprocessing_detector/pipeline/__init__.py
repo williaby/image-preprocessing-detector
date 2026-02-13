@@ -443,8 +443,8 @@ class PipelineHooks:
         if self._alert_manager and (kl_values or psi_values):
             check_drift_and_alert(
                 self._alert_manager,
-                kl_values=kl_values if kl_values else None,
-                psi_values=psi_values if psi_values else None,
+                kl_values=kl_values or None,
+                psi_values=psi_values or None,
             )
 
         return significant_results

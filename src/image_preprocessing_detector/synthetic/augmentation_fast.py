@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -42,7 +42,7 @@ except ImportError:
     A = None
 
 
-class AugmentationProfile(str, Enum):
+class AugmentationProfile(StrEnum):
     """Augmentation intensity profiles."""
 
     PRISTINE = "pristine"  # No augmentation

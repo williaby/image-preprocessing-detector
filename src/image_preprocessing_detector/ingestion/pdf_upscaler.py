@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 import time
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-class UpscaleAlgorithm(str, Enum):
+class UpscaleAlgorithm(StrEnum):
     """Supported upscaling algorithms."""
 
     BICUBIC = "bicubic"

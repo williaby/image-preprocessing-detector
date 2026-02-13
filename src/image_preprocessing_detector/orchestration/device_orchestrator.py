@@ -14,7 +14,7 @@ Sprint 4.1.1: Device Orchestrator Class (Phase 4)
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from image_preprocessing_detector.utils.device_probe import (
@@ -26,7 +26,7 @@ from image_preprocessing_detector.utils.log_config import get_logger
 logger = get_logger(__name__)
 
 
-class InferenceMode(str, Enum):
+class InferenceMode(StrEnum):
     """Execution mode for inference (affects device policy)."""
 
     PRODUCTION = "production"  # Strict: Block CPU teacher, enforce budgets

@@ -14,7 +14,7 @@ import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import wraps
 from typing import Any, TypeVar
 
@@ -108,7 +108,7 @@ except ImportError:
 # ============================================================================
 
 
-class MetricsNamespace(str, Enum):
+class MetricsNamespace(StrEnum):
     """Metric namespace prefixes for different deployments."""
 
     PRODUCTION = "imgprep_prod"

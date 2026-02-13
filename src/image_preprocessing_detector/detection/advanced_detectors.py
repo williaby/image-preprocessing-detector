@@ -719,7 +719,7 @@ def _classify_scripts(
     if aspect_variance > 0.5 and avg_density > 0.4:
         scripts.append(ScriptType.ARABIC)
 
-    return scripts if scripts else [ScriptType.UNKNOWN]
+    return scripts or [ScriptType.UNKNOWN]
 
 
 def detect_language_script(image: np.ndarray) -> LanguageResult:

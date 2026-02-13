@@ -10,7 +10,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ import yaml
 from image_preprocessing_detector.utils.datetime_compat import UTC
 
 
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     """Status of a benchmark run."""
 
     PENDING = "pending"

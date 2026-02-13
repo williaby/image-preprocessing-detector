@@ -19,11 +19,11 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TypedDict
 
 
-class TextScope(str, Enum):
+class TextScope(StrEnum):
     """Text content scope/granularity classification.
 
     Ordered from smallest to largest unit of text.
@@ -41,7 +41,7 @@ class TextScope(str, Enum):
     UNKNOWN = "unknown"  # Scope not determined
 
 
-class TextDensity(str, Enum):
+class TextDensity(StrEnum):
     """Text density classification based on text-to-image ratio."""
 
     SPARSE = "sparse"  # < 10% text coverage
@@ -51,7 +51,7 @@ class TextDensity(str, Enum):
     VERY_DENSE = "very_dense"  # > 75% text coverage
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     """Primary content type classification."""
 
     PRINTED = "printed"  # Machine-printed text

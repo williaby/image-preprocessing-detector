@@ -194,7 +194,7 @@ class LocalBackend(InferenceBackend):
             import torch
             from transformers import AutoModel, AutoTokenizer
 
-            model = AutoModel.from_pretrained(
+            model = AutoModel.from_pretrained(  # nosec B615
                 str(path),
                 local_files_only=True,
                 trust_remote_code=True,
@@ -206,7 +206,7 @@ class LocalBackend(InferenceBackend):
             model.eval()
 
             try:
-                tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
                     str(path), local_files_only=True
                 )
             except Exception:

@@ -16,11 +16,11 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TypedDict
 
 
-class PaperSizeStandard(str, Enum):
+class PaperSizeStandard(StrEnum):
     """Paper size standard/region."""
 
     ISO = "iso"  # International (A4, A3, etc.)
@@ -29,7 +29,7 @@ class PaperSizeStandard(str, Enum):
     CUSTOM = "custom"  # Non-standard size
 
 
-class PaperSize(str, Enum):
+class PaperSize(StrEnum):
     """Common paper sizes with standard names."""
 
     # ISO A-series (most common internationally)

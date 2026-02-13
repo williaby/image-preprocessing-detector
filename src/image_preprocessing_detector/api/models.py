@@ -7,13 +7,13 @@ Defines Pydantic models for:
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ProcessingStatus(str, Enum):
+class ProcessingStatus(StrEnum):
     """Status of a processing job."""
 
     PENDING = "pending"
@@ -22,7 +22,7 @@ class ProcessingStatus(str, Enum):
     FAILED = "failed"
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Structured error codes for API responses."""
 
     # Validation errors (400)

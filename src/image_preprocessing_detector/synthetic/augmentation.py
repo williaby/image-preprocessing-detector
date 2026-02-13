@@ -37,7 +37,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -98,7 +98,7 @@ except ImportError:
     logger.warning("Augraphy not available. Install with: uv sync --extra synthetic")
 
 
-class DegradationProfile(str, Enum):
+class DegradationProfile(StrEnum):
     """Predefined degradation intensity profiles."""
 
     PRISTINE = "pristine"

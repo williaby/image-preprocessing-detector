@@ -247,8 +247,8 @@ def main():
     # Save results
     output_file = Path("validation/handwriting_samples_analysis.json")
     output_data = {
-        "manual_samples": manual_results if manual_results else [],
-        "signatr6k_samples": signatr6k_data if signatr6k_data else {},
+        "manual_samples": manual_results or [],
+        "signatr6k_samples": signatr6k_data or {},
     }
 
     with open(output_file, "w") as f:

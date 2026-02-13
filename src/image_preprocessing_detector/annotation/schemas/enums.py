@@ -27,10 +27,10 @@ Example:
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class CaptureMethod(str, Enum):
+class CaptureMethod(StrEnum):
     """Capture method taxonomy (Axis 4 from detection-taxonomy.md).
 
     Describes how the original document was captured/digitized.
@@ -56,7 +56,7 @@ class CaptureMethod(str, Enum):
     UNKNOWN = "unknown"
 
 
-class DomainLevel1(str, Enum):
+class DomainLevel1(StrEnum):
     """Primary domain codes (Axis 1 from document-type-taxonomy.md).
 
     High-level document domain classification using 3-letter codes.
@@ -86,7 +86,7 @@ class DomainLevel1(str, Enum):
     UNKNOWN = "UNK"
 
 
-class ResolutionCategory(str, Enum):
+class ResolutionCategory(StrEnum):
     """Resolution category bins for image quality assessment.
 
     Categorizes images by their effective DPI/resolution.
@@ -104,7 +104,7 @@ class ResolutionCategory(str, Enum):
     HIGH = "high_>300"
 
 
-class EnrichmentTier(str, Enum):
+class EnrichmentTier(StrEnum):
     """Enrichment source tier for provenance tracking.
 
     Indicates the confidence/source of derived annotations.

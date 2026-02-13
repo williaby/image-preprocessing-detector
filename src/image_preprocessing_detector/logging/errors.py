@@ -10,7 +10,7 @@ Sprint 6.1.3: Provides:
 import os
 import traceback
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from image_preprocessing_detector.logging import get_correlation_id, get_logger
@@ -21,7 +21,7 @@ from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 # ============================================================================
 
 
-class ErrorCategory(str, Enum):
+class ErrorCategory(StrEnum):
     """High-level error categories."""
 
     VALIDATION = "validation"
@@ -34,7 +34,7 @@ class ErrorCategory(str, Enum):
     INTERNAL = "internal"
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Structured error codes for the application."""
 
     # Validation Errors (400)

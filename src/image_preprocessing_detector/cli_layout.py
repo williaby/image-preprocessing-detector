@@ -120,7 +120,7 @@ def _build_comparison_rows(
 
     for source_label in source_classes:
         result = taxonomy.convert(source_label, source_schema, target_schema)
-        target_label = result.target_label if result.target_label else "(unmapped)"
+        target_label = result.target_label or "(unmapped)"
         rows.append(
             {
                 "source_label": result.source_label,

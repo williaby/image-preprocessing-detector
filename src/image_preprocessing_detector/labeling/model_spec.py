@@ -17,7 +17,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +26,7 @@ import yaml
 from image_preprocessing_detector.utils.datetime_compat import UTC
 
 
-class ModelSource(str, Enum):
+class ModelSource(StrEnum):
     """Source location for model artifacts."""
 
     HUGGINGFACE = "huggingface"
@@ -34,7 +34,7 @@ class ModelSource(str, Enum):
     API = "api"
 
 
-class ModelVariant(str, Enum):
+class ModelVariant(StrEnum):
     """Model variant type."""
 
     BASE = "base"
@@ -44,7 +44,7 @@ class ModelVariant(str, Enum):
     MIXED = "mixed"  # Mixed precision quantization
 
 
-class RuntimeBackend(str, Enum):
+class RuntimeBackend(StrEnum):
     """Inference runtime backend."""
 
     TRANSFORMERS = "transformers"

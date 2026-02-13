@@ -19,7 +19,7 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TypeAlias
 
 # Type aliases for clarity (requires Python 3.10+, not 3.12+ type keyword)
@@ -28,7 +28,7 @@ XYXYBox: TypeAlias = tuple[float, float, float, float]  # noqa: UP040
 YOLOBox: TypeAlias = tuple[float, float, float, float]  # noqa: UP040
 
 
-class BBoxFormat(str, Enum):
+class BBoxFormat(StrEnum):
     """Supported bounding box formats."""
 
     COCO_XYWH = "coco_xywh"  # [x, y, width, height] - PROJECT STANDARD

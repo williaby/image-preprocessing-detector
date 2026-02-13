@@ -12,7 +12,7 @@ import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from image_preprocessing_detector.logging import (
@@ -25,7 +25,7 @@ from image_preprocessing_detector.logging import (
 # ============================================================================
 
 
-class GateDecision(str, Enum):
+class GateDecision(StrEnum):
     """Text gate decision outcomes."""
 
     TEXT_DETECTED = "text_detected"
@@ -34,7 +34,7 @@ class GateDecision(str, Enum):
     ERROR = "error"
 
 
-class ModelSelection(str, Enum):
+class ModelSelection(StrEnum):
     """Model selection outcomes."""
 
     STUDENT_ONLY = "student_only"
@@ -44,7 +44,7 @@ class ModelSelection(str, Enum):
     TEACHER_HIGH_RISK = "teacher_high_risk"
 
 
-class DeviceUsed(str, Enum):
+class DeviceUsed(StrEnum):
     """Device used for inference."""
 
     CPU = "cpu"

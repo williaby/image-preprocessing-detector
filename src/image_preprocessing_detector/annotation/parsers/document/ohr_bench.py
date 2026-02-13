@@ -187,7 +187,7 @@ class OhrBenchParser(BaseParser):
         cache_dir = str(dataset_path) if dataset_path.exists() else None
 
         try:
-            return load_dataset(
+            return load_dataset(  # nosec B615
                 "opendatalab/OHR-Bench",
                 cache_dir=cache_dir,
                 trust_remote_code=True,

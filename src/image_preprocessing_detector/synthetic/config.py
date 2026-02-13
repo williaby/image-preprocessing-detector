@@ -23,7 +23,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
@@ -32,7 +32,7 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
 )
 
 
-class ColorMode(str, Enum):
+class ColorMode(StrEnum):
     """Color mode for generated document images.
 
     Controls post-processing color conversion for training diversity.
@@ -56,7 +56,7 @@ COLOR_MODE_WEIGHTS: dict[ColorMode, float] = {
 }
 
 
-class LayoutType(str, Enum):
+class LayoutType(StrEnum):
     """Document layout types for synthetic generation.
 
     These map to Layer 2 StructureInfo.layout_type values.
@@ -96,7 +96,7 @@ class LayoutType(str, Enum):
     """Dense paragraphs with minimal margins."""
 
 
-class TextDensity(str, Enum):
+class TextDensity(StrEnum):
     """Text density levels for generated documents.
 
     Controls text length and coverage in generated images.

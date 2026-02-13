@@ -448,7 +448,7 @@ def _safe_str(value: Any) -> str | None:
     if value is None:
         return None
     result = str(value).strip()
-    return result if result else None
+    return result or None
 
 
 def _safe_bool(value: Any) -> bool | None:

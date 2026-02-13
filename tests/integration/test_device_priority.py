@@ -428,7 +428,7 @@ class TestDevicePriorityPipeline:
         assert student_scores.inference_time_ms > 0
         # Device should be reported correctly
         assert (
-            student_scores.device in [ml_detector.device]
+            student_scores.device == ml_detector.device
             or student_scores.device is not None
         )
 

@@ -21,7 +21,7 @@ import io
 import random
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import numpy as np
@@ -31,7 +31,7 @@ from image_preprocessing_detector.utils.log_config import get_logger
 logger = get_logger(__name__)
 
 
-class CircuitState(str, Enum):
+class CircuitState(StrEnum):
     """Circuit breaker states."""
 
     CLOSED = "closed"  # Normal operation

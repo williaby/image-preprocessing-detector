@@ -267,7 +267,7 @@ class RvlCdipParser(BaseParser):
             if image_id is not None:
                 break
 
-        return layout_detections if layout_detections else None
+        return layout_detections or None
 
     def _extract_ocr_text(
         self, filename: str, dataset_path: Path

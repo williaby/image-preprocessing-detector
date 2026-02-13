@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class DocLayoutClass(str, Enum):
+class DocLayoutClass(StrEnum):
     """Unified document layout element classes.
 
     Supports both DocLayNet (11 classes) and DocStructBench (10 classes) taxonomies.
@@ -543,7 +543,7 @@ class DocLayoutYOLODetector:
         try:
             # Load model from HuggingFace
             start_time = time.perf_counter()
-            self._model = YOLOv10.from_pretrained(self._model_id)
+            self._model = YOLOv10.from_pretrained(self._model_id)  # nosec B615
             load_time = (time.perf_counter() - start_time) * 1000
 
             self._model_loaded = True

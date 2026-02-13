@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CoarseBucket(str, Enum):
+class CoarseBucket(StrEnum):
     """Resolution quality coarse classification buckets."""
 
     NEEDS_MAJOR_UPSCALE = "needs_major_upscale"
