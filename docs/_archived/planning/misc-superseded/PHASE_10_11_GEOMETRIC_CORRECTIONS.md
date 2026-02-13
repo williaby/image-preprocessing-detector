@@ -679,7 +679,7 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 - **Sprint 10B.2.3**: OCR backend recommendation logic (3 hours)
   - Implement recommendation logic:
     - IF `pdf_type == born_digital` → "fast"
-    - ELIF `dqs_score < 0.5` (high quality scan) → "paddleocr"
+    - ELIF `dqs_score < 0.5` (high-quality scan) → "paddleocr"
     - ELSE → "advanced" (multi-engine fusion)
   - Implement Docling flag mapping:
     - `do_ocr = (pdf_type == image_only)`

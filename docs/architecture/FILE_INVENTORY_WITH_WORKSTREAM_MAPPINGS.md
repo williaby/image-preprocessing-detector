@@ -182,7 +182,7 @@ title: Complete File Inventory with Workstream Mappings
 
 ### Training Scripts (1,833 LOC) - LEGACY
 
-> **NOTE**: These ResNet teacher/student training scripts are legacy. The new two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). New training scripts are planned per [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). Training data will come from 10 purpose-built datasets (~503K total images) per [DATASET_DIVERSITY_REQUIREMENTS.md](../../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
+> **NOTE**: These ResNet teacher/student training scripts are legacy. The new two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). New training scripts are planned per [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). Training data will come from 10 purpose-built datasets (~503K total images) per [DATASET_DIVERSITY_REQUIREMENTS.md](../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|

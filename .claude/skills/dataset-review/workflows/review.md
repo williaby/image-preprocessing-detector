@@ -410,10 +410,10 @@ grep "{dataset}" docs/datasets/DATASET_PROCESSING_STATUS.md
 
 ```bash
 # ROLLBACK: Restore from checkpoint
-cp "$CHECKPOINT_DIR"/{dataset}.md docs/datasets/source/
-cp "$CHECKPOINT_DIR"/DATASET_QUICK_REFERENCE.md docs/datasets/
-cp "$CHECKPOINT_DIR"/DATASET_PROCESSING_STATUS.md docs/datasets/
-cp "$CHECKPOINT_DIR"/DATASET_NAMING_STANDARD.md docs/datasets/
+cp "$CHECKPOINT_DIR"/{dataset}.md docs/datasets/source/{dataset}.md
+cp "$CHECKPOINT_DIR"/DATASET_QUICK_REFERENCE.md docs/datasets/DATASET_QUICK_REFERENCE.md
+cp "$CHECKPOINT_DIR"/DATASET_PROCESSING_STATUS.md docs/datasets/DATASET_PROCESSING_STATUS.md
+cp "$CHECKPOINT_DIR"/DATASET_NAMING_STANDARD.md docs/datasets/DATASET_NAMING_STANDARD.md
 echo "Rolled back to checkpoint"
 ```
 
@@ -555,6 +555,8 @@ uv run python scripts/metadata_completeness_report.py
 ls -la tmp_cleanup/.checkpoint-{dataset}-*
 
 # Restore from specific checkpoint
-cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/{dataset}.md docs/datasets/source/
-cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/DATASET_*.md docs/datasets/
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/{dataset}.md docs/datasets/source/{dataset}.md
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/DATASET_QUICK_REFERENCE.md docs/datasets/DATASET_QUICK_REFERENCE.md
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/DATASET_PROCESSING_STATUS.md docs/datasets/DATASET_PROCESSING_STATUS.md
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/DATASET_NAMING_STANDARD.md docs/datasets/DATASET_NAMING_STANDARD.md
 ```

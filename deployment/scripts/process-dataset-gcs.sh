@@ -7,12 +7,6 @@
 # Example:
 #   ./process-dataset-gcs.sh pubtabnet 10000
 #   ./process-dataset-gcs.sh tablebank
-#
-# This script:
-#   1. Downloads dataset from GCS in batches
-#   2. Sends to Docling API for processing
-#   3. Uploads extracted text to GCS
-#   4. Cleans up local files
 
 set -euo pipefail
 
@@ -76,23 +70,23 @@ check_docling() {
 
 # List files in GCS
 list_gcs_files() {
-    gsutil ls -r "${GCS_BUCKET}/${GCS_PATH}/**" 2>/dev/null | \
+    gsutil ls -r "${GCS_BUCKET}/${GCS_PATH}/**" 2>&1 | \
         grep -E '\.(png|jpg|jpeg|pdf|tiff|tif)$' || true
 }
 
 # Download batch of files
 download_batch() {
-    local file_list="$1"
+    local batch_file="$1"
     local batch_num="$2"
 
-    log_info "Downloading batch $batch_num ($BATCH_SIZE files)..."
+    log_info "Downloading batch $batch_num..."
 
     # Create batch input directory
     local batch_dir="${INPUT_DIR}/batch_${batch_num}"
     mkdir -p "$batch_dir"
 
     # Download files in parallel (gsutil cp -I expects newline-delimited paths)
-    echo "$file_list" | gsutil -m cp -I "$batch_dir/"
+    gsutil -m cp -I "$batch_dir/" < "$batch_file"
 
     echo "$batch_dir"
 }
@@ -122,10 +116,10 @@ process_batch() {
         if curl -sf -X POST "${DOCLING_API}/v1/convert/file" \
             -F "file=@${file}" \
             -F "output_format=json" \
-            -o "$output_file" 2>/dev/null; then
-            ((processed+=1))
+            -o "$output_file"; then
+            processed=$((processed + 1))
         else
-            ((failed+=1))
+            failed=$((failed + 1))
             log_warn "Failed to process: $filename"
         fi
 
@@ -147,7 +141,7 @@ upload_results() {
     log_info "Uploading batch $batch_num results to GCS..."
 
     gsutil -m cp -r "$output_batch" \
-        "${GCS_BUCKET}/extracted_text/${DATASET}/" 2>/dev/null
+        "${GCS_BUCKET}/extracted_text/${DATASET}/"
 
     log_info "Uploaded to ${GCS_BUCKET}/extracted_text/${DATASET}/batch_${batch_num}/"
 }
@@ -173,12 +167,16 @@ main() {
     # Create directories
     mkdir -p "$INPUT_DIR" "$OUTPUT_DIR/${DATASET}"
 
-    # List all files
+    # List all files to a temp file (avoids loading entire listing into memory)
     log_info "Listing files in GCS..."
-    local all_files
-    all_files=$(list_gcs_files)
+    local file_list
+    file_list=$(mktemp)
+    trap 'rm -f "$file_list" "${file_list}".batch_*' EXIT
+
+    list_gcs_files > "$file_list"
+
     local total_files
-    total_files=$(echo "$all_files" | wc -l)
+    total_files=$(wc -l < "$file_list")
 
     if [[ $total_files -eq 0 ]]; then
         log_error "No image files found in ${GCS_BUCKET}/${GCS_PATH}"
@@ -191,16 +189,21 @@ main() {
     local num_batches=$(( (total_files + BATCH_SIZE - 1) / BATCH_SIZE ))
     log_info "Will process in $num_batches batches"
 
-    # Process in batches
-    local batch_num=1
-    while IFS= read -r batch_files; do
-        [[ -z "$batch_files" ]] && continue
+    # Split file list into batch files (preserves newline-delimited format)
+    split -l "$BATCH_SIZE" -d --additional-suffix=".txt" "$file_list" "${file_list}.batch_"
 
-        log_info "=== Batch $batch_num of $num_batches ==="
+    # Process each batch file
+    local batch_num=1
+    for batch_file in "${file_list}".batch_*; do
+        [[ -f "$batch_file" ]] || continue
+
+        local batch_count
+        batch_count=$(wc -l < "$batch_file")
+        log_info "=== Batch $batch_num of $num_batches ($batch_count files) ==="
 
         # Download
         local batch_dir
-        batch_dir=$(download_batch "$batch_files" "$batch_num")
+        batch_dir=$(download_batch "$batch_file" "$batch_num")
 
         # Process
         local output_batch
@@ -212,12 +215,8 @@ main() {
         # Cleanup
         cleanup_batch "$batch_dir" "$output_batch"
 
-        ((batch_num+=1))
-
-    done < <(echo "$all_files" | awk -v bs="$BATCH_SIZE" '{
-        lines = lines ? lines "\n" $0 : $0; count++
-        if (count >= bs) { print lines; lines=""; count=0 }
-    } END { if (lines) print lines }')
+        batch_num=$((batch_num + 1))
+    done
 
     log_info "=== Dataset $DATASET processing complete ==="
     log_info "Results at: ${GCS_BUCKET}/extracted_text/${DATASET}/"

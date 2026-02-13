@@ -50,18 +50,22 @@ fi
 
 # Step 2: Create directories
 log_info "Creating directories..."
-ssh "$DOCKER_HOST" "sudo mkdir -p /data/docling/{input,output,secrets,scripts} && sudo chown -R byron:byron /data/docling"
+# Extract username from DOCKER_HOST for chown (supports user@host format)
+REMOTE_USER="${DOCKER_HOST%%@*}"
+ssh "$DOCKER_HOST" "sudo mkdir -p /data/docling/{input,output,secrets,scripts} && sudo chown -R ${REMOTE_USER}:${REMOTE_USER} /data/docling"
 
 # Step 3: Copy service account credentials
 log_info "Setting up GCS credentials..."
-if [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
-    scp ~/.config/gcloud/application_default_credentials.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
-    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
-    log_info "Copied application default credentials"
-elif [[ -f ~/gcs-service-account.json ]]; then
+if [[ -f ~/gcs-service-account.json ]]; then
     scp ~/gcs-service-account.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
     ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
     log_info "Copied service account credentials"
+elif [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
+    log_warn "Using application default credentials (ADC)."
+    log_warn "ADC may contain broad user-scoped tokens. Prefer a dedicated service account key."
+    scp ~/.config/gcloud/application_default_credentials.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
+    log_info "Copied application default credentials"
 else
     log_warn "No GCS credentials found locally"
     log_warn "Please copy your service account JSON to:"

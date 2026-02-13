@@ -73,6 +73,22 @@ This skill invokes the `dataset-catalog-agent` defined in `.claude/agents/datase
 - **Naming Standard**: docs/datasets/DATASET_NAMING_STANDARD.md
 - **Layer 2 Schema**: docs/schema/layer2_enrichment.schema.json
 
+## Cleanup
+
+After a successful review, remove temporary artifacts:
+
+```bash
+# Remove gap analysis and research notes
+rm -f tmp_cleanup/.tmp-{dataset}-gap-analysis.md
+rm -f tmp_cleanup/.tmp-{dataset}-research.md
+
+# Remove checkpoint once cross-file consistency verified
+rm -rf tmp_cleanup/.checkpoint-{dataset}-*
+```
+
+Checkpoint directories should only be kept if the review is incomplete or if
+rollback may be needed.
+
 ## Success Criteria
 
 - All template sections populated or appropriately marked
@@ -80,3 +96,4 @@ This skill invokes the `dataset-catalog-agent` defined in `.claude/agents/datase
 - Text content handled OR blocker documented
 - Cross-file counts and statuses consistent
 - Quality rating assigned: Complete, Partial, or Stub
+- Temporary artifacts cleaned up (gap analysis, research notes, checkpoints)

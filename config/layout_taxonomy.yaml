@@ -301,35 +301,44 @@ schemas:
 # one of the schema class_mappings above. Aliases are resolved BEFORE
 # schema lookup so downstream code only sees normalized labels.
 aliases:
-  # List-item variants
+  # Aliases map variant spellings -> the exact native label used in a
+  # schema's class_mapping above.  The resolved label is then looked up
+  # in the appropriate schema to reach the canonical class.
+  #
+  # Self-referential entries (e.g. "caption" -> "caption") are included
+  # intentionally so callers can normalise ANY casing through the alias
+  # table without first checking whether the input is already a valid
+  # native label.
+
+  # List-item variants -> DocLayNet native label
   "list-item": "List-item"
-  "list_item": "list_item"
+  "list_item": "list_item"       # Docling native label (underscore form)
   "listitem": "List-item"
   "ListItem": "List-item"
   "list item": "List-item"
 
   # Page-footer variants
   "page-footer": "Page-footer"
-  "page_footer": "page_footer"
+  "page_footer": "page_footer"   # Docling native label
   "pagefooter": "Page-footer"
-  "PageFooter": "PageFooter"
+  "PageFooter": "PageFooter"     # D4LA native label
   "page footer": "Page-footer"
 
   # Page-header variants
   "page-header": "Page-header"
-  "page_header": "page_header"
+  "page_header": "page_header"   # Docling native label
   "pageheader": "Page-header"
-  "PageHeader": "PageHeader"
+  "PageHeader": "PageHeader"     # D4LA native label
   "page header": "Page-header"
 
   # Section-header variants
   "section-header": "Section-header"
-  "section_header": "section_header"
+  "section_header": "section_header"  # Docling native label
   "sectionheader": "Section-header"
   "SectionHeader": "Section-header"
   "section header": "Section-header"
 
-  # Caption variants
+  # Caption variants (lowercase = Docling, Title-case = DocLayNet)
   "caption": "caption"
   "CAPTION": "Caption"
 
@@ -345,7 +354,7 @@ aliases:
   "picture": "picture"
   "PICTURE": "Picture"
 
-  # Table variants (lowercase -> case-sensitive schema label)
+  # Table variants
   "table": "table"
   "TABLE": "Table"
 

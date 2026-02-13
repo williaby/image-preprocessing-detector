@@ -243,10 +243,10 @@ allowed:
   - training_data
   - device_orchestration
   - state_machine
+  - state_machines
   - error_handling
   - model_registry
   - inventory
-  - metadata
   - improvement_plan
   - action_items
   - template
@@ -259,24 +259,28 @@ allowed:
   - retraining
   - layout_fusion
   - dociq
-  - diqa_5000
   - lifecycle
-  - state_machines
   - contract
   - api
   - root_cause_analysis
   - redesign
-  - quick_reference
   - synthetic_generation
   - monitoring_drift
+
+  # Data & Datasets (continued)
   - enrichment
   - domain_classification
   - metadata_enrichment
-  - openrouter
+  - metadata
   - catalog
   - naming
   - tracking
   - status
   - processing
   - status_tracking
+  - diqa_5000
+  - quick_reference
   - ensemble
+
+  # External Services & Integrations
+  - openrouter

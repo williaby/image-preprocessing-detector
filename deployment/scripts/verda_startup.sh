@@ -25,7 +25,7 @@ cd /workspace
 python3 -m venv /workspace/venv
 source /workspace/venv/bin/activate
 
-# Install PyTorch with CUDA 12.4 support
+# Install PyTorch with CUDA 12.4 support (cu124 = CUDA 12.4)
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 
