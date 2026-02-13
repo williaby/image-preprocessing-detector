@@ -78,6 +78,9 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 # KNOWN ISSUE MITIGATIONS
 # ===================================================================
 
+# Page stem appearing in multiple KI contexts (figure, Dzongkha, signature)
+_AFS_PAGE_4 = "AFS_2024-25-2 4_p000"
+
 # --- KI-001: Docling layout label casing (CRITICAL) -----------------
 APPLY_KI_001_LAYOUT_CASING = True
 
@@ -116,7 +119,7 @@ VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset(
         # Government seals/emblems (cover pages, letters)
         "AFS_2024-25-2 1_p000",
         "AFS_2024-25-2 2_p000",
-        "AFS_2024-25-2 4_p000",
+        _AFS_PAGE_4,
         "AFS_2024-25-2 6_p000",
         "AFS_2024-25-2 14_p000",
         "Tax-Act-of-Bhutan-2021_1_p000",
@@ -152,7 +155,7 @@ DZONGKHA_PAGE_STEMS: frozenset[str] = frozenset(
         "AFS_2024-25-2 1_p000",
         "AFS_2024-25-2 2_p000",
         "AFS_2024-25-2 3_p000",
-        "AFS_2024-25-2 4_p000",
+        _AFS_PAGE_4,
         "AFS_2024-25-2 5_p000",
         "AFS_2024-25-2 6_p000",
         "AFS_2024-25-2 7_p000",
@@ -190,7 +193,7 @@ DZONGKHA_PAGE_STEMS: frozenset[str] = frozenset(
 # --- VLM Discovery: Signature detection ------------------------------
 SIGNATURE_PAGE_STEMS: frozenset[str] = frozenset(
     {
-        "AFS_2024-25-2 4_p000",  # Ministry of Finance formal letter
+        _AFS_PAGE_4,  # Ministry of Finance formal letter
     }
 )
 
