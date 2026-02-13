@@ -779,7 +779,7 @@ class TestCorrelationIDMiddleware:
         from image_preprocessing_detector.api.middleware import CorrelationIDMiddleware
 
         # Just verify the class exists and is importable
-        assert CorrelationIDMiddleware is not None
+        assert callable(CorrelationIDMiddleware)
 
 
 class TestMiddlewareIntegration:

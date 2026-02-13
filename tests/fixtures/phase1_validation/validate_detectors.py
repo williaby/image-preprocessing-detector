@@ -35,7 +35,7 @@ class ValidationMetrics:
     # For continuous values (angles, scores)
     mae: float | None = None  # Mean Absolute Error
     rmse: float | None = None  # Root Mean Square Error
-    predictions: list[dict] = None  # Detailed predictions
+    predictions: list[dict] | None = None  # Detailed predictions
 
     def __post_init__(self) -> None:
         """Initialize predictions list if not provided."""

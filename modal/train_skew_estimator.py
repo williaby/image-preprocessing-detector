@@ -69,6 +69,9 @@ gcs_secret = modal.Secret.from_name("gcs-credentials")
 GCS_BUCKET = "image_detection_b"
 GCS_TAR_BLOB = "skew_training.tar"
 
+# Common file name constants (S1192: avoid duplicate string literals)
+LABELS_FILE = "labels.json"
+
 training_image = modal.Image.debian_slim(python_version="3.12").pip_install(
     "torch==2.5.1",
     "torchvision==0.20.1",
@@ -164,7 +167,7 @@ def build_skew_dataset(
 
     split_dir = Path(data_dir) / split
     images_dir = split_dir / "images"
-    labels_path = split_dir / "labels.json"
+    labels_path = split_dir / LABELS_FILE
 
     with labels_path.open() as f:
         all_labels = json.load(f)
@@ -328,7 +331,7 @@ def _auto_batch_size(backbone: str, input_size: int) -> int:
 def _benchmark_cpu_inference(
     model: torch.nn.Module,
     config: TrainingConfig,
-    run_id: str,
+    _run_id: str,
 ) -> dict[str, float]:
     """Time CPU inference for the trained model.
 
@@ -452,7 +455,7 @@ def train(
         _download_gcs_individual(data_dir, test_mode=True)
     else:
         data_dir = "/tmp/skew_training"  # nosec B108
-        labels_check = Path(data_dir) / "train" / "labels.json"
+        labels_check = Path(data_dir) / "train" / LABELS_FILE
 
         if not labels_check.exists():
             # Extract from Volume-cached tar (single 2GB file)
@@ -899,12 +902,12 @@ def _run_test_evaluation(
     model: torch.nn.Module,
     data_dir: str,
     config: TrainingConfig,
-    bin_centers: list[float],
-    bin_half_widths: list[float],
+    _bin_centers: list[float],
+    _bin_half_widths: list[float],
     bin_centers_tensor: torch.Tensor,
     bin_half_widths_tensor: torch.Tensor,
     device: torch.device,
-    run_id: str,
+    _run_id: str,
 ) -> dict[str, Any]:
     """Run test set evaluation using best checkpoint.
 
@@ -914,7 +917,7 @@ def _run_test_evaluation(
     from torch.utils.data import DataLoader
 
     test_dir = Path(data_dir) / "test"
-    if not (test_dir / "labels.json").exists():
+    if not (test_dir / LABELS_FILE).exists():
         print("\nNo test set found, skipping test evaluation.")
         return {}
 
@@ -1075,7 +1078,7 @@ def _download_gcs_individual(data_dir: str, test_mode: bool = False) -> None:
 
         # Download labels.json
         labels_blob = bucket.blob(f"{split_prefix}labels.json")
-        labels_local = local_split / "labels.json"
+        labels_local = local_split / LABELS_FILE
         if labels_blob.exists():
             labels_blob.download_to_filename(str(labels_local))
             print(f"  Downloaded {split}/labels.json")

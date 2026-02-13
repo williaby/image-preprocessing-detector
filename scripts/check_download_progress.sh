@@ -28,7 +28,7 @@ fi
 
 # Check latest log file
 LATEST_LOG=$(find logs -maxdepth 1 -name "dataset_download_*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-if [ -n "$LATEST_LOG" ]; then
+if [[ -n "$LATEST_LOG" ]]; then
     echo -e "${BLUE}Latest log file:${NC} $LATEST_LOG"
     echo ""
     echo -e "${BLUE}Last 20 lines:${NC}"
@@ -54,7 +54,7 @@ for dataset in "${DATASETS[@]}"; do
     IFS='|' read -r path name expected_size <<< "$dataset"
     full_path="${PROJECT_ROOT}/${path}"
 
-    if [ -d "$full_path" ]; then
+    if [[ -d "$full_path" ]]; then
         current_size=$(du -sh "$full_path" 2>/dev/null | cut -f1 || echo "0")
         file_count=$(find "$full_path" -type f 2>/dev/null | wc -l)
         echo -e "${GREEN}✓${NC} ${name}: ${current_size} / ${expected_size} (${file_count} files)"

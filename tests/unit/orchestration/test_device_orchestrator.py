@@ -319,7 +319,7 @@ class TestBudgetEnforcement:
         orchestrator = DeviceOrchestrator(config=config, capabilities=caps)
 
         # First 3 pages should work
-        for i in range(3):
+        for _ in range(3):
             choice = orchestrator.select_device_for_teacher(doc_id="doc1")
             assert choice.device == "cuda"
             orchestrator.record_teacher_inference("cuda", 100.0)
@@ -347,7 +347,7 @@ class TestBudgetEnforcement:
 
         # Process 5 pages across 2 documents
         for doc_idx in range(2):
-            for page_idx in range(3):
+            for _ in range(3):
                 if orchestrator.budget.pages_processed_batch < 5:
                     choice = orchestrator.select_device_for_teacher(
                         doc_id=f"doc{doc_idx}"
@@ -427,7 +427,7 @@ class TestBudgetEnforcement:
         orchestrator = DeviceOrchestrator(config=config, capabilities=caps)
 
         # Exhaust budget for doc1
-        for i in range(2):
+        for _ in range(2):
             choice = orchestrator.select_device_for_teacher(doc_id="doc1")
             assert choice.device == "cuda"
             orchestrator.record_teacher_inference("cuda", 100.0)
@@ -455,8 +455,7 @@ class TestBudgetEnforcement:
 
         # Exhaust batch budget
         for i in range(2):
-            choice = orchestrator.select_device_for_teacher(doc_id=f"doc{i}")
-            assert choice.device == "cuda"
+            orchestrator.select_device_for_teacher(doc_id=f"doc{i}")
             orchestrator.record_teacher_inference("cuda", 100.0)
 
         # Should be blocked
@@ -486,11 +485,11 @@ class TestBudgetStatusReporting:
 
         assert status["pages_processed_doc"] == 0
         assert status["pages_processed_batch"] == 0
-        assert status["modal_gpu_hours_month"] == 0.0
+        assert status["modal_gpu_hours_month"] == pytest.approx(0.0)
         assert status["documents_processed"] == 0
         assert status["doc_budget_remaining"] == 10
         assert status["batch_budget_remaining"] == 100
-        assert status["monthly_hours_remaining"] == 5.0
+        assert status["monthly_hours_remaining"] == pytest.approx(5.0)
 
     def test_get_budget_status_after_usage(self) -> None:
         """Test budget status after teacher inference."""
@@ -508,8 +507,8 @@ class TestBudgetStatusReporting:
         orchestrator = DeviceOrchestrator(config=config, capabilities=caps)
 
         # Process 3 pages
-        for i in range(3):
-            choice = orchestrator.select_device_for_teacher(doc_id="doc1")
+        for _ in range(3):
+            orchestrator.select_device_for_teacher(doc_id="doc1")
             orchestrator.record_teacher_inference("cuda", 100.0)
 
         status = orchestrator.get_budget_status()

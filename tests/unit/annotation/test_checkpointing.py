@@ -164,7 +164,7 @@ class TestCheckpointManager:
     def test_creates_checkpoint_dir(self, tmp_path: Path) -> None:
         """Test checkpoint directory is created."""
         dir_path = tmp_path / "nested" / "checkpoints"
-        manager = CheckpointManager(dir_path)
+        CheckpointManager(dir_path)
 
         assert dir_path.exists()
         assert dir_path.is_dir()
@@ -249,7 +249,7 @@ class TestCheckpointManager:
 
         # Get checkpoint file path
         checkpoint_file = checkpoint_dir / "test.checkpoint.json"
-        original_content = checkpoint_file.read_text()
+        checkpoint_file.read_text()
 
         # Save second checkpoint
         manager.save_checkpoint("test", 200, "path2.jpg", "hash2")
@@ -465,7 +465,7 @@ class TestBatchCheckpointManager:
         assert progress["has_checkpoint"]
         assert progress["batch_idx"] == 5
         assert progress["total_batches"] == 10
-        assert progress["percentage"] == 50.0
+        assert progress["percentage"] == pytest.approx(50.0)
 
     def test_get_progress_no_checkpoint(
         self, batch_manager: BatchCheckpointManager

@@ -30,6 +30,9 @@ if TYPE_CHECKING:
         LayoutTaxonomy,
     )
 
+# Common string constants (S1192: avoid duplicate string literals)
+UNMAPPED_LABEL = "(unmapped)"
+
 
 def _get_taxonomy() -> LayoutTaxonomy:
     """Import and return the LayoutTaxonomy singleton.
@@ -120,7 +123,7 @@ def _build_comparison_rows(
 
     for source_label in source_classes:
         result = taxonomy.convert(source_label, source_schema, target_schema)
-        target_label = result.target_label or "(unmapped)"
+        target_label = result.target_label or UNMAPPED_LABEL
         rows.append(
             {
                 "source_label": result.source_label,
@@ -200,7 +203,7 @@ def _format_table(
 
     # Coverage: how many target classes are reachable
     reachable = {
-        str(r["target_label"]) for r in rows if str(r["target_label"]) != "(unmapped)"
+        str(r["target_label"]) for r in rows if str(r["target_label"]) != UNMAPPED_LABEL
     }
     lines.append(
         f"{target_schema} coverage: {len(reachable)}/{target_count} classes reachable"
@@ -231,7 +234,7 @@ def _format_json(
     lossless = sum(1 for r in rows if not r["is_lossy"])
     lossy = sum(1 for r in rows if r["is_lossy"])
     reachable = {
-        str(r["target_label"]) for r in rows if str(r["target_label"]) != "(unmapped)"
+        str(r["target_label"]) for r in rows if str(r["target_label"]) != UNMAPPED_LABEL
     }
 
     output = {

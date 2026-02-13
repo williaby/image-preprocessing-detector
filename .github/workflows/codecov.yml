@@ -9,7 +9,8 @@ on:
     types:
       - completed
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   upload-coverage:

@@ -652,7 +652,7 @@ def apply_swap_repairs(
 
 def _is_uniquely_needed(
     rec: ImageRecord,
-    selected: list[ImageRecord],
+    _selected: list[ImageRecord],
     state: DiversityState,
 ) -> bool:
     """Check if removing *rec* would create a new diversity deficit.

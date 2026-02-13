@@ -190,7 +190,6 @@ def main():
         for label in NUMERIC_TO_LABEL.values():
             if label.script_name == script_name:
                 code = label.script_code
-                lang = label.language_code
                 break
         pct = 100 * count / total
         print(f"{script_name:<15} {code:<6} {count:<8} {pct:>5.1f}%")

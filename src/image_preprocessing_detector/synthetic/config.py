@@ -353,6 +353,10 @@ class ScriptConfig:
             return None
 
 
+# Common font name constants (S1192: avoid duplicate string literals)
+NOTO_SERIF_FONT = "NotoSerif-Regular.ttf"
+NOTO_SANS_FONT = "NotoSans-Regular.ttf"
+
 # =============================================================================
 # Script Configurations (27 scripts)
 # =============================================================================
@@ -365,7 +369,7 @@ SCRIPT_CONFIGS: dict[str, ScriptConfig] = {
         code="Latn",
         name="Latin",
         direction="ltr",
-        fonts=["NotoSans-Regular.ttf", "NotoSerif-Regular.ttf"],
+        fonts=[NOTO_SANS_FONT, NOTO_SERIF_FONT],
         openlid_languages=[
             # Major European languages
             "eng_Latn",  # English
@@ -746,7 +750,7 @@ SCRIPT_CONFIGS: dict[str, ScriptConfig] = {
         code="Cyrl",
         name="Cyrillic",
         direction="ltr",
-        fonts=["NotoSans-Regular.ttf", "NotoSerif-Regular.ttf"],
+        fonts=[NOTO_SANS_FONT, NOTO_SERIF_FONT],
         openlid_languages=[
             "rus_Cyrl",  # Russian
             "ukr_Cyrl",  # Ukrainian
@@ -767,7 +771,7 @@ SCRIPT_CONFIGS: dict[str, ScriptConfig] = {
         code="Grek",
         name="Greek",
         direction="ltr",
-        fonts=["NotoSans-Regular.ttf", "NotoSerif-Regular.ttf"],
+        fonts=[NOTO_SANS_FONT, NOTO_SERIF_FONT],
         openlid_languages=["ell_Grek"],  # Greek
         script_family=ScriptFamily.OTHER,
     ),

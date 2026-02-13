@@ -17,9 +17,12 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 BUNDLED_FONTS="$REPO_ROOT/fonts/synthetic-gen"
 USER_FONTS="$HOME/.local/share/fonts/synthetic-gen"
 
-echo "=============================================="
+# Constant for separator line (avoid duplication)
+SEPARATOR_LINE="=============================================="
+
+echo "$SEPARATOR_LINE"
 echo "Font Setup for Synthetic Document Generation"
-echo "=============================================="
+echo "$SEPARATOR_LINE"
 echo ""
 
 # Check if running with sudo capability
@@ -29,6 +32,7 @@ check_sudo() {
         echo "Please run with sudo or enter password when prompted."
         echo ""
     fi
+    return 0
 }
 
 # Step 1: Install Noto font packages
@@ -58,6 +62,7 @@ install_noto_fonts() {
     sudo apt-get install -y "${NOTO_PACKAGES[@]}"
     echo "  ✓ Noto fonts installed"
     echo ""
+    return 0
 }
 
 # Step 2: Install additional regional font packages
@@ -120,6 +125,7 @@ install_regional_fonts() {
     }
     echo "  ✓ Regional fonts installed"
     echo ""
+    return 0
 }
 
 # Step 3: Copy bundled fonts (handwriting, mimicry, SIL)
@@ -127,7 +133,7 @@ copy_bundled_fonts() {
     echo "=== Step 3: Copying Bundled Fonts ==="
     echo ""
 
-    if [ -d "$BUNDLED_FONTS" ]; then
+    if [[ -d "$BUNDLED_FONTS" ]]; then
         mkdir -p "$USER_FONTS"
         cp -n "$BUNDLED_FONTS"/*.ttf "$USER_FONTS/" 2>/dev/null || true
         cp -n "$BUNDLED_FONTS"/*.otf "$USER_FONTS/" 2>/dev/null || true
@@ -138,6 +144,7 @@ copy_bundled_fonts() {
         echo "  Skipping bundled font copy"
     fi
     echo ""
+    return 0
 }
 
 # Step 4: Update font cache
@@ -148,6 +155,7 @@ update_font_cache() {
     fc-cache -fv
     echo "  ✓ Font cache updated"
     echo ""
+    return 0
 }
 
 # Step 5: Verify installation
@@ -208,6 +216,7 @@ verify_installation() {
     done
 
     echo ""
+    return 0
 }
 
 # Main execution
@@ -219,15 +228,16 @@ main() {
     update_font_cache
     verify_installation
 
-    echo "=============================================="
+    echo "$SEPARATOR_LINE"
     echo "Font Setup Complete!"
-    echo "=============================================="
+    echo "$SEPARATOR_LINE"
     echo ""
     echo "Fonts installed to:"
     echo "  - System: /usr/share/fonts/"
     echo "  - User:   $USER_FONTS"
     echo ""
     echo "The FontManager will automatically discover all fonts."
+    return 0
 }
 
 main "$@"

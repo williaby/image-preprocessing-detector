@@ -369,7 +369,7 @@ def compute_cross_source_agreement(
                 non_null = [v for v in source_values.values() if v is not None]
                 if len(non_null) >= 2:
                     total_comparisons += 1
-                    if len(set(str(v) for v in non_null)) == 1:
+                    if len({str(v) for v in non_null}) == 1:
                         agreements += 1
 
         if total_comparisons == 0:
@@ -599,7 +599,7 @@ def score_dataset(
         "computed_at": datetime.now(UTC).isoformat(),
         "scorecard_config_version": config.get("version", "unknown"),
         "artifacts_found": artifacts_found,
-        "dimension_scores": {k: v for k, v in dimension_scores.items()},
+        "dimension_scores": dict(dimension_scores.items()),
         **overall,
     }
 

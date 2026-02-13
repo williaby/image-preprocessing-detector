@@ -428,7 +428,7 @@ class TestHelperFunctions:
             (300, 100, 500, 100),  # midpoint (400, 100)
             (600, 120, 700, 120),  # midpoint (650, 120)
         ]
-        poly_score, coeff, _residual = _compute_polynomial_fit(lines, 800)
+        _, coeff, _residual = _compute_polynomial_fit(lines, 800)
         # Non-zero quadratic coefficient for parabolic arrangement
         assert coeff != pytest.approx(0.0)
 

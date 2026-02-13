@@ -67,6 +67,9 @@ GCS_BUCKET = "image_detection_b"
 GCS_PREFIX = "datasets/diqa-5000-original"
 DIQA5000_SPLITS = ["train", "val", "test"]
 
+# Common file name constants (S1192: avoid duplicate string literals)
+BEST_MODEL_FILE = "siglip2_iqa_best.pt"
+
 # Docker image with all dependencies
 training_image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -931,7 +934,7 @@ def train_siglip2_iqa(
                 "config": config.to_dict(),
                 "metrics": val_metrics,
             }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
+            torch.save(best_checkpoint, output_dir / BEST_MODEL_FILE)
             print("  ✓ New best VQualA! Saved checkpoint.")
             patience_counter = 0
         else:
@@ -956,6 +959,7 @@ def train_siglip2_iqa(
             },
             {"params": model.heads.parameters(), "lr": config.phase2_lr},
         ],
+        lr=config.phase2_lr,
         weight_decay=config.weight_decay,
     )
 
@@ -1057,7 +1061,7 @@ def train_siglip2_iqa(
                 "config": config.to_dict(),
                 "metrics": val_metrics,
             }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
+            torch.save(best_checkpoint, output_dir / BEST_MODEL_FILE)
             print("  ✓ New best VQualA! Saved checkpoint.")
             patience_counter = 0
         else:
@@ -1103,7 +1107,7 @@ def train_siglip2_iqa(
         print("=" * 70)
 
         # Load best model
-        best_state = torch.load(output_dir / "siglip2_iqa_best.pt", weights_only=True)
+        best_state = torch.load(output_dir / BEST_MODEL_FILE, weights_only=True)
         model.load_state_dict(best_state["model_state_dict"])
         model.eval()
 
@@ -1164,7 +1168,7 @@ def train_siglip2_iqa(
         # Update best checkpoint with calibration
         best_checkpoint["model_state_dict"] = model.state_dict()
         best_checkpoint["calibration_temps"] = calibration_temps
-        torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
+        torch.save(best_checkpoint, output_dir / BEST_MODEL_FILE)
         print("  ✓ Saved calibrated model")
 
     # ========================================================================
@@ -1176,7 +1180,7 @@ def train_siglip2_iqa(
     print("=" * 70)
 
     # Load best model
-    best_state = torch.load(output_dir / "siglip2_iqa_best.pt", weights_only=True)
+    best_state = torch.load(output_dir / BEST_MODEL_FILE, weights_only=True)
     model.load_state_dict(best_state["model_state_dict"])
 
     test_loader = DataLoader(
@@ -1220,7 +1224,7 @@ def train_siglip2_iqa(
         },
         "target_achieved": target_achieved,
         "history": history,
-        "checkpoint_path": str(output_dir / "siglip2_iqa_best.pt"),
+        "checkpoint_path": str(output_dir / BEST_MODEL_FILE),
         "timestamp": datetime.now().isoformat(),
     }
 

@@ -39,7 +39,8 @@ on:
       - main
       - develop
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}

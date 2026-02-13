@@ -393,7 +393,7 @@ def main():
     if actual_count < expected_count:
         print(f"\n⚠️  Warning: Missing {expected_count - actual_count} datasets")
         # Find missing datasets
-        created_names = set(f.replace(".md", "") for f in created_files)
+        created_names = {f.replace(".md", "") for f in created_files}
         missing = set(CANONICAL_NAMES.keys()) - created_names
         if missing:
             print(f"  Missing: {', '.join(sorted(missing))}")

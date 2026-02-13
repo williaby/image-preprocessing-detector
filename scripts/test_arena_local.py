@@ -44,7 +44,10 @@ import time
 from pathlib import Path
 
 import numpy as np
+import pytest
 from PIL import Image
+
+rng = np.random.default_rng()
 
 
 def check_dependencies() -> bool:
@@ -100,16 +103,16 @@ def create_test_images(
         List of (image_array, labels) tuples.
     """
     images = []
-    np.random.seed(42)
+    rng_seeded = np.random.default_rng(42)
 
-    for i in range(num_images):
+    for _ in range(num_images):
         # Create varied test images
         img = np.zeros((224, 224, 3), dtype=np.uint8)
 
         # Vary quality characteristics
-        noise_level = np.random.uniform(0.1, 0.5)
-        brightness = np.random.uniform(0.3, 0.9)
-        sharpness_factor = np.random.uniform(0.3, 0.9)
+        noise_level = rng_seeded.uniform(0.1, 0.5)
+        brightness = rng_seeded.uniform(0.3, 0.9)
+        sharpness_factor = rng_seeded.uniform(0.3, 0.9)
 
         # Base image with gradient
         for y in range(224):
@@ -121,7 +124,7 @@ def create_test_images(
                 ]
 
         # Add noise
-        noise = np.random.normal(0, noise_level * 50, img.shape).astype(np.int16)
+        noise = rng_seeded.normal(0, noise_level * 50, img.shape).astype(np.int16)
         img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
         # Ground truth labels (simulated)
@@ -159,7 +162,7 @@ def test_schemas() -> bool:
             image_id="test_001",
             inference_time_ms=25.5,
         )
-        assert pred.overall == 0.85
+        assert pred.overall == pytest.approx(0.85)
         print("  DIQAPrediction: OK")
 
         # Test BenchmarkResult
@@ -332,9 +335,9 @@ def test_inference_backend_factory() -> bool:
         for source in ["huggingface", "local", "api", "modal"]:
             try:
                 if source == "api":
-                    backend = create_backend(source, provider="openai")
+                    create_backend(source, provider="openai")
                 else:
-                    backend = create_backend(source)
+                    create_backend(source)
                 print(f"  {source} backend: created")
             except Exception as e:
                 print(f"  {source} backend: {e}")
@@ -364,7 +367,7 @@ def test_modal_client() -> bool:
         print(f"  Client initialized: app={client.app_name}")
 
         # Test mock prediction
-        test_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        test_image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         request = ArenaInferenceRequest(
             image=test_image,
             prompt="Rate this document quality",
@@ -380,7 +383,7 @@ def test_modal_client() -> bool:
         # Test batch prediction
         batch_requests = [
             ArenaInferenceRequest(
-                image=np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8),
+                image=rng.integers(0, 255, (224, 224, 3), dtype=np.uint8),
                 prompt="Rate quality",
                 request_id=f"batch-{i}",
             )
@@ -445,7 +448,7 @@ def test_modal_backend() -> bool:
         print("  Backend loaded")
 
         # Test single prediction
-        test_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        test_image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         prediction = backend.predict(test_image)
         assert 0 <= prediction.overall <= 1
         assert 0 <= prediction.sharpness <= 1
@@ -455,9 +458,7 @@ def test_modal_backend() -> bool:
         )
 
         # Test batch prediction
-        images = [
-            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8) for _ in range(4)
-        ]
+        images = [rng.integers(0, 255, (224, 224, 3), dtype=np.uint8) for _ in range(4)]
         predictions = backend.predict_batch(images)
         assert len(predictions) == 4
         print(f"  Batch predict: {len(predictions)} predictions")
@@ -559,7 +560,7 @@ def test_smolvlm_model_loading(device: str = "cuda", model_size: str = "256M") -
         # Test inference on a simple image
         print("  Running test inference...")
         test_image = Image.fromarray(
-            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+            rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         )
 
         # SmolVLM uses a simpler chat format
@@ -689,7 +690,7 @@ def test_qwen_vlm_loading(device: str = "cuda") -> bool:
         # Test inference
         print("  Running test inference...")
         test_image = Image.fromarray(
-            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+            rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
         )
 
         messages = [

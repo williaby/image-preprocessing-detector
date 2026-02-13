@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -245,7 +246,7 @@ def check_metadata(name: str, parquet_data: dict[str, Any] | None) -> dict[str, 
     result["field_coverage"] = ds_data["field_coverage"]
 
     for field in ["capture_method", "domain_level1", "enrichment_version"]:
-        if ds_data["field_coverage"].get(field, 0.0) == 0.0:
+        if math.isclose(ds_data["field_coverage"].get(field, 0.0), 0.0):
             result["critical_gaps"].append(field)
 
     tracked = ds_data["field_coverage"]
@@ -447,7 +448,9 @@ def _dimension_status(entry: dict[str, Any], dim: str) -> str:
 
     if dim == "documentation":
         score = data.get("documentation_score", 0)
-        return "Complete" if score >= 90 else ("Partial" if score >= 50 else "Missing")
+        if score >= 90:
+            return "Complete"
+        return "Partial" if score >= 50 else "Missing"
 
     if dim == "metadata":
         if data.get("error"):
@@ -474,9 +477,9 @@ def _dimension_status(entry: dict[str, Any], dim: str) -> str:
             ]
             if data.get(k)
         )
-        return (
-            "Complete" if present == 4 else ("Partial" if present >= 2 else "Missing")
-        )
+        if present == 4:
+            return "Complete"
+        return "Partial" if present >= 2 else "Missing"
 
     if dim == "aggregation":
         if not data.get("stats_file_exists"):

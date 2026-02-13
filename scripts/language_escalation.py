@@ -48,6 +48,10 @@ logger = logging.getLogger(__name__)
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 REVIEW_QUEUE_PATH = Path("/mnt/e/image_detection/metadata_registry/review_queue")
 
+# Common string constants (S1192: avoid duplicate string literals)
+GEMINI_PRO_MODEL = "google/gemini-2.5-pro"
+JPEG_MIME_TYPE = "image/jpeg"
+
 # Tier 1b: FREE vision models for initial image-based detection
 FREE_VISION_MODELS = [
     "qwen/qwen-2.5-vl-7b-instruct:free",  # Best: explicit multilingual text recognition
@@ -57,7 +61,7 @@ FREE_VISION_MODELS = [
 
 # Tier 2: PAID vision models for escalation when free tier uncertain
 PAID_VISION_MODELS = [
-    "google/gemini-2.5-pro",  # Best multilingual, 1M context
+    GEMINI_PRO_MODEL,  # Best multilingual, 1M context
     "qwen/qwen3-vl-235b-a22b-instruct",  # Strong vision-language
     "openai/gpt-5.1",  # Excellent vision understanding
 ]
@@ -193,7 +197,7 @@ class EscalationConfig:
     tier1b_confidence_threshold: float = 0.7  # Escalate to Tier 2 if below
 
     # Tier 2: PAID vision model settings (escalation)
-    paid_vision_model: str = "google/gemini-2.5-pro"
+    paid_vision_model: str = GEMINI_PRO_MODEL
     paid_fallback_models: list[str] = field(
         default_factory=lambda: PAID_VISION_MODELS[1:]
     )
@@ -347,13 +351,13 @@ def get_image_media_type(image_path: Path) -> str:
     """Determine MIME type from file extension."""
     suffix = image_path.suffix.lower()
     return {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
+        ".jpg": JPEG_MIME_TYPE,
+        ".jpeg": JPEG_MIME_TYPE,
         ".png": "image/png",
         ".gif": "image/gif",
         ".webp": "image/webp",
         ".bmp": "image/bmp",
-    }.get(suffix, "image/jpeg")
+    }.get(suffix, JPEG_MIME_TYPE)
 
 
 def detect_via_vision_llm(
@@ -449,7 +453,7 @@ def estimate_cost(model: str, usage: dict[str, int] | None) -> float:
 
     # Approximate pricing per 1K tokens (as of 2026)
     pricing = {
-        "google/gemini-2.5-pro": {"input": 0.00125, "output": 0.005},
+        GEMINI_PRO_MODEL: {"input": 0.00125, "output": 0.005},
         "qwen/qwen3-vl-235b-a22b-instruct": {"input": 0.001, "output": 0.003},
         "openai/gpt-5.1": {"input": 0.005, "output": 0.015},
     }
@@ -899,7 +903,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Test language detection escalation")
     parser.add_argument("image", type=Path, help="Image file to analyze")
-    parser.add_argument("--model", default="google/gemini-2.5-pro", help="Vision model")
+    parser.add_argument("--model", default=GEMINI_PRO_MODEL, help="Vision model")
     parser.add_argument(
         "--force-tier2", action="store_true", help="Force Tier 2 escalation"
     )

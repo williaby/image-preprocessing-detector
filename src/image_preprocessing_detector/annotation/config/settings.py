@@ -38,6 +38,11 @@ from typing import Any
 
 import yaml
 
+# Default path constants (S1192: avoid duplicate string literals)
+DEFAULT_BASE_DIR = "/mnt/e/image_detection"
+DEFAULT_REGISTRY_DIR = "/mnt/e/image_detection/metadata_registry"
+DEFAULT_CHECKPOINT_DIR = "/mnt/e/image_detection/metadata_registry/.checkpoints"
+
 
 @dataclass(frozen=True)
 class AnnotationSettings:
@@ -70,15 +75,9 @@ class AnnotationSettings:
     """
 
     # Paths
-    e_drive_root: Path = field(default_factory=lambda: Path("/mnt/e/image_detection"))
-    metadata_root: Path = field(
-        default_factory=lambda: Path("/mnt/e/image_detection/metadata_registry")
-    )
-    checkpoint_dir: Path = field(
-        default_factory=lambda: Path(
-            "/mnt/e/image_detection/metadata_registry/.checkpoints"
-        )
-    )
+    e_drive_root: Path = field(default_factory=lambda: Path(DEFAULT_BASE_DIR))
+    metadata_root: Path = field(default_factory=lambda: Path(DEFAULT_REGISTRY_DIR))
+    checkpoint_dir: Path = field(default_factory=lambda: Path(DEFAULT_CHECKPOINT_DIR))
 
     # Processing
     cache_size_limit: int = 10_000
@@ -136,13 +135,11 @@ class AnnotationSettings:
             return Path(val) if val else None
 
         return cls(
-            e_drive_root=get_path("E_DRIVE_ROOT", "/mnt/e/image_detection"),
-            metadata_root=get_path(
-                "METADATA_ROOT", "/mnt/e/image_detection/metadata_registry"
-            ),
+            e_drive_root=get_path("E_DRIVE_ROOT", DEFAULT_BASE_DIR),
+            metadata_root=get_path("METADATA_ROOT", DEFAULT_REGISTRY_DIR),
             checkpoint_dir=get_path(
                 "CHECKPOINT_DIR",
-                "/mnt/e/image_detection/metadata_registry/.checkpoints",
+                DEFAULT_CHECKPOINT_DIR,
             ),
             cache_size_limit=get_int("CACHE_SIZE", 10_000),
             batch_size=get_int("BATCH_SIZE", 100),
@@ -204,13 +201,11 @@ class AnnotationSettings:
             return Path(val) if val else None
 
         return cls(
-            e_drive_root=get_path("e_drive_root", "/mnt/e/image_detection"),
-            metadata_root=get_path(
-                "metadata_root", "/mnt/e/image_detection/metadata_registry"
-            ),
+            e_drive_root=get_path("e_drive_root", DEFAULT_BASE_DIR),
+            metadata_root=get_path("metadata_root", DEFAULT_REGISTRY_DIR),
             checkpoint_dir=get_path(
                 "checkpoint_dir",
-                "/mnt/e/image_detection/metadata_registry/.checkpoints",
+                DEFAULT_CHECKPOINT_DIR,
             ),
             cache_size_limit=config.get(
                 "cache_size_limit", config.get("cache_size", 10_000)

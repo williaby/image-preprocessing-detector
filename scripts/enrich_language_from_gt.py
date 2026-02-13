@@ -55,6 +55,9 @@ E_DRIVE_ROOT = Path("/mnt/e/image_detection")
 BASE_DATA = E_DRIVE_ROOT / "01_base_data"
 METADATA_REGISTRY = E_DRIVE_ROOT / "metadata_registry/json"
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+JSON_GLOB = "*.json"
+
 # Dataset configurations with ground truth text locations
 DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
     # === COCO-style annotations with text ===
@@ -489,7 +492,7 @@ def extract_text_funsd(annotation_dir: Path) -> dict[str, str]:
 
     image_texts: dict[str, str] = {}
 
-    for json_file in annotation_dir.glob("*.json"):
+    for json_file in annotation_dir.glob(JSON_GLOB):
         with open(json_file) as f:
             data = json.load(f)
 
@@ -683,7 +686,7 @@ def extract_text_fintabnet_dir(annotation_dir: Path) -> dict[str, str]:
     logger.info(f"Loading FinTabNet JSONs from {annotation_dir}")
 
     image_texts: dict[str, str] = {}
-    json_files = list(annotation_dir.glob("*.json"))
+    json_files = list(annotation_dir.glob(JSON_GLOB))
 
     logger.info(f"Processing {len(json_files)} JSON files...")
 
@@ -757,7 +760,7 @@ def extract_text_sroie_voxel51(annotation_dir: Path) -> dict[str, str]:
 
     image_texts: dict[str, str] = {}
 
-    for json_file in annotation_dir.glob("*.json"):
+    for json_file in annotation_dir.glob(JSON_GLOB):
         try:
             with open(json_file) as f:
                 data = json.load(f)

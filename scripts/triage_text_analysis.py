@@ -301,13 +301,12 @@ def compute_consensus(
     best_lang = ft_lang or lingua_lang or "und"
     best_conf = max(ft_conf, lingua_conf)
     needs_esc = best_conf < 0.6 or not agreement
-    reason = (
-        "low_confidence"
-        if best_conf < 0.6
-        else "disagreement"
-        if not agreement
-        else None
-    )
+    if best_conf < 0.6:
+        reason = "low_confidence"
+    elif not agreement:
+        reason = "disagreement"
+    else:
+        reason = None
 
     return best_lang, best_conf, agreement, needs_esc, reason
 

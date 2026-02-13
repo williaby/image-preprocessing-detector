@@ -103,6 +103,12 @@ SCRIPT_VERSION = "2.0.0"
 # Common file extensions (S1192: avoid duplicate string literals)
 _JSON_EXT = ".json"
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+JPG_GLOB = "**/*.jpg"
+PNG_GLOB = "**/*.png"
+TRAIN_JSON = "train.json"
+SAMPLES_PARQUET = "samples.parquet"
+
 
 class CaptureMethod(str, Enum):
     """Capture method taxonomy (Axis 4 from detection-taxonomy.md)."""
@@ -182,7 +188,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Benchmark datasets ===
     "diqa-5000": {
         "path": BENCHMARK_ONLY / "diqa-5000",
-        "pattern": "**/*.jpg",  # All images: ori (original) + res (enhanced)
+        "pattern": JPG_GLOB,  # All images: ori (original) + res (enhanced)
         "capture_method": CaptureMethod.UNKNOWN,  # Per-image: ori=camera_smartphone, res=synthetic (set by parser)
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": True,
@@ -232,7 +238,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "historical_degraded": {
         "path": BASE_DATA / "degraded/historical_degraded",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -250,7 +256,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "doclaynet": {
         "path": BASE_DATA / "documents/doclaynet",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -259,7 +265,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist-sd2": {
         "path": BASE_DATA / "forms/nist-sd2",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -272,7 +278,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist_sd6": {
         "path": BASE_DATA / "forms/nist_sd6",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.TAX,
         "has_human_mos": False,
@@ -296,7 +302,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "funsd_plus": {
         "path": BASE_DATA / "forms/funsd_plus",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_ADF,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
@@ -309,7 +315,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "sroie": {
         "path": BASE_DATA / "forms/sroie_icdar2019",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -337,7 +343,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "pubtabnet": {
         "path": BASE_DATA / "tables/pubtabnet",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.SCIENTIFIC,
         "has_human_mos": False,
@@ -352,7 +358,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "fintabnet": {
         "path": BASE_DATA / "tables/fintabnet",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -367,7 +373,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nist_sd19": {
         "path": BASE_DATA / "handwriting/nist-sd19",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,
         "has_human_mos": False,
@@ -382,7 +388,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "signatr6k": {
         "path": BASE_DATA / "handwriting/signatr6k",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,
         "has_human_mos": False,
@@ -397,7 +403,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "maths_handwriting": {
         "path": BASE_DATA / "handwriting/maths_handwriting",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -427,7 +433,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "im2latex": {
         "path": BASE_DATA / "formulas/im2latex",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.SCIENTIFIC,
         "has_human_mos": False,
@@ -487,7 +493,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === NEW: Multilingual/Script Detection Datasets ===
     "pucit_ohul": {
         "path": BASE_DATA / "language/pucit-ohul",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -512,7 +518,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "multilingual_scripts": {
         "path": BASE_DATA / "language/multilingual_scripts",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -531,7 +537,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Unlabeled real-world documents (for inference/testing) ===
     "bhutan_financial": {
         "path": BASE_DATA / "documents/bhutan_financial",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -544,7 +550,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Phase 10B Script Detection Datasets ===
     "mdiw13": {
         "path": BASE_DATA / "language/mdiw13",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed domains (newspapers, letters)
         "has_human_mos": False,
@@ -556,7 +562,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "cc_ocr": {
         "path": BASE_DATA / "language/cc-ocr",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         "domain": DomainLevel1.UNKNOWN,  # Multiple domains
         "has_human_mos": False,
@@ -566,7 +572,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "tibhcr": {
         "path": BASE_DATA / "language/huggingface_downloads/TibHCR/TibHCR",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,  # Handwritten characters
         "has_human_mos": False,
@@ -577,7 +583,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "mlt19": {
         "path": BASE_DATA / "language/mlt19",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text from various sources
         "has_human_mos": False,
@@ -589,7 +595,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === HierText (hierarchical scene text) ===
     "hiertext": {
         "path": BASE_DATA / "text_detection/hiertext",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.UNKNOWN,  # Natural scene images (Open Images)
         "domain": DomainLevel1.UNKNOWN,  # Scene text from various sources
         "has_human_mos": False,
@@ -612,7 +618,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Additional Kaggle Script Detection Datasets ===
     "arabic_docs_ocr": {
         "path": BASE_DATA / "language/arabic_docs_ocr",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed documents
         "has_human_mos": False,
@@ -623,7 +629,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "hindi_ocr_synthetic": {
         "path": BASE_DATA / "language/hindi_ocr_synthetic",
-        "pattern": "**/*.png",
+        "pattern": PNG_GLOB,
         "capture_method": CaptureMethod.BORN_DIGITAL,  # Synthetic
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -646,7 +652,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "yarmouk_ocr": {
         "path": BASE_DATA / "language/yarmouk",  # Converted from PDFs
-        "pattern": "**/*.png",  # PNG format from conversion
+        "pattern": PNG_GLOB,  # PNG format from conversion
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed Arabic documents
         "has_human_mos": False,
@@ -658,7 +664,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Script Identification Datasets ===
     "cvsi": {
         "path": BASE_DATA / "language/cvsi",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -669,7 +675,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "siw13": {
         "path": BASE_DATA / "language/siw13",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -680,7 +686,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "mle2e": {
         "path": BASE_DATA / "language/mle2e",
-        "pattern": "**/*.jpg",
+        "pattern": JPG_GLOB,
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         "domain": DomainLevel1.UNKNOWN,  # Scene text
         "has_human_mos": False,
@@ -1587,8 +1593,7 @@ def parse_ocr_quality_labels(dataset_path: Path, image_path: Path) -> OriginalLa
     """Parse OCR-Quality labels (human scores 1-4)."""
     labels = OriginalLabels()
 
-    # Load from JSON or Parquet
-    json_path = dataset_path / "OCR-Quality.json"
+    # Load from Parquet
     parquet_path = dataset_path / "OCR-Quality.parquet"
 
     if parquet_path.exists():
@@ -1724,13 +1729,13 @@ def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
 
     # Look for COCO annotations in various locations
     coco_paths = [
-        dataset_path / "ground_truth" / "coco" / "train.json",
+        dataset_path / "ground_truth" / "coco" / TRAIN_JSON,
         dataset_path / "ground_truth" / "coco" / "val.json",
         dataset_path / "ground_truth" / "coco" / "test.json",
-        dataset_path / "COCO" / "train.json",
+        dataset_path / "COCO" / TRAIN_JSON,
         dataset_path / "COCO" / "val.json",
         dataset_path / "COCO" / "test.json",
-        dataset_path / "annotations" / "train.json",
+        dataset_path / "annotations" / TRAIN_JSON,
         dataset_path / "annotations" / "instances_train.json",
     ]
 
@@ -1812,8 +1817,8 @@ def parse_tablebank_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
         / "Detection"
         / "annotations"
         / "tablebank_word_train.json",
-        dataset_path / "Detection" / "annotations" / "train.json",
-        dataset_path / "annotations" / "train.json",
+        dataset_path / "Detection" / "annotations" / TRAIN_JSON,
+        dataset_path / "annotations" / TRAIN_JSON,
     ]
 
     coco_data = None
@@ -3659,7 +3664,6 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
     }
 
     # Try to extract document type from filename prefix
-    remainder = filename
     for prefix, (doc_type, lang, script) in doc_type_mapping.items():
         if filename.startswith(prefix):
             labels.raw_labels["doc_type"] = doc_type
@@ -3683,6 +3687,7 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
             "_en_" in filename_lower
             or "_eng_" in filename_lower
             or "_english" in filename_lower
+            or filename_lower.startswith(("en_", "eng_"))
         ):
             labels.language_code = "en"
             labels.script_name = "Latn"
@@ -3691,13 +3696,8 @@ def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalL
             or "_chi_" in filename_lower
             or "_chn_" in filename_lower
             or "_chinese" in filename_lower
+            or filename_lower.startswith(("zh_", "chi_"))
         ):
-            labels.language_code = "zh"
-            labels.script_name = "Hans"
-        elif filename_lower.startswith(("en_", "eng_")):
-            labels.language_code = "en"
-            labels.script_name = "Latn"
-        elif filename_lower.startswith(("zh_", "chi_")):
             labels.language_code = "zh"
             labels.script_name = "Hans"
 
@@ -3897,7 +3897,7 @@ LABEL_PARSERS = {
 
 def get_enrichment_tier(
     dataset_name: str,
-    config: dict[str, Any],
+    _config: dict[str, Any],
     original_labels: OriginalLabels,
     use_yolo: bool,
 ) -> tuple[EnrichmentTier, str]:
@@ -3941,7 +3941,7 @@ def apply_tiered_enrichment(
     config: dict[str, Any],
     image_path: Path,
     use_yolo: bool,
-    git_sha: str,
+    _git_sha: str,
     existing_openlid: dict[str, Any] | None = None,
 ) -> EnrichmentData:
     """Apply tiered enrichment logic to determine content flags.
@@ -3961,15 +3961,13 @@ def apply_tiered_enrichment(
         config: Dataset configuration
         image_path: Path to the image file
         use_yolo: Whether to use DocLayout-YOLO inference
-        git_sha: Current git SHA for provenance
+        _git_sha: Current git SHA for provenance (reserved for future use)
         existing_openlid: Optional existing OpenLID-detected language data to preserve
     """
     dataset_name = sample.dataset_name
     original_labels = sample.original_labels
 
-    tier, tier_description = get_enrichment_tier(
-        dataset_name, config, original_labels, use_yolo
-    )
+    tier, _ = get_enrichment_tier(dataset_name, config, original_labels, use_yolo)
 
     # Determine capture_method: prefer parser-derived value over config default
     config_capture = config["capture_method"]
@@ -4107,14 +4105,6 @@ def apply_tiered_enrichment(
         "Punjabi": "Guru",
         "Urdu": "Arab",  # Urdu uses Arabic script
     }
-
-    # Check for ground truth from parser (Priority 1 - highest)
-    has_ground_truth_language = bool(
-        config.get("iso639_language") or original_labels.language_code
-    )
-    has_ground_truth_script = bool(
-        config.get("iso15924_script") or original_labels.script_name
-    )
 
     # Apply language with priority hierarchy
     if config.get("iso639_language"):
@@ -4866,13 +4856,12 @@ Enrichment Tiers:
         if args.dry_run:
             logger.info("DRY RUN - would scan:")
             for name, config in datasets_to_scan.items():
-                tier = (
-                    "Tier 0"
-                    if name in TIER_0_DATASETS
-                    else "Tier 1"
-                    if name in TIER_1_DATASETS
-                    else "Tier 2/3"
-                )
+                if name in TIER_0_DATASETS:
+                    tier = "Tier 0"
+                elif name in TIER_1_DATASETS:
+                    tier = "Tier 1"
+                else:
+                    tier = "Tier 2/3"
                 logger.info(f"  {name}: {config['path']} ({tier})")
             return
 
@@ -4897,11 +4886,11 @@ Enrichment Tiers:
         save_metadata_json(all_samples, args.output / "json")
 
         # Parquet (flat, efficient)
-        save_metadata_parquet(all_samples, args.output / "samples.parquet")
+        save_metadata_parquet(all_samples, args.output / SAMPLES_PARQUET)
 
     if args.stats:
         # Load existing metadata
-        parquet_path = args.output / "samples.parquet"
+        parquet_path = args.output / SAMPLES_PARQUET
         if parquet_path.exists():
             table = pq.read_table(parquet_path)
             logger.info(f"Loaded {table.num_rows} samples from {parquet_path}")
@@ -4957,7 +4946,7 @@ Enrichment Tiers:
         logger.info(f"With Formulas: {stats.get('with_formulas', 0):,}")
 
     if args.export:
-        parquet_path = args.output / "samples.parquet"
+        parquet_path = args.output / SAMPLES_PARQUET
         if parquet_path.exists():
             logger.info(f"Parquet export already exists: {parquet_path}")
         elif all_samples:

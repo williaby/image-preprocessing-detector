@@ -176,7 +176,7 @@ class TestDownloadFromGithub:
         """Test that parent directory is created."""
         local_dir = tmp_path / "parent" / "child"
 
-        with patch("git.Repo") as mock_repo:
+        with patch("git.Repo"):
             download_from_github(
                 repo_url="https://github.com/test/repo",
                 local_dir=local_dir,

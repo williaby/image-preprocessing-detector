@@ -315,11 +315,9 @@ class TestDownloadDataset:
 
     def test_download_creates_output_directory(self, tmp_path: Path) -> None:
         """Test that download creates output directory."""
-        with patch(
-            "download_table_datasets._download_all_files", return_value=True
-        ) as mock_download:
+        with patch("download_table_datasets._download_all_files", return_value=True):
             with patch("download_table_datasets._extract_archives"):
-                result = download_dataset(
+                download_dataset(
                     dataset_name="pubtabnet",
                     output_base_dir=str(tmp_path),
                     hf_token="test_token",
@@ -346,7 +344,7 @@ class TestDownloadDataset:
                 "download_table_datasets._handle_tablebank_postprocess",
                 return_value=True,
             ) as mock_postprocess:
-                result = download_dataset(
+                download_dataset(
                     dataset_name="tablebank",
                     output_base_dir=str(tmp_path),
                     hf_token="test_token",

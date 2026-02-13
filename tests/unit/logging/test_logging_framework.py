@@ -229,7 +229,7 @@ class TestRequestContext:
         """LoggingContext restores previous context on exit."""
         set_request_context({"outer": "value"})
         with LoggingContext(inner="value"):
-            pass
+            pass  # Intentionally empty - testing context restoration on exit
         assert get_request_context() == {"outer": "value"}
 
 
@@ -504,7 +504,7 @@ class TestLoggingConfiguration:
             },
         ):
             setup_logging()
-            config = get_logging_config()
+            get_logging_config()
             # Config should reflect environment (after setup_logging creates new config)
 
     def test_config_defaults(self) -> None:

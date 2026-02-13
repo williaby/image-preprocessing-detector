@@ -10,7 +10,8 @@ on:
   push:
     branches: [main, develop]
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   reuse:

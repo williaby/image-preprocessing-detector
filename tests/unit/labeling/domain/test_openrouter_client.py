@@ -32,7 +32,7 @@ class TestExtractJson:
         """Parses clean JSON directly."""
         result = _extract_json('{"domain": "SCI", "domain_confidence": 0.95}')
         assert result["domain"] == "SCI"
-        assert result["domain_confidence"] == 0.95
+        assert result["domain_confidence"] == pytest.approx(0.95)
 
     def test_json_in_markdown_code_block(self) -> None:
         """Extracts JSON from markdown code blocks."""
@@ -78,7 +78,7 @@ class TestParseTextResponse:
         }
         result = _parse_text_response(raw, "deepseek/deepseek-r1-0528:free")
         assert result.domain_level1 == "SCI"
-        assert result.domain_confidence == 0.92
+        assert result.domain_confidence == pytest.approx(0.92)
         assert result.iso639_language == "en"
         assert result.iso15924_script == "Latn"
         assert result.input_mode == "text"
@@ -100,7 +100,7 @@ class TestParseTextResponse:
         """Confidence values clamped to [0, 1]."""
         raw: dict[str, Any] = {"domain": "FIN", "domain_confidence": 1.5}
         result = _parse_text_response(raw, "test-model")
-        assert result.domain_confidence == 1.0
+        assert result.domain_confidence == pytest.approx(1.0)
 
     def test_domain_case_insensitive(self) -> None:
         """Domain codes are uppercased."""
@@ -174,24 +174,24 @@ class TestClampConfidence:
 
     def test_normal_value(self) -> None:
         """Normal values pass through."""
-        assert _clamp_confidence(0.85) == 0.85
+        assert _clamp_confidence(0.85) == pytest.approx(0.85)
 
     def test_above_one(self) -> None:
         """Values above 1.0 clamped to 1.0."""
-        assert _clamp_confidence(1.5) == 1.0
+        assert _clamp_confidence(1.5) == pytest.approx(1.0)
 
     def test_below_zero(self) -> None:
         """Values below 0.0 clamped to 0.0."""
-        assert _clamp_confidence(-0.5) == 0.0
+        assert _clamp_confidence(-0.5) == pytest.approx(0.0)
 
     def test_non_numeric_defaults(self) -> None:
         """Non-numeric values default to 0.5."""
-        assert _clamp_confidence("not a number") == 0.5
-        assert _clamp_confidence(None) == 0.5
+        assert _clamp_confidence("not a number") == pytest.approx(0.5)
+        assert _clamp_confidence(None) == pytest.approx(0.5)
 
     def test_string_number(self) -> None:
         """String numbers are converted."""
-        assert _clamp_confidence("0.75") == 0.75
+        assert _clamp_confidence("0.75") == pytest.approx(0.75)
 
 
 class TestSafeStr:
@@ -274,7 +274,7 @@ class TestOpenRouterClient:
         result = client.classify_text("Sample text", "deepseek/deepseek-r1-0528:free")
         assert isinstance(result, EnrichmentResult)
         assert result.domain_level1 == "SCI"
-        assert result.domain_confidence == 0.92
+        assert result.domain_confidence == pytest.approx(0.92)
         assert result.input_mode == "text"
 
     def test_retry_on_failure(self) -> None:

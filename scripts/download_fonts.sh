@@ -68,7 +68,7 @@ echo "  Downloading Awami Nastaliq..."
 curl -sL "https://software.sil.org/downloads/r/awami/AwamiNastaliq-3.200.zip" -o "$TEMP_DIR/awami-nastaliq.zip" 2>/dev/null || {
     echo "  Warning: Could not download Awami Nastaliq"
 }
-if [ -f "$TEMP_DIR/awami-nastaliq.zip" ]; then
+if [[ -f "$TEMP_DIR/awami-nastaliq.zip" ]]; then
     unzip -o -q "$TEMP_DIR/awami-nastaliq.zip" -d "$TEMP_DIR/awami" 2>/dev/null || true
     find "$TEMP_DIR/awami" -name "*.ttf" -exec cp {} "$FONT_DIR/" \; 2>/dev/null || true
 fi

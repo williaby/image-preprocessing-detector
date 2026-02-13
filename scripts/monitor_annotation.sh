@@ -4,9 +4,12 @@
 #
 # Monitor annotation progress for large datasets
 
-echo "======================================================================="
+# Constant for separator line (avoid duplication)
+SEPARATOR_LINE="======================================================================="
+
+echo "$SEPARATOR_LINE"
 echo "ANNOTATION PROGRESS MONITOR"
-echo "======================================================================="
+echo "$SEPARATOR_LINE"
 echo
 
 # Check running processes
@@ -16,7 +19,7 @@ ps aux | grep -E "annotate_base_metadata" | grep -v grep | grep -v monitor || ec
 echo
 
 # Check progress file
-if [ -f ".annotate_progress.json" ]; then
+if [[ -f ".annotate_progress.json" ]]; then
     echo "Progress Status:"
     echo "---------------"
     uv run python scripts/annotate_base_metadata_incremental.py --status 2>&1 | tail -20
@@ -36,14 +39,14 @@ find /mnt/e/image_detection/metadata_registry/json -name "*.json" -mmin -60 2>/d
 echo
 
 # Show log tail if available
-if [ -f "/tmp/annotation_progress.log" ]; then
+if [[ -f "/tmp/annotation_progress.log" ]]; then
     echo "Recent Log Activity:"
     echo "-------------------"
     tail -10 /tmp/annotation_progress.log | grep -E "Processing:|completed|failed|ERROR" || tail -5 /tmp/annotation_progress.log
 fi
 
 echo
-echo "======================================================================="
+echo "$SEPARATOR_LINE"
 echo "To watch live progress: tail -f /tmp/annotation_progress.log"
 echo "To check specific task: cat /tmp/claude/-home-byron-dev-image-detection/tasks/<task_id>.output"
-echo "======================================================================="
+echo "$SEPARATOR_LINE"

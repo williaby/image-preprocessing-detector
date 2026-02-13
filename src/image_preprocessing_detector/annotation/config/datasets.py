@@ -179,6 +179,13 @@ def get_parser_module_name(config: DatasetConfig) -> str | None:
 
 
 # =============================================================================
+# Common Glob Patterns (S1192: avoid duplicate string literals)
+# =============================================================================
+JPG_GLOB = "**/*.jpg"
+PNG_GLOB = "**/*.png"
+IMAGES_JPG_GLOB = "images/*.jpg"
+
+# =============================================================================
 # Dataset Configuration Registry
 # =============================================================================
 
@@ -191,7 +198,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         path_suffix="02_benchmark_only/diqa-5000",
         # Include both ori/ (original scanned) and res/ (synthetic degradation) images
         # Parser detects folder and sets is_synthetic_degradation accordingly
-        pattern="**/*.jpg",  # train/{ori,res}/, val/{ori,res}/, test/{ori,res}/
+        pattern=JPG_GLOB,  # train/{ori,res}/, val/{ori,res}/, test/{ori,res}/
         capture_method=CaptureMethod.UNKNOWN,  # Determined per-image by parser
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=True,
@@ -247,7 +254,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "historical_degraded": DatasetConfig(
         name="historical_degraded",
         path_suffix="01_base_data/degraded/historical_degraded",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -261,7 +268,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "rvl_cdip": DatasetConfig(
         name="rvl_cdip",
         path_suffix="01_base_data/documents/rvl_cdip",
-        pattern="images/*.jpg",
+        pattern=IMAGES_JPG_GLOB,
         capture_method=CaptureMethod.SCANNER_ADF,
         domain=DomainLevel1.ADMINISTRATIVE,
         is_benchmark=False,
@@ -271,7 +278,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "doclaynet": DatasetConfig(
         name="doclaynet",
         path_suffix="01_base_data/documents/doclaynet",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -285,7 +292,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "nist-sd2": DatasetConfig(
         name="nist-sd2",
         path_suffix="01_base_data/forms/nist-sd2",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.FINANCIAL,
         is_benchmark=False,
@@ -298,7 +305,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "nist_sd6": DatasetConfig(
         name="nist_sd6",
         path_suffix="01_base_data/forms/nist_sd6",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.TAX,
         is_benchmark=False,
@@ -309,7 +316,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "funsd": DatasetConfig(
         name="funsd",
         path_suffix="01_base_data/forms/funsd",
-        pattern="images/*.jpg",  # Images converted to JPG format
+        pattern=IMAGES_JPG_GLOB,  # Images converted to JPG format
         capture_method=CaptureMethod.SCANNER_ADF,
         domain=DomainLevel1.ADMINISTRATIVE,
         is_benchmark=False,
@@ -322,7 +329,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "funsd_plus": DatasetConfig(
         name="funsd_plus",
         path_suffix="01_base_data/forms/funsd_plus",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.SCANNER_ADF,
         domain=DomainLevel1.ADMINISTRATIVE,
         is_benchmark=False,
@@ -335,7 +342,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "sroie": DatasetConfig(
         name="sroie",
         path_suffix="01_base_data/forms/sroie_icdar2019",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,
         domain=DomainLevel1.FINANCIAL,
         is_benchmark=False,
@@ -365,7 +372,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "pubtabnet": DatasetConfig(
         name="pubtabnet",
         path_suffix="01_base_data/tables/pubtabnet",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,
         domain=DomainLevel1.SCIENTIFIC,
         is_benchmark=False,
@@ -380,7 +387,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "fintabnet": DatasetConfig(
         name="fintabnet",
         path_suffix="01_base_data/tables/fintabnet",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,
         domain=DomainLevel1.FINANCIAL,
         is_benchmark=False,
@@ -398,7 +405,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "nist_sd19": DatasetConfig(
         name="nist_sd19",
         path_suffix="01_base_data/handwriting/nist-sd19",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.PERSONAL,
         is_benchmark=False,
@@ -413,7 +420,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "signatr6k": DatasetConfig(
         name="signatr6k",
         path_suffix="01_base_data/handwriting/signatr6k",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.PERSONAL,
         is_benchmark=False,
@@ -428,7 +435,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "maths_handwriting": DatasetConfig(
         name="maths_handwriting",
         path_suffix="01_base_data/handwriting/maths_handwriting",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.EDUCATIONAL,
         is_benchmark=False,
@@ -461,7 +468,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "iam": DatasetConfig(
         name="iam",
         path_suffix="01_base_data/handwriting/iam_handwriting",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.ADMINISTRATIVE,
         is_benchmark=False,
@@ -498,7 +505,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "im2latex": DatasetConfig(
         name="im2latex",
         path_suffix="01_base_data/formulas/im2latex",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,
         domain=DomainLevel1.SCIENTIFIC,
         is_benchmark=False,
@@ -513,7 +520,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "mathverse": DatasetConfig(
         name="mathverse",
         path_suffix="01_base_data/formulas/mathverse",
-        pattern="images/*.jpg",
+        pattern=IMAGES_JPG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,
         domain=DomainLevel1.EDUCATIONAL,
         is_benchmark=False,
@@ -571,7 +578,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "pucit_ohul": DatasetConfig(
         name="pucit_ohul",
         path_suffix="01_base_data/language/pucit-ohul",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.EDUCATIONAL,
         is_benchmark=False,
@@ -585,7 +592,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "multilingual_scripts": DatasetConfig(
         name="multilingual_scripts",
         path_suffix="01_base_data/language/multilingual_scripts",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.UNKNOWN,
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -607,7 +614,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "bhutan_financial": DatasetConfig(
         name="bhutan_financial",
         path_suffix="01_base_data/documents/bhutan_financial",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.FINANCIAL,
         is_benchmark=False,
@@ -620,7 +627,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "mdiw13": DatasetConfig(
         name="mdiw13",
         path_suffix="01_base_data/language/mdiw13",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,  # Mixed domains
         is_benchmark=False,
@@ -633,7 +640,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "cc_ocr": DatasetConfig(
         name="cc_ocr",
         path_suffix="01_base_data/language/huggingface_downloads/CC-OCR/extracted_images",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -645,7 +652,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "cocotext": DatasetConfig(
         name="cocotext",
         path_suffix="01_base_data/text_detection/cocotext/images",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # COCO natural images
         domain=DomainLevel1.UNKNOWN,  # Various scene types
         is_benchmark=False,
@@ -657,7 +664,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "tibhcr": DatasetConfig(
         name="tibhcr",
         path_suffix="01_base_data/language/huggingface_downloads/TibHCR/TibHCR",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.PERSONAL,  # Handwritten characters
         is_benchmark=False,
@@ -670,7 +677,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "mlt19": DatasetConfig(
         name="mlt19",
         path_suffix="01_base_data/language/mlt19",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -682,7 +689,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "arabic_docs_ocr": DatasetConfig(
         name="arabic_docs_ocr",
         path_suffix="01_base_data/language/arabic_docs_ocr",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -695,7 +702,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "hindi_ocr_synthetic": DatasetConfig(
         name="hindi_ocr_synthetic",
         path_suffix="01_base_data/language/hindi_ocr_synthetic",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.BORN_DIGITAL,  # Synthetic
         domain=DomainLevel1.EDUCATIONAL,
         is_benchmark=False,
@@ -708,7 +715,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "nepali_handwritten": DatasetConfig(
         name="nepali_handwritten",
         path_suffix="01_base_data/language/nepali_handwritten",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.EDUCATIONAL,
         is_benchmark=False,
@@ -722,7 +729,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "yarmouk_ocr": DatasetConfig(
         name="yarmouk_ocr",
         path_suffix="01_base_data/language/yarmouk",
-        pattern="**/*.png",
+        pattern=PNG_GLOB,
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -738,7 +745,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "cvsi": DatasetConfig(
         name="cvsi",
         path_suffix="01_base_data/language/cvsi",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -750,7 +757,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "siw13": DatasetConfig(
         name="siw13",
         path_suffix="01_base_data/language/siw13",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -762,7 +769,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "mle2e": DatasetConfig(
         name="mle2e",
         path_suffix="01_base_data/language/mle2e",
-        pattern="**/*.jpg",
+        pattern=JPG_GLOB,
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # Scene text
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -809,7 +816,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     "synth-multiscript-250k": DatasetConfig(
         name="synth-multiscript-250k",
         path_suffix="03_training_datasets/synthetic_multiscript",
-        pattern="**/*.png",  # Images organized by script: {Script}/*.png
+        pattern=PNG_GLOB,  # Images organized by script: {Script}/*.png
         capture_method=CaptureMethod.BORN_DIGITAL,  # Synthetic generation
         domain=DomainLevel1.UNKNOWN,  # Mixed domains
         is_benchmark=False,

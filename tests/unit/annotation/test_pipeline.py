@@ -112,7 +112,7 @@ class TestCheckpointManager:
         checkpoint_dir = tmp_path / "checkpoints"
         assert not checkpoint_dir.exists()
 
-        manager = CheckpointManager(checkpoint_dir=checkpoint_dir)
+        CheckpointManager(checkpoint_dir=checkpoint_dir)
 
         assert checkpoint_dir.exists()
 
@@ -237,7 +237,7 @@ class TestProgressState:
         state = ProgressState(dataset_name="test", total=100)
         state.current = 50
 
-        assert state.percent_complete == 50.0
+        assert state.percent_complete == pytest.approx(50.0)
 
     def test_eta_seconds(self):
         """Test ETA calculation."""
@@ -404,7 +404,7 @@ class TestPipelineStats:
         assert stats.total_images == 0
         assert stats.success_count == 0
         assert stats.error_count == 0
-        assert stats.cpu_time_seconds == 0.0
+        assert stats.cpu_time_seconds == pytest.approx(0.0)
 
 
 class TestPipelineResult:

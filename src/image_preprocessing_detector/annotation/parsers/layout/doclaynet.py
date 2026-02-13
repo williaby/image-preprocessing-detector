@@ -59,6 +59,9 @@ from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
+# Common file name constants (S1192: avoid duplicate string literals)
+TRAIN_JSON = "train.json"
+
 # Module-level cache for COCO annotations (load once per file)
 _COCO_CACHE: dict[str, dict[str, Any]] = {}
 
@@ -164,13 +167,13 @@ class DocLayNetParser(BaseParser):
 
         # Look for COCO annotations in various locations
         coco_paths = [
-            dataset_path / "ground_truth" / "coco" / "train.json",
+            dataset_path / "ground_truth" / "coco" / TRAIN_JSON,
             dataset_path / "ground_truth" / "coco" / "val.json",
             dataset_path / "ground_truth" / "coco" / "test.json",
-            dataset_path / "COCO" / "train.json",
+            dataset_path / "COCO" / TRAIN_JSON,
             dataset_path / "COCO" / "val.json",
             dataset_path / "COCO" / "test.json",
-            dataset_path / "annotations" / "train.json",
+            dataset_path / "annotations" / TRAIN_JSON,
             dataset_path / "annotations" / "instances_train.json",
         ]
 

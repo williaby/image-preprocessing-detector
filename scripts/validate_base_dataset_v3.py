@@ -95,15 +95,15 @@ def validate_corrupt_images(dataset_dir: Path) -> dict[str, Any]:
         if not script_dir.is_dir():
             continue
 
-        jpg_files = set(p.stem for p in script_dir.glob("*.jpg"))
-        json_files = set(p.stem for p in script_dir.glob("*.json"))
+        jpg_files = {p.stem for p in script_dir.glob("*.jpg")}
+        json_files = {p.stem for p in script_dir.glob("*.json")}
 
         total_images += len(jpg_files)
 
         # Check for unpaired files
-        for stem in jpg_files - json_files:
+        for _ in jpg_files - json_files:
             missing_json += 1
-        for stem in json_files - jpg_files:
+        for _ in json_files - jpg_files:
             missing_image += 1
 
         # Spot-check image validity (check first 10 per script)
@@ -163,15 +163,12 @@ def validate_distributions(
     # Count layouts
     layout_counts: Counter[str] = Counter()
     resolution_counts: Counter[str] = Counter()
-    quality_counts: Counter[str] = Counter()
 
     for meta in metadata_list:
         data = meta.get("data", {})
         structure = data.get("structure", {})
         layout = structure.get("layout_type", "unknown")
         layout_counts[layout] += 1
-
-        resolution = data.get("resolution", {})
         # Resolution tier is in generation_params
         gen_params = data.get("generation_params", meta.get("generation_params", {}))
         res_tier = (
@@ -205,7 +202,7 @@ def validate_distributions(
         "total_samples": total,
         "tolerance": tolerance,
         "deviations": deviations,
-        "layout_distribution": {k: v for k, v in layout_counts.most_common()},
+        "layout_distribution": dict(layout_counts.most_common()),
     }
     status = "PASS" if passed else f"WARN ({len(deviations)} deviations)"
     print(f"  {status}: {total:,} samples checked")

@@ -49,7 +49,9 @@ class TestFindAllImages:
 
         result = find_all_images(tmp_path)
 
-        assert len(result) >= 0  # May be 0 if directory structure doesn't match
+        assert isinstance(
+            result, list
+        )  # May be empty if directory structure doesn't match
 
     def test_empty_directory(self, tmp_path: Path) -> None:
         """Test finding images in empty directory."""

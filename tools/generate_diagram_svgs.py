@@ -44,8 +44,9 @@ def download_plantuml() -> bool:
 
     print(f"Downloading PlantUML to {PLANTUML_JAR}...")
     try:
-        # Create SSL context with certificate verification
+        # Create SSL context with certificate verification and TLS 1.2 minimum
         ssl_context = ssl.create_default_context()
+        ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         # Security: PLANTUML_URL is a module-level constant pointing to the official
         # PlantUML GitHub releases. It cannot be modified by user input.
         with (

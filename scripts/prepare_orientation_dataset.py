@@ -492,7 +492,7 @@ class OrientationDatasetGenerator:
 
     def _apply_noise(self, image: np.ndarray, std: float) -> np.ndarray:
         """Apply Gaussian noise."""
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(seed=42)
         noise = rng.normal(0, std, image.shape).astype(np.float32)
         noisy = image.astype(np.float32) + noise
         return np.clip(noisy, 0, 255).astype(np.uint8)

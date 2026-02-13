@@ -107,14 +107,14 @@ def run_iqa_benchmark(
 
 
 def run_layout_benchmark(
-    suite_config: dict[str, Any],
+    _suite_config: dict[str, Any],
     adapter: Any,
     scorer: AggregateScorer,
 ) -> None:
     """Run layout detection benchmark.
 
     Args:
-        suite_config: Suite configuration
+        _suite_config: Suite configuration (reserved for future use)
         adapter: Dataset adapter
         scorer: Result scorer
     """

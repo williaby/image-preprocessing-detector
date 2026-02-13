@@ -170,7 +170,8 @@ class InferenceBackend(ABC):
             return
 
         # Create dummy image for warmup
-        dummy_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        rng = np.random.default_rng()
+        dummy_image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
 
         for _ in range(num_iterations):
             with contextlib.suppress(Exception):

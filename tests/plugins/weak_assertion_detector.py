@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 
+# Common string constants (S1192: avoid duplicate string literals)
+TRUTHINESS_CHECK_MSG = "Checks truthiness only, not specific value"
+
+
 @dataclass
 class WeakAssertionInfo:
     """Information about a weak assertion pattern detected."""
@@ -94,12 +98,12 @@ class WeakAssertionVisitor(ast.NodeVisitor):
 
     # Patterns that may indicate weak assertions (warnings)
     SUSPICIOUS_PATTERNS: ClassVar[dict[str, str]] = {
-        "assert result": "Checks truthiness only, not specific value",
-        "assert response": "Checks truthiness only, not specific value",
-        "assert data": "Checks truthiness only, not specific value",
-        "assert output": "Checks truthiness only, not specific value",
-        "assert ret": "Checks truthiness only, not specific value",
-        "assert value": "Checks truthiness only, not specific value",
+        "assert result": TRUTHINESS_CHECK_MSG,
+        "assert response": TRUTHINESS_CHECK_MSG,
+        "assert data": TRUTHINESS_CHECK_MSG,
+        "assert output": TRUTHINESS_CHECK_MSG,
+        "assert ret": TRUTHINESS_CHECK_MSG,
+        "assert value": TRUTHINESS_CHECK_MSG,
     }
 
     def __init__(self, source_lines: list[str]):
@@ -243,7 +247,7 @@ class WeakAssertionPlugin:
             self.stats.append(stats)
 
     def pytest_terminal_summary(
-        self, terminalreporter: TerminalReporter, exitstatus: int
+        self, terminalreporter: TerminalReporter, _exitstatus: int
     ) -> None:
         """Print summary of weak assertions."""
         if not self.enabled or not self.stats:
@@ -339,7 +343,7 @@ class WeakAssertionPlugin:
                 bold=True,
             )
 
-    def pytest_sessionfinish(self, session, exitstatus: int) -> None:
+    def pytest_sessionfinish(self, session, _exitstatus: int) -> None:
         """Modify exit status if fail_on_weak is enabled."""
         if not self.enabled or not self.fail_on_weak:
             return

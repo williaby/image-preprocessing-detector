@@ -244,7 +244,7 @@ class TestFullPipelineE2E:
     ) -> None:
         """Test full DocumentMetadata generation."""
         # Create metadata builder
-        builder = MetadataBuilder(
+        MetadataBuilder(
             document_id="test-doc-001",
             file_name="test_document.pdf",
         )
@@ -394,7 +394,7 @@ class TestRoutingDecisionE2E:
             structural_complexity_score=0.1,  # Low complexity
         )
 
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.BORN_DIGITAL,
             dqs,
             0.1,
@@ -421,9 +421,7 @@ class TestRoutingDecisionE2E:
             structural_complexity_score=0.8,
         )
 
-        recommendation, rationale = recommend_ocr_routing(
-            PDFType.HYBRID, dqs, 0.5, [layout]
-        )
+        recommendation, _ = recommend_ocr_routing(PDFType.HYBRID, dqs, 0.5, [layout])
 
         # Document with tables should use vision structured
         from image_preprocessing_detector.schema import OCRRoutingRecommendation
@@ -447,7 +445,7 @@ class TestRoutingDecisionE2E:
             structural_complexity_score=0.4,
         )
 
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.IMAGE_ONLY, dqs, 0.3, [layout]
         )
 

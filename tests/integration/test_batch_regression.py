@@ -76,7 +76,7 @@ def sample_page_images() -> list[np.ndarray]:
 def large_batch_images() -> list[np.ndarray]:
     """Create a larger batch (50 pages) for throughput testing."""
     images = []
-    for i in range(50):
+    for _ in range(50):
         # Smaller images to keep memory manageable
         image = np.ones((500, 400, 3), dtype=np.uint8) * 255
         for y in range(25, 475, 20):
@@ -359,7 +359,7 @@ class TestMixedPDFTypeBatch:
             pre_ocr_risk = calculate_pre_ocr_risk(dqs, pdf_type, [layout])
 
             # Get routing decision
-            recommendation, rationale = recommend_ocr_routing(
+            recommendation, _ = recommend_ocr_routing(
                 pdf_type, dqs, pre_ocr_risk, [layout]
             )
             routing_decisions.append(

@@ -123,7 +123,7 @@ def generate_worker(task: WorkerTask) -> WorkerResult:
     )
 
     try:
-        for sample in generator.generate():
+        for _ in generator.generate():
             samples_generated += 1
 
             # Progress reporting

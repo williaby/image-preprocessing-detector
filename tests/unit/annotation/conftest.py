@@ -76,11 +76,11 @@ def sample_rgb_bytes() -> bytes:
             0x00,
             0x00,
             0x00,
-            0x01,  # width = 1
+            0x01,  # width: 1 pixel
             0x00,
             0x00,
             0x00,
-            0x01,  # height = 1
+            0x01,  # height: 1 pixel
             0x08,
             0x02,  # bit depth = 8, color type = 2 (RGB)
             0x00,

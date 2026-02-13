@@ -27,11 +27,9 @@ COPY pyproject.toml poetry.lock* ./
 COPY src/ ./src/
 COPY benchmarks/ ./benchmarks/
 
-# Configure poetry to not create virtualenv
-RUN poetry config virtualenvs.create false
-
-# Export requirements for production with ML dependencies
-RUN poetry export -f requirements.txt --without-hashes --extras api --extras ml > requirements.txt
+# Configure poetry and export requirements for production with ML dependencies
+RUN poetry config virtualenvs.create false && \
+    poetry export -f requirements.txt --without-hashes --extras api --extras ml > requirements.txt
 
 # ============================================================================
 # Stage 2: GPU Runtime with CUDA
@@ -75,11 +73,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/benchmarks ./benchmarks
 
-# Install the package
-RUN pip install --no-cache-dir -e .
-
-# Create directories
-RUN mkdir -p /app/tmp /app/logs /app/models && \
+# Install the package and create directories
+RUN pip install --no-cache-dir -e . && \
+    mkdir -p /app/tmp /app/logs /app/models && \
     chown -R imgprep:imgprep /app
 
 # Switch to non-root user

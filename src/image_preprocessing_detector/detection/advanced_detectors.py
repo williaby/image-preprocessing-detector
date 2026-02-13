@@ -25,6 +25,9 @@ from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
+# Common error messages (S1192: avoid duplicate string literals)
+INVALID_IMAGE_MSG = "Invalid image"
+
 
 # ============================================================================
 # Common Helper Functions (reduces cyclomatic complexity)
@@ -46,7 +49,7 @@ def _validate_and_preprocess(
         ValueError: If image is invalid
     """
     if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+        raise ValueError(INVALID_IMAGE_MSG)
 
     h, w = image.shape[:2]
 
@@ -139,7 +142,7 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
         WarpingResult with curvature metrics
     """
     if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+        raise ValueError(INVALID_IMAGE_MSG)
 
     h, w = image.shape[:2]
     lines = _detect_hough_lines(image, w)
@@ -280,7 +283,7 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
         PerspectiveResult with distortion metrics
     """
     if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+        raise ValueError(INVALID_IMAGE_MSG)
 
     h, w = image.shape[:2]
 
@@ -576,7 +579,7 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
         SignatureStampResult with detected regions
     """
     if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+        raise ValueError(INVALID_IMAGE_MSG)
 
     h, w = image.shape[:2]
     contours = _extract_contours(image)
@@ -812,7 +815,7 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
         OrientationResult with orientation information
     """
     if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+        raise ValueError(INVALID_IMAGE_MSG)
 
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image

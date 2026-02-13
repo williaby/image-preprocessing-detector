@@ -321,7 +321,7 @@ def integrate_sample(
     # D10 - text_scope_content_type
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "unknown"
+        data["text_scope_content_type"] = content_type or "unknown"
     else:
         data["text_scope_content_type"] = "unknown"
     data["text_scope"] = "printed"

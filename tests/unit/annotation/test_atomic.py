@@ -88,8 +88,8 @@ class TestAtomicWrite:
         with pytest.raises(ValueError):
             _write_and_fail()
 
-        # Temp file should be cleaned up
-        assert temp_path_ref is not None
+        # Temp file should be cleaned up (nonlocal was assigned before the exception)
+        assert isinstance(temp_path_ref, Path)
         assert not temp_path_ref.exists()
         # Target should not exist (was never created)
         assert not target.exists()

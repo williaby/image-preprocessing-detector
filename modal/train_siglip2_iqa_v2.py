@@ -1192,7 +1192,7 @@ def _compute_pcgrad_losses(
 
 
 def _backward_step(
-    config: SigLIP2TrainingConfigV2,
+    _config: SigLIP2TrainingConfigV2,
     pcgrad_optimizer: Any | None,
     scaler: Any | None,
     loss_or_losses: Any,
@@ -1201,7 +1201,7 @@ def _backward_step(
     """Execute backward pass, returning accumulated loss value.
 
     Args:
-        config: Training config.
+        _config: Training config (reserved for future use).
         pcgrad_optimizer: PCGrad wrapper (or None).
         scaler: GradScaler for FP16 (or None).
         loss_or_losses: Either a single loss tensor or list of per-dim losses.

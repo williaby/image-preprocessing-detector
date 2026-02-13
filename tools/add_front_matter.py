@@ -13,7 +13,7 @@ from pathlib import Path
 import frontmatter
 
 
-def infer_tags(path: Path, content: str) -> list[str]:  # noqa: ARG001
+def infer_tags(path: Path, _content: str) -> list[str]:
     """Infer appropriate tags based on file path and content."""
     tags = []
     path_str = str(path).lower()

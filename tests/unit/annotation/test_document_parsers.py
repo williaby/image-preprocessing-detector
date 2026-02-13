@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 # Import all parsers
 from image_preprocessing_detector.annotation.parsers.document.midv500 import (

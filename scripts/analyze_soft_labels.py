@@ -488,7 +488,6 @@ def analyze_layout_detections(
 
     confidences = []
     soft_count = 0
-    hard_count = 0
 
     for det in detections:
         conf = det.get("confidence")
@@ -500,8 +499,6 @@ def analyze_layout_detections(
         is_soft = determine_is_soft_label(tier, conf, source)
         if is_soft:
             soft_count += 1
-        else:
-            hard_count += 1
 
     avg_conf = sum(confidences) / len(confidences) if confidences else None
 
@@ -666,7 +663,6 @@ def _print_language_summary(report: DatasetReport) -> None:
 def _print_text_quality_summary(report: DatasetReport) -> None:
     """Print text quality confidence summary including dataset cap info."""
     methods: Counter[str] = Counter()
-    capped_count = 0
 
     for sample in report.samples:
         for fa in sample.field_assessments:
@@ -674,10 +670,7 @@ def _print_text_quality_summary(report: DatasetReport) -> None:
                 methods[fa.detection_method] += 1
                 break
 
-    # Check for dataset cap
-    for sample_raw in report.samples:
-        # Access raw data to check for cap
-        pass  # Cap info will show through the method/confidence values
+    # Cap info will show through the method/confidence values
 
     print(f"  {'TEXT QUALITY CONFIDENCE':─<50}")
     if not methods or (len(methods) == 1 and "none" in methods):
@@ -781,7 +774,12 @@ def print_report(report: DatasetReport) -> None:
         soft_n = soft_counts.get(True, 0)
         conf_values = report.field_confidence_sums.get(field_name, [])
 
-        label_tag = "HARD" if soft_n == 0 else ("SOFT" if hard_n == 0 else "MIXED")
+        if soft_n == 0:
+            label_tag = "HARD"
+        elif hard_n == 0:
+            label_tag = "SOFT"
+        else:
+            label_tag = "MIXED"
         conf_str = format_confidence_band(conf_values)
 
         print(f"  {field_name:22s} [{label_tag:5s}] {conf_str}")
@@ -804,10 +802,6 @@ def print_report(report: DatasetReport) -> None:
         print(f"  Avg detection confidence:  {avg_conf:.3f}")
 
         # Confidence band for individual detections
-        all_det_confs = []
-        for sample in report.samples:
-            enrichment = sample.field_assessments
-            # Get from raw data (stored in layout analysis)
         print(
             f"  Samples with detections:   {sum(1 for c in layout_counts if c > 0)}/{len(layout_counts)}"
         )

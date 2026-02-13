@@ -49,6 +49,9 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SCHEMA = PROJECT_ROOT / "docs" / "schema" / "layer2_enrichment_v2.schema.json"
 
+# Common string constants (S1192: avoid duplicate string literals)
+PREDICTED_MOS_KEY = "llm_scores.predicted_mos"
+
 # Defect classification taxonomy.
 DEFECT_TYPES = (
     "wrong_value",
@@ -717,7 +720,7 @@ def validate_sample(
                 mos_defects.append(
                     FieldDefect(
                         sample_id=sample_id,
-                        field_path="llm_scores.predicted_mos",
+                        field_path=PREDICTED_MOS_KEY,
                         defect_type=DefectType.WRONG_FORMAT,
                         message="predicted_mos must be numeric",
                         actual_value=mos,
@@ -727,19 +730,19 @@ def validate_sample(
                 mos_defects.append(
                     FieldDefect(
                         sample_id=sample_id,
-                        field_path="llm_scores.predicted_mos",
+                        field_path=PREDICTED_MOS_KEY,
                         defect_type=DefectType.WRONG_VALUE,
                         message=(f"predicted_mos must be 1-5, got {mos}"),
                         actual_value=mos,
                     )
                 )
         _track(
-            "llm_scores.predicted_mos",
+            PREDICTED_MOS_KEY,
             mos is not None,
             mos_defects,
         )
     else:
-        _track("llm_scores.predicted_mos", False, [])
+        _track(PREDICTED_MOS_KEY, False, [])
 
     # -- sample_reliability_summary ---------------------------------------
     srs = data.get("sample_reliability_summary")
@@ -1038,8 +1041,9 @@ def run_compliance_audit(
     Raises:
         FileNotFoundError: If the metadata file does not exist.
     """
-    if schema_path is None:
-        schema_path = DEFAULT_SCHEMA
+    # schema_path is accepted for future schema-driven validation;
+    # currently the audit uses hard-coded field definitions.
+    _ = schema_path or DEFAULT_SCHEMA
 
     if not metadata_path.exists():
         msg = f"Metadata file not found: {metadata_path}"

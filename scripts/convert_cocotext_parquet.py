@@ -174,7 +174,7 @@ def main():
 
     # Load HuggingFace dataset
     logger.info("Loading COCO-Text dataset from HuggingFace...")
-    dataset, dataset_name = load_huggingface_dataset()
+    dataset, _ = load_huggingface_dataset()
 
     # Count total images
     total_images = sum(len(dataset[split]) for split in dataset.keys())

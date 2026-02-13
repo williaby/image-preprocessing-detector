@@ -106,8 +106,8 @@ def run_modal_inference(samples: list[dict]) -> list[dict]:
     print("\nConnecting to Modal app 'arena-benchmark'...")
 
     # Look up the deployed VLMInference class
-    VLMInference = modal.Cls.from_name("arena-benchmark", "VLMInference")
-    inference = VLMInference()
+    vlm_inference_cls = modal.Cls.from_name("arena-benchmark", "VLMInference")
+    inference = vlm_inference_cls()
 
     results = []
 

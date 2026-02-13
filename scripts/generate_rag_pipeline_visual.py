@@ -17,7 +17,7 @@ def create_rag_pipeline_diagram(output_path: str) -> None:
         output_path: Path where the PNG image will be saved
     """
     # Create figure with high DPI for professional quality
-    fig, ax = plt.subplots(figsize=(14, 10), dpi=200)
+    _, ax = plt.subplots(figsize=(14, 10), dpi=200)
     ax.set_xlim(0, 14)
     ax.set_ylim(0, 10)
     ax.axis("off")

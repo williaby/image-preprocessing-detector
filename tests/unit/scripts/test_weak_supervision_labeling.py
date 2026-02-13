@@ -371,7 +371,7 @@ class TestLabelDataset:
         input_dir, output_dir = sample_dataset
 
         with patch("builtins.print"):
-            stats = labeler.label_dataset(input_dir, output_dir, metrics=["laplacian"])
+            labeler.label_dataset(input_dir, output_dir, metrics=["laplacian"])
 
         # Check label files only have blur labels
         label_file = next(output_dir.glob("*.json"))

@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 
 class TestCeleryConfig:
     """Tests for Celery configuration."""
@@ -124,7 +126,7 @@ class TestHelperFunctions:
         from image_preprocessing_detector.workers.tasks import _preprocess_image
 
         # Create dummy image (HxWx3, BGR)
-        image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        image = rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)
 
         result = _preprocess_image(image)
 
@@ -300,7 +302,7 @@ class TestTaskHelperFunctions:
         for i in range(3):
             outputs[f"head_{i}"] = np.array([[0.5, 0.5]])
 
-        scores, confidences = _postprocess_outputs(outputs)
+        scores, _ = _postprocess_outputs(outputs)
 
         # Should have scores for available heads
         assert "blur_score" in scores
@@ -341,7 +343,7 @@ class TestRunIQAAnalysisTask:
         from image_preprocessing_detector.workers.tasks import IQATask, run_iqa_analysis
 
         # Create a real test image
-        test_image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        test_image = rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
         _, encoded = cv2.imencode(".png", test_image)
         image_b64 = base64.b64encode(encoded.tobytes()).decode()
 
@@ -397,7 +399,7 @@ class TestRunIQAAnalysisTask:
         from image_preprocessing_detector.workers.tasks import IQATask, run_iqa_analysis
 
         # Create valid test image
-        test_image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        test_image = rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
         _, encoded = cv2.imencode(".png", test_image)
         image_b64 = base64.b64encode(encoded.tobytes()).decode()
 

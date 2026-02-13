@@ -294,7 +294,7 @@ def extract_image_id(sample: dict[str, Any]) -> str | None:
 
 
 def process_ground_truth_dataset(
-    dataset_name: str,
+    _dataset_name: str,
     metadata_path: Path,
     gt_source: str,
     dry_run: bool = False,
@@ -302,7 +302,7 @@ def process_ground_truth_dataset(
     """Process a ground truth text dataset: assign confidence=1.0.
 
     Args:
-        dataset_name: Canonical dataset name.
+        _dataset_name: Canonical dataset name (reserved for future per-dataset logic).
         metadata_path: Path to the metadata JSON file.
         gt_source: Description of the ground truth source.
         dry_run: If True, report without writing.
@@ -362,7 +362,7 @@ def process_ground_truth_dataset(
 
 
 def process_docling_dataset(
-    dataset_name: str,
+    _dataset_name: str,
     metadata_path: Path,
     annotation_dir: Path,
     dry_run: bool = False,
@@ -375,7 +375,7 @@ def process_docling_dataset(
       2. Apply dataset-level quality cap if failure rate exceeds threshold
 
     Args:
-        dataset_name: Canonical dataset name.
+        _dataset_name: Canonical dataset name (reserved for future per-dataset logic).
         metadata_path: Path to the metadata JSON file.
         annotation_dir: Path to annotations/{dataset}/ directory.
         dry_run: If True, report without writing.

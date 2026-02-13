@@ -1670,9 +1670,9 @@ def main() -> None:
         ocr_index=ocr_index,
         mos_index=mos_index,
         res_to_ori=res_to_ori,
-        egret_index=egret_index if egret_index else None,
-        orphan_corrections=orphan_corr if orphan_corr else None,
-        iqa_index=iqa_index if iqa_index else None,
+        egret_index=egret_index or None,
+        orphan_corrections=orphan_corr or None,
+        iqa_index=iqa_index or None,
         dry_run=args.dry_run,
     )
 

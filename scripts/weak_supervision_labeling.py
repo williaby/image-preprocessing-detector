@@ -337,7 +337,7 @@ def main():
     args = parser.parse_args()
 
     # Set output directory
-    output_dir = args.output if args.output else args.input / "labels"
+    output_dir = args.output or args.input / "labels"
 
     # Create labeler
     labeler = WeakSupervisionLabeler(

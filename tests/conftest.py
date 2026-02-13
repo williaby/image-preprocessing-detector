@@ -43,6 +43,7 @@ BENCHMARKS_DIR = PROJECT_ROOT / "data" / "benchmarks"
 # Glob patterns - extracted to constants to avoid duplication (S1192)
 PDF_GLOB_PATTERN = "*.pdf"
 IMAGE_GLOB_PATTERN = "*.{jpg,png,jpeg}"
+JPG_GLOB = "*.jpg"
 
 
 # ============================================================================
@@ -369,7 +370,7 @@ def training_validation_images(training_validation_dir: Path) -> list[Path]:
     - 1 moderate degradation sample
     - 1 severe degradation sample
     """
-    images = sorted(training_validation_dir.glob("*.jpg"))
+    images = sorted(training_validation_dir.glob(JPG_GLOB))
     if not images:
         pytest.skip("Training validation images not available")
     return images
@@ -385,7 +386,7 @@ def augmentation_input_images(augmentation_input_dir: Path) -> list[Path]:
     - Clean table page
     - Clean form page
     """
-    images = sorted(augmentation_input_dir.glob("*.jpg"))
+    images = sorted(augmentation_input_dir.glob(JPG_GLOB))
     if not images:
         pytest.skip("Augmentation input images not available")
     return images
@@ -404,7 +405,7 @@ def layout_edge_case_samples(layout_samples_dir: Path) -> list[Path]:
     """
     samples = []
     samples.extend(sorted(layout_samples_dir.glob(PDF_GLOB_PATTERN)))
-    samples.extend(sorted(layout_samples_dir.glob("*.jpg")))
+    samples.extend(sorted(layout_samples_dir.glob(JPG_GLOB)))
     if not samples:
         pytest.skip("Layout edge case samples not available")
     return samples
@@ -516,7 +517,7 @@ def all_tablebank_images(tablebank_fixtures_dir: Path) -> list[Path]:
     if not tablebank_fixtures_dir.exists():
         return []
     images = list(tablebank_fixtures_dir.glob("*.png"))
-    images.extend(tablebank_fixtures_dir.glob("*.jpg"))
+    images.extend(tablebank_fixtures_dir.glob(JPG_GLOB))
     return images
 
 

@@ -292,7 +292,7 @@ class TestBatchContext:
         outcome_logger = OutcomeLogger(logger=mock_logger, sample_rate=1.0)
 
         with outcome_logger.batch_context("batch_001", total_files=5):
-            pass
+            pass  # Intentionally empty - testing start/complete logging only
 
         # Should have batch_started and batch_completed
         events = [c[0][0] for c in mock_logger.info.call_args_list]
@@ -408,7 +408,7 @@ class TestTimedOperation:
             log_on_complete=True,
             extra_context="value",
         ) as result:
-            pass
+            pass  # Intentionally empty - testing log-on-complete behavior
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args

@@ -29,7 +29,7 @@ class TestBinConfig:
         config = BinConfig.from_yaml()
         assert config.total_bins == 42
         assert len(config.centers) == 42
-        assert config.max_residual == 0.25
+        assert config.max_residual == pytest.approx(0.25)
 
     def test_from_yaml_with_explicit_path(self) -> None:
         """BinConfig loads from explicitly provided config path."""
@@ -74,10 +74,10 @@ class TestBinConfig:
 
         config = BinConfig.from_yaml()
         critical_zone = next(z for z in config.zones if z.name == "critical")
-        assert critical_zone.width == 0.5
+        assert critical_zone.width == pytest.approx(0.5)
         assert critical_zone.count == 20
-        assert critical_zone.start == -5.0
-        assert critical_zone.end == 5.0
+        assert critical_zone.start == pytest.approx(-5.0)
+        assert critical_zone.end == pytest.approx(5.0)
 
     def test_zone_bin_counts_sum_to_total(self) -> None:
         """Sum of all zone bin counts equals total_bins."""
@@ -216,9 +216,9 @@ class TestSkewEstimation:
             final_angle=-12.6,
         )
         assert est.orientation_class == 90
-        assert est.orientation_confidence == 0.99
+        assert est.orientation_confidence == pytest.approx(0.99)
         assert est.skew_bin == 5
-        assert est.final_angle == -12.6
+        assert est.final_angle == pytest.approx(-12.6)
 
 
 class TestSoftmax:

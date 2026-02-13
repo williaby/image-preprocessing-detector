@@ -41,7 +41,7 @@ from ...schemas.enrichment import EnrichmentData, LayoutDetection
 from ..errors import InferenceError
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 
 class SimulatedInferenceProvider:

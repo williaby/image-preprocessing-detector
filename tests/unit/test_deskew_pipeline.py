@@ -31,10 +31,10 @@ class TestDeskewConfig:
         from image_preprocessing_detector.detection.deskew_pipeline import DeskewConfig
 
         config = DeskewConfig()
-        assert config.orientation_confidence_threshold == 0.85
-        assert config.skew_confidence_threshold == 0.3
-        assert config.min_correction_angle == 0.3
-        assert config.max_correction_angle == 45.0
+        assert config.orientation_confidence_threshold == pytest.approx(0.85)
+        assert config.skew_confidence_threshold == pytest.approx(0.3)
+        assert config.min_correction_angle == pytest.approx(0.3)
+        assert config.max_correction_angle == pytest.approx(45.0)
         assert config.uncertainty_gate is True
         assert config.fallback_enabled is True
         assert config.border_value == 255
@@ -44,8 +44,8 @@ class TestDeskewConfig:
         from image_preprocessing_detector.detection.deskew_pipeline import DeskewConfig
 
         config = DeskewConfig.from_yaml()
-        assert config.orientation_confidence_threshold == 0.85
-        assert config.min_correction_angle == 0.3
+        assert config.orientation_confidence_threshold == pytest.approx(0.85)
+        assert config.min_correction_angle == pytest.approx(0.3)
         assert config.fallback_enabled is True
 
     def test_frozen(self) -> None:
@@ -68,10 +68,10 @@ class TestDeskewResult:
         result = DeskewResult(corrected_image=img)
         assert result.orientation_applied is False
         assert result.orientation_angle == 0
-        assert result.skew_angle == 0.0
+        assert result.skew_angle == pytest.approx(0.0)
         assert result.correction_applied is False
         assert result.method == "ml"
-        assert result.latency_ms == 0.0
+        assert result.latency_ms == pytest.approx(0.0)
 
     def test_frozen(self) -> None:
         """DeskewResult is immutable."""
@@ -275,7 +275,7 @@ class TestSchemaIntegration:
         from image_preprocessing_detector.schema import DeskewDetection
 
         dd = DeskewDetection()
-        assert dd.skew_angle == 0.0
+        assert dd.skew_angle == pytest.approx(0.0)
         assert dd.skew_corrected is False
         assert dd.detection_method == "ml"
         assert dd.skipped_reason is None
@@ -299,7 +299,7 @@ class TestSchemaIntegration:
             latency_ms=12.5,
         )
         assert dd.orientation_angle == OrientationAngle.ROTATED_90
-        assert dd.skew_angle == 1.5
+        assert dd.skew_angle == pytest.approx(1.5)
         assert dd.skew_corrected is True
 
     def test_page_metadata_has_deskew_field(self) -> None:
@@ -319,7 +319,7 @@ class TestSchemaIntegration:
             deskew=dd,
         )
         assert pm.deskew is not None
-        assert pm.deskew.skew_angle == 2.0
+        assert pm.deskew.skew_angle == pytest.approx(2.0)
 
     def test_page_metadata_deskew_none_by_default(self) -> None:
         """PageMetadata.deskew is None by default."""

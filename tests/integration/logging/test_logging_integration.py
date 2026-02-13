@@ -9,6 +9,7 @@ Sprint 6.1.5: Validates logging across modules with:
 
 import tempfile
 import time
+from collections.abc import Iterator
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -50,7 +51,7 @@ from image_preprocessing_detector.logging.outcomes import (
 
 
 @pytest.fixture
-def temp_log_dir() -> Path:
+def temp_log_dir() -> Iterator[Path]:
     """Create temporary log directory."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
@@ -91,11 +92,11 @@ class TestEndToEndLogFlow:
             assert get_correlation_id() == "test-flow-123"
 
             # Error logger
-            error_logger = get_error_logger()
+            get_error_logger()
             assert get_correlation_id() == "test-flow-123"
 
             # Outcome logger
-            outcome_logger = get_outcome_logger()
+            get_outcome_logger()
             assert get_correlation_id() == "test-flow-123"
 
     def test_nested_contexts_preserve_correlation(self) -> None:
@@ -354,7 +355,7 @@ class TestLoggingPerformance:
         start = time.perf_counter()
 
         for i in range(iterations):
-            error = StructuredError(
+            StructuredError(
                 code=ErrorCode.PROCESSING_FAILED,
                 message=f"Error {i}",
                 details={"iteration": i},
@@ -412,7 +413,7 @@ class TestLoggingPerformance:
         start = time.perf_counter()
 
         for i in range(iterations):
-            outcome = PageOutcome(
+            PageOutcome(
                 document_id=f"doc_{i}",
                 page_index=i % 10,
                 gate_decision=GateDecision.TEXT_DETECTED,
@@ -616,7 +617,7 @@ class TestCrossModuleIntegration:
         """Test outcome and error logs share correlation ID."""
         with LoggingContext(correlation_id="shared-123"):
             # Create outcome
-            outcome = PageOutcome(
+            PageOutcome(
                 document_id="doc_test",
                 page_index=0,
                 gate_decision=GateDecision.NO_TEXT,

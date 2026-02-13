@@ -35,7 +35,7 @@ from image_preprocessing_detector.synthetic.config import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 logger = logging.getLogger(__name__)
 

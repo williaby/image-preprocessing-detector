@@ -136,14 +136,14 @@ class MuharafParser(BaseParser):
     def _parse_page_xml(
         self,
         xml_path: Path,
-        image_path: Path,
+        _image_path: Path,
         labels: OriginalLabels,
     ) -> None:
         """Parse PAGE XML file and populate labels.
 
         Args:
             xml_path: Path to PAGE XML file
-            image_path: Path to image file (for dimensions)
+            _image_path: Path to image file (reserved; dimensions from XML)
             labels: OriginalLabels instance to populate
         """
         tree = ET.parse(xml_path)

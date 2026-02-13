@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 
 def _is_onnxruntime_functional() -> bool:

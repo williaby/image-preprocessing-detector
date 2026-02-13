@@ -31,9 +31,10 @@ print_help() {
   echo "Options:"
   echo "    --unzip           unzip dataset in TARGET_DIR and delete the zip file"
   echo "    --without-pdfs    download without pdfs, can be only used for unlabeled dataset"
+  return 0
 }
 
-if [ "$#" -lt 3 ]; then
+if [[ "$#" -lt 3 ]]; then
   echo "You need to provide at least three arguments."
   print_help
   exit 1
@@ -46,7 +47,7 @@ shift ; shift ; shift
 
 unzip="no"
 without_pdfs="no"
-while [ "$#" -ge 1 ]; do
+while [[ "$#" -ge 1 ]]; do
   if [[ "$1" == "--without-pdfs" ]]; then
     if [[ "$dataset" != "unlabeled" ]]; then
       echo "--without-pdfs can only be used for unlabeled dataset."
@@ -84,7 +85,7 @@ download_and_unzip() {
     echo "Downloading $url"
     curl -O "$url"
     zip_size=$(wc -c "$zipfile" | sed -e 's/ *\([0-9]*\) .*/\1/')
-    if [ "$zip_size" -lt 100000000 ]; then
+    if [[ "$zip_size" -lt 100000000 ]]; then
       echo "Unexpected size of downloaded $zipfile, perhaps token '$token' or dataset name '$dataset' is wrong"
       exit 1
     fi

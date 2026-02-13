@@ -46,6 +46,10 @@ CC_OCR_PATH = BASE_DATA_PATH / "language/huggingface_downloads/CC-OCR"
 OHR_BENCH_PATH = BENCHMARK_PATH / "ohr-bench"
 FINANCEBENCH_PATH = BENCHMARK_PATH / "financebench"
 
+# Common string constants (S1192: avoid duplicate string literals)
+PYMUPDF_NOT_INSTALLED = "PyMuPDF (fitz) not installed. Run: pip install pymupdf"
+PDF_GLOB = "*.pdf"
+
 
 def convert_yarmouk_pdfs(
     input_path: Path = YARMOUK_PATH,
@@ -67,13 +71,13 @@ def convert_yarmouk_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0}
 
     # Find all PDF files
-    pdf_files = list(input_path.rglob("*.pdf"))
+    pdf_files = list(input_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:
@@ -258,7 +262,7 @@ def convert_ohr_bench_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0, "pages": 0}
@@ -270,7 +274,7 @@ def convert_ohr_bench_pdfs(
         return {"error": "path_not_found"}
 
     # Find all PDF files
-    pdf_files = list(pdfs_path.rglob("*.pdf"))
+    pdf_files = list(pdfs_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:
@@ -374,7 +378,7 @@ def convert_financebench_pdfs(
     try:
         import fitz  # PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF (fitz) not installed. Run: pip install pymupdf")
+        logger.error(PYMUPDF_NOT_INSTALLED)
         return {"error": "missing_dependency"}
 
     stats = {"found": 0, "converted": 0, "skipped": 0, "errors": 0, "pages": 0}
@@ -386,7 +390,7 @@ def convert_financebench_pdfs(
         return {"error": "path_not_found"}
 
     # Find all PDF files
-    pdf_files = list(pdfs_path.rglob("*.pdf"))
+    pdf_files = list(pdfs_path.rglob(PDF_GLOB))
     stats["found"] = len(pdf_files)
 
     if dry_run:

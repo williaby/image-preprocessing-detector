@@ -156,16 +156,16 @@ class GenericParser(BaseParser):
         self,
         labels: OriginalLabels,
         dataset_name: str,
-        image_path: Path,
-        config: dict[str, Any],
+        _image_path: Path,
+        _config: dict[str, Any],
     ) -> None:
         """Extract dataset-specific metadata where possible.
 
         Args:
             labels: OriginalLabels to update
             dataset_name: Name of the dataset
-            image_path: Path to the image
-            config: Dataset configuration
+            _image_path: Path to the image (reserved for future per-image logic)
+            _config: Dataset configuration (reserved for future per-dataset logic)
         """
         if labels.raw_labels is None:
             return

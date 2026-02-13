@@ -1066,7 +1066,7 @@ def process_dataset(
     logger.info(f"Found {len(samples_to_process)} samples needing language enrichment")
 
     # Apply slice
-    end = end_idx if end_idx else len(samples_to_process)
+    end = end_idx or len(samples_to_process)
     samples_to_process = samples_to_process[start_idx:end]
     logger.info(
         f"Processing {len(samples_to_process)} samples (index {start_idx} to {end})"

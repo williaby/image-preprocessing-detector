@@ -378,10 +378,10 @@ def compute_dataset_statistics(
 
 
 def _validate_script_coverage(
-    samples: list[GeneratedSample],  # noqa: ARG001
+    _samples: list[GeneratedSample],
     stats: dict[str, Any],
     report: ValidationReport,
-    thresh: dict[str, Any],  # noqa: ARG001
+    _thresh: dict[str, Any],
 ) -> None:
     """Validate all required scripts are present in all splits."""
     from image_preprocessing_detector.synthetic.config import SCRIPT_CONFIGS

@@ -36,6 +36,11 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger(__name__)
 
+# Common string constants (S1192: avoid duplicate string literals)
+SAFETENSORS_FILE = "model.safetensors"
+ONNX_MODEL_FILE = "model.onnx"
+MODEL_NOT_LOADED_MSG = "Model not loaded"
+
 
 class LocalBackend(InferenceBackend):
     """Inference backend for locally stored model artifacts.
@@ -90,9 +95,9 @@ class LocalBackend(InferenceBackend):
             start_time = time.perf_counter()
 
             # Detect artifact type and load accordingly
-            if (artifact_path / "model.safetensors").exists():
+            if (artifact_path / SAFETENSORS_FILE).exists():
                 self._load_safetensors(artifact_path, config)
-            elif (artifact_path / "model.onnx").exists():
+            elif (artifact_path / ONNX_MODEL_FILE).exists():
                 self._load_onnx(artifact_path, config)
             elif artifact_path.suffix == ".onnx":
                 self._load_onnx(artifact_path.parent, config, artifact_path.name)
@@ -130,7 +135,7 @@ class LocalBackend(InferenceBackend):
         try:
             from safetensors.torch import load_file
 
-            weights_path = path / "model.safetensors"
+            weights_path = path / SAFETENSORS_FILE
             state_dict = load_file(str(weights_path))
 
             # Load config if available
@@ -150,7 +155,7 @@ class LocalBackend(InferenceBackend):
             raise ModelLoadError(msg) from e
 
     def _load_onnx(
-        self, path: Path, config: InferenceConfig, filename: str = "model.onnx"
+        self, path: Path, config: InferenceConfig, filename: str = ONNX_MODEL_FILE
     ) -> None:
         """Load ONNX model."""
         try:
@@ -246,7 +251,7 @@ class LocalBackend(InferenceBackend):
     def predict(self, image: NDArray[np.uint8] | Image.Image) -> DIQAPrediction:
         """Run inference on a single image."""
         if not self.is_loaded():
-            msg = "Model not loaded"
+            msg = MODEL_NOT_LOADED_MSG
             raise ModelNotLoadedError(msg)
 
         results = self.predict_batch([image])
@@ -258,7 +263,7 @@ class LocalBackend(InferenceBackend):
     ) -> list[DIQAPrediction]:
         """Run inference on a batch of images."""
         if not self.is_loaded():
-            msg = "Model not loaded"
+            msg = MODEL_NOT_LOADED_MSG
             raise ModelNotLoadedError(msg)
 
         try:
@@ -372,7 +377,7 @@ class LocalBackend(InferenceBackend):
     def get_provenance(self) -> ProvenanceInfo:
         """Get provenance information."""
         if not self.is_loaded():
-            msg = "Model not loaded"
+            msg = MODEL_NOT_LOADED_MSG
             raise ModelNotLoadedError(msg)
 
         return ProvenanceInfo(
@@ -388,7 +393,7 @@ class LocalBackend(InferenceBackend):
         hash_obj = hashlib.sha256()
 
         # Hash key files
-        for filename in ["model.safetensors", "model.onnx", "config.json"]:
+        for filename in [SAFETENSORS_FILE, ONNX_MODEL_FILE, "config.json"]:
             file_path = self._artifact_path / filename
             if file_path.exists():
                 with open(file_path, "rb") as f:

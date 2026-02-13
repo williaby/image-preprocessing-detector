@@ -666,7 +666,7 @@ def main():
     logger.info(f"Found {len(test_samples)} test images needing enrichment")
 
     # Apply slice
-    end_idx = args.end if args.end else len(test_samples)
+    end_idx = args.end or len(test_samples)
     test_samples = test_samples[args.start : end_idx]
     logger.info(
         f"Processing {len(test_samples)} images (index {args.start} to {end_idx})"

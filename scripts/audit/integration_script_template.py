@@ -457,8 +457,8 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     # Script-specific character patterns
     # {FILL_IN}: Uncomment/add patterns for your dataset's script(s)
     deva_chars = len(re.findall(r"[\u0900-\u097f]", clean_text))
-    # cjk_chars = len(re.findall(r"[\u4e00-\u9fff\u3400-\u4dbf]", clean_text))
-    # arabic_chars = len(re.findall(r"[\u0600-\u06ff]", clean_text))
+    # {FILL_IN}: Add CJK character counting for range U+4E00-U+9FFF, U+3400-U+4DBF
+    # {FILL_IN}: Add Arabic character counting for range U+0600-U+06FF
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
 
     avg_line_len = 0.0
@@ -958,7 +958,7 @@ def integrate_sample(
     # -------------------------------------------------------------------
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "unknown"
+        data["text_scope_content_type"] = content_type or "unknown"
     else:
         data["text_scope_content_type"] = v1_data.get(
             "text_scope_content_type", "unknown"

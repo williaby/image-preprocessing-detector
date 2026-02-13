@@ -16,6 +16,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+rng = np.random.default_rng()
+
 from image_preprocessing_detector.orchestration import (
     CircuitBreakerConfig,
     CircuitState,
@@ -496,7 +498,7 @@ class TestImageEncoding:
     def test_encode_uint8_image(self) -> None:
         """Test encoding uint8 image."""
         client = ModalClient(modal_endpoint="https://test.modal.com")
-        img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        img = rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
 
         encoded = client._encode_image(img)
 
@@ -511,7 +513,7 @@ class TestImageEncoding:
     def test_encode_float_image(self) -> None:
         """Test encoding float [0,1] image."""
         client = ModalClient(modal_endpoint="https://test.modal.com")
-        img = np.random.random((100, 100, 3)).astype(np.float32)
+        img = rng.random((100, 100, 3)).astype(np.float32)
 
         encoded = client._encode_image(img)
 

@@ -1029,10 +1029,6 @@ def evaluate_smartdoc_qa_ocr(
     cacc_np = np.array(all_cacc)
     wacc_np = np.array(all_wacc)
 
-    # Convert accuracy to error rate
-    cer_np = 100.0 - cacc_np  # Character error rate (higher = worse)
-    wer_np = 100.0 - wacc_np  # Word error rate (higher = worse)
-
     # Our models output degradation scores (higher = more degradation = worse quality)
     # Error rates: higher = worse OCR performance
     # Therefore: higher degradation should correlate with higher error rate

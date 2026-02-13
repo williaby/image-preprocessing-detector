@@ -141,7 +141,7 @@ class TestDocLayNetRoundTrip:
         result = taxonomy.from_canonical(canonical, "doclaynet")
         assert result.target_label == label
         assert not result.is_lossy
-        assert result.confidence == 1.0
+        assert result.confidence == pytest.approx(1.0)
 
     @pytest.mark.parametrize("label", DOCLAYNET_CLASSES)
     def test_convert_roundtrip(self, taxonomy: LayoutTaxonomy, label: str) -> None:
@@ -208,7 +208,7 @@ class TestLossyConversion:
         result = taxonomy.convert("abandon", "docstructbench", "doclaynet")
         assert result.target_label == "(unmapped)"
         assert result.is_lossy
-        assert result.confidence == 0.0
+        assert result.confidence == pytest.approx(0.0)
 
     def test_docling_form_to_doclaynet_unmapped(self, taxonomy: LayoutTaxonomy) -> None:
         """Docling form -> FORM has no DocLayNet mapping."""

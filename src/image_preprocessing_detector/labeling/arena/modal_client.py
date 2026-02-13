@@ -37,7 +37,7 @@ import numpy as np
 import structlog
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 logger = structlog.get_logger(__name__)
 

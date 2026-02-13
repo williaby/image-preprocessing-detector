@@ -205,13 +205,12 @@ def assess_element_quality_ml(
         for score, issue_type, action, name in score_mappings:
             # ML scores: 0=bad, 1=good; threshold at 0.5
             if score < 0.5:
-                severity = (
-                    Severity.CRITICAL
-                    if score < 0.3
-                    else Severity.HIGH
-                    if score < 0.4
-                    else Severity.MEDIUM
-                )
+                if score < 0.3:
+                    severity = Severity.CRITICAL
+                elif score < 0.4:
+                    severity = Severity.HIGH
+                else:
+                    severity = Severity.MEDIUM
                 issues.append(
                     DetectedIssue(
                         issue_type=issue_type,

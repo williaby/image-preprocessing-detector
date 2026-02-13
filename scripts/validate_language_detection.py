@@ -214,7 +214,6 @@ def main() -> int:
     # Initialize detection models
     fasttext_model = None
     lingua_detector = None
-    easyocr_reader = None
 
     # Load fastText
     try:

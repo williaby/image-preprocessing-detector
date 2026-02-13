@@ -291,7 +291,7 @@ class TestCalculateComplexityMetrics:
 
         result = calculate_complexity_metrics(markdown, [])
 
-        # Density = (1000 / (1700 * 2200)) * 1000
+        # Expected density based on 1000 chars in 1700x2200 page area
         expected_density = (1000 / (1700 * 2200)) * 1000
         assert abs(result["text_density"] - expected_density) < 0.001
 

@@ -30,17 +30,19 @@ echo ""
 # Function to extract markdown links from a file
 # Returns: link_text|link_target (one per line)
 extract_links() {
-    local file=$1
+    local file="$1"
     # Match [text](path) - capturing both text and path
     grep -oP '\[([^\]]+)\]\(([^)]+)\)' "$file" 2>/dev/null | \
         sed 's/\[\(.*\)\](\(.*\))/\1|\2/' || true
+    return 0
 }
 
 # Function to resolve relative path from source file
 resolve_path() {
-    local source_file=$1
-    local link_target=$2
-    local source_dir=$(dirname "$source_file")
+    local source_file="$1"
+    local link_target="$2"
+    local source_dir
+    source_dir=$(dirname "$source_file")
 
     # Skip external URLs
     if [[ "$link_target" =~ ^https?:// ]]; then
@@ -65,13 +67,13 @@ resolve_path() {
 
 # Function to check if file exists
 check_file_exists() {
-    local file_path=$1
+    local file_path="$1"
 
-    if [ "$file_path" = "EXTERNAL" ] || [ "$file_path" = "ANCHOR" ] || [ "$file_path" = "INVALID" ]; then
+    if [[ "$file_path" = "EXTERNAL" ]] || [[ "$file_path" = "ANCHOR" ]] || [[ "$file_path" = "INVALID" ]]; then
         return 2  # Skip
     fi
 
-    if [ -f "$file_path" ] || [ -d "$file_path" ]; then
+    if [[ -f "$file_path" ]] || [[ -d "$file_path" ]]; then
         return 0  # Exists
     else
         return 1  # Broken
@@ -83,7 +85,7 @@ declare -a BROKEN_LINKS
 
 # Validate links in a file
 validate_file_links() {
-    local file=$1
+    local file="$1"
     local file_display="${file#$PROJECT_ROOT/}"
 
     echo -e "${BLUE}Checking: ${file_display}${NC}"
@@ -92,7 +94,7 @@ validate_file_links() {
     local file_broken=0
 
     while IFS='|' read -r link_text link_target; do
-        [ -z "$link_target" ] && continue
+        [[ -z "$link_target" ]] && continue
 
         ((total_links++))
         ((file_links++))
@@ -101,9 +103,9 @@ validate_file_links() {
 
         if check_file_exists "$resolved"; then
             status=$?
-            if [ $status -eq 0 ]; then
+            if [[ $status -eq 0 ]]; then
                 ((valid_links++))
-            elif [ $status -eq 1 ]; then
+            elif [[ $status -eq 1 ]]; then
                 ((broken_links++))
                 ((file_broken++))
                 echo -e "  ${RED}✗ BROKEN: [$link_text]($link_target)${NC}"
@@ -114,45 +116,46 @@ validate_file_links() {
         fi
     done < <(extract_links "$file")
 
-    if [ $file_links -eq 0 ]; then
+    if [[ $file_links -eq 0 ]]; then
         echo -e "  ${YELLOW}No links found${NC}"
-    elif [ $file_broken -eq 0 ]; then
+    elif [[ $file_broken -eq 0 ]]; then
         echo -e "  ${GREEN}✓ All ${file_links} links valid${NC}"
     else
         echo -e "  ${RED}✗ ${file_broken}/${file_links} links broken${NC}"
     fi
 
     echo ""
+    return 0
 }
 
 # Main validation
 echo "=== Level 0 ==="
 for file in "$DOCS_DIR"/level-0/*.md; do
-    [ -f "$file" ] && validate_file_links "$file"
+    [[ -f "$file" ]] && validate_file_links "$file"
 done
 
 echo "=== Level 1 ==="
 for file in "$DOCS_DIR"/level-1/*.md; do
-    [ -f "$file" ] && validate_file_links "$file"
+    [[ -f "$file" ]] && validate_file_links "$file"
 done
 
 echo "=== Level 2 ==="
 for dir in "$DOCS_DIR"/level-2/*/; do
     for file in "$dir"*.md; do
-        [ -f "$file" ] && validate_file_links "$file"
+        [[ -f "$file" ]] && validate_file_links "$file"
     done
 done
 
 echo "=== Deprecated ==="
 for dir in "$DOCS_DIR"/deprecated/*/; do
     for file in "$dir"*.md; do
-        [ -f "$file" ] && validate_file_links "$file"
+        [[ -f "$file" ]] && validate_file_links "$file"
     done
 done
 
 echo "=== Root Architecture Docs ==="
 for file in "$PROJECT_ROOT"/docs/architecture/*.md; do
-    [ -f "$file" ] && validate_file_links "$file"
+    [[ -f "$file" ]] && validate_file_links "$file"
 done
 
 # Summary
@@ -163,7 +166,7 @@ echo -e "Total Links Checked: ${BLUE}${total_links}${NC}"
 echo -e "Valid Links: ${GREEN}${valid_links}${NC}"
 echo -e "Broken Links: ${RED}${broken_links}${NC}"
 
-if [ ${broken_links} -gt 0 ]; then
+if [[ ${broken_links} -gt 0 ]]; then
     echo ""
     echo "❌ FAILED: Found ${broken_links} broken link(s)"
     echo ""

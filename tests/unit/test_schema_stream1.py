@@ -73,7 +73,7 @@ class TestScriptDetectionResult:
             method="heuristic",
         )
         assert result.detected_script == "Zzzz"
-        assert result.confidence == 0.0
+        assert result.confidence == pytest.approx(0.0)
         assert result.is_unknown is True
         assert result.unknown_reason == "no_text_detected"
 
@@ -186,7 +186,7 @@ class TestDocumentScriptDetection:
         detection = DocumentScriptDetection.from_instances([])
 
         assert detection.dominant_script == "Zzzz"
-        assert detection.dominant_confidence == 0.0
+        assert detection.dominant_confidence == pytest.approx(0.0)
         assert detection.is_multilingual is False
 
     def test_script_distribution(self) -> None:
@@ -241,7 +241,7 @@ class TestTableComplexity:
         """Test default values are sensible."""
         tc = TableComplexity()
         assert tc.has_borders is True
-        assert tc.complexity_score == 0.5
+        assert tc.complexity_score == pytest.approx(0.5)
 
 
 class TestDoclingRoutingParams:

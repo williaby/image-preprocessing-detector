@@ -18,34 +18,36 @@ NC='\033[0m' # No Color
 # Check if Modal CLI is installed
 check_modal_installed() {
     if ! command -v modal &> /dev/null; then
-        echo -e "${RED}Error: Modal CLI not installed${NC}"
+        echo -e "${RED}Error: Modal CLI not installed${NC}" >&2
         echo "Install with: poetry add modal && poetry install"
         exit 1
     fi
+    return 0
 }
 
 # Check if authenticated
 check_modal_auth() {
     # Check if token file exists
-    if [ ! -f "$HOME/.modal.toml" ]; then
-        echo -e "${RED}Error: Not authenticated with Modal${NC}"
+    if [[ ! -f "$HOME/.modal.toml" ]]; then
+        echo -e "${RED}Error: Not authenticated with Modal${NC}" >&2
         echo "Run: modal token new"
         exit 1
     fi
+    return 0
 }
 
 # Setup Modal secrets for GCS (base64 format for consistency)
 setup_gcs_secret() {
     local key_path="$1"
 
-    if [ -z "$key_path" ]; then
-        echo -e "${RED}Error: GCS service account key path required${NC}"
+    if [[ -z "$key_path" ]]; then
+        echo -e "${RED}Error: GCS service account key path required${NC}" >&2
         echo "Usage: $0 setup-gcs-secret /path/to/key.json"
         exit 1
     fi
 
-    if [ ! -f "$key_path" ]; then
-        echo -e "${RED}Error: Key file not found: $key_path${NC}"
+    if [[ ! -f "$key_path" ]]; then
+        echo -e "${RED}Error: Key file not found: $key_path${NC}" >&2
         exit 1
     fi
 
@@ -55,21 +57,21 @@ setup_gcs_secret() {
     GCP_SA_KEY_B64=$(base64 < "$key_path" | tr -d '\n')
 
     # Verify base64 encoding succeeded and is not empty
-    if [ -z "$GCP_SA_KEY_B64" ]; then
-        echo -e "${RED}Error: Failed to encode service account key to base64${NC}"
+    if [[ -z "$GCP_SA_KEY_B64" ]]; then
+        echo -e "${RED}Error: Failed to encode service account key to base64${NC}" >&2
         echo "Check that the file is readable and contains valid JSON"
         exit 1
     fi
 
     # Verify the encoded value looks like valid base64 (basic sanity check)
     if ! echo "$GCP_SA_KEY_B64" | grep -qE '^[A-Za-z0-9+/=]+$'; then
-        echo -e "${RED}Error: Base64 encoding produced invalid characters${NC}"
+        echo -e "${RED}Error: Base64 encoding produced invalid characters${NC}" >&2
         exit 1
     fi
 
     echo -e "${YELLOW}Creating Modal secret 'gcs-credentials' with GCP_SA_KEY...${NC}"
     if ! modal secret create gcs-credentials GCP_SA_KEY="$GCP_SA_KEY_B64"; then
-        echo -e "${RED}Error: Failed to create Modal secret${NC}"
+        echo -e "${RED}Error: Failed to create Modal secret${NC}" >&2
         echo "Check that you are authenticated with Modal (modal token new)"
         exit 1
     fi
@@ -77,12 +79,14 @@ setup_gcs_secret() {
     echo -e "${GREEN}✅ GCS secret created successfully (base64 format)${NC}"
     echo -e "${GREEN}   Secret name: gcs-credentials${NC}"
     echo -e "${GREEN}   Environment variable: GCP_SA_KEY${NC}"
+    return 0
 }
 
 # Test GPU access
 test_gpu() {
     echo -e "${YELLOW}Testing GPU access...${NC}"
     poetry run modal run modal/app.py::hello_gpu
+    return 0
 }
 
 # Run Phase 2 training
@@ -90,6 +94,7 @@ train_phase2() {
     echo -e "${YELLOW}Starting Phase 2 IQA training...${NC}"
     echo "Monitor at: https://modal.com/apps"
     poetry run modal run modal/train_phase2_iqa.py
+    return 0
 }
 
 # Run Phase 3 training (DocLayout-YOLO)
@@ -97,6 +102,7 @@ train_phase3() {
     echo -e "${YELLOW}Starting Phase 3 DocLayout-YOLO training...${NC}"
     echo "Monitor at: https://modal.com/apps"
     poetry run modal run modal/train_phase3_doclayout_yolo.py
+    return 0
 }
 
 # Monitor Modal app
@@ -109,18 +115,21 @@ monitor() {
     else
         echo "Visit: https://modal.com/apps"
     fi
+    return 0
 }
 
 # Show usage costs
 show_costs() {
     echo -e "${YELLOW}Checking Modal usage...${NC}"
     poetry run modal profile current
+    return 0
 }
 
 # List secrets
 list_secrets() {
     echo -e "${YELLOW}Listing Modal secrets...${NC}"
     poetry run modal secret list
+    return 0
 }
 
 # Main command router

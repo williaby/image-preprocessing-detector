@@ -35,7 +35,7 @@ class SyntheticImageGenerator:
         self,
         width: int = 2480,
         height: int = 3509,
-        dpi: int = 300,
+        _dpi: int = 300,
         background_color: tuple[int, int, int] = (255, 255, 255),
         text_color: tuple[int, int, int] = (0, 0, 0),
     ) -> np.ndarray:
@@ -45,7 +45,7 @@ class SyntheticImageGenerator:
         Args:
             width: Image width in pixels
             height: Image height in pixels
-            dpi: DPI resolution
+            _dpi: DPI resolution (reserved for future use)
             background_color: RGB background color
             text_color: RGB text color
 

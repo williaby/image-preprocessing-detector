@@ -226,11 +226,18 @@ def main() -> None:
     ws_labels = load_weak_supervision_labels(current_file)
     image_path = ws_labels["image_path"]
 
+    # Sanitize path: resolve to absolute and reject path traversal
+    resolved_image_path = Path(image_path).resolve()
+    if ".." in Path(image_path).parts:
+        st.error("Invalid image path: path traversal detected")
+        return
+
     # Check if image exists
-    if not Path(image_path).exists():
-        st.error(f"Image not found: {image_path}")
+    if not resolved_image_path.exists():
+        st.error(f"Image not found: {resolved_image_path}")
         st.info("Please check the image_path in the labels JSON")
         return
+    image_path = str(resolved_image_path)
 
     # Main content area
     col_left, col_right = st.columns([2, 1])

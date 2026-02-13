@@ -28,7 +28,7 @@ class TestDomainModelConfig:
         """Model config has sensible defaults."""
         config = DomainModelConfig(model_id="test/model:free", role="primary_text")
         assert config.max_tokens == 2000
-        assert config.temperature == 0.0
+        assert config.temperature == pytest.approx(0.0)
         assert config.supports_vision is False
 
     def test_vision_model(self) -> None:
@@ -65,8 +65,8 @@ class TestDomainPipelineConfig:
         config = get_default_config()
         assert 0.0 <= config.text_confidence_threshold <= 1.0
         assert 0.0 <= config.vision_confidence_threshold <= 1.0
-        assert config.text_confidence_threshold == 0.85
-        assert config.vision_confidence_threshold == 0.80
+        assert config.text_confidence_threshold == pytest.approx(0.85)
+        assert config.vision_confidence_threshold == pytest.approx(0.80)
 
     def test_api_key_from_env(self) -> None:
         """API key resolved from environment variable."""
@@ -92,7 +92,7 @@ class TestDomainPipelineConfig:
     def test_rate_limit_delay(self) -> None:
         """Rate limit delay is configurable."""
         config = DomainPipelineConfig(rate_limit_delay=1.0)
-        assert config.rate_limit_delay == 1.0
+        assert config.rate_limit_delay == pytest.approx(1.0)
 
 
 class TestEnrichmentResult:
@@ -102,7 +102,7 @@ class TestEnrichmentResult:
         """Result with only required fields."""
         result = EnrichmentResult(domain_level1="SCI", domain_confidence=0.95)
         assert result.domain_level1 == "SCI"
-        assert result.domain_confidence == 0.95
+        assert result.domain_confidence == pytest.approx(0.95)
         assert result.iso639_language is None
         assert result.has_table is None
         assert result.input_mode == "text"

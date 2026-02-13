@@ -11,12 +11,15 @@ from pathlib import Path
 
 DOCS_DIR = Path("docs/datasets/source")
 
+# Common string constants (S1192: avoid duplicate string literals)
+IMAGE_FORMAT_LABEL = "JPG/PNG"
+
 # Verified E drive image counts and paths (from 2026-02-06 audit)
 DATASET_INFO: dict[str, dict[str, str | int | bool]] = {
     "arabic-docs": {
         "images": 10045,
         "e_path": "01_base_data/language/arabic_docs_ocr",
-        "img_format": "JPG/PNG",
+        "img_format": IMAGE_FORMAT_LABEL,
         "has_ocr": False,
         "has_layout": False,
         "ocr_records": 0,
@@ -42,7 +45,7 @@ DATASET_INFO: dict[str, dict[str, str | int | bool]] = {
     "cc-ocr": {
         "images": 6533,
         "e_path": "01_base_data/language/cc-ocr",
-        "img_format": "JPG/PNG",
+        "img_format": IMAGE_FORMAT_LABEL,
         "has_ocr": False,
         "has_layout": False,
         "ocr_records": 0,
@@ -68,7 +71,7 @@ DATASET_INFO: dict[str, dict[str, str | int | bool]] = {
     "cvsi": {
         "images": 10715,
         "e_path": "01_base_data/language/cvsi",
-        "img_format": "JPG/PNG",
+        "img_format": IMAGE_FORMAT_LABEL,
         "has_ocr": False,
         "has_layout": False,
         "ocr_records": 0,
@@ -276,7 +279,7 @@ DATASET_INFO: dict[str, dict[str, str | int | bool]] = {
     "invoices-kg": {
         "images": 1414,
         "e_path": "01_base_data/forms/invoices_kaggle",
-        "img_format": "JPG/PNG",
+        "img_format": IMAGE_FORMAT_LABEL,
         "has_ocr": True,
         "has_layout": True,
         "ocr_records": 1414,

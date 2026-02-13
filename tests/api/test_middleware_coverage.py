@@ -93,7 +93,7 @@ class TestRequestLoggingMiddlewareExceptions:
 
     def test_logs_exception_and_reraises(self) -> None:
         """Middleware logs exception and re-raises it."""
-        with patch("image_preprocessing_detector.api.middleware.logger") as mock_logger:
+        with patch("image_preprocessing_detector.api.middleware.logger"):
             app = FastAPI()
             app.add_middleware(
                 RequestLoggingMiddleware,

@@ -45,7 +45,7 @@ class TestGetDatasetSize:
         test_dir.mkdir()
         (test_dir / "file.txt").write_text("test content" * 100)
 
-        human_size, bytes_size = get_dataset_size(test_dir)
+        human_size, _ = get_dataset_size(test_dir)
 
         assert isinstance(human_size, str)
         assert any(unit in human_size for unit in ["B", "KB", "MB", "GB", "TB"])
@@ -56,7 +56,7 @@ class TestGetDatasetSize:
         test_dir.mkdir()
         (test_dir / "file.txt").write_text("test content")
 
-        human_size, bytes_size = get_dataset_size(test_dir)
+        _, bytes_size = get_dataset_size(test_dir)
 
         assert isinstance(bytes_size, int)
         assert bytes_size >= 0

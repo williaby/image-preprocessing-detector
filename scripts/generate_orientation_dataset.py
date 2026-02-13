@@ -53,16 +53,23 @@ logger = logging.getLogger(__name__)
 # Base data path
 BASE_DATA_PATH = Path("/mnt/e/image_detection/01_base_data")
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+DOCLAYNET_DIR = "documents/doclaynet"
+PNG_GLOB = "**/*.png"
+ALL_FILES_GLOB = "**/*.*"
+JPG_GLOB = "**/*.jpg"
+
 # Dataset composition configuration
 DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "scientific_papers": {
         "count": 2000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "scientific" in str(p).lower()
-                or random.random() < 0.3,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "scientific" in str(p).lower() or random.random() < 0.3
+                ),
             }
         ],
         "doc_type": "scientific",
@@ -71,10 +78,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1500,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "financial" in str(p).lower()
-                or random.random() < 0.2,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "financial" in str(p).lower() or random.random() < 0.2
+                ),
             }
         ],
         "doc_type": "financial",
@@ -82,25 +90,25 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "forms": {
         "count": 1500,
         "sources": [
-            {"path": BASE_DATA_PATH / "forms/funsd", "pattern": "**/*.png"},
-            {"path": BASE_DATA_PATH / "forms/funsd_plus", "pattern": "**/*.png"},
-            {"path": BASE_DATA_PATH / "forms/nist-sd2", "pattern": "**/*.*"},
-            {"path": BASE_DATA_PATH / "forms/nist_sd6", "pattern": "**/*.*"},
+            {"path": BASE_DATA_PATH / "forms/funsd", "pattern": PNG_GLOB},
+            {"path": BASE_DATA_PATH / "forms/funsd_plus", "pattern": PNG_GLOB},
+            {"path": BASE_DATA_PATH / "forms/nist-sd2", "pattern": ALL_FILES_GLOB},
+            {"path": BASE_DATA_PATH / "forms/nist_sd6", "pattern": ALL_FILES_GLOB},
         ],
         "doc_type": "form",
     },
     "receipts": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "forms/sroie_icdar2019", "pattern": "**/*.jpg"},
+            {"path": BASE_DATA_PATH / "forms/sroie_icdar2019", "pattern": JPG_GLOB},
         ],
         "doc_type": "receipt",
     },
     "tables": {
         "count": 1500,
         "sources": [
-            {"path": BASE_DATA_PATH / "tables/tablebank", "pattern": "**/*.jpg"},
-            {"path": BASE_DATA_PATH / "tables/pubtabnet", "pattern": "**/*.png"},
+            {"path": BASE_DATA_PATH / "tables/tablebank", "pattern": JPG_GLOB},
+            {"path": BASE_DATA_PATH / "tables/pubtabnet", "pattern": PNG_GLOB},
         ],
         "doc_type": "table",
     },
@@ -108,10 +116,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
-                "filter_fn": lambda p: "law" in str(p).lower()
-                or random.random() < 0.15,
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
+                "filter_fn": lambda p: (
+                    "law" in str(p).lower() or random.random() < 0.15
+                ),
             }
         ],
         "doc_type": "legal",
@@ -119,7 +128,10 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "handwritten_pages": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "handwriting/nist-sd19", "pattern": "**/*.*"},
+            {
+                "path": BASE_DATA_PATH / "handwriting/nist-sd19",
+                "pattern": ALL_FILES_GLOB,
+            },
         ],
         "doc_type": "handwritten",
     },
@@ -127,8 +139,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 1000,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "documents/doclaynet",
-                "pattern": "**/*.png",
+                "path": BASE_DATA_PATH / DOCLAYNET_DIR,
+                "pattern": PNG_GLOB,
                 "filter_fn": lambda p: random.random() < 0.15,
             }
         ],
@@ -139,11 +151,11 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "sources": [
             {
                 "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
-                "pattern": "**/*.jpg",
+                "pattern": JPG_GLOB,
             },
             {
                 "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
-                "pattern": "**/*.png",
+                "pattern": PNG_GLOB,
             },
         ],
         "doc_type": "arabic",
@@ -154,7 +166,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH
                 / "language/multilingual_scripts/nepal_devanagari",
-                "pattern": "**/*.png",
+                "pattern": PNG_GLOB,
             },
         ],
         "doc_type": "devanagari",
@@ -162,8 +174,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "japanese_vertical": {
         "count": 1050,
         "sources": [
-            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": "**/*.jpg"},
-            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": "**/*.png"},
+            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": JPG_GLOB},
+            {"path": BASE_DATA_PATH / "language/mlt19", "pattern": PNG_GLOB},
         ],
         "doc_type": "japanese",
     },
@@ -522,9 +534,7 @@ def main() -> int:
                     "2": "180° (inverted)",
                     "3": "270° clockwise",
                 },
-                "composition": {
-                    doc_type: count for doc_type, count in type_counts.items()
-                },
+                "composition": dict(type_counts.items()),
                 "samples": all_metadata,
             },
             f,

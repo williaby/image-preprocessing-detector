@@ -36,6 +36,9 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
+# Common glob patterns (S1192: avoid duplicate string literals)
+TXT_GLOB = "*.txt"
+
 # Text source configurations per dataset
 TEXT_SOURCE_CONFIGS: dict[str, dict[str, Any]] = {
     "funsd": {
@@ -50,13 +53,13 @@ TEXT_SOURCE_CONFIGS: dict[str, dict[str, Any]] = {
         "source_type": "ground_truth",
         "source_format": "txt_file",
         "text_dir": "ground_truth",
-        "file_pattern": "*.txt",
+        "file_pattern": TXT_GLOB,
     },
     "iam": {
         "source_type": "ground_truth",
         "source_format": "txt_file",
         "text_dir": "ground_truth",
-        "file_pattern": "*.txt",
+        "file_pattern": TXT_GLOB,
     },
     # Add more dataset configs as needed
 }
@@ -340,7 +343,7 @@ def load_ground_truth_text(
     """
     config = TEXT_SOURCE_CONFIGS.get(dataset, {})
     text_dir = config.get("text_dir", "ground_truth")
-    file_pattern = config.get("file_pattern", "*.txt")
+    file_pattern = config.get("file_pattern", TXT_GLOB)
 
     gt_dir = annotations_dir / dataset / text_dir
     if not gt_dir.exists():

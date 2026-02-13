@@ -131,11 +131,17 @@ class DIQAParser(BaseParser):
         # Per DocIQ paper (arXiv:2509.17012):
         # - ori/: Camera-captured (mobile phone) with real distortions
         # - res/: Synthetically enhanced versions of ori/ images
+        if is_from_ori:
+            image_folder: str | None = "ori"
+        elif is_from_res:
+            image_folder = "res"
+        else:
+            image_folder = None
         labels.raw_labels = {
             "is_synthetic_degradation": is_from_res,
             "capture_method": "camera_smartphone" if is_from_ori else "synthetic",
             "base_document_origin": "born_digital",  # PDFs printed then photographed
-            "image_folder": "ori" if is_from_ori else "res" if is_from_res else None,
+            "image_folder": image_folder,
             "paired_image": None,  # Will be populated if found in CSV
             "distortion_source": "real_world"
             if is_from_ori

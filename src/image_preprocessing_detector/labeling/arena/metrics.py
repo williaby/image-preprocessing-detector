@@ -28,6 +28,9 @@ from scipy import stats
 # Type alias for values that can be converted to arrays
 ArrayInput: TypeAlias = ArrayLike | Sequence[float] | list[float]  # noqa: UP040
 
+# Common error messages (S1192: avoid duplicate string literals)
+NAN_INPUTS_MSG = "Inputs contain NaN values"
+
 
 def compute_plcc(
     predictions: ArrayLike,
@@ -62,7 +65,7 @@ def compute_plcc(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     if len(preds) < 2:
@@ -110,7 +113,7 @@ def compute_srcc(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     if len(preds) < 2:
@@ -158,7 +161,7 @@ def compute_mae(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     return float(np.mean(np.abs(preds - gt)))
@@ -198,7 +201,7 @@ def compute_rmse(
         raise ValueError(msg)
 
     if np.isnan(preds).any() or np.isnan(gt).any():
-        msg = "Inputs contain NaN values"
+        msg = NAN_INPUTS_MSG
         raise ValueError(msg)
 
     return float(np.sqrt(np.mean((preds - gt) ** 2)))

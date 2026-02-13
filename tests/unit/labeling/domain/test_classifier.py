@@ -73,7 +73,7 @@ class TestFallbackResult:
         """Text fallback returns UNK with zero confidence."""
         result = _fallback_result("text", "No text available")
         assert result.domain_level1 == "UNK"
-        assert result.domain_confidence == 0.0
+        assert result.domain_confidence == pytest.approx(0.0)
         assert result.input_mode == "text"
         assert "Fallback" in result.reasoning
 
@@ -102,7 +102,7 @@ class TestMetadataEnricher:
 
         result = enricher.enrich_sample(text="Research paper about ML")
         assert result.domain_level1 == "SCI"
-        assert result.domain_confidence == 0.95
+        assert result.domain_confidence == pytest.approx(0.95)
         enricher._client.classify_text.assert_called_once()
         enricher._client.classify_image.assert_not_called()
 
@@ -147,7 +147,7 @@ class TestMetadataEnricher:
         ]
 
         result = enricher.enrich_sample(text="Ambiguous document")
-        assert result.domain_confidence == 0.90
+        assert result.domain_confidence == pytest.approx(0.90)
         assert result.escalated is True
         assert enricher._client.classify_text.call_count == 2
 
@@ -157,7 +157,7 @@ class TestMetadataEnricher:
         enricher._client.classify_text.return_value = _make_result("FIN", 0.95, "text")
 
         result = enricher.enrich_sample(text="Financial statement Q4")
-        assert result.domain_confidence == 0.95
+        assert result.domain_confidence == pytest.approx(0.95)
         assert result.escalated is False
         assert enricher._client.classify_text.call_count == 1
 
@@ -174,7 +174,7 @@ class TestMetadataEnricher:
 
         result = enricher.enrich_sample(text="Technical document")
         assert result.domain_level1 == "SCI"
-        assert result.domain_confidence == 0.70
+        assert result.domain_confidence == pytest.approx(0.70)
         assert result.escalated is True
 
     def test_secondary_text_failure_returns_primary(self) -> None:
@@ -198,7 +198,7 @@ class TestMetadataEnricher:
 
         result = enricher.enrich_sample(text="Document text")
         assert result.domain_level1 == "UNK"
-        assert result.domain_confidence == 0.0
+        assert result.domain_confidence == pytest.approx(0.0)
 
     def test_image_escalation_on_low_confidence(self) -> None:
         """Low confidence vision result triggers escalation."""
@@ -213,7 +213,7 @@ class TestMetadataEnricher:
 
         result = enricher.enrich_sample(image_path=Path("/tmp/test.png"))
         assert result.domain_level1 == "EDU"
-        assert result.domain_confidence == 0.85
+        assert result.domain_confidence == pytest.approx(0.85)
         assert result.escalated is True
 
     def test_get_stats_initial(self) -> None:

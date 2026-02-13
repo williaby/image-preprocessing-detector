@@ -30,7 +30,7 @@ from image_preprocessing_detector.annotation.integrity.checkpointing import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-only imports needed yet; guard kept for future additions
 
 
 @pytest.mark.e2e
@@ -128,7 +128,6 @@ class TestEnrichmentFailuresE2E:
 
         # Check we have mix of success/failure
         successes = sum(1 for r in results if not r.errors)
-        failures = sum(1 for r in results if r.errors)
         assert successes > 0, "Should have at least one success"
         # With 30% failure rate on 10 images, expect some failures
         # (but don't require exactly 3 due to hash distribution)
@@ -237,7 +236,7 @@ class TestCheckpointCorruptionE2E:
         )
 
         # Should handle wrong schema gracefully (missing required fields)
-        result = manager.get_resume_point("wrong-schema")
+        manager.get_resume_point("wrong-schema")
         # May return None or raise KeyError depending on implementation
         # Either is acceptable as long as it doesn't crash
 

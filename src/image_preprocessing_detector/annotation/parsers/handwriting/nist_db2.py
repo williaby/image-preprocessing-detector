@@ -110,7 +110,7 @@ class NistDb2Parser(BaseParser):
                             if line and " " in line:
                                 parts = line.split(" ", 1)
                                 if len(parts) == 2:
-                                    field_id, value = parts
+                                    _, value = parts
                                     if value and value != "_ICON_":
                                         field_values.append(value)
 

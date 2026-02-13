@@ -277,7 +277,7 @@ def detect_language_lingua(text: str, detector) -> tuple[str | None, float]:
 
 def compute_consensus(
     scripts: list[str],
-    script_counts: dict[str, int],
+    _script_counts: dict[str, int],
     ft_lang: str | None,
     ft_conf: float,
     lingua_lang: str | None,

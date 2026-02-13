@@ -55,9 +55,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-log_info() { echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1"; }
-log_error() { echo -e "${RED}[$(date '+%H:%M:%S')]${NC} $1"; }
+log_info() { local msg="$1"; echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $msg"; return 0; }
+log_warn() { local msg="$1"; echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $msg"; return 0; }
+log_error() { local msg="$1"; echo -e "${RED}[$(date '+%H:%M:%S')]${NC} $msg" >&2; return 0; }
 
 # Check Docling API health
 check_docling() {
@@ -66,18 +66,22 @@ check_docling() {
         exit 1
     fi
     log_info "Docling API is healthy"
+    return 0
 }
 
 # List files in GCS
 list_gcs_files() {
     gsutil ls -r "${GCS_BUCKET}/${GCS_PATH}/**" 2>&1 | \
         grep -E '\.(png|jpg|jpeg|pdf|tiff|tif)$' || true
+    return 0
 }
 
 # Download batch of files
 download_batch() {
-    local batch_file="$1"
-    local batch_num="$2"
+    local batch_file
+    local batch_num
+    batch_file="$1"
+    batch_num="$2"
 
     log_info "Downloading batch $batch_num..."
 
@@ -89,6 +93,7 @@ download_batch() {
     gsutil -m cp -I "$batch_dir/" < "$batch_file"
 
     echo "$batch_dir"
+    return 0
 }
 
 # Process batch through Docling
@@ -131,6 +136,7 @@ process_batch() {
 
     log_info "Batch $batch_num complete: $processed processed, $failed failed"
     echo "$output_batch"
+    return 0
 }
 
 # Upload results to GCS
@@ -144,6 +150,7 @@ upload_results() {
         "${GCS_BUCKET}/extracted_text/${DATASET}/"
 
     log_info "Uploaded to ${GCS_BUCKET}/extracted_text/${DATASET}/batch_${batch_num}/"
+    return 0
 }
 
 # Cleanup local files
@@ -153,6 +160,7 @@ cleanup_batch() {
 
     log_info "Cleaning up local files..."
     rm -rf "$batch_dir" "$output_batch"
+    return 0
 }
 
 # Main processing loop
@@ -221,6 +229,7 @@ main() {
 
     log_info "=== Dataset $DATASET processing complete ==="
     log_info "Results at: ${GCS_BUCKET}/extracted_text/${DATASET}/"
+    return 0
 }
 
 main "$@"

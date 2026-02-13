@@ -419,8 +419,6 @@ def compute_sample_summary(
 
     hard_count = sum(1 for a in assessments if a.category == "hard_label")
     soft_count = sum(1 for a in assessments if a.category == "soft_label")
-    active_count = sum(1 for a in assessments if a.category == "active_learning")
-    unreliable_count = sum(1 for a in assessments if a.category == "unreliable")
 
     field_summary = [
         {
