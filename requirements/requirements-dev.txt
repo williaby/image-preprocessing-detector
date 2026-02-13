@@ -176,7 +176,7 @@ coverage==7.13.1
     # via
     #   mutmut
     #   pytest-cov
-cryptography==46.0.3
+cryptography==46.0.5
     # via
     #   asyncssh
     #   authlib
@@ -789,7 +789,7 @@ pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
     # via ipython
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.1.0
+pillow==12.1.1
     # via
     #   image-preprocessing-detector
     #   imageio
@@ -904,7 +904,7 @@ pymdown-extensions==10.20
     # via
     #   mkdocs-material
     #   mkdocstrings
-pymupdf==1.26.7
+pymupdf==1.27.1
     # via image-preprocessing-detector
 pyparsing==3.3.1
     # via
