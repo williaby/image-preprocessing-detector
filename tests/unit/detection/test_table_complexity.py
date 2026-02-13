@@ -300,7 +300,7 @@ class TestBlankImage:
         self, analyzer: TableComplexityAnalyzer, blank_image: np.ndarray
     ) -> None:
         result = analyzer.analyze(blank_image)
-        assert result.complexity_score == 0.0
+        assert result.complexity_score == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -420,7 +420,7 @@ class TestEdgeCases:
         result = analyzer.analyze(tiny_image)
         assert result.estimated_rows == 0
         assert result.estimated_columns == 0
-        assert result.complexity_score == 0.0
+        assert result.complexity_score == pytest.approx(0.0)
 
     def test_grayscale_input(self, analyzer: TableComplexityAnalyzer) -> None:
         gray = np.full((400, 600), 255, dtype=np.uint8)
@@ -484,7 +484,7 @@ class TestConvenienceFunction:
     def test_blank_image(self, blank_image: np.ndarray) -> None:
         result = analyze_table_complexity(blank_image)
         assert result.estimated_rows == 0
-        assert result.complexity_score == 0.0
+        assert result.complexity_score == pytest.approx(0.0)
 
     def test_invalid_raises(self) -> None:
         with pytest.raises(ValueError):

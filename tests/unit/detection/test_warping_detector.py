@@ -145,10 +145,10 @@ class TestWarpingDetectionResult:
             confidence=0.8,
         )
         assert result.has_warping is True
-        assert result.warping_score == 0.45
+        assert result.warping_score == pytest.approx(0.45)
         assert result.warping_type == "barrel"
         assert result.line_count == 15
-        assert result.confidence == 0.8
+        assert result.confidence == pytest.approx(0.8)
 
     def test_no_warping_result(self) -> None:
         """No-warping result has expected defaults."""
@@ -187,7 +187,7 @@ class TestNoWarping:
         result = detector.detect(blank_page)
 
         assert result.has_warping is False
-        assert result.warping_score == 0.0
+        assert result.warping_score == pytest.approx(0.0)
         assert result.warping_type is None
         assert result.line_count < 5
 
@@ -344,7 +344,7 @@ class TestConfigurableThresholds:
         result = strict.detect(straight_lines_image)
         # Not enough lines => no-warping result
         assert result.has_warping is False
-        assert result.warping_score == 0.0
+        assert result.warping_score == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -388,15 +388,15 @@ class TestHelperFunctions:
     def test_compute_line_curvature_empty(self) -> None:
         """Empty line list returns zero curvature."""
         score, max_dev = _compute_line_curvature([], 600)
-        assert score == 0.0
-        assert max_dev == 0.0
+        assert score == pytest.approx(0.0)
+        assert max_dev == pytest.approx(0.0)
 
     def test_compute_line_curvature_horizontal(self) -> None:
         """Perfectly horizontal lines have near-zero curvature."""
         lines = [(50, 100, 750, 100), (50, 200, 750, 200)]
         score, max_dev = _compute_line_curvature(lines, 600)
-        assert score == 0.0
-        assert max_dev == 0.0
+        assert score == pytest.approx(0.0)
+        assert max_dev == pytest.approx(0.0)
 
     def test_compute_line_curvature_tilted(self) -> None:
         """Tilted lines produce non-zero curvature."""
@@ -410,15 +410,15 @@ class TestHelperFunctions:
         """A blank image has no contours, returns 0."""
         blank = np.full((100, 100), 255, dtype=np.uint8)
         score = _compute_rectangularity(blank, 100, 100)
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_compute_polynomial_fit_insufficient_lines(self) -> None:
         """Fewer than 3 lines returns zero polynomial score."""
         lines = [(50, 100, 750, 100), (50, 200, 750, 200)]
         poly_score, coeff, residual = _compute_polynomial_fit(lines, 800)
-        assert poly_score == 0.0
-        assert coeff == 0.0
-        assert residual == 0.0
+        assert poly_score == pytest.approx(0.0)
+        assert coeff == pytest.approx(0.0)
+        assert residual == pytest.approx(0.0)
 
     def test_compute_polynomial_fit_parabolic(self) -> None:
         """Parabolic midpoints produce non-zero quadratic coefficient."""
@@ -430,7 +430,7 @@ class TestHelperFunctions:
         ]
         poly_score, coeff, _residual = _compute_polynomial_fit(lines, 800)
         # Non-zero quadratic coefficient for parabolic arrangement
-        assert coeff != 0.0
+        assert coeff != pytest.approx(0.0)
 
     def test_classify_warping_type_none(self) -> None:
         """Low coefficients and residuals return None."""
