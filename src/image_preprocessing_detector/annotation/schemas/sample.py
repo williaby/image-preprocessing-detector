@@ -32,15 +32,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from image_preprocessing_detector.utils.datetime_compat import UTC
 
 from .enrichment import EnrichmentData, EnrichmentVersion
 from .immutable import OriginalFileMetadata, OriginalLabels
-
-if TYPE_CHECKING:
-    pass
 
 # Schema version for tracking changes
 SCHEMA_VERSION = "2.1"

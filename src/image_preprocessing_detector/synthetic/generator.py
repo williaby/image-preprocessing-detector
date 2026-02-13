@@ -82,7 +82,7 @@ from image_preprocessing_detector.synthetic.schema_adapter import (
 )
 
 if TYPE_CHECKING:
-    pass
+    from PIL.Image import Image as PILImageType
 
 logger = logging.getLogger(__name__)
 
@@ -1468,6 +1468,75 @@ class MultiScriptDocumentGenerator:
 
         return sample
 
+    def _apply_degradation(
+        self,
+        image: PILImageType,
+        degradation_profile: DegradationProfile,
+    ) -> tuple[PILImageType, IQALabels, bool]:
+        """Apply degradation augmentation for multi-script documents.
+
+        Returns (degraded_image, iqa_labels, is_pristine).
+        """
+        is_pristine = degradation_profile == DegradationProfile.PRISTINE
+        if is_pristine or not AUGRAPHY_AVAILABLE:
+            return image, IQALabels(overall_quality=1.0), is_pristine
+        try:
+            degraded_image, iqa_labels = self.augmentation.apply(
+                image, degradation_profile
+            )
+            return degraded_image, iqa_labels, is_pristine
+        except Exception as e:
+            logger.warning("Augmentation failed: %s", e)
+            return image, IQALabels(overall_quality=1.0), is_pristine
+
+    @staticmethod
+    def _store_geometric_metadata(
+        sample: GeneratedSample,
+        skew_angle: float | None,
+        orientation_class: int | None,
+        degraded_image: PILImageType,
+    ) -> None:
+        """Store geometric transform metadata on the sample."""
+        if skew_angle is not None:
+            sample.skew_angle_degrees = skew_angle
+        if orientation_class is not None:
+            sample.orientation_class = orientation_class
+            sample.width_px = degraded_image.width
+            sample.height_px = degraded_image.height
+
+    def _collect_multi_script_text(
+        self, scripts: list[str]
+    ) -> tuple[list[tuple[str, str, str]], set[str], list[str], dict[str, str]]:
+        """Collect text blocks, scripts, languages, and directions for multi-script doc."""
+        text_blocks_data: list[tuple[str, str, str]] = []
+        all_scripts: set[str] = set()
+        all_languages: list[str] = []
+        script_directions: dict[str, str] = {}
+
+        for script_code in scripts:
+            text, language_code = self.corpus_manager.get_text_with_language(
+                script_code, TextDensity.MEDIUM
+            )
+            if text and language_code:
+                text_blocks_data.append((text, script_code, language_code))
+                all_scripts.add(script_code)
+                all_languages.append(language_code)
+                script_directions[script_code] = self._select_text_direction(
+                    script_code
+                )
+
+        return text_blocks_data, all_scripts, all_languages, script_directions
+
+    def _collect_font_families(self, all_scripts: set[str]) -> list[str]:
+        """Track font families used across all scripts."""
+        font_families: list[str] = []
+        for sc in all_scripts:
+            fc = self.font_manager.get_font_info(sc)
+            if fc and fc.fonts:
+                fi = fc.default_font or fc.fonts[0]
+                font_families.append(fi.path.stem)
+        return font_families
+
     def generate_multi_script_document(
         self,
         scripts: list[str],
@@ -1487,25 +1556,9 @@ class MultiScriptDocumentGenerator:
         if not self._initialized:
             raise RuntimeError("Generator not initialized. Call initialize() first.")
 
-        # Collect text blocks for each script
-        text_blocks_data: list[tuple[str, str, str]] = []
-        all_scripts: set[str] = set()
-        all_languages: list[str] = []
-
-        # Select text direction for each script (v2.3: CJK vertical support)
-        script_directions: dict[str, str] = {}
-
-        for script_code in scripts:
-            text, language_code = self.corpus_manager.get_text_with_language(
-                script_code, TextDensity.MEDIUM
-            )
-            if text and language_code:
-                text_blocks_data.append((text, script_code, language_code))
-                all_scripts.add(script_code)
-                all_languages.append(language_code)
-                script_directions[script_code] = self._select_text_direction(
-                    script_code
-                )
+        text_blocks_data, all_scripts, all_languages, script_directions = (
+            self._collect_multi_script_text(scripts)
+        )
 
         if not text_blocks_data:
             logger.error("No text available for any of the requested scripts")
@@ -1522,38 +1575,17 @@ class MultiScriptDocumentGenerator:
 
         # Measure char_height_rendered_px on pristine image BEFORE any transforms
         char_height_rendered = self._measure_char_height_rendered(image)
-
-        # Compute SHA256 of pristine image for split registry integration
         base_image_sha256 = self._compute_image_sha256(image)
-
-        # Capture degradation seed for reproducible replay
         degradation_seed = self._rng.randint(0, 2**31 - 1)
-
-        # Track font families used across all scripts
-        font_families: list[str] = []
-        for sc in all_scripts:
-            fc = self.font_manager.get_font_info(sc)
-            if fc and fc.fonts:
-                fi = fc.default_font or fc.fonts[0]
-                font_families.append(fi.path.stem)
+        font_families = self._collect_font_families(all_scripts)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
 
-        # Apply augmentation (noise, blur, degradation on geometrically-correct image)
-        is_pristine = degradation_profile == DegradationProfile.PRISTINE
-        if is_pristine or not AUGRAPHY_AVAILABLE:
-            degraded_image = image
-            iqa_labels = IQALabels(overall_quality=1.0)
-        else:
-            try:
-                degraded_image, iqa_labels = self.augmentation.apply(
-                    image, degradation_profile
-                )
-            except Exception as e:
-                logger.warning("Augmentation failed: %s", e)
-                degraded_image = image
-                iqa_labels = IQALabels(overall_quality=1.0)
+        # Apply augmentation
+        degraded_image, iqa_labels, is_pristine = self._apply_degradation(
+            image, degradation_profile
+        )
 
         # Create sample
         sample = GeneratedSample(
@@ -1581,18 +1613,11 @@ class MultiScriptDocumentGenerator:
 
         # Store v2.3 metadata
         sample.char_height_rendered_px = char_height_rendered
-
-        # Store text direction metadata (v2.3: CJK vertical support)
         if script_directions:
             sample.text_directions = script_directions
-
-        # Store geometric transform metadata (applied before augmentation)
-        if skew_angle is not None:
-            sample.skew_angle_degrees = skew_angle
-        if orientation_class is not None:
-            sample.orientation_class = orientation_class
-            sample.width_px = degraded_image.width
-            sample.height_px = degraded_image.height
+        self._store_geometric_metadata(
+            sample, skew_angle, orientation_class, degraded_image
+        )
 
         return sample
 

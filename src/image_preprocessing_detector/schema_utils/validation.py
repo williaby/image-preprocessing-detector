@@ -164,37 +164,44 @@ def _validate_against_schema(
     )
 
 
+def _check_enrichment_warnings(
+    enrichment_data: dict[str, Any], data: dict[str, Any]
+) -> list[str]:
+    """Check enrichment-specific warnings for optional but recommended fields."""
+    warnings: list[str] = []
+
+    if "provenance" not in data:
+        warnings.append("Missing 'provenance' field - recommended for reproducibility")
+
+    quality = enrichment_data.get("quality")
+    if quality and ("degradations" not in quality or not quality["degradations"]):
+        warnings.append("No degradations recorded - consider running IQA analysis")
+
+    flags = enrichment_data.get("content_flags")
+    if flags and "tier" not in flags:
+        warnings.append("content_flags missing 'tier' - provenance unclear")
+
+    return warnings
+
+
+def _check_bbox_format_warnings(data: dict[str, Any]) -> list[str]:
+    """Check for bbox_source_format consistency in layout detections."""
+    warnings: list[str] = []
+    detections = data.get("data", {}).get("layout_detections", [])
+    for i, det in enumerate(detections):
+        if "bbox_source_format" not in det:
+            warnings.append(f"layout_detections[{i}] missing 'bbox_source_format'")
+    return warnings
+
+
 def _check_warnings(data: dict[str, Any], _schema: dict) -> list[str]:
     """Check for non-fatal issues and best practice violations."""
-    warnings = []
+    warnings: list[str] = []
 
-    # Check for missing optional but recommended fields
     if "data" in data:
-        enrichment_data = data["data"]
+        warnings.extend(_check_enrichment_warnings(data["data"], data))
 
-        if "provenance" not in data:
-            warnings.append(
-                "Missing 'provenance' field - recommended for reproducibility"
-            )
-
-        if "quality" in enrichment_data:
-            quality = enrichment_data["quality"]
-            if "degradations" not in quality or not quality["degradations"]:
-                warnings.append(
-                    "No degradations recorded - consider running IQA analysis"
-                )
-
-        if "content_flags" in enrichment_data:
-            flags = enrichment_data["content_flags"]
-            if "tier" not in flags:
-                warnings.append("content_flags missing 'tier' - provenance unclear")
-
-    # Check for bbox format consistency
-    if "layout_detections" in data.get("data", {}):
-        for i, det in enumerate(data["data"]["layout_detections"]):
-            if "bbox_source_format" not in det:
-                warnings.append(f"layout_detections[{i}] missing 'bbox_source_format'")
-
+    warnings.extend(_check_bbox_format_warnings(data))
     return warnings
 
 

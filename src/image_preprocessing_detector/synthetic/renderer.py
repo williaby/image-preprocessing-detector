@@ -424,6 +424,50 @@ class DocumentRenderer:
 
         return lines
 
+    @staticmethod
+    def _get_cjk_char_dimensions(
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+    ) -> tuple[int, int]:
+        """Get character width and height from a sample CJK character."""
+        sample_bbox = font.getbbox("\u4e00")  # "一" (CJK unified ideograph)
+        char_width = sample_bbox[2] - sample_bbox[0]
+        char_height = sample_bbox[3] - sample_bbox[1]
+        if char_width == 0:
+            char_width = getattr(font, "size", 16)
+        if char_height == 0:
+            char_height = getattr(font, "size", 16)
+        return char_width, char_height
+
+    def _flush_vertical_column(
+        self,
+        draw: ImageDraw.ImageDraw,
+        col_chars: list[str],
+        x_offset: int,
+        col_start_y: int,
+        char_height: int,
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+        script_code: str,
+        language_code: str,
+        state: RenderState,
+        is_header: bool,
+        is_caption: bool,
+    ) -> None:
+        """Render a column of characters if non-empty and within bounds."""
+        if col_chars:
+            self._draw_vertical_column(
+                draw,
+                col_chars,
+                x_offset,
+                col_start_y,
+                char_height,
+                font,
+                script_code,
+                language_code,
+                state,
+                is_header,
+                is_caption,
+            )
+
     def _render_vertical_text_block(
         self,
         draw: ImageDraw.ImageDraw,
@@ -461,15 +505,7 @@ class DocumentRenderer:
         if not text.strip():
             return 0
 
-        # Get character dimensions from a sample CJK character
-        sample_bbox = font.getbbox("\u4e00")  # "一" (CJK unified ideograph)
-        char_width = sample_bbox[2] - sample_bbox[0]
-        char_height = sample_bbox[3] - sample_bbox[1]
-        if char_width == 0:
-            char_width = getattr(font, "size", 16)
-        if char_height == 0:
-            char_height = getattr(font, "size", 16)
-
+        char_width, char_height = self._get_cjk_char_dimensions(font)
         col_width = int(char_width * column_spacing)
         max_chars_per_column = max(1, region.height // char_height)
 
@@ -483,35 +519,37 @@ class DocumentRenderer:
         total_width_used = 0
 
         for char in chars:
-            if char == "\n" or len(col_chars) >= max_chars_per_column:
-                # Render current column
-                if col_chars and x_offset >= region.x:
-                    self._draw_vertical_column(
-                        draw,
-                        col_chars,
-                        x_offset,
-                        col_start_y,
-                        char_height,
-                        font,
-                        script_code,
-                        language_code,
-                        state,
-                        is_header,
-                        is_caption,
-                    )
-                    total_width_used += col_width
-                col_chars = []
-                x_offset -= col_width
-                if x_offset < region.x:
-                    break  # Out of horizontal space
-                if char == "\n":
-                    continue
+            if char != "\n" and len(col_chars) < max_chars_per_column:
+                col_chars.append(char)
+                continue
 
-            col_chars.append(char)
+            # Render current column and advance
+            if x_offset >= region.x:
+                self._flush_vertical_column(
+                    draw,
+                    col_chars,
+                    x_offset,
+                    col_start_y,
+                    char_height,
+                    font,
+                    script_code,
+                    language_code,
+                    state,
+                    is_header,
+                    is_caption,
+                )
+                if col_chars:
+                    total_width_used += col_width
+            col_chars = []
+            x_offset -= col_width
+            if x_offset < region.x:
+                break
+            if char != "\n":
+                col_chars.append(char)
 
         # Render remaining characters
         if col_chars and x_offset >= region.x:
-            self._draw_vertical_column(
+            self._flush_vertical_column(
                 draw,
                 col_chars,
                 x_offset,

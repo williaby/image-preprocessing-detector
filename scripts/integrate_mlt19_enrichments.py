@@ -117,36 +117,44 @@ LANGUAGE_TO_ISO639: dict[str, str] = {
 # Updated after VLM inspection.
 # has_figure: scene text images themselves ARE photographs, not embedded figures.
 # Override ALL has_figure=True to False unless VLM confirms actual embedded figure.
-VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # VLM inspection: 0/19657 true positives. Scene photos are NOT embedded figures.
-})
+VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # VLM inspection: 0/19657 true positives. Scene photos are NOT embedded figures.
+    }
+)
 
-VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # VLM inspection: 12/14 flagged are true positives (85.7% TP rate)
-    "ts_img_00093",   # Italian train departure board with grid
-    "ts_img_05637",   # Prayer times table with handwritten entries
-    "tr_img_03126",   # Chinese metro schedule with grid
-    "tr_img_05080",   # Korean key manager contact info grid
-    "tr_img_05409",   # Korean fire safety officer table
-    "tr_img_05704",   # Korean warning with form/table + handwritten phone
-    "tr_img_05857",   # Korean schedule fragment with grid
-    "tr_img_05950",   # Korean waste bag change info table
-    "tr_img_05965",   # Korean management number plate grid
-    "tr_img_06896",   # Japanese parking lot pricing table
-    "tr_img_07480",   # Italian bank security notice 3-row grid
-    "tr_img_07885",   # Italian store hours table (day x time)
-})
+VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # VLM inspection: 12/14 flagged are true positives (85.7% TP rate)
+        "ts_img_00093",  # Italian train departure board with grid
+        "ts_img_05637",  # Prayer times table with handwritten entries
+        "tr_img_03126",  # Chinese metro schedule with grid
+        "tr_img_05080",  # Korean key manager contact info grid
+        "tr_img_05409",  # Korean fire safety officer table
+        "tr_img_05704",  # Korean warning with form/table + handwritten phone
+        "tr_img_05857",  # Korean schedule fragment with grid
+        "tr_img_05950",  # Korean waste bag change info table
+        "tr_img_05965",  # Korean management number plate grid
+        "tr_img_06896",  # Japanese parking lot pricing table
+        "tr_img_07480",  # Italian bank security notice 3-row grid
+        "tr_img_07885",  # Italian store hours table (day x time)
+    }
+)
 
-VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # VLM inspection: 0/6 flagged are true positives (100% FP rate)
-})
+VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # VLM inspection: 0/6 flagged are true positives (100% FP rate)
+    }
+)
 
-VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # VLM inspection: 3 samples confirmed with handwritten elements
-    "ts_img_05637",   # Prayer times with handwritten "12:30" and "3:55"
-    "tr_img_05704",   # Korean warning form with handwritten phone "042-821-1656"
-    "tr_img_07588",   # Italian referendum notice with handwritten date/location
-})
+VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # VLM inspection: 3 samples confirmed with handwritten elements
+        "ts_img_05637",  # Prayer times with handwritten "12:30" and "3:55"
+        "tr_img_05704",  # Korean warning form with handwritten phone "042-821-1656"
+        "tr_img_07588",  # Italian referendum notice with handwritten date/location
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -290,12 +298,8 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         "min_confidence_field": min_field["field"],
         "min_confidence_category": min_field["category"],
         "assessed_field_count": len(fields),
-        "hard_field_count": sum(
-            1 for f in fields if f["category"] == "hard_label"
-        ),
-        "soft_field_count": sum(
-            1 for f in fields if f["category"] == "soft_label"
-        ),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
         "field_summary": fields,
         "computed_at": datetime.now(UTC).isoformat(),
     }
@@ -304,6 +308,73 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
 def standardize_class_name(class_name: str) -> str:
     """Convert DocLayout-YOLO class_name to DocLayNet PascalCase."""
     return DOCLAYOUT_YOLO_TO_DOCLAYNET.get(class_name, class_name)
+
+
+def _resolve_multilingual_primary(
+    raw_labels: dict[str, Any],
+) -> tuple[str, str, float, str] | None:
+    """Resolve primary language from multi-lingual raw_labels.languages."""
+    languages = raw_labels.get("languages", [])
+    for lang_name in languages:
+        if lang_name in ("None", "Symbols", "Mixed"):
+            continue
+        primary_lang = LANGUAGE_TO_ISO639.get(lang_name)
+        primary_script = LANGUAGE_TO_SCRIPT.get(lang_name)
+        if primary_lang:
+            return (primary_lang, primary_script or "Zyyy", 0.95, "parser_gt_primary")
+    return None
+
+
+def _resolve_parser_gt(
+    sample: dict[str, Any],
+) -> tuple[str, str, float, str] | None:
+    """Try to resolve language from parser ground truth (train split only)."""
+    split = sample["source"]["split"]
+    ol = sample.get("original_labels", {})
+    language_code = ol.get("language_code", "")
+    raw_labels = ol.get("raw_labels", {})
+
+    if split != "train" or not language_code or language_code in ("und", ""):
+        return None
+
+    if language_code == "mul":
+        result = _resolve_multilingual_primary(raw_labels)
+        if result:
+            return result
+        return ("mul", "Zmth", 0.9, "parser_gt_multilingual")
+
+    script = ol.get("iso15924_script_code", "")
+    if not script:
+        languages = raw_labels.get("languages", [])
+        if languages:
+            script = LANGUAGE_TO_SCRIPT.get(languages[0], "Zyyy")
+    return (language_code, script or "Zyyy", 0.95, "parser_gt")
+
+
+def _resolve_from_enrichment_record(
+    record: dict[str, Any] | None,
+    lang_key: str,
+    script_key: str,
+    default_conf: float,
+    method: str,
+    *,
+    conf_key: str | None = None,
+    cap_conf: float | None = None,
+) -> tuple[str, str, float, str] | None:
+    """Try to resolve language from a single enrichment source record."""
+    if not record:
+        return None
+    lang_val = record.get(lang_key)
+    if not lang_val or lang_val == "und":
+        return None
+    script_val = record.get(script_key) or "Zyyy"
+    if conf_key is not None:
+        conf = record.get(conf_key, default_conf)
+        if cap_conf is not None:
+            conf = min(conf, cap_conf)
+    else:
+        conf = default_conf
+    return (lang_val, script_val, conf, method)
 
 
 def resolve_language(
@@ -326,72 +397,58 @@ def resolve_language(
     Returns:
         (iso639_language, iso15924_script, confidence, method)
     """
-    split = sample["source"]["split"]
-    ol = sample.get("original_labels", {})
-    language_code = ol.get("language_code", "")
-    raw_labels = ol.get("raw_labels", {})
-
     # Source 1: Parser ground truth (train split only)
-    if split == "train" and language_code and language_code not in ("und", ""):
-        # Parser provides language_code (en, ar, mul, etc.)
-        # For "mul", we need the primary language from raw_labels.languages
-        if language_code == "mul":
-            # Multi-lingual: use first non-None/non-Symbols language
-            languages = raw_labels.get("languages", [])
-            primary_lang = None
-            primary_script = None
-            for lang_name in languages:
-                if lang_name in ("None", "Symbols", "Mixed"):
-                    continue
-                primary_lang = LANGUAGE_TO_ISO639.get(lang_name)
-                primary_script = LANGUAGE_TO_SCRIPT.get(lang_name)
-                if primary_lang:
-                    break
-            if primary_lang:
-                return (primary_lang, primary_script or "Zyyy", 0.95, "parser_gt_primary")
-            # All languages are None/Symbols/Mixed - keep as mul
-            return ("mul", "Zmth", 0.9, "parser_gt_multilingual")
-
-        # Single language from parser
-        # Derive script from language code
-        script = ol.get("iso15924_script_code", "")
-        if not script:
-            # Try raw_labels.languages for script mapping
-            languages = raw_labels.get("languages", [])
-            if languages:
-                script = LANGUAGE_TO_SCRIPT.get(languages[0], "Zyyy")
-        return (language_code, script or "Zyyy", 0.95, "parser_gt")
+    result = _resolve_parser_gt(sample)
+    if result:
+        return result
 
     # Source 2: Train GT enrichments (from GT file parsing, 134 samples)
-    if train_gt:
-        tgt_lang = train_gt.get("iso639_language")
-        tgt_script = train_gt.get("iso15924_script")
-        if tgt_lang and tgt_lang != "und":
-            tgt_conf = train_gt.get("language_confidence", 0.9)
-            return (tgt_lang, tgt_script or "Zyyy", tgt_conf, "train_gt_enrichment")
+    result = _resolve_from_enrichment_record(
+        train_gt,
+        "iso639_language",
+        "iso15924_script",
+        0.9,
+        "train_gt_enrichment",
+        conf_key="language_confidence",
+    )
+    if result:
+        return result
 
     # Source 3: VLM contact sheet enrichments (visual script ID, 9735 test samples)
-    if vlm_enrichment:
-        vlm_lang = vlm_enrichment.get("iso639_language")
-        vlm_script = vlm_enrichment.get("iso15924_script")
-        if vlm_lang and vlm_lang != "und":
-            vlm_conf = vlm_enrichment.get("language_confidence", 0.75)
-            return (vlm_lang, vlm_script or "Zyyy", vlm_conf, "vlm_contact_sheet")
+    result = _resolve_from_enrichment_record(
+        vlm_enrichment,
+        "iso639_language",
+        "iso15924_script",
+        0.75,
+        "vlm_contact_sheet",
+        conf_key="language_confidence",
+    )
+    if result:
+        return result
 
     # Source 4: LLM enrichment
-    if llm:
-        llm_lang = llm.get("iso639_language")
-        llm_script = llm.get("iso15924_script")
-        if llm_lang and llm_lang != "und":
-            return (llm_lang, llm_script or "Zyyy", 0.7, "llm_vision")
+    result = _resolve_from_enrichment_record(
+        llm,
+        "iso639_language",
+        "iso15924_script",
+        0.7,
+        "llm_vision",
+    )
+    if result:
+        return result
 
     # Source 5: Language enrichment (OpenLID)
-    if lang_enrichment:
-        le_lang = lang_enrichment.get("language")
-        le_script = lang_enrichment.get("script")
-        le_conf = lang_enrichment.get("confidence", 0.5)
-        if le_lang and le_lang != "und":
-            return (le_lang, le_script or "Zyyy", min(le_conf, 0.6), "openlid_v2")
+    result = _resolve_from_enrichment_record(
+        lang_enrichment,
+        "language",
+        "script",
+        0.5,
+        "openlid_v2",
+        conf_key="confidence",
+        cap_conf=0.6,
+    )
+    if result:
+        return result
 
     # Fallback
     return ("und", "Zyyy", 0.1, "none")
@@ -453,9 +510,7 @@ def integrate_sample(
         # Keep v1 or default UNK
         data["domain_level1"] = v1_data.get("domain_level1", "UNK")
         data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
-        data["domain_detection_method"] = v1_data.get(
-            "domain_detection_method", "none"
-        )
+        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
 
     # -------------------------------------------------------------------
     # D07 - iso639_language & D11 - iso15924_script: multi-source resolution
@@ -575,6 +630,69 @@ def integrate_sample(
 # ---------------------------------------------------------------------------
 # Integration runner
 # ---------------------------------------------------------------------------
+def _track_sample_stats(
+    stats: dict[str, Any],
+    filename_stem: str,
+    integrated_data: dict[str, Any],
+    llm_index: dict[str, dict[str, Any]],
+    lang_index: dict[str, dict[str, Any]],
+    vlm_index: dict[str, dict[str, Any]] | None,
+    train_gt_index: dict[str, dict[str, Any]] | None,
+) -> None:
+    """Accumulate per-sample statistics into the stats dict."""
+    stats["integrated"] += 1
+    if filename_stem in llm_index:
+        stats["llm_matched"] += 1
+    if filename_stem in lang_index:
+        stats["lang_matched"] += 1
+    if vlm_index and filename_stem in vlm_index:
+        stats["vlm_matched"] += 1
+    if train_gt_index and filename_stem in train_gt_index:
+        stats["train_gt_matched"] += 1
+    stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
+    stats["split_dist"][integrated_data.get("split", "unknown")] += 1
+    stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
+    stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
+    stats["lang_method_dist"][
+        integrated_data.get("text_scope_detection_method", "unknown")
+    ] += 1
+    stats["content_type_dist"][
+        integrated_data.get("text_scope_content_type", "unknown")
+    ] += 1
+    _track_content_flag_counts(stats, integrated_data)
+
+
+def _track_content_flag_counts(
+    stats: dict[str, Any],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Increment content flag counters based on integrated data."""
+    for flag_key, stat_key in (
+        ("has_table", "has_table_count"),
+        ("has_formula", "has_formula_count"),
+        ("has_handwriting", "has_handwriting_count"),
+        ("has_figure", "has_figure_count"),
+    ):
+        if integrated_data.get(flag_key):
+            stats[stat_key] += 1
+
+
+def _upsert_enrichment_version(
+    sample: dict[str, Any],
+    new_version: dict[str, Any],
+    version_number: int,
+) -> None:
+    """Replace existing enrichment version or append new one."""
+    versions = sample["enrichments"]["versions"]
+    for i, v in enumerate(versions):
+        if v.get("version") == version_number:
+            versions[i] = new_version
+            sample["enrichments"]["current_version"] = version_number
+            return
+    versions.append(new_version)
+    sample["enrichments"]["current_version"] = version_number
+
+
 def run_integration(
     metadata: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -614,36 +732,15 @@ def run_integration(
             sample, llm_index, lang_index, vlm_index, train_gt_index
         )
 
-        # Track stats
-        stats["integrated"] += 1
-        if filename_stem in llm_index:
-            stats["llm_matched"] += 1
-        if filename_stem in lang_index:
-            stats["lang_matched"] += 1
-        if vlm_index and filename_stem in vlm_index:
-            stats["vlm_matched"] += 1
-        if train_gt_index and filename_stem in train_gt_index:
-            stats["train_gt_matched"] += 1
-        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
-        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
-        stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][
-            integrated_data.get("script_family", "unknown")
-        ] += 1
-        stats["lang_method_dist"][
-            integrated_data.get("text_scope_detection_method", "unknown")
-        ] += 1
-        stats["content_type_dist"][
-            integrated_data.get("text_scope_content_type", "unknown")
-        ] += 1
-        if integrated_data.get("has_table"):
-            stats["has_table_count"] += 1
-        if integrated_data.get("has_formula"):
-            stats["has_formula_count"] += 1
-        if integrated_data.get("has_handwriting"):
-            stats["has_handwriting_count"] += 1
-        if integrated_data.get("has_figure"):
-            stats["has_figure_count"] += 1
+        _track_sample_stats(
+            stats,
+            filename_stem,
+            integrated_data,
+            llm_index,
+            lang_index,
+            vlm_index,
+            train_gt_index,
+        )
 
         if not dry_run:
             new_version = {
@@ -660,17 +757,7 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            # Replace existing v3 if present, otherwise append
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for i, v in enumerate(versions):
-                if v.get("version") == 3:
-                    versions[i] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = 3
+            _upsert_enrichment_version(sample, new_version, 3)
 
     return stats
 

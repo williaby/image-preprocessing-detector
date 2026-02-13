@@ -327,7 +327,6 @@ class OrientationDatasetGenerator:
         total = len(docs)
         train_size = int(total * self.config.TRAIN_RATIO)
         val_size = int(total * self.config.VAL_RATIO)
-        # test_size = total - train_size - val_size
 
         # Split
         train_docs = docs[:train_size]
@@ -378,6 +377,79 @@ class OrientationDatasetGenerator:
             return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return image  # 0° - no rotation
 
+    def _apply_light_camera_degradation(
+        self, image: np.ndarray
+    ) -> tuple[np.ndarray, list[str]]:
+        """Apply light camera-style degradation."""
+        degradation_types: list[str] = []
+        if random.random() < 0.20:
+            image = self._apply_motion_blur(image, kernel_size=3)
+            degradation_types.append("motion_blur")
+        if random.random() < 0.15:
+            image = self._apply_perspective_warp(image, strength=0.02)
+            degradation_types.append("perspective_warp")
+        if random.random() < 0.20:
+            image = self._apply_soft_shadow(image)
+            degradation_types.append("shadow")
+        return image, degradation_types
+
+    def _apply_light_scanner_degradation(
+        self, image: np.ndarray
+    ) -> tuple[np.ndarray, list[str]]:
+        """Apply light scanner-style degradation."""
+        degradation_types: list[str] = []
+        if random.random() < 0.30:
+            image = self._apply_gaussian_blur(image, sigma=0.7)
+            degradation_types.append("gaussian_blur")
+        if random.random() < 0.25:
+            image = self._apply_noise(image, std=10)
+            degradation_types.append("noise")
+        if random.random() < 0.40:
+            image = self._apply_jpeg_compression(image, quality=80)
+            degradation_types.append("jpeg_compression")
+        return image, degradation_types
+
+    def _apply_moderate_camera_degradation(
+        self, image: np.ndarray
+    ) -> tuple[np.ndarray, list[str]]:
+        """Apply moderate camera-style degradation."""
+        degradation_types: list[str] = []
+        if random.random() < 0.30:
+            image = self._apply_motion_blur(image, kernel_size=5)
+            degradation_types.append("motion_blur")
+        if random.random() < 0.25:
+            image = self._apply_perspective_warp(image, strength=0.05)
+            degradation_types.append("perspective_warp")
+        if random.random() < 0.30:
+            image = self._apply_hard_shadow(image)
+            degradation_types.append("shadow")
+        if random.random() < 0.35:
+            image = self._apply_uneven_lighting(image)
+            degradation_types.append("uneven_lighting")
+        if random.random() < 0.25:
+            image = self._apply_noise(image, std=20)
+            degradation_types.append("iso_noise")
+        return image, degradation_types
+
+    def _apply_moderate_scanner_degradation(
+        self, image: np.ndarray
+    ) -> tuple[np.ndarray, list[str]]:
+        """Apply moderate scanner-style degradation."""
+        degradation_types: list[str] = []
+        if random.random() < 0.30:
+            image = self._apply_gaussian_blur(image, sigma=1.2)
+            degradation_types.append("gaussian_blur")
+        if random.random() < 0.30:
+            image = self._apply_noise(image, std=25)
+            degradation_types.append("scan_noise")
+        if random.random() < 0.50:
+            image = self._apply_jpeg_compression(image, quality=60)
+            degradation_types.append("jpeg_compression")
+        if random.random() < 0.15:
+            image = self._apply_slight_skew(image)
+            degradation_types.append("slight_skew")
+        return image, degradation_types
+
     def apply_degradation(
         self, image: np.ndarray, quality_level: str
     ) -> tuple[np.ndarray, list[str]]:
@@ -393,69 +465,19 @@ class OrientationDatasetGenerator:
         if quality_level == "clean":
             return image, []
 
-        degradation_types = []
-
-        # Determine camera vs scanner profile
         is_camera = random.random() < self.config.CAMERA_DEGRADATION_RATIO
 
         if quality_level == "light_degraded":
             if is_camera:
-                # Camera artifacts (light)
-                if random.random() < 0.20:
-                    image = self._apply_motion_blur(image, kernel_size=3)
-                    degradation_types.append("motion_blur")
-                if random.random() < 0.15:
-                    image = self._apply_perspective_warp(image, strength=0.02)
-                    degradation_types.append("perspective_warp")
-                if random.random() < 0.20:
-                    image = self._apply_soft_shadow(image)
-                    degradation_types.append("shadow")
-            else:
-                # Scanner artifacts (light)
-                if random.random() < 0.30:
-                    image = self._apply_gaussian_blur(image, sigma=0.7)
-                    degradation_types.append("gaussian_blur")
-                if random.random() < 0.25:
-                    image = self._apply_noise(image, std=10)
-                    degradation_types.append("noise")
-                if random.random() < 0.40:
-                    image = self._apply_jpeg_compression(image, quality=80)
-                    degradation_types.append("jpeg_compression")
+                return self._apply_light_camera_degradation(image)
+            return self._apply_light_scanner_degradation(image)
 
-        elif quality_level == "moderate_degraded":
+        if quality_level == "moderate_degraded":
             if is_camera:
-                # Camera artifacts (moderate)
-                if random.random() < 0.30:
-                    image = self._apply_motion_blur(image, kernel_size=5)
-                    degradation_types.append("motion_blur")
-                if random.random() < 0.25:
-                    image = self._apply_perspective_warp(image, strength=0.05)
-                    degradation_types.append("perspective_warp")
-                if random.random() < 0.30:
-                    image = self._apply_hard_shadow(image)
-                    degradation_types.append("shadow")
-                if random.random() < 0.35:
-                    image = self._apply_uneven_lighting(image)
-                    degradation_types.append("uneven_lighting")
-                if random.random() < 0.25:
-                    image = self._apply_noise(image, std=20)
-                    degradation_types.append("iso_noise")
-            else:
-                # Scanner artifacts (moderate)
-                if random.random() < 0.30:
-                    image = self._apply_gaussian_blur(image, sigma=1.2)
-                    degradation_types.append("gaussian_blur")
-                if random.random() < 0.30:
-                    image = self._apply_noise(image, std=25)
-                    degradation_types.append("scan_noise")
-                if random.random() < 0.50:
-                    image = self._apply_jpeg_compression(image, quality=60)
-                    degradation_types.append("jpeg_compression")
-                if random.random() < 0.15:
-                    image = self._apply_slight_skew(image)
-                    degradation_types.append("slight_skew")
+                return self._apply_moderate_camera_degradation(image)
+            return self._apply_moderate_scanner_degradation(image)
 
-        return image, degradation_types
+        return image, []
 
     def _apply_gaussian_blur(self, image: np.ndarray, sigma: float) -> np.ndarray:
         """Apply Gaussian blur."""
@@ -470,7 +492,8 @@ class OrientationDatasetGenerator:
 
     def _apply_noise(self, image: np.ndarray, std: float) -> np.ndarray:
         """Apply Gaussian noise."""
-        noise = np.random.normal(0, std, image.shape).astype(np.float32)
+        rng = np.random.default_rng()
+        noise = rng.normal(0, std, image.shape).astype(np.float32)
         noisy = image.astype(np.float32) + noise
         return np.clip(noisy, 0, 255).astype(np.uint8)
 
@@ -563,6 +586,79 @@ class OrientationDatasetGenerator:
             return "light_degraded"
         return "moderate_degraded"
 
+    def _create_output_directories(self) -> None:
+        """Create split and angle output directories."""
+        for split in ["train", "val", "test"]:
+            for angle in self.config.ROTATION_ANGLES:
+                (self.output_path / split / f"{angle}deg").mkdir(
+                    parents=True, exist_ok=True
+                )
+        (self.output_path / "labels").mkdir(parents=True, exist_ok=True)
+        (self.output_path / "metadata").mkdir(parents=True, exist_ok=True)
+
+    def _load_and_resize_image(self, doc: SourceDocument) -> np.ndarray | None:
+        """Load an image and resize if it exceeds OUTPUT_MAX_SIZE."""
+        image = cv2.imread(str(doc.image_path))
+        if image is None:
+            print(f"    WARNING: Could not load {doc.image_path}")
+            return None
+        h, w = image.shape[:2]
+        if max(h, w) > self.config.OUTPUT_MAX_SIZE:
+            scale = self.config.OUTPUT_MAX_SIZE / max(h, w)
+            image = cv2.resize(image, (int(w * scale), int(h * scale)))
+        return image
+
+    def _generate_rotation_sample(
+        self,
+        doc: SourceDocument,
+        image: np.ndarray | None,
+        angle: int,
+        split_name: str,
+        timestamp: str,
+        dry_run: bool,
+    ) -> OrientationSample:
+        """Generate a single rotated sample from a document."""
+        quality_level = self._determine_quality_level()
+        degradation_types: list[str] = []
+
+        if not dry_run and image is not None:
+            rotated = self.apply_rotation(image, angle)
+            degraded, degradation_types = self.apply_degradation(rotated, quality_level)
+        else:
+            degraded = None
+
+        sample_id = f"{doc.doc_id}_{angle}deg"
+        output_rel_path = f"{split_name}/{angle}deg/{sample_id}.png"
+
+        sample = OrientationSample(
+            sample_id=sample_id,
+            source_doc_id=doc.doc_id,
+            source_dataset=doc.source_dataset,
+            document_type=doc.document_type,
+            orientation_class=self.config.ROTATION_ANGLES.index(angle),
+            orientation_degrees=angle,
+            split=split_name,
+            quality_variant=quality_level,
+            degradation_types=degradation_types,
+            contains_tables=doc.contains_tables,
+            contains_handwriting=doc.contains_handwriting,
+            layout_complexity=doc.layout_complexity,
+            is_vertical_text=doc.is_vertical_text,
+            text_orientation=doc.text_orientation,
+            generation_timestamp=timestamp,
+            output_path=output_rel_path,
+        )
+
+        if not dry_run and degraded is not None:
+            output_file = self.output_path / output_rel_path
+            cv2.imwrite(str(output_file), degraded)
+
+        self.stats[f"{split_name}_total"] += 1
+        self.stats[f"{split_name}_{angle}deg"] += 1
+        self.stats[f"quality_{quality_level}"] += 1
+
+        return sample
+
     def generate_samples(
         self,
         split_docs: dict[str, list[SourceDocument]],
@@ -571,88 +667,30 @@ class OrientationDatasetGenerator:
         """Generate all samples by rotating and augmenting documents."""
         print("\n=== Generating Samples ===\n")
 
-        all_samples = []
+        all_samples: list[OrientationSample] = []
         timestamp = datetime.now(tz=None).isoformat()
 
-        # Create output directories
         if not dry_run:
-            for split in ["train", "val", "test"]:
-                for angle in self.config.ROTATION_ANGLES:
-                    (self.output_path / split / f"{angle}deg").mkdir(
-                        parents=True, exist_ok=True
-                    )
-            (self.output_path / "labels").mkdir(parents=True, exist_ok=True)
-            (self.output_path / "metadata").mkdir(parents=True, exist_ok=True)
+            self._create_output_directories()
 
         for split_name, docs in split_docs.items():
             print(f"\n  Processing {split_name} split ({len(docs)} documents)...")
 
             for doc in tqdm(docs, desc=f"  {split_name}"):
-                # Load image
-                if not dry_run:
-                    image = cv2.imread(str(doc.image_path))
-                    if image is None:
-                        print(f"    WARNING: Could not load {doc.image_path}")
-                        continue
+                image = self._load_and_resize_image(doc) if not dry_run else None
+                if not dry_run and image is None:
+                    continue
 
-                    # Resize if needed
-                    h, w = image.shape[:2]
-                    if max(h, w) > self.config.OUTPUT_MAX_SIZE:
-                        scale = self.config.OUTPUT_MAX_SIZE / max(h, w)
-                        new_w = int(w * scale)
-                        new_h = int(h * scale)
-                        image = cv2.resize(image, (new_w, new_h))
-
-                # Generate 4 rotations for this document
                 for angle in self.config.ROTATION_ANGLES:
-                    # Determine quality level
-                    quality_level = self._determine_quality_level()
-
-                    # Apply rotation
-                    if not dry_run:
-                        rotated = self.apply_rotation(image, angle)
-
-                        # Apply degradation
-                        degraded, degradation_types = self.apply_degradation(
-                            rotated, quality_level
-                        )
-                    else:
-                        degradation_types = []
-
-                    # Create sample record
-                    sample_id = f"{doc.doc_id}_{angle}deg"
-                    output_rel_path = f"{split_name}/{angle}deg/{sample_id}.png"
-
-                    sample = OrientationSample(
-                        sample_id=sample_id,
-                        source_doc_id=doc.doc_id,
-                        source_dataset=doc.source_dataset,
-                        document_type=doc.document_type,
-                        orientation_class=self.config.ROTATION_ANGLES.index(angle),
-                        orientation_degrees=angle,
-                        split=split_name,
-                        quality_variant=quality_level,
-                        degradation_types=degradation_types,
-                        contains_tables=doc.contains_tables,
-                        contains_handwriting=doc.contains_handwriting,
-                        layout_complexity=doc.layout_complexity,
-                        is_vertical_text=doc.is_vertical_text,
-                        text_orientation=doc.text_orientation,
-                        generation_timestamp=timestamp,
-                        output_path=output_rel_path,
+                    sample = self._generate_rotation_sample(
+                        doc,
+                        image,
+                        angle,
+                        split_name,
+                        timestamp,
+                        dry_run,
                     )
-
                     all_samples.append(sample)
-
-                    # Save image
-                    if not dry_run:
-                        output_file = self.output_path / output_rel_path
-                        cv2.imwrite(str(output_file), degraded)
-
-                    # Track statistics
-                    self.stats[f"{split_name}_total"] += 1
-                    self.stats[f"{split_name}_{angle}deg"] += 1
-                    self.stats[f"quality_{quality_level}"] += 1
 
         self.samples = all_samples
         return all_samples

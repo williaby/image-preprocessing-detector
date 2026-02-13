@@ -100,6 +100,9 @@ def get_git_sha() -> str:
 SCHEMA_VERSION = "2.1.0"  # v2.1.0: geometric, physical_degradation, ml_iqa, code, image_properties, ocr_impact
 SCRIPT_VERSION = "2.0.0"
 
+# Common file extensions (S1192: avoid duplicate string literals)
+_JSON_EXT = ".json"
+
 
 class CaptureMethod(str, Enum):
     """Capture method taxonomy (Axis 4 from detection-taxonomy.md)."""
@@ -1385,6 +1388,41 @@ def parse_diqa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+def _char_accuracy_to_mos(char_accuracy: float) -> float:
+    """Convert character accuracy percentage to 1-5 MOS scale."""
+    # 100% -> 5.0, 90% -> 4.0, 80% -> 3.0, 70% -> 2.0, <70% -> 1.0
+    _MOS_THRESHOLDS = [
+        (99, 5.0),
+        (95, 4.5),
+        (90, 4.0),
+        (85, 3.5),
+        (80, 3.0),
+        (75, 2.5),
+        (70, 2.0),
+    ]
+    for threshold, mos_value in _MOS_THRESHOLDS:
+        if char_accuracy >= threshold:
+            return mos_value
+    return 1.0 + (char_accuracy / 70.0)
+
+
+def _parse_unlvisri_accuracy(acc_path: Path) -> float | None:
+    """Parse UNLV-ISRI format accuracy file, returning percentage or None."""
+    import re
+
+    if not acc_path.exists():
+        return None
+    try:
+        with open(acc_path) as f:
+            content = f.read()
+        acc_match = re.search(r"^\s*(\d+\.\d+)%\s+Accuracy$", content, re.MULTILINE)
+        if acc_match:
+            return float(acc_match.group(1))
+    except Exception:
+        return None
+    return None
+
+
 def parse_smartdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse SmartDoc-QA labels from filename encoding and OCR accuracy files.
 
@@ -1407,6 +1445,8 @@ def parse_smartdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
 
     The phone folder name indicates the capture device.
     """
+    import re
+
     labels = OriginalLabels()
 
     # Extract phone/device from parent folder structure
@@ -1419,7 +1459,6 @@ def parse_smartdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
 
     # Parse filename to extract capture parameters
     filename = image_path.stem  # Without extension
-    import re
 
     # Pattern: {S|M}_Img_{Android|WP}_D{doc}_L{light}_r{rot}_a{angle}_b{blur}[_Mb#|_Ob#]
     pattern = r"^([SM])_Img_(Android|WP)_D(\d+)_L([12])_r(-?\d+)_a(-?\d+)_b(-?\d+)(?:_(Mb|Ob)(\d+))?$"
@@ -1463,64 +1502,54 @@ def parse_smartdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
     cacc_path = ocr_folder / f"{filename}.cacc.txt"
     wacc_path = ocr_folder / f"{filename}.wacc.txt"
 
-    if cacc_path.exists():
-        try:
-            with open(cacc_path) as f:
-                content = f.read()
-                # Parse UNLV-ISRI format: Look for accuracy percentage
-                # Line format: "   99.56%  Accuracy"
-                acc_match = re.search(
-                    r"^\s*(\d+\.\d+)%\s+Accuracy$", content, re.MULTILINE
-                )
-                if acc_match:
-                    char_accuracy = float(acc_match.group(1))
-                    # Convert character accuracy to 1-5 MOS scale
-                    # 100% -> 5.0, 90% -> 4.0, 80% -> 3.0, 70% -> 2.0, <70% -> 1.0
-                    if char_accuracy >= 99:
-                        labels.smartdoc_mos = 5.0
-                    elif char_accuracy >= 95:
-                        labels.smartdoc_mos = 4.5
-                    elif char_accuracy >= 90:
-                        labels.smartdoc_mos = 4.0
-                    elif char_accuracy >= 85:
-                        labels.smartdoc_mos = 3.5
-                    elif char_accuracy >= 80:
-                        labels.smartdoc_mos = 3.0
-                    elif char_accuracy >= 75:
-                        labels.smartdoc_mos = 2.5
-                    elif char_accuracy >= 70:
-                        labels.smartdoc_mos = 2.0
-                    else:
-                        labels.smartdoc_mos = 1.0 + (char_accuracy / 70.0)
+    char_accuracy = _parse_unlvisri_accuracy(cacc_path)
+    if char_accuracy is not None:
+        labels.smartdoc_mos = _char_accuracy_to_mos(char_accuracy)
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
+        labels.raw_labels["character_accuracy_percent"] = char_accuracy
 
-                    # Store raw accuracy in raw_labels
-                    if labels.raw_labels is None:
-                        labels.raw_labels = {}
-                    labels.raw_labels["character_accuracy_percent"] = char_accuracy
-        except Exception as e:
-            logger.debug(
-                f"Failed to parse SmartDoc character accuracy from {cacc_path}: {e}"
-            )
-
-    if wacc_path.exists():
-        try:
-            with open(wacc_path) as f:
-                content = f.read()
-                # Parse UNLV-ISRI format: Look for word accuracy
-                acc_match = re.search(
-                    r"^\s*(\d+\.\d+)%\s+Accuracy$", content, re.MULTILINE
-                )
-                if acc_match:
-                    word_accuracy = float(acc_match.group(1))
-                    if labels.raw_labels is None:
-                        labels.raw_labels = {}
-                    labels.raw_labels["word_accuracy_percent"] = word_accuracy
-        except Exception as e:
-            logger.debug(
-                f"Failed to parse SmartDoc word accuracy from {wacc_path}: {e}"
-            )
+    word_accuracy = _parse_unlvisri_accuracy(wacc_path)
+    if word_accuracy is not None:
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
+        labels.raw_labels["word_accuracy_percent"] = word_accuracy
 
     return labels
+
+
+def _classify_dibco_path_part(part: str, raw_labels: dict[str, Any]) -> None:
+    """Classify a single DIBCO path component, updating raw_labels in place."""
+    import re
+
+    # Match year folders: "2009", "2010", etc.
+    if re.match(r"^20\d{2}$", part):
+        raw_labels["dibco_year"] = int(part)
+
+    lower_part = part.lower()
+    # Match folder names to determine document type
+    if "handwritten" in lower_part or "handwriting" in lower_part:
+        raw_labels["document_type"] = "handwritten"
+        raw_labels["has_handwriting"] = True
+    elif "printed" in lower_part:
+        raw_labels["document_type"] = "printed"
+        raw_labels["has_handwriting"] = False
+
+    # Check if this is a ground truth image
+    if "gt" in lower_part or "ground" in lower_part:
+        raw_labels["is_ground_truth"] = True
+
+
+def _check_dibco_ground_truth(image_path: Path, raw_labels: dict[str, Any]) -> None:
+    """Check for corresponding DIBCO ground truth image."""
+    str_path = str(image_path)
+    if "Test_images" not in str_path or "-GT-" in str_path:
+        return
+    gt_path_str = str_path.replace("Test_images", "GT-Test-images")
+    gt_path = Path(gt_path_str)
+    if gt_path.exists():
+        raw_labels["has_ground_truth"] = True
+        raw_labels["ground_truth_path"] = str(gt_path)
 
 
 def parse_dibco_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -1542,51 +1571,14 @@ def parse_dibco_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     evaluation, not quality scores. The GT images are pixel-aligned masks.
     """
     labels = OriginalLabels()
+    labels.raw_labels = {}
 
     # Extract year and document type from path structure
-    path_parts = image_path.parts
-    import re
-
-    for part in path_parts:
-        # Match year folders: "2009", "2010", etc.
-        if re.match(r"^20\d{2}$", part):
-            year = part
-            if labels.raw_labels is None:
-                labels.raw_labels = {}
-            labels.raw_labels["dibco_year"] = int(year)
-
-        # Match folder names to determine document type
-        lower_part = part.lower()
-        if "handwritten" in lower_part or "handwriting" in lower_part:
-            if labels.raw_labels is None:
-                labels.raw_labels = {}
-            labels.raw_labels["document_type"] = "handwritten"
-            # This is a handwriting dataset
-            labels.raw_labels["has_handwriting"] = True
-        elif "printed" in lower_part:
-            if labels.raw_labels is None:
-                labels.raw_labels = {}
-            labels.raw_labels["document_type"] = "printed"
-            labels.raw_labels["has_handwriting"] = False
-
-        # Check if this is a ground truth image
-        if "gt" in lower_part or "ground" in lower_part:
-            if labels.raw_labels is None:
-                labels.raw_labels = {}
-            labels.raw_labels["is_ground_truth"] = True
+    for part in image_path.parts:
+        _classify_dibco_path_part(part, labels.raw_labels)
 
     # Look for corresponding GT image
-    # GT images are typically in parallel folder structure
-    str_path = str(image_path)
-    if "Test_images" in str_path and "-GT-" not in str_path:
-        # This is a test image, look for GT
-        gt_path_str = str_path.replace("Test_images", "GT-Test-images")
-        gt_path = Path(gt_path_str)
-        if gt_path.exists():
-            if labels.raw_labels is None:
-                labels.raw_labels = {}
-            labels.raw_labels["has_ground_truth"] = True
-            labels.raw_labels["ground_truth_path"] = str(gt_path)
+    _check_dibco_ground_truth(image_path, labels.raw_labels)
 
     return labels
 
@@ -1869,7 +1861,7 @@ def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     # Try multiple possible annotation locations
     json_paths = [
         # Alongside image
-        image_path.with_suffix(".json"),
+        image_path.with_suffix(_JSON_EXT),
         # Current structure: {train,test}/annotations/*.json
         dataset_path / split / "annotations" / f"{image_path.stem}.json",
         # Standard FUNSD training structure (legacy)
@@ -2258,6 +2250,52 @@ def parse_rvl_cdip_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
 _pubtabnet_cache: dict[str, dict[str, dict]] = {}
 
 
+def _find_first_existing(paths: list[Path]) -> Path | None:
+    """Return the first path that exists, or None."""
+    for path in paths:
+        if path.exists():
+            return path
+    return None
+
+
+def _load_jsonl_annotations_cached(
+    jsonl_path: Path, dataset_label: str
+) -> dict[str, dict]:
+    """Load and cache JSONL annotations keyed by filename."""
+    cache_key = str(jsonl_path)
+    if cache_key not in _pubtabnet_cache:
+        try:
+            annotations_by_filename: dict[str, dict] = {}
+            with open(jsonl_path) as f:
+                for line in f:
+                    if line.strip():
+                        entry = json.loads(line)
+                        if "filename" in entry:
+                            annotations_by_filename[entry["filename"]] = entry
+            _pubtabnet_cache[cache_key] = annotations_by_filename
+            logger.debug(
+                f"Loaded {len(annotations_by_filename)} {dataset_label} annotations from {jsonl_path}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to load {dataset_label} JSONL from {jsonl_path}: {e}"
+            )
+            _pubtabnet_cache[cache_key] = {}
+    return _pubtabnet_cache.get(cache_key, {})
+
+
+def _extract_table_html_labels(entry: dict, labels: OriginalLabels) -> None:
+    """Extract HTML structure and cell annotations from a table entry."""
+    html_data = entry.get("html")
+    if not html_data:
+        return
+    structure = html_data.get("structure")
+    if structure and "tokens" in structure:
+        labels.table_html = "".join(structure["tokens"])
+    if "cells" in html_data:
+        labels.cell_annotations = html_data["cells"]
+
+
 def parse_pubtabnet_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse PubTabNet table annotations from JSONL file.
 
@@ -2280,64 +2318,29 @@ def parse_pubtabnet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     """
     labels = OriginalLabels()
 
-    # Try multiple possible JSONL locations
-    jsonl_paths = [
-        dataset_path / "PubTabNet_2.0.0.jsonl",
-        dataset_path / "pubtabnet.jsonl",
-        dataset_path / "annotations.jsonl",
-        dataset_path.parent / "PubTabNet_2.0.0.jsonl",
-    ]
-
-    # Find and load JSONL if not cached
-    jsonl_path = None
-    for path in jsonl_paths:
-        if path.exists():
-            jsonl_path = path
-            break
-
+    jsonl_path = _find_first_existing(
+        [
+            dataset_path / "PubTabNet_2.0.0.jsonl",
+            dataset_path / "pubtabnet.jsonl",
+            dataset_path / "annotations.jsonl",
+            dataset_path.parent / "PubTabNet_2.0.0.jsonl",
+        ]
+    )
     if not jsonl_path:
         return labels
 
-    # Load annotations into cache if not already done
-    cache_key = str(jsonl_path)
-    if cache_key not in _pubtabnet_cache:
-        try:
-            annotations_by_filename: dict[str, dict] = {}
-            with open(jsonl_path) as f:
-                for line in f:
-                    if line.strip():
-                        entry = json.loads(line)
-                        if "filename" in entry:
-                            annotations_by_filename[entry["filename"]] = entry
-            _pubtabnet_cache[cache_key] = annotations_by_filename
-            logger.debug(
-                f"Loaded {len(annotations_by_filename)} PubTabNet annotations from {jsonl_path}"
-            )
-        except Exception as e:
-            logger.warning(f"Failed to load PubTabNet JSONL from {jsonl_path}: {e}")
-            _pubtabnet_cache[cache_key] = {}
+    annotations = _load_jsonl_annotations_cached(jsonl_path, "PubTabNet")
+    entry = annotations.get(image_path.name)
+    if not entry:
+        return labels
 
-    # Look up annotation for this image
-    filename = image_path.name
-    annotations = _pubtabnet_cache.get(cache_key, {})
-    entry = annotations.get(filename)
+    _extract_table_html_labels(entry, labels)
 
-    if entry and "html" in entry:
-        html_data = entry["html"]
-
-        # Extract HTML structure as string
-        if "structure" in html_data and "tokens" in html_data["structure"]:
-            labels.table_html = "".join(html_data["structure"]["tokens"])
-
-        # Extract cell annotations
-        if "cells" in html_data:
-            labels.cell_annotations = html_data["cells"]
-
-        # Store split information if available
+    # Store split information if available
+    if "split" in entry:
         if labels.raw_labels is None:
             labels.raw_labels = {}
-        if "split" in entry:
-            labels.raw_labels["split"] = entry["split"]
+        labels.raw_labels["split"] = entry["split"]
 
     return labels
 
@@ -2355,50 +2358,21 @@ def parse_fintabnet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     """
     labels = OriginalLabels()
 
-    # Try multiple possible JSONL locations
-    jsonl_paths = [
-        dataset_path / "fintabnet.jsonl",
-        dataset_path / "annotations.jsonl",
-        dataset_path / "FinTabNet.jsonl",
-        dataset_path.parent / "fintabnet.jsonl",
-    ]
-
-    jsonl_path = None
-    for path in jsonl_paths:
-        if path.exists():
-            jsonl_path = path
-            break
-
+    jsonl_path = _find_first_existing(
+        [
+            dataset_path / "fintabnet.jsonl",
+            dataset_path / "annotations.jsonl",
+            dataset_path / "FinTabNet.jsonl",
+            dataset_path.parent / "fintabnet.jsonl",
+        ]
+    )
     if not jsonl_path:
         return labels
 
-    # Reuse PubTabNet cache mechanism (same format)
-    cache_key = str(jsonl_path)
-    if cache_key not in _pubtabnet_cache:
-        try:
-            annotations_by_filename: dict[str, dict] = {}
-            with open(jsonl_path) as f:
-                for line in f:
-                    if line.strip():
-                        entry = json.loads(line)
-                        if "filename" in entry:
-                            annotations_by_filename[entry["filename"]] = entry
-            _pubtabnet_cache[cache_key] = annotations_by_filename
-        except Exception as e:
-            logger.warning(f"Failed to load FinTabNet JSONL from {jsonl_path}: {e}")
-            _pubtabnet_cache[cache_key] = {}
-
-    # Look up annotation for this image
-    filename = image_path.name
-    annotations = _pubtabnet_cache.get(cache_key, {})
-    entry = annotations.get(filename)
-
-    if entry and "html" in entry:
-        html_data = entry["html"]
-        if "structure" in html_data and "tokens" in html_data["structure"]:
-            labels.table_html = "".join(html_data["structure"]["tokens"])
-        if "cells" in html_data:
-            labels.cell_annotations = html_data["cells"]
+    annotations = _load_jsonl_annotations_cached(jsonl_path, "FinTabNet")
+    entry = annotations.get(image_path.name)
+    if entry:
+        _extract_table_html_labels(entry, labels)
 
     return labels
 
@@ -2406,6 +2380,71 @@ def parse_fintabnet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
 # Cache for im2latex formulas (loaded once)
 _im2latex_formulas_cache: dict[str, list[str]] = {}
 _im2latex_index_cache: dict[str, dict[str, int]] = {}
+
+
+def _load_im2latex_formulas_cached(formula_file: Path) -> list[str]:
+    """Load and cache im2latex formula list."""
+    cache_key = str(formula_file)
+    if cache_key not in _im2latex_formulas_cache:
+        try:
+            with open(formula_file, encoding="utf-8", errors="replace") as f:
+                formulas = [line.strip() for line in f]
+            _im2latex_formulas_cache[cache_key] = formulas
+            logger.debug(f"Loaded {len(formulas)} formulas from {formula_file}")
+        except Exception as e:
+            logger.warning(f"Failed to load im2latex formulas from {formula_file}: {e}")
+            _im2latex_formulas_cache[cache_key] = []
+    return _im2latex_formulas_cache.get(cache_key, [])
+
+
+def _parse_im2latex_index_file(
+    index_file: Path, filename_to_index: dict[str, int]
+) -> None:
+    """Parse a single im2latex index file into the mapping dict."""
+    try:
+        with open(index_file, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    formula_idx = int(parts[0])
+                    filename = parts[1]
+                    # Store both with and without extension
+                    filename_to_index[filename] = formula_idx
+                    filename_to_index[Path(filename).stem] = formula_idx
+    except Exception as e:
+        logger.debug(f"Failed to parse index file {index_file}: {e}")
+
+
+def _load_im2latex_index_cached(dataset_path: Path) -> dict[str, int]:
+    """Load and cache im2latex filename-to-formula-index mapping."""
+    index_cache_key = str(dataset_path)
+    if index_cache_key not in _im2latex_index_cache:
+        index_files = [
+            dataset_path / "im2latex_train.lst",
+            dataset_path / "im2latex_validate.lst",
+            dataset_path / "im2latex_test.lst",
+            dataset_path / "train.lst",
+            dataset_path / "val.lst",
+            dataset_path / "test.lst",
+        ]
+        filename_to_index: dict[str, int] = {}
+        for index_file in index_files:
+            if index_file.exists():
+                _parse_im2latex_index_file(index_file, filename_to_index)
+        _im2latex_index_cache[index_cache_key] = filename_to_index
+    return _im2latex_index_cache.get(index_cache_key, {})
+
+
+def _detect_split_from_path(path_str: str) -> str | None:
+    """Detect dataset split (train/val/test) from a path string."""
+    lower = path_str.lower()
+    if "train" in lower:
+        return "train"
+    if "val" in lower or "validate" in lower:
+        return "val"
+    if "test" in lower:
+        return "test"
+    return None
 
 
 def parse_im2latex_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -2436,91 +2475,62 @@ def parse_im2latex_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
     """
     labels = OriginalLabels()
 
-    # Try to find formulas list file
-    formula_paths = [
-        dataset_path / "im2latex_formulas.lst",
-        dataset_path / "formulas.lst",
-        dataset_path.parent / "im2latex_formulas.lst",
-    ]
-
-    formula_file = None
-    for path in formula_paths:
-        if path.exists():
-            formula_file = path
-            break
-
+    formula_file = _find_first_existing(
+        [
+            dataset_path / "im2latex_formulas.lst",
+            dataset_path / "formulas.lst",
+            dataset_path.parent / "im2latex_formulas.lst",
+        ]
+    )
     if not formula_file:
         return labels
 
-    # Load formulas into cache
-    cache_key = str(formula_file)
-    if cache_key not in _im2latex_formulas_cache:
-        try:
-            with open(formula_file, encoding="utf-8", errors="replace") as f:
-                formulas = [line.strip() for line in f]
-            _im2latex_formulas_cache[cache_key] = formulas
-            logger.debug(f"Loaded {len(formulas)} formulas from {formula_file}")
-        except Exception as e:
-            logger.warning(f"Failed to load im2latex formulas from {formula_file}: {e}")
-            _im2latex_formulas_cache[cache_key] = []
+    formulas = _load_im2latex_formulas_cached(formula_file)
+    index_map = _load_im2latex_index_cached(dataset_path)
 
-    # Try to find image-to-formula index mapping
-    index_files = [
-        (dataset_path / "im2latex_train.lst", "train"),
-        (dataset_path / "im2latex_validate.lst", "validate"),
-        (dataset_path / "im2latex_test.lst", "test"),
-        (dataset_path / "train.lst", "train"),
-        (dataset_path / "val.lst", "val"),
-        (dataset_path / "test.lst", "test"),
-    ]
-
-    # Build filename to index mapping
-    index_cache_key = str(dataset_path)
-    if index_cache_key not in _im2latex_index_cache:
-        filename_to_index: dict[str, int] = {}
-        for index_file, split in index_files:
-            if index_file.exists():
-                try:
-                    with open(index_file, encoding="utf-8", errors="replace") as f:
-                        for line in f:
-                            parts = line.strip().split()
-                            if len(parts) >= 2:
-                                formula_idx = int(parts[0])
-                                filename = parts[1]
-                                # Store both with and without extension
-                                filename_to_index[filename] = formula_idx
-                                filename_to_index[Path(filename).stem] = formula_idx
-                except Exception as e:
-                    logger.debug(f"Failed to parse index file {index_file}: {e}")
-        _im2latex_index_cache[index_cache_key] = filename_to_index
-
-    # Look up formula for this image
-    formulas = _im2latex_formulas_cache.get(cache_key, [])
-    index_map = _im2latex_index_cache.get(index_cache_key, {})
-
-    if labels.raw_labels is None:
-        labels.raw_labels = {}
+    labels.raw_labels = {}
 
     # Try to find the formula index
-    filename = image_path.name
-    stem = image_path.stem
-
-    formula_idx = index_map.get(filename) or index_map.get(stem)
+    formula_idx = index_map.get(image_path.name) or index_map.get(image_path.stem)
 
     if formula_idx is not None and 0 <= formula_idx < len(formulas):
         labels.transcription = formulas[formula_idx]
         labels.raw_labels["formula_index"] = formula_idx
 
     # Determine split from path
-    path_str = str(image_path).lower()
-    if "train" in path_str:
-        labels.raw_labels["split"] = "train"
-    elif "val" in path_str or "validate" in path_str:
-        labels.raw_labels["split"] = "val"
-    elif "test" in path_str:
-        labels.raw_labels["split"] = "test"
+    split = _detect_split_from_path(str(image_path))
+    if split:
+        labels.raw_labels["split"] = split
 
     return labels
+
+
+def _extract_nist_sd19_class(
+    path_parts: tuple[str, ...], labels: OriginalLabels
+) -> None:
+    """Extract class ID and transcription from by_class directory structure."""
+    for i, part in enumerate(path_parts):
+        if part == "by_class" and i + 1 < len(path_parts):
+            class_id = path_parts[i + 1]
+            if labels.raw_labels is not None:
+                labels.raw_labels["class_id"] = class_id
+            if class_id.isdigit():
+                labels.transcription = class_id
+            break
+
+
+def _parse_nist_sd19_filename(filename: str, labels: OriginalLabels) -> None:
+    """Parse NIST SD-19 filename patterns like 'a_0001' or 'digit_5_0001'."""
+    parts = filename.split("_")
+    if len(parts) < 2:
+        return
+    first = parts[0]
+    if first.isalpha() and len(first) == 1:
+        labels.transcription = first.upper()
+    elif first.isdigit() and len(first) == 1:
+        labels.transcription = first
+    if labels.raw_labels is not None:
+        labels.raw_labels["sample_id"] = parts[-1] if parts[-1].isdigit() else None
 
 
 def parse_nist_sd19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
@@ -2548,13 +2558,9 @@ def parse_nist_sd19_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
         - raw_labels: class_id, sample_id
     """
     labels = OriginalLabels()
+    labels.raw_labels = {}
 
-    if labels.raw_labels is None:
-        labels.raw_labels = {}
-
-    # Extract information from path and filename
     path_parts = image_path.parts
-    filename = image_path.stem
 
     # Try to extract writer ID from path (hsf_0, hsf_1, etc.)
     for part in path_parts:
@@ -2562,27 +2568,11 @@ def parse_nist_sd19_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
             labels.writer_id = part
             break
 
-    # Try to extract class from by_class structure or filename
-    for i, part in enumerate(path_parts):
-        if part == "by_class" and i + 1 < len(path_parts):
-            class_id = path_parts[i + 1]
-            labels.raw_labels["class_id"] = class_id
-            # Map class ID to character (simplified mapping)
-            if class_id.isdigit():
-                # Digit class (0-9)
-                labels.transcription = class_id
-            break
+    # Try to extract class from by_class structure
+    _extract_nist_sd19_class(path_parts, labels)
 
     # Parse filename patterns
-    # Common patterns: "a_0001.png", "digit_5_0001.png", etc.
-    parts = filename.split("_")
-    if len(parts) >= 2:
-        if parts[0].isalpha() and len(parts[0]) == 1:
-            # Single character label
-            labels.transcription = parts[0].upper()
-        elif parts[0].isdigit() and len(parts[0]) == 1:
-            labels.transcription = parts[0]
-        labels.raw_labels["sample_id"] = parts[-1] if parts[-1].isdigit() else None
+    _parse_nist_sd19_filename(image_path.stem, labels)
 
     return labels
 
@@ -3250,7 +3240,7 @@ def parse_funsd_plus_labels(dataset_path: Path, image_path: Path) -> OriginalLab
 
     # Same annotation format as FUNSD
     json_paths = [
-        image_path.with_suffix(".json"),
+        image_path.with_suffix(_JSON_EXT),
         dataset_path / "annotations" / f"{image_path.stem}.json",
     ]
 
@@ -3273,6 +3263,28 @@ def parse_funsd_plus_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     return labels
 
 
+def _parse_sroie_text_instances(txt_path: Path) -> list[dict[str, Any]]:
+    """Parse SROIE format text instances from annotation file.
+
+    SROIE format: x1,y1,x2,y2,x3,y3,x4,y4,text
+    """
+    text_instances: list[dict[str, Any]] = []
+    with open(txt_path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(",", 8)
+            if len(parts) < 9:
+                continue
+            try:
+                coords = [int(x) for x in parts[:8]]
+            except ValueError:
+                continue
+            text_instances.append({"bbox": coords, "text": parts[8]})
+    return text_instances
+
+
 def parse_sroie_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse SROIE receipt labels from annotation files.
 
@@ -3280,46 +3292,22 @@ def parse_sroie_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     Contains OCR text and key entity annotations.
     """
     labels = OriginalLabels()
-
-    if labels.raw_labels is None:
-        labels.raw_labels = {}
+    labels.raw_labels = {}
 
     # Try to find transcription file
     txt_path = image_path.with_suffix(".txt")
     if txt_path.exists():
         try:
-            with open(txt_path, encoding="utf-8", errors="replace") as f:
-                lines = f.readlines()
-                # SROIE format: x1,y1,x2,y2,x3,y3,x4,y4,text
-                text_instances = []
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split(",", 8)
-                    if len(parts) >= 9:
-                        try:
-                            coords = [int(x) for x in parts[:8]]
-                            text = parts[8]
-                            text_instances.append(
-                                {
-                                    "bbox": coords,
-                                    "text": text,
-                                }
-                            )
-                        except ValueError:
-                            continue
-                if text_instances:
-                    labels.text_instances = text_instances
+            text_instances = _parse_sroie_text_instances(txt_path)
+            if text_instances:
+                labels.text_instances = text_instances
         except Exception as e:
             logger.debug(f"Failed to parse SROIE annotations: {e}")
 
     # Extract split from path
-    path_str = str(image_path).lower()
-    if "train" in path_str:
-        labels.raw_labels["split"] = "train"
-    elif "test" in path_str:
-        labels.raw_labels["split"] = "test"
+    split = _detect_split_from_path(str(image_path))
+    if split:
+        labels.raw_labels["split"] = split
 
     labels.raw_labels["document_type"] = "receipt"
 
@@ -3337,7 +3325,7 @@ def parse_mathverse_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
         labels.raw_labels = {}
 
     # Try to find metadata JSON
-    json_path = image_path.with_suffix(".json")
+    json_path = image_path.with_suffix(_JSON_EXT)
     if json_path.exists():
         try:
             with open(json_path) as f:
@@ -3351,6 +3339,41 @@ def parse_mathverse_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     return labels
 
 
+def _extract_nist_field_values(lines: list[str]) -> list[str]:
+    """Extract non-icon field values from NIST .fmt data lines."""
+    field_values: list[str] = []
+    for line in lines:
+        line = line.strip()
+        if not line or " " not in line:
+            continue
+        _field_id, value = line.split(" ", 1)
+        if value and value != "_ICON_":
+            field_values.append(value)
+    return field_values
+
+
+def _parse_nist_fmt_file(fmt_path: Path, raw_labels: dict[str, Any]) -> None:
+    """Parse a NIST .fmt companion file into raw_labels."""
+    if not fmt_path.exists():
+        return
+    try:
+        with open(fmt_path, encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+    except Exception:
+        return
+
+    if not lines:
+        return
+
+    raw_labels["form_id"] = lines[0].strip()
+    raw_labels["field_count"] = len(lines) - 1
+
+    field_values = _extract_nist_field_values(lines[1:])
+    if field_values:
+        raw_labels["has_handwritten_content"] = True
+        raw_labels["sample_fields"] = field_values[:5]
+
+
 def parse_nist_sd2_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse NIST Special Database 2 (Tax Form) labels.
 
@@ -3360,39 +3383,12 @@ def parse_nist_sd2_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
     labels = OriginalLabels()
     labels.language_code = "en"
     labels.script_name = "Latin"
+    labels.raw_labels = {
+        "form_type": "1040",
+        "document_type": "tax_form",
+    }
 
-    if labels.raw_labels is None:
-        labels.raw_labels = {}
-
-    labels.raw_labels["form_type"] = "1040"
-    labels.raw_labels["document_type"] = "tax_form"
-
-    # Try to find and parse companion .fmt file
-    fmt_path = image_path.with_suffix(".fmt")
-    if fmt_path.exists():
-        try:
-            with open(fmt_path, encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                if lines:
-                    # First line is form ID
-                    labels.raw_labels["form_id"] = lines[0].strip()
-
-                    # Extract field count and sample values
-                    field_values = []
-                    for line in lines[1:]:
-                        line = line.strip()
-                        if line and " " in line:
-                            field_id, value = line.split(" ", 1)
-                            if value and value != "_ICON_":
-                                field_values.append(value)
-
-                    labels.raw_labels["field_count"] = len(lines) - 1
-                    if field_values:
-                        labels.raw_labels["has_handwritten_content"] = True
-                        # Store first few field values as sample
-                        labels.raw_labels["sample_fields"] = field_values[:5]
-        except Exception as e:
-            logger.debug(f"Failed to parse NIST DB2 .fmt file: {e}")
+    _parse_nist_fmt_file(image_path.with_suffix(".fmt"), labels.raw_labels)
 
     return labels
 
@@ -3406,39 +3402,12 @@ def parse_nist_sd6_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
     labels = OriginalLabels()
     labels.language_code = "en"
     labels.script_name = "Latin"
+    labels.raw_labels = {
+        "form_type": "1040",
+        "document_type": "tax_form",
+    }
 
-    if labels.raw_labels is None:
-        labels.raw_labels = {}
-
-    labels.raw_labels["form_type"] = "1040"
-    labels.raw_labels["document_type"] = "tax_form"
-
-    # Try to find and parse companion .fmt file
-    fmt_path = image_path.with_suffix(".fmt")
-    if fmt_path.exists():
-        try:
-            with open(fmt_path, encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                if lines:
-                    # First line is form ID
-                    labels.raw_labels["form_id"] = lines[0].strip()
-
-                    # Extract field count and sample values
-                    field_values = []
-                    for line in lines[1:]:
-                        line = line.strip()
-                        if line and " " in line:
-                            field_id, value = line.split(" ", 1)
-                            if value and value != "_ICON_":
-                                field_values.append(value)
-
-                    labels.raw_labels["field_count"] = len(lines) - 1
-                    if field_values:
-                        labels.raw_labels["has_handwritten_content"] = True
-                        # Store first few field values as sample
-                        labels.raw_labels["sample_fields"] = field_values[:5]
-        except Exception as e:
-            logger.debug(f"Failed to parse NIST SD6 .fmt file: {e}")
+    _parse_nist_fmt_file(image_path.with_suffix(".fmt"), labels.raw_labels)
 
     return labels
 

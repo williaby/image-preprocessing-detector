@@ -70,10 +70,12 @@ CODE_CLASSES = {"CODE"}
 # VLM corrections (2026-02-11): per-sample overrides from visual inspection.
 # Full audit: scripts/audit/results/jssoda/vlm_corrections.json
 # has_formula: only these 2 samples confirmed to contain visible formulas.
-VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset({
-    "jssoda_horizontal_00537",  # math expression: x = (c - b) / a
-    "jssoda_horizontal_00956",  # equation: (a+b)^2 = a^2 + 2ab + b^2
-})
+VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        "jssoda_horizontal_00537",  # math expression: x = (c - b) / a
+        "jssoda_horizontal_00956",  # equation: (a+b)^2 = a^2 + 2ab + b^2
+    }
+)
 
 # Docling lowercase -> DocLayNet PascalCase mapping
 DOCLING_TO_DOCLAYNET: dict[str, str] = {
@@ -215,6 +217,40 @@ def standardize_class_name(class_name: str) -> str:
     return DOCLING_TO_DOCLAYNET.get(class_name, class_name)
 
 
+def _standardize_layout_detections(
+    detections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Standardize class_name to PascalCase and preserve source_label."""
+    result: list[dict[str, Any]] = []
+    for det in detections:
+        new_det = dict(det)
+        original_class = det.get("class_name", "")
+        new_det["class_name"] = standardize_class_name(original_class)
+        if not new_det.get("source_label"):
+            new_det["source_label"] = original_class
+        result.append(new_det)
+    return result
+
+
+def _resolve_jssoda_split(
+    filename: str,
+    manifest_index: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Resolve split and layout properties from manifest or filename."""
+    manifest_rec = manifest_index.get(filename)
+    if manifest_rec:
+        return {
+            "split": manifest_rec.get("split", "train"),
+            "is_vertical": manifest_rec.get("is_vertical", False),
+            "num_columns": manifest_rec.get("num_columns", 1),
+        }
+    if "vertical" in filename:
+        return {"split": "train", "is_vertical": True}
+    if "horizontal" in filename:
+        return {"split": "train", "is_vertical": False}
+    return {"split": "unknown"}
+
+
 # ---------------------------------------------------------------------------
 # Per-sample integration
 # ---------------------------------------------------------------------------
@@ -237,35 +273,20 @@ def integrate_sample(
 
     data: dict[str, Any] = {}
 
-    # -------------------------------------------------------------------
     # D01 - Layout detections with PascalCase class_name conversion
-    # -------------------------------------------------------------------
     v1_layout = v1_data.get("layout_detections", [])
-    standardized_layout: list[dict[str, Any]] = []
-    for det in v1_layout:
-        new_det = dict(det)
-        original_class = det.get("class_name", "")
-        new_det["class_name"] = standardize_class_name(original_class)
-        # Preserve source_label if not already set
-        if not new_det.get("source_label"):
-            new_det["source_label"] = original_class
-        standardized_layout.append(new_det)
-
+    standardized_layout = _standardize_layout_detections(v1_layout)
     data["layout_detections"] = standardized_layout
     data["layout_source"] = "docling_gpu"
     data["layout_confidence"] = 0.85
     data["layout_detection_count"] = len(standardized_layout)
 
-    # -------------------------------------------------------------------
-    # D02 - capture_method: ALL synthetic (known from dataset documentation)
-    # -------------------------------------------------------------------
+    # D02 - capture_method
     data["capture_method"] = "synthetic"
     data["capture_confidence"] = 1.0
     data["capture_detection_method"] = "dataset_documentation"
 
-    # -------------------------------------------------------------------
-    # D03 - domain_level1: from LLM enrichment
-    # -------------------------------------------------------------------
+    # D03 - domain_level1
     llm = llm_index.get(filename_stem)
     if llm:
         data["domain_level1"] = llm.get("domain_level1", "UNK")
@@ -277,102 +298,97 @@ def integrate_sample(
         data["domain_confidence"] = 0.3
         data["domain_detection_method"] = "none"
 
-    # -------------------------------------------------------------------
-    # D04 - iso639_language: known ja (monolingual Japanese dataset)
-    # -------------------------------------------------------------------
+    # D04/D05/D06 - language, script, script_family
     data["iso639_language"] = "ja"
     data["language_confidence"] = 1.0
     data["text_scope_detection_method"] = "dataset_documentation"
-
-    # -------------------------------------------------------------------
-    # D05 - iso15924_script: known Jpan
-    # -------------------------------------------------------------------
     data["iso15924_script"] = "Jpan"
-
-    # -------------------------------------------------------------------
-    # D06 - script_family: derived from Jpan
-    # -------------------------------------------------------------------
     data["script_family"] = _get_script_family("Jpan")
 
-    # -------------------------------------------------------------------
     # D07 - content_flags: VLM-corrected (v1.1.0)
-    # Visual inspection of ALL 23 flagged samples found:
-    #   has_table:       10/10 false positive (Docling misdetects multi-column text)
-    #   has_figure:       3/3  false positive (Docling misdetects dense text blocks)
-    #   has_handwriting:  4/4  false positive (LLM unreliable on synthetic images)
-    #   has_formula:      4/6  false positive (keep 2 VLM-confirmed true positives)
-    # See: scripts/audit/results/jssoda/vlm_corrections.json
-    # -------------------------------------------------------------------
     flags = derive_content_flags(standardized_layout)
-
-    data["has_table"] = False  # 100% FP: Docling multi-column misdetection
-    data["has_figure"] = False  # 100% FP: Docling dense text misdetection
-    data["has_handwriting"] = False  # 100% FP: LLM can't detect on synthetic
-    data["has_signature"] = False  # All synthetic, LLM confirmed none
-    data["has_code"] = flags["has_code"]  # No code detections in JSSODa
-
-    # has_formula: only VLM-confirmed true positives
+    data["has_table"] = False
+    data["has_figure"] = False
+    data["has_handwriting"] = False
+    data["has_signature"] = False
+    data["has_code"] = flags["has_code"]
     data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
-
     data["content_flags_tier"] = "tier_2_model"
     data["content_flags_source"] = "vlm_corrected+docling_gpu+llm_vision"
-    data["content_flags_confidence"] = 0.95  # VLM-verified
-
-    # handwriting_present: prescreening checks this field name
+    data["content_flags_confidence"] = 0.95
     data["handwriting_present"] = False
 
-    # -------------------------------------------------------------------
-    # D10 - text_scope_content_type: from LLM content_type
-    # -------------------------------------------------------------------
+    # D10 - text_scope_content_type
     if llm:
         content_type = llm.get("content_type", "")
         data["text_scope_content_type"] = content_type if content_type else "unknown"
     else:
         data["text_scope_content_type"] = "unknown"
-
-    # Text scope: all synthetic printed documents
     data["text_scope"] = "printed"
 
-    # -------------------------------------------------------------------
-    # D11 - split: from manifest
-    # -------------------------------------------------------------------
-    manifest_rec = manifest_index.get(filename)
-    if manifest_rec:
-        data["split"] = manifest_rec.get("split", "train")
-        data["is_vertical"] = manifest_rec.get("is_vertical", False)
-        data["num_columns"] = manifest_rec.get("num_columns", 1)
-    else:
-        # Fallback: infer from filename
-        if "vertical" in filename:
-            data["split"] = "train"
-            data["is_vertical"] = True
-        elif "horizontal" in filename:
-            data["split"] = "train"
-            data["is_vertical"] = False
-        else:
-            data["split"] = "unknown"
+    # D11 - split from manifest
+    data.update(_resolve_jssoda_split(filename, manifest_index))
 
-    # -------------------------------------------------------------------
     # Additional derived fields
-    # -------------------------------------------------------------------
     data["dataset_short_code"] = "jssoda"
-
-    # Orientation: ALL images are upright (0deg)
-    # Per source doc: "Japanese vertical text must be labeled as 0° (upright), not 270°"
-    # Both vertical and horizontal images are in their natural reading orientation
     data["orientation_class"] = 0
     data["orientation_confidence"] = 1.0
     data["orientation_detection_method"] = "dataset_documentation"
-
-    # Image properties: all synthetic color renders
     data["image_properties_color_mode"] = "color"
 
-    # -------------------------------------------------------------------
     # Reliability summary recomputation
-    # -------------------------------------------------------------------
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
+
+
+# ---------------------------------------------------------------------------
+# Integration runner helpers
+# ---------------------------------------------------------------------------
+def _track_jssoda_sample_stats(
+    stats: dict[str, Any],
+    filename: str,
+    filename_stem: str,
+    integrated_data: dict[str, Any],
+    llm_index: dict[str, dict[str, Any]],
+    manifest_index: dict[str, dict[str, Any]],
+) -> None:
+    """Accumulate per-sample statistics into the stats dict."""
+    stats["integrated"] += 1
+    if filename_stem in llm_index:
+        stats["llm_matched"] += 1
+    if filename in manifest_index:
+        stats["manifest_matched"] += 1
+    stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
+    stats["split_dist"][integrated_data.get("split", "unknown")] += 1
+    stats["content_type_dist"][
+        integrated_data.get("text_scope_content_type", "unknown")
+    ] += 1
+    stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+    for flag_key, stat_key in (
+        ("has_table", "has_table_count"),
+        ("has_formula", "has_formula_count"),
+        ("has_handwriting", "has_handwriting_count"),
+        ("has_figure", "has_figure_count"),
+    ):
+        if integrated_data.get(flag_key):
+            stats[stat_key] += 1
+
+
+def _upsert_enrichment_version(
+    sample: dict[str, Any],
+    new_version: dict[str, Any],
+    version_number: int,
+) -> None:
+    """Replace existing enrichment version or append new one."""
+    versions = sample["enrichments"]["versions"]
+    for i, v in enumerate(versions):
+        if v.get("version") == version_number:
+            versions[i] = new_version
+            sample["enrichments"]["current_version"] = version_number
+            return
+    versions.append(new_version)
+    sample["enrichments"]["current_version"] = version_number
 
 
 # ---------------------------------------------------------------------------
@@ -409,31 +425,16 @@ def run_integration(
 
         integrated_data = integrate_sample(sample, llm_index, manifest_index)
 
-        # Track stats
-        stats["integrated"] += 1
-        if filename_stem in llm_index:
-            stats["llm_matched"] += 1
-        if filename in manifest_index:
-            stats["manifest_matched"] += 1
-        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
-        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
-        stats["content_type_dist"][
-            integrated_data.get("text_scope_content_type", "unknown")
-        ] += 1
-        stats["capture_method_dist"][
-            integrated_data.get("capture_method", "unknown")
-        ] += 1
-        if integrated_data.get("has_table"):
-            stats["has_table_count"] += 1
-        if integrated_data.get("has_formula"):
-            stats["has_formula_count"] += 1
-        if integrated_data.get("has_handwriting"):
-            stats["has_handwriting_count"] += 1
-        if integrated_data.get("has_figure"):
-            stats["has_figure_count"] += 1
+        _track_jssoda_sample_stats(
+            stats,
+            filename,
+            filename_stem,
+            integrated_data,
+            llm_index,
+            manifest_index,
+        )
 
         if not dry_run:
-            # Create or replace enrichment version 2
             new_version = {
                 "version": 2,
                 "created_at": now,
@@ -447,17 +448,7 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            # Replace existing v2 if present, otherwise append
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for i, v in enumerate(versions):
-                if v.get("version") == 2:
-                    versions[i] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = 2
+            _upsert_enrichment_version(sample, new_version, 2)
 
     return stats
 
@@ -477,7 +468,7 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print()
     print("Domain distribution:")
     for domain, count in stats["domain_dist"].most_common():
-        print(f"  {domain:20s}: {count:5d} ({count/total_samples*100:.1f}%)")
+        print(f"  {domain:20s}: {count:5d} ({count / total_samples * 100:.1f}%)")
     print()
     print("Split distribution:")
     for split, count in stats["split_dist"].most_common():

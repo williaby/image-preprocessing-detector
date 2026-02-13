@@ -17,6 +17,8 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
+import pytest
+
 # =============================================================================
 # SplitRegistry Tests
 # =============================================================================
@@ -383,7 +385,7 @@ class TestSchemaAdapterV23Fields:
         """GeneratedSample has char_height_rendered_px field."""
         sample = self._make_sample()
         sample.char_height_rendered_px = 24.5
-        assert sample.char_height_rendered_px == 24.5
+        assert sample.char_height_rendered_px == pytest.approx(24.5)
 
     def test_output_size_px_field(self) -> None:
         """GeneratedSample has output_size_px field."""
@@ -467,7 +469,7 @@ class TestSchemaAdapterV23Fields:
         metadata = adapter.build_enrichment_metadata(sample)
         data = metadata.get("data", {})
         resolution = data.get("resolution", {})
-        assert resolution.get("character_height_rendered_px") == 28.5
+        assert resolution.get("character_height_rendered_px") == pytest.approx(28.5)
 
 
 # =============================================================================
@@ -512,19 +514,19 @@ class TestCJKVerticalRatios:
         """Japanese vertical ratio is 0.30."""
         from image_preprocessing_detector.synthetic.config import CJK_VERTICAL_RATIOS
 
-        assert CJK_VERTICAL_RATIOS["Jpan"] == 0.30
+        assert CJK_VERTICAL_RATIOS["Jpan"] == pytest.approx(0.30)
 
     def test_hans_ratio(self) -> None:
         """Simplified Chinese vertical ratio is 0.10."""
         from image_preprocessing_detector.synthetic.config import CJK_VERTICAL_RATIOS
 
-        assert CJK_VERTICAL_RATIOS["Hans"] == 0.10
+        assert CJK_VERTICAL_RATIOS["Hans"] == pytest.approx(0.10)
 
     def test_hant_ratio(self) -> None:
         """Traditional Chinese vertical ratio is 0.10."""
         from image_preprocessing_detector.synthetic.config import CJK_VERTICAL_RATIOS
 
-        assert CJK_VERTICAL_RATIOS["Hant"] == 0.10
+        assert CJK_VERTICAL_RATIOS["Hant"] == pytest.approx(0.10)
 
     def test_only_three_scripts(self) -> None:
         """Only Jpan, Hans, Hant have vertical ratios."""
@@ -553,7 +555,7 @@ class TestEnglishSecondaryWeighting:
             ENGLISH_SECONDARY_WEIGHT,
         )
 
-        assert ENGLISH_SECONDARY_WEIGHT == 0.40
+        assert pytest.approx(0.40) == ENGLISH_SECONDARY_WEIGHT
 
     def test_two_script_pair_latn_prevalence(self) -> None:
         """Latin appears as secondary script more often than random chance."""
@@ -599,15 +601,14 @@ class TestGeneratorV23Metadata:
 
     def test_generation_params_keys(self) -> None:
         """generation_params includes degradation_seed, base_image_sha256, font_families_used."""
-        expected_keys = {"degradation_seed", "base_image_sha256", "font_families_used"}
         # Just verify the key names exist in the generation_params schema
         from image_preprocessing_detector.synthetic.schema_adapter import (
             GeneratedSample,
         )
 
         # Check the field exists and can hold dict values
-        sample = GeneratedSample.__dataclass_fields__
-        assert "generation_params" in sample
+        fields = GeneratedSample.__dataclass_fields__
+        assert "generation_params" in fields
 
     def test_compute_image_sha256_deterministic(self) -> None:
         """Same image produces same SHA256."""
@@ -708,3 +709,194 @@ class TestLayoutWeights:
 
         total = sum(LAYOUT_WEIGHTS.values())
         assert abs(total - 1.0) < 0.01, f"Layout weights sum to {total}, not ~1.0"
+
+
+# =============================================================================
+# Integration: End-to-end metadata pipeline (mocked corpus)
+# =============================================================================
+
+
+class TestV23MetadataPipelineIntegration:
+    """Integration tests verifying v2.3 metadata flows from generator to adapter."""
+
+    def _generate_sample_with_mock(
+        self,
+        script_code: str = "Latn",
+    ) -> object:
+        """Generate a sample using mocked corpus/fonts.
+
+        Returns the GeneratedSample or None if generation fails.
+        """
+        from unittest.mock import MagicMock, patch
+
+        from PIL import Image
+
+        from image_preprocessing_detector.synthetic.augmentation import (
+            DegradationProfile,
+        )
+        from image_preprocessing_detector.synthetic.config import (
+            LayoutType,
+            TextDensity,
+        )
+        from image_preprocessing_detector.synthetic.generator import (
+            GenerationConfig,
+            MultiScriptDocumentGenerator,
+        )
+        from image_preprocessing_detector.synthetic.schema_adapter import (
+            IQALabels,
+            TextBlock,
+        )
+
+        config = GenerationConfig(
+            dpi=300,
+            orientation_augmentation=True,
+            skew_augmentation=True,
+            color_mode_enabled=True,
+            save_images=False,
+            save_metadata=False,
+            seed=42,
+            samples_per_script=1,
+            scripts=[script_code],
+        )
+        gen = MultiScriptDocumentGenerator(config=config)
+
+        # Set up internal RNG
+        gen._rng = random.Random(42)
+        gen._initialized = True
+
+        # Mock corpus to return sample text
+        mock_corpus = MagicMock()
+        mock_corpus.get_text_with_language.return_value = (
+            "Sample test text for rendering",
+            f"eng_{script_code}",
+        )
+        gen._corpus_manager = mock_corpus
+
+        # Create a simple rendered image + text blocks
+        test_image = Image.new("RGB", (300, 400), "white")
+        test_blocks = [
+            TextBlock(
+                text="Sample test text",
+                script_code=script_code,
+                language_code=f"eng_{script_code}",
+                bbox=(10, 10, 280, 50),
+                font_size=14,
+                is_header=False,
+                is_caption=False,
+            ),
+        ]
+
+        # Mock renderer
+        mock_renderer = MagicMock()
+        mock_renderer.render_document.return_value = (test_image, test_blocks)
+        gen._renderer = mock_renderer
+        gen._renderers_by_tier = {}
+
+        # Mock font manager
+        mock_font_info = MagicMock()
+        mock_font_info.fonts = [MagicMock()]
+        mock_font_info.fonts[0].path = MagicMock()
+        mock_font_info.fonts[0].path.stem = "NotoSansTest"
+        mock_font_info.default_font = mock_font_info.fonts[0]
+        mock_font_mgr = MagicMock()
+        mock_font_mgr.get_font_info.return_value = mock_font_info
+        gen._font_manager = mock_font_mgr
+
+        # Mock augmentation to just pass through
+        mock_aug = MagicMock()
+        mock_aug.apply.return_value = (
+            test_image,
+            IQALabels(overall_quality=0.85),
+        )
+        gen._fast_augmentation = mock_aug
+
+        # Patch the tier renderer lookup to return our mock
+        with patch.object(gen, "_get_renderer_for_tier", return_value=mock_renderer):
+            with patch.object(gen, "_get_resolution_for_tier", return_value=300):
+                sample = gen._generate_single_sample(
+                    script_code=script_code,
+                    layout_type=LayoutType.STACKED,
+                    text_density=TextDensity.MEDIUM,
+                    degradation_profile=DegradationProfile.MILD,
+                )
+
+        return sample
+
+    def test_single_sample_has_all_v23_fields(self) -> None:
+        """Generated sample has all v2.3 metadata fields."""
+        sample = self._generate_sample_with_mock("Latn")
+        assert sample is not None
+
+        # v2.3 fields on sample
+        assert sample.text_directions is not None
+        assert "Latn" in sample.text_directions
+        assert sample.text_directions["Latn"] == "ltr"
+
+        # char_height_rendered_px may be None for all-white test image (no glyphs)
+        # Just verify it's set as a float or None (correct type)
+        assert isinstance(sample.char_height_rendered_px, (float, int, type(None)))
+
+        # generation_params v2.3 keys
+        params = sample.generation_params
+        assert params is not None
+        assert "degradation_seed" in params
+        assert isinstance(params["degradation_seed"], int)
+        assert "base_image_sha256" in params
+        assert isinstance(params["base_image_sha256"], str)
+        assert len(params["base_image_sha256"]) == 64  # SHA256 hex
+        assert "font_families_used" in params
+        assert isinstance(params["font_families_used"], list)
+        assert "NotoSansTest" in params["font_families_used"]
+
+    def test_metadata_round_trip_through_adapter(self) -> None:
+        """Sample metadata flows correctly through schema adapter."""
+        from image_preprocessing_detector.synthetic.schema_adapter import (
+            Layer2SchemaAdapter,
+        )
+
+        sample = self._generate_sample_with_mock("Latn")
+        assert sample is not None
+
+        adapter = Layer2SchemaAdapter()
+        metadata = adapter.build_enrichment_metadata(sample)
+
+        # Top-level
+        assert metadata["schema_version"] == "2.3.0"
+
+        # v2.3 fields in resolution
+        data = metadata["data"]
+        resolution = data["resolution"]
+        # char_height_rendered_px may be absent for all-white test image
+        # (CC analysis finds no glyphs) - verify key is present when value exists
+        if sample.char_height_rendered_px is not None:
+            assert "character_height_rendered_px" in resolution
+
+        # v2.3 fields in structure
+        structure = data["structure"]
+        assert "text_directions_present" in structure
+        assert "ltr" in structure["text_directions_present"]
+
+        # v2.3 fields in language
+        language = data["language"]
+        assert "text_direction" in language
+        assert language["text_direction"] == "ltr"
+
+    def test_cjk_sample_has_correct_direction(self) -> None:
+        """CJK sample records text_direction and text_directions_present."""
+        sample = self._generate_sample_with_mock("Jpan")
+        assert sample is not None
+
+        assert sample.text_directions is not None
+        assert "Jpan" in sample.text_directions
+        # Direction is either ltr or ttb (random)
+        assert sample.text_directions["Jpan"] in ("ltr", "ttb")
+
+    def test_sha256_is_deterministic(self) -> None:
+        """Same seed produces same base_image_sha256."""
+        sample1 = self._generate_sample_with_mock("Latn")
+        sample2 = self._generate_sample_with_mock("Latn")
+        assert sample1 is not None and sample2 is not None
+        assert (
+            sample1.generation_params["base_image_sha256"]
+            == sample2.generation_params["base_image_sha256"]
+        )

@@ -53,6 +53,12 @@ except ImportError:
     print("Run: uv sync --extra ml")
     sys.exit(1)
 
+# ---------------------------------------------------------------------------
+# Constants (S1192: avoid duplicated literals)
+# ---------------------------------------------------------------------------
+_PROCESSING_DESC = "  Processing"
+_MANIFEST_FILENAME = "manifest.json"
+
 
 def download_jssoda(output_dir: Path, max_samples: int = 2000) -> int:
     """Download JSSODa dataset from HuggingFace.
@@ -89,7 +95,7 @@ def download_jssoda(output_dir: Path, max_samples: int = 2000) -> int:
         vertical_count = 0
         horizontal_count = 0
 
-        for idx, sample in enumerate(tqdm(dataset, desc="  Processing")):
+        for idx, sample in enumerate(tqdm(dataset, desc=_PROCESSING_DESC)):
             if idx >= max_samples:
                 break
 
@@ -139,7 +145,7 @@ def download_jssoda(output_dir: Path, max_samples: int = 2000) -> int:
             total_downloaded += 1
 
         # Save manifest
-        manifest_path = jssoda_dir / "manifest.json"
+        manifest_path = jssoda_dir / _MANIFEST_FILENAME
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
@@ -182,7 +188,7 @@ def download_jssoda_test(output_dir: Path, max_samples: int = 500) -> int:
         vertical_count = 0
         horizontal_count = 0
 
-        for idx, sample in enumerate(tqdm(dataset, desc="  Processing")):
+        for idx, sample in enumerate(tqdm(dataset, desc=_PROCESSING_DESC)):
             if idx >= max_samples:
                 break
 
@@ -225,7 +231,7 @@ def download_jssoda_test(output_dir: Path, max_samples: int = 500) -> int:
 
             total_downloaded += 1
 
-        manifest_path = jssoda_test_dir / "manifest.json"
+        manifest_path = jssoda_test_dir / _MANIFEST_FILENAME
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
@@ -266,7 +272,7 @@ def download_arabic_ocr(output_dir: Path, max_samples: int = 1000) -> int:
         print("  Loading mssqpi/Arabic-OCR-Dataset...")
         dataset = load_dataset("mssqpi/Arabic-OCR-Dataset", split="train")
 
-        for idx, sample in enumerate(tqdm(dataset, desc="  Processing")):
+        for idx, sample in enumerate(tqdm(dataset, desc=_PROCESSING_DESC)):
             if idx >= max_samples:
                 break
 
@@ -294,7 +300,7 @@ def download_arabic_ocr(output_dir: Path, max_samples: int = 1000) -> int:
 
             total_downloaded += 1
 
-        manifest_path = arabic_dir / "manifest.json"
+        manifest_path = arabic_dir / _MANIFEST_FILENAME
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
@@ -334,7 +340,7 @@ def download_multilingual_ocr(output_dir: Path, max_samples: int = 1000) -> int:
         print("  Loading Process-Venue/multilingual-ocr-dataset...")
         dataset = load_dataset("Process-Venue/multilingual-ocr-dataset", split="train")
 
-        for idx, sample in enumerate(tqdm(dataset, desc="  Processing")):
+        for idx, sample in enumerate(tqdm(dataset, desc=_PROCESSING_DESC)):
             if idx >= max_samples:
                 break
 
@@ -372,7 +378,7 @@ def download_multilingual_ocr(output_dir: Path, max_samples: int = 1000) -> int:
 
             total_downloaded += 1
 
-        manifest_path = multi_dir / "manifest.json"
+        manifest_path = multi_dir / _MANIFEST_FILENAME
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
@@ -414,7 +420,7 @@ def download_dzongkha_digits(output_dir: Path, max_samples: int = 500) -> int:
         print("  Loading proadhikary/dzongkha-digits...")
         dataset = load_dataset("proadhikary/dzongkha-digits", split="train")
 
-        for idx, sample in enumerate(tqdm(dataset, desc="  Processing")):
+        for idx, sample in enumerate(tqdm(dataset, desc=_PROCESSING_DESC)):
             if idx >= max_samples:
                 break
 
@@ -445,7 +451,7 @@ def download_dzongkha_digits(output_dir: Path, max_samples: int = 500) -> int:
 
             total_downloaded += 1
 
-        manifest_path = dzongkha_dir / "manifest.json"
+        manifest_path = dzongkha_dir / _MANIFEST_FILENAME
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
@@ -460,11 +466,83 @@ def download_dzongkha_digits(output_dir: Path, max_samples: int = 500) -> int:
     return total_downloaded
 
 
+_KNOWN_DATASET_DIRS: frozenset[str] = frozenset(
+    {
+        "jssoda",
+        "jssoda_test",
+        "vjroda",
+        "arabic_ocr",
+        "multilingual_ocr",
+        "dzongkha_digits",
+    }
+)
+
+
+def _merge_script_counts(
+    combined_scripts: dict,
+    data: dict,
+    vertical_count: int,
+    horizontal_count: int,
+    samples_count: int,
+) -> None:
+    """Merge per-manifest script counts into the combined scripts dict."""
+    if "scripts" in data:
+        for script, count in data["scripts"].items():
+            combined_scripts[script] = combined_scripts.get(script, 0) + count
+
+    # Track Japanese as a script
+    if "japanese" not in combined_scripts and (vertical_count + horizontal_count) > 0:
+        combined_scripts["japanese"] = vertical_count + horizontal_count
+
+    # Track script by declared type (Arabic, Tibetan)
+    declared_script = data.get("script")
+    if declared_script in ("arabic", "tibetan"):
+        combined_scripts[declared_script] = (
+            combined_scripts.get(declared_script, 0) + samples_count
+        )
+
+
+def _process_single_manifest(
+    manifest_path: Path,
+    output_dir: Path,
+    combined: dict,
+) -> None:
+    """Load one manifest file and accumulate its data into *combined*."""
+    with open(manifest_path) as f:
+        data = json.load(f)
+
+    vertical_count = len(data.get("vertical", []))
+    horizontal_count = len(data.get("horizontal", []))
+    samples_count = len(data.get("samples", []))
+
+    combined["datasets"].append(
+        {
+            "name": manifest_path.parent.name,
+            "path": str(manifest_path.relative_to(output_dir)),
+            "vertical_count": vertical_count,
+            "horizontal_count": horizontal_count,
+            "samples_count": samples_count,
+        }
+    )
+
+    combined["total_vertical"] += vertical_count
+    combined["total_horizontal"] += horizontal_count
+    combined["total_samples"] += vertical_count + horizontal_count + samples_count
+
+    _merge_script_counts(
+        combined["scripts"],
+        data,
+        vertical_count,
+        horizontal_count,
+        samples_count,
+    )
+
+
 def create_combined_manifest(output_dir: Path) -> None:
     """Create a combined manifest for all script/language datasets."""
     print("\n=== Creating Combined Manifest ===\n")
 
-    combined = {
+    combined: dict = {
         "datasets": [],
         "total_vertical": 0,
         "total_horizontal": 0,
@@ -472,66 +550,10 @@ def create_combined_manifest(output_dir: Path) -> None:
         "scripts": {},
     }
 
-    # Scan for manifests
-    for manifest_path in output_dir.rglob("manifest.json"):
-        parent_name = manifest_path.parent.name
-        if parent_name in (
-            "jssoda",
-            "jssoda_test",
-            "vjroda",
-            "arabic_ocr",
-            "multilingual_ocr",
-            "dzongkha_digits",
-        ):
-            with open(manifest_path) as f:
-                data = json.load(f)
-
-            dataset_name = parent_name
-            vertical_count = len(data.get("vertical", []))
-            horizontal_count = len(data.get("horizontal", []))
-            samples_count = len(data.get("samples", []))
-
-            combined["datasets"].append(
-                {
-                    "name": dataset_name,
-                    "path": str(manifest_path.relative_to(output_dir)),
-                    "vertical_count": vertical_count,
-                    "horizontal_count": horizontal_count,
-                    "samples_count": samples_count,
-                }
-            )
-
-            combined["total_vertical"] += vertical_count
-            combined["total_horizontal"] += horizontal_count
-            combined["total_samples"] += (
-                vertical_count + horizontal_count + samples_count
-            )
-
-            # Merge script counts
-            if "scripts" in data:
-                for script, count in data["scripts"].items():
-                    combined["scripts"][script] = (
-                        combined["scripts"].get(script, 0) + count
-                    )
-
-            # Track Japanese as a script
-            if (
-                "japanese" not in combined["scripts"]
-                and (vertical_count + horizontal_count) > 0
-            ):
-                combined["scripts"]["japanese"] = vertical_count + horizontal_count
-
-            # Track Arabic
-            if data.get("script") == "arabic":
-                combined["scripts"]["arabic"] = (
-                    combined["scripts"].get("arabic", 0) + samples_count
-                )
-
-            # Track Tibetan (Dzongkha)
-            if data.get("script") == "tibetan":
-                combined["scripts"]["tibetan"] = (
-                    combined["scripts"].get("tibetan", 0) + samples_count
-                )
+    for manifest_path in output_dir.rglob(_MANIFEST_FILENAME):
+        if manifest_path.parent.name not in _KNOWN_DATASET_DIRS:
+            continue
+        _process_single_manifest(manifest_path, output_dir, combined)
 
     # Save combined manifest
     combined_path = output_dir / "combined_manifest.json"

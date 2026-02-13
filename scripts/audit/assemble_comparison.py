@@ -32,6 +32,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -233,6 +234,43 @@ def load_results_json(
     return _index_by_image_id(raw.get("results", []))
 
 
+def _merge_docling_batch(
+    result: dict[str, dict[str, Any]],
+    per_image: dict[str, list[str]],
+) -> None:
+    """Merge per-image annotation data into the accumulated result dict."""
+    for image_id, cats in per_image.items():
+        if image_id not in result:
+            result[image_id] = {
+                "annotation_count": len(cats),
+                "category_names": sorted(set(cats)),
+            }
+        else:
+            result[image_id]["annotation_count"] += len(cats)
+            existing = set(result[image_id]["category_names"])
+            existing.update(cats)
+            result[image_id]["category_names"] = sorted(existing)
+
+
+def _parse_docling_batch(raw: dict[str, Any]) -> dict[str, list[str]]:
+    """Parse a single COCO-format batch into per-image category lists."""
+    cat_map: dict[int, str] = {c["id"]: c["name"] for c in raw.get("categories", [])}
+
+    img_id_to_name: dict[int, str] = {}
+    for img in raw.get("images", []):
+        img_id_to_name[img["id"]] = _image_id_from_filename(img["file_name"])
+
+    per_image: dict[str, list[str]] = defaultdict(list)
+    for ann in raw.get("annotations", []):
+        numeric_id = ann.get("image_id")
+        name = img_id_to_name.get(numeric_id, "")
+        if name:
+            cat_name = cat_map.get(ann.get("category_id", -1), "unknown")
+            per_image[name].append(cat_name)
+
+    return dict(per_image)
+
+
 def load_docling_layout(
     directory: Path,
 ) -> dict[str, dict[str, Any]]:
@@ -251,34 +289,8 @@ def load_docling_layout(
         raw = _load_json_safely(batch_path)
         if not isinstance(raw, dict):
             continue
-
-        cat_map: dict[int, str] = {
-            c["id"]: c["name"] for c in raw.get("categories", [])
-        }
-
-        img_id_to_name: dict[int, str] = {}
-        for img in raw.get("images", []):
-            img_id_to_name[img["id"]] = _image_id_from_filename(img["file_name"])
-
-        per_image: dict[str, list[str]] = defaultdict(list)
-        for ann in raw.get("annotations", []):
-            numeric_id = ann.get("image_id")
-            name = img_id_to_name.get(numeric_id, "")
-            if name:
-                cat_name = cat_map.get(ann.get("category_id", -1), "unknown")
-                per_image[name].append(cat_name)
-
-        for image_id, cats in per_image.items():
-            if image_id not in result:
-                result[image_id] = {
-                    "annotation_count": len(cats),
-                    "category_names": sorted(set(cats)),
-                }
-            else:
-                result[image_id]["annotation_count"] += len(cats)
-                existing = set(result[image_id]["category_names"])
-                existing.update(cats)
-                result[image_id]["category_names"] = sorted(existing)
+        per_image = _parse_docling_batch(raw)
+        _merge_docling_batch(result, per_image)
 
     return result
 
@@ -301,6 +313,89 @@ def load_resolution_quality(
 # ---------------------------------------------------------------------------
 # Source Discovery
 # ---------------------------------------------------------------------------
+def _log_source(label: str, count: int, path: Path | str, *, verbose: bool) -> None:
+    """Log a discovered source to stderr when verbose."""
+    if verbose:
+        print(
+            f"  {label:<24s} {count:>6,} records  ({path})",
+            file=sys.stderr,
+        )
+
+
+def _skip_source(label: str, path: Path | str, *, verbose: bool) -> None:
+    """Log a skipped source to stderr when verbose."""
+    if verbose:
+        print(
+            f"  {label:<24s}   skip  ({path})",
+            file=sys.stderr,
+        )
+
+
+def _try_load_json_source(
+    label: str,
+    path: Path | None,
+    loader: Any,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    *,
+    verbose: bool,
+) -> None:
+    """Attempt to load a JSON source and add it to *sources*."""
+    if path and path.exists():
+        data = loader(path)
+        if data:
+            sources[label] = data
+            _log_source(label, len(data), path, verbose=verbose)
+            return
+    _skip_source(label, path or _NOT_CONFIGURED, verbose=verbose)
+
+
+def _discover_docling_layout(
+    config: DatasetAuditConfig,
+    extracted_dir: Path,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    *,
+    verbose: bool,
+) -> None:
+    """Discover and load Docling layout source."""
+    docling_dir: Path | None = None
+    if config.docling_layout_path and config.docling_layout_path.is_dir():
+        docling_dir = config.docling_layout_path
+    elif extracted_dir.is_dir():
+        docling_dir = extracted_dir
+
+    if docling_dir is None:
+        _skip_source("docling_layout", extracted_dir, verbose=verbose)
+        return
+
+    data = load_docling_layout(docling_dir)
+    if data:
+        sources["docling_layout"] = data
+        _log_source("docling_layout", len(data), docling_dir, verbose=verbose)
+    else:
+        _skip_source("docling_layout", docling_dir, verbose=verbose)
+
+
+def _discover_resolution_quality(
+    dataset: str,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    *,
+    verbose: bool,
+) -> None:
+    """Discover and load resolution quality labels."""
+    res_candidates = [
+        RESULTS_ROOT / f"{dataset}_resolution_labels.json",
+        RESULTS_ROOT / f"{dataset.replace('-', '')}_resolution_labels.json",
+    ]
+    for res_path in res_candidates:
+        if res_path.exists():
+            data = load_resolution_quality(res_path)
+            if data:
+                sources["resolution_quality"] = data
+                _log_source("resolution_quality", len(data), res_path, verbose=verbose)
+            return
+    _skip_source("resolution_quality", res_candidates[0], verbose=verbose)
+
+
 def discover_sources(
     config: DatasetAuditConfig,
     *,
@@ -316,113 +411,56 @@ def discover_sources(
 
     sources: dict[str, dict[str, dict[str, Any]]] = {}
 
-    def _log(label: str, count: int, path: Path | str) -> None:
-        if verbose:
-            print(
-                f"  {label:<24s} {count:>6,} records  ({path})",
-                file=sys.stderr,
-            )
-
-    def _skip(label: str, path: Path | str) -> None:
-        if verbose:
-            print(
-                f"  {label:<24s}   skip  ({path})",
-                file=sys.stderr,
-            )
-
-    # 1. L2 metadata (always, from config)
-    if config.metadata_json_path and config.metadata_json_path.exists():
-        data = load_l2_metadata(config.metadata_json_path)
-        if data:
-            sources["l2_metadata"] = data
-            _log("l2_metadata", len(data), config.metadata_json_path)
-    else:
-        _skip("l2_metadata", config.metadata_json_path or _NOT_CONFIGURED)
+    # 1. L2 metadata
+    _try_load_json_source(
+        "l2_metadata",
+        config.metadata_json_path,
+        load_l2_metadata,
+        sources,
+        verbose=verbose,
+    )
 
     # 2. LLM enrichment
-    if config.llm_enrichment_path and config.llm_enrichment_path.exists():
-        data = load_samples_json(config.llm_enrichment_path)
-        if data:
-            sources["llm_enrichment"] = data
-            _log(
-                "llm_enrichment",
-                len(data),
-                config.llm_enrichment_path,
-            )
-    else:
-        _skip(
-            "llm_enrichment",
-            config.llm_enrichment_path or _NOT_CONFIGURED,
-        )
+    _try_load_json_source(
+        "llm_enrichment",
+        config.llm_enrichment_path,
+        load_samples_json,
+        sources,
+        verbose=verbose,
+    )
 
     # 3. Language enrichment
-    if config.language_enrichment_path and config.language_enrichment_path.exists():
-        data = load_samples_json(config.language_enrichment_path)
-        if data:
-            sources["language_enrichment"] = data
-            _log(
-                "language_enrichment",
-                len(data),
-                config.language_enrichment_path,
-            )
-    else:
-        _skip(
-            "language_enrichment",
-            config.language_enrichment_path or _NOT_CONFIGURED,
-        )
+    _try_load_json_source(
+        "language_enrichment",
+        config.language_enrichment_path,
+        load_samples_json,
+        sources,
+        verbose=verbose,
+    )
 
-    # 4. Docling layout (config path or auto-discover from extracted/)
-    docling_dir: Path | None = None
-    if config.docling_layout_path and config.docling_layout_path.is_dir():
-        docling_dir = config.docling_layout_path
-    elif extracted_dir.is_dir():
-        docling_dir = extracted_dir
-
-    if docling_dir is not None:
-        data = load_docling_layout(docling_dir)
-        if data:
-            sources["docling_layout"] = data
-            _log("docling_layout", len(data), docling_dir)
-        else:
-            _skip("docling_layout", docling_dir)
-    else:
-        _skip("docling_layout", extracted_dir)
+    # 4. Docling layout
+    _discover_docling_layout(config, extracted_dir, sources, verbose=verbose)
 
     # 5. Egret layout results
-    egret_path = audit_dir / "egret_results.json"
-    if egret_path.exists():
-        data = load_results_json(egret_path)
-        if data:
-            sources["egret_layout"] = data
-            _log("egret_layout", len(data), egret_path)
-    else:
-        _skip("egret_layout", egret_path)
+    _try_load_json_source(
+        "egret_layout",
+        audit_dir / "egret_results.json",
+        load_results_json,
+        sources,
+        verbose=verbose,
+    )
 
     # 6. Visual ground truth
-    vgt_path = audit_dir / "visual_ground_truth.json"
-    if vgt_path.exists():
-        data = load_samples_json(vgt_path)
-        if data:
-            sources["visual_gt"] = data
-            _log("visual_gt", len(data), vgt_path)
-    else:
-        _skip("visual_gt", vgt_path)
+    _try_load_json_source(
+        "visual_gt",
+        audit_dir / "visual_ground_truth.json",
+        load_samples_json,
+        sources,
+        verbose=verbose,
+    )
 
     # 7. Resolution quality labels
-    # Try dataset-specific naming patterns.
-    res_candidates = [
-        RESULTS_ROOT / f"{dataset}_resolution_labels.json",
-        RESULTS_ROOT / f"{dataset.replace('-', '')}_resolution_labels.json",
-    ]
-    for res_path in res_candidates:
-        if res_path.exists():
-            data = load_resolution_quality(res_path)
-            if data:
-                sources["resolution_quality"] = data
-                _log("resolution_quality", len(data), res_path)
-            break
-    else:
-        _skip("resolution_quality", res_candidates[0])
+    _discover_resolution_quality(dataset, sources, verbose=verbose)
 
     return sources
 
@@ -487,6 +525,163 @@ def _lookup_source(
     return {}
 
 
+@dataclass(frozen=True)
+class _SourceRecords:
+    """Resolved per-source records for a single image."""
+
+    l2_rec: dict[str, Any]
+    l2_enrich: dict[str, Any]
+    llm_rec: dict[str, Any]
+    lang_rec: dict[str, Any]
+    egret_rec: dict[str, Any]
+    docling_rec: dict[str, Any]
+    vgt_rec: dict[str, Any]
+
+
+def _resolve_source_records(
+    image_id: str,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    dataset: str,
+) -> _SourceRecords:
+    """Look up all source records for a single image."""
+    l2_rec = _lookup_source(sources.get("l2_metadata", {}), image_id, dataset)
+    return _SourceRecords(
+        l2_rec=l2_rec,
+        l2_enrich=l2_rec.get("enrichment", {}),
+        llm_rec=_lookup_source(sources.get("llm_enrichment", {}), image_id, dataset),
+        lang_rec=_lookup_source(
+            sources.get("language_enrichment", {}), image_id, dataset
+        ),
+        egret_rec=_lookup_source(sources.get("egret_layout", {}), image_id, dataset),
+        docling_rec=_lookup_source(
+            sources.get("docling_layout", {}), image_id, dataset
+        ),
+        vgt_rec=_lookup_source(sources.get("visual_gt", {}), image_id, dataset),
+    )
+
+
+def _extract_simple_field(field_name: str, recs: _SourceRecords) -> dict[str, Any]:
+    """Extract a field present in l2_enrich, llm, and visual_gt."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        values["l2_metadata"] = recs.l2_enrich.get(field_name)
+    if recs.llm_rec:
+        values["llm_enrichment"] = recs.llm_rec.get(field_name)
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get(field_name)
+    return values
+
+
+def _extract_l2_vgt_field(field_name: str, recs: _SourceRecords) -> dict[str, Any]:
+    """Extract a field present only in l2_enrich and visual_gt."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        values["l2_metadata"] = recs.l2_enrich.get(field_name)
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get(field_name)
+    return values
+
+
+def _extract_iso639_language(recs: _SourceRecords) -> dict[str, Any]:
+    """Extract iso639_language from all relevant sources."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        values["l2_metadata"] = recs.l2_enrich.get("iso639_language")
+    if recs.lang_rec:
+        values["language_enrichment"] = recs.lang_rec.get("language")
+    if recs.llm_rec:
+        values["llm_enrichment"] = recs.llm_rec.get(
+            "iso639_language", recs.llm_rec.get("language")
+        )
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get("iso639_language")
+    return values
+
+
+def _extract_orientation_class(recs: _SourceRecords) -> dict[str, Any]:
+    """Extract orientation_class with geometric fallback."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        orientation = recs.l2_enrich.get("orientation_class")
+        if orientation is None:
+            geometric = recs.l2_enrich.get("geometric", {})
+            if isinstance(geometric, dict):
+                orientation = geometric.get("orientation_class")
+        values["l2_metadata"] = orientation
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get("orientation_class")
+    return values
+
+
+def _extract_content_flag(field_name: str, recs: _SourceRecords) -> dict[str, Any]:
+    """Extract a content flag field from all sources."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        values["l2_metadata"] = recs.l2_enrich.get(field_name)
+    if recs.llm_rec:
+        values["llm_enrichment"] = recs.llm_rec.get(field_name)
+    if recs.egret_rec:
+        values["egret_layout"] = _egret_content_flags(recs.egret_rec).get(field_name)
+    if recs.docling_rec:
+        values["docling_layout"] = _docling_content_flags(recs.docling_rec).get(
+            field_name
+        )
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get(field_name)
+    return values
+
+
+def _extract_layout_class_count(recs: _SourceRecords) -> dict[str, Any]:
+    """Extract layout_class_count from layout sources."""
+    values: dict[str, Any] = {}
+    if recs.l2_enrich:
+        values["l2_metadata"] = len(recs.l2_enrich.get("layout_detections", []))
+    if recs.egret_rec:
+        values["egret_layout"] = recs.egret_rec.get(
+            "detection_count", len(recs.egret_rec.get("detections", []))
+        )
+    if recs.docling_rec:
+        values["docling_layout"] = recs.docling_rec.get("annotation_count", 0)
+    return values
+
+
+def _extract_split(image_id: str, recs: _SourceRecords) -> dict[str, Any]:
+    """Extract split information from L2, image_id, and visual_gt."""
+    values: dict[str, Any] = {}
+    if recs.l2_rec:
+        values["l2_metadata"] = recs.l2_rec.get("split")
+    id_split = _extract_split_from_image_id(image_id)
+    if id_split is not None:
+        values["image_id_derived"] = id_split
+    if recs.vgt_rec:
+        values["visual_gt"] = recs.vgt_rec.get("split")
+    return values
+
+
+def _extract_single_field(
+    field_name: str,
+    image_id: str,
+    recs: _SourceRecords,
+) -> dict[str, Any]:
+    """Extract values for a single field from all relevant sources."""
+    if field_name in ("capture_method", "domain_level1"):
+        return _extract_simple_field(field_name, recs)
+    if field_name == "iso639_language":
+        return _extract_iso639_language(recs)
+    if field_name in ("script_family", "color_mode", "physical_degradation"):
+        return _extract_l2_vgt_field(field_name, recs)
+    if field_name == "orientation_class":
+        return _extract_orientation_class(recs)
+    if field_name in CONTENT_FLAG_FIELDS:
+        return _extract_content_flag(field_name, recs)
+    if field_name == "layout_class_count":
+        return _extract_layout_class_count(recs)
+    if field_name == "split":
+        return _extract_split(image_id, recs)
+    # Generic fallback
+    return _extract_simple_field(field_name, recs)
+
+
 def extract_field_values(
     image_id: str,
     sources: dict[str, dict[str, dict[str, Any]]],
@@ -497,130 +692,11 @@ def extract_field_values(
 
     Returns ``{field_name: {source_name: value}}``.
     """
-    l2_rec = _lookup_source(
-        sources.get("l2_metadata", {}), image_id, dataset
-    )
-    l2_enrich = l2_rec.get("enrichment", {})
-    llm_rec = _lookup_source(
-        sources.get("llm_enrichment", {}), image_id, dataset
-    )
-    lang_rec = _lookup_source(
-        sources.get("language_enrichment", {}), image_id, dataset
-    )
-    egret_rec = _lookup_source(
-        sources.get("egret_layout", {}), image_id, dataset
-    )
-    docling_rec = _lookup_source(
-        sources.get("docling_layout", {}), image_id, dataset
-    )
-    vgt_rec = _lookup_source(
-        sources.get("visual_gt", {}), image_id, dataset
-    )
+    recs = _resolve_source_records(image_id, sources, dataset)
     result: dict[str, dict[str, Any]] = {}
 
     for field_name in fields:
-        values: dict[str, Any] = {}
-
-        if field_name == "capture_method":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("capture_method")
-            if llm_rec:
-                values["llm_enrichment"] = llm_rec.get("capture_method")
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("capture_method")
-
-        elif field_name == "domain_level1":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("domain_level1")
-            if llm_rec:
-                values["llm_enrichment"] = llm_rec.get("domain_level1")
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("domain_level1")
-
-        elif field_name == "iso639_language":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("iso639_language")
-            if lang_rec:
-                values["language_enrichment"] = lang_rec.get("language")
-            if llm_rec:
-                values["llm_enrichment"] = llm_rec.get(
-                    "iso639_language", llm_rec.get("language")
-                )
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("iso639_language")
-
-        elif field_name == "script_family":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("script_family")
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("script_family")
-
-        elif field_name == "orientation_class":
-            if l2_enrich:
-                orientation = l2_enrich.get("orientation_class")
-                if orientation is None:
-                    geometric = l2_enrich.get("geometric", {})
-                    if isinstance(geometric, dict):
-                        orientation = geometric.get("orientation_class")
-                values["l2_metadata"] = orientation
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("orientation_class")
-
-        elif field_name in CONTENT_FLAG_FIELDS:
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get(field_name)
-            if llm_rec:
-                values["llm_enrichment"] = llm_rec.get(field_name)
-            if egret_rec:
-                flags = _egret_content_flags(egret_rec)
-                values["egret_layout"] = flags.get(field_name)
-            if docling_rec:
-                flags = _docling_content_flags(docling_rec)
-                values["docling_layout"] = flags.get(field_name)
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get(field_name)
-
-        elif field_name == "layout_class_count":
-            if l2_enrich:
-                values["l2_metadata"] = len(l2_enrich.get("layout_detections", []))
-            if egret_rec:
-                values["egret_layout"] = egret_rec.get(
-                    "detection_count",
-                    len(egret_rec.get("detections", [])),
-                )
-            if docling_rec:
-                values["docling_layout"] = docling_rec.get("annotation_count", 0)
-
-        elif field_name == "color_mode":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("color_mode")
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("color_mode")
-
-        elif field_name == "physical_degradation":
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get("physical_degradation")
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("physical_degradation")
-
-        elif field_name == "split":
-            if l2_rec:
-                values["l2_metadata"] = l2_rec.get("split")
-            id_split = _extract_split_from_image_id(image_id)
-            if id_split is not None:
-                values["image_id_derived"] = id_split
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get("split")
-
-        else:
-            # Generic fallback: try each source at the top level.
-            if l2_enrich:
-                values["l2_metadata"] = l2_enrich.get(field_name)
-            if llm_rec:
-                values["llm_enrichment"] = llm_rec.get(field_name)
-            if vgt_rec:
-                values["visual_gt"] = vgt_rec.get(field_name)
-
+        values = _extract_single_field(field_name, image_id, recs)
         # Strip entries where value is ``None`` AND source was empty.
         # Keep ``None`` if source existed but field was absent.
         result[field_name] = {
@@ -875,7 +951,9 @@ def assemble_comparison(
         )
 
         sources_available = {
-            name: any(v in src_data for v in _id_variants(image_id, config.dataset_name))
+            name: any(
+                v in src_data for v in _id_variants(image_id, config.dataset_name)
+            )
             for name, src_data in sources.items()
         }
 

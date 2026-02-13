@@ -163,17 +163,19 @@ def load_diqa5000_metadata(
         split = source.get("split", "unknown")
         capture_type = "ori" if "/ori/" in rel_path else "res"
 
-        samples.append({
-            "id": sample.get("id", ""),
-            "path": rel_path,
-            "split": split,
-            "mos_overall": float(mos_overall),
-            "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
-            "mos_color_fidelity": float(
-                original_labels.get("mos_color_fidelity", 0)
-            ),
-            "capture_type": capture_type,
-        })
+        samples.append(
+            {
+                "id": sample.get("id", ""),
+                "path": rel_path,
+                "split": split,
+                "mos_overall": float(mos_overall),
+                "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
+                "mos_color_fidelity": float(
+                    original_labels.get("mos_color_fidelity", 0)
+                ),
+                "capture_type": capture_type,
+            }
+        )
 
     log.info("Loaded %d DIQA-5000 samples with MOS scores", len(samples))
     return samples
@@ -214,12 +216,14 @@ def load_ohrbench_samples(
             quality = item.get("quality_score")
             if quality is None:
                 continue
-            samples.append({
-                "id": f"ohrbench_{idx:05d}",
-                "index": idx,
-                "quality_score": float(quality),
-                "category": item.get("category", "unknown"),
-            })
+            samples.append(
+                {
+                    "id": f"ohrbench_{idx:05d}",
+                    "index": idx,
+                    "quality_score": float(quality),
+                    "category": item.get("category", "unknown"),
+                }
+            )
         log.info("Loaded %d OHR-Bench samples via HuggingFace datasets", len(samples))
         return samples
     except Exception as exc:
@@ -231,7 +235,9 @@ def load_ohrbench_samples(
         log.warning("No OHR-Bench label files found in %s", dataset_dir)
         return []
 
-    log.warning("OHR-Bench fallback loading not implemented for format: %s", label_files)
+    log.warning(
+        "OHR-Bench fallback loading not implemented for format: %s", label_files
+    )
     return []
 
 
@@ -277,9 +283,7 @@ def benchmark_pyiqa_model(
     try:
         import pyiqa
     except ImportError:
-        log.error(
-            "pyiqa not installed. Run: uv add pyiqa"
-        )
+        log.error("pyiqa not installed. Run: uv add pyiqa")
         raise
 
     log.info("Benchmarking %s on %s (%d images)", model_name, dataset_name, len(images))
@@ -369,6 +373,79 @@ def benchmark_pyiqa_model(
 # ---------------------------------------------------------------------------
 # Classical detector benchmarking
 # ---------------------------------------------------------------------------
+def _create_classical_detectors() -> dict[str, Any]:
+    """Create instances of all classical IQA detectors."""
+    from image_preprocessing_detector.detection.iqa_classical import (
+        BinarizationQualityDetector,
+        BleedThroughDetector,
+        BlurDetector,
+        ContrastDetector,
+        IlluminationDetector,
+        JPEGBlockinessDetector,
+        NoiseDetector,
+        SkewDetector,
+    )
+
+    return {
+        "blur": BlurDetector(),
+        "noise": NoiseDetector(),
+        "contrast": ContrastDetector(),
+        "illumination": IlluminationDetector(),
+        "jpeg_blockiness": JPEGBlockinessDetector(),
+        "binarization": BinarizationQualityDetector(),
+        "bleed_through": BleedThroughDetector(),
+        "skew": SkewDetector(),
+    }
+
+
+def _extract_detector_score(result: Any) -> float:
+    """Extract a 0-1 severity score from a detector result object."""
+    if hasattr(result, "severity_score"):
+        return float(result.severity_score)
+    if hasattr(result, "score"):
+        return float(result.score)
+    if hasattr(result, "confidence"):
+        return float(result.confidence)
+    return 0.0
+
+
+def _collect_detector_scores(
+    images: list[np.ndarray],
+    detectors: dict[str, Any],
+    label: str = "Classical detectors",
+) -> dict[str, list[float]]:
+    """Run all detectors on all images and collect scores."""
+    log.info("Running %d %s on %d images...", len(detectors), label, len(images))
+    scores: dict[str, list[float]] = {name: [] for name in detectors}
+
+    for idx, img in enumerate(images):
+        if (idx + 1) % 500 == 0:
+            log.info("  %s: %d/%d", label, idx + 1, len(images))
+
+        for name, detector in detectors.items():
+            try:
+                result = detector.detect(img)
+                scores[name].append(_extract_detector_score(result))
+            except Exception:
+                scores[name].append(0.0)
+
+    return scores
+
+
+def _compute_correlation_pair(
+    arr_a: np.ndarray,
+    arr_b: np.ndarray,
+) -> tuple[float, float, float, float] | None:
+    """Compute SRCC and PLCC for two arrays. Returns None if constant."""
+    if np.std(arr_a) < 1e-8 or np.std(arr_b) < 1e-8:
+        return None
+    srcc_result = stats.spearmanr(arr_a, arr_b)
+    plcc_result = stats.pearsonr(arr_a, arr_b)
+    srcc_val = float(getattr(srcc_result, "statistic", srcc_result.correlation))
+    plcc_val = float(getattr(plcc_result, "statistic", plcc_result[0]))
+    return srcc_val, float(srcc_result.pvalue), plcc_val, float(plcc_result.pvalue)
+
+
 def benchmark_classical_detectors(
     images: list[np.ndarray],
     mos_scores: list[dict[str, float]],
@@ -385,84 +462,31 @@ def benchmark_classical_detectors(
     Returns:
         List of ClassicalResult for each (detector, mos_dim) pair
     """
-    from image_preprocessing_detector.detection.iqa_classical import (
-        BinarizationQualityDetector,
-        BleedThroughDetector,
-        BlurDetector,
-        ContrastDetector,
-        IlluminationDetector,
-        JPEGBlockinessDetector,
-        NoiseDetector,
-        SkewDetector,
-    )
-
-    detectors = {
-        "blur": BlurDetector(),
-        "noise": NoiseDetector(),
-        "contrast": ContrastDetector(),
-        "illumination": IlluminationDetector(),
-        "jpeg_blockiness": JPEGBlockinessDetector(),
-        "binarization": BinarizationQualityDetector(),
-        "bleed_through": BleedThroughDetector(),
-        "skew": SkewDetector(),
-    }
-
+    detectors = _create_classical_detectors()
     mos_dims = ["mos_overall", "mos_sharpness", "mos_color_fidelity"]
+    detector_scores = _collect_detector_scores(images, detectors, "classical detectors")
 
-    # Collect detector scores for all images
-    log.info("Running 8 classical detectors on %d images...", len(images))
-    detector_scores: dict[str, list[float]] = {name: [] for name in detectors}
-
-    for idx, img in enumerate(images):
-        if (idx + 1) % 500 == 0:
-            log.info("  Classical detectors: %d/%d", idx + 1, len(images))
-
-        for name, detector in detectors.items():
-            try:
-                result = detector.detect(img)
-                # Extract severity score (0-1)
-                if hasattr(result, "severity_score"):
-                    score = float(result.severity_score)
-                elif hasattr(result, "score"):
-                    score = float(result.score)
-                elif hasattr(result, "confidence"):
-                    score = float(result.confidence)
-                else:
-                    score = 0.0
-                detector_scores[name].append(score)
-            except Exception:
-                detector_scores[name].append(0.0)
-
-    # Compute correlations for each (detector, mos_dim) pair
     results: list[ClassicalResult] = []
     for det_name, det_scores in detector_scores.items():
         det_arr = np.array(det_scores)
         for mos_dim in mos_dims:
             gt_arr = np.array([s[mos_dim] for s in mos_scores])
-
-            # Skip if constant values
-            if np.std(det_arr) < 1e-8 or np.std(gt_arr) < 1e-8:
+            corr = _compute_correlation_pair(det_arr, gt_arr)
+            if corr is None:
                 continue
-
-            srcc_result = stats.spearmanr(det_arr, gt_arr)
-            plcc_result = stats.pearsonr(det_arr, gt_arr)
-
-            srcc_val = float(
-                getattr(srcc_result, "statistic", srcc_result.correlation)
+            srcc_val, srcc_pval, plcc_val, plcc_pval = corr
+            results.append(
+                ClassicalResult(
+                    detector_name=det_name,
+                    mos_dimension=mos_dim,
+                    srcc=srcc_val,
+                    srcc_pvalue=srcc_pval,
+                    plcc=plcc_val,
+                    plcc_pvalue=plcc_pval,
+                    num_samples=len(det_scores),
+                )
             )
-            plcc_val = float(getattr(plcc_result, "statistic", plcc_result[0]))
 
-            results.append(ClassicalResult(
-                detector_name=det_name,
-                mos_dimension=mos_dim,
-                srcc=srcc_val,
-                srcc_pvalue=float(srcc_result.pvalue),
-                plcc=plcc_val,
-                plcc_pvalue=float(plcc_result.pvalue),
-                num_samples=len(det_scores),
-            ))
-
-    # Log summary
     for r in results:
         if r.mos_dimension == "mos_overall":
             log.info(
@@ -479,60 +503,12 @@ def benchmark_classical_detectors(
 # ---------------------------------------------------------------------------
 # Inter-correlation matrix for classical detectors
 # ---------------------------------------------------------------------------
-def compute_detector_intercorrelation(
-    images: list[np.ndarray],
+def _compute_pairwise_srcc(
+    scores: dict[str, list[float]],
+    det_names: list[str],
 ) -> dict[str, dict[str, float]]:
-    """Compute inter-correlation matrix between classical detectors.
-
-    Returns dict of {detector_a: {detector_b: srcc}} for all pairs.
-    """
-    from image_preprocessing_detector.detection.iqa_classical import (
-        BinarizationQualityDetector,
-        BleedThroughDetector,
-        BlurDetector,
-        ContrastDetector,
-        IlluminationDetector,
-        JPEGBlockinessDetector,
-        NoiseDetector,
-        SkewDetector,
-    )
-
-    detectors = {
-        "blur": BlurDetector(),
-        "noise": NoiseDetector(),
-        "contrast": ContrastDetector(),
-        "illumination": IlluminationDetector(),
-        "jpeg_blockiness": JPEGBlockinessDetector(),
-        "binarization": BinarizationQualityDetector(),
-        "bleed_through": BleedThroughDetector(),
-        "skew": SkewDetector(),
-    }
-
-    log.info("Computing inter-correlation matrix for %d detectors...", len(detectors))
-    scores: dict[str, list[float]] = {name: [] for name in detectors}
-
-    for idx, img in enumerate(images):
-        if (idx + 1) % 500 == 0:
-            log.info("  Intercorrelation: %d/%d", idx + 1, len(images))
-
-        for name, detector in detectors.items():
-            try:
-                result = detector.detect(img)
-                if hasattr(result, "severity_score"):
-                    score = float(result.severity_score)
-                elif hasattr(result, "score"):
-                    score = float(result.score)
-                elif hasattr(result, "confidence"):
-                    score = float(result.confidence)
-                else:
-                    score = 0.0
-                scores[name].append(score)
-            except Exception:
-                scores[name].append(0.0)
-
-    # Compute pairwise SRCC
+    """Compute pairwise SRCC matrix between detector score arrays."""
     matrix: dict[str, dict[str, float]] = {}
-    det_names = list(detectors.keys())
     for i, name_a in enumerate(det_names):
         matrix[name_a] = {}
         for j, name_b in enumerate(det_names):
@@ -543,18 +519,23 @@ def compute_detector_intercorrelation(
             else:
                 arr_a = np.array(scores[name_a])
                 arr_b = np.array(scores[name_b])
-                if np.std(arr_a) < 1e-8 or np.std(arr_b) < 1e-8:
-                    matrix[name_a][name_b] = 0.0
-                else:
-                    result = stats.spearmanr(arr_a, arr_b)
-                    matrix[name_a][name_b] = round(
-                        float(
-                            getattr(result, "statistic", result.correlation)
-                        ),
-                        4,
-                    )
+                corr = _compute_correlation_pair(arr_a, arr_b)
+                matrix[name_a][name_b] = round(corr[0], 4) if corr else 0.0
 
     return matrix
+
+
+def compute_detector_intercorrelation(
+    images: list[np.ndarray],
+) -> dict[str, dict[str, float]]:
+    """Compute inter-correlation matrix between classical detectors.
+
+    Returns dict of {detector_a: {detector_b: srcc}} for all pairs.
+    """
+    detectors = _create_classical_detectors()
+    log.info("Computing inter-correlation matrix for %d detectors...", len(detectors))
+    scores = _collect_detector_scores(images, detectors, "Intercorrelation")
+    return _compute_pairwise_srcc(scores, list(detectors.keys()))
 
 
 # ---------------------------------------------------------------------------
@@ -665,10 +646,12 @@ def main() -> int:
 
     log.info("Loaded %d/%d DIQA-5000 images", len(diqa_images), len(diqa_samples))
 
+    if not diqa_images:
+        log.error("No DIQA-5000 images loaded, cannot benchmark")
+        return 1
+
     # Normalize MOS to 0-1 for pyiqa comparison
-    diqa_gt_normalized = [
-        (s["mos_overall"] - 1.0) / 4.0 for s in diqa_valid_samples
-    ]
+    diqa_gt_normalized = [(s["mos_overall"] - 1.0) / 4.0 for s in diqa_valid_samples]
     diqa_mos_scores = [
         {
             "mos_overall": s["mos_overall"],
@@ -686,9 +669,7 @@ def main() -> int:
         log.info("CLASSICAL DETECTOR BENCHMARKS")
         log.info("=" * 60)
 
-        classical_results = benchmark_classical_detectors(
-            diqa_images, diqa_mos_scores
-        )
+        classical_results = benchmark_classical_detectors(diqa_images, diqa_mos_scores)
 
         # Inter-correlation matrix (use subset for speed)
         intercorr_images = diqa_images[:500] if len(diqa_images) > 500 else diqa_images
@@ -718,28 +699,13 @@ def main() -> int:
     # -----------------------------------------------------------------------
     # Phase 0b: PyIQA model benchmarks on DIQA-5000
     # -----------------------------------------------------------------------
-    log.info("=" * 60)
-    log.info("PYIQA MODEL BENCHMARKS - DIQA-5000")
-    log.info("=" * 60)
-
-    diqa_results: list[dict[str, Any]] = []
-    for model_name in args.models:
-        try:
-            result = benchmark_pyiqa_model(
-                model_name=model_name,
-                images=diqa_images,
-                ground_truths=diqa_gt_normalized,
-                dataset_name="diqa-5000",
-                device=args.device,
-            )
-            diqa_results.append(result.to_summary())
-        except Exception as exc:
-            log.error("Failed to benchmark %s: %s", model_name, exc)
-            diqa_results.append({
-                "model_name": model_name,
-                "dataset": "diqa-5000",
-                "error": str(exc),
-            })
+    diqa_results = _run_pyiqa_benchmarks(
+        "DIQA-5000",
+        args.models,
+        diqa_images,
+        diqa_gt_normalized,
+        args.device,
+    )
 
     diqa_output = {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -760,111 +726,170 @@ def main() -> int:
     # Phase 0c: PyIQA model benchmarks on OHR-Bench
     # -----------------------------------------------------------------------
     if not args.skip_ohrbench:
-        log.info("=" * 60)
-        log.info("PYIQA MODEL BENCHMARKS - OHR-BENCH")
-        log.info("=" * 60)
-
-        ohrbench_samples = load_ohrbench_samples(args.ohrbench_dir)
-
-        if ohrbench_samples:
-            if args.limit > 0:
-                ohrbench_samples = ohrbench_samples[: args.limit]
-
-            # Load OHR-Bench images
-            log.info("Loading OHR-Bench images...")
-            try:
-                from datasets import load_from_disk
-
-                ohrbench_ds = load_from_disk(str(args.ohrbench_dir))
-            except Exception as exc:
-                log.error("Cannot load OHR-Bench dataset: %s", exc)
-                ohrbench_ds = None
-
-            if ohrbench_ds is not None:
-                ohrbench_images: list[np.ndarray] = []
-                ohrbench_valid: list[dict[str, Any]] = []
-                for sample in ohrbench_samples:
-                    img = load_ohrbench_image(sample, ohrbench_ds)
-                    if img is not None:
-                        ohrbench_images.append(img)
-                        ohrbench_valid.append(sample)
-
-                log.info(
-                    "Loaded %d/%d OHR-Bench images",
-                    len(ohrbench_images),
-                    len(ohrbench_samples),
-                )
-
-                # Normalize OHR-Bench 0-100 to 0-1
-                ohrbench_gt = [s["quality_score"] / 100.0 for s in ohrbench_valid]
-
-                ohrbench_results: list[dict[str, Any]] = []
-                for model_name in args.models:
-                    try:
-                        result = benchmark_pyiqa_model(
-                            model_name=model_name,
-                            images=ohrbench_images,
-                            ground_truths=ohrbench_gt,
-                            dataset_name="ohr-bench",
-                            device=args.device,
-                        )
-                        ohrbench_results.append(result.to_summary())
-                    except Exception as exc:
-                        log.error("Failed %s on OHR-Bench: %s", model_name, exc)
-                        ohrbench_results.append({
-                            "model_name": model_name,
-                            "dataset": "ohr-bench",
-                            "error": str(exc),
-                        })
-
-                ohrbench_output = {
-                    "timestamp": datetime.now(UTC).isoformat(),
-                    "dataset": "ohr-bench",
-                    "num_images": len(ohrbench_images),
-                    "results": ohrbench_results,
-                }
-
-                ohrbench_path = args.output_dir / "ohrbench_baselines.json"
-                with open(ohrbench_path, "w") as fh:
-                    json.dump(ohrbench_output, fh, indent=2)
-                log.info("OHR-Bench results saved to %s", ohrbench_path)
-
-                all_results["ohrbench"] = ohrbench_output
-        else:
-            log.warning("No OHR-Bench samples loaded, skipping")
+        ohrbench_output = _run_ohrbench_benchmarks(
+            args.ohrbench_dir,
+            args.models,
+            args.device,
+            args.limit,
+        )
+        if ohrbench_output is not None:
+            ohrbench_path = args.output_dir / "ohrbench_baselines.json"
+            with open(ohrbench_path, "w") as fh:
+                json.dump(ohrbench_output, fh, indent=2)
+            log.info("OHR-Bench results saved to %s", ohrbench_path)
+            all_results["ohrbench"] = ohrbench_output
 
     # -----------------------------------------------------------------------
     # Summary report
     # -----------------------------------------------------------------------
-    log.info("=" * 60)
-    log.info("SUMMARY")
-    log.info("=" * 60)
-
-    # Print ranking table
-    if diqa_results:
-        log.info("\nDIQA-5000 Model Ranking (by SRCC):")
-        log.info("%-15s  %8s  %8s  %10s", "Model", "SRCC", "PLCC", "Latency(ms)")
-        log.info("-" * 50)
-        ranked = sorted(
-            [r for r in diqa_results if "error" not in r],
-            key=lambda r: abs(r["srcc"]),
-            reverse=True,
-        )
-        for r in ranked:
-            log.info(
-                "%-15s  %8.4f  %8.4f  %10.1f",
-                r["model_name"],
-                r["srcc"],
-                r["plcc"],
-                r["mean_latency_ms"],
-            )
+    _log_ranking_table(diqa_results)
 
     summary_path = args.output_dir / "summary_report.json"
     with open(summary_path, "w") as fh:
         json.dump(all_results, fh, indent=2, default=str)
     log.info("\nFull results saved to %s", summary_path)
 
-    return 0
+    has_errors = any("error" in r for r in diqa_results)
+    return 1 if has_errors else 0
+
+
+def _run_pyiqa_benchmarks(
+    dataset_label: str,
+    model_names: list[str],
+    images: list[np.ndarray],
+    ground_truths: list[float],
+    device: str,
+) -> list[dict[str, Any]]:
+    """Run pyiqa model benchmarks and return result dicts."""
+    log.info("=" * 60)
+    log.info("PYIQA MODEL BENCHMARKS - %s", dataset_label)
+    log.info("=" * 60)
+
+    results: list[dict[str, Any]] = []
+    for model_name in model_names:
+        try:
+            result = benchmark_pyiqa_model(
+                model_name=model_name,
+                images=images,
+                ground_truths=ground_truths,
+                dataset_name=dataset_label.lower(),
+                device=device,
+            )
+            results.append(result.to_summary())
+        except Exception as exc:
+            log.error("Failed to benchmark %s: %s", model_name, exc)
+            results.append(
+                {
+                    "model_name": model_name,
+                    "dataset": dataset_label.lower(),
+                    "error": str(exc),
+                }
+            )
+    return results
+
+
+def _run_ohrbench_benchmarks(
+    ohrbench_dir: Path,
+    model_names: list[str],
+    device: str,
+    limit: int,
+) -> dict[str, Any] | None:
+    """Run pyiqa benchmarks on OHR-Bench. Returns output dict or None."""
+    log.info("=" * 60)
+    log.info("PYIQA MODEL BENCHMARKS - OHR-BENCH")
+    log.info("=" * 60)
+
+    ohrbench_samples = load_ohrbench_samples(ohrbench_dir)
+    if not ohrbench_samples:
+        log.warning("No OHR-Bench samples loaded, skipping")
+        return None
+
+    if limit > 0:
+        ohrbench_samples = ohrbench_samples[:limit]
+
+    ohrbench_ds = _load_ohrbench_dataset(ohrbench_dir)
+    if ohrbench_ds is None:
+        return None
+
+    ohrbench_images, ohrbench_valid = _load_ohrbench_images(
+        ohrbench_samples,
+        ohrbench_ds,
+    )
+    log.info(
+        "Loaded %d/%d OHR-Bench images",
+        len(ohrbench_images),
+        len(ohrbench_samples),
+    )
+
+    ohrbench_gt = [s["quality_score"] / 100.0 for s in ohrbench_valid]
+    ohrbench_results = _run_pyiqa_benchmarks(
+        "OHR-BENCH",
+        model_names,
+        ohrbench_images,
+        ohrbench_gt,
+        device,
+    )
+
+    return {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "dataset": "ohr-bench",
+        "num_images": len(ohrbench_images),
+        "results": ohrbench_results,
+    }
+
+
+def _load_ohrbench_dataset(ohrbench_dir: Path) -> Any | None:
+    """Load OHR-Bench HuggingFace dataset object."""
+    log.info("Loading OHR-Bench images...")
+    try:
+        from datasets import load_from_disk
+
+        return load_from_disk(str(ohrbench_dir))
+    except Exception as exc:
+        log.error("Cannot load OHR-Bench dataset: %s", exc)
+        return None
+
+
+def _load_ohrbench_images(
+    samples: list[dict[str, Any]],
+    dataset: Any,
+) -> tuple[list[np.ndarray], list[dict[str, Any]]]:
+    """Load OHR-Bench images and return (images, valid_samples)."""
+    images: list[np.ndarray] = []
+    valid: list[dict[str, Any]] = []
+    for sample in samples:
+        img = load_ohrbench_image(sample, dataset)
+        if img is not None:
+            images.append(img)
+            valid.append(sample)
+    return images, valid
+
+
+def _log_ranking_table(diqa_results: list[dict[str, Any]]) -> None:
+    """Log the DIQA-5000 model ranking table."""
+    log.info("=" * 60)
+    log.info("SUMMARY")
+    log.info("=" * 60)
+
+    if not diqa_results:
+        return
+
+    log.info("\nDIQA-5000 Model Ranking (by SRCC):")
+    log.info("%-15s  %8s  %8s  %10s", "Model", "SRCC", "PLCC", "Latency(ms)")
+    log.info("-" * 50)
+    ranked = sorted(
+        [r for r in diqa_results if "error" not in r],
+        key=lambda r: abs(r["srcc"]),
+        reverse=True,
+    )
+    for r in ranked:
+        log.info(
+            "%-15s  %8.4f  %8.4f  %10.1f",
+            r["model_name"],
+            r["srcc"],
+            r["plcc"],
+            r["mean_latency_ms"],
+        )
 
 
 if __name__ == "__main__":

@@ -143,17 +143,58 @@ def generate_dataset_summary(df) -> dict:
     return summary
 
 
+def _print_field_completeness_section(df) -> None:
+    """Print field completeness overview grouped by category."""
+    print("\n" + "-" * 80)
+    print("FIELD COMPLETENESS (% of records with non-null values)")
+    print("-" * 80)
+
+    for category, fields in FIELD_CATEGORIES.items():
+        print(f"\n{category.upper().replace('_', ' ')}:")
+        for field_name in fields:
+            non_null, total, pct = calculate_field_completeness(df, field_name)
+            bar = "\u2588" * int(pct / 5) + "\u2591" * (20 - int(pct / 5))
+            print(f"  {field_name:<35} {bar} {pct:>6.1f}% ({non_null:,}/{total:,})")
+
+
+def _print_per_dataset_field_coverage(
+    df,
+    sorted_datasets: list,
+    field_names: list[str],
+    header_fmt: str,
+    row_fmt: str,
+    section_title: str,
+    max_datasets: int = 0,
+) -> None:
+    """Print per-dataset field coverage table."""
+    print("\n" + "-" * 80)
+    print(section_title)
+    print("-" * 80)
+    print(header_fmt)
+    print("-" * 61)
+
+    items = sorted_datasets[:max_datasets] if max_datasets else sorted_datasets
+    for dataset, _info in items:
+        dataset_df = df[df["dataset_name"] == dataset]
+        values = []
+        for field_name in field_names:
+            _, _, pct = calculate_field_completeness(dataset_df, field_name)
+            values.append(f"{pct:>6.1f}%" if pct > 0 else "     -")
+        print(row_fmt.format(dataset=dataset, values=values))
+
+    if max_datasets and len(sorted_datasets) > max_datasets:
+        print(f"  ... and {len(sorted_datasets) - max_datasets} more datasets")
+
+
 def print_summary_table(df, summary: dict) -> None:
     """Print formatted summary table."""
     print("\n" + "=" * 80)
     print("METADATA COMPLETENESS REPORT")
     print("=" * 80)
 
-    # Overall statistics
     total_records = len(df)
-    total_datasets = len(summary)
     print(f"\nTotal Records: {total_records:,}")
-    print(f"Total Datasets: {total_datasets}")
+    print(f"Total Datasets: {len(summary)}")
 
     # Dataset breakdown
     print("\n" + "-" * 80)
@@ -169,42 +210,20 @@ def print_summary_table(df, summary: dict) -> None:
         pct = info["record_count"] / total_records * 100
         print(f"{dataset:<30} {info['record_count']:>12,} {pct:>11.1f}%")
 
-    # Field completeness overview
-    print("\n" + "-" * 80)
-    print("FIELD COMPLETENESS (% of records with non-null values)")
-    print("-" * 80)
+    _print_field_completeness_section(df)
 
-    all_fields = []
-    for fields in FIELD_CATEGORIES.values():
-        all_fields.extend(fields)
-
-    for category, fields in FIELD_CATEGORIES.items():
-        print(f"\n{category.upper().replace('_', ' ')}:")
-        for field in fields:
-            non_null, total, pct = calculate_field_completeness(df, field)
-            bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-            print(f"  {field:<35} {bar} {pct:>6.1f}% ({non_null:,}/{total:,})")
-
-    # Quality scores coverage by dataset
-    print("\n" + "-" * 80)
-    print("QUALITY SCORES COVERAGE BY DATASET")
-    print("-" * 80)
+    # Quality scores coverage
     quality_fields = ["diqa_mos", "ocr_quality_score", "smartdoc_mos"]
-    print(f"{'Dataset':<25} {'DIQA MOS':>12} {'OCR Quality':>12} {'SmartDoc':>12}")
-    print("-" * 61)
-
-    for dataset, info in sorted_datasets:
-        dataset_df = df[df["dataset_name"] == dataset]
-        values = []
-        for field in quality_fields:
-            _, _, pct = calculate_field_completeness(dataset_df, field)
-            values.append(f"{pct:>6.1f}%" if pct > 0 else "     -")
-        print(f"{dataset:<25} {values[0]:>12} {values[1]:>12} {values[2]:>12}")
+    _print_per_dataset_field_coverage(
+        df,
+        sorted_datasets,
+        quality_fields,
+        header_fmt=f"{'Dataset':<25} {'DIQA MOS':>12} {'OCR Quality':>12} {'SmartDoc':>12}",
+        row_fmt="{dataset:<25} {values[0]:>12} {values[1]:>12} {values[2]:>12}",
+        section_title="QUALITY SCORES COVERAGE BY DATASET",
+    )
 
     # Content flags coverage
-    print("\n" + "-" * 80)
-    print("CONTENT FLAGS COVERAGE BY DATASET")
-    print("-" * 80)
     content_fields = [
         "has_table",
         "has_formula",
@@ -212,23 +231,21 @@ def print_summary_table(df, summary: dict) -> None:
         "has_signature",
         "has_figure",
     ]
-    print(
-        f"{'Dataset':<20} {'Table':>8} {'Formula':>8} {'Handwr':>8} {'Sig':>8} {'Figure':>8}"
+    _print_per_dataset_field_coverage(
+        df,
+        sorted_datasets,
+        content_fields,
+        header_fmt=(
+            f"{'Dataset':<20} {'Table':>8} {'Formula':>8}"
+            f" {'Handwr':>8} {'Sig':>8} {'Figure':>8}"
+        ),
+        row_fmt=(
+            "{dataset:<20} {values[0]:>8} {values[1]:>8}"
+            " {values[2]:>8} {values[3]:>8} {values[4]:>8}"
+        ),
+        section_title="CONTENT FLAGS COVERAGE BY DATASET",
+        max_datasets=15,
     )
-    print("-" * 60)
-
-    for dataset, info in sorted_datasets[:15]:  # Top 15 datasets
-        dataset_df = df[df["dataset_name"] == dataset]
-        values = []
-        for field in content_fields:
-            _, _, pct = calculate_field_completeness(dataset_df, field)
-            values.append(f"{pct:>5.0f}%" if pct > 0 else "    -")
-        print(
-            f"{dataset:<20} {values[0]:>8} {values[1]:>8} {values[2]:>8} {values[3]:>8} {values[4]:>8}"
-        )
-
-    if len(sorted_datasets) > 15:
-        print(f"  ... and {len(sorted_datasets) - 15} more datasets")
 
 
 def export_to_csv(df, output_path: Path) -> None:

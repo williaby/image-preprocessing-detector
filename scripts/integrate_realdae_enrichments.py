@@ -216,6 +216,58 @@ def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
     return index
 
 
+def _build_detection_from_annotation(
+    ann: dict[str, Any],
+    cat_map: dict[int, str],
+) -> dict[str, Any]:
+    """Build a detection dict from a single COCO annotation."""
+    category_name = ann.get("category_name", "")
+    if not category_name:
+        category_name = cat_map.get(ann.get("category_id", -1), "unknown")
+    return {
+        "class_name": category_name,
+        "bbox": ann["bbox"],
+        "confidence": 1.0,
+        "source": "docling_gpu",
+        "canonical_class": DOCLING_CATEGORY_TO_CANONICAL.get(
+            category_name, category_name.upper()
+        ),
+        "source_schema": "docling",
+        "text_snippet": (ann.get("text", "")[:200] if ann.get("text") else ""),
+    }
+
+
+def _process_layout_batch(
+    batch_path: Path,
+    index: dict[str, list[dict[str, Any]]],
+) -> int:
+    """Process a single COCO-format layout batch file into the index.
+
+    Returns the number of annotations added.
+    """
+    with open(batch_path, encoding="utf-8") as fh:
+        batch: dict[str, Any] = json.load(fh)
+
+    cat_map: dict[int, str] = {
+        cat["id"]: cat["name"] for cat in batch.get("categories", [])
+    }
+
+    image_id_to_filename: dict[int, str] = {}
+    for img in batch.get("images", []):
+        image_id_to_filename[img["id"]] = img["file_name"]
+        if img["file_name"] not in index:
+            index[img["file_name"]] = []
+
+    count = 0
+    for ann in batch.get("annotations", []):
+        filename = image_id_to_filename.get(ann["image_id"])
+        if filename is None:
+            continue
+        index[filename].append(_build_detection_from_annotation(ann, cat_map))
+        count += 1
+    return count
+
+
 def load_docling_layout(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """Load Docling GPU layout from COCO-format JSON batch files.
 
@@ -242,45 +294,7 @@ def load_docling_layout(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
     total_annotations = 0
 
     for batch_path in batch_files:
-        with open(batch_path, encoding="utf-8") as fh:
-            batch: dict[str, Any] = json.load(fh)
-
-        # Build category_id -> category_name mapping
-        cat_map: dict[int, str] = {
-            cat["id"]: cat["name"] for cat in batch.get("categories", [])
-        }
-
-        # Build image_id -> filename mapping
-        image_id_to_filename: dict[int, str] = {}
-        for img in batch.get("images", []):
-            image_id_to_filename[img["id"]] = img["file_name"]
-            if img["file_name"] not in index:
-                index[img["file_name"]] = []
-
-        # Process annotations
-        for ann in batch.get("annotations", []):
-            img_id = ann["image_id"]
-            filename = image_id_to_filename.get(img_id)
-            if filename is None:
-                continue
-
-            category_name = ann.get("category_name", "")
-            if not category_name:
-                category_name = cat_map.get(ann.get("category_id", -1), "unknown")
-
-            detection: dict[str, Any] = {
-                "class_name": category_name,
-                "bbox": ann["bbox"],
-                "confidence": 1.0,
-                "source": "docling_gpu",
-                "canonical_class": DOCLING_CATEGORY_TO_CANONICAL.get(
-                    category_name, category_name.upper()
-                ),
-                "source_schema": "docling",
-                "text_snippet": (ann.get("text", "")[:200] if ann.get("text") else ""),
-            }
-            index[filename].append(detection)
-            total_annotations += 1
+        total_annotations += _process_layout_batch(batch_path, index)
 
     log.info(
         "  Loaded %d annotations across %d images from %d batch files",
@@ -518,6 +532,106 @@ def standardize_class_name(class_name: str) -> str:
 # ===================================================================
 # Per-sample integration
 # ===================================================================
+def _standardize_layout_detections(
+    detections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Standardize class_name to PascalCase and preserve source_label."""
+    result: list[dict[str, Any]] = []
+    for det in detections:
+        new_det = dict(det)
+        original_class = det.get("class_name", "")
+        new_det["class_name"] = standardize_class_name(original_class)
+        if not new_det.get("source_label"):
+            new_det["source_label"] = original_class
+        result.append(new_det)
+    return result
+
+
+def _resolve_realdae_language(
+    llm: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Resolve language/script fields from LLM enrichment."""
+    if llm:
+        llm_lang = llm.get("iso639_language")
+        llm_script = llm.get("iso15924_script")
+        if llm_lang and llm_lang != "und":
+            return {
+                "iso639_language": llm_lang,
+                "iso15924_script": llm_script or "Zyyy",
+                "language_confidence": 0.65,
+                "text_scope_detection_method": "llm_vision",
+            }
+    return {
+        "iso639_language": "und",
+        "iso15924_script": "Zyyy",
+        "language_confidence": 0.1,
+        "text_scope_detection_method": "none",
+    }
+
+
+def _resolve_realdae_layout(
+    layout_dets: list[dict[str, Any]],
+    v1_data: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Resolve layout detections and metadata. Returns (standardized_layout, layout_fields)."""
+    if layout_dets:
+        standardized = _standardize_layout_detections(layout_dets)
+        fields = {
+            "layout_source": "docling_gpu",
+            "layout_confidence": 0.85,
+        }
+    else:
+        v1_layout = v1_data.get("layout_detections", [])
+        standardized = _standardize_layout_detections(v1_layout)
+        fields = {
+            "layout_source": v1_data.get("layout_source", "none"),
+            "layout_confidence": 0.5 if standardized else 0.0,
+        }
+    fields["layout_detection_count"] = len(standardized)
+    return standardized, fields
+
+
+def _resolve_realdae_orientation(
+    llm: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Resolve orientation fields from LLM enrichment."""
+    if not llm or not llm.get("orientation"):
+        return {
+            "orientation_class": 0,
+            "orientation_confidence": 0.5,
+            "orientation_detection_method": "default_upright",
+        }
+    orientation_str = str(llm["orientation"]).lower()
+    orientation_map = {"portrait": 0, "landscape": 90}
+    return {
+        "orientation_class": orientation_map.get(orientation_str, 0),
+        "orientation_confidence": 0.6,
+        "orientation_detection_method": "llm_vision",
+    }
+
+
+def _resolve_realdae_ocr(
+    ocr_rec: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Resolve text content fields from Docling OCR record."""
+    if ocr_rec and ocr_rec.get("success") and ocr_rec.get("text"):
+        ocr_text = ocr_rec["text"]
+        return {
+            "text_has_content": True,
+            "text_content": ocr_text,
+            "text_content_confidence": ocr_rec.get("confidence", 0.8),
+            "text_content_source": "docling_gpu_ocr",
+            "text_statistics": compute_text_statistics(ocr_text),
+        }
+    return {
+        "text_has_content": False,
+        "text_content": "",
+        "text_content_confidence": 0.0,
+        "text_content_source": "none",
+        "text_statistics": compute_text_statistics(""),
+    }
+
+
 def integrate_sample(
     sample: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -554,23 +668,15 @@ def integrate_sample(
 
     data: dict[str, Any] = {}
 
-    # -------------------------------------------------------------------
-    # D01 - split: derive from original_file path
-    # RealDAE structure: task_*_train/... or task_*_test/...
-    # -------------------------------------------------------------------
+    # D01 - split
     data["split"] = derive_split_from_path(original_path)
 
-    # -------------------------------------------------------------------
-    # D08 - capture_method: camera_smartphone from documentation (KI-005)
-    # LLM disagrees (38% scanner) but documentation takes precedence.
-    # -------------------------------------------------------------------
+    # D08 - capture_method (KI-005)
     data["capture_method"] = KNOWN_CAPTURE_METHOD
     data["capture_confidence"] = 1.0
     data["capture_detection_method"] = "dataset_documentation"
 
-    # -------------------------------------------------------------------
-    # D02 - domain_level1: from LLM enrichment (KI-007: UNK acceptable)
-    # -------------------------------------------------------------------
+    # D02 - domain_level1 (KI-007)
     if llm:
         data["domain_level1"] = llm.get("domain_level1", "UNK")
         data["domain_confidence"] = llm.get("domain_confidence", 0.5)
@@ -581,97 +687,26 @@ def integrate_sample(
         data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
         data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
 
-    # -------------------------------------------------------------------
-    # D03 - iso639_language: from LLM enrichment (replaces wrong 'en')
-    # D04 - iso15924_script: from LLM enrichment (replaces wrong 'Latn')
-    # Priority: LLM enrichment (0.65 confidence) > v1 defaults
-    # -------------------------------------------------------------------
-    if llm:
-        llm_lang = llm.get("iso639_language")
-        llm_script = llm.get("iso15924_script")
-        if llm_lang and llm_lang != "und":
-            data["iso639_language"] = llm_lang
-            data["iso15924_script"] = llm_script or "Zyyy"
-            data["language_confidence"] = 0.65
-            data["text_scope_detection_method"] = "llm_vision"
-        else:
-            data["iso639_language"] = "und"
-            data["iso15924_script"] = "Zyyy"
-            data["language_confidence"] = 0.1
-            data["text_scope_detection_method"] = "none"
-    else:
-        # No LLM record: fall back to undetermined
-        data["iso639_language"] = "und"
-        data["iso15924_script"] = "Zyyy"
-        data["language_confidence"] = 0.1
-        data["text_scope_detection_method"] = "none"
+    # D03/D04 - language/script
+    data.update(_resolve_realdae_language(llm))
 
-    # -------------------------------------------------------------------
-    # D05 - script_family: derived from corrected iso15924_script
-    # Uses get_script_family() for prescreening-compatible lowercase family
-    # -------------------------------------------------------------------
+    # D05 - script_family
     data["script_family"] = _get_script_family(data["iso15924_script"])
 
-    # -------------------------------------------------------------------
-    # D06 - Layout detections: from Docling batch files (with KI-001 casing)
-    # -------------------------------------------------------------------
-    if layout_dets:
-        standardized_layout: list[dict[str, Any]] = []
-        for det in layout_dets:
-            new_det = dict(det)
-            original_class = det.get("class_name", "")
-            new_det["class_name"] = standardize_class_name(original_class)
-            if not new_det.get("source_label"):
-                new_det["source_label"] = original_class
-            standardized_layout.append(new_det)
+    # D06 - Layout detections (KI-001)
+    standardized_layout, layout_fields = _resolve_realdae_layout(layout_dets, v1_data)
+    data["layout_detections"] = standardized_layout
+    data.update(layout_fields)
 
-        data["layout_detections"] = standardized_layout
-        data["layout_source"] = "docling_gpu"
-        data["layout_confidence"] = 0.85
-        data["layout_detection_count"] = len(standardized_layout)
-    else:
-        # Fall back to v1 layout if available
-        v1_layout = v1_data.get("layout_detections", [])
-        standardized_layout = []
-        for det in v1_layout:
-            new_det = dict(det)
-            original_class = det.get("class_name", "")
-            new_det["class_name"] = standardize_class_name(original_class)
-            if not new_det.get("source_label"):
-                new_det["source_label"] = original_class
-            standardized_layout.append(new_det)
-
-        data["layout_detections"] = standardized_layout
-        data["layout_source"] = v1_data.get("layout_source", "none")
-        data["layout_confidence"] = 0.5 if standardized_layout else 0.0
-        data["layout_detection_count"] = len(standardized_layout)
-
-    # -------------------------------------------------------------------
-    # D07 - Content flags: derived from layout + LLM merge
-    # KI-002/003/006: For non-synthetic, use layout-derived flags as
-    # soft labels. No VLM corrections yet so do NOT auto-override.
-    # KI-004: NOT synthetic, so LLM handwriting may be partially valid.
-    # -------------------------------------------------------------------
+    # D07 - Content flags (KI-002/003/006)
     active_layout = data.get("layout_detections", [])
     flags = derive_content_flags(active_layout)
-
-    # has_table: use layout detection (soft label, no VLM override yet)
-    # KI-002: flagged for VLM verification but not auto-overridden
     data["has_table"] = flags["has_table"]
-
-    # has_figure: use layout detection (soft label, no VLM override yet)
-    # KI-003: flagged for VLM verification but not auto-overridden
     data["has_figure"] = flags["has_figure"]
-
-    # has_formula: use layout detection (soft label, no VLM override yet)
-    # KI-006: flagged for VLM verification but not auto-overridden
     data["has_formula"] = flags["has_formula"]
-
-    # has_code: from layout detection
     data["has_code"] = flags["has_code"]
 
-    # D12 - has_handwriting: from LLM (non-synthetic, partially valid)
-    # KI-004: NOT applied (not synthetic) -- trust LLM as soft label
+    # D12 - has_handwriting (KI-004: non-synthetic, trust LLM as soft label)
     if llm and llm.get("has_handwriting") is not None:
         data["has_handwriting"] = bool(llm.get("has_handwriting", False))
     else:
@@ -679,56 +714,20 @@ def integrate_sample(
 
     data["has_signature"] = False
     data["handwriting_present"] = data["has_handwriting"]
-
-    # Content flags confidence: lower because no VLM verification yet
     data["content_flags_tier"] = "tier_2_model"
     data["content_flags_source"] = "docling_gpu+llm_vision"
-    data["content_flags_confidence"] = 0.70  # No VLM verification
+    data["content_flags_confidence"] = 0.70
 
-    # -------------------------------------------------------------------
-    # D10 - orientation_class: from LLM orientation field
-    # -------------------------------------------------------------------
-    if llm and llm.get("orientation"):
-        orientation_str = str(llm["orientation"]).lower()
-        if orientation_str == "portrait":
-            data["orientation_class"] = 0
-        elif orientation_str == "landscape":
-            data["orientation_class"] = 90
-        else:
-            data["orientation_class"] = 0
-        data["orientation_confidence"] = 0.6
-        data["orientation_detection_method"] = "llm_vision"
-    else:
-        data["orientation_class"] = 0
-        data["orientation_confidence"] = 0.5
-        data["orientation_detection_method"] = "default_upright"
+    # D10 - orientation
+    data.update(_resolve_realdae_orientation(llm))
 
-    # -------------------------------------------------------------------
-    # D09 - text_has_content: from Docling OCR batch files
-    # -------------------------------------------------------------------
-    if ocr_rec and ocr_rec.get("success") and ocr_rec.get("text"):
-        ocr_text = ocr_rec["text"]
-        data["text_has_content"] = True
-        data["text_content"] = ocr_text
-        data["text_content_confidence"] = ocr_rec.get("confidence", 0.8)
-        data["text_content_source"] = "docling_gpu_ocr"
-        data["text_statistics"] = compute_text_statistics(ocr_text)
-    else:
-        data["text_has_content"] = False
-        data["text_content"] = ""
-        data["text_content_confidence"] = 0.0
-        data["text_content_source"] = "none"
-        data["text_statistics"] = compute_text_statistics("")
+    # D09 - text content from OCR
+    data.update(_resolve_realdae_ocr(ocr_rec))
 
-    # -------------------------------------------------------------------
-    # D11 - image_properties_color_mode: default to "color" for
-    # camera-captured documents
-    # -------------------------------------------------------------------
+    # D11 - color mode
     data["image_properties_color_mode"] = "color"
 
-    # -------------------------------------------------------------------
     # Text scope
-    # -------------------------------------------------------------------
     if llm:
         content_type = llm.get("content_type", "")
         data["text_scope_content_type"] = content_type if content_type else "unknown"
@@ -738,9 +737,7 @@ def integrate_sample(
         )
     data["text_scope"] = v1_data.get("text_scope", "printed")
 
-    # -------------------------------------------------------------------
     # Additional derived fields
-    # -------------------------------------------------------------------
     data["dataset_short_code"] = DATASET_NAME
 
     # Preserve v1 resolution fields if they exist
@@ -754,9 +751,7 @@ def integrate_sample(
         if field in v1_data:
             data[field] = v1_data[field]
 
-    # -------------------------------------------------------------------
-    # Reliability summary (must be last -- uses confidence fields above)
-    # -------------------------------------------------------------------
+    # Reliability summary (must be last)
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -765,6 +760,72 @@ def integrate_sample(
 # ===================================================================
 # Integration runner
 # ===================================================================
+def _track_realdae_sample_stats(
+    stats: dict[str, Any],
+    filename: str,
+    filename_stem: str,
+    integrated_data: dict[str, Any],
+    llm_index: dict[str, dict[str, Any]],
+    layout_index: dict[str, list[dict[str, Any]]],
+    ocr_index: dict[str, dict[str, Any]],
+) -> None:
+    """Accumulate per-sample statistics into the stats dict."""
+    stats["integrated"] += 1
+    if filename_stem in llm_index:
+        stats["llm_matched"] += 1
+    if filename in layout_index:
+        stats["layout_matched"] += 1
+    if filename in ocr_index:
+        stats["ocr_matched"] += 1
+
+    stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
+    stats["split_dist"][integrated_data.get("split", "unknown")] += 1
+    stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
+    stats["script_family_dist"][integrated_data.get("script_family", "UNKNOWN")] += 1
+    stats["lang_method_dist"][
+        integrated_data.get("text_scope_detection_method", "unknown")
+    ] += 1
+    stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+    stats["content_type_dist"][
+        integrated_data.get("text_scope_content_type", "unknown")
+    ] += 1
+    stats["orientation_dist"][integrated_data.get("orientation_class", 0)] += 1
+
+    _track_realdae_flag_counts(stats, integrated_data)
+
+
+def _track_realdae_flag_counts(
+    stats: dict[str, Any],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Increment content flag and text content counters."""
+    for flag_key, stat_key in (
+        ("has_table", "has_table_count"),
+        ("has_formula", "has_formula_count"),
+        ("has_handwriting", "has_handwriting_count"),
+        ("has_figure", "has_figure_count"),
+        ("text_has_content", "has_text_content_count"),
+    ):
+        if integrated_data.get(flag_key):
+            stats[stat_key] += 1
+
+
+def _upsert_enrichment_version(
+    sample: dict[str, Any],
+    new_version: dict[str, Any],
+    version_number: int,
+) -> None:
+    """Replace existing enrichment version or append new one."""
+    versions = sample["enrichments"]["versions"]
+    for idx, ver in enumerate(versions):
+        if ver.get("version") == version_number:
+            versions[idx] = new_version
+            sample["enrichments"]["current_version"] = version_number
+            return
+    versions.append(new_version)
+    sample["enrichments"]["current_version"] = version_number
+
+
 def run_integration(
     metadata: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -818,44 +879,16 @@ def run_integration(
 
         integrated_data = integrate_sample(sample, llm_index, layout_index, ocr_index)
 
-        # ----- Track statistics -----
-        stats["integrated"] += 1
-        if filename_stem in llm_index:
-            stats["llm_matched"] += 1
-        if filename in layout_index:
-            stats["layout_matched"] += 1
-        if filename in ocr_index:
-            stats["ocr_matched"] += 1
+        _track_realdae_sample_stats(
+            stats,
+            filename,
+            filename_stem,
+            integrated_data,
+            llm_index,
+            layout_index,
+            ocr_index,
+        )
 
-        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
-        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
-        stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][
-            integrated_data.get("script_family", "UNKNOWN")
-        ] += 1
-        stats["lang_method_dist"][
-            integrated_data.get("text_scope_detection_method", "unknown")
-        ] += 1
-        stats["capture_method_dist"][
-            integrated_data.get("capture_method", "unknown")
-        ] += 1
-        stats["content_type_dist"][
-            integrated_data.get("text_scope_content_type", "unknown")
-        ] += 1
-        stats["orientation_dist"][integrated_data.get("orientation_class", 0)] += 1
-
-        if integrated_data.get("has_table"):
-            stats["has_table_count"] += 1
-        if integrated_data.get("has_formula"):
-            stats["has_formula_count"] += 1
-        if integrated_data.get("has_handwriting"):
-            stats["has_handwriting_count"] += 1
-        if integrated_data.get("has_figure"):
-            stats["has_figure_count"] += 1
-        if integrated_data.get("text_has_content"):
-            stats["has_text_content_count"] += 1
-
-        # ----- Write enrichment version -----
         if not dry_run:
             new_version: dict[str, Any] = {
                 "version": ENRICHMENT_VERSION_NUMBER,
@@ -870,17 +903,11 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            # Replace existing version if present, otherwise append
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for idx, ver in enumerate(versions):
-                if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
-                    versions[idx] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            _upsert_enrichment_version(
+                sample,
+                new_version,
+                ENRICHMENT_VERSION_NUMBER,
+            )
 
     return stats
 

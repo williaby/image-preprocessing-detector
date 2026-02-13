@@ -51,7 +51,6 @@ Usage:
 
 from __future__ import annotations
 
-import copy
 import json
 import random
 import time
@@ -73,6 +72,12 @@ diqa5000_volume = modal.Volume.from_name("diqa5000-original", create_if_missing=
 GCS_BUCKET = "image_detection_b"
 GCS_PREFIX = "datasets/diqa-5000-original"
 DIQA5000_SPLITS = ["train", "val", "test"]
+
+# S1192: Extract duplicate literal to constant
+_BEST_MODEL_FILENAME = "siglip2_iqa_best.pt"
+
+# IQA quality dimensions used across all heads
+_IQA_DIMENSIONS = ("overall", "sharpness", "color")
 
 # Model variants
 MODEL_VARIANTS = {
@@ -197,11 +202,67 @@ class SigLIP2TrainingConfigV2:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
 
 
+@dataclass
+class EntrypointConfig:
+    """Grouped parameters for the CLI entrypoint (S107: reduce parameter count)."""
+
+    test: bool = False
+    model: str = "base"
+    epochs: int = 75
+    batch_size: int = 8
+    accumulation: int = 4
+    max_patches: int = 784
+    no_llrd: bool = False
+    no_ranking_loss: bool = False
+    no_pcgrad: bool = False
+    no_ema: bool = False
+    no_uncertainty: bool = False
+    no_gradient_checkpointing: bool = False
+    no_mixed_precision: bool = False
+    fp16: bool = False
+
+    def to_training_config(self) -> SigLIP2TrainingConfigV2:
+        """Convert entrypoint flags to training config."""
+        return SigLIP2TrainingConfigV2(
+            model_variant=self.model,
+            total_epochs=self.epochs,
+            phase1_epochs=min(15, self.epochs // 5),
+            phase2_epochs=self.epochs - min(15, self.epochs // 5),
+            batch_size=self.batch_size,
+            gradient_accumulation_steps=self.accumulation,
+            max_num_patches=self.max_patches,
+            use_llrd=not self.no_llrd,
+            use_ranking_loss=not self.no_ranking_loss,
+            use_pcgrad=not self.no_pcgrad,
+            use_ema=not self.no_ema,
+            uncertainty=not self.no_uncertainty,
+            use_gradient_checkpointing=not self.no_gradient_checkpointing,
+            use_mixed_precision=not self.no_mixed_precision,
+            mixed_precision_dtype="float16" if self.fp16 else "bfloat16",
+        )
+
+
 def compute_vquala(
     srcc_overall: float, srcc_sharpness: float, srcc_color: float
 ) -> float:
     """Compute VQualA final score: 0.5*overall + 0.25*sharpness + 0.25*color."""
     return 0.5 * srcc_overall + 0.25 * srcc_sharpness + 0.25 * srcc_color
+
+
+# ============================================================================
+# Training helper dataclass to hold shared mutable state
+# ============================================================================
+
+
+@dataclass
+class _TrainingState:
+    """Mutable training state shared across helper functions."""
+
+    history: list[dict[str, Any]] = field(default_factory=list)
+    best_vquala: float = 0.0
+    best_checkpoint: dict[str, Any] | None = None
+    patience_counter: int = 0
+    calibration_temps: dict[str, float] | None = None
 
 
 @app.function(
@@ -228,126 +289,92 @@ def train_siglip2_iqa_v2(
         Training results summary.
     """
     import torch
-    import torch.nn as nn
-    from PIL import Image, ImageOps
-    from scipy.optimize import minimize_scalar
-    from scipy.stats import spearmanr
-    from torch.utils.data import DataLoader, Dataset
-    from tqdm import tqdm
-    from transformers import AutoModel, AutoProcessor
 
-    # ========================================================================
-    # PCGrad Implementation (Inline)
-    # ========================================================================
+    config = _apply_test_mode_overrides(
+        SigLIP2TrainingConfigV2(**(config_dict or {})), test_mode
+    )
+    _print_config_banner(config)
 
-    class PCGrad:
-        """Projected Conflicting Gradients optimizer wrapper.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    amp_dtype, scaler = _setup_mixed_precision(config, device)
 
-        Projects conflicting gradients to mitigate negative transfer in multi-task learning.
-        Reference: Yu et al., "Gradient Surgery for Multi-Task Learning", NeurIPS 2020
-        """
+    model, processor = _setup_model(config, device)
+    train_loader, val_loader, test_dataset = _prepare_data(config, processor, test_mode)
+    loss_fns = _create_loss_functions(config)
 
-        def __init__(self, optimizer):
-            self.optimizer = optimizer
+    output_dir = Path(config.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-        @property
-        def param_groups(self):
-            return self.optimizer.param_groups
+    state = _TrainingState()
 
-        def zero_grad(self):
-            return self.optimizer.zero_grad()
+    _run_phase1_warmup(
+        config,
+        model,
+        train_loader,
+        val_loader,
+        loss_fns,
+        device,
+        amp_dtype,
+        scaler,
+        output_dir,
+        state,
+    )
+    _run_phase2_finetuning(
+        config,
+        model,
+        train_loader,
+        val_loader,
+        loss_fns,
+        device,
+        amp_dtype,
+        scaler,
+        output_dir,
+        state,
+    )
 
-        def step(self):
-            return self.optimizer.step()
+    if config.uncertainty:
+        _run_posthoc_calibration(
+            config,
+            model,
+            val_loader,
+            device,
+            amp_dtype,
+            output_dir,
+            state,
+        )
 
-        def pc_backward(self, losses: list[torch.Tensor]):
-            """Backward with gradient projection for conflicting tasks."""
-            task_grads = []
-            for i, loss in enumerate(losses):
-                self.optimizer.zero_grad()
-                loss.backward(retain_graph=(i < len(losses) - 1))
-                grads = []
-                for group in self.optimizer.param_groups:
-                    for p in group["params"]:
-                        if p.grad is not None:
-                            grads.append(p.grad.clone().flatten())
-                        else:
-                            grads.append(torch.zeros_like(p).flatten())
-                task_grads.append(torch.cat(grads))
+    test_metrics, target_achieved = _run_final_evaluation(
+        config,
+        model,
+        test_dataset,
+        device,
+        amp_dtype,
+        output_dir,
+        state,
+    )
 
-            projected_grads = self._project_gradients(task_grads)
+    results = _save_training_results(
+        config,
+        state,
+        test_metrics,
+        target_achieved,
+        output_dir,
+    )
 
-            self.optimizer.zero_grad()
-            offset = 0
-            for group in self.optimizer.param_groups:
-                for p in group["params"]:
-                    numel = p.numel()
-                    p.grad = projected_grads[offset : offset + numel].view_as(p)
-                    offset += numel
+    results_volume.commit()
+    return results
 
-        def _project_gradients(self, grads: list[torch.Tensor]) -> torch.Tensor:
-            """Project gradients to remove conflicting components."""
-            num_tasks = len(grads)
-            projected = [g.clone() for g in grads]
 
-            for i in range(num_tasks):
-                for j in range(num_tasks):
-                    if i != j:
-                        dot = torch.dot(projected[i], grads[j])
-                        if dot < 0:
-                            projected[i] -= (
-                                dot / (torch.dot(grads[j], grads[j]) + 1e-8)
-                            ) * grads[j]
+# ============================================================================
+# Inline classes (must be defined at call site due to Modal serialization)
+# These are created lazily inside helpers that need torch imports.
+# ============================================================================
 
-            return torch.stack(projected).mean(dim=0)
 
-    # ========================================================================
-    # EMA Implementation (TIER 2)
-    # ========================================================================
-
-    class EMA:
-        """Exponential Moving Average for model weights."""
-
-        def __init__(self, model: nn.Module, decay: float = 0.999):
-            self.model = model
-            self.decay = decay
-            self.shadow = {}
-            self.backup = {}
-
-        def register(self):
-            """Register current model parameters as shadow weights."""
-            for name, param in self.model.named_parameters():
-                if param.requires_grad:
-                    self.shadow[name] = param.data.clone()
-
-        def update(self):
-            """Update shadow weights with EMA."""
-            for name, param in self.model.named_parameters():
-                if param.requires_grad and name in self.shadow:
-                    new_average = (
-                        1.0 - self.decay
-                    ) * param.data + self.decay * self.shadow[name]
-                    self.shadow[name] = new_average.clone()
-
-        def apply_shadow(self):
-            """Replace model weights with shadow weights for evaluation."""
-            for name, param in self.model.named_parameters():
-                if param.requires_grad and name in self.shadow:
-                    self.backup[name] = param.data.clone()
-                    param.data = self.shadow[name].clone()
-
-        def restore(self):
-            """Restore original model weights after evaluation."""
-            for name, param in self.model.named_parameters():
-                if name in self.backup:
-                    param.data = self.backup[name].clone()
-            self.backup = {}
-
-    # ========================================================================
-    # Configuration Setup
-    # ========================================================================
-
-    config = SigLIP2TrainingConfigV2(**(config_dict or {}))
+def _apply_test_mode_overrides(
+    config: SigLIP2TrainingConfigV2, test_mode: bool
+) -> SigLIP2TrainingConfigV2:
+    """Apply test mode configuration overrides."""
     if test_mode:
         config.phase1_epochs = 1
         config.phase2_epochs = 1
@@ -356,20 +383,28 @@ def train_siglip2_iqa_v2(
         config.gradient_accumulation_steps = 2
         config.use_ema = False
         print("[TEST MODE] Running quick validation with 2 epochs")
+    return config
 
+
+def _print_config_banner(config: SigLIP2TrainingConfigV2) -> None:
+    """Print training configuration banner."""
     print("=" * 70)
     print("SigLIP 2 IQA Training v2.0 (Tier 1+2+3 Improvements)")
     print("=" * 70)
     print(f"Model: {config.model_id} ({config.model_variant})")
     print(f"Max Patches: {config.max_num_patches} (up from 576)")
     print(f"Total Epochs: {config.total_epochs} (15 warmup + 60 fine-tuning)")
+    effective_batch = config.batch_size * config.gradient_accumulation_steps
     print(
-        f"Batch Size: {config.batch_size} x {config.gradient_accumulation_steps} = {config.batch_size * config.gradient_accumulation_steps}"
+        f"Batch Size: {config.batch_size} x {config.gradient_accumulation_steps}"
+        f" = {effective_batch}"
     )
     print("Scheduler: CosineAnnealingLR (replaces OneCycleLR)")
     print(f"LLRD: {config.use_llrd} (decay={config.llrd_decay})")
     print(f"PCGrad: {config.use_pcgrad}")
-    print(f"Ranking Loss: {config.use_ranking_loss} (λ={config.ranking_loss_weight})")
+    print(
+        f"Ranking Loss: {config.use_ranking_loss} (lambda={config.ranking_loss_weight})"
+    )
     print(f"EMA: {config.use_ema} (starts epoch {config.ema_start_epoch})")
     print(f"Gradient Checkpointing: {config.use_gradient_checkpointing}")
     print(
@@ -380,128 +415,100 @@ def train_siglip2_iqa_v2(
     print(f"Target VQualA: {config.target_vquala}")
     print("=" * 70)
 
-    # ========================================================================
-    # Mixed Precision Setup (TIER 3)
-    # ========================================================================
 
-    # Determine mixed precision dtype
-    if config.use_mixed_precision:
-        if (
-            config.mixed_precision_dtype == "bfloat16"
-            and torch.cuda.is_bf16_supported()
-        ):
-            amp_dtype = torch.bfloat16
-            print("Mixed precision: BF16 enabled (recommended for A100)")
-        else:
-            amp_dtype = torch.float16
-            print("Mixed precision: FP16 enabled")
-        scaler = torch.amp.GradScaler("cuda") if amp_dtype == torch.float16 else None
-    else:
-        amp_dtype = torch.float32
-        scaler = None
+def _setup_mixed_precision(config: SigLIP2TrainingConfigV2, device: Any) -> tuple:
+    """Configure mixed precision training dtype and optional GradScaler.
+
+    Returns:
+        Tuple of (amp_dtype, scaler_or_none).
+    """
+    import torch
+
+    if not config.use_mixed_precision:
         print("Mixed precision: Disabled (FP32)")
+        return torch.float32, None
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if config.mixed_precision_dtype == "bfloat16" and torch.cuda.is_bf16_supported():
+        amp_dtype = torch.bfloat16
+        print("Mixed precision: BF16 enabled (recommended for A100)")
+    else:
+        amp_dtype = torch.float16
+        print("Mixed precision: FP16 enabled")
+
+    scaler = torch.amp.GradScaler("cuda") if amp_dtype == torch.float16 else None
+
     print(f"Device: {device}")
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name()}")
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+        print(f"VRAM: {vram_gb:.1f} GB")
 
-    # ========================================================================
-    # Loss Functions
-    # ========================================================================
+    return amp_dtype, scaler
 
-    class NormInNormLoss(nn.Module):
-        """Norm-in-Norm loss for fast SRCC-aligned convergence."""
 
-        def __init__(self, p: float = 1.0, q: float = 2.0):
-            super().__init__()
-            self.p = p
-            self.q = q
+def _setup_model(config: SigLIP2TrainingConfigV2, device: Any) -> tuple:
+    """Create and configure the SigLIP 2 model and processor.
 
-        def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-            pred_norm = (pred - pred.mean()) / (pred.std() + 1e-8)
-            target_norm = (target - target.mean()) / (target.std() + 1e-8)
-            diff = torch.abs(pred_norm - target_norm)
-            return torch.pow(torch.pow(diff, self.p).mean(), self.q / self.p)
+    Returns:
+        Tuple of (model, processor).
+    """
+    from transformers import AutoProcessor
 
-    class GaussianNLLLoss(nn.Module):
-        """Gaussian Negative Log-Likelihood for uncertainty estimation."""
+    print("\nLoading SigLIP 2 processor and model...")
+    processor = AutoProcessor.from_pretrained(config.model_id)
 
-        def forward(
-            self, mu: torch.Tensor, sigma_sq: torch.Tensor, target: torch.Tensor
-        ) -> torch.Tensor:
-            sigma_sq = torch.clamp(sigma_sq, min=1e-6)
-            loss = 0.5 * torch.log(sigma_sq) + (target - mu) ** 2 / (2 * sigma_sq)
-            return loss.mean()
+    model = _create_siglip2_model(config.model_id, config.uncertainty)
 
-    class MarginRankingLoss(nn.Module):
-        """Margin ranking loss for direct SRCC optimization (TIER 2).
+    if config.use_gradient_checkpointing:
+        model.backbone.gradient_checkpointing_enable()
+        print(
+            "Gradient checkpointing: Enabled (saves memory by recomputing activations)"
+        )
 
-        Creates pairwise comparisons within a batch and optimizes for correct ranking.
-        """
+    model = model.to(device)
 
-        def __init__(self, margin: float = 0.0):
-            super().__init__()
-            self.margin = margin
-            self.loss_fn = nn.MarginRankingLoss(margin=margin)
+    total_params = sum(p.numel() for p in model.parameters())
+    backbone_params = sum(p.numel() for p in model.backbone.parameters())
+    head_params = total_params - backbone_params
+    print(f"Total parameters: {total_params:,}")
+    print(f"Backbone parameters: {backbone_params:,}")
+    print(f"Head parameters: {head_params:,}")
 
-        def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-            # Create all pairs
-            n = pred.size(0)
-            if n < 2:
-                return torch.tensor(0.0, device=pred.device)
+    return model, processor
 
-            # Generate pairs
-            idx_i, idx_j = torch.triu_indices(n, n, offset=1, device=pred.device)
 
-            pred_i = pred[idx_i]
-            pred_j = pred[idx_j]
-            target_i = target[idx_i]
-            target_j = target[idx_j]
+def _create_siglip2_model(model_id: str, uncertainty: bool) -> Any:
+    """Instantiate SigLIP2DocumentIQAv2 model.
 
-            # y = +1 if target_i > target_j, else -1
-            y = torch.sign(target_i - target_j)
-
-            # Filter out ties (y == 0)
-            mask = y != 0
-            if mask.sum() == 0:
-                return torch.tensor(0.0, device=pred.device)
-
-            return self.loss_fn(pred_i[mask], pred_j[mask], y[mask])
-
-    # ========================================================================
-    # Model Definition
-    # ========================================================================
+    This is separated so the class definition stays inside the Modal function scope.
+    """
+    import torch
+    import torch.nn as nn
+    from transformers import AutoModel
 
     class SigLIP2DocumentIQAv2(nn.Module):
         """SigLIP 2 NaFlex with multi-task IQA heads + uncertainty (v2)."""
 
         def __init__(
             self,
-            model_id: str = "google/siglip2-base-patch16-naflex",
-            uncertainty: bool = True,
+            mid: str = "google/siglip2-base-patch16-naflex",
+            use_uncertainty: bool = True,
         ):
             super().__init__()
-
-            self.backbone = AutoModel.from_pretrained(model_id)
+            self.backbone = AutoModel.from_pretrained(mid)
             embed_dim = self.backbone.config.vision_config.hidden_size
-            self.uncertainty = uncertainty
+            self.uncertainty = use_uncertainty
 
-            head_output_dim = 2 if uncertainty else 1
-
+            head_output_dim = 2 if use_uncertainty else 1
             self.heads = nn.ModuleDict(
                 {
-                    "overall": self._make_head(embed_dim, head_output_dim),
-                    "sharpness": self._make_head(embed_dim, head_output_dim),
-                    "color": self._make_head(embed_dim, head_output_dim),
+                    dim: self._make_head(embed_dim, head_output_dim)
+                    for dim in _IQA_DIMENSIONS
                 }
             )
 
-            # Calibration temperatures
-            self.register_buffer("temp_overall", torch.tensor(1.0))
-            self.register_buffer("temp_sharpness", torch.tensor(1.0))
-            self.register_buffer("temp_color", torch.tensor(1.0))
+            for dim in _IQA_DIMENSIONS:
+                self.register_buffer(f"temp_{dim}", torch.tensor(1.0))
 
         def _make_head(self, in_dim: int, out_dim: int) -> nn.Module:
             return nn.Sequential(
@@ -524,21 +531,16 @@ def train_siglip2_iqa_v2(
 
             Returns layers from deepest (earliest) to shallowest (latest).
             """
-            # SigLIP 2 uses vision_model.encoder.layers
             encoder = self.backbone.vision_model.encoder
-            num_layers = len(encoder.layers)
+            # S1481: removed unused num_layers variable
 
             groups = []
-            # Embeddings (deepest - lowest LR)
             groups.append(list(self.backbone.vision_model.embeddings.parameters()))
 
-            # Encoder layers
             for layer in encoder.layers:
                 groups.append(list(layer.parameters()))
 
-            # Post layer norm
             groups.append(list(self.backbone.vision_model.post_layernorm.parameters()))
-
             return groups
 
         def forward(
@@ -562,7 +564,6 @@ def train_siglip2_iqa_v2(
                     sigma_sq = torch.exp(log_sigma_sq)
                     temp = getattr(self, f"temp_{head_name}")
                     sigma_sq_calibrated = temp * sigma_sq
-
                     results[head_name] = {
                         "mu": mu,
                         "sigma_sq": sigma_sq_calibrated,
@@ -577,163 +578,113 @@ def train_siglip2_iqa_v2(
             for head_name, temp in temps.items():
                 setattr(self, f"temp_{head_name}", torch.tensor(temp))
 
-    # ========================================================================
-    # LLRD Optimizer Setup (TIER 2)
-    # ========================================================================
+    return SigLIP2DocumentIQAv2(mid=model_id, use_uncertainty=uncertainty)
 
-    def get_llrd_param_groups(
-        model: SigLIP2DocumentIQAv2,
-        base_lr: float,
-        llrd_decay: float,
-        weight_decay: float,
-    ) -> list[dict]:
-        """Create parameter groups with layer-wise learning rate decay.
 
-        Args:
-            model: The model.
-            base_lr: Base learning rate for heads.
-            llrd_decay: Decay factor per layer (e.g., 0.9).
-            weight_decay: Weight decay.
+def _prepare_data(
+    config: SigLIP2TrainingConfigV2,
+    processor: Any,
+    test_mode: bool,
+) -> tuple:
+    """Download dataset, create DataLoaders.
 
-        Returns:
-            Parameter groups for optimizer.
-        """
-        param_groups = []
+    Returns:
+        Tuple of (train_loader, val_loader, test_dataset).
+    """
+    from torch.utils.data import DataLoader
 
-        # Heads get base LR
-        param_groups.append(
-            {
-                "params": list(model.heads.parameters()),
-                "lr": base_lr,
-                "weight_decay": weight_decay,
-                "name": "heads",
-            }
-        )
+    print("\nDownloading DIQA-5000 dataset from GCS...")
+    data_dir = Path("/data/diqa5000")
+    _download_diqa5000_from_gcs(data_dir)
+    diqa5000_volume.commit()
 
-        # Backbone layers with LLRD
-        layer_groups = model.get_layer_groups()
-        num_layers = len(layer_groups)
+    print("\nLoading DIQA-5000 dataset...")
+    train_dataset = _create_diqa_dataset(
+        split="train",
+        data_dir=data_dir,
+        processor=processor,
+        max_num_patches=config.max_num_patches,
+        use_augmentation=config.use_augmentation,
+        horizontal_flip_prob=config.horizontal_flip_prob,
+        random_crop_prob=config.random_crop_prob,
+    )
+    val_dataset = _create_diqa_dataset(
+        split="val",
+        data_dir=data_dir,
+        processor=processor,
+        max_num_patches=config.max_num_patches,
+    )
+    test_dataset = _create_diqa_dataset(
+        split="test",
+        data_dir=data_dir,
+        processor=processor,
+        max_num_patches=config.max_num_patches,
+    )
 
-        for i, params in enumerate(reversed(layer_groups)):
-            # Layer 0 (shallowest) = base_lr * llrd_decay
-            # Layer n (deepest) = base_lr * llrd_decay^(n+1)
-            layer_lr = base_lr * (llrd_decay ** (i + 1))
-            param_groups.append(
-                {
-                    "params": params,
-                    "lr": layer_lr,
-                    "weight_decay": weight_decay,
-                    "name": f"backbone_layer_{num_layers - 1 - i}",
-                }
-            )
+    if test_mode:
+        train_dataset.samples = train_dataset.samples[:50]
+        val_dataset.samples = val_dataset.samples[:25]
+        test_dataset.samples = test_dataset.samples[:25]
 
-        return param_groups
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True,
+        collate_fn=_custom_collate_fn,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+        collate_fn=_custom_collate_fn,
+    )
 
-    # ========================================================================
-    # GCS Download Functions
-    # ========================================================================
+    return train_loader, val_loader, test_dataset
 
-    def download_diqa5000_from_gcs(data_dir: Path) -> bool:
-        """Download original DIQA-5000 dataset from GCS."""
-        import os
 
-        from google.cloud import storage
+def _create_diqa_dataset(
+    split: str,
+    data_dir: Path,
+    processor: Any,
+    max_num_patches: int = 784,
+    use_augmentation: bool = False,
+    horizontal_flip_prob: float = 0.5,
+    random_crop_prob: float = 0.3,
+) -> Any:
+    """Create a DIQA5000Dataset instance (class defined inside for Modal serialization)."""
+    import csv
 
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
-
-        marker_file = data_dir / ".download_complete"
-        if marker_file.exists():
-            all_csvs_exist = all(
-                (data_dir / split / f"{split}.csv").exists()
-                for split in DIQA5000_SPLITS
-            )
-            if all_csvs_exist:
-                print("DIQA-5000 already downloaded and validated, skipping...")
-                return True
-            marker_file.unlink()
-
-        print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
-        start_time = time.time()
-
-        client = storage.Client()
-        bucket = client.bucket(GCS_BUCKET)
-
-        data_dir.mkdir(parents=True, exist_ok=True)
-        downloaded = 0
-
-        for split in DIQA5000_SPLITS:
-            split_dir = data_dir / split
-            split_dir.mkdir(exist_ok=True)
-            (split_dir / "res").mkdir(exist_ok=True)
-            (split_dir / "ori").mkdir(exist_ok=True)
-
-            prefix = f"{GCS_PREFIX}/{split}/"
-            blobs = bucket.list_blobs(prefix=prefix)
-
-            for blob in blobs:
-                if blob.name.endswith("/"):
-                    continue
-
-                relative_path = blob.name[len(prefix) :]
-                if not relative_path:
-                    continue
-
-                local_file = split_dir / relative_path
-                local_file.parent.mkdir(parents=True, exist_ok=True)
-
-                blob.download_to_filename(str(local_file))
-                downloaded += 1
-
-                if downloaded % 500 == 0:
-                    print(f"  Downloaded {downloaded} files...")
-
-        elapsed = time.time() - start_time
-        print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
-
-        if downloaded < 100:
-            print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
-            return False
-
-        for split in DIQA5000_SPLITS:
-            csv_path = data_dir / split / f"{split}.csv"
-            if not csv_path.exists():
-                print(f"ERROR: Missing CSV at {csv_path}")
-                return False
-            print(f"  Verified: {csv_path}")
-
-        marker_file.touch()
-        return True
-
-    # ========================================================================
-    # Dataset
-    # ========================================================================
+    from PIL import Image, ImageOps
+    from torch.utils.data import Dataset
 
     class DIQA5000Dataset(Dataset):
         """Original DIQA-5000 dataset with human MOS labels."""
 
         def __init__(
             self,
-            split: str,
-            data_dir: str | Path,
-            processor: AutoProcessor,
-            max_num_patches: int = 784,
-            use_augmentation: bool = False,
-            horizontal_flip_prob: float = 0.5,
-            random_crop_prob: float = 0.3,
+            split_name: str,
+            data_directory: Path,
+            proc: Any,
+            max_patches: int,
+            augment: bool,
+            h_flip_prob: float,
+            crop_prob: float,
         ):
-            import csv
+            self.split = split_name
+            self.data_dir = data_directory
+            self.processor = proc
+            self.max_num_patches = max_patches
+            self.use_augmentation = augment and split_name == "train"
+            self.horizontal_flip_prob = h_flip_prob
+            self.random_crop_prob = crop_prob
+            self.samples: list[dict[str, Any]] = []
 
-            self.split = split
-            self.data_dir = Path(data_dir)
-            self.processor = processor
-            self.max_num_patches = max_num_patches
-            self.use_augmentation = use_augmentation and split == "train"
-            self.horizontal_flip_prob = horizontal_flip_prob
-            self.random_crop_prob = random_crop_prob
-            self.samples = []
-
-            split_dir = self.data_dir / split
-            csv_path = split_dir / f"{split}.csv"
+            split_dir = self.data_dir / split_name
+            csv_path = split_dir / f"{split_name}.csv"
             res_dir = split_dir / "res"
 
             if not csv_path.exists():
@@ -758,17 +709,15 @@ def train_siglip2_iqa_v2(
                         }
                     )
 
-            print(f"  {split}: {len(self.samples)} samples loaded")
+            print(f"  {split_name}: {len(self.samples)} samples loaded")
 
         def __len__(self) -> int:
             return len(self.samples)
 
         def _normalize_mos(self, score: float) -> float:
-            """Normalize MOS score from 1-5 to 0-1 range."""
             return (score - 1.0) / 4.0
 
         def _apply_safe_augmentations(self, image: Image.Image) -> Image.Image:
-            """Apply quality-preserving augmentations only."""
             if random.random() < self.horizontal_flip_prob:
                 image = ImageOps.mirror(image)
 
@@ -786,7 +735,6 @@ def train_siglip2_iqa_v2(
 
         def __getitem__(self, idx: int) -> dict[str, Any]:
             sample = self.samples[idx]
-
             image = Image.open(sample["image_path"]).convert("RGB")
 
             if self.use_augmentation:
@@ -813,215 +761,752 @@ def train_siglip2_iqa_v2(
                 "image_id": sample["image_id"],
             }
 
-    # ========================================================================
-    # Training Setup
-    # ========================================================================
-
-    print("\nLoading SigLIP 2 processor and model...")
-    processor = AutoProcessor.from_pretrained(config.model_id)
-    model = SigLIP2DocumentIQAv2(
-        model_id=config.model_id,
-        uncertainty=config.uncertainty,
+    return DIQA5000Dataset(
+        split_name=split,
+        data_directory=data_dir,
+        proc=processor,
+        max_patches=max_num_patches,
+        augment=use_augmentation,
+        h_flip_prob=horizontal_flip_prob,
+        crop_prob=random_crop_prob,
     )
 
-    # Enable gradient checkpointing (TIER 3) - must be done before moving to device
-    if config.use_gradient_checkpointing:
-        model.backbone.gradient_checkpointing_enable()
-        print(
-            "Gradient checkpointing: Enabled (saves memory by recomputing activations)"
+
+def _custom_collate_fn(batch: list[dict]) -> dict[str, Any]:
+    """Collate function for DIQA-5000 DataLoader."""
+    import torch
+
+    pixel_values = torch.stack([item["pixel_values"] for item in batch])
+    spatial_shapes = torch.stack([item["spatial_shapes"] for item in batch])
+    pixel_attention_mask = torch.stack([item["pixel_attention_mask"] for item in batch])
+    labels = [item["labels"] for item in batch]
+    image_ids = [item["image_id"] for item in batch]
+    return {
+        "pixel_values": pixel_values,
+        "spatial_shapes": spatial_shapes,
+        "pixel_attention_mask": pixel_attention_mask,
+        "labels": labels,
+        "image_ids": image_ids,
+    }
+
+
+def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
+    """Download original DIQA-5000 dataset from GCS."""
+    import os
+
+    from google.cloud import storage
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+
+    marker_file = data_dir / ".download_complete"
+    if marker_file.exists():
+        all_csvs_exist = all(
+            (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
         )
+        if all_csvs_exist:
+            print("DIQA-5000 already downloaded and validated, skipping...")
+            return True
+        marker_file.unlink()
 
-    model = model.to(device)
+    print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
+    start_time = time.time()
 
-    total_params = sum(p.numel() for p in model.parameters())
-    backbone_params = sum(p.numel() for p in model.backbone.parameters())
-    head_params = total_params - backbone_params
-    print(f"Total parameters: {total_params:,}")
-    print(f"Backbone parameters: {backbone_params:,}")
-    print(f"Head parameters: {head_params:,}")
+    client = storage.Client()
+    bucket = client.bucket(GCS_BUCKET)
 
-    # Download DIQA-5000
-    print("\nDownloading DIQA-5000 dataset from GCS...")
-    data_dir = Path("/data/diqa5000")
-    download_diqa5000_from_gcs(data_dir)
-    diqa5000_volume.commit()
+    data_dir.mkdir(parents=True, exist_ok=True)
+    downloaded = 0
 
-    # Create datasets
-    print("\nLoading DIQA-5000 dataset...")
-    train_dataset = DIQA5000Dataset(
-        split="train",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
-        use_augmentation=config.use_augmentation,
-        horizontal_flip_prob=config.horizontal_flip_prob,
-        random_crop_prob=config.random_crop_prob,
-    )
-    val_dataset = DIQA5000Dataset(
-        split="val",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
-    )
-    test_dataset = DIQA5000Dataset(
-        split="test",
-        data_dir=data_dir,
-        processor=processor,
-        max_num_patches=config.max_num_patches,
-    )
+    for split in DIQA5000_SPLITS:
+        split_dir = data_dir / split
+        split_dir.mkdir(exist_ok=True)
+        (split_dir / "res").mkdir(exist_ok=True)
+        (split_dir / "ori").mkdir(exist_ok=True)
 
-    if test_mode:
-        train_dataset.samples = train_dataset.samples[:50]
-        val_dataset.samples = val_dataset.samples[:25]
-        test_dataset.samples = test_dataset.samples[:25]
+        prefix = f"{GCS_PREFIX}/{split}/"
+        blobs = bucket.list_blobs(prefix=prefix)
 
-    def custom_collate_fn(batch):
-        pixel_values = torch.stack([item["pixel_values"] for item in batch])
-        spatial_shapes = torch.stack([item["spatial_shapes"] for item in batch])
-        pixel_attention_mask = torch.stack(
-            [item["pixel_attention_mask"] for item in batch]
-        )
-        labels = [item["labels"] for item in batch]
-        image_ids = [item["image_id"] for item in batch]
-        return {
-            "pixel_values": pixel_values,
-            "spatial_shapes": spatial_shapes,
-            "pixel_attention_mask": pixel_attention_mask,
-            "labels": labels,
-            "image_ids": image_ids,
+        for blob in blobs:
+            if blob.name.endswith("/"):
+                continue
+
+            relative_path = blob.name[len(prefix) :]
+            if not relative_path:
+                continue
+
+            local_file = split_dir / relative_path
+            local_file.parent.mkdir(parents=True, exist_ok=True)
+
+            blob.download_to_filename(str(local_file))
+            downloaded += 1
+
+            if downloaded % 500 == 0:
+                print(f"  Downloaded {downloaded} files...")
+
+    elapsed = time.time() - start_time
+    print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
+
+    if downloaded < 100:
+        print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
+        return False
+
+    for split in DIQA5000_SPLITS:
+        csv_path = data_dir / split / f"{split}.csv"
+        if not csv_path.exists():
+            print(f"ERROR: Missing CSV at {csv_path}")
+            return False
+        print(f"  Verified: {csv_path}")
+
+    marker_file.touch()
+    return True
+
+
+# ============================================================================
+# Loss function helpers
+# ============================================================================
+
+
+def _create_loss_functions(config: SigLIP2TrainingConfigV2) -> dict[str, Any]:
+    """Instantiate all loss functions used during training.
+
+    Returns:
+        Dict with keys 'gnll', 'nin', 'ranking' (ranking may be None).
+    """
+    import torch
+    import torch.nn as nn
+
+    class NormInNormLoss(nn.Module):
+        """Norm-in-Norm loss for fast SRCC-aligned convergence."""
+
+        def __init__(self, p: float = 1.0, q: float = 2.0):
+            super().__init__()
+            self.p = p
+            self.q = q
+
+        def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+            pred_norm = (pred - pred.mean()) / (pred.std() + 1e-8)
+            target_norm = (target - target.mean()) / (target.std() + 1e-8)
+            diff = torch.abs(pred_norm - target_norm)
+            return torch.pow(torch.pow(diff, self.p).mean(), self.q / self.p)
+
+    class GaussianNLLLoss(nn.Module):
+        """Gaussian Negative Log-Likelihood for uncertainty estimation."""
+
+        def forward(
+            self, mu: torch.Tensor, sigma_sq: torch.Tensor, target: torch.Tensor
+        ) -> torch.Tensor:
+            sigma_sq = torch.clamp(sigma_sq, min=1e-6)
+            loss = 0.5 * torch.log(sigma_sq) + (target - mu) ** 2 / (2 * sigma_sq)
+            return loss.mean()
+
+    class MarginRankingLoss(nn.Module):
+        """Margin ranking loss for direct SRCC optimization (TIER 2)."""
+
+        def __init__(self, margin: float = 0.0):
+            super().__init__()
+            self.margin = margin
+            self.loss_fn = nn.MarginRankingLoss(margin=margin)
+
+        def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+            n = pred.size(0)
+            if n < 2:
+                return torch.tensor(0.0, device=pred.device)
+
+            idx_i, idx_j = torch.triu_indices(n, n, offset=1, device=pred.device)
+            pred_i = pred[idx_i]
+            pred_j = pred[idx_j]
+            target_i = target[idx_i]
+            target_j = target[idx_j]
+
+            y = torch.sign(target_i - target_j)
+            mask = y != 0
+            if mask.sum() == 0:
+                return torch.tensor(0.0, device=pred.device)
+
+            return self.loss_fn(pred_i[mask], pred_j[mask], y[mask])
+
+    return {
+        "gnll": GaussianNLLLoss(),
+        "nin": NormInNormLoss(p=1.0, q=2.0),
+        "ranking": MarginRankingLoss() if config.use_ranking_loss else None,
+    }
+
+
+# ============================================================================
+# PCGrad and EMA helpers
+# ============================================================================
+
+
+def _create_pcgrad_wrapper(optimizer: Any) -> Any:
+    """Create PCGrad optimizer wrapper for gradient surgery."""
+    import torch
+
+    class PCGrad:
+        """Projected Conflicting Gradients optimizer wrapper.
+
+        Projects conflicting gradients to mitigate negative transfer in multi-task learning.
+        Reference: Yu et al., "Gradient Surgery for Multi-Task Learning", NeurIPS 2020
+        """
+
+        def __init__(self, opt):
+            self.optimizer = opt
+
+        @property
+        def param_groups(self):
+            return self.optimizer.param_groups
+
+        def zero_grad(self):
+            return self.optimizer.zero_grad()
+
+        def step(self):
+            return self.optimizer.step()
+
+        def pc_backward(self, losses: list[torch.Tensor]):
+            """Backward with gradient projection for conflicting tasks."""
+            task_grads = []
+            for i, loss in enumerate(losses):
+                self.optimizer.zero_grad()
+                loss.backward(retain_graph=(i < len(losses) - 1))
+                grads = []
+                for group in self.optimizer.param_groups:
+                    for p in group["params"]:
+                        if p.grad is not None:
+                            grads.append(p.grad.clone().flatten())
+                        else:
+                            grads.append(torch.zeros_like(p).flatten())
+                task_grads.append(torch.cat(grads))
+
+            projected_grads = _project_gradients(task_grads)
+
+            self.optimizer.zero_grad()
+            offset = 0
+            for group in self.optimizer.param_groups:
+                for p in group["params"]:
+                    numel = p.numel()
+                    p.grad = projected_grads[offset : offset + numel].view_as(p)
+                    offset += numel
+
+    def _project_gradients(grads: list[torch.Tensor]) -> torch.Tensor:
+        num_tasks = len(grads)
+        projected = [g.clone() for g in grads]
+
+        for i in range(num_tasks):
+            for j in range(num_tasks):
+                if i != j:
+                    dot = torch.dot(projected[i], grads[j])
+                    if dot < 0:
+                        projected[i] -= (
+                            dot / (torch.dot(grads[j], grads[j]) + 1e-8)
+                        ) * grads[j]
+
+        return torch.stack(projected).mean(dim=0)
+
+    return PCGrad(optimizer)
+
+
+def _create_ema(model: Any, decay: float) -> Any:
+    """Create an EMA (Exponential Moving Average) wrapper for model weights."""
+    import torch.nn as nn
+
+    class EMA:
+        """Exponential Moving Average for model weights."""
+
+        def __init__(self, mdl: nn.Module, ema_decay: float = 0.999):
+            self.model = mdl
+            self.decay = ema_decay
+            self.shadow: dict[str, Any] = {}
+            self.backup: dict[str, Any] = {}
+
+        def register(self):
+            for name, param in self.model.named_parameters():
+                if param.requires_grad:
+                    self.shadow[name] = param.data.clone()
+
+        def update(self):
+            for name, param in self.model.named_parameters():
+                if param.requires_grad and name in self.shadow:
+                    new_average = (
+                        1.0 - self.decay
+                    ) * param.data + self.decay * self.shadow[name]
+                    self.shadow[name] = new_average.clone()
+
+        def apply_shadow(self):
+            for name, param in self.model.named_parameters():
+                if param.requires_grad and name in self.shadow:
+                    self.backup[name] = param.data.clone()
+                    param.data = self.shadow[name].clone()
+
+        def restore(self):
+            for name, param in self.model.named_parameters():
+                if name in self.backup:
+                    param.data = self.backup[name].clone()
+            self.backup = {}
+
+    return EMA(mdl=model, ema_decay=decay)
+
+
+# ============================================================================
+# LLRD Optimizer Setup (TIER 2)
+# ============================================================================
+
+
+def _get_llrd_param_groups(
+    model: Any,
+    base_lr: float,
+    llrd_decay: float,
+    weight_decay: float,
+) -> list[dict]:
+    """Create parameter groups with layer-wise learning rate decay.
+
+    Args:
+        model: The model.
+        base_lr: Base learning rate for heads.
+        llrd_decay: Decay factor per layer (e.g., 0.9).
+        weight_decay: Weight decay.
+
+    Returns:
+        Parameter groups for optimizer.
+    """
+    param_groups = []
+
+    param_groups.append(
+        {
+            "params": list(model.heads.parameters()),
+            "lr": base_lr,
+            "weight_decay": weight_decay,
+            "name": "heads",
         }
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-        collate_fn=custom_collate_fn,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True,
-        collate_fn=custom_collate_fn,
     )
 
-    # Loss functions
-    gnll_criterion = GaussianNLLLoss()
-    nin_criterion = NormInNormLoss(p=1.0, q=2.0)
-    ranking_criterion = MarginRankingLoss() if config.use_ranking_loss else None
+    layer_groups = model.get_layer_groups()
+    num_layers = len(layer_groups)
 
-    # ========================================================================
-    # Training Loop
-    # ========================================================================
+    for i, params in enumerate(reversed(layer_groups)):
+        layer_lr = base_lr * (llrd_decay ** (i + 1))
+        param_groups.append(
+            {
+                "params": params,
+                "lr": layer_lr,
+                "weight_decay": weight_decay,
+                "name": f"backbone_layer_{num_layers - 1 - i}",
+            }
+        )
 
-    def compute_loss(
-        outputs: dict,
-        labels: list[dict],
-        use_ranking: bool = False,
-    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
-        """Compute combined loss for all dimensions."""
-        losses = []
+    return param_groups
 
-        for dim in ["overall", "sharpness", "color"]:
-            target = torch.tensor(
-                [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
-            )
 
-            if config.uncertainty:
-                pred = outputs[dim]
-                # GaussianNLL for uncertainty
-                gnll_loss = gnll_criterion(pred["mu"], pred["sigma_sq"], target)
+# ============================================================================
+# Training building blocks
+# ============================================================================
 
-                if use_ranking and ranking_criterion is not None:
-                    # Ranking loss for SRCC
-                    rank_loss = ranking_criterion(pred["mu"], target)
-                    loss = gnll_loss + config.ranking_loss_weight * rank_loss
-                else:
-                    loss = gnll_loss
+
+def _compute_loss(
+    outputs: dict,
+    labels: list[dict],
+    loss_fns: dict[str, Any],
+    config: SigLIP2TrainingConfigV2,
+    device: Any,
+    use_ranking: bool = False,
+) -> tuple:
+    """Compute combined loss for all dimensions.
+
+    Returns:
+        Tuple of (total_loss, per_dimension_losses).
+    """
+    import torch
+
+    losses = []
+
+    for dim in _IQA_DIMENSIONS:
+        target = torch.tensor(
+            [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
+        )
+
+        if config.uncertainty:
+            pred = outputs[dim]
+            gnll_loss = loss_fns["gnll"](pred["mu"], pred["sigma_sq"], target)
+
+            if use_ranking and loss_fns["ranking"] is not None:
+                rank_loss = loss_fns["ranking"](pred["mu"], target)
+                loss = gnll_loss + config.ranking_loss_weight * rank_loss
             else:
-                pred_scores = outputs[dim]
-                nin_loss = nin_criterion(pred_scores, target)
+                loss = gnll_loss
+        else:
+            pred_scores = outputs[dim]
+            nin_loss = loss_fns["nin"](pred_scores, target)
 
-                if use_ranking and ranking_criterion is not None:
-                    rank_loss = ranking_criterion(pred_scores, target)
-                    loss = nin_loss + config.ranking_loss_weight * rank_loss
+            if use_ranking and loss_fns["ranking"] is not None:
+                rank_loss = loss_fns["ranking"](pred_scores, target)
+                loss = nin_loss + config.ranking_loss_weight * rank_loss
+            else:
+                loss = nin_loss
+
+        losses.append(loss)
+
+    total_loss = sum(losses) / len(losses)
+    return total_loss, losses
+
+
+def _compute_pcgrad_losses(
+    outputs: dict,
+    labels_list: list[dict],
+    loss_fns: dict[str, Any],
+    config: SigLIP2TrainingConfigV2,
+    device: Any,
+    use_ranking: bool = False,
+) -> list:
+    """Compute per-dimension losses for PCGrad backward.
+
+    Returns:
+        List of per-dimension loss tensors (already divided by accumulation steps).
+    """
+    import torch
+
+    losses = []
+    for dim in _IQA_DIMENSIONS:
+        target = torch.tensor(
+            [lbl[dim] for lbl in labels_list],
+            device=device,
+            dtype=torch.float32,
+        )
+        if config.uncertainty:
+            gnll_loss = loss_fns["gnll"](
+                outputs[dim]["mu"], outputs[dim]["sigma_sq"], target
+            )
+            if use_ranking and loss_fns["ranking"] is not None:
+                rank_loss = loss_fns["ranking"](outputs[dim]["mu"], target)
+                loss = gnll_loss + config.ranking_loss_weight * rank_loss
+            else:
+                loss = gnll_loss
+        else:
+            nin_loss = loss_fns["nin"](outputs[dim], target)
+            if use_ranking and loss_fns["ranking"] is not None:
+                rank_loss = loss_fns["ranking"](outputs[dim], target)
+                loss = nin_loss + config.ranking_loss_weight * rank_loss
+            else:
+                loss = nin_loss
+
+        losses.append(loss / config.gradient_accumulation_steps)
+
+    return losses
+
+
+def _backward_step(
+    config: SigLIP2TrainingConfigV2,
+    pcgrad_optimizer: Any | None,
+    scaler: Any | None,
+    loss_or_losses: Any,
+    is_pcgrad: bool,
+) -> float:
+    """Execute backward pass, returning accumulated loss value.
+
+    Args:
+        config: Training config.
+        pcgrad_optimizer: PCGrad wrapper (or None).
+        scaler: GradScaler for FP16 (or None).
+        loss_or_losses: Either a single loss tensor or list of per-dim losses.
+        is_pcgrad: Whether to use PCGrad backward.
+
+    Returns:
+        Scalar loss value for logging.
+    """
+    if is_pcgrad:
+        pcgrad_optimizer.pc_backward(loss_or_losses)
+        return sum(loss_val.item() for loss_val in loss_or_losses)
+
+    if scaler is not None:
+        scaler.scale(loss_or_losses).backward()
+    else:
+        loss_or_losses.backward()
+    return loss_or_losses.item()
+
+
+def _optimizer_step(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    optimizer: Any,
+    pcgrad_optimizer: Any | None,
+    scaler: Any | None,
+    scheduler: Any,
+) -> None:
+    """Execute one optimizer step with gradient clipping and scaler handling."""
+    import torch
+
+    if scaler is not None:
+        scaler.unscale_(optimizer)
+
+    if config.gradient_clip > 0:
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
+
+    if config.use_pcgrad and pcgrad_optimizer is not None:
+        pcgrad_optimizer.step()
+    elif scaler is not None:
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        optimizer.step()
+
+    scheduler.step()
+    optimizer.zero_grad()
+
+
+def _flush_remaining_gradients(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    optimizer: Any,
+    accum_steps: int,
+) -> None:
+    """Flush any accumulated gradients at end of epoch."""
+    import torch
+
+    if accum_steps > 0:
+        if config.gradient_clip > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
+        optimizer.step()
+        optimizer.zero_grad()
+
+
+def _train_one_epoch(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    train_loader: Any,
+    loss_fns: dict[str, Any],
+    optimizer: Any,
+    pcgrad_optimizer: Any | None,
+    scheduler: Any,
+    scaler: Any | None,
+    device: Any,
+    amp_dtype: Any,
+    ema: Any | None,
+    global_epoch: int,
+    phase: int,
+    phase_epoch: int,
+    phase_total: int,
+) -> float:
+    """Run one training epoch, return average train loss."""
+    import torch
+    from tqdm import tqdm
+
+    model.train()
+    train_loss = 0.0
+    accum_steps = 0
+    optimizer.zero_grad()
+
+    desc = f"Phase {phase} - Epoch {phase_epoch}/{phase_total}"
+    for _batch_idx, batch in enumerate(tqdm(train_loader, desc=desc)):
+        pixel_values = batch["pixel_values"].to(device)
+        spatial_shapes = batch["spatial_shapes"].to(device)
+        labels_list = batch["labels"]
+
+        with torch.amp.autocast(
+            device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision
+        ):
+            outputs = model(pixel_values, spatial_shapes)
+
+            if config.use_pcgrad:
+                use_rank = config.use_ranking_loss if phase == 2 else False
+                losses = _compute_pcgrad_losses(
+                    outputs,
+                    labels_list,
+                    loss_fns,
+                    config,
+                    device,
+                    use_ranking=use_rank,
+                )
+            else:
+                loss, _ = _compute_loss(
+                    outputs,
+                    labels_list,
+                    loss_fns,
+                    config,
+                    device,
+                    use_ranking=config.use_ranking_loss,
+                )
+                loss = loss / config.gradient_accumulation_steps
+
+        train_loss += _backward_step(
+            config,
+            pcgrad_optimizer,
+            scaler,
+            losses if config.use_pcgrad else loss,
+            is_pcgrad=config.use_pcgrad,
+        )
+
+        accum_steps += 1
+
+        if accum_steps >= config.gradient_accumulation_steps:
+            _optimizer_step(
+                config,
+                model,
+                optimizer,
+                pcgrad_optimizer,
+                scaler,
+                scheduler,
+            )
+            accum_steps = 0
+
+            if ema is not None and global_epoch >= config.ema_start_epoch:
+                ema.update()
+
+    _flush_remaining_gradients(config, model, optimizer, accum_steps)
+
+    return train_loss * config.gradient_accumulation_steps / len(train_loader)
+
+
+def _validate(
+    model: Any,
+    loader: Any,
+    loss_fns: dict[str, Any],
+    config: SigLIP2TrainingConfigV2,
+    device: Any,
+    amp_dtype: Any,
+) -> dict[str, float]:
+    """Validate model and compute metrics."""
+    import numpy as np
+    import torch
+    from scipy.stats import spearmanr
+
+    model.eval()
+    all_preds = {dim: [] for dim in _IQA_DIMENSIONS}
+    all_labels = {dim: [] for dim in _IQA_DIMENSIONS}
+    total_loss = 0.0
+
+    with torch.no_grad():
+        for batch in loader:
+            pixel_values = batch["pixel_values"].to(device)
+            spatial_shapes = batch["spatial_shapes"].to(device)
+            labels_list = batch["labels"]
+
+            with torch.amp.autocast(
+                device_type="cuda",
+                dtype=amp_dtype,
+                enabled=config.use_mixed_precision,
+            ):
+                outputs = model(pixel_values, spatial_shapes)
+                loss, _ = _compute_loss(
+                    outputs,
+                    labels_list,
+                    loss_fns,
+                    config,
+                    device,
+                    use_ranking=False,
+                )
+
+            total_loss += loss.item()
+
+            for dim in _IQA_DIMENSIONS:
+                if config.uncertainty:
+                    preds = outputs[dim]["mu"].cpu().numpy()
                 else:
-                    loss = nin_loss
+                    preds = outputs[dim].cpu().numpy()
 
-            losses.append(loss)
+                all_preds[dim].extend(preds)
+                all_labels[dim].extend([lbl[dim] for lbl in labels_list])
 
-        total_loss = sum(losses) / len(losses)
-        return total_loss, losses
+    srcc = {}
+    for dim in _IQA_DIMENSIONS:
+        srcc[dim], _ = spearmanr(all_preds[dim], all_labels[dim])
+        if np.isnan(srcc[dim]):
+            srcc[dim] = 0.0
 
-    def validate(loader: DataLoader, use_ema_model: bool = False) -> dict[str, float]:
-        """Validate model and compute metrics."""
-        model.eval()
-        all_preds = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        all_labels = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        total_loss = 0.0
+    vquala = compute_vquala(srcc["overall"], srcc["sharpness"], srcc["color"])
 
-        with torch.no_grad():
-            for batch in loader:
-                pixel_values = batch["pixel_values"].to(device)
-                spatial_shapes = batch["spatial_shapes"].to(device)
-                labels_list = batch["labels"]
+    return {
+        "loss": total_loss / len(loader),
+        "srcc_overall": srcc["overall"],
+        "srcc_sharpness": srcc["sharpness"],
+        "srcc_color": srcc["color"],
+        "vquala": vquala,
+    }
 
-                # TIER 3: Mixed precision inference
-                with torch.amp.autocast(
-                    device_type="cuda",
-                    dtype=amp_dtype,
-                    enabled=config.use_mixed_precision,
-                ):
-                    outputs = model(pixel_values, spatial_shapes)
-                    loss, _ = compute_loss(outputs, labels_list, use_ranking=False)
 
-                total_loss += loss.item()
+def _log_epoch_metrics(
+    phase: int,
+    phase_epoch: int,
+    phase_total: int,
+    global_epoch: int | None,
+    train_loss: float,
+    val_metrics: dict[str, float],
+    current_lr: float,
+    epoch_time: float,
+) -> None:
+    """Print epoch training metrics."""
+    epoch_label = f"Phase {phase} - Epoch {phase_epoch}/{phase_total}"
+    if global_epoch is not None:
+        epoch_label += f" (Global: {global_epoch})"
+    print(f"\n{epoch_label}:")
+    print(f"  Train Loss: {train_loss:.4f}")
+    print(f"  Val Loss: {val_metrics['loss']:.4f}")
+    print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
+    print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
+    print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
+    print(f"  VQualA: {val_metrics['vquala']:.4f}")
+    print(f"  LR: {current_lr:.2e}, Time: {epoch_time:.1f}s")
 
-                for dim in ["overall", "sharpness", "color"]:
-                    if config.uncertainty:
-                        preds = outputs[dim]["mu"].cpu().numpy()
-                    else:
-                        preds = outputs[dim].cpu().numpy()
 
-                    all_preds[dim].extend(preds)
-                    all_labels[dim].extend([lbl[dim] for lbl in labels_list])
+def _update_best_checkpoint(
+    model: Any,
+    val_metrics: dict[str, float],
+    epoch: int,
+    phase: int,
+    config: SigLIP2TrainingConfigV2,
+    output_dir: Path,
+    state: _TrainingState,
+    ema: Any | None = None,
+    ema_active: bool = False,
+) -> None:
+    """Check if current metrics are best and save checkpoint if so."""
+    import copy
 
-        import numpy as np
+    import torch
 
-        srcc = {}
-        for dim in ["overall", "sharpness", "color"]:
-            srcc[dim], _ = spearmanr(all_preds[dim], all_labels[dim])
-            if np.isnan(srcc[dim]):
-                srcc[dim] = 0.0
+    if val_metrics["vquala"] <= state.best_vquala:
+        state.patience_counter += 1
+        return
 
-        vquala = compute_vquala(srcc["overall"], srcc["sharpness"], srcc["color"])
+    state.best_vquala = val_metrics["vquala"]
 
-        return {
-            "loss": total_loss / len(loader),
-            "srcc_overall": srcc["overall"],
-            "srcc_sharpness": srcc["sharpness"],
-            "srcc_color": srcc["color"],
-            "vquala": vquala,
-        }
+    if ema is not None and ema_active:
+        ema.apply_shadow()
+        model_state = copy.deepcopy(model.state_dict())
+        ema.restore()
+    else:
+        model_state = model.state_dict()
 
-    # Training state
-    history = []
-    best_vquala = 0.0
-    best_checkpoint = None
-    patience_counter = 0
+    state.best_checkpoint = {
+        "epoch": epoch,
+        "phase": phase,
+        "model_state_dict": model_state,
+        "config": config.to_dict(),
+        "metrics": val_metrics,
+    }
+    if ema_active:
+        state.best_checkpoint["ema_active"] = True
 
-    output_dir = Path(config.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    torch.save(state.best_checkpoint, output_dir / _BEST_MODEL_FILENAME)
+    print("  -> New best VQualA! Saved checkpoint.")
+    state.patience_counter = 0
 
-    # Initialize EMA (TIER 2)
-    ema = EMA(model, decay=config.ema_decay) if config.use_ema else None
 
-    # ========================================================================
-    # Phase 1: Head Warmup (Frozen Backbone)
-    # ========================================================================
+# ============================================================================
+# Phase orchestrators
+# ============================================================================
+
+
+def _run_phase1_warmup(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    train_loader: Any,
+    val_loader: Any,
+    loss_fns: dict[str, Any],
+    device: Any,
+    amp_dtype: Any,
+    scaler: Any | None,
+    output_dir: Path,
+    state: _TrainingState,
+) -> None:
+    """Phase 1: Head warmup with frozen backbone."""
+    import torch
 
     print("\n" + "=" * 70)
     print("Phase 1: Head Warmup (Frozen Backbone)")
@@ -1029,16 +1514,15 @@ def train_siglip2_iqa_v2(
 
     model.freeze_backbone()
 
+    # S6973: Pass lr and weight_decay explicitly
     optimizer = torch.optim.AdamW(
         [p for p in model.parameters() if p.requires_grad],
         lr=config.phase1_lr,
         weight_decay=config.weight_decay,
     )
 
-    if config.use_pcgrad:
-        pcgrad_optimizer = PCGrad(optimizer)
+    pcgrad_optimizer = _create_pcgrad_wrapper(optimizer) if config.use_pcgrad else None
 
-    # CosineAnnealingLR for Phase 1 (TIER 1)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
         T_max=config.phase1_epochs * len(train_loader),
@@ -1047,100 +1531,30 @@ def train_siglip2_iqa_v2(
 
     for epoch in range(config.phase1_epochs):
         epoch_start = time.time()
-        model.train()
-        train_loss = 0.0
-        accum_steps = 0
 
-        optimizer.zero_grad()
+        train_loss = _train_one_epoch(
+            config,
+            model,
+            train_loader,
+            loss_fns,
+            optimizer,
+            pcgrad_optimizer,
+            scheduler,
+            scaler,
+            device,
+            amp_dtype,
+            ema=None,
+            global_epoch=epoch + 1,
+            phase=1,
+            phase_epoch=epoch + 1,
+            phase_total=config.phase1_epochs,
+        )
 
-        for batch_idx, batch in enumerate(
-            tqdm(
-                train_loader, desc=f"Phase 1 - Epoch {epoch + 1}/{config.phase1_epochs}"
-            )
-        ):
-            pixel_values = batch["pixel_values"].to(device)
-            spatial_shapes = batch["spatial_shapes"].to(device)
-            labels_list = batch["labels"]
-
-            # TIER 3: Mixed precision forward pass
-            with torch.amp.autocast(
-                device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision
-            ):
-                outputs = model(pixel_values, spatial_shapes)
-
-                if config.use_pcgrad:
-                    # PCGrad: separate losses per dimension
-                    losses = []
-                    for dim in ["overall", "sharpness", "color"]:
-                        target = torch.tensor(
-                            [lbl[dim] for lbl in labels_list],
-                            device=device,
-                            dtype=torch.float32,
-                        )
-                        if config.uncertainty:
-                            loss = gnll_criterion(
-                                outputs[dim]["mu"], outputs[dim]["sigma_sq"], target
-                            )
-                        else:
-                            loss = nin_criterion(outputs[dim], target)
-                        losses.append(loss / config.gradient_accumulation_steps)
-                else:
-                    loss, _ = compute_loss(
-                        outputs, labels_list, use_ranking=config.use_ranking_loss
-                    )
-                    loss = loss / config.gradient_accumulation_steps
-
-            # Backward pass (outside autocast, handles scaler for FP16)
-            if config.use_pcgrad:
-                pcgrad_optimizer.pc_backward(losses)
-                train_loss += sum(loss_val.item() for loss_val in losses)
-            else:
-                if scaler is not None:
-                    scaler.scale(loss).backward()
-                else:
-                    loss.backward()
-                train_loss += loss.item()
-
-            accum_steps += 1
-
-            # Gradient accumulation step
-            if accum_steps >= config.gradient_accumulation_steps:
-                if scaler is not None:
-                    # FP16: unscale before clipping
-                    scaler.unscale_(optimizer)
-
-                if config.gradient_clip > 0:
-                    torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), config.gradient_clip
-                    )
-
-                if config.use_pcgrad:
-                    pcgrad_optimizer.step()
-                elif scaler is not None:
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
-                    optimizer.step()
-
-                scheduler.step()
-                optimizer.zero_grad()
-                accum_steps = 0
-
-        # Handle remaining gradients
-        if accum_steps > 0:
-            if config.gradient_clip > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
-            optimizer.step()
-            optimizer.zero_grad()
-
-        train_loss = train_loss * config.gradient_accumulation_steps / len(train_loader)
-
-        # Validation
-        val_metrics = validate(val_loader)
+        val_metrics = _validate(model, val_loader, loss_fns, config, device, amp_dtype)
         epoch_time = time.time() - epoch_start
         current_lr = optimizer.param_groups[0]["lr"]
 
-        history.append(
+        state.history.append(
             {
                 "phase": 1,
                 "epoch": epoch + 1,
@@ -1151,33 +1565,42 @@ def train_siglip2_iqa_v2(
             }
         )
 
-        print(f"\nPhase 1 - Epoch {epoch + 1}/{config.phase1_epochs}:")
-        print(f"  Train Loss: {train_loss:.4f}")
-        print(f"  Val Loss: {val_metrics['loss']:.4f}")
-        print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
-        print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
-        print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
-        print(f"  VQualA: {val_metrics['vquala']:.4f}")
-        print(f"  LR: {current_lr:.2e}, Time: {epoch_time:.1f}s")
+        _log_epoch_metrics(
+            phase=1,
+            phase_epoch=epoch + 1,
+            phase_total=config.phase1_epochs,
+            global_epoch=None,
+            train_loss=train_loss,
+            val_metrics=val_metrics,
+            current_lr=current_lr,
+            epoch_time=epoch_time,
+        )
 
-        if val_metrics["vquala"] > best_vquala:
-            best_vquala = val_metrics["vquala"]
-            best_checkpoint = {
-                "epoch": epoch + 1,
-                "phase": 1,
-                "model_state_dict": model.state_dict(),
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-            }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print("  ✓ New best VQualA! Saved checkpoint.")
-            patience_counter = 0
-        else:
-            patience_counter += 1
+        _update_best_checkpoint(
+            model,
+            val_metrics,
+            epoch=epoch + 1,
+            phase=1,
+            config=config,
+            output_dir=output_dir,
+            state=state,
+        )
 
-    # ========================================================================
-    # Phase 2: Full Fine-Tuning with LLRD (TIER 2)
-    # ========================================================================
+
+def _run_phase2_finetuning(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    train_loader: Any,
+    val_loader: Any,
+    loss_fns: dict[str, Any],
+    device: Any,
+    amp_dtype: Any,
+    scaler: Any | None,
+    output_dir: Path,
+    state: _TrainingState,
+) -> None:
+    """Phase 2: Full fine-tuning with LLRD."""
+    import torch
 
     print("\n" + "=" * 70)
     print("Phase 2: Full Fine-Tuning with LLRD")
@@ -1185,17 +1608,138 @@ def train_siglip2_iqa_v2(
 
     model.unfreeze_backbone()
 
-    # Create optimizer with LLRD (TIER 2)
+    optimizer = _create_phase2_optimizer(config, model)
+    pcgrad_optimizer = _create_pcgrad_wrapper(optimizer) if config.use_pcgrad else None
+
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer,
+        T_max=config.phase2_epochs * len(train_loader),
+        eta_min=config.min_lr,
+    )
+
+    ema = None
+    if config.use_ema:
+        ema = _create_ema(model, decay=config.ema_decay)
+        ema.register()
+        print("  EMA registered")
+
+    for epoch in range(config.phase2_epochs):
+        global_epoch = config.phase1_epochs + epoch + 1
+        epoch_start = time.time()
+
+        train_loss = _train_one_epoch(
+            config,
+            model,
+            train_loader,
+            loss_fns,
+            optimizer,
+            pcgrad_optimizer,
+            scheduler,
+            scaler,
+            device,
+            amp_dtype,
+            ema=ema,
+            global_epoch=global_epoch,
+            phase=2,
+            phase_epoch=epoch + 1,
+            phase_total=config.phase2_epochs,
+        )
+
+        val_metrics = _validate_with_optional_ema(
+            model,
+            val_loader,
+            loss_fns,
+            config,
+            device,
+            amp_dtype,
+            ema,
+            global_epoch,
+        )
+
+        epoch_time = time.time() - epoch_start
+        current_lr = optimizer.param_groups[0]["lr"]
+
+        state.history.append(
+            {
+                "phase": 2,
+                "epoch": global_epoch,
+                "train_loss": train_loss,
+                **val_metrics,
+                "lr": current_lr,
+                "time": epoch_time,
+                "ema_active": ema is not None
+                and global_epoch >= config.ema_start_epoch,
+            }
+        )
+
+        _log_epoch_metrics(
+            phase=2,
+            phase_epoch=epoch + 1,
+            phase_total=config.phase2_epochs,
+            global_epoch=global_epoch,
+            train_loss=train_loss,
+            val_metrics=val_metrics,
+            current_lr=current_lr,
+            epoch_time=epoch_time,
+        )
+
+        ema_active = ema is not None and global_epoch >= config.ema_start_epoch
+        _update_best_checkpoint(
+            model,
+            val_metrics,
+            epoch=global_epoch,
+            phase=2,
+            config=config,
+            output_dir=output_dir,
+            state=state,
+            ema=ema,
+            ema_active=ema_active,
+        )
+
+        _save_periodic_checkpoint(
+            config,
+            model,
+            optimizer,
+            val_metrics,
+            global_epoch,
+            epoch,
+            output_dir,
+        )
+
+        if state.patience_counter >= config.early_stopping_patience:
+            print(
+                f"\nEarly stopping triggered after {state.patience_counter}"
+                " epochs without improvement."
+            )
+            print(f"Best VQualA achieved: {state.best_vquala:.4f}")
+            break
+
+        if (
+            val_metrics["vquala"] >= config.target_vquala
+            and val_metrics["srcc_overall"] >= config.target_srcc
+        ):
+            print("  -> Target metrics achieved! Continuing to maximize performance...")
+
+
+def _create_phase2_optimizer(config: SigLIP2TrainingConfigV2, model: Any) -> Any:
+    """Create optimizer for Phase 2 with optional LLRD."""
+    import torch
+
+    # S6973: Pass lr and weight_decay explicitly to all optimizer constructors
     if config.use_llrd:
-        param_groups = get_llrd_param_groups(
+        param_groups = _get_llrd_param_groups(
             model,
             base_lr=config.phase2_lr,
             llrd_decay=config.llrd_decay,
             weight_decay=config.weight_decay,
         )
-        optimizer = torch.optim.AdamW(param_groups)
+        optimizer = torch.optim.AdamW(
+            param_groups,
+            lr=config.phase2_lr,
+            weight_decay=config.weight_decay,
+        )
         print(f"  LLRD enabled: {len(param_groups)} parameter groups")
-        for pg in param_groups[:3]:  # Print first few
+        for pg in param_groups[:3]:
             print(f"    {pg['name']}: lr={pg['lr']:.2e}")
         print("    ...")
     else:
@@ -1204,298 +1748,164 @@ def train_siglip2_iqa_v2(
                 {"params": model.backbone.parameters(), "lr": config.phase2_lr * 0.1},
                 {"params": model.heads.parameters(), "lr": config.phase2_lr},
             ],
+            lr=config.phase2_lr,
             weight_decay=config.weight_decay,
         )
 
-    if config.use_pcgrad:
-        pcgrad_optimizer = PCGrad(optimizer)
+    return optimizer
 
-    # CosineAnnealingLR for Phase 2 (TIER 1)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer,
-        T_max=config.phase2_epochs * len(train_loader),
-        eta_min=config.min_lr,
-    )
 
-    # Initialize EMA after Phase 1
-    if ema is not None:
-        ema.register()
-        print("  EMA registered")
+def _validate_with_optional_ema(
+    model: Any,
+    val_loader: Any,
+    loss_fns: dict[str, Any],
+    config: SigLIP2TrainingConfigV2,
+    device: Any,
+    amp_dtype: Any,
+    ema: Any | None,
+    global_epoch: int,
+) -> dict[str, float]:
+    """Validate using EMA weights if available and in EMA phase."""
+    if ema is not None and global_epoch >= config.ema_start_epoch:
+        ema.apply_shadow()
+        val_metrics = _validate(model, val_loader, loss_fns, config, device, amp_dtype)
+        ema.restore()
+        print("  (EMA model used for validation)")
+    else:
+        val_metrics = _validate(model, val_loader, loss_fns, config, device, amp_dtype)
+    return val_metrics
 
-    for epoch in range(config.phase2_epochs):
-        global_epoch = config.phase1_epochs + epoch + 1
-        epoch_start = time.time()
-        model.train()
-        train_loss = 0.0
-        accum_steps = 0
 
-        optimizer.zero_grad()
+def _save_periodic_checkpoint(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    optimizer: Any,
+    val_metrics: dict[str, float],
+    global_epoch: int,
+    phase_epoch: int,
+    output_dir: Path,
+) -> None:
+    """Save periodic checkpoint every N epochs."""
+    import torch
 
-        for batch_idx, batch in enumerate(
-            tqdm(
-                train_loader, desc=f"Phase 2 - Epoch {epoch + 1}/{config.phase2_epochs}"
-            )
-        ):
+    if (phase_epoch + 1) % config.save_every_n_epochs == 0:
+        checkpoint = {
+            "epoch": global_epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "config": config.to_dict(),
+            "metrics": val_metrics,
+        }
+        torch.save(checkpoint, output_dir / f"siglip2_iqa_epoch{global_epoch}.pt")
+
+
+def _run_posthoc_calibration(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    val_loader: Any,
+    device: Any,
+    amp_dtype: Any,
+    output_dir: Path,
+    state: _TrainingState,
+) -> None:
+    """Post-hoc STD scaling calibration on validation set."""
+    import numpy as np
+    import torch
+    from scipy.stats import spearmanr
+
+    print("\n" + "=" * 70)
+    print("Post-hoc STD Scaling Calibration")
+    print("=" * 70)
+
+    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME)
+    model.load_state_dict(best_state["model_state_dict"])
+    model.eval()
+
+    predictions = {dim: [] for dim in _IQA_DIMENSIONS}
+    uncertainties = {dim: [] for dim in _IQA_DIMENSIONS}
+    targets = {dim: [] for dim in _IQA_DIMENSIONS}
+
+    with torch.no_grad():
+        for batch in val_loader:
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
             labels_list = batch["labels"]
 
-            # TIER 3: Mixed precision forward pass
             with torch.amp.autocast(
-                device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision
+                device_type="cuda",
+                dtype=amp_dtype,
+                enabled=config.use_mixed_precision,
             ):
                 outputs = model(pixel_values, spatial_shapes)
 
-                # TIER 2: Use PCGrad with gradient accumulation
-                if config.use_pcgrad:
-                    losses = []
-                    for dim in ["overall", "sharpness", "color"]:
-                        target = torch.tensor(
-                            [lbl[dim] for lbl in labels_list],
-                            device=device,
-                            dtype=torch.float32,
-                        )
-                        if config.uncertainty:
-                            gnll_loss = gnll_criterion(
-                                outputs[dim]["mu"], outputs[dim]["sigma_sq"], target
-                            )
-                            if config.use_ranking_loss:
-                                rank_loss = ranking_criterion(
-                                    outputs[dim]["mu"], target
-                                )
-                                loss = (
-                                    gnll_loss + config.ranking_loss_weight * rank_loss
-                                )
-                            else:
-                                loss = gnll_loss
-                        else:
-                            nin_loss = nin_criterion(outputs[dim], target)
-                            if config.use_ranking_loss:
-                                rank_loss = ranking_criterion(outputs[dim], target)
-                                loss = nin_loss + config.ranking_loss_weight * rank_loss
-                            else:
-                                loss = nin_loss
+            for dim in _IQA_DIMENSIONS:
+                predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
+                uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
+                targets[dim].extend([lbl[dim] for lbl in labels_list])
 
-                        losses.append(loss / config.gradient_accumulation_steps)
-                else:
-                    loss, _ = compute_loss(
-                        outputs, labels_list, use_ranking=config.use_ranking_loss
-                    )
-                    loss = loss / config.gradient_accumulation_steps
+    calibration_temps = {}
+    for dim in _IQA_DIMENSIONS:
+        preds = np.array(predictions[dim])
+        uncerts = np.array(uncertainties[dim])
+        targs = np.array(targets[dim])
 
-            # Backward pass (outside autocast, handles scaler for FP16)
-            if config.use_pcgrad:
-                pcgrad_optimizer.pc_backward(losses)
-                train_loss += sum(loss_val.item() for loss_val in losses)
-            else:
-                if scaler is not None:
-                    scaler.scale(loss).backward()
-                else:
-                    loss.backward()
-                train_loss += loss.item()
+        optimal_temp = _find_optimal_temperature(preds, uncerts, targs)
+        calibration_temps[dim] = optimal_temp
 
-            accum_steps += 1
+        srcc, _ = spearmanr(preds, targs)
+        print(f"  {dim}: T={optimal_temp:.3f}, SRCC={srcc:.4f}")
 
-            if accum_steps >= config.gradient_accumulation_steps:
-                if scaler is not None:
-                    # FP16: unscale before clipping
-                    scaler.unscale_(optimizer)
+    model.set_calibration_temps(calibration_temps)
+    state.best_checkpoint["model_state_dict"] = model.state_dict()
+    state.best_checkpoint["calibration_temps"] = calibration_temps
+    state.calibration_temps = calibration_temps
 
-                if config.gradient_clip > 0:
-                    torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), config.gradient_clip
-                    )
+    torch.save(state.best_checkpoint, output_dir / _BEST_MODEL_FILENAME)
+    print("  -> Saved calibrated model")
 
-                if config.use_pcgrad:
-                    pcgrad_optimizer.step()
-                elif scaler is not None:
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
-                    optimizer.step()
 
-                scheduler.step()
-                optimizer.zero_grad()
-                accum_steps = 0
+def _find_optimal_temperature(preds: Any, uncerts: Any, targs: Any) -> float:
+    """Find optimal calibration temperature via NLL minimization."""
+    import numpy as np
+    from scipy.optimize import minimize_scalar
 
-                # EMA update (TIER 2)
-                if ema is not None and global_epoch >= config.ema_start_epoch:
-                    ema.update()
-
-        # Handle remaining gradients
-        if accum_steps > 0:
-            if config.gradient_clip > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
-            optimizer.step()
-            optimizer.zero_grad()
-
-        train_loss = train_loss * config.gradient_accumulation_steps / len(train_loader)
-
-        # Validation (use EMA model if available and in EMA phase)
-        if ema is not None and global_epoch >= config.ema_start_epoch:
-            ema.apply_shadow()
-            val_metrics = validate(val_loader, use_ema_model=True)
-            ema.restore()
-            print("  (EMA model used for validation)")
-        else:
-            val_metrics = validate(val_loader)
-
-        epoch_time = time.time() - epoch_start
-        current_lr = optimizer.param_groups[0]["lr"]
-
-        history.append(
-            {
-                "phase": 2,
-                "epoch": global_epoch,
-                "train_loss": train_loss,
-                **val_metrics,
-                "lr": current_lr,
-                "time": epoch_time,
-                "ema_active": ema is not None
-                and global_epoch >= config.ema_start_epoch,
-            }
+    def negative_log_likelihood(
+        temperature, _uncerts=uncerts, _targs=targs, _preds=preds
+    ):
+        scaled_sigma_sq = temperature * _uncerts
+        return np.mean(
+            0.5 * np.log(scaled_sigma_sq + 1e-8)
+            + (_targs - _preds) ** 2 / (2 * scaled_sigma_sq + 1e-8)
         )
 
-        print(
-            f"\nPhase 2 - Epoch {epoch + 1}/{config.phase2_epochs} (Global: {global_epoch}):"
-        )
-        print(f"  Train Loss: {train_loss:.4f}")
-        print(f"  Val Loss: {val_metrics['loss']:.4f}")
-        print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
-        print(f"  SRCC Sharpness: {val_metrics['srcc_sharpness']:.4f}")
-        print(f"  SRCC Color: {val_metrics['srcc_color']:.4f}")
-        print(f"  VQualA: {val_metrics['vquala']:.4f}")
-        print(f"  LR: {current_lr:.2e}, Time: {epoch_time:.1f}s")
+    result = minimize_scalar(
+        negative_log_likelihood, bounds=(0.1, 10.0), method="bounded"
+    )
+    return result.x
 
-        if val_metrics["vquala"] > best_vquala:
-            best_vquala = val_metrics["vquala"]
 
-            # Save EMA weights if active
-            if ema is not None and global_epoch >= config.ema_start_epoch:
-                ema.apply_shadow()
-                model_state = copy.deepcopy(model.state_dict())
-                ema.restore()
-            else:
-                model_state = model.state_dict()
+def _run_final_evaluation(
+    config: SigLIP2TrainingConfigV2,
+    model: Any,
+    test_dataset: Any,
+    device: Any,
+    amp_dtype: Any,
+    output_dir: Path,
+    state: _TrainingState,
+) -> tuple[dict[str, float], bool]:
+    """Evaluate best model on test set.
 
-            best_checkpoint = {
-                "epoch": global_epoch,
-                "phase": 2,
-                "model_state_dict": model_state,
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-                "ema_active": ema is not None
-                and global_epoch >= config.ema_start_epoch,
-            }
-            torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print("  ✓ New best VQualA! Saved checkpoint.")
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        # Periodic checkpoint
-        if (epoch + 1) % config.save_every_n_epochs == 0:
-            checkpoint = {
-                "epoch": global_epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "config": config.to_dict(),
-                "metrics": val_metrics,
-            }
-            torch.save(checkpoint, output_dir / f"siglip2_iqa_epoch{global_epoch}.pt")
-
-        # Early stopping
-        if patience_counter >= config.early_stopping_patience:
-            print(
-                f"\nEarly stopping triggered after {patience_counter} epochs without improvement."
-            )
-            print(f"Best VQualA achieved: {best_vquala:.4f}")
-            break
-
-        # Log if target achieved
-        if (
-            val_metrics["vquala"] >= config.target_vquala
-            and val_metrics["srcc_overall"] >= config.target_srcc
-        ):
-            print("  ✓ Target metrics achieved! Continuing to maximize performance...")
-
-    # ========================================================================
-    # Post-hoc Calibration
-    # ========================================================================
-
-    if config.uncertainty:
-        print("\n" + "=" * 70)
-        print("Post-hoc STD Scaling Calibration")
-        print("=" * 70)
-
-        import numpy as np
-
-        best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
-        model.load_state_dict(best_state["model_state_dict"])
-        model.eval()
-
-        predictions = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        uncertainties = {dim: [] for dim in ["overall", "sharpness", "color"]}
-        targets = {dim: [] for dim in ["overall", "sharpness", "color"]}
-
-        with torch.no_grad():
-            for batch in val_loader:
-                pixel_values = batch["pixel_values"].to(device)
-                spatial_shapes = batch["spatial_shapes"].to(device)
-                labels_list = batch["labels"]
-
-                # TIER 3: Mixed precision inference
-                with torch.amp.autocast(
-                    device_type="cuda",
-                    dtype=amp_dtype,
-                    enabled=config.use_mixed_precision,
-                ):
-                    outputs = model(pixel_values, spatial_shapes)
-
-                for dim in ["overall", "sharpness", "color"]:
-                    predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
-                    uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
-                    targets[dim].extend([lbl[dim] for lbl in labels_list])
-
-        calibration_temps = {}
-        for dim in ["overall", "sharpness", "color"]:
-            preds = np.array(predictions[dim])
-            uncerts = np.array(uncertainties[dim])
-            targs = np.array(targets[dim])
-
-            def negative_log_likelihood(
-                temperature, _uncerts=uncerts, _targs=targs, _preds=preds
-            ):
-                scaled_sigma_sq = temperature * _uncerts
-                return np.mean(
-                    0.5 * np.log(scaled_sigma_sq + 1e-8)
-                    + (_targs - _preds) ** 2 / (2 * scaled_sigma_sq + 1e-8)
-                )
-
-            result = minimize_scalar(
-                negative_log_likelihood, bounds=(0.1, 10.0), method="bounded"
-            )
-            optimal_temperature = result.x
-            calibration_temps[dim] = optimal_temperature
-
-            srcc, _ = spearmanr(preds, targs)
-            print(f"  {dim}: T={optimal_temperature:.3f}, SRCC={srcc:.4f}")
-
-        model.set_calibration_temps(calibration_temps)
-        best_checkpoint["model_state_dict"] = model.state_dict()
-        best_checkpoint["calibration_temps"] = calibration_temps
-        torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-        print("  ✓ Saved calibrated model")
-
-    # ========================================================================
-    # Final Test Evaluation
-    # ========================================================================
+    Returns:
+        Tuple of (test_metrics, target_achieved).
+    """
+    import torch
+    from torch.utils.data import DataLoader
 
     print("\n" + "=" * 70)
     print("Final Evaluation on Test Set")
     print("=" * 70)
 
-    best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
+    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME)
     model.load_state_dict(best_state["model_state_dict"])
 
     test_loader = DataLoader(
@@ -1503,10 +1913,11 @@ def train_siglip2_iqa_v2(
         batch_size=config.batch_size,
         shuffle=False,
         num_workers=4,
-        collate_fn=custom_collate_fn,
+        collate_fn=_custom_collate_fn,
     )
 
-    test_metrics = validate(test_loader)
+    loss_fns = _create_loss_functions(config)
+    test_metrics = _validate(model, test_loader, loss_fns, config, device, amp_dtype)
 
     print("\nTest Set Results:")
     print(f"  SRCC Overall:   {test_metrics['srcc_overall']:.4f}")
@@ -1520,18 +1931,25 @@ def train_siglip2_iqa_v2(
     )
 
     if target_achieved:
-        print("\n✓ TARGET ACHIEVED! Model ready for production.")
+        print("\n-> TARGET ACHIEVED! Model ready for production.")
     else:
-        print(f"\n✗ Target not achieved. Best VQualA: {best_vquala:.4f}")
+        print(f"\n-> Target not achieved. Best VQualA: {state.best_vquala:.4f}")
         print(f"  Gap to target: {config.target_vquala - test_metrics['vquala']:.4f}")
 
-    # ========================================================================
-    # Save Results
-    # ========================================================================
+    return test_metrics, target_achieved
 
-    results = {
+
+def _save_training_results(
+    config: SigLIP2TrainingConfigV2,
+    state: _TrainingState,
+    test_metrics: dict[str, float],
+    target_achieved: bool,
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Serialize training results to JSON and return results dict."""
+    results: dict[str, Any] = {
         "config": config.to_dict(),
-        "best_vquala": best_vquala,
+        "best_vquala": state.best_vquala,
         "test_results": {
             "srcc_overall": test_metrics["srcc_overall"],
             "srcc_sharpness": test_metrics["srcc_sharpness"],
@@ -1539,53 +1957,63 @@ def train_siglip2_iqa_v2(
             "vquala": test_metrics["vquala"],
         },
         "target_achieved": target_achieved,
-        "history": history,
-        "checkpoint_path": str(output_dir / "siglip2_iqa_best.pt"),
+        "history": state.history,
+        "checkpoint_path": str(output_dir / _BEST_MODEL_FILENAME),
         "timestamp": datetime.now().isoformat(),
-        "improvements": {
-            "tier1": [
-                "CosineAnnealingLR (replaces OneCycleLR)",
-                f"Gradient accumulation ({config.gradient_accumulation_steps} steps)",
-                f"Extended training ({config.total_epochs} epochs)",
-                f"Higher resolution ({config.max_num_patches} patches)",
-                f"Early stopping patience ({config.early_stopping_patience})",
-            ],
-            "tier2": [
-                f"LLRD ({config.llrd_decay} decay per layer)"
-                if config.use_llrd
-                else "LLRD disabled",
-                f"MarginRankingLoss (λ={config.ranking_loss_weight})"
-                if config.use_ranking_loss
-                else "Ranking loss disabled",
-                "PCGrad re-enabled" if config.use_pcgrad else "PCGrad disabled",
-                f"EMA (start epoch {config.ema_start_epoch})"
-                if config.use_ema
-                else "EMA disabled",
-            ],
-            "tier3": [
-                "Gradient checkpointing"
-                if config.use_gradient_checkpointing
-                else "Gradient checkpointing disabled",
-                f"Mixed precision ({config.mixed_precision_dtype})"
-                if config.use_mixed_precision
-                else "Mixed precision disabled",
-            ],
-        },
+        "improvements": _build_improvements_summary(config),
     }
 
-    if config.uncertainty:
-        results["calibration_temps"] = calibration_temps
+    if state.calibration_temps is not None:
+        results["calibration_temps"] = state.calibration_temps
 
     results_path = output_dir / "training_results.json"
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\nResults saved to: {results_path}")
-    print(f"Best checkpoint: {output_dir / 'siglip2_iqa_best.pt'}")
-
-    results_volume.commit()
+    print(f"Best checkpoint: {output_dir / _BEST_MODEL_FILENAME}")
 
     return results
+
+
+def _build_improvements_summary(
+    config: SigLIP2TrainingConfigV2,
+) -> dict[str, list[str]]:
+    """Build the improvements summary dict for results output."""
+    return {
+        "tier1": [
+            "CosineAnnealingLR (replaces OneCycleLR)",
+            f"Gradient accumulation ({config.gradient_accumulation_steps} steps)",
+            f"Extended training ({config.total_epochs} epochs)",
+            f"Higher resolution ({config.max_num_patches} patches)",
+            f"Early stopping patience ({config.early_stopping_patience})",
+        ],
+        "tier2": [
+            f"LLRD ({config.llrd_decay} decay per layer)"
+            if config.use_llrd
+            else "LLRD disabled",
+            f"MarginRankingLoss (lambda={config.ranking_loss_weight})"
+            if config.use_ranking_loss
+            else "Ranking loss disabled",
+            "PCGrad re-enabled" if config.use_pcgrad else "PCGrad disabled",
+            f"EMA (start epoch {config.ema_start_epoch})"
+            if config.use_ema
+            else "EMA disabled",
+        ],
+        "tier3": [
+            "Gradient checkpointing"
+            if config.use_gradient_checkpointing
+            else "Gradient checkpointing disabled",
+            f"Mixed precision ({config.mixed_precision_dtype})"
+            if config.use_mixed_precision
+            else "Mixed precision disabled",
+        ],
+    }
+
+
+# ============================================================================
+# CLI Entrypoint
+# ============================================================================
 
 
 @app.local_entrypoint()
@@ -1623,46 +2051,64 @@ def main(
         no_mixed_precision: Disable mixed precision (TIER 3).
         fp16: Use FP16 instead of BF16 for mixed precision (TIER 3).
     """
-    print("=" * 70)
-    print("SigLIP 2 IQA Training v2.0 (Tier 1+2+3 Improvements)")
-    print("=" * 70)
-    print(f"Test mode: {test}")
-    print(f"Model: {model} ({MODEL_VARIANTS.get(model, 'unknown')})")
-    print(f"Epochs: {epochs if not test else 2}")
-    print(f"Batch size: {batch_size} x {accumulation} = {batch_size * accumulation}")
-    print(f"Max patches: {max_patches}")
-    print(f"LLRD: {not no_llrd}")
-    print(f"Ranking Loss: {not no_ranking_loss}")
-    print(f"PCGrad: {not no_pcgrad}")
-    print(f"EMA: {not no_ema}")
-    print(f"Uncertainty: {not no_uncertainty}")
-    print(f"Gradient Checkpointing: {not no_gradient_checkpointing}")
-    print(f"Mixed Precision: {not no_mixed_precision} ({'fp16' if fp16 else 'bf16'})")
-    print("=" * 70)
-
-    config = SigLIP2TrainingConfigV2(
-        model_variant=model,
-        total_epochs=epochs,
-        phase1_epochs=min(15, epochs // 5),
-        phase2_epochs=epochs - min(15, epochs // 5),
+    # Note: Modal local_entrypoint requires individual parameters, so we
+    # convert to EntrypointConfig internally for config creation.
+    ep_config = EntrypointConfig(
+        test=test,
+        model=model,
+        epochs=epochs,
         batch_size=batch_size,
-        gradient_accumulation_steps=accumulation,
-        max_num_patches=max_patches,
-        use_llrd=not no_llrd,
-        use_ranking_loss=not no_ranking_loss,
-        use_pcgrad=not no_pcgrad,
-        use_ema=not no_ema,
-        uncertainty=not no_uncertainty,
-        use_gradient_checkpointing=not no_gradient_checkpointing,
-        use_mixed_precision=not no_mixed_precision,
-        mixed_precision_dtype="float16" if fp16 else "bfloat16",
+        accumulation=accumulation,
+        max_patches=max_patches,
+        no_llrd=no_llrd,
+        no_ranking_loss=no_ranking_loss,
+        no_pcgrad=no_pcgrad,
+        no_ema=no_ema,
+        no_uncertainty=no_uncertainty,
+        no_gradient_checkpointing=no_gradient_checkpointing,
+        no_mixed_precision=no_mixed_precision,
+        fp16=fp16,
     )
 
+    _print_entrypoint_banner(ep_config)
+
+    config = ep_config.to_training_config()
     result = train_siglip2_iqa_v2.remote(
         config_dict=config.to_dict(),
         test_mode=test,
     )
 
+    _print_training_summary(result)
+
+
+def _print_entrypoint_banner(ep_config: EntrypointConfig) -> None:
+    """Print entrypoint configuration banner."""
+    print("=" * 70)
+    print("SigLIP 2 IQA Training v2.0 (Tier 1+2+3 Improvements)")
+    print("=" * 70)
+    print(f"Test mode: {ep_config.test}")
+    print(
+        f"Model: {ep_config.model} ({MODEL_VARIANTS.get(ep_config.model, 'unknown')})"
+    )
+    print(f"Epochs: {ep_config.epochs if not ep_config.test else 2}")
+    effective = ep_config.batch_size * ep_config.accumulation
+    print(
+        f"Batch size: {ep_config.batch_size} x {ep_config.accumulation} = {effective}"
+    )
+    print(f"Max patches: {ep_config.max_patches}")
+    print(f"LLRD: {not ep_config.no_llrd}")
+    print(f"Ranking Loss: {not ep_config.no_ranking_loss}")
+    print(f"PCGrad: {not ep_config.no_pcgrad}")
+    print(f"EMA: {not ep_config.no_ema}")
+    print(f"Uncertainty: {not ep_config.no_uncertainty}")
+    print(f"Gradient Checkpointing: {not ep_config.no_gradient_checkpointing}")
+    precision_label = "fp16" if ep_config.fp16 else "bf16"
+    print(f"Mixed Precision: {not ep_config.no_mixed_precision} ({precision_label})")
+    print("=" * 70)
+
+
+def _print_training_summary(result: dict[str, Any]) -> None:
+    """Print final training summary after remote execution."""
     print("\n" + "=" * 70)
     print("Training Complete!")
     print("=" * 70)
@@ -1679,11 +2125,12 @@ def main(
             print(f"    - {item}")
 
     if result["target_achieved"]:
-        print("\n✓ Model ready for production!")
+        print("\n-> Model ready for production!")
         print("Next steps:")
         print("  1. Download checkpoint:")
         print(
-            "     modal volume get siglip2-iqa-results /results/siglip2_v2/siglip2_iqa_best.pt ./checkpoints/"
+            "     modal volume get siglip2-iqa-results"
+            f" /results/siglip2_v2/{_BEST_MODEL_FILENAME} ./checkpoints/"
         )
         print("  2. Run inference on new documents")
         print("  3. Consider training 400M variant for further gains")

@@ -137,6 +137,158 @@ def validate_label(label: dict[str, Any]) -> bool:
 # ---------------------------------------------------------------------------
 # Validation against DIQA-5000 MOS
 # ---------------------------------------------------------------------------
+def _build_mos_index(
+    metadata: dict[str, Any],
+) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]]]:
+    """Build MOS lookup indices from DIQA-5000 metadata.
+
+    Returns (mos_by_id, mos_by_path) dicts.
+    """
+    mos_by_id: dict[str, dict[str, float]] = {}
+    mos_by_path: dict[str, dict[str, float]] = {}
+    for sample in metadata.get("samples", []):
+        original_labels = sample.get("original_labels", {})
+        mos_overall = original_labels.get("mos_overall")
+        if mos_overall is None:
+            continue
+
+        sample_id = sample.get("id", "")
+        rel_path = sample.get("source", {}).get("original_path", "")
+
+        mos_data = {
+            "mos_overall": float(mos_overall),
+            "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
+            "mos_color_fidelity": float(original_labels.get("mos_color_fidelity", 0)),
+        }
+        mos_by_id[sample_id] = mos_data
+        if rel_path:
+            mos_by_path[rel_path] = mos_data
+
+    return mos_by_id, mos_by_path
+
+
+def _match_vlm_to_mos(
+    labels: list[dict[str, Any]],
+    mos_by_id: dict[str, dict[str, float]],
+    mos_by_path: dict[str, dict[str, float]],
+) -> list[dict[str, Any]]:
+    """Match VLM labels to MOS scores by ID, path, or partial path."""
+    matched: list[dict[str, Any]] = []
+    for label in labels:
+        image_id = label.get("image_id", label.get("id", ""))
+        mos = mos_by_id.get(image_id) or mos_by_path.get(image_id)
+        if mos is None:
+            mos = _find_partial_path_match(image_id, mos_by_path)
+        if mos is not None:
+            matched.append({"vlm": label["scores"], "mos": mos})
+    return matched
+
+
+def _find_partial_path_match(
+    image_id: str,
+    mos_by_path: dict[str, dict[str, float]],
+) -> dict[str, float] | None:
+    """Try partial path matching for an image ID."""
+    for path_key, mos_val in mos_by_path.items():
+        if image_id.endswith(path_key) or path_key.endswith(image_id):
+            return mos_val
+    return None
+
+
+def _compute_correlation_dict(
+    arr_a: np.ndarray,
+    arr_b: np.ndarray,
+) -> dict[str, float] | None:
+    """Compute SRCC/PLCC correlation dict. Returns None if constant."""
+    if np.std(arr_b) < 1e-8:
+        return None
+    srcc = stats.spearmanr(arr_a, arr_b)
+    plcc = stats.pearsonr(arr_a, arr_b)
+    return {
+        "srcc": round(float(getattr(srcc, "statistic", srcc.correlation)), 4),
+        "srcc_pvalue": float(srcc.pvalue),
+        "plcc": round(float(getattr(plcc, "statistic", plcc[0])), 4),
+        "plcc_pvalue": float(plcc.pvalue),
+    }
+
+
+def _compute_vlm_mos_correlations(
+    matched: list[dict[str, Any]],
+) -> dict[str, dict[str, float]]:
+    """Compute VLM-vs-MOS correlations for each dimension pair."""
+    pairs = [
+        ("vlm_overall_vs_mos_overall", "overall", "mos_overall"),
+        ("vlm_sharpness_vs_mos_sharpness", "sharpness", "mos_sharpness"),
+        ("vlm_contrast_vs_mos_color_fidelity", "contrast", "mos_color_fidelity"),
+    ]
+    correlations: dict[str, dict[str, float]] = {}
+    for pair_name, vlm_dim, mos_dim in pairs:
+        vlm_arr = np.array([m["vlm"][vlm_dim] for m in matched])
+        mos_arr = np.array([m["mos"][mos_dim] for m in matched])
+        corr = _compute_correlation_dict(vlm_arr, mos_arr)
+        if corr is not None:
+            correlations[pair_name] = corr
+    return correlations
+
+
+def _compute_vlm_intercorrelation(
+    matched: list[dict[str, Any]],
+) -> dict[str, dict[str, float]]:
+    """Compute inter-dimension correlation matrix for VLM dimensions."""
+    dim_arrays = {
+        dim: np.array([m["vlm"][dim] for m in matched]) for dim in VLM_DIMENSIONS
+    }
+    intercorr: dict[str, dict[str, float]] = {}
+    for dim_a in VLM_DIMENSIONS:
+        intercorr[dim_a] = {}
+        for dim_b in VLM_DIMENSIONS:
+            if dim_a == dim_b:
+                intercorr[dim_a][dim_b] = 1.0
+            else:
+                r = stats.spearmanr(dim_arrays[dim_a], dim_arrays[dim_b])
+                intercorr[dim_a][dim_b] = round(
+                    float(getattr(r, "statistic", r.correlation)), 4
+                )
+    return intercorr
+
+
+def _check_independence(
+    intercorr: dict[str, dict[str, float]],
+    threshold: float = 0.8,
+) -> dict[str, Any]:
+    """Check independence criteria between non-overall dimension pairs."""
+    high_corr_pairs: list[str] = []
+    for dim_a in VLM_DIMENSIONS:
+        for dim_b in VLM_DIMENSIONS:
+            if dim_a >= dim_b or dim_a == "overall" or dim_b == "overall":
+                continue
+            r = abs(intercorr[dim_a][dim_b])
+            if r >= threshold:
+                high_corr_pairs.append(f"{dim_a}-{dim_b}: {r:.4f}")
+
+    return {
+        "threshold": threshold,
+        "high_correlation_pairs": high_corr_pairs,
+        "passes": len(high_corr_pairs) == 0,
+    }
+
+
+def _compute_dimension_stats(
+    matched: list[dict[str, Any]],
+) -> dict[str, dict[str, float]]:
+    """Compute summary statistics per VLM dimension."""
+    dim_stats: dict[str, dict[str, float]] = {}
+    for dim in VLM_DIMENSIONS:
+        values = [m["vlm"][dim] for m in matched]
+        dim_stats[dim] = {
+            "mean": round(float(np.mean(values)), 3),
+            "std": round(float(np.std(values)), 3),
+            "min": round(float(np.min(values)), 1),
+            "max": round(float(np.max(values)), 1),
+        }
+    return dim_stats
+
+
 def validate_against_diqa(
     labels: list[dict[str, Any]],
     metadata_path: Path,
@@ -152,156 +304,34 @@ def validate_against_diqa(
     with open(metadata_path) as fh:
         metadata = json.load(fh)
 
-    # Build MOS index by sample id and path
-    mos_by_id: dict[str, dict[str, float]] = {}
-    mos_by_path: dict[str, dict[str, float]] = {}
-    for sample in metadata.get("samples", []):
-        original_labels = sample.get("original_labels", {})
-        mos_overall = original_labels.get("mos_overall")
-        if mos_overall is None:
-            continue
-
-        sample_id = sample.get("id", "")
-        rel_path = sample.get("source", {}).get("original_path", "")
-
-        mos_data = {
-            "mos_overall": float(mos_overall),
-            "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
-            "mos_color_fidelity": float(
-                original_labels.get("mos_color_fidelity", 0)
-            ),
-        }
-        mos_by_id[sample_id] = mos_data
-        if rel_path:
-            mos_by_path[rel_path] = mos_data
-
-    # Match VLM labels to MOS scores
-    matched: list[dict[str, Any]] = []
-    for label in labels:
-        image_id = label.get("image_id", label.get("id", ""))
-
-        mos = mos_by_id.get(image_id) or mos_by_path.get(image_id)
-        if mos is None:
-            # Try partial path match
-            for path_key, mos_val in mos_by_path.items():
-                if image_id.endswith(path_key) or path_key.endswith(image_id):
-                    mos = mos_val
-                    break
-
-        if mos is not None:
-            matched.append({"vlm": label["scores"], "mos": mos})
-
+    mos_by_id, mos_by_path = _build_mos_index(metadata)
+    matched = _match_vlm_to_mos(labels, mos_by_id, mos_by_path)
     log.info("Matched %d/%d VLM labels to DIQA-5000 MOS", len(matched), len(labels))
 
     if len(matched) < 10:
         log.warning("Too few matches for meaningful correlation")
         return {"error": "insufficient_matches", "matched": len(matched)}
 
-    # Compute correlations
+    correlations = _compute_vlm_mos_correlations(matched)
+    intercorr = _compute_vlm_intercorrelation(matched)
+    independence = _check_independence(intercorr)
+
     report: dict[str, Any] = {
         "num_matched": len(matched),
         "num_total_vlm": len(labels),
-        "correlations": {},
+        "correlations": correlations,
+        "vlm_intercorrelation": intercorr,
+        "independence_check": independence,
+        "dimension_stats": _compute_dimension_stats(matched),
     }
 
-    # VLM overall vs MOS overall
-    vlm_overall = np.array([m["vlm"]["overall"] for m in matched])
-    mos_overall = np.array([m["mos"]["mos_overall"] for m in matched])
-
-    srcc = stats.spearmanr(vlm_overall, mos_overall)
-    plcc = stats.pearsonr(vlm_overall, mos_overall)
-
-    report["correlations"]["vlm_overall_vs_mos_overall"] = {
-        "srcc": round(float(getattr(srcc, "statistic", srcc.correlation)), 4),
-        "srcc_pvalue": float(srcc.pvalue),
-        "plcc": round(float(getattr(plcc, "statistic", plcc[0])), 4),
-        "plcc_pvalue": float(plcc.pvalue),
-    }
-
-    # VLM sharpness vs MOS sharpness
-    vlm_sharpness = np.array([m["vlm"]["sharpness"] for m in matched])
-    mos_sharpness = np.array([m["mos"]["mos_sharpness"] for m in matched])
-
-    if np.std(mos_sharpness) > 1e-8:
-        srcc = stats.spearmanr(vlm_sharpness, mos_sharpness)
-        plcc = stats.pearsonr(vlm_sharpness, mos_sharpness)
-        report["correlations"]["vlm_sharpness_vs_mos_sharpness"] = {
-            "srcc": round(
-                float(getattr(srcc, "statistic", srcc.correlation)), 4
-            ),
-            "srcc_pvalue": float(srcc.pvalue),
-            "plcc": round(float(getattr(plcc, "statistic", plcc[0])), 4),
-            "plcc_pvalue": float(plcc.pvalue),
-        }
-
-    # VLM contrast vs MOS color_fidelity
-    vlm_contrast = np.array([m["vlm"]["contrast"] for m in matched])
-    mos_color = np.array([m["mos"]["mos_color_fidelity"] for m in matched])
-
-    if np.std(mos_color) > 1e-8:
-        srcc = stats.spearmanr(vlm_contrast, mos_color)
-        plcc = stats.pearsonr(vlm_contrast, mos_color)
-        report["correlations"]["vlm_contrast_vs_mos_color_fidelity"] = {
-            "srcc": round(
-                float(getattr(srcc, "statistic", srcc.correlation)), 4
-            ),
-            "srcc_pvalue": float(srcc.pvalue),
-            "plcc": round(float(getattr(plcc, "statistic", plcc[0])), 4),
-            "plcc_pvalue": float(plcc.pvalue),
-        }
-
-    # Inter-dimension correlation matrix (check independence)
-    dim_arrays = {
-        dim: np.array([m["vlm"][dim] for m in matched]) for dim in VLM_DIMENSIONS
-    }
-    intercorr: dict[str, dict[str, float]] = {}
-    for dim_a in VLM_DIMENSIONS:
-        intercorr[dim_a] = {}
-        for dim_b in VLM_DIMENSIONS:
-            if dim_a == dim_b:
-                intercorr[dim_a][dim_b] = 1.0
-            else:
-                r = stats.spearmanr(dim_arrays[dim_a], dim_arrays[dim_b])
-                intercorr[dim_a][dim_b] = round(
-                    float(getattr(r, "statistic", r.correlation)), 4
-                )
-
-    report["vlm_intercorrelation"] = intercorr
-
-    # Check independence criteria (r < 0.8 between non-overall pairs)
-    high_corr_pairs: list[str] = []
-    for dim_a in VLM_DIMENSIONS:
-        for dim_b in VLM_DIMENSIONS:
-            if dim_a >= dim_b or dim_a == "overall" or dim_b == "overall":
-                continue
-            r = abs(intercorr[dim_a][dim_b])
-            if r >= 0.8:
-                high_corr_pairs.append(f"{dim_a}-{dim_b}: {r:.4f}")
-
-    report["independence_check"] = {
-        "threshold": 0.8,
-        "high_correlation_pairs": high_corr_pairs,
-        "passes": len(high_corr_pairs) == 0,
-    }
-
-    # Summary statistics per dimension
-    report["dimension_stats"] = {}
-    for dim in VLM_DIMENSIONS:
-        values = [m["vlm"][dim] for m in matched]
-        report["dimension_stats"][dim] = {
-            "mean": round(float(np.mean(values)), 3),
-            "std": round(float(np.std(values)), 3),
-            "min": round(float(np.min(values)), 1),
-            "max": round(float(np.max(values)), 1),
-        }
-
-    # Log key results
     log.info("=" * 60)
     log.info("VALIDATION RESULTS")
     log.info("=" * 60)
-    for pair_name, corr in report["correlations"].items():
+    for pair_name, corr in correlations.items():
         log.info("  %s: SRCC=%.4f, PLCC=%.4f", pair_name, corr["srcc"], corr["plcc"])
 
+    high_corr_pairs = independence["high_correlation_pairs"]
     if high_corr_pairs:
         log.warning("High inter-dimension correlations: %s", high_corr_pairs)
     else:
@@ -389,12 +419,11 @@ def integrate_labels(
 
     if dry_run:
         log.info("Dry run - not saving")
-        return updated
-
-    save_path = output_path or metadata_path
-    log.info("Saving metadata to %s", save_path)
-    with open(save_path, "w") as fh:
-        json.dump(metadata, fh, indent=2, default=str)
+    else:
+        save_path = output_path or metadata_path
+        log.info("Saving metadata to %s", save_path)
+        with open(save_path, "w") as fh:
+            json.dump(metadata, fh, indent=2, default=str)
 
     return updated
 
@@ -446,9 +475,7 @@ def merge_label_batches(
 # ---------------------------------------------------------------------------
 def main() -> int:
     """Collect, validate, and integrate VLM IQA labels."""
-    parser = argparse.ArgumentParser(
-        description="Collect and integrate VLM IQA labels"
-    )
+    parser = argparse.ArgumentParser(description="Collect and integrate VLM IQA labels")
     parser.add_argument(
         "--labels",
         nargs="+",
