@@ -474,8 +474,8 @@ class TestSignalIsolation:
         self, classifier: DocumentSourceClassifier
     ) -> None:
         """Random noise image should have lower background uniformity."""
-        rng = np.random.RandomState(42)
-        noisy = rng.randint(0, 256, (200, 300, 3), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        noisy = rng.integers(0, 256, (200, 300, 3), dtype=np.uint8)
         result = classifier.classify(noisy)
         assert result.background_uniformity < 0.5
 

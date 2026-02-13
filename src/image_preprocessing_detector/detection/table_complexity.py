@@ -135,6 +135,37 @@ def _cluster_positions(positions: list[int], min_gap: int) -> list[int]:
     return sorted(int(np.mean(cluster)) for cluster in clusters)
 
 
+def _is_gap_at_point(
+    binary: np.ndarray,
+    center_x: int,
+    center_y: int,
+    img_w: int,
+    img_h: int,
+    radius: int = 3,
+) -> bool:
+    """Check if a grid line gap exists at the given point.
+
+    Args:
+        binary: Binary (inverted) image where lines are white.
+        center_x: X coordinate of the sample center.
+        center_y: Y coordinate of the sample center.
+        img_w: Image width.
+        img_h: Image height.
+        radius: Half-size of the sampling window.
+
+    Returns:
+        True if the region around the point has low intensity (gap).
+    """
+    if not (0 <= center_x < img_w and 0 <= center_y < img_h):
+        return False
+    y_lo = max(0, center_y - radius)
+    y_hi = min(img_h, center_y + radius + 1)
+    x_lo = max(0, center_x - radius)
+    x_hi = min(img_w, center_x + radius + 1)
+    region = binary[y_lo:y_hi, x_lo:x_hi]
+    return bool(np.mean(region) < 30)
+
+
 def _detect_merged_cells(
     binary: np.ndarray,
     row_positions: list[int],
@@ -159,35 +190,22 @@ def _detect_merged_cells(
     img_h, img_w = binary.shape[:2]
     total_checks = 0
     gaps_found = 0
-    sample_radius = 3
 
     # Check interior horizontal segments between adjacent column boundaries
     for row_y in row_positions[1:-1]:
         for col_idx in range(len(col_positions) - 1):
             mid_x = (col_positions[col_idx] + col_positions[col_idx + 1]) // 2
-            if 0 <= mid_x < img_w and 0 <= row_y < img_h:
-                y_lo = max(0, row_y - sample_radius)
-                y_hi = min(img_h, row_y + sample_radius + 1)
-                x_lo = max(0, mid_x - sample_radius)
-                x_hi = min(img_w, mid_x + sample_radius + 1)
-                region = binary[y_lo:y_hi, x_lo:x_hi]
-                total_checks += 1
-                if np.mean(region) < 30:
-                    gaps_found += 1
+            total_checks += 1
+            if _is_gap_at_point(binary, mid_x, row_y, img_w, img_h):
+                gaps_found += 1
 
     # Check interior vertical segments between adjacent row boundaries
     for col_x in col_positions[1:-1]:
         for row_idx in range(len(row_positions) - 1):
             mid_y = (row_positions[row_idx] + row_positions[row_idx + 1]) // 2
-            if 0 <= col_x < img_w and 0 <= mid_y < img_h:
-                y_lo = max(0, mid_y - sample_radius)
-                y_hi = min(img_h, mid_y + sample_radius + 1)
-                x_lo = max(0, col_x - sample_radius)
-                x_hi = min(img_w, col_x + sample_radius + 1)
-                region = binary[y_lo:y_hi, x_lo:x_hi]
-                total_checks += 1
-                if np.mean(region) < 30:
-                    gaps_found += 1
+            total_checks += 1
+            if _is_gap_at_point(binary, col_x, mid_y, img_w, img_h):
+                gaps_found += 1
 
     if total_checks == 0:
         return False
