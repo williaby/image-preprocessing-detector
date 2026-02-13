@@ -702,9 +702,7 @@ def main() -> int:
         Exit code (0 = success, 1 = error).
     """
     parser = argparse.ArgumentParser(
-        description=(
-            f"Integrate all enrichment sources into {DATASET_NAME} metadata."
-        ),
+        description=(f"Integrate all enrichment sources into {DATASET_NAME} metadata."),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

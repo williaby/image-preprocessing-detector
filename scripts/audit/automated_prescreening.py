@@ -358,7 +358,10 @@ def _check_text_directions_present(
     if val is None:
         return True, None
     if not isinstance(val, list):
-        return False, f"text_directions_present is not a list (type={type(val).__name__})"
+        return (
+            False,
+            f"text_directions_present is not a list (type={type(val).__name__})",
+        )
     invalid = [v for v in val if v not in VALID_TEXT_DIRECTIONS]
     if invalid:
         return False, f"text_directions_present has invalid values: {invalid}"

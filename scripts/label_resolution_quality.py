@@ -321,10 +321,12 @@ def main() -> int:
                 flagged += 1
         except Exception:
             logger.exception("Failed to process %s", image_path)
-            results.append({
-                "image_path": str(image_path.relative_to(args.input_dir)),
-                "error": "processing_exception",
-            })
+            results.append(
+                {
+                    "image_path": str(image_path.relative_to(args.input_dir)),
+                    "error": "processing_exception",
+                }
+            )
             errors += 1
 
     # Write output

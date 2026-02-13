@@ -231,8 +231,10 @@ def print_summary(stats: dict[str, int], total: int) -> None:
     print("  Skew/Orientation Integration Summary")
     print("=" * 60)
     print(f"  Total samples:     {total:>6d}")
-    print(f"  Matched:           {matched:>6d}  ({matched/max(total,1)*100:.1f}%)")
-    print(f"  No match:          {no_match:>6d}  ({no_match/max(total,1)*100:.1f}%)")
+    print(f"  Matched:           {matched:>6d}  ({matched / max(total, 1) * 100:.1f}%)")
+    print(
+        f"  No match:          {no_match:>6d}  ({no_match / max(total, 1) * 100:.1f}%)"
+    )
     if no_filename:
         print(f"  No filename:       {no_filename:>6d}")
 

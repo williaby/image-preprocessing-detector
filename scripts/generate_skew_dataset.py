@@ -189,16 +189,33 @@ def sample_degradation_profile(rng: random.Random) -> str:
 # Tier-based sampling weights (higher-resource scripts get more samples)
 SCRIPT_TIER_WEIGHTS: dict[str, float] = {
     # Tier 1 — High resource (48% of original dataset)
-    "Latn": 0.14, "Arab": 0.08, "Hans": 0.06,
-    "Cyrl": 0.06, "Deva": 0.08, "Hant": 0.06,
+    "Latn": 0.14,
+    "Arab": 0.08,
+    "Hans": 0.06,
+    "Cyrl": 0.06,
+    "Deva": 0.08,
+    "Hant": 0.06,
     # Tier 2 — Medium resource (29%)
-    "Jpan": 0.04, "Kore": 0.04, "Beng": 0.03, "Thai": 0.03,
-    "Taml": 0.03, "Hebr": 0.02, "Telu": 0.02, "Grek": 0.02, "Gujr": 0.02,
+    "Jpan": 0.04,
+    "Kore": 0.04,
+    "Beng": 0.03,
+    "Thai": 0.03,
+    "Taml": 0.03,
+    "Hebr": 0.02,
+    "Telu": 0.02,
+    "Grek": 0.02,
+    "Gujr": 0.02,
     "Knda": 0.02,
     # Tier 3 — Lower resource (23%)
-    "Mlym": 0.02, "Guru": 0.015, "Mymr": 0.015, "Tibt": 0.015,
-    "Sinh": 0.015, "Khmr": 0.015, "Laoo": 0.01,
-    "Ethi": 0.01, "Orya": 0.01,
+    "Mlym": 0.02,
+    "Guru": 0.015,
+    "Mymr": 0.015,
+    "Tibt": 0.015,
+    "Sinh": 0.015,
+    "Khmr": 0.015,
+    "Laoo": 0.01,
+    "Ethi": 0.01,
+    "Orya": 0.01,
 }
 
 
@@ -231,8 +248,7 @@ def discover_source_images(
 
     # Check for worker-based layout first (worker_0, worker_1, ...)
     worker_dirs = sorted(
-        d for d in source_dir.iterdir()
-        if d.is_dir() and d.name.startswith("worker_")
+        d for d in source_dir.iterdir() if d.is_dir() and d.name.startswith("worker_")
     )
 
     if worker_dirs:
@@ -272,7 +288,9 @@ def discover_source_images(
                     if script_dir.is_dir():
                         imgs = list(script_dir.glob(_PNG_GLOB))
                         if imgs:
-                            images_by_script.setdefault(script_dir.name, []).extend(imgs)
+                            images_by_script.setdefault(script_dir.name, []).extend(
+                                imgs
+                            )
 
     return images_by_script
 
@@ -308,7 +326,7 @@ def discover_gcs_images(
         if not blob.name.endswith((".png", ".jpg")):
             continue
         # Extract script code from path: prefix/ScriptCode/image.png
-        relative = blob.name[len(prefix):]
+        relative = blob.name[len(prefix) :]
         parts = relative.split("/")
         if len(parts) >= 2:
             script_code = parts[0]
@@ -483,22 +501,25 @@ def _apply_degradation(img: Any, profile: str) -> Any:
         transforms_list = []
 
         if params["blur_limit"] > 0:
-            transforms_list.extend([
-                A.GaussianBlur(blur_limit=(3, params["blur_limit"]), p=0.5),
-                A.MotionBlur(blur_limit=(3, params["blur_limit"]), p=0.3),
-            ])
+            transforms_list.extend(
+                [
+                    A.GaussianBlur(blur_limit=(3, params["blur_limit"]), p=0.5),
+                    A.MotionBlur(blur_limit=(3, params["blur_limit"]), p=0.3),
+                ]
+            )
 
         if params["noise_var"][1] > 0:
             low_std = math.sqrt(params["noise_var"][0]) / 255.0
             high_std = math.sqrt(params["noise_var"][1]) / 255.0
-            transforms_list.append(
-                A.GaussNoise(std_range=(low_std, high_std), p=0.5)
-            )
+            transforms_list.append(A.GaussNoise(std_range=(low_std, high_std), p=0.5))
 
         if params["jpeg_quality"][0] < 95:
             transforms_list.append(
                 A.ImageCompression(
-                    quality_range=(params["jpeg_quality"][0], params["jpeg_quality"][1]),
+                    quality_range=(
+                        params["jpeg_quality"][0],
+                        params["jpeg_quality"][1],
+                    ),
                     p=0.4,
                 )
             )
@@ -537,28 +558,40 @@ def _get_albumentations_params(profile: str) -> dict[str, Any]:
     """Get Albumentations parameters for a degradation profile."""
     params: dict[str, dict[str, Any]] = {
         "pristine": {
-            "blur_limit": 0, "noise_var": (0, 0),
-            "jpeg_quality": (95, 100), "perspective": 0.0,
+            "blur_limit": 0,
+            "noise_var": (0, 0),
+            "jpeg_quality": (95, 100),
+            "perspective": 0.0,
         },
         "light": {
-            "blur_limit": 3, "noise_var": (5, 15),
-            "jpeg_quality": (75, 95), "perspective": 0.02,
+            "blur_limit": 3,
+            "noise_var": (5, 15),
+            "jpeg_quality": (75, 95),
+            "perspective": 0.02,
         },
         "moderate": {
-            "blur_limit": 5, "noise_var": (10, 30),
-            "jpeg_quality": (50, 85), "perspective": 0.05,
+            "blur_limit": 5,
+            "noise_var": (10, 30),
+            "jpeg_quality": (50, 85),
+            "perspective": 0.05,
         },
         "heavy": {
-            "blur_limit": 7, "noise_var": (20, 50),
-            "jpeg_quality": (30, 70), "perspective": 0.1,
+            "blur_limit": 7,
+            "noise_var": (20, 50),
+            "jpeg_quality": (30, 70),
+            "perspective": 0.1,
         },
         "aged": {
-            "blur_limit": 3, "noise_var": (5, 20),
-            "jpeg_quality": (60, 90), "perspective": 0.02,
+            "blur_limit": 3,
+            "noise_var": (5, 20),
+            "jpeg_quality": (60, 90),
+            "perspective": 0.02,
         },
         "historical": {
-            "blur_limit": 5, "noise_var": (15, 40),
-            "jpeg_quality": (40, 75), "perspective": 0.05,
+            "blur_limit": 5,
+            "noise_var": (15, 40),
+            "jpeg_quality": (40, 75),
+            "perspective": 0.05,
         },
     }
     return params.get(profile, params["moderate"])
@@ -615,9 +648,7 @@ def build_generation_plan(
         if code not in held_back and code in SCRIPT_TIER_WEIGHTS
     }
     test_only_scripts = {
-        code: imgs
-        for code, imgs in images_by_script.items()
-        if code in held_back
+        code: imgs for code, imgs in images_by_script.items() if code in held_back
     }
 
     if not train_val_scripts:
@@ -625,9 +656,7 @@ def build_generation_plan(
         return GenerationPlan(stats={"error": "no matching scripts"})
 
     # Compute per-script allocation for train+val+test(seen)
-    available_weight_sum = sum(
-        SCRIPT_TIER_WEIGHTS[code] for code in train_val_scripts
-    )
+    available_weight_sum = sum(SCRIPT_TIER_WEIGHTS[code] for code in train_val_scripts)
     per_script_count: dict[str, int] = {}
     for code in train_val_scripts:
         weight = SCRIPT_TIER_WEIGHTS[code] / available_weight_sum
@@ -672,15 +701,17 @@ def build_generation_plan(
             else:
                 split = "train"
 
-            items.append({
-                "source_path": str(src_img),
-                "script_code": script_code,
-                "skew_angle": round(skew_angle, 4),
-                "orientation_class": orientation,
-                "degradation_profile": degradation,
-                "split": split,
-                "output_idx": output_idx,
-            })
+            items.append(
+                {
+                    "source_path": str(src_img),
+                    "script_code": script_code,
+                    "skew_angle": round(skew_angle, 4),
+                    "orientation_class": orientation,
+                    "degradation_profile": degradation,
+                    "split": split,
+                    "output_idx": output_idx,
+                }
+            )
 
             orient_counts[str(orientation)] += 1
             degrad_counts[degradation] += 1
@@ -702,15 +733,17 @@ def build_generation_plan(
             orientation = rng.choice(ORIENTATION_CLASSES)
             degradation = sample_degradation_profile(rng)
 
-            items.append({
-                "source_path": str(src_img),
-                "script_code": script_code,
-                "skew_angle": round(skew_angle, 4),
-                "orientation_class": orientation,
-                "degradation_profile": degradation,
-                "split": "test",
-                "output_idx": output_idx,
-            })
+            items.append(
+                {
+                    "source_path": str(src_img),
+                    "script_code": script_code,
+                    "skew_angle": round(skew_angle, 4),
+                    "orientation_class": orientation,
+                    "degradation_profile": degradation,
+                    "split": "test",
+                    "output_idx": output_idx,
+                }
+            )
 
             orient_counts[str(orientation)] += 1
             degrad_counts[degradation] += 1
@@ -837,15 +870,17 @@ def execute_generation(
                         continue
                 source_path = str(cache_path)
 
-            work_items.append((
-                source_path,
-                str(split_img_dir),
-                item["script_code"],
-                item["skew_angle"],
-                item["orientation_class"],
-                item["degradation_profile"],
-                item["output_idx"],
-            ))
+            work_items.append(
+                (
+                    source_path,
+                    str(split_img_dir),
+                    item["script_code"],
+                    item["skew_angle"],
+                    item["orientation_class"],
+                    item["degradation_profile"],
+                    item["output_idx"],
+                )
+            )
 
         # Process in parallel using ProcessPoolExecutor
         completed = 0
@@ -871,13 +906,19 @@ def execute_generation(
                     rate = (success_count + error_count) / max(elapsed, 0.01)
                     logger.info(
                         "[%s] Progress: %d/%d total (%.1f img/s, %d errors)",
-                        split, success_count + error_count, total, rate, error_count,
+                        split,
+                        success_count + error_count,
+                        total,
+                        rate,
+                        error_count,
                     )
 
         split_elapsed = time.monotonic() - split_start
         logger.info(
             "[%s] Complete: %d images in %.1fs (%.1f img/s)",
-            split, completed, split_elapsed,
+            split,
+            completed,
+            split_elapsed,
             completed / max(split_elapsed, 0.01),
         )
 
@@ -1016,8 +1057,9 @@ def main() -> None:
 
     # Step 1: Discover source images
     if args.gcs_bucket:
-        logger.info("Discovering source images in gs://%s/%s",
-                     args.gcs_bucket, args.gcs_prefix)
+        logger.info(
+            "Discovering source images in gs://%s/%s", args.gcs_bucket, args.gcs_prefix
+        )
         gcs_images = discover_gcs_images(args.gcs_bucket, args.gcs_prefix)
         # Convert to generic format (strings work as keys for plan building)
         images_by_script: dict[str, list[Any]] = dict(gcs_images)
@@ -1057,8 +1099,12 @@ def main() -> None:
     stats = plan.stats
     print("\n=== Generation Plan ===")
     print(f"Total images: {stats['total_images']:,}")
-    print(f"Train: {stats['train_count']:,} | Val: {stats['val_count']:,} | Test: {stats['test_count']:,}")
-    print(f"  (includes {stats['held_back_test_images']:,} held-back script images in test)")
+    print(
+        f"Train: {stats['train_count']:,} | Val: {stats['val_count']:,} | Test: {stats['test_count']:,}"
+    )
+    print(
+        f"  (includes {stats['held_back_test_images']:,} held-back script images in test)"
+    )
     print(f"Scripts: {stats['scripts']}")
     print(f"Held-back (test only): {stats['held_back_scripts']}")
     print(f"Seed: {stats['seed']}")
@@ -1075,7 +1121,9 @@ def main() -> None:
         print(f"  {orient:4s} deg: {count:6,d} ({pct:5.1f}%)")
 
     print("\n--- Degradation Distribution ---")
-    for prof, count in sorted(stats["degradation_distribution"].items(), key=lambda x: -x[1]):
+    for prof, count in sorted(
+        stats["degradation_distribution"].items(), key=lambda x: -x[1]
+    ):
         pct = 100 * count / stats["total_images"]
         print(f"  {prof:12s}: {count:6,d} ({pct:5.1f}%)")
 
@@ -1115,8 +1163,12 @@ def main() -> None:
     print("\n=== Generation Complete ===")
     print(f"Total: {result['total_images']:,} images")
     print(f"Errors: {result['errors']}")
-    print(f"Time: {result['elapsed_seconds']:.1f}s ({result['images_per_second']:.1f} img/s)")
-    print(f"Train: {result['train_labels_count']:,} | Val: {result['val_labels_count']:,} | Test: {result['test_labels_count']:,}")
+    print(
+        f"Time: {result['elapsed_seconds']:.1f}s ({result['images_per_second']:.1f} img/s)"
+    )
+    print(
+        f"Train: {result['train_labels_count']:,} | Val: {result['val_labels_count']:,} | Test: {result['test_labels_count']:,}"
+    )
     print(f"Output: {args.output_dir}")
 
 

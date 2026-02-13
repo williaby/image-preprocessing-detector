@@ -166,9 +166,7 @@ def _detect_projection(gray: np.ndarray) -> tuple[float, float]:
                 best_angle = angle
 
         # Refine around best angle
-        for angle_tenths in range(
-            int(best_angle * 10) - 5, int(best_angle * 10) + 6
-        ):
+        for angle_tenths in range(int(best_angle * 10) - 5, int(best_angle * 10) + 6):
             angle = angle_tenths / 10.0
             h, w = binary.shape
             center = (w // 2, h // 2)
@@ -300,13 +298,16 @@ def print_report(report: dict[str, Any]) -> None:
 
     if "confidence_stats" in report:
         cs = report["confidence_stats"]
-        print(f"\nConfidence: mean={cs['mean']}, median={cs['median']}, "
-              f"std={cs['std']}")
+        print(
+            f"\nConfidence: mean={cs['mean']}, median={cs['median']}, std={cs['std']}"
+        )
 
     if "angle_stats" in report:
         a_s = report["angle_stats"]
-        print(f"Angle: mean={a_s['mean']}, median={a_s['median']}, "
-              f"range=[{a_s['min']}, {a_s['max']}]")
+        print(
+            f"Angle: mean={a_s['mean']}, median={a_s['median']}, "
+            f"range=[{a_s['min']}, {a_s['max']}]"
+        )
 
     print("\nMethod distribution:")
     for method, count in report.get("method_distribution", {}).items():

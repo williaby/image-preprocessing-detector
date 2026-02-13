@@ -306,15 +306,10 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "jssoda": {
         "image_base_path": (
-            _BASE_DATA_DIR
-            / "language"
-            / "multilingual_scripts"
-            / "jssoda"
+            _BASE_DATA_DIR / "language" / "multilingual_scripts" / "jssoda"
         ),
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "jssoda_metadata.json"),
-        "llm_enrichment_path": (
-            DEFAULT_METADATA_ROOT / "jssoda_llm_enrichment.json"
-        ),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "jssoda_llm_enrichment.json"),
         "language_enrichment_path": (
             DEFAULT_METADATA_ROOT / "jssoda_language_enrichment.json"
         ),
@@ -325,13 +320,9 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         ),
     },
     "mlt19": {
-        "image_base_path": (
-            _BASE_DATA_DIR / "language" / "mlt19"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "language" / "mlt19"),
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "mlt19_metadata.json"),
-        "llm_enrichment_path": (
-            DEFAULT_METADATA_ROOT / "mlt19_llm_enrichment.json"
-        ),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "mlt19_llm_enrichment.json"),
         "language_enrichment_path": (
             DEFAULT_METADATA_ROOT / "mlt19_language_enrichment.json"
         ),
@@ -342,11 +333,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         ),
     },
     "nepali-handwritten": {
-        "image_base_path": (
-            _BASE_DATA_DIR
-            / "language"
-            / "nepali_handwritten"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "language" / "nepali_handwritten"),
         "metadata_json_path": (
             DEFAULT_METADATA_ROOT / "nepali_handwritten_metadata.json"
         ),
@@ -361,14 +348,9 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "dzongkha-digits": {
         "image_base_path": (
-            _BASE_DATA_DIR
-            / "language"
-            / "multilingual_scripts"
-            / "dzongkha_digits"
+            _BASE_DATA_DIR / "language" / "multilingual_scripts" / "dzongkha_digits"
         ),
-        "metadata_json_path": (
-            DEFAULT_METADATA_ROOT / "dzongkha-digits_metadata.json"
-        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "dzongkha-digits_metadata.json"),
         "sample_size": 62,
         "stratification_axes": (
             "capture_method",
@@ -376,15 +358,9 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         ),
     },
     "realdae": {
-        "image_base_path": (
-            _BASE_DATA_DIR
-            / "camera_captured"
-            / "realdae"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "camera_captured" / "realdae"),
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "realdae_metadata.json"),
-        "llm_enrichment_path": (
-            DEFAULT_METADATA_ROOT / "realdae_llm_enrichment.json"
-        ),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "realdae_llm_enrichment.json"),
         "stratification_axes": (
             "capture_method",
             "domain_level1",
@@ -392,11 +368,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         ),
     },
     "bhutan-afs": {
-        "image_base_path": (
-            _BASE_DATA_DIR
-            / "documents"
-            / "bhutan_financial"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "documents" / "bhutan_financial"),
         "metadata_json_path": (
             DEFAULT_METADATA_ROOT / "bhutan_financial_metadata.json"
         ),

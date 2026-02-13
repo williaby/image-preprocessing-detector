@@ -267,18 +267,24 @@ def compute_defect_rate(
         return 100.0
 
     dim_config = config.get("dimensions", {}).get("defect_rate", {})
-    penalties = dim_config.get("defect_penalties", {
-        "critical": 15,
-        "high": 10,
-        "medium": 5,
-        "low": 2,
-    })
-    status_weights = dim_config.get("status_weights", {
-        "RESOLVED": 0.0,
-        "PARTIALLY_RESOLVED": 0.5,
-        "DEFERRED": 0.3,
-        "OPEN": 1.0,
-    })
+    penalties = dim_config.get(
+        "defect_penalties",
+        {
+            "critical": 15,
+            "high": 10,
+            "medium": 5,
+            "low": 2,
+        },
+    )
+    status_weights = dim_config.get(
+        "status_weights",
+        {
+            "RESOLVED": 0.0,
+            "PARTIALLY_RESOLVED": 0.5,
+            "DEFERRED": 0.3,
+            "OPEN": 1.0,
+        },
+    )
 
     total_penalty = 0.0
     for defect in defects:
@@ -360,9 +366,7 @@ def compute_cross_source_agreement(
             fields = sample.get("fields", {})
             for _field_name, field_data in fields.items():
                 source_values = field_data.get("sources", {})
-                non_null = [
-                    v for v in source_values.values() if v is not None
-                ]
+                non_null = [v for v in source_values.values() if v is not None]
                 if len(non_null) >= 2:
                     total_comparisons += 1
                     if len(set(str(v) for v in non_null)) == 1:
@@ -522,9 +526,7 @@ def compute_overall(
         "grade": grade,
         "dimensions": dim_details,
         "excluded_dimensions": excluded,
-        "effective_weights": {
-            k: round(v, 4) for k, v in effective_weights.items()
-        },
+        "effective_weights": {k: round(v, 4) for k, v in effective_weights.items()},
     }
     if grade_cap_applied:
         result["grade_cap_applied"] = grade_cap_applied
@@ -597,9 +599,7 @@ def score_dataset(
         "computed_at": datetime.now(UTC).isoformat(),
         "scorecard_config_version": config.get("version", "unknown"),
         "artifacts_found": artifacts_found,
-        "dimension_scores": {
-            k: v for k, v in dimension_scores.items()
-        },
+        "dimension_scores": {k: v for k, v in dimension_scores.items()},
         **overall,
     }
 
@@ -641,20 +641,14 @@ def print_scorecard(scorecard: dict[str, Any]) -> None:
 
     dims = scorecard.get("dimensions", {})
     if dims:
-        print(
-            f"  {'Dimension':<28s} {'Score':>6s} {'Weight':>7s} "
-            f"{'Weighted':>8s}"
-        )
+        print(f"  {'Dimension':<28s} {'Score':>6s} {'Weight':>7s} {'Weighted':>8s}")
         print("  " + "-" * 52)
         for dim_name, detail in dims.items():
             label = dim_name.replace("_", " ").title()
             score = detail.get("score", 0)
             eff_w = detail.get("effective_weight", 0)
             weighted = detail.get("weighted_contribution", 0)
-            print(
-                f"  {label:<28s} {score:>5.1f} {eff_w:>6.2f}  "
-                f"{weighted:>7.2f}"
-            )
+            print(f"  {label:<28s} {score:>5.1f} {eff_w:>6.2f}  {weighted:>7.2f}")
         print("  " + "-" * 52)
         print(f"  {'TOTAL':<28s} {'':>6s} {'1.00':>7s}  {overall:>7.2f}")
 

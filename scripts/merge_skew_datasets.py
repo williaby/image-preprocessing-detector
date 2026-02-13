@@ -116,14 +116,17 @@ def main() -> None:
 
     # Filter by confidence
     high_conf = [
-        img for img in nscan_images
+        img
+        for img in nscan_images
         if img.get("classical_skew_confidence", 0) >= args.min_confidence
         and img.get("classical_skew_error") is None
     ]
     low_conf = len(nscan_images) - len(high_conf)
     logger.info(
         "After confidence filter (>= %.2f): %d kept, %d excluded",
-        args.min_confidence, len(high_conf), low_conf,
+        args.min_confidence,
+        len(high_conf),
+        low_conf,
     )
 
     # Group by split
@@ -159,7 +162,9 @@ def main() -> None:
     grand_synth = sum(len(synth_labels[s]) for s in synth_labels)
     grand_nscan = len(high_conf)
     grand_total = grand_synth + grand_nscan
-    print(f"\n  Total: {grand_synth:,d} synthetic + {grand_nscan:,d} natural = {grand_total:,d}")
+    print(
+        f"\n  Total: {grand_synth:,d} synthetic + {grand_nscan:,d} natural = {grand_total:,d}"
+    )
 
     # Natural scan dataset composition
     script_counts: dict[str, int] = {}
@@ -202,11 +207,13 @@ def main() -> None:
         work_items = []
         nscan_meta: list[tuple[dict[str, Any], int]] = []
         for img_record in split_imgs:
-            work_items.append((
-                img_record["path"],
-                str(split_img_dir),
-                nscan_idx,
-            ))
+            work_items.append(
+                (
+                    img_record["path"],
+                    str(split_img_dir),
+                    nscan_idx,
+                )
+            )
             nscan_meta.append((img_record, nscan_idx))
             nscan_idx += 1
 
@@ -232,13 +239,19 @@ def main() -> None:
                         "dataset": record.get("dataset", "unknown"),
                         "text_direction": record.get("text_direction", "ltr"),
                         "capture_method": record.get("capture_method", "unknown"),
-                        "classical_confidence": record.get("classical_skew_confidence", 0),
-                        "classical_method": record.get("classical_skew_method", "unknown"),
+                        "classical_confidence": record.get(
+                            "classical_skew_confidence", 0
+                        ),
+                        "classical_method": record.get(
+                            "classical_skew_method", "unknown"
+                        ),
                     }
                     success_count += 1
                 else:
                     error_count += 1
-                    logger.warning("Failed: %s — %s", record.get("path"), result["error"])
+                    logger.warning(
+                        "Failed: %s — %s", record.get("path"), result["error"]
+                    )
 
                 completed += 1
                 if completed % 2000 == 0:
@@ -246,7 +259,10 @@ def main() -> None:
                     rate = (success_count + error_count) / max(elapsed, 0.01)
                     logger.info(
                         "[%s] Progress: %d/%d (%.1f img/s)",
-                        split, completed, len(work_items), rate,
+                        split,
+                        completed,
+                        len(work_items),
+                        rate,
                     )
 
         logger.info("[%s] Complete: %d natural scan images added", split, completed)
@@ -256,7 +272,9 @@ def main() -> None:
         labels_path = skew_dir / split / "labels.json"
         with labels_path.open("w") as f:
             json.dump(synth_labels[split], f, indent=2)
-        logger.info("Wrote %d total labels to %s", len(synth_labels[split]), labels_path)
+        logger.info(
+            "Wrote %d total labels to %s", len(synth_labels[split]), labels_path
+        )
 
     # Write merge manifest
     elapsed = time.monotonic() - start_time
@@ -268,14 +286,21 @@ def main() -> None:
         "elapsed_seconds": round(elapsed, 1),
         "splits": {
             split: {
-                "synthetic": len(synth_labels[split]) - len([
-                    v for v in synth_labels[split].values()
-                    if v.get("source_type") == "natural_scan"
-                ]),
-                "natural_scan": len([
-                    v for v in synth_labels[split].values()
-                    if v.get("source_type") == "natural_scan"
-                ]),
+                "synthetic": len(synth_labels[split])
+                - len(
+                    [
+                        v
+                        for v in synth_labels[split].values()
+                        if v.get("source_type") == "natural_scan"
+                    ]
+                ),
+                "natural_scan": len(
+                    [
+                        v
+                        for v in synth_labels[split].values()
+                        if v.get("source_type") == "natural_scan"
+                    ]
+                ),
                 "total": len(synth_labels[split]),
             }
             for split in ["train", "val", "test"]

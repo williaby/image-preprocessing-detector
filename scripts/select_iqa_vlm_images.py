@@ -93,19 +93,21 @@ def load_diqa5000_for_selection(
         rel_path = source.get("original_path", "")
         capture_type = "ori" if "/ori/" in rel_path else "res"
 
-        samples.append({
-            "id": sample.get("id", ""),
-            "dataset": "diqa-5000",
-            "path": rel_path,
-            "abs_path": str(DIQA_DATASET_DIR / rel_path),
-            "split": split,
-            "mos_overall": float(mos_overall),
-            "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
-            "mos_color_fidelity": float(
-                original_labels.get("mos_color_fidelity", 0)
-            ),
-            "capture_type": capture_type,
-        })
+        samples.append(
+            {
+                "id": sample.get("id", ""),
+                "dataset": "diqa-5000",
+                "path": rel_path,
+                "abs_path": str(DIQA_DATASET_DIR / rel_path),
+                "split": split,
+                "mos_overall": float(mos_overall),
+                "mos_sharpness": float(original_labels.get("mos_sharpness", 0)),
+                "mos_color_fidelity": float(
+                    original_labels.get("mos_color_fidelity", 0)
+                ),
+                "capture_type": capture_type,
+            }
+        )
 
     # Assign MOS quintiles
     mos_values = [s["mos_overall"] for s in samples]
@@ -124,9 +126,7 @@ def load_diqa5000_for_selection(
         else:
             sample["mos_quintile"] = 5
 
-    log.info(
-        "Loaded %d DIQA-5000 samples (splits: %s)", len(samples), splits
-    )
+    log.info("Loaded %d DIQA-5000 samples (splits: %s)", len(samples), splits)
     return samples
 
 
@@ -184,13 +184,15 @@ def load_ohrbench_for_selection(
             quality = item.get("quality_score")
             if quality is None:
                 continue
-            samples.append({
-                "id": f"ohrbench_{idx:05d}",
-                "dataset": "ohr-bench",
-                "index": idx,
-                "quality_score": float(quality),
-                "category": item.get("category", "unknown"),
-            })
+            samples.append(
+                {
+                    "id": f"ohrbench_{idx:05d}",
+                    "dataset": "ohr-bench",
+                    "index": idx,
+                    "quality_score": float(quality),
+                    "category": item.get("category", "unknown"),
+                }
+            )
 
         # Assign quality quintiles
         scores = [s["quality_score"] for s in samples]
@@ -241,7 +243,9 @@ def stratified_select_ohrbench(
         for i in indices:
             selected.append(stratum_samples[i])
 
-    log.info("Selected %d OHR-Bench images across %d quintiles", len(selected), len(strata))
+    log.info(
+        "Selected %d OHR-Bench images across %d quintiles", len(selected), len(strata)
+    )
     return selected
 
 

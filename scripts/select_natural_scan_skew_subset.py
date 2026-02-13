@@ -398,9 +398,7 @@ def discover_dataset_images(
     return candidates
 
 
-def _find_images(
-    root: Path, extensions: set[str], max_depth: int
-) -> list[Path]:
+def _find_images(root: Path, extensions: set[str], max_depth: int) -> list[Path]:
     """Recursively find image files up to max_depth."""
     results: list[Path] = []
     _walk_images(root, extensions, max_depth, 0, results)
@@ -676,13 +674,9 @@ def stratified_select(
             if target > 0:
                 sample = rng.sample(pool, target)
                 selected.extend(sample)
-                logger.info(
-                    "Selected %d from %s (proportional)", target, name
-                )
+                logger.info("Selected %d from %s (proportional)", target, name)
 
-    logger.info(
-        "Total selected: %d (target: %d)", len(selected), total_target
-    )
+    logger.info("Total selected: %d (target: %d)", len(selected), total_target)
     return selected
 
 
@@ -877,7 +871,11 @@ def main() -> int:
         dataset_configs[config.name] = config
         total_discovered += len(candidates)
 
-    logger.info("Total discovered: %d images across %d datasets", total_discovered, len(all_candidates))
+    logger.info(
+        "Total discovered: %d images across %d datasets",
+        total_discovered,
+        len(all_candidates),
+    )
 
     if total_discovered == 0:
         logger.error("No images found. Check --base-dir path.")

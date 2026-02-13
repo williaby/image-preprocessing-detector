@@ -60,7 +60,8 @@ def _find_images(input_dir: Path, recursive: bool) -> list[Path]:
     """
     pattern = "**/*" if recursive else "*"
     images = [
-        p for p in input_dir.glob(pattern)
+        p
+        for p in input_dir.glob(pattern)
         if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
     ]
     images.sort()
@@ -190,7 +191,9 @@ def main() -> int:
         # Load from config YAML
         import yaml
 
-        config_path = Path(__file__).resolve().parents[1] / "config" / "skew_estimation.yaml"
+        config_path = (
+            Path(__file__).resolve().parents[1] / "config" / "skew_estimation.yaml"
+        )
         with config_path.open() as f:
             cfg = yaml.safe_load(f)
         model_rel = cfg["model"]["onnx_fp32_path"]
@@ -204,7 +207,9 @@ def main() -> int:
     # Read input_size from config
     import yaml
 
-    config_path = Path(__file__).resolve().parents[1] / "config" / "skew_estimation.yaml"
+    config_path = (
+        Path(__file__).resolve().parents[1] / "config" / "skew_estimation.yaml"
+    )
     with config_path.open() as f:
         cfg = yaml.safe_load(f)
     input_size = int(cfg["model"]["input_size"])
@@ -245,10 +250,12 @@ def main() -> int:
                 total_time_ms += result.get("processing_time_ms", 0.0)
         except Exception:
             logger.exception("Failed to process %s", image_path)
-            results.append({
-                "image_path": str(image_path.relative_to(args.input_dir)),
-                "error": "processing_exception",
-            })
+            results.append(
+                {
+                    "image_path": str(image_path.relative_to(args.input_dir)),
+                    "error": "processing_exception",
+                }
+            )
             errors += 1
 
     # Compute summary stats

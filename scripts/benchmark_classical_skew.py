@@ -284,7 +284,9 @@ def print_summary(report: BenchmarkReport) -> None:
     print(f"TOP80:       {m.top80_error:.4f} deg")
     print(f"Within 0.5d: {m.within_05_deg:.1%}")
     print(f"Within 1.0d: {m.within_1_deg:.1%}")
-    print(f"Latency:     {m.mean_latency_ms:.1f} ms (mean), {m.p95_latency_ms:.1f} ms (p95)")
+    print(
+        f"Latency:     {m.mean_latency_ms:.1f} ms (mean), {m.p95_latency_ms:.1f} ms (p95)"
+    )
     print("=" * 42)
 
 

@@ -73,10 +73,33 @@ DEFAULT_SEED = 42
 
 # All 27 scripts
 ALL_SCRIPTS = [
-    "Arab", "Armn", "Beng", "Cyrl", "Deva", "Ethi", "Geor", "Grek",
-    "Gujr", "Guru", "Hans", "Hant", "Hebr", "Jpan", "Khmr", "Knda",
-    "Kore", "Laoo", "Latn", "Mlym", "Mymr", "Orya", "Sinh", "Taml",
-    "Telu", "Thai", "Tibt",
+    "Arab",
+    "Armn",
+    "Beng",
+    "Cyrl",
+    "Deva",
+    "Ethi",
+    "Geor",
+    "Grek",
+    "Gujr",
+    "Guru",
+    "Hans",
+    "Hant",
+    "Hebr",
+    "Jpan",
+    "Khmr",
+    "Knda",
+    "Kore",
+    "Laoo",
+    "Latn",
+    "Mlym",
+    "Mymr",
+    "Orya",
+    "Sinh",
+    "Taml",
+    "Telu",
+    "Thai",
+    "Tibt",
 ]
 
 
@@ -132,7 +155,9 @@ def _show_distribution_plan(
     print(f"  Schema version:  {SCHEMA_VERSION}")
     print(f"  Seed:            {seed}")
     print(f"  Workers:         {workers}")
-    print(f"  Est. storage:    ~{total * 200 / 1024:.0f} MB ({total * 200 / 1024 / 1024:.1f} GB)")
+    print(
+        f"  Est. storage:    ~{total * 200 / 1024:.0f} MB ({total * 200 / 1024 / 1024:.1f} GB)"
+    )
     print()
     print("Per-script distribution:")
     for script, count in sorted(distribution.items()):
@@ -315,9 +340,7 @@ def _generate_worker_batch(
     stats["end_time"] = time.time()
     stats["duration_s"] = stats["end_time"] - stats["start_time"]
     stats["rate_img_s"] = (
-        stats["generated"] / stats["duration_s"]
-        if stats["duration_s"] > 0
-        else 0
+        stats["generated"] / stats["duration_s"] if stats["duration_s"] > 0 else 0
     )
     return stats
 
@@ -466,7 +489,9 @@ def main() -> int:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("/mnt/e/image_detection/03_training_datasets/synthetic_multiscript_v3"),
+        default=Path(
+            "/mnt/e/image_detection/03_training_datasets/synthetic_multiscript_v3"
+        ),
         help="Output directory for generated dataset",
     )
     parser.add_argument(
@@ -510,7 +535,8 @@ def main() -> int:
         help="Resume interrupted generation (skip existing samples)",
     )
     parser.add_argument(
-        "--yes", "-y",
+        "--yes",
+        "-y",
         action="store_true",
         help="Skip confirmation prompt",
     )

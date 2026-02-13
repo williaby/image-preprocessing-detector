@@ -130,8 +130,10 @@ def validate_corrupt_images(dataset_dir: Path) -> dict[str, Any]:
         "corrupt_files": corrupt_files[:10],
     }
     status = "PASS" if passed else "FAIL"
-    print(f"  {status}: {total_images:,} images, {missing_json} missing JSON, "
-          f"{missing_image} missing images, {corrupt_image} corrupt")
+    print(
+        f"  {status}: {total_images:,} images, {missing_json} missing JSON, "
+        f"{missing_image} missing images, {corrupt_image} corrupt"
+    )
     return result
 
 
@@ -174,7 +176,11 @@ def validate_distributions(
         resolution = data.get("resolution", {})
         # Resolution tier is in generation_params
         gen_params = data.get("generation_params", meta.get("generation_params", {}))
-        res_tier = gen_params.get("resolution_tier", "unknown") if isinstance(gen_params, dict) else "unknown"
+        res_tier = (
+            gen_params.get("resolution_tier", "unknown")
+            if isinstance(gen_params, dict)
+            else "unknown"
+        )
         resolution_counts[res_tier] += 1
 
     deviations: list[dict[str, Any]] = []
@@ -184,13 +190,15 @@ def validate_distributions(
         actual = layout_counts.get(layout_type.value, 0) / total
         deviation = abs(actual - expected_weight)
         if deviation > tolerance:
-            deviations.append({
-                "dimension": "layout",
-                "value": layout_type.value,
-                "expected": round(expected_weight, 3),
-                "actual": round(actual, 3),
-                "deviation": round(deviation, 3),
-            })
+            deviations.append(
+                {
+                    "dimension": "layout",
+                    "value": layout_type.value,
+                    "expected": round(expected_weight, 3),
+                    "actual": round(actual, 3),
+                    "deviation": round(deviation, 3),
+                }
+            )
 
     passed = len(deviations) == 0
     result = {
@@ -204,7 +212,9 @@ def validate_distributions(
     status = "PASS" if passed else f"WARN ({len(deviations)} deviations)"
     print(f"  {status}: {total:,} samples checked")
     for d in deviations[:5]:
-        print(f"    {d['dimension']}/{d['value']}: expected {d['expected']}, got {d['actual']}")
+        print(
+            f"    {d['dimension']}/{d['value']}: expected {d['expected']}, got {d['actual']}"
+        )
     return result
 
 
@@ -258,10 +268,12 @@ def validate_char_height_correlation(
         "analytical_median": round(float(np.median(analytical_heights)), 1),
     }
     status = "PASS" if passed else "FAIL"
-    print(f"  {status}: r={r:.4f} (min {min_correlation}), "
-          f"n={len(rendered_heights):,}, "
-          f"median rendered={np.median(rendered_heights):.1f}px, "
-          f"median analytical={np.median(analytical_heights):.1f}px")
+    print(
+        f"  {status}: r={r:.4f} (min {min_correlation}), "
+        f"n={len(rendered_heights):,}, "
+        f"median rendered={np.median(rendered_heights):.1f}px, "
+        f"median analytical={np.median(analytical_heights):.1f}px"
+    )
     return result
 
 
@@ -275,9 +287,11 @@ def validate_vertical_text(
     """
     print("\n[4/8] Checking CJK vertical text ratios...")
 
-    cjk_scripts = {"Jpan": {"total": 0, "ttb": 0},
-                    "Hans": {"total": 0, "ttb": 0},
-                    "Hant": {"total": 0, "ttb": 0}}
+    cjk_scripts = {
+        "Jpan": {"total": 0, "ttb": 0},
+        "Hans": {"total": 0, "ttb": 0},
+        "Hant": {"total": 0, "ttb": 0},
+    }
 
     for meta in metadata_list:
         data = meta.get("data", {})
@@ -298,7 +312,12 @@ def validate_vertical_text(
 
     for script, counts in cjk_scripts.items():
         if counts["total"] == 0:
-            results[script] = {"total": 0, "ttb": 0, "ratio": 0, "expected": expected_ratios[script]}
+            results[script] = {
+                "total": 0,
+                "ttb": 0,
+                "ratio": 0,
+                "expected": expected_ratios[script],
+            }
             continue
 
         ratio = counts["ttb"] / counts["total"]
@@ -324,8 +343,10 @@ def validate_vertical_text(
     print(f"  {status}:")
     for script, data in results.items():
         s = "ok" if data.get("ok", True) else "DEVIATION"
-        print(f"    {script}: {data['ttb']}/{data['total']} TTB "
-              f"({data['ratio']:.1%}, expected {data['expected']:.0%}) [{s}]")
+        print(
+            f"    {script}: {data['ttb']}/{data['total']} TTB "
+            f"({data['ratio']:.1%}, expected {data['expected']:.0%}) [{s}]"
+        )
     return result
 
 
@@ -359,7 +380,8 @@ def validate_english_secondary(
 
             # Multi-script: check if Latn is one of the scripts
             if script_code == "Latn" or any(
-                lang.get("script_code") == "Latn" for lang in languages
+                lang.get("script_code") == "Latn"
+                for lang in languages
                 if isinstance(lang, dict)
             ):
                 english_secondary += 1
@@ -380,8 +402,10 @@ def validate_english_secondary(
         "expected": expected_ratio,
     }
     status = "PASS" if passed else "WARN"
-    print(f"  {status}: {english_secondary}/{multi_script} "
-          f"({ratio:.1%}, expected ~{expected_ratio:.0%})")
+    print(
+        f"  {status}: {english_secondary}/{multi_script} "
+        f"({ratio:.1%}, expected ~{expected_ratio:.0%})"
+    )
     return result
 
 
@@ -451,11 +475,13 @@ def validate_font_diversity(
     for script in sorted(fonts_per_script):
         count = len(fonts_per_script[script])
         if count < 5:
-            low_diversity.append({
-                "script": script,
-                "font_count": count,
-                "fonts": sorted(fonts_per_script[script]),
-            })
+            low_diversity.append(
+                {
+                    "script": script,
+                    "font_count": count,
+                    "fonts": sorted(fonts_per_script[script]),
+                }
+            )
 
     result = {
         "check": "font_diversity",
@@ -464,9 +490,13 @@ def validate_font_diversity(
         "low_diversity_scripts": low_diversity,
         "fonts_per_script": {k: len(v) for k, v in sorted(fonts_per_script.items())},
     }
-    print(f"  INFO: {len(fonts_per_script)} scripts, {len(low_diversity)} with <5 font families")
+    print(
+        f"  INFO: {len(fonts_per_script)} scripts, {len(low_diversity)} with <5 font families"
+    )
     for ld in low_diversity:
-        print(f"    {ld['script']}: {ld['font_count']} fonts ({', '.join(ld['fonts'][:3])})")
+        print(
+            f"    {ld['script']}: {ld['font_count']} fonts ({', '.join(ld['fonts'][:3])})"
+        )
     return result
 
 
@@ -559,8 +589,7 @@ def main() -> int:
     skipped = sum(1 for r in results if r.get("skipped"))
 
     print("\n" + "=" * 70)
-    print(f"Validation Summary: {passed}/{total} checks passed "
-          f"({skipped} skipped)")
+    print(f"Validation Summary: {passed}/{total} checks passed ({skipped} skipped)")
     print("=" * 70)
 
     for r in results:
