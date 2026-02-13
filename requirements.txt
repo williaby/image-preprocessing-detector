@@ -184,7 +184,7 @@ pathspec==0.12.1
     #   mypy
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.1.0
+pillow==12.1.1
     # via image-preprocessing-detector
 platformdirs==4.5.1
     # via
@@ -196,7 +196,7 @@ propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.3
+protobuf==6.33.5
     # via
     #   kaggle
     #   kagglesdk
@@ -219,7 +219,7 @@ pydantic-settings==2.12.0
     # via image-preprocessing-detector
 pygments==2.19.2
     # via rich
-pymupdf==1.26.7
+pymupdf==1.27.1
     # via image-preprocessing-detector
 pyreadline3==3.5.4 ; sys_platform == 'win32'
     # via humanfriendly
