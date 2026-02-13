@@ -198,6 +198,9 @@ yolov10x.pt
 # YOLO inference runs
 runs/
 
+# Audit results (generated per-dataset artifacts, not source code)
+scripts/audit/results/
+
 # Generated/stale artifacts
 front-matter-report.json
 coverage.json
