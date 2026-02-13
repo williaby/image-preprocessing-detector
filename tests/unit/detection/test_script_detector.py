@@ -278,7 +278,7 @@ class TestUnknownDetection:
 
         assert result.detected_script == "Zzzz"
         assert result.is_unknown is True
-        assert result.confidence == 0.0
+        assert result.confidence == pytest.approx(0.0)
         assert result.unknown_reason is not None
 
     def test_sparse_image_is_unknown(
@@ -341,7 +341,7 @@ class TestProbabilities:
         """Unknown result should have Zzzz=1.0 in probabilities."""
         result = detector.detect(blank_image)
 
-        assert result.script_probabilities.get("Zzzz") == 1.0
+        assert result.script_probabilities.get("Zzzz") == pytest.approx(1.0)
 
     def test_probabilities_keys_are_valid_iso(
         self, detector: ScriptDetectorHeuristic, cjk_like_image: np.ndarray
@@ -526,7 +526,7 @@ class TestInternalHelpers:
         scores = {"cjk": 0.0, "latin": 0.0, "arabic": 0.0, "devanagari": 0.0}
         probs = _build_probabilities(scores)
 
-        assert probs.get("Zzzz") == 1.0
+        assert probs.get("Zzzz") == pytest.approx(1.0)
 
     def test_compute_confidence_high_separation(self) -> None:
         """High score separation should yield higher confidence."""
@@ -603,4 +603,4 @@ class TestInternalHelpers:
         """Empty binary image should return 0.0 complexity."""
         binary = np.zeros((100, 100), dtype=np.uint8)
         complexity = _compute_cc_complexity_signal(binary)
-        assert complexity == 0.0
+        assert complexity == pytest.approx(0.0)

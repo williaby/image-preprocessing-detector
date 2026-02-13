@@ -208,11 +208,11 @@ class TestCodeDetectionResult:
             confidence=0.75,
         )
         assert result.has_code is True
-        assert result.code_confidence == 0.75
-        assert result.width_uniformity == 0.9
+        assert result.code_confidence == pytest.approx(0.75)
+        assert result.width_uniformity == pytest.approx(0.9)
         assert result.indentation_levels == 4
-        assert result.line_height_uniformity == 0.85
-        assert result.confidence == 0.75
+        assert result.line_height_uniformity == pytest.approx(0.85)
+        assert result.confidence == pytest.approx(0.75)
 
 
 # ---------------------------------------------------------------------------
@@ -278,10 +278,10 @@ class TestNonCodeDetection:
         result = detector.detect(blank_page)
 
         assert result.has_code is False
-        assert result.code_confidence == 0.0
-        assert result.width_uniformity == 0.0
+        assert result.code_confidence == pytest.approx(0.0)
+        assert result.width_uniformity == pytest.approx(0.0)
         assert result.indentation_levels == 0
-        assert result.line_height_uniformity == 0.0
+        assert result.line_height_uniformity == pytest.approx(0.0)
 
     def test_sparse_page_no_code(self, sparse_page: np.ndarray) -> None:
         """Page with too few components returns no-code result."""
@@ -289,7 +289,7 @@ class TestNonCodeDetection:
         result = detector.detect(sparse_page)
 
         assert result.has_code is False
-        assert result.code_confidence == 0.0
+        assert result.code_confidence == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -457,7 +457,7 @@ class TestConfigurableThresholds:
         detector = CodeDetector(min_components=100_000)
         result = detector.detect(monospace_code_image)
         assert result.has_code is False
-        assert result.code_confidence == 0.0
+        assert result.code_confidence == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------

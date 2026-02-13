@@ -153,9 +153,9 @@ class TestTextLayerAnalyzer:
 
         assert result.text_layer_quality > 0.85
         assert result.text_layer_skip_ocr is True
-        assert result.extractability_rate == 1.0
-        assert result.replacement_char_ratio == 0.0
-        assert result.font_embedding_score == 1.0
+        assert result.extractability_rate == pytest.approx(1.0)
+        assert result.replacement_char_ratio == pytest.approx(0.0)
+        assert result.font_embedding_score == pytest.approx(1.0)
         assert result.coordinate_precision_score > 0.5
         assert result.page_count == 1
         assert result.total_characters > 0
@@ -181,7 +181,7 @@ class TestTextLayerAnalyzer:
         # quality should still be well below the skip-OCR threshold.
         assert result.text_layer_quality < 0.85
         assert result.text_layer_skip_ocr is False
-        assert result.extractability_rate == 0.0
+        assert result.extractability_rate == pytest.approx(0.0)
         assert result.total_characters == 0
         assert result.page_count == 1
 
@@ -224,8 +224,8 @@ class TestTextLayerAnalyzer:
         analyzer = TextLayerAnalyzer()
         result = analyzer.analyze("/fake/all_bad.pdf")
 
-        assert result.replacement_char_ratio == 1.0
-        assert result.font_embedding_score == 0.0
+        assert result.replacement_char_ratio == pytest.approx(1.0)
+        assert result.font_embedding_score == pytest.approx(0.0)
         assert result.text_layer_skip_ocr is False
 
     @patch(_FITZ_MODULE)
@@ -243,7 +243,7 @@ class TestTextLayerAnalyzer:
         analyzer = TextLayerAnalyzer()
         result = analyzer.analyze("/fake/unembedded.pdf")
 
-        assert result.font_embedding_score == 0.0
+        assert result.font_embedding_score == pytest.approx(0.0)
         # Quality should be reduced by the font embedding penalty.
         assert result.text_layer_quality < 0.85
 
@@ -262,7 +262,7 @@ class TestTextLayerAnalyzer:
         analyzer = TextLayerAnalyzer()
         result = analyzer.analyze("/fake/round.pdf")
 
-        assert result.coordinate_precision_score == 0.0
+        assert result.coordinate_precision_score == pytest.approx(0.0)
 
     @patch(_FITZ_MODULE)
     def test_multipage_pdf(self, mock_fitz: MagicMock) -> None:
@@ -303,7 +303,7 @@ class TestTextLayerAnalyzer:
         result = analyzer.analyze("/fake/single.pdf")
 
         assert result.page_count == 1
-        assert result.extractability_rate == 1.0
+        assert result.extractability_rate == pytest.approx(1.0)
 
     @patch(_FITZ_MODULE)
     def test_zero_page_pdf(self, mock_fitz: MagicMock) -> None:
@@ -319,7 +319,7 @@ class TestTextLayerAnalyzer:
         result = analyzer.analyze("/fake/zeropages.pdf")
 
         assert result.page_count == 0
-        assert result.text_layer_quality == 0.0
+        assert result.text_layer_quality == pytest.approx(0.0)
         assert result.text_layer_skip_ocr is False
         assert result.total_characters == 0
 
@@ -491,7 +491,7 @@ class TestTextLayerAnalyzer:
 
         assert 0.0 <= result.text_layer_quality <= 1.0
         assert 0.0 <= result.replacement_char_ratio <= 1.0
-        assert result.replacement_char_ratio == 1.0
+        assert result.replacement_char_ratio == pytest.approx(1.0)
 
     @patch(_FITZ_MODULE)
     def test_confidence_increases_with_more_text(self, mock_fitz: MagicMock) -> None:
@@ -666,7 +666,7 @@ class TestEdgeCases:
         analyzer = TextLayerAnalyzer()
         result = analyzer.analyze("/fake/whitespace.pdf")
 
-        assert result.extractability_rate == 0.0
+        assert result.extractability_rate == pytest.approx(0.0)
 
     @patch(_FITZ_MODULE)
     def test_page_with_no_fonts_referenced(self, mock_fitz: MagicMock) -> None:
@@ -687,7 +687,7 @@ class TestEdgeCases:
         result = analyzer.analyze("/fake/no_fonts.pdf")
 
         # No fonts = nothing to fail on, score defaults to 1.0.
-        assert result.font_embedding_score == 1.0
+        assert result.font_embedding_score == pytest.approx(1.0)
 
     @patch(_FITZ_MODULE)
     def test_page_with_no_words(self, mock_fitz: MagicMock) -> None:
@@ -708,7 +708,7 @@ class TestEdgeCases:
         result = analyzer.analyze("/fake/no_words.pdf")
 
         # Neutral default when no coordinate data.
-        assert result.coordinate_precision_score == 0.5
+        assert result.coordinate_precision_score == pytest.approx(0.5)
 
     @patch(_FITZ_MODULE)
     def test_mixed_round_and_precise_coords(self, mock_fitz: MagicMock) -> None:

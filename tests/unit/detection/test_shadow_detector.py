@@ -114,10 +114,10 @@ class TestShadowDetectionResult:
             confidence=0.82,
         )
         assert result.has_shadows is True
-        assert result.shadow_score == 0.45
+        assert result.shadow_score == pytest.approx(0.45)
         assert result.shadow_severity == "moderate"
-        assert result.shadow_ratio == 0.35
-        assert result.confidence == 0.82
+        assert result.shadow_ratio == pytest.approx(0.35)
+        assert result.confidence == pytest.approx(0.82)
 
 
 # ---------------------------------------------------------------------------

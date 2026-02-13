@@ -288,12 +288,12 @@ class TestHandwritingDetectionResult:
             confidence=0.75,
         )
         assert result.has_handwriting is True
-        assert result.handwriting_score == 0.65
-        assert result.stroke_width_variance == 0.7
-        assert result.baseline_irregularity == 0.5
-        assert result.spacing_variance == 0.6
-        assert result.form_factor_score == 0.8
-        assert result.confidence == 0.75
+        assert result.handwriting_score == pytest.approx(0.65)
+        assert result.stroke_width_variance == pytest.approx(0.7)
+        assert result.baseline_irregularity == pytest.approx(0.5)
+        assert result.spacing_variance == pytest.approx(0.6)
+        assert result.form_factor_score == pytest.approx(0.8)
+        assert result.confidence == pytest.approx(0.75)
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +339,7 @@ class TestNoHandwritingDetection:
         result = detector.detect(white_page)
 
         assert result.has_handwriting is False
-        assert result.handwriting_score == 0.0
+        assert result.handwriting_score == pytest.approx(0.0)
         assert 0.0 <= result.confidence <= 1.0
 
     def test_printed_text_no_handwriting(self, printed_text_image: np.ndarray) -> None:
@@ -374,8 +374,8 @@ class TestToAssessment:
         assert isinstance(assessment, HandwritingAssessment)
         assert assessment.presence == HandwritingPresence.NONE
         assert assessment.detection_method == "heuristic"
-        assert assessment.presence_score == 0.1
-        assert assessment.presence_confidence == 0.6
+        assert assessment.presence_score == pytest.approx(0.1)
+        assert assessment.presence_confidence == pytest.approx(0.6)
 
     def test_sparse_handwriting(self) -> None:
         """Score in [0.2, 0.4) maps to HandwritingPresence.SPARSE."""
@@ -432,8 +432,8 @@ class TestToAssessment:
         )
         assessment = result.to_assessment()
         assert assessment.legibility == HandwritingLegibility.NOT_APPLICABLE
-        assert assessment.legibility_score == 0.0
-        assert assessment.legibility_confidence == 0.0
+        assert assessment.legibility_score == pytest.approx(0.0)
+        assert assessment.legibility_confidence == pytest.approx(0.0)
 
     def test_content_type_is_not_applicable(self) -> None:
         """Heuristic detector cannot determine content type."""
@@ -448,7 +448,7 @@ class TestToAssessment:
         )
         assessment = result.to_assessment()
         assert assessment.content_type == HandwritingContentType.NOT_APPLICABLE
-        assert assessment.content_type_confidence == 0.0
+        assert assessment.content_type_confidence == pytest.approx(0.0)
 
     def test_assessment_boundary_at_0_2(self) -> None:
         """Score exactly at 0.2 maps to SPARSE (not NONE)."""
@@ -539,7 +539,7 @@ class TestEdgeCases:
         result = detector.detect(img)
         assert isinstance(result, HandwritingDetectionResult)
         assert result.has_handwriting is False
-        assert result.handwriting_score == 0.0
+        assert result.handwriting_score == pytest.approx(0.0)
 
     def test_all_black_image(self) -> None:
         """An all-black image should not crash."""

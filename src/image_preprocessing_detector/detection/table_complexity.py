@@ -453,8 +453,8 @@ class TableComplexityAnalyzer:
         expected_h = estimated_rows + 1 if estimated_rows > 0 else 1
         expected_v = estimated_columns + 1 if estimated_columns > 0 else 1
 
-        h_ratio = num_h_lines / expected_h if expected_h > 0 else 0
-        v_ratio = num_v_lines / expected_v if expected_v > 0 else 0
+        h_ratio = num_h_lines / expected_h
+        v_ratio = num_v_lines / expected_v
 
         return h_ratio >= _BORDER_LINE_RATIO and v_ratio >= _BORDER_LINE_RATIO
 

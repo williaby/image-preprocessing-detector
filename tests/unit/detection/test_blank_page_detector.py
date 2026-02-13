@@ -112,11 +112,11 @@ class TestBlankPageResult:
             confidence=0.98,
         )
         assert result.is_blank is True
-        assert result.blankness_score == 0.95
-        assert result.content_ratio == 0.001
-        assert result.edge_density == 0.0005
-        assert result.pixel_variance == 5.0
-        assert result.confidence == 0.98
+        assert result.blankness_score == pytest.approx(0.95)
+        assert result.content_ratio == pytest.approx(0.001)
+        assert result.edge_density == pytest.approx(0.0005)
+        assert result.pixel_variance == pytest.approx(5.0)
+        assert result.confidence == pytest.approx(0.98)
 
 
 # ---------------------------------------------------------------------------
