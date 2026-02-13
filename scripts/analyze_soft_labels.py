@@ -712,6 +712,96 @@ def format_confidence_band(values: list[float]) -> str:
     )
 
 
+def _print_category_histogram(
+    title: str,
+    categories: list[str],
+    counts_source: dict | Counter,
+    total: int,
+) -> None:
+    """Print a histogram section for a list of categories.
+
+    Args:
+        title: Section title string.
+        categories: Ordered list of category keys.
+        counts_source: Dict/Counter mapping category to count.
+        total: Total for percentage calculation.
+    """
+    print(f"  {title:─<50}")
+    for category in categories:
+        count = counts_source.get(category, 0)
+        pct = (count / total * 100) if total > 0 else 0
+        bar = "#" * int(pct / 2)
+        print(f"  {category:20s} {count:6d} ({pct:5.1f}%) {bar}")
+    print()
+
+
+def _get_field_label_tag(report: DatasetReport, field_name: str) -> str:
+    """Determine whether a field is HARD, SOFT, or MIXED across the dataset."""
+    soft_counts = report.field_soft_label_counts.get(field_name, Counter())
+    hard_n = soft_counts.get(False, 0)
+    soft_n = soft_counts.get(True, 0)
+    if soft_n == 0:
+        return "HARD"
+    if hard_n == 0:
+        return "SOFT"
+    return "MIXED"
+
+
+def _determine_readiness(hard_pct: float, soft_pct: float) -> str:
+    """Return a training readiness label based on hard/soft label percentages."""
+    if hard_pct >= 70:
+        return "HIGH - Majority hard labels, suitable for supervised training"
+    if hard_pct + soft_pct >= 70:
+        return "MODERATE - Mix of hard/soft labels, suitable for semi-supervised"
+    if soft_pct >= 50:
+        return "LOW - Predominantly soft labels, use with confidence weighting"
+    return "NEEDS ENRICHMENT - Too many unassessed fields"
+
+
+def _print_training_readiness(report: DatasetReport, total_fields: int) -> None:
+    """Print the training readiness and sample-level composite sections."""
+    _safe_pct = lambda key: (
+        report.label_category_counts.get(key, 0) / total_fields * 100
+        if total_fields > 0
+        else 0
+    )
+    hard_pct = _safe_pct("hard_label")
+    soft_pct = _safe_pct("soft_label")
+    unassessed_pct = _safe_pct("unassessed")
+
+    print(f"  {'TRAINING READINESS':─<50}")
+    print(f"  Readiness: {_determine_readiness(hard_pct, soft_pct)}")
+    print(f"  Hard labels:  {hard_pct:.1f}%  (full training weight)")
+    print(f"  Soft labels:  {soft_pct:.1f}%  (reduced weight / semi-supervised)")
+    print(f"  Unassessed:   {unassessed_pct:.1f}%  (apply default policy)")
+    print()
+
+    # Sample-Level Composite
+    composite_counts: Counter[str] = Counter()
+    bottleneck_counts: Counter[str] = Counter()
+    for sample in report.samples:
+        if not sample.reliability_summary:
+            continue
+        composite_counts[sample.reliability_summary.min_confidence_category] += 1
+        if sample.reliability_summary.min_confidence_field:
+            bottleneck_counts[sample.reliability_summary.min_confidence_field] += 1
+
+    _print_category_histogram(
+        "SAMPLE-LEVEL COMPOSITE (min_confidence_category per sample)",
+        ["hard_label", "soft_label", "active_learning", "unreliable", "unassessed"],
+        composite_counts,
+        len(report.samples),
+    )
+
+    print(f"  {'BOTTLENECK FIELDS (which field is the weakest most often)':─<50}")
+    n_samples = len(report.samples)
+    for field_name, count in bottleneck_counts.most_common():
+        pct = count / n_samples * 100
+        print(f"  {field_name:22s} {count:6d} ({pct:5.1f}%)")
+
+    print(f"\n{'=' * 72}\n")
+
+
 def print_report(report: DatasetReport) -> None:
     """Print a formatted analysis report for a dataset."""
     total_fields = sum(report.label_category_counts.values())
@@ -724,34 +814,32 @@ def print_report(report: DatasetReport) -> None:
     print(f"  Total field assessments: {total_fields}")
     print()
 
-    # --- Label Category Distribution ---
-    print(f"  {'LABEL CATEGORY DISTRIBUTION':─<50}")
-    for category in [
+    _label_categories = [
         "hard_label",
         "soft_label",
         "active_learning",
         "unreliable",
         "unassessed",
-    ]:
-        count = report.label_category_counts.get(category, 0)
-        pct = (count / total_fields * 100) if total_fields > 0 else 0
-        bar = "#" * int(pct / 2)
-        print(f"  {category:20s} {count:6d} ({pct:5.1f}%) {bar}")
-    print()
-
-    # --- Provenance Tier Distribution ---
-    print(f"  {'PROVENANCE TIER DISTRIBUTION':─<50}")
-    for tier in [
+    ]
+    _provenance_tiers = [
         "tier_0_exact",
         "tier_1_annotation",
         "tier_2_model",
         "tier_3_heuristic",
-    ]:
-        count = report.provenance_tier_counts.get(tier, 0)
-        pct = (count / total_fields * 100) if total_fields > 0 else 0
-        bar = "#" * int(pct / 2)
-        print(f"  {tier:20s} {count:6d} ({pct:5.1f}%) {bar}")
-    print()
+    ]
+
+    _print_category_histogram(
+        "LABEL CATEGORY DISTRIBUTION",
+        _label_categories,
+        report.label_category_counts,
+        total_fields,
+    )
+    _print_category_histogram(
+        "PROVENANCE TIER DISTRIBUTION",
+        _provenance_tiers,
+        report.provenance_tier_counts,
+        total_fields,
+    )
 
     # --- Per-Field Breakdown ---
     print(f"  {'PER-FIELD CONFIDENCE & SOFT LABEL BREAKDOWN':─<50}")
@@ -767,21 +855,10 @@ def print_report(report: DatasetReport) -> None:
         "has_figure",
         "layout_detections",
     ]
-
     for field_name in fields:
-        soft_counts = report.field_soft_label_counts.get(field_name, Counter())
-        hard_n = soft_counts.get(False, 0)
-        soft_n = soft_counts.get(True, 0)
+        label_tag = _get_field_label_tag(report, field_name)
         conf_values = report.field_confidence_sums.get(field_name, [])
-
-        if soft_n == 0:
-            label_tag = "HARD"
-        elif hard_n == 0:
-            label_tag = "SOFT"
-        else:
-            label_tag = "MIXED"
         conf_str = format_confidence_band(conf_values)
-
         print(f"  {field_name:22s} [{label_tag:5s}] {conf_str}")
     print()
 
@@ -800,82 +877,14 @@ def print_report(report: DatasetReport) -> None:
         print(f"  {'LAYOUT DETECTION STATISTICS':─<50}")
         print(f"  Avg detections per sample: {avg_count:.1f}")
         print(f"  Avg detection confidence:  {avg_conf:.3f}")
-
-        # Confidence band for individual detections
         print(
             f"  Samples with detections:   {sum(1 for c in layout_counts if c > 0)}/{len(layout_counts)}"
         )
         print()
 
-    # --- Language/Script Confidence with OpenLID Secondary ---
     _print_language_summary(report)
-
-    # --- Text Quality Confidence ---
     _print_text_quality_summary(report)
-
-    # --- Training Readiness Summary ---
-    hard_pct = (
-        report.label_category_counts.get("hard_label", 0) / total_fields * 100
-        if total_fields > 0
-        else 0
-    )
-    soft_pct = (
-        report.label_category_counts.get("soft_label", 0) / total_fields * 100
-        if total_fields > 0
-        else 0
-    )
-    unassessed_pct = (
-        report.label_category_counts.get("unassessed", 0) / total_fields * 100
-        if total_fields > 0
-        else 0
-    )
-
-    print(f"  {'TRAINING READINESS':─<50}")
-    if hard_pct >= 70:
-        readiness = "HIGH - Majority hard labels, suitable for supervised training"
-    elif hard_pct + soft_pct >= 70:
-        readiness = "MODERATE - Mix of hard/soft labels, suitable for semi-supervised"
-    elif soft_pct >= 50:
-        readiness = "LOW - Predominantly soft labels, use with confidence weighting"
-    else:
-        readiness = "NEEDS ENRICHMENT - Too many unassessed fields"
-
-    print(f"  Readiness: {readiness}")
-    print(f"  Hard labels:  {hard_pct:.1f}%  (full training weight)")
-    print(f"  Soft labels:  {soft_pct:.1f}%  (reduced weight / semi-supervised)")
-    print(f"  Unassessed:   {unassessed_pct:.1f}%  (apply default policy)")
-    print()
-
-    # --- Sample-Level Composite (min across all fields) ---
-    print(f"  {'SAMPLE-LEVEL COMPOSITE (min_confidence_category per sample)':─<50}")
-    composite_counts: Counter[str] = Counter()
-    bottleneck_counts: Counter[str] = Counter()
-    for sample in report.samples:
-        if sample.reliability_summary:
-            composite_counts[sample.reliability_summary.min_confidence_category] += 1
-            if sample.reliability_summary.min_confidence_field:
-                bottleneck_counts[sample.reliability_summary.min_confidence_field] += 1
-
-    n_samples = len(report.samples)
-    for category in [
-        "hard_label",
-        "soft_label",
-        "active_learning",
-        "unreliable",
-        "unassessed",
-    ]:
-        count = composite_counts.get(category, 0)
-        pct = (count / n_samples * 100) if n_samples > 0 else 0
-        bar = "#" * int(pct / 2)
-        print(f"  {category:20s} {count:6d} ({pct:5.1f}%) {bar}")
-
-    print()
-    print(f"  {'BOTTLENECK FIELDS (which field is the weakest most often)':─<50}")
-    for field_name, count in bottleneck_counts.most_common():
-        pct = count / n_samples * 100
-        print(f"  {field_name:22s} {count:6d} ({pct:5.1f}%)")
-
-    print(f"\n{'=' * 72}\n")
+    _print_training_readiness(report, total_fields)
 
 
 def print_sample_detail(report: DatasetReport, num_samples: int = 3) -> None:

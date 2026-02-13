@@ -153,6 +153,63 @@ class ValidationReport:
 # =============================================================================
 
 
+def _check_schema_version(
+    result: DatasetValidation,
+    schema_version_col,
+    expected: str,
+) -> None:
+    """Check schema version column and record mismatches in result."""
+    if len(schema_version_col) == 0:
+        return
+
+    for val in schema_version_col:
+        if val.is_valid:
+            result.schema_version = val.as_py()
+            break
+
+    if result.schema_version != expected:
+        result.issues.append(
+            f"Schema version mismatch: {result.schema_version} (expected {expected})"
+        )
+
+
+def _validate_table_contents(
+    result: DatasetValidation,
+    writer: Any,
+    dataset_name: str,
+    verify_sample_hashes: int,
+    settings: Any | None,
+) -> None:
+    """Validate the contents of a dataset table in-place on result."""
+    table: pa.Table = writer.read_dataset(dataset_name)
+    result.row_count = len(table)
+
+    # Check for null file_hash values
+    null_count = table.column("file_hash").null_count
+    result.null_file_hash_count = null_count
+    if null_count > 0:
+        result.issues.append(f"{null_count} rows with null file_hash")
+
+    _check_schema_version(
+        result, table.column("schema_version"), result.expected_schema_version
+    )
+
+    # Accumulate parquet file sizes
+    partition_dir = writer._get_partition_dir(dataset_name)
+    for parquet_file in partition_dir.glob("*.parquet"):
+        result.file_size_bytes += parquet_file.stat().st_size
+
+    # Verify sample hashes if requested
+    if verify_sample_hashes > 0 and settings is not None:
+        verified, failed = _verify_sample_hashes(
+            table, dataset_name, verify_sample_hashes, settings
+        )
+        result.sample_hashes_verified = verified
+        result.sample_hashes_failed = failed
+        if failed > 0:
+            result.issues.append(f"{failed} sample hashes failed verification")
+
+
 def validate_dataset(
     writer: Any,  # PartitionedParquetWriter
     dataset_name: str,
@@ -178,56 +235,16 @@ def validate_dataset(
         expected_schema_version=expected_schema_version,
     )
 
-    # Check if partition exists
-    existing_datasets = writer.list_datasets()
-    if dataset_name not in existing_datasets:
+    if dataset_name not in writer.list_datasets():
         result.issues.append("Partition does not exist")
         return result
 
     result.exists = True
 
-    # Read dataset
     try:
-        table: pa.Table = writer.read_dataset(dataset_name)
-        result.row_count = len(table)
-
-        # Check for null file_hash values
-        file_hash_col = table.column("file_hash")
-        null_count = file_hash_col.null_count
-        result.null_file_hash_count = null_count
-        if null_count > 0:
-            result.issues.append(f"{null_count} rows with null file_hash")
-
-        # Check schema version
-        schema_version_col = table.column("schema_version")
-        if len(schema_version_col) > 0:
-            # Get first non-null value
-            for val in schema_version_col:
-                if val.is_valid:
-                    result.schema_version = val.as_py()
-                    break
-
-            if result.schema_version != expected_schema_version:
-                result.issues.append(
-                    f"Schema version mismatch: {result.schema_version} "
-                    f"(expected {expected_schema_version})"
-                )
-
-        # Get file size
-        partition_dir = writer._get_partition_dir(dataset_name)
-        for parquet_file in partition_dir.glob("*.parquet"):
-            result.file_size_bytes += parquet_file.stat().st_size
-
-        # Verify sample hashes if requested
-        if verify_sample_hashes > 0 and settings is not None:
-            verified, failed = _verify_sample_hashes(
-                table, dataset_name, verify_sample_hashes, settings
-            )
-            result.sample_hashes_verified = verified
-            result.sample_hashes_failed = failed
-            if failed > 0:
-                result.issues.append(f"{failed} sample hashes failed verification")
-
+        _validate_table_contents(
+            result, writer, dataset_name, verify_sample_hashes, settings
+        )
     except Exception as e:
         result.issues.append(f"Error reading dataset: {e}")
         logger.exception(f"Error validating {dataset_name}")
@@ -359,6 +376,51 @@ def generate_report(
     return report
 
 
+def _print_dataset_detail(validation: DatasetValidation) -> None:
+    """Print detailed info for a single dataset validation result."""
+    status_icon = "✓" if validation.passed else "✗"
+    status_color = "PASS" if validation.passed else validation.status
+
+    print(f"Dataset: {validation.dataset_name}")
+    print(f"  Status: {status_icon} {status_color}")
+
+    if not validation.exists:
+        print()
+        return
+
+    print(f"  Rows: {validation.row_count:,}")
+    print(f"  Null file_hash: {validation.null_file_hash_count}")
+    schema_check = (
+        "✓" if validation.schema_version == validation.expected_schema_version else "✗"
+    )
+    print(f"  Schema version: {validation.schema_version} {schema_check}")
+
+    if validation.sample_hashes_verified > 0:
+        print(
+            f"  Sample hashes: {validation.sample_hashes_verified} verified, "
+            f"{validation.sample_hashes_failed} failed"
+        )
+
+    if validation.file_size_bytes > 0:
+        size_mb = validation.file_size_bytes / (1024 * 1024)
+        print(f"  Size: {size_mb:.1f} MB")
+
+    if validation.issues:
+        print("  Issues:")
+        for issue in validation.issues:
+            print(f"    - {issue}")
+    print()
+
+
+def _print_truncated_list(label: str, items: list[str], limit: int = 10) -> None:
+    """Print a list with truncation after *limit* items."""
+    if not items:
+        return
+    print(f"\n{label}: {', '.join(items[:limit])}")
+    if len(items) > limit:
+        print(f"  ... and {len(items) - limit} more")
+
+
 def print_report(report: ValidationReport, summary_only: bool = False) -> None:
     """Print validation report to console.
 
@@ -374,37 +436,7 @@ def print_report(report: ValidationReport, summary_only: bool = False) -> None:
 
     if not summary_only:
         for validation in report.datasets:
-            status_icon = "✓" if validation.passed else "✗"
-            status_color = "PASS" if validation.passed else validation.status
-
-            print(f"Dataset: {validation.dataset_name}")
-            print(f"  Status: {status_icon} {status_color}")
-
-            if validation.exists:
-                print(f"  Rows: {validation.row_count:,}")
-                print(f"  Null file_hash: {validation.null_file_hash_count}")
-                schema_check = (
-                    "✓"
-                    if validation.schema_version == validation.expected_schema_version
-                    else "✗"
-                )
-                print(f"  Schema version: {validation.schema_version} {schema_check}")
-
-                if validation.sample_hashes_verified > 0:
-                    print(
-                        f"  Sample hashes: {validation.sample_hashes_verified} verified, "
-                        f"{validation.sample_hashes_failed} failed"
-                    )
-
-                if validation.file_size_bytes > 0:
-                    size_mb = validation.file_size_bytes / (1024 * 1024)
-                    print(f"  Size: {size_mb:.1f} MB")
-
-                if validation.issues:
-                    print("  Issues:")
-                    for issue in validation.issues:
-                        print(f"    - {issue}")
-            print()
+            _print_dataset_detail(validation)
 
     # Summary
     print("-" * 60)
@@ -415,15 +447,8 @@ def print_report(report: ValidationReport, summary_only: bool = False) -> None:
     print(f"Failed: {report.failed_count}")
     print(f"Missing: {report.missing_count}")
 
-    if report.missing_datasets:
-        print(f"\nMissing datasets: {', '.join(report.missing_datasets[:10])}")
-        if len(report.missing_datasets) > 10:
-            print(f"  ... and {len(report.missing_datasets) - 10} more")
-
-    if report.error_datasets:
-        print(f"\nDatasets with errors: {', '.join(report.error_datasets[:10])}")
-        if len(report.error_datasets) > 10:
-            print(f"  ... and {len(report.error_datasets) - 10} more")
+    _print_truncated_list("Missing datasets", report.missing_datasets)
+    _print_truncated_list("Datasets with errors", report.error_datasets)
 
     print(f"\nTotal rows: {report.total_rows:,}")
     size_mb = report.total_size_bytes / (1024 * 1024)

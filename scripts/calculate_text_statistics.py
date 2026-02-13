@@ -94,6 +94,40 @@ class TextStatistics:
         }
 
 
+_EMPTY_STATS = TextStatistics(
+    character_count=0,
+    character_count_no_spaces=0,
+    word_count=0,
+    sentence_count=0,
+    paragraph_count=0,
+    line_count=0,
+    avg_word_length=None,
+    avg_sentence_length=None,
+    avg_paragraph_length=None,
+)
+
+
+def _safe_avg(numerator: int, denominator: int) -> float | None:
+    """Compute rounded average or None if denominator is zero."""
+    if denominator == 0:
+        return None
+    return round(numerator / denominator, 2)
+
+
+def _count_nonempty_splits(
+    text: str, pattern: str | None = None, sep: str | None = None
+) -> int:
+    """Split text by regex pattern or separator and count non-empty parts (min 1)."""
+    if pattern is not None:
+        parts = re.split(pattern, text)
+    elif sep is not None:
+        parts = text.split(sep)
+    else:
+        parts = [text]
+    count = sum(1 for p in parts if p.strip())
+    return max(count, 1)
+
+
 def calculate_text_stats(text: str) -> TextStatistics:
     """Calculate text statistics from raw text.
 
@@ -104,70 +138,30 @@ def calculate_text_stats(text: str) -> TextStatistics:
         TextStatistics with all computed metrics
     """
     if not text or not text.strip():
-        return TextStatistics(
-            character_count=0,
-            character_count_no_spaces=0,
-            word_count=0,
-            sentence_count=0,
-            paragraph_count=0,
-            line_count=0,
-            avg_word_length=None,
-            avg_sentence_length=None,
-            avg_paragraph_length=None,
-        )
+        return _EMPTY_STATS
 
-    # Character counts
-    char_count = len(text)
-    char_count_no_spaces = len(
-        text.replace(" ", "").replace("\t", "").replace("\n", "")
-    )
-
-    # Word count (whitespace tokenization)
     words = text.split()
     word_count = len(words)
-
-    # Sentence count (punctuation-based: . ! ?)
-    # Handle abbreviations and decimals carefully
-    sentences = re.split(r"[.!?]+(?:\s|$)", text)
-    sentences = [s.strip() for s in sentences if s.strip()]
-    sentence_count = len(sentences) if sentences else 1
-
-    # Paragraph count (double newline or explicit markers)
-    paragraphs = re.split(r"\n\s*\n", text)
-    paragraphs = [p.strip() for p in paragraphs if p.strip()]
-    paragraph_count = len(paragraphs) if paragraphs else 1
-
-    # Line count
-    lines = text.split("\n")
-    lines = [line for line in lines if line.strip()]
-    line_count = len(lines)
-
-    # Average word length
-    avg_word_length = None
-    if word_count > 0:
-        total_word_chars = sum(len(w) for w in words)
-        avg_word_length = round(total_word_chars / word_count, 2)
-
-    # Average sentence length (in words)
-    avg_sentence_length = None
-    if sentence_count > 0 and word_count > 0:
-        avg_sentence_length = round(word_count / sentence_count, 2)
-
-    # Average paragraph length (in sentences)
-    avg_paragraph_length = None
-    if paragraph_count > 0 and sentence_count > 0:
-        avg_paragraph_length = round(sentence_count / paragraph_count, 2)
+    sentence_count = _count_nonempty_splits(text, pattern=r"[.!?]+(?:\s|$)")
+    paragraph_count = _count_nonempty_splits(text, pattern=r"\n\s*\n")
+    line_count = sum(1 for line in text.split("\n") if line.strip())
 
     return TextStatistics(
-        character_count=char_count,
-        character_count_no_spaces=char_count_no_spaces,
+        character_count=len(text),
+        character_count_no_spaces=len(
+            text.replace(" ", "").replace("\t", "").replace("\n", "")
+        ),
         word_count=word_count,
         sentence_count=sentence_count,
         paragraph_count=paragraph_count,
         line_count=line_count,
-        avg_word_length=avg_word_length,
-        avg_sentence_length=avg_sentence_length,
-        avg_paragraph_length=avg_paragraph_length,
+        avg_word_length=_safe_avg(sum(len(w) for w in words), word_count),
+        avg_sentence_length=_safe_avg(word_count, sentence_count)
+        if word_count > 0
+        else None,
+        avg_paragraph_length=_safe_avg(sentence_count, paragraph_count)
+        if sentence_count > 0
+        else None,
     )
 
 
@@ -447,6 +441,50 @@ def extract_sample_key(sample: dict[str, Any]) -> str | None:
     return None
 
 
+def _resolve_text_data(
+    sample: dict,
+    text_map: dict,
+    filename_mapping: dict | None,
+) -> tuple[str | None, dict | None]:
+    """Resolve a sample to its text data entry.
+
+    Returns:
+        (sample_key, text_data) or (None, None) if unresolvable.
+    """
+    sample_key = extract_sample_key(sample)
+    if not sample_key:
+        return None, None
+
+    text_key = sample_key
+    if filename_mapping:
+        text_key = filename_mapping.get(sample_key, sample_key)
+
+    text_data = text_map.get(text_key)
+    return sample_key, text_data
+
+
+def _compute_summary(values: list[float | int]) -> dict[str, Any] | None:
+    """Compute summary statistics for a list of numeric values."""
+    if not values:
+        return None
+    return {
+        "min": min(values),
+        "max": max(values),
+        "mean": round(statistics.mean(values), 2),
+        "median": round(statistics.median(values), 2),
+        "stdev": round(statistics.stdev(values), 2) if len(values) > 1 else 0,
+        "percentiles": {
+            "p25": round(statistics.quantiles(values, n=4)[0], 2)
+            if len(values) >= 4
+            else None,
+            "p50": round(statistics.median(values), 2),
+            "p75": round(statistics.quantiles(values, n=4)[2], 2)
+            if len(values) >= 4
+            else None,
+        },
+    }
+
+
 def process_dataset(
     layer2_dir: Path,
     annotations_dir: Path,
@@ -466,7 +504,7 @@ def process_dataset(
     Returns:
         Processing statistics
     """
-    stats = {
+    stats: dict[str, Any] = {
         "dataset": dataset,
         "samples_total": 0,
         "samples_with_text": 0,
@@ -475,20 +513,17 @@ def process_dataset(
         "text_stats_summary": {},
     }
 
-    # Find Layer 2 metadata file
     metadata_file = layer2_dir / f"{dataset}_metadata.json"
     if not metadata_file.exists():
         print(f"  ❌ Layer 2 metadata not found: {metadata_file}")
         return stats
 
-    # Load Layer 2 metadata first (needed for hash mapping)
     print("  📖 Loading Layer 2 metadata...")
     with open(metadata_file, encoding="utf-8") as f:
         metadata = json.load(f)
 
     samples = metadata.get("samples", [])
 
-    # Load text content (pass samples for hash-based mapping if needed)
     print("  📖 Loading text content...")
     text_map, filename_mapping = load_text_for_dataset(
         annotations_dir, dataset, metadata_samples=samples
@@ -498,51 +533,34 @@ def process_dataset(
         return stats
 
     print(f"  ✅ Found text for {len(text_map)} files")
-
     stats["samples_total"] = len(samples)
 
-    # Collect statistics for aggregation
-    all_char_counts = []
-    all_word_counts = []
-    all_sentence_counts = []
-    all_paragraph_counts = []
-    all_avg_word_lengths = []
-    all_avg_sentence_lengths = []
+    # Aggregation accumulators
+    agg: dict[str, list] = {
+        "character_count": [],
+        "word_count": [],
+        "sentence_count": [],
+        "paragraph_count": [],
+        "avg_word_length": [],
+        "avg_sentence_length": [],
+    }
 
-    # Process each sample
     updated_count = 0
     for sample in samples:
-        sample_key = extract_sample_key(sample)
-        if not sample_key:
-            stats["samples_skipped"] += 1
-            continue
-
-        # Map sample key to text key if needed
-        text_key = sample_key
-        if filename_mapping:
-            text_key = filename_mapping.get(sample_key, sample_key)
-
-        # Check if text exists for this sample
-        text_data = text_map.get(text_key)
-        if not text_data:
+        sample_key, text_data = _resolve_text_data(sample, text_map, filename_mapping)
+        if not sample_key or not text_data:
             stats["samples_skipped"] += 1
             continue
 
         stats["samples_with_text"] += 1
 
-        # Get the current enrichment data
-        enrichments = sample.get("enrichments", {})
-        versions = enrichments.get("versions", [])
-
+        versions = sample.get("enrichments", {}).get("versions", [])
         if not versions:
             stats["samples_skipped"] += 1
             continue
 
-        # Get the latest version's data
-        latest_version = versions[-1]
-        data = latest_version.get("data", {})
+        data = versions[-1].get("data", {})
 
-        # Create text_content entry
         full_text = text_data.get("full_text", "")
         text_content = {
             "full_text": full_text,
@@ -556,16 +574,13 @@ def process_dataset(
             "is_complete": True,
         }
 
-        # Calculate text statistics
         text_stats = calculate_text_stats(full_text)
-
         text_statistics = {
             **text_stats.to_dict(),
             "text_source": text_data.get("source_type", "unknown"),
             "computation_method": "regex_simple",
         }
 
-        # Update the data
         if not dry_run:
             data["text_content"] = text_content
             data["text_statistics"] = text_statistics
@@ -573,16 +588,17 @@ def process_dataset(
         updated_count += 1
 
         # Collect for aggregation
-        all_char_counts.append(text_stats.character_count)
-        all_word_counts.append(text_stats.word_count)
-        if text_stats.sentence_count is not None:
-            all_sentence_counts.append(text_stats.sentence_count)
-        if text_stats.paragraph_count is not None:
-            all_paragraph_counts.append(text_stats.paragraph_count)
-        if text_stats.avg_word_length is not None:
-            all_avg_word_lengths.append(text_stats.avg_word_length)
-        if text_stats.avg_sentence_length is not None:
-            all_avg_sentence_lengths.append(text_stats.avg_sentence_length)
+        agg["character_count"].append(text_stats.character_count)
+        agg["word_count"].append(text_stats.word_count)
+        for attr, key in [
+            ("sentence_count", "sentence_count"),
+            ("paragraph_count", "paragraph_count"),
+            ("avg_word_length", "avg_word_length"),
+            ("avg_sentence_length", "avg_sentence_length"),
+        ]:
+            val = getattr(text_stats, attr)
+            if val is not None:
+                agg[key].append(val)
 
         if verbose:
             print(
@@ -590,38 +606,8 @@ def process_dataset(
             )
 
     stats["samples_updated"] = updated_count
+    stats["text_stats_summary"] = {k: _compute_summary(v) for k, v in agg.items()}
 
-    # Compute aggregate statistics
-    def compute_summary(values: list[float | int]) -> dict[str, Any] | None:
-        if not values:
-            return None
-        return {
-            "min": min(values),
-            "max": max(values),
-            "mean": round(statistics.mean(values), 2),
-            "median": round(statistics.median(values), 2),
-            "stdev": round(statistics.stdev(values), 2) if len(values) > 1 else 0,
-            "percentiles": {
-                "p25": round(statistics.quantiles(values, n=4)[0], 2)
-                if len(values) >= 4
-                else None,
-                "p50": round(statistics.median(values), 2),
-                "p75": round(statistics.quantiles(values, n=4)[2], 2)
-                if len(values) >= 4
-                else None,
-            },
-        }
-
-    stats["text_stats_summary"] = {
-        "character_count": compute_summary(all_char_counts),
-        "word_count": compute_summary(all_word_counts),
-        "sentence_count": compute_summary(all_sentence_counts),
-        "paragraph_count": compute_summary(all_paragraph_counts),
-        "avg_word_length": compute_summary(all_avg_word_lengths),
-        "avg_sentence_length": compute_summary(all_avg_sentence_lengths),
-    }
-
-    # Save updated metadata
     if not dry_run and updated_count > 0:
         print("  💾 Saving updated metadata...")
         with open(metadata_file, "w", encoding="utf-8") as f:

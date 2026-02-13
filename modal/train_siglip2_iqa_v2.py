@@ -790,6 +790,45 @@ def _custom_collate_fn(batch: list[dict]) -> dict[str, Any]:
     }
 
 
+def _is_diqa5000_cached(data_dir: Path) -> bool:
+    """Check if DIQA-5000 is already downloaded and valid."""
+    marker_file = data_dir / ".download_complete"
+    if not marker_file.exists():
+        return False
+    all_csvs_exist = all(
+        (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
+    )
+    if all_csvs_exist:
+        print("DIQA-5000 already downloaded and validated, skipping...")
+        return True
+    marker_file.unlink()
+    return False
+
+
+def _download_gcs_split(bucket: Any, data_dir: Path, split: str) -> int:
+    """Download a single split from GCS. Returns count of downloaded files."""
+    split_dir = data_dir / split
+    split_dir.mkdir(exist_ok=True)
+    (split_dir / "res").mkdir(exist_ok=True)
+    (split_dir / "ori").mkdir(exist_ok=True)
+
+    prefix = f"{GCS_PREFIX}/{split}/"
+    downloaded = 0
+    for blob in bucket.list_blobs(prefix=prefix):
+        if blob.name.endswith("/"):
+            continue
+        relative_path = blob.name[len(prefix) :]
+        if not relative_path:
+            continue
+        local_file = split_dir / relative_path
+        local_file.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(local_file))
+        downloaded += 1
+        if downloaded % 500 == 0:
+            print(f"  Downloaded {downloaded} files from {split}...")
+    return downloaded
+
+
 def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
     """Download original DIQA-5000 dataset from GCS."""
     import os
@@ -798,53 +837,21 @@ def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
 
-    marker_file = data_dir / ".download_complete"
-    if marker_file.exists():
-        all_csvs_exist = all(
-            (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
-        )
-        if all_csvs_exist:
-            print("DIQA-5000 already downloaded and validated, skipping...")
-            return True
-        marker_file.unlink()
+    if _is_diqa5000_cached(data_dir):
+        return True
 
     print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
     start_time = time.time()
 
     client = storage.Client()
     bucket = client.bucket(GCS_BUCKET)
-
     data_dir.mkdir(parents=True, exist_ok=True)
-    downloaded = 0
 
-    for split in DIQA5000_SPLITS:
-        split_dir = data_dir / split
-        split_dir.mkdir(exist_ok=True)
-        (split_dir / "res").mkdir(exist_ok=True)
-        (split_dir / "ori").mkdir(exist_ok=True)
+    downloaded = sum(
+        _download_gcs_split(bucket, data_dir, split) for split in DIQA5000_SPLITS
+    )
 
-        prefix = f"{GCS_PREFIX}/{split}/"
-        blobs = bucket.list_blobs(prefix=prefix)
-
-        for blob in blobs:
-            if blob.name.endswith("/"):
-                continue
-
-            relative_path = blob.name[len(prefix) :]
-            if not relative_path:
-                continue
-
-            local_file = split_dir / relative_path
-            local_file.parent.mkdir(parents=True, exist_ok=True)
-
-            blob.download_to_filename(str(local_file))
-            downloaded += 1
-
-            if downloaded % 500 == 0:
-                print(f"  Downloaded {downloaded} files...")
-
-    elapsed = time.time() - start_time
-    print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
+    print(f"Downloaded {downloaded} files in {time.time() - start_time:.1f}s")
 
     if downloaded < 100:
         print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
@@ -857,7 +864,7 @@ def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
             return False
         print(f"  Verified: {csv_path}")
 
-    marker_file.touch()
+    (data_dir / ".download_complete").touch()
     return True
 
 
@@ -941,10 +948,44 @@ def _create_pcgrad_wrapper(optimizer: Any) -> Any:
     """Create PCGrad optimizer wrapper for gradient surgery."""
     import torch
 
+    def _collect_grads(opt) -> torch.Tensor:
+        """Collect flattened gradients from all optimizer param groups."""
+        grads = []
+        for group in opt.param_groups:
+            for p in group["params"]:
+                grads.append(
+                    p.grad.clone().flatten()
+                    if p.grad is not None
+                    else torch.zeros_like(p).flatten()
+                )
+        return torch.cat(grads)
+
+    def _apply_grads(opt, projected_grads: torch.Tensor) -> None:
+        """Assign projected gradients back to parameters."""
+        offset = 0
+        for group in opt.param_groups:
+            for p in group["params"]:
+                numel = p.numel()
+                p.grad = projected_grads[offset : offset + numel].view_as(p)
+                offset += numel
+
+    def _project_gradients(grads: list[torch.Tensor]) -> torch.Tensor:
+        """Project gradients to remove conflicting components."""
+        projected = [g.clone() for g in grads]
+        for i in range(len(grads)):
+            for j in range(len(grads)):
+                if i == j:
+                    continue
+                dot = torch.dot(projected[i], grads[j])
+                if dot < 0:
+                    projected[i] -= (
+                        dot / (torch.dot(grads[j], grads[j]) + 1e-8)
+                    ) * grads[j]
+        return torch.stack(projected).mean(dim=0)
+
     class PCGrad:
         """Projected Conflicting Gradients optimizer wrapper.
 
-        Projects conflicting gradients to mitigate negative transfer in multi-task learning.
         Reference: Yu et al., "Gradient Surgery for Multi-Task Learning", NeurIPS 2020
         """
 
@@ -967,39 +1008,10 @@ def _create_pcgrad_wrapper(optimizer: Any) -> Any:
             for i, loss in enumerate(losses):
                 self.optimizer.zero_grad()
                 loss.backward(retain_graph=(i < len(losses) - 1))
-                grads = []
-                for group in self.optimizer.param_groups:
-                    for p in group["params"]:
-                        if p.grad is not None:
-                            grads.append(p.grad.clone().flatten())
-                        else:
-                            grads.append(torch.zeros_like(p).flatten())
-                task_grads.append(torch.cat(grads))
-
-            projected_grads = _project_gradients(task_grads)
+                task_grads.append(_collect_grads(self.optimizer))
 
             self.optimizer.zero_grad()
-            offset = 0
-            for group in self.optimizer.param_groups:
-                for p in group["params"]:
-                    numel = p.numel()
-                    p.grad = projected_grads[offset : offset + numel].view_as(p)
-                    offset += numel
-
-    def _project_gradients(grads: list[torch.Tensor]) -> torch.Tensor:
-        num_tasks = len(grads)
-        projected = [g.clone() for g in grads]
-
-        for i in range(num_tasks):
-            for j in range(num_tasks):
-                if i != j:
-                    dot = torch.dot(projected[i], grads[j])
-                    if dot < 0:
-                        projected[i] -= (
-                            dot / (torch.dot(grads[j], grads[j]) + 1e-8)
-                        ) * grads[j]
-
-        return torch.stack(projected).mean(dim=0)
+            _apply_grads(self.optimizer, _project_gradients(task_grads))
 
     return PCGrad(optimizer)
 

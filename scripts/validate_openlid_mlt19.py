@@ -261,44 +261,8 @@ def validate_sample(
     )
 
 
-def print_report(stats: ValidationStats, results: list[ValidationResult]) -> None:
-    """Print validation report."""
-    print("\n" + "=" * 70)
-    print("VALIDATION RESULTS: OpenLID-v2 vs lid.176.bin on MLT-19")
-    print("=" * 70)
-
-    # Overall accuracy
-    openlid_acc = stats.openlid_correct / stats.total * 100 if stats.total > 0 else 0
-    script_acc = (
-        stats.openlid_script_correct / stats.total * 100 if stats.total > 0 else 0
-    )
-    lid176_acc = stats.lid176_correct / stats.total * 100 if stats.total > 0 else 0
-
-    print(f"\nSamples Validated: {stats.total}")
-    print(f"Samples Skipped: {stats.skipped}")
-
-    print("\n--- Overall Accuracy ---")
-    print(
-        f"OpenLID-v2 Language: {stats.openlid_correct}/{stats.total} ({openlid_acc:.1f}%)"
-    )
-    print(
-        f"OpenLID-v2 Script:   {stats.openlid_script_correct}/{stats.total} ({script_acc:.1f}%)"
-    )
-    if stats.lid176_correct > 0:
-        print(
-            f"lid.176.bin:         {stats.lid176_correct}/{stats.total} ({lid176_acc:.1f}%)"
-        )
-
-    # Latency
-    if stats.openlid_latencies:
-        avg_openlid = sum(stats.openlid_latencies) / len(stats.openlid_latencies)
-        print("\n--- Latency ---")
-        print(f"OpenLID-v2 avg: {avg_openlid:.2f}ms")
-    if stats.lid176_latencies:
-        avg_lid176 = sum(stats.lid176_latencies) / len(stats.lid176_latencies)
-        print(f"lid.176.bin avg: {avg_lid176:.2f}ms")
-
-    # Per-language breakdown
+def _print_per_language_table(stats: ValidationStats) -> None:
+    """Print per-language accuracy breakdown table."""
     print("\n--- Per-Language Accuracy ---")
     print(f"{'Language':<8} {'OpenLID-v2':<15} {'lid.176':<15} {'Script':<15}")
     print("-" * 55)
@@ -324,6 +288,45 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
         script_str = f"{lang_stats['script_correct']}/{total} ({script_pct:.0f}%)"
 
         print(f"{lang:<8} {openlid_str:<15} {lid176_str:<15} {script_str:<15}")
+
+
+def print_report(stats: ValidationStats, results: list[ValidationResult]) -> None:
+    """Print validation report."""
+    print("\n" + "=" * 70)
+    print("VALIDATION RESULTS: OpenLID-v2 vs lid.176.bin on MLT-19")
+    print("=" * 70)
+
+    def _safe_pct(correct: int) -> float:
+        return correct / stats.total * 100 if stats.total > 0 else 0
+    openlid_acc = _safe_pct(stats.openlid_correct)
+    script_acc = _safe_pct(stats.openlid_script_correct)
+    lid176_acc = _safe_pct(stats.lid176_correct)
+
+    print(f"\nSamples Validated: {stats.total}")
+    print(f"Samples Skipped: {stats.skipped}")
+
+    print("\n--- Overall Accuracy ---")
+    print(
+        f"OpenLID-v2 Language: {stats.openlid_correct}/{stats.total} ({openlid_acc:.1f}%)"
+    )
+    print(
+        f"OpenLID-v2 Script:   {stats.openlid_script_correct}/{stats.total} ({script_acc:.1f}%)"
+    )
+    if stats.lid176_correct > 0:
+        print(
+            f"lid.176.bin:         {stats.lid176_correct}/{stats.total} ({lid176_acc:.1f}%)"
+        )
+
+    # Latency
+    if stats.openlid_latencies:
+        avg_openlid = sum(stats.openlid_latencies) / len(stats.openlid_latencies)
+        print("\n--- Latency ---")
+        print(f"OpenLID-v2 avg: {avg_openlid:.2f}ms")
+    if stats.lid176_latencies:
+        avg_lid176 = sum(stats.lid176_latencies) / len(stats.lid176_latencies)
+        print(f"lid.176.bin avg: {avg_lid176:.2f}ms")
+
+    _print_per_language_table(stats)
 
     # Show some errors
     errors = [r for r in results if not r.openlid_correct]
@@ -355,6 +358,64 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
         )
         if ar_acc < 90:
             print("  ⚠ Arabic dialect confusion detected (expected with OpenLID-v2)")
+
+
+def _init_easyocr_readers_openlid() -> tuple[dict[str, Any], dict[str, str]]:
+    """Initialise EasyOCR readers for script families used by OpenLID validation.
+
+    Returns:
+        Tuple of (easyocr_readers dict, lang_to_reader mapping).
+    """
+    import easyocr
+
+    script_families = {
+        "latin": ["en"],
+        "arabic": ["ar", "en"],
+        "devanagari": ["hi", "en"],
+        "bengali": ["bn", "en"],
+        "cjk": ["ch_sim", "en"],
+        "japanese": ["ja", "en"],
+        "korean": ["ko", "en"],
+    }
+
+    readers: dict[str, Any] = {}
+    for family, langs in script_families.items():
+        try:
+            logger.info(f"Initializing EasyOCR for {family}")
+            readers[family] = easyocr.Reader(langs, gpu=True)
+        except Exception as e:
+            logger.warning(f"Could not init {family} reader: {e}")
+
+    lang_to_reader = {
+        "en": "latin",
+        "fr": "latin",
+        "de": "latin",
+        "it": "latin",
+        "ar": "arabic",
+        "hi": "devanagari",
+        "bn": "bengali",
+        "zh": "cjk",
+        "ja": "japanese",
+        "ko": "korean",
+    }
+    return readers, lang_to_reader
+
+
+def _init_lid176_model(no_lid176: bool) -> Any:
+    """Try to load the lid.176.bin fastText model."""
+    if no_lid176:
+        return None
+    lid176_path = MODEL_DIR / "lid.176.bin"
+    if not lid176_path.exists():
+        return None
+    try:
+        import fasttext
+
+        logger.info("Loading lid.176.bin for comparison...")
+        return fasttext.load_model(str(lid176_path))
+    except Exception as e:
+        logger.warning(f"Could not load lid.176.bin: {e}")
+    return None
 
 
 def main() -> int:
@@ -400,12 +461,10 @@ def main() -> int:
     labeled_samples = get_training_samples_with_labels(metadata, target_languages)
     logger.info(f"Found {len(labeled_samples)} training samples with labels")
 
-    # Sample if not using all
     if not args.all and len(labeled_samples) > args.samples:
         labeled_samples = random.sample(labeled_samples, args.samples)
     logger.info(f"Validating {len(labeled_samples)} samples")
 
-    # Show language distribution
     lang_dist = Counter(
         s.get("original_labels", {}).get("language_code") for _, s in labeled_samples
     )
@@ -419,24 +478,12 @@ def main() -> int:
 
         logger.info("Initializing OpenLID-v2 detector...")
         openlid_detector = OpenLIDDetector(auto_download=True)
-        # Warm up
         openlid_detector.detect("test")
     except Exception as e:
         logger.error(f"Failed to initialize OpenLID-v2: {e}")
         return 1
 
-    # Initialize lid.176.bin (optional)
-    lid176_model = None
-    if not args.no_lid176:
-        lid176_path = MODEL_DIR / "lid.176.bin"
-        if lid176_path.exists():
-            try:
-                import fasttext
-
-                logger.info("Loading lid.176.bin for comparison...")
-                lid176_model = fasttext.load_model(str(lid176_path))
-            except Exception as e:
-                logger.warning(f"Could not load lid.176.bin: {e}")
+    lid176_model = _init_lid176_model(args.no_lid176)
 
     # Initialize EasyOCR readers
     easyocr_readers: dict[str, Any] = {}
@@ -444,37 +491,7 @@ def main() -> int:
 
     if not args.no_ocr:
         try:
-            import easyocr
-
-            script_families = {
-                "latin": ["en"],
-                "arabic": ["ar", "en"],
-                "devanagari": ["hi", "en"],
-                "bengali": ["bn", "en"],
-                "cjk": ["ch_sim", "en"],
-                "japanese": ["ja", "en"],
-                "korean": ["ko", "en"],
-            }
-
-            for family, langs in script_families.items():
-                try:
-                    logger.info(f"Initializing EasyOCR for {family}")
-                    easyocr_readers[family] = easyocr.Reader(langs, gpu=True)
-                except Exception as e:
-                    logger.warning(f"Could not init {family} reader: {e}")
-
-            lang_to_reader = {
-                "en": "latin",
-                "fr": "latin",
-                "de": "latin",
-                "it": "latin",
-                "ar": "arabic",
-                "hi": "devanagari",
-                "bn": "bengali",
-                "zh": "cjk",
-                "ja": "japanese",
-                "ko": "korean",
-            }
+            easyocr_readers, lang_to_reader = _init_easyocr_readers_openlid()
         except ImportError:
             logger.warning("EasyOCR not installed")
 
@@ -503,14 +520,12 @@ def main() -> int:
         results.append(result)
         stats.add_result(result)
 
-        # Progress
         if (idx + 1) % 25 == 0:
             acc = stats.openlid_correct / stats.total * 100 if stats.total > 0 else 0
             logger.info(
                 f"Progress: {idx + 1}/{len(labeled_samples)} | OpenLID acc: {acc:.1f}%"
             )
 
-    # Print report
     print_report(stats, results)
 
     return 0

@@ -43,6 +43,71 @@ class ValidationMetrics:
             self.predictions = []
 
 
+def _gather_all_images(
+    test_set: dict[str, list[tuple[Path, dict]]],
+) -> list[tuple[Path, dict]]:
+    """Flatten test_set values into a single list of (filepath, ground_truth)."""
+    all_images: list[tuple[Path, dict]] = []
+    for images in test_set.values():
+        all_images.extend(images)
+    return all_images
+
+
+def _classify_binary(
+    gt_positive: bool, pred_positive: bool, counters: dict[str, int]
+) -> None:
+    """Update TP/FP/TN/FN counters for a single binary prediction."""
+    if gt_positive and pred_positive:
+        counters["tp"] += 1
+    elif not gt_positive and pred_positive:
+        counters["fp"] += 1
+    elif not gt_positive and not pred_positive:
+        counters["tn"] += 1
+    else:
+        counters["fn"] += 1
+
+
+def _compute_classification_metrics(
+    counters: dict[str, int],
+) -> tuple[float, float, float, float]:
+    """Compute precision, recall, f1, and accuracy from TP/FP/TN/FN counters."""
+    tp, fp, tn, fn = counters["tp"], counters["fp"], counters["tn"], counters["fn"]
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+    accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+    return precision, recall, f1, accuracy
+
+
+def _build_validation_metrics(
+    detector_name: str,
+    counters: dict[str, int],
+    predictions: list[dict],
+    mae: float | None = None,
+    rmse: float | None = None,
+) -> ValidationMetrics:
+    """Build a ValidationMetrics object from counters and predictions."""
+    precision, recall, f1, accuracy = _compute_classification_metrics(counters)
+    return ValidationMetrics(
+        detector_name=detector_name,
+        true_positives=counters["tp"],
+        false_positives=counters["fp"],
+        true_negatives=counters["tn"],
+        false_negatives=counters["fn"],
+        precision=precision,
+        recall=recall,
+        f1_score=f1,
+        accuracy=accuracy,
+        mae=mae,
+        rmse=rmse,
+        predictions=predictions,
+    )
+
+
 class DetectorValidator:
     """
     Validates IQA detectors against synthetic test images.
@@ -71,39 +136,21 @@ class DetectorValidator:
         """
         print("\nValidating Skew Detector...")
 
-        tp = fp = tn = fn = 0
-        angle_errors = []
-        predictions = []
+        counters = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
+        angle_errors: list[float] = []
+        predictions: list[dict] = []
 
-        # Test all images in test set
-        all_images = []
-        for images in self.test_set.values():
-            all_images.extend(images)
+        all_images = _gather_all_images(self.test_set)
 
         for filepath, ground_truth in all_images:
-            # Load image
             img = cv2.imread(str(filepath))
             if img is None:
-                print(f"  ⚠️  Failed to load {filepath}")
+                print(f"  Warning: Failed to load {filepath}")
                 continue
 
-            # Run detector
             result = detect_skew(img)
+            _classify_binary(ground_truth["has_skew"], result.is_skewed, counters)
 
-            # Classification metrics (has_skew)
-            gt_has_skew = ground_truth["has_skew"]
-            pred_has_skew = result.is_skewed
-
-            if gt_has_skew and pred_has_skew:
-                tp += 1
-            elif not gt_has_skew and pred_has_skew:
-                fp += 1
-            elif not gt_has_skew and not pred_has_skew:
-                tn += 1
-            elif gt_has_skew and not pred_has_skew:
-                fn += 1
-
-            # Regression metrics (angle estimation)
             gt_angle = ground_truth["skew_angle"]
             pred_angle = result.angle
             angle_error = abs(gt_angle - pred_angle)
@@ -112,8 +159,8 @@ class DetectorValidator:
             predictions.append(
                 {
                     "file": filepath.name,
-                    "gt_has_skew": gt_has_skew,
-                    "pred_has_skew": pred_has_skew,
+                    "gt_has_skew": ground_truth["has_skew"],
+                    "pred_has_skew": result.is_skewed,
                     "gt_angle": gt_angle,
                     "pred_angle": pred_angle,
                     "angle_error": angle_error,
@@ -122,38 +169,19 @@ class DetectorValidator:
                 }
             )
 
-        # Calculate metrics
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if (precision + recall) > 0
-            else 0.0
-        )
-        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
-
         mae = np.mean(angle_errors) if angle_errors else 0.0
         rmse = np.sqrt(np.mean(np.array(angle_errors) ** 2)) if angle_errors else 0.0
 
-        metrics = ValidationMetrics(
-            detector_name="Skew Detector",
-            true_positives=tp,
-            false_positives=fp,
-            true_negatives=tn,
-            false_negatives=fn,
-            precision=precision,
-            recall=recall,
-            f1_score=f1,
-            accuracy=accuracy,
-            mae=mae,
-            rmse=rmse,
-            predictions=predictions,
+        metrics = _build_validation_metrics(
+            "Skew Detector", counters, predictions, mae=mae, rmse=rmse
         )
 
-        print(f"  ✓ Tested {len(all_images)} images")
-        print(f"  Accuracy: {accuracy:.2%}")
-        print(f"  Precision: {precision:.2%}, Recall: {recall:.2%}, F1: {f1:.2%}")
-        print(f"  Angle MAE: {mae:.2f}°, RMSE: {rmse:.2f}°")
+        print(f"  Tested {len(all_images)} images")
+        print(f"  Accuracy: {metrics.accuracy:.2%}")
+        print(
+            f"  Precision: {metrics.precision:.2%}, Recall: {metrics.recall:.2%}, F1: {metrics.f1_score:.2%}"
+        )
+        print(f"  Angle MAE: {mae:.2f}, RMSE: {rmse:.2f}")
 
         return metrics
 
@@ -166,12 +194,9 @@ class DetectorValidator:
         """
         print("\nValidating Blur Detector...")
 
-        tp = fp = tn = fn = 0
-        predictions = []
-
-        all_images = []
-        for images in self.test_set.values():
-            all_images.extend(images)
+        counters = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
+        predictions: list[dict] = []
+        all_images = _gather_all_images(self.test_set)
 
         for filepath, ground_truth in all_images:
             img = cv2.imread(str(filepath))
@@ -179,55 +204,26 @@ class DetectorValidator:
                 continue
 
             result = detect_blur(img)
-
-            gt_is_blurred = ground_truth["is_blurred"]
-            pred_is_blurred = result.is_blurred
-
-            if gt_is_blurred and pred_is_blurred:
-                tp += 1
-            elif not gt_is_blurred and pred_is_blurred:
-                fp += 1
-            elif not gt_is_blurred and not pred_is_blurred:
-                tn += 1
-            elif gt_is_blurred and not pred_is_blurred:
-                fn += 1
+            _classify_binary(ground_truth["is_blurred"], result.is_blurred, counters)
 
             predictions.append(
                 {
                     "file": filepath.name,
-                    "gt_is_blurred": gt_is_blurred,
-                    "pred_is_blurred": pred_is_blurred,
+                    "gt_is_blurred": ground_truth["is_blurred"],
+                    "pred_is_blurred": result.is_blurred,
                     "blur_score": result.score,
                     "confidence": result.confidence,
                     "severity": result.severity.value,
                 }
             )
 
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if (precision + recall) > 0
-            else 0.0
-        )
-        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+        metrics = _build_validation_metrics("Blur Detector", counters, predictions)
 
-        metrics = ValidationMetrics(
-            detector_name="Blur Detector",
-            true_positives=tp,
-            false_positives=fp,
-            true_negatives=tn,
-            false_negatives=fn,
-            precision=precision,
-            recall=recall,
-            f1_score=f1,
-            accuracy=accuracy,
-            predictions=predictions,
+        print(f"  Tested {len(all_images)} images")
+        print(f"  Accuracy: {metrics.accuracy:.2%}")
+        print(
+            f"  Precision: {metrics.precision:.2%}, Recall: {metrics.recall:.2%}, F1: {metrics.f1_score:.2%}"
         )
-
-        print(f"  ✓ Tested {len(all_images)} images")
-        print(f"  Accuracy: {accuracy:.2%}")
-        print(f"  Precision: {precision:.2%}, Recall: {recall:.2%}, F1: {f1:.2%}")
 
         return metrics
 
@@ -240,12 +236,9 @@ class DetectorValidator:
         """
         print("\nValidating Contrast Detector...")
 
-        tp = fp = tn = fn = 0
-        predictions = []
-
-        all_images = []
-        for images in self.test_set.values():
-            all_images.extend(images)
+        counters = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
+        predictions: list[dict] = []
+        all_images = _gather_all_images(self.test_set)
 
         for filepath, ground_truth in all_images:
             img = cv2.imread(str(filepath))
@@ -253,55 +246,28 @@ class DetectorValidator:
                 continue
 
             result = detect_contrast(img)
-
-            gt_is_low = ground_truth["is_low_contrast"]
-            pred_is_low = result.is_low_contrast
-
-            if gt_is_low and pred_is_low:
-                tp += 1
-            elif not gt_is_low and pred_is_low:
-                fp += 1
-            elif not gt_is_low and not pred_is_low:
-                tn += 1
-            elif gt_is_low and not pred_is_low:
-                fn += 1
+            _classify_binary(
+                ground_truth["is_low_contrast"], result.is_low_contrast, counters
+            )
 
             predictions.append(
                 {
                     "file": filepath.name,
-                    "gt_is_low_contrast": gt_is_low,
-                    "pred_is_low_contrast": pred_is_low,
+                    "gt_is_low_contrast": ground_truth["is_low_contrast"],
+                    "pred_is_low_contrast": result.is_low_contrast,
                     "contrast_score": result.score,
                     "confidence": result.confidence,
                     "severity": result.severity.value,
                 }
             )
 
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if (precision + recall) > 0
-            else 0.0
-        )
-        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+        metrics = _build_validation_metrics("Contrast Detector", counters, predictions)
 
-        metrics = ValidationMetrics(
-            detector_name="Contrast Detector",
-            true_positives=tp,
-            false_positives=fp,
-            true_negatives=tn,
-            false_negatives=fn,
-            precision=precision,
-            recall=recall,
-            f1_score=f1,
-            accuracy=accuracy,
-            predictions=predictions,
+        print(f"  Tested {len(all_images)} images")
+        print(f"  Accuracy: {metrics.accuracy:.2%}")
+        print(
+            f"  Precision: {metrics.precision:.2%}, Recall: {metrics.recall:.2%}, F1: {metrics.f1_score:.2%}"
         )
-
-        print(f"  ✓ Tested {len(all_images)} images")
-        print(f"  Accuracy: {accuracy:.2%}")
-        print(f"  Precision: {precision:.2%}, Recall: {recall:.2%}, F1: {f1:.2%}")
 
         return metrics
 
@@ -316,12 +282,9 @@ class DetectorValidator:
         """
         print("\nValidating Text Detection Gate...")
 
-        tp = fp = tn = fn = 0
-        predictions = []
-
-        all_images = []
-        for images in self.test_set.values():
-            all_images.extend(images)
+        counters = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
+        predictions: list[dict] = []
+        all_images = _gather_all_images(self.test_set)
 
         for filepath, _ground_truth in all_images:
             img = cv2.imread(str(filepath))
@@ -331,54 +294,29 @@ class DetectorValidator:
             result = detect_text(img)
 
             # All synthetic images should have text
-            gt_has_text = True  # Ground truth
-            pred_has_text = result.has_text
-
-            if gt_has_text and pred_has_text:
-                tp += 1
-            elif not gt_has_text and pred_has_text:
-                fp += 1
-            elif not gt_has_text and not pred_has_text:
-                tn += 1
-            elif gt_has_text and not pred_has_text:
-                fn += 1
+            gt_has_text = True
+            _classify_binary(gt_has_text, result.has_text, counters)
 
             predictions.append(
                 {
                     "file": filepath.name,
                     "gt_has_text": gt_has_text,
-                    "pred_has_text": pred_has_text,
+                    "pred_has_text": result.has_text,
                     "confidence": result.confidence,
                     "stroke_density": result.stroke_density,
                     "component_score": result.component_score,
                 }
             )
 
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if (precision + recall) > 0
-            else 0.0
-        )
-        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
-
-        metrics = ValidationMetrics(
-            detector_name="Text Detection Gate",
-            true_positives=tp,
-            false_positives=fp,
-            true_negatives=tn,
-            false_negatives=fn,
-            precision=precision,
-            recall=recall,
-            f1_score=f1,
-            accuracy=accuracy,
-            predictions=predictions,
+        metrics = _build_validation_metrics(
+            "Text Detection Gate", counters, predictions
         )
 
-        print(f"  ✓ Tested {len(all_images)} images")
-        print(f"  Accuracy: {accuracy:.2%}")
-        print(f"  Precision: {precision:.2%}, Recall: {recall:.2%}, F1: {f1:.2%}")
+        print(f"  Tested {len(all_images)} images")
+        print(f"  Accuracy: {metrics.accuracy:.2%}")
+        print(
+            f"  Precision: {metrics.precision:.2%}, Recall: {metrics.recall:.2%}, F1: {metrics.f1_score:.2%}"
+        )
 
         return metrics
 

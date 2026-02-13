@@ -69,6 +69,70 @@ def reconstruct_page_text(paragraphs: list[dict]) -> str:
     return "\n".join(ln["text"] for ln in all_lines)
 
 
+def _build_line_annotation(line: dict) -> dict | None:
+    """Build a COCO-style line-level annotation from a HierText line.
+
+    Args:
+        line: HierText line dict with vertices, text, and handwritten fields.
+
+    Returns:
+        Annotation dict, or None if vertices are missing or have zero area.
+    """
+    line_verts = line.get("vertices", [])
+    if not line_verts:
+        return None
+
+    x, y, w, h = polygon_to_coco_bbox(line_verts)
+    if w <= 0 or h <= 0:
+        return None
+
+    ann: dict = {
+        "bbox": [x, y, w, h],
+        "coord_origin": "top-left",
+        "category_name": "line",
+        "category_id": 1,
+        "area": float(w * h),
+    }
+    line_text = line.get("text", "").strip()
+    if line_text:
+        ann["text"] = line_text[:200]
+    if line.get("handwritten", False):
+        ann["handwritten"] = True
+    return ann
+
+
+def _build_word_annotation(word: dict) -> dict | None:
+    """Build a COCO-style word-level annotation from a HierText word.
+
+    Args:
+        word: HierText word dict with vertices, text, and handwritten fields.
+
+    Returns:
+        Annotation dict, or None if vertices are missing or have zero area.
+    """
+    word_verts = word.get("vertices", [])
+    if not word_verts:
+        return None
+
+    x, y, w, h = polygon_to_coco_bbox(word_verts)
+    if w <= 0 or h <= 0:
+        return None
+
+    ann: dict = {
+        "bbox": [x, y, w, h],
+        "coord_origin": "top-left",
+        "category_name": "word",
+        "category_id": 2,
+        "area": float(w * h),
+    }
+    word_text = word.get("text", "").strip()
+    if word_text:
+        ann["text"] = word_text[:200]
+    if word.get("handwritten", False):
+        ann["handwritten"] = True
+    return ann
+
+
 def build_annotations(paragraphs: list[dict]) -> list[dict]:
     """Create COCO-style annotations at word and line level."""
     annotations = []
@@ -81,50 +145,16 @@ def build_annotations(paragraphs: list[dict]) -> list[dict]:
             if not line.get("legible", True):
                 continue
 
-            # Line-level annotation
-            line_verts = line.get("vertices", [])
-            if line_verts:
-                x, y, w, h = polygon_to_coco_bbox(line_verts)
-                if w > 0 and h > 0:
-                    ann = {
-                        "bbox": [x, y, w, h],
-                        "coord_origin": "top-left",
-                        "category_name": "line",
-                        "category_id": 1,
-                        "area": float(w * h),
-                    }
-                    line_text = line.get("text", "").strip()
-                    if line_text:
-                        ann["text"] = line_text[:200]
-                    if line.get("handwritten", False):
-                        ann["handwritten"] = True
-                    annotations.append(ann)
+            line_ann = _build_line_annotation(line)
+            if line_ann:
+                annotations.append(line_ann)
 
-            # Word-level annotations
             for word in line.get("words", []):
                 if not word.get("legible", True):
                     continue
-                word_verts = word.get("vertices", [])
-                if not word_verts:
-                    continue
-
-                x, y, w, h = polygon_to_coco_bbox(word_verts)
-                if w <= 0 or h <= 0:
-                    continue
-
-                ann = {
-                    "bbox": [x, y, w, h],
-                    "coord_origin": "top-left",
-                    "category_name": "word",
-                    "category_id": 2,
-                    "area": float(w * h),
-                }
-                word_text = word.get("text", "").strip()
-                if word_text:
-                    ann["text"] = word_text[:200]
-                if word.get("handwritten", False):
-                    ann["handwritten"] = True
-                annotations.append(ann)
+                word_ann = _build_word_annotation(word)
+                if word_ann:
+                    annotations.append(word_ann)
 
     return annotations
 
@@ -188,6 +218,33 @@ def save_batch(
         json.dump(layout_data, f, indent=2)
 
 
+def _flush_batch(
+    batch_results: list[dict],
+    batch_num: int,
+    output_dir: Path,
+    dry_run: bool,
+    total_processed: int,
+) -> tuple[int, int]:
+    """Save current batch and return updated counters.
+
+    Args:
+        batch_results: Current batch of results to save.
+        batch_num: Current batch number.
+        output_dir: Output directory.
+        dry_run: Whether this is a dry run.
+        total_processed: Running total of processed images.
+
+    Returns:
+        Tuple of (updated total_processed, updated batch_num).
+    """
+    if not dry_run:
+        save_batch(batch_results, batch_num, output_dir, "hiertext")
+    total_processed += len(batch_results)
+    if (batch_num + 1) % 10 == 0:
+        print(f"  Batch {batch_num + 1}: {total_processed} processed")
+    return total_processed, batch_num + 1
+
+
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/text_detection/hiertext")
     gt_dir = base_dir / "gt"
@@ -215,7 +272,6 @@ def main() -> None:
 
         print(f"Loading {split} ({gt_path.stat().st_size / 1e6:.0f} MB)...")
 
-        # HierText uses single JSON object despite .jsonl extension
         with open(gt_path) as f:
             data = json.load(f)
 
@@ -224,7 +280,6 @@ def main() -> None:
 
         for img_ann in image_annotations:
             image_id = img_ann.get("image_id", "")
-            image_name = f"{image_id}.jpg"
             paragraphs = img_ann.get("paragraphs", [])
 
             text = reconstruct_page_text(paragraphs)
@@ -234,7 +289,7 @@ def main() -> None:
 
             batch_results.append(
                 {
-                    "filename": image_name,
+                    "filename": f"{image_id}.jpg",
                     "split": split,
                     "text": text,
                     "annotations": annotations,
@@ -242,19 +297,23 @@ def main() -> None:
             )
 
             if len(batch_results) >= BATCH_SIZE:
-                if not dry_run:
-                    save_batch(batch_results, batch_num, output_dir, "hiertext")
-                total_processed += len(batch_results)
-                if (batch_num + 1) % 10 == 0:
-                    print(f"  Batch {batch_num + 1}: {total_processed} processed")
+                total_processed, batch_num = _flush_batch(
+                    batch_results,
+                    batch_num,
+                    output_dir,
+                    dry_run,
+                    total_processed,
+                )
                 batch_results = []
-                batch_num += 1
 
     if batch_results:
-        if not dry_run:
-            save_batch(batch_results, batch_num, output_dir, "hiertext")
-        total_processed += len(batch_results)
-        batch_num += 1
+        total_processed, batch_num = _flush_batch(
+            batch_results,
+            batch_num,
+            output_dir,
+            dry_run,
+            total_processed,
+        )
 
     print(
         f"\nDone: {total_processed} images, {batch_num} batches, "

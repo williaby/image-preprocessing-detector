@@ -188,6 +188,52 @@ def get_sample_filename(sample: dict[str, Any]) -> str | None:
     return None
 
 
+def _next_version_number(enrichments: dict[str, Any]) -> int:
+    """Compute the next version number from the enrichments structure."""
+    current_ver = enrichments.get("current_version", "v0")
+    if current_ver and current_ver.startswith("v"):
+        try:
+            return int(current_ver[1:]) + 1
+        except ValueError:
+            return len(enrichments.get("versions", [])) + 1
+    return 1
+
+
+def _apply_rq_to_sample(
+    sample: dict[str, Any],
+    rq_fields: dict[str, Any],
+    patch_current: bool,
+    stats: dict[str, int],
+) -> None:
+    """Apply resolution quality fields to a single sample (mutates sample)."""
+    enrichments = sample.setdefault("enrichments", {"versions": []})
+    versions = enrichments.setdefault("versions", [])
+
+    if patch_current and versions:
+        current = versions[-1]
+        current_data = current.setdefault("data", {})
+        current_data.update(rq_fields)
+        stats["patched"] += 1
+        return
+
+    ver_num = _next_version_number(enrichments)
+    new_version = {
+        "version": f"v{ver_num}",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "method": "resolution_quality_integration",
+        "description": (
+            "Added resolution quality labels from PaddleOCR DBNet + "
+            "connected component analysis pipeline"
+        ),
+        "script": "integrate_resolution_quality.py",
+        "script_version": SCRIPT_VERSION,
+        "data": rq_fields,
+    }
+    versions.append(new_version)
+    enrichments["current_version"] = new_version["version"]
+    stats["new_version"] += 1
+
+
 def integrate_into_metadata(
     metadata: dict[str, Any],
     rq_index: dict[str, dict[str, Any]],
@@ -227,53 +273,14 @@ def integrate_into_metadata(
         stats["matched"] += 1
         rq_fields = extract_rq_fields(rq)
 
-        # Track bucket distribution
         bucket = rq_fields.get("resolution_quality_coarse_bucket", "unknown")
         stats[f"bucket_{bucket}"] += 1
 
-        # Track flagged
         if rq.get("flagged_for_review"):
             stats["flagged"] += 1
 
-        if dry_run:
-            continue
-
-        # Get or create enrichments structure
-        enrichments = sample.setdefault("enrichments", {"versions": []})
-        versions = enrichments.setdefault("versions", [])
-
-        if patch_current and versions:
-            # Patch the most recent version's data
-            current = versions[-1]
-            current_data = current.setdefault("data", {})
-            current_data.update(rq_fields)
-            stats["patched"] += 1
-        else:
-            # Create a new enrichment version with only RQ fields
-            current_ver = enrichments.get("current_version", "v0")
-            # Increment version number
-            ver_num = 1
-            if current_ver and current_ver.startswith("v"):
-                try:
-                    ver_num = int(current_ver[1:]) + 1
-                except ValueError:
-                    ver_num = len(versions) + 1
-
-            new_version = {
-                "version": f"v{ver_num}",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "method": "resolution_quality_integration",
-                "description": (
-                    "Added resolution quality labels from PaddleOCR DBNet + "
-                    "connected component analysis pipeline"
-                ),
-                "script": "integrate_resolution_quality.py",
-                "script_version": SCRIPT_VERSION,
-                "data": rq_fields,
-            }
-            versions.append(new_version)
-            enrichments["current_version"] = new_version["version"]
-            stats["new_version"] += 1
+        if not dry_run:
+            _apply_rq_to_sample(sample, rq_fields, patch_current, stats)
 
         if (idx + 1) % 1000 == 0:
             elapsed = time.time() - start

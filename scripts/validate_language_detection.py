@@ -148,6 +148,116 @@ def validate_sample(
     )
 
 
+def _init_fasttext_model(model_dir: Path) -> Any:
+    """Try to load the fastText language identification model."""
+    try:
+        import fasttext
+
+        model_path = model_dir / "lid.176.bin"
+        if model_path.exists():
+            logger.info("Loading fastText model...")
+            return fasttext.load_model(str(model_path))
+    except ImportError:
+        logger.warning("fastText not installed")
+    return None
+
+
+def _init_lingua_detector() -> Any:
+    """Try to initialise the lingua language detector."""
+    try:
+        from lingua import LanguageDetectorBuilder
+
+        logger.info("Initializing lingua detector...")
+        return LanguageDetectorBuilder.from_all_languages().build()
+    except ImportError:
+        logger.warning("lingua not installed")
+    return None
+
+
+def _init_easyocr_readers() -> tuple[dict[str, Any], dict[str, str]]:
+    """Initialise EasyOCR readers for different script families.
+
+    Returns:
+        Tuple of (easyocr_readers dict, lang_to_reader mapping).
+    """
+    import easyocr
+
+    script_families = {
+        "latin": ["en"],
+        "arabic": ["ar", "en"],
+        "devanagari": ["hi", "en"],
+        "bengali": ["bn", "en"],
+        "cjk": ["ch_sim", "en"],
+        "japanese": ["ja", "en"],
+        "korean": ["ko", "en"],
+    }
+
+    readers: dict[str, Any] = {}
+    for family, langs in script_families.items():
+        try:
+            logger.info(f"Initializing EasyOCR for {family}: {langs}")
+            readers[family] = easyocr.Reader(langs, gpu=True)
+        except Exception as e:
+            logger.warning(f"Could not init {family} reader: {e}")
+
+    lang_to_reader = {
+        "en": "latin",
+        "ar": "arabic",
+        "hi": "devanagari",
+        "bn": "bengali",
+        "zh": "cjk",
+        "ja": "japanese",
+        "ko": "korean",
+    }
+    return readers, lang_to_reader
+
+
+def _print_validation_report(
+    results: list[ValidationResult], correct_count: int, skipped_count: int
+) -> None:
+    """Print final validation results report."""
+    print("\n" + "=" * 70)
+    print("VALIDATION RESULTS")
+    print("=" * 70)
+
+    total = len(results)
+    accuracy = correct_count / total if total > 0 else 0
+    print(f"\nOverall Accuracy: {accuracy * 100:.1f}% ({correct_count}/{total})")
+    print(f"Skipped (image not found): {skipped_count}")
+
+    # Per-language breakdown
+    print("\nPer-Language Accuracy:")
+    lang_results: dict[str, list[bool]] = {}
+    for r in results:
+        lang_results.setdefault(r.gt_language, []).append(r.correct)
+
+    for lang, correct_list in sorted(lang_results.items()):
+        lang_acc = sum(correct_list) / len(correct_list)
+        print(
+            f"  {lang}: {lang_acc * 100:.1f}% ({sum(correct_list)}/{len(correct_list)})"
+        )
+
+    # Method breakdown
+    print("\nDetection Methods Used:")
+    method_counts = Counter(r.method for r in results)
+    for method, count in method_counts.most_common():
+        method_results = [r.correct for r in results if r.method == method]
+        method_acc = sum(method_results) / len(method_results)
+        print(f"  {method}: {count} samples, {method_acc * 100:.1f}% accuracy")
+
+    # Show some errors
+    errors = [r for r in results if not r.correct]
+    if errors:
+        print("\nSample Errors (first 10):")
+        for r in errors[:10]:
+            print(
+                f"  GT={r.gt_language}, Detected={r.detected_language} ({r.detected_languages})"
+            )
+            print(f"    Method: {r.method}, Conf: {r.confidence:.2f}")
+            if r.extracted_text:
+                print(f"    Text: {r.extracted_text[:80]}...")
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -212,68 +322,17 @@ def main() -> int:
     logger.info(f"Language distribution: {dict(lang_dist)}")
 
     # Initialize detection models
-    fasttext_model = None
-    lingua_detector = None
-
-    # Load fastText
-    try:
-        import fasttext
-
-        model_path = args.model_dir / "lid.176.bin"
-        if model_path.exists():
-            logger.info("Loading fastText model...")
-            fasttext_model = fasttext.load_model(str(model_path))
-    except ImportError:
-        logger.warning("fastText not installed")
-
-    # Load lingua
-    try:
-        from lingua import LanguageDetectorBuilder
-
-        logger.info("Initializing lingua detector...")
-        lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
-    except ImportError:
-        logger.warning("lingua not installed")
+    fasttext_model = _init_fasttext_model(args.model_dir)
+    lingua_detector = _init_lingua_detector()
 
     # Load EasyOCR readers for different script families
-    # EasyOCR has strict language compatibility - can't mix certain scripts
     easyocr_readers: dict[str, Any] = {}
+    lang_to_reader: dict[str, str] = {}
     if not args.no_ocr:
         try:
-            import easyocr
-
-            # Create readers for different script families
-            script_families = {
-                "latin": ["en"],  # Latin scripts
-                "arabic": ["ar", "en"],  # Arabic + Latin
-                "devanagari": ["hi", "en"],  # Hindi + Latin
-                "bengali": ["bn", "en"],  # Bengali + Latin
-                "cjk": ["ch_sim", "en"],  # Chinese + Latin
-                "japanese": ["ja", "en"],  # Japanese + Latin
-                "korean": ["ko", "en"],  # Korean + Latin
-            }
-
-            for family, langs in script_families.items():
-                try:
-                    logger.info(f"Initializing EasyOCR for {family}: {langs}")
-                    easyocr_readers[family] = easyocr.Reader(langs, gpu=True)
-                except Exception as e:
-                    logger.warning(f"Could not init {family} reader: {e}")
-
-            # Map GT language codes to reader families
-            lang_to_reader = {
-                "en": "latin",
-                "ar": "arabic",
-                "hi": "devanagari",
-                "bn": "bengali",
-                "zh": "cjk",
-                "ja": "japanese",
-                "ko": "korean",
-            }
+            easyocr_readers, lang_to_reader = _init_easyocr_readers()
         except ImportError:
             logger.warning("EasyOCR not installed")
-    else:
-        lang_to_reader = {}
 
     if not easyocr_readers:
         logger.error("EasyOCR required for validation")
@@ -310,47 +369,7 @@ def main() -> int:
                 f"Accuracy: {accuracy * 100:.1f}% ({correct_count}/{len(results)})"
             )
 
-    # Final report
-    print("\n" + "=" * 70)
-    print("VALIDATION RESULTS")
-    print("=" * 70)
-
-    total = len(results)
-    accuracy = correct_count / total if total > 0 else 0
-    print(f"\nOverall Accuracy: {accuracy * 100:.1f}% ({correct_count}/{total})")
-    print(f"Skipped (image not found): {skipped_count}")
-
-    # Per-language breakdown
-    print("\nPer-Language Accuracy:")
-    lang_results: dict[str, list[bool]] = {}
-    for r in results:
-        lang_results.setdefault(r.gt_language, []).append(r.correct)
-
-    for lang, correct_list in sorted(lang_results.items()):
-        lang_acc = sum(correct_list) / len(correct_list)
-        print(
-            f"  {lang}: {lang_acc * 100:.1f}% ({sum(correct_list)}/{len(correct_list)})"
-        )
-
-    # Method breakdown
-    print("\nDetection Methods Used:")
-    method_counts = Counter(r.method for r in results)
-    for method, count in method_counts.most_common():
-        method_results = [r.correct for r in results if r.method == method]
-        method_acc = sum(method_results) / len(method_results)
-        print(f"  {method}: {count} samples, {method_acc * 100:.1f}% accuracy")
-
-    # Show some errors
-    errors = [r for r in results if not r.correct]
-    if errors:
-        print("\nSample Errors (first 10):")
-        for r in errors[:10]:
-            print(
-                f"  GT={r.gt_language}, Detected={r.detected_language} ({r.detected_languages})"
-            )
-            print(f"    Method: {r.method}, Conf: {r.confidence:.2f}")
-            if r.extracted_text:
-                print(f"    Text: {r.extracted_text[:80]}...")
+    _print_validation_report(results, correct_count, skipped_count)
 
     return 0
 

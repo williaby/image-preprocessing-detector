@@ -231,6 +231,61 @@ def save_batch(
         json.dump(layout_data, f, indent=2)
 
 
+def _find_structure_xml(
+    structure_dir: Path,
+    structure_id: str,
+) -> list[dict]:
+    """Find and parse structure XML for a given structure ID.
+
+    Args:
+        structure_dir: Root directory for structure annotations.
+        structure_id: Table structure identifier.
+
+    Returns:
+        List of parsed structure annotations, empty if not found.
+    """
+    if not structure_id:
+        return []
+
+    for split_name in ("train", "val", "test"):
+        xml_path = structure_dir / split_name / f"{structure_id}.xml"
+        if xml_path.exists():
+            return parse_structure_xml(xml_path)
+    return []
+
+
+def _process_fintabnet_table(
+    table: dict,
+    json_path: Path,
+    structure_dir: Path,
+) -> dict:
+    """Process a single FinTabNet table into a result dict.
+
+    Args:
+        table: Table annotation dict with cells, structure_id, split.
+        json_path: Path to the source JSON file.
+        structure_dir: Root directory for structure annotations.
+
+    Returns:
+        Result dict with filename, split, text, and annotations.
+    """
+    cells = table.get("cells", [])
+    structure_id = table.get("structure_id", "")
+    split = table.get("split", "unknown")
+
+    image_name = f"{structure_id}.jpg" if structure_id else json_path.stem + ".jpg"
+    text = reconstruct_page_text(cells)
+    cell_annotations = build_cell_annotations(cells, img_id=0)
+    struct_annotations = _find_structure_xml(structure_dir, structure_id)
+
+    return {
+        "filename": image_name,
+        "split": split,
+        "text": text,
+        "annotations": cell_annotations + struct_annotations,
+    }
+
+
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/tables/fintabnet")
     pdf_ann_dir = base_dir / "FinTabNet.c-PDF_Annotations"
@@ -245,7 +300,6 @@ def main() -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Discover all JSON annotation files
     json_files = sorted(pdf_ann_dir.glob("*.json"))
     print(f"Found {len(json_files)} JSON annotation files")
     print(f"Output to {output_dir}/")
@@ -268,43 +322,10 @@ def main() -> None:
             tables = [tables]
 
         for table in tables:
-            cells = table.get("cells", [])
-            structure_id = table.get("structure_id", "")
-            split = table.get("split", "unknown")
-
-            # Derive image filename from structure_id
-            image_name = (
-                f"{structure_id}.jpg" if structure_id else json_path.stem + ".jpg"
-            )
-
-            # Reconstruct text from cells
-            text = reconstruct_page_text(cells)
-            total_text_chars += len(text)
-
-            # Build cell-level annotations from PDF annotations
-            cell_annotations = build_cell_annotations(cells, img_id=0)
-
-            # Try to find and parse structure XML for layout annotations
-            struct_annotations: list[dict] = []
-            if structure_id:
-                for split_name in ("train", "val", "test"):
-                    xml_path = structure_dir / split_name / f"{structure_id}.xml"
-                    if xml_path.exists():
-                        struct_annotations = parse_structure_xml(xml_path)
-                        break
-
-            # Combine: cell annotations + structure annotations
-            all_annotations = cell_annotations + struct_annotations
-            total_annotations += len(all_annotations)
-
-            batch_results.append(
-                {
-                    "filename": image_name,
-                    "split": split,
-                    "text": text,
-                    "annotations": all_annotations,
-                }
-            )
+            result = _process_fintabnet_table(table, json_path, structure_dir)
+            total_text_chars += len(result["text"])
+            total_annotations += len(result["annotations"])
+            batch_results.append(result)
 
             if len(batch_results) >= BATCH_SIZE:
                 if not dry_run:
@@ -319,7 +340,6 @@ def main() -> None:
                 batch_results = []
                 batch_num += 1
 
-    # Save final partial batch
     if batch_results:
         if not dry_run:
             save_batch(batch_results, batch_num, output_dir, "fintabnet")

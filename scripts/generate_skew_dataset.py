@@ -228,6 +228,105 @@ SKIP_DIRS = {"train", "val", "test", "augmented", "metadata", "__pycache__"}
 _PNG_GLOB = "*.png"
 
 
+def _is_valid_script_dir(script_dir: Path) -> bool:
+    """Check if a directory is a valid script directory (not a skip/hidden dir).
+
+    Args:
+        script_dir: Directory path to check.
+
+    Returns:
+        True if the directory should be scanned for images.
+    """
+    if not script_dir.is_dir():
+        return False
+    name = script_dir.name
+    return name not in SKIP_DIRS and not name.startswith((".", "_"))
+
+
+def _collect_images_from_dir(script_dir: Path) -> list[Path]:
+    """Collect PNG and JPG images from a single directory.
+
+    Args:
+        script_dir: Directory to scan for images.
+
+    Returns:
+        List of image paths found.
+    """
+    return list(script_dir.glob(_PNG_GLOB)) + list(script_dir.glob("*.jpg"))
+
+
+def _discover_worker_layout(source_dir: Path) -> dict[str, list[Path]]:
+    """Discover images from worker-based layout: source_dir/worker_*/ScriptCode/*.
+
+    Args:
+        source_dir: Root of synth-multiscript dataset.
+
+    Returns:
+        Dict mapping script code to sorted list of image paths.
+    """
+    images_by_script: dict[str, list[Path]] = {}
+    worker_dirs = sorted(
+        d for d in source_dir.iterdir() if d.is_dir() and d.name.startswith("worker_")
+    )
+
+    if not worker_dirs:
+        return images_by_script
+
+    logger.info("Detected worker-based layout (%d workers)", len(worker_dirs))
+    for worker_dir in worker_dirs:
+        for script_dir in sorted(worker_dir.iterdir()):
+            if not _is_valid_script_dir(script_dir):
+                continue
+            imgs = _collect_images_from_dir(script_dir)
+            if imgs:
+                images_by_script.setdefault(script_dir.name, []).extend(imgs)
+
+    for code in images_by_script:
+        images_by_script[code].sort()
+    return images_by_script
+
+
+def _discover_flat_layout(source_dir: Path) -> dict[str, list[Path]]:
+    """Discover images from flat layout: source_dir/ScriptCode/*.
+
+    Args:
+        source_dir: Root of synth-multiscript dataset.
+
+    Returns:
+        Dict mapping script code to sorted list of image paths.
+    """
+    images_by_script: dict[str, list[Path]] = {}
+    for script_dir in sorted(source_dir.iterdir()):
+        if not _is_valid_script_dir(script_dir):
+            continue
+        imgs = _collect_images_from_dir(script_dir)
+        if imgs:
+            images_by_script[script_dir.name] = sorted(imgs)
+    return images_by_script
+
+
+def _discover_split_layout(source_dir: Path) -> dict[str, list[Path]]:
+    """Discover images from split-based layout: source_dir/{train,val,test}/images/ScriptCode/*.
+
+    Args:
+        source_dir: Root of synth-multiscript dataset.
+
+    Returns:
+        Dict mapping script code to list of image paths.
+    """
+    images_by_script: dict[str, list[Path]] = {}
+    for sub in ["train", "val", "test"]:
+        img_dir = source_dir / sub / "images"
+        if not img_dir.exists():
+            continue
+        for script_dir in sorted(img_dir.iterdir()):
+            if script_dir.is_dir():
+                imgs = list(script_dir.glob(_PNG_GLOB))
+                if imgs:
+                    images_by_script.setdefault(script_dir.name, []).extend(imgs)
+    return images_by_script
+
+
 def discover_source_images(
     source_dir: Path,
 ) -> dict[str, list[Path]]:
@@ -244,55 +343,18 @@ def discover_source_images(
     Returns:
         Dict mapping script code to list of image paths.
     """
-    images_by_script: dict[str, list[Path]] = {}
-
     # Check for worker-based layout first (worker_0, worker_1, ...)
-    worker_dirs = sorted(
-        d for d in source_dir.iterdir() if d.is_dir() and d.name.startswith("worker_")
-    )
-
-    if worker_dirs:
-        logger.info("Detected worker-based layout (%d workers)", len(worker_dirs))
-        for worker_dir in worker_dirs:
-            for script_dir in sorted(worker_dir.iterdir()):
-                if not script_dir.is_dir():
-                    continue
-                name = script_dir.name
-                if name in SKIP_DIRS or name.startswith((".", "_")):
-                    continue
-                imgs = list(script_dir.glob(_PNG_GLOB)) + list(script_dir.glob("*.jpg"))
-                if imgs:
-                    images_by_script.setdefault(name, []).extend(imgs)
-        # Sort per-script for deterministic ordering
-        for code in images_by_script:
-            images_by_script[code].sort()
+    images_by_script = _discover_worker_layout(source_dir)
+    if images_by_script:
         return images_by_script
 
     # Flat layout: source_dir/ScriptCode/*.png
-    for script_dir in sorted(source_dir.iterdir()):
-        if not script_dir.is_dir():
-            continue
-        name = script_dir.name
-        if name in SKIP_DIRS or name.startswith((".", "_")):
-            continue
-        imgs = list(script_dir.glob(_PNG_GLOB)) + list(script_dir.glob("*.jpg"))
-        if imgs:
-            images_by_script[name] = sorted(imgs)
+    images_by_script = _discover_flat_layout(source_dir)
+    if images_by_script:
+        return images_by_script
 
     # Fallback: split-based layout
-    if not images_by_script:
-        for sub in ["train", "val", "test"]:
-            img_dir = source_dir / sub / "images"
-            if img_dir.exists():
-                for script_dir in sorted(img_dir.iterdir()):
-                    if script_dir.is_dir():
-                        imgs = list(script_dir.glob(_PNG_GLOB))
-                        if imgs:
-                            images_by_script.setdefault(script_dir.name, []).extend(
-                                imgs
-                            )
-
-    return images_by_script
+    return _discover_split_layout(source_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -610,6 +672,104 @@ class GenerationPlan:
     stats: dict[str, Any] = field(default_factory=dict)
 
 
+def _assign_split(
+    rng: random.Random,
+    test_fraction: float,
+    val_fraction: float,
+) -> str:
+    """Randomly assign a sample to train/val/test split.
+
+    Args:
+        rng: Seeded random generator.
+        test_fraction: Fraction for test split.
+        val_fraction: Fraction for validation split.
+
+    Returns:
+        Split name: "train", "val", or "test".
+    """
+    roll = rng.random()
+    if roll < test_fraction:
+        return "test"
+    if roll < test_fraction + val_fraction:
+        return "val"
+    return "train"
+
+
+def _generate_plan_item(
+    rng: random.Random,
+    source_images: list[Any],
+    script_code: str,
+    split: str,
+    output_idx: int,
+) -> dict[str, Any]:
+    """Generate a single plan item with sampled transforms.
+
+    Args:
+        rng: Seeded random generator.
+        source_images: List of source image paths for this script.
+        script_code: ISO 15924 script code.
+        split: Target split name.
+        output_idx: Output filename index.
+
+    Returns:
+        Plan item dict with source_path, transforms, split, and output_idx.
+    """
+    return {
+        "source_path": str(rng.choice(source_images)),
+        "script_code": script_code,
+        "skew_angle": round(sample_skew_angle(rng), 4),
+        "orientation_class": rng.choice(ORIENTATION_CLASSES),
+        "degradation_profile": sample_degradation_profile(rng),
+        "split": split,
+        "output_idx": output_idx,
+    }
+
+
+def _update_plan_counts(
+    item: dict[str, Any],
+    orient_counts: dict[str, int],
+    degrad_counts: dict[str, int],
+    script_counts: dict[str, int],
+    split_counts: dict[str, int],
+) -> None:
+    """Update counter dicts from a single plan item.
+
+    Args:
+        item: Plan item dict.
+        orient_counts: Orientation distribution counter.
+        degrad_counts: Degradation distribution counter.
+        script_counts: Per-script count.
+        split_counts: Per-split count.
+    """
+    orient_counts[str(item["orientation_class"])] += 1
+    degrad_counts[item["degradation_profile"]] += 1
+    script_counts[item["script_code"]] = script_counts.get(item["script_code"], 0) + 1
+    split_counts[item["split"]] += 1
+
+
+def _compute_angle_distribution(
+    items: list[dict[str, Any]],
+) -> dict[str, int]:
+    """Compute angle distribution stats across all plan items.
+
+    Args:
+        items: List of plan items with skew_angle field.
+
+    Returns:
+        Dict mapping angle allocation name to count.
+    """
+    angle_counts = {alloc.name: 0 for alloc in ANGLE_DISTRIBUTION}
+    for item in items:
+        angle = item["skew_angle"]
+        for alloc in ANGLE_DISTRIBUTION:
+            if alloc.low <= angle < alloc.high or (
+                alloc.name == "extreme_pos" and angle == alloc.high
+            ):
+                angle_counts[alloc.name] += 1
+                break
+    return angle_counts
+
+
 def build_generation_plan(
     images_by_script: dict[str, list[Any]],
     total_images: int,
@@ -641,7 +801,6 @@ def build_generation_plan(
     rng = random.Random(seed)  # nosec B311
     held_back = set(held_back_scripts or [])
 
-    # Separate available vs held-back scripts
     train_val_scripts = {
         code: imgs
         for code, imgs in images_by_script.items()
@@ -669,54 +828,27 @@ def build_generation_plan(
         largest = max(per_script_count, key=lambda c: per_script_count[c])
         per_script_count[largest] += diff
 
-    # Build items for train/val/test(seen scripts)
     items: list[dict[str, Any]] = []
     output_idx = 0
-
-    # Statistics
-    angle_counts = {alloc.name: 0 for alloc in ANGLE_DISTRIBUTION}
     orient_counts = dict.fromkeys((str(o) for o in ORIENTATION_CLASSES), 0)
     degrad_counts = dict.fromkeys(DEGRADATION_WEIGHTS, 0)
     script_counts: dict[str, int] = {}
     split_counts = {"train": 0, "val": 0, "test": 0}
 
+    # Build items for train/val/test (seen scripts)
     for script_code, count in sorted(per_script_count.items()):
         source_images = train_val_scripts[script_code]
         if not source_images:
             continue
-
         for _i in range(count):
-            src_img = rng.choice(source_images)
-
-            skew_angle = sample_skew_angle(rng)
-            orientation = rng.choice(ORIENTATION_CLASSES)
-            degradation = sample_degradation_profile(rng)
-
-            # 3-way split: train / val / test
-            roll = rng.random()
-            if roll < test_fraction:
-                split = "test"
-            elif roll < test_fraction + val_fraction:
-                split = "val"
-            else:
-                split = "train"
-
-            items.append(
-                {
-                    "source_path": str(src_img),
-                    "script_code": script_code,
-                    "skew_angle": round(skew_angle, 4),
-                    "orientation_class": orientation,
-                    "degradation_profile": degradation,
-                    "split": split,
-                    "output_idx": output_idx,
-                }
+            split = _assign_split(rng, test_fraction, val_fraction)
+            item = _generate_plan_item(
+                rng, source_images, script_code, split, output_idx
             )
-
-            orient_counts[str(orientation)] += 1
-            degrad_counts[degradation] += 1
-            script_counts[script_code] = script_counts.get(script_code, 0) + 1
-            split_counts[split] += 1
+            items.append(item)
+            _update_plan_counts(
+                item, orient_counts, degrad_counts, script_counts, split_counts
+            )
             output_idx += 1
 
     # Add held-back scripts exclusively to test split
@@ -726,41 +858,18 @@ def build_generation_plan(
         if not source_images:
             logger.warning("Held-back script %s has no source images", script_code)
             continue
-
         for _i in range(held_back_per_script):
-            src_img = rng.choice(source_images)
-            skew_angle = sample_skew_angle(rng)
-            orientation = rng.choice(ORIENTATION_CLASSES)
-            degradation = sample_degradation_profile(rng)
-
-            items.append(
-                {
-                    "source_path": str(src_img),
-                    "script_code": script_code,
-                    "skew_angle": round(skew_angle, 4),
-                    "orientation_class": orientation,
-                    "degradation_profile": degradation,
-                    "split": "test",
-                    "output_idx": output_idx,
-                }
+            item = _generate_plan_item(
+                rng, source_images, script_code, "test", output_idx
             )
-
-            orient_counts[str(orientation)] += 1
-            degrad_counts[degradation] += 1
-            script_counts[script_code] = script_counts.get(script_code, 0) + 1
-            split_counts["test"] += 1
+            items.append(item)
+            _update_plan_counts(
+                item, orient_counts, degrad_counts, script_counts, split_counts
+            )
             held_back_total += 1
             output_idx += 1
 
-    # Compute angle distribution stats
-    for item in items:
-        angle = item["skew_angle"]
-        for alloc in ANGLE_DISTRIBUTION:
-            if alloc.low <= angle < alloc.high or (
-                alloc.name == "extreme_pos" and angle == alloc.high
-            ):
-                angle_counts[alloc.name] += 1
-                break
+    angle_counts = _compute_angle_distribution(items)
 
     stats = {
         "total_images": len(items),
@@ -801,6 +910,124 @@ def _process_item_wrapper(args: tuple[Any, ...]) -> ProcessedImage:
     )
 
 
+def _build_work_items_for_split(
+    split_items: list[dict[str, Any]],
+    split_img_dir: Path,
+    gcs_bucket: str | None,
+    gcs_cache_dir: Path | None,
+) -> tuple[list[tuple[Any, ...]], int]:
+    """Build work item tuples for a single split, handling GCS downloads if needed.
+
+    Args:
+        split_items: Plan items for this split.
+        split_img_dir: Output directory for this split's images.
+        gcs_bucket: Optional GCS bucket name for source downloads.
+        gcs_cache_dir: Optional local cache directory for GCS images.
+
+    Returns:
+        Tuple of (work_items list, error_count from GCS downloads).
+    """
+    work_items: list[tuple[Any, ...]] = []
+    download_errors = 0
+
+    for item in split_items:
+        source_path = item["source_path"]
+
+        if gcs_bucket and gcs_cache_dir:
+            cache_path = gcs_cache_dir / Path(source_path).name
+            if not cache_path.exists():
+                try:
+                    download_gcs_image(gcs_bucket, source_path, cache_path)
+                except Exception as exc:
+                    download_errors += 1
+                    logger.warning("GCS download failed: %s — %s", source_path, exc)
+                    continue
+            source_path = str(cache_path)
+
+        work_items.append(
+            (
+                source_path,
+                str(split_img_dir),
+                item["script_code"],
+                item["skew_angle"],
+                item["orientation_class"],
+                item["degradation_profile"],
+                item["output_idx"],
+            )
+        )
+
+    return work_items, download_errors
+
+
+def _process_split_items(
+    split: str,
+    work_items: list[tuple[Any, ...]],
+    workers: int,
+    labels: dict[str, dict[str, Any]],
+    start_time: float,
+    total: int,
+    success_count: int,
+    error_count: int,
+) -> tuple[int, int]:
+    """Process all work items for a single split in parallel.
+
+    Args:
+        split: Split name ("train", "val", or "test").
+        work_items: Work item tuples for parallel processing.
+        workers: Number of parallel workers.
+        labels: Labels dict to update in-place.
+        start_time: Overall start time for rate calculation.
+        total: Total items across all splits for progress reporting.
+        success_count: Running success count.
+        error_count: Running error count.
+
+    Returns:
+        Tuple of (updated success_count, updated error_count).
+    """
+    split_start = time.monotonic()
+    completed = 0
+
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        for result in executor.map(_process_item_wrapper, work_items, chunksize=50):
+            if result.success:
+                labels[split][result.output_filename] = {
+                    "angle": result.skew_angle,
+                    "orientation": result.orientation_class,
+                    "skew_bin": result.skew_bin,
+                    "script": result.script_code,
+                    "degradation": result.degradation_profile,
+                    "source": Path(result.source_path).name,
+                }
+                success_count += 1
+            else:
+                error_count += 1
+                logger.warning("Failed: %s — %s", result.source_path, result.error)
+
+            completed += 1
+            if completed % 2000 == 0:
+                elapsed = time.monotonic() - start_time
+                rate = (success_count + error_count) / max(elapsed, 0.01)
+                logger.info(
+                    "[%s] Progress: %d/%d total (%.1f img/s, %d errors)",
+                    split,
+                    success_count + error_count,
+                    total,
+                    rate,
+                    error_count,
+                )
+
+    split_elapsed = time.monotonic() - split_start
+    logger.info(
+        "[%s] Complete: %d images in %.1fs (%.1f img/s)",
+        split,
+        completed,
+        split_elapsed,
+        completed / max(split_elapsed, 0.01),
+    )
+
+    return success_count, error_count
+
+
 def execute_generation(
     plan: GenerationPlan,
     output_dir: Path,
@@ -824,7 +1051,6 @@ def execute_generation(
     for split in splits:
         (output_dir / split / "images").mkdir(parents=True, exist_ok=True)
 
-    # If using GCS, set up cache directory
     if gcs_bucket and gcs_cache_dir:
         gcs_cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -851,75 +1077,23 @@ def execute_generation(
             continue
 
         split_img_dir = output_dir / split / "images"
-        split_start = time.monotonic()
+        work_items, dl_errors = _build_work_items_for_split(
+            split_items,
+            split_img_dir,
+            gcs_bucket,
+            gcs_cache_dir,
+        )
+        error_count += dl_errors
 
-        # Build work items for parallel execution
-        work_items: list[tuple[Any, ...]] = []
-        for item in split_items:
-            source_path = item["source_path"]
-
-            # If GCS source, download to cache first (sequential — GCS has its own concurrency)
-            if gcs_bucket and gcs_cache_dir:
-                cache_path = gcs_cache_dir / Path(source_path).name
-                if not cache_path.exists():
-                    try:
-                        download_gcs_image(gcs_bucket, source_path, cache_path)
-                    except Exception as exc:
-                        error_count += 1
-                        logger.warning("GCS download failed: %s — %s", source_path, exc)
-                        continue
-                source_path = str(cache_path)
-
-            work_items.append(
-                (
-                    source_path,
-                    str(split_img_dir),
-                    item["script_code"],
-                    item["skew_angle"],
-                    item["orientation_class"],
-                    item["degradation_profile"],
-                    item["output_idx"],
-                )
-            )
-
-        # Process in parallel using ProcessPoolExecutor
-        completed = 0
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            for result in executor.map(_process_item_wrapper, work_items, chunksize=50):
-                if result.success:
-                    labels[split][result.output_filename] = {
-                        "angle": result.skew_angle,
-                        "orientation": result.orientation_class,
-                        "skew_bin": result.skew_bin,
-                        "script": result.script_code,
-                        "degradation": result.degradation_profile,
-                        "source": Path(result.source_path).name,
-                    }
-                    success_count += 1
-                else:
-                    error_count += 1
-                    logger.warning("Failed: %s — %s", result.source_path, result.error)
-
-                completed += 1
-                if completed % 2000 == 0:
-                    elapsed = time.monotonic() - start_time
-                    rate = (success_count + error_count) / max(elapsed, 0.01)
-                    logger.info(
-                        "[%s] Progress: %d/%d total (%.1f img/s, %d errors)",
-                        split,
-                        success_count + error_count,
-                        total,
-                        rate,
-                        error_count,
-                    )
-
-        split_elapsed = time.monotonic() - split_start
-        logger.info(
-            "[%s] Complete: %d images in %.1fs (%.1f img/s)",
+        success_count, error_count = _process_split_items(
             split,
-            completed,
-            split_elapsed,
-            completed / max(split_elapsed, 0.01),
+            work_items,
+            workers,
+            labels,
+            start_time,
+            total,
+            success_count,
+            error_count,
         )
 
     # Write labels.json for each split
@@ -956,6 +1130,86 @@ def execute_generation(
 # ---------------------------------------------------------------------------
 
 
+def _discover_images(args: argparse.Namespace) -> dict[str, list[Any]]:
+    """Discover source images from local filesystem or GCS.
+
+    Args:
+        args: Parsed command-line arguments.
+
+    Returns:
+        Dict mapping script code to list of image paths/blob names.
+    """
+    if args.gcs_bucket:
+        logger.info(
+            "Discovering source images in gs://%s/%s", args.gcs_bucket, args.gcs_prefix
+        )
+        gcs_images = discover_gcs_images(args.gcs_bucket, args.gcs_prefix)
+        return dict(gcs_images)
+
+    logger.info("Discovering source images in %s", args.source_dir)
+    return dict(discover_source_images(args.source_dir))
+
+
+def _print_plan_statistics(
+    stats: dict[str, Any],
+    plan: GenerationPlan,
+    held_back_scripts: list[str],
+) -> None:
+    """Print generation plan statistics to stdout.
+
+    Args:
+        stats: Plan statistics dict.
+        plan: Generation plan with items.
+        held_back_scripts: Scripts reserved for test only.
+    """
+    print("\n=== Generation Plan ===")
+    print(f"Total images: {stats['total_images']:,}")
+    print(
+        f"Train: {stats['train_count']:,} | Val: {stats['val_count']:,} | Test: {stats['test_count']:,}"
+    )
+    print(
+        f"  (includes {stats['held_back_test_images']:,} held-back script images in test)"
+    )
+    print(f"Scripts: {stats['scripts']}")
+    print(f"Held-back (test only): {stats['held_back_scripts']}")
+    print(f"Seed: {stats['seed']}")
+
+    print("\n--- Script Allocation ---")
+    held_set = set(held_back_scripts)
+    for code, count in sorted(stats["per_script"].items(), key=lambda x: -x[1]):
+        pct = 100 * count / stats["total_images"]
+        held = " [TEST ONLY]" if code in held_set else ""
+        print(f"  {code:5s}: {count:6,d} ({pct:5.1f}%){held}")
+
+    print("\n--- Orientation Distribution ---")
+    for orient, count in sorted(stats["orientation_distribution"].items()):
+        pct = 100 * count / stats["total_images"]
+        print(f"  {orient:4s} deg: {count:6,d} ({pct:5.1f}%)")
+
+    print("\n--- Degradation Distribution ---")
+    for prof, count in sorted(
+        stats["degradation_distribution"].items(), key=lambda x: -x[1]
+    ):
+        pct = 100 * count / stats["total_images"]
+        print(f"  {prof:12s}: {count:6,d} ({pct:5.1f}%)")
+
+    print("\n--- Angle Distribution ---")
+    for name, count in stats["angle_distribution"].items():
+        pct = 100 * count / stats["total_images"]
+        print(f"  {name:20s}: {count:6,d} ({pct:5.1f}%)")
+
+    # Bin coverage check
+    bin_counts = [0] * 42
+    for item in plan.items:
+        bin_idx = angle_to_bin(item["skew_angle"])
+        bin_counts[bin_idx] += 1
+    empty_bins = sum(1 for c in bin_counts if c == 0)
+    min_bin = min(bin_counts)
+    max_bin = max(bin_counts)
+    print("\n--- Bin Coverage ---")
+    print(f"  42 bins: min={min_bin}, max={max_bin}, empty={empty_bins}")
+
+
 def main() -> None:
     """CLI entry point for skew dataset generation."""
     parser = argparse.ArgumentParser(
@@ -963,7 +1217,6 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Source: local or GCS (at least one required)
     source_group = parser.add_argument_group("source (choose one)")
     source_group.add_argument(
         "--source-dir",
@@ -983,7 +1236,6 @@ def main() -> None:
         default="synthetic_multiscript/",
         help="GCS prefix within bucket (default: synthetic_multiscript/)",
     )
-
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -1015,10 +1267,7 @@ def main() -> None:
         help="Random seed for reproducibility (default: 42)",
     )
     parser.add_argument(
-        "--workers",
-        type=int,
-        default=4,
-        help="Number of parallel workers (default: 4)",
+        "--workers", type=int, default=4, help="Number of parallel workers (default: 4)"
     )
     parser.add_argument(
         "--held-back-scripts",
@@ -1037,12 +1286,7 @@ def main() -> None:
         action="store_true",
         help="Show plan statistics without processing images",
     )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging",
-    )
-
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
 
     if not args.source_dir and not args.gcs_bucket:
@@ -1056,17 +1300,7 @@ def main() -> None:
     )
 
     # Step 1: Discover source images
-    if args.gcs_bucket:
-        logger.info(
-            "Discovering source images in gs://%s/%s", args.gcs_bucket, args.gcs_prefix
-        )
-        gcs_images = discover_gcs_images(args.gcs_bucket, args.gcs_prefix)
-        # Convert to generic format (strings work as keys for plan building)
-        images_by_script: dict[str, list[Any]] = dict(gcs_images)
-    else:
-        logger.info("Discovering source images in %s", args.source_dir)
-        images_by_script = dict(discover_source_images(args.source_dir))
-
+    images_by_script = _discover_images(args)
     if not images_by_script:
         logger.error("No images found in source")
         sys.exit(1)
@@ -1095,63 +1329,15 @@ def main() -> None:
         logger.error("Generation plan is empty. Check source directory structure.")
         sys.exit(1)
 
-    # Print plan statistics
-    stats = plan.stats
-    print("\n=== Generation Plan ===")
-    print(f"Total images: {stats['total_images']:,}")
-    print(
-        f"Train: {stats['train_count']:,} | Val: {stats['val_count']:,} | Test: {stats['test_count']:,}"
-    )
-    print(
-        f"  (includes {stats['held_back_test_images']:,} held-back script images in test)"
-    )
-    print(f"Scripts: {stats['scripts']}")
-    print(f"Held-back (test only): {stats['held_back_scripts']}")
-    print(f"Seed: {stats['seed']}")
-
-    print("\n--- Script Allocation ---")
-    for code, count in sorted(stats["per_script"].items(), key=lambda x: -x[1]):
-        pct = 100 * count / stats["total_images"]
-        held = " [TEST ONLY]" if code in set(args.held_back_scripts) else ""
-        print(f"  {code:5s}: {count:6,d} ({pct:5.1f}%){held}")
-
-    print("\n--- Orientation Distribution ---")
-    for orient, count in sorted(stats["orientation_distribution"].items()):
-        pct = 100 * count / stats["total_images"]
-        print(f"  {orient:4s} deg: {count:6,d} ({pct:5.1f}%)")
-
-    print("\n--- Degradation Distribution ---")
-    for prof, count in sorted(
-        stats["degradation_distribution"].items(), key=lambda x: -x[1]
-    ):
-        pct = 100 * count / stats["total_images"]
-        print(f"  {prof:12s}: {count:6,d} ({pct:5.1f}%)")
-
-    print("\n--- Angle Distribution ---")
-    for name, count in stats["angle_distribution"].items():
-        pct = 100 * count / stats["total_images"]
-        print(f"  {name:20s}: {count:6,d} ({pct:5.1f}%)")
-
-    # Bin coverage check
-    bin_counts = [0] * 42
-    for item in plan.items:
-        bin_idx = angle_to_bin(item["skew_angle"])
-        bin_counts[bin_idx] += 1
-    empty_bins = sum(1 for c in bin_counts if c == 0)
-    min_bin = min(bin_counts)
-    max_bin = max(bin_counts)
-    print("\n--- Bin Coverage ---")
-    print(f"  42 bins: min={min_bin}, max={max_bin}, empty={empty_bins}")
+    _print_plan_statistics(plan.stats, plan, args.held_back_scripts)
 
     if args.dry_run:
         print("\n[DRY RUN] No images processed. Use without --dry-run to generate.")
         return
 
     # Step 3: Execute generation
-    print(f"\nGenerating {stats['total_images']:,} images to {args.output_dir}")
-
+    print(f"\nGenerating {plan.stats['total_images']:,} images to {args.output_dir}")
     gcs_cache = args.output_dir / ".gcs_cache" if args.gcs_bucket else None
-
     result = execute_generation(
         plan=plan,
         output_dir=args.output_dir,

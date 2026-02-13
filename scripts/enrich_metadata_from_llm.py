@@ -212,6 +212,72 @@ DATASETS_VISION_ONLY: dict[str, dict[str, Any]] = {
 # =============================================================================
 
 
+def _get_text_extractor(
+    fmt: str,
+    config: dict[str, Any],
+    limit: int | None,
+) -> tuple[Any, str | None] | None:
+    """Return (extractor_callable, text_source_override) for the given format.
+
+    Returns None if the format is unsupported.
+    """
+    # Formats with text_source override
+    _EXTRACTED_SOURCE = "extracted"
+
+    # Lookup tables keyed by format string
+    _file_extractors: dict[str, tuple[Any, str | None]] = {
+        "doclaynet_coco": (lambda: _extract_coco_text(config["annotation_file"]), None),
+        "tablebank_coco": (lambda: _extract_coco_text(config["annotation_file"]), None),
+        "coco_text": (
+            lambda: _extract_coco_text_field(config["annotation_file"]),
+            None,
+        ),
+        "pubtabnet_jsonl": (
+            lambda: _extract_jsonl_html(config["annotation_file"], limit),
+            None,
+        ),
+        "hiertext_json": (lambda: _extract_hiertext(config["annotation_file"]), None),
+        "invoices_kg_json": (
+            lambda: _extract_invoices_kg(config["annotation_file"]),
+            None,
+        ),
+        "financebench_jsonl": (
+            lambda: _extract_financebench(config["annotation_file"]),
+            None,
+        ),
+        "ocr_quality_json": (
+            lambda: _extract_ocr_quality(config["annotation_file"]),
+            _EXTRACTED_SOURCE,
+        ),
+        "iam_lines_txt": (lambda: _extract_iam_lines(config["annotation_file"]), None),
+    }
+
+    _dir_extractors: dict[str, tuple[Any, str | None]] = {
+        "funsd_json": (lambda: _extract_funsd_text(config["annotation_dir"]), None),
+        "fintabnet_dir": (
+            lambda: _extract_fintabnet_text(config["annotation_dir"]),
+            None,
+        ),
+        "docling_ocr": (
+            lambda: _extract_docling_ocr(config["annotation_dir"]),
+            _EXTRACTED_SOURCE,
+        ),
+        "mlt19_gt": (lambda: _extract_mlt19_gt(config["annotation_dir"]), None),
+        "sroie_voxel51_json": (
+            lambda: _extract_sroie_text(config["annotation_dir"]),
+            None,
+        ),
+        "muharaf_paired_txt": (
+            lambda: _extract_muharaf(config["annotation_dir"]),
+            None,
+        ),
+        "midv500_gt_json": (lambda: _extract_midv500(config["annotation_dir"]), None),
+    }
+
+    entry = _file_extractors.get(fmt) or _dir_extractors.get(fmt)
+    return entry
+
+
 def extract_text_samples(
     dataset_name: str,
     config: dict[str, Any],
@@ -229,43 +295,17 @@ def extract_text_samples(
     """
     fmt = config.get("format", "")
     text_source = config.get("text_source", "ground_truth")
-    samples: list[tuple[str, str, str]] = []
 
-    if fmt == "doclaynet_coco" or fmt == "tablebank_coco":
-        samples = _extract_coco_text(config["annotation_file"])
-    elif fmt == "coco_text":
-        samples = _extract_coco_text_field(config["annotation_file"])
-    elif fmt == "funsd_json":
-        samples = _extract_funsd_text(config["annotation_dir"])
-    elif fmt == "pubtabnet_jsonl":
-        samples = _extract_jsonl_html(config["annotation_file"], limit)
-    elif fmt == "fintabnet_dir":
-        samples = _extract_fintabnet_text(config["annotation_dir"])
-    elif fmt == "docling_ocr":
-        samples = _extract_docling_ocr(config["annotation_dir"])
-        text_source = "extracted"
-    elif fmt == "hiertext_json":
-        samples = _extract_hiertext(config["annotation_file"])
-    elif fmt == "mlt19_gt":
-        samples = _extract_mlt19_gt(config["annotation_dir"])
-    elif fmt == "sroie_voxel51_json":
-        samples = _extract_sroie_text(config["annotation_dir"])
-    elif fmt == "invoices_kg_json":
-        samples = _extract_invoices_kg(config["annotation_file"])
-    elif fmt == "financebench_jsonl":
-        samples = _extract_financebench(config["annotation_file"])
-    elif fmt == "ocr_quality_json":
-        samples = _extract_ocr_quality(config["annotation_file"])
-        text_source = "extracted"
-    elif fmt == "muharaf_paired_txt":
-        samples = _extract_muharaf(config["annotation_dir"])
-    elif fmt == "iam_lines_txt":
-        samples = _extract_iam_lines(config["annotation_file"])
-    elif fmt == "midv500_gt_json":
-        samples = _extract_midv500(config["annotation_dir"])
-    else:
+    entry = _get_text_extractor(fmt, config, limit)
+    if entry is None:
         logger.warning(f"Unsupported text format: {fmt} for {dataset_name}")
         return []
+
+    extractor, source_override = entry
+    if source_override:
+        text_source = source_override
+
+    samples = extractor()
 
     # Apply text_source to all samples
     samples = [(img_id, text, text_source) for img_id, text, _ in samples]
@@ -408,6 +448,15 @@ def _extract_fintabnet_text(annotation_dir: Path) -> list[tuple[str, str, str]]:
     return samples
 
 
+def _resolve_docling_image_id(entry: dict[str, Any]) -> str:
+    """Extract image ID from a Docling OCR JSONL entry."""
+    img_id = entry.get("image_id", entry.get("filename", ""))
+    if img_id:
+        return str(img_id)
+    source = entry.get("source", "")
+    return Path(source).name if source else ""
+
+
 def _extract_docling_ocr(annotation_dir: Path) -> list[tuple[str, str, str]]:
     """Extract text from Docling OCR JSONL files."""
     ocr_dir = annotation_dir / "ocr"
@@ -422,16 +471,12 @@ def _extract_docling_ocr(annotation_dir: Path) -> list[tuple[str, str, str]]:
             for line in fh:
                 try:
                     entry = json.loads(line)
-                    text = entry.get("text", "")
-                    img_id = entry.get("image_id", entry.get("filename", ""))
-                    if not img_id:
-                        source = entry.get("source", "")
-                        if source:
-                            img_id = Path(source).name
-                    if text and img_id:
-                        samples.append((str(img_id), text[:4000], "extracted"))
                 except json.JSONDecodeError:
                     continue
+                text = entry.get("text", "")
+                img_id = _resolve_docling_image_id(entry)
+                if text and img_id:
+                    samples.append((img_id, text[:4000], "extracted"))
     return samples
 
 
@@ -658,6 +703,24 @@ def _extract_midv500(annotation_dir: Path) -> list[tuple[str, str, str]]:
     return samples
 
 
+def _collect_image_paths(image_dir: Path, recursive: bool, pattern: str) -> list[Path]:
+    """Collect image paths using the appropriate glob strategy."""
+    extensions = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
+
+    if pattern:
+        glob_fn = image_dir.rglob if recursive else image_dir.glob
+        return sorted(glob_fn(pattern))
+
+    if recursive:
+        return sorted(
+            p
+            for p in image_dir.rglob("*")
+            if p.is_file() and p.suffix.lower() in extensions
+        )
+
+    return sorted(p for p in image_dir.iterdir() if p.suffix.lower() in extensions)
+
+
 def load_image_paths(
     dataset_name: str,
     config: dict[str, Any],
@@ -679,22 +742,9 @@ def load_image_paths(
         return []
 
     image_dir = Path(image_dir)
-    extensions = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
-    recursive = config.get("recursive", False)
-    pattern = config.get("pattern", "")
-
-    if pattern and recursive:
-        paths = sorted(image_dir.rglob(pattern))
-    elif pattern:
-        paths = sorted(image_dir.glob(pattern))
-    elif recursive:
-        paths = sorted(
-            p
-            for p in image_dir.rglob("*")
-            if p.is_file() and p.suffix.lower() in extensions
-        )
-    else:
-        paths = sorted(p for p in image_dir.iterdir() if p.suffix.lower() in extensions)
+    paths = _collect_image_paths(
+        image_dir, config.get("recursive", False), config.get("pattern", "")
+    )
 
     if limit:
         paths = paths[:limit]
@@ -797,6 +847,65 @@ def load_existing_ids(dataset_name: str, output_dir: Path) -> set[str]:
 # =============================================================================
 
 
+def _build_sample_inputs(
+    dataset_name: str,
+    config: dict[str, Any],
+    is_vision: bool,
+    limit: int | None,
+    skip_ids: set[str],
+) -> list[Any]:
+    """Build SampleInput objects for text-based or vision-based classification."""
+    from image_preprocessing_detector.labeling.domain.classifier import SampleInput
+
+    samples: list[SampleInput] = []
+
+    if not is_vision:
+        for image_id, text, text_source in extract_text_samples(
+            dataset_name, config, limit
+        ):
+            if image_id not in skip_ids:
+                samples.append(
+                    SampleInput(image_id=image_id, text=text, text_source=text_source)
+                )
+        return samples
+
+    vision_config = DATASETS_VISION_ONLY.get(dataset_name, config)
+    for image_id, image_path in load_image_paths(dataset_name, vision_config, limit):
+        if image_id not in skip_ids:
+            samples.append(SampleInput(image_id=image_id, image_path=image_path))
+    return samples
+
+
+def _print_dataset_summary(
+    dataset_name: str,
+    results: list[tuple[str, Any]],
+    stats: dict[str, Any],
+    output_path: Path,
+) -> None:
+    """Print summary statistics after processing a dataset."""
+    print(f"\n{'=' * 60}")
+    print(f"Dataset: {dataset_name}")
+    print(f"Samples processed: {len(results)}")
+    print(f"Output: {output_path}")
+    print(f"Total tokens: {stats.get('total_tokens', 0):,}")
+    print(f"Escalation rate: {stats.get('escalation_rate', 0):.1%}")
+    print(f"Errors: {stats.get('errors', 0)}")
+
+    domain_dist = Counter(r.domain_level1 for _, r in results)
+    print("\nDomain Distribution:")
+    for domain, count in domain_dist.most_common():
+        pct = count / len(results) * 100
+        print(f"  {domain}: {count} ({pct:.1f}%)")
+
+    lang_dist = Counter(r.iso639_language for _, r in results if r.iso639_language)
+    if lang_dist:
+        print("\nTop Languages:")
+        for lang, count in lang_dist.most_common(5):
+            print(f"  {lang}: {count}")
+
+    print(f"{'=' * 60}\n")
+
+
 def process_dataset(
     dataset_name: str,
     config: dict[str, Any],
@@ -809,10 +918,7 @@ def process_dataset(
         config: Dataset configuration dict.
         args: CLI arguments.
     """
-    from image_preprocessing_detector.labeling.domain.classifier import (
-        MetadataEnricher,
-        SampleInput,
-    )
+    from image_preprocessing_detector.labeling.domain.classifier import MetadataEnricher
     from image_preprocessing_detector.labeling.domain.config import (
         DomainModelConfig,
         DomainPipelineConfig,
@@ -832,41 +938,16 @@ def process_dataset(
     pipeline_config = DomainPipelineConfig(**pipeline_kwargs)
     enricher = MetadataEnricher(pipeline_config)
 
-    # Resume support
     skip_ids: set[str] = set()
     if args.resume:
         skip_ids = load_existing_ids(dataset_name, METADATA_REGISTRY)
         if skip_ids:
             logger.info(f"Resuming: skipping {len(skip_ids)} already-processed samples")
 
-    # Build sample inputs
-    samples: list[SampleInput] = []
     is_vision = args.vision_only or dataset_name in DATASETS_VISION_ONLY
-
-    if not is_vision:
-        # Text-based classification
-        text_samples = extract_text_samples(dataset_name, config, args.limit)
-        for image_id, text, text_source in text_samples:
-            if image_id not in skip_ids:
-                samples.append(
-                    SampleInput(
-                        image_id=image_id,
-                        text=text,
-                        text_source=text_source,
-                    )
-                )
-    else:
-        # Vision-based classification
-        vision_config = DATASETS_VISION_ONLY.get(dataset_name, config)
-        image_paths = load_image_paths(dataset_name, vision_config, args.limit)
-        for image_id, image_path in image_paths:
-            if image_id not in skip_ids:
-                samples.append(
-                    SampleInput(
-                        image_id=image_id,
-                        image_path=image_path,
-                    )
-                )
+    samples = _build_sample_inputs(
+        dataset_name, config, is_vision, args.limit, skip_ids
+    )
 
     if not samples:
         logger.warning(f"No samples to process for {dataset_name}")
@@ -884,7 +965,6 @@ def process_dataset(
             logger.info(f"  {sample.image_id}: text={text_preview}")
         return
 
-    # Process with progress bar
     results: list[tuple[str, Any]] = []
     with tqdm(total=len(samples), desc=dataset_name) as pbar:
         for sample in samples:
@@ -900,34 +980,9 @@ def process_dataset(
                 conf=f"{result.domain_confidence:.2f}",
             )
 
-    # Save results
     stats = enricher.get_stats()
     output_path = save_enrichment(dataset_name, results, stats, METADATA_REGISTRY)
-
-    # Print summary
-    print(f"\n{'=' * 60}")
-    print(f"Dataset: {dataset_name}")
-    print(f"Samples processed: {len(results)}")
-    print(f"Output: {output_path}")
-    print(f"Total tokens: {stats.get('total_tokens', 0):,}")
-    print(f"Escalation rate: {stats.get('escalation_rate', 0):.1%}")
-    print(f"Errors: {stats.get('errors', 0)}")
-
-    # Domain distribution
-    domain_dist = Counter(r.domain_level1 for _, r in results)
-    print("\nDomain Distribution:")
-    for domain, count in domain_dist.most_common():
-        pct = count / len(results) * 100
-        print(f"  {domain}: {count} ({pct:.1f}%)")
-
-    # Language distribution (top 5)
-    lang_dist = Counter(r.iso639_language for _, r in results if r.iso639_language)
-    if lang_dist:
-        print("\nTop Languages:")
-        for lang, count in lang_dist.most_common(5):
-            print(f"  {lang}: {count}")
-
-    print(f"{'=' * 60}\n")
+    _print_dataset_summary(dataset_name, results, stats, output_path)
 
 
 def list_datasets() -> None:
@@ -946,6 +1001,28 @@ def list_datasets() -> None:
     print(
         f"\nTotal: {len(DATASETS_WITH_TEXT) + len(DATASETS_VISION_ONLY)} datasets, {total:,} images"
     )
+
+
+def _resolve_llm_datasets(
+    args: argparse.Namespace,
+) -> dict[str, dict[str, Any]] | None:
+    """Resolve which datasets to process from CLI args.
+
+    Returns None and exits on unknown dataset.
+    """
+    if args.dataset:
+        if args.dataset in DATASETS_WITH_TEXT:
+            return {args.dataset: DATASETS_WITH_TEXT[args.dataset]}
+        if args.dataset in DATASETS_VISION_ONLY:
+            return {args.dataset: DATASETS_VISION_ONLY[args.dataset]}
+        logger.error(f"Unknown dataset: {args.dataset}")
+        logger.info("Use --list to see available datasets")
+        sys.exit(1)
+
+    datasets: dict[str, dict[str, Any]] = dict(DATASETS_WITH_TEXT)
+    if not args.text_only:
+        datasets.update(DATASETS_VISION_ONLY)
+    return datasets
 
 
 def main() -> None:
@@ -981,21 +1058,7 @@ def main() -> None:
         parser.print_help()
         sys.exit(1)
 
-    # Determine datasets to process
-    datasets: dict[str, dict[str, Any]] = {}
-    if args.dataset:
-        if args.dataset in DATASETS_WITH_TEXT:
-            datasets[args.dataset] = DATASETS_WITH_TEXT[args.dataset]
-        elif args.dataset in DATASETS_VISION_ONLY:
-            datasets[args.dataset] = DATASETS_VISION_ONLY[args.dataset]
-        else:
-            logger.error(f"Unknown dataset: {args.dataset}")
-            logger.info("Use --list to see available datasets")
-            sys.exit(1)
-    elif args.all:
-        datasets.update(DATASETS_WITH_TEXT)
-        if not args.text_only:
-            datasets.update(DATASETS_VISION_ONLY)
+    datasets = _resolve_llm_datasets(args)
 
     for name, config in datasets.items():
         try:

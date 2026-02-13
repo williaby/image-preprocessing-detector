@@ -357,6 +357,51 @@ def infer_script_from_language(lang_code: str) -> str | None:
     return lang_to_script.get(lang_code)
 
 
+def _try_two_of_two_consensus(
+    votes: list[DetectionResult],
+) -> ConsensusResult | None:
+    """Check if the first two votes agree on language."""
+    if len(votes) < 2:
+        return None
+    v1, v2 = votes[0], votes[1]
+    if v1.language != v2.language or v1.language == "und":
+        return None
+    avg_conf = (v1.confidence + v2.confidence) / 2
+    return ConsensusResult(
+        language=v1.language,
+        script=v1.script or v2.script,
+        confidence=avg_conf,
+        method="consensus_2of2",
+        votes=votes,
+        agreement=True,
+    )
+
+
+def _try_two_of_three_consensus(
+    votes: list[DetectionResult],
+) -> ConsensusResult | None:
+    """Check for 2-of-3 majority among votes."""
+    if len(votes) < 3:
+        return None
+    lang_counts = Counter(v.language for v in votes if v.language != "und")
+    if not lang_counts:
+        return None
+    majority_lang, count = lang_counts.most_common(1)[0]
+    if count < 2:
+        return None
+    majority_votes = [v for v in votes if v.language == majority_lang]
+    avg_conf = sum(v.confidence for v in majority_votes) / len(majority_votes)
+    script = next((v.script for v in majority_votes if v.script), None)
+    return ConsensusResult(
+        language=majority_lang,
+        script=script,
+        confidence=avg_conf,
+        method="consensus_2of3",
+        votes=votes,
+        agreement=True,
+    )
+
+
 def consensus_detect(
     text: str,
     fasttext_model: Any = None,
@@ -366,29 +411,19 @@ def consensus_detect(
 
     Strategy:
     1. Run two methods (fastText + Unicode or lingua + Unicode)
-    2. If both agree on language AND script → accept with high confidence
-    3. If disagreement → run third method, use 2-of-3 majority
-    4. If no majority → use highest confidence result
+    2. If both agree on language AND script -> accept with high confidence
+    3. If disagreement -> run third method, use 2-of-3 majority
+    4. If no majority -> use highest confidence result
     """
     votes: list[DetectionResult] = []
 
-    # Method 1: Unicode script analysis (always available)
-    unicode_result = detect_script_unicode(text)
-    votes.append(unicode_result)
-
-    # Method 2: fastText (if available)
+    votes.append(detect_script_unicode(text))
     if fasttext_model:
-        fasttext_result = detect_language_fasttext(text, fasttext_model)
-        votes.append(fasttext_result)
-
-    # Method 3: lingua (if available)
+        votes.append(detect_language_fasttext(text, fasttext_model))
     if lingua_detector:
-        lingua_result = detect_language_lingua(text, lingua_detector)
-        votes.append(lingua_result)
+        votes.append(detect_language_lingua(text, lingua_detector))
 
-    # Analyze votes
     if len(votes) < 2:
-        # Only one method available
         return ConsensusResult(
             language=votes[0].language,
             script=votes[0].script,
@@ -398,47 +433,13 @@ def consensus_detect(
             agreement=True,
         )
 
-    # Check for agreement between first two methods
-    if len(votes) >= 2:
-        v1, v2 = votes[0], votes[1]
+    result = _try_two_of_two_consensus(votes)
+    if result:
+        return result
 
-        # Both agree on language
-        if v1.language == v2.language and v1.language != "und":
-            avg_conf = (v1.confidence + v2.confidence) / 2
-            # Use more specific script if available
-            script = v1.script or v2.script
-            return ConsensusResult(
-                language=v1.language,
-                script=script,
-                confidence=avg_conf,
-                method="consensus_2of2",
-                votes=votes,
-                agreement=True,
-            )
-
-    # Disagreement - check third method if available
-    if len(votes) >= 3:
-        lang_counts = Counter(v.language for v in votes if v.language != "und")
-
-        if lang_counts:
-            majority_lang, count = lang_counts.most_common(1)[0]
-
-            if count >= 2:
-                # 2-of-3 majority
-                majority_votes = [v for v in votes if v.language == majority_lang]
-                avg_conf = sum(v.confidence for v in majority_votes) / len(
-                    majority_votes
-                )
-                script = next((v.script for v in majority_votes if v.script), None)
-
-                return ConsensusResult(
-                    language=majority_lang,
-                    script=script,
-                    confidence=avg_conf,
-                    method="consensus_2of3",
-                    votes=votes,
-                    agreement=True,
-                )
+    result = _try_two_of_three_consensus(votes)
+    if result:
+        return result
 
     # No consensus - use highest confidence non-und result
     valid_votes = [v for v in votes if v.language != "und"]
@@ -447,13 +448,12 @@ def consensus_detect(
         return ConsensusResult(
             language=best.language,
             script=best.script,
-            confidence=best.confidence * 0.8,  # Reduce confidence due to disagreement
+            confidence=best.confidence * 0.8,
             method="highest_confidence",
             votes=votes,
             agreement=False,
         )
 
-    # All methods returned 'und'
     return ConsensusResult(
         language="und",
         script=votes[0].script if votes else None,
@@ -558,6 +558,85 @@ def download_fasttext_model(model_dir: Path) -> Path:
     return model_path
 
 
+def _init_mlt19_fasttext(model_dir: Path) -> Any | None:
+    """Initialize fastText model for MLT-19 enrichment."""
+    try:
+        import fasttext
+
+        model_path = model_dir / "lid.176.bin"
+        if model_path.exists():
+            logger.info("Loading fastText model...")
+            return fasttext.load_model(str(model_path))
+        logger.warning(f"fastText model not found at {model_path}")
+        logger.warning("Run with --download-model to download it")
+    except ImportError:
+        logger.warning("fastText not installed. Run: uv add fasttext")
+    return None
+
+
+def _init_mlt19_lingua() -> Any | None:
+    """Initialize lingua detector for MLT-19 enrichment."""
+    try:
+        from lingua import LanguageDetectorBuilder
+
+        logger.info("Initializing lingua detector...")
+        return LanguageDetectorBuilder.from_all_languages().build()
+    except ImportError:
+        logger.warning("lingua not installed. Run: uv add lingua-language-detector")
+    return None
+
+
+def _init_mlt19_easyocr() -> Any | None:
+    """Initialize EasyOCR reader for MLT-19 text extraction."""
+    try:
+        import easyocr
+
+        logger.info("Initializing EasyOCR reader...")
+        return easyocr.Reader(
+            ["en", "ar", "hi", "bn", "ja", "ko", "ch_sim"],
+            gpu=True,
+        )
+    except ImportError:
+        logger.warning("EasyOCR not installed. Run: uv add easyocr")
+        logger.warning("Will skip text extraction")
+    return None
+
+
+def _filter_und_test_samples(
+    samples: list[dict[str, Any]],
+) -> list[tuple[int, dict[str, Any]]]:
+    """Filter samples to test images with 'und' language baseline."""
+    return [
+        (i, sample)
+        for i, sample in enumerate(samples)
+        if sample.get("original_labels", {}).get("raw_labels", {}).get("split")
+        == "test"
+        and sample.get("original_labels", {}).get("language_code") == "und"
+    ]
+
+
+def _detect_mlt19_sample(
+    image_path: Path,
+    easyocr_reader: Any | None,
+    fasttext_model: Any | None,
+    lingua_detector: Any | None,
+) -> ConsensusResult:
+    """Detect language for a single MLT-19 sample."""
+    text = extract_text_easyocr(image_path, easyocr_reader) if easyocr_reader else ""
+
+    if not text:
+        return ConsensusResult(
+            language="und",
+            script=None,
+            confidence=0.0,
+            method="no_text_extracted",
+            votes=[],
+            agreement=True,
+        )
+
+    return consensus_detect(text, fasttext_model, lingua_detector)
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -594,78 +673,26 @@ def main():
     )
     args = parser.parse_args()
 
-    # Download model if requested
     if args.download_model:
         download_fasttext_model(args.model_dir)
         return 0
 
-    # Initialize detection models
-    fasttext_model = None
-    lingua_detector = None
-    easyocr_reader = None
-
-    # Try to load fastText
-    try:
-        import fasttext
-
-        model_path = args.model_dir / "lid.176.bin"
-        if model_path.exists():
-            logger.info("Loading fastText model...")
-            fasttext_model = fasttext.load_model(str(model_path))
-        else:
-            logger.warning(f"fastText model not found at {model_path}")
-            logger.warning("Run with --download-model to download it")
-    except ImportError:
-        logger.warning("fastText not installed. Run: uv add fasttext")
-
-    # Try to load lingua
-    try:
-        from lingua import LanguageDetectorBuilder
-
-        logger.info("Initializing lingua detector...")
-        lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
-    except ImportError:
-        logger.warning("lingua not installed. Run: uv add lingua-language-detector")
-
-    # Try to load EasyOCR for text extraction
-    if not args.no_ocr:
-        try:
-            import easyocr
-
-            logger.info("Initializing EasyOCR reader...")
-            easyocr_reader = easyocr.Reader(
-                ["en", "ar", "hi", "bn", "ja", "ko", "ch_sim"],
-                gpu=True,
-            )
-        except ImportError:
-            logger.warning("EasyOCR not installed. Run: uv add easyocr")
-            logger.warning("Will skip text extraction")
+    fasttext_model = _init_mlt19_fasttext(args.model_dir)
+    lingua_detector = _init_mlt19_lingua()
+    easyocr_reader = _init_mlt19_easyocr() if not args.no_ocr else None
 
     if not fasttext_model and not lingua_detector:
         logger.error("No language detection models available!")
         logger.error("Install at least one: uv add fasttext lingua-language-detector")
         return 1
 
-    # Load metadata
     logger.info(f"Loading metadata from {args.metadata}")
     metadata = load_metadata(args.metadata)
     samples = metadata.get("samples", [])
 
-    # Filter to test images with 'und' baseline
-    test_samples = []
-    for i, sample in enumerate(samples):
-        orig_labels = sample.get("original_labels", {})
-        raw_labels = orig_labels.get("raw_labels", {})
-
-        if (
-            raw_labels.get("split") == "test"
-            and orig_labels.get("language_code") == "und"
-        ):
-            test_samples.append((i, sample))
-
+    test_samples = _filter_und_test_samples(samples)
     logger.info(f"Found {len(test_samples)} test images needing enrichment")
 
-    # Apply slice
     end_idx = args.end or len(test_samples)
     test_samples = test_samples[args.start : end_idx]
     logger.info(
@@ -676,67 +703,46 @@ def main():
         logger.info("No images to process")
         return 0
 
-    # Process images
     processed = 0
     consensus_count = 0
     no_consensus_count = 0
 
     for idx, (sample_idx, sample) in enumerate(test_samples):
-        source = sample.get("source", {})
-        orig_path = source.get("original_path", "")
+        orig_path = sample.get("source", {}).get("original_path", "")
         image_path = args.dataset_path / orig_path
 
         if not image_path.exists():
             logger.warning(f"Image not found: {image_path}")
             continue
 
-        # Extract text from image
-        text = ""
-        if easyocr_reader:
-            text = extract_text_easyocr(image_path, easyocr_reader)
-
-        if not text:
-            # No text extracted - mark as undetermined
-            result = ConsensusResult(
-                language="und",
-                script=None,
-                confidence=0.0,
-                method="no_text_extracted",
-                votes=[],
-                agreement=True,
-            )
-        else:
-            # Run consensus detection
-            result = consensus_detect(text, fasttext_model, lingua_detector)
-
-        # Update enrichment layer
+        result = _detect_mlt19_sample(
+            image_path,
+            easyocr_reader,
+            fasttext_model,
+            lingua_detector,
+        )
         update_enrichment(samples[sample_idx], result)
 
         if result.agreement:
             consensus_count += 1
         else:
             no_consensus_count += 1
-
         processed += 1
 
-        # Progress logging
         if processed % 100 == 0:
             logger.info(
                 f"Processed {processed}/{len(test_samples)} | "
                 f"Consensus: {consensus_count} | No consensus: {no_consensus_count}"
             )
 
-        # Save checkpoint
         if not args.dry_run and processed % args.batch_size == 0:
             logger.info(f"Saving checkpoint at {processed} images...")
             save_metadata(metadata, args.metadata)
 
-    # Final save
     if not args.dry_run:
         logger.info("Saving final results...")
         save_metadata(metadata, args.metadata)
 
-    # Summary
     logger.info("=" * 60)
     logger.info(f"Completed: {processed} images processed")
     logger.info(

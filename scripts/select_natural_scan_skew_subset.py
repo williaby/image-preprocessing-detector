@@ -605,6 +605,76 @@ def assign_splits(
     )
 
 
+def _select_targeted(
+    rng: random.Random,
+    all_candidates: dict[str, list[ImageCandidate]],
+    dataset_configs: dict[str, DatasetConfig],
+) -> tuple[list[ImageCandidate], int, dict[str, DatasetConfig]]:
+    """Phase 1: Select from datasets with explicit target counts.
+
+    Returns (selected, count_used, targeted_datasets).
+    """
+    targeted = {
+        name: cfg
+        for name, cfg in dataset_configs.items()
+        if cfg.target_count > 0 and name in all_candidates
+    }
+
+    selected: list[ImageCandidate] = []
+    count_used = 0
+
+    for name, cfg in targeted.items():
+        pool = all_candidates.get(name, [])
+        if not pool:
+            logger.warning("No candidates for %s (target: %d)", name, cfg.target_count)
+            continue
+
+        target = min(cfg.target_count, len(pool))
+        if target < cfg.target_count:
+            logger.warning(
+                "%s: only %d available (target: %d)", name, len(pool), cfg.target_count
+            )
+
+        selected.extend(rng.sample(pool, target))
+        count_used += target
+        logger.info(
+            "Selected %d from %s (target: %d, available: %d)",
+            target,
+            name,
+            cfg.target_count,
+            len(pool),
+        )
+
+    return selected, count_used, targeted
+
+
+def _select_proportional(
+    rng: random.Random,
+    all_candidates: dict[str, list[ImageCandidate]],
+    excluded: dict[str, DatasetConfig],
+    budget: int,
+) -> list[ImageCandidate]:
+    """Phase 2: Proportionally fill remaining budget from untargeted datasets."""
+    untargeted = {
+        name: cands
+        for name, cands in all_candidates.items()
+        if name not in excluded and cands
+    }
+    if budget <= 0 or not untargeted:
+        return []
+
+    selected: list[ImageCandidate] = []
+    total_available = sum(len(c) for c in untargeted.values())
+
+    for name, pool in untargeted.items():
+        target = min(int(budget * len(pool) / total_available), len(pool))
+        if target > 0:
+            selected.extend(rng.sample(pool, target))
+            logger.info("Selected %d from %s (proportional)", target, name)
+
+    return selected
+
+
 def stratified_select(
     all_candidates: dict[str, list[ImageCandidate]],
     dataset_configs: dict[str, DatasetConfig],
@@ -626,56 +696,15 @@ def stratified_select(
         Selected candidates list.
     """
     rng = random.Random(seed)  # nosec B311
-    selected: list[ImageCandidate] = []
-    remaining_budget = total_target
 
-    # Phase 1: Fill datasets with explicit targets
-    targeted_datasets = {
-        name: cfg
-        for name, cfg in dataset_configs.items()
-        if cfg.target_count > 0 and name in all_candidates
-    }
+    targeted_selected, used, targeted_datasets = _select_targeted(
+        rng, all_candidates, dataset_configs
+    )
+    proportional_selected = _select_proportional(
+        rng, all_candidates, targeted_datasets, total_target - used
+    )
 
-    for name, cfg in targeted_datasets.items():
-        pool = all_candidates.get(name, [])
-        if not pool:
-            logger.warning("No candidates for %s (target: %d)", name, cfg.target_count)
-            continue
-
-        target = min(cfg.target_count, len(pool))
-        if target < cfg.target_count:
-            logger.warning(
-                "%s: only %d available (target: %d)", name, len(pool), cfg.target_count
-            )
-
-        sample = rng.sample(pool, target)
-        selected.extend(sample)
-        remaining_budget -= target
-        logger.info(
-            "Selected %d from %s (target: %d, available: %d)",
-            target,
-            name,
-            cfg.target_count,
-            len(pool),
-        )
-
-    # Phase 2: Fill remaining budget proportionally from untargeted datasets
-    untargeted = {
-        name: cands
-        for name, cands in all_candidates.items()
-        if name not in targeted_datasets and cands
-    }
-
-    if remaining_budget > 0 and untargeted:
-        total_available = sum(len(c) for c in untargeted.values())
-        for name, pool in untargeted.items():
-            proportion = len(pool) / total_available
-            target = min(int(remaining_budget * proportion), len(pool))
-            if target > 0:
-                sample = rng.sample(pool, target)
-                selected.extend(sample)
-                logger.info("Selected %d from %s (proportional)", target, name)
-
+    selected = targeted_selected + proportional_selected
     logger.info("Total selected: %d (target: %d)", len(selected), total_target)
     return selected
 
@@ -685,31 +714,21 @@ def stratified_select(
 # ---------------------------------------------------------------------------
 
 
-def generate_report(candidates: list[ImageCandidate]) -> dict[str, Any]:
-    """Generate stratification statistics report."""
-    report: dict[str, Any] = {
-        "total_selected": len(candidates),
-        "splits": dict(Counter(c.split for c in candidates)),
-    }
+_REPORT_DIMENSIONS = [
+    "dataset",
+    "script",
+    "text_direction",
+    "orientation",
+    "layout_type",
+    "domain",
+    "capture_method",
+]
 
-    # Per-dimension distributions
-    for dim in [
-        "dataset",
-        "script",
-        "text_direction",
-        "orientation",
-        "layout_type",
-        "domain",
-        "capture_method",
-    ]:
-        dist = Counter(getattr(c, dim) for c in candidates)
-        report[f"{dim}_distribution"] = dict(dist.most_common())
 
-    # Handwriting
-    hw_count = sum(1 for c in candidates if c.has_handwriting)
-    report["handwriting_percentage"] = round(100 * hw_count / len(candidates), 1)
-
-    # Per-split breakdown
+def _per_split_breakdown(
+    candidates: list[ImageCandidate], report: dict[str, Any]
+) -> None:
+    """Add per-split count, script, and dataset breakdowns to report."""
     for split_name in ["train", "val", "test"]:
         split_cands = [c for c in candidates if c.split == split_name]
         if split_cands:
@@ -721,15 +740,29 @@ def generate_report(candidates: list[ImageCandidate]) -> dict[str, Any]:
                 Counter(c.dataset for c in split_cands).most_common()
             )
 
-    # Held-back verification
-    held_back_in_train = [
-        c for c in candidates if c.script in HELD_BACK_SCRIPTS and c.split == "train"
-    ]
-    held_back_in_val = [
-        c for c in candidates if c.script in HELD_BACK_SCRIPTS and c.split == "val"
-    ]
-    report["held_back_leak_train"] = len(held_back_in_train)
-    report["held_back_leak_val"] = len(held_back_in_val)
+
+def generate_report(candidates: list[ImageCandidate]) -> dict[str, Any]:
+    """Generate stratification statistics report."""
+    report: dict[str, Any] = {
+        "total_selected": len(candidates),
+        "splits": dict(Counter(c.split for c in candidates)),
+    }
+
+    for dim in _REPORT_DIMENSIONS:
+        dist = Counter(getattr(c, dim) for c in candidates)
+        report[f"{dim}_distribution"] = dict(dist.most_common())
+
+    hw_count = sum(1 for c in candidates if c.has_handwriting)
+    report["handwriting_percentage"] = round(100 * hw_count / len(candidates), 1)
+
+    _per_split_breakdown(candidates, report)
+
+    report["held_back_leak_train"] = sum(
+        1 for c in candidates if c.script in HELD_BACK_SCRIPTS and c.split == "train"
+    )
+    report["held_back_leak_val"] = sum(
+        1 for c in candidates if c.script in HELD_BACK_SCRIPTS and c.split == "val"
+    )
     report["held_back_scripts"] = list(HELD_BACK_SCRIPTS)
 
     return report
@@ -774,6 +807,115 @@ def print_report(report: dict[str, Any]) -> None:
         print("\nHeld-back scripts: CLEAN (no leakage into train/val)")
 
     print("=" * 70)
+
+
+def _discover_all_candidates(
+    base_dir: Path,
+) -> tuple[dict[str, list[ImageCandidate]], dict[str, DatasetConfig], int]:
+    """Discover candidate images from all configured datasets.
+
+    Returns:
+        Tuple of (all_candidates, dataset_configs, total_discovered).
+    """
+    _enrichment_dispatch: dict[str, Any] = {
+        "rvl-cdip": enrich_with_rvl_class,
+        "arabic-docs": enrich_with_arabic_docs_class,
+    }
+
+    all_candidates: dict[str, list[ImageCandidate]] = {}
+    dataset_configs: dict[str, DatasetConfig] = {}
+    total_discovered = 0
+
+    for config in DATASET_CONFIGS:
+        candidates = discover_dataset_images(base_dir, config)
+        if not candidates:
+            continue
+
+        enricher = _enrichment_dispatch.get(config.name)
+        if enricher is not None:
+            for c in candidates:
+                enricher(c)
+
+        all_candidates[config.name] = candidates
+        dataset_configs[config.name] = config
+        total_discovered += len(candidates)
+
+    logger.info(
+        "Total discovered: %d images across %d datasets",
+        total_discovered,
+        len(all_candidates),
+    )
+    return all_candidates, dataset_configs, total_discovered
+
+
+def _filter_by_dimensions(
+    all_candidates: dict[str, list[ImageCandidate]],
+    dataset_configs: dict[str, DatasetConfig],
+) -> None:
+    """Filter candidates by image dimensions (in-place)."""
+    logger.info("Phase 2: Checking image dimensions (this may take a while)...")
+    for name, candidates in list(all_candidates.items()):
+        config = dataset_configs[name]
+        min_dim = config.min_dim
+        filtered = check_image_dimensions(candidates, min_dim)
+        all_candidates[name] = filtered
+        logger.info(
+            "%s: %d -> %d after dimension filter (min_dim=%d)",
+            name,
+            len(candidates),
+            len(filtered),
+            min_dim,
+        )
+    total_after_filter = sum(len(c) for c in all_candidates.values())
+    logger.info("After dimension filter: %d images", total_after_filter)
+
+
+def _write_outputs(
+    output_dir: Path,
+    selected: list[ImageCandidate],
+    base_dir: Path,
+    seed: int,
+    report: dict[str, Any],
+) -> None:
+    """Write manifest and report JSON files."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_path = output_dir / "natural_scan_manifest.json"
+    manifest_data = {
+        "version": "1.0",
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "total_images": len(selected),
+        "base_dir": str(base_dir),
+        "seed": seed,
+        "held_back_scripts": list(HELD_BACK_SCRIPTS),
+        "images": [
+            {
+                "path": c.path,
+                "dataset": c.dataset,
+                "filename": c.filename,
+                "script": c.script,
+                "text_direction": c.text_direction,
+                "capture_method": c.capture_method,
+                "domain": c.domain,
+                "has_handwriting": c.has_handwriting,
+                "layout_type": c.layout_type,
+                "orientation": c.orientation,
+                "split": c.split,
+                "width": c.width,
+                "height": c.height,
+            }
+            for c in selected
+        ],
+    }
+
+    with open(manifest_path, "w") as f:
+        json.dump(manifest_data, f, indent=2)
+    logger.info("Manifest written: %s (%d images)", manifest_path, len(selected))
+
+    report_path = output_dir / "natural_scan_selection_report.json"
+    with open(report_path, "w") as f:
+        json.dump(report, f, indent=2)
+    logger.info("Report written: %s", report_path)
 
 
 # ---------------------------------------------------------------------------
@@ -850,31 +992,8 @@ def main() -> int:
 
     # Phase 1: Discover all candidate images
     logger.info("Phase 1: Discovering candidate images...")
-    all_candidates: dict[str, list[ImageCandidate]] = {}
-    dataset_configs: dict[str, DatasetConfig] = {}
-    total_discovered = 0
-
-    for config in DATASET_CONFIGS:
-        candidates = discover_dataset_images(base_dir, config)
-        if not candidates:
-            continue
-
-        # Enrich with dataset-specific metadata
-        if config.name == "rvl-cdip":
-            for c in candidates:
-                enrich_with_rvl_class(c)
-        elif config.name == "arabic-docs":
-            for c in candidates:
-                enrich_with_arabic_docs_class(c)
-
-        all_candidates[config.name] = candidates
-        dataset_configs[config.name] = config
-        total_discovered += len(candidates)
-
-    logger.info(
-        "Total discovered: %d images across %d datasets",
-        total_discovered,
-        len(all_candidates),
+    all_candidates, dataset_configs, total_discovered = _discover_all_candidates(
+        base_dir
     )
 
     if total_discovered == 0:
@@ -883,21 +1002,7 @@ def main() -> int:
 
     # Phase 2: Dimension filtering (optional, slow)
     if args.check_dims:
-        logger.info("Phase 2: Checking image dimensions (this may take a while)...")
-        for name, candidates in list(all_candidates.items()):
-            config = dataset_configs[name]
-            min_dim = config.min_dim
-            filtered = check_image_dimensions(candidates, min_dim)
-            all_candidates[name] = filtered
-            logger.info(
-                "%s: %d -> %d after dimension filter (min_dim=%d)",
-                name,
-                len(candidates),
-                len(filtered),
-                min_dim,
-            )
-        total_after_filter = sum(len(c) for c in all_candidates.values())
-        logger.info("After dimension filter: %d images", total_after_filter)
+        _filter_by_dimensions(all_candidates, dataset_configs)
 
     # Phase 3: Stratified selection
     logger.info("Phase 3: Stratified selection (target: %d)...", args.total_images)
@@ -921,46 +1026,7 @@ def main() -> int:
         return 0
 
     # Phase 6: Write outputs
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Write manifest
-    manifest_path = args.output_dir / "natural_scan_manifest.json"
-    manifest_data = {
-        "version": "1.0",
-        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-        "total_images": len(selected),
-        "base_dir": str(base_dir),
-        "seed": args.seed,
-        "held_back_scripts": list(HELD_BACK_SCRIPTS),
-        "images": [
-            {
-                "path": c.path,
-                "dataset": c.dataset,
-                "filename": c.filename,
-                "script": c.script,
-                "text_direction": c.text_direction,
-                "capture_method": c.capture_method,
-                "domain": c.domain,
-                "has_handwriting": c.has_handwriting,
-                "layout_type": c.layout_type,
-                "orientation": c.orientation,
-                "split": c.split,
-                "width": c.width,
-                "height": c.height,
-            }
-            for c in selected
-        ],
-    }
-
-    with open(manifest_path, "w") as f:
-        json.dump(manifest_data, f, indent=2)
-    logger.info("Manifest written: %s (%d images)", manifest_path, len(selected))
-
-    # Write report
-    report_path = args.output_dir / "natural_scan_selection_report.json"
-    with open(report_path, "w") as f:
-        json.dump(report, f, indent=2)
-    logger.info("Report written: %s", report_path)
+    _write_outputs(args.output_dir, selected, base_dir, args.seed, report)
 
     logger.info("Done! (%.1fs)", elapsed)
     return 0

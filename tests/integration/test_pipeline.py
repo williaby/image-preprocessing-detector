@@ -31,6 +31,49 @@ from image_preprocessing_detector.output.json_generator import (
 )
 
 
+def _run_detection_and_corrections(image, text_result):
+    """Run IQA detection and apply corrections if text is detected.
+
+    Returns:
+        Tuple of (corrected_image, detection_results_dict, corrections_dict).
+    """
+    detection_results = {
+        "skew_result": None,
+        "blur_result": None,
+        "contrast_result": None,
+    }
+    corrections = {
+        "skew_correction": None,
+        "contrast_correction": None,
+    }
+
+    if not text_result.has_text:
+        return image, detection_results, corrections
+
+    skew_result = detect_skew(image)
+    blur_result = detect_blur(image)
+    contrast_result = detect_contrast(image)
+    detection_results["skew_result"] = skew_result
+    detection_results["blur_result"] = blur_result
+    detection_results["contrast_result"] = contrast_result
+
+    if skew_result and skew_result.is_skewed:
+        skew_correction = correct_skew(image, skew_result.angle, skew_result.confidence)
+        corrections["skew_correction"] = skew_correction
+        if skew_correction.applied:
+            image = skew_correction.corrected_image
+
+    if contrast_result and contrast_result.is_low_contrast:
+        contrast_correction = enhance_contrast(
+            image, contrast_result.score, contrast_result.severity
+        )
+        corrections["contrast_correction"] = contrast_correction
+        if contrast_correction.applied:
+            image = contrast_correction.corrected_image
+
+    return image, detection_results, corrections
+
+
 class TestEndToEndPipeline:
     """Test complete end-to-end processing pipeline."""
 
@@ -176,45 +219,19 @@ class TestEndToEndPipeline:
 
             builder = MetadataBuilder(document_id="img_001", file_name="skewed.jpg")
 
-            # Run detection
+            # Run detection and corrections
             text_result = detect_text(image)
-
-            skew_result = None
-            blur_result = None
-            contrast_result = None
-            skew_correction = None
-            contrast_correction = None
-
-            if text_result.has_text:
-                skew_result = detect_skew(image)
-                blur_result = detect_blur(image)
-                contrast_result = detect_contrast(image)
-
-                # Apply corrections
-                if skew_result and skew_result.is_skewed:
-                    skew_correction = correct_skew(
-                        image, skew_result.angle, skew_result.confidence
-                    )
-                    if skew_correction.applied:
-                        image = skew_correction.corrected_image
-
-                if contrast_result and contrast_result.is_low_contrast:
-                    contrast_correction = enhance_contrast(
-                        image, contrast_result.score, contrast_result.severity
-                    )
-                    if contrast_correction.applied:
-                        image = contrast_correction.corrected_image
+            image, detection_results, corrections = _run_detection_and_corrections(
+                image, text_result
+            )
 
             # Add to builder
             builder.add_page(
                 page_number=0,
                 page_data=(image, metadata),
                 _text_result=text_result,
-                skew_result=skew_result,
-                blur_result=blur_result,
-                contrast_result=contrast_result,
-                skew_correction=skew_correction,
-                contrast_correction=contrast_correction,
+                **detection_results,
+                **corrections,
             )
 
             # Generate output
@@ -230,7 +247,6 @@ class TestEndToEndPipeline:
             # Verify corrections were recorded
             page = loaded.pages[0]
             if len(page.transform_history) > 0:
-                # At least one correction was applied
                 actions = [t.action for t in page.transform_history]
                 assert any(
                     action in ["deskew", "clahe_contrast_enhancement"]

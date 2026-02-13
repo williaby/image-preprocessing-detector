@@ -316,12 +316,10 @@ def run_inference(
 # ---------------------------------------------------------------------------
 # Summary printer
 # ---------------------------------------------------------------------------
-def print_summary(results: list[ImageResult]) -> None:
-    """Print human-readable inference summary to stdout."""
-    total = len(results)
-    errored = sum(1 for r in results if r.error is not None)
-    successful = total - errored
-
+def _collect_result_stats(
+    results: list[ImageResult],
+) -> tuple[list[float], list[float], Counter[str], Counter[str]]:
+    """Collect confidences, times, class counts and flag counts from results."""
     all_confidences: list[float] = []
     all_times: list[float] = []
     class_counter: Counter[str] = Counter()
@@ -338,6 +336,27 @@ def print_summary(results: list[ImageResult]) -> None:
             if flag_val:
                 content_flag_counter[flag_name] += 1
 
+    return all_confidences, all_times, class_counter, content_flag_counter
+
+
+def _print_timing_stats(all_times: list[float]) -> None:
+    """Print inference timing statistics."""
+    print("\n  Timing (ms):")
+    print(f"    Average:           {sum(all_times) / len(all_times):.1f}")
+    print(f"    Min:               {min(all_times):.1f}")
+    print(f"    Max:               {max(all_times):.1f}")
+    print(f"    Total:             {sum(all_times):.1f}")
+
+
+def print_summary(results: list[ImageResult]) -> None:
+    """Print human-readable inference summary to stdout."""
+    total = len(results)
+    errored = sum(1 for r in results if r.error is not None)
+    successful = total - errored
+
+    all_confidences, all_times, class_counter, content_flag_counter = (
+        _collect_result_stats(results)
+    )
     total_detections = sum(class_counter.values())
 
     print("\n" + "=" * 65)
@@ -349,23 +368,14 @@ def print_summary(results: list[ImageResult]) -> None:
     print(f"  Total detections:    {total_detections}")
 
     if all_confidences:
-        avg_conf = sum(all_confidences) / len(all_confidences)
-        min_conf = min(all_confidences)
-        max_conf = max(all_confidences)
-        print(f"  Avg confidence:      {avg_conf:.4f}")
-        print(f"  Min confidence:      {min_conf:.4f}")
-        print(f"  Max confidence:      {max_conf:.4f}")
+        print(
+            f"  Avg confidence:      {sum(all_confidences) / len(all_confidences):.4f}"
+        )
+        print(f"  Min confidence:      {min(all_confidences):.4f}")
+        print(f"  Max confidence:      {max(all_confidences):.4f}")
 
     if all_times:
-        avg_time = sum(all_times) / len(all_times)
-        min_time = min(all_times)
-        max_time = max(all_times)
-        total_time = sum(all_times)
-        print("\n  Timing (ms):")
-        print(f"    Average:           {avg_time:.1f}")
-        print(f"    Min:               {min_time:.1f}")
-        print(f"    Max:               {max_time:.1f}")
-        print(f"    Total:             {total_time:.1f}")
+        _print_timing_stats(all_times)
 
     if class_counter:
         print("\n  Class distribution:")

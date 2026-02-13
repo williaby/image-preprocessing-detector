@@ -116,6 +116,16 @@ class DatasetAuditConfig:
         if not self.dataset_name:
             warnings.append("dataset_name is empty")
 
+        self._validate_paths(warnings)
+        self._validate_parameters(warnings)
+
+        for warning in warnings:
+            logger.warning("Config validation: %s", warning)
+
+        return warnings
+
+    def _validate_paths(self, warnings: list[str]) -> None:
+        """Validate all configured file and directory paths."""
         if self.metadata_json_path and not self.metadata_json_path.exists():
             warnings.append(
                 f"metadata_json_path does not exist: {self.metadata_json_path}"
@@ -143,17 +153,14 @@ class DatasetAuditConfig:
             if not csv_path.exists():
                 warnings.append(f"csv_path does not exist: {csv_path}")
 
+    def _validate_parameters(self, warnings: list[str]) -> None:
+        """Validate non-path configuration parameters."""
         if self.sample_size < 1:
             warnings.append(f"sample_size must be >= 1, got {self.sample_size}")
 
-        invalid_axes = set(self.stratification_axes) - (VALID_STRATIFICATION_AXES)
+        invalid_axes = set(self.stratification_axes) - VALID_STRATIFICATION_AXES
         if invalid_axes:
             warnings.append(f"Unknown stratification axes: {sorted(invalid_axes)}")
-
-        for warning in warnings:
-            logger.warning("Config validation: %s", warning)
-
-        return warnings
 
     def as_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-safe dictionary."""

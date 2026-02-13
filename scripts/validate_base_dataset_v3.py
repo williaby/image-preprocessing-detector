@@ -77,6 +77,39 @@ def _load_metadata_sample(
     return metadata_list
 
 
+def _check_script_dir(
+    script_dir: Path,
+    spot_check_limit: int = 10,
+) -> tuple[int, int, int, int, list[str]]:
+    """Validate a single script directory for image/JSON pairing and corruption.
+
+    Returns:
+        (total_images, missing_json, missing_image, corrupt_image, corrupt_files)
+    """
+    from PIL import Image
+
+    jpg_files = {p.stem for p in script_dir.glob("*.jpg")}
+    json_files = {p.stem for p in script_dir.glob("*.json")}
+
+    missing_json = len(jpg_files - json_files)
+    missing_image = len(json_files - jpg_files)
+
+    corrupt_image = 0
+    corrupt_files: list[str] = []
+
+    for i, jpg_path in enumerate(sorted(script_dir.glob("*.jpg"))):
+        if i >= spot_check_limit:
+            break
+        try:
+            img = Image.open(jpg_path)
+            img.verify()
+        except Exception:
+            corrupt_image += 1
+            corrupt_files.append(str(jpg_path))
+
+    return len(jpg_files), missing_json, missing_image, corrupt_image, corrupt_files
+
+
 def validate_corrupt_images(dataset_dir: Path) -> dict[str, Any]:
     """Check for corrupt or missing image/metadata pairs.
 
@@ -85,39 +118,21 @@ def validate_corrupt_images(dataset_dir: Path) -> dict[str, Any]:
     """
     print("\n[1/8] Checking for corrupt images and missing pairs...")
 
+    total_images = 0
     missing_json = 0
     missing_image = 0
     corrupt_image = 0
-    total_images = 0
     corrupt_files: list[str] = []
 
     for script_dir in sorted(dataset_dir.iterdir()):
         if not script_dir.is_dir():
             continue
-
-        jpg_files = {p.stem for p in script_dir.glob("*.jpg")}
-        json_files = {p.stem for p in script_dir.glob("*.json")}
-
-        total_images += len(jpg_files)
-
-        # Check for unpaired files
-        for _ in jpg_files - json_files:
-            missing_json += 1
-        for _ in json_files - jpg_files:
-            missing_image += 1
-
-        # Spot-check image validity (check first 10 per script)
-        from PIL import Image
-
-        for i, jpg_path in enumerate(sorted(script_dir.glob("*.jpg"))):
-            if i >= 10:
-                break
-            try:
-                img = Image.open(jpg_path)
-                img.verify()
-            except Exception:
-                corrupt_image += 1
-                corrupt_files.append(str(jpg_path))
+        imgs, mj, mi, ci, cf = _check_script_dir(script_dir)
+        total_images += imgs
+        missing_json += mj
+        missing_image += mi
+        corrupt_image += ci
+        corrupt_files.extend(cf)
 
     passed = missing_json == 0 and missing_image == 0 and corrupt_image == 0
     result = {

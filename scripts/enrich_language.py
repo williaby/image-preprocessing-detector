@@ -646,6 +646,152 @@ def detect_language_lingua(text: str, detector: Any) -> LanguageDetection:
         return LanguageDetection("und", None, 0.0, "lingua_error")
 
 
+def _check_mixed_script_language(
+    detected_scripts: list[str],
+    detected_languages: list[str],
+    significant_scripts: list[ScriptCount],
+    votes: list[LanguageDetection],
+    script_breakdown: list[ScriptCount],
+) -> MultiLanguageResult | None:
+    """Check if multiple scripts represent a single mixed-script language (Japanese/Korean).
+
+    Returns a result if matched, otherwise None.
+    """
+    script_set = set(detected_scripts)
+
+    # Japanese uses Hira + Kana + Hani together
+    if script_set & {"Hira", "Kana"} and "Hani" in script_set:
+        return MultiLanguageResult(
+            primary_language="ja",
+            primary_script="Jpan",
+            detected_languages=["ja"],
+            detected_scripts=detected_scripts,
+            confidence=0.9,
+            method="japanese_mixed_script",
+            agreement=True,
+            votes=votes,
+            script_breakdown=script_breakdown,
+        )
+
+    # Korean uses Hang + sometimes Hani
+    if "Hang" in script_set and "Hani" in script_set and len(script_set) == 2:
+        return MultiLanguageResult(
+            primary_language="ko",
+            primary_script="Kore",
+            detected_languages=["ko"],
+            detected_scripts=detected_scripts,
+            confidence=0.9,
+            method="korean_mixed_script",
+            agreement=True,
+            votes=votes,
+            script_breakdown=script_breakdown,
+        )
+
+    return None
+
+
+def _collect_detector_votes(
+    text: str,
+    openlid_detector: Any,
+    lingua_detector: Any,
+    fasttext_model: Any,
+    detected_languages: list[str],
+    detected_scripts: list[str],
+) -> list[LanguageDetection]:
+    """Run statistical language detectors and accumulate votes.
+
+    Mutates detected_languages and detected_scripts in place.
+    """
+    votes: list[LanguageDetection] = []
+
+    if openlid_detector:
+        ol_result = detect_language_openlid(text, openlid_detector)
+        votes.append(ol_result)
+        if ol_result.language != "und" and ol_result.language not in detected_languages:
+            detected_languages.append(ol_result.language)
+        if ol_result.script and ol_result.script not in detected_scripts:
+            detected_scripts.append(ol_result.script)
+
+    if lingua_detector:
+        lg_result = detect_language_lingua(text, lingua_detector)
+        votes.append(lg_result)
+        if lg_result.language != "und" and lg_result.language not in detected_languages:
+            detected_languages.append(lg_result.language)
+
+    if fasttext_model and not openlid_detector:
+        ft_result = detect_language_fasttext(text, fasttext_model)
+        votes.append(ft_result)
+        if ft_result.language != "und" and ft_result.language not in detected_languages:
+            detected_languages.append(ft_result.language)
+
+    return votes
+
+
+def _resolve_single_script(
+    primary_script: str,
+    significant_scripts: list[ScriptCount],
+    detected_scripts: list[str],
+    votes: list[LanguageDetection],
+    script_breakdown: list[ScriptCount],
+) -> MultiLanguageResult:
+    """Resolve language when only a single script is present."""
+    # Check if detectors agree
+    if len(votes) >= 2:
+        v1, v2 = votes[0], votes[1]
+        if v1.language == v2.language and v1.language != "und":
+            avg_conf = (v1.confidence + v2.confidence) / 2
+            return MultiLanguageResult(
+                primary_language=v1.language,
+                primary_script=primary_script,
+                detected_languages=[v1.language],
+                detected_scripts=detected_scripts,
+                confidence=avg_conf,
+                method="consensus_2of2",
+                agreement=True,
+                votes=votes,
+                script_breakdown=script_breakdown,
+            )
+
+    # No consensus - use best guess from detectors
+    valid_votes = [v for v in votes if v.language != "und"]
+    if valid_votes:
+        best_vote = max(valid_votes, key=lambda v: v.confidence)
+        return MultiLanguageResult(
+            primary_language=best_vote.language,
+            primary_script=primary_script,
+            detected_languages=[best_vote.language],
+            detected_scripts=detected_scripts,
+            confidence=best_vote.confidence * 0.8,
+            method="highest_confidence",
+            agreement=False,
+            votes=votes,
+            script_breakdown=script_breakdown,
+        )
+
+    # Fall back to script-based inference
+    primary_lang = SCRIPT_TO_PRIMARY_LANGUAGE.get(primary_script, "und")
+    ambiguous = {"Latn", "Cyrl", "Hani", "Arab"}
+    base_confidence = significant_scripts[0].percentage
+    if primary_script in ambiguous:
+        confidence = base_confidence * 0.4
+        method = "script_inference_ambiguous"
+    else:
+        confidence = base_confidence * 0.85
+        method = "script_inference"
+
+    return MultiLanguageResult(
+        primary_language=primary_lang or "und",
+        primary_script=primary_script,
+        detected_languages=[primary_lang] if primary_lang else [],
+        detected_scripts=detected_scripts,
+        confidence=confidence,
+        method=method,
+        agreement=True,
+        votes=votes,
+        script_breakdown=script_breakdown,
+    )
+
+
 def multi_language_consensus(
     text: str,
     fasttext_model: Any = None,
@@ -671,10 +817,6 @@ def multi_language_consensus(
     - OpenLID detects: en_Latn (0.75), bo_Tibt (0.85)
     - Result: mul, detected_languages=["en", "bo"]
     """
-    votes: list[LanguageDetection] = []
-    detected_languages: list[str] = []
-    detected_scripts: list[str] = []
-
     # Step 1: Detect ALL scripts via Unicode
     script_breakdown = detect_all_scripts(text)
 
@@ -694,89 +836,44 @@ def multi_language_consensus(
     significant_scripts = [
         sc for sc in script_breakdown if sc.percentage >= MIN_LANGUAGE_PERCENTAGE
     ]
-
-    detected_scripts = [sc.script for sc in significant_scripts]
+    detected_scripts: list[str] = [sc.script for sc in significant_scripts]
+    detected_languages: list[str] = []
 
     # Step 2: For each significant script, infer possible languages
-    script_languages: dict[str, list[str]] = {}
-    ambiguous_scripts: list[str] = []  # Scripts needing statistical detection
-
     for sc in significant_scripts:
         possible_langs = script_to_languages(sc.script)
-        if possible_langs:
-            script_languages[sc.script] = possible_langs
-            # Add primary language to detected list for unambiguous scripts
-            primary = SCRIPT_TO_PRIMARY_LANGUAGE.get(sc.script)
-            if primary and primary not in detected_languages:
-                detected_languages.append(primary)
-            elif not primary:
-                # Ambiguous script (Latin, Cyrillic, Han) - needs statistical detection
-                ambiguous_scripts.append(sc.script)
+        if not possible_langs:
+            continue
+        primary = SCRIPT_TO_PRIMARY_LANGUAGE.get(sc.script)
+        if primary and primary not in detected_languages:
+            detected_languages.append(primary)
 
     # Step 3: Run statistical language detectors
-    # OpenLID-v2 is PRIMARY (provides language + script in one call)
-    if openlid_detector:
-        ol_result = detect_language_openlid(text, openlid_detector)
-        votes.append(ol_result)
-        if ol_result.language != "und" and ol_result.language not in detected_languages:
-            detected_languages.append(ol_result.language)
-        # OpenLID also provides script - validate against Unicode detection
-        if ol_result.script and ol_result.script not in detected_scripts:
-            # OpenLID detected a script not in Unicode analysis (rare)
-            detected_scripts.append(ol_result.script)
-
-    # lingua as SECONDARY for consensus
-    if lingua_detector:
-        lg_result = detect_language_lingua(text, lingua_detector)
-        votes.append(lg_result)
-        if lg_result.language != "und" and lg_result.language not in detected_languages:
-            detected_languages.append(lg_result.language)
-
-    # fastText lid.176 as FALLBACK (only if OpenLID not available)
-    if fasttext_model and not openlid_detector:
-        ft_result = detect_language_fasttext(text, fasttext_model)
-        votes.append(ft_result)
-        if ft_result.language != "und" and ft_result.language not in detected_languages:
-            detected_languages.append(ft_result.language)
+    votes = _collect_detector_votes(
+        text,
+        openlid_detector,
+        lingua_detector,
+        fasttext_model,
+        detected_languages,
+        detected_scripts,
+    )
 
     # Step 4: Determine primary language
-    # If multiple significant scripts → multi-language document
     if len(significant_scripts) > 1:
-        # Check for Japanese (uses Hira + Kana + Hani together)
-        script_set = set(detected_scripts)
-        if script_set & {"Hira", "Kana"} and "Hani" in script_set:
-            # This is Japanese using mixed scripts (not multi-language)
-            return MultiLanguageResult(
-                primary_language="ja",
-                primary_script="Jpan",
-                detected_languages=["ja"],
-                detected_scripts=detected_scripts,
-                confidence=0.9,
-                method="japanese_mixed_script",
-                agreement=True,
-                votes=votes,
-                script_breakdown=script_breakdown,
-            )
-
-        # Check for Korean (uses Hang + sometimes Hani)
-        if "Hang" in script_set:
-            if "Hani" in script_set and len(script_set) == 2:
-                return MultiLanguageResult(
-                    primary_language="ko",
-                    primary_script="Kore",
-                    detected_languages=["ko"],
-                    detected_scripts=detected_scripts,
-                    confidence=0.9,
-                    method="korean_mixed_script",
-                    agreement=True,
-                    votes=votes,
-                    script_breakdown=script_breakdown,
-                )
+        mixed = _check_mixed_script_language(
+            detected_scripts,
+            detected_languages,
+            significant_scripts,
+            votes,
+            script_breakdown,
+        )
+        if mixed:
+            return mixed
 
         # Genuine multi-language document
         return MultiLanguageResult(
             primary_language="mul",
-            primary_script=significant_scripts[0].script,  # Most common
+            primary_script=significant_scripts[0].script,
             detected_languages=detected_languages,
             detected_scripts=detected_scripts,
             confidence=0.85,
@@ -786,71 +883,13 @@ def multi_language_consensus(
             script_breakdown=script_breakdown,
         )
 
-    # Single script - check detector agreement
-    primary_script = significant_scripts[0].script
-
-    # Check if detectors agree
-    if len(votes) >= 2:
-        v1, v2 = votes[0], votes[1]
-        if v1.language == v2.language and v1.language != "und":
-            avg_conf = (v1.confidence + v2.confidence) / 2
-            return MultiLanguageResult(
-                primary_language=v1.language,
-                primary_script=primary_script,
-                detected_languages=[v1.language],
-                detected_scripts=detected_scripts,
-                confidence=avg_conf,
-                method="consensus_2of2",
-                agreement=True,
-                votes=votes,
-                script_breakdown=script_breakdown,
-            )
-
-    # No consensus - use best guess from script + detectors
-    if votes and any(v.language != "und" for v in votes):
-        best_vote = max(
-            [v for v in votes if v.language != "und"],
-            key=lambda v: v.confidence,
-        )
-        return MultiLanguageResult(
-            primary_language=best_vote.language,
-            primary_script=primary_script,
-            detected_languages=[best_vote.language],
-            detected_scripts=detected_scripts,
-            confidence=best_vote.confidence * 0.8,  # Reduce for no consensus
-            method="highest_confidence",
-            agreement=False,
-            votes=votes,
-            script_breakdown=script_breakdown,
-        )
-
-    # Fall back to script-based inference
-    primary_lang = SCRIPT_TO_PRIMARY_LANGUAGE.get(primary_script, "und")
-
-    # Confidence depends on script ambiguity:
-    # - Latin/Cyrillic/Han: Low confidence (many possible languages)
-    # - Other scripts: High confidence (script strongly determines language)
-    ambiguous_scripts = {"Latn", "Cyrl", "Hani", "Arab"}
-    base_confidence = significant_scripts[0].percentage
-    if primary_script in ambiguous_scripts:
-        # Reduce confidence for ambiguous scripts - language uncertain
-        confidence = base_confidence * 0.4
-        method = "script_inference_ambiguous"
-    else:
-        # High confidence for unambiguous scripts
-        confidence = base_confidence * 0.85
-        method = "script_inference"
-
-    return MultiLanguageResult(
-        primary_language=primary_lang or "und",
-        primary_script=primary_script,
-        detected_languages=[primary_lang] if primary_lang else [],
-        detected_scripts=detected_scripts,
-        confidence=confidence,
-        method=method,
-        agreement=True,
-        votes=votes,
-        script_breakdown=script_breakdown,
+    # Single script
+    return _resolve_single_script(
+        significant_scripts[0].script,
+        significant_scripts,
+        detected_scripts,
+        votes,
+        script_breakdown,
     )
 
 
@@ -1003,6 +1042,73 @@ def download_fasttext_model(model_dir: Path) -> Path:
 # =============================================================================
 
 
+def _resolve_dataset_path(metadata: dict[str, Any], dataset_name: str) -> Path:
+    """Resolve the base path for a dataset from metadata or common patterns."""
+    dataset_info = metadata.get("dataset_info", {})
+    base_path = dataset_info.get("base_path")
+
+    if not base_path:
+        for category in ["language", "document_ocr", "receipts", "forms", "tables"]:
+            test_path = BASE_DATA_PATH / category / dataset_name
+            if test_path.exists():
+                return test_path
+
+    if not base_path:
+        logger.warning(f"Could not determine base path for {dataset_name}")
+        return BASE_DATA_PATH
+
+    return Path(base_path)
+
+
+def _resolve_image_path(orig_path: str, dataset_path: Path) -> Path | None:
+    """Try multiple path resolutions to find an image file."""
+    for candidate in [
+        dataset_path / orig_path,
+        Path(orig_path),
+        BASE_DATA_PATH / orig_path,
+    ]:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _detect_sample_language(
+    text: str,
+    fasttext_model: Any,
+    lingua_detector: Any,
+    openlid_detector: Any | None,
+) -> tuple[MultiLanguageResult, str]:
+    """Detect language for a single sample, returning (result, category).
+
+    Category is one of: "multi_language", "undetermined", "single_language".
+    """
+    if not text:
+        result = MultiLanguageResult(
+            primary_language="und",
+            primary_script=None,
+            detected_languages=[],
+            detected_scripts=[],
+            confidence=0.0,
+            method="no_text_extracted",
+            agreement=True,
+            script_breakdown=[],
+        )
+        return result, "undetermined"
+
+    result = multi_language_consensus(
+        text,
+        fasttext_model=fasttext_model,
+        lingua_detector=lingua_detector,
+        openlid_detector=openlid_detector,
+    )
+
+    if result.primary_language == "mul":
+        return result, "multi_language"
+    if result.primary_language == "und":
+        return result, "undetermined"
+    return result, "single_language"
+
+
 def process_dataset(
     dataset_name: str,
     metadata_path: Path,
@@ -1032,36 +1138,26 @@ def process_dataset(
     Returns:
         Stats dict with processing counts.
     """
+    _empty_stats = {
+        "processed": 0,
+        "multi_language": 0,
+        "single_language": 0,
+        "undetermined": 0,
+    }
+
     logger.info(f"Loading metadata from {metadata_path}")
     metadata = load_metadata(metadata_path)
     samples = metadata.get("samples", [])
 
-    # Find dataset base path from metadata or config
-    dataset_info = metadata.get("dataset_info", {})
-    base_path = dataset_info.get("base_path")
-
-    if not base_path:
-        # Try common patterns
-        for category in ["language", "document_ocr", "receipts", "forms", "tables"]:
-            test_path = BASE_DATA_PATH / category / dataset_name
-            if test_path.exists():
-                base_path = str(test_path)
-                break
-
-    if not base_path:
-        logger.warning(f"Could not determine base path for {dataset_name}")
-        base_path = str(BASE_DATA_PATH)
-
-    dataset_path = Path(base_path)
+    dataset_path = _resolve_dataset_path(metadata, dataset_name)
 
     # Filter to samples needing enrichment
-    samples_to_process: list[tuple[int, dict[str, Any]]] = []
-    for i, sample in enumerate(samples):
-        orig_labels = sample.get("original_labels", {})
-        lang_code = orig_labels.get("language_code")
-
-        if not lang_code or lang_code == "und":
-            samples_to_process.append((i, sample))
+    samples_to_process = [
+        (i, s)
+        for i, s in enumerate(samples)
+        if not s.get("original_labels", {}).get("language_code")
+        or s.get("original_labels", {}).get("language_code") == "und"
+    ]
 
     logger.info(f"Found {len(samples_to_process)} samples needing language enrichment")
 
@@ -1073,80 +1169,33 @@ def process_dataset(
     )
 
     if not samples_to_process:
-        return {
-            "processed": 0,
-            "multi_language": 0,
-            "single_language": 0,
-            "undetermined": 0,
-        }
+        return _empty_stats
 
-    # Process samples
-    stats = {
-        "processed": 0,
-        "multi_language": 0,
-        "single_language": 0,
-        "undetermined": 0,
-    }
+    stats = dict(_empty_stats)
 
     for idx, (sample_idx, sample) in enumerate(samples_to_process):
-        source = sample.get("source", {})
-        orig_path = source.get("original_path", "")
-
-        # Try multiple path resolutions
-        image_path = None
-        for candidate in [
-            dataset_path / orig_path,
-            Path(orig_path),
-            BASE_DATA_PATH / orig_path,
-        ]:
-            if candidate.exists():
-                image_path = candidate
-                break
+        orig_path = sample.get("source", {}).get("original_path", "")
+        image_path = _resolve_image_path(orig_path, dataset_path)
 
         if not image_path:
             logger.debug(f"Image not found: {orig_path}")
             continue
 
-        # Extract text from image
-        text = ""
-        if easyocr_reader:
-            text = extract_text_easyocr(image_path, easyocr_reader)
+        text = (
+            extract_text_easyocr(image_path, easyocr_reader) if easyocr_reader else ""
+        )
 
-        if not text:
-            # No text extracted
-            result = MultiLanguageResult(
-                primary_language="und",
-                primary_script=None,
-                detected_languages=[],
-                detected_scripts=[],
-                confidence=0.0,
-                method="no_text_extracted",
-                agreement=True,
-                script_breakdown=[],
-            )
-            stats["undetermined"] += 1
-        else:
-            # Run multi-language consensus detection
-            # OpenLID-v2 is primary, lingua secondary, fastText fallback
-            result = multi_language_consensus(
-                text,
-                fasttext_model=fasttext_model,
-                lingua_detector=lingua_detector,
-                openlid_detector=openlid_detector,
-            )
+        result, category = _detect_sample_language(
+            text,
+            fasttext_model,
+            lingua_detector,
+            openlid_detector,
+        )
 
-            if result.primary_language == "mul":
-                stats["multi_language"] += 1
-            elif result.primary_language == "und":
-                stats["undetermined"] += 1
-            else:
-                stats["single_language"] += 1
-
-        # Update enrichment layer
         update_enrichment(samples[sample_idx], result)
+        stats[category] += 1
         stats["processed"] += 1
 
-        # Progress logging
         if stats["processed"] % 100 == 0:
             logger.info(
                 f"Processed {stats['processed']}/{len(samples_to_process)} | "
@@ -1154,17 +1203,99 @@ def process_dataset(
                 f"Und: {stats['undetermined']}"
             )
 
-        # Save checkpoint
         if not dry_run and stats["processed"] % batch_size == 0:
             logger.info(f"Saving checkpoint at {stats['processed']} samples...")
             save_metadata(metadata, metadata_path)
 
-    # Final save
     if not dry_run and stats["processed"] > 0:
         logger.info("Saving final results...")
         save_metadata(metadata, metadata_path)
 
     return stats
+
+
+def _init_openlid(no_openlid: bool) -> Any | None:
+    """Initialize OpenLID-v2 detector if enabled."""
+    if no_openlid:
+        return None
+    try:
+        from image_preprocessing_detector.schema_utils.openlid_integration import (
+            OpenLIDDetector,
+        )
+
+        logger.info("Initializing OpenLID-v2 detector (primary)...")
+        detector = OpenLIDDetector(auto_download=True)
+        detector.detect("test")
+        logger.info("OpenLID-v2 ready (200 languages, provides script detection)")
+        return detector
+    except ImportError:
+        logger.warning("OpenLID integration not available")
+    except Exception as e:
+        logger.warning(f"OpenLID-v2 initialization error: {e}")
+    return None
+
+
+def _init_fasttext(model_dir: Path) -> Any | None:
+    """Initialize fastText model as fallback."""
+    try:
+        import fasttext
+
+        model_path = model_dir / "lid.176.bin"
+        if model_path.exists():
+            logger.info("Loading fastText lid.176.bin model (fallback)...")
+            return fasttext.load_model(str(model_path))
+        logger.warning(f"fastText model not found at {model_path}")
+        logger.warning("Run with --download-model to download it")
+    except ImportError:
+        logger.warning("fastText not installed. Run: uv add fasttext")
+    return None
+
+
+def _init_lingua() -> Any | None:
+    """Initialize lingua-py detector for consensus."""
+    try:
+        from lingua import LanguageDetectorBuilder
+
+        logger.info("Initializing lingua detector (secondary)...")
+        return LanguageDetectorBuilder.from_all_languages().build()
+    except ImportError:
+        logger.warning("lingua not installed. Run: uv add lingua-language-detector")
+    return None
+
+
+def _init_easyocr(ocr_languages: str) -> Any | None:
+    """Initialize EasyOCR reader for text extraction."""
+    try:
+        import easyocr
+
+        ocr_langs = ocr_languages.split(",")
+        logger.info(f"Initializing EasyOCR reader for languages: {ocr_langs}")
+        return easyocr.Reader(ocr_langs, gpu=True)
+    except ImportError:
+        logger.warning("EasyOCR not installed. Run: uv add easyocr")
+    except Exception as e:
+        logger.warning(f"EasyOCR initialization error: {e}")
+    return None
+
+
+def _resolve_datasets_to_process(
+    args: argparse.Namespace,
+) -> list[tuple[str, Path]] | None:
+    """Determine which datasets to process from CLI args.
+
+    Returns None if the user should see help text.
+    """
+    if args.dataset:
+        metadata_path = METADATA_REGISTRY_PATH / f"{args.dataset}_metadata.json"
+        if not metadata_path.exists():
+            logger.error(f"Metadata not found: {metadata_path}")
+            return []
+        return [(args.dataset, metadata_path)]
+
+    if args.all:
+        return [(name, path) for name, path, _ in find_datasets_needing_enrichment()]
+
+    return None
 
 
 def main() -> int:
@@ -1207,107 +1338,39 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    # List datasets mode
     if args.list_datasets:
         datasets = find_datasets_needing_enrichment()
         if not datasets:
             logger.info("No datasets need language enrichment!")
             return 0
-
         logger.info(f"Found {len(datasets)} datasets needing enrichment:")
         for name, path, count in datasets:
             logger.info(f"  {name}: {count:,} samples need enrichment")
         return 0
 
-    # Download model mode
     if args.download_model:
         download_fasttext_model(args.model_dir)
         return 0
 
-    # Determine datasets to process
-    if args.dataset:
-        metadata_path = METADATA_REGISTRY_PATH / f"{args.dataset}_metadata.json"
-        if not metadata_path.exists():
-            logger.error(f"Metadata not found: {metadata_path}")
-            return 1
-        datasets_to_process = [(args.dataset, metadata_path)]
-    elif args.all:
-        datasets_needing = find_datasets_needing_enrichment()
-        datasets_to_process = [(name, path) for name, path, _ in datasets_needing]
-    else:
+    datasets_to_process = _resolve_datasets_to_process(args)
+    if datasets_to_process is None:
         parser.print_help()
         return 1
-
     if not datasets_to_process:
         logger.info("No datasets to process")
         return 0
 
     # Initialize detection models
-    fasttext_model = None
-    lingua_detector = None
-    openlid_detector = None
-    easyocr_reader = None
-
-    # Load OpenLID-v2 (PRIMARY - recommended)
-    if not args.no_openlid:
-        try:
-            from image_preprocessing_detector.schema_utils.openlid_integration import (
-                OpenLIDDetector,
-            )
-
-            logger.info("Initializing OpenLID-v2 detector (primary)...")
-            openlid_detector = OpenLIDDetector(auto_download=True)
-            # Warm up the model
-            openlid_detector.detect("test")
-            logger.info("OpenLID-v2 ready (200 languages, provides script detection)")
-        except ImportError:
-            logger.warning("OpenLID integration not available")
-        except Exception as e:
-            logger.warning(f"OpenLID-v2 initialization error: {e}")
-
-    # Load fastText lid.176.bin (FALLBACK - only if OpenLID not available)
-    if not openlid_detector:
-        try:
-            import fasttext
-
-            model_path = args.model_dir / "lid.176.bin"
-            if model_path.exists():
-                logger.info("Loading fastText lid.176.bin model (fallback)...")
-                fasttext_model = fasttext.load_model(str(model_path))
-            else:
-                logger.warning(f"fastText model not found at {model_path}")
-                logger.warning("Run with --download-model to download it")
-        except ImportError:
-            logger.warning("fastText not installed. Run: uv add fasttext")
-
-    # Load lingua (SECONDARY - for consensus)
-    try:
-        from lingua import LanguageDetectorBuilder
-
-        logger.info("Initializing lingua detector (secondary)...")
-        lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
-    except ImportError:
-        logger.warning("lingua not installed. Run: uv add lingua-language-detector")
-
-    # Load EasyOCR
-    if not args.no_ocr:
-        try:
-            import easyocr
-
-            ocr_langs = args.ocr_languages.split(",")
-            logger.info(f"Initializing EasyOCR reader for languages: {ocr_langs}")
-            easyocr_reader = easyocr.Reader(ocr_langs, gpu=True)
-        except ImportError:
-            logger.warning("EasyOCR not installed. Run: uv add easyocr")
-        except Exception as e:
-            logger.warning(f"EasyOCR initialization error: {e}")
+    openlid_detector = _init_openlid(args.no_openlid)
+    fasttext_model = _init_fasttext(args.model_dir) if not openlid_detector else None
+    lingua_detector = _init_lingua()
+    easyocr_reader = _init_easyocr(args.ocr_languages) if not args.no_ocr else None
 
     if not openlid_detector and not fasttext_model and not lingua_detector:
         logger.error("No language detection models available!")
         logger.error("Install OpenLID-v2 (recommended) or fastText/lingua")
         return 1
 
-    # Log detection strategy
     if openlid_detector:
         logger.info("Detection strategy: OpenLID-v2 (primary) + lingua (consensus)")
     else:
@@ -1340,10 +1403,8 @@ def main() -> int:
 
         for key in total_stats:
             total_stats[key] += stats[key]
-
         logger.info(f"Dataset {dataset_name} complete: {stats}")
 
-    # Final summary
     logger.info("=" * 60)
     logger.info("FINAL SUMMARY")
     logger.info(f"Total processed: {total_stats['processed']:,}")

@@ -440,58 +440,79 @@ def run_audit(
 
 
 # -- Status & priority helpers ----------------------------------------------
+
+
+def _documentation_status(data: dict[str, Any]) -> str:
+    """Return status for the documentation dimension."""
+    score = data.get("documentation_score", 0)
+    if score >= 90:
+        return "Complete"
+    return "Partial" if score >= 50 else "Missing"
+
+
+def _metadata_status(data: dict[str, Any]) -> str:
+    """Return status for the metadata dimension."""
+    if data.get("error"):
+        return "N/A"
+    if not data.get("in_parquet"):
+        return "Missing"
+    return "Complete" if data.get("metadata_score", 0) >= 50 else "Partial"
+
+
+def _parser_status(data: dict[str, Any]) -> str:
+    """Return status for the parser dimension."""
+    has_file = data.get("file_exists", False)
+    has_cfg = data.get("in_dataset_configs", False)
+    if has_file and has_cfg:
+        return "Complete"
+    return "Partial" if (has_file or has_cfg) else "Missing"
+
+
+def _cross_file_status(data: dict[str, Any]) -> str:
+    """Return status for the cross_file dimension."""
+    _keys = [
+        "in_source_file",
+        "in_quick_reference",
+        "in_processing_status",
+        "in_naming_standard",
+    ]
+    present = sum(1 for k in _keys if data.get(k))
+    if present == 4:
+        return "Complete"
+    return "Partial" if present >= 2 else "Missing"
+
+
+def _aggregation_status(data: dict[str, Any]) -> str:
+    """Return status for the aggregation dimension."""
+    if not data.get("stats_file_exists"):
+        return "Missing"
+    flags = [
+        data.get("has_capture"),
+        data.get("has_domain"),
+        data.get("has_content_flags"),
+    ]
+    return "Complete" if all(flags) else "Partial"
+
+
+_DIMENSION_STATUS_DISPATCH: dict[str, Any] = {
+    "documentation": _documentation_status,
+    "metadata": _metadata_status,
+    "parser": _parser_status,
+    "cross_file": _cross_file_status,
+    "aggregation": _aggregation_status,
+}
+
+
 def _dimension_status(entry: dict[str, Any], dim: str) -> str:
     """Return Complete/Partial/Missing/N-A for a dimension."""
     data = entry.get(dim, {})
     if not data:
         return "N/A"
 
-    if dim == "documentation":
-        score = data.get("documentation_score", 0)
-        if score >= 90:
-            return "Complete"
-        return "Partial" if score >= 50 else "Missing"
-
-    if dim == "metadata":
-        if data.get("error"):
-            return "N/A"
-        if not data.get("in_parquet"):
-            return "Missing"
-        return "Complete" if data.get("metadata_score", 0) >= 50 else "Partial"
-
-    if dim == "parser":
-        has_file = data.get("file_exists", False)
-        has_cfg = data.get("in_dataset_configs", False)
-        if has_file and has_cfg:
-            return "Complete"
-        return "Partial" if (has_file or has_cfg) else "Missing"
-
-    if dim == "cross_file":
-        present = sum(
-            1
-            for k in [
-                "in_source_file",
-                "in_quick_reference",
-                "in_processing_status",
-                "in_naming_standard",
-            ]
-            if data.get(k)
-        )
-        if present == 4:
-            return "Complete"
-        return "Partial" if present >= 2 else "Missing"
-
-    if dim == "aggregation":
-        if not data.get("stats_file_exists"):
-            return "Missing"
-        flags = [
-            data.get("has_capture"),
-            data.get("has_domain"),
-            data.get("has_content_flags"),
-        ]
-        return "Complete" if all(flags) else "Partial"
-
-    return "N/A"
+    handler = _DIMENSION_STATUS_DISPATCH.get(dim)
+    if handler is None:
+        return "N/A"
+    return handler(data)
 
 
 def _prioritize(entry: dict[str, Any]) -> list[tuple[str, str]]:

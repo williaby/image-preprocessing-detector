@@ -574,6 +574,49 @@ def select_diversity_picks(
     return diversity_picks
 
 
+def _perform_constraint_swaps(
+    constraint_name: str,
+    deficit: int,
+    selected: list[ImageRecord],
+    selected_ids: set[str],
+    all_records: dict[str, ImageRecord],
+    state: DiversityState,
+    rng: random.Random,
+) -> None:
+    """Swap records to satisfy a single diversity constraint."""
+    swap_candidates = [
+        r
+        for r in all_records.values()
+        if r.image_id not in selected_ids and _candidate_satisfies(r, constraint_name)
+    ]
+    rng.shuffle(swap_candidates)
+
+    swaps_done = 0
+    for swap_in in swap_candidates:
+        if swaps_done >= deficit:
+            break
+        swap_out_candidates = [
+            r
+            for r in selected
+            if r.split == swap_in.split
+            and r.folder == swap_in.folder
+            and not _candidate_satisfies(r, constraint_name)
+            and not _is_uniquely_needed(r, selected, state)
+        ]
+        if not swap_out_candidates:
+            continue
+
+        swap_out = rng.choice(swap_out_candidates)
+        idx = selected.index(swap_out)
+        selected[idx] = swap_in
+        swap_in.selection_reason = (
+            f"swap for diversity: {constraint_name} (replaced {swap_out.image_id})"
+        )
+        selected_ids.discard(swap_out.image_id)
+        selected_ids.add(swap_in.image_id)
+        swaps_done += 1
+
+
 def apply_swap_repairs(
     selected: list[ImageRecord],
     all_records: dict[str, ImageRecord],
@@ -607,44 +650,15 @@ def apply_swap_repairs(
         deficit = state.deficits().get(constraint_name, 0)
         if deficit <= 0:
             continue
-
-        # Find candidates from the full pool that satisfy this constraint
-        swap_candidates = [
-            r
-            for r in all_records.values()
-            if r.image_id not in selected_ids
-            and _candidate_satisfies(r, constraint_name)
-        ]
-        rng.shuffle(swap_candidates)
-
-        swaps_done = 0
-        for swap_in in swap_candidates:
-            if swaps_done >= deficit:
-                break
-
-            # Find a selected record in the same stratum that does NOT
-            # uniquely satisfy any OTHER unmet constraint
-            swap_out_candidates = [
-                r
-                for r in selected
-                if r.split == swap_in.split
-                and r.folder == swap_in.folder
-                and not _candidate_satisfies(r, constraint_name)
-                and not _is_uniquely_needed(r, selected, state)
-            ]
-            if not swap_out_candidates:
-                continue
-
-            swap_out = rng.choice(swap_out_candidates)
-            idx = selected.index(swap_out)
-            selected[idx] = swap_in
-            swap_in.selection_reason = (
-                f"swap for diversity: {constraint_name} (replaced {swap_out.image_id})"
-            )
-            selected_ids.discard(swap_out.image_id)
-            selected_ids.add(swap_in.image_id)
-            swaps_done += 1
-
+        _perform_constraint_swaps(
+            constraint_name,
+            deficit,
+            selected,
+            selected_ids,
+            all_records,
+            state,
+            rng,
+        )
         state.update_from(selected)
 
     return selected
@@ -741,23 +755,12 @@ def build_output(
 # ---------------------------------------------------------------------------
 # Summary printing
 # ---------------------------------------------------------------------------
-def print_summary(selected: list[ImageRecord]) -> None:
-    """Print a human-readable distribution table."""
-    state = DiversityState()
-    state.update_from(selected)
-
-    sep = "-" * 62
-    print(f"\n{'DIQA-5000 Audit Sample Selection Summary':^62}")
-    print(sep)
-
-    # Separate base-stratum picks from diversity picks
-    def is_diversity(rec: ImageRecord) -> bool:
-        return rec.selection_reason.startswith("diversity")
-
-    base_picks = [r for r in selected if not is_diversity(r)]
-    div_picks = [r for r in selected if is_diversity(r)]
-
-    # Stratum distribution (base picks only, then diversity separately)
+def _print_stratum_table(
+    base_picks: list[ImageRecord],
+    div_picks: list[ImageRecord],
+    total_selected: int,
+) -> None:
+    """Print the stratum distribution table."""
     print(f"\n{'Stratum Distribution':}")
     print(f"  {'Stratum':<20} {'Base':>6}  {'Target':>6}")
     print(f"  {'-' * 20} {'-' * 6}  {'-' * 6}")
@@ -766,9 +769,11 @@ def print_summary(selected: list[ImageRecord]) -> None:
         marker = " *" if count != target else ""
         print(f"  {split}/{folder:<15} {count:>6}  {target:>6}{marker}")
     print(f"  {'diversity picks':<20} {len(div_picks):>6}  {DIVERSITY_PICKS:>6}")
-    print(f"  {'TOTAL':<20} {len(selected):>6}  {TARGET_SAMPLE_COUNT:>6}")
+    print(f"  {'TOTAL':<20} {total_selected:>6}  {TARGET_SAMPLE_COUNT:>6}")
 
-    # MOS tier distribution (res/ only)
+
+def _print_mos_table(selected: list[ImageRecord]) -> None:
+    """Print MOS quality tier distribution for res/ images."""
     print(f"\n{'MOS Quality Tier Distribution (res/ only)':}")
     res_selected = [r for r in selected if r.folder == "res"]
     tier_counts: dict[str, int] = {"low": 0, "mid": 0, "high": 0}
@@ -780,7 +785,9 @@ def print_summary(selected: list[ImageRecord]) -> None:
         print(f"  {tier_name:<10} {count:>4}")
     print(f"  {'total':<10} {sum(tier_counts.values()):>4}")
 
-    # Diversity constraints
+
+def _print_diversity_table(state: DiversityState) -> bool:
+    """Print diversity constraint satisfaction table. Returns True if all met."""
     print(f"\n{'Diversity Constraint Satisfaction':}")
     print(f"  {'Constraint':<22} {'Count':>6}  {'Min':>4}  {'Status'}")
     print(f"  {'-' * 22} {'-' * 6}  {'-' * 4}  {'-' * 6}")
@@ -797,10 +804,31 @@ def print_summary(selected: list[ImageRecord]) -> None:
     for name, count in constraint_map.items():
         minimum = DIVERSITY_CONSTRAINTS[name]
         met = count >= minimum
-        status = "OK" if met else "UNMET"
         if not met:
             all_met = False
+        status = "OK" if met else "UNMET"
         print(f"  {name:<22} {count:>6}  {minimum:>4}  {status}")
+    return all_met
+
+
+def print_summary(selected: list[ImageRecord]) -> None:
+    """Print a human-readable distribution table."""
+    state = DiversityState()
+    state.update_from(selected)
+
+    sep = "-" * 62
+    print(f"\n{'DIQA-5000 Audit Sample Selection Summary':^62}")
+    print(sep)
+
+    def is_diversity(rec: ImageRecord) -> bool:
+        return rec.selection_reason.startswith("diversity")
+
+    base_picks = [r for r in selected if not is_diversity(r)]
+    div_picks = [r for r in selected if is_diversity(r)]
+
+    _print_stratum_table(base_picks, div_picks, len(selected))
+    _print_mos_table(selected)
+    all_met = _print_diversity_table(state)
 
     print(sep)
     overall = "ALL CONSTRAINTS MET" if all_met else "SOME CONSTRAINTS UNMET"

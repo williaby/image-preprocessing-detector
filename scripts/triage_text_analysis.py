@@ -138,6 +138,28 @@ def extract_text_from_words_json(words_file: Path) -> str:
         return ""
 
 
+def _extract_tokens(tokens: list[str]) -> str:
+    """Join non-HTML tokens from a cell's token list."""
+    return "".join(t for t in tokens if not (t.startswith("<") and t.endswith(">")))
+
+
+def _parse_pubtabnet_record(line: str) -> tuple[str, str] | None:
+    """Parse a single JSONL record and return (filename, text) or None."""
+    try:
+        record = json.loads(line)
+    except json.JSONDecodeError:
+        return None
+
+    filename = record.get("filename", "")
+    cells = record.get("html", {}).get("cells", [])
+    texts = [_extract_tokens(c.get("tokens", [])) for c in cells]
+    text = " ".join(t for t in texts if t.strip())
+
+    if filename and text:
+        return filename, text
+    return None
+
+
 def load_pubtabnet_index(jsonl_path: Path) -> dict[str, str]:
     """Load pubtabnet text index from JSONL (cached globally)."""
     global _PUBTABNET_TEXT_INDEX
@@ -148,23 +170,13 @@ def load_pubtabnet_index(jsonl_path: Path) -> dict[str, str]:
     logger.info(f"Loading pubtabnet text index from {jsonl_path}...")
     _PUBTABNET_TEXT_INDEX = {}
 
-    def extract_tokens(tokens: list[str]) -> str:
-        return "".join(t for t in tokens if not (t.startswith("<") and t.endswith(">")))
-
     with open(jsonl_path) as f:
         for i, line in enumerate(f):
             if (i + 1) % 100000 == 0:
                 logger.info(f"  Loaded {i + 1} records...")
-            try:
-                record = json.loads(line)
-                filename = record.get("filename", "")
-                cells = record.get("html", {}).get("cells", [])
-                texts = [extract_tokens(c.get("tokens", [])) for c in cells]
-                text = " ".join(t for t in texts if t.strip())
-                if filename and text:
-                    _PUBTABNET_TEXT_INDEX[filename] = text
-            except json.JSONDecodeError:
-                continue
+            result = _parse_pubtabnet_record(line)
+            if result is not None:
+                _PUBTABNET_TEXT_INDEX[result[0]] = result[1]
 
     logger.info(f"Loaded {len(_PUBTABNET_TEXT_INDEX)} pubtabnet text entries")
     return _PUBTABNET_TEXT_INDEX
@@ -249,6 +261,35 @@ def detect_lingua(text: str, detector) -> tuple[str | None, float]:
         return None, 0.0
 
 
+_SCRIPT_TO_LANG: dict[str, str] = {
+    "Arab": "ar",
+    "Deva": "hi",
+    "Beng": "bn",
+    "Hani": "zh",
+    "Hang": "ko",
+    "Hira": "ja",
+    "Kana": "ja",
+    "Cyrl": "ru",
+    "Grek": "el",
+    "Hebr": "he",
+    "Thai": "th",
+    "Taml": "ta",
+}
+
+_AMBIGUOUS_SCRIPTS = {"Latn", "Cyrl", "Arab"}
+
+
+def _determine_escalation_reason(
+    best_conf: float, agreement: bool
+) -> tuple[bool, str | None]:
+    """Determine if escalation is needed and the reason."""
+    if best_conf < 0.6:
+        return True, "low_confidence"
+    if not agreement:
+        return True, "disagreement"
+    return False, None
+
+
 def compute_consensus(
     scripts: list[str],
     ft_lang: str | None,
@@ -257,36 +298,17 @@ def compute_consensus(
     lingua_conf: float,
 ) -> tuple[str, float, bool, bool, str | None]:
     """Compute consensus language."""
-
-    # Non-ambiguous scripts
-    SCRIPT_TO_LANG = {
-        "Arab": "ar",
-        "Deva": "hi",
-        "Beng": "bn",
-        "Hani": "zh",
-        "Hang": "ko",
-        "Hira": "ja",
-        "Kana": "ja",
-        "Cyrl": "ru",
-        "Grek": "el",
-        "Hebr": "he",
-        "Thai": "th",
-        "Taml": "ta",
-    }
-    AMBIGUOUS = {"Latn", "Cyrl", "Arab"}
-
     primary_script = scripts[0] if scripts else None
 
     # Non-ambiguous script = high confidence
-    if primary_script and primary_script not in AMBIGUOUS:
-        lang = SCRIPT_TO_LANG.get(primary_script, "und")
-        return lang, 0.9, True, False, None
+    if primary_script and primary_script not in _AMBIGUOUS_SCRIPTS:
+        return _SCRIPT_TO_LANG.get(primary_script, "und"), 0.9, True, False, None
 
-    # No text
+    # No text at all
     if not scripts and not ft_lang and not lingua_lang:
         return "und", 0.0, False, True, "no_text"
 
-    # Check agreement
+    # Check detector agreement
     agreement = ft_lang == lingua_lang if (ft_lang and lingua_lang) else False
 
     if agreement and ft_conf > 0.5 and lingua_conf > 0.5:
@@ -300,14 +322,7 @@ def compute_consensus(
 
     best_lang = ft_lang or lingua_lang or "und"
     best_conf = max(ft_conf, lingua_conf)
-    needs_esc = best_conf < 0.6 or not agreement
-    if best_conf < 0.6:
-        reason = "low_confidence"
-    elif not agreement:
-        reason = "disagreement"
-    else:
-        reason = None
-
+    needs_esc, reason = _determine_escalation_reason(best_conf, agreement)
     return best_lang, best_conf, agreement, needs_esc, reason
 
 
@@ -380,84 +395,83 @@ def analyze_sample(
     )
 
 
-def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
-    """Generate stratified report."""
-
+def _counter_markdown_table(
+    title: str,
+    header: str,
+    counts: Counter,
+    total: int,
+    top_n: int | None = None,
+) -> list[str]:
+    """Build a markdown table section from a Counter."""
     lines = [
-        f"# Language Triage Report: {dataset}",
-        f"Generated: {datetime.now(UTC).isoformat()}",
-        f"Total samples: {len(results)}",
-        "Method: Pre-extracted text (no OCR)",
+        f"## {title}",
         "",
-        "## Executive Summary",
-        "",
+        f"| {header} | Count | % |",
+        f"|{'---' * len(header)}|-------|---|",
     ]
-
-    needs_esc = sum(1 for r in results if r.needs_escalation)
-    no_esc = len(results) - needs_esc
-
-    lines.extend(
-        [
-            f"- **Can label locally**: {no_esc} ({100 * no_esc / len(results):.1f}%)",
-            f"- **Needs vision API**: {needs_esc} ({100 * needs_esc / len(results):.1f}%)",
-            "",
-        ]
-    )
-
-    # Script distribution
-    script_counts = Counter()
-    for r in results:
-        script_counts[r.primary_script or "None"] += 1
-
-    lines.extend(
-        [
-            "## Script Distribution",
-            "",
-            "| Script | Count | % |",
-            "|--------|-------|---|",
-        ]
-    )
-    for script, count in script_counts.most_common():
-        lines.append(f"| {script} | {count} | {100 * count / len(results):.1f}% |")
+    items = counts.most_common(top_n) if top_n else counts.most_common()
+    for name, count in items:
+        lines.append(f"| {name} | {count} | {100 * count / total:.1f}% |")
     lines.append("")
+    return lines
 
-    # Language distribution
-    lang_counts = Counter()
-    for r in results:
-        lang_counts[r.consensus_language] += 1
 
-    lines.extend(
-        [
-            "## Language Distribution",
-            "",
-            "| Language | Count | % |",
-            "|----------|-------|---|",
-        ]
-    )
-    for lang, count in lang_counts.most_common(15):
-        lines.append(f"| {lang} | {count} | {100 * count / len(results):.1f}% |")
-    lines.append("")
-
-    # Confidence stratification
-    lines.extend(
-        [
-            "## Confidence Stratification",
-            "",
-            "| Confidence | Count | % | Needs Escalation |",
-            "|------------|-------|---|------------------|",
-        ]
-    )
-
+def _confidence_stratification_table(
+    results: list[TextAnalysisResult],
+) -> list[str]:
+    """Build confidence stratification markdown table."""
+    lines = [
+        "## Confidence Stratification",
+        "",
+        "| Confidence | Count | % | Needs Escalation |",
+        "|------------|-------|---|------------------|",
+    ]
+    total = len(results)
     for low, high, label in CONFIDENCE_BINS:
         in_bin = [r for r in results if low <= r.consensus_confidence < high]
         count = len(in_bin)
-        pct = 100 * count / len(results) if results else 0
+        pct = 100 * count / total if total else 0
         esc = sum(1 for r in in_bin if r.needs_escalation)
         esc_pct = 100 * esc / count if count else 0
         lines.append(
             f"| {label} ({low:.1f}-{high:.1f}) | {count} | {pct:.1f}% | {esc} ({esc_pct:.0f}%) |"
         )
     lines.append("")
+    return lines
+
+
+def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
+    """Generate stratified report."""
+    total = len(results)
+    needs_esc = sum(1 for r in results if r.needs_escalation)
+    no_esc = total - needs_esc
+
+    lines = [
+        f"# Language Triage Report: {dataset}",
+        f"Generated: {datetime.now(UTC).isoformat()}",
+        f"Total samples: {total}",
+        "Method: Pre-extracted text (no OCR)",
+        "",
+        "## Executive Summary",
+        "",
+        f"- **Can label locally**: {no_esc} ({100 * no_esc / total:.1f}%)",
+        f"- **Needs vision API**: {needs_esc} ({100 * needs_esc / total:.1f}%)",
+        "",
+    ]
+
+    script_counts = Counter(r.primary_script or "None" for r in results)
+    lines.extend(
+        _counter_markdown_table("Script Distribution", "Script", script_counts, total)
+    )
+
+    lang_counts = Counter(r.consensus_language for r in results)
+    lines.extend(
+        _counter_markdown_table(
+            "Language Distribution", "Language", lang_counts, total, top_n=15
+        )
+    )
+
+    lines.extend(_confidence_stratification_table(results))
 
     # Detector agreement
     agree = sum(1 for r in results if r.detector_agreement)
@@ -465,15 +479,9 @@ def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
         [
             "## Detector Agreement",
             "",
-            f"- **Agree**: {agree} ({100 * agree / len(results):.1f}%)",
-            f"- **Disagree**: {len(results) - agree} ({100 * (len(results) - agree) / len(results):.1f}%)",
+            f"- **Agree**: {agree} ({100 * agree / total:.1f}%)",
+            f"- **Disagree**: {total - agree} ({100 * (total - agree) / total:.1f}%)",
             "",
-        ]
-    )
-
-    # Cost estimate
-    lines.extend(
-        [
             "## Cost Estimate",
             "",
             f"- Samples needing vision: {needs_esc}",

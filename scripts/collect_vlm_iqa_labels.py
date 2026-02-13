@@ -473,6 +473,41 @@ def merge_label_batches(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def _expand_label_globs(patterns: list[str]) -> list[Path]:
+    """Expand glob patterns in label file arguments to concrete paths."""
+    label_paths: list[Path] = []
+    for pattern in patterns:
+        expanded = glob.glob(pattern)
+        if expanded:
+            label_paths.extend(Path(p) for p in expanded)
+        else:
+            label_paths.append(Path(pattern))
+    return label_paths
+
+
+def _run_actions(args, valid_labels: list, labels: list) -> None:
+    """Execute validate/integrate actions based on CLI arguments."""
+    if args.validate:
+        report = validate_against_diqa(valid_labels, args.metadata)
+        report_path = args.output_dir / "vlm_validation_report.json"
+        with open(report_path, "w") as fh:
+            json.dump(report, fh, indent=2)
+        log.info("Validation report saved to %s", report_path)
+
+    if args.integrate:
+        updated = integrate_labels(
+            valid_labels,
+            args.metadata,
+            output_path=args.output,
+            dry_run=args.dry_run,
+        )
+        log.info("Integration complete: %d samples updated", updated)
+
+    if not args.validate and not args.integrate:
+        log.info("No action specified. Use --validate, --integrate, or --merge")
+        log.info("Labels loaded: %d total, %d valid", len(labels), len(valid_labels))
+
+
 def main() -> int:
     """Collect, validate, and integrate VLM IQA labels."""
     parser = argparse.ArgumentParser(description="Collect and integrate VLM IQA labels")
@@ -524,29 +559,20 @@ def main() -> int:
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Expand glob patterns in label paths
-    label_paths: list[Path] = []
-    for pattern in args.labels:
-        expanded = glob.glob(pattern)
-        if expanded:
-            label_paths.extend(Path(p) for p in expanded)
-        else:
-            label_paths.append(Path(pattern))
+    label_paths = _expand_label_globs(args.labels)
 
     if not any(p.exists() for p in label_paths):
         log.error("No label files found: %s", args.labels)
         return 1
 
-    # Merge mode
+    # Merge mode (early return)
     if args.merge:
         output = args.output or args.output_dir / "vlm_labels_merged.json"
         merge_label_batches(label_paths, output)
         return 0
 
-    # Load labels
+    # Load and filter labels
     labels = load_vlm_labels([p for p in label_paths if p.exists()])
-
-    # Validate labels
     valid_labels = [lbl for lbl in labels if validate_label(lbl)]
     if len(valid_labels) < len(labels):
         log.warning(
@@ -554,28 +580,7 @@ def main() -> int:
             len(labels) - len(valid_labels),
         )
 
-    # Validate against DIQA-5000
-    if args.validate:
-        report = validate_against_diqa(valid_labels, args.metadata)
-        report_path = args.output_dir / "vlm_validation_report.json"
-        with open(report_path, "w") as fh:
-            json.dump(report, fh, indent=2)
-        log.info("Validation report saved to %s", report_path)
-
-    # Integrate into metadata
-    if args.integrate:
-        updated = integrate_labels(
-            valid_labels,
-            args.metadata,
-            output_path=args.output,
-            dry_run=args.dry_run,
-        )
-        log.info("Integration complete: %d samples updated", updated)
-
-    if not args.validate and not args.integrate:
-        log.info("No action specified. Use --validate, --integrate, or --merge")
-        log.info("Labels loaded: %d total, %d valid", len(labels), len(valid_labels))
-
+    _run_actions(args, valid_labels, labels)
     return 0
 
 

@@ -408,6 +408,77 @@ def validate_enrichment_data(
     return errors
 
 
+def _make_skipped_result(dataset_name: str, reason: str) -> dict[str, Any]:
+    """Create a result dict for a skipped/error dataset."""
+    return {
+        "dataset": dataset_name,
+        "status": "skipped",
+        "reason": reason,
+        "samples_total": 0,
+        "samples_migrated": 0,
+        "samples_already_migrated": 0,
+        "errors": [],
+    }
+
+
+def _load_dataset_metadata(input_file: Path) -> dict[str, Any] | str:
+    """Load dataset metadata from JSON file.
+
+    Returns:
+        The parsed metadata dict, or an error string on failure.
+    """
+    try:
+        with open(input_file) as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        return str(e)
+
+
+def _migrate_sample_versions(
+    sample: dict[str, Any],
+    idx: int,
+    schema_validator: Draft7Validator | None,
+    validation_errors: list[str],
+) -> int:
+    """Migrate all enrichment versions in a single sample.
+
+    Returns:
+        Count of already-migrated versions encountered.
+    """
+    already_migrated = 0
+    enrichments = sample.get("enrichments", {})
+    versions = enrichments.get("versions", [])
+
+    for version in versions:
+        flat_data = version.get("data", {})
+        if is_already_migrated(flat_data):
+            already_migrated += 1
+            continue
+
+        nested_data = migrate_sample_data(flat_data)
+
+        if schema_validator:
+            ver_errors = validate_enrichment_data(nested_data, schema_validator)
+            if ver_errors:
+                validation_errors.extend([f"Sample {idx}: {e}" for e in ver_errors])
+
+        version["data"] = nested_data
+
+    return already_migrated
+
+
+def _determine_migration_status(
+    errors: list[dict[str, Any]],
+    total_samples: int,
+) -> str:
+    """Determine overall migration status from error count."""
+    if len(errors) == total_samples and total_samples > 0:
+        return "failed"
+    if errors:
+        return "partial"
+    return "success"
+
+
 def migrate_dataset(
     dataset_name: str,
     input_dir: Path,
@@ -434,38 +505,23 @@ def migrate_dataset(
     input_file = input_dir / f"{dataset_name}_metadata.json"
 
     if not input_file.exists():
-        return {
-            "dataset": dataset_name,
-            "status": "skipped",
-            "reason": "No metadata file found",
-            "samples_total": 0,
-            "samples_migrated": 0,
-            "samples_already_migrated": 0,
-            "errors": [],
-        }
+        return _make_skipped_result(dataset_name, "No metadata file found")
 
     if verbose:
         logger.info(f"Loading {input_file}...")
 
-    # Load original file
-    try:
-        with open(input_file) as f:
-            dataset_metadata = json.load(f)
-    except json.JSONDecodeError as e:
-        return {
-            "dataset": dataset_name,
-            "status": "error",
-            "reason": f"Invalid JSON: {e}",
-            "samples_total": 0,
-            "samples_migrated": 0,
-            "samples_already_migrated": 0,
-            "errors": [str(e)],
-        }
+    loaded = _load_dataset_metadata(input_file)
+    if isinstance(loaded, str):
+        result = _make_skipped_result(dataset_name, f"Invalid JSON: {loaded}")
+        result["status"] = "error"
+        result["errors"] = [loaded]
+        return result
+    dataset_metadata = loaded
 
-    original_sample_count = dataset_metadata.get("sample_count", 0)
     samples = dataset_metadata.get("samples", [])
 
     if verbose:
+        original_sample_count = dataset_metadata.get("sample_count", 0)
         logger.info(f"Found {len(samples)} samples (declared: {original_sample_count})")
 
     # Backup if requested
@@ -480,42 +536,21 @@ def migrate_dataset(
     # Migrate each sample
     migrated_samples = []
     already_migrated = 0
-    errors = []
-    validation_errors = []
+    errors: list[dict[str, Any]] = []
+    validation_errors: list[str] = []
 
     for idx, sample in enumerate(samples):
         try:
-            # Extract enrichment data
-            enrichments = sample.get("enrichments", {})
-            versions = enrichments.get("versions", [])
-
-            for version in versions:
-                flat_data = version.get("data", {})
-
-                # Check if already migrated
-                if is_already_migrated(flat_data):
-                    already_migrated += 1
-                    continue
-
-                # Convert to nested format
-                nested_data = migrate_sample_data(flat_data)
-
-                # Validate if requested
-                if schema_validator:
-                    ver_errors = validate_enrichment_data(nested_data, schema_validator)
-                    if ver_errors:
-                        validation_errors.extend(
-                            [f"Sample {idx}: {e}" for e in ver_errors]
-                        )
-
-                # Replace data field
-                version["data"] = nested_data
-
+            already_migrated += _migrate_sample_versions(
+                sample,
+                idx,
+                schema_validator,
+                validation_errors,
+            )
             migrated_samples.append(sample)
 
             if verbose and (idx + 1) % 10000 == 0:
                 logger.info(f"  Processed {idx + 1}/{len(samples)} samples...")
-
         except Exception as e:
             errors.append(
                 {
@@ -526,16 +561,12 @@ def migrate_dataset(
             )
             if verbose:
                 logger.warning(f"Error migrating sample {idx}: {e}")
-            # Still include the sample (unchanged) to preserve data
             migrated_samples.append(sample)
 
     # Update dataset metadata
     dataset_metadata["samples"] = migrated_samples
-
-    # Add migration metadata
-    migration_time = datetime.now(UTC).isoformat()
     dataset_metadata["migration"] = {
-        "migrated_at": migration_time,
+        "migrated_at": datetime.now(UTC).isoformat(),
         "migration_script": f"migrate_layer2_schema_to_full.py_v{SCRIPT_VERSION}",
         "format_version": MIGRATION_FORMAT_VERSION,
         "samples_processed": len(migrated_samples),
@@ -544,7 +575,6 @@ def migrate_dataset(
         "validation_errors_count": len(validation_errors),
     }
 
-    # Write migrated file
     if not dry_run:
         output_file = output_dir / f"{dataset_name}_metadata.json"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -553,29 +583,19 @@ def migrate_dataset(
         if verbose:
             logger.info(f"Wrote migrated data to {output_file}")
 
-    status = "success"
-    if errors:
-        status = "partial"
-    if len(errors) == len(samples):
-        status = "failed"
-
     return {
         "dataset": dataset_name,
-        "status": status,
+        "status": _determine_migration_status(errors, len(samples)),
         "samples_total": len(samples),
         "samples_migrated": len(migrated_samples) - already_migrated,
         "samples_already_migrated": already_migrated,
         "errors": errors,
-        "validation_errors": validation_errors[:10],  # Limit to first 10
+        "validation_errors": validation_errors[:10],
     }
 
 
-def main() -> int:
-    """Main migration function.
-
-    Returns:
-        Exit code (0 for success, 1 for errors)
-    """
+def _build_arg_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser for migration."""
     parser = argparse.ArgumentParser(
         description="Migrate Layer 2 metadata from flat to full nested schema",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -619,44 +639,105 @@ def main() -> int:
         help="Don't write files, just report what would be done",
     )
     parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Print detailed progress",
+        "--verbose", "-v", action="store_true", help="Print detailed progress"
     )
+    return parser
 
-    args = parser.parse_args()
+
+def _load_schema_validator(schema_path: Path) -> Draft7Validator | None:
+    """Load and return a JSON schema validator, or None on failure."""
+    if not HAS_JSONSCHEMA:
+        logger.error("jsonschema package required for validation. Install with:")
+        logger.error("  uv pip install jsonschema")
+        return None
+
+    schema = load_json_schema(schema_path)
+    if not schema:
+        return None
+
+    enrichment_data_schema = schema.get("$defs", {}).get("EnrichmentData", {})
+    if not enrichment_data_schema:
+        logger.warning("EnrichmentData schema not found, skipping validation")
+        return None
+
+    logger.info(f"Loaded schema from {schema_path}")
+    return Draft7Validator(enrichment_data_schema)
+
+
+def _discover_migration_datasets(args: argparse.Namespace) -> list[str]:
+    """Discover datasets to migrate from CLI args or directory listing."""
+    if args.dataset:
+        return [args.dataset]
+    metadata_files = list(args.input_dir.glob("*_metadata.json"))
+    return sorted(f.stem.replace("_metadata", "") for f in metadata_files)
+
+
+def _build_migration_report(
+    results: list[dict[str, Any]],
+    dry_run: bool,
+) -> dict[str, Any]:
+    """Aggregate per-dataset results into a migration report."""
+    return {
+        "migration_date": datetime.now(UTC).strftime("%Y-%m-%d"),
+        "migration_timestamp": datetime.now(UTC).isoformat(),
+        "script_version": SCRIPT_VERSION,
+        "format_version": MIGRATION_FORMAT_VERSION,
+        "dry_run": dry_run,
+        "total_datasets": len(results),
+        "successful": sum(1 for r in results if r["status"] == "success"),
+        "partial": sum(1 for r in results if r["status"] == "partial"),
+        "skipped": sum(1 for r in results if r["status"] == "skipped"),
+        "failed": sum(1 for r in results if r["status"] in ("error", "failed")),
+        "total_samples_migrated": sum(r.get("samples_migrated", 0) for r in results),
+        "total_samples_already_migrated": sum(
+            r.get("samples_already_migrated", 0) for r in results
+        ),
+        "results": results,
+    }
+
+
+def _print_migration_summary(
+    report: dict[str, Any],
+    report_file: Path,
+    backup_dir: Path | None,
+    dry_run: bool,
+) -> None:
+    """Print the final migration summary to stdout."""
+    print(f"\n{'=' * 60}")
+    print("MIGRATION SUMMARY")
+    print(f"{'=' * 60}")
+    print(f"Total datasets:     {report['total_datasets']}")
+    print(f"  Successful:       {report['successful']}")
+    print(f"  Partial:          {report['partial']}")
+    print(f"  Skipped:          {report['skipped']}")
+    print(f"  Failed:           {report['failed']}")
+    print(f"Total samples migrated:         {report['total_samples_migrated']}")
+    print(f"Total samples already migrated: {report['total_samples_already_migrated']}")
+    print(f"Report: {report_file}")
+    if backup_dir:
+        print(f"Backup: {backup_dir}")
+    if dry_run:
+        print("\n[DRY RUN] No files were modified.")
+
+
+def main() -> int:
+    """Main migration function.
+
+    Returns:
+        Exit code (0 for success, 1 for errors)
+    """
+    args = _build_arg_parser().parse_args()
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    # Load schema validator if requested
     schema_validator = None
     if args.validate:
-        if not HAS_JSONSCHEMA:
-            logger.error("jsonschema package required for validation. Install with:")
-            logger.error("  uv pip install jsonschema")
+        schema_validator = _load_schema_validator(args.schema_path)
+        if schema_validator is None and not HAS_JSONSCHEMA:
             return 1
 
-        schema = load_json_schema(args.schema_path)
-        if schema:
-            # Extract the EnrichmentData sub-schema for validating data field
-            enrichment_data_schema = schema.get("$defs", {}).get("EnrichmentData", {})
-            if enrichment_data_schema:
-                schema_validator = Draft7Validator(enrichment_data_schema)
-                logger.info(f"Loaded schema from {args.schema_path}")
-            else:
-                logger.warning("EnrichmentData schema not found, skipping validation")
-
-    # Get list of datasets to migrate
-    if args.dataset:
-        datasets = [args.dataset]
-    else:
-        # Find all metadata files
-        metadata_files = list(args.input_dir.glob("*_metadata.json"))
-        datasets = [f.stem.replace("_metadata", "") for f in metadata_files]
-        datasets.sort()
-
+    datasets = _discover_migration_datasets(args)
     if not datasets:
         logger.error(f"No metadata files found in {args.input_dir}")
         return 1
@@ -665,7 +746,14 @@ def main() -> int:
     if args.dry_run:
         logger.info("DRY RUN - no files will be modified")
 
-    # Migrate each dataset
+    _status_labels = {
+        "success": "OK",
+        "partial": "WARN",
+        "skipped": "SKIP",
+        "error": "ERR",
+        "failed": "FAIL",
+    }
+
     results = []
     for dataset_name in datasets:
         if args.verbose:
@@ -684,42 +772,16 @@ def main() -> int:
         )
         results.append(result)
 
-        # Print per-dataset summary
-        status_emoji = {
-            "success": "OK",
-            "partial": "WARN",
-            "skipped": "SKIP",
-            "error": "ERR",
-            "failed": "FAIL",
-        }
-        emoji = status_emoji.get(result["status"], "?")
+        label = _status_labels.get(result["status"], "?")
         logger.info(
-            f"[{emoji}] {dataset_name}: "
+            f"[{label}] {dataset_name}: "
             f"{result['samples_migrated']} migrated, "
             f"{result['samples_already_migrated']} already done, "
             f"{len(result.get('errors', []))} errors"
         )
 
-    # Generate migration report
-    report = {
-        "migration_date": datetime.now(UTC).strftime("%Y-%m-%d"),
-        "migration_timestamp": datetime.now(UTC).isoformat(),
-        "script_version": SCRIPT_VERSION,
-        "format_version": MIGRATION_FORMAT_VERSION,
-        "dry_run": args.dry_run,
-        "total_datasets": len(results),
-        "successful": sum(1 for r in results if r["status"] == "success"),
-        "partial": sum(1 for r in results if r["status"] == "partial"),
-        "skipped": sum(1 for r in results if r["status"] == "skipped"),
-        "failed": sum(1 for r in results if r["status"] in ("error", "failed")),
-        "total_samples_migrated": sum(r.get("samples_migrated", 0) for r in results),
-        "total_samples_already_migrated": sum(
-            r.get("samples_already_migrated", 0) for r in results
-        ),
-        "results": results,
-    }
+    report = _build_migration_report(results, args.dry_run)
 
-    # Write report
     report_date = datetime.now(UTC).strftime("%Y%m%d")
     report_file = Path("metadata_registry") / f"migration_report_{report_date}.json"
     report_file.parent.mkdir(parents=True, exist_ok=True)
@@ -729,29 +791,9 @@ def main() -> int:
             json.dump(report, f, indent=2)
         logger.info(f"Report written to: {report_file}")
 
-    # Print summary
-    print(f"\n{'=' * 60}")
-    print("MIGRATION SUMMARY")
-    print(f"{'=' * 60}")
-    print(f"Total datasets:     {report['total_datasets']}")
-    print(f"  Successful:       {report['successful']}")
-    print(f"  Partial:          {report['partial']}")
-    print(f"  Skipped:          {report['skipped']}")
-    print(f"  Failed:           {report['failed']}")
-    print(f"Total samples migrated:         {report['total_samples_migrated']}")
-    print(f"Total samples already migrated: {report['total_samples_already_migrated']}")
-    print(f"Report: {report_file}")
+    _print_migration_summary(report, report_file, args.backup_dir, args.dry_run)
 
-    if args.backup_dir:
-        print(f"Backup: {args.backup_dir}")
-
-    if args.dry_run:
-        print("\n[DRY RUN] No files were modified.")
-
-    # Return error code if any failures
-    if report["failed"] > 0:
-        return 1
-    return 0
+    return 1 if report["failed"] > 0 else 0
 
 
 if __name__ == "__main__":

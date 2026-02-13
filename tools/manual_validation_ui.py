@@ -147,6 +147,110 @@ def get_progress(output_dir: Path, total_files: int) -> tuple[int, int]:
     return completed, total_files
 
 
+def _validate_image_path(ws_labels: dict) -> str | None:
+    """Validate and resolve the image path from labels.
+
+    Returns:
+        Resolved image path string, or None if invalid.
+    """
+    image_path = ws_labels["image_path"]
+    resolved_image_path = Path(image_path).resolve()
+
+    if ".." in Path(image_path).parts:
+        st.error("Invalid image path: path traversal detected")
+        return None
+
+    if not resolved_image_path.exists():
+        st.error(f"Image not found: {resolved_image_path}")
+        st.info("Please check the image_path in the labels JSON")
+        return None
+
+    return str(resolved_image_path)
+
+
+def _render_image_column(image_path: str, ws_labels: dict) -> None:
+    """Render the left column with image preview and quality scores."""
+    st.subheader("Image Preview")
+    try:
+        img = load_image(image_path)
+        st.image(img, use_container_width=True)
+    except Exception as e:
+        st.error(f"Failed to load image: {e}")
+
+    st.subheader("Quality Metrics")
+    scores = ws_labels.get("quality_scores", {})
+    score_cols = st.columns(3)
+
+    for idx, (metric, value) in enumerate(scores.items()):
+        with score_cols[idx % 3]:
+            st.metric(metric.replace("_", " ").title(), f"{value:.2f}")
+
+
+def _render_label_column(
+    ws_labels: dict,
+    image_path: str,
+    current_file: Path,
+    output_path: Path,
+    file_index: int,
+    queue_length: int,
+) -> None:
+    """Render the right column with label corrections and save/skip controls."""
+    st.subheader("Label Correction")
+    corrected_labels = {}
+
+    for issue in QUALITY_ISSUES:
+        original_label = ws_labels["labels"].get(issue, {})
+        original_value = original_label.get("value", 0)
+        confidence = original_label.get("confidence", 0.0)
+
+        st.markdown(f"**{issue.replace('_', ' ').title()}**")
+        st.markdown(f"_{ISSUE_DESCRIPTIONS[issue]}_")
+
+        st.caption(
+            f"Weak Supervision: {'Issue Present' if original_value == 1 else 'No Issue'} "
+            f"(confidence: {confidence:.2f})"
+        )
+
+        corrected_labels[issue] = st.checkbox(
+            "Issue Present",
+            value=bool(original_value),
+            key=f"issue_{issue}",
+        )
+        st.divider()
+
+    st.subheader("Notes")
+    annotator_notes = st.text_area(
+        "Annotator Notes (optional)",
+        placeholder="Any observations or comments about this image...",
+        height=100,
+    )
+
+    if st.button("Save Corrections", type="primary", use_container_width=True):
+        corrected_labels_int = {k: int(v) for k, v in corrected_labels.items()}
+        output_filename = current_file.stem.replace("_labels", "_corrected") + ".json"
+        output_file = output_path / output_filename
+        save_corrected_labels(
+            output_file,
+            image_path,
+            corrected_labels_int,
+            ws_labels["labels"],
+            ws_labels.get("quality_scores", {}),
+            annotator_notes,
+        )
+        st.success(f"Saved to {output_file}")
+        if file_index < queue_length - 1:
+            st.info("Advancing to next image...")
+            st.rerun()
+        else:
+            st.balloons()
+            st.success("All images annotated!")
+
+    if st.button("Skip (no changes)", use_container_width=True):
+        st.info("Skipped. No changes saved.")
+        if file_index < queue_length - 1:
+            st.rerun()
+
+
 def main() -> None:
     """Main Streamlit app."""
     st.set_page_config(
@@ -155,7 +259,7 @@ def main() -> None:
         layout="wide",
     )
 
-    st.title("🔍 IQA Manual Validation Interface")
+    st.title("IQA Manual Validation Interface")
     st.markdown(
         """
         Review and correct weak supervision labels for image quality assessment.
@@ -163,9 +267,7 @@ def main() -> None:
         """
     )
 
-    # Sidebar configuration
     st.sidebar.header("Configuration")
-
     input_dir = st.sidebar.text_input(
         "Input Directory (weak supervision labels)",
         value="data/weak_supervision_labels",
@@ -185,23 +287,17 @@ def main() -> None:
         )
         return
 
-    # Get annotation queue
     annotation_queue = get_annotation_queue(input_path)
-
     if not annotation_queue:
         st.warning(f"No label files found in {input_dir}")
         return
 
-    # Progress tracking
     completed, total = get_progress(output_path, len(annotation_queue))
     st.sidebar.metric(
         "Progress", f"{completed}/{total}", f"{completed / total * 100:.1f}%"
     )
 
-    # File navigation
     st.sidebar.header("Navigation")
-
-    # File selector
     file_index = st.sidebar.number_input(
         "File Index",
         min_value=0,
@@ -213,129 +309,31 @@ def main() -> None:
     current_file = annotation_queue[file_index]
     st.sidebar.info(f"Current: {current_file.name}")
 
-    # Navigation buttons
     col1, col2 = st.sidebar.columns(2)
-    if col1.button("⬅️ Previous") and file_index > 0:
+    if col1.button("Previous") and file_index > 0:
         file_index -= 1
         st.rerun()
-    if col2.button("➡️ Next") and file_index < len(annotation_queue) - 1:
+    if col2.button("Next") and file_index < len(annotation_queue) - 1:
         file_index += 1
         st.rerun()
 
-    # Load weak supervision labels
     ws_labels = load_weak_supervision_labels(current_file)
-    image_path = ws_labels["image_path"]
-
-    # Sanitize path: resolve to absolute and reject path traversal
-    resolved_image_path = Path(image_path).resolve()
-    if ".." in Path(image_path).parts:
-        st.error("Invalid image path: path traversal detected")
+    image_path = _validate_image_path(ws_labels)
+    if image_path is None:
         return
 
-    # Check if image exists
-    if not resolved_image_path.exists():
-        st.error(f"Image not found: {resolved_image_path}")
-        st.info("Please check the image_path in the labels JSON")
-        return
-    image_path = str(resolved_image_path)
-
-    # Main content area
     col_left, col_right = st.columns([2, 1])
-
-    # Left column: Image display
     with col_left:
-        st.subheader("Image Preview")
-        try:
-            img = load_image(image_path)
-            st.image(img, use_container_width=True)
-        except Exception as e:
-            st.error(f"Failed to load image: {e}")
-
-        # Quality scores
-        st.subheader("Quality Metrics")
-        scores = ws_labels.get("quality_scores", {})
-        score_cols = st.columns(3)
-
-        for idx, (metric, value) in enumerate(scores.items()):
-            with score_cols[idx % 3]:
-                st.metric(metric.replace("_", " ").title(), f"{value:.2f}")
-
-    # Right column: Label correction
+        _render_image_column(image_path, ws_labels)
     with col_right:
-        st.subheader("Label Correction")
-
-        # Initialize corrected labels from weak supervision
-        corrected_labels = {}
-
-        for issue in QUALITY_ISSUES:
-            original_label = ws_labels["labels"].get(issue, {})
-            original_value = original_label.get("value", 0)
-            confidence = original_label.get("confidence", 0.0)
-
-            st.markdown(f"**{issue.replace('_', ' ').title()}**")
-            st.markdown(f"_{ISSUE_DESCRIPTIONS[issue]}_")
-
-            # Show original prediction
-            st.caption(
-                f"Weak Supervision: {'✅ Issue Present' if original_value == 1 else '❌ No Issue'} "
-                f"(confidence: {confidence:.2f})"
-            )
-
-            # Correction checkbox
-            corrected_labels[issue] = st.checkbox(
-                "Issue Present",
-                value=bool(original_value),
-                key=f"issue_{issue}",
-            )
-
-            st.divider()
-
-        # Annotator notes
-        st.subheader("Notes")
-        annotator_notes = st.text_area(
-            "Annotator Notes (optional)",
-            placeholder="Any observations or comments about this image...",
-            height=100,
+        _render_label_column(
+            ws_labels,
+            image_path,
+            current_file,
+            output_path,
+            file_index,
+            len(annotation_queue),
         )
-
-        # Save button
-        if st.button("💾 Save Corrections", type="primary", use_container_width=True):
-            # Convert boolean to int (0/1)
-            corrected_labels_int = {k: int(v) for k, v in corrected_labels.items()}
-
-            # Generate output filename
-            output_filename = (
-                current_file.stem.replace("_labels", "_corrected") + ".json"
-            )
-            output_file = output_path / output_filename
-
-            # Save corrected labels
-            save_corrected_labels(
-                output_file,
-                image_path,
-                corrected_labels_int,
-                ws_labels["labels"],
-                ws_labels.get("quality_scores", {}),
-                annotator_notes,
-            )
-
-            st.success(f"✅ Saved to {output_file}")
-
-            # Auto-advance to next file
-            if file_index < len(annotation_queue) - 1:
-                st.info("Advancing to next image...")
-                file_index += 1
-                st.rerun()
-            else:
-                st.balloons()
-                st.success("🎉 All images annotated!")
-
-        # Skip button
-        if st.button("⏭️ Skip (no changes)", use_container_width=True):
-            st.info("Skipped. No changes saved.")
-            if file_index < len(annotation_queue) - 1:
-                file_index += 1
-                st.rerun()
 
 
 if __name__ == "__main__":

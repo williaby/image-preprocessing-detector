@@ -69,6 +69,51 @@ class ProcessingResult:
     error: str | None = None
 
 
+def _extract_text_content(result_data: dict) -> tuple[str, str]:
+    """Extract text and markdown from a Docling API response.
+
+    Returns:
+        Tuple of (text, markdown).
+    """
+    if "document" in result_data:
+        doc = result_data["document"]
+        return doc.get("text", ""), doc.get("markdown", doc.get("md_content", ""))
+    if "text" in result_data:
+        return result_data["text"], result_data.get(
+            "markdown", result_data.get("md_content", "")
+        )
+    return "", ""
+
+
+def _extract_layout_and_tables(
+    result_data: dict,
+) -> tuple[list[dict], list]:
+    """Extract layout elements and tables from a Docling API response.
+
+    Returns:
+        Tuple of (layout_elements, tables).
+    """
+    if "document" not in result_data:
+        return [], []
+
+    doc = result_data["document"]
+    layout_elements: list[dict] = []
+
+    if "main_text" in doc:
+        for i, item in enumerate(doc["main_text"]):
+            element: dict = {
+                "id": i,
+                "type": item.get("type", "text"),
+                "text": item.get("text", ""),
+            }
+            if "bbox" in item:
+                element["bbox"] = item["bbox"]
+            layout_elements.append(element)
+
+    tables = doc.get("tables", [])
+    return layout_elements, tables
+
+
 class LocalDatasetProcessor:
     """Process local datasets through Docling API."""
 
@@ -122,32 +167,7 @@ class LocalDatasetProcessor:
         start = time.perf_counter()
 
         try:
-            # Read file
-            with open(file_path, "rb") as f:
-                file_content = f.read()
-
-            # Prepare multipart form data
-            files = {
-                "file": (file_path.name, file_content, "image/jpeg"),
-            }
-
-            # Request options for docling
-            data = {
-                "options": json.dumps(
-                    {
-                        "do_ocr": self.config.extract_text,
-                        "do_table_structure": True,
-                        "generate_markdown": True,
-                    }
-                )
-            }
-
-            # Send to Docling API
-            response = self.client.post(
-                f"{self.config.docling_url}/v1/convert/file",
-                files=files,
-                data=data,
-            )
+            response = self._call_docling_api(file_path)
 
             if response.status_code != 200:
                 return ProcessingResult(
@@ -159,40 +179,8 @@ class LocalDatasetProcessor:
                 )
 
             result_data = response.json()
-
-            # Extract text content
-            text = ""
-            markdown = ""
-            if "document" in result_data:
-                doc = result_data["document"]
-                text = doc.get("text", "")
-                markdown = doc.get("markdown", doc.get("md_content", ""))
-            elif "text" in result_data:
-                text = result_data["text"]
-                markdown = result_data.get(
-                    "markdown", result_data.get("md_content", "")
-                )
-
-            # Extract layout elements
-            layout_elements = []
-            tables = []
-            if "document" in result_data:
-                doc = result_data["document"]
-                # Extract layout from document structure
-                if "main_text" in doc:
-                    for i, item in enumerate(doc["main_text"]):
-                        element = {
-                            "id": i,
-                            "type": item.get("type", "text"),
-                            "text": item.get("text", ""),
-                        }
-                        if "bbox" in item:
-                            element["bbox"] = item["bbox"]
-                        layout_elements.append(element)
-
-                # Extract tables
-                if "tables" in doc:
-                    tables = doc["tables"]
+            text, markdown = _extract_text_content(result_data)
+            layout_elements, tables = _extract_layout_and_tables(result_data)
 
             return ProcessingResult(
                 file_path=str(file_path),
@@ -214,11 +202,44 @@ class LocalDatasetProcessor:
                 error=str(e),
             )
 
+    def _call_docling_api(self, file_path: Path) -> Any:
+        """Send a file to the Docling API and return the response."""
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+
+        files = {"file": (file_path.name, file_content, "image/jpeg")}
+        data = {
+            "options": json.dumps(
+                {
+                    "do_ocr": self.config.extract_text,
+                    "do_table_structure": True,
+                    "generate_markdown": True,
+                }
+            )
+        }
+        return self.client.post(
+            f"{self.config.docling_url}/v1/convert/file",
+            files=files,
+            data=data,
+        )
+
     def save_results(self, results: list[ProcessingResult], batch_num: int):
         """Save batch results to output directory."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Save individual results as JSONL
+        jsonl_path = self._save_jsonl(results, batch_num)
+
+        if self.config.extract_layout:
+            self._save_coco_layout(results, batch_num)
+
+        logger.info(f"Saved batch {batch_num}: {jsonl_path}")
+
+    def _save_jsonl(
+        self,
+        results: list[ProcessingResult],
+        batch_num: int,
+    ) -> Path:
+        """Save individual results as JSONL and return the file path."""
         jsonl_path = self.output_dir / f"batch_{batch_num:04d}.jsonl"
         with open(jsonl_path, "w") as f:
             for r in results:
@@ -227,71 +248,78 @@ class LocalDatasetProcessor:
                     "file_name": r.file_name,
                     "text": r.text if self.config.extract_text else "",
                     "markdown": r.markdown if self.config.extract_text else "",
-                    "layout_elements": r.layout_elements
-                    if self.config.extract_layout
-                    else [],
+                    "layout_elements": (
+                        r.layout_elements if self.config.extract_layout else []
+                    ),
                     "tables": r.tables,
                     "processing_time_ms": r.processing_time_ms,
                     "success": r.success,
                     "error": r.error,
                 }
                 f.write(json.dumps(record) + "\n")
+        return jsonl_path
 
-        # Save layout in COCO format
-        if self.config.extract_layout:
-            coco_path = self.output_dir / f"layout_coco_batch_{batch_num:04d}.json"
-            coco_data = {
-                "info": {
-                    "description": f"Docling layout annotations for {self.config.dataset}",
-                    "batch": batch_num,
-                },
-                "images": [],
-                "annotations": [],
-                "categories": [
-                    {"id": 0, "name": "text"},
-                    {"id": 1, "name": "title"},
-                    {"id": 2, "name": "section_header"},
-                    {"id": 3, "name": "list_item"},
-                    {"id": 4, "name": "table"},
-                    {"id": 5, "name": "figure"},
-                    {"id": 6, "name": "caption"},
-                    {"id": 7, "name": "footnote"},
-                    {"id": 8, "name": "formula"},
-                    {"id": 9, "name": "page_header"},
-                    {"id": 10, "name": "page_footer"},
-                ],
-            }
+    def _save_coco_layout(
+        self,
+        results: list[ProcessingResult],
+        batch_num: int,
+    ) -> None:
+        """Save layout annotations in COCO format."""
+        coco_path = self.output_dir / f"layout_coco_batch_{batch_num:04d}.json"
+        coco_data: dict = {
+            "info": {
+                "description": f"Docling layout annotations for {self.config.dataset}",
+                "batch": batch_num,
+            },
+            "images": [],
+            "annotations": [],
+            "categories": [
+                {"id": i, "name": name}
+                for i, name in enumerate(
+                    [
+                        "text",
+                        "title",
+                        "section_header",
+                        "list_item",
+                        "table",
+                        "figure",
+                        "caption",
+                        "footnote",
+                        "formula",
+                        "page_header",
+                        "page_footer",
+                    ]
+                )
+            ],
+        }
 
-            ann_id = 0
-            for img_id, r in enumerate(results):
-                if r.success and r.layout_elements:
-                    coco_data["images"].append(
-                        {
-                            "id": img_id,
-                            "file_name": r.file_name,
-                            "file_path": r.file_path,
-                        }
-                    )
-                    for elem in r.layout_elements:
-                        ann = {
-                            "id": ann_id,
-                            "image_id": img_id,
-                            "category_id": self._type_to_category_id(
-                                elem.get("type", "text")
-                            ),
-                            "category_name": elem.get("type", "text"),
-                        }
-                        if "bbox" in elem:
-                            ann["bbox"] = elem["bbox"]
-                        if "text" in elem:
-                            ann["text"] = elem["text"][:500]  # Truncate long text
-                        coco_data["annotations"].append(ann)
-                        ann_id += 1
+        ann_id = 0
+        for img_id, r in enumerate(results):
+            if not (r.success and r.layout_elements):
+                continue
+            coco_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r.file_name,
+                    "file_path": r.file_path,
+                }
+            )
+            for elem in r.layout_elements:
+                ann: dict = {
+                    "id": ann_id,
+                    "image_id": img_id,
+                    "category_id": self._type_to_category_id(elem.get("type", "text")),
+                    "category_name": elem.get("type", "text"),
+                }
+                if "bbox" in elem:
+                    ann["bbox"] = elem["bbox"]
+                if "text" in elem:
+                    ann["text"] = elem["text"][:500]
+                coco_data["annotations"].append(ann)
+                ann_id += 1
 
-            with open(coco_path, "w") as f:
-                json.dump(coco_data, f, indent=2)
-
-        logger.info(f"Saved batch {batch_num}: {jsonl_path}")
+        with open(coco_path, "w") as f:
+            json.dump(coco_data, f, indent=2)
 
     def _type_to_category_id(self, type_name: str) -> int:
         """Map element type to category ID."""
@@ -318,6 +346,43 @@ class LocalDatasetProcessor:
         }
         return mapping.get(type_name.lower(), 0)
 
+    def _process_batch(
+        self,
+        batch_files: list[Path],
+        batch_num: int,
+        num_batches: int,
+    ) -> tuple[int, int, float]:
+        """Process a single batch and return (success_count, failed_count, time_ms)."""
+        logger.info(
+            f"=== Batch {batch_num + 1}/{num_batches} ({len(batch_files)} files) ==="
+        )
+
+        results = []
+        for i, file_path in enumerate(batch_files):
+            result = self.process_file(file_path)
+            results.append(result)
+
+            status = "+" if result.success else "x"
+            if (i + 1) % 10 == 0 or not result.success:
+                logger.info(
+                    f"  [{i + 1}/{len(batch_files)}] {status} "
+                    f"{file_path.name} ({result.processing_time_ms:.0f}ms)"
+                )
+
+        self.save_results(results, batch_num)
+
+        batch_success = sum(1 for r in results if r.success)
+        batch_time = sum(r.processing_time_ms for r in results)
+        batch_failed = len(results) - batch_success
+
+        avg_time = batch_time / len(results) if results else 0
+        logger.info(
+            f"Batch {batch_num + 1}: {batch_success} success, "
+            f"{batch_failed} failed, avg {avg_time:.0f}ms/file"
+        )
+
+        return batch_success, batch_failed, batch_time
+
     def process_dataset(self):
         """Process entire dataset."""
         logger.info(f"=== Processing dataset: {self.config.dataset} ===")
@@ -326,12 +391,10 @@ class LocalDatasetProcessor:
         logger.info(f"Extract text: {self.config.extract_text}")
         logger.info(f"Extract layout: {self.config.extract_layout}")
 
-        # Check API
         if not self.check_api_health():
             logger.error("Docling API not available. Exiting.")
             return
 
-        # List files
         all_files = self.list_image_files()
         if not all_files:
             logger.error("No image files found")
@@ -343,7 +406,6 @@ class LocalDatasetProcessor:
                 logger.info(f"  {f}")
             return
 
-        # Process in batches
         num_batches = (
             len(all_files) + self.config.batch_size - 1
         ) // self.config.batch_size
@@ -358,41 +420,16 @@ class LocalDatasetProcessor:
             end_idx = min(start_idx + self.config.batch_size, len(all_files))
             batch_files = all_files[start_idx:end_idx]
 
-            logger.info(
-                f"=== Batch {batch_num + 1}/{num_batches} ({len(batch_files)} files) ==="
-            )
+            s, f, t = self._process_batch(batch_files, batch_num, num_batches)
+            total_success += s
+            total_failed += f
+            total_time += t
 
-            results = []
-            for i, file_path in enumerate(batch_files):
-                result = self.process_file(file_path)
-                results.append(result)
-
-                status = "✓" if result.success else "✗"
-                if (i + 1) % 10 == 0 or not result.success:
-                    logger.info(
-                        f"  [{i + 1}/{len(batch_files)}] {status} {file_path.name} ({result.processing_time_ms:.0f}ms)"
-                    )
-
-            # Save batch results
-            self.save_results(results, batch_num)
-
-            # Stats
-            batch_success = sum(1 for r in results if r.success)
-            batch_time = sum(r.processing_time_ms for r in results)
-            total_success += batch_success
-            total_failed += len(results) - batch_success
-            total_time += batch_time
-
-            avg_time = batch_time / len(results) if results else 0
-            logger.info(
-                f"Batch {batch_num + 1}: {batch_success} success, {len(results) - batch_success} failed, avg {avg_time:.0f}ms/file"
-            )
-
-        # Final summary
         logger.info("=== Processing complete ===")
         logger.info(f"Total: {total_success} success, {total_failed} failed")
         logger.info(
-            f"Total time: {total_time / 1000:.1f}s, avg {total_time / len(all_files):.0f}ms/file"
+            f"Total time: {total_time / 1000:.1f}s, "
+            f"avg {total_time / len(all_files):.0f}ms/file"
         )
         logger.info(f"Output: {self.output_dir}")
 

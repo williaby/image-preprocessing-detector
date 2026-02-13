@@ -147,6 +147,46 @@ def create_symlinks(
     return created, skipped, missing
 
 
+def _handle_existing_target(target: Path, force: bool, dry_run: bool) -> None:
+    """Handle existing target directory: force-remove or skip."""
+    if not target.exists():
+        return
+    if force and not dry_run:
+        import shutil
+
+        logger.warning(f"Removing existing target directory: {target}")
+        shutil.rmtree(target)
+    else:
+        logger.info(f"Target directory exists: {target} (will skip existing)")
+
+
+def _print_symlink_results(
+    created: int,
+    skipped: int,
+    missing: int,
+    target: Path,
+    required_count: int,
+    dry_run: bool,
+) -> None:
+    """Log symlink creation results and verify."""
+    logger.info("=" * 80)
+    logger.info("Symlink Creation Complete!")
+    logger.info(f"  Created:  {created:,} symlinks")
+    if skipped > 0:
+        logger.info(f"  Skipped:  {skipped:,} (already exist)")
+    if missing > 0:
+        logger.warning(f"  Missing:  {missing:,} (source not found)")
+
+    if not dry_run:
+        actual_links = len(list(target.glob("COCO_*.jpg")))
+        logger.info(f"  Total files in target: {actual_links:,}")
+        if actual_links >= required_count:
+            logger.info("  All required images available!")
+        else:
+            logger.warning(f"  Still missing: {required_count - actual_links:,} images")
+    logger.info("=" * 80)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Create symlinks for COCO-Text images in flat directory structure"
@@ -181,7 +221,6 @@ def main():
     )
     args = parser.parse_args()
 
-    # Validate inputs
     if not args.source.exists():
         logger.error(f"Source directory not found: {args.source}")
         sys.exit(1)
@@ -193,62 +232,27 @@ def main():
     if args.dry_run:
         logger.info("DRY RUN MODE - no files will be modified")
 
-    # Load required images from annotations
     required = load_required_images(args.annotation)
-
-    # Find source images
     source_images = find_source_images(args.source)
 
-    # Check coverage
-    available = len([f for f in required if f in source_images])
+    available = sum(1 for f in required if f in source_images)
     logger.info(f"Coverage: {available:,}/{len(required):,} images available")
-
     if available < len(required):
-        missing_count = len(required) - available
-        logger.warning(f"{missing_count:,} images from annotations not found in source")
+        logger.warning(
+            f"{len(required) - available:,} images from annotations not found in source"
+        )
 
-    # Handle existing target directory
-    if args.target.exists():
-        if args.force:
-            if not args.dry_run:
-                import shutil
+    _handle_existing_target(args.target, args.force, args.dry_run)
 
-                logger.warning(f"Removing existing target directory: {args.target}")
-                shutil.rmtree(args.target)
-        else:
-            logger.info(f"Target directory exists: {args.target} (will skip existing)")
-
-    # Create symlinks
     created, skipped, missing = create_symlinks(
         required, source_images, args.target, args.dry_run
     )
 
-    # Report results
-    logger.info("=" * 80)
-    logger.info("Symlink Creation Complete!")
-    logger.info(f"  ✅ Created:  {created:,} symlinks")
-    if skipped > 0:
-        logger.info(f"  ⏭️  Skipped:  {skipped:,} (already exist)")
-    if missing > 0:
-        logger.warning(f"  ❌ Missing:  {missing:,} (source not found)")
+    _print_symlink_results(
+        created, skipped, missing, args.target, len(required), args.dry_run
+    )
 
-    # Verify
-    if not args.dry_run:
-        actual_links = len(list(args.target.glob("COCO_*.jpg")))
-        logger.info(f"  📁 Total files in target: {actual_links:,}")
-
-        if actual_links >= len(required):
-            logger.info("  ✅ All required images available!")
-        else:
-            missing_final = len(required) - actual_links
-            logger.warning(f"  ⚠️  Still missing: {missing_final:,} images")
-    logger.info("=" * 80)
-
-    if missing > 0:
-        sys.exit(1)
-    else:
-        logger.info("Success!")
-        sys.exit(0)
+    sys.exit(1 if missing > 0 else 0)
 
 
 if __name__ == "__main__":

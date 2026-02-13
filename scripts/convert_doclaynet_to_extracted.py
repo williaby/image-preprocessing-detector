@@ -186,6 +186,36 @@ def save_batch(
         json.dump(layout_data, f, indent=2)
 
 
+def _extract_layout_annotations(coco_entry: dict | None) -> tuple[list[dict], str]:
+    """Extract layout annotations and split from a COCO index entry.
+
+    Args:
+        coco_entry: COCO index entry for an image, or None if not indexed.
+
+    Returns:
+        Tuple of (layout_annotations list, split name).
+    """
+    if coco_entry is None:
+        return [], "unknown"
+
+    split = coco_entry.get("split", "unknown")
+    layout_annotations = []
+    for ann in coco_entry.get("annotations", []):
+        bbox = ann.get("bbox", [])
+        if len(bbox) != 4:
+            continue
+        layout_annotations.append(
+            {
+                "bbox": [float(v) for v in bbox],
+                "coord_origin": "top-left",
+                "category_id": ann.get("category_id", 0),
+                "area": ann.get("area", 0.0),
+                "iscrowd": ann.get("iscrowd", 0),
+            }
+        )
+    return layout_annotations, split
+
+
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
     json_dir = base_dir / "ground_truth" / "json"
@@ -200,12 +230,10 @@ def main() -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Step 1: Load COCO layout annotations (indexed by filename)
     print("Loading COCO layout annotations...")
     coco_index = load_coco_annotations(coco_dir)
     print(f"  Total indexed: {len(coco_index)} images with layout annotations")
 
-    # Step 2: Process per-document JSON files for text
     json_files = sorted(json_dir.glob("*.json"))
     print(f"\nFound {len(json_files)} per-document JSON files")
     print(f"Output to {output_dir}/")
@@ -227,37 +255,15 @@ def main() -> None:
 
         cells = doc_data.get("cells", [])
         metadata = doc_data.get("metadata", {})
-
-        # Image filename = JSON filename with .png extension
         image_name = json_path.stem + ".png"
 
-        # Reconstruct full page text from cell-level words
         text = reconstruct_page_text(cells)
         total_text_chars += len(text)
 
-        # Get semantic layout annotations from COCO data
-        layout_annotations: list[dict] = []
         coco_entry = coco_index.get(image_name)
-        split = "unknown"
-
+        layout_annotations, split = _extract_layout_annotations(coco_entry)
         if coco_entry:
             total_with_layout += 1
-            split = coco_entry.get("split", "unknown")
-            for ann in coco_entry.get("annotations", []):
-                bbox = ann.get("bbox", [])
-                if len(bbox) != 4:
-                    continue
-
-                layout_annotations.append(
-                    {
-                        "bbox": [float(v) for v in bbox],
-                        "coord_origin": "top-left",
-                        "category_id": ann.get("category_id", 0),
-                        "area": ann.get("area", 0.0),
-                        "iscrowd": ann.get("iscrowd", 0),
-                    }
-                )
-
         total_annotations += len(layout_annotations)
 
         batch_results.append(
@@ -284,7 +290,6 @@ def main() -> None:
             batch_results = []
             batch_num += 1
 
-    # Save final partial batch
     if batch_results:
         if not dry_run:
             save_batch(batch_results, batch_num, output_dir, "doclaynet")

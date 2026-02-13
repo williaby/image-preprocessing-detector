@@ -69,6 +69,34 @@ def download_image(
     return (index, False, "max retries exceeded")
 
 
+def _print_failures(failed: list[tuple[int, str]]) -> None:
+    """Print summary of failed downloads."""
+    if not failed:
+        return
+    print(f"\nFailed downloads ({len(failed)}):")
+    for idx, msg in failed[:10]:
+        print(f"  - {idx}.png: {msg}")
+    if len(failed) > 10:
+        print(f"  ... and {len(failed) - 10} more")
+
+
+def _write_download_manifest(
+    output_dir: Path, final_count: int, failed: list[tuple[int, str]]
+) -> None:
+    """Write download summary manifest file."""
+    manifest_path = output_dir.parent / "download_manifest.txt"
+    with open(manifest_path, "w") as f:
+        f.write("OCR-Quality Dataset Download\n")
+        f.write("============================\n")
+        f.write(f"Total images: {TOTAL_IMAGES}\n")
+        f.write(f"Downloaded: {final_count}\n")
+        f.write(f"Failed: {len(failed)}\n")
+        if failed:
+            f.write("\nFailed files:\n")
+            f.writelines(f"  {idx}.png: {msg}\n" for idx, msg in failed)
+    print(f"Manifest written to {manifest_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Download OCR-Quality dataset images")
     parser.add_argument(
@@ -123,27 +151,8 @@ def main():
     final_count = sum(1 for f in output_dir.glob("*.png") if f.stat().st_size > 0)
     print(f"\nDownload complete: {final_count}/{TOTAL_IMAGES} images")
 
-    if failed:
-        print(f"\nFailed downloads ({len(failed)}):")
-        for idx, msg in failed[:10]:
-            print(f"  - {idx}.png: {msg}")
-        if len(failed) > 10:
-            print(f"  ... and {len(failed) - 10} more")
-
-    # Write manifest
-    manifest_path = output_dir.parent / "download_manifest.txt"
-    with open(manifest_path, "w") as f:
-        f.write("OCR-Quality Dataset Download\n")
-        f.write("============================\n")
-        f.write(f"Total images: {TOTAL_IMAGES}\n")
-        f.write(f"Downloaded: {final_count}\n")
-        f.write(f"Failed: {len(failed)}\n")
-        if failed:
-            f.write("\nFailed files:\n")
-            for idx, msg in failed:
-                f.write(f"  {idx}.png: {msg}\n")
-
-    print(f"Manifest written to {manifest_path}")
+    _print_failures(failed)
+    _write_download_manifest(output_dir, final_count, failed)
 
 
 if __name__ == "__main__":

@@ -250,6 +250,124 @@ def is_major_section_header(header_text: str) -> bool:
     return False
 
 
+def _save_current_dataset(
+    current_dataset: str | None,
+    current_lines: list[str],
+    start_line: int,
+    end_line: int,
+    datasets: list[tuple[str, str, int, int]],
+) -> None:
+    """Save the current dataset to the datasets list if it exists.
+
+    Args:
+        current_dataset: Current canonical dataset name, or None.
+        current_lines: Accumulated lines for the current dataset.
+        start_line: Starting line number.
+        end_line: Ending line number.
+        datasets: Datasets list to append to.
+    """
+    if current_dataset and current_lines:
+        content = "".join(current_lines)
+        datasets.append((current_dataset, content, start_line, end_line))
+
+
+def _start_new_dataset(
+    title: str,
+    line: str,
+    line_num: int,
+    skipped_datasets: list[str],
+) -> tuple[str | None, list[str], int]:
+    """Normalize a header title and start a new dataset section.
+
+    Args:
+        title: Raw section title text.
+        line: Full header line to include in content.
+        line_num: Current line number.
+        skipped_datasets: List to append skipped names to.
+
+    Returns:
+        Tuple of (canonical_name or None, initial lines list, start_line).
+    """
+    canonical_name = normalize_dataset_name(title)
+    if canonical_name is None:
+        skipped_datasets.append(title)
+        return None, [], line_num
+    return canonical_name, [line], line_num
+
+
+def _handle_h3_header(
+    section_title: str,
+    line: str,
+    line_num: int,
+    current_dataset: str | None,
+    current_lines: list[str],
+    start_line: int,
+    datasets: list[tuple[str, str, int, int]],
+    skipped_datasets: list[str],
+) -> tuple[str | None, list[str], int]:
+    """Handle a ### level header line.
+
+    Args:
+        section_title: Header text after ###.
+        line: Full header line.
+        line_num: Current line number.
+        current_dataset: Current dataset name being accumulated.
+        current_lines: Current dataset lines.
+        start_line: Current dataset start line.
+        datasets: Datasets list to append to.
+        skipped_datasets: Skipped names list.
+
+    Returns:
+        Tuple of (new current_dataset, new current_lines, new start_line).
+    """
+    if is_major_section_header(section_title):
+        _save_current_dataset(
+            current_dataset, current_lines, start_line, line_num - 1, datasets
+        )
+        return None, [], start_line
+
+    _save_current_dataset(
+        current_dataset, current_lines, start_line, line_num - 1, datasets
+    )
+    return _start_new_dataset(section_title, line, line_num, skipped_datasets)
+
+
+def _handle_h4_header(
+    dataset_name: str,
+    line: str,
+    line_num: int,
+    current_dataset: str | None,
+    current_lines: list[str],
+    start_line: int,
+    datasets: list[tuple[str, str, int, int]],
+    skipped_datasets: list[str],
+) -> tuple[str | None, list[str], int]:
+    """Handle a #### level header line.
+
+    Args:
+        dataset_name: Header text after ####.
+        line: Full header line.
+        line_num: Current line number.
+        current_dataset: Current dataset name being accumulated.
+        current_lines: Current dataset lines.
+        start_line: Current dataset start line.
+        datasets: Datasets list to append to.
+        skipped_datasets: Skipped names list.
+
+    Returns:
+        Tuple of (new current_dataset, new current_lines, new start_line).
+    """
+    if is_subsection_header(dataset_name):
+        if current_dataset:
+            current_lines.append(line)
+        return current_dataset, current_lines, start_line
+
+    _save_current_dataset(
+        current_dataset, current_lines, start_line, line_num - 1, datasets
+    )
+    return _start_new_dataset(dataset_name, line, line_num, skipped_datasets)
+
+
 def extract_datasets(
     catalog_path: Path,
 ) -> tuple[list[tuple[str, str, int, int]], list[str]]:
@@ -263,82 +381,41 @@ def extract_datasets(
     with open(catalog_path, encoding="utf-8") as f:
         lines = f.readlines()
 
-    datasets = []
-    current_dataset = None
-    current_lines = []
+    datasets: list[tuple[str, str, int, int]] = []
+    current_dataset: str | None = None
+    current_lines: list[str] = []
     start_line = 0
-    skipped_datasets = []
+    skipped_datasets: list[str] = []
 
     for i, line in enumerate(lines, 1):
-        # Look for dataset headers (### or #### {Dataset Name})
         if line.startswith("### "):
-            section_title = line[4:].strip()
-
-            # Check if this is a major section boundary (skip it, don't reset dataset)
-            if is_major_section_header(section_title):
-                # Save current dataset if exists
-                if current_dataset and current_lines:
-                    content = "".join(current_lines)
-                    datasets.append((current_dataset, content, start_line, i - 1))
-                    current_dataset = None
-                    current_lines = []
-                # Don't start a new dataset for category headers, just skip
-                continue
-
-            # Otherwise, this is a dataset at ### level
-            # Save previous dataset if exists
-            if current_dataset:
-                content = "".join(current_lines)
-                datasets.append((current_dataset, content, start_line, i - 1))
-
-            # Start new dataset
-            canonical_name = normalize_dataset_name(section_title)
-            if canonical_name is None:
-                # Skip this dataset
-                skipped_datasets.append(section_title)
-                current_dataset = None
-                current_lines = []
-                continue
-            current_dataset = canonical_name
-            current_lines = [line]
-            start_line = i
-
+            current_dataset, current_lines, start_line = _handle_h3_header(
+                line[4:].strip(),
+                line,
+                i,
+                current_dataset,
+                current_lines,
+                start_line,
+                datasets,
+                skipped_datasets,
+            )
         elif line.startswith("#### "):
-            dataset_name = line[5:].strip()
-
-            # Check if this is a subsection header (not a dataset)
-            if is_subsection_header(dataset_name):
-                # This is a subsection within a dataset, just accumulate
-                if current_dataset:
-                    current_lines.append(line)
-                continue
-
-            # This is a new dataset header at #### level
-            # Save previous dataset if exists
-            if current_dataset:
-                content = "".join(current_lines)
-                datasets.append((current_dataset, content, start_line, i - 1))
-
-            # Start new dataset
-            canonical_name = normalize_dataset_name(dataset_name)
-            if canonical_name is None:
-                # Skip this dataset (e.g., "Arabic OCR Dataset" - not in canonical 51)
-                skipped_datasets.append(dataset_name)
-                current_dataset = None
-                current_lines = []
-                continue
-            current_dataset = canonical_name
-            current_lines = [line]
-            start_line = i
-
-        # Accumulate lines for current dataset
+            current_dataset, current_lines, start_line = _handle_h4_header(
+                line[5:].strip(),
+                line,
+                i,
+                current_dataset,
+                current_lines,
+                start_line,
+                datasets,
+                skipped_datasets,
+            )
         elif current_dataset:
             current_lines.append(line)
 
-    # Save last dataset
-    if current_dataset and current_lines:
-        content = "".join(current_lines)
-        datasets.append((current_dataset, content, start_line, len(lines)))
+    _save_current_dataset(
+        current_dataset, current_lines, start_line, len(lines), datasets
+    )
 
     return datasets, skipped_datasets
 

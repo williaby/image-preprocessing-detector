@@ -175,6 +175,71 @@ def check_split_leakage(
 # ---------------------------------------------------------------------------
 # Classical IQA
 # ---------------------------------------------------------------------------
+def _extract_detector_fields(name: str, result: Any) -> dict[str, Any]:
+    """Extract result fields from a single IQA detector into a flat dict.
+
+    Args:
+        name: Detector name (e.g. "skew", "blur").
+        result: Detection result object.
+
+    Returns:
+        Dict of field-name -> value pairs for the detector.
+    """
+    _extractors: dict[str, Any] = {
+        "skew": lambda r: {
+            "skew_detected": r.is_skewed,
+            "skew_angle": round(r.angle, 4),
+            "skew_confidence": round(r.confidence, 4),
+            "skew_severity": r.severity.value,
+        },
+        "blur": lambda r: {
+            "blur_detected": r.is_blurred,
+            "blur_score": round(r.blur_score, 4),
+            "blur_confidence": round(r.confidence, 4),
+            "blur_severity": r.severity.value,
+        },
+        "noise": lambda r: {
+            "noise_detected": r.is_noisy,
+            "noise_level": round(r.noise_sigma, 4),
+            "noise_confidence": round(r.confidence, 4),
+            "noise_severity": r.severity.value,
+        },
+        "contrast": lambda r: {
+            "contrast_issue": r.is_low_contrast,
+            "contrast_score": round(r.score, 4),
+            "contrast_confidence": round(r.confidence, 4),
+            "contrast_severity": r.severity.value,
+        },
+        "illumination": lambda r: {
+            "illumination_issue": r.has_issues,
+            "illumination_uniformity": round(r.score, 4),
+            "illumination_confidence": round(r.confidence, 4),
+            "illumination_severity": r.severity.value,
+        },
+        "jpeg_blockiness": lambda r: {
+            "jpeg_blockiness_detected": r.has_artifacts,
+            "jpeg_blockiness_score": round(r.blockiness_score, 4),
+            "jpeg_blockiness_confidence": round(r.confidence, 4),
+            "jpeg_blockiness_severity": r.severity.value,
+        },
+        "binarization": lambda r: {
+            "binarization_quality": round(r.binarization_score, 4),
+            "binarization_confidence": round(r.confidence, 4),
+            "binarization_severity": r.severity.value,
+        },
+        "bleed_through": lambda r: {
+            "bleed_through_detected": r.bleed_through_detected,
+            "bleed_through_score": round(r.severity, 4),
+            "bleed_through_confidence": round(r.confidence, 4),
+            "bleed_through_severity": r.severity_level.value,
+        },
+    }
+    extractor = _extractors.get(name)
+    if extractor is None:
+        return {}
+    return extractor(result)
+
+
 def run_classical_iqa_batch(
     metadata: dict[str, Any],
     dataset_dir: Path,
@@ -266,70 +331,7 @@ def run_classical_iqa_batch(
         for name, detector in detectors.items():
             try:
                 result = detector.detect(img)
-                if name == "skew":
-                    sample_results["skew_detected"] = result.is_skewed
-                    sample_results["skew_angle"] = round(result.angle, 4)
-                    sample_results["skew_confidence"] = round(result.confidence, 4)
-                    sample_results["skew_severity"] = result.severity.value
-                elif name == "blur":
-                    sample_results["blur_detected"] = result.is_blurred
-                    sample_results["blur_score"] = round(result.blur_score, 4)
-                    sample_results["blur_confidence"] = round(result.confidence, 4)
-                    sample_results["blur_severity"] = result.severity.value
-                elif name == "noise":
-                    sample_results["noise_detected"] = result.is_noisy
-                    sample_results["noise_level"] = round(result.noise_sigma, 4)
-                    sample_results["noise_confidence"] = round(result.confidence, 4)
-                    sample_results["noise_severity"] = result.severity.value
-                elif name == "contrast":
-                    sample_results["contrast_issue"] = result.is_low_contrast
-                    sample_results["contrast_score"] = round(result.score, 4)
-                    sample_results["contrast_confidence"] = round(result.confidence, 4)
-                    sample_results["contrast_severity"] = result.severity.value
-                elif name == "illumination":
-                    sample_results["illumination_issue"] = result.has_issues
-                    sample_results["illumination_uniformity"] = round(
-                        result.score,
-                        4,
-                    )
-                    sample_results["illumination_confidence"] = round(
-                        result.confidence,
-                        4,
-                    )
-                    sample_results["illumination_severity"] = result.severity.value
-                elif name == "jpeg_blockiness":
-                    sample_results["jpeg_blockiness_detected"] = result.has_artifacts
-                    sample_results["jpeg_blockiness_score"] = round(
-                        result.blockiness_score,
-                        4,
-                    )
-                    sample_results["jpeg_blockiness_confidence"] = round(
-                        result.confidence,
-                        4,
-                    )
-                    sample_results["jpeg_blockiness_severity"] = result.severity.value
-                elif name == "binarization":
-                    sample_results["binarization_quality"] = round(
-                        result.binarization_score,
-                        4,
-                    )
-                    sample_results["binarization_confidence"] = round(
-                        result.confidence,
-                        4,
-                    )
-                    sample_results["binarization_severity"] = result.severity.value
-                elif name == "bleed_through":
-                    sample_results["bleed_through_detected"] = (
-                        result.bleed_through_detected
-                    )
-                    sample_results["bleed_through_score"] = round(result.severity, 4)
-                    sample_results["bleed_through_confidence"] = round(
-                        result.confidence,
-                        4,
-                    )
-                    sample_results["bleed_through_severity"] = (
-                        result.severity_level.value
-                    )
+                sample_results.update(_extract_detector_fields(name, result))
             except Exception:
                 log.exception("IQA %s failed for %s", name, filename)
                 sample_results[f"{name}_error"] = True
@@ -886,6 +888,471 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# integrate_sample helpers (private)
+# ---------------------------------------------------------------------------
+def _resolve_llm_for_res(
+    filename: str,
+    is_res: bool,
+    llm: dict[str, Any] | None,
+    llm_index: dict[str, dict[str, Any]],
+    res_to_ori: dict[str, str],
+) -> dict[str, Any] | None:
+    """Resolve the LLM enrichment dict, transferring from ori/ for res/ images."""
+    if llm:
+        return llm
+    if is_res:
+        ori_filename = res_to_ori.get(filename)
+        return llm_index.get(ori_filename) if ori_filename else None
+    return None
+
+
+def _integrate_split(original_path: str) -> str:
+    """Detect split from the original file path (D01)."""
+    path_lower = original_path.lower()
+    for split_name in ["train", "val", "test"]:
+        if f"/{split_name}/" in path_lower or path_lower.startswith(f"{split_name}/"):
+            return split_name
+    return "unknown"
+
+
+def _integrate_capture_method(is_ori: bool, is_res: bool) -> dict[str, Any]:
+    """Determine capture method fields (D02)."""
+    if is_ori:
+        return {
+            "capture_method": "camera_smartphone",
+            "capture_confidence": 0.95,
+            "capture_detection_method": "parser_dociq_paper",
+        }
+    if is_res:
+        return {
+            "capture_method": "synthetic",
+            "capture_confidence": 1.0,
+            "capture_detection_method": "parser_dociq_paper",
+        }
+    return {
+        "capture_method": "unknown",
+        "capture_confidence": 0.5,
+        "capture_detection_method": "dataset_config",
+    }
+
+
+def _integrate_domain(
+    llm: dict[str, Any] | None,
+    is_res: bool,
+    filename: str,
+    llm_index: dict[str, dict[str, Any]],
+    res_to_ori: dict[str, str],
+) -> dict[str, Any]:
+    """Integrate domain fields (D05)."""
+    if llm:
+        return {
+            "domain_level1": llm["domain_level1"],
+            "domain_confidence": llm["domain_confidence"],
+            "domain_detection_method": "llm_vision",
+            "domain_content_type": llm.get("content_type", ""),
+        }
+    if is_res:
+        ori_filename = res_to_ori.get(filename)
+        ori_llm = llm_index.get(ori_filename) if ori_filename else None
+        if ori_llm:
+            return {
+                "domain_level1": ori_llm["domain_level1"],
+                "domain_confidence": round(ori_llm["domain_confidence"] * 0.9, 4),
+                "domain_detection_method": "llm_vision_transferred_from_ori",
+                "domain_content_type": ori_llm.get("content_type", ""),
+            }
+    return {
+        "domain_level1": "UNK",
+        "domain_confidence": 0.3,
+        "domain_detection_method": "none",
+    }
+
+
+def _integrate_language(
+    llm: dict[str, Any] | None,
+    lang: dict[str, Any] | None,
+    is_res: bool,
+    filename: str,
+    lang_index: dict[str, dict[str, Any]],
+    llm_index: dict[str, dict[str, Any]],
+    res_to_ori: dict[str, str],
+) -> dict[str, Any]:
+    """Integrate language and script fields (D04, D06)."""
+    _default = {
+        "iso639_language": "und",
+        "iso15924_script": "Zyyy",
+        "language_confidence": 0.0,
+        "text_scope_detection_method": "none",
+    }
+
+    if lang and lang.get("confidence", 0) >= 0.5:
+        return {
+            "iso639_language": lang["language"],
+            "iso15924_script": lang["script"],
+            "language_confidence": lang["confidence"],
+            "text_scope_detection_method": "openlid_v2",
+        }
+    if llm:
+        return {
+            "iso639_language": llm.get("iso639_language", "und"),
+            "iso15924_script": llm.get("iso15924_script", "Zyyy"),
+            "language_confidence": 0.8,
+            "text_scope_detection_method": "llm_vision",
+        }
+    if lang:
+        return {
+            "iso639_language": lang["language"],
+            "iso15924_script": lang["script"],
+            "language_confidence": lang["confidence"],
+            "text_scope_detection_method": "openlid_v2_low_confidence",
+        }
+    if not is_res:
+        return _default
+
+    # Transfer language from ori counterpart via CSV mapping
+    ori_filename = res_to_ori.get(filename)
+    ori_lang = lang_index.get(ori_filename) if ori_filename else None
+    ori_llm = llm_index.get(ori_filename) if ori_filename else None
+
+    if ori_lang and ori_lang.get("confidence", 0) >= 0.5:
+        return {
+            "iso639_language": ori_lang["language"],
+            "iso15924_script": ori_lang["script"],
+            "language_confidence": round(ori_lang["confidence"] * 0.9, 4),
+            "text_scope_detection_method": "openlid_v2_transferred_from_ori",
+        }
+    if ori_llm:
+        return {
+            "iso639_language": ori_llm.get("iso639_language", "und"),
+            "iso15924_script": ori_llm.get("iso15924_script", "Zyyy"),
+            "language_confidence": 0.7,
+            "text_scope_detection_method": "llm_vision_transferred_from_ori",
+        }
+    return _default
+
+
+def _integrate_layout(
+    filename: str,
+    egret_index: dict[str, list[dict[str, Any]]] | None,
+    layout_index: dict[str, list[dict[str, Any]]],
+    v1_data: dict[str, Any],
+    width: int,
+    height: int,
+) -> dict[str, Any]:
+    """Integrate layout detections with 3-tier priority (D07, D08)."""
+    egret_dets = (egret_index or {}).get(filename, [])
+    layout_dets = layout_index.get(filename, [])
+
+    data: dict[str, Any] = {}
+
+    if egret_dets:
+        data.update(_layout_from_egret(egret_dets))
+    elif layout_dets:
+        data.update(_layout_from_docling(layout_dets))
+    else:
+        data.update(_layout_from_v1(v1_data))
+
+    # Derive layout_category and text_area_ratio
+    active_dets = data.get("layout_detections", [])
+    if active_dets:
+        layout_cat, layout_cat_conf = derive_layout_category(active_dets)
+        data["layout_category"] = layout_cat
+        data["layout_category_confidence"] = layout_cat_conf
+        data["text_area_ratio"] = compute_text_area_ratio(active_dets, width, height)
+    else:
+        data["layout_category"] = "unknown"
+        data["layout_category_confidence"] = 0.0
+        data["text_area_ratio"] = 0.0
+
+    return data
+
+
+def _layout_from_egret(egret_dets: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build layout fields from egret-xlarge detections."""
+    n_dets = len(egret_dets)
+    high_conf = sum(1 for d in egret_dets if d.get("confidence", 0.9) >= 0.5)
+    calibrated_conf = 0.70 + 0.15 * (high_conf / n_dets) if n_dets else 0.60
+    flags = derive_content_flags(egret_dets)
+    return {
+        "layout_detections": egret_dets,
+        "layout_source": "egret_xlarge",
+        "layout_confidence": round(calibrated_conf, 4),
+        "layout_detection_count": n_dets,
+        "has_table": flags["has_table"],
+        "has_formula": flags["has_formula"],
+        "has_figure": flags["has_figure"],
+        "has_code": flags["has_code"],
+        "content_flags_tier": "tier_2_model",
+        "content_flags_source": "egret_xlarge",
+        "content_flags_confidence": round(calibrated_conf, 4),
+    }
+
+
+def _layout_from_docling(layout_dets: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build layout fields from Docling GPU detections."""
+    flags = derive_content_flags(layout_dets)
+    return {
+        "layout_detections": layout_dets,
+        "layout_source": "docling_gpu",
+        "layout_confidence": 0.85,
+        "layout_detection_count": len(layout_dets),
+        "has_table": flags["has_table"],
+        "has_formula": flags["has_formula"],
+        "has_figure": flags["has_figure"],
+        "has_code": flags["has_code"],
+        "content_flags_tier": "tier_2_model",
+        "content_flags_source": "docling_gpu",
+        "content_flags_confidence": 0.85,
+    }
+
+
+def _layout_from_v1(v1_data: dict[str, Any]) -> dict[str, Any]:
+    """Build layout fields from v1 (DocLayout-YOLO) fallback."""
+    v1_layout = v1_data.get("layout_detections", [])
+    source = v1_data.get("content_flags_source", "doclayout_yolo")
+    flags = derive_content_flags(v1_layout)
+    return {
+        "layout_detections": v1_layout,
+        "layout_source": source,
+        "layout_confidence": 0.7,
+        "layout_detection_count": len(v1_layout),
+        "has_table": flags["has_table"],
+        "has_formula": flags["has_formula"],
+        "has_figure": flags["has_figure"],
+        "has_code": flags["has_code"],
+        "content_flags_tier": "tier_2_model",
+        "content_flags_source": source,
+        "content_flags_confidence": 0.7,
+    }
+
+
+def _override_content_flags_from_llm(
+    data: dict[str, Any],
+    llm_for_flags: dict[str, Any] | None,
+) -> None:
+    """Override content flags with LLM data (more reliable for handwriting)."""
+    if not llm_for_flags:
+        data["has_handwriting"] = data.get("has_handwriting", False)
+        return
+
+    data["has_handwriting"] = (
+        True
+        if llm_for_flags.get("has_handwriting")
+        else data.get("has_handwriting", False)
+    )
+    if llm_for_flags.get("has_table"):
+        data["has_table"] = True
+    if llm_for_flags.get("has_formula"):
+        data["has_formula"] = True
+    if llm_for_flags.get("has_figure"):
+        data["has_figure"] = True
+    if llm_for_flags.get("has_signature"):
+        data["has_signature"] = True
+
+
+def _integrate_text_content(
+    ocr: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Integrate text content and statistics from OCR (D14, D15)."""
+    data: dict[str, Any] = {}
+
+    if ocr and ocr.get("success") and ocr.get("text"):
+        data["text_content"] = ocr["text"]
+        data["text_content_confidence"] = ocr.get("confidence", 0.8)
+        data["text_content_source"] = "docling_gpu_ocr"
+        data["text_statistics"] = compute_text_statistics(ocr["text"])
+    else:
+        data["text_content"] = ""
+        data["text_content_confidence"] = 0.0
+        data["text_content_source"] = "none"
+        data["text_statistics"] = compute_text_statistics("")
+
+    text_stats = data["text_statistics"]
+    if text_stats["has_content"]:
+        data["text_quality_confidence"] = min(data["text_content_confidence"], 0.8)
+        data["text_quality_method"] = "docling_ocr"
+        data["text_quality_provenance_tier"] = "tier_2_model"
+    else:
+        data["text_quality_confidence"] = 0.0
+        data["text_quality_method"] = "none"
+        data["text_quality_provenance_tier"] = "tier_3_heuristic"
+
+    return data
+
+
+def _integrate_quality_scores(
+    mos: dict[str, float] | None,
+    is_ori: bool,
+    is_res: bool,
+) -> dict[str, Any]:
+    """Integrate MOS quality scores (D09)."""
+    if mos and is_res:
+        return {
+            "quality_overall_mos": mos["overall"],
+            "quality_sharpness_mos": mos["sharpness"],
+            "quality_color_fidelity_mos": mos["color_fidelity"],
+            "quality_overall_normalized": mos_to_normalized(mos["overall"]),
+            "quality_tier": mos_to_quality_tier(mos["overall"]),
+            "quality_scores_confidence": 0.95,
+            "quality_scores_source": "human_mos_itur_bt500",
+        }
+    if is_ori:
+        return {
+            "quality_overall_mos": None,
+            "quality_sharpness_mos": None,
+            "quality_color_fidelity_mos": None,
+            "quality_scores_confidence": 0.0,
+            "quality_scores_source": "none",
+            "quality_mos_note": (
+                "ori/ images are source degraded images without MOS scores"
+            ),
+        }
+    return {
+        "quality_scores_confidence": 0.0,
+        "quality_scores_source": "none",
+    }
+
+
+def _integrate_geometric(
+    llm_for_geo: dict[str, Any] | None,
+    llm: dict[str, Any] | None,
+    width: int,
+    height: int,
+) -> dict[str, Any]:
+    """Integrate geometric / orientation properties (D10)."""
+    if llm_for_geo and llm_for_geo.get("orientation"):
+        orientation_str = llm_for_geo["orientation"]
+        orientation_class = 90 if orientation_str == "landscape" else 0
+        return {
+            "orientation_class": orientation_class,
+            "geometric_confidence": 0.85 if llm else 0.75,
+            "geometric_source": (
+                "llm_vision" if llm else "llm_vision_transferred_from_ori"
+            ),
+        }
+    # Default: assume portrait based on dimensions
+    return {
+        "orientation_class": 0 if width < height else 90,
+        "geometric_confidence": 0.6,
+        "geometric_source": "dimension_heuristic",
+    }
+
+
+def _integrate_degradation(is_ori: bool) -> dict[str, Any]:
+    """Integrate physical degradation info (D11)."""
+    if is_ori:
+        return {
+            "physical_degradation_present": True,
+            "physical_degradation_types": ["unknown_single_distortion"],
+            "physical_degradation_note": (
+                "Each DIQA-5000 ori/ image has exactly ONE distortion type "
+                "(shadow, occlusion, blur, creases, or moire) but the per-image "
+                "assignment is not provided in the public dataset. "
+                "100 images per distortion type across 500 ori/ images."
+            ),
+            "physical_degradation_confidence": 0.5,
+        }
+    return {
+        "physical_degradation_present": False,
+        "physical_degradation_types": [],
+        "physical_degradation_confidence": 0.9,
+    }
+
+
+def _integrate_handwriting(
+    llm_for_hw: dict[str, Any] | None,
+    llm: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Integrate handwriting assessment (D16)."""
+    if llm_for_hw:
+        return {
+            "handwriting_present": llm_for_hw.get("has_handwriting", False),
+            "handwriting_confidence": 0.85 if llm else 0.75,
+            "handwriting_source": (
+                "llm_vision" if llm else "llm_vision_transferred_from_ori"
+            ),
+        }
+    return {
+        "handwriting_present": False,
+        "handwriting_confidence": 0.5,
+        "handwriting_source": "none",
+    }
+
+
+def _integrate_llm_scores(
+    llm_for_scores: dict[str, Any] | None,
+    llm: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Integrate raw LLM enrichment scores (D18)."""
+    if llm_for_scores:
+        return {
+            "llm_domain_level1": llm_for_scores.get("domain_level1"),
+            "llm_domain_confidence": llm_for_scores.get("domain_confidence"),
+            "llm_language": llm_for_scores.get("iso639_language"),
+            "llm_script": llm_for_scores.get("iso15924_script"),
+            "llm_content_type": llm_for_scores.get("content_type"),
+            "llm_reasoning": llm_for_scores.get("reasoning", "")[:500],
+            "llm_model": llm_for_scores.get("model_used"),
+            "llm_data_available": True,
+            "llm_data_is_direct": llm is not None,
+        }
+    return {
+        "llm_data_available": False,
+        "llm_data_is_direct": False,
+    }
+
+
+def _integrate_classical_iqa(iqa: dict[str, Any] | None) -> dict[str, Any]:
+    """Integrate classical IQA scores into prefixed fields (D20)."""
+    if not iqa:
+        return {}
+
+    _iqa_field_keys = [
+        "skew_detected",
+        "skew_angle",
+        "skew_confidence",
+        "skew_severity",
+        "blur_detected",
+        "blur_score",
+        "blur_confidence",
+        "blur_severity",
+        "noise_detected",
+        "noise_level",
+        "noise_confidence",
+        "noise_severity",
+        "contrast_issue",
+        "contrast_score",
+        "contrast_confidence",
+        "contrast_severity",
+        "illumination_issue",
+        "illumination_uniformity",
+        "illumination_confidence",
+        "illumination_severity",
+        "jpeg_blockiness_detected",
+        "jpeg_blockiness_score",
+        "jpeg_blockiness_confidence",
+        "jpeg_blockiness_severity",
+        "binarization_quality",
+        "binarization_confidence",
+        "binarization_severity",
+        "bleed_through_detected",
+        "bleed_through_score",
+        "bleed_through_confidence",
+        "bleed_through_severity",
+    ]
+    data: dict[str, Any] = {
+        f"classical_iqa_{key}": iqa.get(key) for key in _iqa_field_keys
+    }
+    data["classical_iqa_source"] = "iqa_classical_v1"
+    data["classical_iqa_detector_count"] = 8
+
+    if iqa.get("skew_angle") is not None:
+        data["skew_angle_degrees"] = iqa["skew_angle"]
+
+    return data
+
+
+# ---------------------------------------------------------------------------
 # Main integration logic
 # ---------------------------------------------------------------------------
 def integrate_sample(
@@ -919,336 +1386,67 @@ def integrate_sample(
     if sample["enrichments"]["versions"]:
         v1_data = sample["enrichments"]["versions"][0].get("data", {})
 
+    llm = llm_index.get(filename)
+    lang = lang_index.get(filename)
+
     data: dict[str, Any] = {}
 
-    # -------------------------------------------------------------------
-    # 1. Split (D01) - from path
-    # -------------------------------------------------------------------
-    split = "unknown"
-    path_lower = original_path.lower()
-    for split_name in ["train", "val", "test"]:
-        if f"/{split_name}/" in path_lower or path_lower.startswith(f"{split_name}/"):
-            split = split_name
-            break
-    data["split"] = split
+    # 1. Split (D01)
+    data["split"] = _integrate_split(original_path)
 
-    # -------------------------------------------------------------------
-    # 2. Capture method (D02) - from ori/res path
-    # -------------------------------------------------------------------
-    if is_ori:
-        data["capture_method"] = "camera_smartphone"
-        data["capture_confidence"] = 0.95
-        data["capture_detection_method"] = "parser_dociq_paper"
-    elif is_res:
-        data["capture_method"] = "synthetic"
-        data["capture_confidence"] = 1.0
-        data["capture_detection_method"] = "parser_dociq_paper"
-    else:
-        data["capture_method"] = "unknown"
-        data["capture_confidence"] = 0.5
-        data["capture_detection_method"] = "dataset_config"
+    # 2. Capture method (D02)
+    data.update(_integrate_capture_method(is_ori, is_res))
 
-    # -------------------------------------------------------------------
-    # 3. Resolution (from original_file)
-    # -------------------------------------------------------------------
+    # 3. Resolution
     data["resolution_category"] = v1_data.get("resolution_category", "unknown")
     data["resolution_pixels"] = [width, height]
 
-    # -------------------------------------------------------------------
-    # 4. Domain (D05) - from LLM enrichment
-    # -------------------------------------------------------------------
-    llm = llm_index.get(filename)
+    # 4. Domain (D05)
+    data.update(_integrate_domain(llm, is_res, filename, llm_index, res_to_ori))
 
-    if llm:
-        data["domain_level1"] = llm["domain_level1"]
-        data["domain_confidence"] = llm["domain_confidence"]
-        data["domain_detection_method"] = "llm_vision"
-        data["domain_content_type"] = llm.get("content_type", "")
-    elif is_res:
-        # res/ images share domain with their ori/ counterpart
-        # Use CSV-based res->ori mapping for accurate lookup
-        ori_filename = res_to_ori.get(filename)
-        ori_llm = llm_index.get(ori_filename) if ori_filename else None
-        if ori_llm:
-            data["domain_level1"] = ori_llm["domain_level1"]
-            # Lower confidence since it's transferred from ori -> res
-            data["domain_confidence"] = round(ori_llm["domain_confidence"] * 0.9, 4)
-            data["domain_detection_method"] = "llm_vision_transferred_from_ori"
-            data["domain_content_type"] = ori_llm.get("content_type", "")
-        else:
-            data["domain_level1"] = "UNK"
-            data["domain_confidence"] = 0.3
-            data["domain_detection_method"] = "none"
-    else:
-        data["domain_level1"] = "UNK"
-        data["domain_confidence"] = 0.3
-        data["domain_detection_method"] = "none"
-
-    # -------------------------------------------------------------------
-    # 5. Language & script (D04, D06) - from language enrichment + LLM
-    # -------------------------------------------------------------------
-    lang = lang_index.get(filename)
-
-    if lang and lang.get("confidence", 0) >= 0.5:
-        data["iso639_language"] = lang["language"]
-        data["iso15924_script"] = lang["script"]
-        data["language_confidence"] = lang["confidence"]
-        data["text_scope_detection_method"] = "openlid_v2"
-    elif llm:
-        data["iso639_language"] = llm.get("iso639_language", "und")
-        data["iso15924_script"] = llm.get("iso15924_script", "Zyyy")
-        data["language_confidence"] = 0.8
-        data["text_scope_detection_method"] = "llm_vision"
-    elif lang:
-        # Low confidence OpenLID result - still better than nothing
-        data["iso639_language"] = lang["language"]
-        data["iso15924_script"] = lang["script"]
-        data["language_confidence"] = lang["confidence"]
-        data["text_scope_detection_method"] = "openlid_v2_low_confidence"
-    elif is_res:
-        # Transfer language from ori counterpart via CSV mapping
-        ori_filename = res_to_ori.get(filename)
-        ori_lang = lang_index.get(ori_filename) if ori_filename else None
-        ori_llm = llm_index.get(ori_filename) if ori_filename else None
-        if ori_lang and ori_lang.get("confidence", 0) >= 0.5:
-            data["iso639_language"] = ori_lang["language"]
-            data["iso15924_script"] = ori_lang["script"]
-            data["language_confidence"] = round(ori_lang["confidence"] * 0.9, 4)
-            data["text_scope_detection_method"] = "openlid_v2_transferred_from_ori"
-        elif ori_llm:
-            data["iso639_language"] = ori_llm.get("iso639_language", "und")
-            data["iso15924_script"] = ori_llm.get("iso15924_script", "Zyyy")
-            data["language_confidence"] = 0.7
-            data["text_scope_detection_method"] = "llm_vision_transferred_from_ori"
-        else:
-            data["iso639_language"] = "und"
-            data["iso15924_script"] = "Zyyy"
-            data["language_confidence"] = 0.0
-            data["text_scope_detection_method"] = "none"
-    else:
-        data["iso639_language"] = "und"
-        data["iso15924_script"] = "Zyyy"
-        data["language_confidence"] = 0.0
-        data["text_scope_detection_method"] = "none"
-
-    # Script family (D04 fix) - centralised lookup from iso_language_script
+    # 5. Language & script (D04, D06)
+    data.update(
+        _integrate_language(
+            llm, lang, is_res, filename, lang_index, llm_index, res_to_ori
+        )
+    )
     data["script_family"] = _get_script_family(data.get("iso15924_script", ""))
 
-    # -------------------------------------------------------------------
-    # 6. Layout detections (D07, D08) - egret_xlarge > docling_gpu > v1
-    # -------------------------------------------------------------------
-    egret_dets = (egret_index or {}).get(filename, [])
-    layout_dets = layout_index.get(filename, [])
+    # 6. Layout detections (D07, D08)
+    data.update(
+        _integrate_layout(filename, egret_index, layout_index, v1_data, width, height)
+    )
 
-    if egret_dets:
-        # Prefer egret-xlarge (17-class, per-detection confidence)
-        data["layout_detections"] = egret_dets
-        data["layout_source"] = "egret_xlarge"
-        # Calibrated confidence: base 0.70 for running SOTA egret model,
-        # +0.15 modulated by fraction of detections with confidence >= 0.5.
-        # Raw detection confidence reflects bbox uncertainty, not overall
-        # layout analysis reliability. Range: [0.70, 0.85].
-        n_dets = len(egret_dets)
-        high_conf = sum(1 for d in egret_dets if d.get("confidence", 0.9) >= 0.5)
-        calibrated_conf = 0.70 + 0.15 * (high_conf / n_dets) if n_dets else 0.60
-        data["layout_confidence"] = round(calibrated_conf, 4)
-        data["layout_detection_count"] = n_dets
+    # Override content flags with LLM data
+    llm_for_flags = _resolve_llm_for_res(
+        filename,
+        is_res,
+        llm,
+        llm_index,
+        res_to_ori,
+    )
+    _override_content_flags_from_llm(data, llm_for_flags)
 
-        flags = derive_content_flags(egret_dets)
-        data["has_table"] = flags["has_table"]
-        data["has_formula"] = flags["has_formula"]
-        data["has_figure"] = flags["has_figure"]
-        data["has_code"] = flags["has_code"]
-        data["content_flags_tier"] = "tier_2_model"
-        data["content_flags_source"] = "egret_xlarge"
-        data["content_flags_confidence"] = round(calibrated_conf, 4)
-    elif layout_dets:
-        data["layout_detections"] = layout_dets
-        data["layout_source"] = "docling_gpu"
-        data["layout_confidence"] = 0.85
-        data["layout_detection_count"] = len(layout_dets)
+    # 7. Text content & statistics (D14, D15)
+    data.update(_integrate_text_content(ocr_index.get(filename)))
 
-        flags = derive_content_flags(layout_dets)
-        data["has_table"] = flags["has_table"]
-        data["has_formula"] = flags["has_formula"]
-        data["has_figure"] = flags["has_figure"]
-        data["has_code"] = flags["has_code"]
-        data["content_flags_tier"] = "tier_2_model"
-        data["content_flags_source"] = "docling_gpu"
-        data["content_flags_confidence"] = 0.85
-    else:
-        # Fall back to v1 layout detections if available
-        v1_layout = v1_data.get("layout_detections", [])
-        data["layout_detections"] = v1_layout
-        data["layout_source"] = v1_data.get("content_flags_source", "doclayout_yolo")
-        data["layout_confidence"] = 0.7
-        data["layout_detection_count"] = len(v1_layout)
+    # 8. Quality scores (D09)
+    data.update(_integrate_quality_scores(mos_index.get(filename), is_ori, is_res))
 
-        flags = derive_content_flags(v1_layout)
-        data["has_table"] = flags["has_table"]
-        data["has_formula"] = flags["has_formula"]
-        data["has_figure"] = flags["has_figure"]
-        data["has_code"] = flags["has_code"]
-        data["content_flags_tier"] = "tier_2_model"
-        data["content_flags_source"] = v1_data.get(
-            "content_flags_source", "doclayout_yolo"
-        )
-        data["content_flags_confidence"] = 0.7
+    # 9. Geometric properties (D10)
+    llm_for_geo = _resolve_llm_for_res(filename, is_res, llm, llm_index, res_to_ori)
+    data.update(_integrate_geometric(llm_for_geo, llm, width, height))
 
-    # Derive layout_category and text_area_ratio from whichever detections we chose
-    active_dets = data.get("layout_detections", [])
-    if active_dets:
-        layout_cat, layout_cat_conf = derive_layout_category(active_dets)
-        data["layout_category"] = layout_cat
-        data["layout_category_confidence"] = layout_cat_conf
-        data["text_area_ratio"] = compute_text_area_ratio(
-            active_dets,
-            width,
-            height,
-        )
-    else:
-        data["layout_category"] = "unknown"
-        data["layout_category_confidence"] = 0.0
-        data["text_area_ratio"] = 0.0
+    # 10. Physical degradation (D11)
+    data.update(_integrate_degradation(is_ori))
 
-    # Override content flags with LLM data (more reliable for has_handwriting)
-    # For res/ images, transfer from their ori/ counterpart via CSV mapping
-    llm_for_flags = llm
-    if not llm_for_flags and is_res:
-        ori_filename = res_to_ori.get(filename)
-        llm_for_flags = llm_index.get(ori_filename) if ori_filename else None
-
-    if llm_for_flags:
-        if llm_for_flags.get("has_handwriting"):
-            data["has_handwriting"] = True
-        else:
-            data["has_handwriting"] = data.get("has_handwriting", False)
-
-        if llm_for_flags.get("has_table"):
-            data["has_table"] = True
-        if llm_for_flags.get("has_formula"):
-            data["has_formula"] = True
-        if llm_for_flags.get("has_figure"):
-            data["has_figure"] = True
-        if llm_for_flags.get("has_signature"):
-            data["has_signature"] = True
-    else:
-        data["has_handwriting"] = data.get("has_handwriting", False)
-
-    # -------------------------------------------------------------------
-    # 7. Text content & statistics (D14, D15) - from OCR batches
-    # -------------------------------------------------------------------
-    ocr = ocr_index.get(filename)
-
-    if ocr and ocr.get("success") and ocr.get("text"):
-        data["text_content"] = ocr["text"]
-        data["text_content_confidence"] = ocr.get("confidence", 0.8)
-        data["text_content_source"] = "docling_gpu_ocr"
-        data["text_statistics"] = compute_text_statistics(ocr["text"])
-    else:
-        data["text_content"] = ""
-        data["text_content_confidence"] = 0.0
-        data["text_content_source"] = "none"
-        data["text_statistics"] = compute_text_statistics("")
-
-    # Text quality from OCR
-    text_stats = data["text_statistics"]
-    if text_stats["has_content"]:
-        data["text_quality_confidence"] = min(data["text_content_confidence"], 0.8)
-        data["text_quality_method"] = "docling_ocr"
-        data["text_quality_provenance_tier"] = "tier_2_model"
-    else:
-        data["text_quality_confidence"] = 0.0
-        data["text_quality_method"] = "none"
-        data["text_quality_provenance_tier"] = "tier_3_heuristic"
-
-    # -------------------------------------------------------------------
-    # 8. Quality scores (D09) - from MOS CSVs
-    # -------------------------------------------------------------------
-    mos = mos_index.get(filename)
-
-    if mos and is_res:
-        data["quality_overall_mos"] = mos["overall"]
-        data["quality_sharpness_mos"] = mos["sharpness"]
-        data["quality_color_fidelity_mos"] = mos["color_fidelity"]
-        data["quality_overall_normalized"] = mos_to_normalized(mos["overall"])
-        data["quality_tier"] = mos_to_quality_tier(mos["overall"])
-        data["quality_scores_confidence"] = 0.95
-        data["quality_scores_source"] = "human_mos_itur_bt500"
-    elif is_ori:
-        # ori/ images are source degraded images - MOS only collected for res/
-        data["quality_overall_mos"] = None
-        data["quality_sharpness_mos"] = None
-        data["quality_color_fidelity_mos"] = None
-        data["quality_scores_confidence"] = 0.0
-        data["quality_scores_source"] = "none"
-        data["quality_mos_note"] = (
-            "ori/ images are source degraded images without MOS scores"
-        )
-    else:
-        data["quality_scores_confidence"] = 0.0
-        data["quality_scores_source"] = "none"
-
-    # -------------------------------------------------------------------
-    # 9. Geometric properties (D10) - from LLM enrichment
-    # -------------------------------------------------------------------
-    # For res/ images, transfer from ori/ counterpart
-    llm_for_geo = llm
-    if not llm_for_geo and is_res:
-        ori_filename = res_to_ori.get(filename)
-        llm_for_geo = llm_index.get(ori_filename) if ori_filename else None
-
-    if llm_for_geo and llm_for_geo.get("orientation"):
-        orientation_str = llm_for_geo["orientation"]
-        if orientation_str == "portrait":
-            data["orientation_class"] = 0
-        elif orientation_str == "landscape":
-            data["orientation_class"] = 90
-        else:
-            data["orientation_class"] = 0
-
-        data["geometric_confidence"] = 0.85 if llm else 0.75
-        data["geometric_source"] = (
-            "llm_vision" if llm else "llm_vision_transferred_from_ori"
-        )
-    else:
-        # Default: assume portrait based on dimensions
-        if width < height:
-            data["orientation_class"] = 0
-        else:
-            data["orientation_class"] = 90
-        data["geometric_confidence"] = 0.6
-        data["geometric_source"] = "dimension_heuristic"
-
-    # -------------------------------------------------------------------
-    # 10. Physical degradation (D11) - for ori/ images
-    # -------------------------------------------------------------------
-    if is_ori:
-        data["physical_degradation_present"] = True
-        data["physical_degradation_types"] = ["unknown_single_distortion"]
-        data["physical_degradation_note"] = (
-            "Each DIQA-5000 ori/ image has exactly ONE distortion type "
-            "(shadow, occlusion, blur, creases, or moire) but the per-image "
-            "assignment is not provided in the public dataset. "
-            "100 images per distortion type across 500 ori/ images."
-        )
-        data["physical_degradation_confidence"] = 0.5
-    else:
-        data["physical_degradation_present"] = False
-        data["physical_degradation_types"] = []
-        data["physical_degradation_confidence"] = 0.9
-
-    # -------------------------------------------------------------------
-    # 11. Image properties (D13) - derived
-    # -------------------------------------------------------------------
+    # 11. Image properties (D13)
     data["image_properties_color_mode"] = "color"
     data["image_properties_document_age"] = "modern"
     data["image_properties_confidence"] = 0.95
     data["image_properties_source"] = "dataset_paper_ground_truth"
 
-    # -------------------------------------------------------------------
-    # 12. Paper size (D17) - estimated
-    # -------------------------------------------------------------------
+    # 12. Paper size (D17)
     data["paper_size"] = estimate_paper_size(
         width,
         height,
@@ -1256,139 +1454,112 @@ def integrate_sample(
         capture_method=data.get("capture_method"),
     )
 
-    # -------------------------------------------------------------------
-    # 13. Handwriting assessment (D16) - from LLM
-    # -------------------------------------------------------------------
-    # For res/ images, transfer from ori/ counterpart
-    llm_for_hw = llm
-    if not llm_for_hw and is_res:
-        ori_filename = res_to_ori.get(filename)
-        llm_for_hw = llm_index.get(ori_filename) if ori_filename else None
+    # 13. Handwriting assessment (D16)
+    llm_for_hw = _resolve_llm_for_res(filename, is_res, llm, llm_index, res_to_ori)
+    data.update(_integrate_handwriting(llm_for_hw, llm))
 
-    if llm_for_hw:
-        data["handwriting_present"] = llm_for_hw.get("has_handwriting", False)
-        data["handwriting_confidence"] = 0.85 if llm else 0.75
-        data["handwriting_source"] = (
-            "llm_vision" if llm else "llm_vision_transferred_from_ori"
-        )
-    else:
-        data["handwriting_present"] = False
-        data["handwriting_confidence"] = 0.5
-        data["handwriting_source"] = "none"
-
-    # -------------------------------------------------------------------
     # 14. LLM scores integration (D18)
-    # -------------------------------------------------------------------
-    # For res/ images, reference the ori/ LLM data
-    llm_for_scores = llm
-    if not llm_for_scores and is_res:
-        ori_filename = res_to_ori.get(filename)
-        llm_for_scores = llm_index.get(ori_filename) if ori_filename else None
+    llm_for_scores = _resolve_llm_for_res(filename, is_res, llm, llm_index, res_to_ori)
+    data.update(_integrate_llm_scores(llm_for_scores, llm))
 
-    if llm_for_scores:
-        data["llm_domain_level1"] = llm_for_scores.get("domain_level1")
-        data["llm_domain_confidence"] = llm_for_scores.get("domain_confidence")
-        data["llm_language"] = llm_for_scores.get("iso639_language")
-        data["llm_script"] = llm_for_scores.get("iso15924_script")
-        data["llm_content_type"] = llm_for_scores.get("content_type")
-        data["llm_reasoning"] = llm_for_scores.get("reasoning", "")[:500]
-        data["llm_model"] = llm_for_scores.get("model_used")
-        data["llm_data_available"] = True
-        data["llm_data_is_direct"] = llm is not None
-    else:
-        data["llm_data_available"] = False
-        data["llm_data_is_direct"] = False
-
-    # -------------------------------------------------------------------
     # 15. Dataset short code
-    # -------------------------------------------------------------------
     data["dataset_short_code"] = "diqa-5000"
 
-    # -------------------------------------------------------------------
     # 16. Text scope
-    # -------------------------------------------------------------------
     data["text_scope_content_type"] = "printed"
     if data.get("has_handwriting"):
         data["text_scope_content_type"] = "mixed"
 
-    # -------------------------------------------------------------------
     # 17. Classical IQA scores (D20)
-    # -------------------------------------------------------------------
-    iqa = (iqa_index or {}).get(filename)
-    if iqa:
-        data["classical_iqa_skew_detected"] = iqa.get("skew_detected")
-        data["classical_iqa_skew_angle"] = iqa.get("skew_angle")
-        data["classical_iqa_skew_confidence"] = iqa.get("skew_confidence")
-        data["classical_iqa_skew_severity"] = iqa.get("skew_severity")
-        data["classical_iqa_blur_detected"] = iqa.get("blur_detected")
-        data["classical_iqa_blur_score"] = iqa.get("blur_score")
-        data["classical_iqa_blur_confidence"] = iqa.get("blur_confidence")
-        data["classical_iqa_blur_severity"] = iqa.get("blur_severity")
-        data["classical_iqa_noise_detected"] = iqa.get("noise_detected")
-        data["classical_iqa_noise_level"] = iqa.get("noise_level")
-        data["classical_iqa_noise_confidence"] = iqa.get("noise_confidence")
-        data["classical_iqa_noise_severity"] = iqa.get("noise_severity")
-        data["classical_iqa_contrast_issue"] = iqa.get("contrast_issue")
-        data["classical_iqa_contrast_score"] = iqa.get("contrast_score")
-        data["classical_iqa_contrast_confidence"] = iqa.get("contrast_confidence")
-        data["classical_iqa_contrast_severity"] = iqa.get("contrast_severity")
-        data["classical_iqa_illumination_issue"] = iqa.get("illumination_issue")
-        data["classical_iqa_illumination_uniformity"] = iqa.get(
-            "illumination_uniformity",
-        )
-        data["classical_iqa_illumination_confidence"] = iqa.get(
-            "illumination_confidence",
-        )
-        data["classical_iqa_illumination_severity"] = iqa.get(
-            "illumination_severity",
-        )
-        data["classical_iqa_jpeg_blockiness_detected"] = iqa.get(
-            "jpeg_blockiness_detected",
-        )
-        data["classical_iqa_jpeg_blockiness_score"] = iqa.get(
-            "jpeg_blockiness_score",
-        )
-        data["classical_iqa_jpeg_blockiness_confidence"] = iqa.get(
-            "jpeg_blockiness_confidence",
-        )
-        data["classical_iqa_jpeg_blockiness_severity"] = iqa.get(
-            "jpeg_blockiness_severity",
-        )
-        data["classical_iqa_binarization_quality"] = iqa.get("binarization_quality")
-        data["classical_iqa_binarization_confidence"] = iqa.get(
-            "binarization_confidence",
-        )
-        data["classical_iqa_binarization_severity"] = iqa.get("binarization_severity")
-        data["classical_iqa_bleed_through_detected"] = iqa.get(
-            "bleed_through_detected",
-        )
-        data["classical_iqa_bleed_through_score"] = iqa.get("bleed_through_score")
-        data["classical_iqa_bleed_through_confidence"] = iqa.get(
-            "bleed_through_confidence",
-        )
-        data["classical_iqa_bleed_through_severity"] = iqa.get(
-            "bleed_through_severity",
-        )
-        data["classical_iqa_source"] = "iqa_classical_v1"
-        data["classical_iqa_detector_count"] = 8
+    data.update(_integrate_classical_iqa((iqa_index or {}).get(filename)))
 
-        # Also populate the skew_angle_degrees geometric field
-        if iqa.get("skew_angle") is not None:
-            data["skew_angle_degrees"] = iqa["skew_angle"]
-
-    # -------------------------------------------------------------------
     # Apply orphan corrections (manual overrides for missing enrichments)
-    # -------------------------------------------------------------------
     if orphan_corrections and filename in orphan_corrections:
-        corr = orphan_corrections[filename]
-        data.update(corr)
+        data.update(orphan_corrections[filename])
 
-    # -------------------------------------------------------------------
     # Compute reliability summary
-    # -------------------------------------------------------------------
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
+
+
+def _track_source_matches(
+    stats: dict[str, int],
+    filename: str,
+    llm_index: dict[str, dict[str, Any]],
+    lang_index: dict[str, dict[str, Any]],
+    layout_index: dict[str, list[dict[str, Any]]],
+    ocr_index: dict[str, dict[str, Any]],
+    mos_index: dict[str, dict[str, float]],
+    egret_index: dict[str, list[dict[str, Any]]] | None,
+    iqa_index: dict[str, dict[str, Any]] | None,
+) -> None:
+    """Increment source match counters for a single sample."""
+    _match_keys = [
+        ("llm_matched", llm_index),
+        ("lang_matched", lang_index),
+        ("layout_matched", layout_index),
+        ("ocr_matched", ocr_index),
+        ("mos_matched", mos_index),
+    ]
+    for key, index in _match_keys:
+        if filename in index:
+            stats[key] += 1
+    if (egret_index or {}).get(filename):
+        stats["egret_matched"] += 1
+    if (iqa_index or {}).get(filename):
+        stats["iqa_matched"] += 1
+
+
+def _track_distribution_stats(
+    stats: dict[str, int],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Track distribution counters from integrated data."""
+    lang_method = integrated_data.get("text_scope_detection_method", "none")
+    stats[f"lang_source_{lang_method}"] += 1
+    domain_method = integrated_data.get("domain_detection_method", "none")
+    stats[f"domain_source_{domain_method}"] += 1
+    split_val = integrated_data.get("split", "unknown")
+    stats[f"split_{split_val}"] += 1
+    rel = integrated_data.get("sample_reliability_summary", {})
+    cat = rel.get("min_confidence_category", "unreliable")
+    stats[f"reliability_{cat}"] += 1
+
+
+def _apply_sample_enrichment(
+    sample: dict[str, Any],
+    integrated_data: dict[str, Any],
+) -> None:
+    """Write integrated data back into the sample (mutates sample)."""
+    # Fix split in source (D01)
+    if integrated_data.get("split") != "unknown":
+        sample["source"]["split"] = integrated_data["split"]
+
+    # Fix original_labels with MOS scores (D03)
+    if integrated_data.get("quality_overall_mos"):
+        labels = sample.setdefault("original_labels", {})
+        labels["mos_overall"] = integrated_data["quality_overall_mos"]
+        labels["mos_sharpness"] = integrated_data["quality_sharpness_mos"]
+        labels["mos_color_fidelity"] = integrated_data["quality_color_fidelity_mos"]
+
+    # Create new enrichment version
+    new_version = {
+        "version": sample["enrichments"]["current_version"] + 1,
+        "created_at": datetime.now(UTC).isoformat(),
+        "created_by": f"integrate_diqa_enrichments.py_v{SCRIPT_VERSION}",
+        "method": "multi_source_integration",
+        "description": (
+            "Integrated: LLM enrichment (domain, content), "
+            "OpenLID (language), egret-xlarge layout (preferred) + "
+            "Docling GPU fallback (layout, OCR), "
+            "MOS scores, paper ground truth"
+        ),
+        "script_version": SCRIPT_VERSION,
+        "data": integrated_data,
+    }
+    sample["enrichments"]["versions"].append(new_version)
+    sample["enrichments"]["current_version"] = new_version["version"]
 
 
 def run_integration(
@@ -1407,8 +1578,6 @@ def run_integration(
     """Run integration across all samples."""
     samples = metadata["samples"]
     total = len(samples)
-
-    # Statistics counters
     stats: dict[str, int] = Counter()
 
     log.info("Integrating enrichment data for %d samples ...", total)
@@ -1417,7 +1586,6 @@ def run_integration(
     for idx, sample in enumerate(samples):
         filename = sample["source"]["original_filename"]
 
-        # Create integrated enrichment data
         integrated_data = integrate_sample(
             sample,
             llm_index,
@@ -1431,92 +1599,32 @@ def run_integration(
             iqa_index,
         )
 
-        # Track statistics
-        if filename in llm_index:
-            stats["llm_matched"] += 1
-        if filename in lang_index:
-            stats["lang_matched"] += 1
-        if (egret_index or {}).get(filename):
-            stats["egret_matched"] += 1
-        if filename in layout_index:
-            stats["layout_matched"] += 1
-        if filename in ocr_index:
-            stats["ocr_matched"] += 1
-        if filename in mos_index:
-            stats["mos_matched"] += 1
-        if (iqa_index or {}).get(filename):
-            stats["iqa_matched"] += 1
-
-        # Track language source distribution
-        lang_method = integrated_data.get("text_scope_detection_method", "none")
-        stats[f"lang_source_{lang_method}"] += 1
-
-        # Track domain source distribution
-        domain_method = integrated_data.get("domain_detection_method", "none")
-        stats[f"domain_source_{domain_method}"] += 1
-
-        # Track split distribution
-        split_val = integrated_data.get("split", "unknown")
-        stats[f"split_{split_val}"] += 1
-
-        rel = integrated_data.get("sample_reliability_summary", {})
-        cat = rel.get("min_confidence_category", "unreliable")
-        stats[f"reliability_{cat}"] += 1
+        _track_source_matches(
+            stats,
+            filename,
+            llm_index,
+            lang_index,
+            layout_index,
+            ocr_index,
+            mos_index,
+            egret_index,
+            iqa_index,
+        )
+        _track_distribution_stats(stats, integrated_data)
 
         if not dry_run:
-            # Fix split in source (D01)
-            if integrated_data.get("split") != "unknown":
-                sample["source"]["split"] = integrated_data["split"]
-
-            # Fix original_labels with MOS scores (D03)
-            if integrated_data.get("quality_overall_mos"):
-                if not sample.get("original_labels"):
-                    sample["original_labels"] = {}
-                sample["original_labels"]["mos_overall"] = integrated_data[
-                    "quality_overall_mos"
-                ]
-                sample["original_labels"]["mos_sharpness"] = integrated_data[
-                    "quality_sharpness_mos"
-                ]
-                sample["original_labels"]["mos_color_fidelity"] = integrated_data[
-                    "quality_color_fidelity_mos"
-                ]
-
-            # Create new enrichment version
-            new_version = {
-                "version": sample["enrichments"]["current_version"] + 1,
-                "created_at": datetime.now(UTC).isoformat(),
-                "created_by": f"integrate_diqa_enrichments.py_v{SCRIPT_VERSION}",
-                "method": "multi_source_integration",
-                "description": (
-                    "Integrated: LLM enrichment (domain, content), "
-                    "OpenLID (language), egret-xlarge layout (preferred) + "
-                    "Docling GPU fallback (layout, OCR), "
-                    "MOS scores, paper ground truth"
-                ),
-                "script_version": SCRIPT_VERSION,
-                "data": integrated_data,
-            }
-
-            sample["enrichments"]["versions"].append(new_version)
-            sample["enrichments"]["current_version"] = new_version["version"]
+            _apply_sample_enrichment(sample, integrated_data)
 
         if (idx + 1) % 500 == 0:
             elapsed = time.time() - start
             rate = (idx + 1) / elapsed
-            log.info(
-                "  [%d/%d] %.0f samples/sec",
-                idx + 1,
-                total,
-                rate,
-            )
+            log.info("  [%d/%d] %.0f samples/sec", idx + 1, total, rate)
 
     elapsed = time.time() - start
     log.info("Integration complete in %.1f seconds", elapsed)
 
     # Update top-level metadata
     if not dry_run:
-        # Recount splits
         split_counts: dict[str, int] = Counter()
         for s in samples:
             split_counts[s["source"]["split"]] += 1

@@ -729,115 +729,44 @@ def _discover_datasets(metadata_dir: Path) -> list[str]:
     return sorted(names)
 
 
-def main() -> int:
-    """Run the standardization pipeline.
+def _resolve_source_schema(
+    ds_name: str,
+    explicit_schema: str | None,
+    metadata_dir: Path,
+) -> str | None:
+    """Resolve the source schema for a dataset (explicit > auto-detect > metadata)."""
+    schema = explicit_schema or _auto_detect_source_schema(ds_name)
+    if schema is None:
+        schema = _detect_schema_from_metadata_file(metadata_dir, ds_name)
+    return schema
 
-    Returns:
-        Exit code (0 = success, 1 = error).
-    """
-    parser = _build_parser()
-    args = parser.parse_args()
 
-    # Configure logging level
-    if args.verbose:
-        structlog.configure(
-            wrapper_class=structlog.make_filtering_bound_logger(logging_level=10),
-        )
-
-    # Import taxonomy module (may not exist yet if taxonomy-agent
-    # hasn't finished building it)
-    try:
-        from image_preprocessing_detector.schema_utils.layout_taxonomy import (
-            LayoutTaxonomy,
-        )
-    except ImportError as exc:
-        log.error(
-            "taxonomy_import_failed",
-            error=str(exc),
-            hint=(
-                "The layout_taxonomy module is not yet available. "
-                "Ensure taxonomy-agent has completed building "
-                "src/.../schema_utils/layout_taxonomy.py"
-            ),
-        )
-        print(
-            "ERROR: Cannot import LayoutTaxonomy. "
-            "Has the taxonomy module been created yet?",
-            file=sys.stderr,
-        )
-        return 1
-
-    taxonomy = LayoutTaxonomy()
-
-    metadata_dir: Path = args.metadata_dir
-    if not metadata_dir.is_dir():
-        print(
-            f"ERROR: Metadata directory not found: {metadata_dir}",
-            file=sys.stderr,
-        )
-        return 1
-
-    dry_run: bool = args.dry_run
-    if dry_run:
-        print("=== DRY RUN MODE (no files will be modified) ===\n")
-
-    # Build list of (dataset_name, source_schema) to process
-    targets: list[tuple[str, str | None]] = []
-
+def _build_targets(
+    args: argparse.Namespace,
+    metadata_dir: Path,
+) -> list[tuple[str, str | None]]:
+    """Build list of (dataset_name, source_schema) targets to process."""
     if args.process_all:
         datasets = _discover_datasets(metadata_dir)
         log.info("discovered_datasets", count=len(datasets))
-        for ds_name in datasets:
-            schema = args.source_schema or _auto_detect_source_schema(ds_name)
-            # Fallback: detect schema from enrichment metadata (YOLO, etc.)
-            if schema is None:
-                schema = _detect_schema_from_metadata_file(
-                    metadata_dir,
-                    ds_name,
-                )
-            targets.append((ds_name, schema))
-    else:
-        dataset_name: str = args.dataset
-        schema = args.source_schema or _auto_detect_source_schema(dataset_name)
-        # Fallback: detect schema from enrichment metadata
-        if schema is None:
-            schema = _detect_schema_from_metadata_file(
-                metadata_dir,
-                dataset_name,
-            )
-        targets.append((dataset_name, schema))
-
-    # Process each target
-    reports: list[StandardizationReport] = []
-    skipped: list[str] = []
-
-    for ds_name, source_schema in targets:
-        if source_schema is None:
-            log.info(
-                "skipping_no_schema",
-                dataset=ds_name,
-                reason="No source schema could be determined",
-            )
-            skipped.append(ds_name)
-            continue
-
-        log.info(
-            "standardizing_dataset",
-            dataset=ds_name,
-            schema=source_schema,
-            dry_run=dry_run,
+        return [
+            (ds_name, _resolve_source_schema(ds_name, args.source_schema, metadata_dir))
+            for ds_name in datasets
+        ]
+    return [
+        (
+            args.dataset,
+            _resolve_source_schema(args.dataset, args.source_schema, metadata_dir),
         )
+    ]
 
-        report = standardize_dataset(
-            metadata_dir=metadata_dir,
-            dataset_name=ds_name,
-            taxonomy=taxonomy,
-            source_schema=source_schema,
-            dry_run=dry_run,
-        )
-        reports.append(report)
 
-    # Print summary
+def _print_standardization_summary(
+    reports: list[StandardizationReport],
+    skipped: list[str],
+    dry_run: bool,
+) -> int:
+    """Print summary report and return the total error count."""
     print("\n" + "=" * 60)
     print("Layout Label Standardization Report")
     if dry_run:
@@ -871,6 +800,87 @@ def main() -> int:
     print(f"Datasets processed:          {len(reports)}")
     print(f"Datasets skipped:            {len(skipped)}")
 
+    return total_errors
+
+
+def main() -> int:
+    """Run the standardization pipeline.
+
+    Returns:
+        Exit code (0 = success, 1 = error).
+    """
+    parser = _build_parser()
+    args = parser.parse_args()
+
+    if args.verbose:
+        structlog.configure(
+            wrapper_class=structlog.make_filtering_bound_logger(logging_level=10),
+        )
+
+    try:
+        from image_preprocessing_detector.schema_utils.layout_taxonomy import (
+            LayoutTaxonomy,
+        )
+    except ImportError as exc:
+        log.error(
+            "taxonomy_import_failed",
+            error=str(exc),
+            hint=(
+                "The layout_taxonomy module is not yet available. "
+                "Ensure taxonomy-agent has completed building "
+                "src/.../schema_utils/layout_taxonomy.py"
+            ),
+        )
+        print(
+            "ERROR: Cannot import LayoutTaxonomy. "
+            "Has the taxonomy module been created yet?",
+            file=sys.stderr,
+        )
+        return 1
+
+    taxonomy = LayoutTaxonomy()
+
+    metadata_dir: Path = args.metadata_dir
+    if not metadata_dir.is_dir():
+        print(f"ERROR: Metadata directory not found: {metadata_dir}", file=sys.stderr)
+        return 1
+
+    dry_run: bool = args.dry_run
+    if dry_run:
+        print("=== DRY RUN MODE (no files will be modified) ===\n")
+
+    targets = _build_targets(args, metadata_dir)
+
+    reports: list[StandardizationReport] = []
+    skipped: list[str] = []
+
+    for ds_name, source_schema in targets:
+        if source_schema is None:
+            log.info(
+                "skipping_no_schema",
+                dataset=ds_name,
+                reason="No source schema could be determined",
+            )
+            skipped.append(ds_name)
+            continue
+
+        log.info(
+            "standardizing_dataset",
+            dataset=ds_name,
+            schema=source_schema,
+            dry_run=dry_run,
+        )
+
+        report = standardize_dataset(
+            metadata_dir=metadata_dir,
+            dataset_name=ds_name,
+            taxonomy=taxonomy,
+            source_schema=source_schema,
+            dry_run=dry_run,
+        )
+        reports.append(report)
+
+    total_errors = _print_standardization_summary(reports, skipped, dry_run)
     return 1 if total_errors > 0 else 0
 
 

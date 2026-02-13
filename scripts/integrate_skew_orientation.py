@@ -133,6 +133,52 @@ def get_sample_filename(sample: dict[str, Any]) -> str | None:
     return None
 
 
+def _next_version_number(enrichments: dict[str, Any]) -> int:
+    """Compute the next version number from the enrichments structure."""
+    current_ver = enrichments.get("current_version", "v0")
+    if current_ver and current_ver.startswith("v"):
+        try:
+            return int(current_ver[1:]) + 1
+        except ValueError:
+            return len(enrichments.get("versions", [])) + 1
+    return 1
+
+
+def _apply_skew_to_sample(
+    sample: dict[str, Any],
+    skew_fields: dict[str, Any],
+    patch_current: bool,
+    stats: dict[str, int],
+) -> None:
+    """Apply skew/orientation fields to a single sample (mutates sample)."""
+    enrichments = sample.setdefault("enrichments", {"versions": []})
+    versions = enrichments.setdefault("versions", [])
+
+    if patch_current and versions:
+        current = versions[-1]
+        current_data = current.setdefault("data", {})
+        current_data.update(skew_fields)
+        stats["patched"] += 1
+        return
+
+    ver_num = _next_version_number(enrichments)
+    new_version = {
+        "version": f"v{ver_num}",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "method": "skew_orientation_integration",
+        "description": (
+            "Added skew/orientation labels from MobileNetV4-Conv-S "
+            "ONNX estimator (test MAE=0.956, orient_acc=99.5%)"
+        ),
+        "script": "integrate_skew_orientation.py",
+        "script_version": SCRIPT_VERSION,
+        "data": skew_fields,
+    }
+    versions.append(new_version)
+    enrichments["current_version"] = new_version["version"]
+    stats["new_version"] += 1
+
+
 def integrate_into_metadata(
     metadata: dict[str, Any],
     skew_index: dict[str, dict[str, Any]],
@@ -174,41 +220,8 @@ def integrate_into_metadata(
         orient = skew_fields.get("orientation_class", -1)
         stats[f"orient_{orient}"] += 1
 
-        if dry_run:
-            continue
-
-        enrichments = sample.setdefault("enrichments", {"versions": []})
-        versions = enrichments.setdefault("versions", [])
-
-        if patch_current and versions:
-            current = versions[-1]
-            current_data = current.setdefault("data", {})
-            current_data.update(skew_fields)
-            stats["patched"] += 1
-        else:
-            current_ver = enrichments.get("current_version", "v0")
-            ver_num = 1
-            if current_ver and current_ver.startswith("v"):
-                try:
-                    ver_num = int(current_ver[1:]) + 1
-                except ValueError:
-                    ver_num = len(versions) + 1
-
-            new_version = {
-                "version": f"v{ver_num}",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "method": "skew_orientation_integration",
-                "description": (
-                    "Added skew/orientation labels from MobileNetV4-Conv-S "
-                    "ONNX estimator (test MAE=0.956, orient_acc=99.5%)"
-                ),
-                "script": "integrate_skew_orientation.py",
-                "script_version": SCRIPT_VERSION,
-                "data": skew_fields,
-            }
-            versions.append(new_version)
-            enrichments["current_version"] = new_version["version"]
-            stats["new_version"] += 1
+        if not dry_run:
+            _apply_skew_to_sample(sample, skew_fields, patch_current, stats)
 
         if (idx + 1) % 1000 == 0:
             elapsed = time.time() - start

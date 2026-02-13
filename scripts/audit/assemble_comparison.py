@@ -709,6 +709,116 @@ def extract_field_values(
 # ---------------------------------------------------------------------------
 # Agreement Metrics (pairwise, no ground-truth dependency)
 # ---------------------------------------------------------------------------
+def _tally_pairwise_matches(
+    present: list[tuple[str, Any]],
+    field_pair_matches: dict[tuple[str, str], dict[str, int]],
+    pair_stats: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """Accumulate pairwise match counts for one sample's present values."""
+    for i in range(len(present)):
+        for j in range(i + 1, len(present)):
+            s_a, v_a = present[i]
+            s_b, v_b = present[j]
+            key = tuple(sorted([s_a, s_b]))
+            pair_key = (key[0], key[1])
+
+            field_pair_matches[pair_key]["total"] += 1
+            pair_stats[pair_key]["total"] += 1
+
+            if _values_match(v_a, v_b):
+                field_pair_matches[pair_key]["matches"] += 1
+                pair_stats[pair_key]["matches"] += 1
+
+
+def _tally_gt_accuracy(
+    src_vals: dict[str, Any],
+    gt_correct: dict[str, int],
+    gt_total: dict[str, int],
+) -> None:
+    """Accumulate per-source accuracy vs visual_gt for one sample."""
+    gt_val = src_vals.get("visual_gt")
+    if gt_val is None:
+        return
+    for src, val in src_vals.items():
+        if src == "visual_gt" or val is None:
+            continue
+        gt_total[src] += 1
+        if _values_match(val, gt_val):
+            gt_correct[src] += 1
+
+
+def _summarize_field_pairs(
+    field_pair_matches: dict[tuple[str, str], dict[str, int]],
+) -> dict[str, float]:
+    """Compute agreement rate for each source pair within a single field."""
+    field_pairs: dict[str, float] = {}
+    for pair_key, stats in field_pair_matches.items():
+        label = f"{pair_key[0]} vs {pair_key[1]}"
+        if stats["total"] > 0:
+            field_pairs[label] = round(stats["matches"] / stats["total"], 4)
+    return field_pairs
+
+
+def _compute_gt_source_accuracies(
+    source_names: list[str],
+    field_pair_matches: dict[tuple[str, str], dict[str, int]],
+) -> tuple[dict[str, float], str | None, float]:
+    """Compute per-source accuracy vs GT for a single field.
+
+    Returns (source_accuracies, best_source, best_accuracy).
+    """
+    src_accs: dict[str, float] = {}
+    best_source: str | None = None
+    best_accuracy = -1.0
+    for src in source_names:
+        if src == "visual_gt":
+            continue
+        for pair_key, stats in field_pair_matches.items():
+            if "visual_gt" in pair_key and src in pair_key and stats["total"] > 0:
+                acc = stats["matches"] / stats["total"]
+                src_accs[src] = round(acc, 4)
+                if acc > best_accuracy:
+                    best_accuracy = acc
+                    best_source = src
+    return src_accs, best_source, best_accuracy
+
+
+def _build_pairwise_summary(
+    pair_stats: dict[tuple[str, str], dict[str, int]],
+) -> dict[str, dict[str, Any]]:
+    """Build the overall pairwise agreement summary across all fields."""
+    pairwise_summary: dict[str, dict[str, Any]] = {}
+    for pair_key, stats in sorted(pair_stats.items()):
+        label = f"{pair_key[0]} vs {pair_key[1]}"
+        pairwise_summary[label] = {
+            "comparisons": stats["total"],
+            "matches": stats["matches"],
+            "agreement_rate": (
+                round(stats["matches"] / stats["total"], 4)
+                if stats["total"] > 0
+                else None
+            ),
+        }
+    return pairwise_summary
+
+
+def _build_per_source_gt(
+    gt_correct: dict[str, int],
+    gt_total: dict[str, int],
+) -> dict[str, dict[str, Any]]:
+    """Build per-source accuracy summary vs visual ground truth."""
+    per_source_gt: dict[str, dict[str, Any]] = {}
+    for src in sorted(set(gt_correct.keys()) | set(gt_total.keys())):
+        total = gt_total[src]
+        correct = gt_correct[src]
+        per_source_gt[src] = {
+            "fields_compared": total,
+            "fields_matching_gt": correct,
+            "overall_accuracy": (round(correct / total, 4) if total > 0 else None),
+        }
+    return per_source_gt
+
+
 def compute_agreement_metrics(
     all_comparisons: list[dict[str, Any]],
     fields: list[str],
@@ -723,15 +833,10 @@ def compute_agreement_metrics(
     """
     has_gt = "visual_gt" in source_names
 
-    # Per-field statistics
     per_field: dict[str, dict[str, Any]] = {}
-
-    # Pairwise agreement counters: (src_a, src_b) -> {matches, total}
     pair_stats: dict[tuple[str, str], dict[str, int]] = defaultdict(
         lambda: {"matches": 0, "total": 0}
     )
-
-    # Per-source vs GT counters (only when GT exists)
     gt_correct: dict[str, int] = defaultdict(int)
     gt_total: dict[str, int] = defaultdict(int)
 
@@ -742,102 +847,32 @@ def compute_agreement_metrics(
 
         for comp in all_comparisons:
             src_vals = comp.get("fields", {}).get(field_name, {}).get("sources", {})
-
             present = [(s, v) for s, v in src_vals.items() if v is not None]
-
-            # Pairwise comparisons
-            for i in range(len(present)):
-                for j in range(i + 1, len(present)):
-                    s_a, v_a = present[i]
-                    s_b, v_b = present[j]
-                    key = tuple(sorted([s_a, s_b]))
-                    pair_key = (key[0], key[1])
-
-                    field_pair_matches[pair_key]["total"] += 1
-                    pair_stats[pair_key]["total"] += 1
-
-                    if _values_match(v_a, v_b):
-                        field_pair_matches[pair_key]["matches"] += 1
-                        pair_stats[pair_key]["matches"] += 1
-
-            # GT accuracy (if visual_gt present)
+            _tally_pairwise_matches(present, field_pair_matches, pair_stats)
             if has_gt:
-                gt_val = src_vals.get("visual_gt")
-                if gt_val is not None:
-                    for src, val in src_vals.items():
-                        if src == "visual_gt" or val is None:
-                            continue
-                        gt_total[src] += 1
-                        if _values_match(val, gt_val):
-                            gt_correct[src] += 1
-
-        # Summarize field-level pairwise agreement
-        field_pairs: dict[str, float] = {}
-        for pair_key, stats in field_pair_matches.items():
-            label = f"{pair_key[0]} vs {pair_key[1]}"
-            if stats["total"] > 0:
-                field_pairs[label] = round(stats["matches"] / stats["total"], 4)
+                _tally_gt_accuracy(src_vals, gt_correct, gt_total)
 
         per_field[field_name] = {
-            "pairwise_agreement": field_pairs,
+            "pairwise_agreement": _summarize_field_pairs(field_pair_matches),
         }
 
-        # If GT exists, add per-source accuracy for this field
         if has_gt:
-            src_accs: dict[str, float] = {}
-            best_source: str | None = None
-            best_accuracy = -1.0
-            for src in source_names:
-                if src == "visual_gt":
-                    continue
-                for pair_key, stats in field_pair_matches.items():
-                    if (
-                        "visual_gt" in pair_key
-                        and src in pair_key
-                        and stats["total"] > 0
-                    ):
-                        acc = stats["matches"] / stats["total"]
-                        src_accs[src] = round(acc, 4)
-                        if acc > best_accuracy:
-                            best_accuracy = acc
-                            best_source = src
+            src_accs, best_source, best_accuracy = _compute_gt_source_accuracies(
+                source_names, field_pair_matches
+            )
             per_field[field_name]["source_accuracies_vs_gt"] = src_accs
             per_field[field_name]["best_source"] = best_source
             per_field[field_name]["best_accuracy"] = (
                 round(best_accuracy, 4) if best_accuracy >= 0 else None
             )
 
-    # Overall pairwise summary
-    pairwise_summary: dict[str, dict[str, Any]] = {}
-    for pair_key, stats in sorted(pair_stats.items()):
-        label = f"{pair_key[0]} vs {pair_key[1]}"
-        pairwise_summary[label] = {
-            "comparisons": stats["total"],
-            "matches": stats["matches"],
-            "agreement_rate": (
-                round(stats["matches"] / stats["total"], 4)
-                if stats["total"] > 0
-                else None
-            ),
-        }
-
     result: dict[str, Any] = {
         "per_field": per_field,
-        "pairwise": pairwise_summary,
+        "pairwise": _build_pairwise_summary(pair_stats),
     }
 
-    # Per-source GT accuracy
     if has_gt:
-        per_source_gt: dict[str, dict[str, Any]] = {}
-        for src in sorted(set(gt_correct.keys()) | set(gt_total.keys())):
-            total = gt_total[src]
-            correct = gt_correct[src]
-            per_source_gt[src] = {
-                "fields_compared": total,
-                "fields_matching_gt": correct,
-                "overall_accuracy": (round(correct / total, 4) if total > 0 else None),
-            }
-        result["per_source_vs_gt"] = per_source_gt
+        result["per_source_vs_gt"] = _build_per_source_gt(gt_correct, gt_total)
 
     return result
 
@@ -881,6 +916,116 @@ def find_disagreements(
 # ---------------------------------------------------------------------------
 # Main Assembly
 # ---------------------------------------------------------------------------
+def _resolve_audit_ids(
+    config: DatasetAuditConfig,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    *,
+    verbose: bool,
+) -> list[str]:
+    """Determine the set of audit sample IDs to compare."""
+    audit_dir = AUDIT_RESULTS_ROOT / config.dataset_name
+    sample_set_path = audit_dir / "sample_set.json"
+
+    if sample_set_path.exists():
+        ss_data = load_samples_json(sample_set_path)
+        audit_ids = sorted(ss_data.keys())
+        if verbose:
+            print(
+                f"  Sample set loaded: {len(audit_ids)} samples from {sample_set_path}",
+                file=sys.stderr,
+            )
+        return audit_ids
+
+    all_ids: set[str] = set()
+    for src_data in sources.values():
+        all_ids.update(src_data.keys())
+    audit_ids = sorted(all_ids)
+    if verbose:
+        print(
+            f"  No sample_set.json; using union of "
+            f"{len(audit_ids)} image IDs across sources",
+            file=sys.stderr,
+        )
+    return audit_ids
+
+
+def _build_pairwise_match_matrix(
+    src_vals: dict[str, Any],
+) -> dict[str, dict[str, bool | None]]:
+    """Build a pairwise match matrix for one field's source values."""
+    present = [(s, v) for s, v in src_vals.items() if v is not None]
+    matches: dict[str, dict[str, bool | None]] = {}
+    for i, (s_a, v_a) in enumerate(present):
+        for j, (s_b, v_b) in enumerate(present):
+            if i >= j:
+                continue
+            matches.setdefault(s_a, {})[s_b] = _values_match(v_a, v_b)
+    return matches
+
+
+def _build_sample_comparison(
+    image_id: str,
+    sources: dict[str, dict[str, dict[str, Any]]],
+    fields: list[str],
+    dataset: str,
+) -> dict[str, Any]:
+    """Build a per-sample comparison record."""
+    field_values = extract_field_values(image_id, sources, fields, dataset=dataset)
+
+    sources_available = {
+        name: any(v in src_data for v in _id_variants(image_id, dataset))
+        for name, src_data in sources.items()
+    }
+
+    sample_comparison: dict[str, Any] = {
+        "image_id": image_id,
+        "sources_available": sources_available,
+        "fields": {},
+    }
+
+    for field_name in fields:
+        src_vals = field_values.get(field_name, {})
+        sample_comparison["fields"][field_name] = {
+            "sources": src_vals,
+            "pairwise_matches": _build_pairwise_match_matrix(src_vals),
+        }
+
+    return sample_comparison
+
+
+def _build_source_paths(
+    config: DatasetAuditConfig,
+) -> dict[str, str]:
+    """Build a mapping of source name to filesystem path for metadata."""
+    source_paths: dict[str, str] = {}
+    path_entries: list[tuple[str, Path | None]] = [
+        ("l2_metadata", config.metadata_json_path),
+        ("llm_enrichment", config.llm_enrichment_path),
+        ("language_enrichment", config.language_enrichment_path),
+    ]
+    for name, path in path_entries:
+        if path:
+            source_paths[name] = str(path)
+
+    audit_dir = AUDIT_RESULTS_ROOT / config.dataset_name
+    dir_entries: list[tuple[str, Path]] = [
+        ("docling_layout", DEFAULT_EXTRACTED_ROOT / config.dataset_name),
+    ]
+    for name, dirpath in dir_entries:
+        if dirpath.is_dir():
+            source_paths[name] = str(dirpath)
+
+    file_entries: list[tuple[str, Path]] = [
+        ("egret_layout", audit_dir / "egret_results.json"),
+        ("visual_gt", audit_dir / "visual_ground_truth.json"),
+    ]
+    for name, filepath in file_entries:
+        if filepath.exists():
+            source_paths[name] = str(filepath)
+
+    return source_paths
+
+
 def assemble_comparison(
     config: DatasetAuditConfig,
     fields: list[str],
@@ -910,99 +1055,19 @@ def assemble_comparison(
             file=sys.stderr,
         )
 
-    # Determine audit sample IDs.
-    # Prefer sample_set.json if it exists; otherwise use the
-    # intersection of all available sources.
-    audit_dir = AUDIT_RESULTS_ROOT / config.dataset_name
-    sample_set_path = audit_dir / "sample_set.json"
-
-    audit_ids: list[str]
-    if sample_set_path.exists():
-        ss_data = load_samples_json(sample_set_path)
-        audit_ids = sorted(ss_data.keys())
-        if verbose:
-            print(
-                f"  Sample set loaded: {len(audit_ids)} samples from {sample_set_path}",
-                file=sys.stderr,
-            )
-    else:
-        # Fall back to union of all source IDs.
-        all_ids: set[str] = set()
-        for src_data in sources.values():
-            all_ids.update(src_data.keys())
-        audit_ids = sorted(all_ids)
-        if verbose:
-            print(
-                f"  No sample_set.json; using union of "
-                f"{len(audit_ids)} image IDs across sources",
-                file=sys.stderr,
-            )
+    audit_ids = _resolve_audit_ids(config, sources, verbose=verbose)
 
     if not audit_ids:
         print("ERROR: No audit sample IDs found.", file=sys.stderr)
         sys.exit(1)
 
-    # Build per-sample comparisons.
-    all_comparisons: list[dict[str, Any]] = []
+    all_comparisons = [
+        _build_sample_comparison(image_id, sources, fields, config.dataset_name)
+        for image_id in audit_ids
+    ]
 
-    for image_id in audit_ids:
-        field_values = extract_field_values(
-            image_id, sources, fields, dataset=config.dataset_name
-        )
-
-        sources_available = {
-            name: any(
-                v in src_data for v in _id_variants(image_id, config.dataset_name)
-            )
-            for name, src_data in sources.items()
-        }
-
-        sample_comparison: dict[str, Any] = {
-            "image_id": image_id,
-            "sources_available": sources_available,
-            "fields": {},
-        }
-
-        for field_name in fields:
-            src_vals = field_values.get(field_name, {})
-
-            # Pairwise match matrix
-            present = [(s, v) for s, v in src_vals.items() if v is not None]
-            matches: dict[str, dict[str, bool | None]] = {}
-            for i, (s_a, v_a) in enumerate(present):
-                for j, (s_b, v_b) in enumerate(present):
-                    if i >= j:
-                        continue
-                    matches.setdefault(s_a, {})[s_b] = _values_match(v_a, v_b)
-
-            sample_comparison["fields"][field_name] = {
-                "sources": src_vals,
-                "pairwise_matches": matches,
-            }
-
-        all_comparisons.append(sample_comparison)
-
-    # Aggregate metrics
     metrics = compute_agreement_metrics(all_comparisons, fields, source_names)
     disagreements = find_disagreements(all_comparisons, fields)
-
-    # Build source path map for metadata
-    source_paths: dict[str, str] = {}
-    if config.metadata_json_path:
-        source_paths["l2_metadata"] = str(config.metadata_json_path)
-    if config.llm_enrichment_path:
-        source_paths["llm_enrichment"] = str(config.llm_enrichment_path)
-    if config.language_enrichment_path:
-        source_paths["language_enrichment"] = str(config.language_enrichment_path)
-    docling_dir = DEFAULT_EXTRACTED_ROOT / config.dataset_name
-    if docling_dir.is_dir():
-        source_paths["docling_layout"] = str(docling_dir)
-    egret_path = audit_dir / "egret_results.json"
-    if egret_path.exists():
-        source_paths["egret_layout"] = str(egret_path)
-    vgt_path = audit_dir / "visual_ground_truth.json"
-    if vgt_path.exists():
-        source_paths["visual_gt"] = str(vgt_path)
 
     report: dict[str, Any] = {
         "report_metadata": {
@@ -1010,7 +1075,7 @@ def assemble_comparison(
             "audit_sample_count": len(audit_ids),
             "created_at": datetime.now(tz=UTC).isoformat(),
             "sources_discovered": source_names,
-            "source_paths": source_paths,
+            "source_paths": _build_source_paths(config),
             "fields_compared": fields,
         },
         "samples": all_comparisons,

@@ -160,6 +160,56 @@ def autofix_front_matter(path: Path) -> bool:
     return changed
 
 
+def _check_redundant_h1(path: Path, content: str) -> None:
+    """Warn about redundant body H1 headings in files with front matter titles."""
+    content_without_code = re.sub(
+        r"^[ \t]*```[^\n]*\n.*?^[ \t]*```[ \t]*$",
+        "",
+        content,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    content_without_code = re.sub(
+        r"^[ \t]*~~~[^\n]*\n.*?^[ \t]*~~~[ \t]*$",
+        "",
+        content_without_code,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    h1_match = H1_RE.search(content_without_code)
+    if h1_match:
+        h1_text = h1_match.group(1).strip()
+        print(
+            f"  [WARN] {path}: redundant H1 '# {h1_text}' (title in front matter)",
+            file=sys.stderr,
+        )
+
+
+def _validate_meta_schema(meta: dict, errors: list[str]) -> None:
+    """Run Pydantic validation and allowlist checks on metadata."""
+    if "schema_type" in meta:
+        try:
+            FM_ADAPTER.validate_python(meta)
+        except ValidationError as e:
+            for err in e.errors():
+                loc = "/".join(map(str, err["loc"]))
+                errors.append(f"{loc}: {err['msg']}")
+
+
+def _validate_allowlists(
+    meta: dict,
+    allowed_tags: set[str],
+    allowed_owners: set[str],
+    errors: list[str],
+) -> None:
+    """Validate tags and owner against allowlists."""
+    if "tags" in meta and isinstance(meta["tags"], list):
+        unknown_tags = [t for t in meta["tags"] if t not in allowed_tags]
+        if unknown_tags:
+            errors.append(f"unknown tag(s): {unknown_tags}")
+
+    if "owner" in meta and meta["owner"] not in allowed_owners:
+        errors.append(f"unknown owner '{meta['owner']}'")
+
+
 def validate_file(
     path: Path,
     allowed_tags: set[str],
@@ -182,65 +232,45 @@ def validate_file(
             - fixed: bool - Whether autofix made changes
     """
     errors: list[str] = []
-    fixed = False
+    fixed = autofix and autofix_front_matter(path)
 
-    # Autofix if requested
-    if autofix:
-        fixed = autofix_front_matter(path)
-
-    # Parse front matter
     meta, content = parse_front_matter(path)
 
     if meta is None:
         errors.append("missing or invalid front matter")
         return {"file": str(path), "ok": False, "errors": errors, "fixed": fixed}
 
-    # Check for redundant body H1 (non-blocking warning for GitHub-rendered docs)
-    # Remove fenced code blocks before checking for H1
-    # Uses simpler DOTALL approach that properly handles multi-line blocks
-    content_without_code = re.sub(
-        r"^[ \t]*```[^\n]*\n.*?^[ \t]*```[ \t]*$",
-        "",
-        content,
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    content_without_code = re.sub(
-        r"^[ \t]*~~~[^\n]*\n.*?^[ \t]*~~~[ \t]*$",
-        "",
-        content_without_code,
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    h1_match = H1_RE.search(content_without_code)
-    if h1_match:
-        h1_text = h1_match.group(1).strip()
-        # Log as warning only — H1 is needed for GitHub rendering
-        print(
-            f"  [WARN] {path}: redundant H1 '# {h1_text}' (title in front matter)",
-            file=sys.stderr,
-        )
+    _check_redundant_h1(path, content)
+    _validate_meta_schema(meta, errors)
+    _validate_allowlists(meta, allowed_tags, allowed_owners, errors)
 
-    # Strict Pydantic validation (only for files with schema_type field)
-    # Files without schema_type are legacy docs not yet migrated to the schema system
-    if "schema_type" in meta:
-        try:
-            FM_ADAPTER.validate_python(meta)
-        except ValidationError as e:
-            for err in e.errors():
-                loc = "/".join(map(str, err["loc"]))
-                errors.append(f"{loc}: {err['msg']}")
+    return {"file": str(path), "ok": not errors, "errors": errors, "fixed": fixed}
 
-    # Validate tags against allow-list
-    if "tags" in meta and isinstance(meta["tags"], list):
-        unknown_tags = [t for t in meta["tags"] if t not in allowed_tags]
-        if unknown_tags:
-            errors.append(f"unknown tag(s): {unknown_tags}")
 
-    # Validate owner against allow-list
-    if "owner" in meta and meta["owner"] not in allowed_owners:
-        errors.append(f"unknown owner '{meta['owner']}'")
+def _collect_md_files(path_strings: list[str]) -> list[Path]:
+    """Collect all Markdown files from paths and directories."""
+    md_files: list[Path] = []
+    for path_str in path_strings:
+        path = Path(path_str)
+        if path.is_dir():
+            md_files.extend(path.rglob("*.md"))
+        elif path.suffix.lower() == ".md":
+            md_files.append(path)
+    return md_files
 
-    ok = not errors
-    return {"file": str(path), "ok": ok, "errors": errors, "fixed": fixed}
+
+def _print_results(results: list[dict[str, Any]], emit_json: bool) -> None:
+    """Output validation results as JSON or human-readable text."""
+    if emit_json:
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+        return
+
+    for result in results:
+        status = "OK" if result["ok"] else "ISSUES"
+        fixed_marker = " [FIXED]" if result.get("fixed", False) else ""
+        print(f"{result['file']}: {status}{fixed_marker}")
+        for error in result["errors"]:
+            print(f"  - {error}")
 
 
 def main() -> int:
@@ -253,9 +283,7 @@ def main() -> int:
         description="Validate and autofix YAML front matter in Markdown files"
     )
     parser.add_argument(
-        "paths",
-        nargs="+",
-        help="Paths to Markdown files or directories to validate",
+        "paths", nargs="+", help="Paths to Markdown files or directories to validate"
     )
     parser.add_argument(
         "--fix",
@@ -269,52 +297,25 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    # Collect Markdown files
-    md_files: list[Path] = []
-    for path_str in args.paths:
-        path = Path(path_str)
-        if path.is_dir():
-            md_files.extend(path.rglob("*.md"))
-        elif path.suffix.lower() == ".md":
-            md_files.append(path)
-
+    md_files = _collect_md_files(args.paths)
     if not md_files:
         print("No Markdown files found", file=sys.stderr)
         return 1
 
-    # Find docs root for allow-lists
-    docroot = next(
-        (p for p in map(Path, args.paths) if p.name == "docs"),
-        Path("docs"),
-    )
-
-    # Load allow-lists
+    docroot = next((p for p in map(Path, args.paths) if p.name == "docs"), Path("docs"))
     try:
         allowed_tags, allowed_owners = load_allowlists(docroot)
     except Exception as e:
         print(f"Error loading allow-lists: {e}", file=sys.stderr)
         return 1
 
-    # Validate all files
-    results: list[dict[str, Any]] = []
-    failed = False
+    results = [
+        validate_file(md_file, allowed_tags, allowed_owners, args.fix)
+        for md_file in sorted(md_files)
+    ]
+    failed = any(not r["ok"] for r in results)
 
-    for md_file in sorted(md_files):
-        result = validate_file(md_file, allowed_tags, allowed_owners, args.fix)
-        results.append(result)
-        failed |= not result["ok"]
-
-    # Output results
-    if args.emit_json:
-        print(json.dumps(results, ensure_ascii=False, indent=2))
-    else:
-        for result in results:
-            status = "OK" if result["ok"] else "ISSUES"
-            fixed_marker = " [FIXED]" if result.get("fixed", False) else ""
-            print(f"{result['file']}: {status}{fixed_marker}")
-            for error in result["errors"]:
-                print(f"  - {error}")
-
+    _print_results(results, args.emit_json)
     return 1 if failed else 0
 
 

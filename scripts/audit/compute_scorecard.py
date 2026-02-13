@@ -112,6 +112,31 @@ def compute_field_coverage(screening_path: Path) -> float | None:
     return round(score, 2)
 
 
+def _extract_validity_from_summary(
+    field_summary: dict[str, Any],
+) -> list[float]:
+    """Extract validity percentages from field_summary format."""
+    return [
+        info["validity_pct"]
+        for info in field_summary.values()
+        if isinstance(info, dict) and "validity_pct" in info
+    ]
+
+
+def _extract_validity_from_per_field(
+    per_field: dict[str, Any],
+) -> list[float]:
+    """Extract validity percentages from per_field_results format."""
+    pcts: list[float] = []
+    for info in per_field.values():
+        if not isinstance(info, dict):
+            continue
+        total = info.get("valid", 0) + info.get("invalid", 0)
+        if total > 0:
+            pcts.append(info["valid"] / total * 100)
+    return pcts
+
+
 def compute_field_validity(compliance_path: Path) -> float | None:
     """Compute field validity score from compliance.json.
 
@@ -130,42 +155,57 @@ def compute_field_validity(compliance_path: Path) -> float | None:
     with compliance_path.open() as f:
         data = json.load(f)
 
-    # Handle both summary-level and field-level formats
-    field_summary = data.get("field_summary", {})
-    if field_summary:
-        validity_pcts: list[float] = []
-        for _field, info in field_summary.items():
-            if isinstance(info, dict) and "validity_pct" in info:
-                validity_pcts.append(info["validity_pct"])
-        if validity_pcts:
-            score = sum(validity_pcts) / len(validity_pcts)
-            log.info(
-                "  field_validity: %.1f/100 (%d fields)",
-                score,
-                len(validity_pcts),
-            )
-            return round(score, 2)
+    validity_pcts = _extract_validity_from_summary(data.get("field_summary", {}))
+    if not validity_pcts:
+        validity_pcts = _extract_validity_from_per_field(
+            data.get("per_field_results", {})
+        )
 
-    # Fallback: extract from per_field_results if available
-    per_field = data.get("per_field_results", {})
-    if per_field:
-        validity_pcts = []
-        for _field, info in per_field.items():
-            if isinstance(info, dict):
-                total = info.get("valid", 0) + info.get("invalid", 0)
-                if total > 0:
-                    validity_pcts.append(info["valid"] / total * 100)
-        if validity_pcts:
-            score = sum(validity_pcts) / len(validity_pcts)
-            log.info(
-                "  field_validity: %.1f/100 (%d fields)",
-                score,
-                len(validity_pcts),
-            )
-            return round(score, 2)
+    if not validity_pcts:
+        log.warning("  Could not extract validity scores from compliance.json")
+        return None
 
-    log.warning("  Could not extract validity scores from compliance.json")
-    return None
+    score = sum(validity_pcts) / len(validity_pcts)
+    log.info("  field_validity: %.1f/100 (%d fields)", score, len(validity_pcts))
+    return round(score, 2)
+
+
+_EXPECTED_SECTIONS: list[str] = [
+    "overview",
+    "statistics",
+    "format",
+    "label",
+    "iqa",
+    "limitation",
+    "license",
+    "layer 2",
+    "reliability",
+    "processing",
+    "version history",
+]
+
+
+def _section_has_content(lines: list[str], heading_idx: int) -> bool:
+    """Check whether the section starting at *heading_idx* has body content."""
+    for j in range(heading_idx + 1, min(heading_idx + 20, len(lines))):
+        stripped = lines[j].strip()
+        if stripped and re.match(r"^#{1,6}\s+", stripped):
+            break
+        if stripped and not stripped.startswith("---"):
+            return True
+    return False
+
+
+def _count_populated_sections(lines: list[str]) -> int:
+    """Count how many expected sections have body content."""
+    populated = 0
+    for keyword in _EXPECTED_SECTIONS:
+        for i, line in enumerate(lines):
+            if re.match(r"^#{1,6}\s+", line) and keyword.lower() in line.lower():
+                if _section_has_content(lines, i):
+                    populated += 1
+                break
+    return populated
 
 
 def compute_doc_completeness(source_doc_path: Path) -> float | None:
@@ -187,47 +227,8 @@ def compute_doc_completeness(source_doc_path: Path) -> float | None:
     content = source_doc_path.read_text(encoding="utf-8")
     lines = content.splitlines()
 
-    # Expected section keywords (case-insensitive partial match)
-    expected_sections = [
-        "overview",
-        "statistics",
-        "format",
-        "label",
-        "iqa",
-        "limitation",
-        "license",
-        "layer 2",
-        "reliability",
-        "processing",
-        "version history",
-    ]
-
-    # Find headings and check for content after them
-    populated = 0
-    for keyword in expected_sections:
-        found_heading = False
-        for i, line in enumerate(lines):
-            # Match any heading level
-            if re.match(r"^#{1,6}\s+", line) and keyword.lower() in line.lower():
-                found_heading = True
-                # Check if there's content after the heading
-                has_content = False
-                for j in range(i + 1, min(i + 20, len(lines))):
-                    stripped = lines[j].strip()
-                    # Stop at next heading
-                    if stripped and re.match(r"^#{1,6}\s+", stripped):
-                        break
-                    # Non-empty, non-heading line = content
-                    if stripped and not stripped.startswith("---"):
-                        has_content = True
-                        break
-                if has_content:
-                    populated += 1
-                break
-        if not found_heading:
-            pass  # Section not found at all
-
-    total = len(expected_sections)
+    populated = _count_populated_sections(lines)
+    total = len(_EXPECTED_SECTIONS)
     score = populated / total * 100
     log.info(
         "  doc_completeness: %.1f/100 (%d/%d sections populated)",
@@ -315,6 +316,52 @@ def compute_defect_rate(
     return round(score, 2)
 
 
+def _collect_pairwise_agreements(
+    samples: list[dict[str, Any]],
+) -> dict[str, list[bool]]:
+    """Collect pairwise match booleans from comparison report samples."""
+    field_agreements: dict[str, list[bool]] = {}
+    for sample in samples:
+        for field_name, field_data in sample.get("fields", {}).items():
+            for _pair, matches in field_data.get("pairwise_matches", {}).items():
+                if isinstance(matches, bool):
+                    field_agreements.setdefault(field_name, []).append(matches)
+    return field_agreements
+
+
+def _compute_fallback_agreement(samples: list[dict[str, Any]]) -> float | None:
+    """Compute agreement by checking if all non-null source values match."""
+    total_comparisons = 0
+    agreements = 0
+    for sample in samples:
+        for field_data in sample.get("fields", {}).values():
+            non_null = [
+                v for v in field_data.get("sources", {}).values() if v is not None
+            ]
+            if len(non_null) < 2:
+                continue
+            total_comparisons += 1
+            if len({str(v) for v in non_null}) == 1:
+                agreements += 1
+    if total_comparisons == 0:
+        return None
+    return agreements / total_comparisons * 100
+
+
+def _compute_field_agreement_score(
+    field_agreements: dict[str, list[bool]],
+) -> float | None:
+    """Compute mean agreement rate across fields from pairwise matches."""
+    field_rates = [
+        sum(matches) / len(matches) * 100
+        for matches in field_agreements.values()
+        if matches
+    ]
+    if not field_rates:
+        return None
+    return sum(field_rates) / len(field_rates)
+
+
 def compute_cross_source_agreement(
     comparison_path: Path,
 ) -> float | None:
@@ -341,50 +388,21 @@ def compute_cross_source_agreement(
         log.warning("  Only %d sources - cross-source agreement N/A", len(sources))
         return None
 
-    # Compute pairwise agreement from samples
     samples = data.get("samples", [])
     if not samples:
         log.warning("  No samples in comparison report")
         return None
 
-    field_agreements: dict[str, list[bool]] = {}
-    for sample in samples:
-        fields = sample.get("fields", {})
-        for field_name, field_data in fields.items():
-            pairwise = field_data.get("pairwise_matches", {})
-            for _pair, matches in pairwise.items():
-                if field_name not in field_agreements:
-                    field_agreements[field_name] = []
-                if isinstance(matches, bool):
-                    field_agreements[field_name].append(matches)
+    field_agreements = _collect_pairwise_agreements(samples)
 
-    if not field_agreements:
-        # Fallback: count fields where sources agree
-        total_comparisons = 0
-        agreements = 0
-        for sample in samples:
-            fields = sample.get("fields", {})
-            for _field_name, field_data in fields.items():
-                source_values = field_data.get("sources", {})
-                non_null = [v for v in source_values.values() if v is not None]
-                if len(non_null) >= 2:
-                    total_comparisons += 1
-                    if len({str(v) for v in non_null}) == 1:
-                        agreements += 1
-
-        if total_comparisons == 0:
-            log.warning("  No multi-source comparisons available")
-            return None
-        score = agreements / total_comparisons * 100
+    if field_agreements:
+        score = _compute_field_agreement_score(field_agreements)
     else:
-        field_rates: list[float] = []
-        for _field, matches in field_agreements.items():
-            if matches:
-                rate = sum(matches) / len(matches) * 100
-                field_rates.append(rate)
-        if not field_rates:
-            return None
-        score = sum(field_rates) / len(field_rates)
+        score = _compute_fallback_agreement(samples)
+
+    if score is None:
+        log.warning("  No multi-source comparisons available")
+        return None
 
     log.info("  cross_source_agreement: %.1f/100", score)
     return round(score, 2)
@@ -741,6 +759,40 @@ def update_tracking_index(
 # -------------------------------------------------------------------
 # CLI
 # -------------------------------------------------------------------
+def _discover_datasets(dataset_arg: str | None) -> list[str] | None:
+    """Return the list of datasets to score, or None if none found."""
+    if dataset_arg:
+        return [dataset_arg]
+    datasets = sorted(
+        d.name
+        for d in AUDIT_RESULTS_DIR.iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    )
+    if not datasets:
+        log.error("No audit results found in %s", AUDIT_RESULTS_DIR)
+        return None
+    log.info("Found audit results for %d datasets", len(datasets))
+    return datasets
+
+
+def _print_multi_dataset_summary(scorecards: list[dict[str, Any]]) -> None:
+    """Print a summary table for multi-dataset runs."""
+    print("=" * 60)
+    print("  Summary: All Datasets")
+    print("=" * 60)
+    print(f"  {'Dataset':<20s} {'Score':>6s} {'Grade':>6s}")
+    print("  " + "-" * 34)
+    for sc in scorecards:
+        ds = sc.get("dataset", "?")
+        if sc.get("status") == "no_audit_data":
+            print(f"  {ds:<20s} {'N/A':>6s} {'N/A':>6s}")
+        else:
+            grade = sc.get("grade", "?")
+            overall = sc.get("overall_score", 0.0)
+            print(f"  {ds:<20s} {overall:>5.1f} {grade:>6s}")
+    print("=" * 60)
+
+
 def main() -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -785,52 +837,24 @@ def main() -> int:
     args = parser.parse_args()
     config = load_scorecard_config(args.config)
 
+    datasets = _discover_datasets(args.dataset)
+    if datasets is None:
+        return 1
+
     scorecards: list[dict[str, Any]] = []
-
-    if args.dataset:
-        datasets = [args.dataset]
-    else:
-        # Find all datasets with audit results
-        datasets = sorted(
-            d.name
-            for d in AUDIT_RESULTS_DIR.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
-        )
-        if not datasets:
-            log.error("No audit results found in %s", AUDIT_RESULTS_DIR)
-            return 1
-        log.info("Found audit results for %d datasets", len(datasets))
-
     for dataset_name in datasets:
         scorecard = score_dataset(dataset_name, config)
         scorecards.append(scorecard)
 
-        # Write individual scorecard
         out_dir = args.output_dir or (AUDIT_RESULTS_DIR / dataset_name)
         write_scorecard(scorecard, out_dir / "scorecard.json")
 
         if not args.quiet:
             print_scorecard(scorecard)
 
-    # Summary for multi-dataset runs
     if len(scorecards) > 1 and not args.quiet:
-        print("=" * 60)
-        print("  Summary: All Datasets")
-        print("=" * 60)
-        print(f"  {'Dataset':<20s} {'Score':>6s} {'Grade':>6s}")
-        print("  " + "-" * 34)
-        for sc in scorecards:
-            ds = sc.get("dataset", "?")
-            grade = sc.get("grade", "?")
-            overall = sc.get("overall_score", 0.0)
-            status = sc.get("status", "")
-            if status == "no_audit_data":
-                print(f"  {ds:<20s} {'N/A':>6s} {'N/A':>6s}")
-            else:
-                print(f"  {ds:<20s} {overall:>5.1f} {grade:>6s}")
-        print("=" * 60)
+        _print_multi_dataset_summary(scorecards)
 
-    # Update tracking index if requested
     if args.update_index:
         valid = [s for s in scorecards if s.get("status") != "no_audit_data"]
         if valid:

@@ -361,6 +361,96 @@ def process_ground_truth_dataset(
     return stats
 
 
+def _categorize_confidence(
+    confidence: float, method: str, stats: dict[str, int]
+) -> None:
+    """Increment the appropriate stats counter based on confidence level."""
+    if confidence <= CONFIDENCE_HARD_FAILURE:
+        stats["hard_failure"] += 1
+    elif confidence <= CONFIDENCE_SILENT_FAILURE:
+        stats["silent_failure"] += 1
+    elif confidence <= CONFIDENCE_IMAGE_ONLY:
+        stats["image_only"] += 1
+    elif confidence <= CONFIDENCE_SHORT_TEXT:
+        stats["short_text"] += 1
+    elif method == "docling_ocr_partial_formula":
+        stats["formula_partial"] += 1
+    else:
+        stats["normal"] += 1
+
+
+def _compute_pass1_confidences(
+    samples: list[dict[str, Any]],
+    docling_index: dict[str, tuple[float, str, str]],
+    stats: dict[str, int],
+) -> list[tuple[int, float]]:
+    """Pass 1: compute per-sample confidence from Docling index.
+
+    Writes initial confidence values into sample enrichment data and
+    returns (sample_idx, confidence) pairs for cap computation.
+    """
+    sample_confidences: list[tuple[int, float]] = []
+
+    for idx, sample in enumerate(samples):
+        versions = sample.get("enrichments", {}).get("versions", [])
+        if not versions:
+            stats["no_enrichment"] += 1
+            continue
+
+        data = versions[0].get("data", {})
+        if data.get("text_quality_confidence") is not None:
+            stats["already_has_confidence"] += 1
+            continue
+
+        image_id = extract_image_id(sample)
+        docling_result = docling_index.get(image_id) if image_id else None
+
+        if docling_result is None:
+            stats["unmatched"] += 1
+            continue
+
+        confidence, method, tier = docling_result
+        stats["matched"] += 1
+        _categorize_confidence(confidence, method, stats)
+
+        sample_confidences.append((idx, confidence))
+
+        data["text_quality_confidence"] = confidence
+        data["text_quality_method"] = method
+        data["text_quality_provenance_tier"] = tier
+        data["text_quality_is_soft_label"] = tier != "tier_0_exact"
+
+    return sample_confidences
+
+
+def _apply_quality_cap(
+    samples: list[dict[str, Any]],
+    sample_confidences: list[tuple[int, float]],
+    cap: float,
+    stats: dict[str, int],
+) -> None:
+    """Pass 2: apply dataset-level quality cap to samples exceeding it."""
+    all_confidences = [c for _, c in sample_confidences]
+    low_count = sum(1 for c in all_confidences if c < SAMPLE_LOW_QUALITY_THRESHOLD)
+    low_rate = low_count / len(all_confidences) if all_confidences else 0
+
+    logger.info(
+        f"  Dataset quality cap triggered: {low_count}/{len(all_confidences)} "
+        f"({low_rate:.1%}) samples below {SAMPLE_LOW_QUALITY_THRESHOLD} -> "
+        f"capping all at {cap}"
+    )
+
+    cap_reason = f"{low_rate:.1%} samples below {SAMPLE_LOW_QUALITY_THRESHOLD}"
+    for idx, _original_confidence in sample_confidences:
+        data = samples[idx]["enrichments"]["versions"][0]["data"]
+        current = data.get("text_quality_confidence")
+        if current is not None and current > cap:
+            data["text_quality_confidence"] = cap
+            data["text_quality_dataset_cap"] = cap
+            data["text_quality_dataset_cap_reason"] = cap_reason
+            stats["cap_applied"] += 1
+
+
 def process_docling_dataset(
     _dataset_name: str,
     metadata_path: Path,
@@ -398,96 +488,30 @@ def process_docling_dataset(
         "cap_applied": 0,
     }
 
-    # Build Docling index
     docling_index = build_docling_index(annotation_dir)
     logger.info(f"  Docling index: {len(docling_index)} records")
     if not docling_index:
         logger.warning(f"  No Docling OCR data found in {annotation_dir}/ocr/")
         return stats
 
-    # Load metadata
     with open(metadata_path) as f:
         metadata = json.load(f)
 
     samples = metadata.get("samples", [])
     stats["total"] = len(samples)
 
-    # --- Pass 1: Compute per-sample confidence ---
-    sample_confidences: list[tuple[int, float]] = []  # (sample_idx, confidence)
+    # Pass 1: compute per-sample confidence
+    sample_confidences = _compute_pass1_confidences(samples, docling_index, stats)
 
-    for idx, sample in enumerate(samples):
-        enrichments = sample.get("enrichments", {})
-        versions = enrichments.get("versions", [])
-        if not versions:
-            stats["no_enrichment"] += 1
-            continue
-
-        data = versions[0].get("data", {})
-
-        if data.get("text_quality_confidence") is not None:
-            stats["already_has_confidence"] += 1
-            continue
-
-        image_id = extract_image_id(sample)
-        docling_result = docling_index.get(image_id) if image_id else None
-
-        if docling_result is None:
-            stats["unmatched"] += 1
-            continue
-
-        confidence, method, tier = docling_result
-        stats["matched"] += 1
-
-        # Count by category
-        if confidence <= CONFIDENCE_HARD_FAILURE:
-            stats["hard_failure"] += 1
-        elif confidence <= CONFIDENCE_SILENT_FAILURE:
-            stats["silent_failure"] += 1
-        elif confidence <= CONFIDENCE_IMAGE_ONLY:
-            stats["image_only"] += 1
-        elif confidence <= CONFIDENCE_SHORT_TEXT:
-            stats["short_text"] += 1
-        elif method == "docling_ocr_partial_formula":
-            stats["formula_partial"] += 1
-        else:
-            stats["normal"] += 1
-
-        # Store pre-cap confidence for cap computation
-        sample_confidences.append((idx, confidence))
-
-        # Write initial values (may be capped in pass 2)
-        data["text_quality_confidence"] = confidence
-        data["text_quality_method"] = method
-        data["text_quality_provenance_tier"] = tier
-        data["text_quality_is_soft_label"] = tier != "tier_0_exact"
-
-    # --- Pass 2: Dataset-level quality cap ---
+    # Pass 2: dataset-level quality cap
     all_confidences = [c for _, c in sample_confidences]
     cap = compute_dataset_quality_cap(all_confidences, cap_trigger_pct)
 
     if cap is not None:
-        low_count = sum(1 for c in all_confidences if c < SAMPLE_LOW_QUALITY_THRESHOLD)
-        low_rate = low_count / len(all_confidences) if all_confidences else 0
-        logger.info(
-            f"  Dataset quality cap triggered: {low_count}/{len(all_confidences)} "
-            f"({low_rate:.1%}) samples below {SAMPLE_LOW_QUALITY_THRESHOLD} → "
-            f"capping all at {cap}"
-        )
-
-        for idx, original_confidence in sample_confidences:
-            data = samples[idx]["enrichments"]["versions"][0]["data"]
-            current = data.get("text_quality_confidence")
-            if current is not None and current > cap:
-                data["text_quality_confidence"] = cap
-                data["text_quality_dataset_cap"] = cap
-                data["text_quality_dataset_cap_reason"] = (
-                    f"{low_rate:.1%} samples below {SAMPLE_LOW_QUALITY_THRESHOLD}"
-                )
-                stats["cap_applied"] += 1
+        _apply_quality_cap(samples, sample_confidences, cap, stats)
     else:
         logger.info("  No dataset quality cap needed")
 
-    # Write updated metadata
     if not dry_run:
         metadata.setdefault("backfill_history", [])
         metadata["backfill_history"].append(

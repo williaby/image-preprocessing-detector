@@ -761,6 +761,81 @@ def build_data_locations_table(name: str, info: dict) -> str:
     return "\n".join(lines)
 
 
+def _find_section_end_after_table(lines: list[str], header_idx: int) -> int:
+    """Find the end index of a table section starting after a header line.
+
+    Scans forward from header_idx+1, tracking whether we've entered a
+    markdown table (lines starting with '|'). Returns the line index
+    after the last line belonging to this section.
+    """
+    end = header_idx + 1
+    in_table = False
+    for j in range(header_idx + 1, len(lines)):
+        stripped = lines[j].strip()
+        if stripped.startswith("|"):
+            in_table = True
+            end = j + 1
+        elif in_table and stripped == "":
+            end = j + 1
+            break
+        elif in_table and stripped.startswith(("#", "---")):
+            break
+        elif not in_table and stripped == "":
+            continue
+        elif not in_table and stripped.startswith("|"):
+            continue
+        elif stripped.startswith(("#", "---")):
+            break
+        else:
+            end = j + 1
+    return end
+
+
+def _find_heading_start(lines: list[str], heading_idx: int) -> int:
+    """Walk backwards from a heading to skip preceding blank lines."""
+    start = heading_idx
+    while start > 0 and lines[start - 1].strip() == "":
+        start -= 1
+    return start
+
+
+def _find_quick_ref_end(lines: list[str], start_idx: int) -> int:
+    """Find end of a quick-reference style Data Locations block."""
+    end = start_idx + 1
+    for j in range(start_idx + 1, len(lines)):
+        stripped = lines[j].strip()
+        if stripped.startswith("|"):
+            end = j + 1
+        elif stripped == "":
+            end = j + 1
+            break
+        elif stripped.startswith(("#", "[")):
+            break
+        else:
+            end = j + 1
+    return end
+
+
+def _find_insert_after_section(
+    lines: list[str], section_pattern: str, exclude_keyword: str | None = None
+) -> tuple[int, int, str] | None:
+    """Find insertion point after a section matching the given pattern.
+
+    Returns (idx, idx, 'insert') positioned at the next heading after the
+    matched section, or at EOF if no subsequent heading is found.
+    """
+    for i, line in enumerate(lines):
+        if re.search(section_pattern, line) and line.strip().startswith("#"):
+            for j in range(i + 1, len(lines)):
+                stripped = lines[j].strip()
+                if stripped.startswith("#") and (
+                    exclude_keyword is None or exclude_keyword not in stripped
+                ):
+                    return j, j, "insert"
+            return len(lines), len(lines), "insert"
+    return None
+
+
 def find_insertion_point(content: str) -> tuple[int, int, str]:
     """Find where to insert/replace Data Locations table.
 
@@ -771,69 +846,25 @@ def find_insertion_point(content: str) -> tuple[int, int, str]:
     # First, check if Data Locations table already exists
     for i, line in enumerate(lines):
         if "Data Locations" in line and line.strip().startswith("#"):
-            # Found existing table header - find extent
-            start = i
-            # Look backwards for blank line before heading
-            while start > 0 and lines[start - 1].strip() == "":
-                start -= 1
-
-            # Find end of table (next heading or section break)
-            end = i + 1
-            in_table = False
-            for j in range(i + 1, len(lines)):
-                stripped = lines[j].strip()
-                if stripped.startswith("|"):
-                    in_table = True
-                    end = j + 1
-                elif in_table and stripped == "":
-                    end = j + 1
-                    break
-                elif in_table and stripped.startswith(("#", "---")):
-                    break
-                elif not in_table and stripped == "":
-                    continue
-                elif not in_table and (stripped.startswith("|") or stripped == ""):
-                    continue
-                elif stripped.startswith(("#", "---")):
-                    break
-                else:
-                    end = j + 1
-
+            start = _find_heading_start(lines, i)
+            end = _find_section_end_after_table(lines, i)
             return start, end, "replace"
 
     # Check for Quick Reference Data Locations (different format)
     for i, line in enumerate(lines):
         if line.strip() == "**Data Locations**:":
-            start = i
-            end = i + 1
-            for j in range(i + 1, len(lines)):
-                stripped = lines[j].strip()
-                if stripped.startswith("|"):
-                    end = j + 1
-                elif stripped == "":
-                    end = j + 1
-                    break
-                elif stripped.startswith(("#", "[")):
-                    break
-                else:
-                    end = j + 1
-            return start, end, "replace"
+            end = _find_quick_ref_end(lines, i)
+            return i, end, "replace"
 
     # No existing table - find insertion point after Project Usage section
-    for i, line in enumerate(lines):
-        if re.search(r"Project Usage", line) and line.strip().startswith("#"):
-            # Find end of Project Usage section
-            for j in range(i + 1, len(lines)):
-                stripped = lines[j].strip()
-                if stripped.startswith("#") and "Data" not in stripped:
-                    return j, j, "insert"
-            # If Project Usage is the last section, insert at end
-            return len(lines), len(lines), "insert"
+    result = _find_insert_after_section(lines, r"Project Usage", exclude_keyword="Data")
+    if result is not None:
+        return result
 
     # Fallback: insert before References or at end of file
-    for i, line in enumerate(lines):
-        if re.search(r"References|Citation", line) and line.strip().startswith("#"):
-            return i, i, "insert"
+    result = _find_insert_after_section(lines, r"References|Citation")
+    if result is not None:
+        return result
 
     # Last resort: insert before the last line
     return len(lines) - 1, len(lines) - 1, "insert"
