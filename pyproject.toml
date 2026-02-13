@@ -134,7 +134,7 @@ ml = [
     # Machine Learning Dependencies (install separately for Phase 2/3)
     # Includes ~4GB of CUDA dependencies - use [fuzz] extra for lightweight installs
     "torch>=2.10.0",  # Snyk: CVE fix (upgraded from >=2.9.0)
-    "torchvision>=0.24.0",  # Compatible with torch 2.10.0
+    "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
     "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
     "timm>=0.9.0",
@@ -167,7 +167,7 @@ api = [
 colab = [
     # Google Colab Training Dependencies (Phase 2-3)
     "torch>=2.10.0",  # Snyk: CVE fix (upgraded from >=2.9.0)
-    "torchvision>=0.24.0",
+    "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
     "ultralytics>=8.0.0",  # YOLOv8 for Phase 6 layout-lite (lightweight)
     "timm>=0.9.0",
@@ -190,7 +190,7 @@ workers = [
 labeling = [
     # Labeling Workstreams Dependencies (Project A/B/C)
     "torch>=2.10.0",  # Snyk: CVE fix (upgraded from >=2.0.0)
-    "torchvision>=0.15.0",
+    "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "transformers>=4.40.0",  # HuggingFace transformers for model loading
     "accelerate>=0.25.0",    # Device management and mixed precision
     "bitsandbytes>=0.42.0",  # 4-bit/8-bit quantization (Linux only)

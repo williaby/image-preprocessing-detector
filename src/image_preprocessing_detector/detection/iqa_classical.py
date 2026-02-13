@@ -26,7 +26,7 @@ Future refactoring should split this into separate modules per detector:
 """
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 import cv2
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 _INVALID_IMAGE_ERROR = "Invalid or empty image provided"
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     """Issue severity levels."""
 
     LOW = "low"
@@ -710,7 +710,7 @@ class NoiseMetrics:
     noise_type_hint: str
 
 
-class NoiseType(StrEnum):
+class NoiseType(str, Enum):
     """Types of image noise."""
 
     GAUSSIAN = "gaussian"
@@ -1298,7 +1298,7 @@ def detect_contrast(image: np.ndarray) -> ContrastDetectionResult:
     return detector.detect(image)
 
 
-class IlluminationType(StrEnum):
+class IlluminationType(str, Enum):
     """Types of illumination issues."""
 
     UNIFORM = "uniform"

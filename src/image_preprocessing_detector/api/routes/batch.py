@@ -108,7 +108,7 @@ async def process_batch_job(
                 results.append(result)
             finally:
                 # Cleanup - trivially fast, no I/O blocking concern
-                tmp_path.unlink(missing_ok=True)  # noqa: ASYNC240
+                tmp_path.unlink(missing_ok=True)
 
             # Update progress
             _update_job(

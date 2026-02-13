@@ -155,6 +155,7 @@ class OrientationDatasetGenerator:
         # Set random seeds for reproducibility
         random.seed(seed)
         np.random.seed(seed)
+        self._rng = np.random.default_rng(seed=seed)
 
         # Tracking
         self.source_documents: list[SourceDocument] = []
@@ -492,8 +493,7 @@ class OrientationDatasetGenerator:
 
     def _apply_noise(self, image: np.ndarray, std: float) -> np.ndarray:
         """Apply Gaussian noise."""
-        rng = np.random.default_rng(seed=42)
-        noise = rng.normal(0, std, image.shape).astype(np.float32)
+        noise = self._rng.normal(0, std, image.shape).astype(np.float32)
         noisy = image.astype(np.float32) + noise
         return np.clip(noisy, 0, 255).astype(np.uint8)
 

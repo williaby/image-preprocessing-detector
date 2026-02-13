@@ -20,11 +20,11 @@ Supported Dataset Types:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import TypedDict
 
 
-class DatasetCategory(StrEnum):
+class DatasetCategory(str, Enum):
     """High-level dataset category classification."""
 
     IQA_BENCHMARK = "iqa_benchmark"  # Quality assessment benchmarks
@@ -38,7 +38,7 @@ class DatasetCategory(StrEnum):
     UNKNOWN = "unknown"
 
 
-class LicenseType(StrEnum):
+class LicenseType(str, Enum):
     """Dataset license classification."""
 
     CC_BY = "cc-by"  # Creative Commons Attribution

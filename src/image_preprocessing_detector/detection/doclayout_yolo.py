@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class DocLayoutClass(StrEnum):
+class DocLayoutClass(str, Enum):
     """Unified document layout element classes.
 
     Supports both DocLayNet (11 classes) and DocStructBench (10 classes) taxonomies.

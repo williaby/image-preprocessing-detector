@@ -34,7 +34,7 @@ import logging
 import os
 import shutil
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CheckSeverity(StrEnum):
+class CheckSeverity(str, Enum):
     """Severity level for pre-flight check failures."""
 
     ERROR = "error"  # Must fix before proceeding
@@ -52,7 +52,7 @@ class CheckSeverity(StrEnum):
     INFO = "info"  # Informational only
 
 
-class CheckCategory(StrEnum):
+class CheckCategory(str, Enum):
     """Category of pre-flight check."""
 
     DISK = "disk"

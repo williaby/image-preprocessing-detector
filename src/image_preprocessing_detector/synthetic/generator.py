@@ -806,7 +806,7 @@ class MultiScriptDocumentGenerator:
                 script_code=script_code,
                 language_code=language_code or "",
                 layout_type=layout_type,
-                text_density=text_density,
+                _text_density=text_density,
             )
         except Exception as e:
             logger.error("Rendering failed for %s: %s", script_code, e)

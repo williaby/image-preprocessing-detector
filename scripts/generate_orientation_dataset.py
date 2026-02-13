@@ -32,7 +32,6 @@ import argparse
 import hashlib  # nosemgrep: python.lang.security.audit.insecure-hash-algorithms  # Uses SHA256, not MD5
 import json
 import logging
-import random
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -42,6 +41,9 @@ from typing import Any
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
+
+# Module-level seeded RNG (re-initialized in main() with user-supplied seed)
+_rng: np.random.Generator = np.random.default_rng(seed=0)
 
 # Configure logging
 logging.basicConfig(
@@ -68,7 +70,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
                 "path": BASE_DATA_PATH / DOCLAYNET_DIR,
                 "pattern": PNG_GLOB,
                 "filter_fn": lambda p: (
-                    "scientific" in str(p).lower() or random.random() < 0.3
+                    "scientific" in str(p).lower() or _rng.random() < 0.3
                 ),
             }
         ],
@@ -81,7 +83,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
                 "path": BASE_DATA_PATH / DOCLAYNET_DIR,
                 "pattern": PNG_GLOB,
                 "filter_fn": lambda p: (
-                    "financial" in str(p).lower() or random.random() < 0.2
+                    "financial" in str(p).lower() or _rng.random() < 0.2
                 ),
             }
         ],
@@ -119,7 +121,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
                 "path": BASE_DATA_PATH / DOCLAYNET_DIR,
                 "pattern": PNG_GLOB,
                 "filter_fn": lambda p: (
-                    "law" in str(p).lower() or random.random() < 0.15
+                    "law" in str(p).lower() or _rng.random() < 0.15
                 ),
             }
         ],
@@ -141,7 +143,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH / DOCLAYNET_DIR,
                 "pattern": PNG_GLOB,
-                "filter_fn": lambda p: random.random() < 0.15,
+                "filter_fn": lambda p: _rng.random() < 0.15,
             }
         ],
         "doc_type": "mixed",
@@ -275,7 +277,7 @@ def collect_source_files(category: str, config: dict[str, Any]) -> list[Document
         return samples
 
     # Shuffle and sample
-    random.shuffle(all_files)
+    _rng.shuffle(all_files)
     selected = all_files[:target_count]
 
     logger.info(f"{category}: Found {len(all_files)} files, selected {len(selected)}")
@@ -308,7 +310,7 @@ def split_by_document_id(
     test_samples: list[DocumentSample] = []
 
     for doc_type, type_samples in by_type.items():
-        random.shuffle(type_samples)
+        _rng.shuffle(type_samples)
         n = len(type_samples)
 
         train_end = int(n * train_ratio)
@@ -442,9 +444,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Set random seed
-    random.seed(args.seed)
-    np.random.seed(args.seed)
+    # Set random seed (uses numpy Generator API for SonarCloud compliance)
+    global _rng
+    _rng = np.random.default_rng(args.seed)
 
     logger.info("=" * 60)
     logger.info("Orientation Dataset Generation")

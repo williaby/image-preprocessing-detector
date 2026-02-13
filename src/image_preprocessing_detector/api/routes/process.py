@@ -401,6 +401,8 @@ async def process_single_document(
         # Cleanup temp file
         try:
             if "tmp_path" in locals():
-                tmp_path.unlink(missing_ok=True)  # noqa: ASYNC240  # Trivially fast, no I/O blocking concern
+                tmp_path.unlink(
+                    missing_ok=True
+                )  # Trivially fast, no I/O blocking concern
         except Exception as e:
             logger.debug("temp_file_cleanup_failed", error=str(e))

@@ -32,12 +32,12 @@ def _find_image_in_subdirs(subdirs: list[Path], filename: str) -> Path | None:
     return None
 
 
-def find_all_images(input_dir: Path) -> list[tuple[Path, Path]]:
+def find_all_images(input_dir: Path) -> list[tuple[Path, Path, dict[str, str]]]:
     """
     Find all images and their corresponding CSV rows.
 
     Returns:
-        List of (image_path, csv_path) tuples
+        List of (image_path, csv_path, row_dict) tuples
     """
     image_csv_pairs = []
 

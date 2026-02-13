@@ -10,6 +10,7 @@ Provides:
 
 import logging
 import os
+import random
 import re
 import sys
 from contextvars import ContextVar
@@ -22,6 +23,9 @@ import structlog
 from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.logging import RichHandler
+
+# Module-level SystemRandom for log sampling (uses OS entropy, no seed needed)
+_log_sampler = random.SystemRandom()
 
 # ============================================================================
 # Context Variables for Request Tracking
@@ -268,11 +272,9 @@ def sample_logs(
     Structlog processor that probabilistically drops events based on
     configured sample rate. Important log levels are always preserved.
 
-    Note: Uses standard random (not secrets) as this is for log sampling,
-    not for cryptographic purposes.
+    Uses SystemRandom (OS entropy) instead of the default PRNG to satisfy
+    SonarCloud S6709 security hotspot requirements.
     """
-    import random
-
     config = get_logging_config()
     level = event_dict.get("level", "").upper()
 
@@ -280,7 +282,7 @@ def sample_logs(
     if (
         level not in config.always_log_levels
         and config.sample_rate < 1.0
-        and random.random() > config.sample_rate  # nosec B311
+        and _log_sampler.random() > config.sample_rate  # nosec B311
     ):
         raise structlog.DropEvent
 

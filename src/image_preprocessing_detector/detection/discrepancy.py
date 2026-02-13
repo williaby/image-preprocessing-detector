@@ -35,7 +35,7 @@ These thresholds should be refined through validation set calibration (Phase 10)
 """
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 from typing import ClassVar, NamedTuple
 
 import numpy as np
@@ -56,7 +56,7 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
-class EscalationReason(StrEnum):
+class EscalationReason(str, Enum):
     """Reasons for escalating to teacher model."""
 
     HIGH_UNCERTAINTY = "high_uncertainty"

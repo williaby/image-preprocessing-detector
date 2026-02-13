@@ -17,11 +17,11 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import TypedDict
 
 
-class ISO15924Script(StrEnum):
+class ISO15924Script(str, Enum):
     """ISO 15924 Script Codes.
 
     4-letter codes for writing systems.
@@ -79,7 +79,7 @@ class ISO15924Script(StrEnum):
     ZZZZ = "Zzzz"  # Unknown/Undetermined
 
 
-class ISO639Language(StrEnum):
+class ISO639Language(str, Enum):
     """ISO 639-1 Language Codes.
 
     2-letter codes for major languages.
@@ -248,7 +248,7 @@ LANGUAGE_TO_DEFAULT_SCRIPT: dict[str, str] = {
 }
 
 
-class ScriptFamily(StrEnum):
+class ScriptFamily(str, Enum):
     """High-level script family groupings for routing decisions."""
 
     LATIN = "latin"

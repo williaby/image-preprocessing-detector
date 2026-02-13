@@ -17,11 +17,11 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import TypedDict
 
 
-class RuntimeIssueType(StrEnum):
+class RuntimeIssueType(str, Enum):
     """Runtime issue types from document_metadata.schema.json."""
 
     NOISE = "noise"
@@ -33,7 +33,7 @@ class RuntimeIssueType(StrEnum):
     LOW_DPI = "low_dpi"
 
 
-class SeverityLevel(StrEnum):
+class SeverityLevel(str, Enum):
     """Severity levels for detected issues."""
 
     NONE = "none"
@@ -46,7 +46,7 @@ class SeverityLevel(StrEnum):
     CRITICAL = "critical"
 
 
-class DegradationGroup(StrEnum):
+class DegradationGroup(str, Enum):
     """Degradation groups from the 45-type taxonomy."""
 
     BLUR_FOCUS = "blur_focus"

@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -62,7 +62,7 @@ except ImportError:
 HYBRID_AVAILABLE = AUGRAPHY_AVAILABLE and ALBUMENTATIONS_AVAILABLE
 
 
-class HybridProfile(StrEnum):
+class HybridProfile(str, Enum):
     """Hybrid augmentation intensity profiles."""
 
     PRISTINE = "pristine"  # No augmentation

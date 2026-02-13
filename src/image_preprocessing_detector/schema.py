@@ -10,7 +10,7 @@ scores, and Docling routing support. See docs/planning/STREAM_1_SCHEMA_ANALYSIS.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum, IntEnum, StrEnum
+from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     )
 
 
-class IssueType(StrEnum):
+class IssueType(str, Enum):
     """Types of image quality issues that can be detected."""
 
     NOISE = "noise"
@@ -43,7 +43,7 @@ class IssueType(StrEnum):
     LOW_DPI = "low_dpi"
 
 
-class DocumentType(StrEnum):
+class DocumentType(str, Enum):
     """Document type classification (Phase 8 + Office Support)."""
 
     IMAGE = "image"
@@ -62,7 +62,7 @@ class OrientationAngle(int, Enum):
     ROTATED_270 = 270
 
 
-class IssueSeverity(StrEnum):
+class IssueSeverity(str, Enum):
     """Severity levels for detected issues."""
 
     LOW = "low"
@@ -71,7 +71,7 @@ class IssueSeverity(StrEnum):
     CRITICAL = "critical"
 
 
-class ElementCategory(StrEnum):
+class ElementCategory(str, Enum):
     """Categories of document elements that can be detected.
 
     Includes all 11 DocLayNet classes plus additional project-specific categories.
@@ -164,7 +164,7 @@ class ElementCategory(StrEnum):
         return taxonomy.to_canonical(doclaynet_label, "doclaynet")
 
 
-class PDFType(StrEnum):
+class PDFType(str, Enum):
     """PDF document type classification (Phase 8)."""
 
     IMAGE_ONLY = "image_only"
@@ -172,7 +172,7 @@ class PDFType(StrEnum):
     HYBRID = "hybrid"
 
 
-class OCRRoutingStrategy(StrEnum):
+class OCRRoutingStrategy(str, Enum):
     """OCR routing recommendation strategies (Phase 8)."""
 
     OCR_FAST = "ocr_fast"
@@ -181,7 +181,7 @@ class OCRRoutingStrategy(StrEnum):
     VISION_STRUCTURED = "vision_structured"
 
 
-class LayoutType(StrEnum):
+class LayoutType(str, Enum):
     """Coarse page layout classification (Phase 6 - Layout-Lite)."""
 
     SINGLE_COLUMN = "single_column"
@@ -231,7 +231,7 @@ class HandwritingLegibility(IntEnum):
     ILLEGIBLE = 5  # Historical/severely degraded (OCR conf < 0.3)
 
 
-class HandwritingContentType(StrEnum):
+class HandwritingContentType(str, Enum):
     """Handwriting content type classification - WHAT is written.
 
     Orthogonal to presence (quantity) and legibility (quality).
@@ -247,7 +247,7 @@ class HandwritingContentType(StrEnum):
     SPECIALIZED = "specialized"  # Math, symbols, non-Latin scripts
 
 
-class ActionType(StrEnum):
+class ActionType(str, Enum):
     """Types of correction actions that can be applied."""
 
     DESKEW = "deskew"

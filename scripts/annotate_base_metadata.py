@@ -46,7 +46,7 @@ import subprocess
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -110,7 +110,7 @@ TRAIN_JSON = "train.json"
 SAMPLES_PARQUET = "samples.parquet"
 
 
-class CaptureMethod(StrEnum):
+class CaptureMethod(str, Enum):
     """Capture method taxonomy (Axis 4 from detection-taxonomy.md)."""
 
     BORN_DIGITAL = "born_digital"
@@ -122,7 +122,7 @@ class CaptureMethod(StrEnum):
     UNKNOWN = "unknown"
 
 
-class DomainLevel1(StrEnum):
+class DomainLevel1(str, Enum):
     """Primary domain codes (Axis 1 from document-type-taxonomy.md)."""
 
     TAX = "TAX"
@@ -137,7 +137,7 @@ class DomainLevel1(StrEnum):
     UNKNOWN = "UNK"
 
 
-class ResolutionCategory(StrEnum):
+class ResolutionCategory(str, Enum):
     """Resolution category bins."""
 
     LOW = "low_<150"
@@ -146,7 +146,7 @@ class ResolutionCategory(StrEnum):
     HIGH = "high_>300"
 
 
-class EnrichmentTier(StrEnum):
+class EnrichmentTier(str, Enum):
     """Enrichment source tier for provenance tracking."""
 
     TIER_0_EXACT = "tier_0_exact"  # Dataset IS 100% this content type

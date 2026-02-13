@@ -210,7 +210,7 @@ async def version_info() -> VersionResponse:
         from pathlib import Path
 
         model_dir = Path("models/iqa/onnx")
-        if model_dir.exists():  # noqa: ASYNC240  # Trivially fast exists check
+        if model_dir.exists():  # Trivially fast exists check
             teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
             student_path = model_dir / "resnet18_student.onnx"
 

@@ -30,7 +30,7 @@ import os
 import random
 import time
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 logger = structlog.get_logger(__name__)
 
 
-class CircuitState(StrEnum):
+class CircuitState(str, Enum):
     """Circuit breaker states."""
 
     CLOSED = "closed"  # Normal operation

@@ -35,7 +35,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -119,7 +119,7 @@ DEGRADATION_INDEX: dict[str, int] = {
 NUM_DEGRADATION_TYPES = 45
 
 
-class AnchorSource(StrEnum):
+class AnchorSource(str, Enum):
     """Anchor score source priority ranking."""
 
     HUMAN = "human"  # Weight: 1.0

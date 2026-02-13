@@ -11,7 +11,7 @@ Phase 2 Integration - Milestone 14.2
 """
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -37,14 +37,14 @@ except ImportError:
     ort = None
 
 
-class ModelType(StrEnum):
+class ModelType(str, Enum):
     """IQA model types (teacher vs student)."""
 
     STUDENT = "student"
     TEACHER = "teacher"
 
 
-class ModelVersion(StrEnum):
+class ModelVersion(str, Enum):
     """IQA model version for Phase 7 transition.
 
     Supports gradual rollout from binary classification to continuous regression:
@@ -56,7 +56,7 @@ class ModelVersion(StrEnum):
     CONTINUOUS_V2 = "continuous_v2"
 
 
-class Device(StrEnum):
+class Device(str, Enum):
     """Available compute devices for inference."""
 
     GPU = "cuda"
