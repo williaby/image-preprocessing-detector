@@ -352,7 +352,7 @@ class TestSchemaFieldMapping:
     def test_psm_maps_to_document_metadata(self) -> None:
         """PSM recommender output matches DocumentMetadata field."""
         rec = recommend_psm(PSMInput())
-        # recommended_psm must be an int between 0 and 13 inclusive
+        # DocumentMetadata.recommended_psm is int | None, ge=0, le=13
         assert isinstance(rec.psm, int)
         assert 0 <= rec.psm <= 13
 
