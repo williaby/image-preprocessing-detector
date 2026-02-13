@@ -298,6 +298,7 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
 
     def _safe_pct(correct: int) -> float:
         return correct / stats.total * 100 if stats.total > 0 else 0
+
     openlid_acc = _safe_pct(stats.openlid_correct)
     script_acc = _safe_pct(stats.openlid_script_correct)
     lid176_acc = _safe_pct(stats.lid176_correct)

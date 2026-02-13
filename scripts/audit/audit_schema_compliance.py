@@ -37,7 +37,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +63,7 @@ DEFECT_TYPES = (
 )
 
 
-class DefectType(str, Enum):
+class DefectType(StrEnum):
     """Taxonomy of enrichment defects."""
 
     WRONG_VALUE = "wrong_value"

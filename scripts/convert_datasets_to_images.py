@@ -25,6 +25,7 @@ import csv
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Increase CSV field size limit for base64-encoded images
 csv.field_size_limit(sys.maxsize)

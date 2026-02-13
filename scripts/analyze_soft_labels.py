@@ -760,11 +760,14 @@ def _determine_readiness(hard_pct: float, soft_pct: float) -> str:
 
 def _print_training_readiness(report: DatasetReport, total_fields: int) -> None:
     """Print the training readiness and sample-level composite sections."""
-    _safe_pct = lambda key: (
-        report.label_category_counts.get(key, 0) / total_fields * 100
-        if total_fields > 0
-        else 0
-    )
+
+    def _safe_pct(key: str) -> float:
+        return (
+            report.label_category_counts.get(key, 0) / total_fields * 100
+            if total_fields > 0
+            else 0
+        )
+
     hard_pct = _safe_pct("hard_label")
     soft_pct = _safe_pct("soft_label")
     unassessed_pct = _safe_pct("unassessed")

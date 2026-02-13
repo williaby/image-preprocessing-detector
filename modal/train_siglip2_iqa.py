@@ -698,7 +698,7 @@ def _run_phase1(config, model, train_loader, val_loader, criterion, device, stat
                         loss = criterion(outputs[dim], target)
                     losses.append(loss)
                 pcgrad_optimizer.pc_backward(losses)
-                train_loss += sum(l.item() for l in losses) / len(losses)
+                train_loss += sum(loss_i.item() for loss_i in losses) / len(losses)
             else:
                 loss, _ = _compute_loss_v1(
                     outputs, labels_list, criterion, config, device

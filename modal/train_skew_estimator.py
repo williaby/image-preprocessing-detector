@@ -726,7 +726,7 @@ def _run_skew_training_loop(
 
 
 def _run_skew_post_training(
-    SkewEstimatorNet,
+    skew_estimator_cls,
     data_dir,
     config,
     bin_centers,
@@ -741,7 +741,7 @@ def _run_skew_post_training(
 
     run_id = state["run_id"]
 
-    eval_model = SkewEstimatorNet().to(device)
+    eval_model = skew_estimator_cls().to(device)
     best_ckpt_path = f"/results/{run_id}/best_model.pt"
     if Path(best_ckpt_path).exists():
         ckpt = torch.load(best_ckpt_path, map_location=device, weights_only=True)
@@ -846,7 +846,7 @@ def train(
     print(f"Bin config: {num_bins} bins")
 
     device = torch.device("cuda")
-    model, SkewEstimatorNet = _build_skew_model(config, num_bins, device)
+    model, skew_estimator_cls = _build_skew_model(config, num_bins, device)
 
     train_loader, val_loader = _build_skew_loaders(data_dir, config)
 
@@ -874,7 +874,7 @@ def train(
     )
 
     return _run_skew_post_training(
-        SkewEstimatorNet,
+        skew_estimator_cls,
         data_dir,
         config,
         bin_centers,

@@ -375,7 +375,7 @@ def analyze_sample(
     # Detect scripts
     scripts, script_counts = detect_scripts(text)
     primary_script = scripts[0] if scripts else None
-    script_conf = 0.9 if primary_script and primary_script not in {"Latn"} else 0.5
+    script_conf = 0.9 if primary_script and primary_script != "Latn" else 0.5
 
     # Detect language
     ft_lang, ft_conf = detect_language_fasttext(text, models.get("fasttext"))
