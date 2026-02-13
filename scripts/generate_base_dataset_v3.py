@@ -687,7 +687,7 @@ def main() -> int:
 
     registry = SplitRegistry(str(split_registry_path))
     split_stats = registry.stats
-    print(f"\n  Split distribution:")
+    print("\n  Split distribution:")
     for split_name, count in sorted(split_stats.items()):
         pct = count / total_generated * 100 if total_generated > 0 else 0
         print(f"    {split_name}: {count:,} ({pct:.1f}%)")
@@ -696,7 +696,7 @@ def main() -> int:
     vertical = sum(s.get("vertical_text_count", 0) for s in all_stats)
     eng_sec = sum(s.get("english_secondary_count", 0) for s in all_stats)
     multi = sum(s.get("multi_script_count", 0) for s in all_stats)
-    print(f"\n  v2.3 metadata:")
+    print("\n  v2.3 metadata:")
     print(f"    Vertical text (TTB): {vertical:,}")
     print(f"    English secondary:   {eng_sec:,}")
     print(f"    Multi-script:        {multi:,}")

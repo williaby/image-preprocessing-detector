@@ -154,8 +154,6 @@ def validate_distributions(
 
     from image_preprocessing_detector.synthetic.config import (
         LAYOUT_WEIGHTS,
-        QUALITY_TIER_WEIGHTS,
-        RESOLUTION_TIER_WEIGHTS,
     )
 
     total = len(metadata_list)

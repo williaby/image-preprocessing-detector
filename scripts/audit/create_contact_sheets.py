@@ -75,7 +75,9 @@ def create_contact_sheet(
 
     # Try to load a small font; fall back to default
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)  # nosemgrep: hardcoded-absolute-path
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11
+        )  # nosemgrep: hardcoded-absolute-path
     except OSError:
         font = ImageFont.load_default()
 
