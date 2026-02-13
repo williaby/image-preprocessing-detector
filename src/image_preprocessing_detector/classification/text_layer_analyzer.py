@@ -25,7 +25,7 @@ try:
 
     _has_fitz = True
 except ImportError:
-    fitz = None  # type: ignore[assignment]
+    fitz = None
     _has_fitz = False
 
 logger = get_logger(__name__)
@@ -140,7 +140,7 @@ class TextLayerAnalyzer:
         """
         logger.info("Analysing PDF text layer", path=pdf_path)
 
-        doc = fitz.open(pdf_path)  # type: ignore[union-attr, no-untyped-call]
+        doc = fitz.open(pdf_path)
         try:
             page_count: int = doc.page_count
             if page_count == 0:
@@ -155,7 +155,7 @@ class TextLayerAnalyzer:
             round_coords = 0
 
             for page in doc:
-                text: str = page.get_text()  # type: ignore[no-untyped-call]
+                text: str = page.get_text()
                 if text.strip():
                     pages_with_text += 1
 
@@ -163,11 +163,11 @@ class TextLayerAnalyzer:
                 replacement_chars += sum(1 for ch in text if ch in _REPLACEMENT_CHARS)
 
                 # Font information: list of (xref, ext, type, basefont, name, encoding)
-                fonts = page.get_fonts()  # type: ignore[no-untyped-call]
+                fonts = page.get_fonts()
                 all_fonts.extend(fonts)
 
                 # Word-level coordinates for precision analysis.
-                words = page.get_text_words()  # type: ignore[no-untyped-call]
+                words = page.get_text_words()
                 for word_info in words:
                     # Tuple layout: (x0, y0, x1, y1, word, block_no, line_no, word_no).
                     coords = word_info[:4]
@@ -176,7 +176,7 @@ class TextLayerAnalyzer:
                         1 for c in coords if abs(c - round(c)) < _ROUND_TOLERANCE
                     )
         finally:
-            doc.close()  # type: ignore[no-untyped-call]
+            doc.close()
 
         # 1. Extractability rate.
         extractability = pages_with_text / page_count if page_count > 0 else 0.0

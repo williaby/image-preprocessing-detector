@@ -173,11 +173,12 @@ def _compute_stroke_width_variance(binary: np.ndarray) -> float:
     if foreground.size < 10:
         return 0.0
 
-    mean_val = float(np.mean(foreground))
+    fg_float = foreground.astype(np.float64)
+    mean_val = float(np.mean(fg_float))
     if mean_val < 1e-6:
         return 0.0
 
-    coeff_var = float(np.std(foreground)) / mean_val
+    coeff_var = float(np.std(fg_float)) / mean_val
     return float(np.clip(coeff_var / _STROKE_CV_CAP, 0.0, 1.0))
 
 
