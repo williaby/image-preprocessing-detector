@@ -216,6 +216,7 @@ path = [
     "pal_generated.code",  # PAL MCP generated code artifact
     "results/**/*.json",  # Generated result files
     "results/**/*.jsonl",  # Generated JSONL result files
+    "results/**/*.md",  # Generated result reports and analysis
     "scripts/**/*.json",  # Script audit/result JSON files
 ]
 SPDX-License-Identifier = "CC0-1.0"
@@ -237,10 +238,22 @@ path = [
 SPDX-License-Identifier = "Apache-2.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Deployment scripts and configuration - CC0-1.0
+# Deployment Python scripts - Apache-2.0 (source code)
 [[annotations]]
 path = [
-    "deployment/**",
+    "deployment/scripts/**/*.py",
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Deployment configuration, shell scripts, and docs - CC0-1.0
+[[annotations]]
+path = [
+    "deployment/**/*.yml",
+    "deployment/**/*.yaml",
+    "deployment/**/*.sh",
+    "deployment/**/*.md",
+    "deployment/Dockerfile*",
     ".shellcheckrc",
     ".hadolint.yaml",
 ]
