@@ -66,6 +66,9 @@ dependencies = [
     # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
     # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
     "openpyxl>=3.1.5",
+    # Transitive dependency CVE fixes
+    "protobuf>=6.33.5",  # GHSA-7gcm-g887-7qv7: JSON recursion depth bypass
+    "pyasn1>=0.6.2",  # GHSA-63vm-454h-vhhq: DoS in decoder
 ]
 
 [project.optional-dependencies]
