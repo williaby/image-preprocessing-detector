@@ -11,10 +11,10 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import structlog
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, File, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from image_preprocessing_detector.api.config import get_api_settings
@@ -263,10 +263,14 @@ async def process_document(
     },
 )
 async def process_single_document(
-    file: UploadFile = File(..., description="Document to process (PDF or image)"),
-    prefer_gpu: bool = True,
-    enable_corrections: bool = True,
-    enable_teacher: bool = False,
+    file: Annotated[UploadFile, File(description="Document to process (PDF or image)")],
+    prefer_gpu: Annotated[bool, Query(description="Whether to prefer GPU")] = True,
+    enable_corrections: Annotated[
+        bool, Query(description="Whether to enable corrections")
+    ] = True,
+    enable_teacher: Annotated[
+        bool, Query(description="Whether to enable teacher model")
+    ] = False,
 ) -> ProcessResponse | JSONResponse:
     """Process a single document.
 

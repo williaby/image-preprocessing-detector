@@ -265,20 +265,23 @@ def sample_logs(
 ) -> dict[str, Any]:
     """Apply sampling to reduce log volume.
 
+    Structlog processor that probabilistically drops events based on
+    configured sample rate. Important log levels are always preserved.
+
     Note: Uses standard random (not secrets) as this is for log sampling,
     not for cryptographic purposes.
     """
     import random
 
     config = get_logging_config()
-
-    # Always log certain levels
     level = event_dict.get("level", "").upper()
-    if level in config.always_log_levels:
-        return event_dict
 
-    # Apply sampling (combined condition to satisfy SIM102)
-    if config.sample_rate < 1.0 and random.random() > config.sample_rate:  # nosec B311
+    # Drop sampled-out events (always preserve important levels)
+    if (
+        level not in config.always_log_levels
+        and config.sample_rate < 1.0
+        and random.random() > config.sample_rate  # nosec B311
+    ):
         raise structlog.DropEvent
 
     return event_dict

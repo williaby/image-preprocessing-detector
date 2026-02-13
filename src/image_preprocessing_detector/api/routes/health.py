@@ -73,7 +73,6 @@ def get_uptime_seconds() -> float | None:
 
 @router.get(
     "/health",
-    response_model=HealthResponse,
     summary="Health check",
     description="Basic liveness check - returns healthy if server is running.",
     responses={
@@ -97,7 +96,6 @@ async def health_check() -> HealthResponse:
 
 @router.get(
     "/ready",
-    response_model=ReadyResponse,
     summary="Readiness check",
     description="Readiness check with dependency validation for load balancer probes.",
     responses={
@@ -187,7 +185,6 @@ async def readiness_check(response: Response) -> ReadyResponse:
 
 @router.get(
     "/version",
-    response_model=VersionResponse,
     summary="Version information",
     description="Returns API version, Python version, and model versions.",
 )
