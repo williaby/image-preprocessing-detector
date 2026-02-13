@@ -1,8 +1,8 @@
-# Layer 2 Metadata Audit - {DATASET_NAME}
+# Layer 2 Metadata Audit - bhutan-afs
 
 > **Version**: 1.3.0
-> **Date**: {DATE}
-> **Auditor**: {AUDITOR}
+> **Date**: 2026-02-12
+> **Auditor**: claude-opus-4-6
 > **Methodology**: 9-Phase Audit (v2.3.0)
 > **Reference**: [docs/prompts/layer2_audit_prompt.md](../prompts/layer2_audit_prompt.md)
 >
@@ -16,10 +16,10 @@
 
 | Property | Value |
 |----------|-------|
-| Dataset Name | {DATASET_NAME} |
-| Total Samples | {TOTAL_SAMPLES} |
-| Image Base Path | {IMAGE_BASE_PATH} |
-| Audit Started | {DATE} |
+| Dataset Name | bhutan-afs |
+| Total Samples | 135 |
+| Image Base Path | /mnt/e/image_detection/01_base_data/documents/bhutan_financial/ |
+| Audit Started | 2026-02-12 |
 | Audit Completed | |
 | Enrichment Version | |
 
@@ -33,10 +33,10 @@
   - **Known datasets**: diqa-5000, doclaynet, funsd, pubtabnet, fintabnet, sroie, hiertext, cc-ocr, arabic-docs-ocr, ohr-bench, jssoda, mlt19
   - **Status**:
 
-- [ ] Metadata JSON exists at `/mnt/e/image_detection/metadata_registry/json/{DATASET_NAME}_metadata.json`?
+- [ ] Metadata JSON exists at `/mnt/e/image_detection/metadata_registry/json/bhutan-afs_metadata.json`?
   - **Status**:
 
-- [ ] Dataset source doc exists at `docs/datasets/source/{DATASET_NAME}.md`?
+- [ ] Dataset source doc exists at `docs/datasets/source/bhutan-afs.md`?
   - **Status**:
 
 ### Enrichment Source Inventory
@@ -45,17 +45,17 @@ Check existence of each enrichment source (✅ exists, ❌ missing, ⏭️ N/A):
 
 | Source | Path | Exists? | Notes |
 |--------|------|---------|-------|
-| Base metadata | `json/{DATASET_NAME}_metadata.json` | [ ] | Layer 0+1 fields |
-| LLM enrichment | `enrichments/{DATASET_NAME}_llm_enrichment.json` | [ ] | domain, content_flags, orientation |
-| Language enrichment | `enrichments/{DATASET_NAME}_language_enrichment.json` | [ ] | iso639, iso15924, script_family |
-| Docling layout | `enrichments/{DATASET_NAME}_docling_layout.json` | [ ] | layout_detections with bboxes |
-| Docling OCR | `enrichments/{DATASET_NAME}_docling_ocr.json` | [ ] | text_content, text_statistics |
-| Classical IQA | `enrichments/{DATASET_NAME}_classical_iqa.json` | [ ] | 8 detector scores |
-| Resolution quality | `results/{DATASET_NAME}_resolution_labels.json` | [ ] | char_height, resolution_quality_score |
-| Skew/orientation | `results/{DATASET_NAME}_skew_labels.json` | [ ] | skew_angle, orientation_class |
+| Base metadata | `json/bhutan-afs_metadata.json` | [ ] | Layer 0+1 fields |
+| LLM enrichment | `enrichments/bhutan-afs_llm_enrichment.json` | [ ] | domain, content_flags, orientation |
+| Language enrichment | `enrichments/bhutan-afs_language_enrichment.json` | [ ] | iso639, iso15924, script_family |
+| Docling layout | `enrichments/bhutan-afs_docling_layout.json` | [ ] | layout_detections with bboxes |
+| Docling OCR | `enrichments/bhutan-afs_docling_ocr.json` | [ ] | text_content, text_statistics |
+| Classical IQA | `enrichments/bhutan-afs_classical_iqa.json` | [ ] | 8 detector scores |
+| Resolution quality | `results/bhutan-afs_resolution_labels.json` | [ ] | char_height, resolution_quality_score |
+| Skew/orientation | `results/bhutan-afs_skew_labels.json` | [ ] | skew_angle, orientation_class |
 | Parser/manifest | Dataset-specific | [ ] | split, source annotations |
-| VLM contact sheet | `scripts/audit/results/{DATASET_NAME}/vlm_test_enrichments.json` | [ ] | language, script (visual batch) |
-| Train GT enrichment | `scripts/audit/results/{DATASET_NAME}/train_gt_enrichments.json` | [ ] | language, script from GT files |
+| VLM contact sheet | `scripts/audit/results/bhutan-afs/vlm_test_enrichments.json` | [ ] | language, script (visual batch) |
+| Train GT enrichment | `scripts/audit/results/bhutan-afs/train_gt_enrichments.json` | [ ] | language, script from GT files |
 
 **Total sources available**: ___/11
 
@@ -97,9 +97,9 @@ Fill in based on dataset documentation review:
 
 ### Documentation Review
 
-- [ ] Read `docs/datasets/source/{DATASET_NAME}.md` thoroughly
+- [ ] Read `docs/datasets/source/bhutan-afs.md` thoroughly
 - [ ] Read `scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json`
-- [ ] Review parser source code at `src/image_preprocessing_detector/annotation/parsers/{DATASET_NAME}_parser.py` (if exists)
+- [ ] Review parser source code at `src/image_preprocessing_detector/annotation/parsers/bhutan-afs_parser.py` (if exists)
 
 ### Expected Field Values
 
@@ -125,10 +125,10 @@ Document expected values based on documentation (ground truth for validation):
 
 ```bash
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/audit/automated_prescreening.py --dataset {DATASET_NAME}
+    uv run python3 scripts/audit/automated_prescreening.py --dataset bhutan-afs
 ```
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/automated_screening.json`
+**Output**: `scripts/audit/results/bhutan-afs/automated_screening.json`
 
 ### Results
 
@@ -175,11 +175,11 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 ```bash
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
     uv run python3 scripts/audit/audit_schema_compliance.py \
-    --dataset {DATASET_NAME} \
-    --output scripts/audit/results/{DATASET_NAME}/compliance.json
+    --dataset bhutan-afs \
+    --output scripts/audit/results/bhutan-afs/compliance.json
 ```
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/compliance.json`
+**Output**: `scripts/audit/results/bhutan-afs/compliance.json`
 
 ### Results Summary
 
@@ -218,10 +218,10 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 ```bash
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
     uv run python3 scripts/audit/assemble_comparison.py \
-    --dataset {DATASET_NAME}
+    --dataset bhutan-afs
 ```
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/comparison_report.json`
+**Output**: `scripts/audit/results/bhutan-afs/comparison_report.json`
 
 ### Sources Discovered
 
@@ -255,7 +255,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ### Defect Catalog
 
-Document all defects in `scripts/audit/results/{DATASET_NAME}/defect_catalog.json`
+Document all defects in `scripts/audit/results/bhutan-afs/defect_catalog.json`
 
 | ID | Field | Type | Severity | Affected | Status | Root Cause | Fix Location |
 |----|-------|------|----------|----------|--------|------------|--------------|
@@ -329,8 +329,8 @@ Defects with `universal_risk=true` that may affect other datasets:
 - **Estimated sheets** (50 thumbnails/sheet): ___
 - **Estimated turns** (5 sheets/turn): ___
 - **Estimated sessions**: ___
-- **Incremental save path**: `scripts/audit/results/{DATASET_NAME}/vlm_test_enrichments.json`
-- **Progress tracking file**: `scripts/audit/results/{DATASET_NAME}/audit_progress.json`
+- **Incremental save path**: `scripts/audit/results/bhutan-afs/vlm_test_enrichments.json`
+- **Progress tracking file**: `scripts/audit/results/bhutan-afs/audit_progress.json`
 
 **Notes**:
 
@@ -340,13 +340,13 @@ Defects with `universal_risk=true` that may affect other datasets:
 
 ### Integration Script Development
 
-- [ ] Create `scripts/integrate_{DATASET_NAME}_enrichments.py`
+- [ ] Create `scripts/integrate_bhutan-afs_enrichments.py`
 - [ ] Follow established integration script pattern
 - [ ] Support `--dry-run` mode
 
 ### Pre-Integration Actions
 
-- [ ] Run `standardize_layout_labels.py --dataset {DATASET_NAME}` (KI-001)
+- [ ] Run `standardize_layout_labels.py --dataset bhutan-afs` (KI-001)
 - [ ] Determine capture_method from documentation (KI-005)
 - [ ] Plan synthetic overrides if applicable (KI-004, KI-005)
 
@@ -355,11 +355,11 @@ Defects with `universal_risk=true` that may affect other datasets:
 ```bash
 # Dry run first
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/integrate_{DATASET_NAME}_enrichments.py --dry-run
+    uv run python3 scripts/integrate_bhutan-afs_enrichments.py --dry-run
 
 # Actual integration
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/integrate_{DATASET_NAME}_enrichments.py
+    uv run python3 scripts/integrate_bhutan-afs_enrichments.py
 ```
 
 ### Field Population Priority
@@ -397,7 +397,7 @@ Re-run prescreening to measure improvement:
 
 ```bash
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/audit/automated_prescreening.py --dataset {DATASET_NAME}
+    uv run python3 scripts/audit/automated_prescreening.py --dataset bhutan-afs
 ```
 
 **Before/After Comparison**:
@@ -506,7 +506,7 @@ If a flag exceeds the threshold, expand inspection for that specific flag before
 
 #### Inspection Results
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/vlm_corrections.json`
+**Output**: `scripts/audit/results/bhutan-afs/vlm_corrections.json`
 
 | Field | Original True Count | Corrected True Count | FP Rate | Root Cause | Action |
 |-------|-------------------|---------------------|---------|------------|--------|
@@ -527,10 +527,10 @@ If a flag exceeds the threshold, expand inspection for that specific flag before
   - Thumbnail size: ~150x150px
   - Sheet size: ~1500x750px, JPEG quality 90
   - Number each thumbnail position 1-50
-  - Save to `tmp_cleanup/{DATASET_NAME}_contact_sheets/contact_sheet_NNN.jpg`
+  - Save to `tmp_cleanup/bhutan-afs_contact_sheets/contact_sheet_NNN.jpg`
   - Generate manifest JSON mapping positions to filenames
 
-**Contact sheet script**: `scripts/generate_{DATASET_NAME}_contact_sheets.py`
+**Contact sheet script**: `scripts/generate_bhutan-afs_contact_sheets.py`
 
 #### Batch Processing
 
@@ -550,7 +550,7 @@ If a flag exceeds the threshold, expand inspection for that specific flag before
 | 3 | 11-15 | 501-750 | [ ] | |
 | ... | | | | |
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/vlm_test_enrichments.json`
+**Output**: `scripts/audit/results/bhutan-afs/vlm_test_enrichments.json`
 
 **Total sheets**: ___
 **Total images classified**:___
@@ -562,7 +562,7 @@ Save after every 5 sheets to `vlm_test_enrichments.json`:
 
 ```json
 {
-  "dataset": "{DATASET_NAME}",
+  "dataset": "bhutan-afs",
   "method": "vlm_contact_sheet",
   "completed": 250,
   "sheets_processed": 5,
@@ -578,7 +578,7 @@ Save after every 5 sheets to `vlm_test_enrichments.json`:
 - [ ] For each, read image and verify ALL populated fields
 - [ ] Compute accuracy rate per field
 
-**Output**: `scripts/audit/results/{DATASET_NAME}/vlm_validation_passing.json`
+**Output**: `scripts/audit/results/bhutan-afs/vlm_validation_passing.json`
 
 #### Passing Sample Validation
 
@@ -633,7 +633,7 @@ Save after every 5 sheets to `vlm_test_enrichments.json`:
 
 ### Sample Count
 
-**Formula**: `max(ceil(0.01 * {TOTAL_SAMPLES}), 10)` = ___ samples
+**Formula**: `max(ceil(0.01 * 135), 10)` = ___ samples
 
 ### Sample Selection
 
@@ -651,15 +651,15 @@ Save after every 5 sheets to `vlm_test_enrichments.json`:
 | 3 | | | | | [ ] |
 | ... | | | | | |
 
-**Output**: `results/{DATASET_NAME}_text_labels.json`
+**Output**: `results/bhutan-afs_text_labels.json`
 
 ### Integration
 
 ```bash
 # Re-run integration with VLM text labels
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/integrate_{DATASET_NAME}_enrichments.py \
-    --vlm-text-labels results/{DATASET_NAME}_text_labels.json
+    uv run python3 scripts/integrate_bhutan-afs_enrichments.py \
+    --vlm-text-labels results/bhutan-afs_text_labels.json
 ```
 
 - [ ] Integration script updated with `--vlm-text-labels` flag
@@ -690,15 +690,15 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 ```bash
 # Dry run with updated script
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/integrate_{DATASET_NAME}_enrichments.py --dry-run
+    uv run python3 scripts/integrate_bhutan-afs_enrichments.py --dry-run
 
 # Actual write
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/integrate_{DATASET_NAME}_enrichments.py
+    uv run python3 scripts/integrate_bhutan-afs_enrichments.py
 
 # Re-run prescreening
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/audit/automated_prescreening.py --dataset {DATASET_NAME}
+    uv run python3 scripts/audit/automated_prescreening.py --dataset bhutan-afs
 ```
 
 ### Post-Correction Prescreening
@@ -744,7 +744,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ### Dataset Documentation Updates
 
-- [ ] Update `docs/datasets/source/{DATASET_NAME}.md`
+- [ ] Update `docs/datasets/source/bhutan-afs.md`
 - [ ] Add **Layer 2 Annotation Summary** section
 - [ ] Add **Reliability & Bottlenecks** section
 - [ ] Update **Version History**
@@ -757,8 +757,8 @@ Add to dataset documentation:
 ## Layer 2 Annotation Summary
 
 **Enrichment Version**: integrated_v3
-**Audit Date**: {DATE}
-**Auditor**: {AUDITOR}
+**Audit Date**: 2026-02-12
+**Auditor**: claude-opus-4-6
 
 ### Enrichment Sources
 
@@ -806,8 +806,8 @@ Add to dataset documentation:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| integrated_v2 | {DATE} | Initial integration (parser GT, LLM, layout) |
-| integrated_v3 | {DATE} | Added VLM contact sheet, train GT enrichment |
+| integrated_v2 | 2026-02-12 | Initial integration (parser GT, LLM, layout) |
+| integrated_v3 | 2026-02-12 | Added VLM contact sheet, train GT enrichment |
 ```
 
 ### Cross-Dataset Pattern Documentation
@@ -824,37 +824,37 @@ Add to dataset documentation:
 
 ## Phase 9: Dataset Catalog Update
 
-> **Purpose**: Ensure `docs/datasets/source/{DATASET_NAME}.md` is the single source of truth
+> **Purpose**: Ensure `docs/datasets/source/bhutan-afs.md` is the single source of truth
 > by running aggregation scripts and updating all sections per template v1.4.0.
 
 ### Step 1: Regenerate Aggregate Statistics
 
 ```bash
 uv run python3 scripts/aggregate_layer2_metadata.py \
-    --dataset {DATASET_NAME} \
+    --dataset bhutan-afs \
     --layer2-dir /mnt/e/image_detection/metadata_registry/json \
     --verbose
 ```
 
 - [ ] Script completed successfully
-- [ ] Output: `metadata_registry/aggregates/{DATASET_NAME}_stats.json`
+- [ ] Output: `metadata_registry/aggregates/bhutan-afs_stats.json`
 
 ### Step 2: Materialize Reliability Summary
 
 ```bash
 uv run python3 scripts/materialize_reliability_summary.py \
-    --datasets {DATASET_NAME} \
+    --datasets bhutan-afs \
     --update-docs \
     --force
 ```
 
 - [ ] Script completed successfully
-- [ ] `docs/datasets/source/{DATASET_NAME}.md` Section 12 updated
+- [ ] `docs/datasets/source/bhutan-afs.md` Section 12 updated
 - [ ] Re-added contextual notes if needed (script overwrites entire section)
 
 ### Step 3: Update Source Doc Sections
 
-Update `docs/datasets/source/{DATASET_NAME}.md` per template v1.4.0:
+Update `docs/datasets/source/bhutan-afs.md` per template v1.4.0:
 
 - [ ] **Section 5.3 (Language & Script)**: Reflects actual LLM-detected distribution, not just paper claims
 - [ ] **Section 7 (Known Issues)**: Includes "Layer 2 Audit Findings" subsection with defect IDs
@@ -874,7 +874,7 @@ Update `docs/datasets/source/{DATASET_NAME}.md` per template v1.4.0:
 
 ```bash
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-    uv run python3 scripts/audit/compute_scorecard.py --dataset {DATASET_NAME} --verbose
+    uv run python3 scripts/audit/compute_scorecard.py --dataset bhutan-afs --verbose
 ```
 
 - [ ] Scorecard recomputed (doc_completeness may change after doc updates)
@@ -994,27 +994,27 @@ All standard audit artifacts:
 
 | File | Purpose | Created | Verified |
 |------|---------|---------|----------|
-| `scripts/audit/results/{DATASET_NAME}/automated_screening.json` | Per-field pass/fail counts | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/compliance.json` | Schema validation per field | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/comparison_report.json` | Multi-source field comparison | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/defect_catalog.json` | Categorized defects with status | [ ] | [ ] |
-| `scripts/integrate_{DATASET_NAME}_enrichments.py` | Integration script | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/vlm_corrections.json` | VLM visual inspection corrections | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/vlm_validation_passing.json` | Passing sample accuracy check | [ ] | [ ] |
-| `docs/datasets/source/{DATASET_NAME}.md` (UPDATED) | Documentation with L2 summary + audit summary | [ ] | [ ] |
-| `metadata_registry/aggregates/{DATASET_NAME}_stats.json` | Regenerated aggregate statistics | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/scorecard.json` | Final quality scorecard | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/automated_screening.json` | Per-field pass/fail counts | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/compliance.json` | Schema validation per field | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/comparison_report.json` | Multi-source field comparison | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/defect_catalog.json` | Categorized defects with status | [ ] | [ ] |
+| `scripts/integrate_bhutan-afs_enrichments.py` | Integration script | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/vlm_corrections.json` | VLM visual inspection corrections | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/vlm_validation_passing.json` | Passing sample accuracy check | [ ] | [ ] |
+| `docs/datasets/source/bhutan-afs.md` (UPDATED) | Documentation with L2 summary + audit summary | [ ] | [ ] |
+| `metadata_registry/aggregates/bhutan-afs_stats.json` | Regenerated aggregate statistics | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/scorecard.json` | Final quality scorecard | [ ] | [ ] |
 
 **Optional artifacts** (if applicable):
 
 | File | Purpose | Created | Verified |
 |------|---------|---------|----------|
-| `tmp_cleanup/{DATASET_NAME}_contact_sheets/` | Contact sheet images | [ ] | [ ] |
-| `scripts/generate_{DATASET_NAME}_contact_sheets.py` | Contact sheet generator | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/vlm_test_enrichments.json` | VLM batch classification results | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/train_gt_enrichments.json` | Train GT file extraction results | [ ] | [ ] |
-| `scripts/audit/results/{DATASET_NAME}/audit_progress.json` | Multi-session progress tracking | [ ] | [ ] |
-| `results/{DATASET_NAME}_text_labels.json` | VLM text transcription labels (Phase 6.5) | [ ] | [ ] |
+| `tmp_cleanup/bhutan-afs_contact_sheets/` | Contact sheet images | [ ] | [ ] |
+| `scripts/generate_bhutan-afs_contact_sheets.py` | Contact sheet generator | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/vlm_test_enrichments.json` | VLM batch classification results | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/train_gt_enrichments.json` | Train GT file extraction results | [ ] | [ ] |
+| `scripts/audit/results/bhutan-afs/audit_progress.json` | Multi-session progress tracking | [ ] | [ ] |
+| `results/bhutan-afs_text_labels.json` | VLM text transcription labels (Phase 6.5) | [ ] | [ ] |
 | `docs/known_issues/KI-{NNN}-{slug}.md` | New cross-dataset pattern (if found) | [ ] | [ ] |
 
 ---

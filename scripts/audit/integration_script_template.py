@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Integrate all enrichment sources into {DATASET_NAME} Layer 2 metadata.
 
-TEMPLATE VERSION: 1.0.0
+TEMPLATE VERSION: 1.1.0
 CREATED FROM: scripts/audit/integration_script_template.py
 
 Customization guide:
@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import sys
 import time
 from collections import Counter
@@ -67,6 +68,10 @@ LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "{FILL_IN}_language_enrichmen
 # RESOLUTION_LABELS_PATH = Path("results/{FILL_IN}_resolution_labels.json")
 # VLM_ENRICHMENT_PATH = Path("scripts/audit/results/{FILL_IN}/vlm_test_enrichments.json")
 # TRAIN_GT_PATH = Path("{FILL_IN}")  # Dataset-specific GT annotation path
+
+# VLM text transcription labels (Phase 6.5 conditional text labeling)
+# Uncomment if text_has_content < 50% at prescreening
+# VLM_TEXT_LABELS_PATH = Path("results/{FILL_IN}_text_labels.json")
 
 SCRIPT_VERSION = "1.0.0"
 ENRICHMENT_VERSION_TAG = "integrated_v2"
@@ -389,6 +394,97 @@ def load_train_gt(path: Path) -> dict[str, dict[str, Any]]:
     return index
 
 
+def load_vlm_text_labels(path: Path) -> dict[str, dict[str, Any]]:
+    """Load VLM text transcription labels and index by filename stem.
+
+    Used by Phase 6.5 conditional text labeling when text_has_content
+    pass rate is below 50%. Labels are manually transcribed VLM outputs.
+
+    Expected JSON structure:
+      {"labels": [{"image_id": "train/1", "transcription": "...", ...}]}
+
+    Args:
+        path: Path to VLM text labels JSON.
+
+    Returns:
+        Dict mapping filename stem to label record.
+    """
+    if not path.exists():
+        log.warning("VLM text labels not found: %s", path)
+        return {}
+    log.info("Loading VLM text labels from %s", path)
+    with open(path, encoding="utf-8") as f:
+        raw: dict[str, Any] = json.load(f)
+    index: dict[str, dict[str, Any]] = {}
+    for rec in raw.get("labels", []):
+        image_id = rec.get("image_id", "")
+        # image_id may be "train/1" or just "1" - extract final component
+        stem = image_id.split("/")[-1] if "/" in image_id else image_id
+        if stem:
+            index[stem] = rec
+    log.info("  Indexed %d VLM text label records", len(index))
+    return index
+
+
+def compute_text_statistics(text: str) -> dict[str, Any]:
+    """Compute basic text statistics from transcription text.
+
+    Counts characters, words, lines, and script-specific characters.
+    Includes Devanagari, CJK, and Arabic character detection patterns.
+    {FILL_IN}: Add or remove script patterns based on dataset language.
+
+    Args:
+        text: Raw transcription text content.
+
+    Returns:
+        Dict with char_count, word_count, line_count, has_content,
+        and avg_line_length. Script-specific counts included when
+        non-zero.
+    """
+    if not text or text.strip() == "":
+        return {
+            "char_count": 0,
+            "word_count": 0,
+            "line_count": 0,
+            "has_content": False,
+        }
+
+    clean_text = text.strip()
+    lines = clean_text.split("\n")
+    non_empty_lines = [ln for ln in lines if ln.strip()]
+    words = clean_text.split()
+
+    # Script-specific character patterns
+    # {FILL_IN}: Uncomment/add patterns for your dataset's script(s)
+    deva_chars = len(re.findall(r"[\u0900-\u097f]", clean_text))
+    # cjk_chars = len(re.findall(r"[\u4e00-\u9fff\u3400-\u4dbf]", clean_text))
+    # arabic_chars = len(re.findall(r"[\u0600-\u06ff]", clean_text))
+    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
+
+    avg_line_len = 0.0
+    if non_empty_lines:
+        avg_line_len = round(
+            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines),
+            1,
+        )
+
+    stats: dict[str, Any] = {
+        "char_count": len(clean_text),
+        "word_count": len(words),
+        "line_count": len(non_empty_lines),
+        "has_content": True,
+        "avg_line_length": avg_line_len,
+    }
+
+    # Only include script-specific counts if non-zero
+    if deva_chars > 0:
+        stats["devanagari_char_count"] = deva_chars
+    if latin_words > 0:
+        stats["latin_word_count"] = latin_words
+
+    return stats
+
+
 # ===================================================================
 # Derivation helpers
 # ===================================================================
@@ -670,6 +766,7 @@ def integrate_sample(
     resolution_index: dict[str, dict[str, Any]] | None = None,
     vlm_index: dict[str, dict[str, Any]] | None = None,
     train_gt_index: dict[str, dict[str, Any]] | None = None,
+    text_labels_index: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Create integrated enrichment data for a single sample.
 
@@ -684,6 +781,7 @@ def integrate_sample(
         resolution_index: Resolution quality index (filename -> record).
         vlm_index: VLM enrichment index (image_stem -> record).
         train_gt_index: Train GT index (image_id -> record).
+        text_labels_index: VLM text transcription index (stem -> record).
 
     Returns:
         New enrichment data dict with all sources merged.
@@ -704,6 +802,7 @@ def integrate_sample(
     resolution_rec = (resolution_index or {}).get(filename_full)
     vlm_rec = (vlm_index or {}).get(filename_stem)
     train_gt = (train_gt_index or {}).get(filename_stem)
+    text_label = (text_labels_index or {}).get(filename_stem)
 
     data: dict[str, Any] = {}
 
@@ -902,6 +1001,28 @@ def integrate_sample(
                 data[field] = v1_data[field]
 
     # -------------------------------------------------------------------
+    # TEXT CONTENT (Phase 6.5: VLM text labeling)
+    #
+    # Populated when VLM text transcription labels are available.
+    # Only a subset of samples will have transcriptions (typically
+    # max(ceil(1% of dataset), 10) samples at >75% confidence).
+    # -------------------------------------------------------------------
+    if text_label and text_label.get("transcription"):
+        transcription = text_label["transcription"]
+        confidence = text_label.get("confidence", 0.8)
+        data["text_has_content"] = True
+        data["text_content"] = transcription
+        data["text_content_confidence"] = confidence
+        data["text_content_source"] = "vlm_manual_transcription"
+        data["text_statistics"] = compute_text_statistics(transcription)
+    else:
+        data["text_has_content"] = False
+        data["text_content"] = ""
+        data["text_content_confidence"] = 0.0
+        data["text_content_source"] = "none"
+        data["text_statistics"] = compute_text_statistics("")
+
+    # -------------------------------------------------------------------
     # ADDITIONAL DERIVED FIELDS
     # -------------------------------------------------------------------
     data["dataset_short_code"] = DATASET_NAME
@@ -929,6 +1050,7 @@ def run_integration(
     resolution_index: dict[str, dict[str, Any]] | None = None,
     vlm_index: dict[str, dict[str, Any]] | None = None,
     train_gt_index: dict[str, dict[str, Any]] | None = None,
+    text_labels_index: dict[str, dict[str, Any]] | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Run integration for all samples.
@@ -945,6 +1067,7 @@ def run_integration(
         resolution_index: Resolution quality index (optional).
         vlm_index: VLM enrichment index (optional).
         train_gt_index: Train GT enrichment index (optional).
+        text_labels_index: VLM text transcription index (optional).
         dry_run: If True, compute stats without modifying metadata.
 
     Returns:
@@ -959,6 +1082,8 @@ def run_integration(
         "train_gt_matched": 0,
         "skew_matched": 0,
         "resolution_matched": 0,
+        "text_labels_matched": 0,
+        "has_text_content_count": 0,
         "domain_dist": Counter(),
         "split_dist": Counter(),
         "lang_dist": Counter(),
@@ -988,6 +1113,7 @@ def run_integration(
             resolution_index,
             vlm_index,
             train_gt_index,
+            text_labels_index,
         )
 
         # ----- Track statistics -----
@@ -1004,6 +1130,10 @@ def run_integration(
             stats["skew_matched"] += 1
         if resolution_index and filename_full in resolution_index:
             stats["resolution_matched"] += 1
+        if text_labels_index and filename_stem in text_labels_index:
+            stats["text_labels_matched"] += 1
+        if integrated_data.get("text_has_content"):
+            stats["has_text_content_count"] += 1
 
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
@@ -1087,6 +1217,8 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print(f"Train GT matched:     {stats.get('train_gt_matched', 0)}")
     print(f"Skew matched:         {stats.get('skew_matched', 0)}")
     print(f"Resolution matched:   {stats.get('resolution_matched', 0)}")
+    print(f"Text labels matched:  {stats.get('text_labels_matched', 0)}")
+    print(f"Has text content:     {stats.get('has_text_content_count', 0)}")
     print()
 
     print("Domain distribution:")
@@ -1197,6 +1329,12 @@ def main() -> int:
         help="Path to train GT enrichment JSON (optional)",
     )
     parser.add_argument(
+        "--vlm-text-labels",
+        type=Path,
+        default=None,
+        help="Path to VLM text transcription labels JSON (Phase 6.5, optional)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Report only, do not write output",
@@ -1230,6 +1368,10 @@ def main() -> int:
     if args.train_gt:
         train_gt_index = load_train_gt(args.train_gt)
 
+    text_labels_index: dict[str, dict[str, Any]] | None = None
+    if args.vlm_text_labels:
+        text_labels_index = load_vlm_text_labels(args.vlm_text_labels)
+
     # ----- Run integration -----
     start = time.monotonic()
     stats = run_integration(
@@ -1240,6 +1382,7 @@ def main() -> int:
         resolution_index=resolution_index,
         vlm_index=vlm_index,
         train_gt_index=train_gt_index,
+        text_labels_index=text_labels_index,
         dry_run=args.dry_run,
     )
     elapsed = time.monotonic() - start

@@ -359,6 +359,22 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
             "has_handwriting",
         ),
     },
+    "dzongkha-digits": {
+        "image_base_path": (
+            _BASE_DATA_DIR
+            / "language"
+            / "multilingual_scripts"
+            / "dzongkha_digits"
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "dzongkha-digits_metadata.json"
+        ),
+        "sample_size": 62,
+        "stratification_axes": (
+            "capture_method",
+            "has_handwriting",
+        ),
+    },
     "realdae": {
         "image_base_path": (
             _BASE_DATA_DIR
@@ -373,6 +389,33 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
             "capture_method",
             "domain_level1",
             "resolution_category",
+        ),
+    },
+    "bhutan-afs": {
+        "image_base_path": (
+            _BASE_DATA_DIR
+            / "documents"
+            / "bhutan_financial"
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "bhutan_financial_metadata.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "bhutan-afs"
+            / "layout_batch_0.json"
+        ),
+        "docling_ocr_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "bhutan-afs"
+            / "ocr_batch_0.jsonl"
+        ),
+        "sample_size": 135,
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
         ),
     },
 }

@@ -1,6 +1,6 @@
 # Layer 2 Metadata Audit System
 
-> **Version**: 1.2.0
+> **Version**: 1.3.0
 > **Last Updated**: 2026-02-12
 > **Status**: Active
 
@@ -26,7 +26,7 @@ Phase 0: Paper Review
   └─> Fill paper_review.md template with baseline expectations
 
 Phase 1: Automated Prescreening
-  └─> Run automated_prescreening.py → 13-field validation
+  └─> Run automated_prescreening.py → 15-field validation
   └─> Generates automated_screening.json with pass/fail rates
 
 Phase 2: Schema Compliance Check
@@ -52,12 +52,19 @@ Phase 5: Integration Script Development
 
 Phase 6: VLM Visual Inspection (Adaptive Sampling)
   └─> Select sampling tier (1/2/3) based on Phase 1-4 quality signals
-  └─> Run VLM agent on sample_set.json → Validate 13 fields visually
+  └─> Run VLM agent on sample_set.json → Validate 15 fields visually
   └─> Expand inspection for flags with high FP rates
   └─> Generates vlm_validation.json with agreement rates per field
 
+Phase 6.5: VLM Text Labeling (Conditional)
+  └─> Trigger: text_has_content pass rate < 50% in Phase 1 prescreening
+  └─> Target: max(ceil(1% of dataset), 10) samples at >75% confidence
+  └─> Transcribe text via VLM vision → text_content, text_statistics
+  └─> Generates vlm_text_labels.json → re-integrate in Phase 7
+
 Phase 7: Corrections & Iteration
   └─> Fix defects identified in Phase 4-6
+  └─> Re-integrate with all enrichment sources (including text labels)
   └─> Re-run Phases 1-6 until targets met (90% coverage, <5% defects)
 
 Phase 8: Documentation & Tracking
@@ -74,6 +81,12 @@ Phase 9: Dataset Catalog Update
   └─> Run materialize_reliability_summary.py → Update reliability section
   └─> Update docs/datasets/source/{dataset}.md Section 11 (Audit Summary)
   └─> Run dataset-catalog-agent for gap analysis + cross-file sync
+
+Phase 10: Lessons Learned & Process Improvement
+  └─> Review audit for issues with templates, scripts, or methodology
+  └─> Document improvements in audit execution checklist
+  └─> Propose changes to README, templates, scripts, or Known Issues registry
+  └─> Update docs/audit/README.md version and changelog
 ```
 
 ## Directory Structure
@@ -92,9 +105,9 @@ config/
 └── audit_scorecard.yaml              ← 6-dimension weighted scoring rubric
 
 scripts/audit/
-├── audit_config.py                   ← Dataset registry (12 known datasets)
+├── audit_config.py                   ← Dataset registry (14 known datasets)
 ├── audit_report_template.md          ← Symlink → docs/audit/AUDIT_REPORT_TEMPLATE.md
-├── automated_prescreening.py         ← Phase 1: 13-field validation
+├── automated_prescreening.py         ← Phase 1: 15-field validation
 ├── audit_schema_compliance.py        ← Phase 2: Schema compliance (15 fields)
 ├── assemble_comparison.py            ← Phase 3: Multi-source comparison
 ├── select_audit_samples.py           ← Phase 4.5: Stratified sample selection
@@ -105,11 +118,21 @@ scripts/audit/
     ├── diqa-5000/
     │   ├── automated_screening.json
     │   ├── comparison_report.json
-    │   └── sample_set.json
+    │   ├── sample_set.json
+    │   └── scorecard.json
     ├── jssoda/
     │   ├── automated_screening.json
     │   ├── comparison_report.json
-    │   └── sample_set.json
+    │   ├── sample_set.json
+    │   └── scorecard.json
+    ├── nepali-handwritten/              ← Full audit example
+    │   ├── automated_screening.json
+    │   ├── comparison_report.json
+    │   ├── defect_catalog.json
+    │   ├── sample_set.json
+    │   ├── scorecard.json
+    │   ├── vlm_corrections.json
+    │   └── vlm_validation_passing.json
     └── mlt19/
         ├── automated_screening.json
         ├── comparison_report.json
@@ -197,7 +220,7 @@ PYTHONPATH=. uv run python3 scripts/integrate_{dataset}_enrichments.py
 
 | Script | Phase | Purpose | Example Usage |
 |--------|-------|---------|---------------|
-| `automated_prescreening.py` | 1 | Validate 13 prescreening fields (split, capture_method, domain_level1, etc.) | `PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset jssoda` |
+| `automated_prescreening.py` | 1 | Validate 15 prescreening fields (split, capture_method, domain_level1, etc.) | `PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset jssoda` |
 | `audit_schema_compliance.py` | 2 | Validate 15 schema fields (types, ranges, COCO bbox format, etc.) | `PYTHONPATH=. uv run python3 scripts/audit/audit_schema_compliance.py --dataset jssoda` |
 | `assemble_comparison.py` | 3 | Compare multiple enrichment sources, compute cross-source agreement | `PYTHONPATH=. uv run python3 scripts/audit/assemble_comparison.py --dataset jssoda` |
 | `select_audit_samples.py` | 4.5 | Stratified random sampling for VLM inspection (36-100 images) | `PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py --dataset jssoda --size 36` |
@@ -246,7 +269,7 @@ All audit scripts support these common flags:
 
 | Dimension | Weight | Description | Source Artifact |
 |-----------|--------|-------------|-----------------|
-| **Field Coverage** | 25% | Percentage of 13 prescreening fields passing validation | `automated_screening.json` |
+| **Field Coverage** | 25% | Percentage of 15 prescreening fields passing validation | `automated_screening.json` |
 | **Field Validity** | 25% | Percentage of 15 schema compliance fields passing validation | `schema_compliance.json` |
 | **Document Completeness** | 15% | Percentage of samples with all required fields populated | `automated_screening.json` |
 | **Defect Rate** | 15% | Inverse of defect rate from VLM validation (1.0 - defect_rate) | `vlm_validation.json` |
@@ -305,7 +328,7 @@ The 57-image inspection caught 17 corrections across 13 images, with `has_handwr
 
 ### Dataset Registry (scripts/audit/audit_config.py)
 
-**12 Registered Datasets:**
+**14 Registered Datasets:**
 
 | Dataset | Path | Stratification Axes |
 |---------|------|---------------------|
@@ -321,6 +344,8 @@ The 57-image inspection caught 17 corrections across 13 images, with `has_handwr
 | fintabnet | `/mnt/e/image_detection/metadata_registry/json/fintabnet/` | domain_level1, layout_complexity |
 | cocotext | `/mnt/e/image_detection/metadata_registry/json/cocotext/` | capture_method, domain_level1 |
 | mdiw13 | `/mnt/e/image_detection/metadata_registry/json/mdiw13/` | script_family, capture_method |
+| nepali-handwritten | `/mnt/e/image_detection/metadata_registry/json/nepali_handwritten/` | capture_method, resolution_category, has_handwriting |
+| nist-sd2 | `/mnt/e/image_detection/metadata_registry/json/nist_sd2/` | capture_method, domain_level1 |
 
 **Usage**:
 
@@ -426,7 +451,14 @@ PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset $DATASE
 # 15. Update tracking index
 # Add audit completion date and scorecard grade to docs/datasets/AUDIT_TRACKING_INDEX.md
 
-# 16. Phase 9: Dataset catalog update
+# 16. Phase 6.5: VLM Text Labeling (if text_has_content < 50%)
+# Check prescreening text_has_content pass rate:
+grep "text_has_content" scripts/audit/results/${DATASET}/automated_screening.json
+# If < 50%: scan images, transcribe max(ceil(0.01 * N), 10) samples at >75% confidence
+# Output: results/${DATASET_UNDERSCORE}_text_labels.json
+# Then re-run integration with --vlm-text-labels flag (see Phase 6.5 policy below)
+
+# 17. Phase 9: Dataset catalog update
 # Regenerate aggregate statistics from post-integration metadata
 uv run python3 scripts/aggregate_layer2_metadata.py \
     --dataset $DATASET \
@@ -434,25 +466,77 @@ uv run python3 scripts/aggregate_layer2_metadata.py \
     --verbose
 # Output: metadata_registry/aggregates/${DATASET}_stats.json
 
-# 17. Materialize reliability summary into source doc
+# 18. Materialize reliability summary into source doc
 uv run python3 scripts/materialize_reliability_summary.py \
     --datasets $DATASET \
     --update-docs \
     --force
 # Updates: docs/datasets/source/${DATASET}.md (Reliability & Bottlenecks section)
 
-# 18. Update source doc with audit summary (Section 11 per template v1.4.0)
+# 19. Update source doc with audit summary (Section 11 per template v1.4.0)
 # Manually or via dataset-catalog-agent:
 #   - Add/update Section 11 "Layer 2 Audit Summary" with scorecard, defects, VLM results
-#   - Verify Section 12 "Reliability & Bottlenecks" was updated by step 17
+#   - Verify Section 12 "Reliability & Bottlenecks" was updated by step 18
 #   - Verify language/script section reflects actual LLM-detected distribution
 #   - Verify known issues section includes audit-discovered defects
 
-# 19. (Optional) Run dataset-catalog-agent for full gap analysis
+# 20. (Optional) Run dataset-catalog-agent for full gap analysis
 # The agent validates all 12 template sections, checks cross-file consistency
 # (Quick Reference, Processing Status, Task Indices), and flags missing content.
 # Invoke via: /agent dataset-catalog-agent with dataset name
+
+# 21. Phase 10: Lessons Learned & Process Improvement
+# Review audit execution for friction points, script bugs, stale docs, new KI patterns.
+# Categorize improvements and apply quick fixes to README, templates, scripts.
+# Add "Lessons Learned" section to docs/audit/audits/${DATASET}_audit.md.
+# See Phase 10 detailed section below for full procedure.
 ```
+
+### Phase 6.5: VLM Text Labeling Policy
+
+**Trigger**: If Phase 1 prescreening shows `text_has_content` pass rate < 50%, VLM text labeling
+is required before proceeding to Phase 7 corrections.
+
+**Sample Count**: `max(ceil(0.01 * total_samples), 10)` samples. For a 958-sample dataset, this
+is `max(10, 10) = 10`. For a 5000-sample dataset, this is `max(50, 10) = 50`.
+
+**Sample Selection Criteria**:
+
+1. **Upright images only** - exclude rotated samples (orientation_class != 0)
+2. **Confidence > 75%** - VLM must be able to transcribe at >75% estimated accuracy
+3. **Diverse document types** - sample across different content categories (essays, forms, lists, etc.)
+4. **Both splits represented** - include samples from train and test if available
+
+**Procedure**:
+
+```bash
+# 1. Check text_has_content pass rate from prescreening
+grep "text_has_content" scripts/audit/results/{dataset}/automated_screening.json
+
+# 2. If pass rate < 50%, scan images for clean samples
+#    Read images via VLM vision, classify as HIGH/GOOD/MEDIUM/POOR legibility
+
+# 3. Transcribe high-confidence samples and save to results
+#    Output: results/{dataset}_text_labels.json
+#    Schema: {"labels": [{"image_id": "train/1", "transcription": "...", "confidence": 0.9, ...}]}
+
+# 4. Add --vlm-text-labels flag to integration script
+#    The integration script template includes load_vlm_text_labels() and compute_text_statistics()
+
+# 5. Re-run integration (Phase 7) to populate text_content fields
+PYTHONPATH=. uv run python3 scripts/integrate_{dataset}_enrichments.py \
+    --vlm-text-labels results/{dataset}_text_labels.json
+```
+
+**Integration Fields Set**:
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| `text_has_content` | Boolean | True if transcription exists for this sample |
+| `text_content` | String | Full transcription text |
+| `text_content_confidence` | Float | VLM transcription confidence (0.0-1.0) |
+| `text_content_source` | Enum | `vlm_manual_transcription`, `docling_gpu_ocr`, or `none` |
+| `text_statistics` | Object | `{char_count, word_count, line_count, has_content, avg_line_length, ...}` |
 
 ### Expected Timeline
 
@@ -473,31 +557,34 @@ uv run python3 scripts/materialize_reliability_summary.py \
 
 **Location**: `scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json`
 
-**8 Known Issues Tracked:**
+**9 Known Issues Tracked:**
 
-| ID | Issue | Severity | Affected Datasets | Mitigation |
-|----|-------|----------|-------------------|------------|
-| **KI-001** | Missing `split` field | HIGH | 5 datasets | Default to "train" with deprecation warning |
-| **KI-002** | Invalid `capture_method` values | MEDIUM | 3 datasets | Fuzzy matching to canonical values |
-| **KI-003** | Script family mismatch with ISO639 | MEDIUM | 4 datasets | ISO639 takes precedence |
-| **KI-004** | Layout bbox outside image bounds | HIGH | 2 datasets | Clip to [0, 1] normalized range |
-| **KI-005** | Empty `degradation_type` array | LOW | 6 datasets | Accept as valid (pristine documents) |
-| **KI-006** | Quality score out of [0, 1] range | HIGH | 1 dataset | Clamp to [0, 1] with warning |
-| **KI-007** | Missing `domain_level2` when level1 exists | LOW | 8 datasets | Set to "UNK" |
-| **KI-008** | Duplicate layout detections | MEDIUM | 2 datasets | Deduplicate by bbox IoU > 0.95 |
+| ID | Issue | Severity | Scope | Mitigation |
+|----|-------|----------|-------|------------|
+| **KI-001** | Docling layout label casing mismatch | CRITICAL | All Docling datasets | Run `standardize_layout_labels.py` before integration |
+| **KI-002** | Table detection multi-column FP | HIGH | Synthetic/multi-column | VLM verify all `has_table=True` samples |
+| **KI-003** | Picture detection dense text FP | MEDIUM | Synthetic datasets | VLM verify `has_figure=True` samples |
+| **KI-004** | LLM handwriting on synthetic | HIGH | Synthetic datasets | Override `has_handwriting=False` for synthetic |
+| **KI-005** | LLM cannot detect synthetic capture | HIGH | Synthetic datasets | Hardcode `capture_method=synthetic` from docs |
+| **KI-006** | LLM formula semantic confusion | MEDIUM | All LLM-enriched | VLM verify `has_formula=True` samples |
+| **KI-007** | LLM domain UNK on generic content | LOW | Generic/narrative | Accept `domain_level1=UNK` as valid |
+| **KI-008** | `script_family` contains directionality | HIGH | All base-annotated | Re-derive via `get_script_family(iso15924_script)` |
+| **KI-009** | Documentation language claims unreliable | CRITICAL | Docs-only language | Cross-validate with LLM enrichment; prioritize LLM |
 
-**Integration Script Template**: All known issues have toggle flags in `integration_script_template.py`:
+**Integration Script Template**: All known issues have toggle flags and mitigation sections
+in `integration_script_template.py`:
 
 ```python
-# Known issue mitigation toggles
-MITIGATE_KI_001 = True   # Missing split field
-MITIGATE_KI_002 = True   # Invalid capture_method
-MITIGATE_KI_003 = True   # Script family mismatch
-MITIGATE_KI_004 = True   # Layout bbox clipping
-MITIGATE_KI_005 = False  # Empty degradation_type (valid)
-MITIGATE_KI_006 = True   # Quality score clamping
-MITIGATE_KI_007 = True   # Missing domain_level2
-MITIGATE_KI_008 = True   # Duplicate layout detections
+# Known issue mitigation toggles (integration_script_template.py)
+APPLY_KI_001_LAYOUT_CASING = True     # Docling lowercase -> PascalCase
+# KI-002: VLM_TABLE_TRUE_POSITIVES frozenset
+# KI-003: VLM_FIGURE_TRUE_POSITIVES frozenset
+# KI-004: IS_SYNTHETIC_DATASET flag -> has_handwriting=False
+# KI-005: KNOWN_CAPTURE_METHOD override
+# KI-006: VLM_FORMULA_TRUE_POSITIVES frozenset
+# KI-007: Accept domain_level1=UNK (no toggle needed)
+# KI-008: Always re-derive script_family via get_script_family()
+# KI-009: resolve_language() priority chain favors LLM over docs
 ```
 
 ## Phase 9: Dataset Catalog Update (Detailed)
@@ -608,6 +695,79 @@ The agent validates:
 - [ ] Final scorecard recomputed after doc updates
 - [ ] (Optional) Dataset-catalog-agent gap analysis passed
 
+## Phase 10: Lessons Learned & Process Improvement (Detailed)
+
+Every audit surfaces friction points, gaps, or improvements in the audit system itself. Phase 10
+captures these insights so the process improves with each dataset audited.
+
+### Why This Phase Exists
+
+Without a structured feedback loop, the same pain points recur across audits. Examples from
+past audits:
+
+- **nepali-handwritten**: Discovered `aggregate_layer2_metadata.py` filename mismatch (hyphen vs
+  underscore), `materialize_reliability_summary.py` missing `--verbose` flag, prescreening field
+  count was stale (13 -> 15 after v2.3.0), and VLM text labeling proved viable as a new enrichment
+  source not previously documented.
+- **realdae**: KI-009 language mismatch pattern led to creating the Adaptive VLM Sampling Policy
+  and expanding from 3 to 8 known issues.
+
+### Step-by-Step Procedure
+
+After the audit scorecard is finalized and the tracking index updated:
+
+#### Step 1: Review Audit Friction Points
+
+Walk through the audit execution checklist and identify:
+
+- **Script failures**: Did any script fail unexpectedly? What was the root cause?
+- **Missing enrichment sources**: Were there enrichment types (text labels, skew, resolution) that
+  should have been available but weren't?
+- **Stale documentation**: Did the README, templates, or Known Issues registry contain outdated
+  information?
+- **Missing known issues**: Did the audit discover a new cross-dataset pattern not yet in
+  `CROSS_DATASET_KNOWN_ISSUES.json`?
+- **Workflow gaps**: Were there manual steps that should be automated, or automated steps that
+  produced incorrect results?
+
+#### Step 2: Categorize Improvements
+
+| Category | Examples | Target File(s) |
+|----------|----------|-----------------|
+| **Script bug** | Filename mismatch, missing CLI flags | `scripts/audit/*.py`, `scripts/*.py` |
+| **Template gap** | Missing section, stale field count | `docs/audit/README.md`, `AUDIT_EXECUTION_TEMPLATE.md` |
+| **New known issue** | Cross-dataset pattern not in registry | `CROSS_DATASET_KNOWN_ISSUES.json` |
+| **New enrichment type** | VLM text labels, classical IQA | Integration script template, README |
+| **Documentation stale** | Wrong dataset count, old version refs | `docs/audit/README.md`, tracking index |
+| **Process change** | New phase, reordered steps | Workflow overview, execution template |
+
+#### Step 3: Implement or Propose Changes
+
+- **Quick fixes** (typos, counts, version refs): Apply directly and increment README version.
+- **Script fixes**: Fix in the relevant script, add to troubleshooting table.
+- **New known issues**: Add to `CROSS_DATASET_KNOWN_ISSUES.json` with full evidence.
+- **Template changes**: Update both the README description and the actual template file.
+- **Process changes**: Discuss with team before modifying the workflow sequence.
+
+#### Step 4: Update Audit Execution Checklist
+
+Add a "Lessons Learned" section to the per-dataset audit checklist
+(`docs/audit/audits/{dataset}_audit.md`) documenting:
+
+- What worked well
+- What caused friction
+- Specific changes made or proposed to the audit system
+
+### Phase 10 Checklist
+
+- [ ] Reviewed audit execution for friction points and gaps
+- [ ] Categorized improvements by type (script bug, template gap, new KI, etc.)
+- [ ] Applied quick fixes (README version, field counts, troubleshooting entries)
+- [ ] Proposed or implemented script/template changes
+- [ ] Added new known issues to `CROSS_DATASET_KNOWN_ISSUES.json` (if applicable)
+- [ ] Updated `docs/audit/README.md` version number and Last Updated date
+- [ ] Added "Lessons Learned" note to per-dataset audit checklist
+
 ## Related Documentation
 
 ### Core Methodology
@@ -646,6 +806,9 @@ The agent validates:
 | `KeyError: field_coverage` | Ensure `automated_screening.json` exists for scorecard computation |
 | Empty `comparison_report.json` | Dataset may have only one enrichment source (skip Phase 3) |
 | Stratified sampling fails | Reduce `--size` parameter if stratification axes have few unique values |
+| `aggregate_layer2_metadata.py` file not found | Metadata filename may use underscores (`foo_bar_metadata.json`) while script constructs with hyphens (`foo-bar_metadata.json`). Create symlink: `ln -sf actual_name.json expected-name.json` |
+| `materialize_reliability_summary.py` unknown flag | `--verbose` is NOT supported by this script. Remove the flag. |
+| Reliability section overwritten | `materialize_reliability_summary.py --update-docs` replaces the entire Reliability section. Re-add contextual notes (e.g., bottleneck explanations) after the script runs. |
 
 **Debug Mode:**
 

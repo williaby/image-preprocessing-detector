@@ -21,8 +21,9 @@ title: Training Dataset Catalog
 
 | Dataset | Images | Purpose | Status | Design Spec |
 |---------|--------|---------|--------|-------------|
-| orientation | 50,000 | Orientation Detection | ✅ Ready | [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md) |
-| synthetic_multiscript | 250,000 (target) | Script Detection | 🔄 In Progress | [synth-multiscript-250k_review.md](datasets/reviews/synth-multiscript-250k_review.md) |
+| orientation | 50,000 | Orientation Detection | Ready | [Design Spec](planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md) |
+| synth-multiscript-v3 | 350,000 | Script Detection + Base for All Views | Generating | [Full Doc](training/synth-multiscript-250k.md) |
+| skew | 90,412 | Skew Estimation | Ready | [Pipeline Plan](../../tmp_cleanup/.tmp-skew-pipeline-project-plan.md) |
 
 **Storage Location**: `E:\image_detection\03_training_datasets\`
 
@@ -165,139 +166,133 @@ uv run python scripts/prepare_orientation_dataset.py --output /mnt/e/image_detec
 
 ---
 
-## synthetic_multiscript
+## synth-multiscript-v3
 
-> **Quick Stats**: 250,000 target | 27 scripts | 198 languages | 🔄 In Progress (~27K)
+> **Quick Stats**: 350,000 images | 27 scripts | 198 languages | JPEG q95 | Layer 2 v2.3
 >
-> **Status**: 🔄 In Progress | **Started**: 2026-01-30
+> **Status**: Generating | **Version**: 3.0
 
 ### Overview
 
-Synthetic multilingual text images for Phase 10B script family classification. Generates document images with authentic text from OpenLID-v2 corpus across 27 ISO 15924 scripts.
+Synthetic multilingual text images serving as the **pristine base** from which ALL synthetic training
+views are derived. Generates document images with authentic text from OpenLID-v2 corpus across
+27 ISO 15924 scripts with comprehensive Layer 2 v2.3 metadata.
 
-**Purpose**: Train SigLIP script detection model for 27-class classification.
+**Purpose**: Unified base dataset for SigLIP 2 multi-task training and MobileNetV4 training.
 
-**Technical Review**: [synth-multiscript-250k_review.md](datasets/reviews/synth-multiscript-250k_review.md)
+**Full Documentation**: [training/synth-multiscript-250k.md](training/synth-multiscript-250k.md)
 
-### Target Configuration
+### Configuration
 
 | Attribute | Value |
 |-----------|-------|
-| Total Images | 250,000 |
+| Total Images | 350,000 |
 | Scripts | 27 ISO 15924 codes |
 | Languages | 198 OpenLID-v2 varieties |
-| Multi-script | 65% (2-4 scripts per image) |
-| Single-script | 35% |
-| Split | Train: 200K / Val: 25K / Test: 25K |
+| File Format | JPEG quality 95 (~200 KB/image, ~70 GB total) |
+| Schema | Layer 2 Enrichment v2.3.0 |
+| Multi-script | 55% (two 38% + three 10% + four+ 2% + priority 5%) |
+| Single-script | 45% |
+| Split | Train: 280K (80%) / Val: 35K (10%) / Test: 35K (10%) |
+| Skew Range | +/-22 deg (expanded from +/-10 deg) |
 
-### Script Coverage (27 Scripts)
+### Key Design: Pristine Base + Deferred Degradation
 
-| Script Code | Script Name | Estimated Count |
-|-------------|-------------|-----------------|
-| Latn | Latin | ~35K |
-| Arab | Arabic | ~20K |
-| Deva | Devanagari | ~15K |
-| Hans | Chinese Simplified | ~12K |
-| Hant | Chinese Traditional | ~8K |
-| Jpan | Japanese | ~10K |
-| Kore | Korean | ~8K |
-| Cyrl | Cyrillic | ~12K |
-| Grek | Greek | ~5K |
-| Thai | Thai | ~5K |
-| Hebr | Hebrew | ~5K |
-| Beng | Bengali | ~5K |
-| Gujr | Gujarati | ~5K |
-| Guru | Gurmukhi | ~5K |
-| Knda | Kannada | ~5K |
-| Armn | Armenian | ~5K |
-| Geor | Georgian | ~5K |
-| Ethi | Ethiopic | ~5K |
-| Khmr | Khmer | ~5K |
-| + 8 more | Various | ~100K |
+Images stored **pristine** (no degradation baked in). Degradation parameters recorded in metadata
+for reproducible replay. Derived views apply their own transforms at derivation time.
 
-### Current Progress
+### v3-Specific Features
 
-**Generated**: ~27,004 images (partial run)
+- **CJK Vertical Text**: Jpan 30% TTB, Hans/Hant 10% TTB with `text_direction` per block
+- **English Secondary Weighting**: 40% probability as secondary in multi-script compositions
+- **Generation Provenance**: SHA256 hash, degradation seed, font families per image
+- **Global Split Registry**: SHA256-keyed JSONL prevents cross-dataset train/test leakage
+- **Hybrid Augmentation**: Augraphy (document effects) + Albumentations (general effects)
+- **Document Age**: 80% modern, 15% aged, 5% historical
+- **Color Modes**: 60% color, 30% grayscale, 10% binarized
 
-**Scripts with samples**:
+### Derived Views (from this base)
 
-- Arab, Armn, Beng, Cyrl, Deva, Ethi, Geor, Grek
-- Gujr, Guru, Hans, Hant, Hebr, Jpan, Khmr, Knda, Kore
+| View | Count | Output Size | Model Target |
+|------|-------|-------------|--------------|
+| Script Detection | 350K (direct) | Native DPI | SigLIP 2 G2 |
+| Orientation | 50K | 224px | MobileNetV4 H1 |
+| Skew | 50-80K synth | 384px | MobileNetV4 H2 |
+| Resolution Quality | 30K | 224px | MobileNetV4 H3 |
+| IQA Pseudo-Labels | 100K | 384px | SigLIP 2 G1 |
+| Shadow | 15K | 384px | SigLIP 2 G5 |
+| Warping | 20K | 384px | SigLIP 2 G5 |
 
-**Pending**: Continue generation to reach 250K target.
+### Generation
 
-### Expected Label Schema
+**Script**: [scripts/generate_base_dataset_v3.py](../scripts/generate_base_dataset_v3.py)
 
-```json
-{
-  "image_id": "img_000001",
-  "scripts": [
-    {
-      "iso15924_code": "Latn",
-      "language_code": "eng",
-      "bcp47_tag": "en-Latn",
-      "region": {
-        "bbox": [100, 50, 400, 200],
-        "text_content": "Sample text..."
-      }
-    },
-    {
-      "iso15924_code": "Arab",
-      "language_code": "ara",
-      "bcp47_tag": "ar-Arab",
-      "region": {
-        "bbox": [100, 250, 400, 400],
-        "text_content": "نص عربي..."
-      }
-    }
-  ],
-  "layout_type": "two_column",
-  "text_density": "medium",
-  "iqa_labels": {
-    "blur": 0.3,
-    "noise": 0.1,
-    "skew": 0.0,
-    "overall_quality": 0.85
-  },
-  "composition": {
-    "script_count": 2,
-    "is_multilingual": true,
-    "primary_script": "Latn"
-  }
-}
+**Validation**: [scripts/validate_base_dataset_v3.py](../scripts/validate_base_dataset_v3.py)
+
+```bash
+python scripts/generate_base_dataset_v3.py \
+    --output-dir /path/to/synthetic_multiscript_v3 \
+    --total-images 350000 --workers 4 --seed 42 --augmenter hybrid --yes
 ```
 
-### Directory Structure
+### Deprecated Versions
 
-```text
-synthetic_multiscript/
-├── Arab/
-│   ├── {uuid}.png
-│   └── {uuid}.json
-├── Armn/
-├── Beng/
-├── Cyrl/
-├── Deva/
-├── ... (27 script folders)
-└── metadata/
-    └── generation_config.json
-```
+| Version | Images | Status |
+|---------|--------|--------|
+| v1.0 (27K) | 27,004 | DELETED |
+| v2.0 (250K) | ~62,500 partial | DELETED |
+
+---
+
+## skew
+
+> **Quick Stats**: 90,412 images | 71K synthetic + 19K natural | 384x384 JPEG q90
+>
+> **Status**: Ready | **Created**: 2026-02-11
+
+### Overview
+
+Skew estimation training dataset for MobileNetV4-Conv-S Head 2. Combines synthetic document images
+with classical-ensemble-labeled natural scans from 13 real-document datasets.
+
+**Purpose**: Train hybrid 42-bin classification + residual regression skew estimator.
+
+### Configuration
+
+| Attribute | Value |
+|-----------|-------|
+| Total Images | 90,412 |
+| Synthetic | 71,498 |
+| Natural Scans | 18,914 (13 datasets, conf >= 0.7) |
+| Image Size | 384x384 JPEG quality 90 |
+| Skew Range | +/-45 deg (42 non-uniform bins) |
+| Split | Train: 70,763 / Val: 9,025 / Test: 10,624 |
+| Local Path | `E:\03_training_datasets\skew\` |
+| GCS Path | `gs://image_detection_b/skew_training/` |
+
+### Training Results
+
+| Config | Val MAE | Test MAE | SRCC | Orient Acc | CPU Inference |
+|--------|---------|----------|------|------------|---------------|
+| conv_small @ 224px, 50ep | **0.837** | **0.956** | **0.936** | 99.5% | 17.5ms |
+| conv_small @ 320px, 10ep | 1.028 | 1.028 | - | - | 18.1ms |
+| conv_small @ 384px, 10ep | 1.005 | 1.005 | - | - | 20.5ms |
 
 ### Key Features
 
-- **Multi-script documents**: 65% have 2-4 scripts per image
-- **Synthetic IQA labels**: 8 quality dimensions (blur, noise, skew, etc.)
-- **Layout metadata**: Document layout type and text density
-- **Per-region bounding boxes**: COCO format for each script region
-- **Text corpus**: OpenLID-v2 (authentic language samples)
+- **Hybrid heads**: Orientation (4-class) + bins (42-class) + regression (continuous)
+- **Per-bin residual clamping**: max_residual matches each bin's half-width
+- **Natural scan diversity**: 13 source datasets (FUNSD, DocLayNet, SROIE, etc.)
+- **Classical ensemble labeling**: Hough + projection + gradient methods, conf >= 0.7 filter
 
-### Target Model Performance
+### Generation Scripts
 
-| Metric | Target |
-|--------|--------|
-| Overall Accuracy | ≥90% |
-| Per-script Accuracy | ≥80% (min) |
-| Multi-script Detection | ≥85% |
+| Script | Purpose |
+|--------|---------|
+| `generate_skew_dataset.py` | Generate synthetic skew images |
+| `merge_skew_datasets.py` | Merge synthetic + natural scans |
+| `select_natural_scan_skew_subset.py` | Select and stratify natural scans |
+| `label_skew_classical.py` | Classical ensemble labeling |
 
 ---
 
@@ -312,18 +307,20 @@ See [TRAINING_DATASET_TEMPLATE.md](TRAINING_DATASET_TEMPLATE.md) for the standar
 | Dataset | Script | Location |
 |---------|--------|----------|
 | orientation | `prepare_orientation_dataset.py` | [scripts/](../scripts/prepare_orientation_dataset.py) |
-| synthetic_multiscript | (synthetic generator) | TBD |
+| synth-multiscript-v3 | `generate_base_dataset_v3.py` | [scripts/](../scripts/generate_base_dataset_v3.py) |
+| skew | `generate_skew_dataset.py` | [scripts/](../scripts/generate_skew_dataset.py) |
 
 ---
 
 ## Appendix: Related Documentation
 
-- **Design Specification**: [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md)
-- **Script Detection Review**: [synth-multiscript-250k_review.md](datasets/reviews/synth-multiscript-250k_review.md)
-- **Source Dataset Catalog**: [DATASET_CATALOG.md](DATASET_CATALOG.md)
-- **Layer 2 Schema**: [layer2_enrichment.schema.json](schema/layer2_enrichment.schema.json)
+- **Orientation Design**: [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](../planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md)
+- **Synth-Multiscript Full Doc**: [training/synth-multiscript-250k.md](training/synth-multiscript-250k.md)
+- **Regeneration Plan**: [Plan File](../../.claude/plans/parallel-discovering-acorn.md)
+- **Source Datasets**: [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md)
+- **Layer 2 Schema**: [layer2_enrichment_v2.schema.json](../schema/layer2_enrichment_v2.schema.json)
 
 ---
 
-**Last Updated**: 2026-02-01
+**Last Updated**: 2026-02-12
 **Maintained By**: Data team

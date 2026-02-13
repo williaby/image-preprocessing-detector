@@ -17,17 +17,17 @@
 | Metric | Count | Percentage | Progress Bar |
 |--------|-------|------------|--------------|
 | **Total Datasets** | 51 | 100% | ████████████████████ 100% |
-| **Audits Complete** | 3 | 5.9% | █░░░░░░░░░░░░░░░░░░░ 6% |
+| **Audits Complete** | 6 | 11.8% | ██░░░░░░░░░░░░░░░░░░ 12% |
 | **Audits In Progress** | 0 | 0% | ░░░░░░░░░░░░░░░░░░░░ 0% |
-| **Not Started** | 48 | 94.1% | ░░░░░░░░░░░░░░░░░░░░ 0% |
-| **Audit Config Registered** | 12 | 23.5% | █████░░░░░░░░░░░░░░░ 24% |
+| **Not Started** | 45 | 88.2% | ░░░░░░░░░░░░░░░░░░░░ 0% |
+| **Audit Config Registered** | 15 | 29.4% | ██████░░░░░░░░░░░░░░ 29% |
 
 **Key Insights**:
 
-- Early-stage coverage: Only 3 datasets fully audited (DIQA-5000, JSSODa, MLT19)
-- 7 cross-dataset known issues (KI-001 to KI-007) documented from audits so far
-- 12 datasets have audit configurations ready (can run immediately)
-- 39 datasets need audit configuration setup before auditing
+- 6 datasets fully audited (DIQA-5000, JSSODa, MLT19, RealDAE, Nepali-Handwritten, Dzongkha-Digits)
+- 8 cross-dataset known issues (KI-001 to KI-008) documented from audits so far
+- 15 datasets have audit configurations ready (can run immediately)
+- 36 datasets need audit configuration setup before auditing
 
 ---
 
@@ -37,6 +37,7 @@
 
 | Dataset | Score | Grade | Coverage | Validity | Doc | Defects | Agreement | VLM | Updated |
 |---------|-------|-------|----------|----------|-----|---------|-----------|-----|---------|
+| nepali-handwritten | 87.7 | B | 87 | 100 | 55 | 96 | - | 96 | 2026-02-12 |
 | realdae | 88.9 | B | 99 | 93 | 64 | 91 | - | - | 2026-02-12 |
 
 <!-- SCORECARD_TABLE_END -->
@@ -68,7 +69,7 @@ Datasets directly used for SigLIP 2 / MobileNetV4 / YOLOv10-doc training.
 | **tablebank** | ❌ Not Started | - | 278,582 | ❌ No | Table detection dataset, needs config |
 | **fintabnet** | ❌ Not Started | - | 97,475 | Yes | Financial table dataset |
 | **synth-multiscript-250k** | ❌ Not Started | - | 250,000 (generating) | ❌ No | Synthetic script detection dataset, generation in progress |
-| **realdae** | ❌ Not Started | - | 1,200 | ❌ No | IQA before/after pairs |
+| **realdae** | ✅ Complete | 2026-02-12 | 1,200 | Yes | Grade B (88.9), IQA before/after pairs |
 | **hiertext** | ❌ Not Started | - | 11,641 | Yes | Handwriting legibility gold standard |
 
 ---
@@ -92,8 +93,8 @@ Secondary datasets providing diversity, validation, or augmentation.
 | **pucit-ohul** | ❌ Not Started | - | 7,401 | ❌ No | Urdu handwriting |
 | **yarmouk** | ❌ Not Started | - | 15,062 | ❌ No | Arabic OCR |
 | **tibhcr** | ❌ Not Started | - | 141,698 | ❌ No | Tibetan handwriting |
-| **dzongkha-digits** | ❌ Not Started | - | 62 | ❌ No | Tibetan digits |
-| **nepali-handwritten** | ❌ Not Started | - | 958 | ❌ No | Devanagari handwriting |
+| **dzongkha-digits** | ✅ Complete | 2026-02-12 | 62 | Yes | 12 defects (9 resolved, 3 deferred), VLM 62/62 pass, prescreening 93.3% |
+| **nepali-handwritten** | ✅ Complete | 2026-02-12 | 958 | Yes | Grade B (87.7), 5 defects (1 resolved, 3 deferred, 1 open) |
 | **muharaf** | ❌ Not Started | - | 25,711 | ❌ No | Arabic cursive historical |
 | **iam** | ❌ Not Started | - | 130,212 | ❌ No | English handwriting corpus |
 | **cocotext** | ❌ Not Started | - | 63,686 | ❌ No | Scene text with legibility labels |
@@ -281,6 +282,9 @@ python scripts/audit/compute_scorecard.py --dataset jssoda --update-index
 
 | Version | Date | Changes | Audits Added |
 |---------|------|---------|--------------|
+| 1.3.0 | 2026-02-12 | Added dzongkha-digits audit (Tier 3, 62/62 VLM pass, 93.3% prescreening) | Dzongkha-Digits |
+| 1.2.0 | 2026-02-12 | Added nepali-handwritten audit (Grade B, 87.7), updated to KI-008 | Nepali-Handwritten |
+| 1.1.0 | 2026-02-12 | Added realdae audit (Grade B, 88.9) | RealDAE |
 | 1.0.0 | 2026-02-12 | Initial creation with 3 audited datasets | DIQA-5000, JSSODa, MLT19 |
 
 ---
