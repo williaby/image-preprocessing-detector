@@ -430,12 +430,12 @@ class DocumentRenderer:
     ) -> tuple[int, int]:
         """Get character width and height from a sample CJK character."""
         sample_bbox = font.getbbox("\u4e00")  # "一" (CJK unified ideograph)
-        char_width = sample_bbox[2] - sample_bbox[0]
-        char_height = sample_bbox[3] - sample_bbox[1]
+        char_width: int = int(sample_bbox[2] - sample_bbox[0])
+        char_height: int = int(sample_bbox[3] - sample_bbox[1])
         if char_width == 0:
-            char_width = getattr(font, "size", 16)
+            char_width = int(getattr(font, "size", 16))
         if char_height == 0:
-            char_height = getattr(font, "size", 16)
+            char_height = int(getattr(font, "size", 16))
         return char_width, char_height
 
     def _flush_vertical_column(

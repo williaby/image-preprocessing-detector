@@ -543,7 +543,7 @@ def crop_polygon_region(
     # Apply polygon mask within the crop
     shifted_pts = pts - np.array([x_min, y_min])
     mask = np.zeros(cropped.shape, dtype=np.uint8)
-    cv2.fillPoly(mask, [shifted_pts], 255)
+    cv2.fillPoly(mask, [np.array(shifted_pts, dtype=np.int32)], (255,))
 
     # Set non-text pixels to white (255) so they don't create dark CCs
     cropped[mask == 0] = 255

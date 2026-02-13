@@ -56,7 +56,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import defusedxml.ElementTree as ET  # noqa: N817
+import defusedxml.ElementTree as ET  # noqa: N817  # nosemgrep: python.lang.security.audit.insecure-xml-use
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser

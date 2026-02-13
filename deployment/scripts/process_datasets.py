@@ -137,7 +137,10 @@ class UnifiedProcessor:
         # Initialize model
         self.docling_converter = None
 
-        # Global category map for consistent IDs across batches
+        # Global category map for consistent IDs across batches.
+        # This is cumulative: new category names discovered in later batches are
+        # appended with incrementing IDs so that category_id values remain stable
+        # across all output batch files for the same processing run.
         self._category_map: dict[str, int] = {}
 
         # Directories
@@ -540,14 +543,29 @@ class UnifiedProcessor:
             num_rows = len(table)
             logger.info(f"Contains {num_rows} images")
 
+            # Validate expected columns exist
+            column_names = set(table.column_names)
+            missing_cols = {"filename", "image_data"} - column_names
+            if missing_cols:
+                logger.error(
+                    f"Parquet file {local_pq.name} missing required columns: "
+                    f"{sorted(missing_cols)}. Available columns: {sorted(column_names)}"
+                )
+                local_pq.unlink(missing_ok=True)
+                continue
+
             # Process in batches within this parquet
             for batch_start in range(0, num_rows, self.config.batch_size):
                 batch_end = min(batch_start + self.config.batch_size, num_rows)
                 results = []
 
                 for row_idx in range(batch_start, batch_end):
-                    filename = table["filename"][row_idx].as_py()
-                    image_data = table["image_data"][row_idx].as_py()
+                    try:
+                        filename = table["filename"][row_idx].as_py()
+                        image_data = table["image_data"][row_idx].as_py()
+                    except KeyError as e:
+                        logger.warning(f"Missing column in parquet row {row_idx}: {e}")
+                        continue
 
                     # Write image to temp file
                     img_path = temp_dir / filename
@@ -640,15 +658,31 @@ class UnifiedProcessor:
             num_rows = len(table)
             logger.info(f"Contains {num_rows} images")
 
+            # Validate the Arrow schema contains the expected 'image' column
+            if "image" not in table.column_names:
+                logger.error(
+                    f"Arrow shard {local_arrow.name} missing required 'image' column. "
+                    f"Available columns: {sorted(table.column_names)}"
+                )
+                local_arrow.unlink(missing_ok=True)
+                continue
+
             # Process in batches within this shard
             for batch_start in range(0, num_rows, self.config.batch_size):
                 batch_end = min(batch_start + self.config.batch_size, num_rows)
                 results = []
 
                 for row_idx in range(batch_start, batch_end):
-                    image_col = table["image"][row_idx].as_py()
-                    image_bytes = image_col["bytes"]
-                    image_path_str = image_col.get("path", f"image_{row_idx}.png")
+                    try:
+                        image_col = table["image"][row_idx].as_py()
+                        image_bytes = image_col["bytes"]
+                        image_path_str = image_col.get("path", f"image_{row_idx}.png")
+                    except (KeyError, TypeError) as e:
+                        logger.warning(
+                            f"Invalid image structure in arrow row {row_idx}: {e}. "
+                            f"Expected dict with 'bytes' key."
+                        )
+                        continue
                     filename = Path(image_path_str).name or f"image_{row_idx}.png"
 
                     # Write image to temp file

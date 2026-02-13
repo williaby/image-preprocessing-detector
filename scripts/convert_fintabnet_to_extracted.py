@@ -15,7 +15,7 @@ Output format matches process_datasets.py output:
 
 import json
 import sys
-import defusedxml.ElementTree as ET  # noqa: N817
+import defusedxml.ElementTree as ET  # noqa: N817  # nosemgrep: python.lang.security.audit.insecure-xml-use
 from pathlib import Path
 
 BATCH_SIZE = 200

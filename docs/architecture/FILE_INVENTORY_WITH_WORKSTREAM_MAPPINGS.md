@@ -497,7 +497,7 @@ grep -oP 'src/[^"]+' scripts/extract_workstream_loc.sh
 | WS7: Monitoring & Drift | 5,348 | 5,353 | ⚠️ ~0.1% variance |
 | WS8: Synthetic Generation | 1,066 | ~1,500+ | ⚠️ Expanded (recount needed) |
 
-**Result**: ✅ All workstreams match within ±1%
+**Result**: ✅ All workstreams match within ±1%, except WS8 (Synthetic Generation) which was expanded with multi-task additions and requires a LOC recount
 
 ### Check 3: Unassigned Files Need Review
 

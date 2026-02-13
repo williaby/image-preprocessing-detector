@@ -186,7 +186,8 @@ main() {
     log_info "Found $total_files files to process"
 
     # Calculate batches
-    local num_batches=$(( (total_files + BATCH_SIZE - 1) / BATCH_SIZE ))
+    local num_batches
+    num_batches=$(( (total_files + BATCH_SIZE - 1) / BATCH_SIZE ))
     log_info "Will process in $num_batches batches"
 
     # Split file list into batch files (preserves newline-delimited format)

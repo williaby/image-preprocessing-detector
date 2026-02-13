@@ -25,7 +25,7 @@ cd /workspace
 python3 -m venv /workspace/venv
 source /workspace/venv/bin/activate
 
-# Install PyTorch with CUDA 12.4 support (cu124 = CUDA 12.4)
+# Install PyTorch with CUDA 12.4 support (cu124 = CUDA 12.4, matching Verda driver)
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 
@@ -58,7 +58,10 @@ model = YOLOv10.from_pretrained('juliozhao/DocLayout-YOLO-DocStructBench')
 print('DocLayout-YOLO model loaded successfully')
 "
 
-# Create the unified processor script
+# Create the unified processor script.
+# NOTE: This Python script is intentionally embedded inline (heredoc) so that
+# verda_startup.sh remains a single self-contained file that can be deployed
+# without needing to scp additional files to the GPU instance.
 cat > /workspace/scripts/process_datasets.py << 'PROCESSOR_SCRIPT'
 #!/usr/bin/env python3
 """

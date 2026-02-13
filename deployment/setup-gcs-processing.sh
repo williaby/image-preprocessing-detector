@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-DOCKER_HOST="${DOCKER_HOST:-byron@192.168.1.209}"
+DOCKER_HOST="${DOCKER_HOST:?"DOCKER_HOST env var must be set (e.g., user@host)"}"
 DEPLOY_DIR="${DEPLOY_DIR:-/data/compose/docling}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -55,6 +55,8 @@ REMOTE_USER="${DOCKER_HOST%%@*}"
 ssh "$DOCKER_HOST" "sudo mkdir -p /data/docling/{input,output,secrets,scripts} && sudo chown -R ${REMOTE_USER}:${REMOTE_USER} /data/docling"
 
 # Step 3: Copy service account credentials
+# Prefer dedicated service account keys over Application Default Credentials (ADC).
+# ADC tokens are user-scoped and may grant broader permissions than needed.
 log_info "Setting up GCS credentials..."
 if [[ -f ~/gcs-service-account.json ]]; then
     scp ~/gcs-service-account.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
@@ -78,6 +80,8 @@ fi
 
 # Step 4: Copy processing scripts
 log_info "Copying processing scripts..."
+[[ -f "$SCRIPT_DIR/scripts/gcs_processor.py" ]] || { log_error "Error: $SCRIPT_DIR/scripts/gcs_processor.py not found"; exit 1; }
+[[ -f "$SCRIPT_DIR/scripts/process-dataset-gcs.sh" ]] || { log_error "Error: $SCRIPT_DIR/scripts/process-dataset-gcs.sh not found"; exit 1; }
 scp "$SCRIPT_DIR/scripts/gcs_processor.py" "$DOCKER_HOST:/data/docling/scripts/"
 scp "$SCRIPT_DIR/scripts/process-dataset-gcs.sh" "$DOCKER_HOST:/data/docling/scripts/"
 ssh "$DOCKER_HOST" "chmod +x /data/docling/scripts/*.sh"
@@ -88,6 +92,7 @@ ssh "$DOCKER_HOST" "pip3 install --user httpx google-cloud-storage"
 
 # Step 6: Deploy Docling container
 log_info "Deploying Docling container..."
+[[ -f "$SCRIPT_DIR/docker-compose.docling-gcs.yml" ]] || { log_error "Error: $SCRIPT_DIR/docker-compose.docling-gcs.yml not found"; exit 1; }
 ssh "$DOCKER_HOST" "sudo mkdir -p $DEPLOY_DIR"
 scp "$SCRIPT_DIR/docker-compose.docling-gcs.yml" "$DOCKER_HOST:$DEPLOY_DIR/docker-compose.yml"
 scp -r "$SCRIPT_DIR/scripts" "$DOCKER_HOST:$DEPLOY_DIR/"
@@ -107,7 +112,8 @@ for _i in {1..30}; do
     sleep 5
 done
 if [[ "$healthy" != "true" ]]; then
-    log_warn "Health check timeout after 150s - container may still be starting"
+    log_error "Health check timeout after 150s - Docling container failed to become healthy"
+    exit 1
 fi
 
 # Step 8: Test GCS access

@@ -251,7 +251,7 @@ def _build_skew_estimator(
                 num_classes=0,  # Remove default classifier
                 global_pool="avg",
             )
-            feature_dim = self.backbone.num_features
+            feature_dim: int = int(self.backbone.num_features)  # type: ignore[arg-type]  # timm stubs type as Tensor|Module but is int at runtime
 
             # Head 1: Orientation classification
             self.orientation_head = nn.Sequential(
@@ -429,7 +429,7 @@ def export_to_onnx(
 
     torch.onnx.export(
         model,
-        dummy_input,
+        (dummy_input,),
         str(output_path),
         opset_version=opset_version,
         input_names=["input"],
@@ -588,4 +588,5 @@ def _softmax(logits: np.ndarray) -> np.ndarray:
 
     shifted = logits - np.max(logits)
     exp_vals = np.exp(shifted)
-    return exp_vals / np.sum(exp_vals)
+    result: np.ndarray = exp_vals / np.sum(exp_vals)
+    return result

@@ -29,7 +29,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
+import hashlib  # nosemgrep: python.lang.security.audit.insecure-hash-algorithms  # Uses SHA256, not MD5
 import json
 import logging
 import random

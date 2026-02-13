@@ -98,7 +98,7 @@ class ONNXModelRunner:
             RuntimeError: If ONNX Runtime fails to load the model.
         """
         if self._session is not None:
-            return self._session  # type: ignore[return-value]
+            return self._session
 
         import onnxruntime as ort
 
@@ -120,7 +120,7 @@ class ONNXModelRunner:
             raise RuntimeError(msg) from exc
 
         session = self._session
-        assert isinstance(session, ort.InferenceSession)  # type: ignore[attr-defined]
+        assert isinstance(session, ort.InferenceSession)
         input_names = [inp.name for inp in session.get_inputs()]
         output_names = [out.name for out in session.get_outputs()]
         logger.info(
@@ -133,7 +133,7 @@ class ONNXModelRunner:
             },
         )
 
-        return session  # type: ignore[return-value]
+        return session
 
     def run(
         self,

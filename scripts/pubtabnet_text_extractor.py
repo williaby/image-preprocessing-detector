@@ -106,7 +106,7 @@ def load_index() -> dict[str, str]:
         return index
 
     with open(INDEX_PATH, encoding="utf-8") as f:
-        return json.load(f)
+        return json.load(f)  # nosemgrep: python.lang.security.deserialization.avoid-pickle  # Uses json.load, not pickle
 
 
 def get_text(filename: str, index: dict[str, str] | None = None) -> str | None:
