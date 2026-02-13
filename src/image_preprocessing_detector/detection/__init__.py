@@ -15,6 +15,17 @@ Model configuration: configs/models/doclayout_yolo.yaml
 """
 
 # Deskew pipeline (ML-first with classical fallback)
+# Stream 2: Heuristic detectors
+from image_preprocessing_detector.detection.blank_page_detector import (
+    BlankPageDetector,
+    BlankPageResult,
+    detect_blank_page,
+)
+from image_preprocessing_detector.detection.code_detector import (
+    CodeDetectionResult,
+    CodeDetector,
+    detect_code,
+)
 from image_preprocessing_detector.detection.deskew_pipeline import (
     DeskewConfig,
     DeskewPipeline,
@@ -30,6 +41,11 @@ from image_preprocessing_detector.detection.discrepancy import (
     MLScores,
     ThresholdConfig,
     create_discrepancy_analyzer,
+)
+from image_preprocessing_detector.detection.handwriting_detector import (
+    HandwritingDetectionResult,
+    HandwritingDetector,
+    detect_handwriting,
 )
 from image_preprocessing_detector.detection.iqa_classical import (
     BinarizationQualityDetector,
@@ -88,10 +104,28 @@ from image_preprocessing_detector.detection.orientation_detector import (
     correct_orientation,
     detect_orientation,
 )
+from image_preprocessing_detector.detection.script_detector import (
+    ScriptDetectorHeuristic,
+    detect_script_heuristic,
+)
+from image_preprocessing_detector.detection.shadow_detector import (
+    ShadowDetectionResult,
+    ShadowDetector,
+    detect_shadows,
+)
+from image_preprocessing_detector.detection.table_complexity import (
+    TableComplexityAnalyzer,
+    analyze_table_complexity,
+)
 from image_preprocessing_detector.detection.text_gate import (
     TextDetectionResult,
     TextGate,
     detect_text,
+)
+from image_preprocessing_detector.detection.warping_detector import (
+    WarpingDetectionResult,
+    WarpingDetector,
+    detect_warping_distortion,
 )
 
 # DocLayout-YOLO detector (Phase 6)
@@ -182,6 +216,27 @@ __all__ = [
     "normalize_noise_score",
     "teacher_iqa_to_dict",
     "uncertainty_metrics_to_dict",
+    # Warping detection (Stream 2)
+    "WarpingDetectionResult",
+    "WarpingDetector",
+    "detect_warping_distortion",
+    # Stream 2: Heuristic detectors
+    "BlankPageDetector",
+    "BlankPageResult",
+    "detect_blank_page",
+    "CodeDetectionResult",
+    "CodeDetector",
+    "detect_code",
+    "HandwritingDetectionResult",
+    "HandwritingDetector",
+    "detect_handwriting",
+    "ScriptDetectorHeuristic",
+    "detect_script_heuristic",
+    "ShadowDetectionResult",
+    "ShadowDetector",
+    "detect_shadows",
+    "TableComplexityAnalyzer",
+    "analyze_table_complexity",
 ]
 
 # Add DocLayout-YOLO exports if available
