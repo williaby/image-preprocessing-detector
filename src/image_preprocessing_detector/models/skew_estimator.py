@@ -366,12 +366,8 @@ def compute_skew_loss(
 
     regression_out = outputs["skew_regression"]
 
-    if regression_out.shape[-1] == 2:
-        # Uncertainty mode: extract predicted mean and log-variance
-        pred_mu = regression_out[:, 0]
-        pred_log_var = regression_out[:, 1]
-    else:
-        pred_mu = regression_out[:, 0]
+    pred_mu = regression_out[:, 0]
+    uncertainty_mode = regression_out.shape[-1] == 2
 
     # Gaussian reweighting for critical zone (|angle| < 2 deg)
     # Apply higher weight to samples where |gt_angle| < 2
@@ -381,7 +377,8 @@ def compute_skew_loss(
         sample_weights[critical_mask] = critical_zone_weight
 
     # Re-weight the regression loss
-    if regression_out.shape[-1] == 2:
+    if uncertainty_mode:
+        pred_log_var = regression_out[:, 1]
         per_sample = 0.5 * (
             pred_log_var
             + (target_residuals - pred_mu) ** 2 / (pred_log_var.exp() + 1e-6)

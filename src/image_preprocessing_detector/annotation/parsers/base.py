@@ -97,7 +97,6 @@ class DatasetParser(Protocol):
             >>> parser.dataset_names
             ["diqa-5000", "diqa-synthetic"]
         """
-        ...
 
     def parse(
         self,
@@ -133,7 +132,6 @@ class DatasetParser(Protocol):
             >>> print(labels.diqa_overall)
             4.2
         """
-        ...
 
     def supports_batch(self) -> bool:
         """Whether this parser supports batch operations.

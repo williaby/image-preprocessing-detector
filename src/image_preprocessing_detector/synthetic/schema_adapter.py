@@ -63,12 +63,6 @@ IQA_TO_DEGRADATION_MAPPING: dict[str, list[str]] = {
     "overall_quality": [],  # Meta-dimension, not a specific degradation
 }
 
-# Severity thresholds for converting numeric values to categorical
-SEVERITY_THRESHOLDS: dict[str, tuple[float, float, float]] = {
-    # (mild_threshold, moderate_threshold, severe_threshold)
-    "default": (0.2, 0.5, 0.8),
-}
-
 
 def numeric_to_categorical_severity(
     value: float,

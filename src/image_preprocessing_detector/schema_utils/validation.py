@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, cast
 
 try:
-    from jsonschema import Draft7Validator, ValidationError, validate
+    from jsonschema import Draft7Validator, ValidationError
     from jsonschema.exceptions import SchemaError
 
     JSONSCHEMA_AVAILABLE = True
@@ -34,7 +34,6 @@ except ImportError:
     Draft7Validator = None
     ValidationError = Exception
     SchemaError = Exception
-    validate = None
 
 
 # Schema file paths (relative to project root)

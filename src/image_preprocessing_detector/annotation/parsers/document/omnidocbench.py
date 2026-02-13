@@ -31,14 +31,11 @@ Example:
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
-
-logger = logging.getLogger(__name__)
 
 
 class OmnidocbenchParser(BaseParser):

@@ -41,15 +41,12 @@ Example:
 
 from __future__ import annotations
 
-import logging
 import re
 from pathlib import Path
 from typing import Any
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
-
-logger = logging.getLogger(__name__)
 
 
 class DibcoParser(BaseParser):

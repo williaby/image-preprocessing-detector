@@ -61,7 +61,6 @@ _MODEL_LABEL_TO_DOCLING: dict[str, str] = {
 _TABLE_CLASSES = {"TABLE"}
 _FORMULA_CLASSES = {"FORMULA"}
 _FIGURE_CLASSES = {"PICTURE", "CHART"}
-_CODE_CLASSES = {"CODE"}
 
 
 class DoclingLayoutProvider:

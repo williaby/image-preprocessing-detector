@@ -153,7 +153,7 @@ class Mdiw13Parser(BaseParser):
                         if 0 <= numeric_label <= 12:
                             labels[line_num] = numeric_label
                     except ValueError:
-                        pass
+                        pass  # Skip non-numeric lines in ground truth file
 
         cls._gt_labels = labels
         cls._gt_path = gt_path

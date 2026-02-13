@@ -80,7 +80,6 @@ class EnrichmentProvider(Protocol):
             >>> provider.name
             "doclayout_yolo"
         """
-        ...
 
     @property
     def tier(self) -> str:
@@ -94,7 +93,6 @@ class EnrichmentProvider(Protocol):
             >>> provider.tier
             "tier_2_model"
         """
-        ...
 
     def is_available(self) -> bool:
         """Check if this provider is available for use.
@@ -109,7 +107,6 @@ class EnrichmentProvider(Protocol):
             >>> provider.is_available()
             True  # Model found, GPU available
         """
-        ...
 
     def supports(self, image_path: Path) -> bool:
         """Check if this provider should process the given image.
@@ -127,7 +124,6 @@ class EnrichmentProvider(Protocol):
             >>> provider.supports(Path("document.jpg"))
             True  # This image needs layout detection
         """
-        ...
 
     def enrich(self, image_path: Path) -> EnrichmentData:
         """Enrich a single image.
@@ -150,7 +146,6 @@ class EnrichmentProvider(Protocol):
             >>> print(enrichment.layout_detections)
             [LayoutDetection(...), ...]
         """
-        ...
 
     def enrich_batch(self, image_paths: list[Path]) -> list[EnrichmentData]:
         """Enrich multiple images in a batch.

@@ -2093,7 +2093,6 @@ class BinarizationQualityDetector:
             scale = min(max_dim / h, max_dim / w)
             new_h, new_w = int(h * scale), int(w * scale)
             gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-            h, w = gray.shape
 
         # Compute bimodality score (histogram analysis)
         bimodality_score, estimated_threshold = self._compute_bimodality(gray)

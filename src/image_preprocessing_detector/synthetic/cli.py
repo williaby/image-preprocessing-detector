@@ -24,7 +24,6 @@ Example:
 from __future__ import annotations
 
 import json
-import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -50,11 +49,10 @@ from image_preprocessing_detector.synthetic.generator import (
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger(__name__)
 
-# Default output path on E drive
+# Default output path on E drive (v3: 350K pristine base)
 DEFAULT_OUTPUT_PATH = Path(
-    "/mnt/e/image_detection/03_training_datasets/synthetic_multiscript"
+    "/mnt/e/image_detection/03_training_datasets/synthetic_multiscript_v3"
 )
 
 # Alternative paths for different environments
@@ -185,7 +183,7 @@ def synthetic() -> None:
 @click.option(
     "--skew",
     is_flag=True,
-    help="Enable random skew augmentation (+/-10 degrees with exact angle labels)",
+    help="Enable random skew augmentation (+/-22 degrees with exact angle labels)",
 )
 @click.option(
     "--orientation",

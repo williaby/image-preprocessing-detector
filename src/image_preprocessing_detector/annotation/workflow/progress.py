@@ -59,7 +59,6 @@ class ProgressCallback(Protocol):
             rate: Current processing rate (items/second)
             dataset_name: Name of dataset being processed (optional)
         """
-        ...
 
 
 @dataclass
