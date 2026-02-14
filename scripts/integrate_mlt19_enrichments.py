@@ -139,7 +139,23 @@ SCRIPT_TO_DIRECTION: dict[str, str] = {
 # Latin-script European languages for KI-009 refinement.
 # When parser GT returns "en" (Latin class), LLM may have the actual language.
 LATIN_EUROPEAN_LANGUAGES: frozenset[str] = frozenset(
-    {"fr", "de", "it", "es", "pt", "nl", "ro", "pl", "cs", "sv", "da", "no", "fi", "hu", "tr"}
+    {
+        "fr",
+        "de",
+        "it",
+        "es",
+        "pt",
+        "nl",
+        "ro",
+        "pl",
+        "cs",
+        "sv",
+        "da",
+        "no",
+        "fi",
+        "hu",
+        "tr",
+    }
 )
 
 # VLM corrections: per-sample overrides from visual inspection (Phase 6).
@@ -593,12 +609,7 @@ def integrate_sample(
     # European languages to "en". When LLM enrichment has a more specific
     # European language (fr/de/it/etc.), prefer it over the conflated "en".
     # -------------------------------------------------------------------
-    if (
-        lang == "en"
-        and lang_method == "parser_gt"
-        and script == "Latn"
-        and llm
-    ):
+    if lang == "en" and lang_method == "parser_gt" and script == "Latn" and llm:
         llm_lang = llm.get("iso639_language", "")
         if llm_lang in LATIN_EUROPEAN_LANGUAGES:
             lang = llm_lang

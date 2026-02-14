@@ -102,8 +102,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({"field": field_name, "confidence": round(confidence, 4),
-                        "category": category, "is_soft_label": category == "soft_label"})
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -209,7 +215,12 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
         data["text_has_content"] = False
         data["text_content_confidence"] = 0.0
         data["text_content_source"] = "none"
-        data["text_statistics"] = {"char_count": 0, "word_count": 0, "line_count": 0, "has_content": False}
+        data["text_statistics"] = {
+            "char_count": 0,
+            "word_count": 0,
+            "line_count": 0,
+            "has_content": False,
+        }
 
     # TEXT DIRECTION
     data["text_direction"] = "ltr"
@@ -231,8 +242,11 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0, "has_text_content_count": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
+        "total": 0,
+        "integrated": 0,
+        "has_text_content_count": 0,
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
         "has_formula_count": 0,
     }
     now = datetime.now(UTC).isoformat()
@@ -251,7 +265,8 @@ def run_integration(
 
         if not dry_run:
             new_version = {
-                "version": ENRICHMENT_VERSION_NUMBER, "created_at": now,
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
                 "created_by": "integrate_im2latex_enrichments.py",
                 "method": "tier_2_model",
                 "description": (

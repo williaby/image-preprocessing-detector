@@ -3987,9 +3987,7 @@ def parse_anyphotodoc6300_labels(
     return labels
 
 
-def parse_docalign12k_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_docalign12k_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse DocAlign12k labels from directory/filename patterns.
 
     Structure: distorted_hard/{group_num}/*.jpg  (flat/ has GT)
@@ -4049,9 +4047,7 @@ def parse_wsrd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
-def parse_warpdoc_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_warpdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse WarpDoc labels from directory/filename patterns.
 
     Structure: WarpDoc/{image,digital,digital_margin}/{distortion_type}/*.jpg
@@ -4085,9 +4081,7 @@ def parse_warpdoc_labels(
     return labels
 
 
-def parse_docreal_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_docreal_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse DocReal labels from directory/filename patterns.
 
     Structure: DocReal/{distorted,scanned}/*.png
@@ -4182,9 +4176,7 @@ def _load_cocotext_cached(dataset_path: Path) -> dict[str, Any]:
     return index
 
 
-def parse_cocotext_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_cocotext_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse COCO-Text v2 labels for a single image.
 
     COCO-Text structure:
@@ -4258,13 +4250,15 @@ def parse_cocotext_labels(
         lang = ann.get("language", "na")
         languages.append(lang)
 
-        text_instances.append({
-            "bbox": ann.get("bbox", []),
-            "text": ann.get("utf8_string", ""),
-            "language": lang,
-            "class": text_class,
-            "legibility": legibility,
-        })
+        text_instances.append(
+            {
+                "bbox": ann.get("bbox", []),
+                "text": ann.get("utf8_string", ""),
+                "language": lang,
+                "class": text_class,
+                "legibility": legibility,
+            }
+        )
 
     labels.raw_labels["machine_printed_count"] = machine_printed
     labels.raw_labels["handwritten_count"] = handwritten

@@ -130,7 +130,9 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
     avg_line_len = 0.0
     if non_empty_lines:
-        avg_line_len = round(sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1)
+        avg_line_len = round(
+            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1
+        )
     stats: dict[str, Any] = {
         "char_count": len(clean_text),
         "word_count": len(words),
@@ -162,8 +164,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({"field": field_name, "confidence": round(confidence, 4),
-                        "category": category, "is_soft_label": category == "soft_label"})
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -302,9 +310,13 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0, "llm_matched": 0, "lang_matched": 0,
+        "total": 0,
+        "integrated": 0,
+        "llm_matched": 0,
+        "lang_matched": 0,
         "has_text_content_count": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
         "has_handwriting_count": 0,
     }
     now = datetime.now(UTC).isoformat()
@@ -329,7 +341,8 @@ def run_integration(
 
         if not dry_run:
             new_version = {
-                "version": ENRICHMENT_VERSION_NUMBER, "created_at": now,
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
                 "created_by": "integrate_iam_enrichments.py",
                 "method": "tier_2_model",
                 "description": (
@@ -381,7 +394,9 @@ def main() -> int:
     output_path: Path = args.output or args.metadata
     if not args.metadata.is_file():
         log.error("Metadata file not found: %s", args.metadata)
-        log.error("IAM metadata file must be created first via annotate_base_metadata.py")
+        log.error(
+            "IAM metadata file must be created first via annotate_base_metadata.py"
+        )
         return 1
 
     metadata = load_metadata(args.metadata)

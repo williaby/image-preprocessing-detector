@@ -109,9 +109,7 @@ def _resolve_source_doc(dataset: str) -> Path | None:
 
     # Try hyphenated/dehyphenated variants
     normalized = dataset.replace("-", "")
-    candidates = [
-        c for c in SOURCE_DOCS_DIR.glob("*.md") if c.name != "README.md"
-    ]
+    candidates = [c for c in SOURCE_DOCS_DIR.glob("*.md") if c.name != "README.md"]
 
     for candidate in candidates:
         if candidate.stem.replace("-", "") == normalized:
@@ -173,7 +171,11 @@ def _build_scorecard_section(
 
     # Extract audit date from computed_at
     computed_at = sc.get("computed_at", "")
-    audit_date = computed_at[:10] if computed_at else datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+    audit_date = (
+        computed_at[:10]
+        if computed_at
+        else datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+    )
 
     grade = sc.get("grade", "?")
     overall = sc.get("overall_score", 0.0)
@@ -196,10 +198,12 @@ def _build_scorecard_section(
             lines.append("")
 
     # Scorecard table
-    lines.extend([
-        "| Dimension | Score | Weight | Notes |",
-        "|-----------|------:|-------:|-------|",
-    ])
+    lines.extend(
+        [
+            "| Dimension | Score | Weight | Notes |",
+            "|-----------|------:|-------:|-------|",
+        ]
+    )
 
     dimensions = sc.get("dimensions", {})
     excluded = sc.get("excluded_dimensions", [])
@@ -236,11 +240,13 @@ def _build_scorecard_section(
 
     # Grade cap explanation
     if grade_cap:
-        lines.extend([
-            "**Grade Cap Applied**:",
-            f"> {grade_cap}",
-            "",
-        ])
+        lines.extend(
+            [
+                "**Grade Cap Applied**:",
+                f"> {grade_cap}",
+                "",
+            ]
+        )
 
     return "\n".join(lines)
 
@@ -254,20 +260,24 @@ def _build_defects_section(
 
     dc = artifacts.defect_catalog
     if dc is None:
-        lines.extend([
-            "No defect catalog available for this dataset.",
-            "",
-        ])
+        lines.extend(
+            [
+                "No defect catalog available for this dataset.",
+                "",
+            ]
+        )
         return "\n".join(lines)
 
     defects = dc.get("defects", [])
     summary = dc.get("defect_summary", {})
 
     if not defects:
-        lines.extend([
-            "No defects identified during audit.",
-            "",
-        ])
+        lines.extend(
+            [
+                "No defects identified during audit.",
+                "",
+            ]
+        )
         return "\n".join(lines)
 
     # Summary line
@@ -293,10 +303,12 @@ def _build_defects_section(
     lines.append("")
 
     # Defect table
-    lines.extend([
-        "| ID | Field | Severity | Status | Description |",
-        "|----|-------|----------|--------|-------------|",
-    ])
+    lines.extend(
+        [
+            "| ID | Field | Severity | Status | Description |",
+            "|----|-------|----------|--------|-------------|",
+        ]
+    )
 
     for defect in defects:
         did = defect.get("id", "?")
@@ -324,20 +336,24 @@ def _build_vlm_section(
 
     vlm = artifacts.vlm_corrections
     if vlm is None:
-        lines.extend([
-            "No VLM inspection data available.",
-            "",
-        ])
+        lines.extend(
+            [
+                "No VLM inspection data available.",
+                "",
+            ]
+        )
         return "\n".join(lines)
 
     # Check if VLM was deferred
     vlm_status = vlm.get("vlm_inspection_status", "")
     if vlm_status == "deferred":
         reason = vlm.get("reason", "Deferred to manual review")
-        lines.extend([
-            f"> **Status**: Deferred -- {reason}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"> **Status**: Deferred -- {reason}",
+                "",
+            ]
+        )
         return "\n".join(lines)
 
     total_inspected = vlm.get("total_samples_inspected", 0)
@@ -358,10 +374,12 @@ def _build_vlm_section(
     accuracy_by_field = validation.get("accuracy_by_field", {})
 
     if accuracy_by_field:
-        lines.extend([
-            "| Field | Correct | Incorrect | Accuracy | Notes |",
-            "|-------|--------:|----------:|---------:|-------|",
-        ])
+        lines.extend(
+            [
+                "| Field | Correct | Incorrect | Accuracy | Notes |",
+                "|-------|--------:|----------:|---------:|-------|",
+            ]
+        )
 
         for field_name, field_data in accuracy_by_field.items():
             correct = field_data.get("correct", 0)
@@ -381,12 +399,14 @@ def _build_vlm_section(
     # Content flag distribution (if available)
     content_flags = validation.get("content_flag_distribution", {})
     if content_flags:
-        lines.extend([
-            "**Content Flag Distribution** (in inspected samples):",
-            "",
-            "| Flag | Count | Percentage |",
-            "|------|------:|-----------:|",
-        ])
+        lines.extend(
+            [
+                "**Content Flag Distribution** (in inspected samples):",
+                "",
+                "| Flag | Count | Percentage |",
+                "|------|------:|-----------:|",
+            ]
+        )
 
         for flag_name, flag_data in content_flags.items():
             count = flag_data.get("count", 0)
@@ -436,11 +456,13 @@ def _build_cross_dataset_section(
     else:
         lines.append("- No cross-dataset known issues identified for this dataset.")
 
-    lines.extend([
-        "",
-        f"**Audit Artifacts**: [scripts/audit/results/{artifacts.dataset}/](../../scripts/audit/results/{artifacts.dataset}/)",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            f"**Audit Artifacts**: [scripts/audit/results/{artifacts.dataset}/](../../scripts/audit/results/{artifacts.dataset}/)",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -488,7 +510,7 @@ def _find_section_11_bounds(content: str) -> tuple[int, int] | None:
     heading_level = len(match.group(1))
 
     # Find the next heading at same or higher level
-    rest = content[match.end():]
+    rest = content[match.end() :]
     next_heading = re.search(
         rf"^#{{2,{heading_level}}}\s+",
         rest,
@@ -559,7 +581,9 @@ def _adjust_heading_levels(section_content: str, target_prefix: str) -> str:
         new_len = max(2, min(6, new_len))
         return "#" * new_len + rest
 
-    return re.sub(r"^(#{2,6})([ \t])", adjust_heading, section_content, flags=re.MULTILINE)
+    return re.sub(
+        r"^(#{2,6})([ \t])", adjust_heading, section_content, flags=re.MULTILINE
+    )
 
 
 def update_source_doc(
@@ -584,7 +608,9 @@ def update_source_doc(
     existing_bounds = _find_section_11_bounds(content)
 
     if existing_bounds is not None and not overwrite:
-        print(f"  SKIP: Section 11 already exists in {doc_path.name} (use --overwrite to replace)")
+        print(
+            f"  SKIP: Section 11 already exists in {doc_path.name} (use --overwrite to replace)"
+        )
         return False
 
     # Generate the new Section 11
@@ -668,12 +694,24 @@ def main() -> None:
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dataset", help="Single dataset to update")
-    group.add_argument("--all-missing", action="store_true", help="Update all datasets missing Section 11")
-    group.add_argument("--all", action="store_true", help="Update all datasets with scorecards")
-    group.add_argument("--list-missing", action="store_true", help="List datasets missing Section 11")
+    group.add_argument(
+        "--all-missing",
+        action="store_true",
+        help="Update all datasets missing Section 11",
+    )
+    group.add_argument(
+        "--all", action="store_true", help="Update all datasets with scorecards"
+    )
+    group.add_argument(
+        "--list-missing", action="store_true", help="List datasets missing Section 11"
+    )
 
-    parser.add_argument("--overwrite", action="store_true", help="Replace existing Section 11 content")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing")
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Replace existing Section 11 content"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview changes without writing"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()

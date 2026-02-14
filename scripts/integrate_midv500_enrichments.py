@@ -432,7 +432,9 @@ def integrate_sample(
     # -------------------------------------------------------------------
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "identity_document"
+        data["text_scope_content_type"] = (
+            content_type if content_type else "identity_document"
+        )
     else:
         data["text_scope_content_type"] = v1_data.get(
             "text_scope_content_type", "identity_document"
@@ -644,23 +646,32 @@ def main() -> int:
         description=f"Integrate all enrichment sources into {DATASET_NAME} metadata.",
     )
     parser.add_argument(
-        "--metadata", type=Path, default=METADATA_PATH,
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
         help="Path to dataset metadata JSON",
     )
     parser.add_argument(
-        "--output", type=Path, default=None,
+        "--output",
+        type=Path,
+        default=None,
         help="Output path (default: overwrite input file)",
     )
     parser.add_argument(
-        "--llm-enrichment", type=Path, default=LLM_ENRICHMENT_PATH,
+        "--llm-enrichment",
+        type=Path,
+        default=LLM_ENRICHMENT_PATH,
         help="Path to LLM enrichment JSON",
     )
     parser.add_argument(
-        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH,
+        "--language-enrichment",
+        type=Path,
+        default=LANGUAGE_ENRICHMENT_PATH,
         help="Path to language enrichment JSON",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Report only, do not write output",
     )
     args = parser.parse_args()

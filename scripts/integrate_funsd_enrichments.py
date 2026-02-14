@@ -119,30 +119,58 @@ DOCLING_TO_DOCLAYNET: dict[str, str] = {
 # --- KI-002: Table detection multi-column FP (HIGH) -----------------
 # Full VLM coverage (199/199 via contact sheets, 2026-02-13).
 # Only actual data tables (rows/columns of data), NOT form field layouts.
-VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # Test split (10 images)
-    "82251504", "82491256", "82837252", "83823750",
-    "86236474_6476", "86244113", "87086073", "87428306",
-    "89856243", "93106788",
-    # Train split (23 images)
-    "0000999294", "0001118259", "0001456787", "0001477983",
-    "00040534", "0011838621", "0011845203", "0012178355",
-    "0012529284", "0012529295", "0012602424", "0060173256",
-    "0060270727", "0060308461", "00836816", "00837285",
-    "00865872", "01408099_01408101", "11508234", "716552",
-    "81574683", "93351929_93351931", "93380187",
-})
+VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # Test split (10 images)
+        "82251504",
+        "82491256",
+        "82837252",
+        "83823750",
+        "86236474_6476",
+        "86244113",
+        "87086073",
+        "87428306",
+        "89856243",
+        "93106788",
+        # Train split (23 images)
+        "0000999294",
+        "0001118259",
+        "0001456787",
+        "0001477983",
+        "00040534",
+        "0011838621",
+        "0011845203",
+        "0012178355",
+        "0012529284",
+        "0012529295",
+        "0012602424",
+        "0060173256",
+        "0060270727",
+        "0060308461",
+        "00836816",
+        "00837285",
+        "00865872",
+        "01408099_01408101",
+        "11508234",
+        "716552",
+        "81574683",
+        "93351929_93351931",
+        "93380187",
+    }
+)
 
 # --- KI-003: Picture detection dense text FP (MEDIUM) ---------------
 # Figures = diagrams, prominent seals/logos, promotional graphics.
 # Small letterhead logos excluded per KI-003 guidance.
-VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset({
-    "82092117",              # Attorney General seal
-    "00838511_00838525",     # Decision tree diagram
-    "91856041_6049",         # Newport pleasure promotional graphic
-    "92586242",              # Newport pleasure promotional graphic
-    "91814768_91814769",     # Massachusetts government seal
-})
+VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        "82092117",  # Attorney General seal
+        "00838511_00838525",  # Decision tree diagram
+        "91856041_6049",  # Newport pleasure promotional graphic
+        "92586242",  # Newport pleasure promotional graphic
+        "91814768_91814769",  # Massachusetts government seal
+    }
+)
 
 # --- KI-005: Capture method override from documentation --------------
 KNOWN_CAPTURE_METHOD: str | None = "scanner_adf"
@@ -156,48 +184,133 @@ VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 
 # --- Handwriting VLM override ----------------------------------------
 # Forms with visible handwritten text in form fields (not just signatures).
-VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # Test split (27 images)
-    "82092117", "82200067_0069", "82250337_0338", "82251504",
-    "82253245_3247", "82253362_3364", "82504862", "82562350",
-    "82573104", "82837252", "83443897", "83624198",
-    "83641919_1921", "83772145", "83823750", "85201976",
-    "85240939", "86075409_5410", "86220490", "86263525",
-    "86328049_8050", "87093315_87093318", "87125460", "87147607",
-    "87332450", "87594142_87594144", "92380595",
-    # Train split (37 images)
-    "0000971160", "0000989556", "0000990274", "0000999294",
-    "0001123541", "0001129658", "0001463282", "0001477983",
-    "0001485288", "00040534", "0011505151", "0011845203",
-    "0011856542", "0011899960", "0012529284", "0012529295",
-    "0012602424", "0012947358", "00283813", "0030031163",
-    "0030041455", "0060029036", "0060068489", "0060136394",
-    "0060262650", "0071032807", "00851772_1780", "00922237",
-    "01073843", "71190280", "71202511", "71563825",
-    "80728670", "87533049", "92433599_92433601", "93329540",
-    "93455715",
-})
+VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # Test split (27 images)
+        "82092117",
+        "82200067_0069",
+        "82250337_0338",
+        "82251504",
+        "82253245_3247",
+        "82253362_3364",
+        "82504862",
+        "82562350",
+        "82573104",
+        "82837252",
+        "83443897",
+        "83624198",
+        "83641919_1921",
+        "83772145",
+        "83823750",
+        "85201976",
+        "85240939",
+        "86075409_5410",
+        "86220490",
+        "86263525",
+        "86328049_8050",
+        "87093315_87093318",
+        "87125460",
+        "87147607",
+        "87332450",
+        "87594142_87594144",
+        "92380595",
+        # Train split (37 images)
+        "0000971160",
+        "0000989556",
+        "0000990274",
+        "0000999294",
+        "0001123541",
+        "0001129658",
+        "0001463282",
+        "0001477983",
+        "0001485288",
+        "00040534",
+        "0011505151",
+        "0011845203",
+        "0011856542",
+        "0011899960",
+        "0012529284",
+        "0012529295",
+        "0012602424",
+        "0012947358",
+        "00283813",
+        "0030031163",
+        "0030041455",
+        "0060029036",
+        "0060068489",
+        "0060136394",
+        "0060262650",
+        "0071032807",
+        "00851772_1780",
+        "00922237",
+        "01073843",
+        "71190280",
+        "71202511",
+        "71563825",
+        "80728670",
+        "87533049",
+        "92433599_92433601",
+        "93329540",
+        "93455715",
+    }
+)
 
 # --- Signature VLM override ------------------------------------------
 # Forms with visible hand-written signatures.
-VLM_SIGNATURE_TRUE_POSITIVES: frozenset[str] = frozenset({
-    # Test split (12 images)
-    "82254765", "82573104", "83641919_1921", "83996357",
-    "85201976", "86220490", "86263525", "87086073",
-    "87093315_87093318", "87137840", "87594142_87594144",
-    "91814768_91814769",
-    # Train split (36 images)
-    "0000989556", "0001123541", "00040534", "00070353",
-    "0011505151", "0011859695", "0011899960", "0012529295",
-    "0012602424", "00283813", "0030031163", "0060029036",
-    "0060068489", "0060077689", "0060173256", "0060207528",
-    "0060255888", "0060302201", "0071032790",
-    "00838511_00838525", "00851772_1780", "00865872",
-    "00922237", "01408099_01408101", "12825369", "13149651",
-    "71202511", "716552", "81310636", "87533049",
-    "89368010", "89386032", "89867723", "91581919",
-    "93380187", "93455715",
-})
+VLM_SIGNATURE_TRUE_POSITIVES: frozenset[str] = frozenset(
+    {
+        # Test split (12 images)
+        "82254765",
+        "82573104",
+        "83641919_1921",
+        "83996357",
+        "85201976",
+        "86220490",
+        "86263525",
+        "87086073",
+        "87093315_87093318",
+        "87137840",
+        "87594142_87594144",
+        "91814768_91814769",
+        # Train split (36 images)
+        "0000989556",
+        "0001123541",
+        "00040534",
+        "00070353",
+        "0011505151",
+        "0011859695",
+        "0011899960",
+        "0012529295",
+        "0012602424",
+        "00283813",
+        "0030031163",
+        "0060029036",
+        "0060068489",
+        "0060077689",
+        "0060173256",
+        "0060207528",
+        "0060255888",
+        "0060302201",
+        "0071032790",
+        "00838511_00838525",
+        "00851772_1780",
+        "00865872",
+        "00922237",
+        "01408099_01408101",
+        "12825369",
+        "13149651",
+        "71202511",
+        "716552",
+        "81310636",
+        "87533049",
+        "89368010",
+        "89386032",
+        "89867723",
+        "91581919",
+        "93380187",
+        "93455715",
+    }
+)
 
 # ===================================================================
 # Content flag class mappings (canonical layout -> content flags)
@@ -329,9 +442,7 @@ def load_docling_layout_batches(
                 continue
 
             cat_id = ann.get("category_id")
-            cat_name = ann.get("category_name", "") or cat_name_lookup.get(
-                cat_id, ""
-            )
+            cat_name = ann.get("category_name", "") or cat_name_lookup.get(cat_id, "")
 
             detection = {
                 "class_name": cat_name,
@@ -503,9 +614,7 @@ def derive_content_flags(
         Dict with boolean flags: has_table, has_formula, has_figure, has_code.
     """
     canonical_classes = {
-        d.get("class_name", "").upper()
-        for d in detections
-        if d.get("class_name")
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),
@@ -745,14 +854,20 @@ def integrate_sample(
     if llm:
         data["has_table"] = bool(llm.get("has_table", False)) or flags["has_table"]
         data["has_figure"] = bool(llm.get("has_figure", False)) or flags["has_figure"]
-        data["has_formula"] = bool(llm.get("has_formula", False)) or flags["has_formula"]
+        data["has_formula"] = (
+            bool(llm.get("has_formula", False)) or flags["has_formula"]
+        )
         data["has_handwriting"] = bool(llm.get("has_handwriting", False))
         data["has_signature"] = bool(llm.get("has_signature", False))
     else:
         # For test samples without LLM enrichment, use v1 data or layout
         data["has_table"] = bool(v1_data.get("has_table", False)) or flags["has_table"]
-        data["has_figure"] = bool(v1_data.get("has_figure", False)) or flags["has_figure"]
-        data["has_formula"] = bool(v1_data.get("has_formula", False)) or flags["has_formula"]
+        data["has_figure"] = (
+            bool(v1_data.get("has_figure", False)) or flags["has_figure"]
+        )
+        data["has_formula"] = (
+            bool(v1_data.get("has_formula", False)) or flags["has_formula"]
+        )
         data["has_handwriting"] = bool(v1_data.get("has_handwriting", False))
         data["has_signature"] = bool(v1_data.get("has_signature", False))
 
@@ -801,7 +916,9 @@ def integrate_sample(
             data["split"] = "test"
         else:
             data["split"] = "train"  # Default for FUNSD
-            log.warning("Could not determine split for %s, defaulting to train", filename)
+            log.warning(
+                "Could not determine split for %s, defaulting to train", filename
+            )
 
     # -----------------------------------------------------------------
     # TEXT SCOPE

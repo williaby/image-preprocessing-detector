@@ -155,7 +155,9 @@ def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
         raw: dict[str, Any] = json.load(f)
     # Handle both list-of-samples and single-record known_language format
     if "enrichment_type" in raw and raw.get("enrichment_type") == "known_language":
-        log.info("  Known-language enrichment: %s/%s", raw.get("language"), raw.get("script"))
+        log.info(
+            "  Known-language enrichment: %s/%s", raw.get("language"), raw.get("script")
+        )
         return {}  # No per-image index needed; use defaults
     index: dict[str, dict[str, Any]] = {}
     for rec in raw.get("samples", []):
@@ -341,9 +343,7 @@ def derive_content_flags(
 ) -> dict[str, bool]:
     """Derive content flags from canonical layout classes."""
     canonical_classes = {
-        d.get("class_name", "").upper()
-        for d in detections
-        if d.get("class_name")
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),
@@ -512,14 +512,20 @@ def integrate_sample(
     if llm:
         data["has_table"] = bool(llm.get("has_table", False)) or flags["has_table"]
         data["has_figure"] = bool(llm.get("has_figure", False)) or flags["has_figure"]
-        data["has_formula"] = bool(llm.get("has_formula", False)) or flags["has_formula"]
+        data["has_formula"] = (
+            bool(llm.get("has_formula", False)) or flags["has_formula"]
+        )
         data["has_handwriting"] = bool(llm.get("has_handwriting", False))
         data["has_signature"] = bool(llm.get("has_signature", False))
     else:
         # Use v1 enrichment flags as fallback
         data["has_table"] = bool(v1_data.get("has_table", False)) or flags["has_table"]
-        data["has_figure"] = bool(v1_data.get("has_figure", False)) or flags["has_figure"]
-        data["has_formula"] = bool(v1_data.get("has_formula", False)) or flags["has_formula"]
+        data["has_figure"] = (
+            bool(v1_data.get("has_figure", False)) or flags["has_figure"]
+        )
+        data["has_formula"] = (
+            bool(v1_data.get("has_formula", False)) or flags["has_formula"]
+        )
         data["has_handwriting"] = bool(v1_data.get("has_handwriting", False))
         data["has_signature"] = False
 
@@ -532,7 +538,10 @@ def integrate_sample(
         data["has_figure"] = False
     if VLM_FORMULA_TRUE_POSITIVES and filename_stem not in VLM_FORMULA_TRUE_POSITIVES:
         data["has_formula"] = False
-    if VLM_HANDWRITING_TRUE_POSITIVES and filename_stem not in VLM_HANDWRITING_TRUE_POSITIVES:
+    if (
+        VLM_HANDWRITING_TRUE_POSITIVES
+        and filename_stem not in VLM_HANDWRITING_TRUE_POSITIVES
+    ):
         data["has_handwriting"] = False
 
     data["content_flags_tier"] = "tier_2_model"
@@ -637,7 +646,11 @@ def run_integration(
         filename_full = Path(filename).name
 
         integrated_data = integrate_sample(
-            sample, llm_index, lang_index, layout_index, ocr_index,
+            sample,
+            llm_index,
+            lang_index,
+            layout_index,
+            ocr_index,
             filename_map=filename_map,
         )
 
@@ -771,31 +784,45 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--metadata", type=Path, default=METADATA_PATH,
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
         help="Path to dataset metadata JSON (default: %(default)s)",
     )
     parser.add_argument(
-        "--output", type=Path, default=None,
+        "--output",
+        type=Path,
+        default=None,
         help="Output path (default: overwrite input file)",
     )
     parser.add_argument(
-        "--llm-enrichment", type=Path, default=LLM_ENRICHMENT_PATH,
+        "--llm-enrichment",
+        type=Path,
+        default=LLM_ENRICHMENT_PATH,
         help="Path to LLM enrichment JSON (default: %(default)s)",
     )
     parser.add_argument(
-        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH,
+        "--language-enrichment",
+        type=Path,
+        default=LANGUAGE_ENRICHMENT_PATH,
         help="Path to language enrichment JSON (default: %(default)s)",
     )
     parser.add_argument(
-        "--docling-extracted-dir", type=Path, default=DOCLING_EXTRACTED_DIR,
+        "--docling-extracted-dir",
+        type=Path,
+        default=DOCLING_EXTRACTED_DIR,
         help="Path to extracted data dir (default: %(default)s)",
     )
     parser.add_argument(
-        "--arrow-dir", type=Path, default=HF_ARROW_DIR,
+        "--arrow-dir",
+        type=Path,
+        default=HF_ARROW_DIR,
         help="Path to HuggingFace Arrow data for filename mapping (default: %(default)s)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Report only, do not write output",
+        "--dry-run",
+        action="store_true",
+        help="Report only, do not write output",
     )
     args = parser.parse_args()
 

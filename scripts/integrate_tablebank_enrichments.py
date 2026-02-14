@@ -144,12 +144,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field": field_name,
-            "confidence": round(confidence, 4),
-            "category": category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -294,8 +296,12 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
         if integrated_data.get("has_table"):
             stats["has_table_count"] += 1
         if integrated_data.get("has_formula"):

@@ -179,7 +179,9 @@ def load_docling_layout_batches(
     if not batch_files:
         log.warning("No layout batch files found in %s", layout_dir)
         return {}
-    log.info("Loading %d Docling layout batch files from %s", len(batch_files), layout_dir)
+    log.info(
+        "Loading %d Docling layout batch files from %s", len(batch_files), layout_dir
+    )
     index: dict[str, list[dict[str, Any]]] = {}
     total_detections = 0
     for batch_path in batch_files:
@@ -207,7 +209,8 @@ def load_docling_layout_batches(
             total_detections += 1
     log.info(
         "  Indexed %d images with %d total detections",
-        len(index), total_detections,
+        len(index),
+        total_detections,
     )
     return index
 
@@ -252,12 +255,15 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     arab_chars = len(re.findall(r"[\u0600-\u06ff]", clean_text))
     beng_chars = len(re.findall(r"[\u0980-\u09ff]", clean_text))
     thai_chars = len(re.findall(r"[\u0e00-\u0e7f]", clean_text))
-    cjk_chars = len(re.findall(r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]", clean_text))
+    cjk_chars = len(
+        re.findall(r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]", clean_text)
+    )
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
     avg_line_len = 0.0
     if non_empty_lines:
         avg_line_len = round(
-            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1,
+            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines),
+            1,
         )
     stats: dict[str, Any] = {
         "char_count": len(clean_text),
@@ -318,12 +324,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field": field_name,
-            "confidence": round(confidence, 4),
-            "category": category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -542,14 +550,21 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0,
-        "layout_matched": 0, "ocr_matched": 0, "lang_matched": 0,
+        "total": 0,
+        "integrated": 0,
+        "layout_matched": 0,
+        "ocr_matched": 0,
+        "lang_matched": 0,
         "has_text_content_count": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
-        "lang_dist": Counter(), "script_family_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
         "lang_method_dist": Counter(),
-        "has_table_count": 0, "has_formula_count": 0,
-        "has_handwriting_count": 0, "has_figure_count": 0,
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
     }
     now = datetime.now(UTC).isoformat()
 
@@ -574,12 +589,18 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["lang_method_dist"][integrated_data.get("text_scope_detection_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["lang_method_dist"][
+            integrated_data.get("text_scope_detection_method", "unknown")
+        ] += 1
 
         for flag_key, stat_key in (
-            ("has_table", "has_table_count"), ("has_formula", "has_formula_count"),
-            ("has_handwriting", "has_handwriting_count"), ("has_figure", "has_figure_count"),
+            ("has_table", "has_table_count"),
+            ("has_formula", "has_formula_count"),
+            ("has_handwriting", "has_handwriting_count"),
+            ("has_figure", "has_figure_count"),
         ):
             if integrated_data.get(flag_key):
                 stats[stat_key] += 1
@@ -624,8 +645,10 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print(f"Has text content:     {stats['has_text_content_count']}")
     print()
     for dist_name, dist_key in [
-        ("Language", "lang_dist"), ("Script family", "script_family_dist"),
-        ("Split", "split_dist"), ("Detection method", "lang_method_dist"),
+        ("Language", "lang_dist"),
+        ("Script family", "script_family_dist"),
+        ("Split", "split_dist"),
+        ("Detection method", "lang_method_dist"),
     ]:
         print(f"{dist_name} distribution:")
         for val, count in stats[dist_key].most_common(15):
@@ -647,7 +670,9 @@ def main() -> int:
     )
     parser.add_argument("--metadata", type=Path, default=METADATA_PATH)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH)
+    parser.add_argument(
+        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH
+    )
     parser.add_argument("--layout-dir", type=Path, default=DOCLING_LAYOUT_DIR)
     parser.add_argument("--ocr-dir", type=Path, default=DOCLING_OCR_DIR)
     parser.add_argument("--dry-run", action="store_true")
@@ -665,7 +690,9 @@ def main() -> int:
     ocr_index = load_docling_ocr_batches(args.ocr_dir)
 
     start = time.monotonic()
-    stats = run_integration(metadata, layout_index, ocr_index, lang_index, dry_run=args.dry_run)
+    stats = run_integration(
+        metadata, layout_index, ocr_index, lang_index, dry_run=args.dry_run
+    )
     elapsed = time.monotonic() - start
 
     print_summary(stats, len(metadata["samples"]))

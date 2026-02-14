@@ -1289,14 +1289,10 @@ def main(argv: list[str] | None = None) -> int:
     # and no explicit --output is given.  This ensures compute_scorecard.py can
     # find the artifact without manual --output flags.
     if output_path is None and args.dataset:
-        auto_dir = (
-            Path(__file__).resolve().parent / "results" / args.dataset
-        )
+        auto_dir = Path(__file__).resolve().parent / "results" / args.dataset
         auto_dir.mkdir(parents=True, exist_ok=True)
         output_path = auto_dir / "compliance.json"
-        logger.info(
-            "Auto-outputting to %s (use --output to override)", output_path
-        )
+        logger.info("Auto-outputting to %s (use --output to override)", output_path)
 
     if output_path:
         write_report(report, output_path)

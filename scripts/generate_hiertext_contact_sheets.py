@@ -36,9 +36,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-IMAGE_BASE = Path(
-    "/mnt/e/image_detection/01_base_data/text_detection/hiertext"
-)
+IMAGE_BASE = Path("/mnt/e/image_detection/01_base_data/text_detection/hiertext")
 METADATA_PATH = Path(
     "/mnt/e/image_detection/metadata_registry/json/hiertext_metadata.json"
 )
@@ -107,20 +105,24 @@ def load_image_list(metadata_path: Path) -> list[dict[str, str]]:
         # Build full path: IMAGE_BASE / split / filename
         img_path = IMAGE_BASE / split / filename
 
-        images.append({
-            "image_id": image_id,
-            "filename": filename,
-            "split": split,
-            "path": str(img_path),
-        })
+        images.append(
+            {
+                "image_id": image_id,
+                "filename": filename,
+                "split": split,
+                "path": str(img_path),
+            }
+        )
 
     # Sort by split order, then filename
     images.sort(key=lambda x: (split_order.get(x["split"], 9), x["filename"]))
-    log.info("  Found %d images (train=%d, val=%d, test=%d)",
-             len(images),
-             sum(1 for i in images if i["split"] == "train"),
-             sum(1 for i in images if i["split"] == "validation"),
-             sum(1 for i in images if i["split"] == "test"))
+    log.info(
+        "  Found %d images (train=%d, val=%d, test=%d)",
+        len(images),
+        sum(1 for i in images if i["split"] == "train"),
+        sum(1 for i in images if i["split"] == "validation"),
+        sum(1 for i in images if i["split"] == "test"),
+    )
     return images
 
 
@@ -156,9 +158,7 @@ def generate_contact_sheet(
     draw = ImageDraw.Draw(sheet)
 
     try:
-        font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9
-        )
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
     except OSError:
         font = ImageFont.load_default()
 
@@ -237,7 +237,11 @@ def generate_all_sheets(
     num_sheets = math.ceil(len(images) / IMAGES_PER_SHEET)
     log.info(
         "Generating %d contact sheets (%d images, %d per sheet, %dx%d grid)",
-        num_sheets, len(images), IMAGES_PER_SHEET, COLS, ROWS,
+        num_sheets,
+        len(images),
+        IMAGES_PER_SHEET,
+        COLS,
+        ROWS,
     )
 
     manifest: list[dict[str, Any]] = []
@@ -280,7 +284,8 @@ def generate_all_sheets(
         if (sheet_idx + 1) % 25 == 0 or (sheet_idx + 1) == num_sheets:
             log.info(
                 "  Progress: %d/%d sheets (%d images, %d errors)",
-                sheet_idx + 1, num_sheets,
+                sheet_idx + 1,
+                num_sheets,
                 min(end, len(images)),
                 total_errors,
             )
@@ -301,7 +306,9 @@ def main() -> int:
         description="Generate HierText contact sheets for VLM inspection"
     )
     parser.add_argument(
-        "--metadata", type=Path, default=METADATA_PATH,
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
         help="Path to hiertext_metadata.json",
     )
     args = parser.parse_args()
@@ -319,7 +326,8 @@ def main() -> int:
     existing = sum(1 for p in sample_paths if p.exists())
     log.info(
         "Path verification: %d/%d sample paths exist",
-        existing, len(sample_paths),
+        existing,
+        len(sample_paths),
     )
     if existing == 0:
         log.error("No image paths resolve. Check IMAGE_BASE: %s", IMAGE_BASE)

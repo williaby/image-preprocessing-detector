@@ -162,9 +162,9 @@ VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 ENGLISH_PAGE_STEMS: frozenset[str] = frozenset(
     {
         # Tax Act of Bhutan 2021 - English pages only
-        "Tax-Act-of-Bhutan-2021_4_p000",   # Table of Contents (English)
-        "Tax-Act-of-Bhutan-2021_6_p000",   # Preamble + Sections 1-4 (English)
-        "Tax-Act-of-Bhutan-2021_8_p000",   # Schedule 1 - Revision of Sales Tax
+        "Tax-Act-of-Bhutan-2021_4_p000",  # Table of Contents (English)
+        "Tax-Act-of-Bhutan-2021_6_p000",  # Preamble + Sections 1-4 (English)
+        "Tax-Act-of-Bhutan-2021_8_p000",  # Schedule 1 - Revision of Sales Tax
         "Tax-Act-of-Bhutan-2021_10_p000",  # Schedule 1 continuation (English)
     }
 )

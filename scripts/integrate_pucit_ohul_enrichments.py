@@ -62,9 +62,7 @@ METADATA_PATH = REGISTRY_DIR / "json" / "pucit_ohul_metadata.json"
 # No LLM enrichment available
 LLM_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "pucit_ohul_llm_enrichment.json"
 # Language enrichment is a minimal stub (243 bytes)
-LANGUAGE_ENRICHMENT_PATH = (
-    REGISTRY_DIR / "json" / "pucit-ohul_language_enrichment.json"
-)
+LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "pucit-ohul_language_enrichment.json"
 
 # Docling extracted data (38 COCO layout batches + 38 OCR JSONL batches)
 DOCLING_LAYOUT_DIR = REGISTRY_DIR / "extracted" / "pucit-ohul"
@@ -212,7 +210,9 @@ def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, An
         log.warning("No layout batch files found in %s", layout_dir)
         return {}
 
-    log.info("Loading %d Docling layout batch files from %s", len(batch_files), layout_dir)
+    log.info(
+        "Loading %d Docling layout batch files from %s", len(batch_files), layout_dir
+    )
     index: dict[str, list[dict[str, Any]]] = {}
     total_annotations = 0
 
@@ -321,7 +321,11 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     words = clean_text.split()
 
     # Arabic script characters (Urdu uses Arabic script range)
-    arabic_chars = len(re.findall(r"[\u0600-\u06ff\u0750-\u077f\ufb50-\ufdff\ufe70-\ufeff]", clean_text))
+    arabic_chars = len(
+        re.findall(
+            r"[\u0600-\u06ff\u0750-\u077f\ufb50-\ufdff\ufe70-\ufeff]", clean_text
+        )
+    )
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
 
     avg_line_len = 0.0

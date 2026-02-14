@@ -226,7 +226,9 @@ def load_docling_layout_batches(
         log.warning("No layout batch files found in %s", layout_dir)
         return {}
 
-    log.info("Loading %d Docling layout batch files from %s", len(batch_files), layout_dir)
+    log.info(
+        "Loading %d Docling layout batch files from %s", len(batch_files), layout_dir
+    )
     index: dict[str, list[dict[str, Any]]] = {}
     total_detections = 0
 
@@ -309,7 +311,9 @@ def load_docling_ocr_batches(
                 if filename:
                     index[filename] = rec
 
-    log.info("  Indexed %d OCR records from %d batch files", len(index), len(batch_files))
+    log.info(
+        "  Indexed %d OCR records from %d batch files", len(index), len(batch_files)
+    )
     return index
 
 
@@ -375,7 +379,9 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     taml_chars = len(re.findall(r"[\u0b80-\u0bff]", clean_text))
     telu_chars = len(re.findall(r"[\u0c00-\u0c7f]", clean_text))
     thai_chars = len(re.findall(r"[\u0e00-\u0e7f]", clean_text))
-    cjk_chars = len(re.findall(r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]", clean_text))
+    cjk_chars = len(
+        re.findall(r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]", clean_text)
+    )
     latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
 
     avg_line_len = 0.0
@@ -432,9 +438,7 @@ def derive_content_flags(
         has_code.
     """
     canonical_classes = {
-        d.get("class_name", "").upper()
-        for d in detections
-        if d.get("class_name")
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),
@@ -959,9 +963,7 @@ def run_integration(
         filename_stem = Path(filename).stem
         filename_full = Path(filename).name
 
-        integrated_data = integrate_sample(
-            sample, llm_index, layout_index, ocr_index
-        )
+        integrated_data = integrate_sample(sample, llm_index, layout_index, ocr_index)
 
         _track_sample_stats(
             stats,
@@ -991,7 +993,11 @@ def run_integration(
             _upsert_enrichment_version(sample, new_version, ENRICHMENT_VERSION_NUMBER)
 
         if stats["total"] % report_interval == 0:
-            log.info("  Processed %d / %d samples...", stats["total"], len(metadata["samples"]))
+            log.info(
+                "  Processed %d / %d samples...",
+                stats["total"],
+                len(metadata["samples"]),
+            )
 
     return stats
 

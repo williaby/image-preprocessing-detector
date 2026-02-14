@@ -50,9 +50,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-BASE_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet"
-)
+BASE_DIR = Path("/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet")
 OUTPUT_DIR = Path("tmp_cleanup/pubtabnet_contact_sheets")
 RESULTS_DIR = Path("scripts/audit/results/pubtabnet")
 
@@ -190,7 +188,9 @@ def build_track_samples(
     }
 
     # Track B: Separate pool from Track A
-    track_b_pool = [f for f in val_files if f not in set(val_pool[: TRACK_A_PER_FLAG * 3])]
+    track_b_pool = [
+        f for f in val_files if f not in set(val_pool[: TRACK_A_PER_FLAG * 3])
+    ]
     rng.shuffle(track_b_pool)
     track_b_files = track_b_pool[:TRACK_B_TOTAL]
 
@@ -289,7 +289,9 @@ def generate_streaming_contact_sheet(
             img.close()
             loaded_count += 1
         except Exception as exc:
-            log.warning("Sheet %d: Failed to load %s: %s", sheet_number, img_path.name, exc)
+            log.warning(
+                "Sheet %d: Failed to load %s: %s", sheet_number, img_path.name, exc
+            )
             draw.rectangle(
                 [x, y, x + THUMB_WIDTH, y + THUMB_HEIGHT],
                 fill=(200, 0, 0),
@@ -354,15 +356,10 @@ def generate_all_contact_sheets(
         batch = track_b_samples[start:end]
 
         # Resolve image paths
-        image_paths = [
-            BASE_DIR / s["split"] / s["filename"]
-            for s in batch
-        ]
+        image_paths = [BASE_DIR / s["split"] / s["filename"] for s in batch]
 
         sheet_path = OUTPUT_DIR / f"contact_sheet_{sheet_idx + 1:03d}.jpg"
-        stats = generate_streaming_contact_sheet(
-            image_paths, sheet_path, sheet_idx + 1
-        )
+        stats = generate_streaming_contact_sheet(image_paths, sheet_path, sheet_idx + 1)
 
         # Build manifest entry
         sheet_manifest = {
@@ -433,7 +430,11 @@ def main() -> int:
         len(track_a["has_figure_check"]),
         len(track_a["general_flags"]),
     )
-    log.info("Track B: %d samples (%d sheets)", len(track_b), math.ceil(len(track_b) / IMAGES_PER_SHEET))
+    log.info(
+        "Track B: %d samples (%d sheets)",
+        len(track_b),
+        math.ceil(len(track_b) / IMAGES_PER_SHEET),
+    )
     log.info("Track C: %d samples", len(track_c))
 
     # Step 3: Generate contact sheets for Track B (streaming)

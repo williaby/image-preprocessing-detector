@@ -138,9 +138,14 @@ def main() -> None:
             log.warning("  %s", path)
 
     # Update top-level split info
-    split_counts = {"train": stats.get("split_train", 0), "test": stats.get("split_test", 0)}
+    split_counts = {
+        "train": stats.get("split_train", 0),
+        "test": stats.get("split_test", 0),
+    }
     if stats.get("no_match", 0) > 0 or stats.get("skip_no_entry", 0) > 0:
-        split_counts["unknown"] = stats.get("no_match", 0) + stats.get("skip_no_entry", 0)
+        split_counts["unknown"] = stats.get("no_match", 0) + stats.get(
+            "skip_no_entry", 0
+        )
 
     metadata["splits_included"] = [s for s, c in split_counts.items() if c > 0]
     metadata["split_counts"] = {s: c for s, c in split_counts.items() if c > 0}

@@ -147,7 +147,9 @@ def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, An
         log.warning("No layout batch files found in %s", layout_dir)
         return {}
 
-    log.info("Loading %d Docling layout batch files from %s", len(batch_files), layout_dir)
+    log.info(
+        "Loading %d Docling layout batch files from %s", len(batch_files), layout_dir
+    )
     index: dict[str, list[dict[str, Any]]] = {}
     total_annotations = 0
 
@@ -553,7 +555,10 @@ def run_integration(
         filename_stem = Path(filename).stem
 
         integrated_data = integrate_sample(
-            sample, llm_index, layout_index, ocr_index,
+            sample,
+            llm_index,
+            layout_index,
+            ocr_index,
         )
 
         stats["integrated"] += 1
@@ -569,9 +574,15 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
-        stats["color_mode_dist"][integrated_data.get("image_properties_color_mode", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
+        stats["color_mode_dist"][
+            integrated_data.get("image_properties_color_mode", "unknown")
+        ] += 1
 
         if integrated_data.get("has_table"):
             stats["has_table_count"] += 1
@@ -661,15 +672,20 @@ def main() -> int:
         description=f"Integrate all enrichment sources into {DATASET_NAME} metadata.",
     )
     parser.add_argument(
-        "--metadata", type=Path, default=METADATA_PATH,
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
         help="Path to dataset metadata JSON",
     )
     parser.add_argument(
-        "--output", type=Path, default=None,
+        "--output",
+        type=Path,
+        default=None,
         help="Output path (default: overwrite input file)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Report only, do not write output",
     )
     args = parser.parse_args()

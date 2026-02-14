@@ -11,8 +11,7 @@ import argparse
 import json
 import sys
 import time
-import urllib.request
-import urllib.error
+import requests
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,7 +19,7 @@ from pathlib import Path
 PROJECT_KEY = "williaby_image-preprocessing-detector"
 API_BASE = "https://sonarcloud.io/api"
 PAGE_SIZE = 500  # max allowed by SonarCloud API
-MAX_PAGES = 50   # safety limit (500*50 = 25,000 issues max)
+MAX_PAGES = 50  # safety limit (500*50 = 25,000 issues max)
 
 
 def fetch_issues_page(page: int, page_size: int = PAGE_SIZE) -> dict:
@@ -33,11 +32,11 @@ def fetch_issues_page(page: int, page_size: int = PAGE_SIZE) -> dict:
         f"&statuses=OPEN,CONFIRMED,REOPENED"
         f"&additionalFields=_all"
     )
-    req = urllib.request.Request(url)
-    req.add_header("Accept", "application/json")
+    headers = {"Accept": "application/json"}
 
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    response = requests.get(url, headers=headers, timeout=30)
+    response.raise_for_status()
+    return response.json()
 
 
 def fetch_all_issues() -> tuple[list[dict], dict]:
@@ -58,7 +57,9 @@ def fetch_all_issues() -> tuple[list[dict], dict]:
 
     # SonarCloud API limits to 10,000 results via pagination
     if total > 10000:
-        print(f"WARNING: SonarCloud API limits pagination to 10,000 results. {total} total issues exist.")
+        print(
+            f"WARNING: SonarCloud API limits pagination to 10,000 results. {total} total issues exist."
+        )
         total_pages = min(total_pages, 10000 // PAGE_SIZE)
 
     # Fetch remaining pages
@@ -67,7 +68,9 @@ def fetch_all_issues() -> tuple[list[dict], dict]:
         data = fetch_issues_page(page)
         fetched = len(data["issues"])
         all_issues.extend(data["issues"])
-        print(f"Page {page}/{total_pages}: fetched {fetched} issues (total: {len(all_issues)})")
+        print(
+            f"Page {page}/{total_pages}: fetched {fetched} issues (total: {len(all_issues)})"
+        )
 
         if fetched == 0:
             break
@@ -181,8 +184,12 @@ def write_markdown_report(
     lines.append("")
     lines.append(f"**Project**: `{metadata['project_key']}`")
     lines.append(f"**Fetched**: {metadata['fetched_at']}")
-    lines.append(f"**Total Issues**: {metadata['total_fetched']} (of {metadata['total_reported']} reported)")
-    lines.append(f"**Total Effort**: {metadata['effort_total_minutes']} minutes ({metadata['effort_total_minutes'] / 60:.1f} hours)")
+    lines.append(
+        f"**Total Issues**: {metadata['total_fetched']} (of {metadata['total_reported']} reported)"
+    )
+    lines.append(
+        f"**Total Effort**: {metadata['effort_total_minutes']} minutes ({metadata['effort_total_minutes'] / 60:.1f} hours)"
+    )
     lines.append("")
 
     # Severity breakdown
@@ -292,10 +299,13 @@ def main() -> None:
 
     try:
         issues, metadata = fetch_all_issues()
-    except urllib.error.HTTPError as exc:
-        print(f"ERROR: HTTP {exc.code} - {exc.reason}")
-        if exc.code == 403:
-            print("The project may be private. Set SONAR_TOKEN env var for authentication.")
+    except requests.exceptions.HTTPError as exc:
+        response = exc.response
+        print(f"ERROR: HTTP {response.status_code} - {response.reason}")
+        if response.status_code == 403:
+            print(
+                "The project may be private. Set SONAR_TOKEN env var for authentication."
+            )
         sys.exit(1)
 
     print("=" * 60)
@@ -312,7 +322,9 @@ def main() -> None:
     }
 
     # Write JSON
-    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    output_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     print(f"JSON report written to: {output_path}")
 
     # Write markdown
@@ -325,7 +337,9 @@ def main() -> None:
     print(f"Total issues: {metadata['total_fetched']}")
     print(f"Files affected: {summary['total_files_affected']}")
     print(f"Rules triggered: {summary['total_rules_triggered']}")
-    print(f"Effort: {metadata['effort_total_minutes']} minutes ({metadata['effort_total_minutes'] / 60:.1f} hours)")
+    print(
+        f"Effort: {metadata['effort_total_minutes']} minutes ({metadata['effort_total_minutes'] / 60:.1f} hours)"
+    )
     print("\nBy severity:")
     for sev in ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "INFO"]:
         count = summary["by_severity"].get(sev, 0)

@@ -107,8 +107,21 @@ def get_jpeg_dimensions(filepath: Path) -> tuple[int, int] | None:
                 if marker[0] != 0xFF:
                     return None
                 # SOF markers (0xC0-0xCF except 0xC4 DHT and 0xCC DAC)
-                if marker[1] in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6,
-                                 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                if marker[1] in (
+                    0xC0,
+                    0xC1,
+                    0xC2,
+                    0xC3,
+                    0xC5,
+                    0xC6,
+                    0xC7,
+                    0xC9,
+                    0xCA,
+                    0xCB,
+                    0xCD,
+                    0xCE,
+                    0xCF,
+                ):
                     length_data = f.read(2)
                     if len(length_data) < 2:
                         return None
@@ -207,8 +220,14 @@ def parse_warpdoc_labels(dataset_path: Path, image_path: Path) -> dict:
             labels["image_type"] = "ground_truth"
         elif part == "digital_margin":
             labels["image_type"] = "ground_truth_margin"
-        if part.lower() in ("curved", "fold", "incomplete", "perspective",
-                            "random", "rotate"):
+        if part.lower() in (
+            "curved",
+            "fold",
+            "incomplete",
+            "perspective",
+            "random",
+            "rotate",
+        ):
             labels["distortion_type"] = part.lower()
     return labels
 
@@ -412,8 +431,10 @@ def process_dataset(
 
     # Count images on disk (all images, not just pattern matches)
     all_images = sum(
-        1 for f in dataset_path.rglob("*")
-        if f.is_file() and f.suffix.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff")
+        1
+        for f in dataset_path.rglob("*")
+        if f.is_file()
+        and f.suffix.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff")
     )
 
     # Compute split counts
@@ -463,7 +484,9 @@ def extract_wsrd_zips(base_dir: Path) -> None:
         for zf_path in zips:
             target_dir = challenge_dir / zf_path.stem  # e.g. train_input/
             if target_dir.exists() and any(target_dir.iterdir()):
-                print(f"  SKIP {challenge}/{zf_path.name}: already extracted to {target_dir.name}/")
+                print(
+                    f"  SKIP {challenge}/{zf_path.name}: already extracted to {target_dir.name}/"
+                )
                 continue
 
             target_dir.mkdir(exist_ok=True)
@@ -485,7 +508,9 @@ def extract_wsrd_zips(base_dir: Path) -> None:
                                 if not chunk:
                                     break
                                 dst.write(chunk)
-                    print(f"    Done: {len([m for m in members if not m.endswith('/')])} files")
+                    print(
+                        f"    Done: {len([m for m in members if not m.endswith('/')])} files"
+                    )
             except Exception as e:
                 print(f"    ERROR: {e}")
 
@@ -502,20 +527,24 @@ def main() -> None:
     )
     parser.add_argument("--dataset", help="Specific dataset to process")
     parser.add_argument(
-        "--all-correction", action="store_true",
-        help="Process all correction datasets"
+        "--all-correction", action="store_true", help="Process all correction datasets"
     )
     parser.add_argument(
-        "--extract-wsrd", action="store_true",
-        help="Extract WSRD zips into named subdirectories"
+        "--extract-wsrd",
+        action="store_true",
+        help="Extract WSRD zips into named subdirectories",
     )
     parser.add_argument(
-        "--base-dir", type=Path, required=True,
-        help="Base data directory (e.g. /mnt/e/image_detection/01_base_data)"
+        "--base-dir",
+        type=Path,
+        required=True,
+        help="Base data directory (e.g. /mnt/e/image_detection/01_base_data)",
     )
     parser.add_argument(
-        "--output-dir", type=Path, required=True,
-        help="Output directory for metadata JSON files"
+        "--output-dir",
+        type=Path,
+        required=True,
+        help="Output directory for metadata JSON files",
     )
 
     args = parser.parse_args()

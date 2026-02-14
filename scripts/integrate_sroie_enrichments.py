@@ -62,9 +62,7 @@ METADATA_PATH = REGISTRY_DIR / "json" / "sroie_metadata.json"
 # NOTE: LLM and language enrichments are STALE (from old contaminated dataset
 # with 2,043 images and different IDs). They are intentionally NOT loaded.
 # GT annotations are used instead for text content and language detection.
-GT_ANNOTATIONS_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/forms/sroie_icdar2019"
-)
+GT_ANNOTATIONS_DIR = Path("/mnt/e/image_detection/01_base_data/forms/sroie_icdar2019")
 IMAGES_BASE_DIR = GT_ANNOTATIONS_DIR
 
 SCRIPT_VERSION = "1.0.0"
@@ -279,9 +277,7 @@ def derive_content_flags(
 ) -> dict[str, bool]:
     """Derive content flags from canonical layout classes."""
     canonical_classes = {
-        d.get("class_name", "").upper()
-        for d in detections
-        if d.get("class_name")
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),

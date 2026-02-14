@@ -57,11 +57,20 @@ ENRICHMENT_VERSION_NUMBER = 2
 APPLY_KI_001_LAYOUT_CASING = True
 
 DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text", "list_item": "List-Item", "section_header": "Section-Header",
-    "table": "Table", "picture": "Picture", "formula": "Formula",
-    "caption": "Caption", "footnote": "Footnote", "page_footer": "Page-Footer",
-    "page_header": "Page-Header", "title": "Title", "code": "Code",
-    "checkbox_selected": "Checkbox-Selected", "checkbox_unselected": "Checkbox-Unselected",
+    "text": "Text",
+    "list_item": "List-Item",
+    "section_header": "Section-Header",
+    "table": "Table",
+    "picture": "Picture",
+    "formula": "Formula",
+    "caption": "Caption",
+    "footnote": "Footnote",
+    "page_footer": "Page-Footer",
+    "page_header": "Page-Header",
+    "title": "Title",
+    "code": "Code",
+    "checkbox_selected": "Checkbox-Selected",
+    "checkbox_unselected": "Checkbox-Unselected",
 }
 
 # CVSI is camera-captured scene text (video frames)
@@ -98,7 +107,8 @@ SCRIPT_MAPPINGS: dict[str, tuple[str, str]] = {
 
 SCRIPT_TO_TEXT_DIRECTION: dict[str, str] = {"Arab": "rtl"}
 SCRIPT_TO_DIRECTIONS_PRESENT: dict[str, list[str]] = {
-    "Arab": ["rtl"], "Jpan": ["ltr", "ttb"],
+    "Arab": ["rtl"],
+    "Jpan": ["ltr", "ttb"],
 }
 
 
@@ -190,8 +200,11 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     lines = [ln for ln in clean.split("\n") if ln.strip()]
     avg = round(sum(len(ln.strip()) for ln in lines) / max(len(lines), 1), 1)
     stats: dict[str, Any] = {
-        "char_count": len(clean), "word_count": len(clean.split()),
-        "line_count": len(lines), "has_content": True, "avg_line_length": avg,
+        "char_count": len(clean),
+        "word_count": len(clean.split()),
+        "line_count": len(lines),
+        "has_content": True,
+        "avg_line_length": avg,
     }
     arab = len(re.findall(r"[\u0600-\u06ff]", clean))
     deva = len(re.findall(r"[\u0900-\u097f]", clean))
@@ -207,7 +220,9 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
 
 def derive_content_flags(detections: list[dict[str, Any]]) -> dict[str, bool]:
     """Derive content flags from layout classes."""
-    classes = {d.get("class_name", "").upper() for d in detections if d.get("class_name")}
+    classes = {
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
+    }
     return {
         "has_table": bool(classes & TABLE_CLASSES),
         "has_formula": bool(classes & FORMULA_CLASSES),
@@ -220,26 +235,50 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
     """Compute sample_reliability_summary."""
     fields: list[dict[str, Any]] = []
     for field_name, conf_key in [
-        ("capture_method", "capture_confidence"), ("domain", "domain_confidence"),
-        ("language", "language_confidence"), ("layout_detections", "layout_confidence"),
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
+        ("layout_detections", "layout_confidence"),
         ("content_flags", "content_flags_confidence"),
     ]:
         conf = data.get(conf_key, 0.0) or 0.0
-        cat = "hard_label" if conf >= 0.9 else "soft_label" if conf >= 0.7 else "active_learning" if conf >= 0.5 else "unreliable"
-        fields.append({"field": field_name, "confidence": round(conf, 4), "category": cat, "is_soft_label": cat == "soft_label"})
+        cat = (
+            "hard_label"
+            if conf >= 0.9
+            else "soft_label"
+            if conf >= 0.7
+            else "active_learning"
+            if conf >= 0.5
+            else "unreliable"
+        )
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(conf, 4),
+                "category": cat,
+                "is_soft_label": cat == "soft_label",
+            }
+        )
     min_f = min(fields, key=lambda f: f["confidence"])
     return {
-        "min_confidence": min_f["confidence"], "min_confidence_field": min_f["field"],
-        "min_confidence_category": min_f["category"], "assessed_field_count": len(fields),
+        "min_confidence": min_f["confidence"],
+        "min_confidence_field": min_f["field"],
+        "min_confidence_category": min_f["category"],
+        "assessed_field_count": len(fields),
         "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
         "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields, "computed_at": datetime.now(UTC).isoformat(),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
     }
 
 
 def standardize_class_name(class_name: str) -> str:
     """Convert Docling lowercase to DocLayNet PascalCase."""
-    return DOCLING_TO_DOCLAYNET.get(class_name, class_name) if APPLY_KI_001_LAYOUT_CASING else class_name
+    return (
+        DOCLING_TO_DOCLAYNET.get(class_name, class_name)
+        if APPLY_KI_001_LAYOUT_CASING
+        else class_name
+    )
 
 
 def resolve_split(sample: dict[str, Any]) -> str:
@@ -377,7 +416,9 @@ def integrate_sample(
         data["text_content_source"] = "none"
         data["text_statistics"] = compute_text_statistics("")
 
-    data["image_properties_color_mode"] = v1_data.get("image_properties_color_mode", "color")
+    data["image_properties_color_mode"] = v1_data.get(
+        "image_properties_color_mode", "color"
+    )
     data["text_scope_content_type"] = "scene_text"
     data["text_scope"] = v1_data.get("text_scope", "phrase")
     for field in ("resolution_category", "resolution_pixels"):
@@ -398,13 +439,21 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0, "layout_matched": 0, "ocr_matched": 0,
-        "lang_matched": 0, "has_text_content_count": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
-        "lang_dist": Counter(), "script_family_dist": Counter(),
+        "total": 0,
+        "integrated": 0,
+        "layout_matched": 0,
+        "ocr_matched": 0,
+        "lang_matched": 0,
+        "has_text_content_count": 0,
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
         "lang_method_dist": Counter(),
-        "has_table_count": 0, "has_formula_count": 0,
-        "has_handwriting_count": 0, "has_figure_count": 0,
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
     }
     now = datetime.now(UTC).isoformat()
     for sample in metadata["samples"]:
@@ -426,16 +475,27 @@ def run_integration(
         stats["split_dist"][idata.get("split", "unknown")] += 1
         stats["lang_dist"][idata.get("iso639_language", "und")] += 1
         stats["script_family_dist"][idata.get("script_family", "unknown")] += 1
-        stats["lang_method_dist"][idata.get("text_scope_detection_method", "unknown")] += 1
-        for fk, sk in [("has_table", "has_table_count"), ("has_formula", "has_formula_count"),
-                        ("has_handwriting", "has_handwriting_count"), ("has_figure", "has_figure_count")]:
+        stats["lang_method_dist"][
+            idata.get("text_scope_detection_method", "unknown")
+        ] += 1
+        for fk, sk in [
+            ("has_table", "has_table_count"),
+            ("has_formula", "has_formula_count"),
+            ("has_handwriting", "has_handwriting_count"),
+            ("has_figure", "has_figure_count"),
+        ]:
             if idata.get(fk):
                 stats[sk] += 1
         if not dry_run:
-            nv = {"version": ENRICHMENT_VERSION_NUMBER, "created_at": now,
-                  "created_by": f"integrate_{DATASET_NAME}_enrichments.py", "method": "tier_2_model",
-                  "description": f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: parser GT + Docling layout + OCR + docs",
-                  "script_version": SCRIPT_VERSION, "data": idata}
+            nv = {
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
+                "created_by": f"integrate_{DATASET_NAME}_enrichments.py",
+                "method": "tier_2_model",
+                "description": f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: parser GT + Docling layout + OCR + docs",
+                "script_version": SCRIPT_VERSION,
+                "data": idata,
+            }
             versions = sample["enrichments"]["versions"]
             replaced = False
             for i, v in enumerate(versions):
@@ -452,16 +512,24 @@ def run_integration(
 def print_summary(stats: dict[str, Any], total: int) -> None:
     """Print summary."""
     st = max(total, 1)
-    print(f"\n{'='*60}\n{DATASET_NAME} Integration Summary\n{'='*60}")
+    print(f"\n{'=' * 60}\n{DATASET_NAME} Integration Summary\n{'=' * 60}")
     print(f"Total: {stats['total']}, Integrated: {stats['integrated']}")
-    print(f"Layout: {stats['layout_matched']}, OCR: {stats['ocr_matched']}, Lang: {stats['lang_matched']}")
+    print(
+        f"Layout: {stats['layout_matched']}, OCR: {stats['ocr_matched']}, Lang: {stats['lang_matched']}"
+    )
     print(f"Text content: {stats['has_text_content_count']}")
-    for name, key in [("Language", "lang_dist"), ("Script", "script_family_dist"), ("Split", "split_dist")]:
+    for name, key in [
+        ("Language", "lang_dist"),
+        ("Script", "script_family_dist"),
+        ("Split", "split_dist"),
+    ]:
         print(f"\n{name}:")
         for v, c in stats[key].most_common(15):
-            print(f"  {v:20s}: {c:6d} ({c/st*100:.1f}%)")
-    print(f"\nContent: table={stats['has_table_count']}, formula={stats['has_formula_count']}, "
-          f"handwriting={stats['has_handwriting_count']}, figure={stats['has_figure_count']}")
+            print(f"  {v:20s}: {c:6d} ({c / st * 100:.1f}%)")
+    print(
+        f"\nContent: table={stats['has_table_count']}, formula={stats['has_formula_count']}, "
+        f"handwriting={stats['has_handwriting_count']}, figure={stats['has_figure_count']}"
+    )
     print("=" * 60)
 
 
@@ -470,7 +538,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=f"Integrate {DATASET_NAME} enrichments.")
     ap.add_argument("--metadata", type=Path, default=METADATA_PATH)
     ap.add_argument("--output", type=Path, default=None)
-    ap.add_argument("--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH)
+    ap.add_argument(
+        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH
+    )
     ap.add_argument("--layout-dir", type=Path, default=DOCLING_LAYOUT_DIR)
     ap.add_argument("--ocr-dir", type=Path, default=DOCLING_OCR_DIR)
     ap.add_argument("--dry-run", action="store_true")

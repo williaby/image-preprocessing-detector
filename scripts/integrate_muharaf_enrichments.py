@@ -29,7 +29,11 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s", datefmt="%H:%M:%S")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(message)s",
+    datefmt="%H:%M:%S",
+)
 log = logging.getLogger(__name__)
 
 DATASET_NAME = "muharaf"
@@ -46,10 +50,18 @@ ENRICHMENT_VERSION_TAG = "integrated_v2"
 ENRICHMENT_VERSION_NUMBER = 2
 APPLY_KI_001_LAYOUT_CASING = True
 DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text", "list_item": "List-Item", "section_header": "Section-Header",
-    "table": "Table", "picture": "Picture", "formula": "Formula",
-    "caption": "Caption", "footnote": "Footnote", "page_footer": "Page-Footer",
-    "page_header": "Page-Header", "title": "Title", "code": "Code",
+    "text": "Text",
+    "list_item": "List-Item",
+    "section_header": "Section-Header",
+    "table": "Table",
+    "picture": "Picture",
+    "formula": "Formula",
+    "caption": "Caption",
+    "footnote": "Footnote",
+    "page_footer": "Page-Footer",
+    "page_header": "Page-Header",
+    "title": "Title",
+    "code": "Code",
 }
 KNOWN_CAPTURE_METHOD: str | None = "scanner"
 VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset()
@@ -101,9 +113,14 @@ def load_docling_layout_batches(d: Path) -> dict[str, list[dict[str, Any]]]:
         for a in coco.get("annotations", []):
             fn = im.get(a.get("image_id"), "")
             if fn:
-                idx.setdefault(fn, []).append({
-                    "class_name": cm.get(a.get("category_id", -1), "unknown"),
-                    "bbox": a.get("bbox", []), "confidence": 1.0, "area": a.get("area", 0.0)})
+                idx.setdefault(fn, []).append(
+                    {
+                        "class_name": cm.get(a.get("category_id", -1), "unknown"),
+                        "bbox": a.get("bbox", []),
+                        "confidence": 1.0,
+                        "area": a.get("area", 0.0),
+                    }
+                )
     log.info("  Layout: %d images", len(idx))
     return idx
 
@@ -135,8 +152,13 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     c = text.strip()
     lines = [l for l in c.split("\n") if l.strip()]
     avg = round(sum(len(l.strip()) for l in lines) / max(len(lines), 1), 1)
-    stats: dict[str, Any] = {"char_count": len(c), "word_count": len(c.split()), "line_count": len(lines),
-                              "has_content": True, "avg_line_length": avg}
+    stats: dict[str, Any] = {
+        "char_count": len(c),
+        "word_count": len(c.split()),
+        "line_count": len(lines),
+        "has_content": True,
+        "avg_line_length": avg,
+    }
     arab = len(re.findall(r"[\u0600-\u06ff]", c))
     if arab > 0:
         stats["arabic_char_count"] = arab
@@ -146,25 +168,53 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
 def derive_content_flags(dets: list[dict[str, Any]]) -> dict[str, bool]:
     """Derive content flags."""
     cls = {d.get("class_name", "").upper() for d in dets if d.get("class_name")}
-    return {"has_table": bool(cls & TABLE_CLASSES), "has_formula": bool(cls & FORMULA_CLASSES),
-            "has_figure": bool(cls & FIGURE_CLASSES), "has_code": bool(cls & CODE_CLASSES)}
+    return {
+        "has_table": bool(cls & TABLE_CLASSES),
+        "has_formula": bool(cls & FORMULA_CLASSES),
+        "has_figure": bool(cls & FIGURE_CLASSES),
+        "has_code": bool(cls & CODE_CLASSES),
+    }
 
 
 def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
     """Compute reliability summary."""
     fields: list[dict[str, Any]] = []
-    for fn, ck in [("capture_method", "capture_confidence"), ("domain", "domain_confidence"),
-                   ("language", "language_confidence"), ("layout_detections", "layout_confidence"),
-                   ("content_flags", "content_flags_confidence")]:
+    for fn, ck in [
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
+        ("layout_detections", "layout_confidence"),
+        ("content_flags", "content_flags_confidence"),
+    ]:
         c = data.get(ck, 0.0) or 0.0
-        cat = "hard_label" if c >= 0.9 else "soft_label" if c >= 0.7 else "active_learning" if c >= 0.5 else "unreliable"
-        fields.append({"field": fn, "confidence": round(c, 4), "category": cat, "is_soft_label": cat == "soft_label"})
+        cat = (
+            "hard_label"
+            if c >= 0.9
+            else "soft_label"
+            if c >= 0.7
+            else "active_learning"
+            if c >= 0.5
+            else "unreliable"
+        )
+        fields.append(
+            {
+                "field": fn,
+                "confidence": round(c, 4),
+                "category": cat,
+                "is_soft_label": cat == "soft_label",
+            }
+        )
     mf = min(fields, key=lambda f: f["confidence"])
-    return {"min_confidence": mf["confidence"], "min_confidence_field": mf["field"],
-            "min_confidence_category": mf["category"], "assessed_field_count": len(fields),
-            "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-            "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-            "field_summary": fields, "computed_at": datetime.now(UTC).isoformat()}
+    return {
+        "min_confidence": mf["confidence"],
+        "min_confidence_field": mf["field"],
+        "min_confidence_category": mf["category"],
+        "assessed_field_count": len(fields),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
+    }
 
 
 def standardize_class_name(cn: str) -> str:
@@ -172,9 +222,13 @@ def standardize_class_name(cn: str) -> str:
     return DOCLING_TO_DOCLAYNET.get(cn, cn) if APPLY_KI_001_LAYOUT_CASING else cn
 
 
-def integrate_sample(s: dict[str, Any], llm_idx: dict[str, dict[str, Any]],
-                     la: dict[str, list[dict[str, Any]]], oc: dict[str, dict[str, Any]],
-                     li: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def integrate_sample(
+    s: dict[str, Any],
+    llm_idx: dict[str, dict[str, Any]],
+    la: dict[str, list[dict[str, Any]]],
+    oc: dict[str, dict[str, Any]],
+    li: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
     """Integrate single sample."""
     fn = s["source"]["original_filename"]
     stem = Path(fn).stem
@@ -268,7 +322,9 @@ def integrate_sample(s: dict[str, Any], llm_idx: dict[str, dict[str, Any]],
         data["text_content_source"] = "none"
         data["text_statistics"] = compute_text_statistics("")
 
-    data["image_properties_color_mode"] = v1.get("image_properties_color_mode", "grayscale")
+    data["image_properties_color_mode"] = v1.get(
+        "image_properties_color_mode", "grayscale"
+    )
     data["text_scope_content_type"] = "handwritten_document"
     data["text_scope"] = v1.get("text_scope", "handwritten")
     for f in ("resolution_category", "resolution_pixels"):
@@ -279,13 +335,24 @@ def integrate_sample(s: dict[str, Any], llm_idx: dict[str, dict[str, Any]],
     return data
 
 
-def run_integration(md: dict[str, Any], llm_idx: dict[str, dict[str, Any]],
-                    la: dict[str, list[dict[str, Any]]], oc: dict[str, dict[str, Any]],
-                    li: dict[str, dict[str, Any]], dry_run: bool = False) -> dict[str, Any]:
+def run_integration(
+    md: dict[str, Any],
+    llm_idx: dict[str, dict[str, Any]],
+    la: dict[str, list[dict[str, Any]]],
+    oc: dict[str, dict[str, Any]],
+    li: dict[str, dict[str, Any]],
+    dry_run: bool = False,
+) -> dict[str, Any]:
     """Run integration."""
-    stats: dict[str, Any] = {"total": 0, "integrated": 0, "llm_matched": 0,
-                              "layout_matched": 0, "ocr_matched": 0,
-                              "has_text_content_count": 0, "domain_dist": Counter()}
+    stats: dict[str, Any] = {
+        "total": 0,
+        "integrated": 0,
+        "llm_matched": 0,
+        "layout_matched": 0,
+        "ocr_matched": 0,
+        "has_text_content_count": 0,
+        "domain_dist": Counter(),
+    }
     now = datetime.now(UTC).isoformat()
     for sample in md["samples"]:
         stats["total"] += 1
@@ -304,10 +371,15 @@ def run_integration(md: dict[str, Any], llm_idx: dict[str, dict[str, Any]],
             stats["has_text_content_count"] += 1
         stats["domain_dist"][idata.get("domain_level1", "UNK")] += 1
         if not dry_run:
-            nv = {"version": ENRICHMENT_VERSION_NUMBER, "created_at": now,
-                  "created_by": f"integrate_{DATASET_NAME}_enrichments.py", "method": "tier_2_model",
-                  "description": f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: LLM + Docling + docs",
-                  "script_version": SCRIPT_VERSION, "data": idata}
+            nv = {
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
+                "created_by": f"integrate_{DATASET_NAME}_enrichments.py",
+                "method": "tier_2_model",
+                "description": f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: LLM + Docling + docs",
+                "script_version": SCRIPT_VERSION,
+                "data": idata,
+            }
             vs = sample["enrichments"]["versions"]
             replaced = False
             for i, v in enumerate(vs):
@@ -327,7 +399,9 @@ def main() -> int:
     ap.add_argument("--metadata", type=Path, default=METADATA_PATH)
     ap.add_argument("--output", type=Path, default=None)
     ap.add_argument("--llm-enrichment", type=Path, default=LLM_ENRICHMENT_PATH)
-    ap.add_argument("--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH)
+    ap.add_argument(
+        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH
+    )
     ap.add_argument("--layout-dir", type=Path, default=DOCLING_LAYOUT_DIR)
     ap.add_argument("--ocr-dir", type=Path, default=DOCLING_OCR_DIR)
     ap.add_argument("--dry-run", action="store_true")
@@ -343,9 +417,15 @@ def main() -> int:
     oc = load_docling_ocr_batches(args.ocr_dir)
     t0 = time.monotonic()
     stats = run_integration(md, llm, la, oc, li, dry_run=args.dry_run)
-    log.info("Done in %.2fs. %d integrated, LLM: %d, Layout: %d, OCR: %d, Text: %d",
-             time.monotonic() - t0, stats["integrated"], stats["llm_matched"],
-             stats["layout_matched"], stats["ocr_matched"], stats["has_text_content_count"])
+    log.info(
+        "Done in %.2fs. %d integrated, LLM: %d, Layout: %d, OCR: %d, Text: %d",
+        time.monotonic() - t0,
+        stats["integrated"],
+        stats["llm_matched"],
+        stats["layout_matched"],
+        stats["ocr_matched"],
+        stats["has_text_content_count"],
+    )
     log.info("Domain: %s", dict(stats["domain_dist"]))
     if args.dry_run:
         log.info("Dry run")

@@ -328,9 +328,7 @@ def integrate_sample(
     if gt_rec and gt_rec.get("iso639_language", "und") != "und":
         data["iso639_language"] = gt_rec["iso639_language"]
         data["iso15924_script"] = gt_rec["iso15924_script"]
-        data["language_confidence"] = min(
-            gt_rec.get("language_confidence", 0.95), 0.95
-        )
+        data["language_confidence"] = min(gt_rec.get("language_confidence", 0.95), 0.95)
         data["text_scope_detection_method"] = "langdetect_gt_text"
     elif llm_rec:
         data["iso639_language"] = llm_rec.get("iso639_language", "en")
@@ -418,17 +416,13 @@ def integrate_sample(
     # TEXT SCOPE (preserve V1 or set defaults)
     # -------------------------------------------------------------------
     data["text_scope"] = v1_data.get("text_scope", "page")
-    data["text_scope_content_type"] = v1_data.get(
-        "text_scope_content_type", "printed"
-    )
+    data["text_scope_content_type"] = v1_data.get("text_scope_content_type", "printed")
 
     # -------------------------------------------------------------------
     # D08: IMAGE PROPERTIES COLOR MODE
     # -------------------------------------------------------------------
     color_space = sample.get("original_file", {}).get("color_space", "RGB")
-    data["image_properties_color_mode"] = COLOR_SPACE_TO_MODE.get(
-        color_space, "color"
-    )
+    data["image_properties_color_mode"] = COLOR_SPACE_TO_MODE.get(color_space, "color")
 
     # -------------------------------------------------------------------
     # RESOLUTION (preserve V1 values)
@@ -442,9 +436,7 @@ def integrate_sample(
     # -------------------------------------------------------------------
     if gt_rec:
         data["text_direction"] = gt_rec.get("text_direction", "ltr")
-        data["text_directions_present"] = gt_rec.get(
-            "text_directions_present", ["ltr"]
-        )
+        data["text_directions_present"] = gt_rec.get("text_directions_present", ["ltr"])
     else:
         data["text_direction"] = "ltr"
         data["text_directions_present"] = ["ltr"]
@@ -745,7 +737,10 @@ def main() -> int:
         log.error("Metadata file not found: %s", args.metadata)
         return 1
     if not args.gt_index.is_file():
-        log.error("GT index not found: %s (run extract_doclaynet_gt_index.py first)", args.gt_index)
+        log.error(
+            "GT index not found: %s (run extract_doclaynet_gt_index.py first)",
+            args.gt_index,
+        )
         return 1
 
     # Load all data sources

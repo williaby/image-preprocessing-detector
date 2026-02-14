@@ -50,7 +50,9 @@ IS_SYNTHETIC_DATASET = False
 # ===================================================================
 REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
 METADATA_PATH = REGISTRY_DIR / "json" / "omnidocbench_metadata.json"
-DOCLING_LAYOUT_PATH = REGISTRY_DIR / "extracted" / "omnidocbench" / "layout_batch_0.json"
+DOCLING_LAYOUT_PATH = (
+    REGISTRY_DIR / "extracted" / "omnidocbench" / "layout_batch_0.json"
+)
 
 SCRIPT_VERSION = "1.0.0"
 ENRICHMENT_VERSION_TAG = "integrated_v2"
@@ -131,7 +133,11 @@ def load_docling_layout(path: Path) -> dict[str, list[dict[str, Any]]]:
             "area": ann.get("area", 0.0),
         }
         index.setdefault(fn, []).append(det)
-    log.info("  Indexed %d images with %d detections", len(index), sum(len(v) for v in index.values()))
+    log.info(
+        "  Indexed %d images with %d detections",
+        len(index),
+        sum(len(v) for v in index.values()),
+    )
     return index
 
 
@@ -206,12 +212,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field": field_name,
-            "confidence": round(confidence, 4),
-            "category": category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -263,7 +271,9 @@ def integrate_sample(
     data["iso639_language"] = v1_data.get("iso639_language", "en")
     data["iso15924_script"] = v1_data.get("iso15924_script", "Latn")
     data["language_confidence"] = 0.80
-    data["text_scope_detection_method"] = v1_data.get("text_scope_detection_method", "base_metadata")
+    data["text_scope_detection_method"] = v1_data.get(
+        "text_scope_detection_method", "base_metadata"
+    )
 
     # KI-008: script_family
     data["script_family"] = _get_script_family(data["iso15924_script"])
@@ -311,7 +321,9 @@ def integrate_sample(
     data["text_scope"] = "page"
 
     # IMAGE PROPERTIES
-    data["image_properties_color_mode"] = v1_data.get("image_properties_color_mode", "color")
+    data["image_properties_color_mode"] = v1_data.get(
+        "image_properties_color_mode", "color"
+    )
 
     # RESOLUTION (preserve v1)
     for field in ("resolution_category", "resolution_pixels", "resolution_dpi"):
@@ -340,13 +352,18 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0,
+        "total": 0,
+        "integrated": 0,
         "layout_matched": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
-        "lang_dist": Counter(), "script_family_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
         "capture_method_dist": Counter(),
-        "has_table_count": 0, "has_formula_count": 0,
-        "has_handwriting_count": 0, "has_figure_count": 0,
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
     }
     now = datetime.now(UTC).isoformat()
 
@@ -358,8 +375,12 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
         for flag in ("has_table", "has_formula", "has_handwriting", "has_figure"):
             if integrated_data.get(flag):
                 stats[f"{flag}_count"] += 1
@@ -396,7 +417,9 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print("=" * 60)
     print(f"Total: {stats['total']}, Integrated: {stats['integrated']}")
     print(f"Domain: {dict(stats['domain_dist'])}")
-    print(f"has_table: {stats['has_table_count']}, has_handwriting: {stats['has_handwriting_count']}")
+    print(
+        f"has_table: {stats['has_table_count']}, has_handwriting: {stats['has_handwriting_count']}"
+    )
     print("=" * 60)
 
 

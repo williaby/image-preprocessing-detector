@@ -112,8 +112,12 @@ def select_samples(per_category: int, seed: int = 42) -> list[dict]:
 
 def main() -> None:
     """Run sample selection."""
-    parser = argparse.ArgumentParser(description="Select VLM samples from AnyPhotoDoc6300")
-    parser.add_argument("--per-category", type=int, default=6, help="Samples per category")
+    parser = argparse.ArgumentParser(
+        description="Select VLM samples from AnyPhotoDoc6300"
+    )
+    parser.add_argument(
+        "--per-category", type=int, default=6, help="Samples per category"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
         "--output",

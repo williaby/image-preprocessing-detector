@@ -563,9 +563,7 @@ def integrate_sample(
     else:
         data["domain_level1"] = v1_data.get("domain_level1", "UNK")
         data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
-        data["domain_detection_method"] = v1_data.get(
-            "domain_detection_method", "none"
-        )
+        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
 
     # -------------------------------------------------------------------
     # LANGUAGE / SCRIPT (KI-009: LLM > language_enrichment > docs)
@@ -590,9 +588,7 @@ def integrate_sample(
     flags = derive_content_flags(layout_for_flags)
 
     # Conservative: use layout-derived flags + VLM corrections
-    data["has_table"] = (
-        filename_stem in VLM_TABLE_TRUE_POSITIVES or flags["has_table"]
-    )
+    data["has_table"] = filename_stem in VLM_TABLE_TRUE_POSITIVES or flags["has_table"]
     data["has_figure"] = (
         filename_stem in VLM_FIGURE_TRUE_POSITIVES or flags["has_figure"]
     )

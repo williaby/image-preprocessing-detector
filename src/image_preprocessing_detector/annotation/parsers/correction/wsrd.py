@@ -47,7 +47,6 @@ from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
 
 _VALID_SPLITS = frozenset({"train", "val", "validation", "test"})
-_VALID_IMAGE_TYPES = frozenset({"input", "target"})
 
 
 class WsrdParser(BaseParser):

@@ -80,7 +80,9 @@ REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
 
 METADATA_PATH = REGISTRY_DIR / "json" / "ohr-bench_metadata.json"
 LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "ohr-bench_language_enrichment.json"
-HF_LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "ohr-bench_hf_language_enrichment.json"
+HF_LANGUAGE_ENRICHMENT_PATH = (
+    REGISTRY_DIR / "json" / "ohr-bench_hf_language_enrichment.json"
+)
 
 # Docling layout: 7 COCO-format batch files (layout_batch_0.json .. layout_batch_6.json)
 DOCLING_LAYOUT_DIR = REGISTRY_DIR / "extracted" / "ohr-bench"

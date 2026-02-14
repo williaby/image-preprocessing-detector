@@ -593,9 +593,7 @@ def _track_sample_stats(
     stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
     stats["split_dist"][integrated_data.get("split", "unknown")] += 1
     stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-    stats["script_family_dist"][
-        integrated_data.get("script_family", "unknown")
-    ] += 1
+    stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
     stats["lang_method_dist"][
         integrated_data.get("text_scope_detection_method", "unknown")
     ] += 1
@@ -702,9 +700,7 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            _upsert_enrichment_version(
-                sample, new_version, ENRICHMENT_VERSION_NUMBER
-            )
+            _upsert_enrichment_version(sample, new_version, ENRICHMENT_VERSION_NUMBER)
 
     return stats
 

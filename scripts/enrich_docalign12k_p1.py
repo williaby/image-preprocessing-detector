@@ -152,9 +152,7 @@ def main() -> None:
                     (f.get("confidence", 1.0) for f in field_summary), default=1.0
                 )
                 reliability["min_confidence"] = min_conf
-                min_field = min(
-                    field_summary, key=lambda f: f.get("confidence", 1.0)
-                )
+                min_field = min(field_summary, key=lambda f: f.get("confidence", 1.0))
                 reliability["min_confidence_field"] = min_field.get("field", "")
 
         stats["processed"] += 1

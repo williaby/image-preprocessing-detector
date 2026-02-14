@@ -397,9 +397,7 @@ def integrate_sample(
     else:
         data["domain_level1"] = v1_data.get("domain_level1", "UNK")
         data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
-        data["domain_detection_method"] = v1_data.get(
-            "domain_detection_method", "none"
-        )
+        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
 
     # -------------------------------------------------------------------
     # LANGUAGE / SCRIPT (KI-009)
@@ -676,23 +674,32 @@ def main() -> int:
         description=f"Integrate all enrichment sources into {DATASET_NAME} metadata.",
     )
     parser.add_argument(
-        "--metadata", type=Path, default=METADATA_PATH,
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
         help="Path to dataset metadata JSON",
     )
     parser.add_argument(
-        "--output", type=Path, default=None,
+        "--output",
+        type=Path,
+        default=None,
         help="Output path (default: overwrite input file)",
     )
     parser.add_argument(
-        "--llm-enrichment", type=Path, default=LLM_ENRICHMENT_PATH,
+        "--llm-enrichment",
+        type=Path,
+        default=LLM_ENRICHMENT_PATH,
         help="Path to LLM enrichment JSON",
     )
     parser.add_argument(
-        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH,
+        "--language-enrichment",
+        type=Path,
+        default=LANGUAGE_ENRICHMENT_PATH,
         help="Path to language enrichment JSON",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Report only, do not write output",
     )
     args = parser.parse_args()

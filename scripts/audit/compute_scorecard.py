@@ -605,9 +605,7 @@ def compute_overall(
                     grade = crit_max_grade
                     # Stack cap messages if both VLM and critical field caps apply
                     if grade_cap_applied:
-                        grade_cap_applied = (
-                            f"{grade_cap_applied} | {crit_cap_msg}"
-                        )
+                        grade_cap_applied = f"{grade_cap_applied} | {crit_cap_msg}"
                     else:
                         grade_cap_applied = crit_cap_msg
                     log.warning("  GRADE CAPPED: %s", crit_cap_msg)
@@ -691,9 +689,7 @@ def score_dataset(
         "vlm_accuracy": compute_vlm_accuracy(vlm_path, catalog_path),
     }
 
-    overall = compute_overall(
-        dimension_scores, config, screening_path=screening_path
-    )
+    overall = compute_overall(dimension_scores, config, screening_path=screening_path)
 
     # Build metadata
     artifacts_found: list[str] = []

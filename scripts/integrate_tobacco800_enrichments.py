@@ -380,9 +380,7 @@ def derive_content_flags(
         Dict with boolean flags: has_table, has_formula, has_figure, has_code.
     """
     canonical_classes = {
-        d.get("class_name", "").upper()
-        for d in detections
-        if d.get("class_name")
+        d.get("class_name", "").upper() for d in detections if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),
@@ -671,7 +669,9 @@ def integrate_sample(
     if llm:
         data["has_table"] = bool(llm.get("has_table", False)) or flags["has_table"]
         data["has_figure"] = bool(llm.get("has_figure", False)) or flags["has_figure"]
-        data["has_formula"] = bool(llm.get("has_formula", False)) or flags["has_formula"]
+        data["has_formula"] = (
+            bool(llm.get("has_formula", False)) or flags["has_formula"]
+        )
         data["has_handwriting"] = bool(llm.get("has_handwriting", False))
         data["has_signature"] = bool(llm.get("has_signature", False))
     else:
@@ -690,7 +690,10 @@ def integrate_sample(
         data["has_figure"] = False
     if VLM_FORMULA_TRUE_POSITIVES and filename_stem not in VLM_FORMULA_TRUE_POSITIVES:
         data["has_formula"] = False
-    if VLM_HANDWRITING_TRUE_POSITIVES and filename_stem not in VLM_HANDWRITING_TRUE_POSITIVES:
+    if (
+        VLM_HANDWRITING_TRUE_POSITIVES
+        and filename_stem not in VLM_HANDWRITING_TRUE_POSITIVES
+    ):
         data["has_handwriting"] = False
 
     data["content_flags_tier"] = "tier_2_model"

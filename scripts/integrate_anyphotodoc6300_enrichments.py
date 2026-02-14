@@ -95,14 +95,14 @@ ENRICHMENT_VERSION_NUMBER = 5
 # Layout category mapping: init directory number -> (document_type, domain_level1)
 # domain_level1 uses 3-letter schema codes: FIN, EDU, UNK, etc.
 LAYOUT_CATEGORY_MAP: dict[int, tuple[str, str]] = {
-    1: ("single_column", "SCI"),       # Scientific papers (VLM: all 6 were academic)
-    2: ("complex_layout", "UNK"),      # Mixed content: news, magazines, lifestyle
-    3: ("invoice", "FIN"),             # Financial invoices
-    4: ("education", "EDU"),           # Educational materials
-    5: ("book", "TEC"),               # Chinese tech books + CCF journal articles
-    6: ("two_column", "SCI"),          # Scientific papers (VLM: all 6 were academic)
-    7: ("magazine", "UNK"),            # Advertisements and magazine articles
-    8: ("bill", "FIN"),                # Financial receipts, bills, tickets
+    1: ("single_column", "SCI"),  # Scientific papers (VLM: all 6 were academic)
+    2: ("complex_layout", "UNK"),  # Mixed content: news, magazines, lifestyle
+    3: ("invoice", "FIN"),  # Financial invoices
+    4: ("education", "EDU"),  # Educational materials
+    5: ("book", "TEC"),  # Chinese tech books + CCF journal articles
+    6: ("two_column", "SCI"),  # Scientific papers (VLM: all 6 were academic)
+    7: ("magazine", "UNK"),  # Advertisements and magazine articles
+    8: ("bill", "FIN"),  # Financial receipts, bills, tickets
 }
 
 WARPING_PATTERN_MAP: dict[int, str] = {
@@ -158,7 +158,9 @@ def parse_filename_metadata(filename: str) -> dict[str, Any]:
         "domain_level1": domain,
         "warping_pattern": WARPING_PATTERN_MAP.get(warp_num, f"unknown_{warp_num}"),
         "warping_pattern_id": warp_num,
-        "lighting_condition": LIGHTING_CONDITION_MAP.get(light_num, f"unknown_{light_num}"),
+        "lighting_condition": LIGHTING_CONDITION_MAP.get(
+            light_num, f"unknown_{light_num}"
+        ),
         "lighting_condition_id": light_num,
         "document_instance_id": doc_id,
         "shooting_angle": angle,
@@ -367,14 +369,14 @@ VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset(
 # ===================================================================
 VLM_CATEGORY_CONTENT_FLAGS: dict[int, dict[str, bool]] = {
     1: {  # single_column: scientific papers
-        "has_figure": False,   # 33% observed
-        "has_table": False,    # 0% observed
-        "has_formula": True,   # 50% observed
+        "has_figure": False,  # 33% observed
+        "has_table": False,  # 0% observed
+        "has_formula": True,  # 50% observed
         "has_handwriting": False,
         "has_signature": False,
     },
     2: {  # complex_layout: magazines, news
-        "has_figure": True,    # 100% observed
+        "has_figure": True,  # 100% observed
         "has_table": False,
         "has_formula": False,
         "has_handwriting": False,
@@ -382,34 +384,34 @@ VLM_CATEGORY_CONTENT_FLAGS: dict[int, dict[str, bool]] = {
     },
     3: {  # invoice: financial invoices
         "has_figure": False,
-        "has_table": True,     # 100% observed
+        "has_table": True,  # 100% observed
         "has_formula": False,
         "has_handwriting": False,
         "has_signature": False,  # 33% observed (below threshold)
     },
     4: {  # education: exams, handwritten notes
-        "has_figure": True,    # 50% observed
-        "has_table": False,    # 33% observed
-        "has_formula": True,   # 67% observed
+        "has_figure": True,  # 50% observed
+        "has_table": False,  # 33% observed
+        "has_formula": True,  # 67% observed
         "has_handwriting": True,  # 67% observed
         "has_signature": False,
     },
     5: {  # book: Chinese tech books, CCF journals
-        "has_figure": True,    # 100% observed
+        "has_figure": True,  # 100% observed
         "has_table": False,
         "has_formula": False,
         "has_handwriting": False,
         "has_signature": False,
     },
     6: {  # two_column: scientific papers
-        "has_figure": False,   # 17% observed
+        "has_figure": False,  # 17% observed
         "has_table": False,
-        "has_formula": True,   # 67% observed
+        "has_formula": True,  # 67% observed
         "has_handwriting": False,
         "has_signature": False,
     },
     7: {  # magazine: advertisements, articles
-        "has_figure": True,    # 100% observed
+        "has_figure": True,  # 100% observed
         "has_table": False,
         "has_formula": False,
         "has_handwriting": False,
@@ -417,7 +419,7 @@ VLM_CATEGORY_CONTENT_FLAGS: dict[int, dict[str, bool]] = {
     },
     8: {  # bill: receipts, tickets
         "has_figure": False,
-        "has_table": True,     # 67% observed
+        "has_table": True,  # 67% observed
         "has_formula": False,
         "has_handwriting": False,
         "has_signature": False,
@@ -427,14 +429,14 @@ VLM_CATEGORY_CONTENT_FLAGS: dict[int, dict[str, bool]] = {
 # Language assignment for clear single-language categories.
 # None means mixed/multilingual - fall through to existing resolution.
 VLM_CATEGORY_LANGUAGE: dict[int, str | None] = {
-    1: None,    # Mixed en/zh scientific papers
-    2: None,    # Mixed en/zh-Hant/ja
-    3: "en",    # Predominantly English invoices
-    4: "zh",    # Predominantly Chinese education
-    5: "zh",    # All Chinese books/journals
-    6: None,    # Mixed en/zh scientific papers
-    7: None,    # Mixed zh/en/de
-    8: "zh",    # All Chinese receipts/bills
+    1: None,  # Mixed en/zh scientific papers
+    2: None,  # Mixed en/zh-Hant/ja
+    3: "en",  # Predominantly English invoices
+    4: "zh",  # Predominantly Chinese education
+    5: "zh",  # All Chinese books/journals
+    6: None,  # Mixed en/zh scientific papers
+    7: None,  # Mixed zh/en/de
+    8: "zh",  # All Chinese receipts/bills
 }
 
 # ===================================================================

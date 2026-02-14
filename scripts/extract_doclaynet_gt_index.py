@@ -29,8 +29,12 @@ log = logging.getLogger(__name__)
 # Configuration
 # ---------------------------------------------------------------------------
 
-GT_JSON_DIR = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/json")
-COCO_GT_DIR = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/coco")
+GT_JSON_DIR = Path(
+    "/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/json"
+)
+COCO_GT_DIR = Path(
+    "/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/coco"
+)
 OUTPUT_PATH = Path("results/doclaynet_gt_index.json")
 
 DOC_CATEGORY_TO_DOMAIN: dict[str, str] = {
@@ -43,7 +47,12 @@ DOC_CATEGORY_TO_DOMAIN: dict[str, str] = {
 }
 
 # Unicode ranges for script direction detection
-_ARABIC_RANGES = set(range(0x0600, 0x0700)) | set(range(0x0750, 0x0780)) | set(range(0xFB50, 0xFE00)) | set(range(0xFE70, 0xFF00))
+_ARABIC_RANGES = (
+    set(range(0x0600, 0x0700))
+    | set(range(0x0750, 0x0780))
+    | set(range(0xFB50, 0xFE00))
+    | set(range(0xFE70, 0xFF00))
+)
 _HEBREW_RANGES = set(range(0x0590, 0x0600)) | set(range(0xFB1D, 0xFB50))
 
 
@@ -75,6 +84,7 @@ def _detect_language(text: str) -> tuple[str, float]:
         return ("und", 0.1)
     try:
         import langdetect
+
         langdetect.DetectorFactory.seed = 42
         results = langdetect.detect_langs(text)
         if results:
@@ -87,14 +97,40 @@ def _detect_language(text: str) -> tuple[str, float]:
 def _script_from_language(lang_code: str) -> str:
     """Map ISO 639-1 language code to ISO 15924 script code."""
     mapping: dict[str, str] = {
-        "en": "Latn", "de": "Latn", "fr": "Latn", "es": "Latn", "it": "Latn",
-        "pt": "Latn", "nl": "Latn", "pl": "Latn", "sv": "Latn", "da": "Latn",
-        "no": "Latn", "fi": "Latn", "ro": "Latn", "cs": "Latn", "hu": "Latn",
-        "tr": "Latn", "vi": "Latn", "id": "Latn", "ms": "Latn",
-        "ja": "Jpan", "zh-cn": "Hans", "zh-tw": "Hant", "ko": "Kore",
-        "ru": "Cyrl", "uk": "Cyrl", "bg": "Cyrl", "sr": "Cyrl",
-        "ar": "Arab", "fa": "Arab", "ur": "Arab",
-        "he": "Hebr", "hi": "Deva", "th": "Thai", "el": "Grek",
+        "en": "Latn",
+        "de": "Latn",
+        "fr": "Latn",
+        "es": "Latn",
+        "it": "Latn",
+        "pt": "Latn",
+        "nl": "Latn",
+        "pl": "Latn",
+        "sv": "Latn",
+        "da": "Latn",
+        "no": "Latn",
+        "fi": "Latn",
+        "ro": "Latn",
+        "cs": "Latn",
+        "hu": "Latn",
+        "tr": "Latn",
+        "vi": "Latn",
+        "id": "Latn",
+        "ms": "Latn",
+        "ja": "Jpan",
+        "zh-cn": "Hans",
+        "zh-tw": "Hant",
+        "ko": "Kore",
+        "ru": "Cyrl",
+        "uk": "Cyrl",
+        "bg": "Cyrl",
+        "sr": "Cyrl",
+        "ar": "Arab",
+        "fa": "Arab",
+        "ur": "Arab",
+        "he": "Hebr",
+        "hi": "Deva",
+        "th": "Thai",
+        "el": "Grek",
     }
     return mapping.get(lang_code, "Latn")
 
@@ -119,9 +155,7 @@ def process_gt_json(filepath: str) -> dict | None:
         collection = metadata.get("collection", "")
 
         sorted_cells = sorted(cells, key=lambda c: (c["bbox"][1], c["bbox"][0]))
-        full_text = " ".join(
-            cell["text"] for cell in sorted_cells if cell.get("text")
-        )
+        full_text = " ".join(cell["text"] for cell in sorted_cells if cell.get("text"))
 
         lang_code, lang_conf = _detect_language(full_text)
         script_code = _script_from_language(lang_code)
@@ -185,10 +219,7 @@ def build_coco_content_flags(coco_dir: Path) -> dict[str, dict[str, bool]]:
         with open(coco_path) as f:
             coco_data = json.load(f)
 
-        categories = {
-            cat["id"]: cat["name"]
-            for cat in coco_data.get("categories", [])
-        }
+        categories = {cat["id"]: cat["name"] for cat in coco_data.get("categories", [])}
         img_id_to_stem: dict[int, str] = {}
         for img in coco_data.get("images", []):
             img_id_to_stem[img["id"]] = Path(img["file_name"]).stem
@@ -259,7 +290,11 @@ def main() -> int:
 
     # Step 2: Process GT JSON files
     gt_files = sorted(gt_dir.glob("*.json"))
-    log.info("Step 2: Processing %d GT JSON files with %d workers ...", len(gt_files), args.workers)
+    log.info(
+        "Step 2: Processing %d GT JSON files with %d workers ...",
+        len(gt_files),
+        args.workers,
+    )
 
     results: dict[str, dict] = {}
     lang_counter: Counter[str] = Counter()
@@ -268,10 +303,7 @@ def main() -> int:
     start = time.monotonic()
 
     with ProcessPoolExecutor(max_workers=args.workers) as executor:
-        futures = {
-            executor.submit(process_gt_json, str(fp)): fp
-            for fp in gt_files
-        }
+        futures = {executor.submit(process_gt_json, str(fp)): fp for fp in gt_files}
         for i, future in enumerate(as_completed(futures), 1):
             result = future.result()
             if result is None:
@@ -280,10 +312,17 @@ def main() -> int:
 
             image_id = result["image_id"]
             result["split"] = split_index.get(image_id, "unknown")
-            result["content_flags"] = content_index.get(image_id, {
-                "has_table": False, "has_figure": False, "has_formula": False,
-                "has_handwriting": False, "has_code": False, "has_signature": False,
-            })
+            result["content_flags"] = content_index.get(
+                image_id,
+                {
+                    "has_table": False,
+                    "has_figure": False,
+                    "has_formula": False,
+                    "has_handwriting": False,
+                    "has_code": False,
+                    "has_signature": False,
+                },
+            )
             results[image_id] = result
             lang_counter[result["iso639_language"]] += 1
             domain_counter[result["domain_level1"]] += 1
@@ -294,8 +333,13 @@ def main() -> int:
                 log.info("  Progress: %d/%d (%.0f/sec)", i, len(gt_files), rate)
 
     elapsed = time.monotonic() - start
-    log.info("Step 2 complete: %d results, %d errors in %.1fs (%.0f files/sec)",
-             len(results), errors, elapsed, len(gt_files) / elapsed)
+    log.info(
+        "Step 2 complete: %d results, %d errors in %.1fs (%.0f files/sec)",
+        len(results),
+        errors,
+        elapsed,
+        len(gt_files) / elapsed,
+    )
 
     # Step 3: Write output
     output = {
@@ -306,7 +350,9 @@ def main() -> int:
         "errors": errors,
         "language_distribution": dict(lang_counter.most_common()),
         "domain_distribution": dict(domain_counter.most_common()),
-        "split_distribution": dict(Counter(r["split"] for r in results.values()).most_common()),
+        "split_distribution": dict(
+            Counter(r["split"] for r in results.values()).most_common()
+        ),
         "samples": results,
     }
 

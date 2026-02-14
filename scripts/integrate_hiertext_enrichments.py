@@ -187,9 +187,7 @@ def load_hiertext_gt(gt_dir: Path) -> dict[str, dict[str, Any]]:
                             has_vertical = True
 
             # Compute handwriting assessment metrics
-            presence_ratio = (
-                handwritten_words / total_words if total_words > 0 else 0.0
-            )
+            presence_ratio = handwritten_words / total_words if total_words > 0 else 0.0
             legibility_ratio: float | None = None
             if handwritten_words > 0:
                 legibility_ratio = round(
@@ -209,7 +207,9 @@ def load_hiertext_gt(gt_dir: Path) -> dict[str, dict[str, Any]]:
                 presence_category = "DOMINANT"
 
             # Infer content type from word characteristics
-            content_type = _infer_handwriting_content_type(word_texts, handwritten_words)
+            content_type = _infer_handwriting_content_type(
+                word_texts, handwritten_words
+            )
 
             # Full text from all words (joined with spaces)
             full_text = " ".join(word_texts) if word_texts else ""
@@ -557,7 +557,9 @@ def integrate_sample(
         if vlm_domain and vlm_domain != "UNK":
             data["domain_level1"] = vlm_domain
             data["domain_confidence"] = vlm.get("domain_confidence", 0.40)
-            data["domain_detection_method"] = vlm.get("domain_method", "keyword_heuristic")
+            data["domain_detection_method"] = vlm.get(
+                "domain_method", "keyword_heuristic"
+            )
 
     # -------------------------------------------------------------------
     # D03/D04 - Language & script: multi-source resolution (KI-009)
@@ -622,9 +624,7 @@ def integrate_sample(
     data["handwriting_presence_category"] = parser_gt.get(
         "handwriting_presence_category", "NONE"
     )
-    data["handwriting_legibility_ratio"] = parser_gt.get(
-        "handwriting_legibility_ratio"
-    )
+    data["handwriting_legibility_ratio"] = parser_gt.get("handwriting_legibility_ratio")
     data["handwriting_content_type"] = parser_gt.get(
         "handwriting_content_type", "not_applicable"
     )
@@ -758,9 +758,7 @@ def _track_sample_stats(
     stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
     stats["split_dist"][integrated_data.get("split", "unknown")] += 1
     stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-    stats["script_family_dist"][
-        integrated_data.get("script_family", "unknown")
-    ] += 1
+    stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
     stats["lang_method_dist"][
         integrated_data.get("text_scope_detection_method", "unknown")
     ] += 1
@@ -884,9 +882,7 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            _upsert_enrichment_version(
-                sample, new_version, ENRICHMENT_VERSION_NUMBER
-            )
+            _upsert_enrichment_version(sample, new_version, ENRICHMENT_VERSION_NUMBER)
 
     return stats
 

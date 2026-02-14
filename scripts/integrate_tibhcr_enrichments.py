@@ -68,11 +68,20 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 APPLY_KI_001_LAYOUT_CASING = True
 
 DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text", "list_item": "List-Item", "section_header": "Section-Header",
-    "table": "Table", "picture": "Picture", "formula": "Formula", "caption": "Caption",
-    "footnote": "Footnote", "page_footer": "Page-Footer", "page_header": "Page-Header",
-    "title": "Title", "code": "Code",
-    "checkbox_selected": "Checkbox-Selected", "checkbox_unselected": "Checkbox-Unselected",
+    "text": "Text",
+    "list_item": "List-Item",
+    "section_header": "Section-Header",
+    "table": "Table",
+    "picture": "Picture",
+    "formula": "Formula",
+    "caption": "Caption",
+    "footnote": "Footnote",
+    "page_footer": "Page-Footer",
+    "page_header": "Page-Header",
+    "title": "Title",
+    "code": "Code",
+    "checkbox_selected": "Checkbox-Selected",
+    "checkbox_unselected": "Checkbox-Unselected",
 }
 
 KNOWN_CAPTURE_METHOD = "scanner_flatbed"
@@ -165,7 +174,9 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     tibetan_chars = len(re.findall(r"[\u0f00-\u0fff]", clean_text))
     avg_line_len = 0.0
     if non_empty_lines:
-        avg_line_len = round(sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1)
+        avg_line_len = round(
+            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1
+        )
     stats: dict[str, Any] = {
         "char_count": len(clean_text),
         "word_count": len(words),
@@ -214,8 +225,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({"field": field_name, "confidence": round(confidence, 4),
-                        "category": category, "is_soft_label": category == "soft_label"})
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -356,10 +373,16 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0, "layout_matched": 0, "ocr_matched": 0,
+        "total": 0,
+        "integrated": 0,
+        "layout_matched": 0,
+        "ocr_matched": 0,
         "has_text_content_count": 0,
-        "domain_dist": Counter(), "split_dist": Counter(), "lang_dist": Counter(),
-        "script_family_dist": Counter(), "capture_method_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
+        "capture_method_dist": Counter(),
         "has_handwriting_count": 0,
     }
     now = datetime.now(UTC).isoformat()
@@ -383,12 +406,17 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
 
         if not dry_run:
             new_version = {
-                "version": ENRICHMENT_VERSION_NUMBER, "created_at": now,
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
                 "created_by": "integrate_tibhcr_enrichments.py",
                 "method": "tier_2_model",
                 "description": (
@@ -426,11 +454,14 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print(f"Has text content:     {stats['has_text_content_count']}")
     print(f"Has handwriting:      {stats['has_handwriting_count']}")
     print()
-    for label, key in [("Domain", "domain_dist"), ("Language", "lang_dist"),
-                        ("Script family", "script_family_dist")]:
+    for label, key in [
+        ("Domain", "domain_dist"),
+        ("Language", "lang_dist"),
+        ("Script family", "script_family_dist"),
+    ]:
         print(f"{label} distribution:")
         for val, count in stats[key].most_common():
-            print(f"  {val:20s}: {count:6d} ({count/safe_total*100:.1f}%)")
+            print(f"  {val:20s}: {count:6d} ({count / safe_total * 100:.1f}%)")
         print()
     print("=" * 60)
 

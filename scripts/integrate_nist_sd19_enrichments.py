@@ -64,7 +64,6 @@ APPLY_KI_001_LAYOUT_CASING = False
 KNOWN_CAPTURE_METHOD: str | None = "scanner_flatbed"
 
 
-
 # ===================================================================
 # Content flag class mappings
 # ===================================================================
@@ -174,12 +173,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field": field_name,
-            "confidence": round(confidence, 4),
-            "category": category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
         "min_confidence": min_field["confidence"],
@@ -287,7 +288,9 @@ def integrate_sample(
     data["text_scope"] = "page"
 
     # IMAGE PROPERTIES
-    data["image_properties_color_mode"] = v1_data.get("image_properties_color_mode", "grayscale")
+    data["image_properties_color_mode"] = v1_data.get(
+        "image_properties_color_mode", "grayscale"
+    )
 
     # RESOLUTION (preserve v1)
     for field in ("resolution_category", "resolution_pixels", "resolution_dpi"):
@@ -316,13 +319,18 @@ def run_integration(
 ) -> dict[str, Any]:
     """Run integration for all samples."""
     stats: dict[str, Any] = {
-        "total": 0, "integrated": 0,
+        "total": 0,
+        "integrated": 0,
         "lang_matched": 0,
-        "domain_dist": Counter(), "split_dist": Counter(),
-        "lang_dist": Counter(), "script_family_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_family_dist": Counter(),
         "capture_method_dist": Counter(),
-        "has_table_count": 0, "has_formula_count": 0,
-        "has_handwriting_count": 0, "has_figure_count": 0,
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
     }
     now = datetime.now(UTC).isoformat()
 
@@ -334,8 +342,12 @@ def run_integration(
         stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
         for flag in ("has_table", "has_formula", "has_handwriting", "has_figure"):
             if integrated_data.get(flag):
                 stats[f"{flag}_count"] += 1
@@ -372,7 +384,9 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print("=" * 60)
     print(f"Total: {stats['total']}, Integrated: {stats['integrated']}")
     print(f"Domain: {dict(stats['domain_dist'])}")
-    print(f"has_table: {stats['has_table_count']}, has_handwriting: {stats['has_handwriting_count']}")
+    print(
+        f"has_table: {stats['has_table_count']}, has_handwriting: {stats['has_handwriting_count']}"
+    )
     print("=" * 60)
 
 
@@ -383,7 +397,9 @@ def main() -> int:
     )
     parser.add_argument("--metadata", type=Path, default=METADATA_PATH)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH)
+    parser.add_argument(
+        "--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 

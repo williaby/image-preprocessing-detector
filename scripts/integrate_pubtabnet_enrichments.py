@@ -509,9 +509,7 @@ def integrate_sample(
     if lang_enrichment:
         data["iso639_language"] = lang_enrichment.get("language", "en")
         data["iso15924_script"] = lang_enrichment.get("script", "Latn")
-        data["language_confidence"] = min(
-            lang_enrichment.get("confidence", 0.5), 0.70
-        )
+        data["language_confidence"] = min(lang_enrichment.get("confidence", 0.5), 0.70)
         data["text_scope_detection_method"] = "openlid_v2"
     else:
         # Fallback to V1 data (en/Latn from dataset_config)
@@ -537,14 +535,18 @@ def integrate_sample(
 
     # Store layout summary only (full cell detections in extracted COCO batches)
     # This avoids storing ~25M annotation dicts in memory / on disk
-    data["layout_detections"] = [
-        {
-            "class_name": "table_cell",
-            "canonical_class": "TABLE_CELL",
-            "source_label": "table_cell",
-            "count": layout_count,
-        }
-    ] if layout_count > 0 else []
+    data["layout_detections"] = (
+        [
+            {
+                "class_name": "table_cell",
+                "canonical_class": "TABLE_CELL",
+                "source_label": "table_cell",
+                "count": layout_count,
+            }
+        ]
+        if layout_count > 0
+        else []
+    )
     data["layout_source"] = "pubtabnet_gt"
     data["layout_confidence"] = 1.0 if layout_count > 0 else 0.0
     data["layout_detection_count"] = layout_count
@@ -596,17 +598,13 @@ def integrate_sample(
     # TEXT SCOPE
     # -------------------------------------------------------------------
     data["text_scope"] = v1_data.get("text_scope", "page")
-    data["text_scope_content_type"] = v1_data.get(
-        "text_scope_content_type", "printed"
-    )
+    data["text_scope_content_type"] = v1_data.get("text_scope_content_type", "printed")
 
     # -------------------------------------------------------------------
     # D06: IMAGE PROPERTIES COLOR MODE
     # -------------------------------------------------------------------
     color_space = sample.get("original_file", {}).get("color_space", "RGB")
-    data["image_properties_color_mode"] = COLOR_SPACE_TO_MODE.get(
-        color_space, "color"
-    )
+    data["image_properties_color_mode"] = COLOR_SPACE_TO_MODE.get(color_space, "color")
 
     # -------------------------------------------------------------------
     # RESOLUTION (preserve V1 values)
@@ -708,9 +706,7 @@ def _process_one_sample(
 
     stats["split_dist"][integrated_data.get("split", "unknown")] += 1
     stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
-    stats["script_family_dist"][
-        integrated_data.get("script_family", "unknown")
-    ] += 1
+    stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
     stats["color_mode_dist"][
         integrated_data.get("image_properties_color_mode", "unknown")
     ] += 1
@@ -816,8 +812,13 @@ def run_integration(
                     break
                 sample = metadata["samples"][idx]
                 _process_one_sample(
-                    sample, lang_index, annotations, ocr_index,
-                    stats, dry_run, now,
+                    sample,
+                    lang_index,
+                    annotations,
+                    ocr_index,
+                    stats,
+                    dry_run,
+                    now,
                 )
                 processed.add(idx)
 
@@ -857,8 +858,13 @@ def run_integration(
         if limit > 0 and stats["total"] >= limit:
             break
         _process_one_sample(
-            sample, lang_index, [], ocr_index,
-            stats, dry_run, now,
+            sample,
+            lang_index,
+            [],
+            ocr_index,
+            stats,
+            dry_run,
+            now,
         )
 
         done_phase2 = stats["total"] - phase1_count
@@ -1015,8 +1021,11 @@ def main() -> int:
     elapsed = time.monotonic() - start
 
     print_summary(stats, len(metadata["samples"]))
-    log.info("Integration completed in %.1f seconds (%.0f samples/sec)",
-             elapsed, stats["total"] / elapsed if elapsed > 0 else 0)
+    log.info(
+        "Integration completed in %.1f seconds (%.0f samples/sec)",
+        elapsed,
+        stats["total"] / elapsed if elapsed > 0 else 0,
+    )
 
     # Update metadata header
     if not args.dry_run:
@@ -1034,7 +1043,9 @@ def main() -> int:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False)
         write_elapsed = time.monotonic() - write_start
-        log.info("  Written %d samples in %.1fs", len(metadata["samples"]), write_elapsed)
+        log.info(
+            "  Written %d samples in %.1fs", len(metadata["samples"]), write_elapsed
+        )
 
     return 0
 

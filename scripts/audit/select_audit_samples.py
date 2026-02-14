@@ -612,11 +612,13 @@ _TRACK_B_DEFAULT_CAP = 10_000
 
 # Structural validation fields that VLM cannot visually verify.
 # These are excluded from Track A sample selection.
-_TRACK_A_SKIP_FIELDS: frozenset[str] = frozenset({
-    "layout_bbox_valid",
-    "image_properties_color_mode",
-    "quality_overall_mos",
-})
+_TRACK_A_SKIP_FIELDS: frozenset[str] = frozenset(
+    {
+        "layout_bbox_valid",
+        "image_properties_color_mode",
+        "quality_overall_mos",
+    }
+)
 
 # Large-dataset threshold: above this, use fixed counts only
 # (not percentage) per README Scale-Aware Processing Guidance.
@@ -679,9 +681,7 @@ def compute_tier(prescreening: dict[str, Any]) -> int:
             tier = max(tier, 2)
 
     per_field = prescreening.get("per_field_results", {})
-    zero_fields = sum(
-        1 for v in per_field.values() if v.get("pass", 0) == 0
-    )
+    zero_fields = sum(1 for v in per_field.values() if v.get("pass", 0) == 0)
     if zero_fields >= 4:
         tier = max(tier, 3)
     elif zero_fields >= 2:
@@ -899,11 +899,13 @@ def _select_track_b(
 
     samples = []
     for rec in selected:
-        samples.append({
-            "filename": rec.original_filename,
-            "image_path": rec.image_path,
-            "purpose": "batch_classification",
-        })
+        samples.append(
+            {
+                "filename": rec.original_filename,
+                "image_path": rec.image_path,
+                "purpose": "batch_classification",
+            }
+        )
 
     return {"total_samples": len(samples), "samples": samples}
 
@@ -929,18 +931,18 @@ def _select_track_c(
         Track C output dict with sample list.
     """
     passing = [r for r in records if r.sample_id not in failing_ids]
-    logger.info(
-        "Track C: %d passing / %d total", len(passing), len(records)
-    )
+    logger.info("Track C: %d passing / %d total", len(passing), len(records))
     selected = select_stratified(passing, target, rng)
 
     samples = []
     for rec in selected:
-        samples.append({
-            "filename": rec.original_filename,
-            "image_path": rec.image_path,
-            "purpose": "passing_validation",
-        })
+        samples.append(
+            {
+                "filename": rec.original_filename,
+                "image_path": rec.image_path,
+                "purpose": "passing_validation",
+            }
+        )
 
     return {"total_samples": len(samples), "samples": samples}
 
@@ -1009,8 +1011,7 @@ def run_phase6_selection(
     failing_ids: set[str] = set()
     for fs in prescreening.get("failing_samples", []):
         vlm_failures = [
-            f for f in fs.get("failed_fields", [])
-            if f not in _TRACK_A_SKIP_FIELDS
+            f for f in fs.get("failed_fields", []) if f not in _TRACK_A_SKIP_FIELDS
         ]
         if vlm_failures:
             failing_ids.add(fs["image_id"])
