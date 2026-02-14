@@ -7,7 +7,7 @@ replacing hardcoded paths in the monolithic annotate_base_metadata.py.
 
 Key Components:
     - DatasetConfig: Frozen dataclass for dataset configuration
-    - DATASET_CONFIGS: Registry of all 38 datasets
+    - DATASET_CONFIGS: Registry of all 44 datasets
     - Helper functions: Path resolution and validation
 
 Configuration Categories:
@@ -21,6 +21,8 @@ Configuration Categories:
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
     - OCR Quality (1): ocr_quality
+    - Correction/Shadow/Dewarping (6): anyphotodoc6300, docalign12k, wsrd,
+      warpdoc, docreal, sd7k
     - Multilingual/Script (13): Various script and language datasets
     - Script Identification (3): cvsi, siw13, mle2e
     - OHR-Bench (1): ohr-bench
@@ -829,6 +831,69 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         text_scope="paragraph",
         # Multi-script: 27 scripts (Arab, Latn, Hans, Deva, etc.)
         parser_name="synth_multiscript",
+    ),
+    # =========================================================================
+    # Base Training - Correction / Shadow Removal / Dewarping (6)
+    # =========================================================================
+    "anyphotodoc6300": DatasetConfig(
+        name="anyphotodoc6300",
+        path_suffix="01_base_data/correction/anyphotodoc6300",
+        pattern="init_*/*.[jJ][pP][gG]",  # Camera-captured; mixed .JPG/.jpg case
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="anyphotodoc6300",
+    ),
+    "docalign12k": DatasetConfig(
+        name="docalign12k",
+        path_suffix="01_base_data/correction/docalign12k",
+        pattern="distorted_hard/**/*.jpg",  # Distorted inputs; flat/ has GT
+        capture_method=CaptureMethod.SYNTHETIC,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="docalign12k",
+    ),
+    "wsrd": DatasetConfig(
+        name="wsrd",
+        path_suffix="01_base_data/correction/wsrd",
+        pattern="**/*.png",  # NTIRE 2023+2024 shadow/shadow_free pairs
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="wsrd",
+    ),
+    "warpdoc": DatasetConfig(
+        name="warpdoc",
+        path_suffix="01_base_data/correction/warpdoc",
+        pattern="WarpDoc/image/**/*.jpg",  # Camera-captured warped; digital/ has GT
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="warpdoc",
+    ),
+    "docreal": DatasetConfig(
+        name="docreal",
+        path_suffix="01_base_data/correction/docreal",
+        pattern="DocReal/distorted/*.png",  # 201 distorted; scanned/ has 50 GT
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="docreal",
+    ),
+    "sd7k": DatasetConfig(
+        name="sd7k",
+        path_suffix="01_base_data/correction/sd7k",
+        pattern="**/input/*.png",  # Only input images, not ground truth targets
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="sd7k",
     ),
 }
 
