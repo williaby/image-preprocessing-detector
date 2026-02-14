@@ -214,6 +214,58 @@ image
 | **Text/GT Converted** | `metadata_registry/extracted/hiertext/` | ✅ Converted | GT conversion: 11,639 images, 1,116,661 annotations, 4.8M chars, 3 categories (paragraph/line/word) |
 | **Layout GT Converted** | `metadata_registry/extracted/hiertext/layout_batch_*.json` | ✅ Converted | COCO-style hierarchical layout with polygon→bbox conversion, handwritten flags preserved |
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (81.7/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 99.7 | 25% |  |
+| Field Validity | 94.5 | 25% |  |
+| Doc Completeness | 36.4 | 15% | Below threshold |
+| Defect Rate | 80.0 | 15% |  |
+| Cross-Source Agreement | 62.2 | 10% | Below threshold |
+| VLM Accuracy | 95.0 | 10% |  |
+| **Overall** | **81.7** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 13 defects (3 resolved, 10 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | CRITICAL | OPEN | Split field not populated. Must be derived from GT folder structure (train/valid |
+| D02 | capture_method | LOW | RESOLVED | Already correct as camera_smartphone. No action needed. |
+| D03 | iso639_language | CRITICAL | OPEN | Language field empty/null for all samples. LLM enrichment covers 8,278 samples ( |
+| D04 | script_family | HIGH | OPEN | Script family not populated. Must derive from iso15924_script using KI-008 patte |
+| D05 | handwriting_present | HIGH | OPEN | Handwriting fields all null despite HierText providing gold-standard word-level  |
+| D06 | orientation_class | HIGH | OPEN | Orientation not populated. LLM enrichment may have partial coverage. VLM will pr |
+| D07 | text_has_content | HIGH | OPEN | Text content field empty. Parser GT provides word-level text for all annotated i |
+| D08 | image_properties_color_mode | MEDIUM | OPEN | Color mode not populated. Scene photos are always color. |
+| D09 | text_direction | LOW | RESOLVED | Text direction currently passing prescreening (defaults acceptable). Will be pro |
+| D10 | text_directions_present | LOW | RESOLVED | Text directions present currently passing. Will be enhanced with parser GT verti |
+| D11 | layout_detections | CRITICAL | OPEN | Layout detection labels have wrong casing (KI-001). Schema compliance shows 3.7% |
+| D12 | domain_level1 | CRITICAL | OPEN | Domain field empty despite appearing in base metadata. Prescreening shows 100% f |
+| D13 | has_figure (KI-003) | HIGH | OPEN | Docling layout detects 'Picture' class in ~86% of scene text images. Cross-sourc |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 3425 | **Passing Accuracy**: 95.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/hiertext/](../../scripts/audit/results/hiertext/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 11,639 | **Avg Min Confidence**: 0.000

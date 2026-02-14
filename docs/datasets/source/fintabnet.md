@@ -110,6 +110,46 @@
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (87.1/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.3 | 28% |  |
+| Field Validity | 96.3 | 28% |  |
+| Doc Completeness | 45.5 | 17% | Below threshold |
+| Defect Rate | 98.0 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 11% |  |
+| **Overall** | **87.1** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 1 defects (1 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| FTN-D01 | text_has_content | MEDIUM | OPEN |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/fintabnet/](../../scripts/audit/results/fintabnet/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 97,475 | **Avg Min Confidence**: 0.000

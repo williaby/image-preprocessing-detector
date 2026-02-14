@@ -231,6 +231,61 @@ PUCIT-OHUL includes Urdu text transcriptions in Excel spreadsheets:
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (83.9/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 91.5 | 28% |  |
+| Field Validity | 100.0 | 28% |  |
+| Doc Completeness | 45.5 | 17% | Below threshold |
+| Defect Rate | 75.4 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 11% |  |
+| **Overall** | **83.9** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 13 defects (11 resolved, 1 deferred)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| PO-D01 | split | HIGH | RESOLVED |  |
+| PO-D02 | capture_method | HIGH | RESOLVED |  |
+| PO-D03 | script_family | CRITICAL | RESOLVED |  |
+| PO-D04 | layout_detections | HIGH | MITIGATED |  |
+| PO-D05 | text_has_content | HIGH | DEFERRED |  |
+| PO-D06 | orientation_class | MEDIUM | RESOLVED |  |
+| PO-D07 | image_properties_color_mode | MEDIUM | RESOLVED |  |
+| PO-D08 | handwriting_present | HIGH | RESOLVED |  |
+| PO-D09 | text_direction | MEDIUM | RESOLVED |  |
+| PO-D10 | text_directions_present | MEDIUM | RESOLVED |  |
+| PO-D11 | schema_version | MEDIUM | RESOLVED |  |
+| PO-D12 | has_handwriting | CRITICAL | RESOLVED |  |
+| PO-D13 | has_figure | MEDIUM | RESOLVED |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- **Prescreening/compliance enum mismatch (systemic)**: RESOLVED --
+- **KI-008**: RESOLVED --
+- **KI-001 (casing) mitigated via DOCLING_TO_DOCLAYNET mapping**: MITIGATED --
+- **KI-003 (Picture detection dense text FP)**: RESOLVED --
+
+**Audit Artifacts**: [scripts/audit/results/pucit-ohul/](../../scripts/audit/results/pucit-ohul/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 7,401 | **Avg Min Confidence**: 0.000

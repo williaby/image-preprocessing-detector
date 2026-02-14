@@ -413,6 +413,59 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: A (95.7/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 100.0 | 28% |  |
+| Field Validity | 100.0 | 28% |  |
+| Doc Completeness | 81.8 | 17% |  |
+| Defect Rate | 97.2 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 93.0 | 11% |  |
+| **Overall** | **95.7** | | **Grade A** |
+
+###### 11.2 Key Defects
+
+> **Total**: 14 defects (10 resolved, 3 deferred, 1 partial)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | HIGH | RESOLVED |  |
+| D02 | script_family | HIGH | RESOLVED |  |
+| D03 | text_statistics / text_has_content | HIGH | RESOLVED |  |
+| D04 | orientation_class | MEDIUM | RESOLVED |  |
+| D05 | image_properties_color_mode | MEDIUM | RESOLVED |  |
+| D06 | handwriting_present / has_handwriting | MEDIUM | PARTIALLY_RESOLVED |  |
+| D07 | layout_detections.class_name | CRITICAL | RESOLVED |  |
+| D08 | text_direction | LOW | RESOLVED |  |
+| D09 | text_directions_present | LOW | RESOLVED |  |
+| D10 | llm_enrichment | CRITICAL | RESOLVED |  |
+| D11 | language_enrichment | CRITICAL | RESOLVED |  |
+| D12 | layout_detections | HIGH | DEFERRED |  |
+| D13 | capture_method | MEDIUM | DEFERRED |  |
+| D14 | iso639_language | LOW | DEFERRED |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 93.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/sroie/](../../scripts/audit/results/sroie/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-14 | **Samples**: 973 | **Enrichment Version**: v2

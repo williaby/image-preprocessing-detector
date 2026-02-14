@@ -121,6 +121,62 @@
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: D (86.3/100) | **Auditor**: claude-opus-4-6
+
+> **Grade Cap**: B -> D (see notes below)
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 89.6 | 25% |  |
+| Field Validity | 96.3 | 25% |  |
+| Doc Completeness | 45.5 | 15% | Below threshold |
+| Defect Rate | 89.9 | 15% |  |
+| Cross-Source Agreement | 100.0 | 10% |  |
+| VLM Accuracy | 95.0 | 10% |  |
+| **Overall** | **86.3** | | **Grade D** |
+
+**Grade Cap Applied**:
+> Grade capped from B to D: Critical fields below 75%: domain_level1=65%. Language, script, and domain are critical training stratification fields. Datasets with <75% coverage on any of these fields cannot reliably support diversity-aware training splits or balanced sampling. A contact sheet VLM review or enrichment pipeline must bring these fields above 75% before the dataset can advance beyond Grade D.
+
+###### 11.2 Key Defects
+
+> **Total**: 12 defects (8 resolved, 3 deferred, 1 partial)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | layout_detections[*].class_name | ? | RESOLVED |  |
+| D02 | capture_method | ? | RESOLVED |  |
+| D03 | domain_level1 | ? | PARTIALLY_RESOLVED |  |
+| D04 | iso639_language | ? | RESOLVED |  |
+| D05 | iso15924_script | ? | RESOLVED |  |
+| D06 | script_family | ? | RESOLVED |  |
+| D07 | content_flags.* | ? | RESOLVED |  |
+| D08 | quality_overall_score | ? | DEFERRED |  |
+| D09 | resolution_category, resolution_pixels | ? | DEFERRED |  |
+| D10 | text_scope, text_scope_content_type | ? | RESOLVED |  |
+| D11 | split | ? | RESOLVED |  |
+| D12 | layout_bbox_valid | ? | DEFERRED |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/jssoda/](../../scripts/audit/results/jssoda/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-11 | **Samples**: 2,000 | **Enrichment Version**: v2 (integrated)

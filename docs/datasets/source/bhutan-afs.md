@@ -122,6 +122,59 @@
 | **Degradation** | None detected (born-digital) | ✅ |
 | **Integration Script** | `scripts/integrate_bhutan_afs_enrichments.py` v3.0.0 | ✅ |
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (83.5/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 99.5 | 25% |  |
+| Field Validity | 89.0 | 25% |  |
+| Doc Completeness | 45.5 | 15% | Below threshold |
+| Defect Rate | 72.0 | 15% |  |
+| Cross-Source Agreement | 97.7 | 10% |  |
+| VLM Accuracy | 89.6 | 10% |  |
+| **Overall** | **83.5** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 14 defects (14 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| BA-D01 | capture_method | HIGH | OPEN |  |
+| BA-D02 | split | MEDIUM | OPEN |  |
+| BA-D03 | iso639_language | HIGH | OPEN |  |
+| BA-D04 | script_family | HIGH | OPEN |  |
+| BA-D05 | layout_detections | HIGH | OPEN |  |
+| BA-D06 | text_statistics | HIGH | OPEN |  |
+| BA-D07 | content_flags | MEDIUM | OPEN |  |
+| BA-D08 | orientation_class | MEDIUM | OPEN |  |
+| BA-D09 | text_direction | MEDIUM | OPEN |  |
+| BA-D10 | text_directions_present | MEDIUM | OPEN |  |
+| BA-D11 | handwriting_present | LOW | OPEN |  |
+| BA-D12 | quality_overall | LOW | OPEN |  |
+| BA-D13 | image_properties.color_mode | LOW | OPEN |  |
+| BA-D14 | schema_version | MEDIUM | OPEN |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 89.6%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/bhutan-afs/](../../scripts/audit/results/bhutan-afs/)
+
+---
+
 ##### Reliability & Known Issues
 
 | Issue ID | Severity | Description | Status |

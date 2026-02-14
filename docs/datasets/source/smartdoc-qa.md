@@ -233,6 +233,54 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 | v1.0 | 2026-02-10 | Initial Layer 2 metadata documentation |
 | v1.1 | 2026-02-13 | Added format, license, limitations, processing, version history sections |
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: A (91.9/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 99.5 | 25% |  |
+| Field Validity | 93.6 | 25% |  |
+| Doc Completeness | 100.0 | 15% |  |
+| Defect Rate | 84.0 | 15% |  |
+| Cross-Source Agreement | 68.5 | 10% | Below threshold |
+| VLM Accuracy | 92.0 | 10% |  |
+| **Overall** | **91.9** | | **Grade A** |
+
+###### 11.2 Key Defects
+
+> **Total**: 8 defects (7 accepted, 1 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| DEF-001 | split | low | ACCEPTED | Split is 'unknown' for all 4,260 samples. Dataset does not define official train |
+| DEF-002 | domain_level1 | medium | ACCEPTED | domain_level1 is 'UNK' for all 4,260 samples. LLM enrichment domain confidence i |
+| DEF-003 | script_family | medium | OPEN | script_family uses invalid enum value 'ltr' instead of 'latin' for all 4,260 sam |
+| DEF-004 | layout_detections | low | ACCEPTED | layout_detections empty for 26.7% of samples (1,136/4,260). Partial DocLayout-YO |
+| DEF-005 | text_has_content | low | ACCEPTED | text_has_content is false for all 4,260 samples. No OCR extraction integrated. |
+| DEF-006 | orientation_class | low | ACCEPTED | orientation_class not populated for all 4,260 samples. |
+| DEF-007 | image_properties_color_mode | low | ACCEPTED | image_properties.color_mode not populated for all 4,260 samples. |
+| DEF-008 | handwriting_present | low | ACCEPTED | handwriting_present not populated for all 4,260 samples. |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 92.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- **KI-007**: ACCEPTED --
+- **KI-008**: OPEN --
+
+**Audit Artifacts**: [scripts/audit/results/smartdoc-qa/](../../scripts/audit/results/smartdoc-qa/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 4,260 | **Avg Min Confidence**: 0.217

@@ -127,6 +127,42 @@ Numerals/3/3_0089.jpg, "༣"
 | **Layout Extracted** | `metadata_registry/extracted/tibhcr/` | ✅ Available | Docling GPU: 284 layout batches, 141,698 images |
 | **Layer 2 Metadata** | `metadata_registry/json/tibhcr_metadata.json` | ✅ Complete | 141,698 samples (2026-02-09) |
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (84.5/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 88.3 | 33% |  |
+| Field Validity | 100.0 | 33% |  |
+| Doc Completeness | 45.5 | 20% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 13% |  |
+| **Overall** | **84.5** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/tibhcr/](../../scripts/audit/results/tibhcr/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 141,698 | **Avg Min Confidence**: 0.000

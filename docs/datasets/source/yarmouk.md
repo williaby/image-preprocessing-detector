@@ -79,6 +79,42 @@ Research license from Yarmouk University. Use restricted to academic and researc
 
 Metadata registry: `metadata_registry/json/yarmouk_ocr_metadata.json` (2026-02-09).
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: A (92.7/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.2 | 33% |  |
+| Field Validity | 89.0 | 33% |  |
+| Doc Completeness | 100.0 | 20% |  |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 90.0 | 13% |  |
+| **Overall** | **92.7** | | **Grade A** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/yarmouk/](../../scripts/audit/results/yarmouk/)
+
+---
+
 ##### Reliability Assessment
 
 VLM inspection (2026-02-13): passing_sample_accuracy=0.90. Content flags verified via metadata cross-reference and directory structure analysis. Source PDFs not directly viewable as images. Main concern: has_handwriting flag may be incorrect for a subset of printed-only pages.

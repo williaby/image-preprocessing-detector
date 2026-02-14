@@ -95,6 +95,47 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (82.1/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.7 | 25% |  |
+| Field Validity | 96.6 | 25% |  |
+| Doc Completeness | 45.5 | 15% | Below threshold |
+| Defect Rate | 97.4 | 15% |  |
+| Cross-Source Agreement | 58.3 | 10% | Below threshold |
+| VLM Accuracy | 90.0 | 10% |  |
+| **Overall** | **82.1** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (1 accepted, 1 deferred)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | layout_detections | LOW | ACCEPTED | No layout detections - ID documents do not have standard page layout |
+| D02 | text_has_content | MEDIUM | DEFERRED | No text transcription labels available |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/midv500/](../../scripts/audit/results/midv500/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 15,050 | **Avg Min Confidence**: 0.000

@@ -200,6 +200,52 @@
 
 ---
 
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (86.4/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 100.0 | 28% |  |
+| Field Validity | 100.0 | 28% |  |
+| Doc Completeness | 63.6 | 17% | Below threshold |
+| Defect Rate | 86.0 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 52.8 | 11% | Below threshold |
+| **Overall** | **86.4** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 7 defects (7 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | ? | CRITICAL | OPEN | COCO batch ID collision across 6 layout batches (all use IDs 0-199, 939 overlapp |
+| D02 | ? | CRITICAL | OPEN | Metadata filenames (funsd_plus_test_0000.jpg) do not match layout/OCR batch file |
+| D03 | ? | HIGH | OPEN | has_handwriting=false for all samples but ~47% contain handwritten entries/signa |
+| D04 | ? | HIGH | OPEN | Schema v2.1 missing v2.3.0 fields: text_direction, text_directions_present, orie |
+| D05 | ? | MEDIUM | OPEN | 2/36 VLM samples contain German text but labeled as English (iso639_language=en) |
+| D06 | ? | MEDIUM | OPEN | LLM enrichment not available (OPENROUTER_API_KEY not set) |
+| D07 | ? | LOW | OPEN | script_family was 'ltr' in v1 enrichment (text direction, not script family) |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 52.8%
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/funsd-plus/](../../scripts/audit/results/funsd-plus/)
+
+---
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 1,139 | **Avg Min Confidence**: 0.550

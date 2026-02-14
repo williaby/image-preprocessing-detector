@@ -118,6 +118,7 @@ scripts/audit/
 ├── assemble_comparison.py            ← Phase 3: Multi-source comparison
 ├── select_audit_samples.py           ← Phase 4.5: Stratified sample selection
 ├── compute_scorecard.py              ← Post-audit: Quality scorecard computation
+├── populate_audit_summary.py        ← Phase 9: Generate Section 11 in source docs
 ├── integration_script_template.py    ← Phase 5: Integration script skeleton
 └── results/                          ← Per-dataset audit artifacts
     ├── CROSS_DATASET_KNOWN_ISSUES.json  ← 9 known issues registry (KI-001 to KI-009)
@@ -247,6 +248,7 @@ These scripts update the dataset source documentation and metadata aggregates af
 |--------|---------|---------------|
 | `aggregate_layer2_metadata.py` | Regenerate dataset statistics from post-integration Layer 2 metadata | `uv run python3 scripts/aggregate_layer2_metadata.py --dataset jssoda --layer2-dir /mnt/e/image_detection/metadata_registry/json --verbose` |
 | `materialize_reliability_summary.py` | Compute per-sample reliability and update source doc Reliability section | `uv run python3 scripts/materialize_reliability_summary.py --datasets jssoda --update-docs --force` |
+| `populate_audit_summary.py` | Generate/update Section 11 (Layer 2 Audit Summary) in source docs from scorecard, defect catalog, and VLM correction artifacts | `PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset jssoda` |
 | `compute_scorecard.py` | Compute quality scorecard (also used in Post-Audit phase) | `PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset jssoda` |
 
 **Agent**: `.claude/agents/dataset-catalog-agent.md` - Automated gap analysis against template v1.4.0 and cross-file synchronization.
@@ -682,9 +684,12 @@ uv run python3 scripts/materialize_reliability_summary.py \
     --force
 # Updates: docs/datasets/source/${DATASET}.md (Reliability & Bottlenecks section)
 
-# 19. Update source doc with audit summary (Section 11 per template v1.4.0)
-# Manually or via dataset-catalog-agent:
-#   - Add/update Section 11 "Layer 2 Audit Summary" with scorecard, defects, VLM results
+# 19. Populate Section 11 (Layer 2 Audit Summary) in source doc
+PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset $DATASET
+# Reads scorecard.json, defect_catalog.json, vlm_corrections.json
+# Generates Section 11 with scorecard table, defect list, VLM summary, cross-dataset findings
+# Use --overwrite to replace existing Section 11, --dry-run to preview
+# Batch mode: --all-missing (only missing) or --all --overwrite (refresh all)
 #   - Verify Section 12 "Reliability & Bottlenecks" was updated by step 18
 #   - Verify language/script section reflects actual LLM-detected distribution
 #   - Verify known issues section includes audit-discovered defects
@@ -856,14 +861,23 @@ recomputes even if a `sample_reliability_summary` already exists in the metadata
 
 #### Step 3: Update Source Doc Sections
 
-Manually update `docs/datasets/source/{dataset}.md` per template v1.4.0:
+**Section 11 (automated)**: Run `populate_audit_summary.py` to generate the audit summary:
+
+```bash
+PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset {dataset}
+# Use --overwrite to replace an existing Section 11
+# Use --dry-run to preview without writing
+# Use --all-missing to batch-populate all datasets missing Section 11
+```
+
+**Remaining sections (manual)**: Update `docs/datasets/source/{dataset}.md` per template v1.4.0:
 
 | Section | Action | Source |
 |---------|--------|--------|
 | 5.3 Language & Script | Update with actual LLM-detected distribution | `{dataset}_stats.json` or `comparison_report.json` |
 | 7. Known Issues | Add "Layer 2 Audit Findings" subsection with defect IDs | `defect_catalog.json` |
 | 8. Layer 2 Annotation Summary | Update enrichment sources, field coverage | Integration script, `automated_screening.json` |
-| **11. Layer 2 Audit Summary** (NEW) | Add scorecard, key defects, VLM results | `scorecard.json`, `defect_catalog.json`, `vlm_corrections.json` |
+| **11. Layer 2 Audit Summary** | **Automated** by `populate_audit_summary.py` (Step 3 above) | `scorecard.json`, `defect_catalog.json`, `vlm_corrections.json` |
 | 12. Reliability & Bottlenecks | Verify materialized by Step 2, add context | `materialize_reliability_summary.py` output |
 
 #### Step 4: Compute Final Scorecard
@@ -898,7 +912,7 @@ The agent validates:
 
 - [ ] `aggregate_layer2_metadata.py` ran successfully → `{dataset}_stats.json` generated
 - [ ] `materialize_reliability_summary.py` updated source doc reliability section
-- [ ] Section 11 (Layer 2 Audit Summary) added/updated with scorecard and defects
+- [ ] `populate_audit_summary.py` generated Section 11 in source doc
 - [ ] Language/script section reflects actual distribution (not just paper claims)
 - [ ] Known issues section includes audit-discovered defects
 - [ ] Final scorecard recomputed after doc updates
@@ -1039,6 +1053,6 @@ For audit methodology questions or script issues, see:
 
 ---
 
-**Last Updated**: 2026-02-13
-**Template Version**: 1.3.0
+**Last Updated**: 2026-02-14
+**Template Version**: 1.4.0
 **Audit Methodology Version**: 2.4.0
