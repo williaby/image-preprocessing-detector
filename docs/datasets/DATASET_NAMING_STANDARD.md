@@ -43,10 +43,11 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (45 total)
+### All Datasets (51 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
+| `anyphotodoc6300` | anyphotodoc6300 | anyphotodoc, anyphoto_doc_6300, dvd_benchmark | ✅ | Camera-captured dewarping (6,306 images), audit Grade D* |
 | `arabic-docs` | arabic_docs_ocr | arabic_docs, arabic-ocr | ✅ | Arabic OCR dataset |
 | `bhutan-afs` | bhutan_financial | bhutan_financial, bhutan-financial | ✅ | Bhutan annual financial statements |
 | `cc-ocr` | cc_ocr | cc_ocr, ccocr | ✅ | CJK mixed OCR |
@@ -55,8 +56,10 @@ title: Dataset Naming Standard
 | `dibco` | dibco | dibco-train | ✅ | Document binarization competition dataset |
 | `diqa-5000` | diqa | diqa_5000, diqa5000 | ✅ | Document IQA benchmark |
 | `doc3d` | doc3D-dataset | doc-3d, doc_3d, Doc3D | ✅ | Document 3D shape recovery (dewarping) |
+| `docalign12k` | docalign12k | doc_align_12k, docaligner | 🔄 | Document alignment/dewarping dataset (~12,000 paired images) |
 | `doclaynet` | doclaynet | doc-laynet | ✅ | DocLayNet layout dataset |
 | `docsynth` | docsynth300k | docsynth_300k, docsynth-300k | 🔄 | Synthetic documents (300K) |
+| `docreal` | docreal | doc_real, doc-real | ✅ | Real-world dewarping (200 images), audit Grade D* |
 | `dzongkha-digits` | dzongkha_digits | dzongkha-digits, dzongkha_digits | ✅ | Dzongkha handwritten digits (Tibetan script) |
 | `financebench` | financebench | finance-bench | 🔄 | Financial RAG QA |
 | `fintabnet` | fintabnet | fin-tab-net | ✅ | Financial tables |
@@ -91,6 +94,7 @@ title: Dataset Naming Standard
 | `pucit-ohul` | pucit_ohul_urdu | pucit_ohul, pucit-ohul-urdu | ✅ | PUCIT Urdu handwriting |
 | `realdae` | realdae | real-dae | ✅ | Real document auto-enhancement |
 | `rvl-cdip` | rvl_cdip | rvl_cdip, rvlcdip | ✅ | RVL-CDIP document classification |
+| `sd7k` | sd7k | sd_7k, docshadow_sd7k | ✅ | Document shadow removal (7,239 images), audit Grade D* |
 | `signatr6k` | signatr6k | signatr-6k, signature-6k | ✅ | Text segmentation (signatures) |
 | `siw13` | siw13 | siw-13, siw_13 | ✅ | Script identification words (13 scripts) |
 | `smartdoc-qa` | smartdoc-qa | smartdoc_qa | ✅ | Mobile capture quality assessment |
@@ -100,7 +104,9 @@ title: Dataset Naming Standard
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
+| `warpdoc` | warpdoc | warp_doc, warp-doc | ✅ | Document dewarping (1,020 images), audit Grade D* |
 | `wili-2018` | wili_2018 | wili2018, wili | ❌ | Wikipedia language ID (text-only) |
+| `wsrd` | wsrd | wsrd-dnsr, ntire_shadow | ✅ | Document shadow removal (4,500 images), audit Grade D* |
 | `yarmouk` | yarmouk_ocr_images | yarmouk_ocr, yarmouk-ocr | ✅ | Yarmouk Arabic OCR |
 
 **Status Legend**:
