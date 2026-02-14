@@ -1,0 +1,139 @@
+{
+  "dataset": "anyphotodoc6300",
+  "method": "vlm_category_inspection",
+  "vlm_model": "claude-opus-4-6",
+  "inspection_date": "2026-02-13",
+  "samples_per_category": 6,
+  "total_samples_inspected": 48,
+  "notes": "Category-level enrichments derived from stratified VLM inspection of 48 images (6 per category). Content flags represent observed prevalence rates. Language assigned only for clear single-language categories; mixed-language categories left as 'und' pending per-image VLM detection.",
+  "category_enrichments": {
+    "1": {
+      "category_name": "single_column",
+      "iso639_language": "und",
+      "language_notes": "Mixed English and Chinese scientific papers (~50/50). Per-image VLM needed.",
+      "languages_observed": ["en", "zh"],
+      "domain_level1": "SCI",
+      "domain_notes": "All 6 samples were scientific/academic papers (bioprinting, Bayesian, neural nets)",
+      "content_flags": {
+        "has_figure": 0.33,
+        "has_table": 0.0,
+        "has_formula": 0.50,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "2": {
+      "category_name": "complex_layout",
+      "iso639_language": "und",
+      "language_notes": "Mixed English, Traditional Chinese, Japanese (magazine/news). Per-image VLM needed.",
+      "languages_observed": ["en", "zh-Hant", "ja"],
+      "domain_level1": "UNK",
+      "domain_notes": "Mixed content: news, photography magazines, lifestyle articles",
+      "content_flags": {
+        "has_figure": 1.0,
+        "has_table": 0.0,
+        "has_formula": 0.0,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "3": {
+      "category_name": "invoice",
+      "iso639_language": "en",
+      "language_notes": "Predominantly English invoices (some Arabic bilingual). Commercial/trade invoices.",
+      "languages_observed": ["en", "ar"],
+      "domain_level1": "FIN",
+      "domain_notes": "Financial invoices and bills of lading (already correctly classified)",
+      "content_flags": {
+        "has_figure": 0.0,
+        "has_table": 1.0,
+        "has_formula": 0.0,
+        "has_handwriting": 0.0,
+        "has_signature": 0.33,
+        "has_code": 0.0
+      }
+    },
+    "4": {
+      "category_name": "education",
+      "iso639_language": "zh",
+      "language_notes": "Predominantly Chinese educational materials (exams, handwritten notes). Some English.",
+      "languages_observed": ["zh", "en"],
+      "domain_level1": "EDU",
+      "domain_notes": "Educational materials - exams, study notes, product instructions (already correctly classified)",
+      "content_flags": {
+        "has_figure": 0.50,
+        "has_table": 0.33,
+        "has_formula": 0.67,
+        "has_handwriting": 0.67,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "5": {
+      "category_name": "book",
+      "iso639_language": "zh",
+      "language_notes": "All Chinese - CCF journals, university textbooks, tech books",
+      "languages_observed": ["zh"],
+      "domain_level1": "TEC",
+      "domain_notes": "Chinese tech books and CCF (China Computer Federation) journal articles on computing, AI, privacy",
+      "content_flags": {
+        "has_figure": 1.0,
+        "has_table": 0.0,
+        "has_formula": 0.0,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "6": {
+      "category_name": "two_column",
+      "iso639_language": "und",
+      "language_notes": "Mixed English and Chinese two-column scientific papers (~33% en, ~67% zh). Per-image VLM needed.",
+      "languages_observed": ["en", "zh"],
+      "domain_level1": "SCI",
+      "domain_notes": "All 6 samples were scientific/academic papers (remote sensing, protein LLMs, optimization)",
+      "content_flags": {
+        "has_figure": 0.17,
+        "has_table": 0.0,
+        "has_formula": 0.67,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "7": {
+      "category_name": "magazine",
+      "iso639_language": "und",
+      "language_notes": "Mixed Chinese, English, German (ads, magazine articles). Per-image VLM needed.",
+      "languages_observed": ["zh", "en", "de"],
+      "domain_level1": "UNK",
+      "domain_notes": "Advertisements and magazine articles: watches, diving, food delivery, electronics",
+      "content_flags": {
+        "has_figure": 1.0,
+        "has_table": 0.0,
+        "has_formula": 0.0,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    },
+    "8": {
+      "category_name": "bill",
+      "iso639_language": "zh",
+      "language_notes": "All Chinese receipts, bills, tickets (bus, movie, restaurant, shopping)",
+      "languages_observed": ["zh"],
+      "domain_level1": "FIN",
+      "domain_notes": "Financial receipts and bills (already correctly classified)",
+      "content_flags": {
+        "has_figure": 0.0,
+        "has_table": 0.67,
+        "has_formula": 0.0,
+        "has_handwriting": 0.0,
+        "has_signature": 0.0,
+        "has_code": 0.0
+      }
+    }
+  }
+}
