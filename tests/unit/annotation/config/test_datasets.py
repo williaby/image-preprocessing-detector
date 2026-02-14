@@ -167,8 +167,25 @@ class TestDatasetConfigsRegistry:
         # OHR-Bench (1)
         assert "ohr-bench" in DATASET_CONFIGS
 
-        # Total count (46 datasets: 42 from monolith + 4 added later)
-        assert len(DATASET_CONFIGS) == 46
+        # Correction datasets (8)
+        assert "docalign12k" in DATASET_CONFIGS
+        assert "docreal" in DATASET_CONFIGS
+        assert "drccbi" in DATASET_CONFIGS
+        assert "staindoc" in DATASET_CONFIGS
+        assert "wsrd" in DATASET_CONFIGS
+
+        # Document datasets (2)
+        assert "document-haystack" in DATASET_CONFIGS
+        assert "markushgrapher" in DATASET_CONFIGS
+
+        # Layout datasets (1)
+        assert "indicdlp" in DATASET_CONFIGS
+
+        # Quality datasets (1)
+        assert "q-doc" in DATASET_CONFIGS
+
+        # Total count (58 datasets: 46 existing + 12 new)
+        assert len(DATASET_CONFIGS) == 58
 
     def test_all_keys_match_names(self) -> None:
         """Ensure registry keys match config names."""

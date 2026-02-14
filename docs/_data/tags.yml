@@ -268,6 +268,8 @@ allowed:
   - monitoring_drift
 
   # Data & Datasets (continued)
+  - ground_truth
+  - provenance
   - enrichment
   - domain_classification
   - metadata_enrichment
