@@ -303,7 +303,7 @@
 > - Character Error Rate (CER) on line transcriptions
 > - Word Error Rate (WER)
 > - Legibility classification accuracy
-
+>
 > **Note**: If paper contains no benchmark results, this subsection can be removed.
 
 ##### Legibility Assessment
@@ -364,7 +364,6 @@ This makes it ideal for **handwriting legibility training**.
 ###### 11.1 Quality Scorecard
 
 > **Audit Date**: 2026-02-14 | **Grade**: D (81.0/100) | **Auditor**: claude-opus-4-6
-
 > **Grade Cap**: B -> D (see notes below)
 
 | Dimension | Score | Weight | Notes |

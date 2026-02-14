@@ -114,7 +114,6 @@
 ###### 11.1 Quality Scorecard
 
 > **Audit Date**: 2026-02-14 | **Grade**: D (81.0/100) | **Auditor**: claude-opus-4-6
-
 > **Grade Cap**: B -> D (see notes below)
 
 | Dimension | Score | Weight | Notes |

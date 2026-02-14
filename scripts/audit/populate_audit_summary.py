@@ -23,10 +23,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
-import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Project root for resolving paths
@@ -161,7 +161,7 @@ def _format_weight(weight: float) -> str:
 
 def _build_scorecard_section(
     artifacts: AuditArtifacts,
-    h2: str,
+    _h2: str,
     h3: str,
 ) -> str:
     """Build the 11.1 Quality Scorecard subsection."""
@@ -172,9 +172,7 @@ def _build_scorecard_section(
     # Extract audit date from computed_at
     computed_at = sc.get("computed_at", "")
     audit_date = (
-        computed_at[:10]
-        if computed_at
-        else datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        computed_at[:10] if computed_at else datetime.now(tz=UTC).strftime("%Y-%m-%d")
     )
 
     grade = sc.get("grade", "?")
@@ -225,7 +223,7 @@ def _build_scorecard_section(
             continue
 
         # Add contextual notes for notable scores
-        if score_val == 0.0:
+        if math.isclose(score_val, 0.0):
             notes = "No cross-source data"
         elif score_val < 70:
             notes = "Below threshold"
@@ -559,7 +557,6 @@ def _adjust_heading_levels(section_content: str, target_prefix: str) -> str:
     """Adjust heading levels in the generated section to match the target doc."""
     # Default generation uses #### for h2 and ##### for h3
     default_h2 = "####"
-    default_h3 = "#####"
 
     if target_prefix == default_h2:
         return section_content

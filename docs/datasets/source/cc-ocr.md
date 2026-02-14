@@ -158,7 +158,6 @@ The following datasets have been downloaded for 10-class script detection traini
 ###### 11.1 Quality Scorecard
 
 > **Audit Date**: 2026-02-14 | **Grade**: D (79.2/100) | **Auditor**: claude-opus-4-6
-
 > **Grade Cap**: C -> D (see notes below)
 
 | Dimension | Score | Weight | Notes |

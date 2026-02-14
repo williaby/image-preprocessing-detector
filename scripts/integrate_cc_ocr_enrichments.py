@@ -174,15 +174,14 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         ("content_flags", "content_flags_confidence"),
     ]:
         c = data.get(ck, 0.0) or 0.0
-        cat = (
-            "hard_label"
-            if c >= 0.9
-            else "soft_label"
-            if c >= 0.7
-            else "active_learning"
-            if c >= 0.5
-            else "unreliable"
-        )
+        if c >= 0.9:
+            cat = "hard_label"
+        elif c >= 0.7:
+            cat = "soft_label"
+        elif c >= 0.5:
+            cat = "active_learning"
+        else:
+            cat = "unreliable"
         fields.append(
             {
                 "field": fn,

@@ -436,13 +436,13 @@ normalized_score = (5 - human_score) / 4
 | **OmniDocBench** | metadata | Multi-task evaluation | Multiple | Research |
 | **SmartDoc-QA** | 4,270 | Mobile capture QA | OCR accuracy (proxy) | Research |
 
-##### 11. Layer 2 Audit Summary
+## 11. Layer 2 Audit Summary
 
 > **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
 > after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
 > [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
-###### 11.1 Quality Scorecard
+### 11.1 Quality Scorecard
 
 > **Audit Date**: 2026-02-14 | **Grade**: B (82.6/100) | **Auditor**: claude-opus-4-6
 
@@ -456,7 +456,7 @@ normalized_score = (5 - human_score) / 4
 | VLM Accuracy | 85.0 | 10% |  |
 | **Overall** | **82.6** | | **Grade B** |
 
-###### 11.2 Key Defects
+### 11.2 Key Defects
 
 > **Total**: 3 defects (1 deferred, 2 open)
 
@@ -466,11 +466,11 @@ normalized_score = (5 - human_score) / 4
 | D02 | layout_detections | MEDIUM | OPEN | No layout detections available |
 | D03 | text_has_content | MEDIUM | DEFERRED | No text transcription labels available |
 
-###### 11.3 VLM Inspection Summary
+### 11.3 VLM Inspection Summary
 
 > **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
 
-###### 11.4 Cross-Dataset Findings
+### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
@@ -478,7 +478,7 @@ normalized_score = (5 - human_score) / 4
 
 ---
 
-##### Reliability & Bottlenecks
+#### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 1,000 | **Avg Min Confidence**: 0.000
 

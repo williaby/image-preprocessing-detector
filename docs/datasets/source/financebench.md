@@ -301,13 +301,13 @@ ds = load_dataset("PatronusAI/financebench")
 
 Generated augmented datasets with labels, ready for model training.
 
-##### 11. Layer 2 Audit Summary
+## 11. Layer 2 Audit Summary
 
 > **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
 > after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
 > [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
-###### 11.1 Quality Scorecard
+### 11.1 Quality Scorecard
 
 > **Audit Date**: 2026-02-14 | **Grade**: B (84.6/100) | **Auditor**: claude-opus-4-6
 
@@ -321,7 +321,7 @@ Generated augmented datasets with labels, ready for model training.
 | VLM Accuracy | 95.0 | 11% |  |
 | **Overall** | **84.6** | | **Grade B** |
 
-###### 11.2 Key Defects
+### 11.2 Key Defects
 
 > **Total**: 2 defects (2 open)
 
@@ -330,11 +330,11 @@ Generated augmented datasets with labels, ready for model training.
 | FB-D01 | layout_detections | HIGH | OPEN |  |
 | FB-D02 | text_has_content | MEDIUM | OPEN |  |
 
-###### 11.3 VLM Inspection Summary
+### 11.3 VLM Inspection Summary
 
 > **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
-###### 11.4 Cross-Dataset Findings
+### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
@@ -342,7 +342,7 @@ Generated augmented datasets with labels, ready for model training.
 
 ---
 
-##### Reliability & Bottlenecks
+#### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 54,120 | **Avg Min Confidence**: 0.000
 
