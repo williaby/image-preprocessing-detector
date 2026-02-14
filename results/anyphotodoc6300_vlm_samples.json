@@ -1,0 +1,488 @@
+{
+  "dataset": "anyphotodoc6300",
+  "per_category": 6,
+  "total_samples": 48,
+  "seed": 42,
+  "samples": [
+    {
+      "filename": "1_2_1_4_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_2_1_4_1.jpg",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 4,
+      "angle": 1
+    },
+    {
+      "filename": "1_3_1_7_1.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_3_1_7_1.JPG",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 3,
+      "lighting_condition": 1,
+      "doc_id": 7,
+      "angle": 1
+    },
+    {
+      "filename": "1_3_2_41_2.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_3_2_41_2.JPG",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 3,
+      "lighting_condition": 2,
+      "doc_id": 41,
+      "angle": 2
+    },
+    {
+      "filename": "1_2_2_15_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_2_2_15_2.jpg",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 2,
+      "lighting_condition": 2,
+      "doc_id": 15,
+      "angle": 2
+    },
+    {
+      "filename": "1_3_3_44_2.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_3_3_44_2.JPG",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 3,
+      "lighting_condition": 3,
+      "doc_id": 44,
+      "angle": 2
+    },
+    {
+      "filename": "1_1_3_35_1.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_1/1_1_3_35_1.JPG",
+      "layout_category": "single_column",
+      "layout_cat_id": 1,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 35,
+      "angle": 1
+    },
+    {
+      "filename": "2_2_2_5_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_2_2_5_2.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 2,
+      "lighting_condition": 2,
+      "doc_id": 5,
+      "angle": 2
+    },
+    {
+      "filename": "2_2_1_48_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_2_1_48_2.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 48,
+      "angle": 2
+    },
+    {
+      "filename": "2_1_3_50_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_1_3_50_2.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 50,
+      "angle": 2
+    },
+    {
+      "filename": "2_3_1_41_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_3_1_41_2.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 3,
+      "lighting_condition": 1,
+      "doc_id": 41,
+      "angle": 2
+    },
+    {
+      "filename": "2_2_3_34_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_2_3_34_2.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 2,
+      "lighting_condition": 3,
+      "doc_id": 34,
+      "angle": 2
+    },
+    {
+      "filename": "2_1_2_23_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_2/2_1_2_23_1.jpg",
+      "layout_category": "complex_layout",
+      "layout_cat_id": 2,
+      "warping_pattern": 1,
+      "lighting_condition": 2,
+      "doc_id": 23,
+      "angle": 1
+    },
+    {
+      "filename": "3_2_3_19_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_2_3_19_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 2,
+      "lighting_condition": 3,
+      "doc_id": 19,
+      "angle": 2
+    },
+    {
+      "filename": "3_1_3_22_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_1_3_22_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 22,
+      "angle": 2
+    },
+    {
+      "filename": "3_3_3_8_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_3_3_8_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 3,
+      "lighting_condition": 3,
+      "doc_id": 8,
+      "angle": 2
+    },
+    {
+      "filename": "3_2_1_2_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_2_1_2_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 2,
+      "angle": 2
+    },
+    {
+      "filename": "3_1_2_16_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_1_2_16_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 1,
+      "lighting_condition": 2,
+      "doc_id": 16,
+      "angle": 2
+    },
+    {
+      "filename": "3_1_1_15_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_3/3_1_1_15_2.jpg",
+      "layout_category": "invoice",
+      "layout_cat_id": 3,
+      "warping_pattern": 1,
+      "lighting_condition": 1,
+      "doc_id": 15,
+      "angle": 2
+    },
+    {
+      "filename": "4_2_1_41_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_2_1_41_1.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 41,
+      "angle": 1
+    },
+    {
+      "filename": "4_3_2_17_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_3_2_17_2.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 3,
+      "lighting_condition": 2,
+      "doc_id": 17,
+      "angle": 2
+    },
+    {
+      "filename": "4_1_1_32_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_1_1_32_1.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 1,
+      "lighting_condition": 1,
+      "doc_id": 32,
+      "angle": 1
+    },
+    {
+      "filename": "4_2_3_15_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_2_3_15_1.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 2,
+      "lighting_condition": 3,
+      "doc_id": 15,
+      "angle": 1
+    },
+    {
+      "filename": "4_2_2_42_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_2_2_42_1.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 2,
+      "lighting_condition": 2,
+      "doc_id": 42,
+      "angle": 1
+    },
+    {
+      "filename": "4_3_3_27_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_4/4_3_3_27_2.jpg",
+      "layout_category": "education",
+      "layout_cat_id": 4,
+      "warping_pattern": 3,
+      "lighting_condition": 3,
+      "doc_id": 27,
+      "angle": 2
+    },
+    {
+      "filename": "5_1_1_76_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_1_76_2.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 1,
+      "doc_id": 76,
+      "angle": 2
+    },
+    {
+      "filename": "5_1_2_31_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_2_31_2.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 2,
+      "doc_id": 31,
+      "angle": 2
+    },
+    {
+      "filename": "5_1_3_91_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_3_91_1.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 91,
+      "angle": 1
+    },
+    {
+      "filename": "5_1_1_17_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_1_17_2.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 1,
+      "doc_id": 17,
+      "angle": 2
+    },
+    {
+      "filename": "5_1_2_14_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_2_14_2.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 2,
+      "doc_id": 14,
+      "angle": 2
+    },
+    {
+      "filename": "5_1_3_86_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_5/5_1_3_86_2.jpg",
+      "layout_category": "book",
+      "layout_cat_id": 5,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 86,
+      "angle": 2
+    },
+    {
+      "filename": "6_3_2_47_2.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_3_2_47_2.JPG",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 3,
+      "lighting_condition": 2,
+      "doc_id": 47,
+      "angle": 2
+    },
+    {
+      "filename": "6_1_3_31_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_1_3_31_1.jpg",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 31,
+      "angle": 1
+    },
+    {
+      "filename": "6_2_3_1_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_2_3_1_1.jpg",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 2,
+      "lighting_condition": 3,
+      "doc_id": 1,
+      "angle": 1
+    },
+    {
+      "filename": "6_3_3_31_2.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_3_3_31_2.JPG",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 3,
+      "lighting_condition": 3,
+      "doc_id": 31,
+      "angle": 2
+    },
+    {
+      "filename": "6_3_1_30_2.JPG",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_3_1_30_2.JPG",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 3,
+      "lighting_condition": 1,
+      "doc_id": 30,
+      "angle": 2
+    },
+    {
+      "filename": "6_1_2_22_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_6/6_1_2_22_1.jpg",
+      "layout_category": "two_column",
+      "layout_cat_id": 6,
+      "warping_pattern": 1,
+      "lighting_condition": 2,
+      "doc_id": 22,
+      "angle": 1
+    },
+    {
+      "filename": "7_1_3_32_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_1_3_32_1.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 32,
+      "angle": 1
+    },
+    {
+      "filename": "7_2_1_26_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_2_1_26_1.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 26,
+      "angle": 1
+    },
+    {
+      "filename": "7_1_1_47_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_1_1_47_2.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 1,
+      "lighting_condition": 1,
+      "doc_id": 47,
+      "angle": 2
+    },
+    {
+      "filename": "7_3_1_50_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_3_1_50_1.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 3,
+      "lighting_condition": 1,
+      "doc_id": 50,
+      "angle": 1
+    },
+    {
+      "filename": "7_3_2_42_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_3_2_42_2.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 3,
+      "lighting_condition": 2,
+      "doc_id": 42,
+      "angle": 2
+    },
+    {
+      "filename": "7_2_3_23_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_7/7_2_3_23_1.jpg",
+      "layout_category": "magazine",
+      "layout_cat_id": 7,
+      "warping_pattern": 2,
+      "lighting_condition": 3,
+      "doc_id": 23,
+      "angle": 1
+    },
+    {
+      "filename": "8_2_2_26_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_2_2_26_2.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 2,
+      "lighting_condition": 2,
+      "doc_id": 26,
+      "angle": 2
+    },
+    {
+      "filename": "8_3_3_3_1.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_3_3_3_1.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 3,
+      "lighting_condition": 3,
+      "doc_id": 3,
+      "angle": 1
+    },
+    {
+      "filename": "8_3_1_18_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_3_1_18_2.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 3,
+      "lighting_condition": 1,
+      "doc_id": 18,
+      "angle": 2
+    },
+    {
+      "filename": "8_2_1_35_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_2_1_35_2.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 2,
+      "lighting_condition": 1,
+      "doc_id": 35,
+      "angle": 2
+    },
+    {
+      "filename": "8_1_3_47_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_1_3_47_2.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 1,
+      "lighting_condition": 3,
+      "doc_id": 47,
+      "angle": 2
+    },
+    {
+      "filename": "8_3_2_7_2.jpg",
+      "path": "/mnt/e/image_detection/01_base_data/correction/anyphotodoc6300/init_8/8_3_2_7_2.jpg",
+      "layout_category": "bill",
+      "layout_cat_id": 8,
+      "warping_pattern": 3,
+      "lighting_condition": 2,
+      "doc_id": 7,
+      "angle": 2
+    }
+  ]
+}
