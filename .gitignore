@@ -201,6 +201,9 @@ runs/
 # Audit results (generated per-dataset artifacts, not source code)
 scripts/audit/results/
 
+# Results (local analysis outputs, not tracked)
+results/
+
 # Generated/stale artifacts
 front-matter-report.json
 coverage.json
