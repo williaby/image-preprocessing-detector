@@ -116,6 +116,16 @@ DIBCO/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | Competition organizers |
+| **Quality Assurance** | DIBCO competition binarization ground truth masks |
+| **GT Label Coverage** | 100% |
+
 #### Dataset Statistics
 
 ##### 4.1 Split Coverage

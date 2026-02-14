@@ -106,6 +106,16 @@ Example: 10,20,100,20,100,40,10,40,Latin
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | ICDAR 2019 competition annotators |
+| **Quality Assurance** | Competition-grade annotation with multi-language expert review |
+| **GT Label Coverage** | 100% (train only; test GT not publicly released) |
+
 ---
 
 #### 3. Project Usage

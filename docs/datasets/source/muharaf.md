@@ -138,6 +138,16 @@
 
 **Parser Implementation Priority**: **HIGH** - Rich annotations (PAGE XML standard), expert transcriptions, full polygon support
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Historical Arabic manuscript line transcription |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage

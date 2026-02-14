@@ -61,6 +61,16 @@
 - **Note**: Excellent variety of real-world Arabic documents
 - **Parser**: ✅ `parse_arabic_docs_labels` (extracts category, language_code from folder structure)
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1/Tier 2 |
+| **Annotator Details** | Human (titles) + automatic (OCR extraction) |
+| **Quality Assurance** | Title annotation + OCR extraction |
+| **GT Label Coverage** | 100% |
+
 ---
 
 ##### Data Locations

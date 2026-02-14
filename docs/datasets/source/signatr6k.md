@@ -55,6 +55,16 @@
 - **Use Case**: Signature detection, document authentication IQA
 - **Complementary Datasets**: NIST SD-19 for general handwriting
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Text segmentation annotation for signature detection |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/handwriting/signatr6k/`

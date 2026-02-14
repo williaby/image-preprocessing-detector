@@ -103,6 +103,15 @@ Line 2: \sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6}
 
 **Legend**: ✅ Directly usable | ⚠️ Heuristic derivation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | LaTeX rendering pipeline, exact by construction |
+| **GT Label Coverage** | 100% |
+
 ##### 3. Project Usage
 
 - **Path**: `01_base_data/formulas/im2latex/`

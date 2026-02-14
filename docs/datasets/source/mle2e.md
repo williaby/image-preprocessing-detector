@@ -105,6 +105,16 @@ mle2e/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Scene text annotation with 4 scripts |
+| **GT Label Coverage** | 100% |
+
 ---
 
 #### 3. Project Usage

@@ -91,6 +91,15 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact - programmatic extraction from Word/LaTeX source) |
+| **Quality Assurance** | Automatic extraction from Word/LaTeX documents |
+| **GT Label Coverage** | 100% (all 278K images with table bounding boxes) |
+
 ##### Dataset Statistics
 
 ###### Split Coverage

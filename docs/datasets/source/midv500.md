@@ -83,6 +83,16 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 **Note**: Text values are in template files (one per document type). Frame JSONs contain only quad coordinates for document detection.
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Identity document text field annotation, 50 countries |
+| **GT Label Coverage** | 100% |
+
 ---
 
 ##### Reliability & Bottlenecks

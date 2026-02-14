@@ -81,6 +81,16 @@
 | **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
 | **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | NIST standard collection |
+| **Quality Assurance** | NIST handwriting collection protocol |
+| **GT Label Coverage** | 100% |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |

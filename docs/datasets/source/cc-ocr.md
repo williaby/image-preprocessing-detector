@@ -42,6 +42,16 @@
 | **Languages** | Chinese (Simplified + Traditional), English, Multilingual |
 | **Quality** | Professional annotation |
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | Benchmark annotators |
+| **Quality Assurance** | Multi-task benchmark annotation with professional review |
+| **GT Label Coverage** | 100% (all 7K images with multi-task annotations) |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/language/huggingface_downloads/CC-OCR/`

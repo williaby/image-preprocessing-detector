@@ -111,6 +111,16 @@ Each manifest contains an array of annotation objects:
 
 **Parser Implementation**: ✅ **Complete** - [`InvoicesKgParser`](../../src/image_preprocessing_detector/annotation/parsers/layout/invoices_kg.py)
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Invoice key-value extraction annotation |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 | Aspect | Details |

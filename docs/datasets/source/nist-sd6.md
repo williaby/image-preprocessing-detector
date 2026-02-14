@@ -93,6 +93,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 0/Tier 1 |
+| **Annotator Details** | NIST (synthesized forms + real handprint overlays) |
+| **Quality Assurance** | Standardized NIST collection protocol |
+| **GT Label Coverage** | 100% |
+
 ##### Dataset Statistics
 
 | Metric | Value |

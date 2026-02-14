@@ -104,6 +104,16 @@ Column 3: "Revised" - Cleaned/corrected transcription (preferred)
 
 **Legend**: ✅ Directly usable | ⚠️ May be present | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | Urdu handwriting collection |
+| **Quality Assurance** | Line-level transcription protocol |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 ##### 3a. Integration Status

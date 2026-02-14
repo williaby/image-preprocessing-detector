@@ -130,6 +130,15 @@ doc3d/data/doc3d/
 
 **Parser Status**: ℹ️ Not Implemented - P3 priority dataset, specialized 3D geometry GT not part of Project A core mission (IQA, layout-lite, routing). If dewarping preprocessing becomes required, revisit parser development.
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Synthetic 3D warped document generation, 7 GT types (depth, UV, normals) exact by construction |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 - **Path**: `01_base_data/camera_captured/doc3d/`

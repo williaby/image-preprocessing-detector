@@ -123,6 +123,16 @@
 
 **Parser**: `FunsdPlusParser` at `src/image_preprocessing_detector/annotation/parsers/layout/funsd_plus.py` handles HuggingFace Arrow format directly.
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Extended FUNSD annotation |
+| **GT Label Coverage** | 100% |
+
 ##### 3. Dataset Statistics
 
 | Metric | Value |

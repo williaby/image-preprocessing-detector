@@ -108,6 +108,16 @@ Parquet Schema (OCR-Quality.parquet):
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Crowdsourced |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Human quality rating process |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage

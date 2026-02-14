@@ -137,6 +137,17 @@ template_version: "1.4.0"
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | IBM Research expert annotators |
+| **Inter-Annotator Agreement** | ~90% IAA (reported by authors) |
+| **Quality Assurance** | Multi-stage review with domain experts |
+| **GT Label Coverage** | 100% (all 80K images labeled across 11 classes) |
+
 ##### File Format & Storage
 
 | Property | Value |

@@ -95,6 +95,15 @@ VLM inspection (2026-02-13): passing_sample_accuracy=0.95. Direct viewing of 3 s
 | L2 v1 | 2026-02-09 | Layer 2 metadata generated (80,008 samples) |
 | Audit v1 | 2026-02-13 | VLM inspection completed |
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact - programmatic text rendering) |
+| **Quality Assurance** | Labels exact by construction (synthetic generation) |
+| **GT Label Coverage** | 100% (all 80K images with paired text transcriptions) |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/language/hindi_ocr_synthetic/` Extracted (80,010 files, 920 MB)

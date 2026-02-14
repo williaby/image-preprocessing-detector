@@ -114,6 +114,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Research-specific | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Multi-task comprehensive benchmark annotation |
+| **GT Label Coverage** | 100% |
+
 #### Dataset Statistics
 
 | Metric | Value |

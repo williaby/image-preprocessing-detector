@@ -49,6 +49,15 @@
 - **Weaknesses**: Video keyframes may have compression artifacts, not traditional documents
 - **Complementary Datasets**: im2latex (formulas), MathVerse (geometry), DocLayNet (layout)
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | PDF extraction from textbook content |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/educational/`

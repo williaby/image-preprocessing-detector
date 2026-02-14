@@ -75,6 +75,15 @@
 | **Key Value** | **Only source for Tibetan & Hebrew scene text** |
 | **Domain Gap** | Street signs vs documents - requires augmentation |
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Quality Assurance** | Competition-grade script identification annotation |
+| **GT Label Coverage** | 100% (all 16K images with script class labels) |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/language/siw13/` ✅ Extracted

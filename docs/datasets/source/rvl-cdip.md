@@ -111,6 +111,16 @@ path/to/image/rvl_form_0002.tif 1
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available in source
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | 16-class document classification annotation |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage

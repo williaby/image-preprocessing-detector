@@ -59,6 +59,16 @@
 | **Text Sensitivity** | HIGH - Mathematical annotations |
 | **Key Challenge** | Fine line detection, geometric precision |
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 0/Tier 1 |
+| **Annotator Details** | Rendered math + human VQA annotation |
+| **Quality Assurance** | Math problem rendering + human verification |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `02_benchmark_only/mathverse/` (BENCHMARK - DO NOT TRAIN)

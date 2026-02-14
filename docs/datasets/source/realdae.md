@@ -109,6 +109,15 @@ Examples:
 | ❌ Quality scores | - | Low | Not provided, compute from pairing |
 | ❌ Layout boxes | - | Low | Not provided |
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Paired GT |
+| **Provenance Tier** | Tier 0 (Exact - paired camera-captured and scanner ground truth) |
+| **Quality Assurance** | Camera-captured documents paired with flatbed scanner ground truth |
+| **GT Label Coverage** | 100% (600 document pairs across 3 degradation tasks) |
+
 ##### Dataset Statistics
 
 | Metric | Value |

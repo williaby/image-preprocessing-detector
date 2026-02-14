@@ -101,6 +101,15 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact - programmatic document generation) |
+| **Quality Assurance** | Labels exact by construction (synthetic generation) |
+| **GT Label Coverage** | 100% (all 300K images with 74-class layout annotations) |
+
 ##### Dataset Statistics
 
 | Metric | Value |

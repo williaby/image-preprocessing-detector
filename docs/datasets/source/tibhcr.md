@@ -76,6 +76,16 @@ Numerals/3/3_0089.jpg, "༣"
 | ✅ Category type | `raw_labels.category` | Medium | Consonants/Vowels/Numerals/Punctuation |
 | ❌ Image quality | - | Low | Not provided |
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | 235 Tibetan writers |
+| **Quality Assurance** | Character-level collection with writer tracking |
+| **GT Label Coverage** | 100% |
+
 ##### Dataset Statistics
 
 | Metric | Value |

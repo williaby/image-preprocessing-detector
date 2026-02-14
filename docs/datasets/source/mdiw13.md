@@ -109,6 +109,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | Competition annotators |
+| **Quality Assurance** | Competition-grade multi-level script annotation |
+| **GT Label Coverage** | 100% (all 290K images with script class labels) |
+
 #### 3a. Project Usage
 
 - **Path**: `01_base_data/language/mdiw13/`

@@ -105,6 +105,16 @@ Created for the ICDAR 2019 Robust Reading Competition.
 }
 ```
 
+###### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | ICDAR 2019 competition annotators |
+| **Quality Assurance** | Competition-grade receipt annotation with text + entity extraction |
+| **GT Label Coverage** | 100% (all 973 receipt images with text regions and entities) |
+
 ---
 
 ##### 2. Project Usage

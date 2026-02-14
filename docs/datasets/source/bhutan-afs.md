@@ -54,6 +54,15 @@
 - **Complementary Datasets**: FinTabNet for financial diversity, DocLayNet for layout variety
 - **Phase 10A Role**: 125 government document samples for orientation detection training
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | None (Enrichment only) |
+| **Provenance Tier** | Tier 3 (Heuristic) |
+| **Quality Assurance** | No ground truth labels provided; metadata via Layer 2 enrichment only |
+| **GT Label Coverage** | 0% (no GT labels) |
+
 ##### Data Quality Notes
 
 - **Excluded Blank (3)**: AFS pages 3, 5, 125 - moved to `_excluded_blank/`

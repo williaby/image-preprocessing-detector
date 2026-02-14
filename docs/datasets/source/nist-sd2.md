@@ -119,6 +119,15 @@ _ICON_  ← Special token for non-text content (checkboxes, logos)
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Synthesized IRS 1040 tax forms, exact by construction |
+| **GT Label Coverage** | 100% |
+
 ##### 3. Project Usage
 
 | Aspect | Details |

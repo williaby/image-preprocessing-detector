@@ -94,6 +94,16 @@ cvsi/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Video scene text script annotation |
+| **GT Label Coverage** | 100% (all images with script class labels) |
+
 ##### 3. Project Usage
 
 ###### 3a. Storage Locations

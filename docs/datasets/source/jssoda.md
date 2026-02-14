@@ -43,6 +43,15 @@
 - **Critical Use**: **Japanese vertical text must be labeled as 0° (upright), not 270°**
 - **Phase 10A Role**: Provides 1,250 vertical text samples for orientation detection
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Synthetic Japanese OCR with orientation labels, exact by construction |
+| **GT Label Coverage** | 100% |
+
 ##### Data Locations
 
 | Data Type | Path | Status | Notes |

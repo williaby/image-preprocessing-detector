@@ -127,6 +127,17 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | Multiple human annotators |
+| **Inter-Annotator Agreement** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Scene text annotation with legibility and class attributes |
+| **GT Label Coverage** | 100% (all 64K images with text region annotations) |
+
 #### 3. Project Integration
 
 ##### 3a. Project Usage

@@ -134,6 +134,15 @@ template_version: "1.4.0"
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact - programmatic extraction from PDF/XML alignment) |
+| **Quality Assurance** | Automatic PDF/XML alignment with verification |
+| **GT Label Coverage** | 100% (all 568K table images with HTML structure labels) |
+
 ##### File Format & Storage
 
 | Property | Value |

@@ -125,6 +125,15 @@ WarpDoc/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Paired GT |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Warped/flat document pairs, 6 documented distortion types |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 | Aspect | Details |

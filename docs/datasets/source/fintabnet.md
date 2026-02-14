@@ -70,6 +70,15 @@
 - **Complementary Datasets**: TableBank (general), PubTabNet (scientific)
 - **Corrected Version**: FinTabNet.c (2023) - reduced oversegmentation, aligned with PubTables-1M
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact - programmatic extraction from financial PDFs) |
+| **Quality Assurance** | Automatic extraction from PDF-HTML document matching |
+| **GT Label Coverage** | 100% (all 97K images with cell position annotations) |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/tables/fintabnet/`

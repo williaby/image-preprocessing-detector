@@ -115,6 +115,17 @@ path,symbol_id,latex,user_id
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Crowdsourced |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | ~100K contributors via write-math.com |
+| **Inter-Annotator Agreement** | Crowd consensus (multiple contributors per symbol class) |
+| **Quality Assurance** | Crowdsource verification with contributor agreement filtering |
+| **GT Label Coverage** | 100% (all 168K symbol images with class labels) |
+
 ##### Dataset Statistics
 
 ###### 4.1 Split Coverage

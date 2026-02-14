@@ -89,6 +89,16 @@
 
 > **Blocker**: Parser enhancement blocked until Maryland annotations are acquired from TC-11 official distribution.
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | IIT-CDIP archival annotators |
+| **Quality Assurance** | Document classification annotation |
+| **GT Label Coverage** | 100% |
+
 ##### Dataset Statistics
 
 | Metric | Value |

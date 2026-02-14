@@ -99,6 +99,16 @@ VLM inspection (2026-02-13): passing_sample_accuracy=0.90. Content flags verifie
 | L2 v1 | 2026-02-09 | Layer 2 metadata generated (15,062 samples) |
 | Audit v1 | 2026-02-13 | VLM inspection completed |
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Arabic document OCR ground truth |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/language/yarmouk_ocr/` Extracted (16,734 files, 2.8 GB)

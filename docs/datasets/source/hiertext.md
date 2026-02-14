@@ -131,6 +131,17 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | Google Research team |
+| **Inter-Annotator Agreement** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Expert annotation review |
+| **GT Label Coverage** | 100% (all 11,639 images with hierarchical text annotations) |
+
 ##### Dataset Statistics
 
 | Metric | Value |

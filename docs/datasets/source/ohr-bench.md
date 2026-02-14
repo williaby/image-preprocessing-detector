@@ -123,6 +123,15 @@ documentation_status: complete
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact - programmatic extraction from born-digital PDFs) |
+| **Quality Assurance** | Born-digital PDF extraction (structured data preserved from source) |
+| **GT Label Coverage** | 100% (all 8,500 pages with structured ground truth) |
+
 ---
 
 #### 3. Project Usage

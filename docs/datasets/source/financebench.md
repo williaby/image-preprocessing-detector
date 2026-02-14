@@ -125,6 +125,15 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Born-digital financial PDF extraction |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 ##### 3a. Training Purpose & Dataset Statistics
