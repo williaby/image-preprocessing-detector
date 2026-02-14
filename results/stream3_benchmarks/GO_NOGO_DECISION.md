@@ -1,6 +1,6 @@
 # Stream 3: Go/No-Go Decision Report
 
-> Generated: 2026-02-14 12:45 UTC
+> Generated: 2026-02-14 18:42 UTC
 >
 > Phase 10 Stream 3 benchmarks heuristic detectors (Stream 2) against
 > real labeled datasets to determine if ML upgrades (Stream 4) are needed.
@@ -21,7 +21,7 @@
 
 ## Detailed Results
 
-### Script Detection (MLT-2019)
+### Script Detection (MLT-2019 + IndicDLP)
 
 **Dataset**: mlt19 | **Samples**: 2,000
 
@@ -82,7 +82,31 @@ Latn     244     0   123   472     0     0    15
 | Kore | 0.0000 | 0.0000 | 0.0000 | 142 |
 | Latn | 0.5769 | 0.0176 | 0.0341 | 854 |
 
-**Latency**: mean=2.3ms, p95=5.3ms
+**Supplementary: IndicDLP (12 Indic Languages)**:
+
+> Supplementary evaluation on 12 Indic languages. Does NOT affect Go/No-Go decision.
+
+**Samples**: 5,000
+
+- Family-level accuracy: 7.4%
+- Macro F1: 0.0326
+- Cohen's Kappa: 0.0066
+- ISO-level accuracy: 30.7%
+
+| Script (ISO) | Family Accuracy | Samples |
+|--------------|-----------------|---------|
+| Beng | 8.0% | 829 |
+| Deva | 13.1% | 892 |
+| Gujr | 10.8% | 437 |
+| Guru | 9.9% | 365 |
+| Knda | 1.8% | 458 |
+| Latn | 0.6% | 470 |
+| Mlym | 1.1% | 469 |
+| Orya | 17.7% | 435 |
+| Taml | 0.6% | 326 |
+| Telu | 3.5% | 319 |
+
+**Latency**: mean=2.5ms, p95=5.5ms
 
 **Go/No-Go**: FAIL (15.6% vs 80% target)
 **Recommended Action**: Train SigLIP2 script head (Stream 4)

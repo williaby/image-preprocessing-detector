@@ -222,6 +222,11 @@ def generate_detector_section(
         if "iso_level" in metrics:
             lines.extend(_format_classification_metrics(metrics["iso_level"], "ISO-Level"))
 
+        # IndicDLP supplementary (script detection only)
+        indicdlp = result.get("supplementary_indicdlp")
+        if indicdlp:
+            lines.extend(_format_indicdlp_section(indicdlp))
+
     elif "overall" in metrics:
         # Orientation - overall + breakdowns
         lines.extend(_format_classification_metrics(metrics["overall"], "Overall"))
@@ -362,6 +367,54 @@ def _format_classification_metrics(metrics: dict[str, Any], label: str) -> list[
                 f"{cls_metrics.get('support', 0)} |"
             )
 
+    return lines
+
+
+def _format_indicdlp_section(indicdlp: dict[str, Any]) -> list[str]:
+    """Format the IndicDLP supplementary evaluation section.
+
+    Args:
+        indicdlp: IndicDLP result sub-dict from script detection benchmark.
+
+    Returns:
+        Markdown lines.
+    """
+    lines: list[str] = [
+        "",
+        "**Supplementary: IndicDLP (12 Indic Languages)**:",
+        "",
+        f"> {indicdlp.get('note', '')}",
+        "",
+        f"**Samples**: {indicdlp.get('num_samples', 0):,}",
+        "",
+    ]
+
+    indic_metrics = indicdlp.get("metrics", {})
+    family = indic_metrics.get("family_level", {})
+    if family:
+        lines.extend([
+            f"- Family-level accuracy: {family.get('accuracy', 0):.1%}",
+            f"- Macro F1: {family.get('macro_f1', 0):.4f}",
+            f"- Cohen's Kappa: {family.get('cohens_kappa', 0):.4f}",
+        ])
+
+    iso = indic_metrics.get("iso_level", {})
+    if iso:
+        lines.extend([
+            f"- ISO-level accuracy: {iso.get('accuracy', 0):.1%}",
+        ])
+
+    # Per-language breakdown
+    per_lang = indicdlp.get("per_language", {})
+    if per_lang:
+        lines.extend(["", "| Script (ISO) | Family Accuracy | Samples |"])
+        lines.append("|--------------|-----------------|---------|")
+        for lang_iso, stats in sorted(per_lang.items()):
+            lines.append(
+                f"| {lang_iso} | {stats.get('accuracy', 0):.1%} | {stats.get('total', 0)} |"
+            )
+
+    lines.append("")
     return lines
 
 
@@ -515,7 +568,7 @@ def generate_report(results_dir: Path, output_path: Path) -> None:
     lines.append("")
 
     detector_display_names = {
-        "script_detection": "Script Detection (MLT-2019)",
+        "script_detection": "Script Detection (MLT-2019 + IndicDLP)",
         "document_source": "Document Source (SmartDoc-QA + Tobacco800 + DocReal)",
         "orientation": "Orientation Detection (synth_multiscript_v3)",
         "shadow": "Shadow Detection (SD7K + WSRD)",
