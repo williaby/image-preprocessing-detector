@@ -11,6 +11,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from collections import defaultdict
@@ -91,10 +92,15 @@ def create_contact_sheet(
     draw = ImageDraw.Draw(sheet)
 
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        title_font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16
+        _font_dir = Path("/usr") / "share" / "fonts" / "truetype" / "dejavu"
+        font_path = os.environ.get("CONTACT_SHEET_FONT") or str(
+            _font_dir / "DejaVuSans.ttf"
         )
+        font_bold_path = os.environ.get("CONTACT_SHEET_FONT_BOLD") or str(
+            _font_dir / "DejaVuSans-Bold.ttf"
+        )
+        font = ImageFont.truetype(font_path, 14)
+        title_font = ImageFont.truetype(font_bold_path, 16)
     except OSError:
         font = ImageFont.load_default()
         title_font = font

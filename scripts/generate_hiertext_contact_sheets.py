@@ -158,7 +158,10 @@ def generate_contact_sheet(
     draw = ImageDraw.Draw(sheet)
 
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
+        font_path = os.environ.get("CONTACT_SHEET_FONT") or str(
+            Path("/usr") / "share" / "fonts" / "truetype" / "dejavu" / "DejaVuSans.ttf"
+        )
+        font = ImageFont.truetype(font_path, 9)
     except OSError:
         font = ImageFont.load_default()
 
