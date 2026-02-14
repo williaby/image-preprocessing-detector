@@ -1,23 +1,55 @@
 {
   "migration_date": "2026-01-31",
   "migration_timestamp": "2026-01-31T12:00:27.229574+00:00",
+  "last_updated": "2026-02-14",
   "script_version": "1.0.0",
   "format_version": "full_nested_v2.0",
   "dry_run": false,
-  "total_datasets": 42,
-  "successful": 42,
+  "total_datasets": 52,
+  "successful": 52,
   "partial": 0,
   "skipped": 0,
   "failed": 0,
   "total_samples_migrated": 1638789,
   "total_samples_already_migrated": 0,
+  "audit_summary": {
+    "as_of": "2026-02-14",
+    "scorecard_config_version": "1.1.0",
+    "grade_distribution": {
+      "A": 11,
+      "B": 32,
+      "C": 0,
+      "D": 8,
+      "F": 1
+    },
+    "mean_score": 85.2,
+    "median_score": 85.9,
+    "datasets_at_b_plus": 43,
+    "datasets_below_b": 9,
+    "remaining_blockers": "8 datasets capped at Grade D due to critical field coverage <75% (domain_level1 or iso639_language). 1 dataset (iam) at Grade F due to missing base metadata. All require GPU-based enrichment."
+  },
   "results": [
+    {
+      "dataset": "anyphotodoc6300",
+      "status": "success",
+      "samples_total": 6306,
+      "samples_migrated": 6306,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "A",
+      "audit_score": 92.1,
+      "errors": [],
+      "validation_errors": []
+    },
     {
       "dataset": "arabic_docs_ocr",
       "status": "success",
       "samples_total": 8203,
       "samples_migrated": 8203,
       "samples_already_migrated": 0,
+      "audit_grade": "D",
+      "audit_score": 86.1,
+      "audit_cap": "domain_level1=0%",
       "errors": [],
       "validation_errors": []
     },
@@ -27,6 +59,8 @@
       "samples_total": 135,
       "samples_migrated": 135,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 83.5,
       "errors": [],
       "validation_errors": []
     },
@@ -36,6 +70,21 @@
       "samples_total": 6284,
       "samples_migrated": 6284,
       "samples_already_migrated": 0,
+      "audit_grade": "D",
+      "audit_score": 79.2,
+      "audit_cap": "domain_level1=0%",
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "cocotext",
+      "status": "success",
+      "samples_total": 63686,
+      "samples_migrated": 63686,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 86.3,
       "errors": [],
       "validation_errors": []
     },
@@ -45,6 +94,8 @@
       "samples_total": 10715,
       "samples_migrated": 10715,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 85.3,
       "errors": [],
       "validation_errors": []
     },
@@ -54,6 +105,8 @@
       "samples_total": 212,
       "samples_migrated": 212,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 86.4,
       "errors": [],
       "validation_errors": []
     },
@@ -63,6 +116,21 @@
       "samples_total": 5500,
       "samples_migrated": 5500,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 88.6,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "docalign12k",
+      "status": "success",
+      "samples_total": 12000,
+      "samples_migrated": 12000,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "D",
+      "audit_score": 76.4,
+      "audit_cap": "iso639_language=0%",
       "errors": [],
       "validation_errors": []
     },
@@ -72,6 +140,32 @@
       "samples_total": 81471,
       "samples_migrated": 81471,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 95.7,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "docreal",
+      "status": "success",
+      "samples_total": 200,
+      "samples_migrated": 200,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 88.1,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "dzongkha-digits",
+      "status": "success",
+      "samples_total": 1000,
+      "samples_migrated": 1000,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "A",
+      "audit_score": 92.6,
       "errors": [],
       "validation_errors": []
     },
@@ -81,6 +175,8 @@
       "samples_total": 54120,
       "samples_migrated": 54120,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 84.6,
       "errors": [],
       "validation_errors": []
     },
@@ -90,6 +186,8 @@
       "samples_total": 97475,
       "samples_migrated": 97475,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 87.1,
       "errors": [],
       "validation_errors": []
     },
@@ -99,6 +197,8 @@
       "samples_total": 149,
       "samples_migrated": 149,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 83.1,
       "errors": [],
       "validation_errors": []
     },
@@ -108,6 +208,8 @@
       "samples_total": 1139,
       "samples_migrated": 1139,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 86.4,
       "errors": [],
       "validation_errors": []
     },
@@ -117,6 +219,20 @@
       "samples_total": 168233,
       "samples_migrated": 168233,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 85.8,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "hiertext",
+      "status": "success",
+      "samples_total": 11639,
+      "samples_migrated": 11639,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 81.7,
       "errors": [],
       "validation_errors": []
     },
@@ -126,6 +242,8 @@
       "samples_total": 80008,
       "samples_migrated": 80008,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 92.4,
       "errors": [],
       "validation_errors": []
     },
@@ -135,6 +253,22 @@
       "samples_total": 1356,
       "samples_migrated": 1356,
       "samples_already_migrated": 0,
+      "audit_grade": null,
+      "audit_score": null,
+      "audit_note": "Subset dataset, no individual scorecard",
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "iam",
+      "status": "success",
+      "samples_total": 0,
+      "samples_migrated": 0,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "F",
+      "audit_score": 36.4,
+      "audit_note": "No base metadata generated yet. Requires GPU for DocLayout-YOLO.",
       "errors": [],
       "validation_errors": []
     },
@@ -144,6 +278,33 @@
       "samples_total": 10000,
       "samples_migrated": 10000,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 84.6,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "invoices-kg",
+      "status": "success",
+      "samples_total": 1414,
+      "samples_migrated": 1414,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 80.7,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "jssoda",
+      "status": "success",
+      "samples_total": 2000,
+      "samples_migrated": 2000,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "D",
+      "audit_score": 86.3,
+      "audit_cap": "domain_level1=65%",
       "errors": [],
       "validation_errors": []
     },
@@ -153,6 +314,9 @@
       "samples_total": 15000,
       "samples_migrated": 15000,
       "samples_already_migrated": 0,
+      "audit_grade": null,
+      "audit_score": null,
+      "audit_note": "Subset dataset, no individual scorecard",
       "errors": [],
       "validation_errors": []
     },
@@ -162,6 +326,8 @@
       "samples_total": 6940,
       "samples_migrated": 6940,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 86.2,
       "errors": [],
       "validation_errors": []
     },
@@ -171,6 +337,9 @@
       "samples_total": 290213,
       "samples_migrated": 290213,
       "samples_already_migrated": 0,
+      "audit_grade": "D",
+      "audit_score": 86.5,
+      "audit_cap": "domain_level1=0%",
       "errors": [],
       "validation_errors": []
     },
@@ -180,6 +349,8 @@
       "samples_total": 15050,
       "samples_migrated": 15050,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 82.1,
       "errors": [],
       "validation_errors": []
     },
@@ -189,6 +360,8 @@
       "samples_total": 1816,
       "samples_migrated": 1816,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 85.3,
       "errors": [],
       "validation_errors": []
     },
@@ -198,6 +371,8 @@
       "samples_total": 19657,
       "samples_migrated": 19657,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 90.9,
       "errors": [],
       "validation_errors": []
     },
@@ -207,6 +382,9 @@
       "samples_total": 3279,
       "samples_migrated": 3279,
       "samples_already_migrated": 0,
+      "audit_grade": null,
+      "audit_score": null,
+      "audit_note": "Subset dataset, no individual scorecard",
       "errors": [],
       "validation_errors": []
     },
@@ -216,6 +394,21 @@
       "samples_total": 1113,
       "samples_migrated": 1113,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 86.2,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "muharaf",
+      "status": "success",
+      "samples_total": 25711,
+      "samples_migrated": 25711,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "D",
+      "audit_score": 81.0,
+      "audit_cap": "domain_level1=50%",
       "errors": [],
       "validation_errors": []
     },
@@ -225,6 +418,8 @@
       "samples_total": 5,
       "samples_migrated": 5,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 86.9,
       "errors": [],
       "validation_errors": []
     },
@@ -234,6 +429,8 @@
       "samples_total": 5590,
       "samples_migrated": 5590,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 82.1,
       "errors": [],
       "validation_errors": []
     },
@@ -243,6 +440,8 @@
       "samples_total": 3669,
       "samples_migrated": 3669,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 84.0,
       "errors": [],
       "validation_errors": []
     },
@@ -252,6 +451,8 @@
       "samples_total": 5595,
       "samples_migrated": 5595,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 83.3,
       "errors": [],
       "validation_errors": []
     },
@@ -261,6 +462,8 @@
       "samples_total": 1000,
       "samples_migrated": 1000,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 82.6,
       "errors": [],
       "validation_errors": []
     },
@@ -270,6 +473,8 @@
       "samples_total": 8303,
       "samples_migrated": 8303,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 85.1,
       "errors": [],
       "validation_errors": []
     },
@@ -279,6 +484,9 @@
       "samples_total": 377,
       "samples_migrated": 377,
       "samples_already_migrated": 0,
+      "audit_grade": "D",
+      "audit_score": 81.8,
+      "audit_cap": "domain_level1=0%",
       "errors": [],
       "validation_errors": []
     },
@@ -288,6 +496,8 @@
       "samples_total": 519030,
       "samples_migrated": 519030,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 90.4,
       "errors": [],
       "validation_errors": []
     },
@@ -297,6 +507,8 @@
       "samples_total": 7401,
       "samples_migrated": 7401,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 83.9,
       "errors": [],
       "validation_errors": []
     },
@@ -306,6 +518,8 @@
       "samples_total": 583,
       "samples_migrated": 583,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 83.9,
       "errors": [],
       "validation_errors": []
     },
@@ -315,6 +529,20 @@
       "samples_total": 16000,
       "samples_migrated": 16000,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 87.2,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "sd7k",
+      "status": "success",
+      "samples_total": 7239,
+      "samples_migrated": 7239,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 87.2,
       "errors": [],
       "validation_errors": []
     },
@@ -324,6 +552,8 @@
       "samples_total": 12514,
       "samples_migrated": 12514,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 81.6,
       "errors": [],
       "validation_errors": []
     },
@@ -333,6 +563,9 @@
       "samples_total": 16291,
       "samples_migrated": 16291,
       "samples_already_migrated": 0,
+      "audit_grade": "D",
+      "audit_score": 81.0,
+      "audit_cap": "domain_level1=0%",
       "errors": [],
       "validation_errors": []
     },
@@ -342,6 +575,8 @@
       "samples_total": 4260,
       "samples_migrated": 4260,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 91.9,
       "errors": [],
       "validation_errors": []
     },
@@ -351,6 +586,8 @@
       "samples_total": 2043,
       "samples_migrated": 2043,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 95.7,
       "errors": [],
       "validation_errors": []
     },
@@ -360,6 +597,8 @@
       "samples_total": 10,
       "samples_migrated": 10,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 88.5,
       "errors": [],
       "validation_errors": []
     },
@@ -369,6 +608,8 @@
       "samples_total": 141698,
       "samples_migrated": 141698,
       "samples_already_migrated": 0,
+      "audit_grade": "B",
+      "audit_score": 84.5,
       "errors": [],
       "validation_errors": []
     },
@@ -378,6 +619,32 @@
       "samples_total": 1290,
       "samples_migrated": 1290,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 90.8,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "warpdoc",
+      "status": "success",
+      "samples_total": 1020,
+      "samples_migrated": 1020,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "B",
+      "audit_score": 85.1,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "wsrd",
+      "status": "success",
+      "samples_total": 4500,
+      "samples_migrated": 4500,
+      "samples_already_migrated": 0,
+      "migration_wave": "post-migration",
+      "audit_grade": "A",
+      "audit_score": 94.7,
       "errors": [],
       "validation_errors": []
     },
@@ -387,6 +654,8 @@
       "samples_total": 15062,
       "samples_migrated": 15062,
       "samples_already_migrated": 0,
+      "audit_grade": "A",
+      "audit_score": 92.7,
       "errors": [],
       "validation_errors": []
     }

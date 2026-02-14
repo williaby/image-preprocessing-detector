@@ -607,7 +607,7 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | muharaf | 25,711 | D 81 | ✅ |
 | mlt19 | 20,000 | **A** 91 | ✅ |
 | siw13 | 16,291 | D 81 | ✅ |
-| rvl_cdip | 16,000 | C 79 | ✅ |
+| rvl_cdip | 16,000 | **B** 87 | ✅ |
 | yarmouk_ocr | 15,062 | **A** 93 | ✅ |
 | midv500_data | 15,050 | -- | ✅ |
 | signatr6k | 12,514 | **B** 82 | ✅ |

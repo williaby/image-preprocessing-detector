@@ -11,7 +11,7 @@ tags:
 title: Dataset Processing Status
 ---
 
-> **Last Updated**: 2026-02-09
+> **Last Updated**: 2026-02-14
 > **Purpose**: Operational tracking of dataset processing pipeline
 > **Usage**: Check current state, identify blockers, track conversion progress
 > **Audience**: Development team working on dataset preparation
@@ -27,21 +27,21 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 37/48 datasets training-ready (77.1%), 1 benchmark-ready
+**Current Status**: 39/50 datasets training-ready (78.0%), 1 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 37 | 77.1% | Format standardized + labels extracted |
-| ✅ **Benchmark-Ready** | 1 | 2.1% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 8 | 16.7% | Format conversion, label extraction, or generating |
-| 📚 **Non-Image Corpus** | 1 | 2.1% | Text-only corpus (openlid-v2, used for generation) |
-| ❌ **Blocked** | 1 | 2.1% | Fundamental issue preventing use |
+| ✅ **Training-Ready** | 39 | 78.0% | Format standardized + labels extracted |
+| ✅ **Benchmark-Ready** | 1 | 2.0% | Evaluation-only (license restrictions) |
+| 🔄 **In Progress** | 7 | 14.0% | Format conversion, label extraction, or generating |
+| 📚 **Non-Image Corpus** | 1 | 2.0% | Text-only corpus (openlid-v2, used for generation) |
+| ❌ **Blocked** | 2 | 4.0% | Fundamental issue preventing use |
 
 ---
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (36 datasets)
+### ✅ Training-Ready (39 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -50,16 +50,20 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | arabic_docs_ocr | 10,045 | ✅ JPG | ✅ OCR text | ✅ Complete | Arabic word-level |
 | bhutan-afs | 125 | ✅ PNG | ✅ Extracted | ✅ Complete | Annual reports (10 excluded: 3 blank + 7 rotated) |
 | cc_ocr | 7,058 | ✅ PNG | ✅ OCR text (TSV) | ❌ Needs parser fix | CJK mixed (benchmark-only) |
+| cocotext | 63,686 | ✅ JPG | ✅ Word boxes + text | ✅ Complete | MS-COCO 2014 scene text |
 | cvsi | 10,715 | ✅ PNG | ✅ Scene text boxes | ✅ Complete | Video scene text |
 | diqa-5000 | 5,500 | ✅ JPG | ✅ MOS scores | ✅ Complete | IQA benchmark |
 | doclaynet | 80,863 | ✅ PNG | ✅ COCO boxes | ✅ Complete | 11 DocLayNet classes |
+| dzongkha-digits | 1,000 | ✅ PNG | ✅ Class labels | ✅ Complete | Dzongkha digit recognition |
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |
 | hasyv2 | 168,233 | ✅ PNG | ✅ Symbol labels | ✅ Complete | Math symbols |
+| hiertext | 11,639 | ✅ PNG | ✅ Word-level labels | ✅ Complete | Gold standard for graded handwriting |
 | hindi_ocr_synthetic | 80,009 | ✅ PNG | ✅ OCR text | ✅ Complete | Synthetic Hindi |
 | im2latex | 10,000 | ✅ PNG | ✅ Formula labels | ✅ Complete | Math formulas |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
+| jssoda | 2,000 | ✅ PNG | ✅ Manifest labels | ✅ Complete | Japanese signboard orientation |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
@@ -108,35 +112,28 @@ Datasets ready for benchmark evaluation but not for training (license restrictio
 
 ---
 
-### 🔄 In Progress (9 datasets)
+### 🔄 In Progress (7 datasets)
 
 Format conversion, label extraction, or generation currently underway.
 
 | Dataset | Images | Format Status | Labels Status | Blocker | Next Steps | ETA |
 |---------|--------|---------------|---------------|---------|------------|-----|
 | **synth-multiscript-250k** | 250,000 | 🔄 Generating | ✅ Auto-generated | Generation in progress (40/250K) | 1. Complete synthetic generation<br>2. Generated from OpenLID v2 text corpus<br>3. 27 scripts + 8 IQA dimensions | Week 2-3 |
-| **cocotext** | 63,686 | ✅ Images downloaded | ✅ Labels extracted | None | Images from MS-COCO 2014. Layer 2 audit: Grade B (83.3) | Complete |
 | **doc3d** | 100,000 | 🔄 ZIP→PNG (not extracted) | ✅ 7 GT types available | 16 ZIPs (209GB), user-defined splits | 1. Extract 16 ZIP files<br>2. Verify mesh ID structure<br>3. Decision: Parser needed? | Deferred (P3 priority) |
-| **hiertext** | 11,639 | ✅ Training-Ready | ✅ Word-level labels | None | Gold standard for graded handwriting | Complete |
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |
 | **iam** | 130,212 | ✅ Images Ready | ❌ Parser needed | 6.4 GB PNG already extracted | 1. Implement parser (XML + TXT formats)<br>2. Generate/locate split files<br>3. Extract to Layer 2 metadata | Week 2-3 |
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
 | **yarmouk_source** | Unknown | 🔄 PDF→PNG | ⚠️ Needs extraction | Original PDFs | 1. Convert source PDFs<br>2. Note: yarmouk_ocr already complete | Deprioritized |
-| **jssoda** | 2,000 | ✅ Images Ready | ✅ Available in manifest | Parser not implemented | 1. Implement manifest.json parser<br>2. Extract text + orientation metadata<br>3. Generate Layer 2 metadata | Week 2 |
-| **dzongkha-digits** | 1,000 | ✅ HuggingFace | ✅ Class labels | Local download pending | 1. Download from HuggingFace<br>2. Enhance parser for digit labels<br>3. Generate Layer 2 metadata | Week 2-3 |
 
 **Priority Order**:
 
 1. **P0 (SigLIP Training)**: synth-multiscript-250k (250,000 images) - script detection critical
-2. **P0 (IQA Training)**: ohr-bench (8,561 images) - already have labels
-3. **P1 (Text Detection)**: cocotext (63,686 images) - scene text critical
-4. **P1 (Handwriting)**: iam (130,212 images) - LARGEST handwriting corpus, parser needed
-5. **P2 (Financial)**: financebench (54,121 images) - financial domain coverage
-6. **P3 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
-7. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
-8. **P3 (Receipts)**: mobile_receipts (size unknown) - assess priority
-9. **P4 (Benchmark)**: omnidocbench (metadata framework) - complex, defer
+2. **P0 (Handwriting)**: iam (130,212 images) - LARGEST handwriting corpus, needs base metadata + parser
+3. **P2 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
+4. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
+5. **P3 (Receipts)**: mobile_receipts (size unknown) - assess priority
+6. **P4 (Benchmark)**: omnidocbench (metadata framework) - complex, defer
 
 ---
 
@@ -146,19 +143,19 @@ Paired ground truth datasets for document dewarping and shadow removal. All stor
 
 | Dataset | Images | Format Status | Labels Status | Blocker | Next Steps | ETA |
 |---------|--------|---------------|---------------|---------|------------|-----|
-| **anyphotodoc6300** | 6,306 | ✅ Training-Ready | ✅ Paired GT (corrected/distorted) | None | ✅ Complete: parser, L2 metadata, audit (D*) | Done |
-| **docalign12k** | ~12,000 | ❌ Blocked (download) | ✅ Paired GT (aligned/unaligned) | OneDrive auth | Manual OneDrive download required | Blocked |
-| **wsrd** | 4,500 | ✅ Training-Ready | ✅ Paired GT (shadow/shadow-free) | None | ✅ Complete: parser, L2 metadata, audit (D*) | Done |
-| **warpdoc** | 1,020 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (D*) | Done |
-| **docreal** | 200 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (D*) | Done |
-| **sd7k** | 7,239 | ✅ Training-Ready | ✅ Paired GT (shadow/shadow-free) | None | ✅ Complete: parser, L2 metadata, audit (D*) | Done |
+| **anyphotodoc6300** | 6,306 | ✅ Training-Ready | ✅ Paired GT (corrected/distorted) | None | ✅ Complete: parser, L2 metadata, audit (**A** 92) | Done |
+| **docalign12k** | ~12,000 | ✅ Training-Ready | ✅ Paired GT (aligned/unaligned) | Critical field cap | iso639_language=0% needs GPU enrichment | D 76 |
+| **wsrd** | 4,500 | ✅ Training-Ready | ✅ Paired GT (shadow/shadow-free) | None | ✅ Complete: parser, L2 metadata, audit (**A** 95) | Done |
+| **warpdoc** | 1,020 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (**B** 85) | Done |
+| **docreal** | 200 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (**B** 88) | Done |
+| **sd7k** | 7,239 | ✅ Training-Ready | ✅ Paired GT (shadow/shadow-free) | None | ✅ Complete: parser, L2 metadata, audit (**B** 87) | Done |
 
-**Status** (updated 2026-02-13):
+**Status** (updated 2026-02-14):
 
-- 5/6 datasets fully processed: parser, integration, L2 metadata, audit complete
-- All 5 scored Grade D* (VLM deferred; uncapped scores 79-82 = Grade C/B)
-- docalign12k blocked on OneDrive authentication (manual download needed)
-- Total correction images available: 19,265 (6,306 + 4,500 + 1,020 + 200 + 7,239)
+- 6/6 datasets fully processed: parser, integration, L2 metadata, VLM inspection, audit complete
+- Grades: 1A (anyphotodoc6300=92, wsrd=95), 3B (warpdoc=85, docreal=88, sd7k=87), 1D (docalign12k=76, critical field cap)
+- docalign12k capped at Grade D due to iso639_language=0% -- needs GPU-based language enrichment
+- Total correction images available: 31,265 (6,306 + 12,000 + 4,500 + 1,020 + 200 + 7,239)
 
 **Common Characteristics**:
 
@@ -179,12 +176,13 @@ Text-only corpora used for synthetic dataset generation.
 
 ---
 
-### ❌ Blocked (1 dataset)
+### ❌ Blocked (2 datasets)
 
 Fundamental issues preventing use for image-based training.
 
 | Dataset | Status | Issue | Resolution |
 |---------|--------|-------|------------|
+| **iam** | ❌ No base metadata | Images ready (130K PNG, 6.4GB) but no metadata generated | Run `annotate_base_metadata.py` on IAM images (requires GPU for DocLayout-YOLO). Audit grade: F (36.4) |
 | **wili_2018** | ❌ Text-only | No visual component (text corpus only) | **Cannot use for image training**. Useful for language ID if needed, but not applicable to visual IQA/layout tasks. |
 
 ---
@@ -572,6 +570,6 @@ Before marking a dataset as ✅ Training-Ready, complete:
 
 ---
 
-**Last Updated**: 2026-02-09
-**Next Review**: 2026-02-14 (weekly updates)
+**Last Updated**: 2026-02-14
+**Next Review**: 2026-02-21 (weekly updates)
 **Contact**: Data team for processing questions

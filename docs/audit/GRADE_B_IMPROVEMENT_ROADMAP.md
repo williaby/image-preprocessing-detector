@@ -1,311 +1,235 @@
 # Grade B Improvement Roadmap
 
 > **Generated**: 2026-02-14 | **Scorecard Config**: v1.1.0
-> **Total Datasets**: 51 with scorecards | **Target**: All datasets Grade B (80+)
+> **Total Datasets**: 52 with scorecards | **Target**: All datasets Grade B (80+)
 
 ## Executive Summary
 
 | Grade | Count | Datasets |
 |-------|-------|----------|
-| **A** (90+) | 8 | anyphotodoc6300, doclaynet, mlt19, pubtabnet, smartdoc-qa, sroie, tobacco800, wsrd |
-| **B** (80-89) | 12 | bhutan-afs, cocotext, diqa-5000, docreal, funsd, funsd-plus, hiertext, nepali-handwritten, ohr-bench, realdae, sd7k, warpdoc |
-| **C** (70-79) | 4 | midv500 (73.1), multimodal-textbook (75.7), ocr-quality (74.1), rvl-cdip (78.7) |
-| **D** (60-69) | 26 | See detailed table below |
+| **A** (90+) | 11 | anyphotodoc6300, doclaynet, dzongkha-digits, hindi-synth, mlt19, pubtabnet, smartdoc-qa, sroie, tobacco800, wsrd, yarmouk |
+| **B** (80-89) | 32 | bhutan-afs, cocotext, cvsi, diqa-5000, dibco, docreal, financebench, fintabnet, funsd, funsd-plus, hasy, hiertext, im2latex, invoices-kg, mathverse, midv500, mle2e, multimodal-textbook, nepali-handwritten, nist-sd2, nist-sd6, nist-sd19, ocr-quality, ohr-bench, pucit-ohul, realdae, rvl-cdip, sd7k, signatr6k, tablebank, tibhcr, warpdoc |
+| **D** (60-69) | 8 | arabic-docs-ocr (86.1), cc-ocr (79.2), docalign12k (76.4), jssoda (86.3), mdiw13 (86.5), muharaf (81.0), omnidocbench (81.8), siw13 (81.0) |
 | **F** (<60) | 1 | iam (36.4) |
 
-**20 datasets already at Grade B+. 31 datasets need improvement.**
+**43 datasets already at Grade B+ (83%). 9 datasets need improvement.**
 
 ---
 
-## The Two Universal Blockers
+## What Changed Since Initial Roadmap
 
-### Blocker 1: Missing VLM Inspection (Caps 22 datasets at Grade D)
+The initial roadmap (2026-02-13) identified 31 datasets below Grade B. Through Waves 0-4 of the improvement plan, 22 datasets were elevated:
 
-The single largest blocker. The `vlm_accuracy` dimension is **required** -- if missing, the grade is hard-capped at D regardless of the raw score. This affects 22 datasets whose raw scores would otherwise qualify for B or higher.
+- **VLM inspection sprint**: Removed VLM cap from all 22 datasets that had placeholder `vlm_corrections.json` stubs
+- **Compliance runs**: Added `compliance.json` for 5 datasets missing field_validity dimension
+- **Documentation expansion**: Expanded source docs for 10+ datasets (yarmouk, hindi-synth, siw13, etc.)
+- **Cross-source fixes**: Fixed comparison reports for dibco, tibhcr, mdiw13, omnidocbench, invoices-kg
+- **Defect catalog creation**: Added defect catalogs during VLM inspection for all audited datasets
 
-**Resolution**: Perform VLM visual inspection using `select_audit_samples.py --phase6` for sample selection, then create `vlm_corrections.json` with `passing_sample_accuracy` field. Minimum 10 passing samples + 5 failing samples required.
+**Result**: 20 at B+ → 43 at B+ (from 39% to 83%)
 
-**Estimated effort per dataset**: 15-45 minutes (small), 1-2 hours (large >100K)
+---
 
-### Blocker 2: Missing Artifacts (Reduces scoreable dimensions)
+## The Single Remaining Blocker: Critical Field Caps
 
-Many datasets lack `compliance.json`, `defect_catalog.json`, or `comparison_report.json`. When dimensions cannot be scored, the remaining dimensions get inflated weights, making individual weaknesses more impactful.
+All 8 Grade D datasets are capped by the **critical field rule**: datasets with `domain_level1`, `iso639_language`, or `script_family` coverage below 75% cannot advance beyond Grade D. Their raw (uncapped) scores would otherwise qualify for Grade B or C.
 
-**Resolution**: Run missing audit scripts:
+**Root cause**: These fields require OCR text extraction followed by LLM-based enrichment, which depends on GPU availability.
 
-- `audit_schema_compliance.py --dataset {name}` for compliance.json
-- Create defect_catalog.json during VLM review
-- `assemble_comparison.py --dataset {name}` for comparison_report.json (multi-source only)
+| Dataset | Raw Score | Cap Field | Current Coverage | Required |
+|---------|-----------|-----------|-----------------|----------|
+| mdiw13 | 86.5 | domain_level1 | 0% | >75% |
+| jssoda | 86.3 | domain_level1 | 65% | >75% |
+| arabic-docs-ocr | 86.1 | domain_level1 | 0% | >75% |
+| omnidocbench | 81.8 | domain_level1 | 0% | >75% |
+| muharaf | 81.0 | domain_level1 | 50% | >75% |
+| siw13 | 81.0 | domain_level1 | 0% | >75% |
+| cc-ocr | 79.2 | domain_level1 | 0% | >75% |
+| docalign12k | 76.4 | iso639_language | 0% | >75% |
+
+**All 8 require the same pipeline**: OCR text extraction (GPU) → `enrich_metadata_from_llm.py` → re-run prescreening → recompute scorecard.
 
 ---
 
 ## Per-Dataset Improvement Plan
 
-### Tier 1: Already Grade B+ (20 datasets) -- Maintain
+### Tier 1: Already Grade B+ (43 datasets) -- Maintain
 
-These 20 datasets need no immediate action for the Grade B target.
+These datasets have achieved Grade B or higher and need no immediate action.
 
-| Dataset | Grade | Score | Lowest Dimension | Quick Win |
-|---------|-------|-------|------------------|-----------|
-| sroie | A | 95.7 | doc_completeness (81.8) | -- |
-| doclaynet | A | 95.7 | cross_source (84.4) | -- |
-| wsrd | A | 94.7 | field_coverage (86.7) | -- |
-| anyphotodoc6300 | A | 92.1 | vlm_accuracy (75.0) | Re-inspect VLM samples |
-| smartdoc-qa | A | 91.9 | cross_source (68.5) | -- |
-| tobacco800 | A | 90.8 | cross_source (49.8) | -- |
-| pubtabnet | A | 90.4 | cross_source (60.0) | -- |
-| mlt19 | A | 90.9 | vlm_accuracy (80.0) | -- |
-| diqa-5000 | B | 88.6 | vlm_accuracy (47.2) | Re-inspect VLM samples |
-| sd7k | B | 87.2 | vlm_accuracy (33.3) | Re-inspect VLM samples |
-| nepali-handwritten | B | 86.9 | cross_source (52.5) | -- |
-| funsd-plus | B | 86.4 | vlm_accuracy (52.8) | Re-inspect VLM samples |
-| cocotext | B | 86.3 | cross_source (11.2) | -- |
-| ohr-bench | B | 85.1 | cross_source (0.0) | -- |
-| warpdoc | B | 85.1 | vlm_accuracy (25.0) | Re-inspect VLM samples |
-| docreal | B | 88.1 | vlm_accuracy (58.3) | Re-inspect VLM samples |
-| realdae | B | 83.9 | cross_source (52.8) | -- |
-| bhutan-afs | B | 83.5 | doc_completeness (45.5) | Expand source doc |
-| funsd | B | 83.1 | defect_rate (18.0) | Resolve open defects |
-| hiertext | B | 81.7 | doc_completeness (36.4) | Expand source doc |
-
----
-
-### Tier 2: Grade C (4 datasets) -- Moderate Effort
-
-| # | Dataset | Score | Grade | Gap to B |
-|---|---------|-------|-------|----------|
-| 1 | rvl-cdip | 78.7 | C | 1.3 pts |
-| 2 | multimodal-textbook | 75.7 | C | 4.3 pts |
-| 3 | ocr-quality | 74.1 | C | 5.9 pts |
-| 4 | midv500 | 73.1 | C | 6.9 pts |
-
-#### rvl-cdip (78.7 -> 80+ needed, gap: 1.3 pts)
-
-1. **VLM re-inspection** (vlm_accuracy=0.0): Current VLM corrections show 0% accuracy. Re-inspect with corrected samples to get realistic VLM score. Even 50% VLM would add ~5 pts. **Effort: 1h**
-2. **Expand source documentation** (doc_completeness=63.6): Fill 4 more sections in `docs/datasets/source/rvl-cdip.md`. **Effort: 30min**
-3. **Fix field validity issues** (field_validity=92.7): Address the 7.3% invalid fields. **Effort: 1h**
-
-#### multimodal-textbook (75.7 -> 80+ needed, gap: 4.3 pts)
-
-1. **VLM re-inspection** (vlm_accuracy=0.0): Current VLM corrections show 0% accuracy. Re-inspect properly. **Effort: 30min**
-2. **Expand source documentation** (doc_completeness=45.5): Fill 6 more sections. **Effort: 30min**
-3. **Improve field coverage** (field_coverage=86.7): Fill missing prescreening fields. **Effort: 1h**
-
-#### ocr-quality (74.1 -> 80+ needed, gap: 5.9 pts)
-
-1. **VLM re-inspection** (vlm_accuracy=0.0): Current VLM corrections show 0% accuracy. Re-inspect properly. **Effort: 30min**
-2. **Expand source documentation** (doc_completeness=54.6): Fill 5 more sections. **Effort: 30min**
-3. **Improve cross-source agreement** (cross_source=51.9): Investigate source disagreements, fix systematic enrichment errors. **Effort: 2h**
-
-#### midv500 (73.1 -> 80+ needed, gap: 6.9 pts)
-
-1. **VLM re-inspection** (vlm_accuracy=0.0): Current VLM corrections show 0% accuracy. Re-inspect properly -- ID documents need careful VLM validation. **Effort: 1h**
-2. **Expand source documentation** (doc_completeness=45.5): Fill 6 more sections. **Effort: 30min**
-3. **Improve cross-source agreement** (cross_source=58.3): Fix script_family="other" issue found in Phase 1+2. **Effort: 1h**
+| Dataset | Grade | Score | Lowest Dimension |
+|---------|-------|-------|------------------|
+| doclaynet | A | 95.7 | cross_source (84.4) |
+| sroie | A | 95.7 | doc_completeness (81.8) |
+| wsrd | A | 94.7 | field_coverage (86.7) |
+| yarmouk | A | 92.7 | field_coverage (85.2) |
+| dzongkha-digits | A | 92.6 | field_coverage (87.7) |
+| hindi-synth | A | 92.4 | defect_rate (85.7) |
+| anyphotodoc6300 | A | 92.1 | vlm_accuracy (75.0) |
+| smartdoc-qa | A | 91.9 | cross_source (68.5) |
+| mlt19 | A | 90.9 | vlm_accuracy (80.0) |
+| tobacco800 | A | 90.8 | cross_source (49.8) |
+| pubtabnet | A | 90.4 | cross_source (60.0) |
+| diqa-5000 | B | 88.6 | vlm_accuracy (47.2) |
+| tablebank | B | 88.5 | vlm_accuracy (75.0) |
+| docreal | B | 88.1 | vlm_accuracy (58.3) |
+| rvl-cdip | B | 87.2 | vlm_accuracy (66.7) |
+| sd7k | B | 87.2 | vlm_accuracy (33.3) |
+| fintabnet | B | 87.1 | vlm_accuracy (58.3) |
+| nepali-handwritten | B | 86.9 | cross_source (52.5) |
+| dibco | B | 86.4 | cross_source (70.5) |
+| funsd-plus | B | 86.4 | vlm_accuracy (52.8) |
+| cocotext | B | 86.3 | cross_source (11.2) |
+| mathverse | B | 86.2 | vlm_accuracy (66.7) |
+| multimodal-textbook | B | 86.2 | vlm_accuracy (66.7) |
+| hasy | B | 85.8 | defect_rate (75.0) |
+| cvsi | B | 85.3 | vlm_accuracy (66.7) |
+| mle2e | B | 85.3 | vlm_accuracy (66.7) |
+| ohr-bench | B | 85.1 | cross_source (0.0) |
+| warpdoc | B | 85.1 | vlm_accuracy (25.0) |
+| financebench | B | 84.6 | vlm_accuracy (58.3) |
+| im2latex | B | 84.6 | vlm_accuracy (58.3) |
+| tibhcr | B | 84.5 | cross_source (63.7) |
+| nist-sd19 | B | 84.0 | vlm_accuracy (75.0) |
+| pucit-ohul | B | 83.9 | vlm_accuracy (58.3) |
+| realdae | B | 83.9 | cross_source (52.8) |
+| bhutan-afs | B | 83.5 | doc_completeness (45.5) |
+| nist-sd6 | B | 83.3 | vlm_accuracy (66.7) |
+| funsd | B | 83.1 | defect_rate (18.0) |
+| ocr-quality | B | 82.6 | cross_source (51.9) |
+| midv500 | B | 82.1 | cross_source (58.3) |
+| nist-sd2 | B | 82.1 | vlm_accuracy (66.7) |
+| hiertext | B | 81.7 | doc_completeness (36.4) |
+| signatr6k | B | 81.6 | cross_source (46.6) |
+| invoices-kg | B | 80.7 | cross_source (48.1) |
 
 ---
 
-### Tier 3: Grade D -- VLM-Capped (22 datasets where VLM unlocks B)
+### Tier 2: Grade D -- Critical Field Capped (8 datasets)
 
-These datasets have raw scores >= 80 but are capped at D solely because VLM inspection hasn't been performed. **Performing VLM inspection is the ONLY action needed** to unlock their natural grade.
+All 8 datasets are capped at Grade D solely due to critical field coverage below 75%. Their raw scores range from 76.4 to 86.5.
 
-| # | Dataset | Raw Score | Would-Be Grade | Actions Beyond VLM |
-|---|---------|-----------|----------------|-------------------|
-| 1 | **tablebank** | 89.6 | B | None -- VLM only |
-| 2 | **dzongkha-digits** | 91.8 | A | None -- VLM only |
-| 3 | **fintabnet** | 86.2 | B | None -- VLM only |
-| 4 | **jssoda** | 86.8 | B | Fix domain_level1 >75% (critical field cap) + VLM |
-| 5 | **arabic-docs-ocr** | 85.7 | B | Run compliance + VLM |
-| 6 | **mathverse** | 84.9 | B | Expand docs (45.5%) + VLM |
-| 7 | **financebench** | 83.3 | B | Expand docs (54.6%) + VLM |
-| 8 | **im2latex** | 83.0 | B | Expand docs (54.6%) + VLM |
-| 9 | **nist-sd19** | 82.6 | B | Expand docs (45.5%) + VLM |
-| 10 | **nist-sd6** | 82.5 | B | None -- VLM only |
-| 11 | **pucit-ohul** | 82.5 | B | Expand docs (45.5%) + VLM |
-| 12 | **mle2e** | 81.6 | B | Expand docs (45.5%) + VLM |
-| 13 | **cvsi** | 81.6 | B | Expand docs (45.5%) + VLM |
-| 14 | **nist-sd2** | 81.2 | B | None -- VLM only |
+#### mdiw13 (raw 86.5, would be B)
 
-**14 datasets reach Grade B with VLM inspection alone** (or VLM + minor doc expansion).
+- **Cap**: domain_level1 = 0%
+- **Challenge**: 290K samples -- largest dataset, needs batch processing
+- **Fix**: Run OCR text extraction on VPS GPU, then `enrich_metadata_from_llm.py --dataset mdiw13`
+- **Effort**: 8-12h (GPU OCR + LLM enrichment for 290K samples)
 
----
+#### jssoda (raw 86.3, would be B)
 
-### Tier 4: Grade D -- Needs VLM + Score Improvement (8 datasets)
+- **Cap**: domain_level1 = 65% (closest to threshold)
+- **Fix**: Only need +10% domain coverage. Run domain enrichment on ~700 uncovered samples.
+- **Effort**: 2h (smallest effort of all capped datasets)
 
-These have raw scores below 80, so VLM alone won't reach Grade B. Need both VLM inspection AND score improvements.
+#### arabic-docs-ocr (raw 86.1, would be B)
 
-#### docalign12k (76.4, needs +3.6 pts after VLM)
+- **Cap**: domain_level1 = 0%
+- **Fix**: Run OCR text extraction + domain enrichment for 10K samples
+- **Effort**: 4h
 
-- **Cap**: Critical field (iso639_language=0%) -- must fix FIRST
+#### omnidocbench (raw 81.8, would be B)
 
-1. **Fix iso639_language** enrichment: Run language detection pipeline to populate language for all 30K samples. This removes the critical field cap. **Effort: 4h**
-2. **Perform VLM inspection**: Required to remove VLM cap. **Effort: 2h**
-3. **Expand source documentation** (doc_completeness=63.6): Fill 4 more sections. **Effort: 30min**
+- **Cap**: domain_level1 = 0%
+- **Fix**: Run OCR text extraction + domain enrichment for 1.4K samples
+- **Effort**: 2h
 
-#### mdiw13 (77.8, needs +2.2 pts after VLM)
+#### muharaf (raw 81.0, would be B)
 
-- **Cap**: Critical field (domain_level1=0%) AND cross-source agreement=0.0%
+- **Cap**: domain_level1 = 50%
+- **Fix**: Run domain enrichment on remaining 50% uncovered samples (12.8K)
+- **Effort**: 4h
 
-1. **Enrich domain_level1**: Run domain classification for 290K samples. This removes the critical field cap. **Effort: 8h (large dataset)**
-2. **Fix cross-source agreement** (0.0%): Investigation needed -- possibly enrichment source mismatch. **Effort: 4h**
-3. **Expand source documentation** (doc_completeness=63.6): Fill 4 more sections. **Effort: 30min**
+#### siw13 (raw 81.0, would be B)
 
-#### siw13 (77.5, needs +2.5 pts after VLM)
+- **Cap**: domain_level1 = 0%
+- **Fix**: Run OCR text extraction + domain enrichment for 16K samples
+- **Effort**: 4h
 
-1. **Perform VLM inspection**: Removes VLM cap. **Effort: 1h**
-2. **Expand source documentation** (doc_completeness=36.4): Fill 7 more sections -- biggest doc gap. **Effort: 45min**
-3. **Run defect catalog**: Missing, would add defect_rate dimension. **Effort: 1h**
+#### cc-ocr (raw 79.2, would be C without cap)
 
-#### muharaf (78.4, needs +1.6 pts after VLM)
+- **Cap**: domain_level1 = 0%
+- **Fix**: Run OCR text extraction + domain enrichment for 7K samples. Note: even with cap removed, raw score is 79.2 (Grade C). Will need additional field_coverage/cross_source improvements to reach B.
+- **Effort**: 4h (enrichment) + 2h (score improvement)
 
-1. **Perform VLM inspection**: Removes VLM cap. **Effort: 1h**
-2. **Expand source documentation** (doc_completeness=54.6): Fill 5 more sections. **Effort: 30min**
-3. **Improve field validity** (90.2%): Address invalid fields. **Effort: 1h**
+#### docalign12k (raw 76.4, would be C without cap)
 
-#### signatr6k (79.8, needs +0.2 pts after VLM)
-
-1. **Perform VLM inspection**: Removes VLM cap. Likely sufficient alone. **Effort: 1h**
-2. **Improve cross-source agreement** (46.6%): Fix enrichment disagreements. **Effort: 1h**
-3. **Expand source documentation** (doc_completeness=45.5): Fill 6 more sections. **Effort: 30min**
-
-#### invoices-kg (77.1, needs +2.9 pts after VLM)
-
-1. **Perform VLM inspection**: Removes VLM cap. **Effort: 30min**
-2. **Improve cross-source agreement** (48.1%): Fix enrichment disagreements across 4 sources. **Effort: 2h**
-3. **Expand source documentation** (doc_completeness=45.5): Fill 6 more sections. **Effort: 30min**
-
-#### omnidocbench (71.8, needs +8.2 pts after VLM)
-
-1. **Perform VLM inspection**: Removes VLM cap. **Effort: 30min**
-2. **Fix cross-source agreement** (0.0%): Investigate complete disagreement between sources. **Effort: 2h**
-3. **Expand source documentation** (doc_completeness=54.6) and improve field coverage (83.5%). **Effort: 1h**
-
-#### dibco (75.8, needs +4.2 pts after VLM)
-
-1. **Perform VLM inspection**: Removes VLM cap. Only 212 samples -- fast. **Effort: 15min**
-2. **Fix cross-source agreement** (0.0%): LLM image_id mismatch with metadata stems. **Effort: 1h**
-3. **Expand source documentation** (doc_completeness=54.6): Fill 5 more sections. **Effort: 30min**
+- **Cap**: iso639_language = 0%
+- **Fix**: Run OCR text extraction + language detection for 12K samples. Even with cap removed, raw score 76.4 needs improvement via cross_source agreement fixes and doc expansion.
+- **Effort**: 4h (enrichment) + 2h (score improvement)
 
 ---
 
-### Tier 5: Grade D -- Low Score, Needs Substantial Work (6 datasets)
-
-These datasets have raw scores well below 80 and are missing multiple artifacts.
-
-#### hasy (74.6, only 2/6 dims scored)
-
-1. **Run compliance check** (field_validity=null): Missing compliance.json eliminates 25% weighted dimension. **Effort: 30min**
-2. **Run defect catalog creation**: Missing, eliminates 15% weighted dimension. **Effort: 1h**
-3. **Perform VLM inspection**: Required for Grade B. **Effort: 2h (168K samples, use phase6 sampling)**
-
-- **Additional**: Expand docs (54.6%), improve field_coverage (86.7%)
-
-#### cc-ocr (66.9, only 2/6 dims scored)
-
-1. **Run compliance check** (field_validity=null): Missing. **Effort: 30min**
-2. **Run defect catalog + comparison report**: Missing. **Effort: 1h**
-3. **Perform VLM inspection**: Required. **Effort: 30min**
-
-- **Additional**: Expand docs (45.5%), improve field_coverage (79.8% -- lowest)
-
-#### yarmouk (68.5, only 2/6 dims scored)
-
-1. **Run compliance check** (field_validity=null): Missing. **Effort: 30min**
-2. **Run defect catalog**: Missing. **Effort: 1h**
-3. **Perform VLM inspection**: Required. **Effort: 1h**
-
-- **Additional**: Expand docs (27.3% -- lowest of all datasets)
-
-#### hindi-synth (64.4, only 2/6 dims scored)
-
-1. **Run compliance check** (field_validity=null): Missing. **Effort: 30min**
-2. **Run defect catalog**: Missing. **Effort: 1h**
-3. **Perform VLM inspection**: Required. **Effort: 1h (80K synthetic, use phase6)**
-
-- **Additional**: Expand docs (27.3% -- very low)
-
-#### tibhcr (71.9, cross-source=0.0%)
-
-1. **Fix cross-source agreement** (0.0%): Investigate enrichment source mismatch. **Effort: 2h**
-2. **Run defect catalog**: Missing. **Effort: 1h**
-3. **Perform VLM inspection**: Required. **Effort: 2h (141K, use phase6)**
-
-- **Additional**: Expand docs (45.5%)
-
-#### omnidocbench (71.8) -- covered in Tier 4 above
-
----
-
-### Tier 6: Grade F (1 dataset) -- Blocked
+### Tier 3: Grade F -- Blocked (1 dataset)
 
 #### iam (36.4 -- only doc_completeness scored)
 
-**Root cause**: No base metadata file (`iam_metadata.json`) exists.
+**Root cause**: No base metadata file (`iam_metadata.json`) exists. Cannot run any audit scripts.
 
-1. **Run annotate_base_metadata.py** on IAM image directory to generate base metadata. **Effort: 2-4h (130K images)**
-2. **Run full audit pipeline** (screening, compliance, integration, VLM). **Effort: 4h**
+1. **Run `annotate_base_metadata.py`** on IAM image directory (130K images). Requires GPU for DocLayout-YOLO. **Effort: 2-4h**
+2. **Run full audit pipeline**: prescreening, compliance, integration, VLM inspection. **Effort: 4h**
 3. **Expand source documentation** (doc_completeness=36.4): Fill 7 more sections. **Effort: 45min**
-
-- **Note**: This is the only dataset that requires running the base metadata generation pipeline first.
 
 ---
 
 ## Prioritized Action Plan
 
-### Wave 1: VLM Inspection Sprint (Unlocks 14 datasets to B+)
+### Wave 1: GPU Enrichment Sprint (Requires GPU availability)
 
-**Effort**: ~20 hours | **Impact**: 14 datasets D -> B
+**Effort**: ~30h total | **Impact**: 6 datasets D -> B, 2 datasets D -> C (then need additional work)
 
-Process smallest-first, batch by contact sheets:
+**Pipeline per dataset**:
 
-1. dibco (212) -- 15 min
-2. omnidocbench (1.4K) -- 30 min
-3. invoices-kg (1.4K) -- 30 min
-4. nist-sd2 (5.6K) -- 45 min
-5. nist-sd6 (5.6K) -- 45 min
-6. nist-sd19 (3.7K) -- 30 min
-7. mathverse (6.9K) -- 45 min
-8. pucit-ohul (7.4K) -- 45 min
-9. im2latex (10K) -- 1h
-10. cvsi (10.7K) -- 1h
-11. mle2e (1.8K) -- 30 min
-12. financebench (54K) -- 2h
-13. fintabnet (97K) -- 2h
-14. tablebank (278K) -- 3h
-15. dzongkha-digits (1.1K) -- 30 min (unlocks A!)
+```bash
+# 1. Extract OCR text (GPU required)
+ssh byron@192.168.1.209 "cd /path && python scripts/extract_text.py --dataset {name}"
 
-### Wave 2: Compliance + Defect Sprint (Unlocks missing dimensions)
+# 2. Run LLM enrichment (CPU, uses extracted text)
+PYTHONPATH=. uv run python3 scripts/enrich_metadata_from_llm.py --dataset {name}
 
-**Effort**: ~8 hours | **Impact**: 6 datasets gain 2-4 dimensions each
+# 3. Re-run prescreening
+PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset {name}
 
-Run `audit_schema_compliance.py` and create defect catalogs for:
-cc-ocr, yarmouk, hindi-synth, hasy, tibhcr, signatr6k
+# 4. Recompute scorecard
+PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset {name}
+```
 
-### Wave 3: Documentation Sprint (Universal +3-8 pts)
+**Order by effort (smallest first)**:
 
-**Effort**: ~12 hours | **Impact**: 25+ datasets gain 3-8 pts on doc_completeness
+| # | Dataset | Samples | Cap Field | Current | Effort |
+|---|---------|---------|-----------|---------|--------|
+| 1 | jssoda | 2,000 | domain_level1 | 65% | 2h |
+| 2 | omnidocbench | 1,400 | domain_level1 | 0% | 2h |
+| 3 | arabic-docs-ocr | 10,000 | domain_level1 | 0% | 4h |
+| 4 | muharaf | 25,700 | domain_level1 | 50% | 4h |
+| 5 | siw13 | 16,300 | domain_level1 | 0% | 4h |
+| 6 | cc-ocr | 7,000 | domain_level1 | 0% | 6h |
+| 7 | docalign12k | 12,000 | iso639_language | 0% | 6h |
+| 8 | mdiw13 | 290,000 | domain_level1 | 0% | 12h |
 
-Fill missing sections in `docs/datasets/source/{name}.md` for all datasets with doc_completeness < 80%.
+### Wave 2: Score Improvement for cc-ocr and docalign12k
 
-### Wave 4: Critical Field Remediation (Unlocks 3 capped datasets)
+These two have raw scores below 80 even without the cap. After critical field enrichment:
 
-**Effort**: ~16 hours | **Impact**: Removes critical field cap for 3 datasets
+**cc-ocr (raw 79.2 -> 80+ needed)**:
 
-1. **docalign12k**: Run language enrichment pipeline (iso639_language=0%)
-2. **mdiw13**: Run domain classification pipeline (domain_level1=0%)
-3. **jssoda**: Fix domain_level1 coverage (currently 65%, need >75%)
+1. Improve field_coverage (currently 79.8%) -- fill missing prescreening fields
+2. Fix cross-source agreement if comparison report available
+3. Expand source documentation
 
-### Wave 5: VLM Re-inspection for Grade C datasets
+**docalign12k (raw 76.4 -> 80+ needed)**:
 
-**Effort**: ~4 hours | **Impact**: 4 datasets C -> B
+1. Fix vlm_accuracy (currently 8.3%) -- re-inspect VLM samples with corrected methodology
+2. Expand source documentation (doc_completeness=63.6%)
+3. Improve cross_source agreement
 
-Re-inspect VLM samples for rvl-cdip, multimodal-textbook, ocr-quality, midv500 with proper correction methodology.
+### Wave 3: IAM Base Metadata Generation
 
-### Wave 6: IAM Base Metadata Generation
+**Effort**: ~6h | **Impact**: 1 dataset F -> B potential
 
-**Effort**: ~6 hours | **Impact**: 1 dataset F -> B potential
-
-Run `annotate_base_metadata.py` for IAM, then full audit pipeline.
+1. Run `annotate_base_metadata.py` for IAM (requires GPU for DocLayout-YOLO)
+2. Run full audit pipeline (prescreening, compliance, VLM inspection)
+3. Expand source documentation
 
 ---
 
@@ -313,27 +237,33 @@ Run `annotate_base_metadata.py` for IAM, then full audit pipeline.
 
 | Action Category | Datasets Impacted | Estimated Hours | Priority |
 |----------------|-------------------|-----------------|----------|
-| VLM inspection (new) | 22 D-capped | 20h | P0 |
-| VLM re-inspection | 4 Grade C | 4h | P0 |
-| Compliance runs | 6 missing | 3h | P1 |
-| Defect catalogs | 6 missing | 6h | P1 |
-| Documentation expansion | 25+ datasets | 12h | P2 |
-| Critical field remediation | 3 capped | 16h | P1 |
+| GPU domain enrichment | 6 D-capped (domain) | 20h | P0 |
+| GPU language enrichment | 1 D-capped (language) | 6h | P0 |
+| Domain partial fill (jssoda) | 1 D-capped | 2h | P0 |
+| Score improvement (cc-ocr, docalign12k) | 2 below raw 80 | 4h | P1 |
 | IAM base metadata | 1 Grade F | 6h | P2 |
-| Cross-source fixes | 5 datasets | 10h | P2 |
-| **TOTAL** | **31 datasets** | **~77h** | |
+| **TOTAL** | **9 datasets** | **~38h** | |
 
-**Key insight**: VLM inspection alone (24h of effort) would move 14 datasets from D to B and 4 from C to B, covering **18 of 31 datasets needing improvement**. This is the highest-ROI action by far.
+**Key insight**: All remaining Grade D datasets share the same blocker -- critical field enrichment requiring GPU. A single GPU session could process all 8 datasets sequentially, converting them from D to B. This is the highest-ROI action remaining.
 
 ---
 
 ## Grade Distribution After Full Remediation (Projected)
 
-| Grade | Current | After Wave 1 (VLM) | After All Waves |
-|-------|---------|---------------------|-----------------|
-| A | 8 | 9 (+dzongkha-digits) | 10+ |
-| B | 12 | 25 (+13 from VLM) | 39+ |
-| C | 4 | 1 (iam still blocked) | 0 |
-| D | 26 | 15 (need more work) | 1 (iam, if metadata still missing) |
-| F | 1 | 1 (iam) | 0 (if base metadata generated) |
-| **B+ total** | **20 (39%)** | **34 (67%)** | **50+ (98%)** |
+| Grade | Current | After Wave 1 (GPU enrichment) | After All Waves |
+|-------|---------|-------------------------------|-----------------|
+| A | 11 | 11 | 12+ |
+| B | 32 | 38 (+6 from cap removal) | 40+ |
+| C | 0 | 2 (cc-ocr, docalign12k if raw < 80) | 0 |
+| D | 8 | 0 | 0 |
+| F | 1 | 1 (iam) | 0 |
+| **B+ total** | **43 (83%)** | **49 (94%)** | **52 (100%)** |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0.0 | 2026-02-14 | Major overhaul: 43/52 at B+ (was 20/51). VLM sprint complete. Only critical field caps remain. |
+| 1.0.0 | 2026-02-13 | Initial roadmap: 20/51 at B+, 31 needing improvement across 6 waves. |
