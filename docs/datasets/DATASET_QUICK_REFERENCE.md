@@ -208,8 +208,8 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | Dataset | Images | Audit | Degradation Types | Split | License | Notes |
 |---------|--------|:-----:|-------------------|-------|---------|-------|
 | tobacco800 | 1,290 | **A** 91 | Scanned documents, aging, noise | All | Academic | Real archival degradation |
-| rvl_cdip | 16,000 | C 79 | Scanned document classification | All | Academic | 16-class document types |
-| midv500 | 3,612 | C 73 | Mobile capture (blur, shadow) | All | MIT | 50 countries, ID documents |
+| rvl_cdip | 16,000 | **B** 87 | Scanned document classification | All | Academic | 16-class document types |
+| midv500 | 3,612 | **B** 82 | Mobile capture (blur, shadow) | All | MIT | 50 countries, ID documents |
 | midv500_data | 15,050 | -- | Mobile capture variations | All | MIT | Extended MIDV-500 |
 | smartdoc-qa | 4,280 | **A** 92 | Mobile capture (blur, shadow, perspective) | 3,424 train | Research | **val/test RESERVED** |
 | **Degradation Total** | **41,931** | - | - | **~38K train** | - | - |
@@ -230,12 +230,12 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | **hiertext** | 11,639 | **B** 82 | Scene text (mixed) | `handwritten` + `legible` (word-level) | 8,281 train | CC-BY-SA-4.0 | **GOLD STANDARD for graded assessment** |
 | **iam** | 130,212 | F 36 | English handwriting | Word/line transcriptions + bboxes | 6,161 train (lines) | Research only | **LARGEST handwriting corpus**, 657 writers |
 | cocotext | 63,686 | **B** 86 | Scene text (incidental) | `class` + `legibility` (word-level) | 43,686 train | CC-BY-4.0 | Machine printed vs handwritten |
-| hasyv2 | 168,233 | D 75 | Math symbols (handwritten) | Symbol class | 151,410 train | CC0 | **test RESERVED** |
-| **muharaf** | 24,952 | D 78 | Arabic cursive (historical) | Line transcriptions | All | CC-BY-NC-SA-4.0 | **Variable quality for legibility** (public portion) |
-| nist-sd19 | 3,669 | D 83 | Handwriting (digits + letters) | Character class | All | Public | NIST standard |
-| nist-sd6 | 5,595 | D 83 | Tax forms with handprint | Form + handprint | All | Public | Forms + handwriting |
+| hasyv2 | 168,233 | **B** 86 | Math symbols (handwritten) | Symbol class | 151,410 train | CC0 | **test RESERVED** |
+| **muharaf** | 24,952 | D 81 | Arabic cursive (historical) | Line transcriptions | All | CC-BY-NC-SA-4.0 | **Variable quality for legibility** (public portion) |
+| nist-sd19 | 3,669 | **B** 84 | Handwriting (digits + letters) | Character class | All | Public | NIST standard |
+| nist-sd6 | 5,595 | **B** 83 | Tax forms with handprint | Form + handprint | All | Public | Forms + handwriting |
 | nepali_handwritten | 958 | **B** 87 | Devanagari handwriting | Character class | All | Public | Handwritten Nepali |
-| pucit-ohul | 7,401 | D 83 | Urdu handwriting | Line text | All | Academic | Handwritten Urdu |
+| pucit-ohul | 7,401 | **B** 84 | Urdu handwriting | Line text | All | Academic | Handwritten Urdu |
 | **Handwriting Total** | **416,345** | - | - | - | **~405K train** | - | - |
 
 **Graded Assessment Labels** (NEW):
@@ -256,10 +256,10 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 
 | Dataset | Images | Audit | Content Type | Split | License | Notes |
 |---------|--------|:-----:|--------------|-------|---------|-------|
-| financebench | 54,121 | D 83 | Financial PDFs | All | CC-BY-NC-4.0 | RAG QA dataset |
-| fintabnet | 97,475 | D 86 | Financial tables | All | Research | Table structure |
+| financebench | 54,121 | **B** 85 | Financial PDFs | All | CC-BY-NC-4.0 | RAG QA dataset |
+| fintabnet | 97,475 | **B** 87 | Financial tables | All | Research | Table structure |
 | bhutan-afs | 125 | **B** 83 | Bhutan annual reports | All | Public | Small sample (10 excluded) |
-| invoices_kaggle | 1,414 | D 77 | Invoices | All | Various | Mixed formats |
+| invoices_kaggle | 1,414 | **B** 81 | Invoices | All | Various | Mixed formats |
 
 #### Forms & Structured Documents
 
@@ -269,24 +269,24 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | funsd_plus | 1,139 | **B** 86 | Forms (extended) | All | CC-BY-4.0 | Extended FUNSD |
 | sroie | 973 | **A** 96 | Malaysian receipts (ICDAR 2019) | 626 train / 347 test | Research | Official SROIE from HuggingFace rth/sroie-2019-v2 |
 | sroie-voxel51 | 712 | -- | Receipts (ICDAR-SROIE train only) | 712 train | CC-BY-4.0 | Via Voxel51/HuggingFace (subset) |
-| invoices-kaggle | 1,414 | D 77 | Invoice images | All | ODbL-1.0 | High-quality OCR invoices |
-| nist-sd2 | 5,590 | D 81 | Tax forms (IRS 1040) | 4,472 train / 559 val / 559 test | Public Domain | 12 form types, synthesized |
-| nist-sd6 | 5,595 | D 83 | Tax forms + handprint | All | Public | Forms with handwriting |
+| invoices-kaggle | 1,414 | **B** 81 | Invoice images | All | ODbL-1.0 | High-quality OCR invoices |
+| nist-sd2 | 5,590 | **B** 82 | Tax forms (IRS 1040) | 4,472 train / 559 val / 559 test | Public Domain | 12 form types, synthesized |
+| nist-sd6 | 5,595 | **B** 83 | Tax forms + handprint | All | Public | Forms with handwriting |
 
 #### Educational & Scientific
 
 | Dataset | Images | Audit | Content Type | Split | License | Notes |
 |---------|--------|:-----:|--------------|-------|---------|-------|
-| multimodal-textbook | 1,113 | C 76 | Textbook pages | All | Apache-2.0 | STEM diagrams + equations |
-| im2latex | 10,000 | D 83 | Math formulas | All | CC0 | Formula extraction |
-| mathverse | 6,940 | D 85 | Math problems | All | MIT | Multi-modal math |
+| multimodal-textbook | 1,113 | **B** 86 | Textbook pages | All | Apache-2.0 | STEM diagrams + equations |
+| im2latex | 10,000 | **B** 85 | Math formulas | All | CC0 | Formula extraction |
+| mathverse | 6,940 | **B** 86 | Math problems | All | MIT | Multi-modal math |
 
 #### Scene Text & Signatures
 
 | Dataset | Images | Audit | Content Type | Split | License | Notes |
 |---------|--------|:-----:|--------------|-------|---------|-------|
 | cocotext | 63,686 | **B** 86 | Scene text (incidental) | 43,686 train | CC-BY-4.0 | **val/test RESERVED** |
-| signatr6k | 12,514 | D 80 | Text segmentation | All | Academic | Signature detection |
+| signatr6k | 12,514 | **B** 82 | Text segmentation | All | Academic | Signature detection |
 
 #### Document Dewarping / 3D Geometry
 
@@ -305,7 +305,7 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | wsrd | 4,500 | **A** 95 | 📱 Camera | Shadow removal | Paired GT (shadow/shadow-free) | train/val/test | Unspecified | ✅ Training-Ready (D*) |
 | warpdoc | 1,020 | **B** 85 | 📱 Camera | Dewarping | Paired GT (warped/flat) | unknown | Unspecified | ✅ Training-Ready (D*) |
 | docreal | 200 | **B** 88 | 📱 Camera | Dewarping | Paired GT (warped/flat) | unknown | MIT | ✅ Training-Ready (D*) |
-| docalign12k | ~12,000 | D 76 | 📱 Camera | Dewarping/alignment | Paired GT (aligned/unaligned) | TBD | Unspecified | ❌ Blocked (download) |
+| docalign12k | ~12,000 | D 76 | 📱 Camera | Dewarping/alignment | Paired GT (aligned/unaligned) | TBD | Unspecified | ❌ Blocked (language enrichment) |
 | **Correction Total** | **19,265+** | - | - | - | - | - | - | 5/6 ready, docalign12k pending |
 
 **Common Characteristics**: All datasets provide paired ground truth (degraded input + clean reference). All captured via camera/smartphone. Stored under `01_base_data/correction/`.
@@ -384,11 +384,11 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | smartdoc-qa | 4,280 | **A** 92 | 3,424 | 428 | 428 | Mobile capture QA |
 | ohr-bench | 8,561 | **B** 85 | 6,849 | 856 | 856 | OCR hallucination detection |
 | funsd | 199 | **B** 83 | 149 | - | 50 | Official train/test split |
-| hasyv2 | 168,233 | D 75 | 151,410 | - | 16,823 | Official split |
-| mdiw13 | 290,213 | D 78 | 232,170 | - | 58,043 | Competition test reserved |
+| hasyv2 | 168,233 | **B** 86 | 151,410 | - | 16,823 | Official split |
+| mdiw13 | 290,213 | D 87 | 232,170 | - | 58,043 | Competition test reserved |
 | mlt19 | 20,000 | **A** 91 | 10,000 | 2,000 | 8,000 | Official split |
 | pubtabnet | 519,030 | **A** 90 | 500,777 | 9,115 | 9,138 | Official split |
-| tablebank | 278,582 | D 90 | 260,582 | 10,000 | 8,000 | Official split |
+| tablebank | 278,582 | **B** 89 | 260,582 | 10,000 | 8,000 | Official split |
 | cocotext | 63,686 | **B** 86 | 43,686 | 10,000 | 10,000 | Official split |
 
 **Key Insight**: ~85% of benchmark dataset images ARE trainable (just not val/test splits)
@@ -595,44 +595,44 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 |---------|--------|:-----:|----------------|
 | pubtabnet | 568,000 | **A** 90 | ✅ |
 | docsynth300k | 300,000 | -- | ✅ |
-| mdiw13 | 290,213 | D 78 | ✅ |
-| tablebank | 278,582 | D 90 | ✅ |
-| hasyv2 | 168,233 | D 75 | ✅ |
+| mdiw13 | 290,213 | D 87 | ✅ |
+| tablebank | 278,582 | **B** 89 | ✅ |
+| hasyv2 | 168,233 | **B** 86 | ✅ |
 | iam_handwriting | 130,212 | F 36 | ✅ |
-| fintabnet | 97,475 | D 86 | ✅ |
+| fintabnet | 97,475 | **B** 87 | ✅ |
 | doclaynet | 81,471 | **A** 96 | ✅ |
-| hindi_ocr_synthetic | 80,009 | D 64 | ✅ |
+| hindi_ocr_synthetic | 80,009 | **A** 92 | ✅ |
 | cocotext | 63,686 | **B** 86 | ✅ |
-| financebench | 54,121 | D 83 | 🔄 PDF conversion |
-| muharaf | 25,711 | D 78 | ✅ |
+| financebench | 54,121 | **B** 85 | 🔄 PDF conversion |
+| muharaf | 25,711 | D 81 | ✅ |
 | mlt19 | 20,000 | **A** 91 | ✅ |
-| siw13 | 16,291 | D 78 | ✅ |
+| siw13 | 16,291 | D 81 | ✅ |
 | rvl_cdip | 16,000 | C 79 | ✅ |
-| yarmouk_ocr | 15,062 | D 68 | ✅ |
+| yarmouk_ocr | 15,062 | **A** 93 | ✅ |
 | midv500_data | 15,050 | -- | ✅ |
-| signatr6k | 12,514 | D 80 | ✅ |
-| cvsi | 10,715 | D 82 | ✅ |
+| signatr6k | 12,514 | **B** 82 | ✅ |
+| cvsi | 10,715 | **B** 85 | ✅ |
 | arabic_docs_ocr | 10,045 | D 86 | ✅ |
-| im2latex | 10,000 | D 83 | ✅ |
+| im2latex | 10,000 | **B** 85 | ✅ |
 | ohr-bench | 8,561 | **B** 85 | ✅ |
-| pucit-ohul | 7,401 | D 83 | ✅ |
-| mathverse | 6,940 | D 85 | ✅ |
-| cc_ocr | 7,058 | D 67 | ✅ |
-| nist-sd6 | 5,595 | D 83 | ✅ |
-| nist-sd2 | 5,590 | D 81 | ✅ |
+| pucit-ohul | 7,401 | **B** 84 | ✅ |
+| mathverse | 6,940 | **B** 86 | ✅ |
+| cc_ocr | 7,058 | D 79 | ✅ |
+| nist-sd6 | 5,595 | **B** 83 | ✅ |
+| nist-sd2 | 5,590 | **B** 82 | ✅ |
 | diqa-5000 | 5,500 | **B** 89 | ✅ |
 | smartdoc-qa | 4,280 | **A** 92 | ✅ |
-| midv500 | 3,612 | C 73 | ✅ |
-| nist-sd19 | 3,669 | D 83 | ✅ |
+| midv500 | 3,612 | **B** 82 | ✅ |
+| nist-sd19 | 3,669 | **B** 84 | ✅ |
 | multilingual_scripts | 3,279 | -- | ✅ |
 | sroie | 973 | **A** 96 | ✅ |
-| invoices-kaggle | 1,414 | D 77 | ✅ |
+| invoices-kaggle | 1,414 | **B** 81 | ✅ |
 | tobacco800 | 1,290 | **A** 91 | ✅ |
 | realdae | 1,200 | **B** 84 | ✅ |
 | funsd_plus | 1,139 | **B** 86 | ✅ |
-| multimodal-textbook | 1,113 | C 76 | ✅ |
+| multimodal-textbook | 1,113 | **B** 86 | ✅ |
 | sroie-voxel51 | 712 | -- | ✅ |
-| ocr-quality | 1,000 | C 74 | ✅ |
+| ocr-quality | 1,000 | **B** 83 | ✅ |
 | nepali_handwritten | 958 | **B** 87 | ✅ |
 | funsd | 199 | **B** 83 | ✅ |
 | bhutan-afs | 125 | **B** 83 | ✅ |
@@ -650,8 +650,8 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 | IQA Training | 5 | 181,261 | B 89 (diqa-5000) | ✅ (1 converting) |
 | Degradation | 7 | 41,931 | A 92 (smartdoc-qa) | ✅ |
 | Forms/Receipts | 8 | 17,381 | A 96 (sroie) | ✅ |
-| Educational | 3 | 18,053 | D 85 (mathverse) | ✅ |
-| Financial | 4 | 153,145 | D 86 (fintabnet) | ✅ (1 converting) |
+| Educational | 3 | 18,053 | B 86 (mathverse) | ✅ |
+| Financial | 4 | 153,145 | B 87 (fintabnet) | ✅ (1 converting) |
 | Scene Text | 2 | 76,200 | B 86 (cocotext) | ✅ (1 converting) |
 
 ---
