@@ -11,6 +11,8 @@ This package contains parsers for document classification datasets:
 - RealDAE: Camera-captured documents with degradations
 - Multimodal Textbook: Educational textbook images
 - FinanceBench: SEC filings benchmark (10K, 10Q, 8K, Earnings)
+- Document Haystack: Document retrieval benchmark (Amazon Science)
+- MarkushGrapher: Chemical structure recognition (DS4SD)
 
 Datasets covered:
     - rvl_cdip
@@ -21,6 +23,8 @@ Datasets covered:
     - realdae
     - multimodal_textbook / multimodal-textbook
     - financebench / finance-bench
+    - document-haystack
+    - markushgrapher
 """
 
 from __future__ import annotations
@@ -37,7 +41,9 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     Args:
         registry: ParserRegistry instance to register parsers with
     """
+    from .document_haystack import DocumentHaystackParser
     from .financebench import FinanceBenchParser
+    from .markushgrapher import MarkushgrapherParser
     from .midv500 import Midv500Parser
     from .multimodal_textbook import MultimodalTextbookParser
     from .ohr_bench import OhrBenchParser
@@ -54,6 +60,8 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     registry.register(RealdaeParser())
     registry.register(MultimodalTextbookParser())
     registry.register(FinanceBenchParser())
+    registry.register(DocumentHaystackParser())
+    registry.register(MarkushgrapherParser())
 
 
 __all__ = [

@@ -362,6 +362,62 @@ DATASET_REGISTRY: dict[str, dict] = {
         "license": LicenseType.APACHE,
         "content_type": "educational",
     },
+    # === New Datasets (2025-2026) ===
+    "indicdlp": {
+        "full_name": "IndicDLP (Indic Document Layout Parser)",
+        "category": DatasetCategory.DOCUMENT_LAYOUT,
+        "size": 119000,
+        "license": LicenseType.MIT,
+        "annotation_format": "coco",
+        "classes": 42,
+        "scripts": 12,
+        "url": "https://huggingface.co/datasets/ai4bharat/indicdlp",
+    },
+    "document-haystack": {
+        "full_name": "Document Haystack",
+        "category": DatasetCategory.SPECIALIZED,
+        "size": 400,
+        "license": LicenseType.CC_BY_NC,
+        "content_type": "document_retrieval",
+        "benchmark_only": True,
+        "url": "https://huggingface.co/datasets/AmazonScience/document-haystack",
+    },
+    "staindoc": {
+        "full_name": "StainDoc (WACV 2025)",
+        "category": DatasetCategory.DEGRADED_DOCS,
+        "size": 5000,
+        "license": LicenseType.MIT,
+        "has_ground_truth": True,
+        "has_pairs": True,
+        "content_type": "stain_removal",
+        "url": "https://www.kaggle.com/datasets/xuhangc/wacv2025-staindoc",
+    },
+    "q-doc": {
+        "full_name": "Q-Doc",
+        "category": DatasetCategory.IQA_BENCHMARK,
+        "size": 4260,
+        "license": LicenseType.UNKNOWN,
+        "has_mos": True,
+        "benchmark_only": True,
+        "url": "https://github.com/cydxf/Q-Doc",
+    },
+    "drccbi": {
+        "full_name": "DRCCBI (Document Rectification Camera-Captured Benchmark)",
+        "category": DatasetCategory.CAMERA_CAPTURED,
+        "size": 0,  # Size TBD after download inspection
+        "license": LicenseType.UNKNOWN,
+        "has_pairs": True,
+        "content_type": "dewarping",
+        "url": "https://github.com/HorizonParadox/DRCCBI",
+    },
+    "markushgrapher": {
+        "full_name": "MarkushGrapher Datasets",
+        "category": DatasetCategory.SPECIALIZED,
+        "size": 235000,
+        "license": LicenseType.CC_BY,
+        "content_type": "chemical_structure",
+        "url": "https://huggingface.co/datasets/ds4sd/MarkushGrapher-Datasets",
+    },
 }
 
 

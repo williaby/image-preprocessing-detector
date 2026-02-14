@@ -9,6 +9,8 @@ Datasets covered:
     - warpdoc (document dewarping, 1,020 images)
     - docreal (document dewarping benchmark)
     - sd7k (shadow removal, ~7,000 images)
+    - staindoc (stain removal, WACV 2025, ~5,000 pairs)
+    - drccbi (camera dewarping benchmark)
 """
 
 from __future__ import annotations
@@ -28,7 +30,9 @@ def register_correction_parsers(registry: ParserRegistry) -> None:
     from .anyphotodoc6300 import Anyphotodoc6300Parser
     from .docalign12k import Docalign12KParser
     from .docreal import DocrealParser
+    from .drccbi import DrccbiParser
     from .sd7k import Sd7KParser
+    from .staindoc import StaindocParser
     from .warpdoc import WarpdocParser
     from .wsrd import WsrdParser
 
@@ -38,6 +42,8 @@ def register_correction_parsers(registry: ParserRegistry) -> None:
     registry.register(WarpdocParser())
     registry.register(DocrealParser())
     registry.register(Sd7KParser())
+    registry.register(StaindocParser())
+    registry.register(DrccbiParser())
 
 
 __all__ = ["register_correction_parsers"]

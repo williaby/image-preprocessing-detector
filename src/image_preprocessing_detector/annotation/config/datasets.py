@@ -895,6 +895,71 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_paired_gt=True,
         parser_name="sd7k",
     ),
+    # =========================================================================
+    # New Datasets (2025-2026 Onboarding)
+    # =========================================================================
+    # --- Layout ---
+    "indicdlp": DatasetConfig(
+        name="indicdlp",
+        path_suffix="01_base_data/layout/indicdlp/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.UNKNOWN,  # Mixed born-digital + scanned
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_coco_annotations=True,
+        parser_name="indicdlp",
+    ),
+    # --- Document / Benchmark ---
+    "document-haystack": DatasetConfig(
+        name="document-haystack",
+        path_suffix="02_benchmark_only/document-haystack",
+        pattern="**/*.pdf",
+        capture_method=CaptureMethod.BORN_DIGITAL,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=True,
+        parser_name="document_haystack",
+    ),
+    "markushgrapher": DatasetConfig(
+        name="markushgrapher",
+        path_suffix="01_base_data/specialized/markushgrapher/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.BORN_DIGITAL,
+        domain=DomainLevel1.SCIENTIFIC,
+        is_benchmark=False,
+        parser_name="markushgrapher",
+    ),
+    # --- Correction ---
+    "staindoc": DatasetConfig(
+        name="staindoc",
+        path_suffix="01_base_data/correction/staindoc",
+        pattern="**/input/*.jpg",
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="staindoc",
+    ),
+    "drccbi": DatasetConfig(
+        name="drccbi",
+        path_suffix="01_base_data/correction/drccbi",
+        pattern="**/images/*.jpg",
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,
+        parser_name="drccbi",
+    ),
+    # --- Quality / Benchmark ---
+    "q-doc": DatasetConfig(
+        name="q-doc",
+        path_suffix="02_benchmark_only/q-doc",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.UNKNOWN,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=True,
+        has_human_mos=True,
+        parser_name="q_doc",
+    ),
 }
 
 
