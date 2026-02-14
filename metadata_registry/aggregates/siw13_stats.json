@@ -1,0 +1,239 @@
+{
+  "dataset_name": "siw13",
+  "total_samples": 16291,
+  "capture_methods": {
+    "scanner_flatbed": 16291
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "UNK": 16291
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Arab": 1002,
+    "Khmr": 1083,
+    "Hans": 1298,
+    "Latn": 1221,
+    "Grek": 1018,
+    "Hebr": 1242,
+    "Jpan": 1215,
+    "Knda": 1029,
+    "Kore": 1561,
+    "Mong": 1192,
+    "Cyrl": 1031,
+    "Thai": 2222,
+    "Tibt": 1177
+  },
+  "script_families": {
+    "arabic": 1002,
+    "indic": 5511,
+    "cjk": 4074,
+    "latin": 1221,
+    "greek": 1018,
+    "hebrew": 1242,
+    "other": 1192,
+    "cyrillic": 1031
+  },
+  "language_codes": {
+    "ar": 1002,
+    "km": 1083,
+    "zh": 1298,
+    "en": 1221,
+    "el": 1018,
+    "he": 1242,
+    "ja": 1215,
+    "kn": 1029,
+    "ko": 1561,
+    "mn": 1192,
+    "ru": 1031,
+    "th": 2222,
+    "bo": 1177
+  },
+  "content_flags": {},
+  "text_scopes": {
+    "word": 16291
+  },
+  "content_types": {
+    "printed_word": 16291
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "scanner_flatbed": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "UNK": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Arab": 6.2,
+    "Khmr": 6.6,
+    "Hans": 8.0,
+    "Latn": 7.5,
+    "Grek": 6.2,
+    "Hebr": 7.6,
+    "Jpan": 7.5,
+    "Knda": 6.3,
+    "Kore": 9.6,
+    "Mong": 7.3,
+    "Cyrl": 6.3,
+    "Thai": 13.6,
+    "Tibt": 7.2
+  },
+  "script_families_pct": {
+    "arabic": 6.2,
+    "indic": 33.8,
+    "cjk": 25.0,
+    "latin": 7.5,
+    "greek": 6.2,
+    "hebrew": 7.6,
+    "other": 7.3,
+    "cyrillic": 6.3
+  },
+  "language_codes_pct": {
+    "ar": 6.2,
+    "km": 6.6,
+    "zh": 8.0,
+    "en": 7.5,
+    "el": 6.2,
+    "he": 7.6,
+    "ja": 7.5,
+    "kn": 6.3,
+    "ko": 9.6,
+    "mn": 7.3,
+    "ru": 6.3,
+    "th": 13.6,
+    "bo": 7.2
+  },
+  "text_scopes_pct": {
+    "word": 100.0
+  },
+  "content_types_pct": {
+    "printed_word": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Thai",
+      "count": 2222,
+      "percentage": 13.6
+    },
+    {
+      "script": "Kore",
+      "count": 1561,
+      "percentage": 9.6
+    },
+    {
+      "script": "Hans",
+      "count": 1298,
+      "percentage": 8.0
+    },
+    {
+      "script": "Hebr",
+      "count": 1242,
+      "percentage": 7.6
+    },
+    {
+      "script": "Latn",
+      "count": 1221,
+      "percentage": 7.5
+    },
+    {
+      "script": "Jpan",
+      "count": 1215,
+      "percentage": 7.5
+    },
+    {
+      "script": "Mong",
+      "count": 1192,
+      "percentage": 7.3
+    },
+    {
+      "script": "Tibt",
+      "count": 1177,
+      "percentage": 7.2
+    },
+    {
+      "script": "Khmr",
+      "count": 1083,
+      "percentage": 6.6
+    },
+    {
+      "script": "Cyrl",
+      "count": 1031,
+      "percentage": 6.3
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "th",
+      "count": 2222,
+      "percentage": 13.6
+    },
+    {
+      "language": "ko",
+      "count": 1561,
+      "percentage": 9.6
+    },
+    {
+      "language": "zh",
+      "count": 1298,
+      "percentage": 8.0
+    },
+    {
+      "language": "he",
+      "count": 1242,
+      "percentage": 7.6
+    },
+    {
+      "language": "en",
+      "count": 1221,
+      "percentage": 7.5
+    },
+    {
+      "language": "ja",
+      "count": 1215,
+      "percentage": 7.5
+    },
+    {
+      "language": "mn",
+      "count": 1192,
+      "percentage": 7.3
+    },
+    {
+      "language": "bo",
+      "count": 1177,
+      "percentage": 7.2
+    },
+    {
+      "language": "km",
+      "count": 1083,
+      "percentage": 6.6
+    },
+    {
+      "language": "ru",
+      "count": 1031,
+      "percentage": 6.3
+    }
+  ],
+  "script_family_summary": {
+    "indic": 5511,
+    "cjk": 4074,
+    "hebrew": 1242,
+    "latin": 1221,
+    "other": 1192,
+    "cyrillic": 1031,
+    "greek": 1018,
+    "arabic": 1002
+  }
+}

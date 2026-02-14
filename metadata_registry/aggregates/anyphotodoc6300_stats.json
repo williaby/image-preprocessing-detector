@@ -1,0 +1,143 @@
+{
+  "dataset_name": "anyphotodoc6300",
+  "total_samples": 6306,
+  "capture_methods": {
+    "camera_smartphone": 6306
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "SCI": 1800,
+    "UNK": 1296,
+    "TEC": 1104,
+    "FIN": 1206,
+    "EDU": 900
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Latn": 3240,
+    "Hans": 2742,
+    "Hant": 162,
+    "Jpan": 162
+  },
+  "script_families": {
+    "latin": 3240,
+    "cjk": 3066
+  },
+  "language_codes": {
+    "en": 3006,
+    "zh": 2904,
+    "ja": 162,
+    "de": 234
+  },
+  "content_flags": {
+    "has_formula": 2700,
+    "has_figure": 3300,
+    "has_table": 1206,
+    "has_handwriting": 900
+  },
+  "text_scopes": {
+    "page": 6306
+  },
+  "content_types": {
+    "unknown": 6306
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "camera_smartphone": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "SCI": 28.5,
+    "UNK": 20.6,
+    "TEC": 17.5,
+    "FIN": 19.1,
+    "EDU": 14.3
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Latn": 51.4,
+    "Hans": 43.5,
+    "Hant": 2.6,
+    "Jpan": 2.6
+  },
+  "script_families_pct": {
+    "latin": 51.4,
+    "cjk": 48.6
+  },
+  "language_codes_pct": {
+    "en": 47.7,
+    "zh": 46.1,
+    "ja": 2.6,
+    "de": 3.7
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "unknown": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_formula": 42.8,
+    "has_figure": 52.3,
+    "has_table": 19.1,
+    "has_handwriting": 14.3
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 3240,
+      "percentage": 51.4
+    },
+    {
+      "script": "Hans",
+      "count": 2742,
+      "percentage": 43.5
+    },
+    {
+      "script": "Hant",
+      "count": 162,
+      "percentage": 2.6
+    },
+    {
+      "script": "Jpan",
+      "count": 162,
+      "percentage": 2.6
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 3006,
+      "percentage": 47.7
+    },
+    {
+      "language": "zh",
+      "count": 2904,
+      "percentage": 46.1
+    },
+    {
+      "language": "de",
+      "count": 234,
+      "percentage": 3.7
+    },
+    {
+      "language": "ja",
+      "count": 162,
+      "percentage": 2.6
+    }
+  ],
+  "script_family_summary": {
+    "latin": 3240,
+    "cjk": 3066
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "dataset_name": "warpdoc",
+  "total_samples": 1020,
+  "capture_methods": {
+    "camera_smartphone": 1020
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "GENERAL": 1020
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Latn": 1020
+  },
+  "script_families": {
+    "latin": 1020
+  },
+  "language_codes": {
+    "en": 1020
+  },
+  "content_flags": {},
+  "text_scopes": {
+    "page": 1020
+  },
+  "content_types": {
+    "unknown": 1020
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "camera_smartphone": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "GENERAL": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0
+  },
+  "script_families_pct": {
+    "latin": 100.0
+  },
+  "language_codes_pct": {
+    "en": 100.0
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "unknown": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 1020,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 1020,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 1020
+  }
+}
