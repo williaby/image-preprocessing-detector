@@ -15,7 +15,7 @@
 | **Download** | [AFS 2024-25](https://mof.gov.bt/wp-content/uploads/2025/12/AFS_2024-25-2.pdf), [Tax Act 2021](https://mof.gov.bt/wp-content/uploads/2025/04/Tax-Act-of-Bhutan-2021.pdf) |
 | **License** | Public Domain (Government Document) |
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/bhutan_financial/` |
-| **Documentation Status** | Complete |
+| **Documentation Status** | Complete (v1.4.0, audited 2026-02-12) |
 
 ##### Dataset Statistics
 
@@ -32,8 +32,8 @@
 | Aspect | Details |
 |--------|---------|
 | **Domain** | Government financial reporting + tax legislation |
-| **Document Types** | Balance sheets, income statements, schedules, tax code articles |
-| **Language** | English |
+| **Document Types** | Dzongkha financial statements (AFS), bilingual tax legislation |
+| **Language** | Dzongkha (96.3%, Tibetan script) + English (3.0%, Latin script) |
 | **Table Characteristics** | Multi-column layouts, footnotes, decimal-aligned numbers |
 
 ##### IQA Profile
@@ -79,3 +79,46 @@
 | **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
 | **Text/OCR Extracted** | `metadata_registry/extracted/bhutan-afs/ocr_batch_0.jsonl` | ✅ Extracted | Docling OCR, 135 records, 100% success, tables detected |
 | **Layout Extracted** | `metadata_registry/extracted/bhutan-afs/layout_batch_0.json` | ✅ Extracted | Docling layout annotations, 130 images, 392 annotations, 8 categories |
+
+##### Language & Script Profile
+
+| Attribute | Value |
+|-----------|-------|
+| **Primary Language** | Dzongkha (ISO 639-3: `dzo`) — 130/135 pages (96.3%) |
+| **Secondary Language** | English (ISO 639-3: `eng`) — 4/135 pages (3.0%) |
+| **Other** | Blank/undetermined — 1/135 pages (0.7%) |
+| **Primary Script** | Tibetan (ISO 15924: `Tibt`) |
+| **Secondary Script** | Latin (ISO 15924: `Latn`) |
+| **Text Direction** | Left-to-right (`ltr`) for both Dzongkha and English |
+| **Detection Method** | Full VLM visual audit (2026-02-12), 49 pages at full resolution |
+
+**Document Structure**:
+
+- **AFS 2024-25** (115 active pages): **100% Dzongkha** — entire document uses Tibetan script for all text content (headers, labels, narrative, notes). Arabic numerals are used for financial figures (universal in Bhutanese financial reporting).
+- **Tax Act 2021** (10 pages): **Bilingual** — alternating English and Dzongkha versions of the same content (cover=dzo, TOC=eng+dzo, preamble=eng+dzo, schedules=eng+dzo).
+
+**Audit Note (KI-009)**: Prior documentation incorrectly claimed "Language: English". The original VLM Phase 6 inspection only identified 32 Dzongkha pages (covers, chart labels, rotated tables), defaulting the remaining 103 pages to English. Full VLM audit on 2026-02-12 revealed all 115 AFS pages use Tibetan script — Arabic numerals in financial tables were misinterpreted as English text.
+
+##### Layer 2 Metadata Summary
+
+| Field | Value | Coverage |
+|-------|-------|----------|
+| **Schema Version** | v2.3.0 | ✅ |
+| **Enrichment Version** | integrated_v4 | ✅ |
+| **Language/Script** | 130 dzo/Tibt + 4 eng/Latn + 1 und/Zyyy | ✅ Full audit |
+| **Capture Method** | born_digital (100%) | ✅ |
+| **Domain** | FIN (100%) | ✅ |
+| **Content Flags** | has_table (71.1%), has_figure (9.6%), has_signature (0.7%) | ✅ |
+| **Text Direction** | ltr (100%) | ✅ v2.3.0 |
+| **Degradation** | None detected (born-digital) | ✅ |
+| **Integration Script** | `scripts/integrate_bhutan_afs_enrichments.py` v3.0.0 | ✅ |
+
+##### Reliability & Known Issues
+
+| Issue ID | Severity | Description | Status |
+|----------|----------|-------------|--------|
+| BA-D01 | HIGH | capture_method was "unknown" — overridden to "born_digital" | ✅ Fixed in v2 |
+| BA-D02 | **CRITICAL** | Language misclassification: 103 pages labeled eng instead of dzo | ✅ Fixed in v4 |
+| KI-001 | HIGH | Docling layout label casing (lowercase -> DocLayNet PascalCase) | ✅ Mitigated |
+| KI-003 | MEDIUM | VLM has_figure: 13 flagged, all verified correct (0% FP) | ✅ Verified |
+| KI-009 | HIGH | Documentation language claims unreliable | ✅ Validated & corrected |

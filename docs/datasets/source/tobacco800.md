@@ -247,6 +247,51 @@
 
 ---
 
+##### 5. Data Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | TIFF (converted to PNG) |
+| **Bit Depth** | 1-bit binary |
+| **Resolution** | 150-300 DPI (variable) |
+| **Metadata Format** | Per-image JSON (Layer 2) |
+| **Storage** | GCS bucket + local E:\ drive |
+
+##### 6. License
+
+| Attribute | Value |
+|-----------|-------|
+| **License Type** | Academic / Research Only |
+| **Source** | Master Settlement Agreement (tobacco litigation) |
+| **Commercial Use** | Not permitted |
+| **Citation** | Lewis et al. SIGIR 2006 |
+
+##### 7. Limitations
+
+- **Binary-only images**: 1-bit format prevents grayscale/color analysis, limits classical IQA applicability
+- **Variable scan quality**: Multi-device collection (150-300 DPI), inconsistent capture settings
+- **No official splits**: Entire dataset is a single unsplit collection; splits must be assigned at training time
+- **Maryland annotations separate**: Signature/logo ground truth requires separate download from TC-11
+- **Administrative documents only**: Limited to tobacco litigation correspondence, memos, and forms
+
+##### 8. Processing Status
+
+| Step | Status | Notes |
+|------|--------|-------|
+| **Image Conversion** | ✅ Complete | TIF → PNG conversion |
+| **Base Metadata** | ✅ Complete | 1,290 samples annotated |
+| **LLM Enrichment** | ✅ Complete | Domain, language, script enrichment |
+| **Docling OCR** | ✅ Complete | 100% coverage (1,290 records) |
+| **Docling Layout** | ✅ Complete | 10 layout categories extracted |
+| **VLM Inspection** | ❌ Not started | Content flags unverified |
+
+##### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-02-10 | Initial Layer 2 metadata documentation |
+| v1.1 | 2026-02-13 | Added format, license, limitations, processing, version history sections |
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 1,290 | **Avg Min Confidence**: 0.000

@@ -70,19 +70,16 @@
 
 | Split | Source Count | Layer 2 Count | Coverage | Status |
 |-------|--------------|---------------|----------|--------|
-| **Train** | 149 | 199 (combined) | N/A | ⚠️ Split info not tracked in Layer 2 |
-| **Test** | 50 | 199 (combined) | N/A | ⚠️ Split info not tracked in Layer 2 BENCHMARK RESERVED |
+| **Train** | 149 | 149 | 100% | ✅ Complete |
+| **Test** | 50 | 50 | 100% | ✅ Complete — BENCHMARK RESERVED |
 | **Total** | 199 | 199 | 100% | ✅ All samples in Layer 2 |
 
 **Split Status Legend:**
 
-- ✅ Complete - All samples from this split are in Layer 2 metadata
-- ⚠️ Split info not tracked - Layer 2 metadata exists but doesn't track split membership
+- ✅ Complete - All samples from this split are in Layer 2 metadata with `split` field populated
 - ❌ Missing - Split not included in Layer 2 metadata
 
-> **Note**: Layer 2 metadata contains all 199 samples but does not track which split each sample belongs to
-> (train vs test). The current Layer 2 schema does not include a `split` field. Source split information
-> is available in the original FUNSD directory structure (`training_data/` and `testing_data/`).
+> **Note**: Split field populated via integration script from `source.split` metadata.
 > Test split (50 images) is BENCHMARK RESERVED - do not use for training.
 
 ###### 4.2 Sample Counts
@@ -216,14 +213,23 @@
 
 | Metric | Value |
 |--------|-------|
-| **Annotated Samples** | 5 (subset) |
-| **File Format** | JPEG (100%) |
-| **Dimensions** | 762-771 × 1000 px (avg: 763 × 1000) |
-| **Avg File Size** | 147 KB |
-| **Color Space** | RGB |
-| **Capture Method** | Scanner (ADF) |
-| **Domain** | ADM (Administrative) |
-| **Content Flags** | Tables: ✅, Handwriting: ✅, Signatures: ✅ |
+| **Annotated Samples** | 199 (100%) |
+| **Schema Version** | 2.3.0 |
+| **File Format** | PNG (100%) |
+| **Dimensions** | 754-863 × 1000 px |
+| **Color Mode** | Grayscale (L) |
+| **Capture Method** | Scanner (ADF), confidence 1.0 |
+| **Domain** | ADM (Administrative), confidence 1.0 |
+| **Language** | English (en), confidence 1.0 |
+| **Script** | Latin (Latn), script_family: latin |
+| **Text Direction** | LTR |
+| **Text Directions Present** | [ltr] |
+| **Split** | Train: 149, Test: 50 |
+| **Orientation** | 0 (upright), confidence 0.95 |
+| **Text Content** | 199/199 have OCR text (Docling OCR) |
+| **Layout Detections** | 199/199 with DocLayNet-mapped classes |
+| **Content Flags** | Handwriting: 64/199 (32%), Tables: 33/199 (17%), Signatures: 48/199 (24%), Figures: 5/199 (3%) |
+| **Integration Script** | `scripts/integrate_funsd_enrichments.py` v1.0.0 |
 
 ##### Dataset-Specific Notes
 
@@ -267,20 +273,81 @@ dataset = load_dataset("nielsr/funsd")
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 199 | **Avg Min Confidence**: 0.346
+> **Computed**: 2026-02-13 (post-VLM full coverage) | **Samples**: 199 | **Avg Min Confidence**: 0.90
 
-**Composite Category Distribution**:
+**Composite Category Distribution** (post-integration):
 
 | Category | Count | Pct |
 |----------|------:|----:|
-| hard_label | 4 | 2.0% |
-| soft_label | 11 | 5.5% |
-| active_learning | 11 | 5.5% |
-| unreliable | 173 | 86.9% |
+| hard_label | ~0 | 0% |
+| soft_label | 199 | 100% |
+| active_learning | 0 | 0% |
+| unreliable | 0 | 0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `language` | 98.0% | 0.346 |
-| 2 | `domain` | 2.0% | 0.900 |
+| 1 | `content_flags` | 100% | 0.90 |
+
+> **Pre-audit state**: 86.9% unreliable, language bottleneck at 0.346 confidence.
+> **Post-audit state**: 100% soft_label, content_flags bottleneck at 0.90 confidence (full VLM coverage).
+> Language confidence upgraded to 1.0 (dataset documentation override).
+
+##### Layer 2 Audit Summary
+
+> **Audit Date**: 2026-02-14 | **Auditor**: claude-opus-4-6
+> **Schema Version**: 2.3.0 | **Integration Script**: v1.0.0
+> **Audit Document**: [`docs/audit/audits/funsd_audit.md`](../../audit/audits/funsd_audit.md)
+
+**Pre-Screening Results** (15/15 fields pass):
+
+| Field | Status | Notes |
+|-------|--------|-------|
+| split | ✅ Pass | Derived from source.split (train/test) |
+| capture_method | ✅ Pass | scanner_adf (documentation override) |
+| domain_level1 | ✅ Pass | ADM (documentation override) |
+| iso639_language | ✅ Pass | en, confidence 1.0 |
+| script_family | ✅ Pass | latin (KI-008 fix: was 'ltr') |
+| layout_detections | ✅ Pass | DocLayNet-mapped from FUNSD native labels |
+| layout_bbox_valid | ✅ Pass | All bboxes valid |
+| content_flags_boolean | ✅ Pass | All boolean typed |
+| text_has_content | ✅ Pass | 199/199 from Docling OCR |
+| orientation_class | ✅ Pass | 0 (upright) |
+| image_properties_color_mode | ✅ Pass | grayscale |
+| handwriting_present | ✅ Pass | Derived from has_handwriting |
+| text_direction | ✅ Pass | ltr (v2.3.0) |
+| text_directions_present | ✅ Pass | [ltr] (v2.3.0) |
+| quality_overall_mos | ✅ Pass | Present |
+
+**Schema Compliance**: 199/199 valid (100%)
+
+**Defects Resolved** (11 total: 1 critical, 4 high, 5 medium, 1 low):
+
+| ID | Field | Resolution |
+|----|-------|------------|
+| D01 | split | Populated from source.split |
+| D02 | script_family | Fixed via get_script_family("Latn") -> "latin" |
+| D03 | text_has_content | Populated from Docling OCR (199/199) |
+| D04 | orientation_class | Set to 0 (scanner forms, verified by VLM) |
+| D05 | image_properties_color_mode | Set to "grayscale" (verified: PIL mode=L) |
+| D06 | handwriting_present | Derived from has_handwriting content flag |
+| D07 | layout class_name | FUNSD labels mapped to DocLayNet taxonomy |
+| D08 | text_direction | Set to "ltr" (v2.3.0, English only) |
+| D09 | text_directions_present | Set to ["ltr"] (v2.3.0) |
+| D10 | schema_version | Bumped to "2.3.0" |
+| D11 | content_flags | Full VLM coverage (199/199): HW=64, TBL=33, SIG=48, FIG=5 |
+
+**VLM Inspection** (Full coverage, 199/199 samples via 14 contact sheets):
+
+- Orientation: 199/199 confirmed upright
+- Language/Script: 199/199 confirmed English/Latin
+- has_handwriting: 64/199 (32%) - handwritten field entries
+- has_table: 33/199 (17%) - actual data tables (KI-002 applied)
+- has_signature: 48/199 (24%) - visible signatures
+- has_figure: 5/199 (3%) - prominent seals, diagrams, graphics
+
+**Known Limitations**:
+
+- Content flag accuracy estimated at 95% from contact sheet resolution (some borderline cases)
+- Schema compliance checker does not yet validate v2.3.0 text_direction fields

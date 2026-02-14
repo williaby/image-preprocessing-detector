@@ -177,6 +177,52 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 | **Capture Method** | Camera (Smartphone) |
 | **Domain** | General Documents |
 
+#### 5. Data Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | JPEG |
+| **Resolution** | Camera-native (3264-4128 × 2448-3096 px) |
+| **Color Space** | RGB |
+| **Metadata Format** | Per-image JSON (Layer 2) + HuggingFace Parquet |
+| **Storage** | GCS bucket + local E:\ drive |
+
+#### 6. License
+
+| Attribute | Value |
+|-----------|-------|
+| **License Type** | Research Only |
+| **Source** | L3i Lab, Université de La Rochelle |
+| **Commercial Use** | Not permitted |
+| **Citation** | Nayef et al. CBDAR@ICDAR 2015 |
+
+#### 7. Limitations
+
+- **Benchmark only**: NEVER train on this dataset - designed exclusively for evaluation/benchmarking
+- **Controlled environment**: Robotic arm capture does not represent real-world smartphone usage
+- **Limited document types**: Only 3 categories (modern documents, receipts, old administrative letters)
+- **Partial OCR/layout coverage**: Docling extracted 70% OCR and 54% layout (failures need investigation)
+- **No official splits**: Dataset does not define train/val/test partitions
+
+#### 8. Processing Status
+
+| Step | Status | Notes |
+|------|--------|-------|
+| **Image Storage** | ✅ Complete | 4,260 JPEG images |
+| **Base Metadata** | ✅ Complete | 4,260 samples annotated |
+| **LLM Enrichment** | ✅ Complete | Domain, language, script enrichment |
+| **Language Enrichment** | ✅ Complete | OpenLID language detection |
+| **Docling OCR** | ⚠️ Partial | 70% coverage (3,000/4,280) |
+| **DocLayout-YOLO** | ⚠️ Partial | 54% coverage (2,305/4,280) |
+| **VLM Inspection** | ❌ Not started | Content flags unverified |
+
+#### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-02-10 | Initial Layer 2 metadata documentation |
+| v1.1 | 2026-02-13 | Added format, license, limitations, processing, version history sections |
+
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 4,260 | **Avg Min Confidence**: 0.217
