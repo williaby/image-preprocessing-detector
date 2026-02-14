@@ -363,7 +363,7 @@ def run_benchmark(
     output_dir: Path,
     max_samples: int,
     seed: int,
-) -> dict:
+) -> dict[str, Any]:
     """Run the script detection benchmark.
 
     Args:
@@ -470,20 +470,22 @@ def run_benchmark(
             for lang_iso, stats in sorted(per_lang.items()):
                 print(f"  {lang_iso}: {stats['accuracy']:.1%} ({stats['correct']}/{stats['total']})")
 
+        indicdlp_metrics: dict[str, Any] = {
+            "family_level": indic_family,
+        }
+        if indic_iso is not None:
+            indicdlp_metrics["iso_level"] = indic_iso
+
         result_dict["supplementary_indicdlp"] = {
             "dataset": "indicdlp",
             "num_samples": len(indicdlp_samples),
             "note": "Supplementary evaluation on 12 Indic languages. "
                     "Does NOT affect Go/No-Go decision.",
-            "metrics": {
-                "family_level": indic_family,
-            },
+            "metrics": indicdlp_metrics,
             "latency": indic_latency,
             "failure_rate": round(indicdlp_eval["failures"] / len(indicdlp_samples), 4),
             "per_language": per_lang,
         }
-        if indic_iso is not None:
-            result_dict["supplementary_indicdlp"]["metrics"]["iso_level"] = indic_iso
     else:
         print("\nIndicDLP not found - skipping supplementary evaluation")
 

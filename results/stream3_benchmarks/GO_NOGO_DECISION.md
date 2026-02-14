@@ -34,7 +34,7 @@
 
 **Confusion Matrix**:
 
-```
+```text
                      cjk       latin      arabic  devanagari     unknown
 ------------------------------------------------------------------------
        cjk           223           7          89          33          77
@@ -51,6 +51,7 @@ devanagari           161           3          80          40         111
 | arabic | 0.0761 | 0.2615 | 0.1179 | 130 |
 | devanagari | 0.1970 | 0.1013 | 0.1338 | 395 |
 | unknown | 0.0000 | 0.0000 | 0.0000 | 0 |
+
 **ISO-Level Metrics**:
 
 - Accuracy: 7.5%
@@ -60,7 +61,7 @@ devanagari           161           3          80          40         111
 
 **Confusion Matrix**:
 
-```
+```text
         Arab  Beng  Deva  Hans  Jpan  Kore  Latn
 ------------------------------------------------
 Arab      34     0     7    59     0     0     1

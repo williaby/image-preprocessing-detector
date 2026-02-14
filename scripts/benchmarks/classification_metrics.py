@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import platform
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -379,7 +379,7 @@ def save_benchmark_result(
         Path to the saved JSON file.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
     filename = f"{detector_name}_{timestamp}.json"
     output_path = output_dir / filename
 

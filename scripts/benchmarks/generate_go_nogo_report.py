@@ -16,7 +16,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -109,7 +109,6 @@ def generate_executive_summary(results: dict[str, dict[str, Any]]) -> list[str]:
         # Extract metric value
         threshold_info = result.get("threshold", {})
         met = threshold_info.get("met", False)
-        go_nogo = result.get("go_nogo", "UNKNOWN")
 
         # Find the metric value
         metric_value = _extract_metric(result, threshold.metric)
@@ -256,7 +255,7 @@ def generate_detector_section(
 
     elif "primary" in result or "accuracy" in metrics:
         # Binary metrics (shadow, warping, document source)
-        if "primary" in result and result["primary"]:
+        if result.get("primary"):
             primary = result["primary"]
             lines.extend(_format_binary_metrics(primary.get("metrics", {}), primary.get("dataset", "Primary")))
 
@@ -308,7 +307,6 @@ def generate_detector_section(
     # Go/No-Go
     if threshold:
         met = result.get("threshold", {}).get("met", False)
-        go_nogo = result.get("go_nogo", "UNKNOWN")
         metric_value = _extract_metric(result, threshold.metric)
         score_str = f"{metric_value:.1%}" if metric_value is not None else "N/A"
 
@@ -350,7 +348,7 @@ def _format_classification_metrics(metrics: dict[str, Any], label: str) -> list[
         lines.extend([
             "",
             "**Confusion Matrix**:",
-            "```",
+            "```text",
             format_confusion_matrix(cm, class_names),
             "```",
         ])
@@ -366,6 +364,7 @@ def _format_classification_metrics(metrics: dict[str, Any], label: str) -> list[
                 f"{cls_metrics.get('recall', 0):.4f} | {cls_metrics.get('f1', 0):.4f} | "
                 f"{cls_metrics.get('support', 0)} |"
             )
+        lines.append("")
 
     return lines
 
@@ -548,7 +547,7 @@ def generate_report(results_dir: Path, output_path: Path) -> None:
         print(f"No benchmark results found in {results_dir}", file=sys.stderr)
         sys.exit(1)
 
-    timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     lines: list[str] = [
         "# Stream 3: Go/No-Go Decision Report",
