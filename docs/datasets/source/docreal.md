@@ -169,9 +169,9 @@ DocReal contains 251 images: 201 camera-captured distorted and 50 flatbed-scanne
 
 | Split | Source Count | Layer 2 Count | Coverage | Status |
 |-------|--------------|---------------|----------|--------|
-| **Distorted** | 201 | 0 | 0% | ❌ Not started |
-| **Scanned (GT)** | 50 | 0 | 0% | ❌ Not started |
-| **Total** | 251 | 0 | 0% | ❌ Not started |
+| **Distorted** | 201 | 201 | 100% | ✅ Complete |
+| **Scanned (GT)** | 50 | 50 | 100% | ✅ Complete |
+| **Total** | 251 | 251 | 100% | ✅ Complete |
 
 ##### 4.2 Sample Counts
 

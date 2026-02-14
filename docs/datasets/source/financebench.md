@@ -129,9 +129,9 @@
 
 | Aspect | Details |
 |--------|---------|
-| **Annotation Method** | Automatic Extraction |
-| **Provenance Tier** | Tier 0 (Exact) |
-| **Quality Assurance** | Born-digital financial PDF extraction |
+| **Annotation Method** | Human Expert (Q&A pairs), Automatic Extraction (document parsing) |
+| **Provenance Tier** | Tier 1 (Human-annotated) for Q&A annotations, Tier 0 (Exact) for document metadata |
+| **Quality Assurance** | Human expert annotations for Q&A pairs, born-digital financial PDF extraction for document structure |
 | **GT Label Coverage** | 100% |
 
 #### 3. Project Usage

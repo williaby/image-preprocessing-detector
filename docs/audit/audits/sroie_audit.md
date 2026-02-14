@@ -205,12 +205,12 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 | Field Group | Fields Checked | Valid % | Invalid % | Notes |
 |-------------|---------------|---------|-----------|-------|
-| capture_resolution | | | | |
-| domain_language | | | | Expected: script_family wrong_value |
-| content_flags | | | | |
-| layout_detections | | | | Expected: class_name wrong_value |
-| geometric_quality | | | | Expected: orientation not_populated |
-| text_document | | | | Expected: text_has_content not_populated |
+| capture_resolution | N/A | N/A | N/A | Not evaluated |
+| domain_language | N/A | N/A | N/A | Expected: script_family wrong_value |
+| content_flags | N/A | N/A | N/A | Not evaluated |
+| layout_detections | N/A | N/A | N/A | Expected: class_name wrong_value |
+| geometric_quality | N/A | N/A | N/A | Expected: orientation not_populated |
+| text_document | N/A | N/A | N/A | Expected: text_has_content not_populated |
 
 **Overall Validity**: ___%
 

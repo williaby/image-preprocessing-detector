@@ -889,7 +889,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 - **Prescreening/compliance enum divergence**: VALID_CAPTURE_METHODS in prescreening didn't include full L2 schema enum set. Integration script used correct value (`scanner_flatbed`) but prescreening rejected it. Required cross-referencing `_CAPTURE_ENUMS` in compliance script.
 - **Filename convention inconsistency**: Dataset uses hyphen (`pucit-ohul`) but metadata directory uses underscore (`pucit_ohul_urdu`). Aggregate script constructs filename from dataset name with hyphens. Needed manual symlink.
 - **Compliance output filename**: `audit_schema_compliance.py` writes `schema_compliance_v2.json` but `compute_scorecard.py` looks for `compliance.json`. Not documented.
-- **Docling OCR empty on handwriting**: All 7,401 Docling OCR records return empty text for Nastaliq handwriting. Expected but wasted investigation time. Should be documented as a known limitation for handwriting datasets.
+- **Docling OCR empty on handwriting**: All 7,401 Docling OCR records return empty text for Nastaliq handwriting. Expected but wasted investigation time. This limitation should be documented as a known limitation for handwriting datasets.
 - **Materialize reliability duplicate**: Script appended a second Section 12 instead of replacing the existing one. Required manual cleanup.
 
 ### Recommendations for Next Audit

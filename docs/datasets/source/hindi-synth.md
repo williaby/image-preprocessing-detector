@@ -23,7 +23,7 @@
 | **Total Images** | 80,009 |
 | **CSV Labels** | 1 (data.csv) |
 | **Total Size** | 735 MB |
-| **File Format** | PNG/JPG |
+| **File Format** | PNG |
 | **Layer 2 Samples** | 80,008 |
 
 ##### Format and Structure
@@ -38,7 +38,12 @@ Images are single-line Devanagari text rendered on white backgrounds. Each image
 
 ##### Label Schema
 
-Labels are provided in `data.csv` with columns mapping image filenames to their Hindi text transcriptions. Each row contains: image path, ground truth text (Devanagari). The parser `parse_hindi_synthetic_labels` extracts transcription from paired .txt files with hi/Deva metadata.
+Labels are provided in two formats:
+
+1. **CSV master index**: `data.csv` with columns mapping image filenames to their Hindi text transcriptions
+2. **Per-image transcription files**: Paired `.txt` files (one per image) containing ground truth text in Devanagari
+
+The parser `parse_hindi_synthetic_labels` extracts transcription from paired .txt files with hi/Deva metadata.
 
 ##### IQA Profile
 

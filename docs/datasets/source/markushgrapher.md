@@ -249,8 +249,8 @@ markushgrapher/
 
 ##### 5.1 Class/Category Distribution
 
-| Category | Count | Percentage |
-|----------|-------|------------|
+| Category | Count (estimated) | Percentage (estimated) |
+|----------|-------------------|------------------------|
 | Markush Structures | ~150,000 | ~64% |
 | Generic Structures | ~50,000 | ~21% |
 | Specific Structures | ~35,000 | ~15% |
@@ -312,7 +312,7 @@ markushgrapher/
 | **Training Value** | MEDIUM - Specialized domain (chemical structure recognition) |
 | **Unique Characteristics** | Large-scale Markush structure dataset |
 | **Complementary Datasets** | Domain-specific; limited overlap with general document IQA |
-| **Benchmark Suitability** | MEDIUM - Pre-split train/val/test for chemical recognition tasks |
+| **Benchmark Suitability** | LOW - Limited to chemical structure recognition; not suitable as general document benchmark |
 | **Known Limitations** | Specialized domain, not applicable to general document IQA |
 
 #### 7. Known Issues & Limitations
@@ -337,10 +337,11 @@ markushgrapher/
 ##### Primary Citation
 
 ```bibtex
-@misc{ds4sd2024markushgrapher,
+@misc{smolensky2024markushgrapher,
   title={MarkushGrapher Datasets: Chemical Structure Recognition},
-  author={DS4SD Team},
+  author={Smolensky, Andrey and others},
   year={2024},
+  organization={Bayer AG and IBM Research DS4SD},
   publisher={HuggingFace},
   url={https://huggingface.co/datasets/ds4sd/MarkushGrapher-Datasets}
 }

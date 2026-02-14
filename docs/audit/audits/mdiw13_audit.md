@@ -230,27 +230,15 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ### Sources Discovered
 
-| Source | Fields Contributed | Priority |
-|--------|-------------------|----------|
-| | | |
-| | | |
-| | | |
+N/A - Single source dataset (parser-only ground truth from directory structure and GT file)
 
 ### Field Agreement Analysis
 
-| Field | Sources | Agreement | Disagreement | Notes |
-|-------|---------|-----------|--------------|-------|
-| | | | | |
-| | | | | |
-| | | | | |
+N/A - Single source dataset (parser-only ground truth from directory structure and GT file)
 
 ### Top Disagreements
 
-| Field | Source A | Source B | Affected Samples | Root Cause |
-|-------|----------|----------|-----------------|------------|
-| | | | | |
-| | | | | |
-| | | | | |
+N/A - Single source dataset (parser-only ground truth from directory structure and GT file)
 
 **Notes**:
 
@@ -260,15 +248,9 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ### Defect Catalog
 
-Document all defects in `scripts/audit/results/mdiw13/defect_catalog.json`
+All defects documented in `scripts/audit/results/mdiw13/defect_catalog.json` and resolved/deferred during integration.
 
-| ID | Field | Type | Severity | Affected | Status | Root Cause | Fix Location |
-|----|-------|------|----------|----------|--------|------------|--------------|
-| D01 | | | | | OPEN | | |
-| D02 | | | | | OPEN | | |
-| D03 | | | | | OPEN | | |
-| D04 | | | | | OPEN | | |
-| D05 | | | | | OPEN | | |
+See Phase 7 (Apply Corrections) for complete defect catalog update table with resolution status for all 11 defects (D01-D11).
 
 **Total Defects**: ___
 

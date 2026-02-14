@@ -66,7 +66,7 @@
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/language/cc-ocr/` | ✅ Available | 6,533 JPG/PNG files |
+| **Images** | `01_base_data/language/cc-ocr/` | ✅ Available | 6,533 JPG/PNG files (Note: 525 images referenced in annotations but not included in public download) |
 | **Text/GT** | Native annotations | ✅ Available | TSV: Full OCR text in `answer` field (doc_parsing, kie TSVs) |
 | **Text/OCR Extracted** | `metadata_registry/extracted/cc-ocr/` | ✅ Available | Docling GPU: 33 OCR batches, 6,533 records |
 | **Layout Extracted** | `metadata_registry/extracted/cc-ocr/` | ✅ Available | Docling GPU: 33 layout batches, 6,533 images |

@@ -89,7 +89,7 @@ MIDV500 includes per-document-type JSON template files with text field values:
 |--------|---------|
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation) |
-| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Annotator Details** | (Not disclosed in source) |
 | **Quality Assurance** | Identity document text field annotation, 50 countries |
 | **GT Label Coverage** | 100% |
 

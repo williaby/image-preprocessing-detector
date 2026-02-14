@@ -135,7 +135,7 @@ AnyPhotoDoc6300/
 
 | Aspect | Details |
 |--------|---------|
-| **Parser Status** | ⚠️ Partial - Parser created but enrichment not yet run |
+| **Parser Status** | ✅ Available - Parser created, enrichment pending |
 | **Layer 2 Auto-Derived** | `capture_method=camera_smartphone`, `has_warping=True` |
 
 #### 3c. Data Locations
@@ -156,7 +156,7 @@ AnyPhotoDoc6300/
 
 #### 4. Dataset Statistics
 
-Camera-captured document dewarping benchmark with 6,306 distorted images across 8 layout categories, 3 warping patterns, and 3 lighting conditions.
+Camera-captured document dewarping benchmark with 6,300 distorted images across 8 layout categories, 3 warping patterns, and 3 lighting conditions.
 
 ##### 4.1 Split Coverage
 

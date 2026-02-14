@@ -138,7 +138,7 @@
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
 | **Annotator Details** | Google Research team |
-| **Inter-Annotator Agreement** | [NEEDS_VERIFICATION] |
+| **Inter-Annotator Agreement** | (Not reported in source) |
 | **Quality Assurance** | Expert annotation review |
 | **GT Label Coverage** | 100% (all 11,639 images with hierarchical text annotations) |
 

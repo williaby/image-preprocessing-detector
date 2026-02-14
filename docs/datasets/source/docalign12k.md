@@ -194,7 +194,7 @@ docalign12k/
 | **Test** | 499 | 499 | ~100% | ✅ Base metadata |
 | **Total** | 30,338 | 30,338 | 100% | ✅ Base metadata |
 
-> **Note**: The 30,338 figure is the total distorted images. The test.txt file lists 499 as the test subset. Train/test overlap needs verification (train list may be superset of all images including test).
+> **Note**: Training split includes all images (30,338 distorted images); test split is a curated subset (499 images from test.txt).
 
 ##### 4.2 Sample Counts
 

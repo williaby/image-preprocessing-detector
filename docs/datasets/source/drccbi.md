@@ -290,6 +290,7 @@ drccbi/
 #### 7. Known Issues & Limitations
 
 - **License Unknown**: No explicit license provided - contact authors before commercial use
+- **License status is unverified - contact dataset authors before production use**
 - **Limited Documentation**: GitHub repository may lack detailed README
 - **Dataset Size Unknown**: Number of images not documented; requires repository clone
 - **No Text Ground Truth**: Paired images only; no OCR text provided

@@ -59,7 +59,7 @@ Standard evaluation protocol: "Large Writer Independent Text Line Recognition Ta
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
 | **Annotator Details** | 657 writers providing handwriting samples |
 | **Quality Assurance** | Structured handwriting collection protocol with writer-independent splits |
-| **GT Label Coverage** | 100% (all 130K images with text transcriptions and XML bounding boxes) |
+| **GT Label Coverage** | 100% (all images have line-level transcriptions; word and character segmentation available) |
 
 ##### Dataset Statistics
 

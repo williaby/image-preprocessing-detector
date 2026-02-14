@@ -50,7 +50,7 @@
 | **Annotation Method** | Synthetic |
 | **Provenance Tier** | Tier 0 (Exact) |
 | **Quality Assurance** | Synthetic Japanese OCR with orientation labels, exact by construction |
-| **GT Label Coverage** | 100% |
+| **GT Label Coverage** | 100% (orientation labels for all images; synthetic OCR text exact by construction) |
 
 ##### Data Locations
 

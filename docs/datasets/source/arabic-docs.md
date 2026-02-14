@@ -69,7 +69,7 @@
 | **Provenance Tier** | Tier 1/Tier 2 |
 | **Annotator Details** | Human (titles) + automatic (OCR extraction) |
 | **Quality Assurance** | Title annotation + OCR extraction |
-| **GT Label Coverage** | 100% |
+| **GT Label Coverage** | 100% (category labels); ~69% (title transcriptions) |
 
 #### 11. Layer 2 Audit Summary
 
