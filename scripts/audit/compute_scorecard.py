@@ -69,6 +69,35 @@ def load_scorecard_config(path: Path | None = None) -> dict[str, Any]:
 # -------------------------------------------------------------------
 # Dimension scorers
 # -------------------------------------------------------------------
+def _load_per_field_pass_rates(screening_path: Path) -> dict[str, float] | None:
+    """Load per-field pass rates from automated_screening.json.
+
+    Args:
+        screening_path: Path to automated_screening.json.
+
+    Returns:
+        Dict mapping field names to pass rates (0-100), or None if missing.
+    """
+    if not screening_path.is_file():
+        return None
+
+    with screening_path.open() as f:
+        data = json.load(f)
+
+    per_field = data.get("per_field_results", {})
+    if not per_field:
+        return None
+
+    rates: dict[str, float] = {}
+    for field_name, stats in per_field.items():
+        total = stats.get("pass", 0) + stats.get("fail", 0)
+        if total > 0:
+            rates[field_name] = stats["pass"] / total * 100
+        else:
+            rates[field_name] = 0.0
+    return rates
+
+
 def compute_field_coverage(screening_path: Path) -> float | None:
     """Compute field coverage score from automated_screening.json.
 
@@ -80,29 +109,13 @@ def compute_field_coverage(screening_path: Path) -> float | None:
     Returns:
         Score 0-100, or None if artifact missing.
     """
-    if not screening_path.is_file():
+    rates = _load_per_field_pass_rates(screening_path)
+    if rates is None:
         log.warning("  automated_screening.json not found: %s", screening_path)
         return None
 
-    with screening_path.open() as f:
-        data = json.load(f)
-
-    per_field = data.get("per_field_results", {})
-    if not per_field:
-        log.warning("  No per_field_results in screening data")
-        return None
-
-    total_fields = len(per_field)
-    pass_rates: list[float] = []
-    for field_name, stats in per_field.items():
-        total = stats.get("pass", 0) + stats.get("fail", 0)
-        if total > 0:
-            pass_rate = stats["pass"] / total * 100
-        else:
-            pass_rate = 0.0
-        pass_rates.append(pass_rate)
-
-    score = sum(pass_rates) / max(total_fields, 1)
+    total_fields = len(rates)
+    score = sum(rates.values()) / max(total_fields, 1)
     log.info(
         "  field_coverage: %.1f/100 (%d fields, avg pass rate %.1f%%)",
         score,
@@ -185,14 +198,37 @@ _EXPECTED_SECTIONS: list[str] = [
 ]
 
 
+def _heading_level(line: str) -> int:
+    """Return the heading level (1-6) of a markdown heading, or 0 if not a heading."""
+    match = re.match(r"^(#{1,6})\s+", line.strip())
+    return len(match.group(1)) if match else 0
+
+
 def _section_has_content(lines: list[str], heading_idx: int) -> bool:
-    """Check whether the section starting at *heading_idx* has body content."""
-    for j in range(heading_idx + 1, min(heading_idx + 20, len(lines))):
+    """Check whether the section starting at *heading_idx* has body content.
+
+    Searches the entire sub-tree (including within sub-headings) for any
+    non-heading, non-separator body text.  Only stops at a heading of the
+    same or higher level as the target section, which marks the start of
+    a sibling or parent section.
+    """
+    section_level = _heading_level(lines[heading_idx])
+    if section_level == 0:
+        return False
+
+    for j in range(heading_idx + 1, len(lines)):
         stripped = lines[j].strip()
-        if stripped and re.match(r"^#{1,6}\s+", stripped):
+        if not stripped or stripped.startswith("---"):
+            continue
+        current_level = _heading_level(stripped)
+        # A same-level or higher-level heading means we've left this section
+        if current_level and current_level <= section_level:
             break
-        if stripped and not stripped.startswith("---"):
-            return True
+        # Sub-headings (deeper level) are part of this section -- skip them
+        if current_level:
+            continue
+        # Non-heading, non-empty, non-separator line = body content
+        return True
     return False
 
 
@@ -281,8 +317,9 @@ def compute_defect_rate(
         "status_weights",
         {
             "RESOLVED": 0.0,
-            "PARTIALLY_RESOLVED": 0.5,
+            "ACCEPTED": 0.1,
             "DEFERRED": 0.3,
+            "PARTIALLY_RESOLVED": 0.5,
             "OPEN": 1.0,
         },
     )
@@ -454,6 +491,8 @@ def compute_vlm_accuracy(
 def compute_overall(
     dimension_scores: dict[str, float | None],
     config: dict[str, Any],
+    *,
+    screening_path: Path | None = None,
 ) -> dict[str, Any]:
     """Compute the overall weighted score and grade.
 
@@ -462,6 +501,8 @@ def compute_overall(
     Args:
         dimension_scores: Per-dimension scores (0-100) or None.
         config: Full scorecard config.
+        screening_path: Path to automated_screening.json for critical
+            field coverage grade cap checks.
 
     Returns:
         Dict with overall score, grade, per-dimension details,
@@ -539,6 +580,38 @@ def compute_overall(
             grade = max_grade
             log.warning("  GRADE CAPPED: %s", grade_cap_applied)
 
+    # Check critical field coverage (language, script, domain)
+    crit_cap = grade_caps.get("low_critical_field_coverage", {})
+    crit_fields: list[str] = crit_cap.get("fields", [])
+    crit_threshold: float = crit_cap.get("threshold_pct", 75)
+    if crit_fields and screening_path is not None:
+        per_field_rates = _load_per_field_pass_rates(screening_path)
+        if per_field_rates is not None:
+            failing_fields: list[str] = []
+            for fname in crit_fields:
+                rate = per_field_rates.get(fname, 0.0)
+                if rate < crit_threshold:
+                    failing_fields.append(f"{fname}={rate:.0f}%")
+            if failing_fields:
+                crit_max_grade = crit_cap.get("max_grade", "D")
+                grade_order = ["A", "B", "C", "D", "F"]
+                if grade_order.index(grade) < grade_order.index(crit_max_grade):
+                    crit_reason = crit_cap.get("reason", "").strip()
+                    crit_cap_msg = (
+                        f"Grade capped from {grade} to {crit_max_grade}: "
+                        f"Critical fields below {crit_threshold:.0f}%: "
+                        f"{', '.join(failing_fields)}. {crit_reason}"
+                    )
+                    grade = crit_max_grade
+                    # Stack cap messages if both VLM and critical field caps apply
+                    if grade_cap_applied:
+                        grade_cap_applied = (
+                            f"{grade_cap_applied} | {crit_cap_msg}"
+                        )
+                    else:
+                        grade_cap_applied = crit_cap_msg
+                    log.warning("  GRADE CAPPED: %s", crit_cap_msg)
+
     result: dict[str, Any] = {
         "overall_score": round(overall, 2),
         "grade": grade,
@@ -580,11 +653,32 @@ def score_dataset(
 
     # Compute each dimension
     screening_path = results_dir / "automated_screening.json"
+    # Accept both "compliance.json" (preferred) and legacy "schema_compliance_v2.json"
     compliance_path = results_dir / "compliance.json"
+    if not compliance_path.is_file():
+        legacy_compliance = results_dir / "schema_compliance_v2.json"
+        if legacy_compliance.is_file():
+            compliance_path = legacy_compliance
+            log.info("  Using legacy compliance file: %s", legacy_compliance.name)
     catalog_path = results_dir / "defect_catalog.json"
     comparison_path = results_dir / "comparison_report.json"
     vlm_path = results_dir / "vlm_corrections.json"
+    # Dataset results dir may use non-hyphenated name (e.g. "cocotext") while
+    # the canonical doc uses hyphens (e.g. "coco-text.md").  Try exact match
+    # first, then scan for files containing the base name.
     source_doc = DATASET_DOCS_DIR / f"{dataset_name}.md"
+    if not source_doc.is_file():
+        # Try common variations: add hyphens, remove hyphens
+        for candidate in DATASET_DOCS_DIR.glob("*.md"):
+            normalized = candidate.stem.replace("-", "")
+            if normalized == dataset_name.replace("-", ""):
+                source_doc = candidate
+                log.info(
+                    "  Resolved source doc: %s -> %s",
+                    dataset_name,
+                    candidate.name,
+                )
+                break
 
     dimension_scores: dict[str, float | None] = {
         "field_coverage": compute_field_coverage(screening_path),
@@ -597,7 +691,9 @@ def score_dataset(
         "vlm_accuracy": compute_vlm_accuracy(vlm_path, catalog_path),
     }
 
-    overall = compute_overall(dimension_scores, config)
+    overall = compute_overall(
+        dimension_scores, config, screening_path=screening_path
+    )
 
     # Build metadata
     artifacts_found: list[str] = []

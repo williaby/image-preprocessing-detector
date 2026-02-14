@@ -1,6 +1,6 @@
 # Audit Quality Scorecard Configuration
-# Version: 1.0.0
-# Last Updated: 2026-02-12
+# Version: 1.1.0
+# Last Updated: 2026-02-13
 #
 # Defines the 6-dimension weighted scoring rubric for Layer 2 metadata audit
 # quality assessment. Used by scripts/audit/compute_scorecard.py.
@@ -12,7 +12,7 @@
 #   D = 60+  (Below Standard - major remediation required)
 #   F = <60  (Failing - not suitable for use)
 
-version: "1.0.0"
+version: "1.1.0"
 
 dimensions:
   field_coverage:
@@ -141,9 +141,8 @@ weight_redistribution:
 
 grade_caps:
   description: >
-    When a required dimension is missing, the grade is capped to prevent
-    high grades on unverified data. This ensures VLM inspection cannot be
-    skipped without consequence.
+    Grade caps prevent high grades on datasets with critical gaps.
+    These caps apply regardless of the computed score.
   missing_vlm_accuracy:
     max_grade: "D"
     max_score_label: "69.9 (capped)"
@@ -151,6 +150,19 @@ grade_caps:
       Content flags (has_table, has_figure, has_handwriting, has_formula)
       are unverified soft labels without VLM inspection. Training on
       unverified labels risks propagating systematic errors.
+  low_critical_field_coverage:
+    max_grade: "D"
+    threshold_pct: 75
+    fields:
+      - domain_level1
+      - iso639_language
+      - script_family
+    reason: >
+      Language, script, and domain are critical training stratification
+      fields. Datasets with <75% coverage on any of these fields cannot
+      reliably support diversity-aware training splits or balanced sampling.
+      A contact sheet VLM review or enrichment pipeline must bring these
+      fields above 75% before the dataset can advance beyond Grade D.
 
 vlm_inspection_requirements:
   description: >

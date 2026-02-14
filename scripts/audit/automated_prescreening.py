@@ -69,6 +69,8 @@ VALID_CAPTURE_METHODS = frozenset(
         "camera_smartphone",
         "synthetic",
         "scanner",
+        "scanner_flatbed",
+        "scanner_adf",
         "born_digital",
         "screen_capture",
         "unknown",

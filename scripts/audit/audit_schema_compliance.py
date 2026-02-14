@@ -1283,8 +1283,23 @@ def main(argv: list[str] | None = None) -> int:
     if not args.quiet:
         print_summary(report)
 
-    if args.output:
-        write_report(report, args.output)
+    output_path: Path | None = args.output
+
+    # Auto-output to results/{dataset}/compliance.json when --dataset is used
+    # and no explicit --output is given.  This ensures compute_scorecard.py can
+    # find the artifact without manual --output flags.
+    if output_path is None and args.dataset:
+        auto_dir = (
+            Path(__file__).resolve().parent / "results" / args.dataset
+        )
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        output_path = auto_dir / "compliance.json"
+        logger.info(
+            "Auto-outputting to %s (use --output to override)", output_path
+        )
+
+    if output_path:
+        write_report(report, output_path)
 
     # Exit code 1 if any defects found.
     if report.valid_samples < report.total_samples:

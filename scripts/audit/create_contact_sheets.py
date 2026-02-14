@@ -5,17 +5,38 @@ Tiles multiple document images into grid contact sheets with labels,
 enabling inspection of 10-15 images per VLM call instead of one at a
 time. Each image is labeled with its filename for identification.
 
-Usage:
-    python scripts/audit/create_contact_sheets.py \
-        --input-dir /tmp/vlm_inspection/bhutan-afs/ \
-        --output-dir /tmp/vlm_inspection/bhutan-afs/contact_sheets/ \
-        --cols 5 --rows 2 \
-        --thumb-width 400
+Supports two input modes:
+
+**Directory mode** (``--input-dir``): Scans a directory for images.
+
+**Metadata-driven mode** (``--sample-json``): Reads a Phase 6 sample
+JSON file (output of ``select_audit_samples.py --phase6``) containing
+pre-selected image paths. This avoids filesystem directory scanning on
+large network-mounted datasets (500K+ files) that can cause OOM issues.
+
+Usage::
+
+    # Directory mode (traditional)
+    python scripts/audit/create_contact_sheets.py \\
+        --input-dir /tmp/vlm_inspection/bhutan-afs/ \\
+        --output-dir /tmp/vlm_inspection/bhutan-afs/contact_sheets/
+
+    # Metadata-driven mode (recommended for large datasets)
+    python scripts/audit/create_contact_sheets.py \\
+        --sample-json scripts/audit/results/pubtabnet/phase6_track_b_samples.json \\
+        --output-dir /tmp/pubtabnet_contact_sheets/
+
+    # With base directory override (for relative paths in sample JSON)
+    python scripts/audit/create_contact_sheets.py \\
+        --sample-json scripts/audit/results/pubtabnet/phase6_track_b_samples.json \\
+        --image-dir /mnt/e/image_detection/01_base_datasets/pubtabnet/ \\
+        --output-dir /tmp/pubtabnet_contact_sheets/
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import math
 import sys
@@ -122,16 +143,88 @@ def create_contact_sheet(
     }
 
 
+def _load_images_from_json(
+    sample_json_path: Path,
+    image_dir: Path | None = None,
+) -> list[Path]:
+    """Load image paths from a Phase 6 sample JSON file.
+
+    Reads a JSON file produced by ``select_audit_samples.py --phase6``
+    and resolves image paths. Uses ``image_path`` from each sample
+    entry. If paths are relative and ``image_dir`` is provided,
+    resolves them against that base directory.
+
+    Args:
+        sample_json_path: Path to Phase 6 sample JSON.
+        image_dir: Optional base directory for relative paths.
+
+    Returns:
+        Sorted list of resolved image paths.
+    """
+    with open(sample_json_path) as fh:
+        data = json.load(fh)
+
+    samples = data.get("samples", [])
+    if not samples:
+        log.warning("No samples found in %s", sample_json_path)
+        return []
+
+    paths: list[Path] = []
+    for entry in samples:
+        img_path = entry.get("image_path", "")
+        filename = entry.get("filename", "")
+
+        if img_path:
+            p = Path(img_path)
+            if not p.is_absolute() and image_dir is not None:
+                p = image_dir / img_path
+            paths.append(p)
+        elif filename and image_dir is not None:
+            paths.append(image_dir / filename)
+
+    # Filter to existing files and warn about missing ones
+    existing = [p for p in paths if p.exists()]
+    missing_count = len(paths) - len(existing)
+    if missing_count > 0:
+        log.warning(
+            "%d of %d images not found on disk, skipping",
+            missing_count,
+            len(paths),
+        )
+
+    return sorted(existing)
+
+
 def main() -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         description="Create contact sheet montages for VLM inspection",
     )
-    parser.add_argument(
+
+    # Input source: directory scan OR metadata-driven JSON
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
         "--input-dir",
         type=Path,
-        required=True,
-        help="Directory of resized images",
+        help="Directory of images to tile (scans filesystem)",
+    )
+    input_group.add_argument(
+        "--sample-json",
+        type=Path,
+        help=(
+            "Phase 6 sample JSON file from select_audit_samples.py --phase6. "
+            "Reads pre-selected image paths from metadata -- no directory scan."
+        ),
+    )
+
+    parser.add_argument(
+        "--image-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Base directory for resolving relative image paths in "
+            "--sample-json. Ignored when using --input-dir."
+        ),
     )
     parser.add_argument(
         "--output-dir",
@@ -165,18 +258,33 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.input_dir.is_dir():
-        log.error("Input directory not found: %s", args.input_dir)
+    # Resolve image list from the chosen input source
+    if args.sample_json is not None:
+        if not args.sample_json.exists():
+            log.error("Sample JSON not found: %s", args.sample_json)
+            return 1
+        images = _load_images_from_json(args.sample_json, args.image_dir)
+        log.info(
+            "Loaded %d images from sample JSON: %s",
+            len(images),
+            args.sample_json,
+        )
+    else:
+        if not args.input_dir.is_dir():
+            log.error("Input directory not found: %s", args.input_dir)
+            return 1
+        images = sorted(
+            f
+            for f in args.input_dir.iterdir()
+            if f.suffix.lower() in {".jpg", ".jpeg", ".png"}
+            and "contact_sheet" not in f.name
+        )
+
+    if not images:
+        log.error("No images found")
         return 1
 
     images_per_sheet = args.cols * args.rows
-    images = sorted(
-        f
-        for f in args.input_dir.iterdir()
-        if f.suffix.lower() in {".jpg", ".jpeg", ".png"}
-        and "contact_sheet" not in f.name
-    )
-
     log.info(
         "Creating contact sheets: %d images, %d per sheet (%dx%d)",
         len(images),
