@@ -15,7 +15,11 @@ Also applies:
   - Missing field population: split, orientation_class, color_mode, handwriting_present
   - Reliability summary recomputation
 
-Creates a new enrichment version (v3) in each sample's enrichments.versions[].
+Creates a new enrichment version (v4) in each sample's enrichments.versions[].
+
+v4 changes (schema v2.3.0):
+  - Added text_direction (ltr/rtl/ttb) derived from iso15924_script
+  - Added text_directions_present aggregated from per-image scripts
 
 Usage:
     PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \\
@@ -60,8 +64,8 @@ AUDIT_DIR = Path("scripts/audit/results/mlt19")
 VLM_TEST_ENRICHMENT_PATH = AUDIT_DIR / "vlm_test_enrichments.json"
 TRAIN_GT_ENRICHMENT_PATH = AUDIT_DIR / "train_gt_enrichments.json"
 
-SCRIPT_VERSION = "2.0.0"
-ENRICHMENT_VERSION_TAG = "integrated_v3"
+SCRIPT_VERSION = "3.1.0"
+ENRICHMENT_VERSION_TAG = "integrated_v5"
 
 # Content flag derivation from canonical layout classes
 TABLE_CLASSES = {"TABLE"}
@@ -107,11 +111,36 @@ LANGUAGE_TO_ISO639: dict[str, str] = {
     "Hindi": "hi",
     "Japanese": "ja",
     "Korean": "ko",
-    "Latin": "en",  # Default for Latin script
+    "Latin": "en",  # Default for Latin script (KI-009: conflates fr/de/it)
     "French": "fr",
     "German": "de",
     "Italian": "it",
 }
+
+# ISO 15924 script code -> text direction mapping (v2.3.0 schema)
+# Scene text: CJK is predominantly horizontal (ltr) in signage context
+SCRIPT_TO_DIRECTION: dict[str, str] = {
+    "Arab": "rtl",
+    "Hebr": "rtl",
+    "Latn": "ltr",
+    "Deva": "ltr",
+    "Beng": "ltr",
+    "Hans": "ltr",
+    "Hant": "ltr",
+    "Jpan": "ltr",
+    "Hang": "ltr",
+    "Kore": "ltr",
+    "Cyrl": "ltr",
+    "Grek": "ltr",
+    "Zyyy": "ltr",
+    "Zmth": "ltr",
+}
+
+# Latin-script European languages for KI-009 refinement.
+# When parser GT returns "en" (Latin class), LLM may have the actual language.
+LATIN_EUROPEAN_LANGUAGES: frozenset[str] = frozenset(
+    {"fr", "de", "it", "es", "pt", "nl", "ro", "pl", "cs", "sv", "da", "no", "fi", "hu", "tr"}
+)
 
 # VLM corrections: per-sample overrides from visual inspection (Phase 6).
 # Updated after VLM inspection.
@@ -310,6 +339,52 @@ def standardize_class_name(class_name: str) -> str:
     return DOCLAYOUT_YOLO_TO_DOCLAYNET.get(class_name, class_name)
 
 
+def derive_text_direction(iso15924_script: str) -> str | None:
+    """Derive text reading direction from ISO 15924 script code.
+
+    Returns:
+        "ltr", "rtl", or None if script is unknown/unresolvable.
+    """
+    if not iso15924_script or iso15924_script == "Zyyy":
+        return None
+    return SCRIPT_TO_DIRECTION.get(iso15924_script, "ltr")
+
+
+def derive_text_directions_present(
+    primary_script: str,
+    raw_labels: dict[str, Any] | None = None,
+) -> list[str]:
+    """Aggregate all text directions present in a sample.
+
+    For multilingual images with multiple scripts, collects the unique
+    set of directions. Falls back to the primary script direction.
+
+    Args:
+        primary_script: The resolved iso15924_script for this sample.
+        raw_labels: Optional raw_labels dict with 'languages' list from parser GT.
+
+    Returns:
+        Sorted list of unique directions (e.g., ["ltr", "rtl"]).
+    """
+    directions: set[str] = set()
+
+    # Primary script direction
+    primary_dir = SCRIPT_TO_DIRECTION.get(primary_script)
+    if primary_dir:
+        directions.add(primary_dir)
+
+    # If multilingual, collect directions from all annotated languages
+    if raw_labels:
+        for lang_name in raw_labels.get("languages", []):
+            script_code = LANGUAGE_TO_SCRIPT.get(lang_name)
+            if script_code:
+                direction = SCRIPT_TO_DIRECTION.get(script_code)
+                if direction:
+                    directions.add(direction)
+
+    return sorted(directions) if directions else []
+
+
 def _resolve_multilingual_primary(
     raw_labels: dict[str, Any],
 ) -> tuple[str, str, float, str] | None:
@@ -498,19 +573,14 @@ def integrate_sample(
     data["capture_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
-    # D02 - domain_level1: from LLM enrichment (or keep UNK)
-    # KI-007: UNK is acceptable for scene text
+    # D02 - domain_level1: VLM contact sheet override (2026-02-13)
+    # ALL MLT19 images are scene text photographs (signs, storefronts, etc.)
+    # Override to SCN for all (was 80.7% UNK from LLM, KI-007)
     # -------------------------------------------------------------------
-    if llm:
-        data["domain_level1"] = llm.get("domain_level1", "UNK")
-        data["domain_confidence"] = llm.get("domain_confidence", 0.5)
-        data["domain_detection_method"] = "llm_text"
-        data["domain_content_type"] = llm.get("content_type", "")
-    else:
-        # Keep v1 or default UNK
-        data["domain_level1"] = v1_data.get("domain_level1", "UNK")
-        data["domain_confidence"] = v1_data.get("domain_confidence", 0.3)
-        data["domain_detection_method"] = v1_data.get("domain_detection_method", "none")
+    data["domain_level1"] = "SCN"
+    data["domain_confidence"] = 0.9
+    data["domain_detection_method"] = "vlm_contact_sheet"
+    data["domain_content_type"] = llm.get("content_type", "") if llm else ""
 
     # -------------------------------------------------------------------
     # D07 - iso639_language & D11 - iso15924_script: multi-source resolution
@@ -518,6 +588,23 @@ def integrate_sample(
     lang, script, lang_conf, lang_method = resolve_language(
         sample, llm, lang_enrichment, vlm_enrichment, train_gt
     )
+    # -------------------------------------------------------------------
+    # KI-009 Latin language refinement: parser maps all Latin-script
+    # European languages to "en". When LLM enrichment has a more specific
+    # European language (fr/de/it/etc.), prefer it over the conflated "en".
+    # -------------------------------------------------------------------
+    if (
+        lang == "en"
+        and lang_method == "parser_gt"
+        and script == "Latn"
+        and llm
+    ):
+        llm_lang = llm.get("iso639_language", "")
+        if llm_lang in LATIN_EUROPEAN_LANGUAGES:
+            lang = llm_lang
+            lang_conf = 0.85  # Blended: parser script + LLM language
+            lang_method = "parser_gt+llm_refined"
+
     data["iso639_language"] = lang
     data["iso15924_script"] = script
     data["language_confidence"] = lang_conf
@@ -599,6 +686,21 @@ def integrate_sample(
             "text_scope_content_type", "scene_text"
         )
     data["text_scope"] = v1_data.get("text_scope", "phrase")
+
+    # -------------------------------------------------------------------
+    # v2.3.0 - text_direction & text_directions_present
+    # -------------------------------------------------------------------
+    text_dir = derive_text_direction(script)
+    if text_dir:
+        data["text_direction"] = text_dir
+        data["text_direction_confidence"] = lang_conf  # Same as language confidence
+
+    # Collect all directions from raw_labels (multilingual samples)
+    ol = sample.get("original_labels", {})
+    raw_labels = ol.get("raw_labels")
+    dirs_present = derive_text_directions_present(script, raw_labels)
+    if dirs_present:
+        data["text_directions_present"] = dirs_present
 
     # -------------------------------------------------------------------
     # Additional derived fields
@@ -744,7 +846,7 @@ def run_integration(
 
         if not dry_run:
             new_version = {
-                "version": 3,
+                "version": 4,
                 "created_at": now,
                 "created_by": "integrate_mlt19_enrichments.py",
                 "method": "tier_2_model",
@@ -752,12 +854,14 @@ def run_integration(
                     f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
                     "parser GT + train GT enrichment + VLM contact sheet + "
                     "LLM text + OpenLID language + "
-                    "DocLayout-YOLO layout + dataset documentation"
+                    "DocLayout-YOLO layout + dataset documentation + "
+                    "v2.3.0 text_direction/text_directions_present + "
+                    "KI-009 Latin language refinement (fr/de/it from LLM)"
                 ),
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            _upsert_enrichment_version(sample, new_version, 3)
+            _upsert_enrichment_version(sample, new_version, 5)
 
     return stats
 

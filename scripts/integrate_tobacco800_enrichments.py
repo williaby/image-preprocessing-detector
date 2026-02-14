@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Integrate all enrichment sources into bhutan-afs Layer 2 metadata.
+"""Integrate all enrichment sources into tobacco800 Layer 2 metadata.
 
 TEMPLATE VERSION: 1.1.0
-CREATED FROM: scripts/audit/integration_script_template.py
+CREATED FROM: scripts/integrate_warpdoc_enrichments.py
 
-bhutan-afs specifics:
-  - Born-digital government financial PDFs (135 pages)
-  - Docling layout extraction (COCO format, 8 categories, 392 annotations)
-  - Docling OCR extraction (JSONL, 135 records, 100% success)
-  - No LLM enrichment, no language enrichment
-  - BILINGUAL: Dzongkha/Tibetan (120 pages) + English (4 pages) + blank (1 page)
-  - VLM Phase 6: 13 true figure positives, 14 false positives (KI-003)
-  - capture_method override: born_digital (fixes BA-D01)
-  - Schema upgrade: v2.1 -> v2.3.0
+tobacco800 specifics:
+  - Archival tobacco litigation documents (CDIP subset)
+  - 1,290 binary (1-bit) document scans
+  - Multi-device ADF scanning, 150-300 DPI variable
+  - LLM enrichment available (domain, language, content flags)
+  - Docling layout (7 COCO batches) + OCR (7 JSONL batches) extracted
+  - No official train/val/test splits → hash-based 80/10/10
+  - All English, Latin script, administrative/legal/scientific domains
 
 Usage:
     PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
-        uv run python3 scripts/integrate_bhutan_afs_enrichments.py --dry-run
+        uv run python3 scripts/integrate_tobacco800_enrichments.py --dry-run
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import re
@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 # ===================================================================
 # DATASET CONFIGURATION
 # ===================================================================
-DATASET_NAME = "bhutan-afs"
+DATASET_NAME = "tobacco800"
 IS_SYNTHETIC_DATASET = False
 
 # ===================================================================
@@ -55,31 +55,25 @@ IS_SYNTHETIC_DATASET = False
 # ===================================================================
 REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
 
-METADATA_PATH = REGISTRY_DIR / "json" / "bhutan_financial_metadata.json"
-# No LLM or language enrichment available for bhutan-afs
-LLM_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "bhutan_financial_llm_enrichment.json"
-LANGUAGE_ENRICHMENT_PATH = (
-    REGISTRY_DIR / "json" / "bhutan_financial_language_enrichment.json"
-)
+METADATA_PATH = REGISTRY_DIR / "json" / "tobacco800_metadata.json"
+LLM_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "tobacco800_llm_enrichment.json"
+# No language enrichment file for tobacco800
+LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "tobacco800_language_enrichment.json"
 
-# Docling extracted data (COCO layout + OCR JSONL)
-DOCLING_LAYOUT_PATH = REGISTRY_DIR / "extracted" / "bhutan-afs" / "layout_batch_0.json"
-DOCLING_OCR_PATH = REGISTRY_DIR / "extracted" / "bhutan-afs" / "ocr_batch_0.jsonl"
+# Docling extracted data (layout + OCR)
+DOCLING_EXTRACTED_DIR = REGISTRY_DIR / "extracted" / "tobacco800"
 
-SCRIPT_VERSION = "3.0.0"
-ENRICHMENT_VERSION_TAG = "integrated_v4"
-ENRICHMENT_VERSION_NUMBER = 4
+SCRIPT_VERSION = "1.0.0"
+ENRICHMENT_VERSION_TAG = "integrated_v2"
 
-# Target schema version after integration
-TARGET_SCHEMA_VERSION = "2.3.0"
+# The enrichment version number written into each sample.
+# Use 2 for first integration, 3 for re-integration, etc.
+ENRICHMENT_VERSION_NUMBER = 2
 
 
 # ===================================================================
 # KNOWN ISSUE MITIGATIONS
 # ===================================================================
-
-# Page stem appearing in multiple KI contexts (figure, Dzongkha, signature)
-_AFS_PAGE_4 = "AFS_2024-25-2 4_p000"
 
 # --- KI-001: Docling layout label casing (CRITICAL) -----------------
 APPLY_KI_001_LAYOUT_CASING = True
@@ -99,94 +93,29 @@ DOCLING_TO_DOCLAYNET: dict[str, str] = {
     "code": "Code",
     "checkbox_selected": "Checkbox-Selected",
     "checkbox_unselected": "Checkbox-Unselected",
-    # Docling-specific categories found in bhutan-afs extraction
-    "document_index": "Document-Index",
 }
 
 # --- KI-002: Table detection multi-column FP (HIGH) -----------------
-# Populated after VLM Phase 6 inspection.
-# All unlisted has_table=True samples are overridden to False.
-VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset(
-    {
-        # Will be populated after VLM visual inspection (Phase 6)
-    }
-)
+VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset()
 
 # --- KI-003: Picture detection dense text FP (MEDIUM) ---------------
-# VLM Phase 6 inspection: 13 true positives, 14 false positives
-VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset(
-    {
-        # Government seals/emblems (cover pages, letters)
-        "AFS_2024-25-2 1_p000",
-        "AFS_2024-25-2 2_p000",
-        _AFS_PAGE_4,
-        "AFS_2024-25-2 6_p000",
-        "AFS_2024-25-2 14_p000",
-        "Tax-Act-of-Bhutan-2021_1_p000",
-        "Tax-Act-of-Bhutan-2021_3_p000",
-        # Charts (pie, bar, donut)
-        "AFS_2024-25-2 44_p000",
-        "AFS_2024-25-2 45_p000",
-        "AFS_2024-25-2 46_p000",
-        "AFS_2024-25-2 51_p000",
-        "AFS_2024-25-2 61_p000",
-        "AFS_2024-25-2 62_p000",
-    }
-)
+VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset()
 
 # --- KI-004: LLM handwriting on synthetic (HIGH) --------------------
-# Not applicable: bhutan-afs is non-synthetic born-digital
+# Not applicable: tobacco800 is real scanned documents.
+# Handwriting flags come from LLM enrichment and may be valid
+# (tobacco litigation docs can contain handwritten annotations).
 VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset()
 
-# --- KI-005: Capture method override (HIGH) -------------------------
-# BA-D01: Current metadata has scanner_flatbed, but these are born-digital
-# government PDFs rendered at 299 DPI.
-KNOWN_CAPTURE_METHOD: str | None = "born_digital"
+# --- KI-005: LLM cannot detect synthetic capture (HIGH) -------------
+# ADF scanner-captured archival documents - override from documentation.
+KNOWN_CAPTURE_METHOD: str | None = "scanner_adf"
 
 # --- KI-006: LLM formula semantic confusion (MEDIUM) ----------------
 VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 
-# --- VLM Language Audit (2026-02-12): Corrected language classification ---
-# Full VLM review of all 125 active pages revealed the ENTIRE AFS document
-# (all 115 active pages) is in Dzongkha/Tibetan script. The original
-# DZONGKHA_PAGE_STEMS (32 pages) only captured covers, chart labels, and
-# rotated tables — missing that ALL financial tables/notes use Tibetan script
-# with Arabic numerals. The Tax Act is bilingual (alternating eng/dzo pages).
-#
-# Corrected approach: default ALL pages to Dzongkha, list ONLY the English
-# and blank exceptions. See: tmp_cleanup/.tmp-bhutan-afs-vlm-language-audit-20260212.md
-#
-# Previous (WRONG):  32 dzo (23.7%) / 103 eng (76.3%)
-# Corrected:        120 dzo (96.0%) /   4 eng (3.2%) / 1 blank (0.8%)
-
-ENGLISH_PAGE_STEMS: frozenset[str] = frozenset(
-    {
-        # Tax Act of Bhutan 2021 - English pages only
-        "Tax-Act-of-Bhutan-2021_4_p000",   # Table of Contents (English)
-        "Tax-Act-of-Bhutan-2021_6_p000",   # Preamble + Sections 1-4 (English)
-        "Tax-Act-of-Bhutan-2021_8_p000",   # Schedule 1 - Revision of Sales Tax
-        "Tax-Act-of-Bhutan-2021_10_p000",  # Schedule 1 continuation (English)
-    }
-)
-
-BLANK_PAGE_STEMS: frozenset[str] = frozenset(
-    {
-        "Tax-Act-of-Bhutan-2021_2_p000",  # Empty page (registration marks only)
-    }
-)
-
-# Kept for backwards compatibility / audit trail — do NOT use for classification
-_LEGACY_DZONGKHA_PAGE_STEMS_V2: int = 32  # count from v2.0.0 (incorrect)
-
-# --- VLM Discovery: Signature detection ------------------------------
-SIGNATURE_PAGE_STEMS: frozenset[str] = frozenset(
-    {
-        _AFS_PAGE_4,  # Ministry of Finance formal letter
-    }
-)
-
 # ===================================================================
-# Content flag class mappings
+# Content flag class mappings (canonical layout -> content flags)
 # ===================================================================
 TABLE_CLASSES = {"TABLE"}
 FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
@@ -241,7 +170,7 @@ def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment and index by image_id.
+    """Load language enrichment (OpenLID) and index by image_id.
 
     Args:
         path: Path to *_language_enrichment.json.
@@ -264,89 +193,108 @@ def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
     return index
 
 
-def load_docling_layout(path: Path) -> dict[str, list[dict[str, Any]]]:
-    """Load Docling layout extraction (COCO format) and index by filename.
+def load_docling_layout_batches(
+    extracted_dir: Path,
+) -> dict[str, list[dict[str, Any]]]:
+    """Load Docling layout annotations from COCO-format batch files.
 
-    bhutan-afs specific: COCO format with categories, images, annotations.
-    Maps image_id -> file_name, then groups annotations by file_name.
+    Reads layout_batch_*.json files and indexes annotations by image filename.
 
     Args:
-        path: Path to layout_batch_0.json.
+        extracted_dir: Directory containing layout_batch_*.json files.
 
     Returns:
-        Dict mapping filename to list of annotation dicts.
+        Dict mapping image filename to list of annotation dicts with
+        standardized fields (class_name, bbox, confidence, etc.).
     """
-    if not path.exists():
-        log.warning("Docling layout not found: %s", path)
+    if not extracted_dir.exists():
+        log.warning("Docling extracted dir not found: %s", extracted_dir)
         return {}
-    log.info("Loading Docling layout (COCO) from %s", path)
-    with open(path, encoding="utf-8") as f:
-        coco: dict[str, Any] = json.load(f)
 
-    # Build category id -> name mapping
-    cat_map: dict[int, str] = {}
-    for cat in coco.get("categories", []):
-        cat_map[cat["id"]] = cat["name"]
+    batch_files = sorted(extracted_dir.glob("layout_batch_*.json"))
+    if not batch_files:
+        log.warning("No layout batch files found in %s", extracted_dir)
+        return {}
 
-    # Build image_id -> file_name mapping
-    img_map: dict[int, str] = {}
-    for img in coco.get("images", []):
-        img_map[img["id"]] = img["file_name"]
+    log.info("Loading %d layout batch files from %s", len(batch_files), extracted_dir)
 
-    # Group annotations by filename
     index: dict[str, list[dict[str, Any]]] = {}
-    for ann in coco.get("annotations", []):
-        image_id = ann.get("image_id")
-        filename = img_map.get(image_id, "")
-        if not filename:
-            continue
-        category_name = cat_map.get(ann.get("category_id", -1), "unknown")
-        det = {
-            "class_name": category_name,
-            "bbox": ann.get("bbox", []),
-            "confidence": 1.0,  # Docling does not provide per-detection confidence
-            "area": ann.get("area", 0.0),
-        }
-        index.setdefault(filename, []).append(det)
+    total_annotations = 0
+
+    for batch_file in batch_files:
+        with open(batch_file, encoding="utf-8") as f:
+            batch: dict[str, Any] = json.load(f)
+
+        # Build image_id -> filename mapping
+        id_to_filename: dict[int, str] = {}
+        for img in batch.get("images", []):
+            id_to_filename[img["id"]] = img["file_name"]
+
+        # Index annotations by filename
+        for ann in batch.get("annotations", []):
+            image_id = ann.get("image_id")
+            filename = id_to_filename.get(image_id, "")
+            if not filename:
+                continue
+
+            # Convert to standard layout detection format
+            detection = {
+                "class_name": ann.get("category_name", ""),
+                "bbox": ann.get("bbox", []),
+                "confidence": 0.85,  # Docling default
+                "source_label": ann.get("category_name", ""),
+                "source_schema": "docling-native",
+            }
+            if filename not in index:
+                index[filename] = []
+            index[filename].append(detection)
+            total_annotations += 1
 
     log.info(
-        "  Indexed %d images with %d total detections",
+        "  Indexed %d annotations across %d images",
+        total_annotations,
         len(index),
-        sum(len(v) for v in index.values()),
     )
     return index
 
 
-def load_docling_ocr(path: Path) -> dict[str, dict[str, Any]]:
-    """Load Docling OCR extraction (JSONL) and index by filename.
+def load_docling_ocr_batches(extracted_dir: Path) -> dict[str, dict[str, Any]]:
+    """Load Docling OCR text from JSONL batch files.
 
-    Each line is a JSON record with: source (GCS path), text,
-    confidence, tables_found, processing_time_ms, success, error.
+    Reads ocr_batch_*.jsonl files and indexes by image filename.
 
     Args:
-        path: Path to ocr_batch_0.jsonl.
+        extracted_dir: Directory containing ocr_batch_*.jsonl files.
 
     Returns:
-        Dict mapping filename to OCR record.
+        Dict mapping image filename to OCR record with text, confidence, etc.
     """
-    if not path.exists():
-        log.warning("Docling OCR not found: %s", path)
+    if not extracted_dir.exists():
+        log.warning("Docling extracted dir not found: %s", extracted_dir)
         return {}
-    log.info("Loading Docling OCR from %s", path)
+
+    batch_files = sorted(extracted_dir.glob("ocr_batch_*.jsonl"))
+    if not batch_files:
+        log.warning("No OCR batch files found in %s", extracted_dir)
+        return {}
+
+    log.info("Loading %d OCR batch files from %s", len(batch_files), extracted_dir)
+
     index: dict[str, dict[str, Any]] = {}
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            rec: dict[str, Any] = json.loads(line)
-            if not rec.get("success"):
-                continue
-            # Extract filename from GCS path
-            source = rec.get("source", "")
-            filename = Path(source).name
-            if filename:
-                index[filename] = rec
+
+    for batch_file in batch_files:
+        with open(batch_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rec: dict[str, Any] = json.loads(line)
+                source = rec.get("source", "")
+                # Extract filename from GCS path
+                filename = Path(source).name if source else ""
+                if filename and rec.get("success", False):
+                    index[filename] = rec
+
     log.info("  Indexed %d OCR records", len(index))
     return index
 
@@ -372,10 +320,10 @@ def load_vlm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics from OCR text.
+    """Compute basic text statistics from transcription text.
 
     Args:
-        text: Raw OCR text content.
+        text: Raw transcription text content.
 
     Returns:
         Dict with char_count, word_count, line_count, has_content,
@@ -426,15 +374,15 @@ def derive_content_flags(
     """Derive content flags from canonical layout classes.
 
     Args:
-        detections: List of layout detection dicts with "canonical_class".
+        detections: List of layout detection dicts with "class_name".
 
     Returns:
         Dict with boolean flags: has_table, has_formula, has_figure, has_code.
     """
     canonical_classes = {
-        d.get("canonical_class", "").upper()
+        d.get("class_name", "").upper()
         for d in detections
-        if d.get("canonical_class")
+        if d.get("class_name")
     }
     return {
         "has_table": bool(canonical_classes & TABLE_CLASSES),
@@ -501,10 +449,10 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def standardize_class_name(class_name: str) -> str:
-    """Convert Docling lowercase class_name to DocLayNet PascalCase.
+    """Convert layout extractor class_name to DocLayNet PascalCase.
 
     Args:
-        class_name: Raw class name from Docling layout output.
+        class_name: Raw class name from layout extractor output.
 
     Returns:
         Standardized PascalCase class name.
@@ -514,31 +462,51 @@ def standardize_class_name(class_name: str) -> str:
     return class_name
 
 
+def assign_split(filename: str) -> str:
+    """Assign deterministic train/val/test split using filename hash.
+
+    Uses SHA-256 hash of filename to deterministically assign splits
+    with approximately 80% train, 10% val, 10% test distribution.
+
+    Args:
+        filename: Image filename to hash for split assignment.
+
+    Returns:
+        Split string: "train", "val", or "test".
+    """
+    hash_val = int(hashlib.sha256(filename.encode()).hexdigest(), 16) % 100
+    if hash_val < 80:
+        return "train"
+    if hash_val < 90:
+        return "val"
+    return "test"
+
+
 def resolve_language(
     sample: dict[str, Any],
     llm: dict[str, Any] | None,
     lang_enrichment: dict[str, Any] | None,
+    vlm: dict[str, Any] | None = None,
 ) -> tuple[str, str, float, str]:
-    """Resolve language/script for bhutan-afs.
-
-    bhutan-afs is PREDOMINANTLY Dzongkha: 120 pages (96%) Dzongkha,
-    4 pages (3.2%) English, 1 blank. The entire AFS document (115 active
-    pages) uses Tibetan script. The Tax Act alternates English/Dzongkha.
-
-    Corrected 2026-02-12 via full VLM review of all 125 active pages.
-    Previous classification (32 dzo / 103 eng) was catastrophically wrong —
-    Arabic numerals in financial tables were misinterpreted as English.
+    """Resolve best language/script for a sample using priority chain.
 
     Args:
         sample: The full sample dict from L2 metadata.
-        llm: LLM enrichment record (None for bhutan-afs).
-        lang_enrichment: Language enrichment record (None for bhutan-afs).
+        llm: LLM enrichment record for this sample (or None).
+        lang_enrichment: Language enrichment record (or None).
+        vlm: VLM enrichment record (or None).
 
     Returns:
         Tuple of (iso639_language, iso15924_script, confidence,
         detection_method).
     """
-    # --- Source 4: Language enrichment / OpenLID --------------------
+    if vlm:
+        vlm_lang = vlm.get("iso639_language")
+        vlm_script = vlm.get("iso15924_script")
+        if vlm_lang and vlm_lang != "und":
+            vlm_conf = vlm.get("language_confidence", 0.75)
+            return (vlm_lang, vlm_script or "Latn", vlm_conf, "vlm_contact_sheet")
+
     if lang_enrichment:
         le_lang = lang_enrichment.get("language")
         le_script = lang_enrichment.get("script")
@@ -551,27 +519,24 @@ def resolve_language(
                 "openlid_v2",
             )
 
-    # --- Source 5: LLM vision / text enrichment --------------------
     if llm:
         llm_lang = llm.get("iso639_language")
         llm_script = llm.get("iso15924_script")
         if llm_lang and llm_lang != "und":
-            return (llm_lang, llm_script or "Latn", 0.65, "llm_vision")
+            return (
+                llm_lang,
+                llm_script or "Latn",
+                0.65,
+                "llm_vision",
+            )
 
-    # --- VLM full audit (2026-02-12): Exception-based classification ---
-    filename = sample["source"]["original_filename"]
-    filename_stem = Path(filename).stem
-
-    # English exceptions: only 4 Tax Act pages
-    if filename_stem in ENGLISH_PAGE_STEMS:
-        return ("eng", "Latn", 0.95, "vlm_full_audit")
-
-    # Blank page exception
-    if filename_stem in BLANK_PAGE_STEMS:
-        return ("und", "Zyyy", 0.95, "vlm_full_audit")
-
-    # --- Default: Dzongkha (96% of dataset) -----------------------
-    return ("dzo", "Tibt", 0.95, "vlm_full_audit")
+    # Fallback: tobacco800 is English/Latin from documentation
+    v1_data: dict[str, Any] = {}
+    if sample["enrichments"]["versions"]:
+        v1_data = sample["enrichments"]["versions"][-1].get("data", {})
+    base_lang = v1_data.get("iso639_language", "en")
+    base_script = v1_data.get("iso15924_script", "Latn")
+    return (base_lang, base_script, 0.90, "base_metadata")
 
 
 def resolve_capture_method(
@@ -579,11 +544,11 @@ def resolve_capture_method(
     llm: dict[str, Any] | None,
     is_synthetic: bool,
 ) -> tuple[str, float, str]:
-    """Resolve capture method with KI-005 override.
+    """Resolve capture method with KI-005 synthetic override.
 
     Args:
         sample: The full sample dict from L2 metadata.
-        llm: LLM enrichment record (None for bhutan-afs).
+        llm: LLM enrichment record for this sample (or None).
         is_synthetic: Whether this is a synthetic dataset.
 
     Returns:
@@ -603,25 +568,6 @@ def resolve_capture_method(
     return ("unknown", 0.3, "none")
 
 
-def derive_color_mode(original_file: dict[str, Any]) -> str:
-    """Derive image color mode from original_file metadata.
-
-    Args:
-        original_file: The original_file dict from the sample.
-
-    Returns:
-        Color mode string: "color", "grayscale", or "binarized".
-    """
-    color_space = original_file.get("color_space", "")
-    channels = original_file.get("channels", 0)
-
-    if color_space in ("RGB", "RGBA", "CMYK") or channels >= 3:
-        return "color"
-    if color_space in ("L", "LA") or channels == 1:
-        return "grayscale"
-    return "color"  # default for unknown
-
-
 # ===================================================================
 # Per-sample integration
 # ===================================================================
@@ -635,58 +581,59 @@ def integrate_sample(
 ) -> dict[str, Any]:
     """Create integrated enrichment data for a single sample.
 
-    Merges all available enrichment sources into a single data dict
-    that becomes the new enrichment version for this sample.
-
     Args:
         sample: A single sample from the L2 metadata "samples" list.
-        llm_index: LLM enrichment index (empty for bhutan-afs).
-        lang_index: Language enrichment index (empty for bhutan-afs).
-        layout_index: Docling layout index (filename -> detections).
-        ocr_index: Docling OCR index (filename -> OCR record).
-        vlm_index: VLM enrichment index (optional, post Phase 6).
+        llm_index: LLM enrichment index (image_id -> record).
+        lang_index: Language enrichment index (image_id -> record).
+        layout_index: Docling layout index (filename -> annotations).
+        ocr_index: Docling OCR index (filename -> record).
+        vlm_index: VLM enrichment index (image_stem -> record).
 
     Returns:
         New enrichment data dict with all sources merged.
     """
     filename = sample["source"]["original_filename"]
     filename_stem = Path(filename).stem
+    filename_full = Path(filename).name
 
-    # Get existing enrichment data (latest version) for fallback
     v1_data: dict[str, Any] = {}
     if sample["enrichments"]["versions"]:
         v1_data = sample["enrichments"]["versions"][-1].get("data", {})
 
-    # Look up enrichment sources
     llm = llm_index.get(filename_stem)
     lang_enrichment = lang_index.get(filename_stem)
-    layout_dets = layout_index.get(filename, [])
-    ocr_rec = ocr_index.get(filename)
-    _vlm_rec = (vlm_index or {}).get(filename_stem)  # Reserved for VLM integration
+    vlm_rec = (vlm_index or {}).get(filename_stem)
 
     data: dict[str, Any] = {}
 
-    # -------------------------------------------------------------------
-    # LAYOUT DETECTIONS (with KI-001 casing fix)
-    # -------------------------------------------------------------------
+    # LAYOUT DETECTIONS (from Docling batch files)
+    raw_detections = layout_index.get(filename_full, [])
     standardized_layout: list[dict[str, Any]] = []
-    for det in layout_dets:
+    for det in raw_detections:
         new_det = dict(det)
         original_class = det.get("class_name", "")
-        canonical = standardize_class_name(original_class)
-        new_det["class_name"] = canonical
-        new_det["canonical_class"] = canonical.upper()
-        new_det["source_label"] = original_class
+        new_det["class_name"] = standardize_class_name(original_class)
+        if not new_det.get("source_label"):
+            new_det["source_label"] = original_class
         standardized_layout.append(new_det)
 
+    # Also check v1 layout detections as fallback
+    if not standardized_layout:
+        v1_layout = v1_data.get("layout_detections", [])
+        for det in v1_layout:
+            new_det = dict(det)
+            original_class = det.get("class_name", "")
+            new_det["class_name"] = standardize_class_name(original_class)
+            if not new_det.get("source_label"):
+                new_det["source_label"] = original_class
+            standardized_layout.append(new_det)
+
     data["layout_detections"] = standardized_layout
-    data["layout_source"] = "docling_gpu"
+    data["layout_source"] = "docling_gpu" if raw_detections else "base_metadata"
     data["layout_confidence"] = 0.85
     data["layout_detection_count"] = len(standardized_layout)
 
-    # -------------------------------------------------------------------
-    # CAPTURE METHOD (BA-D01 fix: born_digital)
-    # -------------------------------------------------------------------
+    # CAPTURE METHOD
     capture, capture_conf, capture_method_src = resolve_capture_method(
         sample, llm, IS_SYNTHETIC_DATASET
     )
@@ -694,130 +641,113 @@ def integrate_sample(
     data["capture_confidence"] = capture_conf
     data["capture_detection_method"] = capture_method_src
 
-    # -------------------------------------------------------------------
-    # DOMAIN (from v1 enrichment - all FIN for bhutan-afs)
-    # -------------------------------------------------------------------
-    data["domain_level1"] = v1_data.get("domain_level1", "FIN")
-    data["domain_confidence"] = 1.0  # Known from dataset documentation
-    data["domain_detection_method"] = "dataset_documentation"
-    data["domain_content_type"] = "financial_statement"
+    # DOMAIN
+    if llm:
+        data["domain_level1"] = llm.get("domain_level1", "UNK")
+        data["domain_confidence"] = llm.get("domain_confidence", 0.5)
+        data["domain_detection_method"] = "llm_vision"
+        data["domain_content_type"] = llm.get("content_type", "")
+    else:
+        data["domain_level1"] = v1_data.get("domain_level1", "ADM")
+        data["domain_confidence"] = v1_data.get("domain_confidence", 0.9)
+        data["domain_detection_method"] = "base_metadata"
 
-    # -------------------------------------------------------------------
-    # LANGUAGE / SCRIPT (dataset documentation: English/Latin)
-    # -------------------------------------------------------------------
+    # LANGUAGE / SCRIPT
     lang, script, lang_conf, lang_method = resolve_language(
-        sample, llm, lang_enrichment
+        sample, llm, lang_enrichment, vlm_rec
     )
     data["iso639_language"] = lang
     data["iso15924_script"] = script
     data["language_confidence"] = lang_conf
     data["text_scope_detection_method"] = lang_method
 
-    # -------------------------------------------------------------------
-    # SCRIPT FAMILY (derived from iso15924_script)
-    # -------------------------------------------------------------------
+    # KI-008 fix: convert script to script_family properly
     data["script_family"] = _get_script_family(script)
 
-    # -------------------------------------------------------------------
-    # CONTENT FLAGS (with KI-002, KI-003, KI-006 overrides)
-    # -------------------------------------------------------------------
+    # CONTENT FLAGS
     flags = derive_content_flags(standardized_layout)
 
-    # KI-002: has_table -- only VLM-confirmed true positives
-    if VLM_TABLE_TRUE_POSITIVES:
-        data["has_table"] = filename_stem in VLM_TABLE_TRUE_POSITIVES
+    # Use LLM enrichment for content flags (with VLM override if available)
+    if llm:
+        data["has_table"] = bool(llm.get("has_table", False)) or flags["has_table"]
+        data["has_figure"] = bool(llm.get("has_figure", False)) or flags["has_figure"]
+        data["has_formula"] = bool(llm.get("has_formula", False)) or flags["has_formula"]
+        data["has_handwriting"] = bool(llm.get("has_handwriting", False))
+        data["has_signature"] = bool(llm.get("has_signature", False))
     else:
-        # Pre-VLM: use layout detection as baseline
         data["has_table"] = flags["has_table"]
-
-    # KI-003: has_figure -- only VLM-confirmed true positives
-    if VLM_FIGURE_TRUE_POSITIVES:
-        data["has_figure"] = filename_stem in VLM_FIGURE_TRUE_POSITIVES
-    else:
         data["has_figure"] = flags["has_figure"]
+        data["has_formula"] = flags["has_formula"]
+        data["has_handwriting"] = False
+        data["has_signature"] = False
 
-    # KI-006: has_formula
-    data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
-
-    # Born-digital: no handwriting (signatures detected by VLM)
-    data["has_handwriting"] = False
-    data["has_signature"] = filename_stem in SIGNATURE_PAGE_STEMS
     data["has_code"] = flags["has_code"]
 
-    data["content_flags_tier"] = "tier_2_model"
-    data["content_flags_source"] = "docling_gpu+dataset_documentation"
-    data["content_flags_confidence"] = 0.85
+    # VLM true positive overrides (applied after Phase C)
+    if VLM_TABLE_TRUE_POSITIVES and filename_stem not in VLM_TABLE_TRUE_POSITIVES:
+        data["has_table"] = False
+    if VLM_FIGURE_TRUE_POSITIVES and filename_stem not in VLM_FIGURE_TRUE_POSITIVES:
+        data["has_figure"] = False
+    if VLM_FORMULA_TRUE_POSITIVES and filename_stem not in VLM_FORMULA_TRUE_POSITIVES:
+        data["has_formula"] = False
+    if VLM_HANDWRITING_TRUE_POSITIVES and filename_stem not in VLM_HANDWRITING_TRUE_POSITIVES:
+        data["has_handwriting"] = False
 
-    # Alias used by prescreening checks
+    data["content_flags_tier"] = "tier_2_model"
+    data["content_flags_source"] = "llm_vision+docling_gpu"
+    data["content_flags_confidence"] = 0.80
+
     data["handwriting_present"] = data["has_handwriting"]
 
-    # -------------------------------------------------------------------
-    # ORIENTATION (born-digital = always upright)
-    # -------------------------------------------------------------------
+    # ORIENTATION (scanned documents are upright)
     data["orientation_class"] = 0
-    data["orientation_confidence"] = 1.0
+    data["orientation_confidence"] = 0.95
     data["orientation_detection_method"] = "dataset_documentation"
 
-    # -------------------------------------------------------------------
-    # SPLIT (BA-D02 fix: single train split)
-    # -------------------------------------------------------------------
-    data["split"] = "train"
+    # SPLIT (hash-based deterministic 80/10/10)
+    data["split"] = assign_split(filename_full)
 
-    # -------------------------------------------------------------------
     # TEXT SCOPE
-    # -------------------------------------------------------------------
-    data["text_scope_content_type"] = "financial_statement"
-    data["text_scope"] = "printed"
+    if llm:
+        content_type = llm.get("content_type", "")
+        data["text_scope_content_type"] = content_type if content_type else "printed"
+    else:
+        data["text_scope_content_type"] = "printed"
 
-    # -------------------------------------------------------------------
-    # IMAGE PROPERTIES (BA-D13 fix: derive from original_file)
-    # -------------------------------------------------------------------
-    original_file = sample.get("original_file", {})
-    data["image_properties_color_mode"] = derive_color_mode(original_file)
+    data["text_scope"] = "page"
 
-    # -------------------------------------------------------------------
-    # TEXT CONTENT (from Docling OCR)
-    # -------------------------------------------------------------------
+    # IMAGE PROPERTIES
+    # All tobacco800 images are 1-bit binary (converted to PNG)
+    data["image_properties_color_mode"] = "binarized"
+
+    # RESOLUTION
+    for field in (
+        "resolution_category",
+        "resolution_pixels",
+    ):
+        if field in v1_data:
+            data[field] = v1_data[field]
+
+    # TEXT CONTENT (from Docling OCR batches)
+    ocr_rec = ocr_index.get(filename_full)
     if ocr_rec and ocr_rec.get("text"):
-        ocr_text = ocr_rec["text"]
+        text = ocr_rec["text"]
         data["text_has_content"] = True
-        data["text_content_confidence"] = ocr_rec.get("confidence", 0.9)
+        data["text_content"] = text
+        data["text_content_confidence"] = ocr_rec.get("confidence", 1.0)
         data["text_content_source"] = "docling_ocr"
-        data["text_statistics"] = compute_text_statistics(ocr_text)
+        data["text_statistics"] = compute_text_statistics(text)
     else:
         data["text_has_content"] = False
+        data["text_content"] = ""
         data["text_content_confidence"] = 0.0
         data["text_content_source"] = "none"
         data["text_statistics"] = compute_text_statistics("")
 
-    # -------------------------------------------------------------------
-    # TEXT DIRECTION (v2.3.0 fields - BA-D09, BA-D10)
-    # -------------------------------------------------------------------
-    data["text_direction"] = "ltr"
-    data["text_directions_present"] = ["ltr"]
-
-    # -------------------------------------------------------------------
-    # RESOLUTION (preserve v1 data)
-    # -------------------------------------------------------------------
-    for field in (
-        "resolution_category",
-        "resolution_pixels",
-        "resolution_dpi",
-    ):
-        if field in v1_data:
-            data[field] = v1_data[field]
-    # DPI is known from original_file
-    if "resolution_dpi" not in data:
-        data["resolution_dpi"] = original_file.get("dpi", 299)
-
-    # -------------------------------------------------------------------
     # ADDITIONAL DERIVED FIELDS
-    # -------------------------------------------------------------------
     data["dataset_short_code"] = DATASET_NAME
 
-    # -------------------------------------------------------------------
-    # RELIABILITY SUMMARY (must be last)
-    # -------------------------------------------------------------------
+    # RELIABILITY SUMMARY
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -826,86 +756,6 @@ def integrate_sample(
 # ===================================================================
 # Integration runner
 # ===================================================================
-def _track_match_counts(
-    stats: dict[str, Any],
-    filename: str,
-    filename_stem: str,
-    llm_index: dict[str, dict[str, Any]],
-    lang_index: dict[str, dict[str, Any]],
-    layout_index: dict[str, list[dict[str, Any]]],
-    ocr_index: dict[str, dict[str, Any]],
-    vlm_index: dict[str, dict[str, Any]] | None,
-) -> None:
-    """Increment source match counters for a single sample."""
-    if filename_stem in llm_index:
-        stats["llm_matched"] += 1
-    if filename_stem in lang_index:
-        stats["lang_matched"] += 1
-    if filename in layout_index:
-        stats["layout_matched"] += 1
-    if filename in ocr_index:
-        stats["ocr_matched"] += 1
-    if vlm_index and filename_stem in vlm_index:
-        stats["vlm_matched"] += 1
-
-
-def _track_distributions(
-    stats: dict[str, Any],
-    integrated_data: dict[str, Any],
-) -> None:
-    """Update distribution counters and content flag counts from integrated data."""
-    if integrated_data.get("text_has_content"):
-        stats["has_text_content_count"] += 1
-
-    _dist_fields = {
-        "domain_dist": ("domain_level1", "UNK"),
-        "split_dist": ("split", "unknown"),
-        "lang_dist": ("iso639_language", "und"),
-        "script_family_dist": ("script_family", "unknown"),
-        "lang_method_dist": ("text_scope_detection_method", "unknown"),
-        "capture_method_dist": ("capture_method", "unknown"),
-        "content_type_dist": ("text_scope_content_type", "unknown"),
-    }
-    for stat_key, (data_key, default) in _dist_fields.items():
-        stats[stat_key][integrated_data.get(data_key, default)] += 1
-
-    _flag_fields = ["has_table", "has_formula", "has_handwriting", "has_figure"]
-    for flag in _flag_fields:
-        if integrated_data.get(flag):
-            stats[f"{flag}_count"] += 1
-
-
-def _write_enrichment_version(
-    sample: dict[str, Any],
-    integrated_data: dict[str, Any],
-    now: str,
-) -> None:
-    """Write or replace the enrichment version on a sample (mutates sample)."""
-    new_version = {
-        "version": ENRICHMENT_VERSION_NUMBER,
-        "created_at": now,
-        "created_by": "integrate_bhutan_afs_enrichments.py",
-        "method": "tier_2_model",
-        "description": (
-            f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
-            "Docling layout + Docling OCR + VLM Phase 6 corrections "
-            "(bilingual dzo+eng, figure FP fix, signature detection)"
-        ),
-        "script_version": SCRIPT_VERSION,
-        "data": integrated_data,
-    }
-    versions = sample["enrichments"]["versions"]
-    replaced = False
-    for i, ver in enumerate(versions):
-        if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
-            versions[i] = new_version
-            replaced = True
-            break
-    if not replaced:
-        versions.append(new_version)
-    sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
-
-
 def run_integration(
     metadata: dict[str, Any],
     llm_index: dict[str, dict[str, Any]],
@@ -921,8 +771,8 @@ def run_integration(
         metadata: Full L2 metadata dict with "samples" list.
         llm_index: LLM enrichment index.
         lang_index: Language enrichment index.
-        layout_index: Docling layout index.
-        ocr_index: Docling OCR index.
+        layout_index: Docling layout index (filename -> annotations).
+        ocr_index: Docling OCR index (filename -> record).
         vlm_index: VLM enrichment index (optional).
         dry_run: If True, compute stats without modifying metadata.
 
@@ -934,9 +784,9 @@ def run_integration(
         "integrated": 0,
         "llm_matched": 0,
         "lang_matched": 0,
+        "vlm_matched": 0,
         "layout_matched": 0,
         "ocr_matched": 0,
-        "vlm_matched": 0,
         "has_text_content_count": 0,
         "domain_dist": Counter(),
         "split_dist": Counter(),
@@ -957,6 +807,7 @@ def run_integration(
         stats["total"] += 1
         filename = sample["source"]["original_filename"]
         filename_stem = Path(filename).stem
+        filename_full = Path(filename).name
 
         integrated_data = integrate_sample(
             sample,
@@ -968,20 +819,68 @@ def run_integration(
         )
 
         stats["integrated"] += 1
-        _track_match_counts(
-            stats,
-            filename,
-            filename_stem,
-            llm_index,
-            lang_index,
-            layout_index,
-            ocr_index,
-            vlm_index,
-        )
-        _track_distributions(stats, integrated_data)
+        if filename_stem in llm_index:
+            stats["llm_matched"] += 1
+        if filename_stem in lang_index:
+            stats["lang_matched"] += 1
+        if vlm_index and filename_stem in vlm_index:
+            stats["vlm_matched"] += 1
+        if filename_full in layout_index:
+            stats["layout_matched"] += 1
+        if filename_full in ocr_index:
+            stats["ocr_matched"] += 1
+        if integrated_data.get("text_has_content"):
+            stats["has_text_content_count"] += 1
+
+        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
+        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
+        stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["lang_method_dist"][
+            integrated_data.get("text_scope_detection_method", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
+        stats["content_type_dist"][
+            integrated_data.get("text_scope_content_type", "unknown")
+        ] += 1
+
+        if integrated_data.get("has_table"):
+            stats["has_table_count"] += 1
+        if integrated_data.get("has_formula"):
+            stats["has_formula_count"] += 1
+        if integrated_data.get("has_handwriting"):
+            stats["has_handwriting_count"] += 1
+        if integrated_data.get("has_figure"):
+            stats["has_figure_count"] += 1
 
         if not dry_run:
-            _write_enrichment_version(sample, integrated_data, now)
+            new_version = {
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "created_at": now,
+                "created_by": (f"integrate_{DATASET_NAME}_enrichments.py"),
+                "method": "tier_2_model",
+                "description": (
+                    f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
+                    "LLM vision + Docling layout/OCR + "
+                    "dataset documentation"
+                ),
+                "script_version": SCRIPT_VERSION,
+                "data": integrated_data,
+            }
+            versions = sample["enrichments"]["versions"]
+            replaced = False
+            for i, ver in enumerate(versions):
+                if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
+                    versions[i] = new_version
+                    replaced = True
+                    break
+            if not replaced:
+                versions.append(new_version)
+            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
 
     return stats
 
@@ -1005,9 +904,9 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print(f"Integrated:           {stats['integrated']}")
     print(f"LLM matched:          {stats['llm_matched']}")
     print(f"Language matched:     {stats['lang_matched']}")
-    print(f"Layout matched:       {stats['layout_matched']}")
-    print(f"OCR matched:          {stats['ocr_matched']}")
     print(f"VLM matched:          {stats.get('vlm_matched', 0)}")
+    print(f"Layout matched:       {stats.get('layout_matched', 0)}")
+    print(f"OCR matched:          {stats.get('ocr_matched', 0)}")
     print(f"Has text content:     {stats.get('has_text_content_count', 0)}")
     print()
 
@@ -1022,7 +921,7 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
         print(f"  {split:20s}: {count:5d}")
     print()
 
-    print("Language distribution:")
+    print("Language distribution (top 15):")
     for lang, count in stats["lang_dist"].most_common(15):
         pct = count / safe_total * 100
         print(f"  {lang:20s}: {count:5d} ({pct:.1f}%)")
@@ -1042,6 +941,11 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     print("Capture method distribution:")
     for cm, count in stats["capture_method_dist"].most_common():
         print(f"  {cm:20s}: {count:5d}")
+    print()
+
+    print("Content type (top 10):")
+    for ct, count in stats["content_type_dist"].most_common(10):
+        print(f"  {ct:30s}: {count:5d}")
     print()
 
     print("Content flags:")
@@ -1090,33 +994,24 @@ def main() -> int:
         help="Path to language enrichment JSON (default: %(default)s)",
     )
     parser.add_argument(
-        "--layout",
+        "--docling-extracted-dir",
         type=Path,
-        default=DOCLING_LAYOUT_PATH,
-        help="Path to Docling layout JSON (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--ocr",
-        type=Path,
-        default=DOCLING_OCR_PATH,
-        help="Path to Docling OCR JSONL (default: %(default)s)",
+        default=DOCLING_EXTRACTED_DIR,
+        help="Path to Docling extracted data dir (default: %(default)s)",
     )
     parser.add_argument(
         "--vlm-enrichment",
         type=Path,
         default=None,
-        help="Path to VLM enrichment JSON (optional, post Phase 6)",
+        help="Path to VLM enrichment JSON (optional)",
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report only, do not write output",
+        "--dry-run", action="store_true", help="Report only, do not write output"
     )
     args = parser.parse_args()
 
     output_path: Path = args.output or args.metadata
 
-    # ----- Load all data sources -----
     if not args.metadata.is_file():
         log.error("Metadata file not found: %s", args.metadata)
         return 1
@@ -1124,14 +1019,13 @@ def main() -> int:
     metadata = load_metadata(args.metadata)
     llm_index = load_llm_enrichment(args.llm_enrichment)
     lang_index = load_language_enrichment(args.language_enrichment)
-    layout_index = load_docling_layout(args.layout)
-    ocr_index = load_docling_ocr(args.ocr)
+    layout_index = load_docling_layout_batches(args.docling_extracted_dir)
+    ocr_index = load_docling_ocr_batches(args.docling_extracted_dir)
 
     vlm_index: dict[str, dict[str, Any]] | None = None
     if args.vlm_enrichment:
         vlm_index = load_vlm_enrichment(args.vlm_enrichment)
 
-    # ----- Run integration -----
     start = time.monotonic()
     stats = run_integration(
         metadata=metadata,
@@ -1147,12 +1041,6 @@ def main() -> int:
     print_summary(stats, len(metadata["samples"]))
     log.info("Integration completed in %.2f seconds", elapsed)
 
-    # ----- Update schema version (BA-D14 fix) -----
-    if not args.dry_run:
-        metadata["schema_version"] = TARGET_SCHEMA_VERSION
-        metadata["splits_included"] = ["train"]
-
-    # ----- Write output -----
     if args.dry_run:
         log.info("Dry run - no output written")
     else:
