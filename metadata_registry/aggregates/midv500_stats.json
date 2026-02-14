@@ -8,22 +8,67 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 15050
+    "GOV": 15050
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 13244,
-    "cjk": 1204,
-    "rtl": 602
+  "script_codes": {
+    "Latn": 11438,
+    "Hans": 903,
+    "Arab": 602,
+    "Grek": 301,
+    "Jpan": 301,
+    "Cyrl": 1505
   },
-  "language_codes": {},
-  "content_flags": {},
+  "script_families": {
+    "latin": 11438,
+    "cjk": 1204,
+    "arabic": 602,
+    "greek": 301,
+    "cyrillic": 1505
+  },
+  "language_codes": {
+    "sq": 301,
+    "de": 2709,
+    "az": 301,
+    "pt": 602,
+    "es": 1505,
+    "zh": 903,
+    "cs": 602,
+    "ar": 301,
+    "et": 301,
+    "fi": 602,
+    "el": 301,
+    "hr": 602,
+    "hu": 301,
+    "fa": 301,
+    "it": 301,
+    "ja": 301,
+    "lv": 301,
+    "ro": 602,
+    "no": 301,
+    "pl": 301,
+    "ru": 301,
+    "sr": 602,
+    "sk": 301,
+    "tr": 301,
+    "uk": 602,
+    "en": 1204
+  },
+  "content_flags": {
+    "has_figure": 15050
+  },
   "text_scopes": {
     "page": 15050
   },
-  "content_types": {},
+  "content_types": {
+    "personal_document": 4,
+    "printed": 15038,
+    "certificate": 2,
+    "identification_document": 1,
+    "passport": 4,
+    "memo": 1
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -33,24 +78,159 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "PER": 100.0
+    "GOV": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {
-    "ltr": 88.0,
-    "cjk": 8.0,
-    "rtl": 4.0
+  "script_codes_pct": {
+    "Latn": 76.0,
+    "Hans": 6.0,
+    "Arab": 4.0,
+    "Grek": 2.0,
+    "Jpan": 2.0,
+    "Cyrl": 10.0
   },
-  "language_codes_pct": {},
+  "script_families_pct": {
+    "latin": 76.0,
+    "cjk": 8.0,
+    "arabic": 4.0,
+    "greek": 2.0,
+    "cyrillic": 10.0
+  },
+  "language_codes_pct": {
+    "sq": 2.0,
+    "de": 18.0,
+    "az": 2.0,
+    "pt": 4.0,
+    "es": 10.0,
+    "zh": 6.0,
+    "cs": 4.0,
+    "ar": 2.0,
+    "et": 2.0,
+    "fi": 4.0,
+    "el": 2.0,
+    "hr": 4.0,
+    "hu": 2.0,
+    "fa": 2.0,
+    "it": 2.0,
+    "ja": 2.0,
+    "lv": 2.0,
+    "ro": 4.0,
+    "no": 2.0,
+    "pl": 2.0,
+    "ru": 2.0,
+    "sr": 4.0,
+    "sk": 2.0,
+    "tr": 2.0,
+    "uk": 4.0,
+    "en": 8.0
+  },
   "text_scopes_pct": {
     "page": 100.0
   },
-  "content_types_pct": {},
+  "content_types_pct": {
+    "personal_document": 0.0,
+    "printed": 99.9,
+    "certificate": 0.0,
+    "identification_document": 0.0,
+    "passport": 0.0,
+    "memo": 0.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
-  "content_flags_pct": {},
+  "content_flags_pct": {
+    "has_figure": 100.0
+  },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 11438,
+      "percentage": 76.0
+    },
+    {
+      "script": "Cyrl",
+      "count": 1505,
+      "percentage": 10.0
+    },
+    {
+      "script": "Hans",
+      "count": 903,
+      "percentage": 6.0
+    },
+    {
+      "script": "Arab",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "script": "Grek",
+      "count": 301,
+      "percentage": 2.0
+    },
+    {
+      "script": "Jpan",
+      "count": 301,
+      "percentage": 2.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "de",
+      "count": 2709,
+      "percentage": 18.0
+    },
+    {
+      "language": "es",
+      "count": 1505,
+      "percentage": 10.0
+    },
+    {
+      "language": "en",
+      "count": 1204,
+      "percentage": 8.0
+    },
+    {
+      "language": "zh",
+      "count": 903,
+      "percentage": 6.0
+    },
+    {
+      "language": "pt",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "language": "cs",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "language": "fi",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "language": "hr",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "language": "ro",
+      "count": 602,
+      "percentage": 4.0
+    },
+    {
+      "language": "sr",
+      "count": 602,
+      "percentage": 4.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 11438,
+    "cyrillic": 1505,
+    "cjk": 1204,
+    "arabic": 602,
+    "greek": 301
+  }
 }

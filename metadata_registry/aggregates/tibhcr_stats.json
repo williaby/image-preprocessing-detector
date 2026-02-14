@@ -8,7 +8,7 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 141698
+    "EDU": 141698
   },
   "layout_types": {},
   "text_densities": {},
@@ -25,7 +25,7 @@
     "has_handwriting": 141698
   },
   "text_scopes": {
-    "word": 141698
+    "character": 141698
   },
   "content_types": {
     "handwritten": 141698
@@ -39,7 +39,7 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "PER": 100.0
+    "EDU": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
@@ -53,7 +53,7 @@
     "bo": 100.0
   },
   "text_scopes_pct": {
-    "word": 100.0
+    "character": 100.0
   },
   "content_types_pct": {
     "handwritten": 100.0

@@ -12,19 +12,25 @@
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 12514
+  "script_codes": {
+    "Latn": 12514
   },
-  "language_codes": {},
+  "script_families": {
+    "latin": 12514
+  },
+  "language_codes": {
+    "en": 12514
+  },
   "content_flags": {
     "has_handwriting": 12514,
     "has_signature": 12514
   },
   "text_scopes": {
-    "word": 12514
+    "signature": 12514
   },
-  "content_types": {},
+  "content_types": {
+    "handwritten": 12514
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -38,15 +44,21 @@
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0
+  },
   "script_families_pct": {
-    "ltr": 100.0
+    "latin": 100.0
   },
-  "language_codes_pct": {},
+  "language_codes_pct": {
+    "en": 100.0
+  },
   "text_scopes_pct": {
-    "word": 100.0
+    "signature": 100.0
   },
-  "content_types_pct": {},
+  "content_types_pct": {
+    "handwritten": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
@@ -54,5 +66,21 @@
     "has_signature": 100.0
   },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 12514,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 12514,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 12514
+  }
 }
