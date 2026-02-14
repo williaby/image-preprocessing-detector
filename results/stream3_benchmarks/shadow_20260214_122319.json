@@ -1,0 +1,77 @@
+{
+  "detector": "ShadowDetector",
+  "dataset": "sd7k+wsrd",
+  "num_samples": 1720,
+  "primary": {
+    "dataset": "SD7K-test",
+    "metrics": {
+      "accuracy": 0.6539,
+      "precision": 0.7097,
+      "recall": 0.5211,
+      "f1": 0.6009,
+      "tp": 396,
+      "fp": 162,
+      "tn": 598,
+      "fn": 364,
+      "roc_auc": 0.7311,
+      "num_samples": 1520
+    },
+    "latency": {
+      "mean_ms": 16.95,
+      "p50_ms": 16.32,
+      "p95_ms": 20.95,
+      "p99_ms": 22.83,
+      "min_ms": 13.23,
+      "max_ms": 34.92
+    },
+    "failures": 0,
+    "score_distribution": {
+      "shadow_mean": 0.1407,
+      "shadow_std": 0.1328,
+      "clean_mean": 0.053,
+      "clean_std": 0.0754
+    }
+  },
+  "validation": {
+    "dataset": "WSRD-val",
+    "metrics": {
+      "accuracy": 0.545,
+      "precision": 0.5306,
+      "recall": 0.78,
+      "f1": 0.6316,
+      "tp": 78,
+      "fp": 69,
+      "tn": 31,
+      "fn": 22,
+      "roc_auc": 0.6279,
+      "num_samples": 200
+    },
+    "latency": {
+      "mean_ms": 16.96,
+      "p50_ms": 16.77,
+      "p95_ms": 20.3,
+      "p99_ms": 22.25,
+      "min_ms": 13.8,
+      "max_ms": 22.59
+    },
+    "failures": 0,
+    "score_distribution": {
+      "shadow_mean": 0.2604,
+      "shadow_std": 0.1607,
+      "clean_mean": 0.1939,
+      "clean_std": 0.1274
+    }
+  },
+  "threshold": {
+    "target": 0.85,
+    "metric": "f1",
+    "met": false
+  },
+  "go_nogo": "UPGRADE_ML",
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  }
+}

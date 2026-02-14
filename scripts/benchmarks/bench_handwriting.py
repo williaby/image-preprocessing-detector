@@ -105,12 +105,17 @@ def load_cocotext_samples(
             return None
         # COCO-Text v2 uses image_id to construct filename
         filename = img_info.get("file_name")
-        if filename:
-            path = images_dir / filename
-        else:
-            # Fallback: construct from ID
-            path = images_dir / f"COCO_train2014_{img_id:012d}.jpg"
-        return path if path.exists() else None
+        if not filename:
+            filename = f"COCO_train2014_{img_id:012d}.jpg"
+        # Try direct path first, then subdirectories (train2014/, val2014/)
+        path = images_dir / filename
+        if path.exists():
+            return path
+        for subdir in ("train2014", "val2014"):
+            path = images_dir / subdir / filename
+            if path.exists():
+                return path
+        return None
 
     samples: list[tuple[Path, int]] = []
 

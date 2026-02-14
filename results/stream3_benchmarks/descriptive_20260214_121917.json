@@ -1,0 +1,89 @@
+{
+  "detector": "Tier3_Descriptive",
+  "note": "No Go/No-Go thresholds. Results for manual review only.",
+  "blank_page": {
+    "detector": "BlankPageDetector",
+    "synthetic_metrics": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 100,
+      "fp": 0,
+      "tn": 100,
+      "fn": 0,
+      "roc_auc": 1.0,
+      "num_samples": 200
+    },
+    "synthetic_latency": {
+      "mean_ms": 1.77,
+      "p50_ms": 1.47,
+      "p95_ms": 3.01,
+      "p99_ms": 3.52,
+      "min_ms": 1.02,
+      "max_ms": 3.93
+    },
+    "real_docs_tested": 200,
+    "real_false_blank_count": 0,
+    "real_false_positive_rate": 0.0,
+    "real_score_distribution": {
+      "mean": 0.0006,
+      "std": 0.0061,
+      "max": 0.0753
+    }
+  },
+  "code_detector": {
+    "detector": "CodeDetector",
+    "num_images": 200,
+    "positive_count": 5,
+    "detection_rate": 0.025,
+    "score_distribution": {
+      "mean": 0.3272,
+      "std": 0.0567,
+      "p50": 0.3,
+      "p95": 0.4343,
+      "max": 0.624
+    },
+    "high_confidence_samples": [],
+    "latency": {
+      "mean_ms": 2.78,
+      "p50_ms": 2.42,
+      "p95_ms": 4.99,
+      "p99_ms": 8.23,
+      "min_ms": 1.09,
+      "max_ms": 14.55
+    }
+  },
+  "table_complexity": {
+    "detector": "TableComplexityAnalyzer",
+    "num_images": 200,
+    "complexity_distribution": {
+      "mean": 0.3275,
+      "std": 0.1396,
+      "p50": 0.4,
+      "p95": 0.6
+    },
+    "row_count_distribution": {
+      "mean": 10.6,
+      "max": 34
+    },
+    "col_count_distribution": {
+      "mean": 1.7,
+      "max": 18
+    },
+    "latency": {
+      "mean_ms": 9.72,
+      "p50_ms": 6.51,
+      "p95_ms": 36.54,
+      "p99_ms": 45.12,
+      "min_ms": 1.4,
+      "max_ms": 59.08
+    }
+  },
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  }
+}

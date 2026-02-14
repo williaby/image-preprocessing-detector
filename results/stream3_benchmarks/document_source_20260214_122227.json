@@ -1,0 +1,38 @@
+{
+  "detector": "DocumentSourceClassifier",
+  "dataset": "smartdoc-qa+tobacco800+docreal",
+  "num_samples": 1000,
+  "metrics": {
+    "accuracy": 0.647,
+    "precision": 1.0,
+    "recall": 0.294,
+    "f1": 0.4544,
+    "tp": 147,
+    "fp": 0,
+    "tn": 500,
+    "fn": 353,
+    "roc_auc": 0.7772,
+    "num_samples": 1000
+  },
+  "latency": {
+    "mean_ms": 10.73,
+    "p50_ms": 9.2,
+    "p95_ms": 20.73,
+    "p99_ms": 39.31,
+    "min_ms": 2.78,
+    "max_ms": 66.16
+  },
+  "failure_rate": 0.0,
+  "threshold": {
+    "target": 0.85,
+    "metric": "accuracy",
+    "met": false
+  },
+  "go_nogo": "UPGRADE_ML",
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  }
+}

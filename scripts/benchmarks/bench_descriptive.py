@@ -314,7 +314,7 @@ def benchmark_table_complexity(
 
         complexity_scores.append(result.complexity_score)
         row_counts.append(result.estimated_rows)
-        col_counts.append(result.estimated_cols)
+        col_counts.append(result.estimated_columns)
 
     print(f"Analyzed {len(complexity_scores)} images")
 
