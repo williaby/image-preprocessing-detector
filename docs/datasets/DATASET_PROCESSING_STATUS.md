@@ -27,15 +27,15 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 39/50 datasets training-ready (78.0%), 1 benchmark-ready
+**Current Status**: 43/59 datasets training-ready (72.9%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 39 | 78.0% | Format standardized + labels extracted |
-| ✅ **Benchmark-Ready** | 1 | 2.0% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 7 | 14.0% | Format conversion, label extraction, or generating |
-| 📚 **Non-Image Corpus** | 1 | 2.0% | Text-only corpus (openlid-v2, used for generation) |
-| ❌ **Blocked** | 2 | 4.0% | Fundamental issue preventing use |
+| ✅ **Training-Ready** | 43 | 72.9% | Format standardized + labels extracted |
+| ✅ **Benchmark-Ready** | 2 | 3.4% | Evaluation-only (license restrictions) |
+| 🔄 **In Progress** | 8 | 13.6% | Format conversion, label extraction, or generating |
+| 📚 **Non-Image Corpus** | 1 | 1.7% | Text-only corpus (openlid-v2, used for generation) |
+| ❌ **Blocked** | 5 | 8.5% | Fundamental issue preventing use |
 
 ---
 
@@ -61,6 +61,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | hasyv2 | 168,233 | ✅ PNG | ✅ Symbol labels | ✅ Complete | Math symbols |
 | hiertext | 11,639 | ✅ PNG | ✅ Word-level labels | ✅ Complete | Gold standard for graded handwriting |
 | hindi_ocr_synthetic | 80,009 | ✅ PNG | ✅ OCR text | ✅ Complete | Synthetic Hindi |
+| indicdlp | 9,321+ | ✅ PNG (extracted) | ✅ COCO boxes (42 layout classes) | 🔄 Partial (extracting) | 12 Indic languages, ~109K total. 9,321 extracted+annotated (test split), train+val still extracting. MIT license. |
 | im2latex | 10,000 | ✅ PNG | ✅ Formula labels | ✅ Complete | Math formulas |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels | ✅ Complete | Japanese signboard orientation |
@@ -95,13 +96,14 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
 ---
 
-### ✅ Benchmark-Ready (1 dataset)
+### ✅ Benchmark-Ready (2 datasets)
 
 Datasets ready for benchmark evaluation but not for training (license restrictions or benchmark integrity).
 
 | Dataset | Format | Images | Status | Notes |
 |---------|--------|--------|--------|-------|
 | **financebench** | PNG | 54,120 | ✅ Extracted | Benchmark-only (CC-BY-NC-4.0), parser implemented |
+| **document-haystack** | PDF | 10 PDFs | ✅ Annotated (10 samples) | Document retrieval benchmark (CC-BY-NC-4.0, Amazon Science) |
 
 **Conversion Complete**:
 
@@ -112,7 +114,7 @@ Datasets ready for benchmark evaluation but not for training (license restrictio
 
 ---
 
-### 🔄 In Progress (7 datasets)
+### 🔄 In Progress (8 datasets)
 
 Format conversion, label extraction, or generation currently underway.
 
@@ -125,6 +127,7 @@ Format conversion, label extraction, or generation currently underway.
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
 | **yarmouk_source** | Unknown | 🔄 PDF→PNG | ⚠️ Needs extraction | Original PDFs | 1. Convert source PDFs<br>2. Note: yarmouk_ocr already complete | Deprioritized |
+| **markushgrapher** | ~148,500 | 🔄 Extracting PNG from Arrow | ✅ Partial annotation (33K of ~148K) | 2 subsets: m2s (103), markushgrapher-synthetic-training (~148K). Extracting remaining train split (~120K). Orchestrator annotated 33K partial images. | 1. ✅ Download complete<br>2. 🔄 Extract remaining PNGs<br>3. Re-run orchestrator on full set<br>4. Audit | Week 1-2 |
 
 **Priority Order**:
 
@@ -137,7 +140,7 @@ Format conversion, label extraction, or generation currently underway.
 
 ---
 
-### 🔄 Correction / Shadow Removal / Dewarping (6 datasets)
+### 🔄 Correction / Shadow Removal / Dewarping (8 datasets)
 
 Paired ground truth datasets for document dewarping and shadow removal. All stored under `01_base_data/correction/`.
 
@@ -149,13 +152,16 @@ Paired ground truth datasets for document dewarping and shadow removal. All stor
 | **warpdoc** | 1,020 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (**B** 85) | Done |
 | **docreal** | 200 | ✅ Training-Ready | ✅ Paired GT (warped/flat) | None | ✅ Complete: parser, L2 metadata, audit (**B** 88) | Done |
 | **sd7k** | 7,239 | ✅ Training-Ready | ✅ Paired GT (shadow/shadow-free) | None | ✅ Complete: parser, L2 metadata, audit (**B** 87) | Done |
+| **staindoc** | 15,180 input | ✅ Annotated (15,180 samples) | ✅ Orchestrator done | 3 subdatasets (StainDoc, StainDoc_mark, StainDoc_seal) x (train+test) x (input+target). 15,180 input images annotated at 40.0 img/s | 1. ✅ Run orchestrator<br>2. Audit (stain removal, MIT) | Done |
+| **drccbi** | 325 | ✅ Annotated (325 samples) | ✅ Orchestrator done | 326 train/57 val/15 test, YOLO labels. 325 images annotated at 61.3 img/s (lowercase .jpg only; 46 .JPG + 27 .png not captured) | 1. ✅ Run orchestrator<br>2. Audit (camera dewarping, license TBD) | Done |
 
 **Status** (updated 2026-02-14):
 
-- 6/6 datasets fully processed: parser, integration, L2 metadata, VLM inspection, audit complete
+- 7/8 datasets fully processed: parser, integration, L2 metadata, orchestrator annotation complete
+- 1 dataset extracting remaining images: markushgrapher (~120K remaining from Arrow train split)
 - Grades: 1A (anyphotodoc6300=92, wsrd=95), 3B (warpdoc=85, docreal=88, sd7k=87), 1D (docalign12k=76, critical field cap)
 - docalign12k capped at Grade D due to iso639_language=0% -- needs GPU-based language enrichment
-- Total correction images available: 31,265 (6,306 + 12,000 + 4,500 + 1,020 + 200 + 7,239)
+- Total correction images annotated: 31,265 + 15,180 (staindoc) + 325 (drccbi) = ~46,770
 
 **Common Characteristics**:
 
@@ -176,7 +182,7 @@ Text-only corpora used for synthetic dataset generation.
 
 ---
 
-### ❌ Blocked (2 datasets)
+### ❌ Blocked (5 datasets)
 
 Fundamental issues preventing use for image-based training.
 
@@ -184,6 +190,9 @@ Fundamental issues preventing use for image-based training.
 |---------|--------|-------|------------|
 | **iam** | ❌ No base metadata | Images ready (130K PNG, 6.4GB) but no metadata generated | Run `annotate_base_metadata.py` on IAM images (requires GPU for DocLayout-YOLO). Audit grade: F (36.4) |
 | **wili_2018** | ❌ Text-only | No visual component (text corpus only) | **Cannot use for image training**. Useful for language ID if needed, but not applicable to visual IQA/layout tasks. |
+| **q-doc** | ❌ Images not available | GitHub repo is code-only (VLM eval scripts), no images hosted publicly | Contact authors for image access. Parser ready (`QDocParser`), needs images to generate L2 metadata. IQA benchmark, license TBD. |
+| **u-diads-tl** | ❌ Not available | Competition site returns 404 | Monitor for reappearance; contact authors |
+| **dit700k** | ❌ Not available | No public download URL found | Monitor for public release; referenced in papers but no access |
 
 ---
 
@@ -191,13 +200,15 @@ Fundamental issues preventing use for image-based training.
 
 ### Parquet → JPG/PNG Conversion
 
-**Datasets Requiring Conversion**: 7 datasets, ~510K images
+**Datasets Requiring Conversion**: 9 datasets, ~780K images
 
 | Dataset | Images | Parquet Size | Conversion Script | Storage Target | Status |
 |---------|--------|--------------|-------------------|----------------|--------|
 | cocotext | 63,686 | ~3.2 GB | `scripts/convert_parquet_to_images.py` | `01_base_data/cocotext/` | 🔄 Queued |
 | docsynth300k | 300,000 | ~15 GB | `scripts/convert_parquet_to_images.py --chunked` | `01_base_data/docsynth300k/` | 🔄 Queued |
 | ohr-bench | 8,561 | ~2.1 GB | `scripts/convert_parquet_to_images.py` | `02_benchmark_only/ohr-bench/` | 🔄 In Progress |
+| indicdlp | ~109,000 | 85 GB | `scripts/extract_indicdlp_images.py` | `01_base_data/layout/indicdlp/images/` | 🔄 Extracting (~19K done) |
+| markushgrapher | ~148,500 | 19 GB | `scripts/extract_markushgrapher_images.py` | `01_base_data/specialized/markushgrapher/images/` | 🔄 Extracting (~41K done) |
 | mobile_receipts | Unknown | Unknown | `scripts/convert_parquet_to_images.py` | `01_base_data/mobile_receipts/` | 🔄 Assess first |
 | omnidocbench | Unknown | Unknown | Custom script needed | `02_benchmark_only/omnidocbench/` | ⚠️ Needs analysis |
 
@@ -562,7 +573,7 @@ Before marking a dataset as ✅ Training-Ready, complete:
 ## Related Documentation
 
 - **Quick Reference**: [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) - Training-focused lookup
-- **Individual Datasets**: [source/](source/) - 51 individual dataset files
+- **Individual Datasets**: [source/](source/) - 59 individual dataset files
 - **Task Indices**: [indices/](indices/) - 7 task-based training recipes
 - **Naming Standard**: [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md) - Canonical names and aliases
 - **Label Mapping**: [../schema/LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) - Schema mappings

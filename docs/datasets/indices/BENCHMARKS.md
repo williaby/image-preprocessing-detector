@@ -15,6 +15,8 @@ These datasets are ONLY for benchmark evaluation:
 |---------|--------|---------|------|
 | cc-ocr | 7,058 | CJK complex script evaluation | [cc-ocr.md](../source/cc-ocr.md) |
 | omnidocbench | Metadata | Multi-task document understanding | [omnidocbench.md](../source/omnidocbench.md) |
+| q-doc | 4,260 | IQA quality assessment benchmark | [q-doc.md](../source/q-doc.md) |
+| document-haystack | 400 | Document retrieval benchmark (8,250 queries) | [document-haystack.md](../source/document-haystack.md) |
 
 **Rules**:
 
@@ -32,6 +34,8 @@ Train on train/val splits, but PROTECT test splits:
 |---------|-------|-----------------|---------------|---------|------|
 | ohr-bench | 8,561 | 6,849 | 1,712 | IQA benchmark | [ohr-bench.md](../source/ohr-bench.md) |
 | diqa-5000 | 5,500 | 4,400 | 1,100 | IQA benchmark | [diqa-5000.md](../source/diqa-5000.md) |
+| q-doc | 4,260 | 0 | 4,260 | IQA benchmark (test-only) | [q-doc.md](../source/q-doc.md) |
+| document-haystack | 400 | 0 | 400 | Document retrieval (8,250 queries) | [document-haystack.md](../source/document-haystack.md) |
 | pubtabnet | 519,030 | 500,777 | 9,138 | Table structure benchmark (PubTables-1M) | [pubtabnet.md](../source/pubtabnet.md) |
 | doclaynet | 80,863 | 69,375 | 6,480 | Layout detection benchmark | [doclaynet.md](../source/doclaynet.md) |
 | funsd | 199 | 149 | 50 | Form understanding benchmark | [funsd.md](../source/funsd.md) |
@@ -128,3 +132,4 @@ Before training ANY model:
 
 *See [IQA.md](IQA.md), [LAYOUT.md](LAYOUT.md), [TEXT_DETECTION.md](TEXT_DETECTION.md) for task-specific datasets*
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

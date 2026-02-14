@@ -1,7 +1,7 @@
 # Grade B Improvement Roadmap
 
 > **Generated**: 2026-02-14 | **Scorecard Config**: v1.1.0
-> **Total Datasets**: 52 with scorecards | **Target**: All datasets Grade B (80+)
+> **Total Datasets**: 58 with scorecards | **Target**: All datasets Grade B (80+)
 
 ## Executive Summary
 
@@ -10,9 +10,11 @@
 | **A** (90+) | 11 | anyphotodoc6300, doclaynet, dzongkha-digits, hindi-synth, mlt19, pubtabnet, smartdoc-qa, sroie, tobacco800, wsrd, yarmouk |
 | **B** (80-89) | 32 | bhutan-afs, cocotext, cvsi, diqa-5000, dibco, docreal, financebench, fintabnet, funsd, funsd-plus, hasy, hiertext, im2latex, invoices-kg, mathverse, midv500, mle2e, multimodal-textbook, nepali-handwritten, nist-sd2, nist-sd6, nist-sd19, ocr-quality, ohr-bench, pucit-ohul, realdae, rvl-cdip, sd7k, signatr6k, tablebank, tibhcr, warpdoc |
 | **D** (60-69) | 8 | arabic-docs-ocr (86.1), cc-ocr (79.2), docalign12k (76.4), jssoda (86.3), mdiw13 (86.5), muharaf (81.0), omnidocbench (81.8), siw13 (81.0) |
-| **F** (<60) | 1 | iam (36.4) |
+| **F** (<60) | 7 | iam (36.4), document-haystack (23.9), drccbi (23.9), indicdlp (23.9), markushgrapher (23.9), q-doc (23.9), staindoc (23.9) |
 
-**43 datasets already at Grade B+ (83%). 9 datasets need improvement.**
+**43 datasets already at Grade B+ (74%). 15 datasets need improvement.**
+
+> **Note**: The 6 newly onboarded datasets (document-haystack, drccbi, indicdlp, markushgrapher, q-doc, staindoc) have stub metadata only. Their Grade F reflects empty Layer 2 metadata, not dataset quality issues. Grades will improve as downloads complete and the annotation orchestrator generates full metadata.
 
 ---
 
@@ -160,7 +162,25 @@ All 8 datasets are capped at Grade D solely due to critical field coverage below
 
 ---
 
-### Tier 3: Grade F -- Blocked (1 dataset)
+### Tier 3: Grade F -- Newly Onboarded (6 datasets)
+
+These 6 datasets were onboarded on 2026-02-14 with stub metadata (0 samples). Their F grade reflects the absence of Layer 2 metadata, not dataset quality. Each needs: download completion, annotation orchestrator run, then full audit pipeline.
+
+| Dataset | Category | Expected Size | Download Status | Next Step |
+|---------|----------|---------------|-----------------|-----------|
+| indicdlp | layout | 119K images | Downloading (HuggingFace) | Wait for download, run orchestrator |
+| document-haystack | benchmark | 400 PDFs | Complete (552MB) | Convert PDFs to images, run orchestrator |
+| staindoc | correction | 5K pairs | Extracting (51GB zip) | Wait for extraction, run orchestrator |
+| q-doc | quality | 4,260 images | Code-only repo | Acquire images separately (see paper) |
+| drccbi | correction | ~2K images | LFS pulled (821MB zip) | Unzip, run orchestrator |
+| markushgrapher | document | 235K samples | Complete (19GB Arrow) | Extract images from Arrow, run orchestrator |
+
+**Estimated effort per dataset**: 2-4h (orchestrator + audit pipeline)
+**Total effort for all 6**: ~15h
+
+---
+
+### Tier 4: Grade F -- Blocked (1 dataset)
 
 #### iam (36.4 -- only doc_completeness scored)
 
@@ -242,9 +262,10 @@ These two have raw scores below 80 even without the cap. After critical field en
 | Domain partial fill (jssoda) | 1 D-capped | 2h | P0 |
 | Score improvement (cc-ocr, docalign12k) | 2 below raw 80 | 4h | P1 |
 | IAM base metadata | 1 Grade F | 6h | P2 |
-| **TOTAL** | **9 datasets** | **~38h** | |
+| New dataset onboarding (6 datasets) | 6 Grade F (stub) | 15h | P2 |
+| **TOTAL** | **15 datasets** | **~53h** | |
 
-**Key insight**: All remaining Grade D datasets share the same blocker -- critical field enrichment requiring GPU. A single GPU session could process all 8 datasets sequentially, converting them from D to B. This is the highest-ROI action remaining.
+**Key insight**: All remaining Grade D datasets share the same blocker -- critical field enrichment requiring GPU. A single GPU session could process all 8 datasets sequentially, converting them from D to B. This is the highest-ROI action remaining. The 6 newly onboarded datasets need download completion + orchestrator runs before they can be audited.
 
 ---
 

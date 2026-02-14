@@ -15,8 +15,9 @@
 | pubtabnet | 519,030 | Tables + layout | ⚠️ Train OK (500,777), test reserved | 📄 Born-digital | SCI 100% | [pubtabnet.md](../source/pubtabnet.md) |
 | tablebank | 278,582 | Tables + layout | ✅ Unrestricted (260,582 train) | 📄 Born-digital | SCI 100% | [tablebank.md](../source/tablebank.md) |
 | rvl-cdip | 400,000 | 16 doc types | ✅ Unrestricted (320,000 train) | 🖨️ Scanner | UNK | [rvl-cdip.md](../source/rvl-cdip.md) |
+| indicdlp | 119,000 | 42 classes | ✅ Unrestricted | 📄🖨️ Mixed | 12 Indic langs | HuggingFace: ai4bharat/indicdlp |
 
-**Total Available for Training**: ~1.14M images
+**Total Available for Training**: ~1.26M images
 
 ---
 
@@ -102,3 +103,4 @@
 
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
 *See [TABLES.md](TABLES.md) for table-specific training datasets*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

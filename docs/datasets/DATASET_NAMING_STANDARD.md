@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (51 total)
+### All Datasets (59 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
@@ -55,9 +55,12 @@ title: Dataset Naming Standard
 | `cvsi` | cvsi | cvsi2015, cvsi-2015 | ✅ | Video scene text |
 | `dibco` | dibco | dibco-train | ✅ | Document binarization competition dataset |
 | `diqa-5000` | diqa | diqa_5000, diqa5000 | ✅ | Document IQA benchmark |
+| `dit700k` | DIT-700K | dit_700k, dit-700k | ❌ | No public download available |
 | `doc3d` | doc3D-dataset | doc-3d, doc_3d, Doc3D | ✅ | Document 3D shape recovery (dewarping) |
 | `docalign12k` | docalign12k | doc_align_12k, docaligner | 🔄 | Document alignment/dewarping dataset (~12,000 paired images) |
 | `doclaynet` | doclaynet | doc-laynet | ✅ | DocLayNet layout dataset |
+| `document-haystack` | document_haystack | doc-haystack, haystack | ✅ | Document retrieval benchmark (Amazon Science) |
+| `drccbi` | DRCCBI | drcc-bi, drcc_bi | ✅ | Camera dewarping benchmark |
 | `docsynth` | docsynth300k | docsynth_300k, docsynth-300k | 🔄 | Synthetic documents (300K) |
 | `docreal` | docreal | doc_real, doc-real | ✅ | Real-world dewarping (200 images), audit Grade D* |
 | `dzongkha-digits` | dzongkha_digits | dzongkha-digits, dzongkha_digits | ✅ | Dzongkha handwritten digits (Tibetan script) |
@@ -70,9 +73,11 @@ title: Dataset Naming Standard
 | `hiertext` | hiertext | hier-text, hier_text | ✅ | Hierarchical scene text |
 | `iam` | iam_handwriting | iam_handwriting, iam-handwriting | 🔄 | IAM handwriting database |
 | `im2latex` | im2latex | im2latex-100k | ✅ | Image to LaTeX formulas |
+| `indicdlp` | IndicDLP | indic-dlp, indic_dlp, indicdlp | ✅ | Indic Document Layout Parser (119K images, 42 classes, 12 languages) |
 | `invoices-kg` | invoices_kaggle | invoices_kaggle, kaggle-invoices | ✅ | Kaggle invoices dataset |
 | `jssoda` | jssoda | JSSODa (HuggingFace capitalization) | 🔄 | Japanese Simple Synthetic OCR Dataset |
 | `mathverse` | mathverse | math-verse | ✅ | Multi-modal math problems |
+| `markushgrapher` | MarkushGrapher | markush_grapher, markush-grapher | ✅ | Chemical structure recognition (235K, DS4SD) |
 | `mdiw13` | mdiw13 | mdiw-13, mdiw_13 | ✅ | Multi-lingual document image words (13 scripts) |
 | `midv500` | midv500 | midv-500 | ✅ | Mobile ID documents (500 types) |
 | `midv500-data` | midv500_data | midv500_data, midv-500-data | ✅ | Extended MIDV-500 |
@@ -92,6 +97,7 @@ title: Dataset Naming Standard
 | `omnidocbench` | omnidocbench | omni-doc-bench | 🔄 | Multi-task benchmark framework |
 | `pubtabnet` | pubtabnet | pub-tab-net | ✅ | Publication tables dataset |
 | `pucit-ohul` | pucit_ohul_urdu | pucit_ohul, pucit-ohul-urdu | ✅ | PUCIT Urdu handwriting |
+| `q-doc` | Q-Doc | qdoc, q_doc | ✅ | Document quality assessment benchmark (4,260 images) |
 | `realdae` | realdae | real-dae | ✅ | Real document auto-enhancement |
 | `rvl-cdip` | rvl_cdip | rvl_cdip, rvlcdip | ✅ | RVL-CDIP document classification |
 | `sd7k` | sd7k | sd_7k, docshadow_sd7k | ✅ | Document shadow removal (7,239 images), audit Grade D* |
@@ -99,11 +105,13 @@ title: Dataset Naming Standard
 | `siw13` | siw13 | siw-13, siw_13 | ✅ | Script identification words (13 scripts) |
 | `smartdoc-qa` | smartdoc-qa | smartdoc_qa | ✅ | Mobile capture quality assessment |
 | `sroie` | sroie_icdar2019 | sroie-receipts, sroie-icdar2019 | ✅ | ICDAR 2019 SROIE Malaysian receipts (973 images) |
+| `staindoc` | StainDoc | stain_doc, stain-doc | ✅ | Stain removal (WACV 2025, ~5,000 pairs) |
 | `synth-multiscript-250k` | synthetic_250k | synth-multiscript, synthetic_250k | 🔄 | Synthetic multi-script 250K (27 scripts, SigLIP training) |
 | `synthetic-iqa` | synthetic_iqa | synthetic_iqa | ✅ | Synthetic IQA test samples |
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
+| `u-diads-tl` | U-DIADS-TL | udiads_tl, u_diads_tl | ❌ | Competition site offline (404) |
 | `warpdoc` | warpdoc | warp_doc, warp-doc | ✅ | Document dewarping (1,020 images), audit Grade D* |
 | `wili-2018` | wili_2018 | wili2018, wili | ❌ | Wikipedia language ID (text-only) |
 | `wsrd` | wsrd | wsrd-dnsr, ntire_shadow | ✅ | Document shadow removal (4,500 images), audit Grade D* |
