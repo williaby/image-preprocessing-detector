@@ -1278,7 +1278,7 @@ def _flush_remaining_gradients(
         optimizer.zero_grad()
 
 
-def _train_one_epoch(
+def _train_one_epoch(  # nosonar  # Training loop requires all state params
     config: SigLIP2TrainingConfigV2,
     model: Any,
     train_loader: Any,
@@ -2029,7 +2029,7 @@ def _build_improvements_summary(
 
 
 @app.local_entrypoint()
-def main(
+def main(  # nosonar  # CLI entrypoint params are framework-driven
     test: bool = False,
     model: str = "base",
     epochs: int = 75,
