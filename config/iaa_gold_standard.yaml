@@ -1,0 +1,40 @@
+# IAA Gold Standard Configuration
+# Defines the setup for inter-annotator agreement evaluation.
+
+# Target datasets to sample from (10 datasets, 10 samples each = 100 total)
+datasets:
+  - jssoda
+  - doclaynet
+  - ohr-bench
+  - realdae
+  - funsd
+  - rvl-cdip
+  - sroie
+  - hiertext
+  - mdiw13
+  - dibco
+
+# Number of images to sample per dataset
+samples_per_dataset: 10
+
+# Categorical fields evaluated with Cohen's kappa
+categorical_fields:
+  - capture_method
+  - domain_level1
+  - iso639_language
+  - script_family
+  - layout_type
+  - has_table
+  - has_handwriting
+  - is_color
+  - has_watermark
+
+# Continuous fields evaluated with SRCC
+continuous_fields:
+  - quality_overall
+
+# Models to use for multi-model comparison
+models:
+  - claude-opus-4-6
+  - gemini-2.5-pro
+  - gpt-5

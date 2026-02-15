@@ -280,13 +280,6 @@ drivers = [
 name = "shellcheck"
 
 [[plugin]]
-name = "trivy"
-drivers = [
-  "config",
-  "fs-vuln",
-]
-
-[[plugin]]
 name = "trufflehog"
 
 # Security - SAST scanning with community rules

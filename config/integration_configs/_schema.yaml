@@ -1,0 +1,45 @@
+# Dataset Integration Config Schema Documentation
+#
+# Each YAML file in this directory configures a dataset for the
+# BaseIntegrationScript framework. Files replace the hardcoded
+# constants at the top of integrate_{dataset}_enrichments.py scripts.
+#
+# Required fields:
+#   dataset_name: Canonical short name (e.g., "jssoda", "doclaynet")
+#
+# Optional fields with defaults:
+#   is_synthetic: false
+#   known_capture_method: null
+#   metadata_path: "" (auto: json/{dataset_name}_metadata.json)
+#   llm_enrichment_path: "" (auto: json/{dataset_name}_llm_enrichment.json)
+#   language_enrichment_path: "" (auto: json/{dataset_name}_language_enrichment.json)
+#   skew_labels_path: null
+#   resolution_labels_path: null
+#   vlm_enrichment_path: null
+#   train_gt_path: null
+#   vlm_text_labels_path: null
+#   script_version: "1.1.0"
+#   enrichment_version_tag: "integrated_v2"
+#   enrichment_version_number: 2
+#   doc_language: null (documentation-stated language fallback)
+#   doc_script: null
+#
+# KI Mitigation Config (ki_config):
+#   apply_ki_001_layout_casing: true
+#   layout_source: "docling"  # or "doclayout_yolo"
+#   apply_ki_002_table_override: true
+#   apply_ki_003_figure_override: true
+#   apply_ki_004_handwriting_override: true
+#   apply_ki_005_capture_override: true
+#   apply_ki_006_formula_override: true
+#   apply_ki_008_script_family: true
+#
+# VLM Corrections (vlm_corrections):
+#   table_true_positives: []   # Sample IDs with confirmed tables
+#   figure_true_positives: []  # Sample IDs with confirmed figures
+#   formula_true_positives: [] # Sample IDs with confirmed formulas
+#   handwriting_true_positives: [] # Sample IDs with confirmed handwriting
+#
+# Usage:
+#   PYTHONPATH=. uv run python scripts/audit/integration/base.py \
+#     config/integration_configs/jssoda.yaml --dry-run

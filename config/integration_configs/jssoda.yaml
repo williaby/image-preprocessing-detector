@@ -1,0 +1,34 @@
+# JSSODa dataset integration config
+# Source: Japanese Scene-text and Script-agnostic OCR Dataset
+# Samples: 2,000 synthetic document images
+
+dataset_name: jssoda
+is_synthetic: true
+known_capture_method: synthetic
+
+# Documentation fallback language (known: Japanese)
+doc_language: ja
+doc_script: Jpan
+
+# Versioning
+script_version: "1.1.0"
+enrichment_version_tag: integrated_v2
+enrichment_version_number: 2
+
+ki_config:
+  apply_ki_001_layout_casing: true
+  layout_source: docling
+  apply_ki_002_table_override: true
+  apply_ki_003_figure_override: true
+  apply_ki_004_handwriting_override: true
+  apply_ki_005_capture_override: true
+  apply_ki_006_formula_override: true
+  apply_ki_008_script_family: true
+
+vlm_corrections:
+  table_true_positives: []
+  figure_true_positives: []
+  formula_true_positives:
+    - jssoda_horizontal_00537   # math expression: x = (c - b) / a
+    - jssoda_horizontal_00956   # equation: (a+b)^2 = a^2 + 2ab + b^2
+  handwriting_true_positives: []

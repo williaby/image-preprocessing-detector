@@ -1,0 +1,31 @@
+# FUNSD+ dataset integration config
+# Source: Form Understanding in Noisy Scanned Documents (Plus extended)
+# Samples: ~199 annotated form images
+
+dataset_name: funsd-plus
+is_synthetic: false
+known_capture_method: scanner_flatbed
+
+doc_language: en
+doc_script: Latn
+
+# Versioning
+script_version: "1.1.0"
+enrichment_version_tag: integrated_v2
+enrichment_version_number: 2
+
+ki_config:
+  apply_ki_001_layout_casing: true
+  layout_source: docling
+  apply_ki_002_table_override: true
+  apply_ki_003_figure_override: true
+  apply_ki_004_handwriting_override: true
+  apply_ki_005_capture_override: true
+  apply_ki_006_formula_override: true
+  apply_ki_008_script_family: true
+
+vlm_corrections:
+  table_true_positives: []
+  figure_true_positives: []
+  formula_true_positives: []
+  handwriting_true_positives: []
