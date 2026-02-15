@@ -177,11 +177,25 @@ match.rules = ["radarlint-python:python:S1172"]
 match.file_patterns = ["modal/**"]
 set.ignored = true
 
+# Ignore unused parameter warnings in scripts/ - kept for API extensibility
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1172"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
 # Ignore float equality checks in tests - exact values from deterministic functions
 [[triage]]
 match.plugins = ["radarlint-python"]
 match.rules = ["radarlint-python:python:S1244"]
 match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
+# Ignore float equality checks in scripts/ - statistical thresholds are exact values
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1244"]
+match.file_patterns = ["scripts/**"]
 set.ignored = true
 
 # Ignore commented-out code in tests - preserved for reference

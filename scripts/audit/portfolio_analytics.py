@@ -215,7 +215,7 @@ def compute_field_statistics(
             max_pass_rate=round(max(rates), 2),
             std_dev=round(statistics.stdev(rates), 2) if len(rates) > 1 else 0.0,
             datasets_below_75=sum(1 for r in rates if r < 75.0),
-            datasets_at_100=sum(1 for r in rates if r == 100.0),
+            datasets_at_100=sum(1 for r in rates if abs(r - 100.0) < 1e-9),
             total_datasets=len(rates),
         )
         stats.append(fs)
