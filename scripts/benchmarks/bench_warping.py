@@ -88,7 +88,9 @@ def load_anyphotodoc_samples(data_dir: Path) -> list[tuple[Path, int]]:
 
     logger.info(
         "AnyPhotoDoc6300: %d warped + %d flat = %d total",
-        warped_count, flat_count, len(samples),
+        warped_count,
+        flat_count,
+        len(samples),
     )
     return samples
 
@@ -120,12 +122,16 @@ def load_warpdoc_samples(
 
         if warped_dir.exists():
             warped_files = sorted(warped_dir.glob("*.*"))
-            warped_files = [f for f in warped_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
+            warped_files = [
+                f for f in warped_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")
+            ]
             samples.extend((p, 1) for p in warped_files)
 
         if flat_dir.exists():
             flat_files = sorted(flat_dir.glob("*.*"))
-            flat_files = [f for f in flat_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
+            flat_files = [
+                f for f in flat_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")
+            ]
             samples.extend((p, 0) for p in flat_files)
 
         if samples:
@@ -302,8 +308,12 @@ def main() -> None:
         description="Benchmark WarpingDetector against AnyPhotoDoc6300 + WarpDoc"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
-    parser.add_argument("--max-samples", type=int, default=0, help="Max AnyPhotoDoc samples (0=all)")
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
+    parser.add_argument(
+        "--max-samples", type=int, default=0, help="Max AnyPhotoDoc samples (0=all)"
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()

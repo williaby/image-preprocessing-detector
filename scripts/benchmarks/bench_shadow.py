@@ -72,12 +72,19 @@ def load_paired_dataset(
     input_files = sorted(input_dir.glob("*.png"))
     target_files = sorted(target_dir.glob("*.png"))
 
-    samples.extend((p, 1) for p in input_files)   # label: shadow images are positive class
-    samples.extend((p, 0) for p in target_files)   # label: clean images are negative class
+    samples.extend(
+        (p, 1) for p in input_files
+    )  # label: shadow images are positive class
+    samples.extend(
+        (p, 0) for p in target_files
+    )  # label: clean images are negative class
 
     logger.info(
         "%s: %d input (shadow) + %d target (clean) = %d total",
-        dataset_name, len(input_files), len(target_files), len(samples),
+        dataset_name,
+        len(input_files),
+        len(target_files),
+        len(samples),
     )
     return samples
 
@@ -144,10 +151,18 @@ def evaluate_samples(
         "latency": latency,
         "failures": failures,
         "score_distribution": {
-            "shadow_mean": round(float(np.mean(shadow_scores)), 4) if shadow_scores else None,
-            "shadow_std": round(float(np.std(shadow_scores)), 4) if shadow_scores else None,
-            "clean_mean": round(float(np.mean(clean_scores)), 4) if clean_scores else None,
-            "clean_std": round(float(np.std(clean_scores)), 4) if clean_scores else None,
+            "shadow_mean": round(float(np.mean(shadow_scores)), 4)
+            if shadow_scores
+            else None,
+            "shadow_std": round(float(np.std(shadow_scores)), 4)
+            if shadow_scores
+            else None,
+            "clean_mean": round(float(np.mean(clean_scores)), 4)
+            if clean_scores
+            else None,
+            "clean_std": round(float(np.std(clean_scores)), 4)
+            if clean_scores
+            else None,
         },
     }
 
@@ -257,7 +272,9 @@ def main() -> None:
         description="Benchmark ShadowDetector against SD7K + WSRD"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()

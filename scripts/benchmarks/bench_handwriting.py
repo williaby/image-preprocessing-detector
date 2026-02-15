@@ -95,7 +95,8 @@ def load_cocotext_samples(
 
     logger.info(
         "COCO-Text: %d handwriting images, %d machine-printed-only images",
-        len(hw_image_ids), len(mp_only_image_ids),
+        len(hw_image_ids),
+        len(mp_only_image_ids),
     )
 
     # Map image IDs to filenames
@@ -137,10 +138,12 @@ def load_cocotext_samples(
         if path is not None:
             samples.append((path, 0))
 
-    logger.info("Loaded %d samples (%d positive, %d negative)",
-                len(samples),
-                sum(1 for _, l in samples if l == 1),
-                sum(1 for _, l in samples if l == 0))
+    logger.info(
+        "Loaded %d samples (%d positive, %d negative)",
+        len(samples),
+        sum(1 for _, l in samples if l == 1),
+        sum(1 for _, l in samples if l == 0),
+    )
 
     return samples
 
@@ -175,10 +178,14 @@ def run_benchmark(
 
     num_positive = sum(1 for _, l in samples if l == 1)
     num_negative = sum(1 for _, l in samples if l == 0)
-    print(f"Evaluating {len(samples)} images ({num_positive} hw+, {num_negative} hw-)...")
+    print(
+        f"Evaluating {len(samples)} images ({num_positive} hw+, {num_negative} hw-)..."
+    )
 
     if num_positive < 5:
-        print(f"\nWARNING: Only {num_positive} positive samples. Results have very limited statistical significance.")
+        print(
+            f"\nWARNING: Only {num_positive} positive samples. Results have very limited statistical significance."
+        )
 
     detector = HandwritingDetector()
     rng = np.random.default_rng(seed)
@@ -237,7 +244,9 @@ def run_benchmark(
 
     mark = "PASS" if threshold_met else "FAIL"
     reliability = "" if reliable else " (UNRELIABLE - too few positive samples)"
-    print(f"\nGo/No-Go: {mark} ({metric_value:.1%} vs {threshold.target:.0%} target){reliability}")
+    print(
+        f"\nGo/No-Go: {mark} ({metric_value:.1%} vs {threshold.target:.0%} target){reliability}"
+    )
 
     result_dict: dict[str, Any] = {
         "detector": "HandwritingDetector",
@@ -246,7 +255,7 @@ def run_benchmark(
         "num_positive": num_positive,
         "num_negative": num_negative,
         "caveat": "COCO-Text is scene text (outdoor signs), not documents. "
-                  f"Only {num_positive} positive samples - results have limited statistical significance.",
+        f"Only {num_positive} positive samples - results have limited statistical significance.",
         "metrics": report,
         "latency": latency,
         "failure_rate": round(failures / len(samples), 4) if samples else 0.0,
@@ -273,8 +282,12 @@ def main() -> None:
         description="Benchmark HandwritingDetector against COCO-Text"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
-    parser.add_argument("--max-negative", type=int, default=200, help="Max negative samples")
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
+    parser.add_argument(
+        "--max-negative", type=int, default=200, help="Max negative samples"
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()

@@ -37,9 +37,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def _precision_recall_f1(
-    tp: int, fp: int, fn: int
-) -> tuple[float, float, float]:
+def _precision_recall_f1(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
     """Compute precision, recall, and F1 from raw counts.
 
     Args:
@@ -52,7 +50,11 @@ def _precision_recall_f1(
     """
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    f1 = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
     return precision, recall, f1
 
 
@@ -160,9 +162,7 @@ def compute_classification_report(
     }
 
 
-def _compute_cohens_kappa(
-    cm: NDArray[np.intp], num_samples: int
-) -> float:
+def _compute_cohens_kappa(cm: NDArray[np.intp], num_samples: int) -> float:
     """Compute Cohen's kappa from a confusion matrix.
 
     Args:
@@ -343,7 +343,9 @@ def format_confusion_matrix(
 
     # Data rows
     for idx, name in enumerate(class_names):
-        row_values = "".join(str(int(mat[idx, j])).rjust(col_width) for j in range(len(class_names)))
+        row_values = "".join(
+            str(int(mat[idx, j])).rjust(col_width) for j in range(len(class_names))
+        )
         lines.append(f"{name.rjust(max_name)}  {row_values}")
 
     return "\n".join(lines)
@@ -399,7 +401,14 @@ def compute_latency_stats(latencies_ms: list[float]) -> dict[str, float]:
         Dictionary with mean_ms, p50_ms, p95_ms, p99_ms, min_ms, max_ms.
     """
     if not latencies_ms:
-        return {"mean_ms": 0.0, "p50_ms": 0.0, "p95_ms": 0.0, "p99_ms": 0.0, "min_ms": 0.0, "max_ms": 0.0}
+        return {
+            "mean_ms": 0.0,
+            "p50_ms": 0.0,
+            "p95_ms": 0.0,
+            "p99_ms": 0.0,
+            "min_ms": 0.0,
+            "max_ms": 0.0,
+        }
 
     arr = np.array(latencies_ms)
     return {

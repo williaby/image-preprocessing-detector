@@ -154,13 +154,15 @@ def load_orientation_samples(
         rendering = data.get("rendering", {})
         dpi = rendering.get("target_dpi", 300)
 
-        samples.append({
-            "image_path": img_path,
-            "orientation_class": orientation_class,
-            "script": script_code,
-            "text_direction": text_direction,
-            "dpi": dpi,
-        })
+        samples.append(
+            {
+                "image_path": img_path,
+                "orientation_class": orientation_class,
+                "script": script_code,
+                "text_direction": text_direction,
+                "dpi": dpi,
+            }
+        )
 
     logger.info("Found %d images with orientation metadata", len(samples))
 
@@ -312,34 +314,46 @@ def run_benchmark(
     for script in sorted(per_script_true.keys()):
         if len(per_script_true[script]) >= 10:  # Skip tiny groups
             script_report = compute_classification_report(
-                per_script_true[script], per_script_pred[script], ORIENTATION_CLASSES,
+                per_script_true[script],
+                per_script_pred[script],
+                ORIENTATION_CLASSES,
             )
             per_script_accuracy[script] = {
                 "accuracy": script_report["accuracy"],
                 "num_samples": script_report["num_samples"],
             }
-            print(f"  {script}: {script_report['accuracy']:.1%} ({script_report['num_samples']} samples)")
+            print(
+                f"  {script}: {script_report['accuracy']:.1%} ({script_report['num_samples']} samples)"
+            )
 
     # Per-DPI breakdowns
     per_dpi_accuracy: dict[str, dict[str, Any]] = {}
     for dpi in sorted(per_dpi_true.keys()):
         if len(per_dpi_true[dpi]) >= 10:
             dpi_report = compute_classification_report(
-                per_dpi_true[dpi], per_dpi_pred[dpi], ORIENTATION_CLASSES,
+                per_dpi_true[dpi],
+                per_dpi_pred[dpi],
+                ORIENTATION_CLASSES,
             )
             per_dpi_accuracy[str(dpi)] = {
                 "accuracy": dpi_report["accuracy"],
                 "num_samples": dpi_report["num_samples"],
             }
-            print(f"  DPI {dpi}: {dpi_report['accuracy']:.1%} ({dpi_report['num_samples']} samples)")
+            print(
+                f"  DPI {dpi}: {dpi_report['accuracy']:.1%} ({dpi_report['num_samples']} samples)"
+            )
 
     # CJK vertical text analysis
     vertical_text_report = None
     if len(vertical_text_true) >= 5:
         vertical_text_report = compute_classification_report(
-            vertical_text_true, vertical_text_pred, ORIENTATION_CLASSES,
+            vertical_text_true,
+            vertical_text_pred,
+            ORIENTATION_CLASSES,
         )
-        print(f"\nCJK vertical text (ttb): {vertical_text_report['accuracy']:.1%} ({len(vertical_text_true)} samples)")
+        print(
+            f"\nCJK vertical text (ttb): {vertical_text_report['accuracy']:.1%} ({len(vertical_text_true)} samples)"
+        )
 
     latency = compute_latency_stats(latencies_ms)
     print(f"\nLatency: mean={latency['mean_ms']:.1f}ms, p95={latency['p95_ms']:.1f}ms")
@@ -388,8 +402,12 @@ def main() -> None:
         description="Benchmark OrientationDetector against synth_multiscript_v3"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
-    parser.add_argument("--max-samples", type=int, default=5000, help="Max samples (0=all, stratified)")
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
+    parser.add_argument(
+        "--max-samples", type=int, default=5000, help="Max samples (0=all, stratified)"
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()

@@ -182,15 +182,23 @@ def benchmark_blank_page(
         height, width = img.shape[:2]
         if max(height, width) > MAX_IMAGE_DIM:
             scale = MAX_IMAGE_DIM / max(height, width)
-            img = cv2.resize(img, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
+            img = cv2.resize(
+                img,
+                (int(width * scale), int(height * scale)),
+                interpolation=cv2.INTER_AREA,
+            )
 
         result = detector.detect(img)
         real_scores.append(result.blankness_score)
         if result.is_blank:
             false_blank_count += 1
 
-    real_false_positive_rate = false_blank_count / len(real_images) if real_images else 0.0
-    print(f"Real docs false blank rate: {real_false_positive_rate:.1%} ({false_blank_count}/{len(real_images)})")
+    real_false_positive_rate = (
+        false_blank_count / len(real_images) if real_images else 0.0
+    )
+    print(
+        f"Real docs false blank rate: {real_false_positive_rate:.1%} ({false_blank_count}/{len(real_images)})"
+    )
 
     return {
         "detector": "BlankPageDetector",
@@ -237,7 +245,11 @@ def benchmark_code_detector(
         height, width = img.shape[:2]
         if max(height, width) > MAX_IMAGE_DIM:
             scale = MAX_IMAGE_DIM / max(height, width)
-            img = cv2.resize(img, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
+            img = cv2.resize(
+                img,
+                (int(width * scale), int(height * scale)),
+                interpolation=cv2.INTER_AREA,
+            )
 
         start = time.perf_counter()
         result = detector.detect(img)
@@ -248,10 +260,12 @@ def benchmark_code_detector(
         if result.has_code:
             positive_count += 1
             if result.code_confidence > 0.7:
-                high_confidence_samples.append({
-                    "path": str(img_path.name),
-                    "confidence": round(result.code_confidence, 4),
-                })
+                high_confidence_samples.append(
+                    {
+                        "path": str(img_path.name),
+                        "confidence": round(result.code_confidence, 4),
+                    }
+                )
 
     detection_rate = positive_count / len(images) if images else 0.0
     print(f"Detection rate: {detection_rate:.1%} ({positive_count}/{len(images)})")
@@ -304,7 +318,11 @@ def benchmark_table_complexity(
         height, width = img.shape[:2]
         if max(height, width) > MAX_IMAGE_DIM:
             scale = MAX_IMAGE_DIM / max(height, width)
-            img = cv2.resize(img, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
+            img = cv2.resize(
+                img,
+                (int(width * scale), int(height * scale)),
+                interpolation=cv2.INTER_AREA,
+            )
 
         start = time.perf_counter()
         result = analyzer.analyze(img)
@@ -321,10 +339,18 @@ def benchmark_table_complexity(
         "detector": "TableComplexityAnalyzer",
         "num_images": len(complexity_scores),
         "complexity_distribution": {
-            "mean": round(float(np.mean(complexity_scores)), 4) if complexity_scores else None,
-            "std": round(float(np.std(complexity_scores)), 4) if complexity_scores else None,
-            "p50": round(float(np.median(complexity_scores)), 4) if complexity_scores else None,
-            "p95": round(float(np.percentile(complexity_scores, 95)), 4) if complexity_scores else None,
+            "mean": round(float(np.mean(complexity_scores)), 4)
+            if complexity_scores
+            else None,
+            "std": round(float(np.std(complexity_scores)), 4)
+            if complexity_scores
+            else None,
+            "p50": round(float(np.median(complexity_scores)), 4)
+            if complexity_scores
+            else None,
+            "p95": round(float(np.percentile(complexity_scores, 95)), 4)
+            if complexity_scores
+            else None,
         },
         "row_count_distribution": {
             "mean": round(float(np.mean(row_counts)), 1) if row_counts else None,
@@ -384,7 +410,9 @@ def main() -> None:
         description="Descriptive stats for Tier 3 detectors"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()

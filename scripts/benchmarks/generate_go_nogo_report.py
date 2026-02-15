@@ -130,16 +130,20 @@ def generate_executive_summary(results: dict[str, dict[str, Any]]) -> list[str]:
     # Count results
     total_run = sum(1 for p in _PREFIX_TO_THRESHOLD if p in results)
     total_pass = sum(
-        1 for p in _PREFIX_TO_THRESHOLD
+        1
+        for p in _PREFIX_TO_THRESHOLD
         if p in results and results[p].get("threshold", {}).get("met", False)
     )
     total_fail = total_run - total_pass
 
     lines.append("")
-    lines.append(f"**Summary**: {total_run} benchmarks run, {total_pass} PASS, {total_fail} FAIL")
+    lines.append(
+        f"**Summary**: {total_run} benchmarks run, {total_pass} PASS, {total_fail} FAIL"
+    )
     if any(
         not results.get(p, {}).get("threshold", {}).get("reliable", True)
-        for p in _PREFIX_TO_THRESHOLD if p in results
+        for p in _PREFIX_TO_THRESHOLD
+        if p in results
     ):
         lines.append("\\* Result marked unreliable (insufficient positive samples)")
     lines.append("")
@@ -219,7 +223,9 @@ def generate_detector_section(
         lines.extend(_format_classification_metrics(family, "Family-Level"))
 
         if "iso_level" in metrics:
-            lines.extend(_format_classification_metrics(metrics["iso_level"], "ISO-Level"))
+            lines.extend(
+                _format_classification_metrics(metrics["iso_level"], "ISO-Level")
+            )
 
         # IndicDLP supplementary (script detection only)
         indicdlp = result.get("supplementary_indicdlp")
@@ -237,7 +243,9 @@ def generate_detector_section(
             lines.append("| Script | Accuracy | Samples |")
             lines.append("|--------|----------|---------|")
             for script, data in sorted(per_script.items()):
-                lines.append(f"| {script} | {data['accuracy']:.1%} | {data['num_samples']} |")
+                lines.append(
+                    f"| {script} | {data['accuracy']:.1%} | {data['num_samples']} |"
+                )
 
         # Per-DPI breakdown
         per_dpi = metrics.get("per_dpi", {})
@@ -246,27 +254,40 @@ def generate_detector_section(
             lines.append("| DPI | Accuracy | Samples |")
             lines.append("|-----|----------|---------|")
             for dpi, data in sorted(per_dpi.items(), key=lambda x: int(x[0])):
-                lines.append(f"| {dpi} | {data['accuracy']:.1%} | {data['num_samples']} |")
+                lines.append(
+                    f"| {dpi} | {data['accuracy']:.1%} | {data['num_samples']} |"
+                )
 
         # Vertical text
         vt = metrics.get("vertical_text")
         if vt:
-            lines.extend(["", f"**CJK Vertical Text**: {vt['accuracy']:.1%} ({vt['num_samples']} samples)"])
+            lines.extend(
+                [
+                    "",
+                    f"**CJK Vertical Text**: {vt['accuracy']:.1%} ({vt['num_samples']} samples)",
+                ]
+            )
 
     elif "primary" in result or "accuracy" in metrics:
         # Binary metrics (shadow, warping, document source)
         if result.get("primary"):
             primary = result["primary"]
-            lines.extend(_format_binary_metrics(primary.get("metrics", {}), primary.get("dataset", "Primary")))
+            lines.extend(
+                _format_binary_metrics(
+                    primary.get("metrics", {}), primary.get("dataset", "Primary")
+                )
+            )
 
             score_dist = primary.get("score_distribution", {})
             if score_dist.get("shadow_mean") is not None:
-                lines.extend([
-                    "",
-                    "**Score Distribution**:",
-                    f"- Shadow images: mean={score_dist['shadow_mean']:.4f}, std={score_dist.get('shadow_std', 0):.4f}",
-                    f"- Clean images: mean={score_dist.get('clean_mean', 0):.4f}, std={score_dist.get('clean_std', 0):.4f}",
-                ])
+                lines.extend(
+                    [
+                        "",
+                        "**Score Distribution**:",
+                        f"- Shadow images: mean={score_dist['shadow_mean']:.4f}, std={score_dist.get('shadow_std', 0):.4f}",
+                        f"- Clean images: mean={score_dist.get('clean_mean', 0):.4f}, std={score_dist.get('clean_std', 0):.4f}",
+                    ]
+                )
         else:
             lines.extend(_format_binary_metrics(metrics, dataset))
 
@@ -278,7 +299,9 @@ def generate_detector_section(
             lines.append("|------|-----|----------|---------|")
             for dtype, dtype_result in sorted(warpdoc_per_type.items()):
                 dm = dtype_result.get("metrics", {})
-                lines.append(f"| {dtype} | {dm.get('f1', 0):.4f} | {dm.get('accuracy', 0):.1%} | {dm.get('num_samples', 0)} |")
+                lines.append(
+                    f"| {dtype} | {dm.get('f1', 0):.4f} | {dm.get('accuracy', 0):.1%} | {dm.get('num_samples', 0)} |"
+                )
 
         # Validation dataset (shadow/warping)
         validation = result.get("validation")
@@ -286,18 +309,22 @@ def generate_detector_section(
             lines.extend(["", "**Validation Dataset**:"])
             val_m = validation.get("metrics", {})
             lines.append(f"- Dataset: {validation.get('dataset', 'validation')}")
-            lines.append(f"- F1: {val_m.get('f1', 0):.4f}, Accuracy: {val_m.get('accuracy', 0):.1%}")
+            lines.append(
+                f"- F1: {val_m.get('f1', 0):.4f}, Accuracy: {val_m.get('accuracy', 0):.1%}"
+            )
 
     # Latency
     latency = result.get("latency", {})
     if not latency and "primary" in result and result.get("primary"):
         latency = result["primary"].get("latency", {})
     if latency and latency.get("mean_ms", 0) > 0:
-        lines.extend([
-            "",
-            f"**Latency**: mean={latency.get('mean_ms', 0):.1f}ms, "
-            f"p95={latency.get('p95_ms', 0):.1f}ms",
-        ])
+        lines.extend(
+            [
+                "",
+                f"**Latency**: mean={latency.get('mean_ms', 0):.1f}ms, "
+                f"p95={latency.get('p95_ms', 0):.1f}ms",
+            ]
+        )
 
     # Caveats
     caveat = result.get("caveat")
@@ -310,11 +337,13 @@ def generate_detector_section(
         metric_value = _extract_metric(result, threshold.metric)
         score_str = f"{metric_value:.1%}" if metric_value is not None else "N/A"
 
-        lines.extend([
-            "",
-            f"**Go/No-Go**: {'PASS' if met else 'FAIL'} "
-            f"({score_str} vs {threshold.target:.0%} target)",
-        ])
+        lines.extend(
+            [
+                "",
+                f"**Go/No-Go**: {'PASS' if met else 'FAIL'} "
+                f"({score_str} vs {threshold.target:.0%} target)",
+            ]
+        )
         if not met:
             lines.append(f"**Recommended Action**: {threshold.ml_action}")
 
@@ -345,13 +374,15 @@ def _format_classification_metrics(metrics: dict[str, Any], label: str) -> list[
     cm = metrics.get("confusion_matrix")
     class_names = metrics.get("class_names")
     if cm and class_names:
-        lines.extend([
-            "",
-            "**Confusion Matrix**:",
-            "```text",
-            format_confusion_matrix(cm, class_names),
-            "```",
-        ])
+        lines.extend(
+            [
+                "",
+                "**Confusion Matrix**:",
+                "```text",
+                format_confusion_matrix(cm, class_names),
+                "```",
+            ]
+        )
 
     # Per-class
     per_class = metrics.get("per_class", {})
@@ -391,17 +422,21 @@ def _format_indicdlp_section(indicdlp: dict[str, Any]) -> list[str]:
     indic_metrics = indicdlp.get("metrics", {})
     family = indic_metrics.get("family_level", {})
     if family:
-        lines.extend([
-            f"- Family-level accuracy: {family.get('accuracy', 0):.1%}",
-            f"- Macro F1: {family.get('macro_f1', 0):.4f}",
-            f"- Cohen's Kappa: {family.get('cohens_kappa', 0):.4f}",
-        ])
+        lines.extend(
+            [
+                f"- Family-level accuracy: {family.get('accuracy', 0):.1%}",
+                f"- Macro F1: {family.get('macro_f1', 0):.4f}",
+                f"- Cohen's Kappa: {family.get('cohens_kappa', 0):.4f}",
+            ]
+        )
 
     iso = indic_metrics.get("iso_level", {})
     if iso:
-        lines.extend([
-            f"- ISO-level accuracy: {iso.get('accuracy', 0):.1%}",
-        ])
+        lines.extend(
+            [
+                f"- ISO-level accuracy: {iso.get('accuracy', 0):.1%}",
+            ]
+        )
 
     # Per-language breakdown
     per_lang = indicdlp.get("per_language", {})
@@ -455,38 +490,44 @@ def generate_descriptive_section(result: dict[str, Any]) -> list[str]:
     blank = result.get("blank_page", {})
     if blank:
         synth = blank.get("synthetic_metrics", {})
-        lines.extend([
-            "#### BlankPageDetector",
-            "",
-            f"- Synthetic accuracy: {synth.get('accuracy', 0):.1%}",
-            f"- Real docs false-blank rate: {blank.get('real_false_positive_rate', 0):.1%} "
-            f"({blank.get('real_false_blank_count', 0)}/{blank.get('real_docs_tested', 0)})",
-            "",
-        ])
+        lines.extend(
+            [
+                "#### BlankPageDetector",
+                "",
+                f"- Synthetic accuracy: {synth.get('accuracy', 0):.1%}",
+                f"- Real docs false-blank rate: {blank.get('real_false_positive_rate', 0):.1%} "
+                f"({blank.get('real_false_blank_count', 0)}/{blank.get('real_docs_tested', 0)})",
+                "",
+            ]
+        )
 
     # Code detector
     code = result.get("code_detector", {})
     if code:
         score_dist = code.get("score_distribution", {})
-        lines.extend([
-            "#### CodeDetector",
-            "",
-            f"- Detection rate: {code.get('detection_rate', 0):.1%} ({code.get('positive_count', 0)}/{code.get('num_images', 0)})",
-            f"- Score distribution: mean={score_dist.get('mean', 0):.4f}, p95={score_dist.get('p95', 0):.4f}",
-            "",
-        ])
+        lines.extend(
+            [
+                "#### CodeDetector",
+                "",
+                f"- Detection rate: {code.get('detection_rate', 0):.1%} ({code.get('positive_count', 0)}/{code.get('num_images', 0)})",
+                f"- Score distribution: mean={score_dist.get('mean', 0):.4f}, p95={score_dist.get('p95', 0):.4f}",
+                "",
+            ]
+        )
 
     # Table complexity
     table = result.get("table_complexity", {})
     if table:
         complexity = table.get("complexity_distribution", {})
-        lines.extend([
-            "#### TableComplexityAnalyzer",
-            "",
-            f"- Mean complexity: {complexity.get('mean', 0):.4f}",
-            f"- P95 complexity: {complexity.get('p95', 0):.4f}",
-            "",
-        ])
+        lines.extend(
+            [
+                "#### TableComplexityAnalyzer",
+                "",
+                f"- Mean complexity: {complexity.get('mean', 0):.4f}",
+                f"- P95 complexity: {complexity.get('p95', 0):.4f}",
+                "",
+            ]
+        )
 
     return lines
 
@@ -513,7 +554,9 @@ def generate_ml_recommendations(results: dict[str, dict[str, Any]]) -> list[str]
                 failures.append((prefix, threshold, result))
 
     if not failures:
-        lines.append("All detectors met their Go/No-Go thresholds. No ML upgrades required.")
+        lines.append(
+            "All detectors met their Go/No-Go thresholds. No ML upgrades required."
+        )
         lines.append("")
         return lines
 
@@ -522,14 +565,16 @@ def generate_ml_recommendations(results: dict[str, dict[str, Any]]) -> list[str]
         score_str = f"{metric_value:.1%}" if metric_value is not None else "N/A"
         gap = threshold.target - (metric_value or 0)
 
-        lines.extend([
-            f"### {threshold.detector_name}",
-            "",
-            f"- **Current**: {score_str} | **Target**: {threshold.target:.0%} | **Gap**: {gap:.1%}",
-            f"- **Action**: {threshold.ml_action}",
-            f"- **Dataset**: {threshold.dataset}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"### {threshold.detector_name}",
+                "",
+                f"- **Current**: {score_str} | **Target**: {threshold.target:.0%} | **Gap**: {gap:.1%}",
+                f"- **Action**: {threshold.ml_action}",
+                f"- **Dataset**: {threshold.dataset}",
+                "",
+            ]
+        )
 
     return lines
 
@@ -578,7 +623,9 @@ def generate_report(results_dir: Path, output_path: Path) -> None:
     for prefix, threshold_key in _PREFIX_TO_THRESHOLD.items():
         if prefix in results:
             display_name = detector_display_names.get(prefix, prefix)
-            lines.extend(generate_detector_section(display_name, results[prefix], threshold_key))
+            lines.extend(
+                generate_detector_section(display_name, results[prefix], threshold_key)
+            )
 
     # Descriptive stats
     if "descriptive" in results:

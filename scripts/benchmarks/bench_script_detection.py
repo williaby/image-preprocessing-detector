@@ -75,18 +75,18 @@ ISO_NAMES = ["Arab", "Beng", "Deva", "Hans", "Jpan", "Kore", "Latn"]
 
 # IndicDLP: map ISO 639-1 language codes (from filenames) to ISO 15924 scripts
 _INDICDLP_LANG_TO_ISO: dict[str, str] = {
-    "as": "Beng",   # Assamese -> Bengali script
-    "bn": "Beng",   # Bengali -> Bengali script
-    "en": "Latn",   # English -> Latin script
-    "gu": "Gujr",   # Gujarati -> Gujarati script
-    "hi": "Deva",   # Hindi -> Devanagari
-    "kn": "Knda",   # Kannada -> Kannada script
-    "ml": "Mlym",   # Malayalam -> Malayalam script
-    "mr": "Deva",   # Marathi -> Devanagari
-    "or": "Orya",   # Odia -> Odia script
-    "pa": "Guru",   # Punjabi -> Gurmukhi script
-    "ta": "Taml",   # Tamil -> Tamil script
-    "te": "Telu",   # Telugu -> Telugu script
+    "as": "Beng",  # Assamese -> Bengali script
+    "bn": "Beng",  # Bengali -> Bengali script
+    "en": "Latn",  # English -> Latin script
+    "gu": "Gujr",  # Gujarati -> Gujarati script
+    "hi": "Deva",  # Hindi -> Devanagari
+    "kn": "Knda",  # Kannada -> Kannada script
+    "ml": "Mlym",  # Malayalam -> Malayalam script
+    "mr": "Deva",  # Marathi -> Devanagari
+    "or": "Orya",  # Odia -> Odia script
+    "pa": "Guru",  # Punjabi -> Gurmukhi script
+    "ta": "Taml",  # Tamil -> Tamil script
+    "te": "Telu",  # Telugu -> Telugu script
 }
 
 # Extended ISO-to-family mapping (adds Indic scripts to base mapping)
@@ -103,7 +103,16 @@ _ISO_TO_FAMILY_EXTENDED: dict[str, str] = {
 
 # IndicDLP ISO codes present in the dataset
 INDICDLP_ISO_NAMES = [
-    "Beng", "Deva", "Gujr", "Guru", "Knda", "Latn", "Mlym", "Orya", "Taml", "Telu",
+    "Beng",
+    "Deva",
+    "Gujr",
+    "Guru",
+    "Knda",
+    "Latn",
+    "Mlym",
+    "Orya",
+    "Taml",
+    "Telu",
 ]
 
 # Maximum image dimension before resizing (for speed)
@@ -305,8 +314,16 @@ def evaluate_script_samples(
         # Family-level
         gt_family = iso_to_family.get(gt_iso, "unknown")
         pred_family = iso_to_family.get(pred_iso, "unknown")
-        gt_family_idx = family_names.index(gt_family) if gt_family in family_names else family_names.index("unknown")
-        pred_family_idx = family_names.index(pred_family) if pred_family in family_names else family_names.index("unknown")
+        gt_family_idx = (
+            family_names.index(gt_family)
+            if gt_family in family_names
+            else family_names.index("unknown")
+        )
+        pred_family_idx = (
+            family_names.index(pred_family)
+            if pred_family in family_names
+            else family_names.index("unknown")
+        )
         family_true.append(gt_family_idx)
         family_pred.append(pred_family_idx)
 
@@ -319,7 +336,11 @@ def evaluate_script_samples(
                 # Map to closest ISO in same family
                 pred_fam = iso_to_family.get(pred_iso, "unknown")
                 fallback = next(
-                    (iso for iso, fam in iso_to_family.items() if fam == pred_fam and iso in iso_names),
+                    (
+                        iso
+                        for iso, fam in iso_to_family.items()
+                        if fam == pred_fam and iso in iso_names
+                    ),
                     None,
                 )
                 if fallback is not None:
@@ -332,7 +353,9 @@ def evaluate_script_samples(
         if gt_family == pred_family:
             per_lang_correct[gt_iso] = per_lang_correct.get(gt_iso, 0) + 1
 
-    family_report = compute_classification_report(family_true, family_pred, family_names)
+    family_report = compute_classification_report(
+        family_true, family_pred, family_names
+    )
     iso_report = None
     if iso_true:
         iso_report = compute_classification_report(iso_true, iso_pred, iso_names)
@@ -392,7 +415,11 @@ def run_benchmark(
 
     # Evaluate on MLT-2019 (primary)
     mlt19_eval = evaluate_script_samples(
-        detector, samples, FAMILY_NAMES, ISO_NAMES, _ISO_TO_FAMILY,
+        detector,
+        samples,
+        FAMILY_NAMES,
+        ISO_NAMES,
+        _ISO_TO_FAMILY,
         progress_interval=200,
     )
 
@@ -427,7 +454,9 @@ def run_benchmark(
             "family_level": family_report,
         },
         "latency": latency,
-        "failure_rate": round(mlt19_eval["failures"] / len(samples), 4) if samples else 0.0,
+        "failure_rate": round(mlt19_eval["failures"] / len(samples), 4)
+        if samples
+        else 0.0,
         "threshold": {
             "target": threshold.target,
             "metric": threshold.metric,
@@ -461,14 +490,18 @@ def run_benchmark(
         print(f"IndicDLP Family-level macro F1: {indic_family['macro_f1']:.4f}")
         if indic_iso:
             print(f"IndicDLP ISO-level accuracy: {indic_iso['accuracy']:.1%}")
-        print(f"Latency: mean={indic_latency['mean_ms']:.1f}ms, p95={indic_latency['p95_ms']:.1f}ms")
+        print(
+            f"Latency: mean={indic_latency['mean_ms']:.1f}ms, p95={indic_latency['p95_ms']:.1f}ms"
+        )
 
         # Per-language breakdown
         per_lang = indicdlp_eval["per_language"]
         if per_lang:
             print("\nPer-language family accuracy:")
             for lang_iso, stats in sorted(per_lang.items()):
-                print(f"  {lang_iso}: {stats['accuracy']:.1%} ({stats['correct']}/{stats['total']})")
+                print(
+                    f"  {lang_iso}: {stats['accuracy']:.1%} ({stats['correct']}/{stats['total']})"
+                )
 
         indicdlp_metrics: dict[str, Any] = {
             "family_level": indic_family,
@@ -480,7 +513,7 @@ def run_benchmark(
             "dataset": "indicdlp",
             "num_samples": len(indicdlp_samples),
             "note": "Supplementary evaluation on 12 Indic languages. "
-                    "Does NOT affect Go/No-Go decision.",
+            "Does NOT affect Go/No-Go decision.",
             "metrics": indicdlp_metrics,
             "latency": indic_latency,
             "failure_rate": round(indicdlp_eval["failures"] / len(indicdlp_samples), 4),

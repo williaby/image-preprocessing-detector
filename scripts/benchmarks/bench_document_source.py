@@ -65,7 +65,13 @@ def load_samples(
     scanner_images: list[Path] = []
 
     # SmartDoc-QA -> camera
-    smartdoc_dir = data_dir / "02_benchmark_only" / "smartdoc-qa" / "Dataset SmartDoc-QA" / "Captured_Images"
+    smartdoc_dir = (
+        data_dir
+        / "02_benchmark_only"
+        / "smartdoc-qa"
+        / "Dataset SmartDoc-QA"
+        / "Captured_Images"
+    )
     if smartdoc_dir.exists():
         camera_images.extend(sorted(smartdoc_dir.rglob("*.jpg")))
         logger.info("SmartDoc-QA: %d camera images", len(camera_images))
@@ -73,7 +79,9 @@ def load_samples(
         logger.warning("SmartDoc-QA not found at %s", smartdoc_dir)
 
     # DocReal distorted/ -> camera
-    docreal_distorted = data_dir / "01_base_data" / "correction" / "docreal" / "DocReal" / "distorted"
+    docreal_distorted = (
+        data_dir / "01_base_data" / "correction" / "docreal" / "DocReal" / "distorted"
+    )
     if docreal_distorted.exists():
         docreal_camera = sorted(docreal_distorted.glob("*.png"))
         camera_images.extend(docreal_camera)
@@ -88,7 +96,9 @@ def load_samples(
         logger.warning("Tobacco800 not found at %s", tobacco_dir)
 
     # DocReal scanned/ -> scanner
-    docreal_scanned = data_dir / "01_base_data" / "correction" / "docreal" / "DocReal" / "scanned"
+    docreal_scanned = (
+        data_dir / "01_base_data" / "correction" / "docreal" / "DocReal" / "scanned"
+    )
     if docreal_scanned.exists():
         docreal_scanner = sorted(docreal_scanned.glob("*.png"))
         scanner_images.extend(docreal_scanner)
@@ -111,8 +121,12 @@ def load_samples(
             scanner_images = [scanner_images[i] for i in idx]
 
     samples: list[tuple[Path, int]] = []
-    samples.extend((p, 1) for p in camera_images)  # label: camera-captured are positive class
-    samples.extend((p, 0) for p in scanner_images)  # label: scanned docs are negative class
+    samples.extend(
+        (p, 1) for p in camera_images
+    )  # label: camera-captured are positive class
+    samples.extend(
+        (p, 0) for p in scanner_images
+    )  # label: scanned docs are negative class
 
     # Shuffle
     perm = rng.permutation(len(samples))
@@ -235,8 +249,12 @@ def main() -> None:
         description="Benchmark DocumentSourceClassifier against SmartDoc-QA + Tobacco800 + DocReal"
     )
     parser.add_argument("--data-dir", type=Path, default=Path("/mnt/e/image_detection"))
-    parser.add_argument("--output-dir", type=Path, default=Path("results/stream3_benchmarks"))
-    parser.add_argument("--max-samples", type=int, default=0, help="Max samples per class (0=all)")
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("results/stream3_benchmarks")
+    )
+    parser.add_argument(
+        "--max-samples", type=int, default=0, help="Max samples per class (0=all)"
+    )
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()
