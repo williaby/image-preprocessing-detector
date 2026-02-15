@@ -55,7 +55,6 @@ title: Dataset Naming Standard
 | `cvsi` | cvsi | cvsi2015, cvsi-2015 | ✅ | Video scene text |
 | `dibco` | dibco | dibco-train | ✅ | Document binarization competition dataset |
 | `diqa-5000` | diqa | diqa_5000, diqa5000 | ✅ | Document IQA benchmark |
-| `dit700k` | DIT-700K | dit_700k, dit-700k | ❌ | No public download available |
 | `doc3d` | doc3D-dataset | doc-3d, doc_3d, Doc3D | ✅ | Document 3D shape recovery (dewarping) |
 | `docalign12k` | docalign12k | doc_align_12k, docaligner | 🔄 | Document alignment/dewarping dataset (~12,000 paired images) |
 | `doclaynet` | doclaynet | doc-laynet | ✅ | DocLayNet layout dataset |
@@ -111,7 +110,6 @@ title: Dataset Naming Standard
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
-| `u-diads-tl` | U-DIADS-TL | udiads_tl, u_diads_tl | ❌ | Competition site offline (404) |
 | `warpdoc` | warpdoc | warp_doc, warp-doc | ✅ | Document dewarping (1,020 images), audit Grade D* |
 | `wili-2018` | wili_2018 | wili2018, wili | ❌ | Wikipedia language ID (text-only) |
 | `wsrd` | wsrd | wsrd-dnsr, ntire_shadow | ✅ | Document shadow removal (4,500 images), audit Grade D* |

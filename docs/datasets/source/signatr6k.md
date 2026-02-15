@@ -29,6 +29,25 @@
 | **File Format** | PNG |
 | **Image Dimensions** | Variable |
 
+##### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | PNG |
+| **Dimensions** | 256 x 256 px (fixed) |
+| **Color Space** | Grayscale (50%), RGB (50%) |
+| **Avg File Size** | ~9 KB |
+| **Total Size** | 142 MB |
+
+##### Label Schema
+
+| Label | Type | Description |
+|-------|------|-------------|
+| **Signature ID** | Categorical | Unique signer identifier |
+| **Split** | Categorical | train / validation / test |
+
+No bounding box or segmentation annotations provided. Classification-only dataset organized by folder structure.
+
 ##### Content Organization
 
 | Folder | Contents |
@@ -47,6 +66,22 @@
 | **Noise Sensitivity** | HIGH - Background noise affects verification |
 | **Stroke Quality** | Variable pen pressure, ink quality |
 | **Key Challenge** | Distinguishing genuine vs forged signatures |
+
+##### Known Limitations
+
+- Academic license restricts commercial use
+- Fixed 256x256 resolution may not represent production document scans
+- No bounding box or segmentation masks provided
+- No negative examples (non-signature images) included
+- Handwriting quality varies significantly across signers
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | Academic (research use only) |
+| **Commercial Use** | Not permitted |
+| **Citation** | Gholamian & Vahdat (2023). arXiv:2307.07887 |
 
 ##### Training Value
 
@@ -133,6 +168,21 @@ No defect catalog available for this dataset.
 **Audit Artifacts**: [scripts/audit/results/signatr6k/](../../scripts/audit/results/signatr6k/)
 
 ---
+
+##### Processing Notes
+
+- Parser: `parse_signatr_labels` in `annotate_base_metadata.py`
+- Docling GPU extraction complete: 12,514 OCR records + 9,452 layout images
+- Layer 2 enrichment applied with standard pipeline
+- 100% of samples classified as "unreliable" due to zero-confidence text quality scores
+
+##### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2023 | Initial dataset release |
+| L2 v1 | 2026-02-10 | Layer 2 metadata annotation |
+| L2 v2 | 2026-02-14 | Scorecard v2.0 audit |
 
 ##### Reliability & Bottlenecks
 

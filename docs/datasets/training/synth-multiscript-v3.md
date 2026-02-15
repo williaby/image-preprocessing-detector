@@ -1,6 +1,6 @@
-#### Synthetic Multi-Script Dataset v3 (OpenLID-Integrated)
+#### Synthetic Multi-Script Dataset v3 (synth-multiscript-v3)
 
-> **Quick Stats**: 350,000 images | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
+> **Quick Stats**: 350,012 images | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
 >
 > **License**: MIT | **Commercial Use**: Yes
 
@@ -8,38 +8,42 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Full Name** | Synthetic Multi-Script Document Dataset |
-| **Short Code** | `synth-multiscript` |
-| **Version** | 3.0 |
+| **Full Name** | Synthetic Multi-Script Document Dataset v3 |
+| **Short Code** | `synth-multiscript-v3` |
+| **Version** | 3.0.0 |
 | **Text Source** | [OpenLID-v2](https://huggingface.co/datasets/laurievb/OpenLID-v2) (198 languages) |
 | **Generator** | `src/image_preprocessing_detector/synthetic/generator.py` |
 | **Generation Script** | `scripts/generate_base_dataset_v3.py` |
 | **Validation Script** | `scripts/validate_base_dataset_v3.py` |
 | **Schema Version** | Layer 2 Enrichment v2.3.0 |
 | **License** | MIT |
-| **Documentation Status** | Complete |
+| **Generated** | 2026-02-12 to 2026-02-15 |
 
 ##### Version History
 
-| Version | Images | Format | Key Changes |
-|---------|--------|--------|-------------|
-| v1.0 | 27,000 | PNG | Initial generation, 3-tier DPI |
-| v2.0 | 250,000 | PNG | 7-tier DPI, color modes, document age, hybrid augmentation |
-| **v3.0** | **350,000** | **JPEG q95** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting** |
+| Version | Images | Format | Size | Key Changes |
+|---------|--------|--------|------|-------------|
+| v1.0 | 27,000 | PNG | ~50 GB | Initial generation, 3-tier DPI |
+| v2.0 | 250,000 | PNG | ~800 GB | 7-tier DPI, color modes, document age, hybrid augmentation |
+| **v3.0** | **350,012** | **JPEG q95** | **285 GB** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting, chunked generation** |
 
-##### Dataset Statistics
+##### Dataset Statistics (Actual)
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 350,000 |
-| **Train Split** | 280,000 (80%) |
-| **Val Split** | 35,000 (10%) |
-| **Test Split** | 35,000 (10%) |
+| **Total Images** | 350,012 |
+| **Total Metadata** | 350,011 (1 orphan image) |
+| **Train Split** | 276,060 (79.9%) |
+| **Val Split** | 34,444 (10.0%) |
+| **Test Split** | 35,134 (10.2%) |
+| **Split Registry** | 345,638 entries |
 | **Scripts** | 27 ISO 15924 scripts |
 | **Languages** | 198 OpenLID-v2 language varieties |
-| **File Format** | JPEG quality 95 (~200 KB/image) |
-| **Total Size** | ~70 GB |
+| **File Format** | JPEG quality 95 |
+| **Total Size** | 285 GB (images + metadata) |
+| **Metadata Size** | ~2.3 GB (JSON only) |
 | **Image Storage** | Pristine (no degradation baked in) |
+| **Schema Version** | 100% v2.3.0 |
 
 ##### Key Design: Pristine Base + Deferred Degradation
 
@@ -52,63 +56,95 @@ v3 stores base images as **pristine** (no degradation or geometric transforms ap
 - IQA views can replay degradation with exact parameters for ground-truth labels
 - No information loss; maximum downstream flexibility
 
-##### Script Coverage (27 Scripts)
+##### Script Coverage (27 Scripts, Actual Counts)
 
-| Tier | Scripts | % of Dataset |
-|------|---------|--------------|
-| **Tier 1 (High)** | Latn, Arab, Hans, Cyrl, Deva, Hant | 48% |
-| **Tier 2 (Medium)** | Jpan, Kore, Beng, Thai, Taml, Hebr, Telu, Grek, Gujr, Knda | 29% |
-| **Tier 3 (Lower)** | Mlym, Guru, Mymr, Tibt, Sinh, Khmr, Laoo, Geor, Armn, Ethi, Orya | 23% |
+| Script | Count | Script | Count | Script | Count |
+|--------|-------|--------|-------|--------|-------|
+| Latn | 28,295 | Arab | 27,168 | Deva | 27,260 |
+| Hans | 15,078 | Tibt | 13,302 | Hant | 12,258 |
+| Mlym | 12,260 | Orya | 12,265 | Ethi | 12,158 |
+| Thai | 12,168 | Guru | 12,049 | Grek | 12,025 |
+| Taml | 12,001 | Cyrl | 11,980 | Jpan | 11,973 |
+| Armn | 11,971 | Knda | 11,960 | Laoo | 11,937 |
+| Beng | 10,387 | Kore | 6,049 | Mymr | 6,044 |
+| Hebr | 6,018 | Telu | 5,997 | Gujr | 5,951 |
+| Sinh | 5,825 | Khmr | 5,791 | Geor | 5,732 |
 
-##### CJK Vertical Text (Tategaki) (v3.0 NEW)
+##### CJK Vertical Text (Tategaki) (Validated)
 
-Scripts supporting both horizontal and vertical writing generate both orientations:
+| Script | Actual TTB % | Target | Status |
+|--------|-------------|--------|--------|
+| **Jpan** (Japanese) | 30.0% (3,593/11,995) | 30% | PASS |
+| **Hans** (Simplified Chinese) | 10.0% (2,402/24,130) | 10% | PASS |
+| **Hant** (Traditional Chinese) | 10.2% (1,480/14,486) | 10% | PASS |
 
-| Script | Vertical (TTB) % | Horizontal (LTR) % |
-|--------|-------------------|---------------------|
-| **Jpan** (Japanese) | 30% | 70% |
-| **Hans** (Simplified Chinese) | 10% | 90% |
-| **Hant** (Traditional Chinese) | 10% | 90% |
+Total vertical text samples: 6,352.
 
-Metadata records `text_direction` per language block and `text_directions_present` at document level.
+##### Document Composition (Actual)
 
-##### Document Composition
+| Type | Count | % |
+|------|-------|---|
+| Single-script | 85,666 | 44.9% |
+| Two-script | 82,008 | 43.0% |
+| Three-script | 18,924 | 9.9% |
+| Four-script | 1,272 | 0.7% |
+| Five-script | 1,330 | 0.7% |
+| Six-script | 1,285 | 0.7% |
 
-| Type | % | Description |
-|------|---|-------------|
-| Single-script | 45% | Pure script samples |
-| Two-script | 38% | Bilingual documents |
-| Three-script | 10% | Complex multilingual |
-| Four+-script | 2% | Edge cases |
-| Priority pairs | 5% | High-value script pairs |
+Multi-script total: 104,819 (55.1%). English secondary in multi-script: 25,086 (23.6% of multi-script).
 
-**English Secondary Weighting** (v3.0 NEW): In multi-script compositions, Latn (English) is weighted at 40% probability as the secondary script, mirroring real-world multilingual documents.
+##### Quality Tier Distribution (Actual)
 
-##### Quality Tier Distribution
-
-| Quality Tier | Overall Quality | % | Augmentation |
-|--------------|-----------------|---|--------------|
-| PRISTINE | 0.95-1.00 | 10% | None |
-| HIGH | 0.80-0.95 | 25% | Light (Albumentations) |
-| MEDIUM | 0.60-0.80 | 35% | Moderate |
-| LOW | 0.40-0.60 | 20% | Heavy |
-| DEGRADED | 0.00-0.40 | 10% | Heavy + extras |
+| Quality Tier | Count | % |
+|--------------|-------|---|
+| PRISTINE | 19,103 | 10.0% |
+| HIGH | 47,448 | 24.9% |
+| MEDIUM | 66,755 | 35.0% |
+| LOW | 38,238 | 20.1% |
+| DEGRADED | 18,941 | 9.9% |
 
 **Hybrid Augmentation Pipeline**: Augraphy (document-specific: bleed-through, ink degradation, paper aging, bookbinding, dirty drum, folding) + Albumentations (general: blur, noise, compression, color jitter). Order: Augraphy first, Albumentations second.
 
 **Document Age** (v2.0+): 80% modern, 15% aged (yellowing, foxing), 5% historical (ink fading, paper degradation).
 
-##### Resolution Tiers (7 DPI Tiers)
+##### Resolution Tier Distribution (Actual)
 
-| Tier | DPI | Width Range | Weight | Use Case |
-|------|-----|-------------|--------|----------|
-| VERY_LOW | 72 | 500-700px | 8% | Screen-resolution documents |
-| LOW | 100 | 700-900px | 10% | Low-quality scans |
-| MEDIUM_LOW | 150 | 900-1200px | 12% | Draft-quality scans |
-| MEDIUM | 200 | 1200-1600px | 15% | Standard office scans |
-| STANDARD | 300 | 1800-2400px | 30% | Standard OCR quality |
-| HIGH | 400 | 2400-3200px | 15% | High-quality scans |
-| VERY_HIGH | 600 | 3600-4800px | 10% | Archival/professional |
+| Tier | DPI | Count | % |
+|------|-----|-------|---|
+| VERY_LOW | 72 | 15,491 | 8.1% |
+| LOW | 100 | 22,715 | 11.9% |
+| MEDIUM_LOW | 150 | 28,551 | 15.0% |
+| MEDIUM | 200 | 38,285 | 20.1% |
+| STANDARD | 300 | 47,285 | 24.8% |
+| HIGH | 400 | 22,890 | 12.0% |
+| VERY_HIGH | 600 | 15,268 | 8.0% |
+
+##### Layout Types (11 Generator Types -> 4 Layer 2 Types)
+
+The generator uses 11 internal layout types, mapped to Layer 2 `LayoutType` values via `LAYOUT_TO_LAYER2`:
+
+| Generator Type | Count | Layer 2 Value |
+|---------------|-------|---------------|
+| columns | 50,879 | `multi_column` |
+| header_body | 45,632 | `single_column` |
+| interleaved | 32,976 | `single_column` |
+| stacked | 18,950 | `single_column` |
+| form | 10,318 | `form_based` |
+| captioned | 6,903 | `single_column` |
+| sidebar | 6,872 | `multi_column` |
+| header_body_footer | 6,811 | `single_column` |
+| single_line | 4,168 | `single_column` |
+| short_blocks | 3,530 | `complex` |
+| dense_text | 3,446 | `single_column` |
+
+**Layer 2 distribution** (in metadata JSON files):
+
+| Layout Type | % |
+|-------------|---|
+| `single_column` | 64.3% |
+| `multi_column` | 24.9% |
+| `form_based` | 8.2% |
+| `complex` | 2.6% |
 
 ##### Resolution Quality Labels (v2.3)
 
@@ -118,7 +154,7 @@ Metadata records `text_direction` per language block and `text_directions_presen
 | `character_height_clean_px` | float | Pre-degradation measurement |
 | `character_height_degraded_px` | float | Post-degradation measurement |
 | `character_height_analytical_px` | float | font_size_pt * DPI / 72 (theoretical) |
-| `character_height_rendered_px` | float | **v3 NEW**: Actual rendered glyph height via CC analysis on pristine image |
+| `character_height_rendered_px` | float | Actual rendered glyph height via CC analysis on pristine image |
 | `resolution_quality_score` | float | Piecewise score 0-1 |
 | `coarse_bucket` | str | needs_major_upscale / needs_light_upscale / optimal / good / oversized |
 | `font_size_pt` | float | Pillow font size used |
@@ -130,12 +166,12 @@ Metadata records `text_direction` per language block and `text_directions_presen
 
 > Coarse bucket thresholds: <16px major, 16-32px light, 32-48px optimal, 48-96px good, >96px oversized
 
-##### Geometric Labels (v3.0 Expanded)
+##### Geometric Labels
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `orientation_class` | int | 0, 90, 180, or 270 degrees |
-| `skew_angle_degrees` | float | **±22 deg** (expanded from ±10 deg in v2) |
+| `skew_angle_degrees` | float | ±22 deg (expanded from ±10 deg in v2) |
 
 ##### IQA Labels (8 Dimensions)
 
@@ -150,14 +186,14 @@ Metadata records `text_direction` per language block and `text_directions_presen
 | `bleed_through` | Show-through from reverse |
 | `overall_quality` | Composite score (0-1) |
 
-##### Text Direction Labels (v3.0 NEW)
+##### Text Direction Labels
 
 | Field | Type | Scope | Description |
 |-------|------|-------|-------------|
 | `text_direction` | str | Per-language | `"ltr"`, `"rtl"`, or `"ttb"` for this language block |
 | `text_directions_present` | list[str] | Document-level | All directions in the image (e.g., `["ltr", "ttb"]`) |
 
-##### Generation Provenance (v3.0 NEW)
+##### Generation Provenance
 
 Per-image metadata includes `generation_params` at the top level (alongside `data` and `schema_version`):
 
@@ -175,31 +211,14 @@ Per-image metadata includes `generation_params` at the top level (alongside `dat
 | Grayscale | 30% | Single channel |
 | Binarized | 10% | Black and white |
 
-##### Layout Types (11 Types)
+##### Storage Locations
 
-| Layout | Weight | Description |
-|--------|--------|-------------|
-| STACKED | 24% | Vertical text blocks |
-| TWO_COLUMN | 18% | Newspaper/academic style |
-| THREE_COLUMN | 8% | Dense reference material |
-| FORM | 12% | Structured field-value pairs |
-| INTERLEAVED | 10% | Alternating script blocks |
-| CENTERED | 8% | Title pages, certificates |
-| GRID | 5% | Table-like structure |
-| SIDEBAR | 5% | Main content + sidebar |
-| HEADER_BODY | 5% | Header + body text |
-| DENSE_TEXT | 4% | Full-page dense text |
-| MIXED | 1% | Random mixed layout |
-
-##### Project Usage
-
-| Attribute | Value |
-|-----------|-------|
-| **Local Path** | `synthetic_multiscript_v3/` (via `--output-dir`) |
-| **GCS Path** | `gs://image_detection_b/synth_multiscript_v3/` |
-| **Split Registry** | Global SHA256-keyed JSONL (prevents cross-dataset leakage) |
-| **Phase(s)** | SigLIP 2 Multi-Task Training, MobileNetV4 Training |
-| **Purpose** | Pristine base from which all synthetic training views are derived |
+| Location | Path | Contents |
+|----------|------|----------|
+| **Unraid NFS** | `/mnt/unraid/appdata/synthetic_multiscript_v3/` | Full dataset (285 GB) |
+| **GCS** | `gs://image_detection_b/synth_multiscript_v3/` | Full dataset mirror |
+| **E: drive metadata** | `/mnt/e/image_detection/metadata_registry/json/synth-multiscript-v3/` | JSON metadata only (~2.3 GB) |
+| **Split Registry** | `splits.jsonl` (in dataset root) | 345,638 SHA256-keyed entries |
 
 ##### Derived Task-Specific Views
 
@@ -218,41 +237,38 @@ v3 serves as the single base from which all synthetic training datasets are deri
 ##### Generation Commands
 
 ```bash
-# Full production generation (350K images, ~2 days on GPU machine)
+# Full production generation (350K images, ~2 days on 6-core Xeon)
 python scripts/generate_base_dataset_v3.py \
     --output-dir /path/to/synthetic_multiscript_v3 \
     --total-images 350000 \
     --workers 4 \
     --seed 42 \
     --augmenter hybrid \
+    --chunk-size 10000 \
+    --resume \
     --yes
 
 # Validation (run after generation completes)
 python scripts/validate_base_dataset_v3.py \
     --dataset-dir /path/to/synthetic_multiscript_v3
-
-# Resume interrupted generation
-python scripts/generate_base_dataset_v3.py \
-    --output-dir /path/to/synthetic_multiscript_v3 \
-    --total-images 350000 \
-    --workers 4 \
-    --seed 42 \
-    --augmenter hybrid \
-    --resume \
-    --yes
 ```
 
-##### Key Features
+**Generation notes**:
 
-- **Language Diversity**: 198 languages from OpenLID-v2 corpus
-- **Script-Confusable Pairs**: Includes kas_Arab/kas_Deva, ace_Arab/ace_Latn for robustness
-- **English Secondary Weighting**: 40% probability as secondary script in multi-script compositions
-- **CJK Vertical Text**: Jpan 30% TTB, Hans/Hant 10% TTB with per-block direction metadata
-- **Pristine Base**: No degradation baked in; derived views apply transforms with full control
-- **Generation Provenance**: SHA256, degradation seeds, and font families recorded per image
-- **Global Split Registry**: SHA256-keyed JSONL prevents cross-dataset train/test leakage
-- **Hybrid Augmentation**: Augraphy (document effects) + Albumentations (general effects)
-- **IQA Independence**: Quality distribution independent of script (prevents spurious correlations)
+- `--chunk-size 10000` restarts workers every 10K images to prevent OOM from augmentation pipeline memory leaks
+- `--resume` counts existing `.jpg` files and continues from where it left off
+- Generated on Intel Xeon E5-2690 v4 (6 cores/12 threads), 62 GB RAM, NFS storage
+- Throughput: ~1.8 img/s sustained with 4 workers
+
+##### Validation Results (2026-02-15)
+
+| Check | Status | Details |
+|-------|--------|---------|
+| Corrupt images | WARN | 1 orphan image (missing JSON) out of 350,012 |
+| CJK vertical text | PASS | Jpan 30.0%, Hans 10.0%, Hant 10.2% |
+| Split registry | PASS | 345,638 entries, 80/10/10 split, no leakage |
+| Font diversity | PASS | 27 scripts, 15 with 5+ font families |
+| Schema version | PASS | 100% v2.3.0 |
 
 ##### Deprecated Versions
 
@@ -261,15 +277,14 @@ python scripts/generate_base_dataset_v3.py \
 | v1.0 (27K) | `synthetic_multiscript/` | **DELETED** |
 | v2.0 (250K) | `synthetic_multiscript_full/` | **DELETED** |
 | v2.0-aug | `synthetic_multiscript_augmented/` | **DELETED** |
+| v2.0 metadata | `metadata_registry/json/synth-multiscript-250k/` | **DELETED** |
 | Linux copy | `data/synthetic_250k/` | **DELETED** |
 
-All old dataset copies were removed to prevent confusion with v3.
+All old dataset copies and metadata were removed to prevent confusion with v3.
 
 ---
 
 #### Additional Script Detection Resources (Not Downloaded)
-
-The following datasets may be valuable but require manual download or registration:
 
 | Dataset | Scripts | Format | Source | Notes |
 |---------|---------|--------|--------|-------|

@@ -4,6 +4,34 @@
 >
 > **License**: CC0 1.0 (Public Domain) | **Commercial Use**: Yes
 
+##### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | PNG (embedded in Parquet) |
+| **Annotation Format** | Parquet + JSON |
+| **Dimensions** | 830-9230 x 1063-12313 px (avg: 2194 x 3060) |
+| **Avg File Size** | 1,159 KB |
+| **Total Size** | ~1.19 GB |
+
+##### Known Limitations
+
+- Small dataset (1,000 images) - use for validation, not primary training
+- INVERTED quality scale (1=best, 4=worst) - opposite from most IQA datasets
+- No official validation or test splits (single train split only)
+- OCR text from Qwen2.5-VL-72B (VLM), not traditional OCR engines
+- No layout or degradation annotations provided
+- Class imbalance: 81.2% in Tier 1+2 (good quality), only 18.8% in Tier 3+4 (degraded)
+- Language distribution estimated from source categories, not per-sample detection
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | CC0 1.0 Universal (Public Domain) |
+| **Commercial Use** | Yes (unrestricted) |
+| **Citation** | Zhang et al. (2025). OCR-Quality: A Human-Annotated Dataset for OCR Readability Assessment. arXiv:2510.21774 |
+
 ##### Overview
 
 | Attribute | Value |
@@ -475,6 +503,22 @@ normalized_score = (5 - human_score) / 4
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/ocr-quality/](../../scripts/audit/results/ocr-quality/)
+
+##### Processing Notes
+
+- Parser: `parse_ocr_quality_labels` in `annotate_base_metadata.py`
+- Images embedded as byte arrays in Parquet (no separate image directory)
+- Quality score inversion required: `normalized = (5 - human_score) / 4.0`
+- 30 source categories mapped to domain classifications
+- Text truncated to 500 chars in parser; full text in source Parquet
+
+##### Version History
+
+| Version | Date | Change |
+|---------|------|--------|
+| v1.0 | 2025 | Initial dataset release (arXiv:2510.21774) |
+| L2 v1 | 2026-02-10 | Layer 2 base metadata annotation |
+| L2 v2 | 2026-02-14 | Scorecard v2.0 audit, defect catalog created |
 
 ---
 

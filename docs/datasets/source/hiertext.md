@@ -19,6 +19,43 @@
 | **GCS Path** | `gs://image_detection_b/01_base_data/text_detection/hiertext/` |
 | **Documentation Status** | Complete |
 
+##### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | JPG |
+| **Dimensions** | Variable (natural scene images) |
+| **Color Space** | RGB |
+| **Annotation Format** | JSON (single object per file, despite .jsonl extension) |
+| **Total Size** | ~2.5 GB |
+
+##### IQA Sensitivity
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Natural scene photographs (Open Images) |
+| **Baseline Quality** | Variable outdoor/indoor scenes |
+| **Blur Sensitivity** | HIGH - Small text in natural scenes needs sharpness |
+| **Noise Sensitivity** | MEDIUM - Outdoor lighting creates noise |
+| **Resolution Impact** | HIGH - Word-level annotations require sufficient resolution |
+| **Key Challenge** | Wide range of text sizes, orientations, and legibility levels |
+
+##### Known Limitations
+
+- Scene text focus (not document images) - limited transfer to document pipelines
+- JSONL extension is misleading - files contain single JSON object, not line-delimited
+- No per-instance language labels despite being multilingual
+- Inter-annotator agreement metrics not reported in source paper
+- Polygon annotations require bbox conversion for standard detection frameworks
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | CC-BY-SA-4.0 |
+| **Commercial Use** | Yes (with attribution + ShareAlike) |
+| **Citation** | Long et al. (2022). Towards Rich Hierarchical Scene Text. ECCV 2022. arXiv:2203.15143 |
+
 #### 2. Source Data Inventory
 
 > **Purpose**: Documents what the original dataset provides from the source.
@@ -265,6 +302,22 @@ image
 **Audit Artifacts**: [scripts/audit/results/hiertext/](../../scripts/audit/results/hiertext/)
 
 ---
+
+##### Processing Notes
+
+- Parser: `HiertextParser` from multilingual package
+- GT conversion: 11,639 images, 1,116,661 annotations, 4.8M chars, 3 categories (paragraph/line/word)
+- Polygon-to-bbox conversion applied during layout GT extraction
+- Handwriting flags preserved from source annotations at word level
+- Language enrichment covers 8,278/11,639 samples (71.1%)
+
+##### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2022-03 | Initial dataset release (Google Research) |
+| L2 v1 | 2026-02-10 | Layer 2 metadata annotation |
+| L2 v2 | 2026-02-14 | Scorecard v2.0 audit, defect catalog created |
 
 ##### Reliability & Bottlenecks
 

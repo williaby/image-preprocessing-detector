@@ -145,8 +145,6 @@ title: Ground Truth Label Summary
 | [dibco](source/dibco.md) | 212 | Binarization GT masks | HUM | Competition binarization ground truth |
 | [document-haystack](source/document-haystack.md) | 400 | Relevance pairs (8,250 queries) | HUM | Amazon Science retrieval benchmark |
 | [markushgrapher](source/markushgrapher.md) | 235,000 | Chemical structures (SMILES + graph) | SYN | Programmatic generation, DS4SD (IBM) |
-| [dit700k](source/dit700k.md) | ~700,000 | Unknown | -- | Blocked: not publicly available |
-| [u-diads-tl](source/u-diads-tl.md) | Unknown | Unknown | -- | Blocked: competition site offline |
 
 ### Text Corpora (Non-Image)
 
@@ -169,7 +167,6 @@ title: Ground Truth Label Summary
 | cvsi | HUM | Script labels (10 cls) | 100% | T1 | Video scene text |
 | dibco | HUM | Binarization masks | 100% | T1 | Competition GT |
 | diqa-5000 | CWD | Quality MOS (3-dim, 1-5) | 100% | T1 | 15-subject consensus |
-| dit700k | -- | Unknown | 0% | -- | Blocked: not publicly available |
 | doc3d | SYN | Depth, UV, Normals (7 types) | 100% | T0 | Synthetic 3D generation |
 | docalign12k | PAR | Paired images (aligned/unaligned) | 100% | T0 | Alignment pairs |
 | doclaynet | HUM | Layout (11 cls), Text, Domain | 100% | T1 | Expert, double/triple annotated |
@@ -220,7 +217,6 @@ title: Ground Truth Label Summary
 | tablebank | AUT | Table detection boxes | 100% | T0 | Word/LaTeX extraction |
 | tibhcr | HUM | Character class (47 cls) | 100% | T1 | 235 Tibetan writers |
 | tobacco800 | HUM | Document class (10 cls) | 100% | T1 | Archival documents |
-| u-diads-tl | -- | Unknown | 0% | -- | Blocked: site offline |
 | warpdoc | PAR | Paired images (warped/flat) | 100% | T0 | 6 distortion types |
 | wili-2018 | AUT | Language labels (235 cls) | 100% | T1 | Wikipedia text corpus |
 | wsrd | PAR | Paired images (shadow/clean) | 100% | T0 | Shadow removal |

@@ -21,10 +21,9 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 59 | Across all categories (includes openlid-v2 corpus + synth-multiscript-250k + hiertext + muharaf + 8 new) |
+| **Total Datasets** | 57 | Across all categories (includes openlid-v2 corpus + synth-multiscript-250k + hiertext + muharaf + 8 new) |
 | **Training-Ready** | 48 | ✅ Format standardized + labels extracted |
 | **In Progress** | 7 | 🔄 Format conversion, label extraction, or generating |
-| **Blocked** | 3 | ❌ Text-only corpus (wili_2018) + 2 new (u-diads-tl, dit700k) |
 | **Non-Image Corpus** | 1 | 📚 Text-only (openlid-v2, used for synthetic generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
 | **Benchmark Images Available** | ~850K | Train splits only (val/test RESERVED) |
@@ -111,10 +110,8 @@ Per-dataset metadata completeness across 6 dimensions, sorted by image count des
 | drccbi | TBD | -- | JPG | None | None | None | None |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
-| u-diads-tl | -- | -- | N/A (blocked) | None | None | None | None |
-| dit700k | -- | -- | N/A (blocked) | None | None | None | None |
 
-**Summary**: 58 datasets (54 image + 2 text corpora + 2 blocked) | 47 with text labels | 40 with layout labels | 39 with language labels | 39 with script labels | 52 audited (11A / 32B / 0C / 8D / 1F)
+**Summary**: 57 datasets (54 image + 2 text corpora + 1 generating) | 47 with text labels | 40 with layout labels | 39 with language labels | 39 with script labels | 52 audited (11A / 32B / 0C / 8D / 1F)
 
 ### Coverage Summary
 
@@ -499,13 +496,6 @@ Image-level metadata coverage across the 48 image datasets (excludes text corpor
 - wili_2018
 
 **Status**: Cannot be used for image-based training. Language identification corpus only.
-
-#### Blocked Datasets (Cannot Use)
-
-- u-diads-tl
-- dit700k
-
-**Status**: These datasets are blocked and cannot be used for training or evaluation.
 
 ---
 
