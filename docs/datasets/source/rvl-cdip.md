@@ -111,6 +111,16 @@ path/to/image/rvl_form_0002.tif 1
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available in source
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | 16-class document classification annotation |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage
@@ -305,6 +315,47 @@ path/to/image/rvl_form_0002.tif 1
   year={2015}
 }
 ```
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (87.2/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.2 | 25% |  |
+| Field Validity | 92.7 | 25% |  |
+| Doc Completeness | 63.6 | 15% | Below threshold |
+| Defect Rate | 97.4 | 15% |  |
+| Cross-Source Agreement | 80.4 | 10% |  |
+| VLM Accuracy | 85.0 | 10% |  |
+| **Overall** | **87.2** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (1 deferred, 1 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | layout_detections | LOW | OPEN | 267/16000 images have no Docling layout detections (missing from batch extractio |
+| D02 | text_has_content | MEDIUM | DEFERRED | No text transcription labels available for any sample |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/rvl-cdip/](../../scripts/audit/results/rvl-cdip/)
 
 ---
 

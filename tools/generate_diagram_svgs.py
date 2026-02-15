@@ -35,6 +35,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 DIAGRAMS_DIR = PROJECT_ROOT / "docs/architecture/diagrams"
 PLANTUML_JAR = SCRIPT_DIR / "plantuml.jar"
 PLANTUML_URL = "https://github.com/plantuml/plantuml/releases/download/v1.2024.8/plantuml-1.2024.8.jar"
+SVG_GLOB = "*.svg"
 
 
 def download_plantuml() -> bool:
@@ -84,7 +85,7 @@ def _resolve_generated_svg(
 
     Returns True if a valid SVG was found and verified.
     """
-    generated_svgs = list(output_dir.glob("*.svg"))
+    generated_svgs = list(output_dir.glob(SVG_GLOB))
     new_svgs = [
         s for s in generated_svgs if s.stat().st_mtime > puml_file.stat().st_mtime - 1
     ]
@@ -115,7 +116,7 @@ def generate_svg(puml_file: Path, jar_path: Path) -> bool:
     output_dir = puml_file.parent
     expected_svg = puml_file.with_suffix(".svg")
 
-    for old_svg in output_dir.glob("*.svg"):
+    for old_svg in output_dir.glob(SVG_GLOB):
         if old_svg.stem.lower() == puml_file.stem.lower().replace("-", "_"):
             old_svg.unlink()
 
@@ -153,7 +154,7 @@ def generate_svg(puml_file: Path, jar_path: Path) -> bool:
 def clean_svgs(base_dir: Path) -> int:
     """Remove all generated SVG files."""
     count = 0
-    for svg_file in base_dir.rglob("*.svg"):
+    for svg_file in base_dir.rglob(SVG_GLOB):
         # Only remove if corresponding .puml exists
         puml_file = svg_file.with_suffix(".puml")
         if puml_file.exists():

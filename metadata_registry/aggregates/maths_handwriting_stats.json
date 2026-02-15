@@ -1,0 +1,86 @@
+{
+  "dataset_name": "maths_handwriting",
+  "total_samples": 15000,
+  "capture_methods": {
+    "scanner_flatbed": 15000
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "EDU": 15000
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Zmth": 15000
+  },
+  "script_families": {
+    "ltr": 15000
+  },
+  "language_codes": {
+    "zxx": 15000
+  },
+  "content_flags": {
+    "has_formula": 15000,
+    "has_handwriting": 15000
+  },
+  "text_scopes": {
+    "phrase": 15000
+  },
+  "content_types": {
+    "handwritten": 15000
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "scanner_flatbed": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "EDU": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Zmth": 100.0
+  },
+  "script_families_pct": {
+    "ltr": 100.0
+  },
+  "language_codes_pct": {
+    "zxx": 100.0
+  },
+  "text_scopes_pct": {
+    "phrase": 100.0
+  },
+  "content_types_pct": {
+    "handwritten": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_formula": 100.0,
+    "has_handwriting": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Zmth",
+      "count": 15000,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "zxx",
+      "count": 15000,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "ltr": 15000
+  }
+}

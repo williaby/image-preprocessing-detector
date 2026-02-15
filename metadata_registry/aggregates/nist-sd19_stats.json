@@ -1,0 +1,84 @@
+{
+  "dataset_name": "nist-sd19",
+  "total_samples": 3669,
+  "capture_methods": {
+    "scanner_flatbed": 3669
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "GOV": 3669
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Latn": 3669
+  },
+  "script_families": {
+    "latin": 3669
+  },
+  "language_codes": {
+    "en": 3669
+  },
+  "content_flags": {
+    "has_handwriting": 3669
+  },
+  "text_scopes": {
+    "page": 3669
+  },
+  "content_types": {
+    "printed": 3669
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "scanner_flatbed": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "GOV": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0
+  },
+  "script_families_pct": {
+    "latin": 100.0
+  },
+  "language_codes_pct": {
+    "en": 100.0
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "printed": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_handwriting": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 3669,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 3669,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 3669
+  }
+}

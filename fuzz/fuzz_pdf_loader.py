@@ -27,7 +27,7 @@ with atheris.instrument_imports():
     import numpy as np
 
 
-def TestOneInput(data: bytes) -> None:
+def TestOneInput(data: bytes) -> None:  # nosonar  # Name required by atheris framework
     """Fuzz target for PDF loading.
 
     Args:

@@ -1,6 +1,21 @@
+---
+dataset_id: pubtabnet
+version: "2.0.0"
+license: CDLA-Sharing-1.0
+commercial_use: true
+iqa_profiles:
+  - compression_sensitive
+  - blur_sensitive
+baseline_quality: 9.0
+training_suitable: true
+benchmark_suitable: true
+documentation_status: complete
+template_version: "1.4.0"
+---
+
 #### PubTabNet
 
-> **Quick Stats**: 568,000+ images | Born-digital | Scientific tables | Compression-sensitive
+> **Quick Stats**: 519,030 images | Born-digital | Scientific tables | Compression-sensitive
 >
 > **License**: CDLA-Sharing-1.0 | **Commercial Use**: Yes (PMC Open Access)
 
@@ -119,7 +134,30 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact - programmatic extraction from PDF/XML alignment) |
+| **Quality Assurance** | Automatic PDF/XML alignment with verification |
+| **GT Label Coverage** | 100% (all 568K table images with HTML structure labels) |
+
+##### File Format & Storage
+
+| Property | Value |
+|----------|-------|
+| **Image format** | PNG (lossless) |
+| **Annotation format** | JSONL (single 4.1 GB file) |
+| **Image dimensions** | Variable (200-800px width, table crops) |
+| **Color depth** | RGB 24-bit |
+| **Typical file size** | 5-50 KB per image |
+| **Total storage** | ~15 GB (images + annotations) |
+| **Compression** | None (lossless PNG) |
+
 ##### Dataset Statistics
+
+519,030 total images across 3 splits from PubMed Central scientific table extraction.
 
 ###### 4.1 Split Coverage
 
@@ -230,6 +268,58 @@
 | **Domain** | SCI (Scientific) |
 | **Content Flags** | Tables: ✅ 100% |
 
+##### Known Issues & Limitations
+
+| ID | Issue | Severity | Impact | Mitigation |
+|----|-------|----------|--------|------------|
+| 1 | Test split (9,138) lacks extracted layout annotations and OCR text | LOW | 1.76% of dataset missing `layout_detections` and `text_has_content` | Expected — test split not in extracted layout batches; content flags still populated via defaults |
+| 2 | Language enrichment covers only 0.19% (1,000/519,030) | LOW | Remaining samples use default `en`/`Latn` | Born-digital PubMed Central — English-dominant assumption is well-justified |
+| 3 | Layout stored as summary format (count + reference) not full bboxes | INFO | `layout_bbox_valid` prescreening check fails at 98.24% | Deliberate optimization — full COCO bboxes in `metadata_registry/extracted/pubtabnet/layout_batch_*.json` |
+| 4 | KI-008 (script_family directionality) applicable | LOW | Script family re-derived via `get_script_family()` | Resolved in integration script |
+| 5 | KI-009 (language claims unreliable) applicable | LOW | Doc says "English" but 10+ languages detected at low confidence | VLM confirms ~95% English; multilingual tables still Latin script |
+
+##### Representative Samples
+
+Contact sheets generated for VLM inspection provide representative views:
+
+- `tmp_cleanup/pubtabnet_contact_sheets/contact_sheet_001.jpg` through `contact_sheet_007.jpg`
+- 105 images across 7 sheets (5x3 grid, 300x120px thumbnails)
+- Manifest: `tmp_cleanup/pubtabnet_contact_sheets/manifest.json`
+
+**Typical characteristics**: Clean born-digital tables, white background, variable width (64-1220px), short height (44-665px), mixed font sizes (8-14pt), occasional colored cell backgrounds, scientific notation in values.
+
+##### Dataset-Specific Notes
+
+###### 10.1 HTML Structure Representation
+
+PubTabNet uniquely represents table structure as HTML token sequences:
+
+- Structure tokens: `<thead>`, `<tbody>`, `<tr>`, `<td>`, `<td colspan="N">`, `<td rowspan="N">`
+- Cell text stored as token arrays within `html.cells[].tokens`
+- This HTML representation enables the TEDS (Tree-Edit-Distance-based Similarity) metric
+
+###### 10.2 Cell Bounding Box Format
+
+- Source format: `[x1, y1, x2, y2]` (top-left, bottom-right)
+- Converted to COCO format `[x, y, w, h]` in `metadata_registry/extracted/pubtabnet/`
+- Conversion script: `scripts/convert_pubtabnet_to_extracted.py`
+- 509,892 images have extracted cell bboxes (train + val splits)
+
+###### 10.3 Text Extraction
+
+- GT cell text extracted via `scripts/pubtabnet_text_extractor.py`
+- Concatenates cell tokens with space separator
+- OCR batch files in `metadata_registry/extracted/pubtabnet/ocr_batch_*.json`
+
+###### 10.4 Scale Considerations
+
+At 519K images, PubTabNet is the largest dataset in the audit pipeline. Processing requires:
+
+- **Batch-oriented I/O** over WSL network mount (sequential file access, not random)
+- **Streaming contact sheet generation** (one sheet at a time, gc.collect() between)
+- **Summary format** for layout detections (count + reference instead of 25M+ cell annotations)
+- **Pre-computed text statistics** during OCR loading (discard raw text to save ~500MB)
+
 ##### References
 
 ```bibtex
@@ -241,13 +331,76 @@
 }
 ```
 
+##### License & Access
+
+| Property | Value |
+|----------|-------|
+| **License** | CDLA-Sharing-1.0 (Community Data License Agreement) |
+| **Commercial use** | Yes |
+| **Source** | PubMed Central Open Access Subset |
+| **Download** | [GitHub: ibm-aur-nlp/PubTabNet](https://github.com/ibm-aur-nlp/PubTabNet) |
+| **Registration** | None required |
+| **Citation** | Zhong et al., ECCV 2020 |
+
+##### Layer 2 Audit Summary
+
+> **Audit Date**: 2026-02-13/14 | **Auditor**: claude-opus-4-6 | **Methodology**: v2.3.0 | **Tier**: 1 (Standard)
+
+###### 11.1 Quality Scorecard
+
+| Dimension | Score | Weight | Notes |
+|-----------|-------|--------|-------|
+| **Field Coverage** | 93.2 | 0.25 | 15 fields, avg pass rate 93.2% |
+| **Field Validity** | 96.4 | 0.25 | 27 fields validated; layout_detections at 1.8% (test split) |
+| **Doc Completeness** | 100.0 | 0.15 | 11/11 template v1.4.0 sections populated |
+| **Defect Rate** | 80.0 | 0.15 | 10 defects cataloged (20.0 penalty) |
+| **Cross Source Agreement** | 60.0 | 0.10 | Limited by 2 enrichment sources |
+| **VLM Accuracy** | 100.0 | 0.10 | 165 images inspected, 0 corrections needed |
+| **Overall** | **90.4** | | **Grade A** |
+
+###### 11.2 Key Defects
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | HIGH | RESOLVED | Split field empty — populated from JSONL annotations |
+| D02 | script_family | HIGH | RESOLVED | Empty — re-derived via get_script_family(Latn) |
+| D03 | layout_detections | HIGH | RESOLVED | Empty — integrated from extracted COCO layout batches |
+| D04 | text_has_content | HIGH | RESOLVED | Empty — integrated from extracted OCR batches |
+| D05 | orientation_class | MEDIUM | RESOLVED | Empty — set to 0 (born-digital, no rotation) |
+| D06 | image_properties | MEDIUM | RESOLVED | color_mode empty — set to RGB |
+| D07 | handwriting_present | MEDIUM | RESOLVED | Empty — set to false (born-digital) |
+| D08 | text_direction | LOW | RESOLVED | v2.3.0 field — set to ltr |
+| D09 | text_directions_present | LOW | RESOLVED | v2.3.0 field — set to ["ltr"] |
+| D10 | content_flags | LOW | RESOLVED | Only has_table populated — added has_formula/figure/handwriting/code |
+
+###### 11.3 VLM Inspection Summary
+
+| Track | Images | Method | Finding |
+|-------|--------|--------|---------|
+| A (Content flags) | 40 | Individual reads | 0 FP, all flags correct |
+| B (Batch classification) | 105 | 7 contact sheets | 100% born-digital, Latin, English, upright |
+| C (Passing validation) | 20 | Individual reads | 100% accuracy (160/160 field checks) |
+
+**Adaptive expansion**: Not triggered (FP rate = 0%)
+
+###### 11.4 Cross-Dataset Findings
+
+- **KI-008** (script_family directionality): Applicable, resolved by re-deriving from iso15924_script
+- **KI-009** (language claims unreliable): Applicable but low impact — VLM confirms English-dominant
+
+**Audit artifacts**: `scripts/audit/results/pubtabnet/`
+
 ---
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 519,030 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-10 (PRE-INTEGRATION) | **Samples**: 519,030 | **Avg Min Confidence**: 0.000
+>
+> **Note**: This section reflects pre-integration state. Post-integration (v2, schema 2.3.0),
+> 93.2% of prescreening fields pass. Re-materialize with:
+> `uv run python3 scripts/materialize_reliability_summary.py --datasets pubtabnet --update-docs --force`
 
-**Composite Category Distribution**:
+**Composite Category Distribution** (pre-integration, to be updated):
 
 | Category | Count | Pct |
 |----------|------:|----:|
@@ -256,8 +409,25 @@
 | active_learning | 0 | 0.0% |
 | unreliable | 519,030 | 100.0% |
 
-**Top Bottleneck Fields** (most frequently the weakest):
+**Top Bottleneck Fields** (pre-integration, to be updated):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `layout_detections` | 100.0% | 0.000 |
+
+##### Processing Notes
+
+- **Parser**: `pubtabnet` parser in `annotation/parsers/pubtabnet.py` extracts from single JSONL
+- **Layout conversion**: `scripts/convert_pubtabnet_to_extracted.py` converts cell bboxes to COCO format
+- **Text extraction**: `scripts/pubtabnet_text_extractor.py` concatenates cell tokens into full text
+- **Integration**: `scripts/integrate_pubtabnet_enrichments.py` (v2, schema 2.3.0) merges all sources
+- **Scale**: At 519K samples, all processing must be streaming/batched (no full-dataset in-memory load)
+- **WSL mount**: Images on `/mnt/e/` require sequential access patterns due to WSL network mount latency
+
+##### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0 | 2026-02-13 | Integration script v2 (schema 2.3.0, text_direction, script_family) |
+| 1.0 | 2026-02-12 | Initial base metadata extraction and language enrichment |
+| 0.1 | 2026-02-10 | Layout conversion and text extraction |

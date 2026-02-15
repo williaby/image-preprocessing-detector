@@ -108,6 +108,16 @@ Parquet Schema (OCR-Quality.parquet):
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Crowdsourced |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Human quality rating process |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage
@@ -426,7 +436,49 @@ normalized_score = (5 - human_score) / 4
 | **OmniDocBench** | metadata | Multi-task evaluation | Multiple | Research |
 | **SmartDoc-QA** | 4,270 | Mobile capture QA | OCR accuracy (proxy) | Research |
 
-##### Reliability & Bottlenecks
+## 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (82.6/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 85.8 | 25% |  |
+| Field Validity | 100.0 | 25% |  |
+| Doc Completeness | 54.5 | 15% | Below threshold |
+| Defect Rate | 95.4 | 15% |  |
+| Cross-Source Agreement | 51.9 | 10% | Below threshold |
+| VLM Accuracy | 85.0 | 10% |  |
+| **Overall** | **82.6** | | **Grade B** |
+
+### 11.2 Key Defects
+
+> **Total**: 3 defects (1 deferred, 2 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | domain_level1 | LOW | OPEN | 129/1000 samples have domain_level1=UNK from LLM classification |
+| D02 | layout_detections | MEDIUM | OPEN | No layout detections available |
+| D03 | text_has_content | MEDIUM | DEFERRED | No text transcription labels available |
+
+### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/ocr-quality/](../../scripts/audit/results/ocr-quality/)
+
+---
+
+#### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 1,000 | **Avg Min Confidence**: 0.000
 

@@ -8,8 +8,8 @@ tags:
 title: Dataset Documentation Template
 ---
 
-> **Version**: 1.4.0
-> **Last Updated**: 2026-02-12
+> **Version**: 1.5.0
+> **Last Updated**: 2026-02-14
 > **Purpose**: Standardized template for comprehensive IQA dataset documentation
 > **Consensus**: Validated by Gemini 3 Pro (9/10) and Claude Sonnet 4.5 (8/10)
 
@@ -187,6 +187,27 @@ documentation_status: complete  # complete | partial | inferred
 | ❌ Reading order | - | Low | Not provided |
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
+##### 2.7 Ground Truth Provenance
+
+> **Purpose**: Document annotation methodology, quality assurance, and provenance for ground truth labels.
+> See [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md) for cross-dataset overview.
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert / Crowdsourced / Synthetic / Automatic Extraction / Paired GT / Mixed |
+| **Provenance Tier** | Tier 0 (Exact) / Tier 1 (Annotation) / Tier 2 (Model) / Tier 3 (Heuristic) |
+| **Annotator Details** | Number of annotators, expertise level (if known) |
+| **Inter-Annotator Agreement** | IAA metric and value (if measured) |
+| **Quality Assurance** | QA process (double annotation, review rounds, adjudication, etc.) |
+| **GT Label Coverage** | Percentage of images with ground truth labels |
+
+> **Notes**:
+>
+> - For synthetic datasets, document the generation method instead of annotator details
+> - For paired GT datasets, note the clean reference capture method
+> - Delete rows that don't apply. Use `[NEEDS_VERIFICATION]` for unconfirmed information
+> - See `annotation/schemas/enums.py` for `EnrichmentTier` definitions
 
 ---
 
@@ -650,6 +671,7 @@ The profiling script computes:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5.0 | 2026-02-14 | Added Section 2.7 "Ground Truth Provenance" for annotation methodology, IAA metrics, and QA documentation. See GROUND_TRUTH_SUMMARY.md for cross-dataset overview |
 | 1.4.0 | 2026-02-12 | Added Section 11 "Layer 2 Audit Summary" for post-audit quality scorecard, VLM inspection results, key defects, and cross-dataset findings. Renumbered "Reliability & Bottlenecks" to Section 12 |
 | 1.3.0 | 2026-02-09 | Added Section 11 "Reliability & Bottlenecks" (now Section 12) for auto-generated composite reliability summary with category distribution and top bottleneck fields per dataset |
 | 1.2.0 | 2025-02-01 | Added Section 5.2 "Class/Category Definitions" for taxonomy documentation; Added Section 5.3 "Language & Script Coverage" for multilingual datasets; Added Section 6.5 "Benchmark Results" for published model performance; Added Section 10 "Dataset-Specific Notes" as freeform section for dataset-unique content (annotation caveats, implementation notes, external resources, custom metrics) |

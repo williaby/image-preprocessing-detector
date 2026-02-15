@@ -12,14 +12,60 @@
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {},
-  "language_codes": {},
+  "script_codes": {
+    "Latn": 518892,
+    "Hans": 55,
+    "Deva": 17,
+    "Hant": 63,
+    "Grek": 1,
+    "Arab": 1,
+    "Cyrl": 1
+  },
+  "script_families": {
+    "latin": 518892,
+    "cjk": 118,
+    "indic": 17,
+    "greek": 1,
+    "arabic": 1,
+    "cyrillic": 1
+  },
+  "language_codes": {
+    "en": 518030,
+    "hr": 78,
+    "zh": 113,
+    "pt": 332,
+    "uz": 143,
+    "hne": 16,
+    "ast": 35,
+    "mt": 207,
+    "nn": 6,
+    "pl": 15,
+    "lmo": 12,
+    "yue": 5,
+    "el": 1,
+    "ar": 1,
+    "hu": 1,
+    "cy": 1,
+    "sl": 24,
+    "da": 1,
+    "sk": 1,
+    "crh": 2,
+    "bs": 1,
+    "ru": 1,
+    "ks": 1,
+    "fi": 1,
+    "fur": 1,
+    "lv": 1
+  },
   "content_flags": {
     "has_table": 519030
   },
-  "text_scopes": {},
-  "content_types": {},
+  "text_scopes": {
+    "page": 519030
+  },
+  "content_types": {
+    "printed": 519030
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -33,16 +79,158 @@
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {},
-  "language_codes_pct": {},
-  "text_scopes_pct": {},
-  "content_types_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0,
+    "Hans": 0.0,
+    "Deva": 0.0,
+    "Hant": 0.0,
+    "Grek": 0.0,
+    "Arab": 0.0,
+    "Cyrl": 0.0
+  },
+  "script_families_pct": {
+    "latin": 100.0,
+    "cjk": 0.0,
+    "indic": 0.0,
+    "greek": 0.0,
+    "arabic": 0.0,
+    "cyrillic": 0.0
+  },
+  "language_codes_pct": {
+    "en": 99.8,
+    "hr": 0.0,
+    "zh": 0.0,
+    "pt": 0.1,
+    "uz": 0.0,
+    "hne": 0.0,
+    "ast": 0.0,
+    "mt": 0.0,
+    "nn": 0.0,
+    "pl": 0.0,
+    "lmo": 0.0,
+    "yue": 0.0,
+    "el": 0.0,
+    "ar": 0.0,
+    "hu": 0.0,
+    "cy": 0.0,
+    "sl": 0.0,
+    "da": 0.0,
+    "sk": 0.0,
+    "crh": 0.0,
+    "bs": 0.0,
+    "ru": 0.0,
+    "ks": 0.0,
+    "fi": 0.0,
+    "fur": 0.0,
+    "lv": 0.0
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "printed": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
     "has_table": 100.0
   },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 518892,
+      "percentage": 100.0
+    },
+    {
+      "script": "Hant",
+      "count": 63,
+      "percentage": 0.0
+    },
+    {
+      "script": "Hans",
+      "count": 55,
+      "percentage": 0.0
+    },
+    {
+      "script": "Deva",
+      "count": 17,
+      "percentage": 0.0
+    },
+    {
+      "script": "Grek",
+      "count": 1,
+      "percentage": 0.0
+    },
+    {
+      "script": "Arab",
+      "count": 1,
+      "percentage": 0.0
+    },
+    {
+      "script": "Cyrl",
+      "count": 1,
+      "percentage": 0.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 518030,
+      "percentage": 99.8
+    },
+    {
+      "language": "pt",
+      "count": 332,
+      "percentage": 0.1
+    },
+    {
+      "language": "mt",
+      "count": 207,
+      "percentage": 0.0
+    },
+    {
+      "language": "uz",
+      "count": 143,
+      "percentage": 0.0
+    },
+    {
+      "language": "zh",
+      "count": 113,
+      "percentage": 0.0
+    },
+    {
+      "language": "hr",
+      "count": 78,
+      "percentage": 0.0
+    },
+    {
+      "language": "ast",
+      "count": 35,
+      "percentage": 0.0
+    },
+    {
+      "language": "sl",
+      "count": 24,
+      "percentage": 0.0
+    },
+    {
+      "language": "hne",
+      "count": 16,
+      "percentage": 0.0
+    },
+    {
+      "language": "pl",
+      "count": 15,
+      "percentage": 0.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 518892,
+    "cjk": 118,
+    "indic": 17,
+    "greek": 1,
+    "arabic": 1,
+    "cyrillic": 1
+  }
 }

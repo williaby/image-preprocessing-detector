@@ -2,7 +2,7 @@
   "dataset_name": "nepali_handwritten",
   "total_samples": 958,
   "capture_methods": {
-    "scanner_flatbed": 958
+    "camera_smartphone": 958
   },
   "quality_scores": [],
   "degradation_types": {},
@@ -22,7 +22,9 @@
     "ne": 958
   },
   "content_flags": {
-    "has_handwriting": 958
+    "has_handwriting": 958,
+    "has_figure": 1,
+    "has_table": 1
   },
   "text_scopes": {
     "word": 958
@@ -35,7 +37,7 @@
   "quality_summary": null,
   "degradation_summaries": {},
   "capture_methods_pct": {
-    "scanner_flatbed": 100.0
+    "camera_smartphone": 100.0
   },
   "degradation_types_pct": {},
   "domains_pct": {
@@ -61,7 +63,9 @@
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
-    "has_handwriting": 100.0
+    "has_handwriting": 100.0,
+    "has_figure": 0.1,
+    "has_table": 0.1
   },
   "top_degradations": [],
   "top_scripts": [

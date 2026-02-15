@@ -2,13 +2,22 @@
   "dataset_name": "muharaf",
   "total_samples": 25711,
   "capture_methods": {
-    "scanner_flatbed": 25711
+    "scanner": 25711
   },
   "quality_scores": [],
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 25711
+    "PER": 3199,
+    "MED": 127,
+    "UNK": 12936,
+    "ADM": 6922,
+    "EDU": 346,
+    "LEG": 1725,
+    "TAX": 12,
+    "FIN": 271,
+    "SCI": 26,
+    "TEC": 147
   },
   "layout_types": {},
   "text_densities": {},
@@ -16,7 +25,7 @@
     "Arab": 25711
   },
   "script_families": {
-    "rtl": 25711
+    "arabic": 25711
   },
   "language_codes": {
     "ar": 25711
@@ -29,18 +38,27 @@
     "line": 25711
   },
   "content_types": {
-    "handwritten": 25711
+    "handwritten_document": 25711
   },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
   "degradation_summaries": {},
   "capture_methods_pct": {
-    "scanner_flatbed": 100.0
+    "scanner": 100.0
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "PER": 100.0
+    "PER": 12.4,
+    "MED": 0.5,
+    "UNK": 50.3,
+    "ADM": 26.9,
+    "EDU": 1.3,
+    "LEG": 6.7,
+    "TAX": 0.0,
+    "FIN": 1.1,
+    "SCI": 0.1,
+    "TEC": 0.6
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
@@ -48,7 +66,7 @@
     "Arab": 100.0
   },
   "script_families_pct": {
-    "rtl": 100.0
+    "arabic": 100.0
   },
   "language_codes_pct": {
     "ar": 100.0
@@ -57,7 +75,7 @@
     "line": 100.0
   },
   "content_types_pct": {
-    "handwritten": 100.0
+    "handwritten_document": 100.0
   },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
@@ -81,6 +99,6 @@
     }
   ],
   "script_family_summary": {
-    "rtl": 25711
+    "arabic": 25711
   }
 }

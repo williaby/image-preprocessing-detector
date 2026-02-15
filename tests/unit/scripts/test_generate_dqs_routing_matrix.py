@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 import pytest
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 # Scripts directory added to sys.path via tests/conftest.py
 from generate_dqs_routing_matrix import (

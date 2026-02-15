@@ -1,0 +1,1115 @@
+# Layer 2 Metadata Audit - doclaynet
+
+> **Version**: 1.3.0
+> **Date**: 2026-02-13
+> **Auditor**: claude-opus-4-6
+> **Methodology**: 9-Phase Audit (v2.3.0)
+> **Reference**: [docs/prompts/layer2_audit_prompt.md](../prompts/layer2_audit_prompt.md)
+>
+> **Audit Goal**: The purpose of this audit is not just to identify errors and gaps, but to
+> **close them** so the dataset is ready for production training. Every defect should be
+> resolved, deferred with justification, or documented as a known limitation.
+
+---
+
+## Dataset Overview
+
+| Property | Value |
+|----------|-------|
+| Dataset Name | doclaynet |
+| Total Samples | 81,471 |
+| Image Base Path | /mnt/e/image_detection/01_base_data/documents/doclaynet/ |
+| Audit Started | 2026-02-13 |
+| Audit Completed | 2026-02-13 |
+| Enrichment Version | 2 (schema v2.3.0) |
+| **Grade** | **A (95.7)** |
+
+---
+
+## Pre-Flight Checklist
+
+### Dataset Registration
+
+- [x] Dataset registered in `scripts/audit/audit_config.py`?
+  - **Known datasets**: diqa-5000, doclaynet, funsd, pubtabnet, fintabnet, sroie, hiertext, cc-ocr, arabic-docs-ocr, ohr-bench, jssoda, mlt19
+  - **Status**: ✅ Registered with stratification axes: domain_level1, layout_type, has_table
+
+- [x] Metadata JSON exists at `/mnt/e/image_detection/metadata_registry/json/doclaynet_metadata.json`?
+  - **Status**: ✅ 1.6 GB, 81,471 samples, schema v2.1
+
+- [x] Dataset source doc exists at `docs/datasets/source/doclaynet.md`?
+  - **Status**: ✅ Exists but missing 7/12 template v1.4.0 sections (2, 5, 7, 8, 10, 11, 12)
+
+### Enrichment Source Inventory
+
+Check existence of each enrichment source (✅ exists, ❌ missing, ⏭️ N/A):
+
+| Source | Path | Exists? | Notes |
+|--------|------|---------|-------|
+| Base metadata | `json/doclaynet_metadata.json` | ✅ | 1.6 GB, 81,471 samples, schema v2.1 |
+| LLM enrichment | `json/doclaynet_llm_enrichment.json` | ✅ | 59 MB, 80,857 samples. Text-only mode: domain/lang populated, content flags ALL null |
+| Language enrichment | `json/doclaynet_language_enrichment.json` | ✅ (stub) | 243 bytes. Blanket "en/Latn" for 80,863 samples, confidence 1.0 |
+| Docling layout | `extracted/doclaynet/layout_batch_*.json` | ✅ | 408 batch files, COCO format from Docling GPU |
+| Docling OCR | `extracted/doclaynet/ocr_batch_*.jsonl` | ✅ | 408 batch files, text extraction |
+| Classical IQA | N/A | ❌ | Not generated |
+| Resolution quality | N/A | ❌ | Not generated |
+| Skew/orientation | N/A | ⏭️ | Born-digital, no skew expected |
+| COCO GT layout | `ground_truth/coco/{train,val,test}.json` | ✅ | 80,863 images, 11 DocLayNet classes, PascalCase. Expert-annotated |
+| GT JSON (per-doc) | `ground_truth/json/*.json` | ✅ | 81,471 files. `doc_category`, `collection`, word-level `cells[].text` + font |
+| VLM contact sheet | N/A | ❌ | Not generated yet (Phase 6) |
+
+**Total sources available**: 7/11 (base, LLM, language stub, Docling layout, Docling OCR, COCO GT, GT JSON)
+
+**Note**: 608-sample discrepancy: 81,471 (GT JSON + base metadata) vs 80,863 (COCO GT). Pages without COCO layout annotations.
+
+### Known Issues Applicability
+
+Review [scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json](../../scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json) and check which issues apply:
+
+| Issue | Title | Severity | Applies? | Notes |
+|-------|-------|----------|----------|-------|
+| KI-001 | Docling layout label casing | CRITICAL | ✅ YES | 408 Docling layout batch files with lowercase labels |
+| KI-002 | Table detection multi-column FP | HIGH | ✅ YES | Multi-column layouts common (financial, government, scientific) |
+| KI-003 | Picture detection dense text FP | MEDIUM | ⚠️ MAYBE | Dense scientific text could trigger |
+| KI-004 | LLM handwriting on synthetic | HIGH | ❌ NO | Not synthetic; LLM content flags are null anyway |
+| KI-005 | LLM cannot detect synthetic capture | HIGH | ❌ NO | Not synthetic; capture_method known born_digital |
+| KI-006 | LLM formula semantic confusion | MEDIUM | ✅ YES | Scientific articles + patents contain formulas |
+| KI-007 | LLM domain UNK on generic content | LOW | ✅ YES | 100% UNK in current metadata -- resolved via GT doc_category |
+| KI-008 | script_family directionality | HIGH | ✅ YES | All "ltr" instead of proper ISO 15924 families |
+| KI-009 | Documentation language unreliable | MEDIUM | ✅ YES | Blanket "en" stub; LLM detected de(1791), ja(871), ru(502), fr(477) |
+
+**Applicable issues**: KI-001, KI-002, KI-006, KI-007, KI-008, KI-009
+
+### Dataset Characteristics
+
+Fill in based on dataset documentation review:
+
+| Property | Value | Source |
+|----------|-------|--------|
+| Is synthetic? | NO -- born-digital, professionally typeset | Dataset documentation |
+| Primary language(s) | English (~94%), German (~2.2%), Japanese (~1.1%), Russian (~0.6%), French (~0.6%) | LLM enrichment distribution |
+| Primary script(s) | Latin (dominant), Japanese, Cyrillic | Derived from language |
+| Capture method | born_digital (PDF extraction) | Dataset documentation + base metadata |
+| Expected splits | train (69,375) / val (6,489) / test (4,999) + 608 unassigned | COCO GT file membership |
+| Total samples | 81,471 (GT JSON) / 80,863 (COCO) | Parser manifest + COCO |
+| Has ground truth files? | YES -- 81,471 per-doc JSON + 3 COCO GT files (train/val/test) | Directory listing |
+| Multi-column documents? | YES -- financial reports, scientific articles, patents | Dataset documentation |
+| Document categories | financial_reports, scientific_articles, laws_and_regulations, government_tenders, manuals, patents | GT JSON `metadata.doc_category` |
+
+---
+
+## Phase 0: Paper Review
+
+### Documentation Review
+
+- [x] Read `docs/datasets/source/doclaynet.md` thoroughly
+- [x] Read `scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json`
+- [x] Review parser source code at `src/image_preprocessing_detector/annotation/parsers/layout/doclaynet.py`
+- [x] Reviewed GT JSON structure (doc_category, collection, cells[].text, cells[].font)
+- [x] Reviewed COCO GT files (train.json, val.json, test.json with 80,863 images)
+
+### Expected Field Values
+
+Document expected values based on documentation (ground truth for validation):
+
+| Field | Expected Value | Source | Confidence |
+|-------|---------------|--------|------------|
+| `capture_method` | born_digital | Dataset documentation (PDF extraction) | HIGH |
+| `iso639_language` | en (~94%), de (~2.2%), ja (~1.1%), ru (~0.6%), fr (~0.6%) | LLM enrichment + langdetect on GT text | HIGH |
+| `iso15924_script` | Latn (dominant), Jpan, Cyrl | Derived from language detection | HIGH |
+| `script_family` | latin (dominant) | Derived from iso15924_script | HIGH |
+| `split` | train (69,375) / val (6,489) / test (4,999) + 608 unknown | COCO GT file membership | HIGH |
+| `is_synthetic` | FALSE | Dataset characteristics | HIGH |
+| `domain_level1` | FIN, SCI, LEG, ADM, TEC | GT JSON doc_category mapping | HIGH (GT) |
+| `orientation_class` | 0 (100%) | Born-digital, no rotation | HIGH |
+| `text_direction` (v2.3.0) | ltr (dominant) | Derived from language/script | HIGH |
+| `has_table` | ~22% TRUE | COCO GT "Table" category presence | HIGH (GT) |
+| `has_figure` | ~25% TRUE | COCO GT "Picture" category presence | HIGH (GT) |
+| `has_formula` | ~7% TRUE | COCO GT "Formula" category presence | HIGH (GT) |
+| `has_handwriting` | FALSE (0%) | Born-digital, professional typesetting | HIGH |
+
+**Notes**: GT doc_category -> domain_level1 mapping: financial_reports->FIN, scientific_articles->SCI, laws_and_regulations->LEG, government_tenders->ADM, manuals->TEC, patents->TEC
+
+---
+
+## Phase 1: Automated Prescreening
+
+### Command
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/automated_prescreening.py --dataset doclaynet
+```
+
+**Output**: `scripts/audit/results/doclaynet/automated_screening.json`
+
+### Results
+
+15-field validation summary:
+
+| # | Field | Pass Rate | Status | Notes |
+|---|-------|-----------|--------|-------|
+| 1 | `split` | % | ⬜ | Must not be "unknown" |
+| 2 | `capture_method` | % | ⬜ | Must be in enum |
+| 3 | `domain_level1` | % | ⬜ | Must not be "UNK" |
+| 4 | `iso639_language` | % | ⬜ | Must not be "und" or null |
+| 5 | `script_family` | % | ⬜ | Must be in enum |
+| 6 | `layout_detections` | % | ⬜ | Must be list with >=1 element |
+| 7 | `layout_bbox_valid` | % | ⬜ | All bboxes: [x,y,w,h], w>0, h>0 |
+| 8 | `content_flags_boolean` | % | ⬜ | has_table/formula/handwriting/figure/code must be boolean |
+| 9 | `text_has_content` | % | ⬜ | text_statistics.has_content must be true |
+| 10 | `orientation_class` | % | ⬜ | Must be in enum (0, 90, 180, 270) |
+| 11 | `image_properties_color_mode` | % | ⬜ | Must be non-empty string |
+| 12 | `handwriting_present` | % | ⬜ | Must be boolean |
+| 13 | `quality_overall_mos` | % | ⬜ | Must be numeric 1.0-5.0 (context-dependent) |
+| 14 | `text_direction` | % | ⬜ | Must be in {ltr, rtl, ttb} (v2.3.0) |
+| 15 | `text_directions_present` | % | ⬜ | All items must be in {ltr, rtl, ttb} (v2.3.0) |
+
+**Overall Pass Rate**: _**%
+**Fields at 100%**:**_/15
+**Fields at 0%**: ___ (indicates missing enrichment sources)
+
+### Decision Point
+
+| Pass Rate Range | Action | Status |
+|----------------|--------|--------|
+| 90%+ | ✅ Proceed to Phase 2 | [ ] |
+| 50-89% | ⚠️ Investigate missing sources, then proceed | [ ] |
+| <50% | ❌ Fix enrichment gaps before proceeding | [ ] |
+
+**Notes**:
+
+---
+
+## Phase 2: Schema Compliance
+
+### Command
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/audit_schema_compliance.py \
+    --dataset doclaynet \
+    --output scripts/audit/results/doclaynet/compliance.json
+```
+
+**Output**: `scripts/audit/results/doclaynet/compliance.json`
+
+### Results Summary
+
+| Field Group | Fields Checked | Valid % | Invalid % | Notes |
+|-------------|---------------|---------|-----------|-------|
+| capture_resolution | | | | DPI, resolution_category, color_mode |
+| domain_language | | | | domain_level1, iso639, iso15924, script_family |
+| content_flags | | | | has_table/formula/figure/code/handwriting |
+| layout_detections | | | | class_name, bbox, confidence, structure |
+| geometric_quality | | | | orientation, skew, quality scores |
+| text_document | | | | text_scope, split, content_type |
+
+**Overall Validity**: ___%
+
+### Defect Types Found
+
+| Type | Count | Description |
+|------|-------|-------------|
+| `wrong_value` | | Value exists but factually incorrect |
+| `missing_value` | | Required field absent |
+| `wrong_format` | | Wrong type or structure |
+| `wrong_enum` | | Not in allowed enumeration |
+| `inconsistent` | | Cross-field contradiction |
+| `not_populated` | | Optional field not populated |
+
+**Total Defects**: ___
+
+**Notes**:
+
+---
+
+## Phase 3: Multi-Source Comparison
+
+### Command
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/assemble_comparison.py \
+    --dataset doclaynet
+```
+
+**Output**: `scripts/audit/results/doclaynet/comparison_report.json`
+
+### Sources Discovered
+
+| Source | Fields Contributed | Priority |
+|--------|-------------------|----------|
+| | | |
+| | | |
+| | | |
+
+### Field Agreement Analysis
+
+| Field | Sources | Agreement | Disagreement | Notes |
+|-------|---------|-----------|--------------|-------|
+| | | | | |
+| | | | | |
+| | | | | |
+
+### Top Disagreements
+
+| Field | Source A | Source B | Affected Samples | Root Cause |
+|-------|----------|----------|-----------------|------------|
+| | | | | |
+| | | | | |
+| | | | | |
+
+**Notes**:
+
+---
+
+## Phase 4: Defect Cataloging
+
+### Defect Catalog
+
+Document all defects in `scripts/audit/results/doclaynet/defect_catalog.json`
+
+| ID | Field | Type | Severity | Affected | Status | Root Cause | Fix Location |
+|----|-------|------|----------|----------|--------|------------|--------------|
+| D01 | | | | | OPEN | | |
+| D02 | | | | | OPEN | | |
+| D03 | | | | | OPEN | | |
+| D04 | | | | | OPEN | | |
+| D05 | | | | | OPEN | | |
+
+**Total Defects**: ___
+
+- **Critical**: ___
+- **High**: ___
+- **Medium**: ___
+- **Low**: ___
+
+### Defect Status Breakdown
+
+| Status | Count | Percentage |
+|--------|-------|------------|
+| OPEN | | % |
+| PARTIALLY_RESOLVED | | % |
+| RESOLVED | | % |
+| DEFERRED | | % |
+
+### Cross-Dataset Risk Assessment
+
+Defects with `universal_risk=true` that may affect other datasets:
+
+| Defect ID | Field | Pattern | Potentially Affected Datasets |
+|-----------|-------|---------|------------------------------|
+| | | | |
+
+**Notes**:
+
+---
+
+## Phase 4.5: Scale Assessment & Strategy Selection
+
+### Resolution Strategy Per Defect
+
+| Defect ID | Affected Count | Strategy | Est. Turns | Est. Sessions | Notes |
+|-----------|---------------|----------|------------|--------------|-------|
+| | | | | | |
+| | | | | | |
+| | | | | | |
+
+### Strategy Tier Reference
+
+| Affected Samples | Strategy | Context Cost | Approach |
+|------------------|----------|-------------|----------|
+| **< 50** | Individual VLM inspection | Low (1-2 images/turn) | Read each image directly |
+| **50 - 500** | Programmatic enrichment | Minimal (code execution) | Exploit GT files, parsers, heuristics |
+| **500 - 2,000** | Stratified sampling + extrapolation | Medium (15-25 turns) | Inspect 30-50 samples, extrapolate |
+| **> 2,000** | Contact sheet batch VLM | High but manageable (1 sheet/turn) | Generate thumbnail grids, classify in bulk |
+
+### GT File Exploitation Opportunities
+
+- [ ] Check for ground truth annotation files (`.txt`, `.xml`, `.json`)
+- [ ] Review sample GT file format
+- [ ] Identify fields extractable from GT (language, script, bboxes)
+
+**GT files found**:
+
+**Fields extractable**:
+
+### Contact Sheet Plan (if applicable)
+
+- **Defect ID requiring contact sheets**: ___
+- **Total samples to classify**: ___
+- **Estimated sheets** (50 thumbnails/sheet): ___
+- **Estimated turns** (5 sheets/turn): ___
+- **Estimated sessions**: ___
+- **Incremental save path**: `scripts/audit/results/doclaynet/vlm_test_enrichments.json`
+- **Progress tracking file**: `scripts/audit/results/doclaynet/audit_progress.json`
+
+**Notes**:
+
+---
+
+## Phase 5: Integration Script
+
+### Integration Script Development
+
+- [ ] Create `scripts/integrate_doclaynet_enrichments.py`
+- [ ] Follow established integration script pattern
+- [ ] Support `--dry-run` mode
+
+### Pre-Integration Actions
+
+- [ ] Run `standardize_layout_labels.py --dataset doclaynet` (KI-001)
+- [ ] Determine capture_method from documentation (KI-005)
+- [ ] Plan synthetic overrides if applicable (KI-004, KI-005)
+
+### Command
+
+```bash
+# Dry run first
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/integrate_doclaynet_enrichments.py --dry-run
+
+# Actual integration
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/integrate_doclaynet_enrichments.py
+```
+
+### Field Population Priority
+
+| Field | Priority Source | Fallback | Notes |
+|-------|----------------|----------|-------|
+| `capture_method` | Dataset documentation | LLM enrichment | Never trust LLM for synthetic (KI-005) |
+| `domain_level1` | LLM enrichment | "UNK" acceptable | Accept UNK (KI-007) |
+| `iso639_language` | Parser/documentation | Language enrichment | Use highest-confidence source |
+| `iso15924_script` | Parser/documentation | Language enrichment | |
+| `script_family` | Derived from iso15924_script | `_get_script_family()` | Automatic derivation |
+| `layout_detections` | Docling/Egret layout | Parser annotations | Must standardize labels first (KI-001) |
+| `content_flags.*` | `derive_content_flags()` from layout + LLM | LLM-only | VLM-verify all True flags |
+| `split` | Parser/manifest | Dataset documentation | |
+| `text_scope` | LLM content_type field | "printed" default | |
+| `orientation_class` | LLM enrichment | 0 (upright) default | |
+| `quality_overall` | VLM IQA / Classical IQA | Deferred if unavailable | |
+| `resolution_quality_score` | PaddleOCR pipeline | Deferred if no GPU | |
+
+### Known Issue Mitigations Applied
+
+| Issue | Mitigation | Status |
+|-------|-----------|--------|
+| KI-001 | Ran standardize_layout_labels.py | [ ] |
+| KI-002 | VLM verification for has_table=True | [ ] |
+| KI-003 | VLM verification for has_figure=True | [ ] |
+| KI-004 | Override has_handwriting=False (synthetic) | [ ] |
+| KI-005 | Hardcode capture_method=synthetic | [ ] |
+| KI-006 | VLM verification for has_formula=True | [ ] |
+| KI-007 | Accept domain_level1=UNK | [ ] |
+
+### Post-Integration Prescreening
+
+Re-run prescreening to measure improvement:
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/automated_prescreening.py --dataset doclaynet
+```
+
+**Before/After Comparison**:
+
+| Field | Before | After | Delta |
+|-------|--------|-------|-------|
+| `split` | % | % | +/- % |
+| `capture_method` | % | % | +/- % |
+| `domain_level1` | % | % | +/- % |
+| `iso639_language` | % | % | +/- % |
+| `script_family` | % | % | +/- % |
+| `layout_detections` | % | % | +/- % |
+| `layout_bbox_valid` | % | % | +/- % |
+| `content_flags_boolean` | % | % | +/- % |
+| `text_has_content` | % | % | +/- % |
+| `orientation_class` | % | % | +/- % |
+| `image_properties_color_mode` | % | % | +/- % |
+| `handwriting_present` | % | % | +/- % |
+| `quality_overall_mos` | % | % | +/- % |
+
+**Overall improvement**: +/- _**%
+**Fields improved to 100%**:**_
+
+**Notes**:
+
+---
+
+## Phase 6: VLM Visual Inspection (MANDATORY)
+
+> **This phase is MANDATORY.** Skipping VLM inspection caps the scorecard
+> grade at **D** regardless of all other dimension scores. Content flags
+> without visual verification are unverified soft labels unsuitable for
+> training. At minimum, complete Track A (content flag checks) and
+> Track C (passing sample validation).
+
+### Sample Selection (Metadata-Driven)
+
+**Default approach**: Use `select_audit_samples.py --phase6` to generate Track A/B/C
+sample sets from prescreening results and metadata JSON. This avoids filesystem directory
+scanning, which causes OOM on WSL network mounts with 500K+ files.
+
+```bash
+# Generate Phase 6 sample sets (requires Phase 1 prescreening to exist)
+PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset doclaynet --phase6 --verbose
+
+# Output: scripts/audit/results/doclaynet/phase6_track_{a,b,c}_samples.json
+```
+
+**Tier override** (if defect catalog or cross-source disagreement signals warrant):
+
+```bash
+PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset doclaynet --phase6 --tier 3 --verbose
+```
+
+**Contact sheet generation** (for Track B, datasets > 2K):
+
+```bash
+python scripts/audit/create_contact_sheets.py \
+    --sample-json scripts/audit/results/doclaynet/phase6_track_b_samples.json \
+    --output-dir tmp_cleanup/doclaynet_contact_sheets/ \
+    --cols 10 --rows 5 --thumb-width 150
+```
+
+### Adaptive Sampling Tier Selection
+
+**Before starting VLM inspection**, determine the sampling tier based on signals from Phases 1-4.
+Higher tiers require more samples to compensate for lower metadata confidence.
+
+#### Tier Decision Table
+
+| Signal | Tier 1 (Standard) | Tier 2 (Enhanced) | Tier 3 (Comprehensive) |
+|--------|-------------------|-------------------|------------------------|
+| Prescreening pass rate | >= 85% | 50-84% | < 50% |
+| Critical/High defects | 0-2 | 3-5 | 6+ |
+| Fields at 0% (missing enrichment) | 0-1 | 2-3 | 4+ |
+| Cross-source disagreement on any field | < 10% | 10-30% | > 30% |
+| KI-009 language mismatch detected | No | N/A | Yes (auto Tier 3) |
+
+**Rule**: Use the **highest tier triggered by ANY signal**. For example, if prescreening is
+92% (Tier 1) but there are 4 critical defects (Tier 2), use Tier 2.
+
+#### Sampling Requirements Per Tier
+
+Sample counts use `max(fixed_count, pct_of_dataset)` to ensure larger datasets receive
+proportionally more inspection. The **percentage floor** guarantees coverage scales with
+dataset size rather than being limited to a small fixed number.
+
+| Component | Tier 1 (Standard) | Tier 2 (Enhanced) | Tier 3 (Comprehensive) |
+|-----------|-------------------|-------------------|------------------------|
+| **Track A per flag** | max(10, 3% of dataset) | max(15, 10% of dataset) | max(25, 15% of dataset) or all if < 50 |
+| **Track C passing** | max(10, 2% of dataset) | max(15, 5% of dataset) | max(25, 10% of dataset) |
+| **Total minimum** | max(15, 5% of dataset) | max(30, 15% of dataset) | max(60, 25% of dataset) |
+| **Total target** | max(40, 5% of dataset) | max(75, 15% of dataset) | max(120, 25% of dataset) |
+| **Adaptive expansion** | No | If any flag FP > 20%, inspect all TRUE | If any flag FP > 15%, inspect all TRUE |
+
+**Percentage floor examples**: For a 1,200-image dataset at Tier 2, the minimum is
+max(30, 180) = 180. For a 5,000-image dataset at Tier 3, max(60, 1250) = 1,250.
+For datasets > 10K images, use Track B contact sheets for the percentage-based portion.
+
+**Adaptive expansion**: After processing the initial Track A batch, check per-flag FP rates.
+If a flag exceeds the threshold, expand inspection for that specific flag before concluding.
+
+#### Tier Selection
+
+- [ ] Prescreening pass rate: `___%` → Tier `___`
+- [ ] Critical/High defects: `___` → Tier `___`
+- [ ] Fields at 0%: `___` → Tier `___`
+- [ ] Cross-source disagreement: `___%` → Tier `___`
+- [ ] KI-009 language mismatch: Yes/No → Tier `___`
+
+**Selected Tier**: `___` (highest triggered)
+
+**Justification**:
+
+### Track A: Small-Scale Inspection (< 50 failing samples)
+
+#### Content Flag Verification
+
+- [ ] Generate Track A sample set (auto-selected from prescreening failures):
+
+```bash
+# Already generated by --phase6 above; samples in:
+# scripts/audit/results/doclaynet/phase6_track_a_samples.json
+```
+
+- [ ] For each failing sample in Track A JSON, read image using Read tool
+- [ ] Assess against field definitions
+
+**Fields to inspect**:
+
+| Field | Samples to Inspect | Status |
+|-------|--------------------|--------|
+| `has_table` | | [ ] |
+| `has_formula` | | [ ] |
+| `has_figure` | | [ ] |
+| `has_handwriting` | | [ ] |
+| `has_code` | | [ ] |
+| `capture_method` | | [ ] |
+| `orientation_class` | | [ ] |
+
+#### Inspection Results
+
+**Output**: `scripts/audit/results/doclaynet/vlm_corrections.json`
+
+| Field | Original True Count | Corrected True Count | FP Rate | Root Cause | Action |
+|-------|-------------------|---------------------|---------|------------|--------|
+| `has_table` | | | % | | |
+| `has_formula` | | | % | | |
+| `has_figure` | | | % | | |
+| `has_handwriting` | | | % | | |
+| `has_code` | | | % | | |
+
+**Total images inspected (Track A)**: ___
+
+### Track B: Large-Scale Contact Sheet Classification (> 2,000 samples)
+
+#### Contact Sheet Generation
+
+- [ ] Generate Track B sample set (metadata-driven, no filesystem scan):
+
+```bash
+PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset doclaynet --phase6 --verbose
+```
+
+- [ ] Generate contact sheets from Track B samples:
+
+```bash
+python scripts/audit/create_contact_sheets.py \
+    --sample-json scripts/audit/results/doclaynet/phase6_track_b_samples.json \
+    --output-dir tmp_cleanup/doclaynet_contact_sheets/ \
+    --cols 10 --rows 5 --thumb-width 150
+```
+
+- Grid: 10 columns x 5 rows = 50 thumbnails per sheet
+- Thumbnail size: ~150x150px
+- Sheet size: ~1500x750px, JPEG quality 90
+- Each thumbnail labeled with filename
+- Save to `tmp_cleanup/doclaynet_contact_sheets/contact_sheet_NNN.jpg`
+
+#### Batch Processing
+
+- [ ] Process sheets in batches of 5 (250 images per turn)
+- [ ] Use compact codes to minimize output tokens
+  - Script ID: `la hi bn ko zh ja ar un` (latin, devanagari, bengali, hangul, chinese, japanese, arabic, unclear)
+  - Orientation: `0 90 180 270`
+  - Capture: `sc bd cm sy` (scanner, born-digital, camera, synthetic)
+- [ ] Save incrementally after every 5 sheets
+
+**Progress Tracking**:
+
+| Batch | Sheets Processed | Samples Classified | Status | Notes |
+|-------|-----------------|-------------------|--------|-------|
+| 1 | 1-5 | 1-250 | [ ] | |
+| 2 | 6-10 | 251-500 | [ ] | |
+| 3 | 11-15 | 501-750 | [ ] | |
+| ... | | | | |
+
+**Output**: `scripts/audit/results/doclaynet/vlm_test_enrichments.json`
+
+**Total sheets**: ___
+**Total images classified**:___
+**Sessions required**: ___
+
+#### Incremental Save Pattern
+
+Save after every 5 sheets to `vlm_test_enrichments.json`:
+
+```json
+{
+  "dataset": "doclaynet",
+  "method": "vlm_contact_sheet",
+  "completed": 250,
+  "sheets_processed": 5,
+  "total_sheets": 195,
+  "samples": { ... }
+}
+```
+
+### Track C: Validate Passing Samples (tier-dependent)
+
+- [ ] Track C sample set (auto-generated by `--phase6`):
+
+```bash
+# Already generated by --phase6 above; samples in:
+# scripts/audit/results/doclaynet/phase6_track_c_samples.json
+```
+
+- Tier 1: max(10, 2% of dataset) | Tier 2: max(15, 5%) | Tier 3: max(25, 10%)
+- [ ] For each sample in Track C JSON, read image and verify ALL populated fields
+- [ ] Compute accuracy rate per field
+
+**Output**: `scripts/audit/results/doclaynet/vlm_validation_passing.json`
+
+#### Passing Sample Validation
+
+| Sample | All Fields Match? | Incorrect Fields | Notes |
+|--------|------------------|-----------------|-------|
+| 1 | ✅/❌ | | |
+| 2 | ✅/❌ | | |
+| 3 | ✅/❌ | | |
+| ... | | | |
+
+**Per-Field Accuracy**:
+
+| Field | Correct | Total | Accuracy | Status |
+|-------|---------|-------|----------|--------|
+| `capture_method` | | 15 | % | ⬜ |
+| `domain_level1` | | 15 | % | ⬜ |
+| `iso639_language` | | 15 | % | ⬜ |
+| `has_table` | | 15 | % | ⬜ |
+| `has_formula` | | 15 | % | ⬜ |
+| `has_figure` | | 15 | % | ⬜ |
+| `has_handwriting` | | 15 | % | ⬜ |
+| `orientation_class` | | 15 | % | ⬜ |
+
+**Overall Passing Accuracy**: ___%
+
+**Target**: 95%+ accuracy (Minimum: 90%)
+
+**Notes**:
+
+### Context Budget Tracking
+
+| Phase | Approach | Turns Used | Cumulative | Notes |
+|-------|----------|-----------|-----------|-------|
+| Track A | Individual images | | | |
+| Track B | Contact sheets | | | |
+| Track C | Passing validation | | | |
+| **Total** | | | | |
+
+**Session threshold**: ~40-60 turns before context pressure
+
+---
+
+## Phase 6.5: VLM Text Labeling (Conditional)
+
+> **Trigger**: Run this phase if Phase 1 prescreening shows `text_has_content` pass rate < 50%.
+> If >= 50%, skip to Phase 7.
+
+### Trigger Check
+
+- [ ] `text_has_content` pass rate from prescreening: ___%
+- [ ] Trigger condition met (< 50%)? Yes / No
+
+### Sample Count
+
+**Formula**: `max(ceil(0.01 * 81,471), 10)` = ___ samples
+
+### Sample Selection
+
+- [ ] Upright images only (orientation_class == 0)
+- [ ] Confidence > 75% for VLM transcription
+- [ ] Diverse document types across content categories
+- [ ] Both splits represented (train + test if available)
+
+### Transcription Results
+
+| # | Image ID | Confidence | Document Type | Lines | Status |
+|---|----------|-----------|---------------|-------|--------|
+| 1 | | | | | [ ] |
+| 2 | | | | | [ ] |
+| 3 | | | | | [ ] |
+| ... | | | | | |
+
+**Output**: `results/doclaynet_text_labels.json`
+
+### Integration
+
+```bash
+# Re-run integration with VLM text labels
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/integrate_doclaynet_enrichments.py \
+    --vlm-text-labels results/doclaynet_text_labels.json
+```
+
+- [ ] Integration script updated with `--vlm-text-labels` flag
+- [ ] Enrichment version bumped
+- [ ] Prescreening re-run to verify `text_has_content` improvement
+
+**Fields set**: `text_has_content`, `text_content`, `text_content_confidence`, `text_content_source`, `text_statistics`
+
+---
+
+## Phase 7: Apply Corrections
+
+### Integration Script Updates
+
+- [ ] Update integration script with VLM corrections
+- [ ] Add new enrichment sources from Phase 6
+- [ ] Bump enrichment version tag
+- [ ] Update field population priority logic
+
+**Version progression**:
+
+- v2 integration: ___
+- v3 integration: ___
+- v4 integration: ___
+
+### Commands
+
+```bash
+# Dry run with updated script
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/integrate_doclaynet_enrichments.py --dry-run
+
+# Actual write
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/integrate_doclaynet_enrichments.py
+
+# Re-run prescreening
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/automated_prescreening.py --dataset doclaynet
+```
+
+### Post-Correction Prescreening
+
+| Field | Phase 5 (After v2) | Phase 7 (After v3) | Final Delta | Status |
+|-------|-------------------|-------------------|-------------|--------|
+| `split` | % | % | +/- % | ⬜ |
+| `capture_method` | % | % | +/- % | ⬜ |
+| `domain_level1` | % | % | +/- % | ⬜ |
+| `iso639_language` | % | % | +/- % | ⬜ |
+| `script_family` | % | % | +/- % | ⬜ |
+| `layout_detections` | % | % | +/- % | ⬜ |
+| `layout_bbox_valid` | % | % | +/- % | ⬜ |
+| `content_flags_boolean` | % | % | +/- % | ⬜ |
+| `text_has_content` | % | % | +/- % | ⬜ |
+| `orientation_class` | % | % | +/- % | ⬜ |
+| `image_properties_color_mode` | % | % | +/- % | ⬜ |
+| `handwriting_present` | % | % | +/- % | ⬜ |
+| `quality_overall_mos` | % | % | +/- % | ⬜ |
+
+**Overall improvement**: +/- ___%
+
+### Defect Catalog Update
+
+- [ ] Update defect statuses (OPEN → RESOLVED/PARTIALLY_RESOLVED/DEFERRED)
+- [ ] Document resolution notes
+- [ ] Track remaining open defects
+
+| Defect ID | Original Status | Updated Status | Resolution Notes |
+|-----------|----------------|----------------|-----------------|
+| D01 | OPEN | | |
+| D02 | OPEN | | |
+| D03 | OPEN | | |
+
+**Resolved**: ___
+**Partially Resolved**:___
+**Deferred**: ___
+**Still Open**:___
+
+---
+
+## Phase 8: Documentation
+
+### Dataset Documentation Updates
+
+- [ ] Update `docs/datasets/source/doclaynet.md`
+- [ ] Add **Layer 2 Annotation Summary** section
+- [ ] Add **Reliability & Bottlenecks** section
+- [ ] Update **Version History**
+
+### Layer 2 Annotation Summary
+
+Add to dataset documentation:
+
+```markdown
+## Layer 2 Annotation Summary
+
+**Enrichment Version**: integrated_v3
+**Audit Date**: 2026-02-13
+**Auditor**: claude-opus-4-6
+
+### Enrichment Sources
+
+| Source | Fields Contributed | Confidence | Notes |
+|--------|-------------------|-----------|-------|
+| | | | |
+
+### Field Coverage
+
+| Field | Coverage % | Source | Reliability |
+|-------|-----------|--------|------------|
+| | | | |
+
+### Known Issues & Mitigations
+
+| Issue | Mitigation | Status |
+|-------|-----------|--------|
+| | | |
+
+### VLM Validation
+
+- **Passing sample accuracy**: ___%
+- **Content flag FP rate**: ___%
+- **Total images inspected**: ___
+```
+
+### Reliability & Bottlenecks Section
+
+```markdown
+## Reliability & Bottlenecks
+
+### Prescreening Results
+
+- **Pass rate**: ___% (before), ___% (after)
+- **Fields at 100%**: ___/15
+- **Remaining failures**: ___
+
+### Deferred Items
+
+| Field | Reason | Requirements |
+|-------|--------|--------------|
+| | | |
+
+### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| integrated_v2 | 2026-02-13 | Initial integration (parser GT, LLM, layout) |
+| integrated_v3 | 2026-02-13 | Added VLM contact sheet, train GT enrichment |
+```
+
+### Cross-Dataset Pattern Documentation
+
+- [ ] Review for new cross-dataset patterns
+- [ ] Add to `docs/known_issues/KI-{NNN}-{slug}.md` (if new pattern)
+- [ ] Update `scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json` (if new pattern)
+
+**New patterns identified**: ___
+
+**Known issues updated**: ___
+
+---
+
+## Phase 9: Dataset Catalog Update
+
+> **Purpose**: Ensure `docs/datasets/source/doclaynet.md` is the single source of truth
+> by running aggregation scripts and updating all sections per template v1.4.0.
+
+### Step 1: Regenerate Aggregate Statistics
+
+```bash
+uv run python3 scripts/aggregate_layer2_metadata.py \
+    --dataset doclaynet \
+    --layer2-dir /mnt/e/image_detection/metadata_registry/json \
+    --verbose
+```
+
+- [ ] Script completed successfully
+- [ ] Output: `metadata_registry/aggregates/doclaynet_stats.json`
+
+### Step 2: Materialize Reliability Summary
+
+```bash
+uv run python3 scripts/materialize_reliability_summary.py \
+    --datasets doclaynet \
+    --update-docs \
+    --force
+```
+
+- [ ] Script completed successfully
+- [ ] `docs/datasets/source/doclaynet.md` Section 12 updated
+- [ ] Re-added contextual notes if needed (script overwrites entire section)
+
+### Step 3: Update Source Doc Sections
+
+Update `docs/datasets/source/doclaynet.md` per template v1.4.0:
+
+- [ ] **Section 5.3 (Language & Script)**: Reflects actual LLM-detected distribution, not just paper claims
+- [ ] **Section 7 (Known Issues)**: Includes "Layer 2 Audit Findings" subsection with defect IDs
+- [ ] **Section 8 (Layer 2 Annotation Summary)**: Enrichment sources and field coverage current
+- [ ] **Section 11 (Layer 2 Audit Summary)**: Added/updated with:
+
+| Subsection | Content Source |
+|------------|---------------|
+| Quality Scorecard | `scorecard.json` |
+| Key Defects | `defect_catalog.json` |
+| VLM Inspection Summary | `vlm_corrections.json` |
+| Cross-Dataset Findings | `CROSS_DATASET_KNOWN_ISSUES.json` |
+
+- [ ] **Section 12 (Reliability & Bottlenecks)**: Verified from Step 2 output
+
+### Step 4: Recompute Final Scorecard
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/compute_scorecard.py --dataset doclaynet --verbose
+```
+
+- [ ] Scorecard recomputed (doc_completeness may change after doc updates)
+- [ ] Final grade: ___
+- [ ] Final score: ___/100
+
+### Step 5: (Optional) Dataset Catalog Agent Gap Analysis
+
+- [ ] Invoked `.claude/agents/dataset-catalog-agent.md` for full 12-section gap analysis
+- [ ] Cross-file consistency verified (Quick Reference, Processing Status, Task Indices)
+- [ ] All gaps resolved or documented as deferred
+
+---
+
+## Phase 10: Lessons Learned & Process Improvement
+
+### Friction Points Identified
+
+| Category | Description | Target File(s) | Status |
+|----------|-------------|-----------------|--------|
+| Script bug | | | [ ] |
+| Template gap | | | [ ] |
+| New known issue | | | [ ] |
+| New enrichment type | | | [ ] |
+| Documentation stale | | | [ ] |
+| Process change | | | [ ] |
+
+### Changes Applied
+
+| Change | File Modified | Type | Notes |
+|--------|--------------|------|-------|
+| | | Quick fix / Script fix / Template / KI | |
+| | | | |
+
+### Phase 10 Checklist
+
+- [ ] Reviewed audit execution for friction points and gaps
+- [ ] Categorized improvements by type
+- [ ] Applied quick fixes (README version, field counts, troubleshooting entries)
+- [ ] Proposed or implemented script/template changes
+- [ ] Added new known issues to `CROSS_DATASET_KNOWN_ISSUES.json` (if applicable)
+- [ ] Updated `docs/audit/README.md` version number and Last Updated date
+- [ ] Added these lessons learned to this audit checklist
+
+### What Worked Well
+
+-
+
+### What Caused Friction
+
+-
+
+### Recommendations for Next Audit
+
+-
+
+---
+
+## Sign-Off
+
+### Acceptance Criteria
+
+| Criterion | Target | Minimum | Actual | Pass? | Notes |
+|-----------|--------|---------|--------|-------|-------|
+| Prescreening pass rate | 95%+ | 85% | % | ⬜ | |
+| Fields at 100% | 12+/15 | 10/15 | /15 | ⬜ | |
+| VLM passing accuracy | 95%+ | 90% | % | ⬜ | **REQUIRED** - grade capped at D without |
+| VLM images inspected (Tier 1) | max(40, 5%) | max(15, 5%) | | ⬜ | **REQUIRED** - Track A + Track C |
+| VLM images inspected (Tier 2) | max(75, 15%) | max(30, 15%) | | ⬜ | Enhanced: gaps or critical defects |
+| VLM images inspected (Tier 3) | max(120, 25%) | max(60, 25%) | | ⬜ | Comprehensive: major gaps or KI-009 |
+| Defects resolved | 90%+ | 75% | % | ⬜ | |
+| Content flag FP rate | <5% | <15% | % | ⬜ | |
+| Adaptive expansion triggered | N/A | N/A | | ⬜ | If any flag FP > threshold, expand |
+| Cross-dataset findings documented | All | All critical/high | | ⬜ | |
+
+### Quality Scorecard
+
+Based on [config/audit_scorecard.yaml](../../config/audit_scorecard.yaml):
+
+| Dimension | Weight | Score | Weighted | Notes |
+|-----------|--------|-------|----------|-------|
+| Field Coverage | 0.25 | | | Avg pass rate across 13 fields |
+| Field Validity | 0.25 | | | Schema compliance validity rate |
+| Doc Completeness | 0.15 | | | 11 expected sections |
+| Defect Rate | 0.15 | | | Inverse defect density |
+| Cross-Source Agreement | 0.10 | | | Pairwise agreement (if applicable) |
+| VLM Accuracy | 0.10 | | | Passing sample accuracy |
+
+**Total Score**: _**/100
+**Grade**:**_
+
+**Grade Thresholds**:
+
+- A = 90+ (Excellent - ready for production training)
+- B = 80+ (Good - minor gaps, usable with caveats)
+- C = 70+ (Acceptable - significant gaps needing attention)
+- D = 60+ (Below Standard - major remediation required)
+- F = <60 (Failing - not suitable for use)
+
+### Final Status
+
+- [ ] **APPROVED** - All acceptance criteria met or exceeded
+- [ ] **APPROVED WITH CAVEATS** - Minimum criteria met, documented caveats
+- [ ] **REJECTED** - Below minimum standards, requires additional work
+
+**Caveats** (if applicable):
+
+**Auditor Sign-Off**: _______________________
+
+**Date**: _______________________
+
+---
+
+## Output Artifacts Checklist
+
+All standard audit artifacts:
+
+| File | Purpose | Created | Verified |
+|------|---------|---------|----------|
+| `scripts/audit/results/doclaynet/automated_screening.json` | Per-field pass/fail counts | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/compliance.json` | Schema validation per field | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/comparison_report.json` | Multi-source field comparison | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/defect_catalog.json` | Categorized defects with status | [ ] | [ ] |
+| `scripts/integrate_doclaynet_enrichments.py` | Integration script | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/vlm_corrections.json` | VLM visual inspection corrections | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/vlm_validation_passing.json` | Passing sample accuracy check | [ ] | [ ] |
+| `docs/datasets/source/doclaynet.md` (UPDATED) | Documentation with L2 summary + audit summary | [ ] | [ ] |
+| `metadata_registry/aggregates/doclaynet_stats.json` | Regenerated aggregate statistics | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/scorecard.json` | Final quality scorecard | [ ] | [ ] |
+
+**Optional artifacts** (if applicable):
+
+| File | Purpose | Created | Verified |
+|------|---------|---------|----------|
+| `tmp_cleanup/doclaynet_contact_sheets/` | Contact sheet images | [ ] | [ ] |
+| `scripts/generate_doclaynet_contact_sheets.py` | Contact sheet generator | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/vlm_test_enrichments.json` | VLM batch classification results | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/train_gt_enrichments.json` | Train GT file extraction results | [ ] | [ ] |
+| `scripts/audit/results/doclaynet/audit_progress.json` | Multi-session progress tracking | [ ] | [ ] |
+| `results/doclaynet_text_labels.json` | VLM text transcription labels (Phase 6.5) | [ ] | [ ] |
+| `docs/known_issues/KI-{NNN}-{slug}.md` | New cross-dataset pattern (if found) | [ ] | [ ] |
+
+---
+
+## Audit Trail
+
+### Session Log
+
+| Session | Date | Phase(s) | Turns Used | Progress | Notes |
+|---------|------|----------|-----------|----------|-------|
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+
+### Key Decisions
+
+| Date | Decision | Rationale | Impact |
+|------|----------|-----------|--------|
+| | | | |
+
+### Challenges Encountered
+
+| Challenge | Resolution | Lessons Learned |
+|-----------|-----------|----------------|
+| | | |
+
+---
+
+## Notes
+
+(Space for auditor notes, observations, and recommendations)

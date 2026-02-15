@@ -83,6 +83,13 @@ DATASETS_WITH_TEXT: dict[str, dict[str, Any]] = {
         "images": 199,
         "image_dir": BASE_DATA / "forms/funsd/train/images",
     },
+    "funsd-plus": {
+        "annotation_dir": E_DRIVE_ROOT / "metadata_registry/extracted/funsd_plus",
+        "format": "docling_ocr",
+        "images": 1139,
+        "image_dir": BASE_DATA / "forms/funsd_plus/images",
+        "text_source": "extracted",
+    },
     # === Table datasets ===
     "pubtabnet": {
         "annotation_file": BASE_DATA

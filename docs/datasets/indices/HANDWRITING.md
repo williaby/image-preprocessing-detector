@@ -122,3 +122,4 @@
 
 *See [SCRIPTS.md](SCRIPTS.md) for script-specific training data*
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

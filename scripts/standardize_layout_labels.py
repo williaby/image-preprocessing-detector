@@ -814,7 +814,7 @@ def main() -> int:
 
     if args.verbose:
         structlog.configure(
-            wrapper_class=structlog.make_filtering_bound_logger(logging_level=10),
+            wrapper_class=structlog.make_filtering_bound_logger(10),
         )
 
     try:

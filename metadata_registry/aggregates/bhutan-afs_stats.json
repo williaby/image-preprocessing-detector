@@ -1,0 +1,122 @@
+{
+  "dataset_name": "bhutan-afs",
+  "total_samples": 135,
+  "capture_methods": {
+    "born_digital": 135
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "FIN": 135
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Tibt": 130,
+    "Latn": 4,
+    "Zyyy": 1
+  },
+  "script_families": {
+    "indic": 130,
+    "latin": 4,
+    "other": 1
+  },
+  "language_codes": {
+    "dzo": 130,
+    "eng": 4,
+    "und": 1
+  },
+  "content_flags": {
+    "has_table": 96,
+    "has_figure": 13,
+    "has_signature": 1
+  },
+  "text_scopes": {
+    "printed": 135
+  },
+  "content_types": {
+    "financial_statement": 135
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "born_digital": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "FIN": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Tibt": 96.3,
+    "Latn": 3.0,
+    "Zyyy": 0.7
+  },
+  "script_families_pct": {
+    "indic": 96.3,
+    "latin": 3.0,
+    "other": 0.7
+  },
+  "language_codes_pct": {
+    "dzo": 96.3,
+    "eng": 3.0,
+    "und": 0.7
+  },
+  "text_scopes_pct": {
+    "printed": 100.0
+  },
+  "content_types_pct": {
+    "financial_statement": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_table": 71.1,
+    "has_figure": 9.6,
+    "has_signature": 0.7
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Tibt",
+      "count": 130,
+      "percentage": 96.3
+    },
+    {
+      "script": "Latn",
+      "count": 4,
+      "percentage": 3.0
+    },
+    {
+      "script": "Zyyy",
+      "count": 1,
+      "percentage": 0.7
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "dzo",
+      "count": 130,
+      "percentage": 96.3
+    },
+    {
+      "language": "eng",
+      "count": 4,
+      "percentage": 3.0
+    },
+    {
+      "language": "und",
+      "count": 1,
+      "percentage": 0.7
+    }
+  ],
+  "script_family_summary": {
+    "indic": 130,
+    "latin": 4,
+    "other": 1
+  }
+}

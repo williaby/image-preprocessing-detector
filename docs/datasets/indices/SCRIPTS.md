@@ -172,3 +172,4 @@
 *See [TEXT_DETECTION.md](TEXT_DETECTION.md) for text detection training datasets*
 *See [HANDWRITING.md](HANDWRITING.md) for handwriting-specific datasets*
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

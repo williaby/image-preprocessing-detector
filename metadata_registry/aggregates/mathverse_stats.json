@@ -12,18 +12,25 @@
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 6940
+  "script_codes": {
+    "Latn": 6940
   },
-  "language_codes": {},
+  "script_families": {
+    "latin": 6940
+  },
+  "language_codes": {
+    "en": 6940
+  },
   "content_flags": {
-    "has_formula": 6940
+    "has_formula": 6940,
+    "has_figure": 6940
   },
   "text_scopes": {
     "paragraph": 6940
   },
-  "content_types": {},
+  "content_types": {
+    "printed": 6940
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -37,20 +44,43 @@
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {
-    "ltr": 100.0
+  "script_codes_pct": {
+    "Latn": 100.0
   },
-  "language_codes_pct": {},
+  "script_families_pct": {
+    "latin": 100.0
+  },
+  "language_codes_pct": {
+    "en": 100.0
+  },
   "text_scopes_pct": {
     "paragraph": 100.0
   },
-  "content_types_pct": {},
+  "content_types_pct": {
+    "printed": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
-    "has_formula": 100.0
+    "has_formula": 100.0,
+    "has_figure": 100.0
   },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 6940,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 6940,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 6940
+  }
 }

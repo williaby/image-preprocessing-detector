@@ -91,6 +91,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | Handwriting contributors |
+| **Quality Assurance** | Character class collection |
+| **GT Label Coverage** | 100% |
+
 ##### 3. Integration Status
 
 ###### 3a. Project Usage

@@ -1,7 +1,7 @@
 # Layer 2 Metadata Audit System
 
-> **Version**: 1.3.0
-> **Last Updated**: 2026-02-12
+> **Version**: 1.5.0
+> **Last Updated**: 2026-02-13
 > **Status**: Active
 
 ## Overview
@@ -31,30 +31,34 @@ Phase 1: Automated Prescreening
 
 Phase 2: Schema Compliance Check
   └─> Run audit_schema_compliance.py → Validate field types/ranges
-  └─> Generates schema_compliance.json with 15 field validations
+  └─> Auto-generates compliance.json in results/{dataset}/
+  └─> Run EARLY — Field Validity dimension available from Phase 2 onward
 
 Phase 3: Multi-Source Comparison
   └─> Run assemble_comparison.py → Compare enrichment sources
   └─> Generates comparison_report.json with cross-source agreement
 
-Phase 4: Defect Catalog
+Phase 4: Defect Catalog & Tier Selection
   └─> Manual review of Phase 1-3 artifacts → Identify defect patterns
   └─> Create defect_catalog.json with prioritized issues
-
-Phase 4.5: Defect Sizing
-  └─> Run select_audit_samples.py → Stratified random sample
-  └─> Generates sample_set.json with 36-100 images for VLM review
+  └─> Select VLM sampling tier (1/2/3) based on Phase 1-4 quality signals
+  └─> Tier selection BEFORE integration so audit scope is known upfront
 
 Phase 5: Integration Script Development
   └─> Copy integration_script_template.py → Customize per dataset
-  └─> Implement mitigation logic for known issues (KI-001 to KI-008)
-  └─> Test on sample set, validate outputs
+  └─> Implement mitigation logic for known issues (KI-001 to KI-009)
+  └─> Run integration, then re-run Phase 1 prescreening to verify fixes
+
+Phase 5.5: Stratified Sampling (post-integration)
+  └─> Run select_audit_samples.py on CORRECTED metadata (after Phase 5)
+  └─> Generates sample_set.json with 36-100 images for VLM review
+  └─> Important: sampling on post-integration metadata avoids stale labels
 
 Phase 6: VLM Visual Inspection (Adaptive Sampling)
-  └─> Select sampling tier (1/2/3) based on Phase 1-4 quality signals
+  └─> Tier already selected in Phase 4; sample_set from Phase 5.5
   └─> Run VLM agent on sample_set.json → Validate 15 fields visually
   └─> Expand inspection for flags with high FP rates
-  └─> Generates vlm_validation.json with agreement rates per field
+  └─> Generates vlm_corrections.json with corrections and passing accuracy
 
 Phase 6.5: VLM Text Labeling (Conditional)
   └─> Trigger: text_has_content pass rate < 50% in Phase 1 prescreening
@@ -99,7 +103,9 @@ docs/audit/
 └── audits/                           ← Completed audit execution checklists
     ├── diqa-5000_audit.md
     ├── jssoda_audit.md
-    └── mlt19_audit.md
+    ├── mdiw13_audit.md
+    ├── mlt19_audit.md
+    └── pucit-ohul_audit.md
 
 config/
 └── audit_scorecard.yaml              ← 6-dimension weighted scoring rubric
@@ -112,9 +118,10 @@ scripts/audit/
 ├── assemble_comparison.py            ← Phase 3: Multi-source comparison
 ├── select_audit_samples.py           ← Phase 4.5: Stratified sample selection
 ├── compute_scorecard.py              ← Post-audit: Quality scorecard computation
+├── populate_audit_summary.py        ← Phase 9: Generate Section 11 in source docs
 ├── integration_script_template.py    ← Phase 5: Integration script skeleton
 └── results/                          ← Per-dataset audit artifacts
-    ├── CROSS_DATASET_KNOWN_ISSUES.json  ← 8 known issues registry
+    ├── CROSS_DATASET_KNOWN_ISSUES.json  ← 9 known issues registry (KI-001 to KI-009)
     ├── diqa-5000/
     │   ├── automated_screening.json
     │   ├── comparison_report.json
@@ -133,6 +140,13 @@ scripts/audit/
     │   ├── scorecard.json
     │   ├── vlm_corrections.json
     │   └── vlm_validation_passing.json
+    ├── mdiw13/                            ← Full audit (Grade B, 84.1/100)
+    │   ├── automated_screening.json
+    │   ├── comparison_report.json
+    │   ├── defect_catalog.json
+    │   ├── sample_set.json
+    │   ├── scorecard.json
+    │   └── vlm_corrections.json
     └── mlt19/
         ├── automated_screening.json
         ├── comparison_report.json
@@ -234,6 +248,7 @@ These scripts update the dataset source documentation and metadata aggregates af
 |--------|---------|---------------|
 | `aggregate_layer2_metadata.py` | Regenerate dataset statistics from post-integration Layer 2 metadata | `uv run python3 scripts/aggregate_layer2_metadata.py --dataset jssoda --layer2-dir /mnt/e/image_detection/metadata_registry/json --verbose` |
 | `materialize_reliability_summary.py` | Compute per-sample reliability and update source doc Reliability section | `uv run python3 scripts/materialize_reliability_summary.py --datasets jssoda --update-docs --force` |
+| `populate_audit_summary.py` | Generate/update Section 11 (Layer 2 Audit Summary) in source docs from scorecard, defect catalog, and VLM correction artifacts | `PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset jssoda` |
 | `compute_scorecard.py` | Compute quality scorecard (also used in Post-Audit phase) | `PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset jssoda` |
 
 **Agent**: `.claude/agents/dataset-catalog-agent.md` - Automated gap analysis against template v1.4.0 and cross-file synchronization.
@@ -245,7 +260,7 @@ Each script generates JSON artifacts in `scripts/audit/results/{dataset}/`:
 | Script | Output File | Fields |
 |--------|-------------|--------|
 | `automated_prescreening.py` | `automated_screening.json` | 13 field pass rates, failure examples |
-| `audit_schema_compliance.py` | `schema_compliance.json` | 15 field validations, type/range errors |
+| `audit_schema_compliance.py` | `compliance.json` (auto-output when `--dataset` used) | 15+ field validations, type/range errors |
 | `assemble_comparison.py` | `comparison_report.json` | Cross-source agreement rates per field |
 | `select_audit_samples.py` | `sample_set.json` | 36-100 stratified sample image IDs |
 | `compute_scorecard.py` | `scorecard.json` | 6 dimension scores, final grade, recommendations |
@@ -270,11 +285,11 @@ All audit scripts support these common flags:
 | Dimension | Weight | Description | Source Artifact |
 |-----------|--------|-------------|-----------------|
 | **Field Coverage** | 25% | Percentage of 15 prescreening fields passing validation | `automated_screening.json` |
-| **Field Validity** | 25% | Percentage of 15 schema compliance fields passing validation | `schema_compliance.json` |
-| **Document Completeness** | 15% | Percentage of samples with all required fields populated | `automated_screening.json` |
-| **Defect Rate** | 15% | Inverse of defect rate from VLM validation (1.0 - defect_rate) | `vlm_validation.json` |
+| **Field Validity** | 25% | Percentage of schema compliance fields passing validation | `compliance.json` (or legacy `schema_compliance_v2.json`) |
+| **Document Completeness** | 15% | Percentage of 11 expected doc sections populated | `docs/datasets/source/{dataset}.md` |
+| **Defect Rate** | 15% | Inverse of weighted defect penalties (100 - sum of penalties) | `defect_catalog.json` |
 | **Cross-Source Agreement** | 10% | Average agreement rate across enrichment sources | `comparison_report.json` |
-| **VLM Accuracy** | 10% | VLM validation agreement rate on stratified sample | `vlm_validation.json` |
+| **VLM Accuracy** | 10% | Passing sample accuracy from VLM inspection | `vlm_corrections.json` |
 
 **Grade Thresholds:**
 
@@ -288,6 +303,119 @@ All audit scripts support these common flags:
 
 **Missing Dimension Handling**: If a dimension is unavailable (e.g., no VLM validation run), its weight is
 redistributed proportionally across remaining dimensions.
+
+**Grade Caps** (enforced regardless of computed score):
+
+| Cap Rule | Trigger | Max Grade | Rationale |
+|----------|---------|-----------|-----------|
+| **Missing VLM** | `vlm_corrections.json` absent | D | Content flags are unverified soft labels; training on them risks systematic errors |
+| **Low Critical Field Coverage** | `domain_level1`, `iso639_language`, or `script_family` < 75% pass rate | D | Language, script, and domain are required for diversity-aware training splits; datasets without reliable coverage cannot be used for balanced sampling |
+
+Both caps can stack. A dataset missing VLM inspection AND having <75% language coverage is capped to D
+by both rules. The scorecard reports all triggered caps in the `grade_cap_applied` field.
+
+### Scorecard Input Requirements
+
+`compute_scorecard.py` reads specific JSON files with specific field structures from
+`scripts/audit/results/{dataset}/`. This section documents the exact requirements so auditors
+can produce compatible artifacts without reading the scorer source code.
+
+**Required Artifact Files:**
+
+| Artifact | Filename(s) | Required By | Auto-Generated By |
+|----------|-------------|-------------|-------------------|
+| Prescreening | `automated_screening.json` | Field Coverage, Grade Caps | `automated_prescreening.py --dataset {ds}` |
+| Schema Compliance | `compliance.json` (preferred) or `schema_compliance_v2.json` (legacy) | Field Validity | `audit_schema_compliance.py --dataset {ds}` (auto-outputs to `compliance.json`) |
+| Defect Catalog | `defect_catalog.json` | Defect Rate, VLM Accuracy (fallback) | Manual (Phase 4) |
+| Comparison Report | `comparison_report.json` | Cross-Source Agreement | `assemble_comparison.py --dataset {ds}` |
+| VLM Corrections | `vlm_corrections.json` | VLM Accuracy | Manual (Phase 6-7) |
+| Source Documentation | `docs/datasets/source/{dataset}.md` | Doc Completeness | Manual (Phase 8-9) |
+
+**Per-Artifact Field Requirements:**
+
+**`automated_screening.json`**:
+
+```json
+{
+  "per_field_results": {
+    "field_name": {"pass": 100, "fail": 5}
+  }
+}
+```
+
+**`compliance.json`**:
+
+```json
+{
+  "field_summary": {
+    "field_name": {"validity_pct": 98.5}
+  }
+}
+```
+
+Alternative format (legacy): `{"per_field_results": {"field_name": {"valid": 100, "invalid": 2}}}`.
+
+**`defect_catalog.json`**:
+
+```json
+{
+  "defects": [
+    {
+      "status": "RESOLVED|ACCEPTED|DEFERRED|PARTIALLY_RESOLVED|OPEN",
+      "extrapolation_risk": "CRITICAL|HIGH|MEDIUM|LOW"
+    }
+  ]
+}
+```
+
+**Note**: The scorer reads `extrapolation_risk` (not `severity`) to determine the defect penalty.
+Each defect **must** include both `status` and `extrapolation_risk`.
+
+**`vlm_corrections.json`**:
+
+```json
+{
+  "passing_sample_accuracy": 1.0
+}
+```
+
+The `passing_sample_accuracy` field (0.0-1.0 float) is **required** for the VLM Accuracy dimension.
+Without it the dimension is excluded and the grade may be capped to D.
+
+**`comparison_report.json`**:
+
+```json
+{
+  "report_metadata": {"sources_discovered": ["source1", "source2"]},
+  "samples": [
+    {
+      "fields": {
+        "field_name": {
+          "pairwise_matches": {"source1_vs_source2": true},
+          "sources": {"source1": "val", "source2": "val"}
+        }
+      }
+    }
+  ]
+}
+```
+
+Requires at least 2 sources; single-source datasets return None for this dimension.
+
+**Source Doc (`docs/datasets/source/{dataset}.md`):**
+
+The doc completeness scorer checks for 11 keyword-matched sections:
+`overview`, `statistics`, `format`, `label`, `iqa`, `limitation`, `license`,
+`layer 2`, `reliability`, `processing`, `version history`.
+
+A section counts as populated if it contains any non-heading, non-separator body text
+within its sub-tree (including under sub-headings).
+
+**Dataset Name Resolution:**
+
+The scorecard resolves source doc filenames by normalizing hyphens. If
+`{dataset_name}.md` is not found, it searches for any `.md` file whose stem
+matches after removing hyphens (e.g., `cocotext` resolves to `coco-text.md`).
 
 ### Adaptive VLM Sampling Policy
 
@@ -325,6 +453,83 @@ not just a statistical sample.
 (KI-009 language mismatch, 6 critical/high defects) benefit from higher inspection rates.
 The 57-image inspection caught 17 corrections across 13 images, with `has_handwriting` at
 30% FP and `has_figure` at 50% secondary FP -- patterns only visible with sufficient samples.
+
+### Metadata-Driven Phase 6 Sampling (Default)
+
+Phase 6 sample selection **defaults to metadata-driven mode** to avoid OOM issues from
+filesystem directory scanning on large network-mounted datasets (500K+ files). All image
+filenames are resolved from the Layer 2 metadata JSON, never from `Path.iterdir()` or
+`os.listdir()`.
+
+**Why metadata-driven?** The pubtabnet audit (519K images) demonstrated that calling
+`Path.iterdir()` on WSL-mounted network directories with 500K entries causes kernel OOM.
+Metadata-driven sampling loads filenames from the JSON (one sequential read) instead.
+
+**Workflow:**
+
+```bash
+# Step 1: Run prescreening (prerequisite)
+PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset {ds}
+
+# Step 2: Generate Phase 6 sample sets (metadata-driven, no filesystem scan)
+PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset {ds} --phase6 --verbose
+
+# Step 3: Generate contact sheets from Phase 6 Track B samples
+python scripts/audit/create_contact_sheets.py \
+    --sample-json scripts/audit/results/{ds}/phase6_track_b_samples.json \
+    --output-dir tmp_cleanup/{ds}_contact_sheets/
+```
+
+**Output files** (in `scripts/audit/results/{ds}/`):
+
+| File | Track | Contents |
+|------|-------|----------|
+| `phase6_track_a_samples.json` | A | Failing samples grouped by flag, with image paths |
+| `phase6_track_b_samples.json` | B | Stratified random samples for contact sheets (datasets > 2K only) |
+| `phase6_track_c_samples.json` | C | Passing samples for validation |
+
+**Tier auto-computation**: The `--phase6` flag auto-computes the tier from prescreening
+signals (pass rate, fields at 0%). Override with `--tier 1|2|3` when defect catalog or
+cross-source disagreement signals require a higher tier.
+
+**Track B cap**: For very large datasets, Track B is capped at 10,000 samples by default
+(200 contact sheets at 50/sheet). Override with `--track-b-size`.
+
+### Scale-Aware Processing Guidance
+
+Dataset size determines which processing strategies are feasible. These thresholds are based
+on lessons learned from audits of datasets ranging from 135 (bhutan-afs) to 519K (pubtabnet).
+
+**Processing Strategy by Dataset Size:**
+
+| Dataset Size | VLM Strategy | Integration | Comparison Report | Contact Sheets |
+|-------------|-------------|-------------|-------------------|----------------|
+| **< 500** | Prefer **full VLM coverage** over sampling when context budget allows. Small datasets justify near-complete inspection. | In-memory processing fine | Standard | Not needed (inspect directly) |
+| **500 - 10K** | Standard tier-based sampling (see Adaptive VLM Sampling Policy) | In-memory processing fine | Standard | 5 sheets / 250 images per turn optimal |
+| **10K - 100K** | Tier-based sampling; use contact sheets for the percentage portion of `max(fixed, pct)` | In-memory OK but monitor | Standard | Batch generation with gc.collect() |
+| **> 100K** | **Always use streaming/batched processing.** Never load full metadata into memory. Use val/test splits as representative proxy if train split is too large. | **Streaming JSON** (load one record at a time, never full file) | May become impractically large (2.6GB at 519K). Consider **sampling-based agreement** instead of full pairwise. | **OOM-safe streaming** (load one image at a time, gc.collect() between sheets, peak <50MB) |
+
+**Key Scale Thresholds:**
+
+- **< 500 samples**: Full VLM coverage preferred. bhutan-afs (135 images) achieved Grade A with
+  near-complete inspection in 3 sessions.
+- **> 2,000 samples**: Contact sheets become essential. mlt19 (9,735 test images) used 195 sheets,
+  completing in 40 turns vs ~4,867 individual inspections.
+- **> 100K samples**: In-memory JSON processing will OOM on WSL. pubtabnet (519K) required 3 rounds
+  of optimization: streaming JSON, summary-format layout detections, pre-computed text statistics.
+- **> 100K samples**: `comparison_report.json` becomes impractically large. Consider cap or sampling.
+- **Born-digital homogeneous datasets**: Regardless of size, if prescreening >90% and content is
+  homogeneous (e.g., scientific tables), Tier 1 VLM with minimal samples is sufficient.
+
+**Adaptive Sampling Formula Adjustment for Large Datasets:**
+
+The standard formula `max(fixed_count, pct_of_dataset)` yields impractical numbers at scale
+(e.g., 15K per flag at 519K). For datasets > 100K:
+
+- Use the **fixed_count** portion only (not the percentage)
+- Leverage dataset **homogeneity** to justify smaller samples
+- Document the rationale for reduced sampling in the audit report
 
 ### Dataset Registry (scripts/audit/audit_config.py)
 
@@ -414,31 +619,37 @@ sed -i "s/{AUDITOR}/claude-opus-4-6/g" docs/audit/audits/${DATASET}_audit.md
 PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset $DATASET --verbose
 # Output: scripts/audit/results/${DATASET}/automated_screening.json
 
-# 6. Phase 2: Run schema compliance check
+# 6. Phase 2: Run schema compliance check (run EARLY for Field Validity dimension)
 PYTHONPATH=. uv run python3 scripts/audit/audit_schema_compliance.py --dataset $DATASET --verbose
-# Output: scripts/audit/results/${DATASET}/schema_compliance.json
+# Output: scripts/audit/results/${DATASET}/compliance.json (auto-generated)
 
 # 7. Phase 3: Run multi-source comparison
 PYTHONPATH=. uv run python3 scripts/audit/assemble_comparison.py --dataset $DATASET --verbose
 # Output: scripts/audit/results/${DATASET}/comparison_report.json
 
-# 8. Phase 4: Create defect catalog (manual)
+# 8. Phase 4: Create defect catalog + select VLM tier
 # Review Phase 1-3 artifacts, identify patterns, create defect_catalog.json
+# Select VLM sampling tier (1/2/3) based on prescreening rate, defect count,
+# fields at 0%, cross-source disagreement, and KI-009 applicability.
+# Tier selection BEFORE integration determines audit scope upfront.
 
-# 9. Phase 4.5: Generate stratified sample for VLM review
+# 9. Phase 5: Develop and run integration script
+cp scripts/audit/integration_script_template.py scripts/integrate_${DATASET}_enrichments.py
+# Customize script with dataset-specific logic and KI mitigations
+# Run integration, then re-run Phase 1 prescreening to verify fixes
+
+# 10. Phase 5.5: Generate stratified sample (AFTER integration)
+# Important: sample on corrected/post-integration metadata, not raw base metadata
 PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py --dataset $DATASET --size 36 --verbose
 # Output: scripts/audit/results/${DATASET}/sample_set.json
 
-# 10. Phase 5: Copy integration script template
-cp scripts/audit/integration_script_template.py scripts/integrate_${DATASET}_enrichments.py
-# Customize script with dataset-specific logic
-
-# 11. Phase 6: Run VLM visual inspection (manual or agent-assisted)
+# 11. Phase 6: Run VLM visual inspection (tier selected in Phase 4)
 # Use layer2-audit-agent or manual VLM review on sample_set.json
-# Output: scripts/audit/results/${DATASET}/vlm_validation.json
+# Output: scripts/audit/results/${DATASET}/vlm_corrections.json
 
 # 12. Phase 7: Iterate corrections until targets met (manual)
 # Fix defects, re-run Phases 1-6, repeat until 90% coverage + <5% defects
+# Plan for 2-3 iteration rounds: integrate -> prescreening -> compliance -> fix
 
 # 13. Phase 8: Fill audit report
 cp docs/audit/AUDIT_REPORT_TEMPLATE.md docs/audit/audits/${DATASET}_report.md
@@ -473,9 +684,12 @@ uv run python3 scripts/materialize_reliability_summary.py \
     --force
 # Updates: docs/datasets/source/${DATASET}.md (Reliability & Bottlenecks section)
 
-# 19. Update source doc with audit summary (Section 11 per template v1.4.0)
-# Manually or via dataset-catalog-agent:
-#   - Add/update Section 11 "Layer 2 Audit Summary" with scorecard, defects, VLM results
+# 19. Populate Section 11 (Layer 2 Audit Summary) in source doc
+PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset $DATASET
+# Reads scorecard.json, defect_catalog.json, vlm_corrections.json
+# Generates Section 11 with scorecard table, defect list, VLM summary, cross-dataset findings
+# Use --overwrite to replace existing Section 11, --dry-run to preview
+# Batch mode: --all-missing (only missing) or --all --overwrite (refresh all)
 #   - Verify Section 12 "Reliability & Bottlenecks" was updated by step 18
 #   - Verify language/script section reflects actual LLM-detected distribution
 #   - Verify known issues section includes audit-discovered defects
@@ -544,10 +758,10 @@ PYTHONPATH=. uv run python3 scripts/integrate_{dataset}_enrichments.py \
 |-------|----------|-------|
 | Phase 0: Paper Review | 30-60 min | One-time per dataset |
 | Phase 1-3: Automated Analysis | 5-10 min | Fully automated scripts |
-| Phase 4: Defect Catalog | 1-2 hours | Manual review of artifacts |
-| Phase 4.5: Sample Generation | 1 min | Automated stratified sampling |
-| Phase 5: Integration Script | 2-4 hours | Dataset-specific customization |
-| Phase 6: VLM Inspection | Variable | Scales with dataset size and tier (see Adaptive Sampling Policy) |
+| Phase 4: Defect Catalog + Tier Selection | 1-2 hours | Manual review + select VLM tier |
+| Phase 5: Integration Script | 2-4 hours | Dataset-specific customization, 2-3 iteration rounds |
+| Phase 5.5: Stratified Sampling | 1 min | After integration, on corrected metadata |
+| Phase 6: VLM Inspection | Variable | Scales with dataset size and tier (see Adaptive Sampling + Scale-Aware) |
 | Phase 7: Corrections | Variable | Depends on defect severity |
 | Phase 8: Documentation | 30-60 min | Report writing, index updates |
 | Phase 9: Catalog Update | 15-30 min | Scripts + source doc finalization |
@@ -647,14 +861,23 @@ recomputes even if a `sample_reliability_summary` already exists in the metadata
 
 #### Step 3: Update Source Doc Sections
 
-Manually update `docs/datasets/source/{dataset}.md` per template v1.4.0:
+**Section 11 (automated)**: Run `populate_audit_summary.py` to generate the audit summary:
+
+```bash
+PYTHONPATH=. uv run python3 scripts/audit/populate_audit_summary.py --dataset {dataset}
+# Use --overwrite to replace an existing Section 11
+# Use --dry-run to preview without writing
+# Use --all-missing to batch-populate all datasets missing Section 11
+```
+
+**Remaining sections (manual)**: Update `docs/datasets/source/{dataset}.md` per template v1.4.0:
 
 | Section | Action | Source |
 |---------|--------|--------|
 | 5.3 Language & Script | Update with actual LLM-detected distribution | `{dataset}_stats.json` or `comparison_report.json` |
 | 7. Known Issues | Add "Layer 2 Audit Findings" subsection with defect IDs | `defect_catalog.json` |
 | 8. Layer 2 Annotation Summary | Update enrichment sources, field coverage | Integration script, `automated_screening.json` |
-| **11. Layer 2 Audit Summary** (NEW) | Add scorecard, key defects, VLM results | `scorecard.json`, `defect_catalog.json`, `vlm_corrections.json` |
+| **11. Layer 2 Audit Summary** | **Automated** by `populate_audit_summary.py` (Step 3 above) | `scorecard.json`, `defect_catalog.json`, `vlm_corrections.json` |
 | 12. Reliability & Bottlenecks | Verify materialized by Step 2, add context | `materialize_reliability_summary.py` output |
 
 #### Step 4: Compute Final Scorecard
@@ -689,7 +912,7 @@ The agent validates:
 
 - [ ] `aggregate_layer2_metadata.py` ran successfully → `{dataset}_stats.json` generated
 - [ ] `materialize_reliability_summary.py` updated source doc reliability section
-- [ ] Section 11 (Layer 2 Audit Summary) added/updated with scorecard and defects
+- [ ] `populate_audit_summary.py` generated Section 11 in source doc
 - [ ] Language/script section reflects actual distribution (not just paper claims)
 - [ ] Known issues section includes audit-discovered defects
 - [ ] Final scorecard recomputed after doc updates
@@ -830,6 +1053,6 @@ For audit methodology questions or script issues, see:
 
 ---
 
-**Last Updated**: 2026-02-12
-**Template Version**: 1.2.0
-**Audit Methodology Version**: 2.3.0
+**Last Updated**: 2026-02-14
+**Template Version**: 1.4.0
+**Audit Methodology Version**: 2.4.0

@@ -925,6 +925,7 @@ requests==2.32.5
     #   google-auth
     #   google-genai
     #   huggingface-hub
+    #   image-preprocessing-detector
     #   iterative-telemetry
     #   jupyterlab-server
     #   kaggle

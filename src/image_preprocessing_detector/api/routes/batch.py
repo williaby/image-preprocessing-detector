@@ -6,6 +6,7 @@ Sprint 5.2.3: Batch endpoints
 - GET /batch/{job_id}/result - Get job results
 """
 
+import asyncio
 import tempfile
 import time
 import uuid
@@ -95,12 +96,18 @@ async def process_batch_job(
 
     for idx, (filename, content) in enumerate(files_data):
         try:
-            # Write to temp file
+            # Write to temp file (offload sync I/O to thread)
             ext = Path(filename).suffix.lower()
-            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
-                tmp_file.write(content)
-                tmp_file.flush()
-                tmp_path = Path(tmp_file.name)
+
+            def _write_temp(data: bytes, suffix: str) -> Path:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=suffix
+                ) as tmp_file:
+                    tmp_file.write(data)
+                    tmp_file.flush()
+                    return Path(tmp_file.name)
+
+            tmp_path = await asyncio.to_thread(_write_temp, content, ext)
 
             try:
                 # Process the document

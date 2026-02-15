@@ -51,20 +51,20 @@ def monospace_code_image() -> np.ndarray:
 
     # Row configurations: (indent_index, num_chars)
     rows = [
-        (0, 40),  # def function_name():
-        (1, 35),  #     for i in range(10):
-        (2, 30),  #         result = compute()
-        (2, 25),  #         if result > 0:
-        (1, 35),  #     return result
-        (0, 40),  # class MyClass:
-        (1, 30),  #     def __init__(self):
-        (2, 25),  #         self.x = 0
-        (2, 28),  #         self.y = 0
-        (0, 35),  # def another_function():
-        (1, 32),  #     data = []
-        (2, 28),  #         data.append(x)
-        (1, 30),  #     return data
-        (0, 38),  # # comment line
+        (0, 40),  # top-level function definition
+        (1, 35),  # indented loop statement
+        (2, 30),  # double-indented assignment
+        (2, 25),  # double-indented conditional
+        (1, 35),  # indented return statement
+        (0, 40),  # top-level class definition
+        (1, 30),  # indented method definition
+        (2, 25),  # double-indented attribute init
+        (2, 28),  # double-indented attribute init
+        (0, 35),  # top-level function definition
+        (1, 32),  # indented variable init
+        (2, 28),  # double-indented list append
+        (1, 30),  # indented return statement
+        (0, 38),  # top-level comment line
     ]
 
     y_cursor = 30

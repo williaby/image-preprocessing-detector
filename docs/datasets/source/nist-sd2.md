@@ -119,6 +119,15 @@ _ICON_  ← Special token for non-text content (checkboxes, logos)
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Synthesized IRS 1040 tax forms, exact by construction |
+| **GT Label Coverage** | 100% |
+
 ##### 3. Project Usage
 
 | Aspect | Details |
@@ -357,6 +366,47 @@ N/A - No dataset-specific quality tiers or scoring systems
 | **Color Space** | Binary (1-bit) |
 | **Capture Method** | Scanner (Flatbed) |
 | **Domain** | FIN (Financial/Tax) |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (82.1/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.9 | 25% |  |
+| Field Validity | 92.6 | 25% |  |
+| Doc Completeness | 54.5 | 15% | Below threshold |
+| Defect Rate | 85.0 | 15% |  |
+| Cross-Source Agreement | 73.1 | 10% |  |
+| VLM Accuracy | 90.0 | 10% |  |
+| **Overall** | **82.1** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (2 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| SD2-D01 | layout_detections | HIGH | OPEN |  |
+| SD2-D02 | text_has_content | MEDIUM | OPEN |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/nist-sd2/](../../scripts/audit/results/nist-sd2/)
 
 ---
 

@@ -12,21 +12,53 @@
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "rtl": 26454,
-    "ltr": 56079,
-    "cjk": 7873,
-    "indic": 94236
+  "script_codes": {
+    "Zyyy": 62891,
+    "Arab": 26454,
+    "Beng": 29903,
+    "Guru": 26363,
+    "Deva": 12777,
+    "Jpan": 7873,
+    "Knda": 12413,
+    "Mlym": 15021,
+    "Orya": 25857,
+    "Latn": 29716,
+    "Taml": 9694,
+    "Telu": 9147,
+    "Thai": 22104
   },
-  "language_codes": {},
+  "script_families": {
+    "other": 62891,
+    "arabic": 26454,
+    "indic": 163279,
+    "cjk": 7873,
+    "latin": 29716
+  },
+  "language_codes": {
+    "und": 62891,
+    "ar": 26454,
+    "bn": 29903,
+    "pa": 26363,
+    "hi": 12777,
+    "ja": 7873,
+    "kn": 12413,
+    "ml": 15021,
+    "or": 25857,
+    "en": 29716,
+    "ta": 9694,
+    "te": 9147,
+    "th": 22104
+  },
   "content_flags": {
-    "has_handwriting": 290213
+    "has_handwriting": 152661,
+    "has_table": 4
   },
   "text_scopes": {
     "word": 290213
   },
-  "content_types": {},
+  "content_types": {
+    "handwritten_document": 290213
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -40,23 +72,165 @@
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {
-    "rtl": 9.1,
-    "ltr": 19.3,
-    "cjk": 2.7,
-    "indic": 32.5
+  "script_codes_pct": {
+    "Zyyy": 21.7,
+    "Arab": 9.1,
+    "Beng": 10.3,
+    "Guru": 9.1,
+    "Deva": 4.4,
+    "Jpan": 2.7,
+    "Knda": 4.3,
+    "Mlym": 5.2,
+    "Orya": 8.9,
+    "Latn": 10.2,
+    "Taml": 3.3,
+    "Telu": 3.2,
+    "Thai": 7.6
   },
-  "language_codes_pct": {},
+  "script_families_pct": {
+    "other": 21.7,
+    "arabic": 9.1,
+    "indic": 56.3,
+    "cjk": 2.7,
+    "latin": 10.2
+  },
+  "language_codes_pct": {
+    "und": 21.7,
+    "ar": 9.1,
+    "bn": 10.3,
+    "pa": 9.1,
+    "hi": 4.4,
+    "ja": 2.7,
+    "kn": 4.3,
+    "ml": 5.2,
+    "or": 8.9,
+    "en": 10.2,
+    "ta": 3.3,
+    "te": 3.2,
+    "th": 7.6
+  },
   "text_scopes_pct": {
     "word": 100.0
   },
-  "content_types_pct": {},
+  "content_types_pct": {
+    "handwritten_document": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
-    "has_handwriting": 100.0
+    "has_handwriting": 52.6,
+    "has_table": 0.0
   },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Zyyy",
+      "count": 62891,
+      "percentage": 21.7
+    },
+    {
+      "script": "Beng",
+      "count": 29903,
+      "percentage": 10.3
+    },
+    {
+      "script": "Latn",
+      "count": 29716,
+      "percentage": 10.2
+    },
+    {
+      "script": "Arab",
+      "count": 26454,
+      "percentage": 9.1
+    },
+    {
+      "script": "Guru",
+      "count": 26363,
+      "percentage": 9.1
+    },
+    {
+      "script": "Orya",
+      "count": 25857,
+      "percentage": 8.9
+    },
+    {
+      "script": "Thai",
+      "count": 22104,
+      "percentage": 7.6
+    },
+    {
+      "script": "Mlym",
+      "count": 15021,
+      "percentage": 5.2
+    },
+    {
+      "script": "Deva",
+      "count": 12777,
+      "percentage": 4.4
+    },
+    {
+      "script": "Knda",
+      "count": 12413,
+      "percentage": 4.3
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "und",
+      "count": 62891,
+      "percentage": 21.7
+    },
+    {
+      "language": "bn",
+      "count": 29903,
+      "percentage": 10.3
+    },
+    {
+      "language": "en",
+      "count": 29716,
+      "percentage": 10.2
+    },
+    {
+      "language": "ar",
+      "count": 26454,
+      "percentage": 9.1
+    },
+    {
+      "language": "pa",
+      "count": 26363,
+      "percentage": 9.1
+    },
+    {
+      "language": "or",
+      "count": 25857,
+      "percentage": 8.9
+    },
+    {
+      "language": "th",
+      "count": 22104,
+      "percentage": 7.6
+    },
+    {
+      "language": "ml",
+      "count": 15021,
+      "percentage": 5.2
+    },
+    {
+      "language": "hi",
+      "count": 12777,
+      "percentage": 4.4
+    },
+    {
+      "language": "kn",
+      "count": 12413,
+      "percentage": 4.3
+    }
+  ],
+  "script_family_summary": {
+    "indic": 163279,
+    "other": 62891,
+    "latin": 29716,
+    "arabic": 26454,
+    "cjk": 7873
+  }
 }

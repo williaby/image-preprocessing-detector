@@ -86,6 +86,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_NOT_INITIALIZED_MSG = "Generator not initialized. Call initialize() first."
+
 
 @dataclass
 class GenerationConfig:
@@ -971,7 +973,7 @@ class MultiScriptDocumentGenerator:
             GeneratedSample objects
         """
         if not self._initialized:
-            raise RuntimeError("Generator not initialized. Call initialize() first.")
+            raise RuntimeError(_NOT_INITIALIZED_MSG)
 
         self._stats = GenerationStats()
         layout_types = self.config.layout_types or list(LayoutType)
@@ -1222,7 +1224,7 @@ class MultiScriptDocumentGenerator:
             List of GeneratedSample objects
         """
         if not self._initialized:
-            raise RuntimeError("Generator not initialized. Call initialize() first.")
+            raise RuntimeError(_NOT_INITIALIZED_MSG)
 
         # Temporarily modify config
         original_scripts = self.config.scripts
@@ -1556,7 +1558,7 @@ class MultiScriptDocumentGenerator:
             GeneratedSample or None if failed
         """
         if not self._initialized:
-            raise RuntimeError("Generator not initialized. Call initialize() first.")
+            raise RuntimeError(_NOT_INITIALIZED_MSG)
 
         text_blocks_data, all_scripts, all_languages, script_directions = (
             self._collect_multi_script_text(scripts)

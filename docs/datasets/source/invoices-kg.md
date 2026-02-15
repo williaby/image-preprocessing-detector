@@ -111,6 +111,16 @@ Each manifest contains an array of annotation objects:
 
 **Parser Implementation**: ✅ **Complete** - [`InvoicesKgParser`](../../src/image_preprocessing_detector/annotation/parsers/layout/invoices_kg.py)
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Invoice key-value extraction annotation |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 | Aspect | Details |
@@ -177,6 +187,47 @@ Each manifest contains an array of annotation objects:
 **Preparation Script**: `scripts/prepare_invoice_dataset.py`
 
 **Parser Implementation**: `src/image_preprocessing_detector/annotation/parsers/layout/invoices_kg.py`
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (80.7/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 87.6 | 28% |  |
+| Field Validity | 92.6 | 28% |  |
+| Doc Completeness | 45.5 | 17% | Below threshold |
+| Defect Rate | 85.0 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 80.0 | 11% |  |
+| **Overall** | **80.7** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (2 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| IKG-D01 | layout_detections | HIGH | OPEN |  |
+| IKG-D02 | text_has_content | MEDIUM | OPEN |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/invoices-kg/](../../scripts/audit/results/invoices-kg/)
 
 ---
 

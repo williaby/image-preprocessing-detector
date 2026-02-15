@@ -1,0 +1,212 @@
+{
+  "dataset_name": "cvsi",
+  "total_samples": 10715,
+  "capture_methods": {
+    "camera_smartphone": 10715
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "SCN": 10715
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Arab": 967,
+    "Beng": 1032,
+    "Latn": 1132,
+    "Gujr": 1086,
+    "Deva": 1162,
+    "Knda": 1047,
+    "Orya": 1087,
+    "Guru": 1055,
+    "Taml": 1070,
+    "Telu": 1077
+  },
+  "script_families": {
+    "arabic": 967,
+    "indic": 8616,
+    "latin": 1132
+  },
+  "language_codes": {
+    "ar": 967,
+    "bn": 1032,
+    "en": 1132,
+    "gu": 1086,
+    "hi": 1162,
+    "kn": 1047,
+    "or": 1087,
+    "pa": 1055,
+    "ta": 1070,
+    "te": 1077
+  },
+  "content_flags": {},
+  "text_scopes": {
+    "word": 10715
+  },
+  "content_types": {
+    "scene_text": 10715
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "camera_smartphone": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "SCN": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Arab": 9.0,
+    "Beng": 9.6,
+    "Latn": 10.6,
+    "Gujr": 10.1,
+    "Deva": 10.8,
+    "Knda": 9.8,
+    "Orya": 10.1,
+    "Guru": 9.8,
+    "Taml": 10.0,
+    "Telu": 10.1
+  },
+  "script_families_pct": {
+    "arabic": 9.0,
+    "indic": 80.4,
+    "latin": 10.6
+  },
+  "language_codes_pct": {
+    "ar": 9.0,
+    "bn": 9.6,
+    "en": 10.6,
+    "gu": 10.1,
+    "hi": 10.8,
+    "kn": 9.8,
+    "or": 10.1,
+    "pa": 9.8,
+    "ta": 10.0,
+    "te": 10.1
+  },
+  "text_scopes_pct": {
+    "word": 100.0
+  },
+  "content_types_pct": {
+    "scene_text": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Deva",
+      "count": 1162,
+      "percentage": 10.8
+    },
+    {
+      "script": "Latn",
+      "count": 1132,
+      "percentage": 10.6
+    },
+    {
+      "script": "Orya",
+      "count": 1087,
+      "percentage": 10.1
+    },
+    {
+      "script": "Gujr",
+      "count": 1086,
+      "percentage": 10.1
+    },
+    {
+      "script": "Telu",
+      "count": 1077,
+      "percentage": 10.1
+    },
+    {
+      "script": "Taml",
+      "count": 1070,
+      "percentage": 10.0
+    },
+    {
+      "script": "Guru",
+      "count": 1055,
+      "percentage": 9.8
+    },
+    {
+      "script": "Knda",
+      "count": 1047,
+      "percentage": 9.8
+    },
+    {
+      "script": "Beng",
+      "count": 1032,
+      "percentage": 9.6
+    },
+    {
+      "script": "Arab",
+      "count": 967,
+      "percentage": 9.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "hi",
+      "count": 1162,
+      "percentage": 10.8
+    },
+    {
+      "language": "en",
+      "count": 1132,
+      "percentage": 10.6
+    },
+    {
+      "language": "or",
+      "count": 1087,
+      "percentage": 10.1
+    },
+    {
+      "language": "gu",
+      "count": 1086,
+      "percentage": 10.1
+    },
+    {
+      "language": "te",
+      "count": 1077,
+      "percentage": 10.1
+    },
+    {
+      "language": "ta",
+      "count": 1070,
+      "percentage": 10.0
+    },
+    {
+      "language": "pa",
+      "count": 1055,
+      "percentage": 9.8
+    },
+    {
+      "language": "kn",
+      "count": 1047,
+      "percentage": 9.8
+    },
+    {
+      "language": "bn",
+      "count": 1032,
+      "percentage": 9.6
+    },
+    {
+      "language": "ar",
+      "count": 967,
+      "percentage": 9.0
+    }
+  ],
+  "script_family_summary": {
+    "indic": 8616,
+    "latin": 1132,
+    "arabic": 967
+  }
+}

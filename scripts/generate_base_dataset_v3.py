@@ -70,6 +70,7 @@ JPEG_QUALITY = 95
 DEFAULT_TOTAL = 350_000
 DEFAULT_WORKERS = 4
 DEFAULT_SEED = 42
+DEFAULT_CHUNK_SIZE = 10_000  # Images per chunk to bound memory leaks
 
 # All 27 scripts
 ALL_SCRIPTS = [
@@ -559,6 +560,15 @@ def _parse_main_args() -> argparse.Namespace:
         help="Resume interrupted generation (skip existing samples)",
     )
     parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=DEFAULT_CHUNK_SIZE,
+        help=(
+            f"Images per chunk before restarting workers to reclaim memory "
+            f"(default: {DEFAULT_CHUNK_SIZE:,}). Set to 0 to disable chunking."
+        ),
+    )
+    parser.add_argument(
         "--yes",
         "-y",
         action="store_true",
@@ -706,8 +716,24 @@ def _print_summary(
     return 1 if total_failed > total_generated * 0.01 else 0
 
 
+def _merge_stats(
+    accumulated: list[dict[str, Any]], chunk_stats: list[dict[str, Any]]
+) -> None:
+    """Merge chunk worker stats into accumulated totals.
+
+    Args:
+        accumulated: Running totals (modified in-place).
+        chunk_stats: Stats from the current chunk's workers.
+    """
+    accumulated.extend(chunk_stats)
+
+
 def main() -> int:
-    """Main entry point for base dataset generation."""
+    """Main entry point for base dataset generation.
+
+    Supports chunked generation to prevent OOM: workers are restarted
+    every ``--chunk-size`` images so leaked memory is reclaimed by the OS.
+    """
     args = _parse_main_args()
     _setup_logging(args)
 
@@ -716,49 +742,115 @@ def main() -> int:
     if args.scripts:
         scripts = [s.strip() for s in args.scripts.split(",")]
 
-    # Compute distribution
-    distribution = _compute_distribution(args.total_images, scripts)
-
     # Dry run
     if args.dry_run:
+        distribution = _compute_distribution(args.total_images, scripts)
         _show_distribution_plan(distribution, args.output_dir, args.seed, args.workers)
         return 0
 
-    # Resume check
+    # Determine how many images we need to generate
+    existing_count = 0
     if args.resume:
         existing_count = _check_resume(args.output_dir)
         if existing_count > 0:
             print(f"Found {existing_count:,} existing samples. Resuming...")
-            remaining = max(0, args.total_images - existing_count)
-            if remaining == 0:
-                print("Generation already complete!")
-                return 0
-            distribution = _compute_distribution(remaining, scripts)
+
+    remaining = max(0, args.total_images - existing_count)
+    if remaining == 0:
+        print("Generation already complete!")
+        return 0
 
     # Confirmation
-    total = sum(distribution.values())
-    est_gb = total * 200 / 1024 / 1024 / 1024
+    est_gb = remaining * 200 / 1024 / 1024 / 1024
     if not args.yes:
-        print(f"\nWill generate {total:,} images (~{est_gb:.1f} GB)")
+        print(f"\nWill generate {remaining:,} images (~{est_gb:.1f} GB)")
         print(f"Output: {args.output_dir}")
+        if args.chunk_size > 0:
+            print(f"Chunk size: {args.chunk_size:,} (workers restart each chunk)")
         response = input("Continue? [y/N] ")
         if response.lower() != "y":
             print("Aborted.")
             return 0
 
-    # Create output directory and run generation
+    # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)
     split_registry_path = args.output_dir / "splits.jsonl"
-    samples_per_script = distribution[scripts[0]]
+
+    use_chunking = args.chunk_size > 0
 
     print("=" * 70)
-    print(f"Starting generation: {total:,} images across {args.workers} workers")
+    print(f"Starting generation: {remaining:,} images across {args.workers} workers")
     print(f"Augmenter: {args.augmenter}")
     print(f"Seed: {args.seed}")
+    if use_chunking:
+        print(f"Chunk size: {args.chunk_size:,} (OOM protection)")
     print("=" * 70)
 
     start_time = time.time()
-    all_stats = _run_workers(args, scripts, samples_per_script, split_registry_path)
+    all_stats: list[dict[str, Any]] = []
+    chunk_idx = 0
+
+    while True:
+        # Re-count existing images each iteration for accurate remaining
+        current_count = _check_resume(args.output_dir)
+        remaining = max(0, args.total_images - current_count)
+
+        if remaining == 0:
+            break
+
+        # Determine this chunk's size
+        if use_chunking:
+            chunk_total = min(args.chunk_size, remaining)
+        else:
+            chunk_total = remaining
+
+        # Compute per-script distribution for this chunk
+        chunk_distribution = _compute_distribution(chunk_total, scripts)
+        chunk_per_script = chunk_distribution[scripts[0]]
+
+        if chunk_per_script == 0:
+            break
+
+        # Offset seed per chunk so we don't regenerate identical images
+        chunk_seed = args.seed + chunk_idx * 100_000
+        chunk_args = argparse.Namespace(**vars(args))
+        chunk_args.seed = chunk_seed
+
+        if use_chunking:
+            print(
+                f"\n--- Chunk {chunk_idx + 1}: generating {chunk_total:,} images "
+                f"({current_count:,}/{args.total_images:,} complete) ---"
+            )
+
+        chunk_stats = _run_workers(
+            chunk_args, scripts, chunk_per_script, split_registry_path
+        )
+        _merge_stats(all_stats, chunk_stats)
+
+        chunk_generated = sum(s.get("generated", 0) for s in chunk_stats)
+        chunk_failed = sum(s.get("failed", 0) for s in chunk_stats)
+
+        if use_chunking:
+            elapsed_so_far = time.time() - start_time
+            total_on_disk = _check_resume(args.output_dir)
+            rate = total_on_disk / elapsed_so_far if elapsed_so_far > 0 else 0
+            still_remaining = max(0, args.total_images - total_on_disk)
+            eta_s = still_remaining / rate if rate > 0 else 0
+            print(
+                f"  Chunk done: +{chunk_generated:,} generated, "
+                f"{chunk_failed:,} failed | "
+                f"Total on disk: {total_on_disk:,} | "
+                f"ETA: {eta_s / 3600:.1f}h"
+            )
+
+        chunk_idx += 1
+
+        # If all workers in the chunk failed, bail out to avoid infinite loop
+        if chunk_generated == 0 and chunk_failed == 0:
+            any_errors = any(s.get("error") for s in chunk_stats)
+            if any_errors:
+                logger.error("All workers failed in chunk %d, aborting", chunk_idx)
+                break
 
     manifest_path = _write_manifest(
         args.output_dir, all_stats, args.total_images, args.seed, args.augmenter

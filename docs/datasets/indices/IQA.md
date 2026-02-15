@@ -14,8 +14,9 @@
 | diqa-5000 | 5,500 | ⚠️ Train OK (4,400), test reserved | Unknown | UNK | [diqa-5000.md](../source/diqa-5000.md) |
 | realdae | 1,200 | ✅ Unrestricted (600 pairs) | 📱 Camera 100% | UNK | [realdae.md](../source/realdae.md) |
 | ocr-quality | 1,000 | ✅ Unrestricted | Unknown | UNK | [ocr-quality.md](../source/ocr-quality.md) |
+| q-doc | 4,260 | 🔒 Benchmark-only (test-only) | Unknown | UNK | [q-doc.md](../source/q-doc.md) |
 
-**Total Available for Training**: ~11,000 images
+**Total Available for Training**: ~11,000 images (q-doc is benchmark-only)
 
 **Restriction Legend**:
 
@@ -61,6 +62,7 @@ These datasets don't have explicit quality scores but contain degradation/qualit
 
 - ohr-bench test split (1,712 images): NEVER use for training
 - diqa-5000 test split (~1,100 images): NEVER use for training
+- q-doc (4,260 images): NEVER use for training (benchmark-only, test-only dataset)
 - Used for SigLIP v2 training (just avoid test splits)
 
 **Label Quality**:
@@ -75,3 +77,4 @@ These datasets don't have explicit quality scores but contain degradation/qualit
 ---
 
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

@@ -1,0 +1,80 @@
+{
+  "dataset_name": "docalign12k",
+  "total_samples": 30338,
+  "capture_methods": {
+    "synthetic": 30338
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "GENERAL": 30338
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Zyyy": 30338
+  },
+  "script_families": {
+    "other": 30338
+  },
+  "language_codes": {
+    "und": 30338
+  },
+  "content_flags": {},
+  "text_scopes": {
+    "page": 30338
+  },
+  "content_types": {
+    "printed": 30338
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "synthetic": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "GENERAL": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Zyyy": 100.0
+  },
+  "script_families_pct": {
+    "other": 100.0
+  },
+  "language_codes_pct": {
+    "und": 100.0
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "printed": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Zyyy",
+      "count": 30338,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "und",
+      "count": 30338,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "other": 30338
+  }
+}

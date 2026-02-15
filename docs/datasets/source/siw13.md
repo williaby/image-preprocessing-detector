@@ -75,6 +75,15 @@
 | **Key Value** | **Only source for Tibetan & Hebrew scene text** |
 | **Domain Gap** | Street signs vs documents - requires augmentation |
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Quality Assurance** | Competition-grade script identification annotation |
+| **GT Label Coverage** | 100% (all 16K images with script class labels) |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/language/siw13/` ✅ Extracted
@@ -95,6 +104,46 @@
 | **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
 | **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 | **Docling GPU Extracted** | `metadata_registry/extracted/siw13/` | ✅ Available | Docling GPU: 16,291 OCR records + 5,983 layout images, 9,976 annotations, 3 Docling categories |
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: D (81.0/100) | **Auditor**: claude-opus-4-6
+> **Grade Cap**: B -> D (see notes below)
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 85.7 | 29% |  |
+| Field Validity | 94.0 | 29% |  |
+| Doc Completeness | 36.4 | 18% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | 99.9 | 12% |  |
+| VLM Accuracy | 85.0 | 12% |  |
+| **Overall** | **81.0** | | **Grade D** |
+
+**Grade Cap Applied**:
+> Grade capped from B to D: Critical fields below 75%: domain_level1=0%. Language, script, and domain are critical training stratification fields. Datasets with <75% coverage on any of these fields cannot reliably support diversity-aware training splits or balanced sampling. A contact sheet VLM review or enrichment pipeline must bring these fields above 75% before the dataset can advance beyond Grade D.
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/siw13/](../../scripts/audit/results/siw13/)
+
+---
 
 ##### Reliability & Bottlenecks
 

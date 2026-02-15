@@ -8,18 +8,124 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "UNK": 4260
+    "SCI": 371,
+    "GENERAL": 2376,
+    "EDU": 43,
+    "ADM": 657,
+    "FIN": 570,
+    "MED": 17,
+    "LEG": 171,
+    "TEC": 49,
+    "PER": 5,
+    "TAX": 1
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 4260
+  "script_codes": {
+    "Latn": 3967,
+    "Beng": 109,
+    "Deva": 5,
+    "Hant": 104,
+    "Hans": 35,
+    "Jpan": 23,
+    "Hani": 8,
+    "Kana": 1,
+    "Arab": 5,
+    "Hang": 3
   },
-  "language_codes": {},
-  "content_flags": {},
-  "text_scopes": {},
-  "content_types": {},
+  "script_families": {
+    "latin": 3967,
+    "indic": 114,
+    "cjk": 174,
+    "arabic": 5
+  },
+  "language_codes": {
+    "en": 3178,
+    "as": 109,
+    "fi": 4,
+    "nl": 8,
+    "da": 10,
+    "hne": 5,
+    "zh": 137,
+    "lt": 4,
+    "lv": 2,
+    "gl": 1,
+    "et": 8,
+    "yue": 10,
+    "oc": 1,
+    "ja": 24,
+    "kab": 1,
+    "ltg": 1,
+    "unk": 196,
+    "de": 1,
+    "fr": 500,
+    "sv": 1,
+    "ar": 1,
+    "la": 18,
+    "ro": 1,
+    "mt": 14,
+    "hu": 1,
+    "eo": 1,
+    "sk": 2,
+    "lb": 1,
+    "ko": 3,
+    "ast": 1,
+    "fa": 4,
+    "li": 2,
+    "ilo": 1,
+    "nb": 2,
+    "af": 2,
+    "hr": 1,
+    "lij": 1,
+    "id": 1,
+    "nn": 1,
+    "ss": 1
+  },
+  "content_flags": {
+    "has_figure": 2313,
+    "has_table": 314
+  },
+  "text_scopes": {
+    "page": 4260
+  },
+  "content_types": {
+    "scientific_paper": 33,
+    "unknown": 724,
+    "research_paper": 277,
+    "research_report": 65,
+    "printed": 1425,
+    "letter": 613,
+    "memo": 92,
+    "receipt": 531,
+    "lab_report": 6,
+    "invoice": 33,
+    "annual_report": 6,
+    "insurance_claim": 7,
+    "legal_document": 49,
+    "unk": 4,
+    "court_filing": 38,
+    "legal_correspondence": 6,
+    "technical_specification": 4,
+    "specifications": 3,
+    "manual": 41,
+    "prescription": 2,
+    "technical_report": 2,
+    "lab_results": 3,
+    "personal_document": 2,
+    "datasheet": 1,
+    "recipe": 245,
+    "textbook": 30,
+    "worksheet": 4,
+    "exam": 5,
+    "bank_statement": 1,
+    "contract": 1,
+    "lab_result": 1,
+    "tax_form": 1,
+    "advertisement": 1,
+    "legal_claim": 1,
+    "medical_record": 1,
+    "insurance claim": 2
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -29,20 +135,235 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "UNK": 100.0
+    "SCI": 8.7,
+    "GENERAL": 55.8,
+    "EDU": 1.0,
+    "ADM": 15.4,
+    "FIN": 13.4,
+    "MED": 0.4,
+    "LEG": 4.0,
+    "TEC": 1.2,
+    "PER": 0.1,
+    "TAX": 0.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {
-    "ltr": 100.0
+  "script_codes_pct": {
+    "Latn": 93.1,
+    "Beng": 2.6,
+    "Deva": 0.1,
+    "Hant": 2.4,
+    "Hans": 0.8,
+    "Jpan": 0.5,
+    "Hani": 0.2,
+    "Kana": 0.0,
+    "Arab": 0.1,
+    "Hang": 0.1
   },
-  "language_codes_pct": {},
-  "text_scopes_pct": {},
-  "content_types_pct": {},
+  "script_families_pct": {
+    "latin": 93.1,
+    "indic": 2.7,
+    "cjk": 4.1,
+    "arabic": 0.1
+  },
+  "language_codes_pct": {
+    "en": 74.6,
+    "as": 2.6,
+    "fi": 0.1,
+    "nl": 0.2,
+    "da": 0.2,
+    "hne": 0.1,
+    "zh": 3.2,
+    "lt": 0.1,
+    "lv": 0.0,
+    "gl": 0.0,
+    "et": 0.2,
+    "yue": 0.2,
+    "oc": 0.0,
+    "ja": 0.6,
+    "kab": 0.0,
+    "ltg": 0.0,
+    "unk": 4.6,
+    "de": 0.0,
+    "fr": 11.7,
+    "sv": 0.0,
+    "ar": 0.0,
+    "la": 0.4,
+    "ro": 0.0,
+    "mt": 0.3,
+    "hu": 0.0,
+    "eo": 0.0,
+    "sk": 0.0,
+    "lb": 0.0,
+    "ko": 0.1,
+    "ast": 0.0,
+    "fa": 0.1,
+    "li": 0.0,
+    "ilo": 0.0,
+    "nb": 0.0,
+    "af": 0.0,
+    "hr": 0.0,
+    "lij": 0.0,
+    "id": 0.0,
+    "nn": 0.0,
+    "ss": 0.0
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "scientific_paper": 0.8,
+    "unknown": 17.0,
+    "research_paper": 6.5,
+    "research_report": 1.5,
+    "printed": 33.5,
+    "letter": 14.4,
+    "memo": 2.2,
+    "receipt": 12.5,
+    "lab_report": 0.1,
+    "invoice": 0.8,
+    "annual_report": 0.1,
+    "insurance_claim": 0.2,
+    "legal_document": 1.2,
+    "unk": 0.1,
+    "court_filing": 0.9,
+    "legal_correspondence": 0.1,
+    "technical_specification": 0.1,
+    "specifications": 0.1,
+    "manual": 1.0,
+    "prescription": 0.0,
+    "technical_report": 0.0,
+    "lab_results": 0.1,
+    "personal_document": 0.0,
+    "datasheet": 0.0,
+    "recipe": 5.8,
+    "textbook": 0.7,
+    "worksheet": 0.1,
+    "exam": 0.1,
+    "bank_statement": 0.0,
+    "contract": 0.0,
+    "lab_result": 0.0,
+    "tax_form": 0.0,
+    "advertisement": 0.0,
+    "legal_claim": 0.0,
+    "medical_record": 0.0,
+    "insurance claim": 0.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
-  "content_flags_pct": {},
+  "content_flags_pct": {
+    "has_figure": 54.3,
+    "has_table": 7.4
+  },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 3967,
+      "percentage": 93.1
+    },
+    {
+      "script": "Beng",
+      "count": 109,
+      "percentage": 2.6
+    },
+    {
+      "script": "Hant",
+      "count": 104,
+      "percentage": 2.4
+    },
+    {
+      "script": "Hans",
+      "count": 35,
+      "percentage": 0.8
+    },
+    {
+      "script": "Jpan",
+      "count": 23,
+      "percentage": 0.5
+    },
+    {
+      "script": "Hani",
+      "count": 8,
+      "percentage": 0.2
+    },
+    {
+      "script": "Deva",
+      "count": 5,
+      "percentage": 0.1
+    },
+    {
+      "script": "Arab",
+      "count": 5,
+      "percentage": 0.1
+    },
+    {
+      "script": "Hang",
+      "count": 3,
+      "percentage": 0.1
+    },
+    {
+      "script": "Kana",
+      "count": 1,
+      "percentage": 0.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 3178,
+      "percentage": 74.6
+    },
+    {
+      "language": "fr",
+      "count": 500,
+      "percentage": 11.7
+    },
+    {
+      "language": "unk",
+      "count": 196,
+      "percentage": 4.6
+    },
+    {
+      "language": "zh",
+      "count": 137,
+      "percentage": 3.2
+    },
+    {
+      "language": "as",
+      "count": 109,
+      "percentage": 2.6
+    },
+    {
+      "language": "ja",
+      "count": 24,
+      "percentage": 0.6
+    },
+    {
+      "language": "la",
+      "count": 18,
+      "percentage": 0.4
+    },
+    {
+      "language": "mt",
+      "count": 14,
+      "percentage": 0.3
+    },
+    {
+      "language": "da",
+      "count": 10,
+      "percentage": 0.2
+    },
+    {
+      "language": "yue",
+      "count": 10,
+      "percentage": 0.2
+    }
+  ],
+  "script_family_summary": {
+    "latin": 3967,
+    "cjk": 174,
+    "indic": 114,
+    "arabic": 5
+  }
 }

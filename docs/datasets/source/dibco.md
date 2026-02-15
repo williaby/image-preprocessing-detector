@@ -116,6 +116,16 @@ DIBCO/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | Competition organizers |
+| **Quality Assurance** | DIBCO competition binarization ground truth masks |
+| **GT Label Coverage** | 100% |
+
 #### Dataset Statistics
 
 ##### 4.1 Split Coverage
@@ -209,6 +219,42 @@ DIBCO/
 | **Color Space** | RGB (64%), Binary (36%) |
 | **Capture Method** | Scanner (Flatbed) |
 | **Domain** | Historical Documents |
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (86.4/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 94.6 | 33% |  |
+| Field Validity | 100.0 | 33% |  |
+| Doc Completeness | 54.5 | 20% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 80.0 | 13% |  |
+| **Overall** | **86.4** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A (no VLM inspection performed)
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/dibco/](../../scripts/audit/results/dibco/)
+
+---
 
 ##### Reliability & Bottlenecks
 

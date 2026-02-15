@@ -49,6 +49,15 @@
 - **Weaknesses**: Video keyframes may have compression artifacts, not traditional documents
 - **Complementary Datasets**: im2latex (formulas), MathVerse (geometry), DocLayNet (layout)
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | PDF extraction from textbook content |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `01_base_data/educational/`
@@ -76,6 +85,47 @@
 | **Color Space** | RGB |
 | **Capture Method** | Born-digital |
 | **Domain** | EDU (Educational/STEM) |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (86.2/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.7 | 28% |  |
+| Field Validity | 100.0 | 28% |  |
+| Doc Completeness | 45.5 | 17% | Below threshold |
+| Defect Rate | 97.4 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 11% |  |
+| **Overall** | **86.2** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (1 deferred, 1 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | layout_detections | MEDIUM | OPEN | No layout detections available |
+| D02 | text_has_content | MEDIUM | DEFERRED | No text transcription labels available |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/multimodal-textbook/](../../scripts/audit/results/multimodal-textbook/)
 
 ---
 

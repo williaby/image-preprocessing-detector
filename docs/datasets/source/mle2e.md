@@ -105,6 +105,16 @@ mle2e/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Scene text annotation with 4 scripts |
+| **GT Label Coverage** | 100% |
+
 ---
 
 #### 3. Project Usage
@@ -440,6 +450,42 @@ mle2e/
 - Combine with other script datasets for balanced training
 - 1,816 samples is relatively small - augmentation recommended
 - Pre-segmented format ideal for text line classification (no detection stage needed)
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (85.3/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 90.9 | 29% |  |
+| Field Validity | 93.9 | 29% |  |
+| Doc Completeness | 45.5 | 18% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | 99.6 | 12% |  |
+| VLM Accuracy | 95.0 | 12% |  |
+| **Overall** | **85.3** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/mle2e/](../../scripts/audit/results/mle2e/)
 
 ---
 

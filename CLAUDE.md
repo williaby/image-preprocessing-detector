@@ -800,6 +800,16 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - Training recipes by phase with metadata coverage indicators (⭐⭐⭐/⭐⭐/⭐)
   - Critical filters (benchmark-reserved, license restrictions)
 
+**Tier 1b - Ground Truth Summary**: [docs/datasets/GROUND_TRUTH_SUMMARY.md](docs/datasets/GROUND_TRUTH_SUMMARY.md)
+- **Purpose**: Ground truth label provenance and annotation methodology
+- **Use For**: "How was dataset X annotated?", "Which datasets have human GT labels?"
+- **Size**: ~250 lines, ~6K tokens
+- **Contains**:
+  - Annotation method legend (Human, Crowdsourced, Synthetic, Automatic, Paired GT, Mixed)
+  - Ground truth labels grouped by training task
+  - Full dataset index with provenance tiers
+  - Annotation quality indicators (IAA metrics where available)
+
 **Tier 2 - Processing Status**: [docs/datasets/DATASET_PROCESSING_STATUS.md](docs/datasets/DATASET_PROCESSING_STATUS.md)
 - **Purpose**: Current conversion/extraction status tracking
 - **Use For**: "Is ohr-bench ready?", "What's blocking cocotext?"
@@ -842,6 +852,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 3. **Current state, blockers, or conversion status?** → Read Tier 2 (Processing Status)
 4. **Naming confusion or aliases?** → Read Tier 3 (Naming Standard)
 5. **Deep technical details for ONE dataset?** → Read Tier 4 (Individual source file)
+6. **Ground truth provenance or annotation method?** → Read Tier 1b (Ground Truth Summary)
 
 **Token Efficiency**:
 

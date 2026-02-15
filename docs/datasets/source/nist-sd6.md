@@ -93,6 +93,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 0/Tier 1 |
+| **Annotator Details** | NIST (synthesized forms + real handprint overlays) |
+| **Quality Assurance** | Standardized NIST collection protocol |
+| **GT Label Coverage** | 100% |
+
 ##### Dataset Statistics
 
 | Metric | Value |
@@ -303,6 +313,47 @@
 - **Field Completion Rate**: Percentage of non-empty fields per form (varies by form type)
 - **Handwriting Density**: Estimated by counting non-empty field values
 - **Form Type Stratification**: Recommend splitting by form type for train/val/test to ensure coverage
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (83.3/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.9 | 25% |  |
+| Field Validity | 92.6 | 25% |  |
+| Doc Completeness | 63.6 | 15% | Below threshold |
+| Defect Rate | 85.0 | 15% |  |
+| Cross-Source Agreement | 71.1 | 10% |  |
+| VLM Accuracy | 90.0 | 10% |  |
+| **Overall** | **83.3** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+> **Total**: 2 defects (2 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| SD6-D01 | layout_detections | HIGH | OPEN |  |
+| SD6-D02 | text_has_content | MEDIUM | OPEN |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/nist-sd6/](../../scripts/audit/results/nist-sd6/)
 
 ---
 

@@ -254,7 +254,7 @@ def validate_dataset(
 
 def _verify_sample_hashes(
     table: pa.Table,
-    dataset_name: str,
+    _dataset_name: str,
     num_samples: int,
     settings: Any,
 ) -> tuple[int, int]:

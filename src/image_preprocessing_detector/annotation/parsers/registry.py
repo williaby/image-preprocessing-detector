@@ -223,6 +223,14 @@ class ParserRegistry:
         except ImportError as e:
             logger.warning("Failed to load formula parsers: %s", e)
 
+        # Correction parsers (shadow removal, dewarping)
+        try:
+            from .correction import register_correction_parsers
+
+            register_correction_parsers(registry)
+        except ImportError as e:
+            logger.warning("Failed to load correction parsers: %s", e)
+
         # Generic parser for datasets without specific label formats
         try:
             from .generic import register_generic_parser

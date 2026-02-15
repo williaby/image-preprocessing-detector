@@ -396,8 +396,22 @@ def aggregate_dataset_metadata(
     Returns:
         Dictionary with aggregated statistics
     """
-    # Find Layer 2 metadata file for this dataset
+    # Find Layer 2 metadata file for this dataset.
+    # Dataset names may use hyphens (e.g. "pucit-ohul") while the actual
+    # metadata file on disk uses underscores (e.g. "pucit_ohul_metadata.json").
+    # Try the canonical name first, then fall back to underscore variant.
     metadata_file = layer2_dir / f"{dataset_name}_metadata.json"
+
+    if not metadata_file.exists():
+        underscore_name = dataset_name.replace("-", "_")
+        alt_file = layer2_dir / f"{underscore_name}_metadata.json"
+        if alt_file.exists():
+            metadata_file = alt_file
+            if verbose:
+                print(
+                    f"ℹ️  Using underscore variant: {alt_file.name} "
+                    f"(canonical: {dataset_name}_metadata.json)"
+                )
 
     if not metadata_file.exists():
         if verbose:

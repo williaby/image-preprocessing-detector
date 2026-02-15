@@ -43,6 +43,15 @@
 - **Critical Use**: **Japanese vertical text must be labeled as 0° (upright), not 270°**
 - **Phase 10A Role**: Provides 1,250 vertical text samples for orientation detection
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Synthetic |
+| **Provenance Tier** | Tier 0 (Exact) |
+| **Quality Assurance** | Synthetic Japanese OCR with orientation labels, exact by construction |
+| **GT Label Coverage** | 100% (orientation labels for all images; synthetic OCR text exact by construction) |
+
 ##### Data Locations
 
 | Data Type | Path | Status | Notes |
@@ -109,6 +118,61 @@
 | LEG | 33 | 1.7% |
 | FIN | 22 | 1.1% |
 | TAX | 3 | 0.2% |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: D (86.3/100) | **Auditor**: claude-opus-4-6
+> **Grade Cap**: B -> D (see notes below)
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 89.6 | 25% |  |
+| Field Validity | 96.3 | 25% |  |
+| Doc Completeness | 45.5 | 15% | Below threshold |
+| Defect Rate | 89.9 | 15% |  |
+| Cross-Source Agreement | 100.0 | 10% |  |
+| VLM Accuracy | 95.0 | 10% |  |
+| **Overall** | **86.3** | | **Grade D** |
+
+**Grade Cap Applied**:
+> Grade capped from B to D: Critical fields below 75%: domain_level1=65%. Language, script, and domain are critical training stratification fields. Datasets with <75% coverage on any of these fields cannot reliably support diversity-aware training splits or balanced sampling. A contact sheet VLM review or enrichment pipeline must bring these fields above 75% before the dataset can advance beyond Grade D.
+
+###### 11.2 Key Defects
+
+> **Total**: 12 defects (8 resolved, 3 deferred, 1 partial)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | layout_detections[*].class_name | MEDIUM | RESOLVED |  |
+| D02 | capture_method | MEDIUM | RESOLVED |  |
+| D03 | domain_level1 | CRITICAL | PARTIALLY_RESOLVED |  |
+| D04 | iso639_language | HIGH | RESOLVED |  |
+| D05 | iso15924_script | HIGH | RESOLVED |  |
+| D06 | script_family | MEDIUM | RESOLVED |  |
+| D07 | content_flags.* | LOW | RESOLVED |  |
+| D08 | quality_overall_score | MEDIUM | DEFERRED |  |
+| D09 | resolution_category, resolution_pixels | LOW | DEFERRED |  |
+| D10 | text_scope, text_scope_content_type | MEDIUM | RESOLVED |  |
+| D11 | split | LOW | RESOLVED |  |
+| D12 | layout_bbox_valid | MEDIUM | DEFERRED |  |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/jssoda/](../../scripts/audit/results/jssoda/)
 
 ---
 

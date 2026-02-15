@@ -8,16 +8,28 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "UNK": 212
+    "GOV": 212
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {},
-  "language_codes": {},
-  "content_flags": {},
-  "text_scopes": {},
-  "content_types": {},
+  "script_codes": {
+    "Latn": 212
+  },
+  "script_families": {
+    "latin": 212
+  },
+  "language_codes": {
+    "en": 212
+  },
+  "content_flags": {
+    "has_handwriting": 212
+  },
+  "text_scopes": {
+    "document": 212
+  },
+  "content_types": {
+    "historical_document": 212
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -27,20 +39,46 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "UNK": 100.0
+    "GOV": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {},
-  "language_codes_pct": {},
-  "text_scopes_pct": {},
-  "content_types_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0
+  },
+  "script_families_pct": {
+    "latin": 100.0
+  },
+  "language_codes_pct": {
+    "en": 100.0
+  },
+  "text_scopes_pct": {
+    "document": 100.0
+  },
+  "content_types_pct": {
+    "historical_document": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
-  "content_flags_pct": {},
+  "content_flags_pct": {
+    "has_handwriting": 100.0
+  },
   "top_degradations": [],
-  "top_scripts": [],
-  "top_languages": [],
-  "script_family_summary": {}
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 212,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 212,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 212
+  }
 }

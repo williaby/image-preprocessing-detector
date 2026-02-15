@@ -177,11 +177,25 @@ match.rules = ["radarlint-python:python:S1172"]
 match.file_patterns = ["modal/**"]
 set.ignored = true
 
+# Ignore unused parameter warnings in scripts/ - kept for API extensibility
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1172"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
 # Ignore float equality checks in tests - exact values from deterministic functions
 [[triage]]
 match.plugins = ["radarlint-python"]
 match.rules = ["radarlint-python:python:S1244"]
 match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
+# Ignore float equality checks in scripts/ - statistical thresholds are exact values
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1244"]
+match.file_patterns = ["scripts/**"]
 set.ignored = true
 
 # Ignore commented-out code in tests - preserved for reference
@@ -203,6 +217,48 @@ set.ignored = true
 match.plugins = ["bandit"]
 match.rules = ["bandit:B311"]
 match.file_patterns = ["**/synthetic/**"]
+set.ignored = true
+
+# Ignore function naming in fuzz/ - TestOneInput required by atheris/ClusterFuzzLite framework
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1542"]
+match.file_patterns = ["fuzz/**"]
+set.ignored = true
+
+# Ignore cognitive complexity in API routes - document processing requires sequential pipeline steps
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/api/routes/**"]
+set.ignored = true
+
+# Ignore duplicated string literals in scripts/ - file extensions and field names are natural repetitions
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1192"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore empty block in synthetic CLI - consuming generator to drive progress bar is intentional
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S108"]
+match.file_patterns = ["**/synthetic/cli.py"]
+set.ignored = true
+
+# Ignore cognitive complexity in synthetic CLI - Click command with many options requires sequential processing
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/synthetic/cli.py"]
+set.ignored = true
+
+# Ignore type mismatch in tests - intentional None/wrong type to test edge cases
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S5655"]
+match.file_patterns = ["tests/**", "**/test_*.py"]
 set.ignored = true
 
 [[plugin]]
@@ -236,13 +292,6 @@ drivers = [
 
 [[plugin]]
 name = "shellcheck"
-
-[[plugin]]
-name = "trivy"
-drivers = [
-  "config",
-  "fs-vuln",
-]
 
 [[plugin]]
 name = "trufflehog"

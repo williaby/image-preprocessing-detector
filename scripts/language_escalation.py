@@ -937,7 +937,7 @@ class EscalationManager:
             )
 
         # Tier 2: PAID Vision LLM
-        tier2_accepted, tier2_result, tier2_model, cost = self._try_tier2(
+        tier2_accepted, _, _, _ = self._try_tier2(
             image_path,
             local_result,
             metrics,

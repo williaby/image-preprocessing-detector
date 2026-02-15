@@ -240,6 +240,33 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
             "has_handwriting",
         ),
     },
+    "funsd-plus": {
+        "image_base_path": _BASE_DATA_DIR / "forms" / "funsd_plus",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "funsd_plus_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "funsd_plus_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "funsd_plus_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "funsd_plus"
+            / "layout_batch_0.json"
+        ),
+        "docling_ocr_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "funsd_plus"
+            / "ocr_batch_0.jsonl"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "resolution_category",
+            "has_handwriting",
+        ),
+    },
     "pubtabnet": {
         "image_base_path": DEFAULT_IMAGE_ROOT / "pubtabnet",
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "pubtabnet_metadata.json"),
@@ -304,7 +331,22 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "ohr-bench": {
         "image_base_path": DEFAULT_IMAGE_ROOT / "ohr-bench",
-        "metadata_json_path": (DEFAULT_METADATA_ROOT / "ohr_bench_metadata.json"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "ohr-bench_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "ohr-bench_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "ohr-bench"
+            / "layout_batch_0.json"
+        ),
+        "docling_ocr_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "ohr-bench"
+            / "ocr_batch_0.jsonl"
+        ),
         "stratification_axes": (
             "capture_method",
             "domain_level1",
@@ -395,6 +437,558 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         "stratification_axes": (
             "capture_method",
             "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Correction / Shadow Removal / Dewarping (6)
+    # -----------------------------------------------------------------
+    "anyphotodoc6300": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "anyphotodoc6300"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "anyphotodoc6300_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "docalign12k": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "docalign12k"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "docalign12k_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "wsrd": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "wsrd"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "wsrd_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "warpdoc": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "warpdoc"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "warpdoc_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "docreal": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "docreal"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "docreal_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "sd7k": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "sd7k"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "sd7k_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Text Detection / Scene Text
+    # -----------------------------------------------------------------
+    "cocotext": {
+        "image_base_path": (_BASE_DATA_DIR / "text_detection" / "cocotext"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "cocotext_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "cocotext_llm_enrichment.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "cocotext_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Degraded / Archival Documents
+    # -----------------------------------------------------------------
+    "tobacco800": {
+        "image_base_path": (_BASE_DATA_DIR / "degraded" / "tobacco800"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "tobacco800_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "tobacco800_llm_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Quality Benchmarks
+    # -----------------------------------------------------------------
+    "smartdoc-qa": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/02_benchmark_only/smartdoc-qa")
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "smartdoc-qa_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "smartdoc-qa_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "smartdoc-qa_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "resolution_category",
+            "quality_overall",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Table / Layout Datasets
+    # -----------------------------------------------------------------
+    "tablebank": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "tablebank",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "tablebank_metadata.json"),
+        "stratification_axes": (
+            "domain_level1",
+            "resolution_category",
+            "has_table",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Financial / Forms / Invoice Datasets
+    # -----------------------------------------------------------------
+    "financebench": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "financebench",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "financebench_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "financebench_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "financebench_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    "invoices-kg": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "invoices-kg",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "invoices-kg_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "invoices_kg_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "invoices_kg_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "invoices-kaggle"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    "nist-sd2": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "nist-sd2",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "nist-sd2_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "nist-sd2_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "nist-sd2"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "has_handwriting",
+        ),
+    },
+    "nist-sd6": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "nist-sd6",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "nist_sd6_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "nist-sd6_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "nist-sd6"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "has_handwriting",
+        ),
+    },
+    "nist-sd19": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "nist-sd19",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "nist_sd19_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "nist-sd19_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Multilingual / Script Detection
+    # -----------------------------------------------------------------
+    "mdiw13": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "mdiw13"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "mdiw13_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "mdiw13_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "mdiw13"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "capture_method",
+        ),
+    },
+    "siw13": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "siw13"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "siw13_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "siw13_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent / "extracted" / "siw13" / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "capture_method",
+        ),
+    },
+    "cvsi": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "cvsi"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "cvsi_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "cvsi_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent / "extracted" / "cvsi" / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "capture_method",
+        ),
+    },
+    "hindi-synth": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "hindi_ocr_synthetic"),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "hindi_ocr_synthetic_metadata.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "hindi_ocr_synthetic_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "hindi-synth"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "resolution_category",
+            "domain_level1",
+        ),
+    },
+    "yarmouk": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "yarmouk_ocr"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "yarmouk_ocr_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "yarmouk_ocr_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "yarmouk"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "domain_level1",
+        ),
+    },
+    "muharaf": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "muharaf"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "muharaf_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "muharaf_llm_enrichment.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "muharaf_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "muharaf"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "has_handwriting",
+        ),
+    },
+    "mle2e": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "mle2e"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "mle2e_metadata.json"),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent / "extracted" / "mle2e" / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "capture_method",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Handwriting Datasets
+    # -----------------------------------------------------------------
+    "iam": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "iam",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "iam_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "iam_llm_enrichment.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "iam_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    "tibhcr": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "tibhcr",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "tibhcr_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "tibhcr_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "tibhcr"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    "hasy": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "hasy",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "hasyv2_metadata.json"),
+        "stratification_axes": (
+            "resolution_category",
+            "capture_method",
+        ),
+    },
+    "pucit-ohul": {
+        "image_base_path": (_BASE_DATA_DIR / "language" / "pucit_ohul"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "pucit_ohul_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "pucit-ohul_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "pucit-ohul"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "has_handwriting",
+        ),
+    },
+    "signatr6k": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "signatr6k",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "signatr6k_metadata.json"),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "signatr6k"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "has_handwriting",
+            "capture_method",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Math / Formula Datasets
+    # -----------------------------------------------------------------
+    "im2latex": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "im2latex",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "im2latex_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "im2latex_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "resolution_category",
+            "domain_level1",
+        ),
+    },
+    "mathverse": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "mathverse",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "mathverse_metadata.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "mathverse_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "resolution_category",
+            "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Binarization / Degradation Benchmarks
+    # -----------------------------------------------------------------
+    "dibco": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "dibco",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "dibco_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "dibco_llm_enrichment.json"),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent / "extracted" / "dibco" / "layout_batch_0.json"
+        ),
+        "sample_size": 212,
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Document Classification / ID Documents
+    # -----------------------------------------------------------------
+    "rvl-cdip": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "rvl-cdip",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "rvl_cdip_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "rvl-cdip_llm_enrichment.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "rvl-cdip_language_enrichment.json"
+        ),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "rvl-cdip"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "capture_method",
+        ),
+    },
+    "midv500": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "midv500",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "midv500_metadata.json"),
+        "llm_enrichment_path": (DEFAULT_METADATA_ROOT / "midv500_llm_enrichment.json"),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "midv500_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Benchmarks / Multi-Task
+    # -----------------------------------------------------------------
+    "omnidocbench": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "omnidocbench",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "omnidocbench_metadata.json"),
+        "docling_layout_path": (
+            DEFAULT_METADATA_ROOT.parent
+            / "extracted"
+            / "omnidocbench"
+            / "layout_batch_0.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "capture_method",
+        ),
+    },
+    "multimodal-textbook": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "multimodal-textbook",
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "multimodal_textbook_metadata.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "multimodal_textbook_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    "ocr-quality": {
+        "image_base_path": DEFAULT_IMAGE_ROOT / "ocr-quality",
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "ocr_quality_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "ocr-quality_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "ocr_quality_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "quality_overall",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # New Datasets (2025-2026 Onboarding)
+    # -----------------------------------------------------------------
+    "indicdlp": {
+        "image_base_path": (_BASE_DATA_DIR / "layout" / "indicdlp"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "indicdlp_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "document-haystack": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/02_benchmark_only/document-haystack")
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "document-haystack_metadata.json"
+        ),
+        "stratification_axes": (
+            "domain_level1",
+            "capture_method",
+        ),
+    },
+    "staindoc": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "staindoc"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "staindoc_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "q-doc": {
+        "image_base_path": (Path("/mnt/e/image_detection/02_benchmark_only/q-doc")),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "q-doc_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "drccbi": {
+        "image_base_path": (_BASE_DATA_DIR / "correction" / "drccbi"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "drccbi_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    "markushgrapher": {
+        "image_base_path": (_BASE_DATA_DIR / "specialized" / "markushgrapher"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "markushgrapher_metadata.json"),
+        "stratification_axes": (
+            "domain_level1",
+            "capture_method",
         ),
     },
 }

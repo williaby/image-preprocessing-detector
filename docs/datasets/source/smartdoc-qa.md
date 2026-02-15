@@ -114,6 +114,16 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Research-specific | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Question-answer pair creation on mobile-captured documents |
+| **GT Label Coverage** | 100% |
+
 #### Dataset Statistics
 
 | Metric | Value |
@@ -176,6 +186,100 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 | **Color Space** | RGB |
 | **Capture Method** | Camera (Smartphone) |
 | **Domain** | General Documents |
+
+#### 5. Data Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | JPEG |
+| **Resolution** | Camera-native (3264-4128 × 2448-3096 px) |
+| **Color Space** | RGB |
+| **Metadata Format** | Per-image JSON (Layer 2) + HuggingFace Parquet |
+| **Storage** | GCS bucket + local E:\ drive |
+
+#### 6. License
+
+| Attribute | Value |
+|-----------|-------|
+| **License Type** | Research Only |
+| **Source** | L3i Lab, Université de La Rochelle |
+| **Commercial Use** | Not permitted |
+| **Citation** | Nayef et al. CBDAR@ICDAR 2015 |
+
+#### 7. Limitations
+
+- **Benchmark only**: NEVER train on this dataset - designed exclusively for evaluation/benchmarking
+- **Controlled environment**: Robotic arm capture does not represent real-world smartphone usage
+- **Limited document types**: Only 3 categories (modern documents, receipts, old administrative letters)
+- **Partial OCR/layout coverage**: Docling extracted 70% OCR and 54% layout (failures need investigation)
+- **No official splits**: Dataset does not define train/val/test partitions
+
+#### 8. Processing Status
+
+| Step | Status | Notes |
+|------|--------|-------|
+| **Image Storage** | ✅ Complete | 4,260 JPEG images |
+| **Base Metadata** | ✅ Complete | 4,260 samples annotated |
+| **LLM Enrichment** | ✅ Complete | Domain, language, script enrichment |
+| **Language Enrichment** | ✅ Complete | OpenLID language detection |
+| **Docling OCR** | ⚠️ Partial | 70% coverage (3,000/4,280) |
+| **DocLayout-YOLO** | ⚠️ Partial | 54% coverage (2,305/4,280) |
+| **VLM Inspection** | ❌ Not started | Content flags unverified |
+
+#### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-02-10 | Initial Layer 2 metadata documentation |
+| v1.1 | 2026-02-13 | Added format, license, limitations, processing, version history sections |
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: A (91.9/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 99.5 | 25% |  |
+| Field Validity | 93.6 | 25% |  |
+| Doc Completeness | 100.0 | 15% |  |
+| Defect Rate | 84.0 | 15% |  |
+| Cross-Source Agreement | 68.5 | 10% | Below threshold |
+| VLM Accuracy | 92.0 | 10% |  |
+| **Overall** | **91.9** | | **Grade A** |
+
+###### 11.2 Key Defects
+
+> **Total**: 8 defects (7 accepted, 1 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| DEF-001 | split | low | ACCEPTED | Split is 'unknown' for all 4,260 samples. Dataset does not define official train |
+| DEF-002 | domain_level1 | medium | ACCEPTED | domain_level1 is 'UNK' for all 4,260 samples. LLM enrichment domain confidence i |
+| DEF-003 | script_family | medium | OPEN | script_family uses invalid enum value 'ltr' instead of 'latin' for all 4,260 sam |
+| DEF-004 | layout_detections | low | ACCEPTED | layout_detections empty for 26.7% of samples (1,136/4,260). Partial DocLayout-YO |
+| DEF-005 | text_has_content | low | ACCEPTED | text_has_content is false for all 4,260 samples. No OCR extraction integrated. |
+| DEF-006 | orientation_class | low | ACCEPTED | orientation_class not populated for all 4,260 samples. |
+| DEF-007 | image_properties_color_mode | low | ACCEPTED | image_properties.color_mode not populated for all 4,260 samples. |
+| DEF-008 | handwriting_present | low | ACCEPTED | handwriting_present not populated for all 4,260 samples. |
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- **KI-007**: ACCEPTED --
+- **KI-008**: OPEN --
+
+**Audit Artifacts**: [scripts/audit/results/smartdoc-qa/](../../scripts/audit/results/smartdoc-qa/)
+
+---
 
 ##### Reliability & Bottlenecks
 

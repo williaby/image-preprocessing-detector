@@ -2,7 +2,7 @@
   "dataset_name": "hindi_ocr_synthetic",
   "total_samples": 80008,
   "capture_methods": {
-    "born_digital": 80008
+    "synthetic": 80008
   },
   "quality_scores": [],
   "degradation_types": {},
@@ -26,14 +26,14 @@
     "line": 80008
   },
   "content_types": {
-    "printed": 80008
+    "synthetic_ocr": 80008
   },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
   "degradation_summaries": {},
   "capture_methods_pct": {
-    "born_digital": 100.0
+    "synthetic": 100.0
   },
   "degradation_types_pct": {},
   "domains_pct": {
@@ -54,7 +54,7 @@
     "line": 100.0
   },
   "content_types_pct": {
-    "printed": 100.0
+    "synthetic_ocr": 100.0
   },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},

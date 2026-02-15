@@ -119,6 +119,7 @@ class CaptureMethod(str, Enum):
     CAMERA_PROFESSIONAL = "camera_professional"
     CAMERA_SMARTPHONE = "camera_smartphone"
     FAX = "fax"
+    SYNTHETIC = "synthetic"
     UNKNOWN = "unknown"
 
 
@@ -219,7 +220,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "omnidocbench": {
         "path": BENCHMARK_ONLY / "omnidocbench",
-        "pattern": "extracted_images/*.png",  # After extraction
+        "pattern": "extracted_images/*",  # After extraction (PNG + JPG)
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
@@ -592,6 +593,20 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         # Hindi, and 3 others
         "original_labels_parser": "parse_mlt19_labels",
     },
+    # === COCO-Text (MS COCO scene text annotations) ===
+    "cocotext": {
+        "path": BASE_DATA / "text_detection/cocotext",
+        "pattern": "images/**/*.jpg",  # train2014/ and val2014/ subdirs
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,  # Natural scene photos
+        "domain": DomainLevel1.UNKNOWN,  # Scene text from various contexts
+        "has_human_mos": False,
+        "has_handwriting": True,  # Has "handwritten" text class label
+        "text_scope": "word",  # Word-level annotations with bboxes
+        "is_multilingual": True,  # english / not_english coarse labels
+        "default_language_code": "en",  # Majority English
+        "default_script_name": "Latn",
+        "original_labels_parser": "parse_cocotext_labels",
+    },
     # === HierText (hierarchical scene text) ===
     "hiertext": {
         "path": BASE_DATA / "text_detection/hiertext",
@@ -715,6 +730,55 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_financebench_labels",
         "default_language_code": "en",  # US SEC filings
         "default_script_name": "Latn",
+    },
+    # === Correction / Shadow Removal / Dewarping datasets ===
+    "anyphotodoc6300": {
+        "path": BASE_DATA / "correction/anyphotodoc6300",
+        "pattern": "init_*/*.[jJ][pP][gG]",  # Camera-captured warped; mixed .JPG/.jpg
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_anyphotodoc6300_labels",
+    },
+    "docalign12k": {
+        "path": BASE_DATA / "correction/docalign12k",
+        "pattern": "distorted_hard/**/*.jpg",  # Distorted inputs; flat/ has GT
+        "capture_method": CaptureMethod.SYNTHETIC,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_docalign12k_labels",
+    },
+    "wsrd": {
+        "path": BASE_DATA / "correction/wsrd",
+        "pattern": "**/*.png",  # NTIRE 2023+2024 shadow/shadow_free pairs
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_wsrd_labels",
+    },
+    "warpdoc": {
+        "path": BASE_DATA / "correction/warpdoc",
+        "pattern": "WarpDoc/image/**/*.jpg",  # Camera-captured warped; digital/ has GT
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_warpdoc_labels",
+    },
+    "docreal": {
+        "path": BASE_DATA / "correction/docreal",
+        "pattern": "DocReal/distorted/*.png",  # 201 distorted; scanned/ has 50 GT
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_docreal_labels",
+    },
+    "sd7k": {
+        "path": BASE_DATA / "correction/sd7k",
+        "pattern": "**/input/*.png",  # Only input images, not ground truth targets
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_sd7k_labels",
     },
 }
 
@@ -3889,6 +3953,338 @@ def parse_muharaf_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     return labels
 
 
+def parse_anyphotodoc6300_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse AnyPhotoDoc6300 labels from directory/filename patterns.
+
+    Structure: init_{1-8}/*.JPG (distorted), flat/{category}/*.png (GT)
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "anyphotodoc6300"
+    labels.raw_labels["capture_method"] = "camera_smartphone"
+
+    path_parts = image_path.parts
+    for part in path_parts:
+        if part.startswith("init_"):
+            labels.raw_labels["image_type"] = "input_distorted"
+            labels.raw_labels["batch"] = part  # e.g. init_1
+            break
+        if part == "flat":
+            labels.raw_labels["image_type"] = "ground_truth"
+            # Category is the subdirectory under flat/
+            try:
+                flat_idx = path_parts.index("flat")
+                if flat_idx + 1 < len(path_parts) - 1:
+                    labels.raw_labels["category"] = path_parts[flat_idx + 1]
+            except (ValueError, IndexError):
+                pass
+            break
+
+    return labels
+
+
+def parse_docalign12k_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse DocAlign12k labels from directory/filename patterns.
+
+    Structure: distorted_hard/{group_num}/*.jpg  (flat/ has GT)
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "docalign12k"
+    labels.raw_labels["capture_method"] = "synthetic"
+    labels.raw_labels["correction_task"] = "alignment"
+
+    path_parts = image_path.parts
+    for i, part in enumerate(path_parts):
+        if part.lower() == "distorted_hard":
+            labels.raw_labels["image_type"] = "input_distorted"
+            labels.raw_labels["is_degraded"] = True
+            if i + 1 < len(path_parts):
+                labels.raw_labels["distortion_group"] = path_parts[i + 1]
+        elif part.lower() == "flat":
+            labels.raw_labels["image_type"] = "ground_truth"
+            labels.raw_labels["is_degraded"] = False
+
+    return labels
+
+
+def parse_wsrd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse WSRD shadow removal labels from directory/filename patterns.
+
+    Structure: ntire{2023,2024}/{split}_{input,gt}/*.png
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "wsrd"
+    labels.raw_labels["capture_method"] = "camera_smartphone"
+    labels.raw_labels["is_degraded"] = True
+    labels.raw_labels["degradation_type"] = "shadow"
+
+    path_parts = image_path.parts
+    for part in path_parts:
+        if part.startswith("ntire"):
+            labels.raw_labels["challenge_year"] = part  # ntire2023 or ntire2024
+        # Detect split+type from directory names like train_input, val_gt, etc.
+        if "_input" in part.lower():
+            labels.raw_labels["image_type"] = "input_shadow"
+            split = part.lower().replace("_input", "")
+            if split in ("train", "val", "test"):
+                labels.raw_labels["split"] = split
+        elif "_gt" in part.lower():
+            labels.raw_labels["image_type"] = "ground_truth"
+            split = part.lower().replace("_gt", "")
+            if split in ("train", "val", "test"):
+                labels.raw_labels["split"] = split
+
+    return labels
+
+
+def parse_warpdoc_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse WarpDoc labels from directory/filename patterns.
+
+    Structure: WarpDoc/{image,digital,digital_margin}/{distortion_type}/*.jpg
+    Distortion types: curved, fold, incomplete, perspective, random, rotate
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "warpdoc"
+    labels.raw_labels["capture_method"] = "camera_smartphone"
+
+    path_parts = image_path.parts
+    for part in path_parts:
+        if part == "image":
+            labels.raw_labels["image_type"] = "input_warped"
+        elif part == "digital":
+            labels.raw_labels["image_type"] = "ground_truth"
+        elif part == "digital_margin":
+            labels.raw_labels["image_type"] = "ground_truth_margin"
+        if part.lower() in (
+            "curved",
+            "fold",
+            "incomplete",
+            "perspective",
+            "random",
+            "rotate",
+        ):
+            labels.raw_labels["distortion_type"] = part.lower()
+
+    return labels
+
+
+def parse_docreal_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse DocReal labels from directory/filename patterns.
+
+    Structure: DocReal/{distorted,scanned}/*.png
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "docreal"
+    labels.raw_labels["capture_method"] = "camera_smartphone"
+
+    parent = image_path.parent.name
+    if parent == "distorted":
+        labels.raw_labels["image_type"] = "input_distorted"
+    elif parent == "scanned":
+        labels.raw_labels["image_type"] = "ground_truth"
+
+    return labels
+
+
+def parse_sd7k_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse SD7K shadow removal labels from directory/filename patterns.
+
+    Structure: {train,test}/{input,target}/*.png (IMG_XXXX.png)
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "sd7k"
+    labels.raw_labels["capture_method"] = "camera_smartphone"
+    labels.raw_labels["is_degraded"] = True
+    labels.raw_labels["degradation_type"] = "shadow"
+
+    path_parts = image_path.parts
+    for part in path_parts:
+        if part.lower() in ("train", "test"):
+            labels.raw_labels["split"] = part.lower()
+        if part.lower() == "input":
+            labels.raw_labels["image_type"] = "input_shadow"
+        elif part.lower() == "target":
+            labels.raw_labels["image_type"] = "ground_truth"
+
+    return labels
+
+
+# ---------------------------------------------------------------------------
+# COCO-Text v2 cached parser
+# ---------------------------------------------------------------------------
+_cocotext_cache: dict[str, dict[str, Any]] = {}
+
+
+def _load_cocotext_cached(dataset_path: Path) -> dict[str, Any]:
+    """Load and cache cocotext.v2.json, indexing by image filename stem.
+
+    Returns a dict mapping filename_stem -> {
+        "set": "train"/"val"/"test",
+        "annotations": [list of annotation dicts],
+    }
+    """
+    cache_key = str(dataset_path)
+    if cache_key in _cocotext_cache:
+        return _cocotext_cache[cache_key]
+
+    json_path = dataset_path / "cocotext.v2.json"
+    if not json_path.exists():
+        logger.warning("cocotext.v2.json not found at %s", json_path)
+        _cocotext_cache[cache_key] = {}
+        return {}
+
+    logger.info("Loading cocotext.v2.json (this may take a moment)...")
+    with open(json_path, encoding="utf-8") as f:
+        raw = json.load(f)
+
+    imgs = raw.get("imgs", {})
+    anns = raw.get("anns", {})
+    img_to_anns = raw.get("imgToAnns", {})
+
+    index: dict[str, Any] = {}
+    for img_id_str, img_info in imgs.items():
+        file_name = img_info.get("file_name", "")
+        stem = Path(file_name).stem
+        ann_ids = img_to_anns.get(img_id_str, [])
+        annotations = [anns[str(aid)] for aid in ann_ids if str(aid) in anns]
+        index[stem] = {
+            "set": img_info.get("set", "unknown"),
+            "annotations": annotations,
+        }
+
+    _cocotext_cache[cache_key] = index
+    logger.info("  Cached %d COCO-Text annotated images", len(index))
+    return index
+
+
+def parse_cocotext_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse COCO-Text v2 labels for a single image.
+
+    COCO-Text structure:
+        cocotext/
+            cocotext.v2.json    <- annotation file (53,686 images, 201K words)
+            images/
+                train2014/*.jpg  <- MS COCO 2014 images
+                val2014/*.jpg
+
+    Per-annotation fields:
+        class: "machine printed" | "handwritten"
+        language: "english" | "not_english" | "na"
+        legibility: "legible" | "illegible"
+        utf8_string: text transcription
+
+    Extracts:
+        - language_code: en if majority English, und otherwise
+        - raw_labels: split, text_count, has_handwriting, has_scene_text,
+          languages_present, machine_printed_count, handwritten_count,
+          legible_count, illegible_count
+        - text_instances: word-level annotations with bbox and text
+    """
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    stem = image_path.stem
+    cocotext_data = _load_cocotext_cached(dataset_path)
+    img_data = cocotext_data.get(stem)
+
+    if not img_data:
+        # Image exists in COCO 2014 but has no COCO-Text annotations
+        # Determine split from directory name
+        path_str = str(image_path)
+        if "train2014" in path_str:
+            labels.raw_labels["split"] = "train"
+        elif "val2014" in path_str:
+            labels.raw_labels["split"] = "val"
+        labels.raw_labels["has_cocotext_annotation"] = False
+        labels.raw_labels["text_count"] = 0
+        return labels
+
+    # Split from cocotext.v2.json (train/val/test)
+    labels.raw_labels["split"] = img_data["set"]
+    labels.raw_labels["has_cocotext_annotation"] = True
+
+    annotations = img_data["annotations"]
+    labels.raw_labels["text_count"] = len(annotations)
+
+    # Count by class and language
+    machine_printed = 0
+    handwritten = 0
+    legible = 0
+    illegible = 0
+    languages: list[str] = []
+    text_instances: list[dict[str, Any]] = []
+
+    for ann in annotations:
+        text_class = ann.get("class", "")
+        if text_class == "machine printed":
+            machine_printed += 1
+        elif text_class == "handwritten":
+            handwritten += 1
+
+        legibility = ann.get("legibility", "")
+        if legibility == "legible":
+            legible += 1
+        elif legibility == "illegible":
+            illegible += 1
+
+        lang = ann.get("language", "na")
+        languages.append(lang)
+
+        text_instances.append(
+            {
+                "bbox": ann.get("bbox", []),
+                "text": ann.get("utf8_string", ""),
+                "language": lang,
+                "class": text_class,
+                "legibility": legibility,
+            }
+        )
+
+    labels.raw_labels["machine_printed_count"] = machine_printed
+    labels.raw_labels["handwritten_count"] = handwritten
+    labels.raw_labels["legible_count"] = legible
+    labels.raw_labels["illegible_count"] = illegible
+    labels.raw_labels["has_handwriting"] = handwritten > 0
+    labels.raw_labels["has_scene_text"] = len(annotations) > 0
+
+    # Language aggregation
+    unique_langs = sorted(set(languages))
+    labels.raw_labels["languages_present"] = unique_langs
+
+    # Derive primary language code
+    english_count = languages.count("english")
+    if english_count > 0 and english_count >= len(languages) * 0.5:
+        labels.language_code = "en"
+    elif "not_english" in unique_langs:
+        labels.language_code = "und"
+    else:
+        labels.language_code = "und"
+
+    labels.text_instances = text_instances
+
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -3928,6 +4324,13 @@ LABEL_PARSERS = {
     "parse_realdae_labels": parse_realdae_labels,
     "parse_omnidocbench_labels": parse_omnidocbench_labels,
     "parse_muharaf_labels": parse_muharaf_labels,
+    "parse_anyphotodoc6300_labels": parse_anyphotodoc6300_labels,
+    "parse_docalign12k_labels": parse_docalign12k_labels,
+    "parse_wsrd_labels": parse_wsrd_labels,
+    "parse_warpdoc_labels": parse_warpdoc_labels,
+    "parse_docreal_labels": parse_docreal_labels,
+    "parse_sd7k_labels": parse_sd7k_labels,
+    "parse_cocotext_labels": parse_cocotext_labels,
 }
 
 

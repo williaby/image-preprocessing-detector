@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 
 class TestCeleryConfig:

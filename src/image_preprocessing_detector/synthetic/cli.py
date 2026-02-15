@@ -47,7 +47,7 @@ from image_preprocessing_detector.synthetic.generator import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-checking-only imports needed currently
 
 
 # Default output path on E drive (v3: 350K pristine base)
@@ -190,7 +190,7 @@ def synthetic() -> None:
     is_flag=True,
     help="Enable random orientation augmentation (0/90/180/270 with class labels)",
 )
-def generate(
+def generate(  # nosonar  # Click CLI params are framework-driven
     output: Path | None,
     scripts: str | None,
     samples_per_script: int,
@@ -352,7 +352,6 @@ def generate(
     # Generate
     click.echo(f"\nGenerating {len(script_list) * samples_per_script} samples...")
 
-    generated = 0
     with click.progressbar(
         generator.generate(),
         length=len(script_list) * samples_per_script,
@@ -360,7 +359,7 @@ def generate(
         show_pos=True,
     ) as progress:
         for _sample in progress:
-            generated += 1
+            pass  # consume generator to drive progress bar
 
     # Get stats
     stats = generator.get_statistics()

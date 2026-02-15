@@ -51,7 +51,7 @@
 | Label Type | Format | Granularity | Description |
 |------------|--------|-------------|-------------|
 | **Text Transcriptions** | Arrow (string list) | Word | Ground truth word text (OCR not needed) |
-| **Bounding Boxes** | Arrow (float64 nested list) | Word | Word-level coordinates (format: [x, y, width, height] or [x1, y1, x2, y2] - TBD) |
+| **Bounding Boxes** | Arrow (float64 nested list) | Word | Word-level coordinates (format: [x1, y1, x2, y2] normalized 0-1000) |
 | **NER Tags** | ClassLabel | Word | BIO tagging scheme (9 classes) |
 | **Grouped Words** | Arrow (nested structure) | Entity | Entity-level groupings (optional) |
 | **Labels** | Arrow (int64 list) | Word/Entity | Alternative labeling (details TBD) |
@@ -84,9 +84,9 @@
     "B-HEADER", "I-HEADER",      # Header entity
     "B-OTHER", "I-OTHER"         # Other entity
   ])),
-  "grouped_words": Sequence(...),  # Entity groupings (structure TBD)
-  "labels": Sequence(Value("int64")),  # Alternative labels (details TBD)
-  "image_id": Value("int64")  # Unique image identifier
+  "grouped_words": Sequence(Sequence(Value("int64"))),  # Entity-level word index groupings
+  "labels": Sequence(Value("int64")),  # 4-class labels: 0=Header, 1=Question, 2=Answer, 3=Other
+  "linked_groups": Sequence(Sequence(Value("int64")))  # Entity linking groups
 }
 ```
 
@@ -102,7 +102,7 @@
 | `grouped_words` | Nested | Optional | Entity-level groupings |
 | `labels` | List[int64] | Optional | Alternative labeling scheme |
 
-> **Bbox Format Note**: Coordinate format needs verification (likely [x, y, width, height] COCO format or [x1, y1, x2, y2] PASCAL VOC).
+> **Bbox Format Note**: Coordinates are in [x1, y1, x2, y2] format, normalized to 0-1000 scale.
 
 **BIO Tagging Scheme**:
 
@@ -119,9 +119,19 @@
 | ✅ NER tags | `entities.key_value` or custom | P2 | BIO tags → entity extraction |
 | ✅ Image ID | `provenance.source_id` | P3 | Linking to source |
 | ⚠️ Entity bboxes | `layout_detections.bbox` | P2 | Derivable from word bboxes + BIO tags |
-| ❌ Entity linking | - | N/A | Not available in HF format |
+| ⚠️ Entity linking | - | N/A | `linked_groups` field present in schema but not populated in HF format |
 
-**Critical Gap**: Parser currently expects FUNSD JSON format but dataset uses HuggingFace Arrow. **Rewrite required** (deferred - 6-8h effort).
+**Parser**: `FunsdPlusParser` at `src/image_preprocessing_detector/annotation/parsers/layout/funsd_plus.py` handles HuggingFace Arrow format directly.
+
+###### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Extended FUNSD annotation |
+| **GT Label Coverage** | 100% |
 
 ##### 3. Dataset Statistics
 
@@ -164,7 +174,7 @@
 - **Size**: 420 MB
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Extended form understanding training data
-- **Parser**: ✅ `parse_funsd_plus_labels` (extracts field boxes, entities from JSON annotations)
+- **Parser**: ✅ `FunsdPlusParser` (extracts words, bboxes, NER tags, entity groupings from HuggingFace Arrow)
 
 ##### Data Locations
 
@@ -209,3 +219,71 @@
 |-----:|-------|-------------:|---------------:|
 | 1 | `layout_detections` | 98.5% | 0.550 |
 | 2 | `has_table` | 1.5% | 0.800 |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Audit Version**: 2.3.0 | **Date**: 2026-02-14 | **Grade**: B (86.4/100)
+
+###### Scorecard
+
+| Dimension | Score | Weight | Weighted |
+|-----------|-------|--------|----------|
+| Field Coverage | 100.0 | 0.28 | 27.78 |
+| Field Validity | 100.0 | 0.28 | 27.78 |
+| Doc Completeness | 63.6 | 0.17 | 10.61 |
+| Defect Rate | 86.0 | 0.17 | 14.33 |
+| Cross Source Agreement | — | — | (excluded) |
+| VLM Accuracy | 52.8 | 0.11 | 5.87 |
+| **Total** | **86.4** | **1.00** | **86.36** |
+
+###### Defect Summary
+
+| ID | Severity | Description | Resolution |
+|----|----------|-------------|------------|
+| D01 | CRITICAL | COCO batch ID collision across 6 layout batches | FIXED: Per-batch processing |
+| D02 | CRITICAL | Filename mismatch metadata vs layout/OCR batches | FIXED: Arrow filename mapping |
+| D03 | HIGH | has_handwriting=false but ~47% contain handwriting | DEFERRED: Requires detection model |
+| D04 | HIGH | Schema v2.1 missing v2.3.0 fields | FIXED: Integration script v1.1.0 |
+| D05 | MEDIUM | 2/36 samples contain German text, labeled English | ACCEPTED: <1% of dataset |
+| D06 | MEDIUM | LLM enrichment not available | ACCEPTED: Documentation defaults sufficient |
+| D07 | LOW | script_family was "ltr" (text direction, not script) | FIXED: KI-008 re-derivation |
+
+###### v2.3.0 Field Coverage
+
+| Field | Populated | Source |
+|-------|-----------|--------|
+| `split` | 100% (1026 train, 113 test) | Filename convention |
+| `capture_method` | 100% (scanner_adf) | Dataset documentation |
+| `domain_level1` | 100% (ADM) | Dataset documentation |
+| `iso639_language` | 100% (en) | Known language |
+| `script_family` | 100% (latin) | Derived from ISO 15924 |
+| `layout_detections` | 100% (177,724 annotations) | DocLayout-YOLO batch extraction |
+| `orientation_class` | 100% (portrait) | Dataset documentation |
+| `image_properties_color_mode` | 100% (color) | Original file metadata |
+| `handwriting_present` | 100% (false) | Default (no detection model) |
+| `text_has_content` | 100% | Docling OCR extraction |
+| `text_direction` | 100% (ltr) | v2.3.0 new field |
+| `text_directions_present` | 100% (["ltr"]) | v2.3.0 new field |
+
+###### VLM Inspection
+
+- **Method**: 4 contact sheets (3x3 @ 500px) + 3 individual deep inspections
+- **Sample accuracy**: 52.8% (19/36 fully correct)
+- **Field-level accuracy**: 92.5% (233/252 field-checks correct)
+- **Key issue**: has_handwriting systematically incorrect (forms dataset with inherent handwritten answers)
+- **Language**: 2 German samples detected (test_0099, train_0742)
+
+###### Integration Script
+
+- **Script**: `scripts/integrate_funsd_plus_enrichments.py` (v1.1.0)
+- **Key feature**: HuggingFace Arrow filename mapping (metadata uses renamed files, batches use original HF IDs)
+- **Sources**: DocLayout-YOLO layout (6 batches), Docling OCR (6 batches), dataset documentation, language enrichment
+
+###### Version History
+
+| Version | Date | Change |
+|---------|------|--------|
+| v2.1 | 2026-02-08 | Initial base metadata |
+| v2.3.0 | 2026-02-14 | Full audit: integration v2, v2.3.0 fields, VLM inspection |

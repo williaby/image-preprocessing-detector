@@ -1,0 +1,53 @@
+# Training Criticality Configuration
+# Version: 1.0.0
+# Last Updated: 2026-02-14
+#
+# Defines how training_criticality (1-5) is computed from task index
+# references. Higher criticality = higher audit priority.
+
+version: "1.0.0"
+
+# Role weights for task index references
+role_weights:
+  primary: 2.0        # Listed in "## Primary" section
+  supplementary: 1.0  # Listed in "## Additional" / "## Supplementary" sections
+  benchmark: 0.5      # Listed in benchmark index or marked benchmark-only
+
+# Task indices to scan (relative to project root)
+task_indices:
+  - docs/datasets/indices/IQA.md
+  - docs/datasets/indices/LAYOUT.md
+  - docs/datasets/indices/TABLES.md
+  - docs/datasets/indices/TEXT_DETECTION.md
+  - docs/datasets/indices/HANDWRITING.md
+  - docs/datasets/indices/SCRIPTS.md
+  - docs/datasets/indices/BENCHMARKS.md
+
+# Section markers that identify role type
+section_markers:
+  primary:
+    - "## Primary"
+    - "## Core"
+    - "## Main"
+  supplementary:
+    - "## Additional"
+    - "## Supplementary"
+    - "## Supporting"
+    - "## Complementary"
+  benchmark:
+    - "## Benchmark"
+    - "## Evaluation"
+    - "## Test-Only"
+
+# Criticality scale thresholds (weighted score -> criticality level)
+# Score = sum of (role_weight * count) across all task indices
+scale_thresholds:
+  5: 6.0    # Referenced in 3+ tasks as primary
+  4: 4.0    # Referenced in 2+ tasks as primary
+  3: 2.0    # Referenced in 1 task as primary or 2+ as supplementary
+  2: 1.0    # Referenced in at least one task
+  1: 0.0    # Not referenced in any task index
+
+# Manual overrides (dataset -> criticality)
+# Use when automated scoring doesn't reflect true importance
+overrides: {}

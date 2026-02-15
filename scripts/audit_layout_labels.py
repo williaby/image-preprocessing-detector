@@ -312,7 +312,6 @@ def _format_report_header(report: AuditReport) -> list[str]:
     lines.append("")
 
     datasets_with = len(report.dataset_stats)
-    datasets_without = len(report.datasets_without_layout)
     total = report.total_datasets
     pct = (datasets_with / total * 100) if total > 0 else 0
 

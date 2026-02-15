@@ -9,7 +9,7 @@ bhutan-afs specifics:
   - Docling layout extraction (COCO format, 8 categories, 392 annotations)
   - Docling OCR extraction (JSONL, 135 records, 100% success)
   - No LLM enrichment, no language enrichment
-  - BILINGUAL: English (103 pages) + Dzongkha/Tibetan (32 pages)
+  - BILINGUAL: Dzongkha/Tibetan (120 pages) + English (4 pages) + blank (1 page)
   - VLM Phase 6: 13 true figure positives, 14 false positives (KI-003)
   - capture_method override: born_digital (fixes BA-D01)
   - Schema upgrade: v2.1 -> v2.3.0
@@ -66,9 +66,9 @@ LANGUAGE_ENRICHMENT_PATH = (
 DOCLING_LAYOUT_PATH = REGISTRY_DIR / "extracted" / "bhutan-afs" / "layout_batch_0.json"
 DOCLING_OCR_PATH = REGISTRY_DIR / "extracted" / "bhutan-afs" / "ocr_batch_0.jsonl"
 
-SCRIPT_VERSION = "2.0.0"
-ENRICHMENT_VERSION_TAG = "integrated_v3"
-ENRICHMENT_VERSION_NUMBER = 3
+SCRIPT_VERSION = "3.0.0"
+ENRICHMENT_VERSION_TAG = "integrated_v4"
+ENRICHMENT_VERSION_NUMBER = 4
 
 # Target schema version after integration
 TARGET_SCHEMA_VERSION = "2.3.0"
@@ -146,49 +146,37 @@ KNOWN_CAPTURE_METHOD: str | None = "born_digital"
 # --- KI-006: LLM formula semantic confusion (MEDIUM) ----------------
 VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 
-# --- VLM Discovery: Bilingual dataset (Dzongkha + English) ----------
-# Pages with primarily Dzongkha (Tibetan script) content.
-# Discovered during VLM Phase 6 inspection. iso639=dzo, iso15924=Tibt.
-DZONGKHA_PAGE_STEMS: frozenset[str] = frozenset(
+# --- VLM Language Audit (2026-02-12): Corrected language classification ---
+# Full VLM review of all 125 active pages revealed the ENTIRE AFS document
+# (all 115 active pages) is in Dzongkha/Tibetan script. The original
+# DZONGKHA_PAGE_STEMS (32 pages) only captured covers, chart labels, and
+# rotated tables — missing that ALL financial tables/notes use Tibetan script
+# with Arabic numerals. The Tax Act is bilingual (alternating eng/dzo pages).
+#
+# Corrected approach: default ALL pages to Dzongkha, list ONLY the English
+# and blank exceptions. See: tmp_cleanup/.tmp-bhutan-afs-vlm-language-audit-20260212.md
+#
+# Previous (WRONG):  32 dzo (23.7%) / 103 eng (76.3%)
+# Corrected:        120 dzo (96.0%) /   4 eng (3.2%) / 1 blank (0.8%)
+
+ENGLISH_PAGE_STEMS: frozenset[str] = frozenset(
     {
-        # AFS pages 1-18: Introduction/cover sections in Dzongkha
-        "AFS_2024-25-2 1_p000",
-        "AFS_2024-25-2 2_p000",
-        "AFS_2024-25-2 3_p000",
-        _AFS_PAGE_4,
-        "AFS_2024-25-2 5_p000",
-        "AFS_2024-25-2 6_p000",
-        "AFS_2024-25-2 7_p000",
-        "AFS_2024-25-2 8_p000",
-        "AFS_2024-25-2 9_p000",
-        "AFS_2024-25-2 10_p000",
-        "AFS_2024-25-2 11_p000",
-        "AFS_2024-25-2 12_p000",
-        "AFS_2024-25-2 13_p000",
-        "AFS_2024-25-2 14_p000",
-        "AFS_2024-25-2 15_p000",
-        "AFS_2024-25-2 16_p000",
-        "AFS_2024-25-2 17_p000",
-        "AFS_2024-25-2 18_p000",
-        # AFS pages with Dzongkha chart labels
-        "AFS_2024-25-2 51_p000",
-        "AFS_2024-25-2 61_p000",
-        "AFS_2024-25-2 62_p000",
-        # AFS pages with rotated Dzongkha tables
-        "AFS_2024-25-2 67_p000",
-        "AFS_2024-25-2 73_p000",
-        "AFS_2024-25-2 78_p000",
-        # AFS pages 86-93: Dzongkha financial statements
-        "AFS_2024-25-2 86_p000",
-        "AFS_2024-25-2 87_p000",
-        "AFS_2024-25-2 88_p000",
-        "AFS_2024-25-2 89_p000",
-        "AFS_2024-25-2 90_p000",
-        "AFS_2024-25-2 91_p000",
-        "AFS_2024-25-2 92_p000",
-        "AFS_2024-25-2 93_p000",
+        # Tax Act of Bhutan 2021 - English pages only
+        "Tax-Act-of-Bhutan-2021_4_p000",  # Table of Contents (English)
+        "Tax-Act-of-Bhutan-2021_6_p000",  # Preamble + Sections 1-4 (English)
+        "Tax-Act-of-Bhutan-2021_8_p000",  # Schedule 1 - Revision of Sales Tax
+        "Tax-Act-of-Bhutan-2021_10_p000",  # Schedule 1 continuation (English)
     }
 )
+
+BLANK_PAGE_STEMS: frozenset[str] = frozenset(
+    {
+        "Tax-Act-of-Bhutan-2021_2_p000",  # Empty page (registration marks only)
+    }
+)
+
+# Kept for backwards compatibility / audit trail — do NOT use for classification
+_LEGACY_DZONGKHA_PAGE_STEMS_V2: int = 32  # count from v2.0.0 (incorrect)
 
 # --- VLM Discovery: Signature detection ------------------------------
 SIGNATURE_PAGE_STEMS: frozenset[str] = frozenset(
@@ -533,9 +521,13 @@ def resolve_language(
 ) -> tuple[str, str, float, str]:
     """Resolve language/script for bhutan-afs.
 
-    bhutan-afs is a BILINGUAL dataset: English (76%) + Dzongkha (24%).
-    Dzongkha pages identified via VLM Phase 6 visual inspection.
-    Dzongkha uses Tibetan script (ISO 15924: Tibt).
+    bhutan-afs is PREDOMINANTLY Dzongkha: 120 pages (96%) Dzongkha,
+    4 pages (3.2%) English, 1 blank. The entire AFS document (115 active
+    pages) uses Tibetan script. The Tax Act alternates English/Dzongkha.
+
+    Corrected 2026-02-12 via full VLM review of all 125 active pages.
+    Previous classification (32 dzo / 103 eng) was catastrophically wrong —
+    Arabic numerals in financial tables were misinterpreted as English.
 
     Args:
         sample: The full sample dict from L2 metadata.
@@ -566,14 +558,20 @@ def resolve_language(
         if llm_lang and llm_lang != "und":
             return (llm_lang, llm_script or "Latn", 0.65, "llm_vision")
 
-    # --- VLM visual inspection: Dzongkha detection -----------------
+    # --- VLM full audit (2026-02-12): Exception-based classification ---
     filename = sample["source"]["original_filename"]
     filename_stem = Path(filename).stem
-    if filename_stem in DZONGKHA_PAGE_STEMS:
-        return ("dzo", "Tibt", 0.90, "vlm_visual_inspection")
 
-    # --- Dataset documentation fallback (English pages) ------------
-    return ("eng", "Latn", 1.0, "dataset_documentation")
+    # English exceptions: only 4 Tax Act pages
+    if filename_stem in ENGLISH_PAGE_STEMS:
+        return ("eng", "Latn", 0.95, "vlm_full_audit")
+
+    # Blank page exception
+    if filename_stem in BLANK_PAGE_STEMS:
+        return ("und", "Zyyy", 0.95, "vlm_full_audit")
+
+    # --- Default: Dzongkha (96% of dataset) -----------------------
+    return ("dzo", "Tibt", 0.95, "vlm_full_audit")
 
 
 def resolve_capture_method(

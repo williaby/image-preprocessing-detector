@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import pytest
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 from image_preprocessing_detector.detection.orientation_detector import (
     OrientationConfig,

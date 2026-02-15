@@ -107,3 +107,4 @@
 
 *See [LAYOUT.md](LAYOUT.md) for general layout detection datasets*
 *See [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) for complete dataset overview*
+*See [GROUND_TRUTH_SUMMARY.md](../GROUND_TRUTH_SUMMARY.md) for annotation methodology and provenance*

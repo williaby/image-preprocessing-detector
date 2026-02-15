@@ -51,6 +51,16 @@ Standard evaluation protocol: "Large Writer Independent Text Line Recognition Ta
 
 **Split Status**: [NEEDS_VERIFICATION] Split definition files need to be located or generated from writer IDs
 
+##### Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | 657 writers providing handwriting samples |
+| **Quality Assurance** | Structured handwriting collection protocol with writer-independent splits |
+| **GT Label Coverage** | 100% (all images have line-level transcriptions; word and character segmentation available) |
+
 ##### Dataset Statistics
 
 | Metric | Value | Source |
@@ -216,5 +226,41 @@ The `lines.txt` file includes optimal binarization thresholds (gray level) for e
 - Use word-level for detailed segmentation studies (115,320 words)
 - Use component-level for stroke analysis research (unique capability)
 - Respect writer-independent splits to ensure fair evaluation
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: F (36.4/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | - | - | Excluded (no data) |
+| Field Validity | - | - | Excluded (no data) |
+| Doc Completeness | 36.4 | 100% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **36.4** | | **Grade F** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Status**: Deferred -- VLM inspection requires image loading - deferred to manual review. Additionally, IAM lacks base metadata (iam_metadata.json), blocking automated prescreening and compliance checks.
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/iam/](../../scripts/audit/results/iam/)
+
+---
 
 ---

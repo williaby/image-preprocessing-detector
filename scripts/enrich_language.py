@@ -648,8 +648,8 @@ def detect_language_lingua(text: str, detector: Any) -> LanguageDetection:
 
 def _check_mixed_script_language(
     detected_scripts: list[str],
-    detected_languages: list[str],
-    significant_scripts: list[ScriptCount],
+    _detected_languages: list[str],
+    _significant_scripts: list[ScriptCount],
     votes: list[LanguageDetection],
     script_breakdown: list[ScriptCount],
 ) -> MultiLanguageResult | None:

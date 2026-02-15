@@ -22,6 +22,8 @@
 
 **Need quick stats?** → Read [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) first
 
+**Need ground truth provenance?** → Read [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md)
+
 ---
 
 ## Directory Structure
@@ -31,9 +33,10 @@ docs/datasets/
 ├── README.md                              # This file
 ├──
 ├── DATASET_QUICK_REFERENCE.md             # Quick stats, task groups, restrictions
+├── GROUND_TRUTH_SUMMARY.md               # GT label provenance and annotation methods
 ├── DATASET_PROCESSING_STATUS.md           # Conversion status, blockers, ETAs
 ├── DATASET_NAMING_STANDARD.md             # Canonical names, aliases
-├── DATASET_TEMPLATE.md                    # Template for source datasets
+├── DATASET_TEMPLATE.md                    # Template for source datasets (v1.5.0)
 ├──
 ├── TRAINING_DATASET_QUICK_REFERENCE.md    # Training dataset quick stats
 ├── TRAINING_DATASET_CATALOG.md            # Training dataset full docs
@@ -174,6 +177,7 @@ cat docs/datasets/source/{dataset-name}.md
 3. Add to [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md)
 4. Add to relevant task indices (e.g., `indices/IQA.md`)
 5. Update [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md)
+6. Add ground truth entry to [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md)
 
 **Adding new training dataset**:
 
@@ -192,6 +196,7 @@ cat docs/datasets/source/{dataset-name}.md
 | "TableBank details?" | source/tablebank.md | ~500-1K | 98% savings |
 | "All IQA datasets?" | QUICK_REFERENCE.md | ~8K | 82% savings |
 | "Deep technical details?" | source/{dataset}.md | ~500-2K each | 95%+ savings |
+| "How was X annotated?" | GROUND_TRUTH_SUMMARY.md | ~6K | 92% savings |
 
 **Old approach**: Read entire 11,000-line DATASET_CATALOG.md (45K tokens)
 **New approach**: Read only what you need (500-8K tokens typically)

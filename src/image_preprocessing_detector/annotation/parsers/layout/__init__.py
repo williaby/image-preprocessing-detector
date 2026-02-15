@@ -12,6 +12,7 @@ This package contains parsers for datasets with layout/structure annotations:
 - FUNSD+: Extended FUNSD
 - SROIE: Receipt OCR and IE
 - Invoices-KG: Kaggle High-Quality Invoice Images (JSON manifest)
+- IndicDLP: Indic Document Layout Parser (COCO, 42 classes, 12 languages)
 
 Datasets covered:
     - doclaynet
@@ -23,6 +24,7 @@ Datasets covered:
     - funsd_plus
     - sroie
     - invoices-kg / invoices_kaggle
+    - indicdlp
 """
 
 from __future__ import annotations
@@ -44,6 +46,7 @@ def register_layout_parsers(registry: ParserRegistry) -> None:
     from .fintabnet import FinTabNetParser
     from .funsd import FunsdParser
     from .funsd_plus import FunsdPlusParser
+    from .indicdlp import IndicdlpParser
     from .invoices_kg import InvoicesKgParser
     from .pubtabnet import PubTabNetParser
     from .sroie import SroieParser
@@ -58,6 +61,7 @@ def register_layout_parsers(registry: ParserRegistry) -> None:
     registry.register(FunsdPlusParser())
     registry.register(SroieParser())
     registry.register(InvoicesKgParser())
+    registry.register(IndicdlpParser())
 
 
 __all__ = [

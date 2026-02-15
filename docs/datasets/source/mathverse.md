@@ -59,6 +59,16 @@
 | **Text Sensitivity** | HIGH - Mathematical annotations |
 | **Key Challenge** | Fine line detection, geometric precision |
 
+##### Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 0/Tier 1 |
+| **Annotator Details** | Rendered math + human VQA annotation |
+| **Quality Assurance** | Math problem rendering + human verification |
+| **GT Label Coverage** | 100% |
+
 ##### Project Usage
 
 - **Path**: `02_benchmark_only/mathverse/` (BENCHMARK - DO NOT TRAIN)
@@ -86,6 +96,42 @@
 | **Capture Method** | Born-digital |
 | **Domain** | EDU (Educational/Math) |
 | **Content Flags** | Formulas: ✅ 100% |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (86.2/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.3 | 33% |  |
+| Field Validity | 100.0 | 33% |  |
+| Doc Completeness | 45.5 | 20% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 13% |  |
+| **Overall** | **86.2** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/mathverse/](../../scripts/audit/results/mathverse/)
 
 ---
 

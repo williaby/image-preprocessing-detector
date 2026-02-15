@@ -61,6 +61,56 @@
 - **Note**: Excellent variety of real-world Arabic documents
 - **Parser**: ✅ `parse_arabic_docs_labels` (extracts category, language_code from folder structure)
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Mixed |
+| **Provenance Tier** | Tier 1/Tier 2 |
+| **Annotator Details** | Human (titles) + automatic (OCR extraction) |
+| **Quality Assurance** | Title annotation + OCR extraction |
+| **GT Label Coverage** | 100% (document-type labels); 69% (title transcriptions) |
+
+#### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+##### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: D (86.1/100) | **Auditor**: claude-opus-4-6
+> **Grade Cap**: B -> D (see notes below)
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 85.7 | 42% |  |
+| Field Validity | 88.9 | 42% |  |
+| Doc Completeness | - | - | Excluded (no data) |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 80.0 | 17% |  |
+| **Overall** | **86.1** | | **Grade D** |
+
+**Grade Cap Applied**:
+> Grade capped from B to D: Critical fields below 75%: domain_level1=0%. Language, script, and domain are critical training stratification fields. Datasets with <75% coverage on any of these fields cannot reliably support diversity-aware training splits or balanced sampling. A contact sheet VLM review or enrichment pipeline must bring these fields above 75% before the dataset can advance beyond Grade D.
+
+##### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+##### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+##### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/arabic-docs-ocr/](../../scripts/audit/results/arabic-docs-ocr/)
+
+---
+
 ---
 
 ##### Data Locations

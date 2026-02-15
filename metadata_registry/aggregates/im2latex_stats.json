@@ -8,22 +8,28 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "SCI": 10000
+    "EDU": 10000
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 10000
+  "script_codes": {
+    "Latn": 10000
   },
-  "language_codes": {},
+  "script_families": {
+    "latin": 10000
+  },
+  "language_codes": {
+    "en": 10000
+  },
   "content_flags": {
     "has_formula": 10000
   },
   "text_scopes": {
-    "phrase": 10000
+    "formula": 10000
   },
-  "content_types": {},
+  "content_types": {
+    "printed": 10000
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -33,24 +39,46 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "SCI": 100.0
+    "EDU": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
+  "script_codes_pct": {
+    "Latn": 100.0
+  },
   "script_families_pct": {
-    "ltr": 100.0
+    "latin": 100.0
   },
-  "language_codes_pct": {},
+  "language_codes_pct": {
+    "en": 100.0
+  },
   "text_scopes_pct": {
-    "phrase": 100.0
+    "formula": 100.0
   },
-  "content_types_pct": {},
+  "content_types_pct": {
+    "printed": 100.0
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
     "has_formula": 100.0
   },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 10000,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 10000,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "latin": 10000
+  }
 }

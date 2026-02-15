@@ -125,6 +125,15 @@
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert (Q&A pairs), Automatic Extraction (document parsing) |
+| **Provenance Tier** | Tier 1 (Human-annotated) for Q&A annotations, Tier 0 (Exact) for document metadata |
+| **Quality Assurance** | Human expert annotations for Q&A pairs, born-digital financial PDF extraction for document structure |
+| **GT Label Coverage** | 100% |
+
 #### 3. Project Usage
 
 ##### 3a. Training Purpose & Dataset Statistics
@@ -292,7 +301,48 @@ ds = load_dataset("PatronusAI/financebench")
 
 Generated augmented datasets with labels, ready for model training.
 
-##### Reliability & Bottlenecks
+## 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (84.6/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.7 | 28% |  |
+| Field Validity | 96.3 | 28% |  |
+| Doc Completeness | 54.5 | 17% | Below threshold |
+| Defect Rate | 85.0 | 17% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 11% |  |
+| **Overall** | **84.6** | | **Grade B** |
+
+### 11.2 Key Defects
+
+> **Total**: 2 defects (2 open)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| FB-D01 | layout_detections | HIGH | OPEN |  |
+| FB-D02 | text_has_content | MEDIUM | OPEN |  |
+
+### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/financebench/](../../scripts/audit/results/financebench/)
+
+---
+
+#### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 54,120 | **Avg Min Confidence**: 0.000
 

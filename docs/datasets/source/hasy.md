@@ -115,6 +115,17 @@ path,symbol_id,latex,user_id
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
+###### 2.7 Ground Truth Provenance
+
+| Field | Value |
+|-------|-------|
+| **Annotation Method** | Crowdsourced |
+| **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
+| **Annotator Details** | ~100K contributors via write-math.com |
+| **Inter-Annotator Agreement** | Crowd consensus (multiple contributors per symbol class) |
+| **Quality Assurance** | Crowdsource verification with contributor agreement filtering |
+| **GT Label Coverage** | 100% (all 168K symbol images with class labels) |
+
 ##### Dataset Statistics
 
 ###### 4.1 Split Coverage
@@ -417,5 +428,41 @@ Labels are extracted from CSV files in `classification-task/fold-{1-10}/`:
 | **Capture Method** | Scanner (Flatbed) |
 | **Domain** | EDU (Educational/Math) |
 | **Content Flags** | Formulas: ✅, Handwriting: ✅ |
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: B (85.8/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.7 | 33% |  |
+| Field Validity | 100.0 | 33% |  |
+| Doc Completeness | 54.5 | 20% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | 95.0 | 13% |  |
+| **Overall** | **85.8** | | **Grade B** |
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/hasy/](../../scripts/audit/results/hasy/)
+
+---
 
 ---

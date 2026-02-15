@@ -138,6 +138,16 @@
 
 **Parser Implementation Priority**: **HIGH** - Rich annotations (PAGE XML standard), expert transcriptions, full polygon support
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Human Expert |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Quality Assurance** | Historical Arabic manuscript line transcription |
+| **GT Label Coverage** | 100% |
+
 #### 4. Dataset Statistics
 
 ##### 4.1 Split Coverage
@@ -293,7 +303,7 @@
 > - Character Error Rate (CER) on line transcriptions
 > - Word Error Rate (WER)
 > - Legibility classification accuracy
-
+>
 > **Note**: If paper contains no benchmark results, this subsection can be removed.
 
 ##### Legibility Assessment
@@ -342,6 +352,46 @@ This makes it ideal for **handwriting legibility training**.
 | **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
 | **Layout Extracted** | `metadata_registry/extracted/muharaf/` | ✅ Available | Docling GPU: 129 layout batches, 25,711 images |
 | **Layer 2 Metadata** | `metadata_registry/json/muharaf_metadata.json` | ✅ Complete | 25,711 samples (2026-02-09) |
+
+---
+
+##### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-14 | **Grade**: D (81.0/100) | **Auditor**: claude-opus-4-6
+> **Grade Cap**: B -> D (see notes below)
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 81.0 | 29% |  |
+| Field Validity | 90.2 | 29% |  |
+| Doc Completeness | 54.5 | 18% | Below threshold |
+| Defect Rate | - | - | Excluded (no data) |
+| Cross-Source Agreement | 84.0 | 12% |  |
+| VLM Accuracy | 95.0 | 12% |  |
+| **Overall** | **81.0** | | **Grade D** |
+
+**Grade Cap Applied**:
+> Grade capped from B to D: Critical fields below 75%: domain_level1=50%. Language, script, and domain are critical training stratification fields. Datasets with <75% coverage on any of these fields cannot reliably support diversity-aware training splits or balanced sampling. A contact sheet VLM review or enrichment pipeline must bring these fields above 75% before the dataset can advance beyond Grade D.
+
+###### 11.2 Key Defects
+
+No defect catalog available for this dataset.
+
+###### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/muharaf/](../../scripts/audit/results/muharaf/)
 
 ---
 

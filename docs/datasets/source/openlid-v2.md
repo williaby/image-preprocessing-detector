@@ -96,6 +96,15 @@
 
 **Integration Status**: ✅ Complete via `TextCorpusManager` class (not a traditional parser)
 
+##### 2.7 Ground Truth Provenance
+
+| Aspect | Details |
+|--------|---------|
+| **Annotation Method** | Automatic Extraction |
+| **Provenance Tier** | Tier 1 (Annotation) |
+| **Quality Assurance** | Language identification from web text with fastText-based filtering |
+| **GT Label Coverage** | 100% |
+
 ##### Dataset Statistics
 
 | Metric | Value |

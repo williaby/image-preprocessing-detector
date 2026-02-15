@@ -8,18 +8,101 @@
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "ADM": 1290
+    "ADM": 612,
+    "LEG": 231,
+    "SCI": 213,
+    "FIN": 109,
+    "TEC": 26,
+    "MED": 41,
+    "UNK": 50,
+    "PER": 2,
+    "TAX": 5,
+    "EDU": 1
   },
   "layout_types": {},
   "text_densities": {},
-  "script_codes": {},
-  "script_families": {
-    "ltr": 1290
+  "script_codes": {
+    "Latn": 1288,
+    "Zyyy": 2
   },
-  "language_codes": {},
-  "content_flags": {},
-  "text_scopes": {},
-  "content_types": {},
+  "script_families": {
+    "latin": 1288,
+    "other": 2
+  },
+  "language_codes": {
+    "en": 1276,
+    "de": 4,
+    "unk": 9,
+    "fr": 1
+  },
+  "content_flags": {
+    "has_handwriting": 840,
+    "has_figure": 997,
+    "has_signature": 821,
+    "has_table": 313,
+    "has_formula": 81
+  },
+  "text_scopes": {
+    "page": 1290
+  },
+  "content_types": {
+    "letter": 618,
+    "memo": 167,
+    "research_report": 221,
+    "invoice": 44,
+    "survey": 2,
+    "questionnaire": 7,
+    "table": 1,
+    "unknown": 26,
+    "scientific_paper": 10,
+    "contract": 53,
+    "legal_document": 7,
+    "claim": 1,
+    "document": 7,
+    "annual_report": 2,
+    "fax_message": 3,
+    "medical_record": 2,
+    "list": 2,
+    "patient_record": 1,
+    "agreement": 7,
+    "organizational_chart": 7,
+    "check": 1,
+    "cover_letter": 1,
+    "budget": 7,
+    "engineering_drawing": 3,
+    "court_filing": 6,
+    "work_request": 1,
+    "legal_brief": 1,
+    "financial_report": 33,
+    "price_list": 2,
+    "datasheet": 2,
+    "personal_letter": 2,
+    "specification": 1,
+    "tax_letter": 4,
+    "correspondence": 1,
+    "project_report": 1,
+    "exhibit": 2,
+    "advertisement_schedule": 1,
+    "fax": 1,
+    "proxy": 2,
+    "legal_agreement": 2,
+    "form": 2,
+    "patent_correspondence": 1,
+    "administrative_document": 1,
+    "report": 2,
+    "meeting_minutes": 1,
+    "legal_correspondence": 6,
+    "research_grant": 2,
+    "research_paper": 2,
+    "patent": 3,
+    "tax_form": 1,
+    "telegram": 1,
+    "legal_notice": 1,
+    "sales_report": 1,
+    "other": 1,
+    "description": 2,
+    "invention_disclosure": 1
+  },
   "paper_sizes": {},
   "paper_orientations": {},
   "quality_summary": null,
@@ -29,20 +112,140 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "ADM": 100.0
+    "ADM": 47.4,
+    "LEG": 17.9,
+    "SCI": 16.5,
+    "FIN": 8.4,
+    "TEC": 2.0,
+    "MED": 3.2,
+    "UNK": 3.9,
+    "PER": 0.2,
+    "TAX": 0.4,
+    "EDU": 0.1
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
-  "script_codes_pct": {},
-  "script_families_pct": {
-    "ltr": 100.0
+  "script_codes_pct": {
+    "Latn": 99.8,
+    "Zyyy": 0.2
   },
-  "language_codes_pct": {},
-  "text_scopes_pct": {},
-  "content_types_pct": {},
+  "script_families_pct": {
+    "latin": 99.8,
+    "other": 0.2
+  },
+  "language_codes_pct": {
+    "en": 98.9,
+    "de": 0.3,
+    "unk": 0.7,
+    "fr": 0.1
+  },
+  "text_scopes_pct": {
+    "page": 100.0
+  },
+  "content_types_pct": {
+    "letter": 47.9,
+    "memo": 12.9,
+    "research_report": 17.1,
+    "invoice": 3.4,
+    "survey": 0.2,
+    "questionnaire": 0.5,
+    "table": 0.1,
+    "unknown": 2.0,
+    "scientific_paper": 0.8,
+    "contract": 4.1,
+    "legal_document": 0.5,
+    "claim": 0.1,
+    "document": 0.5,
+    "annual_report": 0.2,
+    "fax_message": 0.2,
+    "medical_record": 0.2,
+    "list": 0.2,
+    "patient_record": 0.1,
+    "agreement": 0.5,
+    "organizational_chart": 0.5,
+    "check": 0.1,
+    "cover_letter": 0.1,
+    "budget": 0.5,
+    "engineering_drawing": 0.2,
+    "court_filing": 0.5,
+    "work_request": 0.1,
+    "legal_brief": 0.1,
+    "financial_report": 2.6,
+    "price_list": 0.2,
+    "datasheet": 0.2,
+    "personal_letter": 0.2,
+    "specification": 0.1,
+    "tax_letter": 0.3,
+    "correspondence": 0.1,
+    "project_report": 0.1,
+    "exhibit": 0.2,
+    "advertisement_schedule": 0.1,
+    "fax": 0.1,
+    "proxy": 0.2,
+    "legal_agreement": 0.2,
+    "form": 0.2,
+    "patent_correspondence": 0.1,
+    "administrative_document": 0.1,
+    "report": 0.2,
+    "meeting_minutes": 0.1,
+    "legal_correspondence": 0.5,
+    "research_grant": 0.2,
+    "research_paper": 0.2,
+    "patent": 0.2,
+    "tax_form": 0.1,
+    "telegram": 0.1,
+    "legal_notice": 0.1,
+    "sales_report": 0.1,
+    "other": 0.1,
+    "description": 0.2,
+    "invention_disclosure": 0.1
+  },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
-  "content_flags_pct": {},
+  "content_flags_pct": {
+    "has_handwriting": 65.1,
+    "has_figure": 77.3,
+    "has_signature": 63.6,
+    "has_table": 24.3,
+    "has_formula": 6.3
+  },
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [
+    {
+      "script": "Latn",
+      "count": 1288,
+      "percentage": 99.8
+    },
+    {
+      "script": "Zyyy",
+      "count": 2,
+      "percentage": 0.2
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "en",
+      "count": 1276,
+      "percentage": 98.9
+    },
+    {
+      "language": "unk",
+      "count": 9,
+      "percentage": 0.7
+    },
+    {
+      "language": "de",
+      "count": 4,
+      "percentage": 0.3
+    },
+    {
+      "language": "fr",
+      "count": 1,
+      "percentage": 0.1
+    }
+  ],
+  "script_family_summary": {
+    "latin": 1288,
+    "other": 2
+  }
 }

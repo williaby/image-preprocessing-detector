@@ -1,0 +1,64 @@
+# Agent Orchestration Configuration
+# Defines handoff protocol between layer2-audit-agent and dataset-catalog-agent.
+
+# Agent phase assignments
+agents:
+  layer2-audit-agent:
+    phases:
+      - prescreening
+      - compliance
+      - sampling
+      - multi_source_comparison
+      - defect_catalog
+      - vlm_review
+      - remediation
+      - scorecard
+    required_outputs:
+      - automated_screening.json
+      - compliance_report.json
+      - scorecard.json
+    optional_outputs:
+      - defect_catalog.json
+      - comparison_report.json
+      - vlm_corrections.json
+
+  dataset-catalog-agent:
+    phases:
+      - catalog_validation
+      - parser_audit
+      - naming_compliance
+      - cross_file_sync
+    required_outputs:
+      - source_doc  # docs/datasets/source/{name}.md must exist
+    pre_conditions:
+      - scorecard.json  # Must have audit scorecard before catalog update
+
+# Handoff triggers
+handoffs:
+  audit_to_catalog:
+    trigger: scorecard_complete
+    from_agent: layer2-audit-agent
+    to_agent: dataset-catalog-agent
+    required_artifacts:
+      - scorecard.json
+      - automated_screening.json
+    description: >
+      After layer2-audit-agent completes scorecard computation,
+      dataset-catalog-agent updates the source doc with audit findings
+      and ensures cross-file consistency.
+
+# Priority sorting
+priority:
+  # training_criticality from compute_training_criticality.py
+  use_training_criticality: true
+  default_criticality: 1
+  # Grade-based priority boost: D/F datasets get +2 priority
+  grade_boost:
+    D: 2
+    F: 3
+
+# Batch processing defaults
+batch:
+  max_concurrent: 3
+  default_scope: full
+  skip_visual: false

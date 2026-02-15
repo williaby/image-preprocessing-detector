@@ -8,7 +8,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 from image_preprocessing_detector.labeling.arena.inference.base import (
     InferenceConfig,
