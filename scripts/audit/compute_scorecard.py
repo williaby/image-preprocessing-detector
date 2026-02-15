@@ -2,7 +2,11 @@
 """Compute quality scorecard for Layer 2 metadata audits.
 
 Reads existing JSON audit artifacts and computes a weighted quality grade
-per dataset based on the 6-dimension rubric in config/audit_scorecard.yaml.
+per dataset based on the 7-dimension rubric in config/audit_scorecard.yaml.
+
+v2.0 dimensions: field_coverage (15%), field_validity (15%),
+doc_completeness (5%), defect_rate (10%), cross_source_agreement (15%),
+label_accuracy (20%), confidence_quality (20%).
 
 Usage:
     # Score a single dataset
@@ -98,20 +102,47 @@ def _load_per_field_pass_rates(screening_path: Path) -> dict[str, float] | None:
     return rates
 
 
-def compute_field_coverage(screening_path: Path) -> float | None:
+def compute_field_coverage(
+    screening_path: Path,
+    config: dict[str, Any] | None = None,
+) -> float | None:
     """Compute field coverage score from automated_screening.json.
 
-    Score = average pass rate across 13 prescreening fields.
+    v2.0: Weighted average of core (70%) and extended (30%) pass rates
+    across 45 prescreening fields. Falls back to simple average if
+    core/extended data not available (old screening artifacts).
 
     Args:
         screening_path: Path to automated_screening.json.
+        config: Scorecard config (for field lists).
 
     Returns:
         Score 0-100, or None if artifact missing.
     """
+    if not screening_path.is_file():
+        log.warning("  automated_screening.json not found: %s", screening_path)
+        return None
+
+    with screening_path.open() as f:
+        data = json.load(f)
+
+    # v2.0: Use pre-computed core/extended pass rates if available
+    core_rate = data.get("core_pass_rate_pct")
+    ext_rate = data.get("extended_pass_rate_pct")
+
+    if core_rate is not None and ext_rate is not None:
+        score = core_rate * 0.7 + ext_rate * 0.3
+        log.info(
+            "  field_coverage: %.1f/100 (core=%.1f%%, ext=%.1f%%)",
+            score,
+            core_rate,
+            ext_rate,
+        )
+        return round(score, 2)
+
+    # Fallback: simple average across all fields (backward compat)
     rates = _load_per_field_pass_rates(screening_path)
     if rates is None:
-        log.warning("  automated_screening.json not found: %s", screening_path)
         return None
 
     total_fields = len(rates)
@@ -485,24 +516,262 @@ def compute_vlm_accuracy(
     return None
 
 
+def compute_label_accuracy(
+    vlm_path: Path,
+    catalog_path: Path,
+    config: dict[str, Any] | None = None,
+) -> float | None:
+    """Compute per-field label accuracy from VLM corrections.
+
+    v2.0: Weighted average of per-field accuracy rates.
+    Critical fields (60%): iso639_language, script_family, domain_level1, capture_method.
+    Structural fields (40%): orientation, handwriting, content flags.
+
+    Falls back to passing_sample_accuracy if per-field data unavailable.
+
+    Args:
+        vlm_path: Path to vlm_corrections.json.
+        catalog_path: Path to defect_catalog.json (fallback).
+        config: Scorecard config.
+
+    Returns:
+        Score 0-100, or None if no VLM data.
+    """
+    dim_config = (config or {}).get("dimensions", {}).get("label_accuracy", {})
+    critical_fields = dim_config.get(
+        "critical_fields",
+        ["iso639_language", "script_family", "domain_level1", "capture_method"],
+    )
+    structural_fields = dim_config.get(
+        "structural_fields",
+        [
+            "orientation_class",
+            "handwriting_present",
+            "has_table",
+            "has_formula",
+            "has_figure",
+            "has_handwriting",
+        ],
+    )
+    critical_weight = dim_config.get("critical_weight", 0.60)
+    structural_weight = dim_config.get("structural_weight", 0.40)
+
+    vlm_data: dict[str, Any] = {}
+    if vlm_path.is_file():
+        with vlm_path.open() as f:
+            vlm_data = json.load(f)
+
+    # Try per-field accuracy from accuracy_by_field
+    accuracy_by_field = vlm_data.get("accuracy_by_field", {})
+    if not accuracy_by_field:
+        # Also try validation_summary
+        val_summary = vlm_data.get("validation_summary", {})
+        accuracy_by_field = val_summary.get("accuracy_by_field", {})
+
+    if accuracy_by_field:
+        # Compute weighted average
+        crit_rates: list[float] = []
+        for field in critical_fields:
+            rate = accuracy_by_field.get(field)
+            if rate is not None:
+                crit_rates.append(float(rate) * 100)
+
+        struct_rates: list[float] = []
+        for field in structural_fields:
+            rate = accuracy_by_field.get(field)
+            if rate is not None:
+                struct_rates.append(float(rate) * 100)
+
+        if crit_rates or struct_rates:
+            crit_avg = sum(crit_rates) / len(crit_rates) if crit_rates else 0.0
+            struct_avg = (
+                sum(struct_rates) / len(struct_rates) if struct_rates else 0.0
+            )
+
+            # Adjust weights if one group has no data
+            if crit_rates and struct_rates:
+                score = crit_avg * critical_weight + struct_avg * structural_weight
+            elif crit_rates:
+                score = crit_avg
+            else:
+                score = struct_avg
+
+            log.info(
+                "  label_accuracy: %.1f/100 (critical=%.1f, structural=%.1f)",
+                score,
+                crit_avg,
+                struct_avg,
+            )
+            return round(score, 2)
+
+    # Fallback: use passing_sample_accuracy
+    passing_accuracy = vlm_data.get("passing_sample_accuracy")
+    if passing_accuracy is not None:
+        score = float(passing_accuracy) * 100
+        log.info("  label_accuracy: %.1f/100 (fallback: passing_sample_accuracy)", score)
+        return round(score, 2)
+
+    # Try defect_catalog fallback
+    if catalog_path.is_file():
+        with catalog_path.open() as f:
+            catalog_data = json.load(f)
+        vlm_val = catalog_data.get("vlm_validation", {})
+        passing_accuracy = vlm_val.get("passing_sample_accuracy")
+        if passing_accuracy is not None:
+            score = float(passing_accuracy) * 100
+            log.info(
+                "  label_accuracy: %.1f/100 (fallback: defect_catalog)",
+                score,
+            )
+            return round(score, 2)
+
+    log.warning("  Label accuracy data not found")
+    return None
+
+
+# Confidence-related field names for the confidence_quality dimension
+CONFIDENCE_FIELDS: list[str] = [
+    "reliability_summary_present",
+    "reliability_min_confidence_category",
+    "reliability_assessed_count",
+    "reliability_min_confidence",
+    "reliability_hard_label_ratio",
+    "capture_confidence_valid",
+    "domain_confidence_valid",
+    "language_confidence_valid",
+    "content_flag_confidence_present",
+    "handwriting_confidence_valid",
+    "structure_confidence_present",
+    "orientation_confidence_valid",
+    "skew_confidence_valid",
+]
+
+
+def compute_confidence_quality(
+    screening_path: Path,
+    config: dict[str, Any] | None = None,
+) -> float | None:
+    """Compute confidence quality score from prescreening pass rates.
+
+    v2.0: Mean pass rate across 13 confidence-related prescreening fields.
+
+    Args:
+        screening_path: Path to automated_screening.json.
+        config: Scorecard config.
+
+    Returns:
+        Score 0-100, or None if no confidence fields available.
+    """
+    rates = _load_per_field_pass_rates(screening_path)
+    if rates is None:
+        log.warning("  automated_screening.json not found for confidence quality")
+        return None
+
+    dim_config = (config or {}).get("dimensions", {}).get("confidence_quality", {})
+    conf_fields = dim_config.get("confidence_fields", CONFIDENCE_FIELDS)
+
+    field_rates: list[float] = []
+    for field in conf_fields:
+        rate = rates.get(field)
+        if rate is not None:
+            field_rates.append(rate)
+
+    if not field_rates:
+        log.warning("  No confidence fields found in prescreening results")
+        return None
+
+    score = sum(field_rates) / len(field_rates)
+    log.info(
+        "  confidence_quality: %.1f/100 (%d/%d fields)",
+        score,
+        len(field_rates),
+        len(conf_fields),
+    )
+    return round(score, 2)
+
+
+def _load_content_flag_fp_rates(
+    vlm_path: Path,
+) -> dict[str, float] | None:
+    """Load per-flag false positive rates from VLM corrections.
+
+    Args:
+        vlm_path: Path to vlm_corrections.json.
+
+    Returns:
+        Dict mapping flag names to FP rates (0-100), or None.
+    """
+    if not vlm_path.is_file():
+        return None
+
+    with vlm_path.open() as f:
+        data = json.load(f)
+
+    # Check for content flag analysis
+    content_flag_analysis = data.get("content_flag_analysis", {})
+    if not content_flag_analysis:
+        # Try track_a_analysis
+        track_a = data.get("track_a_analysis", {})
+        content_flag_analysis = track_a.get("content_flag_analysis", {})
+
+    if not content_flag_analysis:
+        return None
+
+    fp_rates: dict[str, float] = {}
+    for flag_name, flag_data in content_flag_analysis.items():
+        if isinstance(flag_data, dict):
+            fp_rate = flag_data.get("false_positive_rate")
+            if fp_rate is not None:
+                fp_rates[flag_name] = float(fp_rate) * 100
+    return fp_rates if fp_rates else None
+
+
 # -------------------------------------------------------------------
 # Overall scorecard computation
 # -------------------------------------------------------------------
+def _apply_grade_cap(
+    grade: str,
+    max_grade: str,
+    reason: str,
+    existing_cap: str | None,
+) -> tuple[str, str | None]:
+    """Apply a grade cap, stacking with existing caps.
+
+    Args:
+        grade: Current grade letter.
+        max_grade: Maximum allowed grade.
+        reason: Reason for the cap.
+        existing_cap: Existing cap message or None.
+
+    Returns:
+        Tuple of (new_grade, updated_cap_message).
+    """
+    grade_order = ["A", "B", "C", "D", "F"]
+    if grade_order.index(grade) < grade_order.index(max_grade):
+        cap_msg = f"Grade capped from {grade} to {max_grade}: {reason}"
+        log.warning("  GRADE CAPPED: %s", cap_msg)
+        new_cap = f"{existing_cap} | {cap_msg}" if existing_cap else cap_msg
+        return max_grade, new_cap
+    return grade, existing_cap
+
+
 def compute_overall(
     dimension_scores: dict[str, float | None],
     config: dict[str, Any],
     *,
     screening_path: Path | None = None,
+    vlm_path: Path | None = None,
 ) -> dict[str, Any]:
     """Compute the overall weighted score and grade.
 
     Missing dimensions have their weight redistributed proportionally.
+    v2.0: Handles 7 dimensions + 8 grade caps.
 
     Args:
         dimension_scores: Per-dimension scores (0-100) or None.
         config: Full scorecard config.
-        screening_path: Path to automated_screening.json for critical
-            field coverage grade cap checks.
+        screening_path: Path to automated_screening.json for cap checks.
+        vlm_path: Path to vlm_corrections.json for content flag FP caps.
 
     Returns:
         Dict with overall score, grade, per-dimension details,
@@ -561,26 +830,28 @@ def compute_overall(
             grade = grade_letter
             break
 
-    # Enforce grade caps for required dimensions
+    # ---------------------------------------------------------------
+    # Enforce grade caps
+    # ---------------------------------------------------------------
     grade_caps = config.get("grade_caps", {})
     grade_cap_applied: str | None = None
 
-    # Check vlm_accuracy requirement
-    vlm_config = dimensions.get("vlm_accuracy", {})
-    if vlm_config.get("required", False) and "vlm_accuracy" in excluded:
+    # Cap 1: Missing VLM inspection -> max D
+    label_acc_config = dimensions.get("label_accuracy", {})
+    vlm_acc_config = dimensions.get("vlm_accuracy", {})
+    label_required = label_acc_config.get("required", False)
+    vlm_required = vlm_acc_config.get("required", False)
+    if (label_required and "label_accuracy" in excluded) or (
+        vlm_required and "vlm_accuracy" in excluded
+    ):
         cap_rule = grade_caps.get("missing_vlm_accuracy", {})
-        max_grade = cap_rule.get("max_grade", "D")
-        grade_order = ["A", "B", "C", "D", "F"]
-        if grade_order.index(grade) < grade_order.index(max_grade):
-            grade_cap_applied = (
-                f"Grade capped from {grade} to {max_grade}: "
-                f"VLM inspection not performed. "
-                f"{cap_rule.get('reason', '').strip()}"
-            )
-            grade = max_grade
-            log.warning("  GRADE CAPPED: %s", grade_cap_applied)
+        max_g = cap_rule.get("max_grade", "D")
+        reason = cap_rule.get("reason", "").strip()
+        grade, grade_cap_applied = _apply_grade_cap(
+            grade, max_g, f"VLM inspection not performed. {reason}", grade_cap_applied
+        )
 
-    # Check critical field coverage (language, script, domain)
+    # Cap 2: Low critical field coverage -> max D
     crit_cap = grade_caps.get("low_critical_field_coverage", {})
     crit_fields: list[str] = crit_cap.get("fields", [])
     crit_threshold: float = crit_cap.get("threshold_pct", 75)
@@ -593,22 +864,111 @@ def compute_overall(
                 if rate < crit_threshold:
                     failing_fields.append(f"{fname}={rate:.0f}%")
             if failing_fields:
-                crit_max_grade = crit_cap.get("max_grade", "D")
-                grade_order = ["A", "B", "C", "D", "F"]
-                if grade_order.index(grade) < grade_order.index(crit_max_grade):
-                    crit_reason = crit_cap.get("reason", "").strip()
-                    crit_cap_msg = (
-                        f"Grade capped from {grade} to {crit_max_grade}: "
-                        f"Critical fields below {crit_threshold:.0f}%: "
-                        f"{', '.join(failing_fields)}. {crit_reason}"
-                    )
-                    grade = crit_max_grade
-                    # Stack cap messages if both VLM and critical field caps apply
-                    if grade_cap_applied:
-                        grade_cap_applied = f"{grade_cap_applied} | {crit_cap_msg}"
-                    else:
-                        grade_cap_applied = crit_cap_msg
-                    log.warning("  GRADE CAPPED: %s", crit_cap_msg)
+                crit_max = crit_cap.get("max_grade", "D")
+                crit_reason = crit_cap.get("reason", "").strip()
+                msg = (
+                    f"Critical fields below {crit_threshold:.0f}%: "
+                    f"{', '.join(failing_fields)}. {crit_reason}"
+                )
+                grade, grade_cap_applied = _apply_grade_cap(
+                    grade, crit_max, msg, grade_cap_applied
+                )
+
+    # Cap 3: Low label accuracy -> max C
+    label_acc_cap = grade_caps.get("low_label_accuracy", {})
+    label_acc_threshold = label_acc_cap.get("threshold_pct", 70)
+    label_acc_score = dimension_scores.get("label_accuracy")
+    if label_acc_score is not None and label_acc_score < label_acc_threshold:
+        max_g = label_acc_cap.get("max_grade", "C")
+        reason = label_acc_cap.get("reason", "").strip()
+        grade, grade_cap_applied = _apply_grade_cap(
+            grade,
+            max_g,
+            f"label_accuracy={label_acc_score:.1f}% (min {label_acc_threshold}%). {reason}",
+            grade_cap_applied,
+        )
+
+    # Cap 4/5: Content flag FP rates -> max C or D
+    if vlm_path is not None:
+        fp_rates = _load_content_flag_fp_rates(vlm_path)
+        if fp_rates is not None:
+            # Check critical FP cap (>80% -> D)
+            fp_crit_cap = grade_caps.get("high_content_flag_fp_rate_critical", {})
+            fp_crit_threshold = fp_crit_cap.get("threshold_pct", 80)
+            crit_flags = [
+                f"{f}={r:.0f}%"
+                for f, r in fp_rates.items()
+                if r > fp_crit_threshold
+            ]
+            if crit_flags:
+                max_g = fp_crit_cap.get("max_grade", "D")
+                reason = fp_crit_cap.get("reason", "").strip()
+                msg = (
+                    f"Content flag FP >{fp_crit_threshold}%: "
+                    f"{', '.join(crit_flags)}. {reason}"
+                )
+                grade, grade_cap_applied = _apply_grade_cap(
+                    grade, max_g, msg, grade_cap_applied
+                )
+
+            # Check warning FP cap (>50% -> C)
+            fp_warn_cap = grade_caps.get("high_content_flag_fp_rate_warning", {})
+            fp_warn_threshold = fp_warn_cap.get("threshold_pct", 50)
+            warn_flags = [
+                f"{f}={r:.0f}%"
+                for f, r in fp_rates.items()
+                if r > fp_warn_threshold
+            ]
+            if warn_flags:
+                max_g = fp_warn_cap.get("max_grade", "C")
+                reason = fp_warn_cap.get("reason", "").strip()
+                msg = (
+                    f"Content flag FP >{fp_warn_threshold}%: "
+                    f"{', '.join(warn_flags)}. {reason}"
+                )
+                grade, grade_cap_applied = _apply_grade_cap(
+                    grade, max_g, msg, grade_cap_applied
+                )
+        elif "label_accuracy" not in excluded:
+            # VLM data exists but no content flag analysis -> cap at C
+            missing_cf_cap = grade_caps.get("missing_content_flag_inspection", {})
+            max_g = missing_cf_cap.get("max_grade", "C")
+            reason = missing_cf_cap.get("reason", "").strip()
+            grade, grade_cap_applied = _apply_grade_cap(
+                grade, max_g, f"No content flag inspection data. {reason}",
+                grade_cap_applied,
+            )
+
+    # Cap 6: Low confidence quality -> max B
+    conf_cap = grade_caps.get("low_confidence_quality", {})
+    conf_threshold = conf_cap.get("threshold_pct", 60)
+    conf_score = dimension_scores.get("confidence_quality")
+    if conf_score is not None and conf_score < conf_threshold:
+        max_g = conf_cap.get("max_grade", "B")
+        reason = conf_cap.get("reason", "").strip()
+        grade, grade_cap_applied = _apply_grade_cap(
+            grade,
+            max_g,
+            f"confidence_quality={conf_score:.1f}% (min {conf_threshold}%). {reason}",
+            grade_cap_applied,
+        )
+
+    # Cap 7: Low core prescreening pass rate -> max C
+    core_cap = grade_caps.get("low_core_prescreening_pass_rate", {})
+    core_threshold = core_cap.get("threshold_pct", 70)
+    if screening_path is not None and screening_path.is_file():
+        with screening_path.open() as f:
+            screening_data = json.load(f)
+        core_rate = screening_data.get("core_pass_rate_pct")
+        if core_rate is not None and core_rate < core_threshold:
+            max_g = core_cap.get("max_grade", "C")
+            reason = core_cap.get("reason", "").strip()
+            grade, grade_cap_applied = _apply_grade_cap(
+                grade,
+                max_g,
+                f"core_pass_rate={core_rate:.1f}% (min {core_threshold}%). {reason}",
+                grade_cap_applied,
+            )
 
     result: dict[str, Any] = {
         "overall_score": round(overall, 2),
@@ -679,17 +1039,23 @@ def score_dataset(
                 break
 
     dimension_scores: dict[str, float | None] = {
-        "field_coverage": compute_field_coverage(screening_path),
+        "field_coverage": compute_field_coverage(screening_path, config),
         "field_validity": compute_field_validity(compliance_path),
         "doc_completeness": compute_doc_completeness(source_doc),
         "defect_rate": compute_defect_rate(catalog_path, config),
         "cross_source_agreement": compute_cross_source_agreement(
             comparison_path,
         ),
-        "vlm_accuracy": compute_vlm_accuracy(vlm_path, catalog_path),
+        "label_accuracy": compute_label_accuracy(vlm_path, catalog_path, config),
+        "confidence_quality": compute_confidence_quality(screening_path, config),
     }
 
-    overall = compute_overall(dimension_scores, config, screening_path=screening_path)
+    overall = compute_overall(
+        dimension_scores,
+        config,
+        screening_path=screening_path,
+        vlm_path=vlm_path,
+    )
 
     # Build metadata
     artifacts_found: list[str] = []
@@ -809,10 +1175,10 @@ def update_tracking_index(
     lines = [
         start_marker,
         "",
-        "| Dataset | Score | Grade | Coverage | Validity "
-        "| Doc | Defects | Agreement | VLM | Updated |",
-        "|---------|-------|-------|----------|----------"
-        "|-----|---------|-----------|-----|---------|",
+        "| Dataset | Score | Grade | Cov | Valid "
+        "| Doc | Defect | Agree | Label | Conf | Updated |",
+        "|---------|-------|-------|-----|------"
+        "|-----|--------|-------|-------|------|---------|",
     ]
 
     for sc in sorted(scorecards, key=lambda s: s.get("dataset", "")):
@@ -832,7 +1198,8 @@ def update_tracking_index(
             f"| {fmt(dim_scores.get('doc_completeness'))} "
             f"| {fmt(dim_scores.get('defect_rate'))} "
             f"| {fmt(dim_scores.get('cross_source_agreement'))} "
-            f"| {fmt(dim_scores.get('vlm_accuracy'))} "
+            f"| {fmt(dim_scores.get('label_accuracy'))} "
+            f"| {fmt(dim_scores.get('confidence_quality'))} "
             f"| {updated} |"
         )
 
