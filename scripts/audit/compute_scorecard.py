@@ -516,6 +516,24 @@ def compute_vlm_accuracy(
     return None
 
 
+def _extract_accuracy_pct(rate: Any) -> float:
+    """Extract accuracy percentage from either float or dict format.
+
+    Handles two accuracy_by_field value formats:
+    - Float (0-1 scale): multiply by 100 to get percentage.
+    - Dict with 'pct' key (already 0-100): use directly.
+
+    Args:
+        rate: Either a float (0-1) or dict with 'pct' key.
+
+    Returns:
+        Accuracy as percentage (0-100).
+    """
+    if isinstance(rate, dict):
+        return float(rate.get("pct", 0.0))
+    return float(rate) * 100
+
+
 def compute_label_accuracy(
     vlm_path: Path,
     catalog_path: Path,
@@ -574,13 +592,13 @@ def compute_label_accuracy(
         for field in critical_fields:
             rate = accuracy_by_field.get(field)
             if rate is not None:
-                crit_rates.append(float(rate) * 100)
+                crit_rates.append(_extract_accuracy_pct(rate))
 
         struct_rates: list[float] = []
         for field in structural_fields:
             rate = accuracy_by_field.get(field)
             if rate is not None:
-                struct_rates.append(float(rate) * 100)
+                struct_rates.append(_extract_accuracy_pct(rate))
 
         if crit_rates or struct_rates:
             crit_avg = sum(crit_rates) / len(crit_rates) if crit_rates else 0.0

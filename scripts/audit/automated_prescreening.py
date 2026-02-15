@@ -48,7 +48,19 @@ METADATA_REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry/json")
 
 
 def _metadata_path_for(dataset: str) -> Path:
-    """Derive metadata JSON path from dataset name."""
+    """Derive metadata JSON path from dataset name.
+
+    Consults the audit_config registry first for the correct path,
+    falling back to simple ``{dataset}_metadata.json`` derivation.
+    """
+    try:
+        from scripts.audit.audit_config import load_dataset_config
+
+        cfg = load_dataset_config(dataset)
+        if cfg.metadata_json_path is not None:
+            return cfg.metadata_json_path
+    except (ImportError, ValueError):
+        pass
     return METADATA_REGISTRY_DIR / f"{dataset}_metadata.json"
 
 
