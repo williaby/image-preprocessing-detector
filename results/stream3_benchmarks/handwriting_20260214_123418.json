@@ -1,0 +1,42 @@
+{
+  "detector": "HandwritingDetector",
+  "dataset": "cocotext",
+  "num_samples": 205,
+  "num_positive": 5,
+  "num_negative": 200,
+  "caveat": "COCO-Text is scene text (outdoor signs), not documents. Only 5 positive samples - results have limited statistical significance.",
+  "metrics": {
+    "accuracy": 0.1317,
+    "precision": 0.0273,
+    "recall": 1.0,
+    "f1": 0.0532,
+    "tp": 5,
+    "fp": 178,
+    "tn": 22,
+    "fn": 0,
+    "roc_auc": 0.609,
+    "num_samples": 205
+  },
+  "latency": {
+    "mean_ms": 3.31,
+    "p50_ms": 3.17,
+    "p95_ms": 6.35,
+    "p99_ms": 8.96,
+    "min_ms": 0.48,
+    "max_ms": 11.88
+  },
+  "failure_rate": 0.0,
+  "threshold": {
+    "target": 0.75,
+    "metric": "f1",
+    "met": false,
+    "reliable": false
+  },
+  "go_nogo": "UPGRADE_ML",
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  }
+}

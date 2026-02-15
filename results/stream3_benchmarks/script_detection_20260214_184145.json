@@ -1,0 +1,591 @@
+{
+  "detector": "ScriptDetectorHeuristic",
+  "dataset": "mlt19",
+  "timestamp": "",
+  "num_samples": 2000,
+  "metrics": {
+    "family_level": {
+      "accuracy": 0.156,
+      "macro_f1": 0.1223,
+      "weighted_f1": 0.1199,
+      "cohens_kappa": 0.0192,
+      "per_class": {
+        "cjk": {
+          "precision": 0.2437,
+          "recall": 0.5198,
+          "f1": 0.3318,
+          "support": 429
+        },
+        "latin": {
+          "precision": 0.5769,
+          "recall": 0.0143,
+          "f1": 0.028,
+          "support": 1046
+        },
+        "arabic": {
+          "precision": 0.0761,
+          "recall": 0.2615,
+          "f1": 0.1179,
+          "support": 130
+        },
+        "devanagari": {
+          "precision": 0.197,
+          "recall": 0.1013,
+          "f1": 0.1338,
+          "support": 395
+        },
+        "unknown": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          223,
+          7,
+          89,
+          33,
+          77
+        ],
+        [
+          472,
+          15,
+          244,
+          123,
+          192
+        ],
+        [
+          59,
+          1,
+          34,
+          7,
+          29
+        ],
+        [
+          161,
+          3,
+          80,
+          40,
+          111
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "class_names": [
+        "cjk",
+        "latin",
+        "arabic",
+        "devanagari",
+        "unknown"
+      ],
+      "num_samples": 2000
+    },
+    "iso_level": {
+      "accuracy": 0.0754,
+      "macro_f1": 0.0513,
+      "weighted_f1": 0.0427,
+      "cohens_kappa": -0.0042,
+      "per_class": {
+        "Arab": {
+          "precision": 0.0761,
+          "recall": 0.3366,
+          "f1": 0.1241,
+          "support": 101
+        },
+        "Beng": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 132
+        },
+        "Deva": {
+          "precision": 0.0837,
+          "recall": 0.1118,
+          "f1": 0.0958,
+          "support": 152
+        },
+        "Hans": {
+          "precision": 0.059,
+          "recall": 0.4821,
+          "f1": 0.1052,
+          "support": 112
+        },
+        "Jpan": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 98
+        },
+        "Kore": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 142
+        },
+        "Latn": {
+          "precision": 0.5769,
+          "recall": 0.0176,
+          "f1": 0.0341,
+          "support": 854
+        }
+      },
+      "confusion_matrix": [
+        [
+          34,
+          0,
+          7,
+          59,
+          0,
+          0,
+          1
+        ],
+        [
+          42,
+          0,
+          23,
+          64,
+          0,
+          0,
+          3
+        ],
+        [
+          38,
+          0,
+          17,
+          97,
+          0,
+          0,
+          0
+        ],
+        [
+          39,
+          0,
+          16,
+          54,
+          0,
+          0,
+          3
+        ],
+        [
+          18,
+          0,
+          11,
+          67,
+          0,
+          0,
+          2
+        ],
+        [
+          32,
+          0,
+          6,
+          102,
+          0,
+          0,
+          2
+        ],
+        [
+          244,
+          0,
+          123,
+          472,
+          0,
+          0,
+          15
+        ]
+      ],
+      "class_names": [
+        "Arab",
+        "Beng",
+        "Deva",
+        "Hans",
+        "Jpan",
+        "Kore",
+        "Latn"
+      ],
+      "num_samples": 1591
+    }
+  },
+  "latency": {
+    "mean_ms": 2.45,
+    "p50_ms": 2.03,
+    "p95_ms": 5.53,
+    "p99_ms": 9.66,
+    "min_ms": 0.38,
+    "max_ms": 20.66
+  },
+  "failure_rate": 0.0,
+  "threshold": {
+    "target": 0.8,
+    "metric": "accuracy",
+    "met": false
+  },
+  "go_nogo": "UPGRADE_ML",
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  },
+  "supplementary_indicdlp": {
+    "dataset": "indicdlp",
+    "num_samples": 5000,
+    "note": "Supplementary evaluation on 12 Indic languages. Does NOT affect Go/No-Go decision.",
+    "metrics": {
+      "family_level": {
+        "accuracy": 0.0744,
+        "macro_f1": 0.0326,
+        "weighted_f1": 0.1375,
+        "cohens_kappa": 0.0066,
+        "per_class": {
+          "cjk": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "latin": {
+            "precision": 0.1875,
+            "recall": 0.0064,
+            "f1": 0.0123,
+            "support": 470
+          },
+          "arabic": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "devanagari": {
+            "precision": 0.984,
+            "recall": 0.0815,
+            "f1": 0.1505,
+            "support": 4530
+          },
+          "unknown": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            328,
+            3,
+            114,
+            6,
+            19
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2170,
+            13,
+            1947,
+            369,
+            31
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "class_names": [
+          "cjk",
+          "latin",
+          "arabic",
+          "devanagari",
+          "unknown"
+        ],
+        "num_samples": 5000
+      },
+      "iso_level": {
+        "accuracy": 0.3069,
+        "macro_f1": 0.0707,
+        "weighted_f1": 0.156,
+        "cohens_kappa": -0.0045,
+        "per_class": {
+          "Beng": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 67
+          },
+          "Deva": {
+            "precision": 0.312,
+            "recall": 0.9286,
+            "f1": 0.4671,
+            "support": 126
+          },
+          "Gujr": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 47
+          },
+          "Guru": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 37
+          },
+          "Knda": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 8
+          },
+          "Latn": {
+            "precision": 0.1875,
+            "recall": 0.3333,
+            "f1": 0.24,
+            "support": 9
+          },
+          "Mlym": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 5
+          },
+          "Orya": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 77
+          },
+          "Taml": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "Telu": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 11
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            66,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            117,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            47,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            36,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            6,
+            0,
+            0,
+            0,
+            3,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            77,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "class_names": [
+          "Beng",
+          "Deva",
+          "Gujr",
+          "Guru",
+          "Knda",
+          "Latn",
+          "Mlym",
+          "Orya",
+          "Taml",
+          "Telu"
+        ],
+        "num_samples": 391
+      }
+    },
+    "latency": {
+      "mean_ms": 5.17,
+      "p50_ms": 4.58,
+      "p95_ms": 10.41,
+      "p99_ms": 15.59,
+      "min_ms": 0.68,
+      "max_ms": 36.18
+    },
+    "failure_rate": 0.0,
+    "per_language": {
+      "Beng": {
+        "accuracy": 0.0796,
+        "correct": 66,
+        "total": 829
+      },
+      "Deva": {
+        "accuracy": 0.1312,
+        "correct": 117,
+        "total": 892
+      },
+      "Gujr": {
+        "accuracy": 0.1076,
+        "correct": 47,
+        "total": 437
+      },
+      "Guru": {
+        "accuracy": 0.0986,
+        "correct": 36,
+        "total": 365
+      },
+      "Knda": {
+        "accuracy": 0.0175,
+        "correct": 8,
+        "total": 458
+      },
+      "Latn": {
+        "accuracy": 0.0064,
+        "correct": 3,
+        "total": 470
+      },
+      "Mlym": {
+        "accuracy": 0.0107,
+        "correct": 5,
+        "total": 469
+      },
+      "Orya": {
+        "accuracy": 0.177,
+        "correct": 77,
+        "total": 435
+      },
+      "Taml": {
+        "accuracy": 0.0061,
+        "correct": 2,
+        "total": 326
+      },
+      "Telu": {
+        "accuracy": 0.0345,
+        "correct": 11,
+        "total": 319
+      }
+    }
+  }
+}

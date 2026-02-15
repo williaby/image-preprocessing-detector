@@ -1,0 +1,187 @@
+{
+  "detector": "WarpingDetector",
+  "dataset": "anyphotodoc6300+warpdoc",
+  "num_samples": 8459,
+  "primary": {
+    "label": "AnyPhotoDoc",
+    "metrics": {
+      "accuracy": 0.9041,
+      "precision": 0.9766,
+      "recall": 0.9193,
+      "f1": 0.9471,
+      "tp": 5797,
+      "fp": 139,
+      "tn": 314,
+      "fn": 509,
+      "roc_auc": 0.8974,
+      "num_samples": 6759
+    },
+    "latency": {
+      "mean_ms": 15.8,
+      "p50_ms": 14.92,
+      "p95_ms": 27.15,
+      "p99_ms": 33.82,
+      "min_ms": 3.29,
+      "max_ms": 50.62
+    },
+    "failures": 0
+  },
+  "warpdoc_per_type": {
+    "Curved": {
+      "label": "WarpDoc-Curved",
+      "metrics": {
+        "accuracy": 0.7029,
+        "precision": 0.6375,
+        "recall": 0.9412,
+        "f1": 0.7601,
+        "tp": 160,
+        "fp": 91,
+        "tn": 79,
+        "fn": 10,
+        "roc_auc": 0.9,
+        "num_samples": 340
+      },
+      "latency": {
+        "mean_ms": 19.05,
+        "p50_ms": 18.9,
+        "p95_ms": 29.21,
+        "p99_ms": 37.49,
+        "min_ms": 4.84,
+        "max_ms": 42.33
+      },
+      "failures": 0
+    },
+    "Fold": {
+      "label": "WarpDoc-Fold",
+      "metrics": {
+        "accuracy": 0.7206,
+        "precision": 0.6494,
+        "recall": 0.9588,
+        "f1": 0.7743,
+        "tp": 163,
+        "fp": 88,
+        "tn": 82,
+        "fn": 7,
+        "roc_auc": 0.9132,
+        "num_samples": 340
+      },
+      "latency": {
+        "mean_ms": 19.72,
+        "p50_ms": 18.34,
+        "p95_ms": 34.19,
+        "p99_ms": 40.2,
+        "min_ms": 5.94,
+        "max_ms": 45.85
+      },
+      "failures": 0
+    },
+    "Incomplete": {
+      "label": "WarpDoc-Incomplete",
+      "metrics": {
+        "accuracy": 0.7147,
+        "precision": 0.6454,
+        "recall": 0.9529,
+        "f1": 0.7696,
+        "tp": 162,
+        "fp": 89,
+        "tn": 81,
+        "fn": 8,
+        "roc_auc": 0.9032,
+        "num_samples": 340
+      },
+      "latency": {
+        "mean_ms": 18.76,
+        "p50_ms": 18.04,
+        "p95_ms": 30.3,
+        "p99_ms": 36.78,
+        "min_ms": 5.18,
+        "max_ms": 43.08
+      },
+      "failures": 0
+    },
+    "Perspective": {
+      "label": "WarpDoc-Perspective",
+      "metrics": {
+        "accuracy": 0.7206,
+        "precision": 0.6596,
+        "recall": 0.9118,
+        "f1": 0.7654,
+        "tp": 155,
+        "fp": 80,
+        "tn": 90,
+        "fn": 15,
+        "roc_auc": 0.8782,
+        "num_samples": 340
+      },
+      "latency": {
+        "mean_ms": 18.74,
+        "p50_ms": 18.14,
+        "p95_ms": 30.79,
+        "p99_ms": 38.71,
+        "min_ms": 6.48,
+        "max_ms": 47.28
+      },
+      "failures": 0
+    },
+    "Random": {
+      "label": "WarpDoc-Random",
+      "metrics": {
+        "accuracy": 0.7382,
+        "precision": 0.6667,
+        "recall": 0.9529,
+        "f1": 0.7845,
+        "tp": 162,
+        "fp": 81,
+        "tn": 89,
+        "fn": 8,
+        "roc_auc": 0.9173,
+        "num_samples": 340
+      },
+      "latency": {
+        "mean_ms": 18.66,
+        "p50_ms": 17.71,
+        "p95_ms": 30.24,
+        "p99_ms": 37.95,
+        "min_ms": 4.4,
+        "max_ms": 44.54
+      },
+      "failures": 0
+    }
+  },
+  "warpdoc_aggregate": {
+    "label": "WarpDoc-all",
+    "metrics": {
+      "accuracy": 0.7194,
+      "precision": 0.6515,
+      "recall": 0.9435,
+      "f1": 0.7708,
+      "tp": 802,
+      "fp": 429,
+      "tn": 421,
+      "fn": 48,
+      "roc_auc": 0.9032,
+      "num_samples": 1700
+    },
+    "latency": {
+      "mean_ms": 18.87,
+      "p50_ms": 18.36,
+      "p95_ms": 30.89,
+      "p99_ms": 38.17,
+      "min_ms": 4.67,
+      "max_ms": 45.26
+    },
+    "failures": 0
+  },
+  "threshold": {
+    "target": 0.8,
+    "metric": "f1",
+    "met": true
+  },
+  "go_nogo": "PASS",
+  "system_info": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "opencv": "4.11.0",
+    "numpy": "2.2.6"
+  }
+}
