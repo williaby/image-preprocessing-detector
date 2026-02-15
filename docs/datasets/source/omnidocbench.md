@@ -4,7 +4,7 @@
 >
 > **License**: Research | **Commercial Use**: Research only
 
-##### File Format
+#### File Format
 
 | Attribute | Value |
 |-----------|-------|

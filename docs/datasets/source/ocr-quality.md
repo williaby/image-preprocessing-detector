@@ -504,7 +504,7 @@ normalized_score = (5 - human_score) / 4
 
 **Audit Artifacts**: [scripts/audit/results/ocr-quality/](../../scripts/audit/results/ocr-quality/)
 
-##### Processing Notes
+#### Processing Notes
 
 - Parser: `parse_ocr_quality_labels` in `annotate_base_metadata.py`
 - Images embedded as byte arrays in Parquet (no separate image directory)
