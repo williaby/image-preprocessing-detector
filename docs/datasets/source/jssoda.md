@@ -151,22 +151,22 @@
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | layout_detections[*].class_name | ? | RESOLVED |  |
-| D02 | capture_method | ? | RESOLVED |  |
-| D03 | domain_level1 | ? | PARTIALLY_RESOLVED |  |
-| D04 | iso639_language | ? | RESOLVED |  |
-| D05 | iso15924_script | ? | RESOLVED |  |
-| D06 | script_family | ? | RESOLVED |  |
-| D07 | content_flags.* | ? | RESOLVED |  |
-| D08 | quality_overall_score | ? | DEFERRED |  |
-| D09 | resolution_category, resolution_pixels | ? | DEFERRED |  |
-| D10 | text_scope, text_scope_content_type | ? | RESOLVED |  |
-| D11 | split | ? | RESOLVED |  |
-| D12 | layout_bbox_valid | ? | DEFERRED |  |
+| D01 | layout_detections[*].class_name | MEDIUM | RESOLVED |  |
+| D02 | capture_method | MEDIUM | RESOLVED |  |
+| D03 | domain_level1 | CRITICAL | PARTIALLY_RESOLVED |  |
+| D04 | iso639_language | HIGH | RESOLVED |  |
+| D05 | iso15924_script | HIGH | RESOLVED |  |
+| D06 | script_family | MEDIUM | RESOLVED |  |
+| D07 | content_flags.* | LOW | RESOLVED |  |
+| D08 | quality_overall_score | MEDIUM | DEFERRED |  |
+| D09 | resolution_category, resolution_pixels | LOW | DEFERRED |  |
+| D10 | text_scope, text_scope_content_type | MEDIUM | RESOLVED |  |
+| D11 | split | LOW | RESOLVED |  |
+| D12 | layout_bbox_valid | MEDIUM | DEFERRED |  |
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

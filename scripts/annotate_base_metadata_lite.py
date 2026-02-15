@@ -133,13 +133,12 @@ def get_jpeg_dimensions(filepath: Path) -> tuple[int, int] | None:
                     height = struct.unpack(">H", height_data)[0]
                     width = struct.unpack(">H", width_data)[0]
                     return width, height
-                else:
-                    # Skip this segment
-                    length_data = f.read(2)
-                    if len(length_data) < 2:
-                        return None
-                    length = struct.unpack(">H", length_data)[0]
-                    f.seek(length - 2, 1)
+                # Skip this segment
+                length_data = f.read(2)
+                if len(length_data) < 2:
+                    return None
+                length = struct.unpack(">H", length_data)[0]
+                f.seek(length - 2, 1)
     except (OSError, struct.error):
         return None
 
@@ -149,7 +148,7 @@ def get_image_dimensions(filepath: Path) -> tuple[int, int] | None:
     suffix = filepath.suffix.lower()
     if suffix == ".png":
         return get_png_dimensions(filepath)
-    elif suffix in (".jpg", ".jpeg"):
+    if suffix in (".jpg", ".jpeg"):
         return get_jpeg_dimensions(filepath)
     return None
 

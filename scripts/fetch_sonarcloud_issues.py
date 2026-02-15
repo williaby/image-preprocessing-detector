@@ -13,7 +13,7 @@ import sys
 import time
 import requests
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 PROJECT_KEY = "williaby_image-preprocessing-detector"
@@ -79,7 +79,7 @@ def fetch_all_issues() -> tuple[list[dict], dict]:
         "project_key": PROJECT_KEY,
         "total_reported": total,
         "total_fetched": len(all_issues),
-        "fetched_at": datetime.now(tz=timezone.utc).isoformat(),
+        "fetched_at": datetime.now(tz=UTC).isoformat(),
         "effort_total_minutes": data.get("effortTotal", 0),
     }
 

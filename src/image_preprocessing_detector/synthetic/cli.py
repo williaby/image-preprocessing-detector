@@ -47,7 +47,7 @@ from image_preprocessing_detector.synthetic.generator import (
 )
 
 if TYPE_CHECKING:
-    pass
+    pass  # No type-checking-only imports needed currently
 
 
 # Default output path on E drive (v3: 350K pristine base)
@@ -352,7 +352,6 @@ def generate(
     # Generate
     click.echo(f"\nGenerating {len(script_list) * samples_per_script} samples...")
 
-    generated = 0
     with click.progressbar(
         generator.generate(),
         length=len(script_list) * samples_per_script,
@@ -360,7 +359,7 @@ def generate(
         show_pos=True,
     ) as progress:
         for _sample in progress:
-            generated += 1
+            pass
 
     # Get stats
     stats = generator.get_statistics()

@@ -267,7 +267,7 @@ def build_filename_mapping(arrow_dir: Path) -> dict[str, str]:
         Dict mapping renamed -> original (e.g. "funsd_plus_test_0000.jpg" -> "578118.png")
     """
     try:
-        import pyarrow.ipc as ipc  # noqa: PLC0415
+        import pyarrow.ipc as ipc
     except ImportError:
         log.warning("pyarrow not available; filename mapping disabled")
         return {}

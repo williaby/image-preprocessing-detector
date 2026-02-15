@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import os
 import random
-import sys
 from collections import defaultdict
 from pathlib import Path
 

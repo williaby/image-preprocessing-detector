@@ -140,7 +140,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -153,6 +153,9 @@
 ##### Reliability & Bottlenecks
 
 > **Computed**: 2026-02-10 | **Samples**: 97,475 | **Avg Min Confidence**: 0.000
+>
+> **Note**: Audit "Defect Rate" score of 98.0 measures metadata compliance (high = good, few defects).
+> "Unreliable" below measures label confidence (100% = all samples need enrichment/validation).
 
 **Composite Category Distribution**:
 

@@ -153,7 +153,7 @@ DocReal/
 | **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
 | **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
 | **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
-| **Layer 2 Metadata** | `metadata_registry/json/docreal_layer2.json` | 🔄 In Progress | Enrichment pending |
+| **Layer 2 Metadata** | `/mnt/e/image_detection/metadata_registry/json/docreal/` | ✅ Complete | Schema v2.3.0 compliant (per Processing Status section) |
 
 **Location Status Legend**:
 

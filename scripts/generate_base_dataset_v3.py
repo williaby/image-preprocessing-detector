@@ -725,8 +725,7 @@ def _merge_stats(
         accumulated: Running totals (modified in-place).
         chunk_stats: Stats from the current chunk's workers.
     """
-    for s in chunk_stats:
-        accumulated.append(s)
+    accumulated.extend(chunk_stats)
 
 
 def main() -> int:

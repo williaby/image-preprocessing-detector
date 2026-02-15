@@ -193,26 +193,22 @@ def assign_split(layout_cat: int, doc_id: int) -> str:
         # Book: 100 docs -> 70/15/15
         if doc_id <= 70:
             return "train"
-        elif doc_id <= 85:
+        if doc_id <= 85:
             return "val"
-        else:
-            return "test"
-    elif layout_cat == 8:
+        return "test"
+    if layout_cat == 8:
         # Bill: 51 docs -> 36/7/8
         if doc_id <= 36:
             return "train"
-        elif doc_id <= 43:
+        if doc_id <= 43:
             return "val"
-        else:
-            return "test"
-    else:
-        # All other categories: 50 docs -> 35/7/8
-        if doc_id <= 35:
-            return "train"
-        elif doc_id <= 42:
-            return "val"
-        else:
-            return "test"
+        return "test"
+    # All other categories: 50 docs -> 35/7/8
+    if doc_id <= 35:
+        return "train"
+    if doc_id <= 42:
+        return "val"
+    return "test"
 
 
 def get_per_doc_language(layout_cat: int, doc_id: int) -> tuple[str, str] | None:

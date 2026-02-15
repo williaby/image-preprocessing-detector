@@ -47,7 +47,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 
 def check_dependencies() -> bool:

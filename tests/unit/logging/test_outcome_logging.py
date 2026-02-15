@@ -407,7 +407,7 @@ class TestTimedOperation:
             logger=mock_logger,
             log_on_complete=True,
             extra_context="value",
-        ) as result:
+        ):
             pass  # Intentionally empty - testing log-on-complete behavior
 
         mock_logger.info.assert_called_once()

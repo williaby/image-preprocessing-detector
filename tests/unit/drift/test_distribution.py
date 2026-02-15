@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 from image_preprocessing_detector.drift import (
     DEFAULT_NUM_BINS,

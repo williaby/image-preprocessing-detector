@@ -15,7 +15,7 @@ documentation_status: partial
 
 #### AnyPhotoDoc6300 (Document Dewarping Benchmark)
 
-> **Quick Stats**: 6,300 images | Camera-captured | Warped + flat GT pairs | Dewarping benchmark
+> **Quick Stats**: 6,306 images | Camera-captured | Warped + flat GT pairs | Dewarping benchmark
 >
 > **License**: GPL-3.0 (code; check dataset terms) | **Commercial Use**: No (GPL-3.0)
 
@@ -51,7 +51,7 @@ documentation_status: partial
 
 | Split | Images Path | Annotations Path | Count | Status |
 |-------|-------------|------------------|-------|--------|
-| **Full Dataset** | `anyphotodoc6300/` | Implicit (paired structure) | 6,300 | ✅ |
+| **Full Dataset** | `anyphotodoc6300/` | Implicit (paired structure) | 6,306 | ✅ |
 
 **Split Organization Pattern**: `single_dir_with_manifest` (user-defined or paired folder structure)
 
@@ -59,7 +59,7 @@ documentation_status: partial
 >
 > - Dataset provides camera-captured warped images paired with flat/rectified ground truth
 > - Exact internal split structure to be verified after download
-> - Total 6,300 images (warped + corresponding GT pairs)
+> - Total 6,306 images (warped + corresponding GT pairs)
 
 ##### 2.3 Provided Labels & Annotations
 
@@ -156,19 +156,19 @@ AnyPhotoDoc6300/
 
 #### 4. Dataset Statistics
 
-Camera-captured document dewarping benchmark with 6,300 distorted images across 8 layout categories, 3 warping patterns, and 3 lighting conditions.
+Camera-captured document dewarping benchmark with 6,306 distorted images across 8 layout categories, 3 warping patterns, and 3 lighting conditions.
 
 ##### 4.1 Split Coverage
 
 | Split | Source Count | Layer 2 Count | Coverage | Status |
 |-------|--------------|---------------|----------|--------|
-| **Full Dataset** | 6,300 | 0 | 0% | ❌ Not started |
+| **Full Dataset** | 6,306 | 0 | 0% | ❌ Not started |
 
 ##### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 6,300 |
+| **Total Images** | 6,306 |
 | **File Format(s)** | PNG |
 | **Color Space** | RGB |
 | **Annotation Format** | Paired image structure |

@@ -15,10 +15,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 import time
-import unicodedata
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -363,20 +361,20 @@ def main() -> int:
 
     # Summary
     print("\n" + "=" * 70)
-    print(f"  DOCLAYNET GT INDEX EXTRACTION")
+    print("  DOCLAYNET GT INDEX EXTRACTION")
     print("=" * 70)
     print(f"  Total processed: {len(results):,}")
     print(f"  Errors: {errors}")
     print(f"  Duration: {elapsed:.1f}s ({len(gt_files) / elapsed:.0f} files/sec)")
-    print(f"\n  Language distribution (top 10):")
+    print("\n  Language distribution (top 10):")
     for lang, count in lang_counter.most_common(10):
         pct = 100 * count / len(results)
         print(f"    {lang:6s}: {count:6,d} ({pct:.1f}%)")
-    print(f"\n  Domain distribution:")
+    print("\n  Domain distribution:")
     for domain, count in domain_counter.most_common():
         pct = 100 * count / len(results)
         print(f"    {domain:6s}: {count:6,d} ({pct:.1f}%)")
-    print(f"\n  Split distribution:")
+    print("\n  Split distribution:")
     for split, count in Counter(r["split"] for r in results.values()).most_common():
         print(f"    {split:10s}: {count:6,d}")
     print(f"\n  Output: {args.output}")

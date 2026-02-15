@@ -29,7 +29,7 @@ with atheris.instrument_imports():
     from PIL import Image
 
 
-def TestOneInput(data: bytes) -> None:
+def TestOneInput(data: bytes) -> None:  # nosonar  # Name required by atheris framework
     """Fuzz target for image loading.
 
     Args:

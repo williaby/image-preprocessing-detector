@@ -58,21 +58,25 @@ if TYPE_CHECKING:
 __version__ = "0.1.0"
 SCHEMA_VERSION = "2.1"
 
+# Module path constants for lazy imports
+_ENRICHMENT_SUFFIX = ".enrichment"
+_WORKFLOW_ORCHESTRATOR_SUFFIX = ".workflow.orchestrator"
+
 # Lazy import mapping: name -> (module_path, attribute_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "BatchProcessingError": (".enrichment", "BatchProcessingError"),
-    "EnrichmentError": (".enrichment", "EnrichmentError"),
-    "EnrichmentManager": (".enrichment", "EnrichmentManager"),
-    "EnrichmentProvider": (".enrichment", "EnrichmentProvider"),
-    "EnrichmentResult": (".enrichment", "EnrichmentResult"),
-    "InferenceError": (".enrichment", "InferenceError"),
-    "ProviderUnavailableError": (".enrichment", "ProviderUnavailableError"),
-    "QualityScoreProvider": (".enrichment", "QualityScoreProvider"),
-    "ValidationError": (".enrichment", "ValidationError"),
-    "AnnotationOrchestrator": (".workflow.orchestrator", "AnnotationOrchestrator"),
-    "DatasetResult": (".workflow.orchestrator", "DatasetResult"),
-    "OrchestrationResult": (".workflow.orchestrator", "OrchestrationResult"),
-    "create_orchestrator": (".workflow.orchestrator", "create_orchestrator"),
+    "BatchProcessingError": (_ENRICHMENT_SUFFIX, "BatchProcessingError"),
+    "EnrichmentError": (_ENRICHMENT_SUFFIX, "EnrichmentError"),
+    "EnrichmentManager": (_ENRICHMENT_SUFFIX, "EnrichmentManager"),
+    "EnrichmentProvider": (_ENRICHMENT_SUFFIX, "EnrichmentProvider"),
+    "EnrichmentResult": (_ENRICHMENT_SUFFIX, "EnrichmentResult"),
+    "InferenceError": (_ENRICHMENT_SUFFIX, "InferenceError"),
+    "ProviderUnavailableError": (_ENRICHMENT_SUFFIX, "ProviderUnavailableError"),
+    "QualityScoreProvider": (_ENRICHMENT_SUFFIX, "QualityScoreProvider"),
+    "ValidationError": (_ENRICHMENT_SUFFIX, "ValidationError"),
+    "AnnotationOrchestrator": (_WORKFLOW_ORCHESTRATOR_SUFFIX, "AnnotationOrchestrator"),
+    "DatasetResult": (_WORKFLOW_ORCHESTRATOR_SUFFIX, "DatasetResult"),
+    "OrchestrationResult": (_WORKFLOW_ORCHESTRATOR_SUFFIX, "OrchestrationResult"),
+    "create_orchestrator": (_WORKFLOW_ORCHESTRATOR_SUFFIX, "create_orchestrator"),
 }
 
 

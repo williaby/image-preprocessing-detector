@@ -578,9 +578,13 @@ class PerformanceEvaluator:
 
         return result
 
-    def _generate_stub_metrics(self) -> dict[str, float]:
-        """Generate stub metrics for testing."""
-        rng = np.random.default_rng()
+    def _generate_stub_metrics(self, seed: int | None = None) -> dict[str, float]:
+        """Generate stub metrics for testing.
+
+        Args:
+            seed: Optional seed for reproducible random generation.
+        """
+        rng = np.random.default_rng(seed)
         return {
             MetricType.MAP.value: 0.85 + rng.normal(0, 0.02),
             MetricType.MAP_50.value: 0.90 + rng.normal(0, 0.02),

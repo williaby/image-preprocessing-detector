@@ -805,7 +805,7 @@ def run_integration(
         del batch
 
         # Process matching samples
-        for fn, annotations in local_annotations.items():
+        for fn, anns in local_annotations.items():
             idx = filename_to_idx.get(fn)
             if idx is not None:
                 if limit > 0 and stats["total"] >= limit:
@@ -814,7 +814,7 @@ def run_integration(
                 _process_one_sample(
                     sample,
                     lang_index,
-                    annotations,
+                    anns,
                     ocr_index,
                     stats,
                     dry_run,

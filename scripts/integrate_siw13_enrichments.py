@@ -280,9 +280,7 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
         ("cjk_char_count", cjk_chars),
         ("latin_word_count", latin_words),
     ]
-    for key, count in script_counts:
-        if count > 0:
-            stats[key] = count
+    stats.update({key: count for key, count in script_counts if count > 0})
     return stats
 
 

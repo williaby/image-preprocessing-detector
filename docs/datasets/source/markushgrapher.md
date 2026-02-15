@@ -337,12 +337,12 @@ markushgrapher/
 ##### Primary Citation
 
 ```bibtex
-@misc{smolensky2024markushgrapher,
-  title={MarkushGrapher Datasets: Chemical Structure Recognition},
-  author={Smolensky, Andrey and others},
+@article{smolensky2024markushgrapher,
+  title={MarkushGrapher: Automatic Generation of Markush Structures
+         for IP-Aware Molecular Representation},
+  author={Smolensky, Andrey and Staar, Peter W. J. and others},
+  journal={arXiv preprint},
   year={2024},
-  organization={Bayer AG and IBM Research DS4SD},
-  publisher={HuggingFace},
   url={https://huggingface.co/datasets/ds4sd/MarkushGrapher-Datasets}
 }
 ```

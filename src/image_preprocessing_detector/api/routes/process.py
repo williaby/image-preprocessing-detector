@@ -7,6 +7,7 @@ Sprint 5.2.2: POST /process endpoint
 - Error handling with structured codes
 """
 
+import asyncio
 import tempfile
 import time
 import uuid
@@ -85,7 +86,7 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
     return None
 
 
-async def process_document(
+async def process_document(  # nosonar  # async required: callers use await
     file_path: Path,
     file_name: str,
     options: ProcessingOptions,
@@ -320,48 +321,50 @@ async def process_single_document(
 
     # Save file to temp location and process
     try:
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=Path(file.filename or "document").suffix,
-        ) as tmp_file:
-            # Read file content
-            content = await file.read()
+        # Read file content
+        content = await file.read()
 
-            # Check file size
-            file_size_mb = len(content) / (1024 * 1024)
-            if file_size_mb > settings.max_file_size_mb:
-                error = ErrorResponse(
-                    error=ErrorCode.FILE_TOO_LARGE,
-                    message=f"File size {file_size_mb:.1f}MB exceeds limit of {settings.max_file_size_mb}MB",
-                    correlation_id=correlation_id,
-                )
-                return JSONResponse(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    content=ProcessResponse(
-                        status=ProcessingStatus.FAILED,
-                        error=error,
-                    ).model_dump(),
-                )
+        # Check file size
+        file_size_mb = len(content) / (1024 * 1024)
+        if file_size_mb > settings.max_file_size_mb:
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=f"File size {file_size_mb:.1f}MB exceeds limit of {settings.max_file_size_mb}MB",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ProcessResponse(
+                    status=ProcessingStatus.FAILED,
+                    error=error,
+                ).model_dump(),
+            )
 
-            # Check for empty file
-            if len(content) == 0:
-                error = ErrorResponse(
-                    error=ErrorCode.EMPTY_FILE,
-                    message="Uploaded file is empty",
-                    correlation_id=correlation_id,
-                )
-                return JSONResponse(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    content=ProcessResponse(
-                        status=ProcessingStatus.FAILED,
-                        error=error,
-                    ).model_dump(),
-                )
+        # Check for empty file
+        if len(content) == 0:
+            error = ErrorResponse(
+                error=ErrorCode.EMPTY_FILE,
+                message="Uploaded file is empty",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ProcessResponse(
+                    status=ProcessingStatus.FAILED,
+                    error=error,
+                ).model_dump(),
+            )
 
-            # Write to temp file
-            tmp_file.write(content)
-            tmp_file.flush()
-            tmp_path = Path(tmp_file.name)
+        # Write to temp file (offload sync I/O to thread)
+        def _write_temp(data: bytes, suffix: str) -> Path:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+                tmp_file.write(data)
+                tmp_file.flush()
+                return Path(tmp_file.name)
+
+        tmp_path = await asyncio.to_thread(
+            _write_temp, content, Path(file.filename or "document").suffix
+        )
 
         # Process the document
         result = await process_document(

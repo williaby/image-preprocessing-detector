@@ -69,7 +69,7 @@
 | **Provenance Tier** | Tier 1/Tier 2 |
 | **Annotator Details** | Human (titles) + automatic (OCR extraction) |
 | **Quality Assurance** | Title annotation + OCR extraction |
-| **GT Label Coverage** | 100% (category labels); ~69% (title transcriptions) |
+| **GT Label Coverage** | 100% (document-type labels); 69% (title transcriptions) |
 
 #### 11. Layer 2 Audit Summary
 
@@ -101,7 +101,7 @@ No defect catalog available for this dataset.
 
 ##### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ##### 11.4 Cross-Dataset Findings
 

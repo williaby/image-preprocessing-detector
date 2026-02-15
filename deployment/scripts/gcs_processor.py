@@ -193,12 +193,12 @@ class GCSDatasetProcessor:
         client = self._get_next_client()
 
         try:
-            with open(file_path, "rb") as f:  # noqa: ASYNC230
-                response = await client.post(
-                    "/v1/convert/file",
-                    files={"file": (file_path.name, f)},
-                    data={"output_format": "json"},
-                )
+            file_content = await asyncio.to_thread(file_path.read_bytes)
+            response = await client.post(
+                "/v1/convert/file",
+                files={"file": (file_path.name, file_content)},
+                data={"output_format": "json"},
+            )
 
             if response.status_code != 200:
                 return ExtractionResult(

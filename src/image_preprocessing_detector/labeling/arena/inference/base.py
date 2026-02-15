@@ -160,17 +160,18 @@ class InferenceBackend(ABC):
             Dictionary with model information (name, size, etc.)
         """
 
-    def warmup(self, num_iterations: int = 3) -> None:
+    def warmup(self, num_iterations: int = 3, seed: int | None = None) -> None:
         """Run warmup inference to prime the model.
 
         Args:
             num_iterations: Number of warmup iterations.
+            seed: Optional seed for reproducible dummy image generation.
         """
         if not self.is_loaded():
             return
 
         # Create dummy image for warmup
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(seed)
         dummy_image = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
 
         for _ in range(num_iterations):

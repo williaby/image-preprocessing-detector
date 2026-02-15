@@ -62,6 +62,24 @@ ENRICHMENT_VERSION_NUMBER = 2
 # KNOWN ISSUE MITIGATIONS
 # ===================================================================
 APPLY_KI_001_LAYOUT_CASING = False
+
+DOCLING_TO_DOCLAYNET: dict[str, str] = {
+    "text": "Text",
+    "list_item": "List-Item",
+    "section_header": "Section-Header",
+    "table": "Table",
+    "picture": "Picture",
+    "formula": "Formula",
+    "caption": "Caption",
+    "footnote": "Footnote",
+    "page_footer": "Page-Footer",
+    "page_header": "Page-Header",
+    "title": "Title",
+    "code": "Code",
+    "checkbox_selected": "Checkbox-Selected",
+    "checkbox_unselected": "Checkbox-Unselected",
+}
+
 KNOWN_CAPTURE_METHOD: str | None = "scanner_flatbed"
 
 

@@ -18,7 +18,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 7,058 |
+| **Total Images** | 7,058 (6,533 available; 525 referenced in annotations but not included in public download) |
 | **Subsets** | 39 |
 | **Real-world Images** | 41% |
 | **Total Size** | 2.1 GB |
@@ -179,7 +179,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

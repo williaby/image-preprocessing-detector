@@ -712,7 +712,7 @@ def extract_text_fintabnet_dir(annotation_dir: Path) -> dict[str, str]:
                 # Use filename without extension as ID
                 image_id = json_file.stem
                 image_texts[image_id] = " ".join(texts)
-        except (json.JSONDecodeError, KeyError) as e:
+        except (json.JSONDecodeError, KeyError):
             continue  # Skip malformed files
 
     logger.info(f"Extracted text for {len(image_texts)} tables")

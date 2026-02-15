@@ -692,9 +692,12 @@ class ReferenceStore:
             List of expired feature names that were removed
         """
         expired = []
-        for feature_name, ref in list(
+        for (
+            feature_name,
+            ref,
+        ) in list(  # nosonar  list() required: dict modified during iteration
             self._references.items()
-        ):  # list() required: dict modified during iteration
+        ):
             if ref.is_expired():
                 expired.append(feature_name)
                 del self._references[feature_name]

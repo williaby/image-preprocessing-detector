@@ -1,7 +1,7 @@
 ---
 dataset_id: drccbi
 version: "1.0"
-license: Unknown
+license: Unknown (verify with authors before production use)
 commercial_use: unknown
 iqa_profiles:
   - dewarping
@@ -32,6 +32,9 @@ documentation_status: partial
 | **License** | Unknown (unstated - verify with authors) |
 | **Commercial Use** | Unknown (verify with authors) |
 | **Documentation Status** | Partial |
+
+> **License Note**: License status unknown and not stated in repository. Not suitable for production use without
+> explicit license verification from authors. Research use assumed but should be confirmed before any deployment.
 
 #### 2. Source Data Inventory
 

@@ -27,21 +27,21 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 43/59 datasets training-ready (72.9%), 2 benchmark-ready
+**Current Status**: 52/68 datasets training-ready (76.5%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 43 | 72.9% | Format standardized + labels extracted |
-| ✅ **Benchmark-Ready** | 2 | 3.4% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 8 | 13.6% | Format conversion, label extraction, or generating |
-| 📚 **Non-Image Corpus** | 1 | 1.7% | Text-only corpus (openlid-v2, used for generation) |
-| ❌ **Blocked** | 5 | 8.5% | Fundamental issue preventing use |
+| ✅ **Training-Ready** | 52 | 76.5% | Format standardized + labels extracted |
+| ✅ **Benchmark-Ready** | 2 | 2.9% | Evaluation-only (license restrictions) |
+| 🔄 **In Progress** | 8 | 11.8% | Format conversion, label extraction, or generating |
+| 📚 **Non-Image Corpus** | 1 | 1.5% | Text-only corpus (openlid-v2, used for generation) |
+| ❌ **Blocked** | 5 | 7.4% | Fundamental issue preventing use |
 
 ---
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (39 datasets)
+### ✅ Training-Ready (46 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -573,7 +573,7 @@ Before marking a dataset as ✅ Training-Ready, complete:
 ## Related Documentation
 
 - **Quick Reference**: [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) - Training-focused lookup
-- **Individual Datasets**: [source/](source/) - 59 individual dataset files
+- **Individual Datasets**: [source/](source/) - 68 individual dataset files
 - **Task Indices**: [indices/](indices/) - 7 task-based training recipes
 - **Naming Standard**: [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md) - Canonical names and aliases
 - **Label Mapping**: [../schema/LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) - Schema mappings

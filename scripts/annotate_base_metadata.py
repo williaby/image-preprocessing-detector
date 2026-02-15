@@ -220,7 +220,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "omnidocbench": {
         "path": BENCHMARK_ONLY / "omnidocbench",
-        "pattern": "extracted_images/*.png",  # After extraction
+        "pattern": "extracted_images/*",  # After extraction (PNG + JPG)
         "capture_method": CaptureMethod.BORN_DIGITAL,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,

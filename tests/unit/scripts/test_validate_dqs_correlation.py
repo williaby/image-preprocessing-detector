@@ -17,7 +17,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(42)
 
 # Scripts directory added to sys.path via tests/conftest.py
 from validate_dqs_correlation import (

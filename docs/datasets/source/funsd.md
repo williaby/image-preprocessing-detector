@@ -68,8 +68,8 @@
 |-------|-------|
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
-| **Annotator Details** | [NEEDS_VERIFICATION] |
-| **Inter-Annotator Agreement** | [NEEDS_VERIFICATION] |
+| **Annotator Details** | Extended from original FUNSD annotations (expert-labeled) |
+| **Inter-Annotator Agreement** | Not reported in original paper |
 | **Quality Assurance** | Manual annotation of forms with 4 entity types (question, answer, header, other) |
 | **GT Label Coverage** | 100% (all 199 forms with entity-level annotations) |
 
