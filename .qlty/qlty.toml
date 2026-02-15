@@ -205,6 +205,34 @@ match.rules = ["bandit:B311"]
 match.file_patterns = ["**/synthetic/**"]
 set.ignored = true
 
+# Ignore function naming in fuzz/ - TestOneInput required by atheris/ClusterFuzzLite framework
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1542"]
+match.file_patterns = ["fuzz/**"]
+set.ignored = true
+
+# Ignore cognitive complexity in API routes - document processing requires sequential pipeline steps
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/api/routes/**"]
+set.ignored = true
+
+# Ignore duplicated string literals in scripts/ - file extensions and field names are natural repetitions
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1192"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore empty block in synthetic CLI - consuming generator to drive progress bar is intentional
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S108"]
+match.file_patterns = ["**/synthetic/cli.py"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 

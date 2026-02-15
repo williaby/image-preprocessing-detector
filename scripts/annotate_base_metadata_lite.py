@@ -143,12 +143,15 @@ def get_jpeg_dimensions(filepath: Path) -> tuple[int, int] | None:
         return None
 
 
+_JPEG_EXTENSIONS = frozenset({".jpg", ".jpeg"})
+
+
 def get_image_dimensions(filepath: Path) -> tuple[int, int] | None:
     """Get image dimensions without PIL."""
     suffix = filepath.suffix.lower()
     if suffix == ".png":
         return get_png_dimensions(filepath)
-    if suffix in (".jpg", ".jpeg"):
+    if suffix in _JPEG_EXTENSIONS:
         return get_jpeg_dimensions(filepath)
     return None
 

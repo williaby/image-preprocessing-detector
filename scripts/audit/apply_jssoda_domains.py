@@ -89,14 +89,13 @@ def main() -> int:
         current_domain = latest_data.get("domain_level1", "UNK")
         before_counts[current_domain] += 1
 
-        if current_domain == "UNK":
-            if not args.dry_run:
-                latest_data["domain_level1"] = "PER"
-                latest_data["domain_confidence"] = 0.6
-                latest_data["domain_detection_method"] = (
-                    "visual_review_synthetic_japanese_essays"
-                )
-                updated += 1
+        if current_domain == "UNK" and not args.dry_run:
+            latest_data["domain_level1"] = "PER"
+            latest_data["domain_confidence"] = 0.6
+            latest_data["domain_detection_method"] = (
+                "visual_review_synthetic_japanese_essays"
+            )
+            updated += 1
 
     log.info("Before update:")
     for domain, count in before_counts.most_common():

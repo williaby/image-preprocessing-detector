@@ -190,7 +190,7 @@ def synthetic() -> None:
     is_flag=True,
     help="Enable random orientation augmentation (0/90/180/270 with class labels)",
 )
-def generate(
+def generate(  # nosonar  # Click CLI params are framework-driven
     output: Path | None,
     scripts: str | None,
     samples_per_script: int,
@@ -359,7 +359,7 @@ def generate(
         show_pos=True,
     ) as progress:
         for _sample in progress:
-            pass
+            pass  # consume generator to drive progress bar
 
     # Get stats
     stats = generator.get_statistics()
