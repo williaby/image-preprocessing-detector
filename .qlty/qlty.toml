@@ -233,6 +233,20 @@ match.rules = ["radarlint-python:python:S108"]
 match.file_patterns = ["**/synthetic/cli.py"]
 set.ignored = true
 
+# Ignore cognitive complexity in synthetic CLI - Click command with many options requires sequential processing
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/synthetic/cli.py"]
+set.ignored = true
+
+# Ignore type mismatch in tests - intentional None/wrong type to test edge cases
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S5655"]
+match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 
