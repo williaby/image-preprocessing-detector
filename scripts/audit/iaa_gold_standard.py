@@ -279,7 +279,7 @@ def compute_cohens_kappa(
         for label in all_labels
     )
 
-    if abs(p_e - 1.0) < 1e-10:  # noqa: PLR2004
+    if abs(p_e - 1.0) < 1e-10:
         return 1.0 if abs(p_o - 1.0) < 1e-10 else 0.0
 
     return (p_o - p_e) / (1.0 - p_e)
