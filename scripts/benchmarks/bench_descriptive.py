@@ -71,7 +71,7 @@ def create_synthetic_images(
         img = np.full((800, 600, 3), 255, dtype=np.uint8)
         noise = rng.integers(-5, 6, size=img.shape, dtype=np.int16)
         img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-        samples.append((img, 1))  # blank = positive
+        samples.append((img, 1))  # label: blank pages are positive class
 
     # Content images: horizontal lines simulating text
     for _ in range(num_content):
@@ -84,7 +84,7 @@ def create_synthetic_images(
             thickness = int(rng.integers(1, 3))
             color = int(rng.integers(0, 80))
             cv2.line(img, (x_start, y), (x_end, y), (color, color, color), thickness)
-        samples.append((img, 0))  # content = negative
+        samples.append((img, 0))  # label: content pages are negative class
 
     return samples
 

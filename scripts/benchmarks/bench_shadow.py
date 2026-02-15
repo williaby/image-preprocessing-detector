@@ -72,8 +72,8 @@ def load_paired_dataset(
     input_files = sorted(input_dir.glob("*.png"))
     target_files = sorted(target_dir.glob("*.png"))
 
-    samples.extend((p, 1) for p in input_files)   # shadow = positive
-    samples.extend((p, 0) for p in target_files)   # clean = negative
+    samples.extend((p, 1) for p in input_files)   # label: shadow images are positive class
+    samples.extend((p, 0) for p in target_files)   # label: clean images are negative class
 
     logger.info(
         "%s: %d input (shadow) + %d target (clean) = %d total",

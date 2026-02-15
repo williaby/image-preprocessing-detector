@@ -111,8 +111,8 @@ def load_samples(
             scanner_images = [scanner_images[i] for i in idx]
 
     samples: list[tuple[Path, int]] = []
-    samples.extend((p, 1) for p in camera_images)  # camera = positive
-    samples.extend((p, 0) for p in scanner_images)  # scanner = negative
+    samples.extend((p, 1) for p in camera_images)  # label: camera-captured are positive class
+    samples.extend((p, 0) for p in scanner_images)  # label: scanned docs are negative class
 
     # Shuffle
     perm = rng.permutation(len(samples))

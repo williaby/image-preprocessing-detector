@@ -261,6 +261,94 @@ match.rules = ["radarlint-python:python:S5655"]
 match.file_patterns = ["tests/**", "**/test_*.py"]
 set.ignored = true
 
+# Ignore commented-out code in scripts/ - inline annotations (e.g., "# blank = positive") are
+# misidentified as commented-out code by S125
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S125"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore unused local variables in scripts/ - data processing scripts use intermediate
+# variables for clarity and debugging
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1481"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore unused assignment in scripts/ - intermediate variables kept for clarity
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1854"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore merge-if-statements in scripts/ - separate conditions improve readability
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1066"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore identical branches in scripts/ - explicit handling per branch improves readability
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1871"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore identical if/else blocks in scripts/ - explicit handling per condition
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3923"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore B311 (random) in scripts/ - used for sampling and shuffling, not crypto
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B311"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore B110 (try-except-pass) in scripts/ - intentional error suppression for optional processing
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B110"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore B615 (HuggingFace Hub download) in scripts/ - download scripts intentionally
+# use load_dataset without pinning for latest data
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B615"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore hardcoded absolute paths in scripts/ - data processing scripts reference fixed paths
+[[triage]]
+match.plugins = ["semgrep"]
+match.rules = ["semgrep:hardcoded-absolute-path"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore cognitive complexity in annotation parsers - parsing diverse dataset formats
+# requires inherently complex conditional logic
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/annotation/parsers/**"]
+set.ignored = true
+
+# Ignore path traversal in annotation parsers - CLI tools that intentionally accept file paths
+[[triage]]
+match.plugins = ["semgrep"]
+match.rules = ["semgrep:cli-path-traversal-open"]
+match.file_patterns = ["**/annotation/parsers/**"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 
