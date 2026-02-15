@@ -384,9 +384,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    ds_list = (
-        [args.dataset] if args.dataset else args.datasets.split(",")
-    )
+    ds_list = [args.dataset] if args.dataset else args.datasets.split(",")
 
     updated = 0
     for ds in ds_list:

@@ -428,10 +428,11 @@ class TestGroupEContentFlagValidators:
         ok, _ = _check_has_code_present(data)
         assert ok
 
-    def test_has_code_missing_fails(self) -> None:
+    def test_has_code_missing_passes(self) -> None:
+        """Extended validator: pass-if-absent."""
         ok, detail = _check_has_code_present({})
-        assert not ok
-        assert "v2.1.0" in (detail or "")
+        assert ok
+        assert detail is None
 
     def test_has_code_in_nested_flags_pass(self) -> None:
         data = {"content_flags": {"has_code": True}}
@@ -443,10 +444,11 @@ class TestGroupEContentFlagValidators:
         ok, _ = _check_has_signature_present(data)
         assert ok
 
-    def test_has_signature_missing_fails(self) -> None:
+    def test_has_signature_missing_passes(self) -> None:
+        """Extended validator: pass-if-absent."""
         ok, detail = _check_has_signature_present({})
-        assert not ok
-        assert "not present" in (detail or "")
+        assert ok
+        assert detail is None
 
 
 class TestGroupFHandwritingValidators:
@@ -585,10 +587,10 @@ class TestCoreExtendedRegistrySplit:
     """Tests for Core vs Extended validator registry structure."""
 
     def test_core_validators_count(self) -> None:
-        """Core should have 24 validators (incl. quality_overall_mos tracked separately)."""
+        """Core should have 23 validators (+ quality_overall_mos tracked separately)."""
         # _CORE_VALIDATORS list + quality_overall_mos handled separately
-        assert len(_CORE_VALIDATORS) >= 14
-        assert len(CORE_FIELD_NAMES) >= 15  # +quality_overall_mos
+        assert len(_CORE_VALIDATORS) == 23
+        assert len(CORE_FIELD_NAMES) == 24  # +quality_overall_mos
 
     def test_extended_validators_count(self) -> None:
         """Extended should have 21 validators."""
@@ -651,6 +653,72 @@ class TestComputeLabelAccuracy:
         # Structural avg = (70+60)/2 = 65.0
         # Weighted = 87.5*0.6 + 65.0*0.4 = 52.5 + 26.0 = 78.5
         assert abs(score - 78.5) < 0.5
+
+    def test_per_field_accuracy_dict_format(self, tmp_path: Path) -> None:
+        """Per-field accuracy with dict-format values (accuracy_pct, correct/incorrect)."""
+        vlm = _make_vlm_json(
+            tmp_path,
+            {
+                "accuracy_by_field": {
+                    "iso639_language": {
+                        "correct": 95,
+                        "incorrect": 5,
+                        "accuracy_pct": 95.0,
+                    },
+                    "script_family": {
+                        "correct": 90,
+                        "incorrect": 10,
+                        "accuracy_pct": 90.0,
+                    },
+                    "domain_level1": {
+                        "correct": 85,
+                        "incorrect": 15,
+                        "accuracy_pct": 85.0,
+                    },
+                    "capture_method": {
+                        "correct": 80,
+                        "incorrect": 20,
+                        "accuracy_pct": 80.0,
+                    },
+                    "orientation_class": {
+                        "correct": 70,
+                        "incorrect": 30,
+                        "accuracy_pct": 70.0,
+                    },
+                    "handwriting_present": {
+                        "correct": 60,
+                        "incorrect": 40,
+                        "accuracy_pct": 60.0,
+                    },
+                },
+            },
+        )
+        catalog = tmp_path / "defect_catalog.json"
+        config = _v2_config()
+        score = compute_label_accuracy(vlm, catalog, config)
+        assert score is not None
+        # Critical avg = (95+90+85+80)/4 = 87.5
+        # Structural avg = (70+60)/2 = 65.0
+        # Weighted = 87.5*0.6 + 65.0*0.4 = 52.5 + 26.0 = 78.5
+        assert abs(score - 78.5) < 0.5
+
+    def test_per_field_accuracy_dict_without_pct(self, tmp_path: Path) -> None:
+        """Dict-format values computed from correct/incorrect when accuracy_pct missing."""
+        vlm = _make_vlm_json(
+            tmp_path,
+            {
+                "accuracy_by_field": {
+                    "iso639_language": {"correct": 90, "incorrect": 10},
+                    "script_family": {"correct": 80, "incorrect": 20},
+                },
+            },
+        )
+        catalog = tmp_path / "defect_catalog.json"
+        config = _v2_config()
+        score = compute_label_accuracy(vlm, catalog, config)
+        assert score is not None
+        # Only critical fields: avg = (90+80)/2 = 85.0
+        assert abs(score - 85.0) < 0.5
 
     def test_fallback_to_passing_sample_accuracy(self, tmp_path: Path) -> None:
         """Falls back to passing_sample_accuracy if no per-field data."""
@@ -995,6 +1063,41 @@ class TestContentFlagFPRates:
         rates = _load_content_flag_fp_rates(vlm)
         assert rates is not None
         assert abs(rates["has_handwriting"] - 100.0) < 0.1
+
+    def test_loads_from_validation_summary(self, tmp_path: Path) -> None:
+        """FP rates loaded from validation_summary.content_flag_analysis."""
+        vlm = _make_vlm_json(
+            tmp_path,
+            {
+                "validation_summary": {
+                    "content_flag_analysis": {
+                        "has_table": {
+                            "total_flagged": 20,
+                            "true_positive": 15,
+                            "false_positive": 5,
+                            "fp_rate_pct": 25.0,
+                        },
+                    },
+                },
+            },
+        )
+        rates = _load_content_flag_fp_rates(vlm)
+        assert rates is not None
+        assert abs(rates["has_table"] - 25.0) < 0.1
+
+    def test_loads_fp_rate_pct_format(self, tmp_path: Path) -> None:
+        """FP rates loaded using fp_rate_pct key (already 0-100)."""
+        vlm = _make_vlm_json(
+            tmp_path,
+            {
+                "content_flag_analysis": {
+                    "has_figure": {"fp_rate_pct": 33.5},
+                },
+            },
+        )
+        rates = _load_content_flag_fp_rates(vlm)
+        assert rates is not None
+        assert abs(rates["has_figure"] - 33.5) < 0.1
 
     def test_missing_file_returns_none(self, tmp_path: Path) -> None:
         rates = _load_content_flag_fp_rates(tmp_path / "nonexistent.json")

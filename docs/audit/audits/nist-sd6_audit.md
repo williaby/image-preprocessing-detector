@@ -132,7 +132,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ### Results
 
-15-field validation summary:
+45-field validation summary (v2.0):
 
 | # | Field | Pass Rate | Status | Notes |
 |---|-------|-----------|--------|-------|
@@ -153,7 +153,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | 15 | `text_directions_present` | % | ⬜ | All items must be in {ltr, rtl, ttb} (v2.3.0) |
 
 **Overall Pass Rate**: _**%
-**Fields at 100%**:**_/15
+**Fields at 100%**:**_/45
 **Fields at 0%**: ___ (indicates missing enrichment sources)
 
 ### Decision Point
@@ -847,7 +847,7 @@ Add to dataset documentation:
 ### Prescreening Results
 
 - **Pass rate**: ___% (before), ___% (after)
-- **Fields at 100%**: ___/15
+- **Fields at 100%**: ___/45
 - **Remaining failures**: ___
 
 ### Deferred Items
@@ -994,7 +994,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | Criterion | Target | Minimum | Actual | Pass? | Notes |
 |-----------|--------|---------|--------|-------|-------|
 | Prescreening pass rate | 95%+ | 85% | % | ⬜ | |
-| Fields at 100% | 12+/15 | 10/15 | /15 | ⬜ | |
+| Fields at 100% | 35+/45 | 30/45 | /45 | ⬜ | |
 | VLM passing accuracy | 95%+ | 90% | % | ⬜ | **REQUIRED** - grade capped at D without |
 | VLM images inspected (Tier 1) | max(40, 5%) | max(15, 5%) | | ⬜ | **REQUIRED** - Track A + Track C |
 | VLM images inspected (Tier 2) | max(75, 15%) | max(30, 15%) | | ⬜ | Enhanced: gaps or critical defects |
@@ -1010,22 +1010,23 @@ Based on [config/audit_scorecard.yaml](../../config/audit_scorecard.yaml):
 
 | Dimension | Weight | Score | Weighted | Notes |
 |-----------|--------|-------|----------|-------|
-| Field Coverage | 0.25 | | | Avg pass rate across 13 fields |
-| Field Validity | 0.25 | | | Schema compliance validity rate |
-| Doc Completeness | 0.15 | | | 11 expected sections |
-| Defect Rate | 0.15 | | | Inverse defect density |
-| Cross-Source Agreement | 0.10 | | | Pairwise agreement (if applicable) |
-| VLM Accuracy | 0.10 | | | Passing sample accuracy |
+| Field Coverage | 0.15 | | | Avg pass rate across prescreened fields |
+| Field Validity | 0.15 | | | Schema compliance validity rate |
+| Doc Completeness | 0.05 | | | 11 expected sections |
+| Defect Rate | 0.10 | | | Inverse defect density |
+| Cross-Source Agreement | 0.15 | | | Pairwise agreement (if applicable) |
+| Label Accuracy | 0.20 | | | Per-field accuracy from VLM verification |
+| Confidence Quality | 0.20 | | | Confidence score reliability |
 
 **Total Score**: _**/100
 **Grade**:**_
 
 **Grade Thresholds**:
 
-- A = 90+ (Excellent - ready for production training)
-- B = 80+ (Good - minor gaps, usable with caveats)
-- C = 70+ (Acceptable - significant gaps needing attention)
-- D = 60+ (Below Standard - major remediation required)
+- A = 93+ (Excellent - ready for production training)
+- B = 85+ (Good - minor gaps, usable with caveats)
+- C = 75+ (Acceptable - significant gaps needing attention)
+- D = 65+ (Below Standard - major remediation required)
 - F = <60 (Failing - not suitable for use)
 
 ### Final Status

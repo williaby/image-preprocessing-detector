@@ -517,21 +517,39 @@ def compute_vlm_accuracy(
 
 
 def _extract_accuracy_pct(rate: Any) -> float:
-    """Extract accuracy percentage from either float or dict format.
+    """Extract accuracy percentage from various accuracy_by_field formats.
 
-    Handles two accuracy_by_field value formats:
+    Handles multiple accuracy_by_field value formats:
+    - Dict with 'accuracy_pct' key (0-100): use directly.
+    - Dict with 'pct' key (0-100): use directly.
+    - Dict with 'correct'/'incorrect' counts: compute percentage.
     - Float (0-1 scale): multiply by 100 to get percentage.
-    - Dict with 'pct' key (already 0-100): use directly.
+    - Float (>1): treat as already a percentage.
 
     Args:
-        rate: Either a float (0-1) or dict with 'pct' key.
+        rate: A float, int, or dict with accuracy data.
 
     Returns:
         Accuracy as percentage (0-100).
     """
     if isinstance(rate, dict):
-        return float(rate.get("pct", 0.0))
-    return float(rate) * 100
+        # Prefer explicit percentage keys
+        if "accuracy_pct" in rate:
+            return float(rate["accuracy_pct"])
+        if "pct" in rate:
+            return float(rate["pct"])
+        # Compute from correct/incorrect counts
+        correct = rate.get("correct")
+        incorrect = rate.get("incorrect")
+        if isinstance(correct, (int, float)) and isinstance(incorrect, (int, float)):
+            total = correct + incorrect
+            return (correct / total * 100) if total > 0 else 0.0
+        return 0.0
+    val = float(rate)
+    # Values 0-1 are fractions; larger values are already percentages
+    if 0.0 <= val <= 1.0:
+        return val * 100
+    return val
 
 
 def compute_label_accuracy(
@@ -602,9 +620,7 @@ def compute_label_accuracy(
 
         if crit_rates or struct_rates:
             crit_avg = sum(crit_rates) / len(crit_rates) if crit_rates else 0.0
-            struct_avg = (
-                sum(struct_rates) / len(struct_rates) if struct_rates else 0.0
-            )
+            struct_avg = sum(struct_rates) / len(struct_rates) if struct_rates else 0.0
 
             # Adjust weights if one group has no data
             if crit_rates and struct_rates:
@@ -626,7 +642,9 @@ def compute_label_accuracy(
     passing_accuracy = vlm_data.get("passing_sample_accuracy")
     if passing_accuracy is not None:
         score = float(passing_accuracy) * 100
-        log.info("  label_accuracy: %.1f/100 (fallback: passing_sample_accuracy)", score)
+        log.info(
+            "  label_accuracy: %.1f/100 (fallback: passing_sample_accuracy)", score
+        )
         return round(score, 2)
 
     # Try defect_catalog fallback
@@ -725,12 +743,16 @@ def _load_content_flag_fp_rates(
     with vlm_path.open() as f:
         data = json.load(f)
 
-    # Check for content flag analysis
+    # Check for content flag analysis in supported locations
     content_flag_analysis = data.get("content_flag_analysis", {})
     if not content_flag_analysis:
         # Try track_a_analysis
         track_a = data.get("track_a_analysis", {})
         content_flag_analysis = track_a.get("content_flag_analysis", {})
+    if not content_flag_analysis:
+        # Try v2 schema location under validation_summary
+        validation_summary = data.get("validation_summary", {})
+        content_flag_analysis = validation_summary.get("content_flag_analysis", {})
 
     if not content_flag_analysis:
         return None
@@ -738,9 +760,35 @@ def _load_content_flag_fp_rates(
     fp_rates: dict[str, float] = {}
     for flag_name, flag_data in content_flag_analysis.items():
         if isinstance(flag_data, dict):
-            fp_rate = flag_data.get("false_positive_rate")
-            if fp_rate is not None:
-                fp_rates[flag_name] = float(fp_rate) * 100
+            rate_pct: float | None = None
+
+            # Prefer explicit percentage fields (already 0-100)
+            if "fp_rate_pct" in flag_data:
+                try:
+                    rate_pct = float(flag_data["fp_rate_pct"])
+                except (TypeError, ValueError):
+                    rate_pct = None
+            elif "pct" in flag_data:
+                try:
+                    rate_pct = float(flag_data["pct"])
+                except (TypeError, ValueError):
+                    rate_pct = None
+            else:
+                fp_rate = flag_data.get("false_positive_rate")
+                if fp_rate is not None:
+                    try:
+                        fp_rate_f = float(fp_rate)
+                    except (TypeError, ValueError):
+                        fp_rate_f = None
+                    if fp_rate_f is not None:
+                        # Values 0-1 are fractions; larger values are percentages
+                        if 0.0 <= fp_rate_f <= 1.0:
+                            rate_pct = fp_rate_f * 100.0
+                        else:
+                            rate_pct = fp_rate_f
+
+            if rate_pct is not None:
+                fp_rates[flag_name] = rate_pct
     return fp_rates if fp_rates else None
 
 
@@ -820,11 +868,46 @@ def compute_overall(
             "note": "No dimensions could be computed",
         }
 
-    # Redistribute excluded weights
-    total_available_weight = sum(w for w, _ in available.values())
+    # Redistribute excluded weights (only from optional dimensions)
+    # Required dimensions (e.g., label_accuracy) are never redistributed;
+    # their weight stays in the denominator so missing required data
+    # naturally depresses the overall score (scored as 0).
+    missing_optional_weight = sum(
+        dimensions[d].get("weight", 0.0)
+        for d in excluded
+        if not dimensions[d].get("required", False)
+    )
+    missing_required_weight = sum(
+        dimensions[d].get("weight", 0.0)
+        for d in excluded
+        if dimensions[d].get("required", False)
+    )
+    available_weight_sum = sum(w for w, _ in available.values())
+    full_weight_sum = (
+        available_weight_sum + missing_optional_weight + missing_required_weight
+    )
     effective_weights: dict[str, float] = {}
     for dim_name, (weight, _score) in available.items():
-        effective_weights[dim_name] = weight / total_available_weight
+        # Each available dimension gets its original weight plus a
+        # proportional share of the redistributable (optional) weight.
+        redistribution_share = (
+            (weight / available_weight_sum) * missing_optional_weight
+            if available_weight_sum > 0
+            else 0.0
+        )
+        effective_weights[dim_name] = (
+            (weight + redistribution_share) / full_weight_sum
+            if full_weight_sum > 0
+            else 0.0
+        )
+    # Missing required dimensions keep their weight (scored as 0).
+    for d in excluded:
+        if dimensions[d].get("required", False):
+            effective_weights[d] = (
+                dimensions[d].get("weight", 0.0) / full_weight_sum
+                if full_weight_sum > 0
+                else 0.0
+            )
 
     # Compute weighted score
     overall = 0.0
@@ -855,13 +938,14 @@ def compute_overall(
     grade_cap_applied: str | None = None
 
     # Cap 1: Missing VLM inspection -> max D
+    # Check actual VLM file existence rather than dimension exclusion,
+    # because defect_catalog fallback can produce a score even without VLM.
+    vlm_file_exists = vlm_path is not None and vlm_path.is_file()
     label_acc_config = dimensions.get("label_accuracy", {})
     vlm_acc_config = dimensions.get("vlm_accuracy", {})
     label_required = label_acc_config.get("required", False)
     vlm_required = vlm_acc_config.get("required", False)
-    if (label_required and "label_accuracy" in excluded) or (
-        vlm_required and "vlm_accuracy" in excluded
-    ):
+    if (label_required or vlm_required) and not vlm_file_exists:
         cap_rule = grade_caps.get("missing_vlm_accuracy", {})
         max_g = cap_rule.get("max_grade", "D")
         reason = cap_rule.get("reason", "").strip()
@@ -914,9 +998,7 @@ def compute_overall(
             fp_crit_cap = grade_caps.get("high_content_flag_fp_rate_critical", {})
             fp_crit_threshold = fp_crit_cap.get("threshold_pct", 80)
             crit_flags = [
-                f"{f}={r:.0f}%"
-                for f, r in fp_rates.items()
-                if r > fp_crit_threshold
+                f"{f}={r:.0f}%" for f, r in fp_rates.items() if r > fp_crit_threshold
             ]
             if crit_flags:
                 max_g = fp_crit_cap.get("max_grade", "D")
@@ -933,9 +1015,7 @@ def compute_overall(
             fp_warn_cap = grade_caps.get("high_content_flag_fp_rate_warning", {})
             fp_warn_threshold = fp_warn_cap.get("threshold_pct", 50)
             warn_flags = [
-                f"{f}={r:.0f}%"
-                for f, r in fp_rates.items()
-                if r > fp_warn_threshold
+                f"{f}={r:.0f}%" for f, r in fp_rates.items() if r > fp_warn_threshold
             ]
             if warn_flags:
                 max_g = fp_warn_cap.get("max_grade", "C")
@@ -947,13 +1027,15 @@ def compute_overall(
                 grade, grade_cap_applied = _apply_grade_cap(
                     grade, max_g, msg, grade_cap_applied
                 )
-        elif "label_accuracy" not in excluded:
-            # VLM data exists but no content flag analysis -> cap at C
+        elif vlm_file_exists:
+            # VLM file exists but no content flag analysis -> cap at C
             missing_cf_cap = grade_caps.get("missing_content_flag_inspection", {})
             max_g = missing_cf_cap.get("max_grade", "C")
             reason = missing_cf_cap.get("reason", "").strip()
             grade, grade_cap_applied = _apply_grade_cap(
-                grade, max_g, f"No content flag inspection data. {reason}",
+                grade,
+                max_g,
+                f"No content flag inspection data. {reason}",
                 grade_cap_applied,
             )
 

@@ -360,8 +360,7 @@ can produce compatible artifacts without reading the scorer source code.
     "field_name": {"pass": 100, "fail": 5}
   },
   "core_pass_rate_pct": 92.5,
-  "extended_pass_rate_pct": 78.3,
-  "overall_pass_rate_pct": 88.1
+  "extended_pass_rate_pct": 78.3
 }
 ```
 
@@ -413,10 +412,13 @@ Each defect **must** include both `status` and `extrapolation_risk`.
 ```
 
 The `label_accuracy` dimension uses `accuracy_by_field` for per-field accuracy (weighted: critical
-fields 60%, structural fields 40%). Falls back to `passing_sample_accuracy` if per-field data is
-unavailable. Content flag FP rates from `validation_summary.content_flag_analysis` trigger grade
-caps at >50% (cap C) and >80% (cap D). Without `vlm_corrections.json` entirely, the grade is
-capped to D.
+fields 60%, structural fields 40%). Per-field values accept both dict format
+(`{"accuracy_pct": 95.0}` or `{"correct": 95, "incorrect": 5}`) and numeric fractions (0-1 scale).
+Falls back to `passing_sample_accuracy` if per-field data is unavailable. Content flag FP rates
+from `content_flag_analysis` (checked at root, `track_a_analysis`, and `validation_summary`) trigger
+grade caps at >50% (cap C) and >80% (cap D). FP rates accept `fp_rate_pct` (0-100) or
+`false_positive_rate` (0-1 fraction). Without `vlm_corrections.json` entirely, the grade is capped
+to D.
 
 **`comparison_report.json`**:
 
