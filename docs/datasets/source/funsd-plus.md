@@ -4,6 +4,39 @@
 >
 > **License**: CC-BY-4.0 | **Commercial Use**: Yes
 
+##### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | JPEG/PNG |
+| **Annotation Format** | HuggingFace Arrow (Parquet) |
+| **Dimensions** | 956-1409 x 1063-1566 px (avg: 1085 x 1386) |
+| **Avg File Size** | 199 KB |
+| **Total Size** | 420 MB |
+
+##### Known Limitations
+
+- Extended from FUNSD - annotation quality may vary from original
+- has_handwriting systematically incorrect (forms contain handwritten answers but labeled false)
+- 2 German samples detected in English-labeled dataset (<1%)
+- No validation split provided (train/test only)
+- BIO tagging scheme differs from original FUNSD entity-level structure
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | CC-BY-4.0 |
+| **Commercial Use** | Yes (with attribution) |
+| **Citation** | Extended FUNSD dataset, HuggingFace |
+
+##### Processing Notes
+
+- Parser: `FunsdPlusParser` handles HuggingFace Arrow format directly
+- Integration script: `scripts/integrate_funsd_plus_enrichments.py` (v1.1.0)
+- Arrow filename mapping required (metadata uses renamed files, batches use original HF IDs)
+- Sources: DocLayout-YOLO layout (6 batches), Docling OCR (6 batches), dataset docs, language enrichment
+
 ##### 1. Overview
 
 | Attribute | Value |

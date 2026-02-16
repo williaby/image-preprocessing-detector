@@ -13,7 +13,7 @@ title: Dataset Quick Reference
 > **Version**: 2.0.0
 > **Last Updated**: 2026-02-14
 > **Purpose**: Concise dataset lookup for training planning and task selection
-> **Token Optimized**: ~600 lines vs 59 individual dataset files (100-500 lines each)
+> **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
 > **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (16 heads) + Docling Layout (pre-trained)
 
@@ -23,10 +23,9 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 59 | 54 image + 2 text corpora + 2 blocked + 1 generating |
+| **Total Datasets** | 57 | 54 image + 2 text corpora + 1 generating |
 | **Training-Ready** | 48 | Format standardized + labels extracted |
 | **In Progress** | 7 | Format conversion, label extraction, or generating |
-| **Blocked** | 3 | wili_2018 (text-only) + u-diads-tl + dit700k |
 | **Non-Image Corpus** | 1 | openlid-v2 (text-only, feeds synth-multiscript generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
 | **Layer 2 Aggregates** | 57 | Datasets with capture/domain/script/content stats |
@@ -104,12 +103,12 @@ title: Dataset Quick Reference
 | docsynth | 300,000 | -- | PNG | None | GT (DocSynth300K) | None | None |
 | mdiw13 | 290,213 | D 87 | PNG | None | Extracted (Docling) | GT | GT |
 | tablebank | 260,025 | **B** 89 | PNG | None | GT (COCO) | GT (dataset) | GT (dataset) |
-| markushgrapher | 235,000 | -- | PNG | GT (structures) | GT (diagrams) | None | None |
+| markushgrapher | 172,073 | ✅ | PNG | GT (structures) | GT (diagrams) | None | None |
 | hasy | 168,233 | **B** 86 | PNG | Partial (LaTeX) | None | None | None |
 | tibhcr | 141,698 | **B** 85 | PNG | Partial (char) | Extracted (Docling) | GT | GT |
 | iam | 130,212 | F 36 | PNG | GT | None | GT (dataset) | GT (dataset) |
 | coco-text | 123,287 | **B** 86 | JPG | GT | None | GT (coarse) | OpenLID |
-| indicdlp | 119,000 | -- | PNG | None | GT (COCO 42-class) | GT (12 Indic) | GT |
+| indicdlp | 115,803 | ✅ | PNG | None | GT (COCO 42-class) | GT (12 Indic) | GT |
 | doc3d | 102,064 | -- | PNG | None | None | None | None |
 | fintabnet | 97,475 | **B** 87 | PNG | GT + Constructed | GT (FinTabNet) + Converted | GT (dataset) | GT (dataset) |
 | doclaynet | 81,471 | **A** 96 | PNG | GT + Extracted | GT (DocLayNet) + Converted | GT (dataset) | GT (dataset) |
@@ -165,10 +164,8 @@ title: Dataset Quick Reference
 | drccbi | 325 | -- | JPG | Extracted | None | None | None |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
-| u-diads-tl | -- | -- | N/A (blocked) | None | None | None | None |
-| dit700k | -- | -- | N/A (blocked) | None | None | None | None |
 
-**Summary**: 59 datasets (54 image + 2 text corpora + 2 blocked + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
+**Summary**: 57 datasets (54 image + 2 text corpora + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 
@@ -313,7 +310,7 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 | funsd | 199 | COCO + OCR | Forms (4 entities) | 149 | CC-BY-4.0 |
 | funsd-plus | 1,139 | COCO + OCR | Extended forms | All | CC-BY-4.0 |
 | sroie | 973 | Quad + OCR + entities | Receipts | 626 | Research |
-| indicdlp | 119,000 | COCO boxes | 42 classes, 12 Indic langs | All | MIT |
+| indicdlp | 115,803 | COCO boxes | 42 classes, 12 Indic langs | All | MIT |
 | hiertext | 11,641 | COCO boxes | Word/line/paragraph | 8,281 | CC-BY-SA-4.0 |
 
 **DocLayNet classes**: Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title
@@ -393,8 +390,6 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 **Parquet Format** (conversion required): docsynth, iam, ohr-bench, omnidocbench, yarmouk (source). See [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md).
 
 **Text-Only Corpora** (no images): wili-2018, openlid-v2 (text corpus for synthetic generation).
-
-**Blocked**: u-diads-tl (site offline), dit700k (not publicly available).
 
 ---
 

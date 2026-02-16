@@ -1,7 +1,7 @@
 # Layer 2 Metadata Audit System
 
-> **Version**: 1.5.0
-> **Last Updated**: 2026-02-13
+> **Version**: 2.0.0
+> **Last Updated**: 2026-02-14
 > **Status**: Active
 
 ## Overview
@@ -26,8 +26,8 @@ Phase 0: Paper Review
   └─> Fill paper_review.md template with baseline expectations
 
 Phase 1: Automated Prescreening
-  └─> Run automated_prescreening.py → 15-field validation
-  └─> Generates automated_screening.json with pass/fail rates
+  └─> Run automated_prescreening.py → 45-field validation (24 Core + 21 Extended)
+  └─> Generates automated_screening.json with pass/fail rates + core/extended split
 
 Phase 2: Schema Compliance Check
   └─> Run audit_schema_compliance.py → Validate field types/ranges
@@ -56,7 +56,7 @@ Phase 5.5: Stratified Sampling (post-integration)
 
 Phase 6: VLM Visual Inspection (Adaptive Sampling)
   └─> Tier already selected in Phase 4; sample_set from Phase 5.5
-  └─> Run VLM agent on sample_set.json → Validate 15 fields visually
+  └─> Run VLM agent on sample_set.json → Validate fields visually
   └─> Expand inspection for flags with high FP rates
   └─> Generates vlm_corrections.json with corrections and passing accuracy
 
@@ -108,12 +108,12 @@ docs/audit/
     └── pucit-ohul_audit.md
 
 config/
-└── audit_scorecard.yaml              ← 6-dimension weighted scoring rubric
+└── audit_scorecard.yaml              ← 7-dimension weighted scoring rubric (v2.0)
 
 scripts/audit/
 ├── audit_config.py                   ← Dataset registry (14 known datasets)
 ├── audit_report_template.md          ← Symlink → docs/audit/AUDIT_REPORT_TEMPLATE.md
-├── automated_prescreening.py         ← Phase 1: 15-field validation
+├── automated_prescreening.py         ← Phase 1: 45-field validation (24 Core + 21 Extended)
 ├── audit_schema_compliance.py        ← Phase 2: Schema compliance (15 fields)
 ├── assemble_comparison.py            ← Phase 3: Multi-source comparison
 ├── select_audit_samples.py           ← Phase 4.5: Stratified sample selection
@@ -234,11 +234,11 @@ PYTHONPATH=. uv run python3 scripts/integrate_{dataset}_enrichments.py
 
 | Script | Phase | Purpose | Example Usage |
 |--------|-------|---------|---------------|
-| `automated_prescreening.py` | 1 | Validate 15 prescreening fields (split, capture_method, domain_level1, etc.) | `PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset jssoda` |
+| `automated_prescreening.py` | 1 | Validate 45 prescreening fields (24 Core + 21 Extended) across reliability, confidence, geometric, resolution, content flags, and more | `PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py --dataset jssoda` |
 | `audit_schema_compliance.py` | 2 | Validate 15 schema fields (types, ranges, COCO bbox format, etc.) | `PYTHONPATH=. uv run python3 scripts/audit/audit_schema_compliance.py --dataset jssoda` |
 | `assemble_comparison.py` | 3 | Compare multiple enrichment sources, compute cross-source agreement | `PYTHONPATH=. uv run python3 scripts/audit/assemble_comparison.py --dataset jssoda` |
 | `select_audit_samples.py` | 4.5 | Stratified random sampling for VLM inspection (36-100 images) | `PYTHONPATH=. uv run python3 scripts/audit/select_audit_samples.py --dataset jssoda --size 36` |
-| `compute_scorecard.py` | Post-Audit | Compute 6-dimension quality grade (A/B/C/D/F) | `PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset jssoda` |
+| `compute_scorecard.py` | Post-Audit | Compute 7-dimension quality grade (A/B/C/D/F) with accuracy-focused scoring (v2.0) | `PYTHONPATH=. uv run python3 scripts/audit/compute_scorecard.py --dataset jssoda` |
 
 ### Dataset Catalog Update Scripts (Phase 9)
 
@@ -259,11 +259,11 @@ Each script generates JSON artifacts in `scripts/audit/results/{dataset}/`:
 
 | Script | Output File | Fields |
 |--------|-------------|--------|
-| `automated_prescreening.py` | `automated_screening.json` | 13 field pass rates, failure examples |
+| `automated_prescreening.py` | `automated_screening.json` | 45 field pass rates (core/extended split), failure examples |
 | `audit_schema_compliance.py` | `compliance.json` (auto-output when `--dataset` used) | 15+ field validations, type/range errors |
 | `assemble_comparison.py` | `comparison_report.json` | Cross-source agreement rates per field |
 | `select_audit_samples.py` | `sample_set.json` | 36-100 stratified sample image IDs |
-| `compute_scorecard.py` | `scorecard.json` | 6 dimension scores, final grade, recommendations |
+| `compute_scorecard.py` | `scorecard.json` | 7 dimension scores, final grade, grade caps, recommendations |
 
 ### Common Script Options
 
@@ -280,39 +280,58 @@ All audit scripts support these common flags:
 
 ### Audit Scorecard (config/audit_scorecard.yaml)
 
-**6-Dimension Weighted Scoring Rubric:**
+**v2.0 shifts from completeness-tracking (65% weight in v1.1) to accuracy-and-confidence-tracking
+(55% weight). Grade B now means "labels are trustworthy for training" not "fields are populated."**
+
+**7-Dimension Weighted Scoring Rubric:**
 
 | Dimension | Weight | Description | Source Artifact |
 |-----------|--------|-------------|-----------------|
-| **Field Coverage** | 25% | Percentage of 15 prescreening fields passing validation | `automated_screening.json` |
-| **Field Validity** | 25% | Percentage of schema compliance fields passing validation | `compliance.json` (or legacy `schema_compliance_v2.json`) |
-| **Document Completeness** | 15% | Percentage of 11 expected doc sections populated | `docs/datasets/source/{dataset}.md` |
-| **Defect Rate** | 15% | Inverse of weighted defect penalties (100 - sum of penalties) | `defect_catalog.json` |
-| **Cross-Source Agreement** | 10% | Average agreement rate across enrichment sources | `comparison_report.json` |
-| **VLM Accuracy** | 10% | Passing sample accuracy from VLM inspection | `vlm_corrections.json` |
+| **Field Coverage** | 15% | Weighted pass rate across 45 prescreening fields (Core 70%, Extended 30%) | `automated_screening.json` |
+| **Field Validity** | 15% | Schema compliance validity rate across audited field groups | `compliance.json` (or legacy `schema_compliance_v2.json`) |
+| **Document Completeness** | 5% | Percentage of 11 expected doc sections populated | `docs/datasets/source/{dataset}.md` |
+| **Defect Rate** | 10% | Inverse of weighted defect penalties (100 - sum of penalties) | `defect_catalog.json` |
+| **Cross-Source Agreement** | 15% | Average agreement rate across enrichment sources | `comparison_report.json` |
+| **Label Accuracy** | 20% | Per-field label correctness from VLM visual inspection (critical 60%, structural 40%) | `vlm_corrections.json` |
+| **Confidence Quality** | 20% | Label confidence scores and reliability summary quality (13 confidence-related validators) | `automated_screening.json` |
 
-**Grade Thresholds:**
+**Validator Tiers** (for Field Coverage and Confidence Quality):
+
+- **Core (24 fields)**: Penalize absence/invalidity. Includes: split, capture_method, domain_level1,
+  iso639_language, script_family, layout/content/orientation validators, plus reliability summary,
+  per-field confidences (capture, domain, language), script code, resolution category, provenance tier.
+- **Extended (21 fields)**: Validate-if-populated, reward presence. Includes: geometric properties,
+  resolution/character height, content flag confidence, handwriting assessment, structure quality,
+  image properties, physical degradation.
+
+**Grade Thresholds (tightened from v1.1):**
 
 | Grade | Score Range | Quality Level | Production Readiness |
 |-------|-------------|---------------|---------------------|
-| **A** | 90-100 | Excellent | Ready for production training |
-| **B** | 80-89 | Good | Minor gaps, usable with caveats |
-| **C** | 70-79 | Acceptable | Significant gaps needing attention |
-| **D** | 60-69 | Below Standard | Major remediation required |
-| **F** | 0-59 | Failing | Not suitable for use |
+| **A** | 93-100 | Excellent | Production-ready, high-confidence verified labels |
+| **B** | 85-92 | Good | Usable for training with known accuracy limits |
+| **C** | 75-84 | Acceptable | Significant accuracy gaps, use with caution |
+| **D** | 65-74 | Below Standard | Major remediation required |
+| **F** | 0-64 | Failing | Not suitable for use |
 
-**Missing Dimension Handling**: If a dimension is unavailable (e.g., no VLM validation run), its weight is
-redistributed proportionally across remaining dimensions.
+**Missing Dimension Handling**: If a non-required dimension is unavailable (e.g., no comparison report),
+its weight is redistributed proportionally across remaining dimensions. Required dimensions
+(`label_accuracy`) are never redistributed -- instead, a grade cap is applied.
 
-**Grade Caps** (enforced regardless of computed score):
+**Grade Caps** (enforced regardless of computed score; multiple caps stack, most restrictive wins):
 
 | Cap Rule | Trigger | Max Grade | Rationale |
 |----------|---------|-----------|-----------|
-| **Missing VLM** | `vlm_corrections.json` absent | D | Content flags are unverified soft labels; training on them risks systematic errors |
-| **Low Critical Field Coverage** | `domain_level1`, `iso639_language`, or `script_family` < 75% pass rate | D | Language, script, and domain are required for diversity-aware training splits; datasets without reliable coverage cannot be used for balanced sampling |
+| **Missing VLM Accuracy** | `vlm_corrections.json` absent | D | VLM inspection is mandatory for label verification |
+| **Low Critical Field Coverage** | `domain_level1`, `iso639_language`, or `script_family` < 75% pass rate | D | Critical training stratification fields must be reliable |
+| **Low Label Accuracy** | `label_accuracy` < 70% | C | Per-field label accuracy below 70% means labels are unreliable for training |
+| **High Content Flag FP (Critical)** | Any content flag FP rate > 80% | D | Systematic labeling failure requiring full re-enrichment |
+| **High Content Flag FP (Warning)** | Any content flag FP rate > 50% | C | Significant labeling issues needing remediation |
+| **Missing Content Flag Inspection** | No Track A VLM inspection data | C | Content flag accuracy cannot be assessed without Track A |
+| **Low Confidence Quality** | `confidence_quality` < 60% | B | Confidence metadata is insufficient for reliable filtering |
+| **Low Core Prescreening** | Core prescreening pass rate < 70% | C | Essential training metadata is missing or invalid for too many samples |
 
-Both caps can stack. A dataset missing VLM inspection AND having <75% language coverage is capped to D
-by both rules. The scorecard reports all triggered caps in the `grade_cap_applied` field.
+All caps stack. The scorecard reports all triggered caps in the `grade_cap_applied` field.
 
 ### Scorecard Input Requirements
 
@@ -324,11 +343,11 @@ can produce compatible artifacts without reading the scorer source code.
 
 | Artifact | Filename(s) | Required By | Auto-Generated By |
 |----------|-------------|-------------|-------------------|
-| Prescreening | `automated_screening.json` | Field Coverage, Grade Caps | `automated_prescreening.py --dataset {ds}` |
+| Prescreening | `automated_screening.json` | Field Coverage, Confidence Quality, Grade Caps | `automated_prescreening.py --dataset {ds}` |
 | Schema Compliance | `compliance.json` (preferred) or `schema_compliance_v2.json` (legacy) | Field Validity | `audit_schema_compliance.py --dataset {ds}` (auto-outputs to `compliance.json`) |
-| Defect Catalog | `defect_catalog.json` | Defect Rate, VLM Accuracy (fallback) | Manual (Phase 4) |
+| Defect Catalog | `defect_catalog.json` | Defect Rate | Manual (Phase 4) |
 | Comparison Report | `comparison_report.json` | Cross-Source Agreement | `assemble_comparison.py --dataset {ds}` |
-| VLM Corrections | `vlm_corrections.json` | VLM Accuracy | Manual (Phase 6-7) |
+| VLM Corrections | `vlm_corrections.json` | Label Accuracy, Grade Caps | Manual (Phase 6-7) |
 | Source Documentation | `docs/datasets/source/{dataset}.md` | Doc Completeness | Manual (Phase 8-9) |
 
 **Per-Artifact Field Requirements:**
@@ -339,7 +358,9 @@ can produce compatible artifacts without reading the scorer source code.
 {
   "per_field_results": {
     "field_name": {"pass": 100, "fail": 5}
-  }
+  },
+  "core_pass_rate_pct": 92.5,
+  "extended_pass_rate_pct": 78.3
 }
 ```
 
@@ -375,12 +396,29 @@ Each defect **must** include both `status` and `extrapolation_risk`.
 
 ```json
 {
-  "passing_sample_accuracy": 1.0
+  "passing_sample_accuracy": 1.0,
+  "accuracy_by_field": {
+    "iso639_language": {"correct": 95, "incorrect": 5, "accuracy_pct": 95.0},
+    "script_family": {"correct": 98, "incorrect": 2, "accuracy_pct": 98.0},
+    "domain_level1": {"correct": 90, "incorrect": 10, "accuracy_pct": 90.0},
+    "capture_method": {"correct": 100, "incorrect": 0, "accuracy_pct": 100.0}
+  },
+  "validation_summary": {
+    "content_flag_analysis": {
+      "has_table": {"total_flagged": 20, "true_positive": 15, "false_positive": 5, "fp_rate_pct": 25.0}
+    }
+  }
 }
 ```
 
-The `passing_sample_accuracy` field (0.0-1.0 float) is **required** for the VLM Accuracy dimension.
-Without it the dimension is excluded and the grade may be capped to D.
+The `label_accuracy` dimension uses `accuracy_by_field` for per-field accuracy (weighted: critical
+fields 60%, structural fields 40%). Per-field values accept both dict format
+(`{"accuracy_pct": 95.0}` or `{"correct": 95, "incorrect": 5}`) and numeric fractions (0-1 scale).
+Falls back to `passing_sample_accuracy` if per-field data is unavailable. Content flag FP rates
+from `content_flag_analysis` (checked at root, `track_a_analysis`, and `validation_summary`) trigger
+grade caps at >50% (cap C) and >80% (cap D). FP rates accept `fp_rate_pct` (0-100) or
+`false_positive_rate` (0-1 fraction). Without `vlm_corrections.json` entirely, the grade is capped
+to D.
 
 **`comparison_report.json`**:
 
@@ -930,7 +968,7 @@ past audits:
 
 - **nepali-handwritten**: Discovered `aggregate_layer2_metadata.py` filename mismatch (hyphen vs
   underscore), `materialize_reliability_summary.py` missing `--verbose` flag, prescreening field
-  count was stale (13 -> 15 after v2.3.0), and VLM text labeling proved viable as a new enrichment
+  count was stale (expanded to 45 in scorecard v2.0), and VLM text labeling proved viable as a new enrichment
   source not previously documented.
 - **realdae**: KI-009 language mismatch pattern led to creating the Adaptive VLM Sampling Policy
   and expanding from 3 to 8 known issues.
@@ -1055,4 +1093,5 @@ For audit methodology questions or script issues, see:
 
 **Last Updated**: 2026-02-14
 **Template Version**: 1.4.0
-**Audit Methodology Version**: 2.4.0
+**Scorecard Version**: 2.0.0
+**Audit Methodology Version**: 3.0.0

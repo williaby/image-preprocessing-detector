@@ -4,6 +4,24 @@
 >
 > **License**: Research | **Commercial Use**: Research only
 
+##### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | JPEG |
+| **Annotation Format** | Filename-based pairing (_in/_gt suffixes) |
+| **Dimensions** | 734-4976 x 864-4032 px (avg: 2151 x 2611) |
+| **Avg File Size** | 1,675 KB |
+| **Total Size** | 2.06 GB |
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | Research use |
+| **Commercial Use** | Research only |
+| **Citation** | Zhang et al. (2023). Appearance Enhancement for Camera-Captured Document Images in the Wild. IEEE TAI 2024. DOI: 10.1109/TAI.2023.3321257 |
+
 ##### Overview
 
 | Attribute | Value |
@@ -394,6 +412,23 @@ realdae/
 | has_figure | 10 | 0% primary | High secondary FP rate across Track A |
 
 **Audit Artifacts**: [scripts/audit/results/realdae/](../../../scripts/audit/results/realdae/)
+
+##### Processing Notes
+
+- Parser: `parse_realdae_labels` in `annotate_base_metadata.py`
+- Task type and split derived from directory structure (e.g., `task_bleed_train/`)
+- Input images (_in.jpg) only included in Layer 2; GT images (_gt.jpg) excluded by design
+- Integration script: `scripts/integrate_realdae_enrichments.py`
+- Sources: Docling OCR (6 batches, 1,200 records), Docling layout (6 batches, 10 categories), LLM enrichment
+- KI-009: Language documentation wrong (paper claims English, actual 74% Chinese)
+
+##### Version History
+
+| Version | Date | Change |
+|---------|------|--------|
+| v1.0 | 2023 | Initial dataset release (South China University of Technology, TAI 2023) |
+| L2 v1 | 2026-02-10 | Layer 2 base metadata annotation |
+| L2 v2 | 2026-02-12 | Full audit: integration v2, VLM inspection, language correction |
 
 ##### Reliability & Bottlenecks
 

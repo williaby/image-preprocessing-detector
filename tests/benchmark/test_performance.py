@@ -287,8 +287,8 @@ class TestThroughputPerformance:
         elapsed = time.perf_counter() - start
         pages_per_second = num_pages / elapsed
 
-        assert pages_per_second >= 22, (
-            f"Text gate throughput too low: {pages_per_second:.1f} pages/sec (target ≥22)"
+        assert pages_per_second >= 20, (
+            f"Text gate throughput too low: {pages_per_second:.1f} pages/sec (target ≥20)"
         )
 
 

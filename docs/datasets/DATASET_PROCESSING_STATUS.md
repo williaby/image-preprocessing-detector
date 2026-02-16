@@ -11,7 +11,7 @@ tags:
 title: Dataset Processing Status
 ---
 
-> **Last Updated**: 2026-02-14
+> **Last Updated**: 2026-02-15
 > **Purpose**: Operational tracking of dataset processing pipeline
 > **Usage**: Check current state, identify blockers, track conversion progress
 > **Audience**: Development team working on dataset preparation
@@ -27,13 +27,13 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 52/68 datasets training-ready (76.5%), 2 benchmark-ready
+**Current Status**: 54/68 datasets training-ready (79.4%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 52 | 76.5% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 54 | 79.4% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 2 | 2.9% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 8 | 11.8% | Format conversion, label extraction, or generating |
+| 🔄 **In Progress** | 6 | 8.8% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 1.5% | Text-only corpus (openlid-v2, used for generation) |
 | ❌ **Blocked** | 5 | 7.4% | Fundamental issue preventing use |
 
@@ -41,7 +41,7 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (46 datasets)
+### ✅ Training-Ready (48 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -61,8 +61,9 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | hasyv2 | 168,233 | ✅ PNG | ✅ Symbol labels | ✅ Complete | Math symbols |
 | hiertext | 11,639 | ✅ PNG | ✅ Word-level labels | ✅ Complete | Gold standard for graded handwriting |
 | hindi_ocr_synthetic | 80,009 | ✅ PNG | ✅ OCR text | ✅ Complete | Synthetic Hindi |
-| indicdlp | 9,321+ | ✅ PNG (extracted) | ✅ COCO boxes (42 layout classes) | 🔄 Partial (extracting) | 12 Indic languages, ~109K total. 9,321 extracted+annotated (test split), train+val still extracting. MIT license. |
+| indicdlp | 115,803 | ✅ PNG (extracted) | ✅ COCO boxes (42 layout classes) | ✅ Complete | 12 Indic languages, 126K extracted, 115,803 annotated. MIT license. |
 | im2latex | 10,000 | ✅ PNG | ✅ Formula labels | ✅ Complete | Math formulas |
+| markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels | ✅ Complete | Japanese signboard orientation |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
@@ -114,7 +115,7 @@ Datasets ready for benchmark evaluation but not for training (license restrictio
 
 ---
 
-### 🔄 In Progress (8 datasets)
+### 🔄 In Progress (6 datasets)
 
 Format conversion, label extraction, or generation currently underway.
 
@@ -123,20 +124,17 @@ Format conversion, label extraction, or generation currently underway.
 | **synth-multiscript-250k** | 250,000 | 🔄 Generating | ✅ Auto-generated | Generation in progress (40/250K) | 1. Complete synthetic generation<br>2. Generated from OpenLID v2 text corpus<br>3. 27 scripts + 8 IQA dimensions | Week 2-3 |
 | **doc3d** | 100,000 | 🔄 ZIP→PNG (not extracted) | ✅ 7 GT types available | 16 ZIPs (209GB), user-defined splits | 1. Extract 16 ZIP files<br>2. Verify mesh ID structure<br>3. Decision: Parser needed? | Deferred (P3 priority) |
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |
-| **iam** | 130,212 | ✅ Images Ready | ❌ Parser needed | 6.4 GB PNG already extracted | 1. Implement parser (XML + TXT formats)<br>2. Generate/locate split files<br>3. Extract to Layer 2 metadata | Week 2-3 |
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
 | **yarmouk_source** | Unknown | 🔄 PDF→PNG | ⚠️ Needs extraction | Original PDFs | 1. Convert source PDFs<br>2. Note: yarmouk_ocr already complete | Deprioritized |
-| **markushgrapher** | ~148,500 | 🔄 Extracting PNG from Arrow | ✅ Partial annotation (33K of ~148K) | 2 subsets: m2s (103), markushgrapher-synthetic-training (~148K). Extracting remaining train split (~120K). Orchestrator annotated 33K partial images. | 1. ✅ Download complete<br>2. 🔄 Extract remaining PNGs<br>3. Re-run orchestrator on full set<br>4. Audit | Week 1-2 |
 
 **Priority Order**:
 
 1. **P0 (SigLIP Training)**: synth-multiscript-250k (250,000 images) - script detection critical
-2. **P0 (Handwriting)**: iam (130,212 images) - LARGEST handwriting corpus, needs base metadata + parser
-3. **P2 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
-4. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
-5. **P3 (Receipts)**: mobile_receipts (size unknown) - assess priority
-6. **P4 (Benchmark)**: omnidocbench (metadata framework) - complex, defer
+2. **P2 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
+3. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
+4. **P3 (Receipts)**: mobile_receipts (size unknown) - assess priority
+5. **P4 (Benchmark)**: omnidocbench (metadata framework) - complex, defer
 
 ---
 
@@ -155,10 +153,9 @@ Paired ground truth datasets for document dewarping and shadow removal. All stor
 | **staindoc** | 15,180 input | ✅ Annotated (15,180 samples) | ✅ Orchestrator done | 3 subdatasets (StainDoc, StainDoc_mark, StainDoc_seal) x (train+test) x (input+target). 15,180 input images annotated at 40.0 img/s | 1. ✅ Run orchestrator<br>2. Audit (stain removal, MIT) | Done |
 | **drccbi** | 325 | ✅ Annotated (325 samples) | ✅ Orchestrator done | 326 train/57 val/15 test, YOLO labels. 325 images annotated at 61.3 img/s (lowercase .jpg only; 46 .JPG + 27 .png not captured) | 1. ✅ Run orchestrator<br>2. Audit (camera dewarping, license TBD) | Done |
 
-**Status** (updated 2026-02-14):
+**Status** (updated 2026-02-15):
 
-- 7/8 datasets fully processed: parser, integration, L2 metadata, orchestrator annotation complete
-- 1 dataset extracting remaining images: markushgrapher (~120K remaining from Arrow train split)
+- 8/8 datasets fully processed: parser, integration, L2 metadata, orchestrator annotation complete
 - Grades: 1A (anyphotodoc6300=92, wsrd=95), 3B (warpdoc=85, docreal=88, sd7k=87), 1D (docalign12k=76, critical field cap)
 - docalign12k capped at Grade D due to iso639_language=0% -- needs GPU-based language enrichment
 - Total correction images annotated: 31,265 + 15,180 (staindoc) + 325 (drccbi) = ~46,770
@@ -191,8 +188,6 @@ Fundamental issues preventing use for image-based training.
 | **iam** | ❌ No base metadata | Images ready (130K PNG, 6.4GB) but no metadata generated | Run `annotate_base_metadata.py` on IAM images (requires GPU for DocLayout-YOLO). Audit grade: F (36.4) |
 | **wili_2018** | ❌ Text-only | No visual component (text corpus only) | **Cannot use for image training**. Useful for language ID if needed, but not applicable to visual IQA/layout tasks. |
 | **q-doc** | ❌ Images not available | GitHub repo is code-only (VLM eval scripts), no images hosted publicly | Contact authors for image access. Parser ready (`QDocParser`), needs images to generate L2 metadata. IQA benchmark, license TBD. |
-| **u-diads-tl** | ❌ Not available | Competition site returns 404 | Monitor for reappearance; contact authors |
-| **dit700k** | ❌ Not available | No public download URL found | Monitor for public release; referenced in papers but no access |
 
 ---
 
@@ -207,8 +202,8 @@ Fundamental issues preventing use for image-based training.
 | cocotext | 63,686 | ~3.2 GB | `scripts/convert_parquet_to_images.py` | `01_base_data/cocotext/` | 🔄 Queued |
 | docsynth300k | 300,000 | ~15 GB | `scripts/convert_parquet_to_images.py --chunked` | `01_base_data/docsynth300k/` | 🔄 Queued |
 | ohr-bench | 8,561 | ~2.1 GB | `scripts/convert_parquet_to_images.py` | `02_benchmark_only/ohr-bench/` | 🔄 In Progress |
-| indicdlp | ~109,000 | 85 GB | `scripts/extract_indicdlp_images.py` | `01_base_data/layout/indicdlp/images/` | 🔄 Extracting (~19K done) |
-| markushgrapher | ~148,500 | 19 GB | `scripts/extract_markushgrapher_images.py` | `01_base_data/specialized/markushgrapher/images/` | 🔄 Extracting (~41K done) |
+| indicdlp | 126,253 | 85 GB | `scripts/extract_indicdlp_images.py` | `01_base_data/layout/indicdlp/images/` | ✅ Complete (115,803 annotated) |
+| markushgrapher | 179,373 | 19 GB | `scripts/extract_markushgrapher_images.py` | `01_base_data/specialized/markushgrapher/images/` | ✅ Complete (172,073 annotated) |
 | mobile_receipts | Unknown | Unknown | `scripts/convert_parquet_to_images.py` | `01_base_data/mobile_receipts/` | 🔄 Assess first |
 | omnidocbench | Unknown | Unknown | Custom script needed | `02_benchmark_only/omnidocbench/` | ⚠️ Needs analysis |
 

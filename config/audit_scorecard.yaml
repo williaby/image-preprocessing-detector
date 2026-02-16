@@ -1,26 +1,34 @@
 # Audit Quality Scorecard Configuration
-# Version: 1.1.0
-# Last Updated: 2026-02-13
+# Version: 2.0.0
+# Last Updated: 2026-02-14
 #
-# Defines the 6-dimension weighted scoring rubric for Layer 2 metadata audit
+# Defines the 7-dimension weighted scoring rubric for Layer 2 metadata audit
 # quality assessment. Used by scripts/audit/compute_scorecard.py.
 #
-# Grade thresholds:
-#   A = 90+  (Excellent - ready for production training)
-#   B = 80+  (Good - minor gaps, usable with caveats)
-#   C = 70+  (Acceptable - significant gaps needing attention)
-#   D = 60+  (Below Standard - major remediation required)
-#   F = <60  (Failing - not suitable for use)
+# v2.0 shifts from completeness-tracking (65% weight) to
+# accuracy-and-confidence-tracking (55% weight). Grade B now means
+# "labels are trustworthy for training" not "fields are populated."
+#
+# Validator tiers:
+#   Core (24 fields): penalize absence/invalidity
+#   Extended (21 fields): validate-if-populated, reward presence
+#
+# Grade thresholds (tightened from v1.1):
+#   A = 93+  (Production-ready, high-confidence verified labels)
+#   B = 85+  (Usable for training with known accuracy limits)
+#   C = 75+  (Significant accuracy gaps, use with caution)
+#   D = 65+  (Major remediation required)
+#   F = <65  (Not suitable)
 
-version: "1.1.0"
+version: "2.0.0"
 
 dimensions:
   field_coverage:
-    weight: 0.25
-    description: "Percentage of 13 prescreening fields passing validation"
+    weight: 0.15
+    description: "Weighted pass rate across 45 prescreening fields (Core 70%, Extended 30%)"
     source_artifact: "automated_screening.json"
-    computation: "Average pass rate across 13 prescreening fields"
-    fields:
+    computation: "core_pass_rate * 0.7 + extended_pass_rate * 0.3"
+    core_fields:
       - split
       - capture_method
       - domain_level1
@@ -34,14 +42,46 @@ dimensions:
       - image_properties_color_mode
       - handwriting_present
       - quality_overall_mos
+      - text_direction
+      - text_directions_present
+      - reliability_summary_present
+      - reliability_min_confidence_category
+      - reliability_assessed_count
+      - capture_confidence_valid
+      - domain_confidence_valid
+      - language_confidence_valid
+      - language_script_code_valid
+      - resolution_category_valid
+      - provenance_tier_valid
+    extended_fields:
+      - reliability_min_confidence
+      - reliability_hard_label_ratio
+      - language_bcp47_present
+      - language_detection_method_present
+      - geometric_present
+      - skew_angle_present
+      - skew_confidence_valid
+      - orientation_confidence_valid
+      - resolution_dpi_present
+      - resolution_quality_present
+      - character_height_present
+      - content_flag_confidence_present
+      - has_code_present
+      - has_signature_present
+      - handwriting_assessment_present
+      - handwriting_confidence_valid
+      - structure_layout_type_valid
+      - structure_text_density_valid
+      - structure_confidence_present
+      - image_properties_document_age
+      - physical_degradation_present
     notes: >
-      Fields at 0% indicate missing enrichment sources.
-      Fields deferred due to pipeline unavailability (e.g., text_has_content
-      without OCR) should be excluded from the denominator when computing
-      the adjusted score.
+      v2.0: Expanded from 13 to 45 fields. Core fields penalize absence;
+      Extended fields validate-if-populated (pass-if-absent).
+      Backward compatible: falls back to 15-field calculation if old artifacts.
 
   field_validity:
-    weight: 0.25
+    weight: 0.15
     description: "Schema compliance validity rate across audited fields"
     source_artifact: "compliance.json"
     computation: "Average validity_pct from field_summary across all audited field groups"
@@ -57,7 +97,7 @@ dimensions:
       structural validity, and cross-field consistency.
 
   doc_completeness:
-    weight: 0.15
+    weight: 0.05
     description: "Documentation completeness of source dataset file"
     source_artifact: "docs/datasets/source/{dataset_name}.md"
     computation: "Count of populated sections / total expected sections"
@@ -75,11 +115,11 @@ dimensions:
       - "Version History"
     total_sections: 11
     notes: >
-      A section counts as populated if it contains more than just a heading
-      (i.e., has at least one non-empty line of content after the heading).
+      v2.0: Weight reduced from 15% to 5%. Docs support audit process
+      but do not measure label quality.
 
   defect_rate:
-    weight: 0.15
+    weight: 0.10
     description: "Inverse defect density - fewer defects = higher score"
     source_artifact: "defect_catalog.json"
     computation: "max(0, 100 - (open_defects * defect_penalty))"
@@ -99,57 +139,91 @@ dimensions:
       justification receive partial credit (0.3 weight).
 
   cross_source_agreement:
-    weight: 0.10
+    weight: 0.15
     description: "Agreement rate across multiple enrichment sources"
     source_artifact: "comparison_report.json"
     computation: "Mean pairwise agreement rate across all compared fields"
     min_sources_required: 2
     notes: >
-      If only one enrichment source exists (no cross-validation possible),
-      this dimension is excluded and its weight redistributed proportionally
-      to the remaining dimensions.
+      v2.0: Weight increased from 10% to 15%. Cross-source disagreement
+      is a strong signal of labeling errors.
 
-  vlm_accuracy:
-    weight: 0.10
-    description: "VLM visual inspection accuracy on passing samples"
+  label_accuracy:
+    weight: 0.20
+    description: "Per-field label correctness from VLM visual inspection"
     source_artifact: "vlm_corrections.json"
-    computation: "Passing sample accuracy rate from Track C validation"
+    computation: "Weighted average of per-field accuracy (critical 60%, structural 40%)"
     required: true
+    critical_fields:
+      - iso639_language
+      - script_family
+      - domain_level1
+      - capture_method
+    structural_fields:
+      - orientation_class
+      - handwriting_present
+      - has_table
+      - has_formula
+      - has_figure
+      - has_handwriting
+    critical_weight: 0.60
+    structural_weight: 0.40
+    fallback: "passing_sample_accuracy"
     min_samples_required: 10
     notes: >
-      VLM inspection is MANDATORY. If not performed, the grade is capped
-      at D regardless of other dimension scores. A minimum of 10 passing
-      samples must be inspected for the score to be valid.
+      v2.0 NEW dimension (replaces vlm_accuracy 10%). Per-field accuracy
+      from VLM corrections weighted toward critical training fields.
+      Falls back to passing_sample_accuracy if per-field data unavailable.
+
+  confidence_quality:
+    weight: 0.20
+    description: "Label confidence scores and reliability summary quality"
+    source_artifact: "automated_screening.json"
+    computation: "Mean pass rate across 13 confidence-related prescreening fields"
+    confidence_fields:
+      - reliability_summary_present
+      - reliability_min_confidence_category
+      - reliability_assessed_count
+      - reliability_min_confidence
+      - reliability_hard_label_ratio
+      - capture_confidence_valid
+      - domain_confidence_valid
+      - language_confidence_valid
+      - content_flag_confidence_present
+      - handwriting_confidence_valid
+      - structure_confidence_present
+      - orientation_confidence_valid
+      - skew_confidence_valid
+    notes: >
+      v2.0 NEW dimension. Measures whether confidence scores and
+      reliability summaries are populated and trustworthy. Uses 13
+      confidence-related validators from expanded prescreening.
 
 grade_thresholds:
-  A: 90
-  B: 80
-  C: 70
-  D: 60
+  A: 93
+  B: 85
+  C: 75
+  D: 65
   F: 0
 
 weight_redistribution:
   description: >
     When a non-required dimension cannot be computed (missing artifact or
     insufficient data), its weight is redistributed proportionally to the
-    remaining dimensions. Required dimensions (vlm_accuracy) are NEVER
+    remaining dimensions. Required dimensions (label_accuracy) are NEVER
     redistributed - instead, a grade cap is applied.
-  example: >
-    If cross_source_agreement (0.10) is unavailable, remaining dimensions
-    share the 0.10 weight. However, if vlm_accuracy (0.10, required) is
-    unavailable, the grade is capped at D regardless of the computed score.
 
 grade_caps:
   description: >
     Grade caps prevent high grades on datasets with critical gaps.
-    These caps apply regardless of the computed score.
+    These caps apply regardless of the computed score. Multiple caps
+    stack (most restrictive wins).
   missing_vlm_accuracy:
     max_grade: "D"
-    max_score_label: "69.9 (capped)"
+    max_score_label: "64.9 (capped)"
     reason: >
-      Content flags (has_table, has_figure, has_handwriting, has_formula)
-      are unverified soft labels without VLM inspection. Training on
-      unverified labels risks propagating systematic errors.
+      VLM inspection is mandatory for label verification. Without it,
+      content flags and field labels are unverified soft labels.
   low_critical_field_coverage:
     max_grade: "D"
     threshold_pct: 75
@@ -159,14 +233,48 @@ grade_caps:
       - script_family
     reason: >
       Language, script, and domain are critical training stratification
-      fields. Datasets with <75% coverage on any of these fields cannot
-      reliably support diversity-aware training splits or balanced sampling.
-      A contact sheet VLM review or enrichment pipeline must bring these
-      fields above 75% before the dataset can advance beyond Grade D.
+      fields. Datasets with <75% coverage cannot reliably support
+      diversity-aware training splits.
+  low_label_accuracy:
+    max_grade: "C"
+    threshold_pct: 70
+    reason: >
+      Per-field label accuracy below 70% means labels are unreliable
+      for training. Must improve enrichment quality before use.
+  high_content_flag_fp_rate_critical:
+    max_grade: "D"
+    threshold_pct: 80
+    reason: >
+      Any content flag with >80% false positive rate indicates
+      systematic labeling failure requiring full re-enrichment.
+  high_content_flag_fp_rate_warning:
+    max_grade: "C"
+    threshold_pct: 50
+    reason: >
+      Any content flag with >50% false positive rate suggests
+      significant labeling issues needing remediation.
+  missing_content_flag_inspection:
+    max_grade: "C"
+    reason: >
+      Content flag accuracy cannot be assessed without Track A
+      VLM inspection data.
+  low_confidence_quality:
+    max_grade: "B"
+    threshold_pct: 60
+    reason: >
+      Confidence scores below 60% quality indicate unreliable
+      label provenance tracking. Labels may be correct but
+      confidence metadata is insufficient for filtering.
+  low_core_prescreening_pass_rate:
+    max_grade: "C"
+    threshold_pct: 70
+    reason: >
+      Core prescreening fields at <70% pass rate means essential
+      training metadata is missing or invalid for too many samples.
 
 vlm_inspection_requirements:
   description: >
-    Minimum VLM inspection counts required for a valid vlm_accuracy score.
+    Minimum VLM inspection counts required for a valid label_accuracy score.
     These are enforced by compute_scorecard.py.
   min_failing_samples: 5
   min_passing_samples: 10
@@ -181,10 +289,14 @@ success_criteria:
   prescreening_pass_rate:
     target: 95
     minimum: 85
-  fields_at_100_coverage:
-    target: 10
+  core_fields_at_100_coverage:
+    target: 18
+    minimum: 15
+    out_of: 24
+  extended_fields_at_100_coverage:
+    target: 12
     minimum: 8
-    out_of: 13
+    out_of: 21
   vlm_passing_accuracy:
     target: 95
     minimum: 90
@@ -194,3 +306,6 @@ success_criteria:
   content_flag_fp_rate:
     target: 5
     maximum: 15
+  confidence_quality_score:
+    target: 80
+    minimum: 60

@@ -4,6 +4,33 @@
 >
 > **License**: Research | **Commercial Use**: Research only
 
+#### File Format
+
+| Attribute | Value |
+|-----------|-------|
+| **Image Format** | PNG |
+| **Annotation Format** | Parquet/Arrow (HuggingFace) + JSON |
+| **Dimensions** | 570-6800 x 596-9212 px (avg: 2238 x 2667) |
+| **Avg File Size** | 1,529 KB |
+| **Total Size** | ~3 GB (images + annotations) |
+
+##### Known Limitations
+
+- Evaluation-only design - not intended for training (use stratified split for internal development only)
+- Research license restricts commercial use
+- Born-digital PDFs at 300 DPI - may not represent real-world scan degradation
+- Domain imbalance across 9 document types (academic papers overrepresented)
+- OCR noise variants are synthetic (3 engines x 3 levels) - not natural degradation
+- No per-page language labels despite multilingual content (English + Chinese + mixed)
+
+##### License & Citation
+
+| Attribute | Value |
+|-----------|-------|
+| **License** | Research |
+| **Commercial Use** | Research only |
+| **Citation** | Chen et al. (2024). OmniDocBench: Benchmarking Diverse PDF Document Parsing. CVPR 2025. arXiv:2412.07626 |
+
 #### Overview
 
 | Attribute | Value |
@@ -171,7 +198,8 @@
 
 - **Strengths**: 9 document types, 19 layout categories, multi-level evaluation (end-to-end, task-specific, attribute-based)
 - **Weaknesses**: Evaluation-only design, requires document parsing pipeline
-- **Critical**: **NEVER train on this dataset - benchmark only**
+- **Split**: Stratified 70/15/15 train/val/test (938/203/217) by language+domain for training use
+- **Benchmarking Note**: For formal benchmarking, the **full dataset** (all 1,358 samples) must be used as the evaluation set to ensure comparability with published results. The train/val/test split is for internal model development only.
 
 #### Project Usage
 
@@ -247,6 +275,22 @@
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/omnidocbench/](../../scripts/audit/results/omnidocbench/)
+
+##### Processing Notes
+
+- Parser: `parse_omnidocbench_labels` in `annotate_base_metadata.py`
+- HuggingFace Parquet format with 17 columns including OCR noise variants
+- Domain categories: 7 official (Textbook, Law, Finance, Academic, Newspaper, Magazine, Government)
+- Split enrichment script: `scripts/audit/enrich_omnidocbench_split_colormode.py`
+- Docling GPU extraction: 1,358 OCR records + 1,357 layout images, 28,614 annotations
+
+##### Version History
+
+| Version | Date | Change |
+|---------|------|--------|
+| v1.0 | 2024-12 | Initial dataset release (OpenDataLab, CVPR 2025) |
+| L2 v1 | 2026-02-10 | Layer 2 base metadata annotation |
+| L2 v2 | 2026-02-14 | Scorecard v2.0 audit, defect catalog created |
 
 ---
 
