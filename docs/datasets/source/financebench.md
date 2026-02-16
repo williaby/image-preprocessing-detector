@@ -309,17 +309,17 @@ Generated augmented datasets with labels, ready for model training.
 
 ### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (84.6/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (92.9/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 28% |  |
-| Field Validity | 96.3 | 28% |  |
-| Doc Completeness | 54.5 | 17% | Below threshold |
-| Defect Rate | 85.0 | 17% |  |
+| Field Coverage | 88.3 | 18% |  |
+| Field Validity | 100.0 | 18% |  |
+| Doc Completeness | 63.6 | 6% | Below threshold |
+| Defect Rate | 85.0 | 12% |  |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 95.0 | 11% |  |
-| **Overall** | **84.6** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **92.9** | | **Grade B** |
 
 ### 11.2 Key Defects
 
@@ -332,31 +332,10 @@ Generated augmented datasets with labels, ready for model training.
 
 ### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/financebench/](../../scripts/audit/results/financebench/)
-
----
-
-#### Reliability & Bottlenecks
-
-> **Computed**: 2026-02-10 | **Samples**: 54,120 | **Avg Min Confidence**: 0.000
-
-**Composite Category Distribution**:
-
-| Category | Count | Pct |
-|----------|------:|----:|
-| hard_label | 0 | 0.0% |
-| soft_label | 0 | 0.0% |
-| active_learning | 0 | 0.0% |
-| unreliable | 54,120 | 100.0% |
-
-**Top Bottleneck Fields** (most frequently the weakest):
-
-| Rank | Field | Bottleneck % | Avg Confidence |
-|-----:|-------|-------------:|---------------:|
-| 1 | `has_formula` | 100.0% | 0.000 |

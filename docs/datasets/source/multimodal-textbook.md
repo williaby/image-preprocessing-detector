@@ -96,17 +96,17 @@
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (86.2/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (91.2/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 28% |  |
-| Field Validity | 100.0 | 28% |  |
-| Doc Completeness | 45.5 | 17% | Below threshold |
-| Defect Rate | 97.4 | 17% |  |
+| Field Coverage | 86.9 | 18% |  |
+| Field Validity | 100.0 | 18% |  |
+| Doc Completeness | 45.5 | 6% | Below threshold |
+| Defect Rate | 97.4 | 12% |  |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 95.0 | 11% |  |
-| **Overall** | **86.2** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **91.2** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -119,15 +119,13 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/multimodal-textbook/](../../scripts/audit/results/multimodal-textbook/)
-
----
 
 ##### Reliability & Bottlenecks
 

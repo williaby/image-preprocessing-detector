@@ -228,17 +228,17 @@ DIBCO/
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (86.4/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (87.6/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 94.6 | 33% |  |
-| Field Validity | 100.0 | 33% |  |
-| Doc Completeness | 54.5 | 20% | Below threshold |
+| Field Coverage | 91.2 | 20% |  |
+| Field Validity | 92.6 | 20% |  |
+| Doc Completeness | 54.5 | 7% | Below threshold |
 | Defect Rate | - | - | Excluded (no data) |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 80.0 | 13% |  |
-| **Overall** | **86.4** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **87.6** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -246,7 +246,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A (no VLM inspection performed)
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -254,11 +254,9 @@ No defect catalog available for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/dibco/](../../scripts/audit/results/dibco/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 212 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 212 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
@@ -273,4 +271,4 @@ No defect catalog available for this dataset.
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `language` | 100.0% | 0.000 |
+| 1 | `text_quality` | 100.0% | 0.000 |

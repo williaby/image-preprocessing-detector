@@ -87,17 +87,17 @@ Metadata registry: `metadata_registry/json/yarmouk_ocr_metadata.json` (2026-02-0
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: A (92.7/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: A (93.3/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 93.2 | 33% |  |
-| Field Validity | 89.0 | 33% |  |
-| Doc Completeness | 100.0 | 20% |  |
+| Field Coverage | 91.2 | 20% |  |
+| Field Validity | 89.0 | 20% |  |
+| Doc Completeness | 100.0 | 7% |  |
 | Defect Rate | - | - | Excluded (no data) |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 90.0 | 13% |  |
-| **Overall** | **92.7** | | **Grade A** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **93.3** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
@@ -105,15 +105,13 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/yarmouk/](../../scripts/audit/results/yarmouk/)
-
----
 
 ##### Reliability Assessment
 

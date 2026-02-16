@@ -82,14 +82,14 @@ Fill in based on dataset documentation review:
 
 | Property | Value | Source |
 |----------|-------|--------|
-| Is synthetic? | | Dataset documentation |
-| Primary language(s) | | Dataset documentation |
-| Primary script(s) | | Dataset documentation |
-| Capture method | | Dataset documentation |
-| Expected splits | | Dataset documentation / parser |
-| Total samples | | Parser manifest |
-| Has ground truth files? | | Dataset structure |
-| Multi-column documents? | | Dataset documentation |
+| Is synthetic? | No (born-digital from LaTeX/Word) | Dataset documentation |
+| Primary language(s) | English | Dataset documentation |
+| Primary script(s) | Latin (Latn) | Dataset documentation |
+| Capture method | born_digital | Dataset documentation |
+| Expected splits | train=260,582 / val=10,000 / test=8,000 | Dataset documentation |
+| Total samples | 278,582 (Detection task) | Parser manifest |
+| Has ground truth files? | Yes - COCO JSON (table bboxes) | Dataset structure |
+| Multi-column documents? | Yes (academic papers) | Dataset documentation |
 
 ---
 
@@ -107,15 +107,15 @@ Document expected values based on documentation (ground truth for validation):
 
 | Field | Expected Value | Source | Confidence |
 |-------|---------------|--------|------------|
-| `capture_method` | | Dataset documentation | |
-| `iso639_language` | | Dataset documentation | |
-| `iso15924_script` | | Dataset documentation | |
-| `script_family` | | Derived from script | |
-| `split` | | Parser manifest | |
-| `is_synthetic` | | Dataset characteristics | |
-| `domain_level1` | | Dataset content type | |
+| `capture_method` | born_digital | Dataset documentation | HIGH |
+| `iso639_language` | en | Dataset documentation | HIGH |
+| `iso15924_script` | Latn | Dataset documentation | HIGH |
+| `script_family` | latin | Derived from script | HIGH |
+| `split` | train/val/test | Parser manifest / COCO GT | HIGH |
+| `is_synthetic` | false | Dataset characteristics | HIGH |
+| `domain_level1` | SCI | Scientific publications (LaTeX+Word) | HIGH |
 
-**Notes**:
+**Notes**: Born-digital dataset from academic papers. 70% LaTeX / 30% Word rendering. Single-class table detection with COCO bboxes. Blur/compression sensitivity HIGH (thin grid lines). Only 1 OPEN defect (text_has_content).
 
 ---
 

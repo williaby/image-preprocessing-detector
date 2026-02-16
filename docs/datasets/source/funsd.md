@@ -284,81 +284,67 @@ dataset = load_dataset("nielsr/funsd")
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-13 (post-VLM full coverage) | **Samples**: 199 | **Avg Min Confidence**: 0.90
+> **Computed**: 2026-02-16 | **Samples**: 199 | **Avg Min Confidence**: 0.000
 
-**Composite Category Distribution** (post-integration):
+**Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
-| hard_label | ~0 | 0% |
-| soft_label | 199 | 100% |
-| active_learning | 0 | 0% |
-| unreliable | 0 | 0% |
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 199 | 100.0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `content_flags` | 100% | 0.90 |
+| 1 | `text_quality` | 100.0% | 0.000 |
 
-> **Pre-audit state**: 86.9% unreliable, language bottleneck at 0.346 confidence.
-> **Post-audit state**: 100% soft_label, content_flags bottleneck at 0.90 confidence (full VLM coverage).
-> Language confidence upgraded to 1.0 (dataset documentation override).
+##### 11. Layer 2 Audit Summary
 
-##### Layer 2 Audit Summary
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
-> **Audit Date**: 2026-02-14 | **Auditor**: claude-opus-4-6
-> **Schema Version**: 2.3.0 | **Integration Script**: v1.0.0
-> **Audit Document**: [`docs/audit/audits/funsd_audit.md`](../../audit/audits/funsd_audit.md)
+###### 11.1 Quality Scorecard
 
-**Pre-Screening Results** (15/15 fields pass):
+> **Audit Date**: 2026-02-16 | **Grade**: B (88.6/100) | **Auditor**: claude-opus-4-6
 
-| Field | Status | Notes |
-|-------|--------|-------|
-| split | ✅ Pass | Derived from source.split (train/test) |
-| capture_method | ✅ Pass | scanner_adf (documentation override) |
-| domain_level1 | ✅ Pass | ADM (documentation override) |
-| iso639_language | ✅ Pass | en, confidence 1.0 |
-| script_family | ✅ Pass | latin (KI-008 fix: was 'ltr') |
-| layout_detections | ✅ Pass | DocLayNet-mapped from FUNSD native labels |
-| layout_bbox_valid | ✅ Pass | All bboxes valid |
-| content_flags_boolean | ✅ Pass | All boolean typed |
-| text_has_content | ✅ Pass | 199/199 from Docling OCR |
-| orientation_class | ✅ Pass | 0 (upright) |
-| image_properties_color_mode | ✅ Pass | grayscale |
-| handwriting_present | ✅ Pass | Derived from has_handwriting |
-| text_direction | ✅ Pass | ltr (v2.3.0) |
-| text_directions_present | ✅ Pass | [ltr] (v2.3.0) |
-| quality_overall_mos | ✅ Pass | Present |
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 94.2 | 15% |  |
+| Field Validity | 100.0 | 15% |  |
+| Doc Completeness | 72.7 | 5% |  |
+| Defect Rate | 18.0 | 10% | Below threshold |
+| Cross-Source Agreement | 100.0 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **88.6** | | **Grade B** |
 
-**Schema Compliance**: 199/199 valid (100%)
+###### 11.2 Key Defects
 
-**Defects Resolved** (11 total: 1 critical, 4 high, 5 medium, 1 low):
+> **Total**: 11 defects (11 open)
 
-| ID | Field | Resolution |
-|----|-------|------------|
-| D01 | split | Populated from source.split |
-| D02 | script_family | Fixed via get_script_family("Latn") -> "latin" |
-| D03 | text_has_content | Populated from Docling OCR (199/199) |
-| D04 | orientation_class | Set to 0 (scanner forms, verified by VLM) |
-| D05 | image_properties_color_mode | Set to "grayscale" (verified: PIL mode=L) |
-| D06 | handwriting_present | Derived from has_handwriting content flag |
-| D07 | layout class_name | FUNSD labels mapped to DocLayNet taxonomy |
-| D08 | text_direction | Set to "ltr" (v2.3.0, English only) |
-| D09 | text_directions_present | Set to ["ltr"] (v2.3.0) |
-| D10 | schema_version | Bumped to "2.3.0" |
-| D11 | content_flags | Full VLM coverage (199/199): HW=64, TBL=33, SIG=48, FIG=5 |
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | ? | OPEN | Split field not populated in Layer 2 metadata. Source directory structure (train |
+| D02 | script_family | ? | OPEN | script_family contains directionality string 'ltr' instead of script family name |
+| D03 | text_has_content | ? | OPEN | text_statistics object missing entirely. FUNSD has GT text transcriptions that s |
+| D04 | orientation_class | ? | OPEN | orientation_class not populated. Scanner-produced forms are expected to be uprig |
+| D05 | image_properties_color_mode | ? | OPEN | image_properties.color_mode not populated. |
+| D06 | handwriting_present | ? | OPEN | handwriting_present boolean not populated. Forms may contain handwritten entries |
+| D07 | layout_detections[*].class_name | ? | OPEN | 9,743 layout detection class names not in DocLayNet 11-class taxonomy. Values li |
+| D08 | text_direction | ? | OPEN | v2.3.0 text_direction field not populated. English text is LTR. |
+| D09 | text_directions_present | ? | OPEN | v2.3.0 text_directions_present field not populated. |
+| D10 | schema_version | ? | OPEN | schema_version is '2.1', needs bump to '2.3.0' to reflect new fields. |
+| D11 | content_flags | ? | OPEN | Content flags show 100% has_table=True and 100% has_handwriting=True across all  |
 
-**VLM Inspection** (Full coverage, 199/199 samples via 14 contact sheets):
+###### 11.3 VLM Inspection Summary
 
-- Orientation: 199/199 confirmed upright
-- Language/Script: 199/199 confirmed English/Latin
-- has_handwriting: 64/199 (32%) - handwritten field entries
-- has_table: 33/199 (17%) - actual data tables (KI-002 applied)
-- has_signature: 48/199 (24%) - visible signatures
-- has_figure: 5/199 (3%) - prominent seals, diagrams, graphics
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
-**Known Limitations**:
+###### 11.4 Cross-Dataset Findings
 
-- Content flag accuracy estimated at 95% from contact sheet resolution (some borderline cases)
-- Schema compliance checker does not yet validate v2.3.0 text_direction fields
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/funsd/](../../scripts/audit/results/funsd/)

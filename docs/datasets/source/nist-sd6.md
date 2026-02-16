@@ -324,17 +324,17 @@
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (83.3/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (87.4/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.9 | 25% |  |
-| Field Validity | 92.6 | 25% |  |
-| Doc Completeness | 63.6 | 15% | Below threshold |
-| Defect Rate | 85.0 | 15% |  |
-| Cross-Source Agreement | 71.1 | 10% |  |
-| VLM Accuracy | 90.0 | 10% |  |
-| **Overall** | **83.3** | | **Grade B** |
+| Field Coverage | 88.3 | 15% |  |
+| Field Validity | 92.6 | 15% |  |
+| Doc Completeness | 63.6 | 5% | Below threshold |
+| Defect Rate | 85.0 | 10% |  |
+| Cross-Source Agreement | 71.1 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **87.4** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -347,15 +347,13 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/nist-sd6/](../../scripts/audit/results/nist-sd6/)
-
----
 
 ##### Reliability & Bottlenecks
 

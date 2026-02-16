@@ -377,17 +377,17 @@ N/A - No dataset-specific quality tiers or scoring systems
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (82.1/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (87.8/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.9 | 25% |  |
-| Field Validity | 92.6 | 25% |  |
-| Doc Completeness | 54.5 | 15% | Below threshold |
-| Defect Rate | 85.0 | 15% |  |
-| Cross-Source Agreement | 73.1 | 10% |  |
-| VLM Accuracy | 90.0 | 10% |  |
-| **Overall** | **82.1** | | **Grade B** |
+| Field Coverage | 88.3 | 15% |  |
+| Field Validity | 96.3 | 15% |  |
+| Doc Completeness | 54.5 | 5% | Below threshold |
+| Defect Rate | 85.0 | 10% |  |
+| Cross-Source Agreement | 73.1 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **87.8** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -400,7 +400,7 @@ N/A - No dataset-specific quality tiers or scoring systems
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -408,24 +408,21 @@ N/A - No dataset-specific quality tiers or scoring systems
 
 **Audit Artifacts**: [scripts/audit/results/nist-sd2/](../../scripts/audit/results/nist-sd2/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 5,590 | **Avg Min Confidence**: 0.585
+> **Computed**: 2026-02-16 | **Samples**: 5,590 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
 | hard_label | 0 | 0.0% |
-| soft_label | 512 | 9.2% |
-| active_learning | 4,412 | 78.9% |
-| unreliable | 666 | 11.9% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 5,590 | 100.0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `layout_detections` | 98.4% | 0.585 |
-| 2 | `has_table` | 1.6% | 0.800 |
+| 1 | `text_quality` | 100.0% | 0.000 |

@@ -107,17 +107,17 @@
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (86.2/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: A (93.3/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 93.3 | 33% |  |
-| Field Validity | 100.0 | 33% |  |
-| Doc Completeness | 45.5 | 20% | Below threshold |
+| Field Coverage | 91.2 | 20% |  |
+| Field Validity | 100.0 | 20% |  |
+| Doc Completeness | 45.5 | 7% | Below threshold |
 | Defect Rate | - | - | Excluded (no data) |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 95.0 | 13% |  |
-| **Overall** | **86.2** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **93.3** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
@@ -125,7 +125,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -133,11 +133,9 @@ No defect catalog available for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/mathverse/](../../scripts/audit/results/mathverse/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 6,940 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 6,940 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
@@ -152,4 +150,4 @@ No defect catalog available for this dataset.
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `capture_method` | 100.0% | 0.000 |
+| 1 | `text_quality` | 100.0% | 0.000 |
