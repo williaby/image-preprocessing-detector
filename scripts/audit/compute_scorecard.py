@@ -384,27 +384,70 @@ def compute_defect_rate(
     return round(score, 2)
 
 
+_EXCLUDED_PAIR_FIELDS: dict[str, frozenset[str]] = {
+    # Docling/Egret layout models hardcode has_handwriting=False (no handwriting
+    # class), so comparing against L2 metadata is always a false disagreement.
+    "has_handwriting": frozenset({"docling_layout", "egret_layout"}),
+    # Detection counts from different models are inherently different; comparing
+    # raw counts across models is not a meaningful quality signal.
+    "layout_class_count": frozenset({"docling_layout", "egret_layout"}),
+    # image_id_derived split is a heuristic that only works for datasets with
+    # ``{split}_`` prefixed filenames.  Comparing against L2 metadata produces
+    # false disagreements when the naming convention doesn't match.
+    "split": frozenset({"image_id_derived"}),
+}
+"""Source names that should be excluded from cross-source agreement scoring
+for specific fields because the comparison is methodologically invalid."""
+
+
+def _pair_excluded(field_name: str, pair_label: str) -> bool:
+    """Return True if this (field, pair) should be skipped in scoring.
+
+    ``pair_label`` has the form ``"source_a vs source_b"``.
+    """
+    excluded_sources = _EXCLUDED_PAIR_FIELDS.get(field_name)
+    if not excluded_sources:
+        return False
+    return any(src in pair_label for src in excluded_sources)
+
+
 def _collect_pairwise_agreements(
     samples: list[dict[str, Any]],
 ) -> dict[str, list[bool]]:
-    """Collect pairwise match booleans from comparison report samples."""
+    """Collect pairwise match booleans from comparison report samples.
+
+    Pairs listed in ``_EXCLUDED_PAIR_FIELDS`` are skipped because the
+    comparison is methodologically invalid (e.g. layout models that lack
+    a handwriting class, or detection count comparisons across models).
+    """
     field_agreements: dict[str, list[bool]] = {}
     for sample in samples:
         for field_name, field_data in sample.get("fields", {}).items():
-            for _pair, matches in field_data.get("pairwise_matches", {}).items():
-                if isinstance(matches, bool):
+            for pair_label, matches in field_data.get(
+                "pairwise_matches", {}
+            ).items():
+                if isinstance(matches, bool) and not _pair_excluded(
+                    field_name, pair_label
+                ):
                     field_agreements.setdefault(field_name, []).append(matches)
     return field_agreements
 
 
 def _compute_fallback_agreement(samples: list[dict[str, Any]]) -> float | None:
-    """Compute agreement by checking if all non-null source values match."""
+    """Compute agreement by checking if all non-null source values match.
+
+    Sources listed in ``_EXCLUDED_PAIR_FIELDS`` for the given field are
+    removed before comparison.
+    """
     total_comparisons = 0
     agreements = 0
     for sample in samples:
-        for field_data in sample.get("fields", {}).values():
+        for field_name, field_data in sample.get("fields", {}).items():
+            excluded_sources = _EXCLUDED_PAIR_FIELDS.get(field_name, frozenset())
             non_null = [
-                v for v in field_data.get("sources", {}).values() if v is not None
+                v
+                for src, v in field_data.get("sources", {}).items()
+                if v is not None and src not in excluded_sources
             ]
             if len(non_null) < 2:
                 continue
