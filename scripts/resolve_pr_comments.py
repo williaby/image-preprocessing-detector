@@ -60,7 +60,8 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
 
     try:
         pr_numbers = [
-            pr["number"] for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
+            pr["number"]
+            for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
         ]
     except (KeyError, TypeError) as exc:
         print(f"Unexpected PR list response structure: {exc}", file=sys.stderr)
@@ -136,7 +137,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if "/" not in args.repo or args.repo.count("/") != 1:
-        print(f"Error: --repo must be in owner/name format, got {args.repo!r}", file=sys.stderr)
+        print(
+            f"Error: --repo must be in owner/name format, got {args.repo!r}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     owner, repo = args.repo.split("/")
     for slug, name in ((owner, "owner"), (repo, "repo")):
