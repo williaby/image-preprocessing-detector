@@ -2,7 +2,7 @@
 owner: docs-team
 purpose: Documentation for Documentation Improvement Session Summary.
 schema_type: common
-status: final
+status: complete
 tags:
 - architecture
 title: Documentation Improvement Session Summary

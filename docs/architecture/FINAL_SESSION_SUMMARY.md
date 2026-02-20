@@ -3,7 +3,7 @@ owner: docs-team
 purpose: Documentation for Architecture Documentation Improvement - Final
   Session Summary.
 schema_type: common
-status: final
+status: complete
 tags:
 - architecture
 title: Architecture Documentation Improvement - Final Session Summary
