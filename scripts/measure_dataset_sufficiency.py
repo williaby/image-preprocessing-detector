@@ -537,7 +537,7 @@ class DatasetSufficiencyMeasurer:
             return sum(
                 s.get("num_examples", 0) for s in info.get("splits", {}).values()
             )
-        except (json.JSONDecodeError, ValueError) as exc:
+        except ValueError as exc:
             logger.warning(
                 "Error reading dataset info from %s: %s", info_path, exc
             )
@@ -1191,6 +1191,8 @@ class DatasetSufficiencyMeasurer:
                 status,
                 f"DocSynth-300K: {docsynth_samples:,} synthetic layout samples with 71-class taxonomy (pre-training for DocLayNet fine-tuning)",
                 cost_estimate=0.0,
+                real_world_count=0,
+                synthetic_count=docsynth_samples,
             )
 
     def _measure_fr_7_1_dqs_routing(self) -> None:

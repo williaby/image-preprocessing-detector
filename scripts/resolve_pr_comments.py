@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404
 import sys
 
 from check_unresolved_pr_comments import (

@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404
 import sys
 from collections import Counter
 from datetime import datetime, UTC
