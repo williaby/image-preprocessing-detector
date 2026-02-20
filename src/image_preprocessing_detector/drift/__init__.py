@@ -835,7 +835,10 @@ class DriftDetector:
             List of DriftResults for each feature
         """
         if features is None:
-            features = [FeatureType(f) for f in tracker.get_tracked_features()]
+            # Use raw feature names to avoid ValueError for custom string features
+            # not present in the FeatureType enum. The loop below handles both
+            # str and FeatureType values correctly.
+            features = list(tracker.get_tracked_features())
 
         results = []
         for feature in features:
