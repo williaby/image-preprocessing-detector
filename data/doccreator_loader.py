@@ -28,6 +28,7 @@ from typing import Any
 from defusedxml import ElementTree
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 
 @dataclass
@@ -379,9 +380,7 @@ def create_label_file(
         output_path = Path(output_path)
 
     # Validate path to prevent directory traversal
-    if ".." in str(output_path):
-        raise ValueError(f"Path traversal detected: {output_path}")
-    validated_path = Path(output_path).resolve()
+    validated_path = validate_safe_path(output_path)
     validated_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(validated_path, "w") as f:
@@ -491,11 +490,9 @@ class DocCreatorDataset:
         for image_path, _xml_path, label in self._samples:
             label_path = output_dir / f"{image_path.stem}_labels.json"
             # Validate path to prevent directory traversal
-            if ".." in str(label_path):
-                raise ValueError(f"Path traversal detected: {label_path}")
-            validated_path = Path(label_path).resolve()
-            if not validated_path.is_relative_to(output_dir.resolve()):
-                raise ValueError(f"Path {validated_path} is outside allowed base {output_dir}")
+            validated_path = validate_safe_path(
+                label_path, allowed_base=output_dir
+            )
             with open(validated_path, "w") as f:
                 json.dump(label.to_dict(), f, indent=2)
             created_files.append(validated_path)

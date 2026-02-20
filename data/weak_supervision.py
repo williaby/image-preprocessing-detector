@@ -645,6 +645,15 @@ class ContinuousWeakSupervisionLabeler:
         >>> print(f"Blur severity: {label['blur_severity']:.2f}")
     """
 
+    # Confidence assigned to labels when all detectors agree closely.
+    # Range [0, 1]; higher means more certain the label is accurate.
+    NORMAL_LABEL_CONFIDENCE: float = 0.7
+
+    # Confidence assigned to outlier labels where detectors disagree significantly.
+    # Reduced from NORMAL_LABEL_CONFIDENCE to signal lower reliability to downstream
+    # training code (e.g., GDBC uncertainty weighting).
+    OUTLIER_LABEL_CONFIDENCE: float = 0.4
+
     def __init__(
         self,
         label_smoothing: float = 0.0,
@@ -773,13 +782,16 @@ class ContinuousWeakSupervisionLabeler:
             "contrast_severity": contrast_severity,
             "compression_severity": compression_severity,
             "overall_quality": overall_quality,
-            # Document-specific (not computed by weak supervision)
+            # Document-specific degradations not currently measured by weak supervision
+            # detectors. Kept at 0.0 for schema compatibility. These would require
+            # specialized detectors (e.g., spectral analysis for ink, page-pair
+            # comparison for bleed-through) to compute accurately.
             "ink_degradation": 0.0,
             "paper_degradation": 0.0,
             "bleed_through": 0.0,
             # Metadata
             "label_source": "weak_supervision",
-            "label_confidence": 0.7 if not is_outlier else 0.4,
+            "label_confidence": self.NORMAL_LABEL_CONFIDENCE if not is_outlier else self.OUTLIER_LABEL_CONFIDENCE,
             "label_variance": severity_variance,
             "image_path": image_path,
             "is_outlier": is_outlier,

@@ -829,9 +829,12 @@ class TestMiddlewareIntegration:
         app = create_app(settings=full_middleware_settings)
         client = TestClient(app)
 
-        _ = client.get("/health")
         # Health is not in limit_paths by default, so no rate limit headers
-        # But for process endpoint with valid auth...
+        response = client.get("/health")
+        assert response.status_code == 200
+        # Verify response is valid even without rate limit headers on health
+        data = response.json()
+        assert "status" in data
 
 
 # ============================================================================
