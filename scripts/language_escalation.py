@@ -630,10 +630,11 @@ class EscalationManager:
         tier1b_primary_lang = tier1b_result.get("primary_language", "und")
 
         tier1b_validation = None
-        if self.config.validate_script_match and local_result.detected_scripts:
+        detected_scripts = getattr(local_result, "detected_scripts", [])
+        if self.config.validate_script_match and detected_scripts:
             tier1b_validation = validate_language_script_match(
                 tier1b_primary_lang,
-                local_result.detected_scripts,
+                detected_scripts,
             )
 
         is_confident = tier1b_confidence >= self.config.tier1b_confidence_threshold
@@ -786,7 +787,8 @@ class EscalationManager:
                 primary_language=tier1b_result.get("primary_language", "und"),
                 primary_script=tier1b_result.get("primary_script"),
                 detected_languages=tier1b_languages,
-                detected_scripts=tier1b_scripts or local_result.detected_scripts,
+                detected_scripts=tier1b_scripts
+                or getattr(local_result, "detected_scripts", []),
                 confidence=tier1b_confidence * 0.8,
                 confidence_metrics=metrics,
                 method="tier1b_budget_exceeded",
@@ -795,11 +797,11 @@ class EscalationManager:
             )
         return EscalationResult(
             tier=1,
-            primary_language=local_result.primary_language,
-            primary_script=local_result.primary_script,
-            detected_languages=local_result.detected_languages,
-            detected_scripts=local_result.detected_scripts,
-            confidence=local_result.confidence * 0.7,
+            primary_language=getattr(local_result, "primary_language", "und"),
+            primary_script=getattr(local_result, "primary_script", None),
+            detected_languages=getattr(local_result, "detected_languages", []),
+            detected_scripts=getattr(local_result, "detected_scripts", []),
+            confidence=getattr(local_result, "confidence", 0.0) * 0.7,
             confidence_metrics=metrics,
             method="tier1a_budget_exceeded",
             script_validation=script_validation,

@@ -218,7 +218,16 @@ def scan_directory_fast(
     extensions: set[str],
     max_files: int = 50000,
 ) -> list[Path]:
-    """Fast directory scanning with early termination."""
+    """Fast directory scanning with early termination.
+
+    Args:
+        root: Root directory to scan.
+        extensions: Set of file extensions to include (e.g., {".png", ".jpg"}).
+        max_files: Maximum number of files to collect before stopping.
+
+    Returns:
+        List of file paths matching the given extensions.
+    """
     files: list[Path] = []
 
     def _scan(path: Path, depth: int = 0) -> None:
@@ -241,7 +250,15 @@ def scan_directory_fast(
 
 
 def collect_source_files(category: str, config: dict[str, Any]) -> list[DocumentSample]:
-    """Collect source files for a category."""
+    """Collect source files for a category.
+
+    Args:
+        category: Category name used for logging.
+        config: Category configuration dict with keys 'count', 'doc_type', and 'sources'.
+
+    Returns:
+        List of DocumentSample objects for the selected source files.
+    """
     samples: list[DocumentSample] = []
     target_count = config["count"]
     doc_type = config["doc_type"]
@@ -293,10 +310,17 @@ def split_by_document_id(
     train_ratio: float = 0.70,
     val_ratio: float = 0.15,
 ) -> tuple[list[DocumentSample], list[DocumentSample], list[DocumentSample]]:
-    """
-    Split samples by document ID to prevent data leakage.
+    """Split samples by document ID to prevent data leakage.
 
     CRITICAL: Same document must NOT appear in different splits.
+
+    Args:
+        samples: List of DocumentSample objects to split.
+        train_ratio: Fraction of samples for training (default 0.70).
+        val_ratio: Fraction of samples for validation (default 0.15).
+
+    Returns:
+        Tuple of (train_samples, val_samples, test_samples).
     """
     # Group by doc_type for stratified splitting
     by_type: dict[str, list[DocumentSample]] = {}
@@ -342,7 +366,16 @@ def load_and_rotate_image(
     rotation_angle: int,
     target_size: tuple[int, int] = (224, 224),
 ) -> np.ndarray | None:
-    """Load image, rotate, and resize to target size."""
+    """Load image, rotate, and resize to target size.
+
+    Args:
+        source_path: Path to the source image file.
+        rotation_angle: Clockwise rotation angle in degrees (0, 90, 180, or 270).
+        target_size: Output image size as (width, height) in pixels.
+
+    Returns:
+        Resized image as a NumPy array (H x W x 3), or None if loading fails.
+    """
     try:
         # Load with PIL for better format support
         img = Image.open(source_path)
@@ -372,7 +405,17 @@ def generate_rotated_samples(
     split_name: str,
     target_size: tuple[int, int] = (224, 224),
 ) -> list[dict[str, Any]]:
-    """Generate rotated samples for a split."""
+    """Generate rotated samples for a split.
+
+    Args:
+        samples: List of DocumentSample objects to process.
+        output_dir: Root output directory for the dataset.
+        split_name: Split name ('train', 'val', or 'test').
+        target_size: Output image size as (width, height) in pixels.
+
+    Returns:
+        List of metadata dicts for all generated samples.
+    """
     metadata: list[dict[str, Any]] = []
     split_dir = output_dir / split_name
 
@@ -413,7 +456,11 @@ def generate_rotated_samples(
 
 
 def main() -> int:
-    """Main entry point."""
+    """Main entry point.
+
+    Returns:
+        Exit status code (0 for success, 1 for failure).
+    """
     parser = argparse.ArgumentParser(
         description="Generate Orientation Detection Training Dataset"
     )

@@ -65,6 +65,8 @@ def _assign_quintiles(
     samples: list[dict[str, Any]], value_key: str, quintile_key: str
 ) -> None:
     """Assign quintile labels (1-5) to samples in-place based on a numeric field."""
+    if not samples:
+        return
     values = [s[value_key] for s in samples]
     edges = np.quantile(values, [0.2, 0.4, 0.6, 0.8])
     for sample in samples:

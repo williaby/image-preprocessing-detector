@@ -254,6 +254,14 @@ def _backfill_sample_by_type(
     """Apply the correct backfill strategy for a single sample based on enrichment type.
 
     Mutates ``data`` and ``stats`` in place.
+
+    Args:
+        enrichment_type: Enrichment type string from the dataset enrichment file.
+        data: Sample enrichment data to mutate in place.
+        enrichment: Dataset-level enrichment metadata.
+        openlid_result: Per-sample OpenLID result, if available.
+        openlid_index: Lookup table for OpenLID per-sample results.
+        stats: Stats accumulator to update in place.
     """
     if enrichment_type == "known_language":
         backfill_known_language(data, enrichment, openlid_result)
@@ -270,6 +278,9 @@ def _backfill_sample_by_type(
         stats["folder_based"] += 1
         if openlid_result:
             stats["openlid_secondary"] += 1
+            stats["openlid_matched"] += 1
+        elif openlid_index:
+            stats["openlid_unmatched"] += 1
         return
 
     if enrichment_type == "openlid_detection":
@@ -286,7 +297,14 @@ def _backfill_openlid_sample(
     openlid_result: dict[str, Any] | None,
     stats: dict[str, int],
 ) -> None:
-    """Handle openlid_detection enrichment type for a single sample."""
+    """Handle openlid_detection enrichment type for a single sample.
+
+    Args:
+        data: Sample enrichment data to mutate in place.
+        enrichment: Dataset-level enrichment metadata.
+        openlid_result: Per-sample OpenLID result, if available.
+        stats: Stats accumulator to update in place.
+    """
     if openlid_result:
         backfill_openlid_detection(data, openlid_result)
         stats["openlid_primary"] += 1

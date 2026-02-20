@@ -135,13 +135,18 @@ def get_sample_filename(sample: dict[str, Any]) -> str | None:
 
 def _next_version_number(enrichments: dict[str, Any]) -> int:
     """Compute the next version number from the enrichments structure."""
-    current_ver = enrichments.get("current_version", "v0")
-    if current_ver and current_ver.startswith("v"):
-        try:
-            return int(current_ver[1:]) + 1
-        except ValueError:
-            return len(enrichments.get("versions", [])) + 1
-    return 1
+    current_ver = enrichments.get("current_version")
+    if isinstance(current_ver, int):
+        return current_ver + 1
+    if isinstance(current_ver, str):
+        if current_ver.startswith("v"):
+            try:
+                return int(current_ver[1:]) + 1
+            except ValueError:
+                return len(enrichments.get("versions", [])) + 1
+        if current_ver.isdigit():
+            return int(current_ver) + 1
+    return len(enrichments.get("versions", [])) + 1
 
 
 def _apply_skew_to_sample(

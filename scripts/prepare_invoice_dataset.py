@@ -24,20 +24,30 @@ from pathlib import Path
 
 
 def _find_image_in_subdirs(subdirs: list[Path], filename: str) -> Path | None:
-    """Search subdirectories for a file by name, returning the first match."""
+    """Search subdirectories for a file by name, returning the first match.
+
+    Args:
+        subdirs: Subdirectories to search.
+        filename: Image filename to locate.
+
+    Returns:
+        The first matching file path if found, otherwise None.
+    """
     for subdir in subdirs:
         image_path = subdir / filename
-        if image_path.exists():
+        if image_path.is_file():
             return image_path
     return None
 
 
 def find_all_images(input_dir: Path) -> list[tuple[Path, Path, dict[str, str]]]:
-    """
-    Find all images and their corresponding CSV rows.
+    """Find all images and their corresponding CSV rows.
+
+    Args:
+        input_dir: Root directory containing CSV batches.
 
     Returns:
-        List of (image_path, csv_path, row_dict) tuples
+        List of (image_path, csv_path, row_dict) tuples.
     """
     image_csv_pairs = []
 
@@ -45,7 +55,9 @@ def find_all_images(input_dir: Path) -> list[tuple[Path, Path, dict[str, str]]]:
 
     for csv_file in csv_files:
         image_dir = csv_file.parent
-        batch_subdirs = [d for d in image_dir.iterdir() if d.is_dir()]
+        batch_subdirs = sorted(
+            [d for d in image_dir.iterdir() if d.is_dir()], key=lambda d: d.name
+        )
 
         with open(csv_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -105,7 +117,8 @@ def split_dataset(
     random.shuffle(pairs_shuffled)
 
     train_ratio, val_ratio = split_ratios
-    assert abs(train_ratio + val_ratio - 1.0) < 0.001, "Split ratios must sum to 1.0"  # nosec B101
+    if abs(train_ratio + val_ratio - 1.0) >= 0.001:
+        raise ValueError("Split ratios must sum to 1.0")
 
     train_size = int(len(pairs_shuffled) * train_ratio)
 
@@ -194,7 +207,8 @@ def main():
 
     # Parse split ratios
     split_values = [float(x) for x in args.split.split(",")]
-    assert len(split_values) == 2, "Split must have exactly 2 values (train,val)"  # nosec B101
+    if len(split_values) != 2:
+        raise ValueError("Split must have exactly 2 values (train,val)")
     train_ratio, val_ratio = split_values
 
     print("Preparing Kaggle invoice dataset...")

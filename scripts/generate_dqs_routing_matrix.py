@@ -210,8 +210,16 @@ _CLASS_TO_METRIC_KEY: dict[str, str] = {
 }
 
 
-def _estimate_column_count(text_boxes: list[list], image_width: int) -> int:
-    """Estimate column count from text block x-positions."""
+def _estimate_column_count(text_boxes: list[list[float]], image_width: int) -> int:
+    """Estimate column count from text block x-positions.
+
+    Args:
+        text_boxes: COCO bounding boxes as [x, y, w, h] lists.
+        image_width: Width of the image in pixels.
+
+    Returns:
+        Estimated number of columns.
+    """
     if len(text_boxes) <= 5:
         return 1
 

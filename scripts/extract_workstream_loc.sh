@@ -326,7 +326,7 @@ if [[ "$MODE" = "validate-swimlane" ]]; then
 
     if [[ -z "${SWIMLANES[$WORKSTREAM]:-}" ]]; then
         echo -e "${RED}❌ No swimlane diagram found for: ${WORKSTREAM}${NC}"
-        echo -e "${YELLOW}Available swimlanes: ${!SWIMLANES[@]}${NC}"
+        echo -e "${YELLOW}Available swimlanes: ${!SWIMLANES[*]}${NC}"
         exit 1
     fi
 

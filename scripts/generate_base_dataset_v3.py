@@ -761,7 +761,7 @@ def main() -> int:
         return 0
 
     # Confirmation
-    est_gb = remaining * 200 / 1024 / 1024 / 1024
+    est_gb = remaining * 200 / 1024 / 1024
     if not args.yes:
         print(f"\nWill generate {remaining:,} images (~{est_gb:.1f} GB)")
         print(f"Output: {args.output_dir}")
@@ -806,6 +806,8 @@ def main() -> int:
 
         # Compute per-script distribution for this chunk
         chunk_distribution = _compute_distribution(chunk_total, scripts)
+        # Note: Using first script's count for all workers; may generate
+        # up to (num_scripts - 1) extra images due to remainder distribution
         chunk_per_script = chunk_distribution[scripts[0]]
 
         if chunk_per_script == 0:

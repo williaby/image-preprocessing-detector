@@ -104,21 +104,23 @@ def convert_yarmouk_pdfs(
 
             # Open PDF and render first page
             doc = fitz.open(pdf_path)
-            if len(doc) == 0:
-                logger.warning(f"Empty PDF: {pdf_path}")
-                stats["errors"] += 1
-                continue
+            try:
+                if len(doc) == 0:
+                    logger.warning(f"Empty PDF: {pdf_path}")
+                    stats["errors"] += 1
+                    continue
 
-            # Render page at target DPI
-            page = doc[0]
-            # Calculate zoom factor for target DPI (default PDF is 72 DPI)
-            zoom = target_dpi / 72
-            mat = fitz.Matrix(zoom, zoom)
-            pix = page.get_pixmap(matrix=mat)
+                # Render page at target DPI
+                page = doc[0]
+                # Calculate zoom factor for target DPI (default PDF is 72 DPI)
+                zoom = target_dpi / 72
+                mat = fitz.Matrix(zoom, zoom)
+                pix = page.get_pixmap(matrix=mat)
 
-            # Save as PNG
-            pix.save(str(output_path))
-            doc.close()
+                # Save as PNG
+                pix.save(str(output_path))
+            finally:
+                doc.close()
 
             stats["converted"] += 1
 
@@ -291,10 +293,13 @@ def _count_pdf_pages_dry_run(
     for pdf_path in pdf_files:
         try:
             doc = fitz.open(pdf_path)
-            stats["pages"] += len(doc)
-            doc.close()
+            try:
+                stats["pages"] += len(doc)
+            finally:
+                doc.close()
         except Exception as e:
             logger.warning(f"Error counting pages in {pdf_path}: {e}")
+            stats["errors"] += 1
 
 
 def convert_ohr_bench_pdfs(
@@ -350,14 +355,16 @@ def convert_ohr_bench_pdfs(
             output_dir.mkdir(parents=True, exist_ok=True)
 
             doc = fitz.open(pdf_path)
-            if len(doc) == 0:
-                logger.warning(f"Empty PDF: {pdf_path}")
-                stats["errors"] += 1
-                continue
+            try:
+                if len(doc) == 0:
+                    logger.warning(f"Empty PDF: {pdf_path}")
+                    stats["errors"] += 1
+                    continue
 
-            _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
-            doc.close()
-            stats["converted"] += 1
+                _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
+                stats["converted"] += 1
+            finally:
+                doc.close()
 
             if stats["converted"] % 100 == 0:
                 logger.info(
@@ -430,14 +437,16 @@ def convert_financebench_pdfs(
             output_dir.mkdir(parents=True, exist_ok=True)
 
             doc = fitz.open(pdf_path)
-            if len(doc) == 0:
-                logger.warning(f"Empty PDF: {pdf_path}")
-                stats["errors"] += 1
-                continue
+            try:
+                if len(doc) == 0:
+                    logger.warning(f"Empty PDF: {pdf_path}")
+                    stats["errors"] += 1
+                    continue
 
-            _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
-            doc.close()
-            stats["converted"] += 1
+                _render_pdf_pages(doc, pdf_path, output_dir, target_dpi, stats)
+                stats["converted"] += 1
+            finally:
+                doc.close()
 
             if stats["converted"] % 50 == 0:
                 logger.info(

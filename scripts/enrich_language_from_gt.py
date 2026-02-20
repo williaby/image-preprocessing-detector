@@ -649,6 +649,9 @@ def _get_folder_label_parent_dirs(
 
     if dataset_name == "cvsi":
         valid_splits = {"Training", "Testing", "Validation"}
+        if not annotation_dir.exists():
+            logger.warning(f"CVSI path not found: {annotation_dir}")
+            return None
         return [
             d for d in annotation_dir.iterdir() if d.is_dir() and d.name in valid_splits
         ]
@@ -658,11 +661,17 @@ def _get_folder_label_parent_dirs(
 
 def extract_folder_based_labels(
     annotation_dir: Path, dataset_name: str
-) -> dict[str, str]:
+) -> dict[str, int]:
     """Extract labels from folder-based script identification datasets.
 
     For datasets like MDIW13, SIW-13, CVSI where folder name = script/language.
-    Returns a mapping of folder_name -> script name for aggregation.
+
+    Args:
+        annotation_dir: Root directory containing script folders.
+        dataset_name: Dataset key used to resolve folder structure.
+
+    Returns:
+        Mapping of script folder name to image count.
     """
     logger.info(f"Extracting folder-based labels from {annotation_dir}")
 
@@ -1132,6 +1141,89 @@ def _process_multilingual_scripts(
     return stats
 
 
+def _extract_gt_language(
+    dataset_name: str,
+    config: dict[str, Any],
+    language_field: str,
+    dry_run: bool,
+) -> dict[str, int]:
+    """Extract GT language labels directly from annotations when the dataset provides them.
+
+    Args:
+        dataset_name: Dataset key being processed.
+        config: Dataset configuration with annotation_file and language_field.
+        language_field: Field name in each annotation containing the GT language.
+        dry_run: If True, do not write output files.
+
+    Returns:
+        Aggregated processing statistics.
+    """
+    annotation_file = config.get("annotation_file")
+    stats = {
+        "total": 0,
+        "processed": 0,
+        "known_language": 0,
+        "detected": 0,
+        "undetermined": 0,
+    }
+
+    if not annotation_file or not Path(annotation_file).exists():
+        logger.warning(
+            f"Annotation file not found for {dataset_name}: {annotation_file}"
+        )
+        return stats
+
+    with open(annotation_file, encoding="utf-8") as f:
+        data = json.load(f)
+
+    anns = data.get("anns", {})
+    if isinstance(anns, dict):
+        anns = list(anns.values())
+
+    # Aggregate GT language per image (use majority language if annotations differ)
+    image_lang: dict[str, list[str]] = defaultdict(list)
+    for ann in anns:
+        image_id = ann.get("image_id")
+        language = ann.get(language_field, "")
+        if image_id and language:
+            image_lang[str(image_id)].append(language)
+
+    stats["total"] = len(image_lang)
+    results: list[tuple[str, LanguageResult]] = []
+
+    for image_id, languages in image_lang.items():
+        # Use most frequent language as the GT label
+        lang_count: dict[str, int] = defaultdict(int)
+        for lang in languages:
+            lang_count[lang] += 1
+        best_lang = max(lang_count, key=lambda k: lang_count[k])
+
+        result = LanguageResult(
+            language=best_lang if best_lang else "und",
+            script=None,
+            confidence=1.0,
+            method="ground_truth",
+            detected_languages=[best_lang] if best_lang else [],
+            detected_scripts=[],
+        )
+        results.append((image_id, result))
+        if best_lang and best_lang != "und":
+            stats["detected"] += 1
+            stats["known_language"] += 1
+        else:
+            stats["undetermined"] += 1
+        stats["processed"] += 1
+
+    logger.info(
+        f"Extracted GT language for {stats['detected']} / {stats['total']} images"
+    )
+
+    if not dry_run and results:
+        save_language_results(dataset_name, results)
+
+    return stats
+
+
 def _run_openlid_detection(
     dataset_name: str,
     image_texts: dict[str, str],
@@ -1191,7 +1283,17 @@ def process_dataset(
     dry_run: bool = False,
     batch_size: int = 1000,
 ) -> dict[str, int]:
-    """Process a single dataset for language enrichment."""
+    """Process a single dataset for language enrichment.
+
+    Args:
+        dataset_name: Dataset key to process.
+        config: Dataset configuration.
+        dry_run: If True, do not write output files.
+        batch_size: Progress logging batch size.
+
+    Returns:
+        Aggregated processing statistics.
+    """
     _empty_stats = {
         "total": 0,
         "processed": 0,
@@ -1233,9 +1335,13 @@ def process_dataset(
         return {**_empty_stats, "total": len(image_texts)}
 
     # Check for existing language field (e.g., cocotext has language)
-    if config.get("language_field"):
-        logger.info(f"Dataset {dataset_name} has existing language annotations")
-        # TODO: Use existing language annotations
+    language_field = config.get("language_field")
+    if language_field:
+        logger.info(
+            f"Dataset {dataset_name} has existing language annotations "
+            f"(field: {language_field!r}); extracting GT labels directly"
+        )
+        return _extract_gt_language(dataset_name, config, language_field, dry_run)
 
     return _run_openlid_detection(dataset_name, image_texts, batch_size, dry_run)
 
