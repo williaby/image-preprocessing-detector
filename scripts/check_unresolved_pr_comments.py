@@ -131,7 +131,7 @@ def _classify_topic(body: str) -> str:
 
 def _run_graphql_query(query: str) -> dict:
     """Execute a single GraphQL query via gh CLI."""
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603 B607
         ["gh", "api", "graphql", "-f", f"query={query}"],
         capture_output=True,
         text=True,

@@ -43,6 +43,7 @@ exclude_patterns = [
   "**/testdata/**",
   "**/tmp_cleanup/**",
   "**/vendor/**",
+  "**/docs/planning/UNRESOLVED_*.md",
 ]
 
 test_patterns = [

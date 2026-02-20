@@ -30,7 +30,7 @@ _GRAPHQL_RESOLVE_THREAD = 'mutation { resolveReviewThread(input: {threadId: "%s"
 
 def _run_graphql(query: str) -> dict:
     """Execute a GraphQL query via gh CLI."""
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603 B607
         ["gh", "api", "graphql", "-f", f"query={query}"],
         capture_output=True, text=True, check=False,
     )
