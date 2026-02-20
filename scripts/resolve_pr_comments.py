@@ -32,7 +32,9 @@ def _run_graphql(query: str) -> dict:
     """Execute a GraphQL query via gh CLI."""
     result = subprocess.run(  # nosec B603 B607
         ["gh", "api", "graphql", "-f", f"query={query}"],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if result.returncode != 0:
         print(f"Error: {result.stderr.strip()}", file=sys.stderr)
@@ -48,8 +50,7 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
         sys.exit(1)
 
     pr_numbers = [
-        pr["number"]
-        for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
+        pr["number"] for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
     ]
     print(f"Scanning {len(pr_numbers)} merged PRs...", file=sys.stderr)
 
@@ -78,14 +79,16 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
             if any(p in body.lower() for p in _SCANNER_PATTERNS):
                 continue
 
-            threads.append({
-                "thread_id": thread.get("id", ""),
-                "pr": pr["number"],
-                "pr_title": pr["title"],
-                "author": author,
-                "path": first.get("path", ""),
-                "body": body[:80].replace("\n", " "),
-            })
+            threads.append(
+                {
+                    "thread_id": thread.get("id", ""),
+                    "pr": pr["number"],
+                    "pr_title": pr["title"],
+                    "author": author,
+                    "path": first.get("path", ""),
+                    "body": body[:80].replace("\n", " "),
+                }
+            )
     return threads
 
 
@@ -102,12 +105,17 @@ def _resolve_thread(thread_id: str) -> bool:
 
 def main() -> None:
     """Run the PR comment resolver."""
-    parser = argparse.ArgumentParser(description="Resolve unresolved PR review threads.")
+    parser = argparse.ArgumentParser(
+        description="Resolve unresolved PR review threads."
+    )
     parser.add_argument(
-        "--repo", default="williaby/image-preprocessing-detector",
+        "--repo",
+        default="williaby/image-preprocessing-detector",
         help="GitHub repo in owner/name format (default: %(default)s)",
     )
-    parser.add_argument("--execute", action="store_true", help="Actually resolve (default: dry-run)")
+    parser.add_argument(
+        "--execute", action="store_true", help="Actually resolve (default: dry-run)"
+    )
     parser.add_argument("--thread-ids", nargs="+", help="Resolve only these thread IDs")
     args = parser.parse_args()
 
@@ -128,7 +136,9 @@ def main() -> None:
         print(f"    {t['body']}")
 
     if not args.execute:
-        print(f"\nDry-run: {len(threads)} thread(s) would be resolved. Re-run with --execute.")
+        print(
+            f"\nDry-run: {len(threads)} thread(s) would be resolved. Re-run with --execute."
+        )
         return
 
     print(f"\nResolving {len(threads)} thread(s)...")

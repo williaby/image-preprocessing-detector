@@ -381,9 +381,12 @@ class TestTextLayerAnalyzerE2E:
         mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
         mock_doc.page_count = 1
 
-        with patch(
-            "image_preprocessing_detector.classification.text_layer_analyzer.fitz"
-        ) as mock_fitz:
+        _tla_module = "image_preprocessing_detector.classification.text_layer_analyzer"
+        with (
+            patch(f"{_tla_module}.fitz") as mock_fitz,
+            patch(f"{_tla_module}.Path.exists", return_value=True),
+            patch(f"{_tla_module}.Path.is_file", return_value=True),
+        ):
             mock_fitz.open.return_value = mock_doc
             analyzer = TextLayerAnalyzer()
             result = analyzer.analyze("test.pdf")
@@ -405,9 +408,12 @@ class TestTextLayerAnalyzerE2E:
         mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
         mock_doc.page_count = 1
 
-        with patch(
-            "image_preprocessing_detector.classification.text_layer_analyzer.fitz"
-        ) as mock_fitz:
+        _tla_module = "image_preprocessing_detector.classification.text_layer_analyzer"
+        with (
+            patch(f"{_tla_module}.fitz") as mock_fitz,
+            patch(f"{_tla_module}.Path.exists", return_value=True),
+            patch(f"{_tla_module}.Path.is_file", return_value=True),
+        ):
             mock_fitz.open.return_value = mock_doc
             analyzer = TextLayerAnalyzer()
             result = analyzer.analyze("test.pdf")

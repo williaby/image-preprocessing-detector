@@ -707,7 +707,9 @@ class ContinuousWeakSupervisionLabeler:
         Returns:
             Normalized severity in [0, 1] (0=good, 1=bad)
         """
-        params = self.normalization.get(metric_name, {"min": 0, "max": 1, "invert": False})
+        params = self.normalization.get(
+            metric_name, {"min": 0, "max": 1, "invert": False}
+        )
 
         min_val = params["min"]
         max_val = params["max"]
@@ -717,7 +719,9 @@ class ContinuousWeakSupervisionLabeler:
         value = max(min_val, min(max_val, value))
 
         # Normalize to [0, 1]
-        normalized = (value - min_val) / (max_val - min_val) if max_val > min_val else 0.0
+        normalized = (
+            (value - min_val) / (max_val - min_val) if max_val > min_val else 0.0
+        )
 
         # Invert if needed (for metrics where higher = better)
         if invert:
@@ -725,11 +729,13 @@ class ContinuousWeakSupervisionLabeler:
 
         # Apply label smoothing
         if self.label_smoothing > 0:
-            normalized = float(np.clip(
-                normalized,
-                self.smooth_clip_min,
-                self.smooth_clip_max,
-            ))
+            normalized = float(
+                np.clip(
+                    normalized,
+                    self.smooth_clip_min,
+                    self.smooth_clip_max,
+                )
+            )
 
         return float(normalized)
 
@@ -765,7 +771,13 @@ class ContinuousWeakSupervisionLabeler:
 
         # Compute overall quality using 75th percentile of severities
         # This is more robust than max for documents with multiple moderate defects
-        severities = [blur_severity, noise_severity, skew_severity, contrast_severity, compression_severity]
+        severities = [
+            blur_severity,
+            noise_severity,
+            skew_severity,
+            contrast_severity,
+            compression_severity,
+        ]
         severity_75th = float(np.percentile(severities, 75))
         overall_quality = 1.0 - severity_75th
 
@@ -791,7 +803,9 @@ class ContinuousWeakSupervisionLabeler:
             "bleed_through": 0.0,
             # Metadata
             "label_source": "weak_supervision",
-            "label_confidence": self.NORMAL_LABEL_CONFIDENCE if not is_outlier else self.OUTLIER_LABEL_CONFIDENCE,
+            "label_confidence": self.NORMAL_LABEL_CONFIDENCE
+            if not is_outlier
+            else self.OUTLIER_LABEL_CONFIDENCE,
             "label_variance": severity_variance,
             "image_path": image_path,
             "is_outlier": is_outlier,

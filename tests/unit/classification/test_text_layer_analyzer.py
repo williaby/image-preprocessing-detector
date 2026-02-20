@@ -14,6 +14,32 @@ import pytest
 # Module path used to patch the ``fitz`` reference inside the analyzer module.
 _FITZ_MODULE = "image_preprocessing_detector.classification.text_layer_analyzer.fitz"
 
+# Module path for Path existence checks added in text_layer_analyzer.analyze().
+# Tests use fake paths like "/fake/clean.pdf"; we patch Path methods so the
+# file-not-found guard added by the wave agents does not raise in unit tests.
+_PATH_EXISTS = (
+    "image_preprocessing_detector.classification.text_layer_analyzer.Path.exists"
+)
+_PATH_IS_FILE = (
+    "image_preprocessing_detector.classification.text_layer_analyzer.Path.is_file"
+)
+
+
+@pytest.fixture(autouse=True)
+def _patch_path_checks() -> pytest.FixtureResult[None]:  # type: ignore[type-arg]
+    """Patch Path.exists and Path.is_file to return True for all tests.
+
+    The analyze() method added file-existence guards after accepting Path inputs.
+    Unit tests intentionally use fake paths (e.g. '/fake/clean.pdf') and mock
+    the fitz layer, so we stub Path checks to avoid FileNotFoundError.
+    """
+    with (
+        patch(_PATH_EXISTS, return_value=True),
+        patch(_PATH_IS_FILE, return_value=True),
+    ):
+        yield
+
+
 # ---------------------------------------------------------------------------
 # Helpers to build mock fitz objects
 # ---------------------------------------------------------------------------

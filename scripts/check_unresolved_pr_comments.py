@@ -38,15 +38,17 @@ from pathlib import Path
 
 
 # Automated scanner authors whose threads are pure noise
-_SCANNER_AUTHORS = frozenset({
-    "github-advanced-security",
-    "semgrep-code-williaby",
-    "snyk-bot",
-    "dependabot",
-    "github-actions",
-    "codecov",
-    "sonarcloud",
-})
+_SCANNER_AUTHORS = frozenset(
+    {
+        "github-advanced-security",
+        "semgrep-code-williaby",
+        "snyk-bot",
+        "dependabot",
+        "github-actions",
+        "codecov",
+        "sonarcloud",
+    }
+)
 
 # Body patterns that indicate scanner-generated comments
 _SCANNER_PATTERNS = ("code-scanning/", "semgrep", "snyk")
@@ -113,15 +115,45 @@ def _classify_topic(body: str) -> str:
     """Classify comment topic from content keywords."""
     bl = body.lower()
     topic_keywords: dict[str, list[str]] = {
-        "security": ["security", "vulnerab", "injection", "xss", "csrf", "secret", "credential", "auth"],
-        "error-handling": ["error handling", "exception", "try/except", "raise", "error boundary"],
+        "security": [
+            "security",
+            "vulnerab",
+            "injection",
+            "xss",
+            "csrf",
+            "secret",
+            "credential",
+            "auth",
+        ],
+        "error-handling": [
+            "error handling",
+            "exception",
+            "try/except",
+            "raise",
+            "error boundary",
+        ],
         "data-consistency": ["inconsisten", "mismatch", "denominator", "count"],
         "performance": ["performance", "cache", "optimize", "slow", "memory"],
-        "typing": ["type hint", "type annotation", "typing", "mypy", "pyright", "type:"],
+        "typing": [
+            "type hint",
+            "type annotation",
+            "typing",
+            "mypy",
+            "pyright",
+            "type:",
+        ],
         "testing": ["test", "coverage", "assert", "mock"],
         "dead-code": ["duplicate", "redundant", "unused", "dead code"],
         "magic-numbers": ["magic number", "hardcod", "constant"],
-        "documentation": ["docstring", "documentation", "comment", "readme", "frontmatter", "h1", "heading"],
+        "documentation": [
+            "docstring",
+            "documentation",
+            "comment",
+            "readme",
+            "frontmatter",
+            "h1",
+            "heading",
+        ],
     }
     for topic, keywords in topic_keywords.items():
         if any(kw in bl for kw in keywords):
@@ -155,7 +187,10 @@ def _run_graphql(owner: str, repo: str) -> dict:
         pr["number"]
         for pr in pr_list_data["data"]["repository"]["pullRequests"]["nodes"]
     ]
-    print(f"Found {len(pr_numbers)} merged PRs, fetching review threads...", file=sys.stderr)
+    print(
+        f"Found {len(pr_numbers)} merged PRs, fetching review threads...",
+        file=sys.stderr,
+    )
 
     # Step 2: fetch each PR's threads individually
     all_pr_nodes = []
@@ -205,41 +240,56 @@ def _extract_items(data: dict, *, current_only: bool = False) -> list[dict]:
             replies = []
             for comment in comments[1:]:
                 r_author_obj = comment.get("author")
-                r_author = r_author_obj.get("login", "unknown") if r_author_obj else "unknown"
-                replies.append({
-                    "author": r_author,
-                    "date": comment.get("createdAt", "")[:10],
-                    "body": comment.get("body", ""),
-                })
+                r_author = (
+                    r_author_obj.get("login", "unknown") if r_author_obj else "unknown"
+                )
+                replies.append(
+                    {
+                        "author": r_author,
+                        "date": comment.get("createdAt", "")[:10],
+                        "body": comment.get("body", ""),
+                    }
+                )
 
-            items.append({
-                "pr": pr["number"],
-                "pr_title": pr["title"],
-                "pr_url": pr["url"],
-                "thread_id": thread.get("id", ""),
-                "author": author,
-                "date": first.get("createdAt", "")[:10],
-                "path": first.get("path", ""),
-                "line": first.get("line"),
-                "severity": _classify_severity(body),
-                "topic": _classify_topic(body),
-                "outdated": is_outdated,
-                "body": body,
-                "replies": replies,
-            })
+            items.append(
+                {
+                    "pr": pr["number"],
+                    "pr_title": pr["title"],
+                    "pr_url": pr["url"],
+                    "thread_id": thread.get("id", ""),
+                    "author": author,
+                    "date": first.get("createdAt", "")[:10],
+                    "path": first.get("path", ""),
+                    "line": first.get("line"),
+                    "severity": _classify_severity(body),
+                    "topic": _classify_topic(body),
+                    "outdated": is_outdated,
+                    "body": body,
+                    "replies": replies,
+                }
+            )
 
     # Sort: security first, then severity, then PR desc
     severity_order = {"critical": 0, "medium": 1, "unclassified": 2, "low": 3}
     topic_order_map = {
-        "security": 0, "error-handling": 1, "data-consistency": 2, "performance": 3,
-        "typing": 4, "testing": 5, "dead-code": 6, "magic-numbers": 7,
-        "documentation": 8, "other": 9,
+        "security": 0,
+        "error-handling": 1,
+        "data-consistency": 2,
+        "performance": 3,
+        "typing": 4,
+        "testing": 5,
+        "dead-code": 6,
+        "magic-numbers": 7,
+        "documentation": 8,
+        "other": 9,
     }
-    items.sort(key=lambda x: (
-        topic_order_map.get(x["topic"], 99),
-        severity_order.get(x["severity"], 99),
-        -x["pr"],
-    ))
+    items.sort(
+        key=lambda x: (
+            topic_order_map.get(x["topic"], 99),
+            severity_order.get(x["severity"], 99),
+            -x["pr"],
+        )
+    )
     return items
 
 
@@ -267,9 +317,16 @@ def _print_summary(items: list[dict]) -> None:
     print()
 
     priority_map = {
-        "security": "HIGH", "error-handling": "MEDIUM", "data-consistency": "MEDIUM",
-        "performance": "MEDIUM", "typing": "LOW", "testing": "LOW",
-        "dead-code": "LOW", "magic-numbers": "LOW", "documentation": "LOW", "other": "LOW",
+        "security": "HIGH",
+        "error-handling": "MEDIUM",
+        "data-consistency": "MEDIUM",
+        "performance": "MEDIUM",
+        "typing": "LOW",
+        "testing": "LOW",
+        "dead-code": "LOW",
+        "magic-numbers": "LOW",
+        "documentation": "LOW",
+        "other": "LOW",
     }
     print("By topic (current only):")
     for topic, count in Counter(i["topic"] for i in current).most_common():
@@ -306,62 +363,87 @@ def _generate_tracking_md(items: list[dict]) -> str:
             lines.append(f"| Severity: {sev} | {sev_counts[sev]} |")
 
     priority_map = {
-        "security": "HIGH", "error-handling": "MEDIUM", "data-consistency": "MEDIUM",
-        "performance": "MEDIUM", "typing": "LOW", "testing": "LOW",
-        "dead-code": "LOW", "magic-numbers": "LOW", "documentation": "LOW", "other": "LOW",
+        "security": "HIGH",
+        "error-handling": "MEDIUM",
+        "data-consistency": "MEDIUM",
+        "performance": "MEDIUM",
+        "typing": "LOW",
+        "testing": "LOW",
+        "dead-code": "LOW",
+        "magic-numbers": "LOW",
+        "documentation": "LOW",
+        "other": "LOW",
     }
-    lines.extend([
-        "",
-        "| Topic | Count | Priority |",
-        "|-------|-------|----------|",
-    ])
+    lines.extend(
+        [
+            "",
+            "| Topic | Count | Priority |",
+            "|-------|-------|----------|",
+        ]
+    )
     topic_order = [
-        "security", "error-handling", "data-consistency", "performance",
-        "typing", "testing", "dead-code", "magic-numbers", "documentation", "other",
+        "security",
+        "error-handling",
+        "data-consistency",
+        "performance",
+        "typing",
+        "testing",
+        "dead-code",
+        "magic-numbers",
+        "documentation",
+        "other",
     ]
     for topic in topic_order:
         if topic_counts.get(topic, 0) > 0:
-            lines.append(f"| {topic} | {topic_counts[topic]} | {priority_map.get(topic, 'LOW')} |")
+            lines.append(
+                f"| {topic} | {topic_counts[topic]} | {priority_map.get(topic, 'LOW')} |"
+            )
 
-    lines.extend([
-        "",
-        "## Triage Legend",
-        "",
-        "- `[ ]` - Not reviewed",
-        "- `[x]` - Addressed",
-        "- `[~]` - Won't fix",
-        "- `[!]` - Needs investigation",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Triage Legend",
+            "",
+            "- `[ ]` - Not reviewed",
+            "- `[x]` - Addressed",
+            "- `[~]` - Won't fix",
+            "- `[!]` - Needs investigation",
+            "",
+        ]
+    )
 
     current_topic = None
     item_id = 0
     for item in items:
         if item["topic"] != current_topic:
             current_topic = item["topic"]
-            lines.append(f"## {current_topic.replace('-', ' ').title()} ({topic_counts[current_topic]})")
+            lines.append(
+                f"## {current_topic.replace('-', ' ').title()} ({topic_counts[current_topic]})"
+            )
             lines.append("")
 
         item_id += 1
         line_str = str(item["line"]) if item["line"] else "N/A"
         outdated_tag = " [OUTDATED]" if item["outdated"] else ""
-        lines.extend([
-            f"### {item_id}. PR #{item['pr']} - {item['path']}{outdated_tag}",
-            "",
-            "- **Status**: [ ]",
-            f"- **Severity**: {item['severity']}",
-            f"- **PR**: [#{item['pr']} - {item['pr_title']}]({item['pr_url']})",
-            f"- **Reviewer**: @{item['author']}",
-            f"- **Date**: {item['date']}",
-            f"- **File**: `{item['path']}`",
-            f"- **Line**: {line_str}",
-            "",
-            "<details>",
-            "<summary>Comment</summary>",
-            "",
-            item["body"].strip(),
-            "",
-        ])
+        lines.extend(
+            [
+                f"### {item_id}. PR #{item['pr']} - {item['path']}{outdated_tag}",
+                "",
+                "- **Status**: [ ]",
+                f"- **Severity**: {item['severity']}",
+                f"- **PR**: [#{item['pr']} - {item['pr_title']}]({item['pr_url']})",
+                f"- **Reviewer**: @{item['author']}",
+                f"- **Date**: {item['date']}",
+                f"- **File**: `{item['path']}`",
+                f"- **Line**: {line_str}",
+                "",
+                "<details>",
+                "<summary>Comment</summary>",
+                "",
+                item["body"].strip(),
+                "",
+            ]
+        )
         if item["replies"]:
             lines.append("**Replies:**")
             lines.append("")
@@ -385,7 +467,8 @@ def main() -> None:
         help="GitHub repo in owner/name format (default: %(default)s)",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         help="Write full tracking markdown file to this path",
     )
@@ -425,7 +508,10 @@ def main() -> None:
         content = _generate_tracking_md(items)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(content)
-        print(f"Tracking file written to {args.output} ({len(items)} items)", file=sys.stderr)
+        print(
+            f"Tracking file written to {args.output} ({len(items)} items)",
+            file=sys.stderr,
+        )
     else:
         _print_summary(items)
 

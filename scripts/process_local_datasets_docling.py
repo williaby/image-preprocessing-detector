@@ -223,7 +223,13 @@ class LocalDatasetProcessor:
             file_content = f.read()
 
         mime_type, _ = mimetypes.guess_type(file_path.name)
-        files = {"file": (file_path.name, file_content, mime_type or "application/octet-stream")}
+        files = {
+            "file": (
+                file_path.name,
+                file_content,
+                mime_type or "application/octet-stream",
+            )
+        }
         data = {
             "options": json.dumps(
                 {

@@ -490,9 +490,7 @@ class DocCreatorDataset:
         for image_path, _xml_path, label in self._samples:
             label_path = output_dir / f"{image_path.stem}_labels.json"
             # Validate path to prevent directory traversal
-            validated_path = validate_safe_path(
-                label_path, allowed_base=output_dir
-            )
+            validated_path = validate_safe_path(label_path, allowed_base=output_dir)
             with open(validated_path, "w") as f:
                 json.dump(label.to_dict(), f, indent=2)
             created_files.append(validated_path)
