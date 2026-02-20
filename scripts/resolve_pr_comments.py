@@ -29,8 +29,8 @@ from check_unresolved_pr_comments import (
 
 _GRAPHQL_RESOLVE_THREAD = 'mutation { resolveReviewThread(input: {threadId: "%s"}) { thread { isResolved } } }'
 
-# GitHub thread IDs are base64-encoded opaque strings (letters, digits, +, /, =, _, -)
-_THREAD_ID_RE = re.compile(r"^[A-Za-z0-9+/=_\-]+$")
+# GitHub PR review thread IDs follow the PRRT_ prefix pattern
+_THREAD_ID_RE = re.compile(r"^PRRT_[A-Za-z0-9]+$")
 
 
 def _run_graphql(query: str) -> dict:

@@ -643,7 +643,7 @@ DQS = (
 | 0.2 - 0.4 | Good quality | Low-Medium |
 | 0.4 - 0.6 | Moderate quality | Medium |
 | 0.6 - 0.8 | Poor quality | High |
-| 0.8 - 1.0 | Extremely poor quality | Critical |
+| 0.8 - 1.0 | Severely poor quality | Critical |
 
 ### Routing Thresholds
 

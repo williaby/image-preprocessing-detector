@@ -132,7 +132,7 @@
 | **Annotation Method** | Human-annotated Q&A with evidence citations |
 | **Provenance Tier** | Tier 1 (Human-labeled) |
 | **Quality Assurance** | Expert annotation with evidence citation checks |
-| **GT Label Coverage** | 100% of open-source Q&A set (150 pairs) |
+| **GT Label Coverage** | 100% of open-source Q&A subset (150 pairs out of 10,231 total) |
 
 #### 3. Project Usage
 

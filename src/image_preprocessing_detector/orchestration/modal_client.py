@@ -30,6 +30,8 @@ from image_preprocessing_detector.utils.log_config import get_logger
 
 logger = get_logger(__name__)
 
+_RNG = random.SystemRandom()
+
 
 class CircuitState(str, Enum):
     """Circuit breaker states."""
@@ -485,7 +487,7 @@ class ModalClient:
         )
 
         # Add jitter (±25%) using cryptographically secure RNG
-        jitter = random.SystemRandom().uniform(0.75, 1.25)
+        jitter = _RNG.uniform(0.75, 1.25)
         return int(backoff * jitter)
 
     def _record_success(self) -> None:

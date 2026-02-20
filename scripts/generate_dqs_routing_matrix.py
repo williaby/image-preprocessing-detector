@@ -255,7 +255,7 @@ def calculate_structural_complexity(
         "column_count": 1,
     }
 
-    text_boxes: list[list] = []
+    text_boxes: list[list[float]] = []
     for ann in annotations:
         cat_id = ann["category_id"]
         class_name = DOCLAYNET_CLASSES.get(cat_id, "Unknown")

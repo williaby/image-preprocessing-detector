@@ -611,6 +611,26 @@ class TestConfigurableThresholds:
         # Still no handwriting on a blank page regardless of min_components
         assert result.has_handwriting is False
 
+    def test_threshold_below_zero_raises(self) -> None:
+        """threshold < 0.0 must raise ValueError."""
+        with pytest.raises(ValueError, match="threshold must be between"):
+            HandwritingDetector(threshold=-0.1)
+
+    def test_threshold_above_one_raises(self) -> None:
+        """threshold > 1.0 must raise ValueError."""
+        with pytest.raises(ValueError, match="threshold must be between"):
+            HandwritingDetector(threshold=1.1)
+
+    def test_min_components_zero_raises(self) -> None:
+        """min_components=0 must raise ValueError."""
+        with pytest.raises(ValueError, match="min_components must be"):
+            HandwritingDetector(min_components=0)
+
+    def test_min_components_negative_raises(self) -> None:
+        """min_components < 0 must raise ValueError."""
+        with pytest.raises(ValueError, match="min_components must be"):
+            HandwritingDetector(min_components=-5)
+
 
 # ---------------------------------------------------------------------------
 # Tests: Module-level convenience function

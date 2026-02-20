@@ -28,7 +28,7 @@ class DocumentProcessorUser(HttpUser):
     # Wait 1-3 seconds between tasks
     wait_time = between(1, 3)
 
-    # API key for authentication (loaded from environment variable, no default)
+    # API key for authentication (loaded from environment variable; empty string means unauthenticated)
     api_key = os.environ.get("LOAD_TEST_API_KEY", "")
 
     def on_start(self) -> None:

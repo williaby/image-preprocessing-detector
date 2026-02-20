@@ -371,6 +371,8 @@ def analyze_text_layer(pdf_path: str | Path) -> TextLayerAnalysisResult:
     Raises:
         ImportError: When PyMuPDF (``fitz``) is not installed.
         FileNotFoundError: When *pdf_path* does not exist or is not a file.
+        ValueError: When *pdf_path* fails path-traversal security validation.
+        fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
     """
     analyzer = TextLayerAnalyzer()
     return analyzer.analyze(pdf_path)

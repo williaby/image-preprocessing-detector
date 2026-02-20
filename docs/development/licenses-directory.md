@@ -112,7 +112,7 @@ Example:
 
 ```bash
 # Download BSD-3-Clause license (using SPDX canonical GitHub URL with release tag)
-curl https://raw.githubusercontent.com/spdx/license-list-data/v3.25.0/text/BSD-3-Clause.txt > LICENSES/BSD-3-Clause.txt
+curl -fSL https://raw.githubusercontent.com/spdx/license-list-data/v3.25.0/text/BSD-3-Clause.txt > LICENSES/BSD-3-Clause.txt
 
 # Verify
 reuse lint

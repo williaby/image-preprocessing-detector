@@ -1471,7 +1471,16 @@ def save_language_results(
     enrichment_type: str = "openlid_detection",
     method: str = "openlid_v2",
 ) -> None:
-    """Save language detection results to metadata registry."""
+    """Save language detection results to metadata registry.
+
+    Args:
+        dataset_name: Name of the dataset being enriched.
+        results: List of ``(image_id, LanguageResult)`` pairs from detection.
+        enrichment_type: Enrichment type tag written to the output JSON
+            (default ``"openlid_detection"``; pass ``"ground_truth"`` for GT runs).
+        method: Detection method tag written to the output JSON
+            (default ``"openlid_v2"``; pass ``"ground_truth"`` for GT runs).
+    """
     output_file = METADATA_REGISTRY / f"{dataset_name}_language_enrichment.json"
 
     # Aggregate statistics
