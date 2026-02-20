@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 try:
     import fitz  # PyMuPDF
@@ -155,13 +156,10 @@ class TextLayerAnalyzer:
         Raises:
             FileNotFoundError: When *pdf_path* does not exist or is not a file.
             ImportError: When PyMuPDF is not installed.
-            RuntimeError: When the PDF cannot be opened.
+            ValueError: When *pdf_path* fails security validation (path traversal).
+            fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
         """
-        path = Path(pdf_path)
-        if not path.exists():
-            raise FileNotFoundError(f"PDF path does not exist: {path}")
-        if not path.is_file():
-            raise FileNotFoundError(f"PDF path is not a file: {path}")
+        path = validate_safe_path(pdf_path, must_exist=True)
 
         logger.info("Analysing PDF text layer", path=str(path))
 

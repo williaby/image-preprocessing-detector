@@ -502,8 +502,12 @@ class MLIQADetector:
             try:
                 engine.start()
             except Exception:
-                # Ensure the engine is cleaned up if start() fails
-                engine.stop()
+                # Ensure the engine is cleaned up if start() fails;
+                # suppress stop() errors to preserve the original exception.
+                import contextlib
+
+                with contextlib.suppress(Exception):
+                    engine.stop()
                 raise
             self._batch_engine = engine
             logger.info("BatchInferenceEngine initialized", device=device)

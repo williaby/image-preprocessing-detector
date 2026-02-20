@@ -28,8 +28,8 @@ class DocumentProcessorUser(HttpUser):
     # Wait 1-3 seconds between tasks
     wait_time = between(1, 3)
 
-    # API key for authentication (loaded from environment variable)
-    api_key = os.environ.get("LOAD_TEST_API_KEY", "test-api-key")
+    # API key for authentication (loaded from environment variable, no default)
+    api_key = os.environ.get("LOAD_TEST_API_KEY", "")
 
     def on_start(self) -> None:
         """Called when a user starts. Load test fixtures."""

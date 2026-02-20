@@ -1219,7 +1219,12 @@ def _extract_gt_language(
     )
 
     if not dry_run and results:
-        save_language_results(dataset_name, results)
+        save_language_results(
+            dataset_name,
+            results,
+            enrichment_type="ground_truth",
+            method="ground_truth",
+        )
 
     return stats
 
@@ -1462,6 +1467,9 @@ def save_multilingual_scripts_results(
 def save_language_results(
     dataset_name: str,
     results: list[tuple[str, LanguageResult]],
+    *,
+    enrichment_type: str = "openlid_detection",
+    method: str = "openlid_v2",
 ) -> None:
     """Save language detection results to metadata registry."""
     output_file = METADATA_REGISTRY / f"{dataset_name}_language_enrichment.json"
@@ -1493,7 +1501,7 @@ def save_language_results(
 
     output = {
         "dataset": dataset_name,
-        "enrichment_type": "openlid_detection",
+        "enrichment_type": enrichment_type,
         "total_samples": len(results),
         "detected_count": detected_count,
         "undetermined_count": len(results) - detected_count,
@@ -1501,7 +1509,7 @@ def save_language_results(
         "language_distribution": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
         "script_distribution": dict(sorted(script_counts.items(), key=lambda x: -x[1])),
         "created_at": datetime.now(UTC).isoformat(),
-        "method": "openlid_v2",
+        "method": method,
         "samples": sample_results[:1000],  # First 1000 for reference
     }
 

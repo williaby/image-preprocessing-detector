@@ -44,7 +44,11 @@ def _run_graphql(query: str) -> dict:
     if result.returncode != 0:
         print(f"Error: {result.stderr.strip()}", file=sys.stderr)
         return {}
-    return json.loads(result.stdout)
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        print(f"Error parsing GitHub API response: {exc}", file=sys.stderr)
+        return {}
 
 
 def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
@@ -54,9 +58,13 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
         print("Failed to fetch PR list", file=sys.stderr)
         sys.exit(1)
 
-    pr_numbers = [
-        pr["number"] for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
-    ]
+    try:
+        pr_numbers = [
+            pr["number"] for pr in pr_data["data"]["repository"]["pullRequests"]["nodes"]
+        ]
+    except (KeyError, TypeError) as exc:
+        print(f"Unexpected PR list response structure: {exc}", file=sys.stderr)
+        sys.exit(1)
     print(f"Scanning {len(pr_numbers)} merged PRs...", file=sys.stderr)
 
     threads: list[dict] = []
@@ -127,6 +135,9 @@ def main() -> None:
     parser.add_argument("--thread-ids", nargs="+", help="Resolve only these thread IDs")
     args = parser.parse_args()
 
+    if "/" not in args.repo or args.repo.count("/") != 1:
+        print(f"Error: --repo must be in owner/name format, got {args.repo!r}", file=sys.stderr)
+        sys.exit(1)
     owner, repo = args.repo.split("/")
     for slug, name in ((owner, "owner"), (repo, "repo")):
         if not _REPO_SLUG_RE.match(slug):

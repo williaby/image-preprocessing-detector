@@ -176,7 +176,11 @@ def _run_graphql_query(query: str) -> dict:
     if result.returncode != 0:
         print(f"Error querying GitHub API: {result.stderr}", file=sys.stderr)
         return {}
-    return json.loads(result.stdout)
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        print(f"Error parsing GitHub API response: {exc}", file=sys.stderr)
+        return {}
 
 
 def _run_graphql(owner: str, repo: str) -> dict:
@@ -187,10 +191,14 @@ def _run_graphql(owner: str, repo: str) -> dict:
         print("Failed to fetch PR list", file=sys.stderr)
         sys.exit(1)
 
-    pr_numbers = [
-        pr["number"]
-        for pr in pr_list_data["data"]["repository"]["pullRequests"]["nodes"]
-    ]
+    try:
+        pr_numbers = [
+            pr["number"]
+            for pr in pr_list_data["data"]["repository"]["pullRequests"]["nodes"]
+        ]
+    except (KeyError, TypeError) as exc:
+        print(f"Unexpected PR list response structure: {exc}", file=sys.stderr)
+        sys.exit(1)
     print(
         f"Found {len(pr_numbers)} merged PRs, fetching review threads...",
         file=sys.stderr,
@@ -253,7 +261,7 @@ def _extract_items(data: dict, *, current_only: bool = False) -> list[dict]:
                 replies.append(
                     {
                         "author": r_author,
-                        "date": comment.get("createdAt", "")[:10],
+                        "date": (comment.get("createdAt") or "")[:10],
                         "body": comment.get("body", ""),
                     }
                 )
@@ -265,7 +273,7 @@ def _extract_items(data: dict, *, current_only: bool = False) -> list[dict]:
                     "pr_url": pr["url"],
                     "thread_id": thread.get("id", ""),
                     "author": author,
-                    "date": first.get("createdAt", "")[:10],
+                    "date": (first.get("createdAt") or "")[:10],
                     "path": first.get("path", ""),
                     "line": first.get("line"),
                     "severity": _classify_severity(body),
@@ -497,6 +505,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if "/" not in args.repo or args.repo.count("/") != 1:
+        print(f"Error: --repo must be in owner/name format, got {args.repo!r}", file=sys.stderr)
+        sys.exit(1)
     owner, repo = args.repo.split("/")
     for slug, name in ((owner, "owner"), (repo, "repo")):
         if not _REPO_SLUG_RE.match(slug):

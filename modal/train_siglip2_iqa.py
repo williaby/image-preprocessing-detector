@@ -47,6 +47,7 @@ from __future__ import annotations
 import base64
 import json
 import random
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -414,7 +415,11 @@ def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
                 relative_path = blob.name[len(prefix) :]
                 if not relative_path:
                     continue
-                local_file = split_dir / relative_path
+                # Guard against path traversal in GCS object names (e.g. "../../../etc")
+                local_file = (split_dir / relative_path).resolve()
+                if not str(local_file).startswith(str(split_dir.resolve()) + "/"):
+                    print(f"  SKIPPING suspicious path: {blob.name!r}", file=sys.stderr)
+                    continue
                 local_file.parent.mkdir(parents=True, exist_ok=True)
                 try:
                     blob.download_to_filename(str(local_file))

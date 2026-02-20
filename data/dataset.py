@@ -156,8 +156,8 @@ class IQADataset(Dataset):
         # Convert BGR to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Load labels
-        label_path = Path(sample["label_path"])
+        # Load labels - validate path to prevent directory traversal
+        label_path = validate_safe_path(sample["label_path"], must_exist=True)
         with open(label_path) as f:
             label_data = json.load(f)
 
@@ -256,7 +256,7 @@ class IQADataset(Dataset):
         total_samples = len(self.samples)
 
         for sample in self.samples:
-            label_path = Path(sample["label_path"])
+            label_path = validate_safe_path(sample["label_path"], must_exist=True)
             with open(label_path) as f:
                 label_data = json.load(f)
 

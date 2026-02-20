@@ -632,7 +632,11 @@ class DatasetSufficiencyMeasurer:
                 continue
             row = (bin_idx - 1) // 3  # Degradation axis (0-2)
             col = (bin_idx - 1) % 3  # Complexity axis (0-2)
-            routing_matrix[row, col] += int(count)
+            try:
+                routing_matrix[row, col] += int(count)
+            except (ValueError, TypeError):
+                logger.warning("Skipping non-numeric count value: %r", count)
+                continue
 
     def _build_dqs_routing_notes(
         self, total_dqs: int, vidore_dqs: int, total: int, routing_matrix: np.ndarray
