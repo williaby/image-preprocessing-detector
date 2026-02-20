@@ -123,7 +123,7 @@ class TextLayerAnalyzer:
                         f"Valid keys are: {sorted(valid_keys)}"
                     )
                     raise ValueError(msg)
-                if not isinstance(value, (int, float)) or not (value > 0):
+                if not isinstance(value, (int, float)) or value <= 0:
                     msg = (
                         f"Weight for {key!r} must be a positive numeric value, "
                         f"got {value!r}"
