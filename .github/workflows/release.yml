@@ -53,7 +53,7 @@ permissions:
 jobs:
   release:
     name: Semantic Release Pipeline
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5d88a71b91949ee88382284cb6b292d6e0 # 3bf8bf5
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5d88a71b91949ee88382284cb6b292d6e0
     permissions:
       contents: write
       issues: write
