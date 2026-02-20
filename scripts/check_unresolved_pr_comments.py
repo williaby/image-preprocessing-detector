@@ -33,7 +33,7 @@ import json
 import subprocess
 import sys
 from collections import Counter
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 
 
