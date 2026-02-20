@@ -131,7 +131,7 @@ def evaluate_samples(
         start = time.perf_counter()
         try:
             result = detector.detect(img)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             failures += 1
             logger.warning(
                 "Detector failed for %s: %s", img_path, exc

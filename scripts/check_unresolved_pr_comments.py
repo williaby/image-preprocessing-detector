@@ -33,7 +33,7 @@ import json
 import subprocess
 import sys
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 
 
@@ -291,7 +291,7 @@ def _generate_tracking_md(items: list[dict]) -> str:
     lines = [
         "# Unresolved PR Review Comments - Tracking",
         "",
-        f"> **Generated**: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"> **Generated**: {datetime.now(tz=UTC).strftime('%Y-%m-%d %H:%M UTC')}",
         "> **Repository**: williaby/image-preprocessing-detector",
         "> **Scope**: All merged PRs, current (non-outdated) unresolved threads",
         "",
