@@ -534,10 +534,12 @@ class DatasetSufficiencyMeasurer:
         try:
             with open(info_path) as f:
                 info = json.load(f)
+            if not isinstance(info, dict):
+                return 0
             return sum(
                 s.get("num_examples", 0) for s in info.get("splits", {}).values()
             )
-        except ValueError as exc:
+        except (ValueError, AttributeError) as exc:
             logger.warning("Error reading dataset info from %s: %s", info_path, exc)
             return 0
 

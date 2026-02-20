@@ -15,17 +15,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess  # nosec B404
 import sys
 
 from check_unresolved_pr_comments import (
     _GRAPHQL_PR_LIST,
     _GRAPHQL_PR_THREADS,
+    _REPO_SLUG_RE,
     _SCANNER_AUTHORS,
     _SCANNER_PATTERNS,
 )
 
 _GRAPHQL_RESOLVE_THREAD = 'mutation { resolveReviewThread(input: {threadId: "%s"}) { thread { isResolved } } }'
+
+# GitHub thread IDs are base64-encoded opaque strings (letters, digits, +, /, =, _, -)
+_THREAD_ID_RE = re.compile(r"^[A-Za-z0-9+/=_\-]+$")
 
 
 def _run_graphql(query: str) -> dict:
@@ -94,6 +99,9 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
 
 def _resolve_thread(thread_id: str) -> bool:
     """Resolve a single review thread. Returns True on success."""
+    if not _THREAD_ID_RE.match(thread_id):
+        print(f"Skipping invalid thread ID: {thread_id!r}", file=sys.stderr)
+        return False
     result = _run_graphql(_GRAPHQL_RESOLVE_THREAD % thread_id)
     if not result:
         return False
@@ -120,6 +128,10 @@ def main() -> None:
     args = parser.parse_args()
 
     owner, repo = args.repo.split("/")
+    for slug, name in ((owner, "owner"), (repo, "repo")):
+        if not _REPO_SLUG_RE.match(slug):
+            print(f"Error: invalid {name} slug {slug!r}", file=sys.stderr)
+            sys.exit(1)
     threads = _fetch_unresolved_threads(owner, repo)
 
     if args.thread_ids:

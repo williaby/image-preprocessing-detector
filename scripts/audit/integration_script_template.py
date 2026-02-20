@@ -921,13 +921,14 @@ def integrate_sample(
     Returns:
         New enrichment data dict with all sources merged.
     """
-    filename = sample["source"]["original_filename"]
+    filename = (sample.get("source") or {}).get("original_filename", "")
     filename_stem = Path(filename).stem
     filename_full = Path(filename).name
 
     v1_data: dict[str, Any] = {}
-    if sample["enrichments"]["versions"]:
-        v1_data = sample["enrichments"]["versions"][-1].get("data", {})
+    enrichment_versions = (sample.get("enrichments") or {}).get("versions")
+    if enrichment_versions:
+        v1_data = enrichment_versions[-1].get("data", {})
 
     llm = llm_index.get(filename_stem)
     lang_enrichment = lang_index.get(filename_stem)

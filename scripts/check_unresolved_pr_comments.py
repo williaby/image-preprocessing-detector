@@ -30,11 +30,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess  # nosec B404
 import sys
 from collections import Counter
 from datetime import datetime, UTC
 from pathlib import Path
+
+# GitHub owner/repo names: letters, digits, hyphens, dots (no slashes, no spaces)
+_REPO_SLUG_RE = re.compile(r"^[A-Za-z0-9._\-]+$")
 
 
 # Automated scanner authors whose threads are pure noise
@@ -211,7 +215,10 @@ def _run_graphql(owner: str, repo: str) -> dict:
 
 def _extract_items(data: dict, *, current_only: bool = False) -> list[dict]:
     """Extract and classify unresolved review threads."""
-    prs = data["data"]["repository"]["pullRequests"]["nodes"]
+    try:
+        prs = data["data"]["repository"]["pullRequests"]["nodes"]
+    except (KeyError, TypeError):
+        return []
     items = []
 
     for pr in prs:
@@ -340,7 +347,7 @@ def _print_summary(items: list[dict]) -> None:
         print(f"  PR #{pr_num} ({count}): {title[:60]}")
 
 
-def _generate_tracking_md(items: list[dict]) -> str:
+def _generate_tracking_md(items: list[dict], *, repo: str) -> str:
     """Generate a full markdown tracking file."""
     topic_counts = Counter(i["topic"] for i in items)
     sev_counts = Counter(i["severity"] for i in items)
@@ -349,7 +356,7 @@ def _generate_tracking_md(items: list[dict]) -> str:
         "# Unresolved PR Review Comments - Tracking",
         "",
         f"> **Generated**: {datetime.now(tz=UTC).strftime('%Y-%m-%d %H:%M UTC')}",
-        "> **Repository**: williaby/image-preprocessing-detector",
+        f"> **Repository**: {repo}",
         "> **Scope**: All merged PRs, current (non-outdated) unresolved threads",
         "",
         "## Summary",
@@ -491,6 +498,10 @@ def main() -> None:
     args = parser.parse_args()
 
     owner, repo = args.repo.split("/")
+    for slug, name in ((owner, "owner"), (repo, "repo")):
+        if not _REPO_SLUG_RE.match(slug):
+            print(f"Error: invalid {name} slug {slug!r}", file=sys.stderr)
+            sys.exit(1)
     print(f"Querying {owner}/{repo} for unresolved review threads...", file=sys.stderr)
 
     data = _run_graphql(owner, repo)
@@ -505,7 +516,7 @@ def main() -> None:
         return
 
     if args.output:
-        content = _generate_tracking_md(items)
+        content = _generate_tracking_md(items, repo=args.repo)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(content)
         print(

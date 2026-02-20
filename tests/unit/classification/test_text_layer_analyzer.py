@@ -7,6 +7,7 @@ All tests mock ``fitz.open()`` so that no real PDF files are required.
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,7 +27,7 @@ _PATH_IS_FILE = (
 
 
 @pytest.fixture(autouse=True)
-def _patch_path_checks() -> pytest.FixtureResult[None]:  # type: ignore[type-arg]
+def _patch_path_checks() -> Generator[None, None, None]:
     """Patch Path.exists and Path.is_file to return True for all tests.
 
     The analyze() method added file-existence guards after accepting Path inputs.

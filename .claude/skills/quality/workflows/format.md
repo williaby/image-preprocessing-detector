@@ -1,24 +1,24 @@
 ---
 argument-hint: [path]
-description: Format code using Black for Python, markdownlint for Markdown, and appropriate formatters for other languages.
-allowed-tools: Bash(uv:*, black:*, markdownlint:*), Read
+description: Format code using Ruff for Python, markdownlint for Markdown, and appropriate formatters for other languages.
+allowed-tools: Bash(uv:*, ruff:*, markdownlint:*), Read
 ---
 
 # Code Formatting
 
 Auto-format code to match project standards.
 
-## Python (Black)
+## Python (Ruff)
 
 ```bash
 # Format specific path
-uv run black path/
+uv run ruff format path/
 
 # Check without modifying
-uv run black --check path/
+uv run ruff format --check path/
 
 # Format with diff
-uv run black --diff path/
+uv run ruff format --diff path/
 ```
 
 **Standards**: 88-character line length

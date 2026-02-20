@@ -293,10 +293,11 @@ def _compute_roc_auc(
         tpr_points.append(tp_count / num_positive)
         fpr_points.append(fp_count / num_negative)
 
-    # Trapezoidal rule (np.trapz is compatible with numpy>=1.24; np.trapezoid requires 2.0+)
+    # numpy <2.0 uses np.trapz; np.trapezoid was added in 2.0
+    _trapz = getattr(np, "trapezoid", np.trapz)
     tpr_arr = np.array(tpr_points)
     fpr_arr = np.array(fpr_points)
-    auc = float(np.trapz(tpr_arr, fpr_arr))
+    auc = float(_trapz(tpr_arr, fpr_arr))
     return auc
 
 

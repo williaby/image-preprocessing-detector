@@ -121,7 +121,7 @@ Explain which models would be used:
 
 ## Critical Issues (❌ BLOCKING)
 
-### payment.js:3 - Payment Timeout
+### test-assumptions.js:35 - Payment Timeout
 
 **Risk**: Production payment failures under load
 **Fix**: Add timeout and retry logic

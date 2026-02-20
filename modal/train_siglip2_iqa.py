@@ -335,7 +335,7 @@ def _create_pcgrad_wrapper_v1(optimizer: Any) -> Any:
     return PCGrad(optimizer)
 
 
-def _setup_gcs_credentials() -> str | None:
+def _setup_gcs_credentials() -> tuple[str | None, str | None]:
     """Write GCS credentials from Modal secret env var to a temp file.
 
     The Modal secret (gcs-credentials) injects GCP_SA_KEY as a base64-encoded
@@ -343,15 +343,18 @@ def _setup_gcs_credentials() -> str | None:
     client can authenticate without baking credentials into the container image.
 
     Returns:
-        Path to the temp credentials file, or None if credentials already set.
+        Tuple of (credentials_path, prior_env_value). credentials_path is None
+        if GCP_SA_KEY is not set. prior_env_value is the previous value of
+        GOOGLE_APPLICATION_CREDENTIALS (None if it was not set).
     """
     import os
     import tempfile
 
+    prior = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     gcp_sa_key = os.environ.get("GCP_SA_KEY")
     if not gcp_sa_key:
         # Credentials may already be set via another mechanism
-        return None
+        return None, prior
 
     sa_json = base64.b64decode(gcp_sa_key).decode("utf-8")
     with tempfile.NamedTemporaryFile(
@@ -361,7 +364,7 @@ def _setup_gcs_credentials() -> str | None:
         credentials_path = cred_file.name
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    return credentials_path
+    return credentials_path, prior
 
 
 def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
@@ -376,7 +379,7 @@ def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
     from google.cloud import storage
 
     # Write Modal secret credentials to temp file at runtime
-    credentials_path = _setup_gcs_credentials()
+    credentials_path, prior_creds = _setup_gcs_credentials()
 
     try:
         marker_file = data_dir / ".download_complete"
@@ -440,11 +443,18 @@ def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
         return True
 
     finally:
+        import os
+
         # Clean up temp credentials file to avoid leaving sensitive data on disk
         if credentials_path:
             cred = Path(credentials_path)
             if cred.exists():
                 cred.unlink()
+        # Restore the original GOOGLE_APPLICATION_CREDENTIALS value
+        if prior_creds is not None:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = prior_creds
+        elif credentials_path is not None:
+            os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
 
 
 def _prepare_datasets(

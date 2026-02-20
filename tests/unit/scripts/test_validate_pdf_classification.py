@@ -46,7 +46,7 @@ class TestValidatePath:
         with pytest.raises(ValueError):
             validate_path(tmp_path / "nonexistent", must_exist=True)
 
-    def testvalidate_path_with_null_bytes_raises(self, tmp_path: Path) -> None:
+    def test_validate_path_with_null_bytes_raises(self, tmp_path: Path) -> None:
         """Test that path with null bytes raises error."""
         # This is a security check - paths with null bytes are suspicious
         with pytest.raises(ValueError):
