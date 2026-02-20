@@ -25,12 +25,15 @@ reason = "Windows-only vulnerability (CWE-427) - this project runs on Linux"
 # Disputed Vulnerabilities (Auto-Filtered by OSV-Scanner)
 # ============================================================================
 # As of osv-scanner v2.2.4, disputed CVEs are auto-filtered.
-# Documenting for reference:
+# Explicit entry added for scanners that do not auto-filter disputed CVEs.
 #
 # PYSEC-2022-42969 / CVE-2022-42969:
 #   - py library ReDoS in SVN parsing
 #   - Status: DISPUTED in NVD (May 2024)
 #   - Auto-filtered by scanner's disputed CVE handling
+[[IgnoredVulns]]
+id = "PYSEC-2022-42969"
+reason = "Disputed CVE - no fix available, risk accepted per security review"
 
 # ============================================================================
 # Notes - Fixed Vulnerabilities

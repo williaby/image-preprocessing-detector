@@ -462,7 +462,7 @@ python3 tools/generate_diagram_svgs.py --check
 
 ```bash
 # Regenerate inventory (when many files added/moved)
-python3 /tmp/generate_file_inventory.py > docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md
+python3 scripts/generate_file_inventory.py > docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md
 
 # Or manually update specific sections
 ```

@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit - docalign12k
-
 > **Version**: 1.3.0
 > **Date**: 2026-02-13
 > **Auditor**: claude-opus-4-6

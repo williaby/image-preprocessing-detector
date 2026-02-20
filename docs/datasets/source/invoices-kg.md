@@ -117,9 +117,9 @@ Each manifest contains an array of annotation objects:
 |--------|---------|
 | **Annotation Method** | Mixed |
 | **Provenance Tier** | Tier 1 (Annotation) |
-| **Annotator Details** | [NEEDS_VERIFICATION] |
+| **Annotator Details** | Not disclosed |
 | **Quality Assurance** | Invoice key-value extraction annotation |
-| **GT Label Coverage** | 100% |
+| **GT Label Coverage** | 100% of annotated invoice images (note: Layer 2 Doc Completeness is 45.5% due to missing optional metadata fields) |
 
 #### 3. Project Usage
 
@@ -216,8 +216,8 @@ Each manifest contains an array of annotation objects:
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| IKG-D01 | layout_detections | HIGH | OPEN |  |
-| IKG-D02 | text_has_content | MEDIUM | OPEN |  |
+| IKG-D01 | layout_detections | HIGH | OPEN | Missing or incomplete layout element bounding boxes; blocks downstream layout-aware processing |
+| IKG-D02 | text_has_content | MEDIUM | OPEN | Empty or missing OCR text content where text is expected in invoice fields |
 
 ###### 11.3 VLM Inspection Summary
 

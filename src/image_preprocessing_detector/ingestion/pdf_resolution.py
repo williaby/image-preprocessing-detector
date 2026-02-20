@@ -9,6 +9,8 @@ from typing import Any
 
 import fitz  # PyMuPDF  # type: ignore[import-untyped]
 
+from image_preprocessing_detector.utils.path_security import validate_safe_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,11 +168,7 @@ class PDFResolutionAnalyzer:
         Raises:
             Exception: If PDF cannot be opened or analyzed
         """
-        pdf_path = Path(pdf_path)
-
-        if not pdf_path.exists():
-            msg = f"PDF file not found: {pdf_path}"
-            raise FileNotFoundError(msg)
+        pdf_path = validate_safe_path(pdf_path, must_exist=True)
 
         try:
             # CRITICAL: Memory Management: Large PDFs can exhaust memory

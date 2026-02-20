@@ -111,7 +111,7 @@ Read each document and extract:
 
 Before synthesizing, use Context7 to lookup current best practices for technologies in the tech stack:
 
-```
+```text
 # For each major technology in tech-spec.md
 mcp__context7__resolve-library-id(libraryName="fastapi")  # or relevant framework
 mcp__context7__get-library-docs(context7CompatibleLibraryID="/tiangolo/fastapi", topic="project structure")

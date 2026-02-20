@@ -10,7 +10,8 @@ WORKDIR /app
 
 # Install build dependencies
 # hadolint ignore=DL3008
-# Justification: Version pinning system packages reduces reproducibility for security updates
+# APT packages intentionally unpinned: versions float with base image (python:3.11-slim)
+# to automatically receive security patches. Reproducibility ensured by pinning the base image tag.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -47,7 +48,8 @@ WORKDIR /app
 
 # Install Python and runtime dependencies
 # hadolint ignore=DL3008
-# Justification: Version pinning system packages reduces reproducibility for security updates
+# APT packages intentionally unpinned: versions float with base image (nvidia/cuda:12.1.1)
+# to automatically receive security patches. Reproducibility ensured by pinning the base image tag.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \

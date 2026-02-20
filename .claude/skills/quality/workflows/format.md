@@ -1,7 +1,7 @@
 ---
 argument-hint: [path]
 description: Format code using Black for Python, markdownlint for Markdown, and appropriate formatters for other languages.
-allowed-tools: Bash(poetry:*, black:*, markdownlint:*), Read
+allowed-tools: Bash(uv:*, black:*, markdownlint:*), Read
 ---
 
 # Code Formatting

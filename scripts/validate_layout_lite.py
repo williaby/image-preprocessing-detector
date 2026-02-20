@@ -272,7 +272,9 @@ def validate_layout_lite(
         "target_f1": 0.85,
         "flags": flag_results,
         "mean_f1": float(np.mean(all_f1_scores)) if all_f1_scores else 0.0,
-        "all_targets_met": all(f["target_met"] for f in flag_results.values()),
+        "all_targets_met": all(
+            flag_metrics["target_met"] for flag_metrics in flag_results.values()
+        ),
     }
 
     if output_file:

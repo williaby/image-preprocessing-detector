@@ -28,6 +28,7 @@ from PIL import Image
 
 from image_preprocessing_detector.schema import DocumentType
 from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 logger = get_logger(__name__)
 
@@ -432,7 +433,7 @@ class OfficeProcessor:
         """
         import cv2
 
-        output_path = Path(output_dir)
+        output_path = validate_safe_path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
         saved_paths: list[str] = []

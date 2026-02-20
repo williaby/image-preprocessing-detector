@@ -3,6 +3,7 @@
 
 """Unit tests for PDF resolution detection."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -26,10 +27,14 @@ class TestPDFResolutionAnalyzer:
         analyzer = PDFResolutionAnalyzer()
         assert analyzer.min_dpi_threshold == 300
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_no_images(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test analysis of PDF with no images."""
         # Mock Path.exists() to return True
@@ -53,10 +58,14 @@ class TestPDFResolutionAnalyzer:
         assert result["image_count"] == 0
         assert result["low_res_image_count"] == 0
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_high_res(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test analysis of high-resolution PDF."""
         # Mock Path.exists() to return True
@@ -96,10 +105,14 @@ class TestPDFResolutionAnalyzer:
         assert result["image_count"] == 1
         assert result["low_res_image_count"] == 0
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_low_res(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test analysis of low-resolution PDF."""
         # Mock Path.exists() to return True
@@ -139,10 +152,14 @@ class TestPDFResolutionAnalyzer:
         assert result["image_count"] == 1
         assert result["low_res_image_count"] == 1
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_multiple_pages(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test analysis of multi-page PDF with mixed resolutions."""
         # Mock Path.exists() to return True
@@ -186,10 +203,14 @@ class TestPDFResolutionAnalyzer:
         assert result["low_res_image_count"] == 1  # One image below threshold
         assert len(result["details"]) == 2  # Two pages analyzed
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_zero_bbox(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test handling of images with zero-sized bounding boxes."""
         # Mock Path.exists() to return True
@@ -230,13 +251,17 @@ class TestPDFResolutionAnalyzer:
         """Test handling of non-existent PDF file."""
         analyzer = PDFResolutionAnalyzer()
 
-        with pytest.raises(FileNotFoundError, match="PDF file not found"):
+        with pytest.raises(FileNotFoundError):
             analyzer.analyze_pdf_resolution("/nonexistent/path.pdf")
 
+    @patch(
+        "image_preprocessing_detector.ingestion.pdf_resolution.validate_safe_path",
+        side_effect=lambda p, **kw: Path(p),
+    )
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.Path")
     @patch("image_preprocessing_detector.ingestion.pdf_resolution.fitz")
     def test_analyze_pdf_resolution_error(
-        self, mock_fitz: Mock, mock_path: Mock
+        self, mock_fitz: Mock, mock_path: Mock, mock_vsp: Mock
     ) -> None:
         """Test handling of PDF analysis errors."""
         # Mock Path.exists() to return True

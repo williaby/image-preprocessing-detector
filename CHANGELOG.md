@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Affected code**: `annotation.integrity.hashing.compute_full_sha256()`
     replaces the previous `_compute_sha256_partial()` function
 
+- Python version requirement changed from 3.12 to 3.11 for broader compatibility
+  with ML dependencies (PyTorch, ONNX Runtime) and cloud GPU environments
 - OpenSSF Best Practices badge compliance
 - Security policy (SECURITY.md) with vulnerability reporting process
 - Comprehensive API reference documentation

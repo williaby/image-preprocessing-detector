@@ -39,7 +39,7 @@ Processing latency has exceeded acceptable thresholds. This indicates the system
 
    ```bash
    # View latency by operation
-   curl -s http://imgprep:8000/metrics | grep imgprep_processing_duration
+   curl -s http://imgprep:8000/metrics | grep imgprep_processing_duration_seconds
    ```
 
 2. **Identify slow component**

@@ -191,36 +191,6 @@ DEGRADATION_TYPE_MAPPING = {
 }
 
 
-def validate_safe_path(
-    file_path: str | Path, allowed_base: str | Path | None = None
-) -> Path:
-    """Validate file path to prevent directory traversal attacks.
-
-    Args:
-        file_path: Path to validate
-        allowed_base: Optional base directory to restrict access to
-
-    Returns:
-        Resolved absolute path
-
-    Raises:
-        ValueError: If path contains traversal patterns or escapes allowed_base
-    """
-    path = Path(file_path).resolve()
-
-    # Check for path traversal patterns
-    if ".." in str(file_path):
-        raise ValueError(f"Path traversal detected: {file_path}")
-
-    # If allowed_base specified, ensure path is within it
-    if allowed_base:
-        base = Path(allowed_base).resolve()
-        if not str(path).startswith(str(base)):
-            raise ValueError(f"Path {path} is outside allowed base {base}")
-
-    return path
-
-
 def parse_doccreator_xml(xml_path: str | Path) -> DocCreatorLabel:
     """Parse DocCreator XML ground truth to continuous labels.
 
@@ -409,7 +379,9 @@ def create_label_file(
         output_path = Path(output_path)
 
     # Validate path to prevent directory traversal
-    validated_path = validate_safe_path(output_path)
+    if ".." in str(output_path):
+        raise ValueError(f"Path traversal detected: {output_path}")
+    validated_path = Path(output_path).resolve()
     validated_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(validated_path, "w") as f:
@@ -519,7 +491,11 @@ class DocCreatorDataset:
         for image_path, _xml_path, label in self._samples:
             label_path = output_dir / f"{image_path.stem}_labels.json"
             # Validate path to prevent directory traversal
-            validated_path = validate_safe_path(label_path, allowed_base=output_dir)
+            if ".." in str(label_path):
+                raise ValueError(f"Path traversal detected: {label_path}")
+            validated_path = Path(label_path).resolve()
+            if not validated_path.is_relative_to(output_dir.resolve()):
+                raise ValueError(f"Path {validated_path} is outside allowed base {output_dir}")
             with open(validated_path, "w") as f:
                 json.dump(label.to_dict(), f, indent=2)
             created_files.append(validated_path)

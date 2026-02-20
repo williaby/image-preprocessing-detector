@@ -362,11 +362,17 @@ All fixtures are extracted from permissively licensed datasets:
 
 **IQA Fixtures Citation** (required for LIVE dataset):
 
-```text
-Sheikh, H. R., Seshadrinathan, K., Moorthy, A. K., Wang, Z., Bovik, A. C., & Cormack, L. K. (2006).
-A statistical evaluation of recent full reference image quality assessment algorithms.
-IEEE Transactions on Image Processing, 15(11), 3440-3451.
-```text
+```bibtex
+@article{sheikh2006statistical,
+  title={A statistical evaluation of recent full reference image quality assessment algorithms},
+  author={Sheikh, H. R. and Seshadrinathan, K. and Moorthy, A. K. and Wang, Z. and Bovik, A. C. and Cormack, L. K.},
+  journal={IEEE Transactions on Image Processing},
+  volume={15},
+  number={11},
+  pages={3440--3451},
+  year={2006}
+}
+```
 
 ---
 

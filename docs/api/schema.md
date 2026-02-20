@@ -22,7 +22,7 @@ DocumentMetadata
       ├── DetectedIssue (quality issues)
       └── DocumentElement (layout elements)
           └── DetectedIssue (per-element quality)
-```text
+```
 
 ## Module Reference
 

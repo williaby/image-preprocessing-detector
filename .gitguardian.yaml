@@ -28,14 +28,15 @@ secret:
 
   # Allow specific patterns that are commonly false positives
   ignored_matches:
-    # Test fixture API keys
+    # Used in tests/api/ test fixtures for auth middleware testing only
     - name: "test-api-keys"
-      match: "test-key-*"
+      match: "test-key-[0-9a-f]{8}"
+    # Used in tests/api/test_auth_ratelimit.py fixture constants only
     - name: "valid-key-patterns"
-      match: "valid-*-key*"
-    # Placeholder tokens in documentation
+      match: "valid-test-key-[0-9a-f]{8}"
+    # Placeholder tokens in documentation examples
     - name: "placeholder-tokens"
       match: "your_token_here"
-    # AWS example key from AWS docs
+    # AWS example key from official AWS documentation (not a real credential)
     - name: "aws-example-key"
       match: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"

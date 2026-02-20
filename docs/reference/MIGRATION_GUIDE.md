@@ -51,7 +51,7 @@ source: project-a
 - Rationale: Aligned phase numbers with project milestones across A-B-C-D pipeline
 - Problem: Caused confusion within Project A development team
 
-### New System (December 2025 - Current)
+### New System (December 2025 – Current)
 
 **Sequential Numbering** - Clear progression for Project A:
 
@@ -190,7 +190,7 @@ source: project-a
 - Text gate (fast text detection)
 - Basic classical IQA (blur, skew, contrast)
 - Correction pipeline (deskew, CLAHE)
-- CLI interface
+- CLI
 - JSON output
 
 **Timeline**: Weeks 2-5

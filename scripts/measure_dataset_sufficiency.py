@@ -531,11 +531,17 @@ class DatasetSufficiencyMeasurer:
         info_path = path / DATASET_INFO_JSON
         if not info_path.exists():
             return 0
-        with open(info_path) as f:
-            info = json.load(f)
+        try:
+            with open(info_path) as f:
+                info = json.load(f)
             return sum(
                 s.get("num_examples", 0) for s in info.get("splits", {}).values()
             )
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.warning(
+                "Error reading dataset info from %s: %s", info_path, exc
+            )
+            return 0
 
     def _count_iam_handwriting_samples(self, iam_path: Path) -> int:
         """Count IAM handwriting samples with multiple fallback strategies."""
@@ -615,11 +621,18 @@ class DatasetSufficiencyMeasurer:
         self, routing_matrix: np.ndarray, distribution: dict
     ) -> None:
         """Populate routing matrix from distribution dictionary."""
-        for bin_num, count in distribution.items():
-            bin_num = int(bin_num)
-            row = (bin_num - 1) // 3  # Degradation axis (0-2)
-            col = (bin_num - 1) % 3  # Complexity axis (0-2)
-            routing_matrix[row, col] += count
+        for bin_key, count in distribution.items():
+            try:
+                bin_idx = int(bin_key)
+            except (TypeError, ValueError):
+                logger.warning("Skipping invalid DQS routing bin key: %r", bin_key)
+                continue
+            if not 1 <= bin_idx <= 9:
+                logger.warning("Skipping out-of-range DQS routing bin: %s", bin_idx)
+                continue
+            row = (bin_idx - 1) // 3  # Degradation axis (0-2)
+            col = (bin_idx - 1) % 3  # Complexity axis (0-2)
+            routing_matrix[row, col] += int(count)
 
     def _build_dqs_routing_notes(
         self, total_dqs: int, vidore_dqs: int, total: int, routing_matrix: np.ndarray

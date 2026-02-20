@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit - wsrd
-
 > **Version**: 1.4.0
 > **Date**: 2026-02-14
 > **Auditor**: Claude Opus 4.6

@@ -49,15 +49,32 @@ gcs_secret = modal.Secret.from_name("gcs-credentials")
 
 
 def download_gcs_directory(bucket: Any, prefix: str, destination: Path) -> None:
-    """Download all objects under a GCS prefix into a destination directory."""
+    """Download all objects under a GCS prefix into a destination directory.
+
+    Uses string slicing on a normalized prefix (with trailing slash) to compute
+    relative paths instead of Path.relative_to(), which can raise ValueError when
+    blob names share a string prefix but differ at the path-segment level
+    (e.g. ".../trainval/..." when prefix is ".../train").
+    """
     destination.mkdir(parents=True, exist_ok=True)
-    for blob in bucket.list_blobs(prefix=prefix):
+    # Normalize prefix to ensure it ends with exactly one slash so that blob
+    # names with the same string prefix but different path segments are handled
+    # correctly (avoids ValueError from Path.relative_to on mismatched segments).
+    normalized_prefix = prefix.rstrip("/") + "/"
+    for blob in bucket.list_blobs(prefix=normalized_prefix):
         if blob.name.endswith("/"):
             continue
-        if blob.name == prefix:
+        if not blob.name.startswith(normalized_prefix):
             continue
-        relative_path = Path(blob.name).relative_to(prefix)
-        target_path = destination / relative_path
+        if ".." in blob.name:
+            raise ValueError(f"Path traversal detected in blob name: {blob.name}")
+        relative_name = blob.name[len(normalized_prefix) :]
+        if not relative_name:
+            continue
+        relative_path = Path(relative_name)
+        target_path = (destination / relative_path).resolve()
+        if not target_path.is_relative_to(destination.resolve()):
+            raise ValueError(f"Path escapes destination: {target_path}")
         target_path.parent.mkdir(parents=True, exist_ok=True)
         blob.download_to_filename(str(target_path))
 

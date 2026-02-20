@@ -14,6 +14,7 @@ Run scenarios:
     locust -f tests/load/locustfile.py --host http://localhost:8000
 """
 
+import os
 import random
 import time
 from pathlib import Path
@@ -27,8 +28,8 @@ class DocumentProcessorUser(HttpUser):
     # Wait 1-3 seconds between tasks
     wait_time = between(1, 3)
 
-    # API key for authentication (set via environment or update here)
-    api_key = "test-api-key"
+    # API key for authentication (loaded from environment variable)
+    api_key = os.environ.get("LOAD_TEST_API_KEY", "test-api-key")
 
     def on_start(self) -> None:
         """Called when a user starts. Load test fixtures."""

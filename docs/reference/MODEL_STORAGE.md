@@ -51,7 +51,7 @@ gs://rag-pipeline-models/
       runs/
         2025-11-15T02-05Z_run-def456/
           ...
-```text
+```
 
 ### Required Artifacts Per Run
 
@@ -187,7 +187,7 @@ See `modal/train_phase2_iqa_example.py` for a complete integration example.
    export HF_TOKEN=your_huggingface_token
    ```
 
-1. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
+2. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
 
    ```bash
    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
@@ -339,7 +339,7 @@ v1.0.0 – Initial ResNet50 teacher model
 v1.1.0 – Improved augmentation pipeline (+2% accuracy)
 v1.2.0 – Added ONNX export for CPU inference
 v2.0.0 – Switched to EfficientNetV2 architecture (breaking change)
-```text
+```
 
 ## Model Card Template
 

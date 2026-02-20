@@ -472,9 +472,8 @@ class ModalClient:
             self.config.base_backoff_ms * (2**attempt), self.config.max_backoff_ms
         )
 
-        # Add jitter (±25%)
-        # Note: Using random.uniform for jitter (not cryptographic use)
-        jitter = random.uniform(0.75, 1.25)  # noqa: S311  # nosec B311
+        # Add jitter (±25%) using cryptographically secure RNG
+        jitter = random.SystemRandom().uniform(0.75, 1.25)
         return int(backoff * jitter)
 
     def _record_success(self) -> None:

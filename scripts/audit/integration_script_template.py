@@ -1098,14 +1098,15 @@ def _write_enrichment_version(
         "script_version": SCRIPT_VERSION,
         "data": integrated_data,
     }
-    versions = sample["enrichments"]["versions"]
+    enrichments = sample.setdefault("enrichments", {})
+    versions = enrichments.setdefault("versions", [])
     for i, ver in enumerate(versions):
         if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
             versions[i] = new_version
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            enrichments["current_version"] = ENRICHMENT_VERSION_NUMBER
             return
     versions.append(new_version)
-    sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+    enrichments["current_version"] = ENRICHMENT_VERSION_NUMBER
 
 
 def run_integration(

@@ -44,11 +44,11 @@ class APISettings(BaseSettings):
         description="Enable CORS middleware",
     )
     cors_origins: list[str] = Field(
-        default=["*"],
+        default=[],
         description="Allowed CORS origins",
     )
     cors_allow_credentials: bool = Field(
-        default=True,
+        default=False,
         description="Allow credentials in CORS requests",
     )
     cors_allow_methods: list[str] = Field(

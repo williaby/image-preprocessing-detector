@@ -184,7 +184,7 @@ config = {
 **Hypotheses to Test**:
 
 1. CosineAnnealingLR prevents premature convergence
-2. Higher resolution (1024 patches) improves sharpness SRCC
+2. Higher resolution (784 patches) improves sharpness SRCC
 3. Ranking loss directly improves VQualA
 4. LLRD preserves pretrained features better
 

@@ -35,6 +35,7 @@ class MLIQADetector:
 ```
 
 **Issues with Current Approach**:
+
 1. Single `device` parameter for both student and teacher
 2. No budget enforcement mechanism
 3. No circuit breaker for Modal fallback
@@ -620,6 +621,8 @@ def test_modal_circuit_breaker_integration():
 - [ ] Update all documentation
 
 ## Success Criteria
+
+> Legend: [x] = design complete, [ ] = pending implementation/verification
 
 - [x] Orchestrator integrated without breaking existing tests
 - [x] Teacher budget enforcement works in production

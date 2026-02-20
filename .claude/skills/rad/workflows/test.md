@@ -122,8 +122,10 @@ Explain which models would be used:
 ## Critical Issues (❌ BLOCKING)
 
 ### payment.js:3 - Payment Timeout
+
 **Risk**: Production payment failures under load
 **Fix**: Add timeout and retry logic
+
 ```javascript
 function processPayment(amount) {
     const timeout = 5000;
@@ -137,8 +139,10 @@ function processPayment(amount) {
 ```
 
 ### payment.js:18 - Race Condition
+
 **Risk**: Data corruption in concurrent updates
 **Fix**: Add transaction locks
+
 ```javascript
 async function updateUserBalance(userId, amount) {
     const transaction = await db.startTransaction();

@@ -20,9 +20,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Scripts directory added to sys.path via tests/conftest.py
+from _path_security import validate_path
 from validate_pdf_classification import (
     _find_expected_type,
-    _validate_path,
     load_ground_truth,
     print_summary,
     validate_classifications,
@@ -30,27 +30,27 @@ from validate_pdf_classification import (
 
 
 class TestValidatePath:
-    """Tests for _validate_path function."""
+    """Tests for validate_path function."""
 
     def test_validate_existing_path(self, tmp_path: Path) -> None:
         """Test validating an existing path."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("test")
 
-        result = _validate_path(test_file, must_exist=True)
+        result = validate_path(test_file, must_exist=True)
 
         assert result.exists()
 
     def test_validate_nonexistent_path_raises(self, tmp_path: Path) -> None:
         """Test that nonexistent path raises error when must_exist=True."""
         with pytest.raises(ValueError):
-            _validate_path(tmp_path / "nonexistent", must_exist=True)
+            validate_path(tmp_path / "nonexistent", must_exist=True)
 
-    def test_validate_path_with_null_bytes_raises(self, tmp_path: Path) -> None:
+    def testvalidate_path_with_null_bytes_raises(self, tmp_path: Path) -> None:
         """Test that path with null bytes raises error."""
         # This is a security check - paths with null bytes are suspicious
         with pytest.raises(ValueError):
-            _validate_path(Path(str(tmp_path) + "\x00evil"), must_exist=False)
+            validate_path(Path(str(tmp_path) + "\x00evil"), must_exist=False)
 
 
 class TestLoadGroundTruth:

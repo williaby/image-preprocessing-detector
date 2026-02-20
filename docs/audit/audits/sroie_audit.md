@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit - SROIE
-
 > **Version**: 1.3.0
 > **Date**: 2026-02-13
 > **Auditor**: Claude Code (Opus 4.6)

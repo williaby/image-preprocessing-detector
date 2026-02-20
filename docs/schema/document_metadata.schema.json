@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/project-a/document-metadata.schema.json",
+  "$id": "https://github.com/williaby/image-preprocessing-detector/document-metadata.schema.json",
   "title": "DocumentMetadata",
   "description": "Project A output schema for Project B handoff - Preprocessing, IQA & Coarse Layout Gateway",
   "type": "object",
@@ -140,7 +140,7 @@
         "page_number": {
           "type": "integer",
           "minimum": 1,
-          "description": "1-based page number"
+          "description": "1-based page number (note: PageMetadata uses 0-based page_index; convert with page_number = page_index + 1)"
         },
         "layout_type": {
           "type": "string",
@@ -369,7 +369,7 @@
         "page_index": {
           "type": "integer",
           "minimum": 0,
-          "description": "Zero-based page index"
+          "description": "Zero-based page index (note: PageLayoutSummary uses 1-based page_number; convert with page_index = page_number - 1)"
         },
         "width_px": {
           "type": "integer",

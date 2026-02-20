@@ -129,10 +129,10 @@
 
 | Aspect | Details |
 |--------|---------|
-| **Annotation Method** | Human Expert (Q&A pairs), Automatic Extraction (document parsing) |
-| **Provenance Tier** | Tier 1 (Human-annotated) for Q&A annotations, Tier 0 (Exact) for document metadata |
-| **Quality Assurance** | Human expert annotations for Q&A pairs, born-digital financial PDF extraction for document structure |
-| **GT Label Coverage** | 100% |
+| **Annotation Method** | Human-annotated Q&A with evidence citations |
+| **Provenance Tier** | Tier 1 (Human-labeled) |
+| **Quality Assurance** | Expert annotation with evidence citation checks |
+| **GT Label Coverage** | 100% of open-source Q&A set (150 pairs) |
 
 #### 3. Project Usage
 

@@ -11,6 +11,7 @@ Secure file encryption using GPG with strong cipher algorithms.
 ## Encryption
 
 ### Symmetric Encryption (Password-based)
+
 ```bash
 gpg --symmetric --cipher-algo AES256 \
     --compress-algo 1 \
@@ -22,6 +23,7 @@ gpg --symmetric --cipher-algo AES256 \
 ```
 
 ### Public Key Encryption
+
 ```bash
 gpg --encrypt --armor \
     --recipient email@example.com \
@@ -41,6 +43,7 @@ gpg --decrypt file.txt.gpg > file.txt
 ## Common Use Cases
 
 ### 1. Encrypt .env File
+
 ```bash
 gpg --symmetric --cipher-algo AES256 .env
 # Creates .env.gpg
@@ -49,12 +52,14 @@ gpg --symmetric --cipher-algo AES256 .env
 ```
 
 ### 2. Decrypt .env for Development
+
 ```bash
 gpg --decrypt .env.gpg > .env
 chmod 600 .env
 ```
 
 ### 3. Share Encrypted File
+
 ```bash
 # Encrypt for recipient
 gpg --encrypt --armor \

@@ -103,8 +103,8 @@
 
 ###### 2.7 Ground Truth Provenance
 
-| Field | Value |
-|-------|-------|
+| Aspect | Details |
+|--------|---------|
 | **Annotation Method** | Synthetic |
 | **Provenance Tier** | Tier 0 (Exact - programmatic document generation) |
 | **Quality Assurance** | Labels exact by construction (synthetic generation) |

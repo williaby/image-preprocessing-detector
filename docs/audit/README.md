@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit System
-
 > **Version**: 2.0.0
 > **Last Updated**: 2026-02-14
 > **Status**: Active

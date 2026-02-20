@@ -145,8 +145,10 @@ class IQADataset(Dataset):
         """
         sample = self.samples[idx]
 
-        # Load image
-        image_path = Path(sample["image_path"])
+        # Load image - validate path to prevent directory traversal
+        image_path = Path(sample["image_path"]).resolve()
+        if ".." in str(sample["image_path"]):
+            raise ValueError(f"Path traversal detected: {sample['image_path']}")
         image = cv2.imread(str(image_path))
 
         if image is None:
@@ -418,8 +420,10 @@ class ContinuousIQADataset(Dataset):
         """
         sample = self.samples[idx]
 
-        # Load image
-        image_path = Path(sample["image_path"])
+        # Load image - validate path to prevent directory traversal
+        image_path = Path(sample["image_path"]).resolve()
+        if ".." in str(sample["image_path"]):
+            raise ValueError(f"Path traversal detected: {sample['image_path']}")
         image = cv2.imread(str(image_path))
 
         if image is None:

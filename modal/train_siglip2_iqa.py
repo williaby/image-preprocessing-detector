@@ -44,6 +44,7 @@ Post-training:
 
 from __future__ import annotations
 
+import base64
 import json
 import random
 import time
@@ -93,13 +94,10 @@ training_image = (
         # Experiment tracking
         "wandb",
     )
-    # Copy GCS credentials for authentication
-    .add_local_file(
-        ".gcp/service-account.json",
-        "/root/.gcp/service-account.json",
-        copy=True,
-    )
     # Note: PCGrad installed inline in the training function due to non-standard package structure
+    # Note: GCS credentials are injected at runtime via Modal secret (gcs-credentials),
+    # NOT baked into the image. The _download_diqa5000_from_gcs function writes the
+    # secret-provided GCP_SA_KEY env var to a temp file at container start.
 )
 
 
@@ -337,68 +335,116 @@ def _create_pcgrad_wrapper_v1(optimizer: Any) -> Any:
     return PCGrad(optimizer)
 
 
-def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
-    """Download original DIQA-5000 dataset from GCS."""
-    import os
+def _setup_gcs_credentials() -> str | None:
+    """Write GCS credentials from Modal secret env var to a temp file.
 
+    The Modal secret (gcs-credentials) injects GCP_SA_KEY as a base64-encoded
+    service account JSON. We write it to a temp file at runtime so the GCS
+    client can authenticate without baking credentials into the container image.
+
+    Returns:
+        Path to the temp credentials file, or None if credentials already set.
+    """
+    import os
+    import tempfile
+
+    gcp_sa_key = os.environ.get("GCP_SA_KEY")
+    if not gcp_sa_key:
+        # Credentials may already be set via another mechanism
+        return None
+
+    sa_json = base64.b64decode(gcp_sa_key).decode("utf-8")
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False
+    ) as cred_file:
+        cred_file.write(sa_json)
+        credentials_path = cred_file.name
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    return credentials_path
+
+
+def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
+    """Download original DIQA-5000 dataset from GCS.
+
+    Uses credentials from Modal secret (GCP_SA_KEY env var) written to a
+    temporary file at runtime. The temp file is cleaned up after use.
+
+    Returns:
+        True if download succeeded (or cache is valid), False on failure.
+    """
     from google.cloud import storage
 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+    # Write Modal secret credentials to temp file at runtime
+    credentials_path = _setup_gcs_credentials()
 
-    marker_file = data_dir / ".download_complete"
-    if marker_file.exists():
-        all_csvs_exist = all(
-            (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
-        )
-        if all_csvs_exist:
-            print("DIQA-5000 already downloaded and validated, skipping...")
-            return True
-        marker_file.unlink()
+    try:
+        marker_file = data_dir / ".download_complete"
+        if marker_file.exists():
+            all_csvs_exist = all(
+                (data_dir / split / f"{split}.csv").exists()
+                for split in DIQA5000_SPLITS
+            )
+            if all_csvs_exist:
+                print("DIQA-5000 already downloaded and validated, skipping...")
+                return True
+            marker_file.unlink()
 
-    print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
-    start_time = time.time()
+        print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
+        start_time = time.time()
 
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    data_dir.mkdir(parents=True, exist_ok=True)
-    downloaded = 0
+        client = storage.Client()
+        bucket = client.bucket(GCS_BUCKET)
+        data_dir.mkdir(parents=True, exist_ok=True)
+        downloaded = 0
 
-    for split in DIQA5000_SPLITS:
-        split_dir = data_dir / split
-        split_dir.mkdir(exist_ok=True)
-        (split_dir / "res").mkdir(exist_ok=True)
-        (split_dir / "ori").mkdir(exist_ok=True)
+        for split in DIQA5000_SPLITS:
+            split_dir = data_dir / split
+            split_dir.mkdir(exist_ok=True)
+            (split_dir / "res").mkdir(exist_ok=True)
+            (split_dir / "ori").mkdir(exist_ok=True)
 
-        prefix = f"{GCS_PREFIX}/{split}/"
-        for blob in bucket.list_blobs(prefix=prefix):
-            if blob.name.endswith("/"):
-                continue
-            relative_path = blob.name[len(prefix) :]
-            if not relative_path:
-                continue
-            local_file = split_dir / relative_path
-            local_file.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(str(local_file))
-            downloaded += 1
-            if downloaded % 500 == 0:
-                print(f"  Downloaded {downloaded} files...")
+            prefix = f"{GCS_PREFIX}/{split}/"
+            for blob in bucket.list_blobs(prefix=prefix):
+                if blob.name.endswith("/"):
+                    continue
+                relative_path = blob.name[len(prefix) :]
+                if not relative_path:
+                    continue
+                local_file = split_dir / relative_path
+                local_file.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    blob.download_to_filename(str(local_file))
+                    downloaded += 1
+                except Exception as exc:
+                    print(f"  ERROR downloading {blob.name}: {exc}")
+                    raise
+                if downloaded % 500 == 0:
+                    print(f"  Downloaded {downloaded} files...")
 
-    elapsed = time.time() - start_time
-    print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
+        elapsed = time.time() - start_time
+        print(f"Downloaded {downloaded} files in {elapsed:.1f}s")
 
-    if downloaded < 100:
-        print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
-        return False
-
-    for split in DIQA5000_SPLITS:
-        csv_path = data_dir / split / f"{split}.csv"
-        if not csv_path.exists():
-            print(f"ERROR: Missing CSV at {csv_path}")
+        if downloaded < 100:
+            print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
             return False
-        print(f"  Verified: {csv_path}")
 
-    marker_file.touch()
-    return True
+        for split in DIQA5000_SPLITS:
+            csv_path = data_dir / split / f"{split}.csv"
+            if not csv_path.exists():
+                print(f"ERROR: Missing CSV at {csv_path}")
+                return False
+            print(f"  Verified: {csv_path}")
+
+        marker_file.touch()
+        return True
+
+    finally:
+        # Clean up temp credentials file to avoid leaving sensitive data on disk
+        if credentials_path:
+            cred = Path(credentials_path)
+            if cred.exists():
+                cred.unlink()
 
 
 def _prepare_datasets(
@@ -414,7 +460,11 @@ def _prepare_datasets(
 
     data_dir = Path("/data/diqa5000")
     print("\nDownloading DIQA-5000 dataset from GCS...")
-    _download_diqa5000_from_gcs(data_dir)
+    if not _download_diqa5000_from_gcs(data_dir):
+        raise RuntimeError(
+            "Failed to download DIQA-5000 dataset from GCS. "
+            "Check GCS bucket access and network connectivity."
+        )
     diqa5000_volume.commit()
 
     print("\nLoading DIQA-5000 dataset...")

@@ -111,8 +111,8 @@ If adding a new dependency with a different license:
 Example:
 
 ```bash
-# Download BSD-3-Clause license
-curl https://spdx.org/licenses/BSD-3-Clause.txt > LICENSES/BSD-3-Clause.txt
+# Download BSD-3-Clause license (using SPDX canonical GitHub URL with release tag)
+curl https://raw.githubusercontent.com/spdx/license-list-data/v3.25.0/text/BSD-3-Clause.txt > LICENSES/BSD-3-Clause.txt
 
 # Verify
 reuse lint
