@@ -239,7 +239,7 @@ logger.info("Detected issue", issue_type="blur")  # Also includes document_id an
 [2025-11-05 10:23:46] DEBUG Loaded page page_num=1 dpi=300 size=(2480, 3509)
 [2025-11-05 10:23:47] WARN  Low confidence detector=skew confidence=0.35
 [2025-11-05 10:23:48] INFO  Detected issues count=3 types=['blur', 'contrast', 'skew']
-```text
+```
 
 **Production Mode** (JSON):
 

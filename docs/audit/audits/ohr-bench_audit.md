@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit - ohr-bench
-
 > **Version**: 2.3.0
 > **Date**: 2026-02-14
 > **Auditor**: claude-opus-4-6

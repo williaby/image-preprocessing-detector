@@ -57,7 +57,7 @@ Standard evaluation protocol: "Large Writer Independent Text Line Recognition Ta
 |-------|-------|
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
-| **Annotator Details** | 657 writers providing handwriting samples |
+| **Annotator Details** | Transcription and bounding box annotations created by FKI Research Group; handwriting samples from 657 writers |
 | **Quality Assurance** | Structured handwriting collection protocol with writer-independent splits |
 | **GT Label Coverage** | 100% (all images have line-level transcriptions; word and character segmentation available) |
 

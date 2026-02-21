@@ -150,8 +150,8 @@ class TestAPISettingsConfig:
         settings = APISettings()
 
         assert isinstance(settings.cors_origins, list)
-        assert "*" in settings.cors_origins
-        assert settings.cors_allow_credentials is True
+        assert settings.cors_origins == []
+        assert settings.cors_allow_credentials is False
         assert isinstance(settings.cors_allow_methods, list)
         assert isinstance(settings.cors_allow_headers, list)
 
@@ -421,7 +421,7 @@ class TestSchemaImportFailure:
         return TestClient(app)
 
     def test_ready_with_schema_import_failure(self) -> None:
-        """Readiness check fails when schema import fails."""
+        """Readiness check reports schema=False when schema import fails."""
         settings = APISettings(
             title="Test API",
             rate_limit_enabled=False,
@@ -430,28 +430,16 @@ class TestSchemaImportFailure:
         app = create_app(settings=settings)
         client = TestClient(app)
 
-        # Patch the schema import to fail
+        # Patch the schema module to None in sys.modules, which causes
+        # 'from image_preprocessing_detector.schema import ...' to raise ImportError
         with patch.dict(
             "sys.modules",
             {"image_preprocessing_detector.schema": None},
         ):
-            # Need to make the import actually fail
-            import builtins
-
-            original_import = builtins.__import__
-
-            def mock_import(name, *args, **kwargs):
-                if name == "image_preprocessing_detector.schema":
-                    raise ImportError("Schema module not found")
-                return original_import(name, *args, **kwargs)
-
-            with patch.object(builtins, "__import__", mock_import):
-                response = client.get("/ready")
-                # Should still return 200 but with schema check failed
-                # (other checks may still pass)
-                data = response.json()
-                # The schema check should be present
-                assert "schema" in data["checks"]
+            response = client.get("/ready")
+            data = response.json()
+            assert "schema" in data["checks"]
+            assert data["checks"]["schema"] is False
 
     def test_ready_with_configuration_failure(self) -> None:
         """Readiness check handles configuration failure."""
@@ -841,9 +829,12 @@ class TestMiddlewareIntegration:
         app = create_app(settings=full_middleware_settings)
         client = TestClient(app)
 
-        _ = client.get("/health")
         # Health is not in limit_paths by default, so no rate limit headers
-        # But for process endpoint with valid auth...
+        response = client.get("/health")
+        assert response.status_code == 200
+        # Verify response is valid even without rate limit headers on health
+        data = response.json()
+        assert "status" in data
 
 
 # ============================================================================

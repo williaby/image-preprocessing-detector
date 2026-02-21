@@ -408,12 +408,14 @@ Reviewers will check:
 
 We aim to:
 
-- **Acknowledge bug reports** typically within 7-14 days
-- **Respond to enhancement requests** typically within 14-21 days
+- **Acknowledge bug reports** typically within 7 days
+- **Respond to enhancement requests** typically within 14 days
 - **Triage severity** typically within 14 days of report
 - **Provide status updates** on open issues
 
 **Note**: As a single-maintainer project, these timeframes are goals and may vary depending on workload and availability. All issues will be acknowledged and triaged as promptly as possible, but responses may occasionally take longer during busy periods.
+
+**Security issues**: Response timelines for security vulnerabilities differ from general issues and follow the process defined in [SECURITY.md](SECURITY.md).
 
 ### Reporting Bugs
 

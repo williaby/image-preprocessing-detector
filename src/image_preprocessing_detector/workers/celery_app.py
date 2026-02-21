@@ -191,7 +191,8 @@ def get_celery_app() -> Celery:
 def check_broker_connection() -> bool:
     """Check if broker connection is available."""
     try:
-        celery_app.connection().ensure_connection(max_retries=1)
+        with celery_app.connection() as conn:
+            conn.ensure_connection(max_retries=1)
     except Exception as e:
         logger.warning("Broker connection failed", error=str(e))
         return False

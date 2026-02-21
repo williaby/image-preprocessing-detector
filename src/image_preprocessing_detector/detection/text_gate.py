@@ -221,11 +221,10 @@ class TextGate:
 
         # Normalize score: sigmoid-like function
         # Score approaches 1.0 as component count exceeds min_text_components
-        return min(
-            1.0,
-            text_component_count
-            / (self.min_text_components * COMPONENT_SCORE_MULTIPLIER),
-        )
+        denominator = self.min_text_components * COMPONENT_SCORE_MULTIPLIER
+        if denominator == 0:
+            return 0.0
+        return min(1.0, text_component_count / denominator)
 
     def _compute_edge_density(self, gray: np.ndarray) -> float:
         """Compute edge density using Canny edge detection.

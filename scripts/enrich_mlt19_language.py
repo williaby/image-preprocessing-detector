@@ -360,16 +360,18 @@ def infer_script_from_language(lang_code: str) -> str | None:
 def _try_two_of_two_consensus(
     votes: list[DetectionResult],
 ) -> ConsensusResult | None:
-    """Check if the first two votes agree on language."""
+    """Check if the first two votes agree on language and script."""
     if len(votes) < 2:
         return None
     v1, v2 = votes[0], votes[1]
     if v1.language != v2.language or v1.language == "und":
         return None
+    if not v1.script or not v2.script or v1.script != v2.script:
+        return None
     avg_conf = (v1.confidence + v2.confidence) / 2
     return ConsensusResult(
         language=v1.language,
-        script=v1.script or v2.script,
+        script=v1.script,
         confidence=avg_conf,
         method="consensus_2of2",
         votes=votes,

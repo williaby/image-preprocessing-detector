@@ -645,6 +645,15 @@ class ContinuousWeakSupervisionLabeler:
         >>> print(f"Blur severity: {label['blur_severity']:.2f}")
     """
 
+    # Confidence assigned to labels when all detectors agree closely.
+    # Range [0, 1]; higher means more certain the label is accurate.
+    NORMAL_LABEL_CONFIDENCE: float = 0.7
+
+    # Confidence assigned to outlier labels where detectors disagree significantly.
+    # Reduced from NORMAL_LABEL_CONFIDENCE to signal lower reliability to downstream
+    # training code (e.g., GDBC uncertainty weighting).
+    OUTLIER_LABEL_CONFIDENCE: float = 0.4
+
     def __init__(
         self,
         label_smoothing: float = 0.0,
@@ -698,7 +707,9 @@ class ContinuousWeakSupervisionLabeler:
         Returns:
             Normalized severity in [0, 1] (0=good, 1=bad)
         """
-        params = self.normalization.get(metric_name, {"min": 0, "max": 1, "invert": False})
+        params = self.normalization.get(
+            metric_name, {"min": 0, "max": 1, "invert": False}
+        )
 
         min_val = params["min"]
         max_val = params["max"]
@@ -708,7 +719,9 @@ class ContinuousWeakSupervisionLabeler:
         value = max(min_val, min(max_val, value))
 
         # Normalize to [0, 1]
-        normalized = (value - min_val) / (max_val - min_val) if max_val > min_val else 0.0
+        normalized = (
+            (value - min_val) / (max_val - min_val) if max_val > min_val else 0.0
+        )
 
         # Invert if needed (for metrics where higher = better)
         if invert:
@@ -716,11 +729,13 @@ class ContinuousWeakSupervisionLabeler:
 
         # Apply label smoothing
         if self.label_smoothing > 0:
-            normalized = float(np.clip(
-                normalized,
-                self.smooth_clip_min,
-                self.smooth_clip_max,
-            ))
+            normalized = float(
+                np.clip(
+                    normalized,
+                    self.smooth_clip_min,
+                    self.smooth_clip_max,
+                )
+            )
 
         return float(normalized)
 
@@ -756,7 +771,13 @@ class ContinuousWeakSupervisionLabeler:
 
         # Compute overall quality using 75th percentile of severities
         # This is more robust than max for documents with multiple moderate defects
-        severities = [blur_severity, noise_severity, skew_severity, contrast_severity, compression_severity]
+        severities = [
+            blur_severity,
+            noise_severity,
+            skew_severity,
+            contrast_severity,
+            compression_severity,
+        ]
         severity_75th = float(np.percentile(severities, 75))
         overall_quality = 1.0 - severity_75th
 
@@ -773,13 +794,18 @@ class ContinuousWeakSupervisionLabeler:
             "contrast_severity": contrast_severity,
             "compression_severity": compression_severity,
             "overall_quality": overall_quality,
-            # Document-specific (not computed by weak supervision)
+            # Document-specific degradations not currently measured by weak supervision
+            # detectors. Kept at 0.0 for schema compatibility. These would require
+            # specialized detectors (e.g., spectral analysis for ink, page-pair
+            # comparison for bleed-through) to compute accurately.
             "ink_degradation": 0.0,
             "paper_degradation": 0.0,
             "bleed_through": 0.0,
             # Metadata
             "label_source": "weak_supervision",
-            "label_confidence": 0.7 if not is_outlier else 0.4,
+            "label_confidence": self.NORMAL_LABEL_CONFIDENCE
+            if not is_outlier
+            else self.OUTLIER_LABEL_CONFIDENCE,
             "label_variance": severity_variance,
             "image_path": image_path,
             "is_outlier": is_outlier,

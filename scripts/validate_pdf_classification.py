@@ -30,37 +30,10 @@ from typing import Any
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from _path_security import validate_output_path, validate_path
+
 from image_preprocessing_detector.classification import classify_pdf_type
 from image_preprocessing_detector.utils import setup_logging
-
-
-def _validate_path(path: Path, must_exist: bool = True) -> Path:
-    """
-    Validate and resolve a path to prevent path traversal attacks.
-
-    Args:
-        path: The path to validate
-        must_exist: Whether the path must already exist
-
-    Returns:
-        Resolved absolute path
-
-    Raises:
-        ValueError: If path validation fails
-    """
-    try:
-        resolved = path.resolve(strict=must_exist)
-    except (OSError, RuntimeError) as e:
-        msg = f"Invalid path: {path}"
-        raise ValueError(msg) from e
-
-    # Ensure path doesn't contain suspicious patterns
-    path_str = str(resolved)
-    if "\x00" in path_str:
-        msg = f"Path contains null bytes: {path}"
-        raise ValueError(msg)
-
-    return resolved
 
 
 def load_ground_truth(labels_file: Path) -> dict[str, list[str]]:
@@ -76,7 +49,7 @@ def load_ground_truth(labels_file: Path) -> dict[str, list[str]]:
     Raises:
         ValueError: If path validation fails
     """
-    validated_path = _validate_path(labels_file, must_exist=True)
+    validated_path = validate_path(labels_file, must_exist=True)
     with open(validated_path, encoding="utf-8") as f:
         return json.load(f)
 
@@ -277,7 +250,7 @@ def main() -> None:
 
     # Validate input paths
     try:
-        validated_pdf_dir = _validate_path(args.pdf_dir, must_exist=True)
+        validated_pdf_dir = validate_path(args.pdf_dir, must_exist=True)
     except ValueError as e:
         print(f"Error: Invalid PDF directory path: {e}")
         sys.exit(1)
@@ -299,9 +272,7 @@ def main() -> None:
     # Save detailed results if requested
     if args.output:
         # Validate output path (parent must exist, file may not)
-        output_path = (
-            _validate_path(args.output.parent, must_exist=True) / args.output.name
-        )
+        output_path = validate_output_path(args.output)
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
         print(f"\nDetailed results saved to: {output_path}")

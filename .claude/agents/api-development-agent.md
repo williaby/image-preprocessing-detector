@@ -29,7 +29,7 @@ Execute API workflows: requirements analysis → API design → specification cr
 
 - OpenAPI/Swagger tooling for specification management
 - Contract testing frameworks (Pact, Postman, Insomnia)
-- API gateway integration and rate limiting
+- API gateway integration and rate-limiting
 - Authentication and authorization implementation
 - API monitoring and analytics integration
 

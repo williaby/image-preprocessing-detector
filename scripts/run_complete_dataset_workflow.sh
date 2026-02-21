@@ -133,7 +133,7 @@ git commit -m "feat(dataset): add 100K IQA training dataset with 13-dimensional 
 
 - 100,000 samples with balanced defect types and severity
 - Multi-dimensional distribution: color mode, orientation, DPI, JPEG quality
-- Source: DIQA-5000, TableBank, PubTabNet, DocLayNet, IAM, FUNSD
+- Source: DIQA-5000, TableBank, PubTabNet, FUNSD+
 - Tracked with DVC, uploaded to GCS
 - Size: ~45 GB
 "

@@ -98,10 +98,12 @@ uv run safety check --file requirements.txt
 
 # Output JSON format for CI
 uv run safety check --json
+```
 
 # Core Security Commands Reference
 
 ## Environment Validation
+
 ```bash
 # GPG key check
 gpg --list-secret-keys
@@ -115,6 +117,7 @@ git config --get commit.gpgsign
 ```
 
 ## Dependency Scanning
+
 ```bash
 # Python vulnerabilities
 uv run safety check --full-report
@@ -124,6 +127,7 @@ uv run bandit -r src -ll
 ```
 
 ## File Encryption
+
 ```bash
 # Encrypt with AES256
 gpg --symmetric --cipher-algo AES256 file.txt
@@ -133,6 +137,7 @@ gpg --decrypt file.txt.gpg > file.txt
 ```
 
 ## Key Management
+
 ```bash
 # Generate GPG key
 gpg --full-generate-key

@@ -52,7 +52,7 @@ Proactively identify and mitigate security vulnerabilities, ensure compliance wi
 - [ ] Secrets in environment variables
 - [ ] Secure default configurations
 - [ ] TLS/SSL properly configured
-- [ ] CORS properly restricted
+- [ ] CORS appropriately restricted
 
 ### Authentication & Authorization
 - [ ] Strong password policies

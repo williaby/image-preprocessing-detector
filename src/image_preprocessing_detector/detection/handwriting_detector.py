@@ -421,6 +421,13 @@ class HandwritingDetector:
             min_components: Minimum CCs required for reliable analysis
                 (default: 5).
         """
+        if not 0.0 <= threshold <= 1.0:
+            msg = f"threshold must be between 0.0 and 1.0, got {threshold}"
+            raise ValueError(msg)
+        if min_components < 1:
+            msg = f"min_components must be >= 1, got {min_components}"
+            raise ValueError(msg)
+
         self.threshold = threshold
         self.min_components = min_components
 

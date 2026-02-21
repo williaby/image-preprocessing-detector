@@ -51,6 +51,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import json
 import random
 import time
@@ -109,11 +110,9 @@ training_image = (
         # Experiment tracking
         "wandb",
     )
-    .add_local_file(
-        ".gcp/service-account.json",
-        "/root/.gcp/service-account.json",
-        copy=True,
-    )
+    # Note: GCS credentials are injected at runtime via Modal secret (gcs-credentials),
+    # NOT baked into the image. The _download_diqa5000_from_gcs function writes the
+    # secret-provided GCP_SA_KEY env var to a temp file at container start.
 )
 
 
@@ -595,7 +594,11 @@ def _prepare_data(
 
     print("\nDownloading DIQA-5000 dataset from GCS...")
     data_dir = Path("/data/diqa5000")
-    _download_diqa5000_from_gcs(data_dir)
+    if not _download_diqa5000_from_gcs(data_dir):
+        raise RuntimeError(
+            "Failed to download DIQA-5000 dataset from GCS. "
+            "Check GCS bucket access and network connectivity."
+        )
     diqa5000_volume.commit()
 
     print("\nLoading DIQA-5000 dataset...")
@@ -805,8 +808,45 @@ def _is_diqa5000_cached(data_dir: Path) -> bool:
     return False
 
 
+def _setup_gcs_credentials_v2() -> tuple[str | None, str | None]:
+    """Write GCS credentials from Modal secret env var to a temp file.
+
+    The Modal secret (gcs-credentials) injects GCP_SA_KEY as a base64-encoded
+    service account JSON. We write it to a temp file at runtime so the GCS
+    client can authenticate without baking credentials into the container image.
+
+    Returns:
+        Tuple of (credentials_path, prior_env_value). credentials_path is None
+        if GCP_SA_KEY is not set. prior_env_value is the previous value of
+        GOOGLE_APPLICATION_CREDENTIALS (None if it was not set).
+    """
+    import os
+    import tempfile
+
+    prior = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    gcp_sa_key = os.environ.get("GCP_SA_KEY")
+    if not gcp_sa_key:
+        return None, prior
+
+    sa_json = base64.b64decode(gcp_sa_key).decode("utf-8")
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False
+    ) as cred_file:
+        cred_file.write(sa_json)
+        credentials_path = cred_file.name
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    return credentials_path, prior
+
+
 def _download_gcs_split(bucket: Any, data_dir: Path, split: str) -> int:
-    """Download a single split from GCS. Returns count of downloaded files."""
+    """Download a single split from GCS.
+
+    Raises on transient download failures so the caller cannot mark completion.
+
+    Returns:
+        Count of downloaded files.
+    """
     split_dir = data_dir / split
     split_dir.mkdir(exist_ok=True)
     (split_dir / "res").mkdir(exist_ok=True)
@@ -822,50 +862,78 @@ def _download_gcs_split(bucket: Any, data_dir: Path, split: str) -> int:
             continue
         local_file = split_dir / relative_path
         local_file.parent.mkdir(parents=True, exist_ok=True)
-        blob.download_to_filename(str(local_file))
-        downloaded += 1
+        try:
+            blob.download_to_filename(str(local_file))
+            downloaded += 1
+        except Exception as exc:
+            # Clean up partially-written file so the caller cannot mark .download_complete
+            if local_file.exists():
+                local_file.unlink()
+            print(f"  ERROR downloading {blob.name}: {exc}")
+            raise
         if downloaded % 500 == 0:
             print(f"  Downloaded {downloaded} files from {split}...")
     return downloaded
 
 
 def _download_diqa5000_from_gcs(data_dir: Path) -> bool:
-    """Download original DIQA-5000 dataset from GCS."""
-    import os
+    """Download original DIQA-5000 dataset from GCS.
 
+    Uses credentials from Modal secret (GCP_SA_KEY env var) written to a
+    temporary file at runtime. The temp file is cleaned up after use.
+
+    Returns:
+        True if download succeeded (or cache is valid), False on failure.
+    """
     from google.cloud import storage
 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+    # Write Modal secret credentials to temp file at runtime
+    credentials_path, prior_creds = _setup_gcs_credentials_v2()
 
-    if _is_diqa5000_cached(data_dir):
+    try:
+        if _is_diqa5000_cached(data_dir):
+            return True
+
+        print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
+        start_time = time.time()
+
+        client = storage.Client()
+        bucket = client.bucket(GCS_BUCKET)
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        downloaded = sum(
+            _download_gcs_split(bucket, data_dir, split) for split in DIQA5000_SPLITS
+        )
+
+        print(f"Downloaded {downloaded} files in {time.time() - start_time:.1f}s")
+
+        if downloaded < 100:
+            print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
+            return False
+
+        for split in DIQA5000_SPLITS:
+            csv_path = data_dir / split / f"{split}.csv"
+            if not csv_path.exists():
+                print(f"ERROR: Missing CSV at {csv_path}")
+                return False
+            print(f"  Verified: {csv_path}")
+
+        (data_dir / ".download_complete").touch()
         return True
 
-    print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
-    start_time = time.time()
+    finally:
+        import os
 
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    downloaded = sum(
-        _download_gcs_split(bucket, data_dir, split) for split in DIQA5000_SPLITS
-    )
-
-    print(f"Downloaded {downloaded} files in {time.time() - start_time:.1f}s")
-
-    if downloaded < 100:
-        print(f"ERROR: Only downloaded {downloaded} files, expected thousands!")
-        return False
-
-    for split in DIQA5000_SPLITS:
-        csv_path = data_dir / split / f"{split}.csv"
-        if not csv_path.exists():
-            print(f"ERROR: Missing CSV at {csv_path}")
-            return False
-        print(f"  Verified: {csv_path}")
-
-    (data_dir / ".download_complete").touch()
-    return True
+        # Clean up temp credentials file to avoid leaving sensitive data on disk
+        if credentials_path:
+            cred = Path(credentials_path)
+            if cred.exists():
+                cred.unlink()
+        # Restore the original GOOGLE_APPLICATION_CREDENTIALS value
+        if prior_creds is not None:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = prior_creds
+        elif credentials_path is not None:
+            os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
 
 
 # ============================================================================

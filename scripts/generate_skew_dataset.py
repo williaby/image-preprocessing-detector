@@ -320,8 +320,8 @@ def _discover_split_layout(source_dir: Path) -> dict[str, list[Path]]:
         if not img_dir.exists():
             continue
         for script_dir in sorted(img_dir.iterdir()):
-            if script_dir.is_dir():
-                imgs = list(script_dir.glob(_PNG_GLOB))
+            if _is_valid_script_dir(script_dir):
+                imgs = _collect_images_from_dir(script_dir)
                 if imgs:
                     images_by_script.setdefault(script_dir.name, []).extend(imgs)
     return images_by_script

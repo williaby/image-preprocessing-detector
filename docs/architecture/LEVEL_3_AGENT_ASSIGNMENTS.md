@@ -32,19 +32,19 @@ Create complete Level 3 documentation for Data Preparation workstream including:
 
 **Must Read Before Starting**:
 
-- `/home/byron/dev/image_detection/docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md` - Complete file-to-LOC mapping for WS3
-- `/home/byron/dev/image_detection/docs/architecture/LEVEL_3_IMPLEMENTATION_ROADMAP.md` - Detailed content outlines for Issues 4.1 and 4.2
-- `/home/byron/dev/image_detection/docs/architecture/diagrams/level-2/data-preparation/index.md` - Existing Level 2 documentation
-- `/home/byron/dev/image_detection/docs/architecture/SWIMLANE_TRACEABILITY_PROPOSAL.md` - Swimlane format and annotation standards
+- `docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md` - Complete file-to-LOC mapping for WS3
+- `docs/architecture/LEVEL_3_IMPLEMENTATION_ROADMAP.md` - Detailed content outlines for Issues 4.1 and 4.2
+- `docs/architecture/diagrams/level-2/data-preparation/index.md` - Existing Level 2 documentation
+- `docs/architecture/SWIMLANE_TRACEABILITY_PROPOSAL.md` - Swimlane format and annotation standards
 
 **Source Code to Document**:
 
-- `/home/byron/dev/image_detection/scripts/annotate_base_metadata.py` (1,235 lines)
+- `scripts/annotate_base_metadata.py` (1,235 lines)
   - Lines 64-98: Capture method and domain taxonomy
   - Lines 101-361: Dataset configuration system
   - Lines 362-523: Three-layer metadata architecture (IMMUTABLE + ENRICHMENT)
   - Lines 635-852: Label parsers (9 dataset-specific parsers)
-- `/home/byron/dev/image_detection/scripts/build_training_labels.py` (590 lines)
+- `scripts/build_training_labels.py` (590 lines)
   - Lines 60-137: Degradation index (45-dimensional)
   - Lines 119-137: Anchor score priority logic
   - Lines 145-410: Training label builder

@@ -90,9 +90,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       # Image processing optimized caching strategy
       - name: Cache UV dependencies
@@ -184,9 +185,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Free up disk space
         run: |
@@ -277,9 +279,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Free up disk space
         run: |
@@ -390,26 +393,28 @@ jobs:
           TOTAL_LLM=$((LLM_MOCK + LLM_PLACEHOLDER + LLM_LOGIC + LLM_SCAFFOLD + LLM_INFERRED + LLM_TEST_FIRST))
           TOTAL_TAGS=$((TOTAL_RAD + TOTAL_LLM))
 
-          echo "rad_tags=$TOTAL_RAD" >> $GITHUB_OUTPUT
-          echo "llm_tags=$TOTAL_LLM" >> $GITHUB_OUTPUT
-          echo "total_tags=$TOTAL_TAGS" >> $GITHUB_OUTPUT
+          echo "rad_tags=$TOTAL_RAD" >> "$GITHUB_OUTPUT"
+          echo "llm_tags=$TOTAL_LLM" >> "$GITHUB_OUTPUT"
+          echo "total_tags=$TOTAL_TAGS" >> "$GITHUB_OUTPUT"
 
-          echo "### Assumption Tag Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Layer 1 (Production Runtime Risks):**" >> $GITHUB_STEP_SUMMARY
-          echo "- #CRITICAL tags: $CRITICAL_TAGS" >> $GITHUB_STEP_SUMMARY
-          echo "- #ASSUME tags: $ASSUME_TAGS" >> $GITHUB_STEP_SUMMARY
-          echo "- #EDGE tags: $EDGE_TAGS" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Layer 2 (LLM Development Debt):**" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-MOCK: $LLM_MOCK" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-PLACEHOLDER: $LLM_PLACEHOLDER" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-LOGIC: $LLM_LOGIC" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-SCAFFOLD: $LLM_SCAFFOLD" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-INFERRED: $LLM_INFERRED" >> $GITHUB_STEP_SUMMARY
-          echo "- #LLM-TEST-FIRST: $LLM_TEST_FIRST" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Total unverified tags: $TOTAL_TAGS**" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### Assumption Tag Summary"
+            echo ""
+            echo "**Layer 1 (Production Runtime Risks):**"
+            echo "- #CRITICAL tags: $CRITICAL_TAGS"
+            echo "- #ASSUME tags: $ASSUME_TAGS"
+            echo "- #EDGE tags: $EDGE_TAGS"
+            echo ""
+            echo "**Layer 2 (LLM Development Debt):**"
+            echo "- #LLM-MOCK: $LLM_MOCK"
+            echo "- #LLM-PLACEHOLDER: $LLM_PLACEHOLDER"
+            echo "- #LLM-LOGIC: $LLM_LOGIC"
+            echo "- #LLM-SCAFFOLD: $LLM_SCAFFOLD"
+            echo "- #LLM-INFERRED: $LLM_INFERRED"
+            echo "- #LLM-TEST-FIRST: $LLM_TEST_FIRST"
+            echo ""
+            echo "**Total unverified tags: $TOTAL_TAGS**"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$TOTAL_RAD" -gt 0 ]; then
             echo "::error::Found $TOTAL_RAD unverified production risk tags (#CRITICAL, #ASSUME)"

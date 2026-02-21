@@ -492,17 +492,46 @@ class MLIQADetector:
                 raise RuntimeError(msg) from e
 
             session = self._load_student_session(device=device)
-            self._batch_engine = BatchInferenceEngine(
+            engine = BatchInferenceEngine(
                 model_session=session,
                 batch_size=8,  # Default batch size, configurable later
                 batch_timeout_ms=50,
                 enable_cache=True,
                 model_name="student",
             )
-            self._batch_engine.start()
+            try:
+                engine.start()
+            except Exception:
+                # Ensure the engine is cleaned up if start() fails;
+                # suppress stop() errors to preserve the original exception.
+                import contextlib
+
+                with contextlib.suppress(Exception):
+                    engine.stop()
+                raise
+            self._batch_engine = engine
             logger.info("BatchInferenceEngine initialized", device=device)
 
         return self._batch_engine
+
+    def close(self) -> None:
+        """Stop and release the batch inference engine if it was started.
+
+        Call this method when the detector is no longer needed to release
+        background threads and resources held by the BatchInferenceEngine.
+        """
+        if self._batch_engine is not None:
+            try:
+                self._batch_engine.stop()
+                logger.info("BatchInferenceEngine stopped")
+            except Exception as e:
+                logger.warning("Failed to stop BatchInferenceEngine", error=str(e))
+            finally:
+                self._batch_engine = None
+
+    def __del__(self) -> None:
+        """Ensure the batch engine is stopped on garbage collection."""
+        self.close()
 
     def run_batch_inference(
         self,

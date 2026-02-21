@@ -51,7 +51,7 @@ Difference: 60 lines (0.4%) → Investigate missing files
 
 **After**: Swimlane shows:
 
-```
+```text
 Text Gate (350 lines) → Classical IQA (1,200 lines) → ML IQA (800 lines) → Layout-Lite (7,000+ lines)
 ```
 
@@ -85,7 +85,7 @@ Text Gate (350 lines) → Classical IQA (1,200 lines) → ML IQA (800 lines) →
 
 Create detailed swimlane for each of the 8 workstreams:
 
-```
+```text
 docs/architecture/diagrams/level-2/
 ├── production-runtime/
 │   ├── index.md (existing, enriched)
@@ -121,7 +121,7 @@ docs/architecture/diagrams/level-2/
 
 For Production Runtime (16,910 LOC), create module-specific swimlanes:
 
-```
+```text
 docs/architecture/diagrams/level-3/production-runtime/
 ├── ingestion-module-swimlane.puml
 │   └─ Annotations: All 7 files in ingestion/ (2,235 lines)
@@ -261,7 +261,7 @@ validate_swimlane_coverage() {
 
 **Output Example**:
 
-```
+```text
 Validating production_runtime swimlane coverage...
   ⚠️  Files in LOC mapping but missing from swimlane:
     - src/image_preprocessing_detector/utils/tensor_cache.py

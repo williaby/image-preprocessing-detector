@@ -162,9 +162,9 @@ SigLIP2DocumentIQA(
 
 ```python
 {
-  "overall": {"mu": 3.45, "sigma": 0.23},
-  "sharpness": {"mu": 3.82, "sigma": 0.18},
-  "color": {"mu": 3.61, "sigma": 0.21}
+  "overall": {"mu": 3.45, "sigma_sq": 0.05},
+  "sharpness": {"mu": 3.82, "sigma_sq": 0.03},
+  "color": {"mu": 3.61, "sigma_sq": 0.04}
 }
 ```
 

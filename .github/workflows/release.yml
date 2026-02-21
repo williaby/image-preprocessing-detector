@@ -53,7 +53,7 @@ permissions:
 jobs:
   release:
     name: Semantic Release Pipeline
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5d88a71b91949ee88382284cb6b292d6e0
     permissions:
       contents: write
       issues: write
@@ -95,33 +95,43 @@ jobs:
     steps:
       - name: Report release status
         run: |
-          echo "## Semantic Release Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Status**: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Semantic Release Complete"
+            echo ""
+            echo "**Status**: ${{ needs.release.result }}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${{ needs.release.result }}" == "success" ]; then
-            echo "### Release Published ✅" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Version automatically determined from Conventional Commits" >> $GITHUB_STEP_SUMMARY
-            echo "- CHANGELOG.md updated with release notes" >> $GITHUB_STEP_SUMMARY
-            echo "- SLSA provenance generated for supply chain security" >> $GITHUB_STEP_SUMMARY
-            echo "- Package published to PyPI (if version bumped)" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### Release Published ✅"
+              echo ""
+              echo "- Version automatically determined from Conventional Commits"
+              echo "- CHANGELOG.md updated with release notes"
+              echo "- SLSA provenance generated for supply chain security"
+              echo "- Package published to PyPI (if version bumped)"
+            } >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ needs.release.result }}" == "skipped" ]; then
-            echo "### No Release Required ℹ️" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "No commits since last release require a version bump." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "To force a release, use workflow_dispatch with force_release input." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### No Release Required ℹ️"
+              echo ""
+              echo "No commits since last release require a version bump."
+              echo ""
+              echo "To force a release, use workflow_dispatch with force_release input."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "### Release Failed ❌" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Check workflow logs for details." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### Release Failed ❌"
+              echo ""
+              echo "Check workflow logs for details."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Conventional Commit Types" >> $GITHUB_STEP_SUMMARY
-          echo "- \`feat:\` - New feature (MINOR bump)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`fix:\` - Bug fix (PATCH bump)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`feat!:\` or \`fix!:\` - Breaking change (MAJOR bump)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`docs:\`, \`chore:\`, \`test:\` - No version bump" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### Conventional Commit Types"
+            echo "- \`feat:\` - New feature (MINOR bump)"
+            echo "- \`fix:\` - Bug fix (PATCH bump)"
+            echo "- \`feat!:\` or \`fix!:\` - Breaking change (MAJOR bump)"
+            echo "- \`docs:\`, \`chore:\`, \`test:\` - No version bump"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -272,6 +272,31 @@ class TestPullFromGCS:
         assert "rsync" in cmd
         assert "-r" in cmd
 
+    def test_pull_from_gcs_command_includes_gcs_path(self, tmp_path: Path) -> None:
+        """Test that pull_from_gcs command includes dataset-specific GCS path."""
+        from organize_dual_storage import GCS_BUCKET, pull_from_gcs
+
+        nfs_root = tmp_path / "nfs"
+        nfs_root.mkdir()
+
+        creds_file = tmp_path / "creds.json"
+        creds_file.write_text("{}")
+
+        with patch("organize_dual_storage.NFS_ROOT", nfs_root):
+            with patch("organize_dual_storage.GCS_CREDENTIALS", creds_file):
+                with patch("subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(returncode=0)
+
+                    with patch("builtins.print"):
+                        pull_from_gcs("tablebank")
+
+        call_args = mock_run.call_args
+        cmd = call_args[0][0]
+        cmd_str = " ".join(cmd)
+        # Command should contain the GCS bucket and dataset-specific path
+        assert GCS_BUCKET in cmd_str
+        assert "tablebank" in cmd_str
+
     def test_pull_from_gcs_handles_failure(self, tmp_path: Path) -> None:
         """Test that pull_from_gcs handles gsutil failure."""
         from organize_dual_storage import pull_from_gcs
@@ -339,3 +364,14 @@ class TestSyncToGCS:
 
         assert result is True
         mock_run.assert_called_once()
+
+        # Verify gsutil command includes expected GCS and NFS paths
+        from organize_dual_storage import GCS_BUCKET
+
+        call_args = mock_run.call_args
+        cmd = call_args[0][0]
+        cmd_str = " ".join(cmd)
+        # Command should contain GCS bucket with dataset path and local NFS path
+        assert GCS_BUCKET in cmd_str
+        assert "tablebank" in cmd_str
+        assert str(nfs_dataset) in cmd_str

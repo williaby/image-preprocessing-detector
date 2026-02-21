@@ -3,7 +3,7 @@
 This module provides a REST API for:
 - Single document processing (/process)
 - Batch document processing (/batch)
-- Job status tracking (/status, /result)
+- Job status tracking (/batch/{job_id}/status, /batch/{job_id}/result)
 """
 
 from image_preprocessing_detector.api.app import create_app

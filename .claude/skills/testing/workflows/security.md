@@ -21,6 +21,7 @@ Specialized security testing for data ingestion pipelines with emphasis on file 
 ### File Handling Security
 
 **Path Traversal Prevention**:
+
 ```python
 @pytest.mark.security
 class TestPathTraversalPrevention:
@@ -41,6 +42,7 @@ class TestPathTraversalPrevention:
 ```
 
 **Malicious File Handling**:
+
 ```python
 @pytest.mark.security
 def test_handles_malformed_pdf_safely(tmp_path):
@@ -61,6 +63,7 @@ def test_handles_malformed_pdf_safely(tmp_path):
 ### Input Validation Security
 
 **SQL Injection Prevention**:
+
 ```python
 @pytest.mark.security
 class TestSQLInjectionPrevention:
@@ -85,6 +88,7 @@ class TestSQLInjectionPrevention:
 ```
 
 **XSS Prevention**:
+
 ```python
 @pytest.mark.security
 @pytest.mark.parametrize("xss_payload", [
@@ -109,6 +113,7 @@ def test_prevents_xss_in_metadata(xss_payload):
 ```
 
 **Command Injection Prevention**:
+
 ```python
 @pytest.mark.security
 @pytest.mark.parametrize("command_injection", [
@@ -130,6 +135,7 @@ def test_prevents_command_injection(command_injection):
 ### DoS Prevention
 
 **Resource Exhaustion**:
+
 ```python
 @pytest.mark.security
 def test_prevents_memory_exhaustion():
@@ -143,6 +149,7 @@ def test_prevents_memory_exhaustion():
 ```
 
 **Zip Bomb Protection**:
+
 ```python
 @pytest.mark.security
 def test_rejects_zip_bomb_files(tmp_path):
@@ -157,6 +164,7 @@ def test_rejects_zip_bomb_files(tmp_path):
 ### Parser-Specific Security
 
 **PDF Parser Security**:
+
 ```python
 @pytest.mark.security
 class TestPDFParserSecurity:
@@ -191,6 +199,7 @@ class TestPDFParserSecurity:
 ## Security Test Fixtures
 
 **Use Existing Security Fixtures**:
+
 ```python
 def test_comprehensive_injection_prevention(security_test_inputs):
     """Test all injection vectors from security_test_inputs fixture."""

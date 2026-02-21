@@ -30,6 +30,8 @@ from image_preprocessing_detector.utils.log_config import get_logger
 
 logger = get_logger(__name__)
 
+_RNG = random.SystemRandom()
+
 
 class CircuitState(str, Enum):
     """Circuit breaker states."""
@@ -380,8 +382,11 @@ class ModalClient:
             teacher_cls = modal.Cls.lookup("iqa-teacher-inference", "TeacherInference")  # type: ignore[attr-defined]
             teacher = teacher_cls()
 
-            # Call the predict method
-            result: dict[str, Any] = teacher.predict.remote(
+            # Call the predict method, applying the configured request timeout
+            timeout_seconds = self.config.request_timeout_ms / 1000.0
+            result: dict[str, Any] = teacher.predict.with_options(
+                timeout=timeout_seconds
+            ).remote(
                 image_b64=image_b64,
                 request_id=request.request_id,
                 model_version=request.model_version,
@@ -401,16 +406,25 @@ class ModalClient:
         """Encode numpy image array as base64 JPEG.
 
         Args:
-            image_array: Image as numpy array (H, W, C) uint8
+            image_array: Image as numpy array (H, W, C), either uint8 or float32.
+                Float arrays must be normalized to [0, 1] OR already in [0, 255].
+                If float and max <= 1.0, values are scaled by 255.
+                If float and max > 1.0, values are assumed to be in [0, 255] and
+                only clipped and cast (no additional scaling).
 
         Returns:
             Base64-encoded JPEG string
         """
         from PIL import Image as PILImage
 
-        # Convert to PIL Image
+        # Convert float arrays to uint8, detecting the value range
         if image_array.dtype != np.uint8:
-            image_array = (image_array * 255).astype(np.uint8)
+            if image_array.max() <= 1.0:
+                # Normalized [0, 1] float — scale to [0, 255]
+                image_array = (image_array * 255).astype(np.uint8)
+            else:
+                # Already in [0, 255] float range — clip and cast only
+                image_array = np.clip(image_array, 0, 255).astype(np.uint8)
 
         img = PILImage.fromarray(image_array)
 
@@ -472,9 +486,8 @@ class ModalClient:
             self.config.base_backoff_ms * (2**attempt), self.config.max_backoff_ms
         )
 
-        # Add jitter (±25%)
-        # Note: Using random.uniform for jitter (not cryptographic use)
-        jitter = random.uniform(0.75, 1.25)  # noqa: S311  # nosec B311
+        # Add jitter (±25%) using cryptographically secure RNG
+        jitter = _RNG.uniform(0.75, 1.25)
         return int(backoff * jitter)
 
     def _record_success(self) -> None:

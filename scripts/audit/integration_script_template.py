@@ -921,13 +921,14 @@ def integrate_sample(
     Returns:
         New enrichment data dict with all sources merged.
     """
-    filename = sample["source"]["original_filename"]
+    filename = (sample.get("source") or {}).get("original_filename", "")
     filename_stem = Path(filename).stem
     filename_full = Path(filename).name
 
     v1_data: dict[str, Any] = {}
-    if sample["enrichments"]["versions"]:
-        v1_data = sample["enrichments"]["versions"][-1].get("data", {})
+    enrichment_versions = (sample.get("enrichments") or {}).get("versions")
+    if enrichment_versions:
+        v1_data = enrichment_versions[-1].get("data", {})
 
     llm = llm_index.get(filename_stem)
     lang_enrichment = lang_index.get(filename_stem)
@@ -1098,14 +1099,15 @@ def _write_enrichment_version(
         "script_version": SCRIPT_VERSION,
         "data": integrated_data,
     }
-    versions = sample["enrichments"]["versions"]
+    enrichments = sample.setdefault("enrichments", {})
+    versions = enrichments.setdefault("versions", [])
     for i, ver in enumerate(versions):
         if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
             versions[i] = new_version
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            enrichments["current_version"] = ENRICHMENT_VERSION_NUMBER
             return
     versions.append(new_version)
-    sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+    enrichments["current_version"] = ENRICHMENT_VERSION_NUMBER
 
 
 def run_integration(

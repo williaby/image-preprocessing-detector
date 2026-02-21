@@ -715,6 +715,15 @@ class TestPreflightEdgeCases:
           poetry run pytest tests/integration/test_ml_iqa_e2e.py -v --tb=short
           poetry run pytest tests/unit/test_iqa_ml.py -v --tb=short
 
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f /tmp/gcp-key.json
+
+> **Note**: The credentials file written to `/tmp/gcp-key.json` must be cleaned up
+> after use. For production CI, consider migrating from service account key files
+> to **Workload Identity Federation (WIF)** for keyless GCP authentication, which
+> eliminates the need for stored credentials entirely.
+
   # New job: Real data tests
   test-real-data:
     name: Real Data Tests

@@ -45,7 +45,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={3743--3751},
   year={2022}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CDLA-Permissive-2.0`
 
@@ -73,7 +73,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={949--960},
   year={2020}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -101,7 +101,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={1918--1925},
   year={2020}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -129,7 +129,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={697--706},
   year={2021}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CDLA-Permissive`
 
@@ -158,7 +158,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2020},
   organization={Springer}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -185,7 +185,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   booktitle={arXiv preprint arXiv:1601.07140},
   year={2016}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -212,7 +212,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   booktitle={arXiv preprint arXiv:1801.07779},
   year={2018}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-SA-4.0`
 
@@ -241,7 +241,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2019},
   organization={IEEE}
 }
-```text
+```
 
 **SPDX-License-Identifier**: Proprietary
 
@@ -270,7 +270,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   journal={arXiv preprint arXiv:2412.07626},
   year={2024}
 }
-```text
+```
 
 **SPDX-License-Identifier**: `CC-BY-NC-4.0`
 
@@ -352,7 +352,7 @@ grep -r "SPDX-License-Identifier" benchmarks/adapters/
 
 # List all dataset licenses
 cat benchmarks/LICENSES.md | grep "SPDX-License-Identifier"
-```text
+```
 
 ## Adding New Datasets
 
@@ -376,7 +376,7 @@ licenses/third_party/
 ├── CC-BY-SA-4.0.txt
 ├── CC-BY-NC-4.0.txt
 └── CC0-1.0.txt
-```text
+```
 
 ## References
 
