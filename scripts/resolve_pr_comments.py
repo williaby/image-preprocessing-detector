@@ -14,9 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import re
-import subprocess  # nosec B404
 import sys
 
 from check_unresolved_pr_comments import (
@@ -25,6 +23,7 @@ from check_unresolved_pr_comments import (
     _REPO_SLUG_RE,
     _SCANNER_AUTHORS,
     _SCANNER_PATTERNS,
+    _run_graphql_query,
 )
 
 _GRAPHQL_RESOLVE_THREAD = 'mutation { resolveReviewThread(input: {threadId: "%s"}) { thread { isResolved } } }'
@@ -33,27 +32,9 @@ _GRAPHQL_RESOLVE_THREAD = 'mutation { resolveReviewThread(input: {threadId: "%s"
 _THREAD_ID_RE = re.compile(r"^PRRT_[A-Za-z0-9]+$")
 
 
-def _run_graphql(query: str) -> dict:
-    """Execute a GraphQL query via gh CLI."""
-    result = subprocess.run(  # nosec B603 B607
-        ["gh", "api", "graphql", "-f", f"query={query}"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        print(f"Error: {result.stderr.strip()}", file=sys.stderr)
-        return {}
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        print(f"Error parsing GitHub API response: {exc}", file=sys.stderr)
-        return {}
-
-
 def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
     """Fetch all unresolved, non-scanner review threads from merged PRs."""
-    pr_data = _run_graphql(_GRAPHQL_PR_LIST % (owner, repo))
+    pr_data = _run_graphql_query(_GRAPHQL_PR_LIST % (owner, repo))
     if not pr_data:
         print("Failed to fetch PR list", file=sys.stderr)
         sys.exit(1)
@@ -70,7 +51,7 @@ def _fetch_unresolved_threads(owner: str, repo: str) -> list[dict]:
 
     threads: list[dict] = []
     for pr_num in pr_numbers:
-        result = _run_graphql(_GRAPHQL_PR_THREADS % (owner, repo, pr_num))
+        result = _run_graphql_query(_GRAPHQL_PR_THREADS % (owner, repo, pr_num))
         if not result or "data" not in result:
             continue
         pr = result["data"]["repository"]["pullRequest"]
@@ -111,7 +92,7 @@ def _resolve_thread(thread_id: str) -> bool:
     if not _THREAD_ID_RE.match(thread_id):
         print(f"Skipping invalid thread ID: {thread_id!r}", file=sys.stderr)
         return False
-    result = _run_graphql(_GRAPHQL_RESOLVE_THREAD % thread_id)
+    result = _run_graphql_query(_GRAPHQL_RESOLVE_THREAD % thread_id)
     if not result:
         return False
     try:

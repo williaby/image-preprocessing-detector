@@ -365,6 +365,25 @@ class TestSchemaFieldMapping:
 class TestTextLayerAnalyzerE2E:
     """Text layer analyzer integration with mocked fitz."""
 
+    _TLA_MODULE = "image_preprocessing_detector.classification.text_layer_analyzer"
+
+    @staticmethod
+    def _analyze_with_mock_page(mock_page: MagicMock) -> TextLayerAnalysisResult:
+        """Run TextLayerAnalyzer.analyze with a single mocked fitz page."""
+        mock_doc = MagicMock()
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
+        mock_doc.page_count = 1
+
+        tla = TestTextLayerAnalyzerE2E._TLA_MODULE
+        with (
+            patch(f"{tla}.fitz") as mock_fitz,
+            patch(f"{tla}.Path.exists", return_value=True),
+            patch(f"{tla}.Path.is_file", return_value=True),
+        ):
+            mock_fitz.open.return_value = mock_doc
+            return TextLayerAnalyzer().analyze("test.pdf")
+
     def test_high_quality_pdf_skip_ocr(self) -> None:
         """High-quality PDF text layer enables OCR skip."""
         mock_page = MagicMock()
@@ -376,20 +395,7 @@ class TestTextLayerAnalyzerE2E:
             (0, "TrueType", "Type1", "Helvetica", "Helv", 1),
         ]
 
-        mock_doc = MagicMock()
-        mock_doc.__len__ = MagicMock(return_value=1)
-        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
-        mock_doc.page_count = 1
-
-        _tla_module = "image_preprocessing_detector.classification.text_layer_analyzer"
-        with (
-            patch(f"{_tla_module}.fitz") as mock_fitz,
-            patch(f"{_tla_module}.Path.exists", return_value=True),
-            patch(f"{_tla_module}.Path.is_file", return_value=True),
-        ):
-            mock_fitz.open.return_value = mock_doc
-            analyzer = TextLayerAnalyzer()
-            result = analyzer.analyze("test.pdf")
+        result = self._analyze_with_mock_page(mock_page)
 
         assert isinstance(result, TextLayerAnalysisResult)
         assert result.text_layer_quality > 0.5
@@ -403,20 +409,7 @@ class TestTextLayerAnalyzerE2E:
         mock_page.get_text_words.return_value = []
         mock_page.get_fonts.return_value = []
 
-        mock_doc = MagicMock()
-        mock_doc.__len__ = MagicMock(return_value=1)
-        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
-        mock_doc.page_count = 1
-
-        _tla_module = "image_preprocessing_detector.classification.text_layer_analyzer"
-        with (
-            patch(f"{_tla_module}.fitz") as mock_fitz,
-            patch(f"{_tla_module}.Path.exists", return_value=True),
-            patch(f"{_tla_module}.Path.is_file", return_value=True),
-        ):
-            mock_fitz.open.return_value = mock_doc
-            analyzer = TextLayerAnalyzer()
-            result = analyzer.analyze("test.pdf")
+        result = self._analyze_with_mock_page(mock_page)
 
         assert isinstance(result, TextLayerAnalysisResult)
         assert result.text_layer_skip_ocr is False

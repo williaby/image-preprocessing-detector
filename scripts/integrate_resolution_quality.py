@@ -54,6 +54,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from l2_integration_utils import get_sample_filename, next_version_number
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -163,46 +165,6 @@ def extract_rq_fields(rq: dict[str, Any]) -> dict[str, Any]:
     return fields
 
 
-def get_sample_filename(sample: dict[str, Any]) -> str | None:
-    """Extract the original filename from a L2 metadata sample.
-
-    Handles multiple field locations used across datasets.
-
-    Args:
-        sample: A single sample dict from the L2 metadata.
-
-    Returns:
-        The original filename string, or None if not found.
-    """
-    # Try source.original_filename first (standard L2 field)
-    source = sample.get("source", {})
-    filename = source.get("original_filename")
-    if filename:
-        return str(Path(filename).name)
-
-    # Fallback: sample_id may contain the filename
-    sample_id = sample.get("sample_id", "")
-    if sample_id and "." in sample_id:
-        return sample_id
-
-    return None
-
-
-def _next_version_number(enrichments: dict[str, Any]) -> int:
-    """Compute the next version number from the enrichments structure."""
-    current_ver = enrichments.get("current_version")
-    if isinstance(current_ver, int):
-        return current_ver + 1
-    if isinstance(current_ver, str):
-        if current_ver.startswith("v"):
-            try:
-                return int(current_ver[1:]) + 1
-            except ValueError:
-                return len(enrichments.get("versions", [])) + 1
-        if current_ver.isdigit():
-            return int(current_ver) + 1
-    return len(enrichments.get("versions", [])) + 1
-
 
 def _apply_rq_to_sample(
     sample: dict[str, Any],
@@ -221,7 +183,7 @@ def _apply_rq_to_sample(
         stats["patched"] += 1
         return
 
-    ver_num = _next_version_number(enrichments)
+    ver_num = next_version_number(enrichments)
     new_version = {
         "version": f"v{ver_num}",
         "timestamp": datetime.now(UTC).isoformat(),
