@@ -106,7 +106,7 @@ The project now has **59 source datasets** (up from 51 at original planning) and
 
 Extends `SigLIP2DocumentIQAv2` by adding five detection head groups alongside the existing three IQA heads. The shared 768-dim feature vector from the SigLIP2 ViT-B/16 backbone feeds all heads.
 
-```
+```text
 SigLIP2 ViT-B/16 Backbone (86M params, 784 max patches)
     |
 Shared Feature Vector (768-dim)
@@ -330,7 +330,7 @@ loss:
 
 Follows the two-phase training strategy from the restructured plan:
 
-```
+```text
 Phase 1 (15 epochs): Frozen backbone + frozen IQA heads
   → Train ONLY new detection heads
   → LR: 2e-4 with CosineAnnealingLR
@@ -871,7 +871,7 @@ def export_to_onnx(
 
 ## 9. Timeline
 
-```
+```text
 Day 1-2:   Phase A.1 - Model architecture (SigLIP2MultiTaskTeacher)
 Day 2-3:   Phase A.2 - Dataset loaders and MultiTaskDataset
 Day 3-4:   Phase A.3 - Config + unit tests
