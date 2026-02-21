@@ -631,6 +631,21 @@ class TestConfigurableThresholds:
         with pytest.raises(ValueError, match="min_components must be"):
             HandwritingDetector(min_components=-5)
 
+    def test_threshold_zero_is_valid(self) -> None:
+        """threshold=0.0 is a valid boundary value and must not raise."""
+        detector = HandwritingDetector(threshold=0.0)
+        assert detector.threshold == 0.0
+
+    def test_threshold_one_is_valid(self) -> None:
+        """threshold=1.0 is a valid boundary value and must not raise."""
+        detector = HandwritingDetector(threshold=1.0)
+        assert detector.threshold == 1.0
+
+    def test_min_components_one_is_valid(self) -> None:
+        """min_components=1 is a valid boundary value and must not raise."""
+        detector = HandwritingDetector(min_components=1)
+        assert detector.min_components == 1
+
 
 # ---------------------------------------------------------------------------
 # Tests: Module-level convenience function

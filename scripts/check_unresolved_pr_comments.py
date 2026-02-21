@@ -47,7 +47,7 @@ _SCANNER_AUTHORS = frozenset(
         "github-advanced-security",
         "semgrep-code-williaby",
         "snyk-bot",
-        "dependabot",
+        "dependabot[bot]",
         "github-actions",
         "codecov",
         "sonarcloud",
@@ -57,6 +57,15 @@ _SCANNER_AUTHORS = frozenset(
 # Body patterns that indicate scanner-generated comments
 _SCANNER_PATTERNS = ("code-scanning/", "semgrep", "snyk")
 
+
+# NOTE: These queries use hard limits (first: 100 for PRs, first: 100 for threads,
+# first: 10 for comments per thread). The script fetches PRs individually to avoid
+# a single massive query, but does not implement cursor-based pagination within a PR.
+# Repositories with more than 100 merged PRs will only scan the 100 most-recent ones.
+# PRs with more than 100 review threads will have threads silently truncated.
+# Threads with more than 10 comments will have older comments silently truncated.
+# For exhaustive scanning of large repositories, implement cursor-based pagination
+# using the `pageInfo { hasNextPage endCursor }` fields returned by the GraphQL API.
 _GRAPHQL_PR_LIST = """
 {
   repository(owner: "%s", name: "%s") {

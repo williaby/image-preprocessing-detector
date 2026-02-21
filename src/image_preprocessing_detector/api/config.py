@@ -70,10 +70,16 @@ class APISettings(BaseSettings):
         ineffective and a security misconfiguration.  Raise early so
         operators receive an explicit error rather than a silent misbehaviour.
 
+        When ``cors_enabled`` is False the CORS middleware is not mounted, so
+        legacy ``cors_origins`` / ``cors_allow_credentials`` values are
+        irrelevant and must not block startup.
+
         Raises:
-            ValueError: If cors_allow_credentials is True and "*" appears in
-                cors_origins.
+            ValueError: If cors_enabled is True, cors_allow_credentials is
+                True, and "*" appears in cors_origins.
         """
+        if not self.cors_enabled:
+            return self
         if self.cors_allow_credentials and "*" in self.cors_origins:
             msg = (
                 "CORS misconfiguration: cors_allow_credentials=True cannot be "

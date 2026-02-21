@@ -539,7 +539,7 @@ class DatasetSufficiencyMeasurer:
             return sum(
                 s.get("num_examples", 0) for s in info.get("splits", {}).values()
             )
-        except (ValueError, AttributeError) as exc:
+        except (json.JSONDecodeError, AttributeError) as exc:
             logger.warning("Error reading dataset info from %s: %s", info_path, exc)
             return 0
 
