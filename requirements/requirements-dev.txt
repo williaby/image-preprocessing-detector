@@ -1235,7 +1235,7 @@ websocket-client==1.9.0
     # via jupyter-server
 websockets==15.0.1
     # via google-genai
-werkzeug==3.1.5
+werkzeug==3.1.6
     # via image-preprocessing-detector
 widgetsnbextension==4.0.15
     # via ipywidgets
