@@ -27,7 +27,28 @@ Extend the existing SigLIP2-IQA model (86M params, VQualA 0.886) with five new t
 | `config/script_ml_classes.yaml` | Stream 1 | ✅ Planned | Script class mapping |
 | `ISO15924Script` enum | `schema_utils/iso_language_script.py` | ✅ Exists | Script classes |
 | `CaptureMethod` enum | `annotation/schemas/enums.py` | ✅ Exists | Source classification |
-| Heuristic baselines (Stream 3) | `scripts/benchmark_heuristics.py` | ❌ Not started | Go/No-Go thresholds |
+| Heuristic baselines (Stream 3) | `results/stream3_benchmarks/GO_NOGO_DECISION.md` | ✅ Complete | Go/No-Go thresholds confirmed |
+
+### 2.1.1 Stream 3 Go/No-Go Results (Confirmed 2026-02-14)
+
+Stream 3 benchmarks confirm all five Stream 4 heads are needed. Results from
+`results/stream3_benchmarks/GO_NOGO_DECISION.md`:
+
+| Detector | Score | Target | Decision | Impact on Stream 4 |
+|---|---|---|---|---|
+| ScriptDetectorHeuristic | 15.6% acc | 80% | FAIL | Script head required — heuristic unusable |
+| DocumentSourceClassifier | 64.7% acc | 85% | FAIL | Source head required |
+| ShadowDetector | 60.1% F1 | 85% | FAIL | Shadow head required |
+| **WarpingDetector** | **94.7% F1** | **80%** | **PASS** | Binary detection ships as heuristic; warping head provides continuous severity regression for DoclingRouter routing and improves per-type accuracy (WarpDoc types: 70–74% F1) |
+| HandwritingDetector | 5.3% F1 | 75% | FAIL | Deferred to later stream (see §11) |
+| OrientationDetector | not run | 85% | — | Separately validated at ~85%; ML target 98%+ |
+
+**Key implication**: The warping heuristic is sufficient for binary detection (94.7%). The
+warping regression head in this plan is retained for two reasons:
+
+1. Continuous severity score (0–1) required by `DoclingRoutingEngine` for VLM escalation
+   threshold logic (`warping_score > 0.75` → extreme warping → VLM)
+2. Per-type warping accuracy on WarpDoc is only 70–74% F1; regression improves these cases
 
 ### 2.2 Dataset Availability (Updated 2026-02-15)
 
@@ -60,6 +81,7 @@ The project now has **59 source datasets** (up from 51 at original planning) and
 | **Warping** | warpdoc (1,020 paired GT, 6 warping types), anyphotodoc6300 (6,306 paired GT), doc3d (102K warping mesh), docalign12k (~12K aligned pairs), docreal (200 paired GT), SmartDoc-QA (4.3K perspective) | **~126K** total | ✅ Multiple paired GT sources |
 
 **Key improvements since original plan**:
+
 1. **Skew dataset assembled** (90K) — eliminates a major blocker
 2. **Script detection expanding** from 27 scripts (synth-multiscript) to 108 scripts (OpenLID v2 generation)
 3. **Shadow/warping sources identified**: sd7k (7K) + wsrd (4.5K) provide direct paired GT for shadow severity labeling; warpdoc + anyphotodoc6300 provide warping GT
@@ -196,6 +218,7 @@ class SigLIP2MultiTaskTeacher(nn.Module):
 ```
 
 Key implementation details:
+
 - Load pretrained backbone + IQA heads from v2 checkpoint
 - New heads initialized with Xavier uniform
 - `tasks` parameter enables selective head execution (reduces compute for single-task inference)
@@ -215,6 +238,7 @@ Key implementation details:
 | `MultiTaskDataset` | Union of all above | Per-sample task mask | Handles missing labels gracefully |
 
 `MultiTaskDataset` is the critical class — it must handle:
+
 - Samples that have labels for only a subset of tasks
 - Per-task loss masking (don't backprop on missing labels)
 - Balanced sampling across task groups (prevent IQA domination)
@@ -425,6 +449,7 @@ class MultiTaskBatchSampler:
 #### C.1 Script Dataset Assembly
 
 **Sources** (much richer than original plan):
+
 - synth-multiscript-250k (250K, 27 scripts, GCS) ✅ Ready
 - MDIW13 (290K, 13 scripts, GCS) ✅ Ready
 - SIW13 (16K, 13 scripts) ✅ Ready
@@ -434,6 +459,7 @@ class MultiTaskBatchSampler:
 - Script Detection assembled (108K, 108 scripts from OpenLID v2) 🔄 Generating
 
 Tasks:
+
 - [ ] Verify GCS paths and accessibility for synth-multiscript-250k and MDIW13
 - [ ] Assess OpenLID v2 generation progress — determine if 108K script dataset will be ready for Stream 4 training
 - [ ] Create ISO 15924 → 12-class mapping in `config/script_ml_classes.yaml` (if not done in Stream 1)
@@ -453,6 +479,7 @@ Tasks:
 **Source**: Assembled orientation dataset (50K, 4-class) ✅ Ready at `E:\03_training_datasets\orientation\`
 
 Tasks:
+
 - [ ] Verify orientation dataset is accessible or upload to GCS
 - [ ] Verify label format (filename or sidecar JSON with rotation angle)
 - [ ] Create manifest with 4-class labels (0/90/180/270)
@@ -462,6 +489,7 @@ Tasks:
 #### C.3 Document Source Dataset
 
 **Sources** (much richer than original plan):
+
 - SmartDoc-QA (4.3K camera, Audit A 92) ✅ Ready
 - RVL-CDIP (16K scanned, Audit B 87) ✅ Ready
 - DocLayNet (81K born-digital, Audit A 96) ✅ Ready
@@ -470,6 +498,7 @@ Tasks:
 - midv500 (3.6K camera, MIT license) ✅ Ready
 
 Tasks:
+
 - [ ] Extract capture method from Layer 2 aggregates (57 datasets have metadata)
 - [ ] Map to 3 classes: scanned, camera, digital
   - Camera: SmartDoc-QA + realdae + midv500 (~9K)
@@ -482,12 +511,14 @@ Tasks:
 #### C.4 Shadow Dataset
 
 **Sources** (new paired GT datasets available):
+
 - sd7k (7,239 paired GT: shadow/clean) ✅ Ready — **best source for severity labels**
 - wsrd (4,500 paired GT: shadow/clean, Audit A 95) ✅ Ready
 - realdae (1,200 camera) ✅ Ready
 - doc3d (102K with 3D illumination data) ✅ Available
 
 Tasks:
+
 - [ ] Extract shadow severity scores from sd7k + wsrd paired images
   - Compute severity = SSIM difference between shadow and clean images
   - Normalize to 0-1 scale
@@ -499,6 +530,7 @@ Tasks:
 #### C.5 Warping Dataset
 
 **Sources** (new paired GT datasets available):
+
 - warpdoc (1,020 paired GT, 6 warping types, Audit B 85) ✅ Ready
 - anyphotodoc6300 (6,306 paired GT corrected/distorted, Audit A 92) ✅ Ready
 - docalign12k (~12K aligned pairs) ✅ Ready
@@ -507,6 +539,7 @@ Tasks:
 - doc3d (102K with warping mesh data) ✅ Available
 
 Tasks:
+
 - [ ] Extract warping severity from warpdoc + anyphotodoc6300 paired images
   - Compute severity from distortion magnitude between distorted/flat pairs
   - warpdoc provides 6 warping types (book spine, fold, crumple, etc.)
@@ -547,6 +580,7 @@ modal app logs siglip2-multitask-training --follow
 ```
 
 **Expected Phase 1 outcomes** (new heads only, backbone frozen):
+
 - Script accuracy: 80-85% (backbone features already discriminative)
 - Orientation accuracy: 90-95%
 - Source accuracy: 85-90%
@@ -581,6 +615,7 @@ uv run modal run --detach modal/train_siglip2_multitask.py \
 #### D.3 IQA Regression Guard
 
 **Critical**: IQA VQualA must not drop below 0.86 during joint training. If it does:
+
 1. Increase `iqa_lr_multiplier` from 0.01 → 0.001 (more protection)
 2. Increase `iqa` task weight from 1.0 → 2.0
 3. If still regressing, freeze IQA heads entirely in Phase 2
@@ -615,6 +650,7 @@ uv run modal run --detach modal/train_siglip2_multitask.py \
 #### E.2 Confusion Matrix Analysis
 
 For each classification head:
+
 - Full confusion matrix on test set
 - Per-class precision, recall, F1
 - Identification of systematic errors (e.g., CJK confusion, rare script failures)
