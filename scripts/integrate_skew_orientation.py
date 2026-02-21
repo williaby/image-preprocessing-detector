@@ -112,7 +112,6 @@ def extract_skew_fields(skew: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-
 def _apply_skew_to_sample(
     sample: dict[str, Any],
     skew_fields: dict[str, Any],

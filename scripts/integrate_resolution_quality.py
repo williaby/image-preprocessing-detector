@@ -165,7 +165,6 @@ def extract_rq_fields(rq: dict[str, Any]) -> dict[str, Any]:
     return fields
 
 
-
 def _apply_rq_to_sample(
     sample: dict[str, Any],
     rq_fields: dict[str, Any],
