@@ -114,7 +114,7 @@ def _collect_font_paths(fonts_dir: Path) -> list[Path]:
     seen: set[Path] = set()
     result: list[Path] = []
 
-    search_roots = [fonts_dir] + SYSTEM_FONT_PATHS
+    search_roots = [fonts_dir, *SYSTEM_FONT_PATHS]
     for root in search_roots:
         if not root.exists():
             continue

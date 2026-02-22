@@ -319,7 +319,7 @@ def _chi_square_test(
 ) -> tuple[float, bool]:
     """Chi-square uniformity test against a uniform expected distribution.
 
-    Uses the Wilson–Hilferty approximation to derive the critical value
+    Uses the Wilson-Hilferty approximation to derive the critical value
     at p = 0.01 without requiring SciPy.
 
     Args:
@@ -341,7 +341,7 @@ def _chi_square_test(
         if expected_per_cat > 0
     )
 
-    # Wilson–Hilferty approximation for chi-square critical value at p=0.01
+    # Wilson-Hilferty approximation for chi-square critical value at p=0.01
     df = n_cats - 1
     z_99 = 2.326  # z_{0.99} one-tailed
     wh_factor = 1 - 2 / (9 * max(df, 1)) + z_99 * math.sqrt(2 / (9 * max(df, 1)))

@@ -318,7 +318,7 @@ def _build_model_derived_records(
 
     # L2 metadata was built from actual files — trust it.  Per-file stat calls
     # are too slow on large datasets (e.g. 123K COCO-Text at ~3ms/call over WSL).
-    # Pre-sample to 4× the cap before iterating to keep iteration O(cap) not O(N).
+    # Pre-sample to 4x the cap before iterating to keep iteration O(cap) not O(N).
     if config.max_samples and len(samples) > config.max_samples * 4:
         samples = rng.sample(samples, config.max_samples * 4)
 
@@ -374,7 +374,7 @@ def _build_all_printed_records(
         logger.warning("Dataset directory not found (GCS-only?): %s", base_dir)
         return []
 
-    # L2 metadata was built from actual files — trust it.  Pre-sample to 4× cap
+    # L2 metadata was built from actual files — trust it.  Pre-sample to 4x cap
     # before iterating to keep iteration O(cap) not O(N).
     effective_cap = target_count or config.max_samples
     if effective_cap and len(samples) > effective_cap * 4:
@@ -437,8 +437,7 @@ def _build_iam_records_from_filesystem(
     for item in iam_dir.iterdir():
         if item.is_dir() and len(item.name) <= 3:
             # Writer directory (e.g., a01, b02) — collect form PNGs inside
-            for form_png in item.glob("*.png"):
-                form_paths.append(form_png)
+            form_paths.extend(item.glob("*.png"))
         elif item.suffix.lower() == ".png" and item.is_file():
             form_paths.append(item)
 
@@ -489,7 +488,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
         splits[r["split"]] = splits.get(r["split"], 0) + 1
         per_dataset[r["source_dataset"]] = per_dataset.get(r["source_dataset"], 0) + 1
 
-    click.echo(f"\nManifest summary:")
+    click.echo("\nManifest summary:")
     click.echo(f"  Total records  : {total:>8,}")
     click.echo(
         f"  Positive (True): {positive:>8,}  ({100 * positive / max(total, 1):.1f}%)"
@@ -497,7 +496,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
     click.echo(
         f"  Negative (False): {negative:>7,}  ({100 * negative / max(total, 1):.1f}%)"
     )
-    click.echo(f"  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
+    click.echo("  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
     if verbose:
         click.echo("\n  Per-dataset counts:")
         for ds, cnt in sorted(per_dataset.items(), key=lambda x: -x[1]):
@@ -550,7 +549,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
 @click.option(
     "--negatives-from",
     multiple=True,
-    type=click.Choice(list(cfg.name for cfg in _NEGATIVE_DATASETS)),
+    type=click.Choice([cfg.name for cfg in _NEGATIVE_DATASETS]),
     default=["doclaynet"],
     show_default=True,
     help="Negative-class dataset(s) to include.",
@@ -577,7 +576,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
     is_flag=True,
     help="Print per-dataset breakdown.",
 )
-def main(  # noqa: PLR0913
+def main(
     l2_dir: Path,
     base_data_root: Path,
     output: Path,
@@ -667,8 +666,7 @@ def main(  # noqa: PLR0913
     # --- Write manifest ---
     output.parent.mkdir(parents=True, exist_ok=True)
     with open(output, "w") as fh:
-        for record in all_records:
-            fh.write(json.dumps(record) + "\n")
+        fh.writelines(json.dumps(record) + "\n" for record in all_records)
     click.echo(f"\nWrote {len(all_records):,} records → {output}")
 
 

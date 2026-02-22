@@ -112,7 +112,7 @@ _SPLIT_FRACS: tuple[float, float, float] = (0.80, 0.10, 0.10)
 # ---------------------------------------------------------------------------
 # Code snippet library
 # ---------------------------------------------------------------------------
-# Short, illustrative, non-proprietary code snippets.  Each is 10–25 lines.
+# Short, illustrative, non-proprietary code snippets.  Each is 10-25 lines.
 # These cover common programming patterns without any real-world sensitive code.
 
 _SNIPPETS: dict[str, list[str]] = {
@@ -765,7 +765,7 @@ def _render_screenshot(spec: CodeImageSpec, out_path: Path) -> bool:
             style=spec.style,
             font_name="DejaVu Sans Mono",
             font_size=spec.font_size,
-            line_numbers=random.choice([True, False]),  # noqa: S311
+            line_numbers=random.choice([True, False]),
             line_number_bg="#282828",
             image_pad=12,
         )
@@ -803,8 +803,8 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
             font = ImageFont.load_default()
 
         bg_colors = ["#FFFFFF", "#FFFEF8", "#F8F8F0", "#FAFAF7"]
-        bg = random.choice(bg_colors)  # noqa: S311
-        code_bg = random.choice(["#F4F4F4", "#F0F0F0", "#EFEFEF"])  # noqa: S311
+        bg = random.choice(bg_colors)
+        code_bg = random.choice(["#F4F4F4", "#F0F0F0", "#EFEFEF"])
         text_color = "#1A1A1A"
         code_color = "#333333"
 
@@ -823,7 +823,7 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
 
         # Header: fake paragraph lines
         for row_y in range(12, header_h - 8, 14):
-            line_w = random.randint(img_w // 3, int(img_w * 0.85))  # noqa: S311
+            line_w = random.randint(img_w // 3, int(img_w * 0.85))
             draw.rectangle(
                 [padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC"
             )
@@ -847,7 +847,7 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
         # Footer: fake paragraph lines
         footer_top = block_top + code_block_h + 12
         for row_y in range(footer_top, footer_top + footer_h - 8, 14):
-            line_w = random.randint(img_w // 4, int(img_w * 0.9))  # noqa: S311
+            line_w = random.randint(img_w // 4, int(img_w * 0.9))
             draw.rectangle(
                 [padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC"
             )
@@ -1111,7 +1111,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
     click.echo(
         f"  Negative       : {negative:>7,}  ({100 * negative / max(total, 1):.1f}%)"
     )
-    click.echo(f"  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
+    click.echo("  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
 
     if verbose:
         click.echo("\n  Per-source:")
@@ -1209,7 +1209,7 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
     is_flag=True,
     help="Print per-source and per-language breakdown.",
 )
-def main(  # noqa: PLR0913
+def main(
     positives: int,
     screenshot_fraction: float,
     negatives: int,
@@ -1275,8 +1275,7 @@ def main(  # noqa: PLR0913
 
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_path, "w") as fh:
-        for record in all_records:
-            fh.write(json.dumps(record) + "\n")
+        fh.writelines(json.dumps(record) + "\n" for record in all_records)
     click.echo(f"\nWrote {len(all_records):,} records → {manifest_path}")
 
 
