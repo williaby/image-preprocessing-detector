@@ -49,7 +49,7 @@ import logging
 import random
 import shutil
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -213,7 +213,7 @@ def _get_latest_data(sample: dict[str, Any]) -> dict[str, Any]:
     # No version with data — create a stub so we can store the field
     stub: dict[str, Any] = {
         "version": len(versions) + 1,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "created_by": "label_shadow_severity.py",
         "method": "luminance_delta_paired",
         "data": {},
