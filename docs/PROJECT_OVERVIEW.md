@@ -6,7 +6,6 @@ owner: core-maintainer
 purpose: "Narrative technical introduction: what the system does, why it is designed this way, and why its outputs can be trusted."
 tags:
 - architecture
-- overview
 - reference
 ---
 

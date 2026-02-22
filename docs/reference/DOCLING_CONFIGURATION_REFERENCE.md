@@ -1,15 +1,15 @@
 ---
 title: Docling Configuration Reference
-schema_type: reference
+schema_type: common
 status: active
 owner: ml-team
-purpose: "Master reference for all docling adjustment levers available to Project B via DocumentMetadata routing params."
+purpose: "Master reference for all docling adjustment levers available to Project
+  B via DocumentMetadata routing params."
 tags:
-  - docling
-  - ocr
-  - routing
-  - project-b
-  - configuration
+- ocr
+- routing
+- reference
+- api_reference
 ---
 
 # Docling Configuration Reference

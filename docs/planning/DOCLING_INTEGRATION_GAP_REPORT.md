@@ -3,13 +3,13 @@ title: Docling Integration Gap Report
 schema_type: planning
 status: active
 owner: ml-team
-purpose: "Identifies gaps, inconsistencies, and improvement areas in Project A's docling integration and handoff specification."
+purpose: "Identifies gaps, inconsistencies, and improvement areas in Project A's docling
+  integration and handoff specification."
 tags:
-  - docling
-  - gap-analysis
-  - project-b
-  - routing
-  - integration
+- routing
+- integration
+component: Strategy
+source: Internal analysis of docling integration codebase
 ---
 
 # Docling Integration Gap Report

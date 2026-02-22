@@ -3,7 +3,6 @@ schema_type: planning
 title: "Project A: Image Preprocessing & IQA Gateway - Project Plan"
 description: "Comprehensive project plan for Project A with RAG Pipeline architecture,
   teacher-student ResNet IQA, and detailed sprint breakdowns for all 6 phases"
-superseded_by: "MASTER_PROJECT_PLAN.md"
 tags:
   - planning
   - rag_pipeline

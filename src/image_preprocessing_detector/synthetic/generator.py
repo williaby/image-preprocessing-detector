@@ -290,6 +290,7 @@ class MultiScriptDocumentGenerator:
 
         # Initialize corpus
         logger.info("Initializing text corpus...")
+        loaded = 0
         try:
             if download_corpus:
                 loaded = self.corpus_manager.load_from_cache_or_download(
@@ -301,35 +302,33 @@ class MultiScriptDocumentGenerator:
                 if loaded == 0:
                     logger.info("No cache found, using built-in sample texts")
                     loaded = self.corpus_manager.load_sample_texts(self.config.scripts)
-
-            if loaded == 0:
-                raise RuntimeError(
-                    "Corpus empty — cannot generate diverse text. "
-                    "Run corpus download or set use_sample_fallback=True to proceed "
-                    "with built-in sample texts (low diversity)."
-                )
-        except RuntimeError:
-            raise
         except Exception as e:
             logger.error("Failed to initialize corpus: %s", e)
             return False
 
+        if loaded == 0:
+            raise RuntimeError(
+                "Corpus empty — cannot generate diverse text. "
+                "Run corpus download or set use_sample_fallback=True to proceed "
+                "with built-in sample texts (low diversity)."
+            )
+
         # Initialize fonts
         logger.info("Scanning fonts...")
+        found = 0
         try:
             if scan_fonts:
                 found = self.font_manager.scan_fonts()
-                if found == 0:
-                    raise RuntimeError(
-                        "No fonts found for any configured script. "
-                        "Install Noto fonts: "
-                        "https://fonts.google.com/noto or run scripts/install_fonts.sh"
-                    )
-        except RuntimeError:
-            raise
         except Exception as e:
             logger.error("Failed to scan fonts: %s", e)
             return False
+
+        if scan_fonts and found == 0:
+            raise RuntimeError(
+                "No fonts found for any configured script. "
+                "Install Noto fonts: "
+                "https://fonts.google.com/noto or run scripts/install_fonts.sh"
+            )
 
         # Create output directory if needed
         if self.config.output_dir:
@@ -1043,7 +1042,7 @@ class MultiScriptDocumentGenerator:
         # can overshoot its samples_per_script target.  Scripts are pruned from
         # available_scripts once they hit the limit, preventing the Latn/Arab/Deva
         # overshoot observed in the v3 run caused by the chunk_per_script bug.
-        per_script_counts: dict[str, int] = {s: 0 for s in available_scripts}
+        per_script_counts: dict[str, int] = dict.fromkeys(available_scripts, 0)
         script_target = self.config.samples_per_script
 
         samples_generated = 0

@@ -6,9 +6,7 @@ owner: core-maintainer
 purpose: "Comprehensive technical reference: complete module map, canonical files, schema contract, config reference, and training infrastructure."
 tags:
 - architecture
-- overview
 - reference
-- detailed
 ---
 
 # Project A — System Overview (Detailed Reference)

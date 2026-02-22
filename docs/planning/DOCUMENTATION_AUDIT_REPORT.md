@@ -1,12 +1,12 @@
 ---
 owner: docs-team
 purpose: Documentation staleness audit — tracks files needing correction against known ground truth.
-schema_type: audit
+schema_type: common
 status: active
 tags:
-- audit
 - documentation
-- staleness
+- tracking
+- action_items
 title: Documentation Audit Report
 ---
 
