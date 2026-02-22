@@ -1,0 +1,208 @@
+@startuml l2-metadata-enrichment
+!theme plain
+title L2 Metadata Enrichment — Labeling Scripts → Registry Feedback Loop
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+skinparam component {
+    BackgroundColor<<source>> LightPink
+    BackgroundColor<<labeler>> LightBlue
+    BackgroundColor<<registry>> Lavender
+    BackgroundColor<<consumer>> LightGreen
+}
+
+note as purpose_note
+    **Purpose**: Three labeling scripts write new severity/presence
+    fields directly back into the L2 metadata registry, making it
+    a living annotation system rather than read-only.
+    These fields are then consumed by prepare_multitask_datasets.py
+    (shadow/warping/merge sub-commands) in Stream 4C.
+end note
+
+' =====================================================================
+' PAIRED IMAGE SOURCES
+' =====================================================================
+
+package "Paired Image Datasets" as sources_pkg <<source>> {
+    database "sd7k\n(7,000 shadow images\n+ clean counterparts)" as sd7k
+    database "wsrd\n(shadow + warping variants\nwith clean sources)" as wsrd
+    database "warpdoc\n(warping distortion\n+ clean sources)" as warpdoc
+    database "anyphotodoc6300\n(geometric distortion\ndataset)" as anyphotodoc
+    database "docalign12k\n(alignment + warping\ndataset)" as docalign
+}
+
+package "Handwriting Label Sources" as hw_sources_pkg <<source>> {
+    database "IAM Handwriting DB" as iam
+    database "FUNSD (Form\nUnderstanding)" as funsd
+    database "HierText (Hierarchical\nText Detection)" as hiertext
+    database "COCO-Text\n(natural scene text)" as cocotext
+    component "L2 DocLayout\nInferences\n(fallback)" as doclayout_infer
+}
+
+' =====================================================================
+' L2 METADATA REGISTRY (READ and WRITE)
+' =====================================================================
+
+package "L2 Metadata Registry" as registry_pkg <<registry>> {
+    database "DATASET_metadata.json\n(per-dataset files\nmetadata_registry/json/)" as l2_files
+
+    note right of l2_files
+        **Format**: Top-level dict with samples array
+        **Structure**: samples[].enrichments.versions[-1].data
+        **Key nested fields before enrichment:**
+          capture_method (camera_smartphone/scanner/born_digital)
+          orientation_class (0/90/180/270)
+          split_type (train/val/test/ood)
+        **Fields added by labeling scripts:**
+          shadow_severity (float 0-1)
+          warping_severity (float 0-1)
+    end note
+}
+
+' =====================================================================
+' LABELING SCRIPTS (READ sources → WRITE to L2)
+' =====================================================================
+
+package "label_shadow_severity.py" as shadow_labeler <<labeler>> {
+    component "Paired Image Loader" as shadow_loader {
+        [Match distorted ↔ clean via filename convention]
+        [Datasets: sd7k, wsrd]
+    }
+    component "Luminance-Delta Scorer" as shadow_scorer {
+        [Convert both images to LAB colorspace]
+        [Compute mean absolute L* channel delta]
+        [Normalize to 0.0-1.0 severity score]
+    }
+    component "L2 Writer" as shadow_writer {
+        [Field: shadow_severity (float 0-1)]
+        [Method: luminance_delta_v1]
+        [Patch current version in-place]
+    }
+}
+
+package "label_warping_severity.py" as warp_labeler <<labeler>> {
+    component "Paired Image Loader" as warp_loader {
+        [Match distorted ↔ clean]
+        [Datasets: warpdoc, wsrd, anyphotodoc6300, docalign12k]
+    }
+    component "SSIM Scorer" as warp_scorer {
+        [Compute SSIM (distorted, clean)]
+        [severity = 1.0 - SSIM]
+        [Window: 11x11 Gaussian kernel]
+    }
+    component "L2 Writer" as warp_writer {
+        [Field: warping_severity (float 0-1)]
+        [Method: ssim_delta_v1]
+        [Patch current version in-place]
+    }
+}
+
+package "harmonize_handwriting_labels.py" as hw_labeler <<labeler>> {
+    component "Multi-Source Loader" as hw_loader {
+        [IAM: all = handwriting (True)]
+        [FUNSD: form fields → True]
+        [HierText: paragraph heuristic]
+        [COCO-Text: scene text → False default]
+    }
+    component "Conflict Resolver" as hw_resolver {
+        [Priority: human-labeled > inference]
+        [Threshold: ≥50% handwriting → True]
+    }
+    component "Manifest Writer" as hw_writer {
+        [Output: handwriting_manifest.json]
+        [Field: handwriting_present (bool)]
+        [Method: human_label_v1 / doclayout_inference_v1]
+    }
+}
+
+' =====================================================================
+' DOWNSTREAM CONSUMERS
+' =====================================================================
+
+package "Stream 4C Consumers" as consumers_pkg <<consumer>> {
+    component "prepare_multitask_datasets.py\nshadow sub-command" as shadow_consumer {
+        [Reads shadow_severity from L2]
+        [Routes to 5-bin severity labels]
+        [Enforces ≤60% synthetic mixing]
+    }
+    component "prepare_multitask_datasets.py\nwarping sub-command" as warp_consumer {
+        [Reads warping_severity from L2]
+        [Routes to 5-bin severity labels]
+        [Enforces ≤60% synthetic mixing]
+    }
+    component "prepare_multitask_datasets.py\nmerge sub-command" as merge_consumer {
+        [Includes handwriting_present in\ntrain/val manifests]
+        [Used for SigLIP 2 handwriting head]
+    }
+}
+
+' =====================================================================
+' FLOW ARROWS
+' =====================================================================
+
+' Source → Labelers
+sd7k --> shadow_loader : "distorted + clean\nimage pairs"
+wsrd --> shadow_loader : "shadow variants"
+wsrd --> warp_loader : "warping variants"
+warpdoc --> warp_loader : "warping pairs"
+anyphotodoc --> warp_loader : "distortion pairs"
+docalign --> warp_loader : "alignment pairs"
+
+iam --> hw_loader : "handwriting images"
+funsd --> hw_loader : "form images"
+hiertext --> hw_loader : "scene text"
+cocotext --> hw_loader : "natural text"
+doclayout_infer --> hw_resolver : "layout predictions\n(fallback only)"
+
+' Labelers internal flow
+shadow_loader --> shadow_scorer : "image pair"
+shadow_scorer --> shadow_writer : "severity score"
+
+warp_loader --> warp_scorer : "image pair"
+warp_scorer --> warp_writer : "severity score"
+
+hw_loader --> hw_resolver : "raw labels"
+hw_resolver --> hw_writer : "resolved label"
+
+' L2 feedback (write back)
+l2_files --> shadow_labeler : "read existing records\n(match by image_path)"
+shadow_writer --> l2_files : "shadow_severity\nwritten in-place"
+
+l2_files --> warp_labeler : "read existing records"
+warp_writer --> l2_files : "warping_severity\nwritten in-place"
+
+' Manifest output (not L2)
+hw_writer --> merge_consumer : "handwriting_manifest.json"
+
+' L2 → Downstream
+l2_files --> shadow_consumer : "shadow_severity field"
+l2_files --> warp_consumer : "warping_severity field"
+
+note bottom of shadow_labeler
+    **Why luminance-delta?**
+    Shadow primarily affects L* (lightness)
+    in LAB colorspace. Mean |ΔL*| directly
+    measures shadow intensity without
+    sensitivity to hue or saturation noise.
+end note
+
+note bottom of warp_labeler
+    **Why SSIM?**
+    Warping distortion affects structural
+    similarity (edges, textures, gradients)
+    better captured by SSIM than pixel-diff.
+    severity = 1 - SSIM maps 0=clean, 1=severe.
+end note
+
+note right of hw_writer
+    **Output not stored in L2**
+    Handwriting labels go to a standalone
+    handwriting_manifest.json consumed
+    directly by the merge sub-command.
+    L2 DocLayout inference acts as fallback
+    for unlabeled datasets only.
+end note
+
+@enduml

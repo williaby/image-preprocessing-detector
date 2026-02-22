@@ -44,6 +44,14 @@ Usage:
     python scripts/generate_base_dataset_v3.py \\
         --output-dir /mnt/e/image_detection/03_training_datasets/synthetic_multiscript_v3 \\
         --resume
+
+    # Targeted fill using audit output (skip scripts already at target)
+    python scripts/audit_v3_per_script_counts.py \\
+        --output results/v3_per_script_audit.json
+    python scripts/generate_base_dataset_v3.py \\
+        --output-dir /mnt/e/image_detection/03_training_datasets/synthetic_multiscript_v3 \\
+        --resume-from-audit results/v3_per_script_audit.json \\
+        --fail-on-corpus-error
 """
 
 from __future__ import annotations
@@ -72,7 +80,9 @@ DEFAULT_WORKERS = 4
 DEFAULT_SEED = 42
 DEFAULT_CHUNK_SIZE = 10_000  # Images per chunk to bound memory leaks
 
-# All 27 scripts
+# All 27 training scripts.  "Kore" renamed to "Hang" (ISO 15924 Hangul-only code;
+# both map to the KORE ML class — see config/script_ml_classes.yaml).
+# "Geor" is generated but tagged split_type="ood" at save time (see OOD_ONLY_SCRIPTS).
 ALL_SCRIPTS = [
     "Arab",
     "Armn",
@@ -90,7 +100,7 @@ ALL_SCRIPTS = [
     "Jpan",
     "Khmr",
     "Knda",
-    "Kore",
+    "Hang",  # renamed from "Kore" (ISO 15924 Hangul; maps to KORE ML class)
     "Laoo",
     "Latn",
     "Mlym",
@@ -102,6 +112,16 @@ ALL_SCRIPTS = [
     "Thai",
     "Tibt",
 ]
+
+# Scripts reserved exclusively for OOD evaluation — never appear in training manifests.
+# Images generated for these scripts have split_type="ood" in their sidecar metadata.
+# Mongolian (Mong) and Syriac (Syrc) are listed here but NOT in ALL_SCRIPTS yet;
+# they will be added once Noto Sans fonts are installed (see docs/planning/... font setup).
+OOD_ONLY_SCRIPTS: frozenset[str] = frozenset({
+    "Geor",   # Georgian — Noto Sans Georgian (OFL); OOD anchor
+    "Mong",   # Mongolian — Noto Sans Mongolian (OFL); TTB script; OOD anchor
+    "Syrc",   # Syriac — Noto Sans Syriac (OFL); RTL script; OOD anchor
+})
 
 
 def _compute_distribution(
@@ -129,6 +149,63 @@ def _compute_distribution(
         distribution[script] = base_count + (1 if i < remainder else 0)
 
     return distribution
+
+
+def _load_audit_distribution(audit_path: Path, total_images: int) -> tuple[list[str], dict[str, int]]:
+    """Load a targeted fill distribution from an audit JSON file.
+
+    Reads the output of ``audit_v3_per_script_counts.py`` and derives a
+    per-script allocation that only generates images for scripts that have not
+    yet reached their target.  Scripts marked ``"done": true`` in the audit are
+    excluded from the returned script list so workers skip them entirely.
+
+    Args:
+        audit_path: Path to the JSON file produced by audit_v3_per_script_counts.py.
+        total_images: The overall target total (used only for display; individual
+            targets come from the audit file itself).
+
+    Returns:
+        Tuple of (scripts_needing_generation, per_script_distribution).
+
+    Raises:
+        SystemExit: If the audit file cannot be read or is malformed.
+    """
+    try:
+        with audit_path.open() as fh:
+            audit = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"ERROR: Cannot read audit file {audit_path}: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    per_script_data: dict[str, dict[str, object]] = audit.get("per_script", {})
+    if not per_script_data:
+        print(
+            f"ERROR: Audit file {audit_path} has no 'per_script' key or it is empty.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    scripts_needed: list[str] = []
+    distribution: dict[str, int] = {}
+
+    for script, info in per_script_data.items():
+        remaining = int(info.get("remaining", 0))  # type: ignore[arg-type]
+        done = bool(info.get("done", False))
+        if done or remaining <= 0:
+            continue
+        scripts_needed.append(script)
+        distribution[script] = remaining
+
+    total_remaining = sum(distribution.values())
+    print(
+        f"Audit-guided fill: {len(scripts_needed)} scripts need generation "
+        f"({total_remaining:,} images remaining to reach target)"
+    )
+    if not scripts_needed:
+        print("All scripts already at target — nothing to generate.")
+        sys.exit(0)
+
+    return scripts_needed, distribution
 
 
 def _show_distribution_plan(
@@ -230,16 +307,22 @@ def _save_sample(
     image_path = script_dir / f"{sample.sample_id}.{IMAGE_FORMAT}"
     sample.image.save(image_path, format="JPEG", quality=JPEG_QUALITY)
 
+    is_ood = primary_script in OOD_ONLY_SCRIPTS
+
     metadata = generator.schema_adapter.build_enrichment_metadata(
         sample, augmentation_source=augmenter
     )
     metadata["generation_params"] = sample.generation_params
+    # OOD scripts are never assigned to train/val/test — mark them explicitly.
+    if is_ood:
+        metadata["split_type"] = "ood"
     metadata_path = script_dir / f"{sample.sample_id}.json"
     with open(metadata_path, "w") as f:
         json_mod.dump(metadata, f, indent=2, default=str)
 
+    # OOD images must not enter the split registry (train/val/test only).
     sha256 = sample.generation_params.get("base_image_sha256", "")
-    if sha256:
+    if sha256 and not is_ood:
         registry.assign_split(
             sha256_hex=sha256,
             source_dataset="synth_multiscript_v3",
@@ -257,6 +340,7 @@ def _generate_worker_batch(
     seed: int,
     augmenter: str,
     split_registry_path: str,
+    fail_on_corpus_error: bool = False,
 ) -> dict[str, Any]:
     """Generate a batch of samples in a worker process.
 
@@ -272,6 +356,8 @@ def _generate_worker_batch(
         seed: Base random seed (offset by worker_id)
         augmenter: Augmentation library to use
         split_registry_path: Path to split registry JSONL
+        fail_on_corpus_error: If True, treat an empty corpus as a fatal error
+            instead of silently falling back to built-in sample texts.
 
     Returns:
         Dict with generation statistics for this worker
@@ -328,6 +414,15 @@ def _generate_worker_batch(
         if not success:
             stats["error"] = "Failed to initialize generator"
             return stats
+        if fail_on_corpus_error:
+            corpus_scripts = generator.corpus_manager.get_available_scripts()
+            missing = [s for s in scripts if s not in corpus_scripts]
+            if missing:
+                stats["error"] = (
+                    f"--fail-on-corpus-error: no corpus data for scripts: "
+                    f"{', '.join(missing)}. Install corpora before generating."
+                )
+                return stats
     except Exception as e:
         stats["error"] = f"Initialization error: {e}"
         return stats
@@ -574,6 +669,25 @@ def _parse_main_args() -> argparse.Namespace:
         action="store_true",
         help="Skip confirmation prompt",
     )
+    parser.add_argument(
+        "--resume-from-audit",
+        type=Path,
+        default=None,
+        metavar="AUDIT_JSON",
+        help=(
+            "Path to audit JSON produced by audit_v3_per_script_counts.py. "
+            "When set, only scripts with remaining>0 in the audit are generated; "
+            "scripts already at their target are skipped entirely.  Implies --resume."
+        ),
+    )
+    parser.add_argument(
+        "--fail-on-corpus-error",
+        action="store_true",
+        help=(
+            "Exit with error if the text corpus is empty for any configured script "
+            "instead of silently falling back to built-in sample texts."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -596,10 +710,40 @@ def _setup_logging(args: argparse.Namespace) -> None:
     )
 
 
+def _samples_per_script_for_worker(
+    worker_scripts: list[str],
+    distribution: dict[str, int],
+) -> int:
+    """Compute the samples_per_script value to pass to a worker.
+
+    Each worker owns a subset of scripts.  Since the generator config accepts a
+    single ``samples_per_script`` that applies uniformly to all scripts assigned
+    to the worker, we take the *maximum* allocation across the worker's scripts
+    from the distribution.  This guarantees that every script reaches at least
+    its target; any marginal over-generation (at most 1 image per script when
+    the remainder is distributed unevenly) is negligible.
+
+    Previously the code always used ``distribution[scripts[0]]`` regardless of
+    which scripts were actually assigned to the worker.  That caused scripts that
+    did not happen to be ``scripts[0]`` to get the wrong (sometimes zero-inflated)
+    target when the first script received a remainder +1 bonus.
+
+    Args:
+        worker_scripts: Scripts assigned to this worker process.
+        distribution: Full per-script allocation from ``_compute_distribution``.
+
+    Returns:
+        The samples_per_script value for this worker.
+    """
+    if not worker_scripts:
+        return 0
+    return max(distribution.get(script, 0) for script in worker_scripts)
+
+
 def _run_workers(
     args: argparse.Namespace,
     scripts: list[str],
-    samples_per_script: int,
+    distribution: dict[str, int],
     split_registry_path: Path,
 ) -> list[dict[str, Any]]:
     """Dispatch generation work to single or multiple worker processes.
@@ -607,7 +751,9 @@ def _run_workers(
     Args:
         args: Parsed command-line arguments.
         scripts: List of script codes to generate.
-        samples_per_script: Number of samples per script.
+        distribution: Per-script allocation from ``_compute_distribution``.
+            Each worker receives the correct ``samples_per_script`` value
+            derived from its own assigned scripts, not a single global value.
         split_registry_path: Path to the split registry JSONL file.
 
     Returns:
@@ -615,7 +761,10 @@ def _run_workers(
     """
     all_stats: list[dict[str, Any]] = []
 
+    fail_on_corpus = getattr(args, "fail_on_corpus_error", False)
+
     if args.workers == 1:
+        samples_per_script = _samples_per_script_for_worker(scripts, distribution)
         result = _generate_worker_batch(
             worker_id=0,
             scripts=scripts,
@@ -624,6 +773,7 @@ def _run_workers(
             seed=args.seed,
             augmenter=args.augmenter,
             split_registry_path=str(split_registry_path),
+            fail_on_corpus_error=fail_on_corpus,
         )
         all_stats.append(result)
         return all_stats
@@ -639,6 +789,13 @@ def _run_workers(
         for worker_id, worker_scripts in enumerate(scripts_per_worker):
             if not worker_scripts:
                 continue
+            # Fix: derive samples_per_script from the actual distribution for
+            # this worker's scripts, not a single global value taken from
+            # scripts[0] which may have a remainder +1 that does not apply to
+            # all workers.
+            samples_per_script = _samples_per_script_for_worker(
+                worker_scripts, distribution
+            )
             future = executor.submit(
                 _generate_worker_batch,
                 worker_id=worker_id,
@@ -648,6 +805,7 @@ def _run_workers(
                 seed=args.seed,
                 augmenter=args.augmenter,
                 split_registry_path=str(split_registry_path),
+                fail_on_corpus_error=fail_on_corpus,
             )
             futures.append(future)
 
@@ -737,14 +895,24 @@ def main() -> int:
     args = _parse_main_args()
     _setup_logging(args)
 
-    # Parse scripts
-    scripts = ALL_SCRIPTS
-    if args.scripts:
-        scripts = [s.strip() for s in args.scripts.split(",")]
+    # --resume-from-audit implies --resume (skip existing files on disk)
+    if args.resume_from_audit:
+        args.resume = True
+
+    # Parse scripts (and per-script targets) from audit or command line
+    audit_distribution: dict[str, int] | None = None
+    if args.resume_from_audit:
+        scripts, audit_distribution = _load_audit_distribution(
+            args.resume_from_audit, args.total_images
+        )
+    else:
+        scripts = ALL_SCRIPTS
+        if args.scripts:
+            scripts = [s.strip() for s in args.scripts.split(",")]
 
     # Dry run
     if args.dry_run:
-        distribution = _compute_distribution(args.total_images, scripts)
+        distribution = audit_distribution or _compute_distribution(args.total_images, scripts)
         _show_distribution_plan(distribution, args.output_dir, args.seed, args.workers)
         return 0
 
@@ -755,7 +923,12 @@ def main() -> int:
         if existing_count > 0:
             print(f"Found {existing_count:,} existing samples. Resuming...")
 
-    remaining = max(0, args.total_images - existing_count)
+    if audit_distribution:
+        # In audit-guided mode, remaining is the sum of per-script deficits
+        remaining = sum(audit_distribution.values())
+    else:
+        remaining = max(0, args.total_images - existing_count)
+
     if remaining == 0:
         print("Generation already complete!")
         return 0
@@ -790,12 +963,23 @@ def main() -> int:
     all_stats: list[dict[str, Any]] = []
     chunk_idx = 0
 
-    while True:
-        # Re-count existing images each iteration for accurate remaining
-        current_count = _check_resume(args.output_dir)
-        remaining = max(0, args.total_images - current_count)
+    # Track the audit-guided per-script budget across chunks.
+    # We copy it so we can decrement each script's remaining budget as chunks complete.
+    audit_budget: dict[str, int] | None = dict(audit_distribution) if audit_distribution else None
 
-        if remaining == 0:
+    while True:
+        if audit_budget is not None:
+            # Audit-guided mode: remaining is total still-needed across scripts.
+            # Prune scripts that have been satisfied.
+            audit_budget = {s: n for s, n in audit_budget.items() if n > 0}
+            scripts = list(audit_budget.keys())
+            remaining = sum(audit_budget.values())
+        else:
+            # Normal mode: re-count images on disk.
+            current_count = _check_resume(args.output_dir)
+            remaining = max(0, args.total_images - current_count)
+
+        if remaining == 0 or not scripts:
             break
 
         # Determine this chunk's size
@@ -804,13 +988,27 @@ def main() -> int:
         else:
             chunk_total = remaining
 
-        # Compute per-script distribution for this chunk
-        chunk_distribution = _compute_distribution(chunk_total, scripts)
-        # Note: Using first script's count for all workers; may generate
-        # up to (num_scripts - 1) extra images due to remainder distribution
-        chunk_per_script = chunk_distribution[scripts[0]]
+        # Compute per-script distribution for this chunk.
+        if audit_budget is not None:
+            # Proportionally scale the audit budget down to this chunk's size.
+            total_needed = sum(audit_budget.values())
+            scale = chunk_total / total_needed if total_needed > 0 else 1.0
+            chunk_distribution = {
+                s: max(1, round(n * scale)) for s, n in audit_budget.items()
+            }
+            # Correct for rounding so chunk_distribution sums to chunk_total exactly.
+            diff = chunk_total - sum(chunk_distribution.values())
+            if diff != 0:
+                adj_script = max(chunk_distribution, key=lambda k: chunk_distribution[k])
+                chunk_distribution[adj_script] += diff
+        else:
+            # Each script receives base_count or base_count+1 images so that the
+            # chunk total is exact.  Pass the full distribution dict to _run_workers
+            # so each worker derives the correct samples_per_script for its own
+            # assigned scripts instead of blindly using scripts[0]'s allocation.
+            chunk_distribution = _compute_distribution(chunk_total, scripts)
 
-        if chunk_per_script == 0:
+        if chunk_total == 0 or not any(chunk_distribution.values()):
             break
 
         # Offset seed per chunk so we don't regenerate identical images
@@ -819,24 +1017,40 @@ def main() -> int:
         chunk_args.seed = chunk_seed
 
         if use_chunking:
+            progress_of = (
+                f"{sum(audit_distribution.values() if audit_distribution else []):,} remaining"
+                if audit_budget is not None
+                else f"{current_count:,}/{args.total_images:,} complete"
+            )
             print(
                 f"\n--- Chunk {chunk_idx + 1}: generating {chunk_total:,} images "
-                f"({current_count:,}/{args.total_images:,} complete) ---"
+                f"({progress_of}) ---"
             )
 
         chunk_stats = _run_workers(
-            chunk_args, scripts, chunk_per_script, split_registry_path
+            chunk_args, scripts, chunk_distribution, split_registry_path
         )
         _merge_stats(all_stats, chunk_stats)
 
         chunk_generated = sum(s.get("generated", 0) for s in chunk_stats)
         chunk_failed = sum(s.get("failed", 0) for s in chunk_stats)
 
+        # In audit-guided mode, reduce each script's budget by what was generated.
+        if audit_budget is not None:
+            for s in list(chunk_distribution.keys()):
+                script_generated = sum(
+                    w.get("per_script", {}).get(s, 0) for w in chunk_stats
+                )
+                audit_budget[s] = max(0, audit_budget.get(s, 0) - script_generated)
+
         if use_chunking:
             elapsed_so_far = time.time() - start_time
             total_on_disk = _check_resume(args.output_dir)
             rate = total_on_disk / elapsed_so_far if elapsed_so_far > 0 else 0
-            still_remaining = max(0, args.total_images - total_on_disk)
+            if audit_budget is not None:
+                still_remaining = sum(v for v in audit_budget.values() if v > 0)
+            else:
+                still_remaining = max(0, args.total_images - total_on_disk)
             eta_s = still_remaining / rate if rate > 0 else 0
             print(
                 f"  Chunk done: +{chunk_generated:,} generated, "

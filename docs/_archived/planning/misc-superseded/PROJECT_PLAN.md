@@ -3,6 +3,7 @@ schema_type: planning
 title: "Project A: Image Preprocessing & IQA Gateway - Project Plan"
 description: "Comprehensive project plan for Project A with RAG Pipeline architecture,
   teacher-student ResNet IQA, and detailed sprint breakdowns for all 6 phases"
+superseded_by: "MASTER_PROJECT_PLAN.md"
 tags:
   - planning
   - rag_pipeline
@@ -21,6 +22,10 @@ purpose: "Document the complete implementation roadmap for Project A from Phase 
 component: "Strategy"
 source: "Merged from remote branch claude/update-root-project-plan-011NESKE9dRWrXSMWEqoDi9L"
 ---
+
+> ⚠️ **SUPERSEDED** — This document reflects the original Phase 0–9 structure and the ResNet-based
+> ML IQA architecture. The current master plan is
+> [MASTER_PROJECT_PLAN.md](MASTER_PROJECT_PLAN.md). Retain for historical context only.
 
 **Project**: Project A - Image Preprocessing Detection & Quality Assessment for RAG Applications
 **Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues,

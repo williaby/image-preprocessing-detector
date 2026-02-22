@@ -9,6 +9,8 @@ tags:
 title: 'Model Card: IQA ResNet-18 Student'
 ---
 
+> ⚠️ **DEPRECATED** — This model (`iqa_resnet18_student_v1.0.0`) has been superseded by **MobileNetV4-Conv-S** as the production student model (Phase 2+, Stream 4C). The ResNet-18 student was trained for Phase 3 and is no longer part of the active pipeline. See [`docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) for the current architecture.
+
 ## Overview
 
 | Field | Value |

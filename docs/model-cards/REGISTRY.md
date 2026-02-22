@@ -58,13 +58,17 @@ Models that are trained and ready for production deployment.
 
 | Model ID | Architecture | Status | Priority | Phase | Card |
 |----------|--------------|--------|----------|-------|------|
-| `layout_yolov10_doclaynet_v1.0.0` | YOLOv10-doc | ✅ Pretrained | P1 | 2 | [Link](production/layout_yolov10_doclaynet.md) |
+| `docling-layout-egret-xlarge` | docling-layout (egret-xlarge) | ✅ Pretrained | P1 | 2 | — |
+| `docling-layout-heron` | docling-layout (heron) | ✅ Pretrained | P1 | 2 | — |
+| `layout_yolov10_doclaynet_v1.0.0` | YOLOv10-doc | ⚠️ Deprecated | P3 | 2 | [Model Card](production/layout_yolov10_doclaynet.md) |
 
 **Capabilities:**
 
 - 11 DocLayNet classes: Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title
 - Performance: 85+ FPS, 70-80% mAP
 - No additional training required
+- **Current models**: `docling-layout-egret-xlarge` (accuracy) / `docling-layout-heron` (speed)
+- **Deprecated**: `layout_yolov10_doclaynet_v1.0.0` — superseded by Docling layout models
 
 ---
 
@@ -293,7 +297,7 @@ Mapping models to detection taxonomy categories (from [detection-taxonomy.md](..
          ↓                                 ↓
 ┌─────────────────┐              ┌─────────────────┐
 │ Classical IQA   │ (P0)         │  Layout-Lite    │ (P1)
-│ (8 detectors)   │              │  (YOLOv10-doc)  │
+│ (8 detectors)   │              │ (docling-layout)│
 └────────┬────────┘              └────────┬────────┘
          │                                │
          └────────────┬───────────────────┘

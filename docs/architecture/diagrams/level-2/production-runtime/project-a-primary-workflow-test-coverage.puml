@@ -16,7 +16,7 @@ skinparam note {
 start
 
 partition "Input" {
-  :Raw Document\n(PDF / Image);
+  :Raw Document\n(any format);
   note right #LightGreen
     **Tests:**
     • test_image_loader.py

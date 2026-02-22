@@ -289,7 +289,7 @@ q-doc/
 |--------|------------|
 | **Training Value** | HIGH - Quality-annotated dataset for IQA model training |
 | **Unique Characteristics** | Camera-captured documents with quality scores |
-| **Complementary Datasets** | [DIQA-5000](diqa-5000.md), [OHR-Bench](ohr-bench.md), [IQA-Phase7-165K](iqa-phase7-165k.md) |
+| **Complementary Datasets** | [DIQA-5000](diqa-5000.md), [OHR-Bench](ohr-bench.md), ~~[IQA-Phase7-165K](iqa-phase7-165k.md)~~ *(EXCLUDED — dataset FLAWED; see BATCH_1_IQA_SUMMARY.md §5)* |
 | **Benchmark Suitability** | HIGH - Pre-split train/test with quality scores |
 | **Known Limitations** | Unknown license, limited documentation, smaller than DIQA-5000 |
 

@@ -22,7 +22,7 @@ The Synthetic Data Generation workstream provides **controlled document degradat
 
 **Technology**: Microsoft Genalog (synthetic analog document degradation) + custom multi-task generation pipeline with hybrid augmentation (DPI tiers, color modes, document aging, skew/orientation augmentation)
 
-**Status**: Infrastructure complete (~450 lines), Genalog integration in progress, multi-task generation pipeline active for synth-multiscript-250K
+**Status**: Infrastructure complete (~450 lines), Genalog integration in progress, multi-task generation pipeline complete for synth-multiscript-v3 (350,012 images on GCS — ⚠️ imbalanced distribution; rebalancing needed)
 
 ---
 
@@ -411,7 +411,7 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
            ├─ Measure char_height, record color_mode, DPI tier
            └─ Save (augmented_img, multi_task_metadata)
 
-4. "Adjust, Not Redesign" Strategy (synth-multiscript-250K)
+4. "Adjust, Not Redesign" Strategy (synth-multiscript-v3, 350,012 images)
    ├─ Generate base images ONCE
    ├─ Derive multi-task training views from same base
    └─ Add orientation, skew, resolution views without regeneration

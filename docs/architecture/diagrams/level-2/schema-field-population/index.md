@@ -62,7 +62,7 @@ The Layer 2 enrichment schema v2.1.0 fields are populated through an 8-pass sequ
 |------|------|-----------|--------|---------------|
 | **0** | Synthetic (exact) | 1.0 | By construction | `synthetic/generator.py` + `schema_adapter.py` |
 | **1** | Annotation-derived | 0.95 | Dataset configs, COCO labels | `annotate_base_metadata.py` (DATASET_CONFIGS) |
-| **2** | ML Model inference | per-sample | Neural network predictions | DocLayout-YOLO, DeQA ensemble, SigLIP 2, OpenLID-v2 |
+| **2** | ML Model inference | per-sample | Neural network predictions | docling-layout, DeQA ensemble, SigLIP 2, OpenLID-v2 |
 | **3** | Heuristic | 0.5-0.8 | Classical CV, rule-based | `iqa_classical.py` (8 detectors), `layout_lite/` (6 detectors) |
 
 **Priority Rule**: Higher-tier data is NEVER overwritten by lower-tier data. Tier 0 > Tier 1 > Tier 2 > Tier 3.
@@ -107,7 +107,7 @@ The Layer 2 enrichment schema v2.1.0 fields are populated through an 8-pass sequ
 |-------|:---:|:---:|:---:|:---:|--------|
 | `text_density` | `schema_adapter.py` | `annotate_base_metadata.py` | -- | `layout_lite/analyzer.py` | IMPLEMENTED |
 | `layout_type` | derived from blocks | `annotate_base_metadata.py` | -- | `layout_lite/column_detector.py` | IMPLEMENTED |
-| `element_types` | from text blocks | from COCO annotations | DocLayout-YOLO | -- | IMPLEMENTED |
+| `element_types` | from text blocks | from COCO annotations | docling-layout | -- | IMPLEMENTED |
 
 ### QualityInfo (2 fields)
 
@@ -132,11 +132,11 @@ The Layer 2 enrichment schema v2.1.0 fields are populated through an 8-pass sequ
 
 | Field | Tier 0 (Synthetic) | Tier 1 (Annotation) | Tier 2 (Model) | Tier 3 (Heuristic) | Status |
 |-------|:---:|:---:|:---:|:---:|--------|
-| `has_table` | False (synthetic) | `annotate_base_metadata.py` (COCO) | DocLayout-YOLO | `layout_lite/table_detector.py` | IMPLEMENTED |
-| `has_formula` | False | COCO annotations | DocLayout-YOLO | -- | IMPLEMENTED |
+| `has_table` | False (synthetic) | `annotate_base_metadata.py` (COCO) | docling-layout | `layout_lite/table_detector.py` | IMPLEMENTED |
+| `has_formula` | False | COCO annotations | docling-layout | -- | IMPLEMENTED |
 | `has_handwriting` | False | config-driven | SigLIP 2 (Group 4) | -- | IMPLEMENTED (T0-1); PLANNED (T2) |
 | `has_signature` | False | config-driven | -- | -- | IMPLEMENTED (T0-1) |
-| `has_figure` | False | COCO annotations | DocLayout-YOLO | `layout_lite/figure_detector.py` | IMPLEMENTED |
+| `has_figure` | False | COCO annotations | docling-layout | `layout_lite/figure_detector.py` | IMPLEMENTED |
 | `content_flags_tier` | "tier_0" | "tier_1" | "tier_2" | "tier_3" | IMPLEMENTED |
 | `content_flags_source` | "synthetic_generator" | "dataset_config" / "coco" | "doclayout_yolo" | "layout_lite" | IMPLEMENTED |
 
@@ -254,7 +254,7 @@ The Layer 2 enrichment schema v2.1.0 fields are populated through an 8-pass sequ
 
 | Field | Tier 0 (Synthetic) | Tier 1 (Annotation) | Tier 2 (Model) | Tier 3 (Heuristic) | Status |
 |-------|:---:|:---:|:---:|:---:|--------|
-| `class_name` | `schema_adapter.py` | COCO annotation parsers | DocLayout-YOLO | `layout_lite/analyzer.py` | IMPLEMENTED |
+| `class_name` | `schema_adapter.py` | COCO annotation parsers | docling-layout | `layout_lite/analyzer.py` | IMPLEMENTED |
 | `bbox` | from text blocks | from COCO | YOLO output | -- | IMPLEMENTED |
 | `confidence` | 1.0 | 1.0 | per-detection | heuristic | IMPLEMENTED |
 | `source` | "synthetic" | source dataset name | "doclayout_yolo" | "layout_lite" | IMPLEMENTED |
@@ -281,7 +281,7 @@ Pass 1: Base Metadata Annotation (Tier 0-2)
   Fields: capture_method, resolution, domain, structure, quality,
           content_flags, layout_detections, has_code, effective_dpi,
           color_mode, document_age (known datasets)
-  Models: DocLayout-YOLO (layout), config-driven heuristics
+  Models: docling-layout (layout), config-driven heuristics
   Runtime: ~500ms/image (with GPU layout inference)
 
 Pass 2: Language Enrichment (Tier 0-2)
@@ -425,7 +425,7 @@ This section maps population scripts to implementation files with LOC counts.
 | **detection/iqa_classical.py** | 8 classical CV detectors (< 25ms combined); Tier 3 fallback for quality/geometric fields |
 | **detection/layout_lite/** | 6 lightweight detectors; Tier 3 fallback for structure/content/physical fields |
 | **detection/iqa_ml.py** | ResNet teacher-student ML IQA; Tier 2 quality scores (NOT WIRED to Layer 2) |
-| **annotation/enrichment/providers/** | Runtime enrichment providers (DocLayout-YOLO, SigLIP 2, OpenLID-v2) |
+| **annotation/enrichment/providers/** | Runtime enrichment providers (docling-layout, SigLIP 2, OpenLID-v2) |
 | **standardize_layout_labels.py** | Hub-and-spoke taxonomy mapping (57 classes, 6 schemas) |
 | **build_training_labels.py** | Layer 3 assembly: anchor score priority chain + 45-dim IQA vector |
 

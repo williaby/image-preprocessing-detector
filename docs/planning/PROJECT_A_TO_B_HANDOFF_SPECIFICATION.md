@@ -15,6 +15,9 @@ source: CLAUDE.md
 
 **Date**: 2026-01-12
 
+> **Related reference**: [docs/reference/DOCLING_CONFIGURATION_REFERENCE.md](../reference/DOCLING_CONFIGURATION_REFERENCE.md)
+> — complete docling adjustment levers, CLI flags, and `DoclingRoutingParams` coverage matrix.
+
 ---
 
 ## Executive Summary

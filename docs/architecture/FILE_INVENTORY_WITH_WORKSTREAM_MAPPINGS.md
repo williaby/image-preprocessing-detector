@@ -28,23 +28,42 @@ title: Complete File Inventory with Workstream Mappings
 
 ## Quick Summary
 
+> **Last Updated**: 2026-02-21. Stream 4C scripts added (WS3); new src modules added (WS1, WS2); model card deprecation completed; superseded planning docs archived.
+
 | Category | Files | Total LOC | Status |
 |----------|-------|-----------|--------|
-| **WS1: Production Runtime** | 44 | 16,910 | ✅ Assigned |
-| **WS2: Model Training** | 16 | 7,058 | ✅ Assigned |
-| **WS3: Data Preparation** | 8 | 4,066 | ✅ Assigned |
-| **WS4: Pseudo-Labeling** | 8 | 2,947 | ✅ Assigned |
+| **WS1: Production Runtime** | 47+ | 16,910+ | ⚠️ Partial — border_removal, perspective_correction, siglip2_multitask, docling_router added; full recount needed |
+| **WS2: Model Training** | 11+ | ~3,500 | ⚠️ Partial — siglip2_multitask.yaml added; legacy scripts deleted |
+| **WS3: Data Preparation** | 20+ | 4,066+ | ⚠️ Partial — Stream 4C scripts (12 new) added; annotation/ package (~60 files) still untracked |
+| **WS4: Pseudo-Labeling** | 3 | ~2,947 | ⚠️ Stale — modal scripts may not exist in repo |
 | **WS5: Labeling & Benchmarking** | 0 | 0 | ⚠️ Planned (not implemented) |
 | **WS6: Model Arena** | 33 | 6,340 | ✅ Assigned |
 | **WS7: Monitoring & Drift** | 7 | 5,348 | ✅ Assigned |
-| **WS8: Synthetic Generation** | 5+ | ~1,500+ | ✅ Assigned (expanded with multi-task additions) |
+| **WS8: Synthetic Generation** | 11 | ~1,500+ | ⚠️ Stale — package moved from augmentation/ to synthetic/ |
 | **NA - Tests** | ~300 | ~15,000 | ℹ️ Excluded from LOC |
+| **NA - Architecture Diagrams** | 153 | ~8,000 | ℹ️ Excluded from LOC — see dedicated section below |
 | **NA - Documentation** | ~200 | ~8,000 | ℹ️ Excluded from LOC |
 | **NA - Configuration** | ~50 | ~2,000 | ℹ️ Excluded from LOC |
 | **NA - Infrastructure** | ~100 | ~3,000 | ℹ️ Excluded from LOC |
 | **Unassigned** | ~30 | ~500 | ⚠️ Needs review |
 
-**Total**: 1,292 files, ~72,000 lines (entire codebase including tests, docs, configs)
+### Intentionally Excluded Directories
+
+The following directories are **by design not tracked** in workstream diagrams. Files in these directories will always appear in "in repo, not in inventory" comparisons — that is expected and correct.
+
+| Directory | Count | Rationale |
+|-----------|-------|-----------|
+| `fonts/synthetic-gen/` | ~148 | Static font assets for WS8 generator; not pipeline source code |
+| `.claude/` agents, commands, skills | ~97 | Meta-tooling (Claude Code agents), not product pipeline code |
+| `data/test_fixtures/` | ~48 | Test support data, excluded by testing convention |
+| `metadata_registry/aggregates/` | ~57 | Generated artifacts from `aggregate_layer2_metadata.py`; not source files |
+| `.github/workflows/` | ~18 | CI/CD infra; tracked in deployment context, not pipeline workstreams |
+| `docs/_archived/` | ~71 | Explicitly retired docs; no workstream mapping needed |
+| `docs/planning/`, `docs/datasets/`, `docs/handoff/` | ~100+ | Documentation support files, not pipeline source code |
+| `Dockerfile*`, `docker-compose.yaml`, `deployment/` | ~20 | Container/deployment infra; tracked separately |
+| Linting/tooling configs (`.pre-commit-config.yaml`, `pyrightconfig.json`, etc.) | ~20 | Tooling config, not pipeline logic |
+
+**Total**: ~1,679 files (excluding tests/ and tmp_cleanup/), ~72,000+ lines
 
 ---
 
@@ -96,8 +115,9 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/detection/advanced_detectors.py | 892 | Additional quality detectors |
 | src/image_preprocessing_detector/detection/discrepancy.py | 786 | Classical vs ML discrepancy detection |
 | src/image_preprocessing_detector/detection/orientation_detector.py | 608 | Page orientation detection (90°, 180°, 270°) |
+| src/image_preprocessing_detector/detection/siglip2_multitask.py | TBD | SigLIP 2 NAFlex multi-task inference wrapper; lazy-loaded, device-aware; 8 production heads (IQA ×3, script, source, orientation, shadow, warping) |
 
-**Subtotal**: 7,308 lines
+**Subtotal**: 7,308+ lines (LOC recount needed)
 
 ---
 
@@ -105,7 +125,7 @@ title: Complete File Inventory with Workstream Mappings
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| src/image_preprocessing_detector/detection/doclayout_yolo.py | 801 | DocLayout-YOLO integration (11 classes) |
+| src/image_preprocessing_detector/detection/doclayout_yolo.py | 801 | docling-layout integration (11 classes) |
 | src/image_preprocessing_detector/detection/layout_lite/**init**.py | 117 | Module exports |
 | src/image_preprocessing_detector/detection/layout_lite/analyzer.py | 138 | Layout-lite orchestrator |
 | src/image_preprocessing_detector/detection/layout_lite/column_detector.py | 144 | Column detection |
@@ -114,7 +134,7 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/detection/layout_lite/watermark_detector.py | 96 | Watermark detection |
 | src/image_preprocessing_detector/detection/layout_lite/background_detector.py | 101 | Colorful background detection |
 | src/image_preprocessing_detector/detection/layout_lite/fuzzy_scan_detector.py | 94 | Fuzzy scan detection |
-| src/image_preprocessing_detector/detection/layout_lite/doclayout_integration.py | 690 | DocLayout-YOLO wrapper |
+| src/image_preprocessing_detector/detection/layout_lite/doclayout_integration.py | 690 | docling-layout wrapper |
 | src/image_preprocessing_detector/detection/layout_lite/constants.py | 46 | Layout constants |
 | src/image_preprocessing_detector/detection/layout_lite/layout_types.py | 107 | Layout type enums |
 
@@ -122,18 +142,20 @@ title: Complete File Inventory with Workstream Mappings
 
 ---
 
-### Correction (1,284 LOC)
+### Correction (1,284+ LOC)
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
 | src/image_preprocessing_detector/correction/**init**.py | 62 | Module exports |
 | src/image_preprocessing_detector/correction/corrections.py | 1,222 | Deskew, CLAHE, sharpening, denoising (8 correction classes) |
+| src/image_preprocessing_detector/correction/border_removal.py | TBD | Scanner/camera border removal via Otsu + morphology; retains ≥70% area |
+| src/image_preprocessing_detector/correction/perspective_correction.py | TBD | Perspective distortion fix via Canny + quad detection + homography; blocks if warping_score > 0.75 |
 
-**Subtotal**: 1,284 lines
+**Subtotal**: 1,284+ lines (LOC recount needed)
 
 ---
 
-### Metrics & Routing (1,558 LOC)
+### Metrics & Routing (1,558+ LOC)
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
@@ -141,8 +163,9 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/metrics/dqs_calculator.py | 1,369 | Document Quality Score calculation (degradation + complexity) |
 | src/image_preprocessing_detector/routing/**init**.py | 10 | Module exports |
 | src/image_preprocessing_detector/routing/recommendation_engine.py | 140 | OCR routing recommendation (4 strategies) |
+| src/image_preprocessing_detector/routing/docling_router.py | TBD | Docling-specific routing: 6 rules (text layer quality → script-aware → VLM → table mode → enrichments → PSM) |
 
-**Subtotal**: 1,568 lines
+**Subtotal**: 1,568+ lines (LOC recount needed)
 
 ---
 
@@ -168,7 +191,49 @@ title: Complete File Inventory with Workstream Mappings
 
 **Subtotal**: 931 lines
 
-**Note**: device_orchestrator.py not found in current codebase (may be integrated into iqa_ml.py or planned)
+**Note**: `orchestration/device_orchestrator.py` now EXISTS at `src/image_preprocessing_detector/orchestration/device_orchestrator.py` and `src/image_preprocessing_detector/orchestration/modal_client.py`. Also add to WS1: `src/image_preprocessing_detector/utils/budget_enforcement.py`.
+
+**Additional WS1 files found in repo but not yet in inventory** (needs LOC recount):
+
+| File Path | Suggested WS1 Sub-Area |
+|-----------|------------------------|
+| src/image_preprocessing_detector/orchestration/device_orchestrator.py | Device Orchestration |
+| src/image_preprocessing_detector/orchestration/modal_client.py | Device Orchestration |
+| src/image_preprocessing_detector/utils/budget_enforcement.py | Device Orchestration |
+| src/image_preprocessing_detector/detection/deskew_pipeline.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/shadow_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/warping_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/code_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/blank_page_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/handwriting_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/script_detector.py | Detection - Text Gate & IQA |
+| src/image_preprocessing_detector/detection/table_complexity.py | Detection - Layout Lite |
+| src/image_preprocessing_detector/routing/script_router.py | Metrics & Routing |
+| src/image_preprocessing_detector/routing/psm_recommender.py | Metrics & Routing |
+| src/image_preprocessing_detector/metrics/calibration.py | Metrics & Routing |
+| src/image_preprocessing_detector/classification/degradation_classifier.py | Classification |
+| src/image_preprocessing_detector/classification/document_source_classifier.py | Classification |
+| src/image_preprocessing_detector/classification/text_layer_analyzer.py | Classification |
+| src/image_preprocessing_detector/utils/datetime_compat.py | Shared Utility |
+| src/image_preprocessing_detector/utils/log_config.py | Shared Utility |
+| src/image_preprocessing_detector/utils/metadata_generator.py | Shared Utility |
+| src/image_preprocessing_detector/utils/model_config.py | Shared Utility |
+| src/image_preprocessing_detector/utils/path_security.py | Shared Utility |
+| src/image_preprocessing_detector/schema.py | WS1 - Output Schema |
+| src/image_preprocessing_detector/cli.py | WS1 - Entry Point |
+| src/image_preprocessing_detector/cli_layout.py | WS1 - Entry Point |
+| src/image_preprocessing_detector/core/config.py | WS1 - Core Config |
+| src/image_preprocessing_detector/core/exceptions.py | WS1 - Core Config |
+| src/image_preprocessing_detector/api/app.py | WS1 - API |
+| src/image_preprocessing_detector/api/config.py | WS1 - API |
+| src/image_preprocessing_detector/api/middleware.py | WS1 - API |
+| src/image_preprocessing_detector/api/models.py | WS1 - API |
+| src/image_preprocessing_detector/api/routes/batch.py | WS1 - API |
+| src/image_preprocessing_detector/api/routes/health.py | WS1 - API |
+| src/image_preprocessing_detector/api/routes/process.py | WS1 - API |
+| src/image_preprocessing_detector/logging/errors.py | WS1 - Logging |
+| src/image_preprocessing_detector/logging/outcomes.py | WS1 - Logging |
+| `src/image_preprocessing_detector/pipeline/__init__.py` | WS1 - Pipeline |
 
 **WS1 Total**: 16,910 lines ✅ (matches LOC extraction)
 
@@ -180,50 +245,67 @@ title: Complete File Inventory with Workstream Mappings
 **Total LOC**: 7,058
 **Level 2 Doc**: [model-training/index.md](diagrams/level-2/model-training/index.md)
 
-### Training Scripts (1,833 LOC) - LEGACY
+### Training Scripts — CURRENT (in repo)
 
-> **NOTE**: These ResNet teacher/student training scripts are legacy. The new two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). New training scripts are planned per [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). Training data will come from 10 purpose-built datasets (~503K total images) per [DATASET_DIVERSITY_REQUIREMENTS.md](../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
+> **NOTE**: The two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| modal/train_phase2_iqa.py | 707 | Legacy: Teacher training (ResNet-50, 50 epochs) |
-| modal/train_student_distillation.py | 779 | Legacy: Student distillation (ResNet-18, 30 epochs) |
-| modal/export_phase7_onnx.py | 347 | ONNX export + validation |
-
-**Subtotal**: 1,833 lines
+| modal/train_siglip2_multitask.py | TBD | SigLIP 2 multi-task training (Stream 4C); two-phase: frozen backbone → fine-tune w/ PCGrad |
+| modal/train_siglip2_iqa.py | TBD | SigLIP 2 IQA training |
+| modal/train_siglip2_iqa_v2.py | TBD | SigLIP 2 IQA v2 training |
+| modal/train_skew_estimator.py | TBD | MobileNetV4 skew estimator training |
+| modal/train_phase3_doclayout_yolo.py | TBD | docling-layout fine-tuning |
+| modal/train_phase6_layout_lite.py | TBD | Layout-lite training |
+| config/siglip2_multitask.yaml | TBD | SigLIP 2 model architecture, head configs, training hyperparams (phase 1/2 LR, loss weights, EMA, mixed precision, go/no-go thresholds) |
 
 ---
 
-### Training Infrastructure (1,938 LOC)
+### Training Scripts — LEGACY (❌ NOT IN REPO — deleted)
 
-| File Path | LOC | Workflow Step |
-|-----------|-----|---------------|
-| src/image_preprocessing_detector/training/**init**.py | 45 | Module exports |
-| src/image_preprocessing_detector/training/teacher_trainer.py | 586 | Teacher training loop |
-| src/image_preprocessing_detector/training/student_trainer.py | 664 | Student training loop |
-| src/image_preprocessing_detector/training/distillation_loss.py | 248 | KL divergence + MSE loss |
-| src/image_preprocessing_detector/training/generate_soft_labels.py | 313 | Generate soft targets from teacher |
-| src/image_preprocessing_detector/training/checkpoint_utils.py | 82 | Checkpoint save/load utilities |
+> These files were in a previous inventory but no longer exist in the repository.
 
-**Subtotal**: 1,938 lines
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~modal/train_phase2_iqa.py~~ | 707 | ❌ Deleted — replaced by train_siglip2_iqa.py |
+| ~~modal/train_student_distillation.py~~ | 779 | ❌ Deleted — superseded |
+| ~~modal/export_phase7_onnx.py~~ | 347 | ❌ Deleted |
 
 ---
 
-### Model Architectures (3,287 LOC)
+### Training Infrastructure (❌ NOT IN REPO — src/training/ package deleted)
+
+> The `src/image_preprocessing_detector/training/` package no longer exists. Training logic lives in modal scripts.
+
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~src/image_preprocessing_detector/training/teacher_trainer.py~~ | 586 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/training/student_trainer.py~~ | 664 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/training/distillation_loss.py~~ | 248 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/training/generate_soft_labels.py~~ | 313 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/training/checkpoint_utils.py~~ | 82 | ❌ Deleted |
+
+---
+
+### Model Architectures (in repo)
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| src/image_preprocessing_detector/models/**init**.py | 86 | Module exports |
-| src/image_preprocessing_detector/models/resnet_teacher.py | 293 | Legacy: ResNet-50 architecture (superseded by SigLIP 2 NAFlex) |
-| src/image_preprocessing_detector/models/resnet_student.py | 277 | Legacy: ResNet-18 architecture (superseded by MobileNetV4-Conv-S) |
-| src/image_preprocessing_detector/models/model_loader.py | 244 | Load models (ONNX, PyTorch, TorchScript) |
-| src/image_preprocessing_detector/models/model_optimizer.py | 1,435 | ONNX optimization, quantization |
-| src/image_preprocessing_detector/models/batch_inference.py | 622 | Batch inference utilities |
-| src/image_preprocessing_detector/models/loss_functions.py | 330 | MSE, BCE, composite losses |
+| src/image_preprocessing_detector/models/skew_estimator.py | TBD | MobileNetV4-Conv-S + 3 heads (orient, bins, regression) |
+| src/image_preprocessing_detector/models/onnx_runtime.py | TBD | ONNX Runtime inference wrapper |
 
-**Subtotal**: 3,287 lines
+### Model Architectures (❌ NOT IN REPO — legacy ResNet models deleted)
 
-**WS2 Total**: 7,058 lines ✅ (matches LOC extraction)
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~src/image_preprocessing_detector/models/resnet_teacher.py~~ | 293 | ❌ Deleted — superseded by SigLIP 2 NAFlex |
+| ~~src/image_preprocessing_detector/models/resnet_student.py~~ | 277 | ❌ Deleted — superseded by MobileNetV4-Conv-S |
+| ~~src/image_preprocessing_detector/models/model_loader.py~~ | 244 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/models/model_optimizer.py~~ | 1,435 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/models/batch_inference.py~~ | 622 | ❌ Deleted |
+| ~~src/image_preprocessing_detector/models/loss_functions.py~~ | 330 | ❌ Deleted |
+
+**WS2 Total**: Requires full recount (legacy scripts deleted; 6 new modal training scripts added)
 
 ---
 
@@ -236,15 +318,74 @@ title: Complete File Inventory with Workstream Mappings
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
 | scripts/download_all_datasets.py | 470 | Dataset collection orchestrator |
-| scripts/download_iqa_datasets.py | 79 | Download LIVE, CSIQ, DIQA-5000 |
 | scripts/download_phase3_datasets.py | 290 | Download OHR-Bench, phase-specific datasets |
 | scripts/download_table_datasets.py | 569 | Download TableBank, PubTabNet |
-| scripts/download_omnidocbench.py | 404 | Download OmniDocBench multi-task benchmark |
 | scripts/annotate_base_metadata.py | 1,235 | Layer 1 (Immutable) + Layer 2 (Enrichment) metadata |
 | scripts/build_training_labels.py | 590 | Layer 3 (Training) - 45-dim IQA vector, anchor scores |
 | scripts/validate_datasets.py | 429 | Dataset integrity validation |
 
-**WS3 Total**: 4,066 lines ✅ (matches LOC extraction)
+### Stream 4C — Multi-Task Dataset Preparation (⚠️ NOT IN PREVIOUS INVENTORY)
+
+These 10 scripts form the **Stream 4C dataset preparation sub-system** for SigLIP 2 multi-task training. They run in three logical stages: augmentation generation → label computation → manifest assembly/validation.
+
+**Stage 1: Augmentation Generation**
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| scripts/generate_v3_shadow_view.py | TBD | Synthesize 8K shadow images from v3 base (4 types: edge/cast/spotlight/scanner_lid) |
+| scripts/generate_v3_warping_view.py | TBD | Synthesize 5K warped images from v3 base (perspective/page_curl/fold) |
+| scripts/derive_v3_orientation_view.py | TBD | Extract non-Latin v3 images + fetch orientation labels from sidecars (≤20K synthetic) |
+| scripts/build_orientation_real_component.py | TBD | Download DocLayNet/RVL-CDIP PDFs from GCS, render pages, apply 4 rotations (≤30K real) |
+
+**Stage 2: Label Computation**
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| scripts/label_shadow_severity.py | TBD | Compute luminance-delta severity for sd7k/wsrd paired images; writes to L2 metadata |
+| scripts/label_warping_severity.py | TBD | Compute SSIM-based severity for warpdoc/wsrd/anyphotodoc6300/docalign12k; writes to L2 metadata |
+| scripts/harmonize_handwriting_labels.py | TBD | Assemble handwriting-presence manifest from IAM/FUNSD/HierText/COCO-Text/L2 DocLayout inference |
+| scripts/generate_multitask_labels.py | TBD | Run SigLIP 2 teacher in eval mode on unlabeled corpus → pseudo-labels for active learning |
+
+**Stage 3: Audit & Manifest Assembly**
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| scripts/audit_font_coverage.py | TBD | Verify synth-multiscript-v3 fonts meet ≥5 families/script; exits non-zero if under threshold |
+| scripts/audit_v3_per_script_counts.py | TBD | Count v3 images per script from GCS; compare vs target; generate resume-points for generator |
+| scripts/prepare_multitask_datasets.py | TBD | Main orchestrator: 6 Click sub-commands (script/orientation/source/shadow/warping/merge) + OOD leakage checks + ≤60% synthetic mixing enforcement |
+| scripts/evaluate_dataset_diversity.py | TBD | Dataset Diversity Report (DDR) generator; evaluates 14 dimensions, markdown reports, OOD checks |
+
+**Note**: `label_shadow_severity.py` and `label_warping_severity.py` write back into L2 metadata registry — see planned [L2 Metadata Enrichment diagram](../diagrams/level-2/data-preparation/).
+
+---
+
+### Scripts — ❌ NOT IN REPO
+
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~scripts/download_iqa_datasets.py~~ | 79 | ❌ Not found in repo |
+| ~~scripts/download_omnidocbench.py~~ | 404 | ❌ Not found in repo |
+
+### Large Annotation Package — ⚠️ NOT YET IN INVENTORY
+
+The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 LOC) is the primary WS3 implementation but was not tracked in the original inventory. Key sub-packages:
+
+| Sub-Package | Files | Purpose |
+|-------------|-------|---------|
+| annotation/parsers/correction/ | 8 | Dataset-specific correction parsers |
+| annotation/parsers/document/ | 10 | Document dataset parsers |
+| annotation/parsers/layout/ | 10 | Layout dataset parsers |
+| annotation/parsers/multilingual/ | 14 | Multilingual/script parsers |
+| annotation/parsers/handwriting/ | 9 | Handwriting dataset parsers |
+| annotation/parsers/quality/ | 5 | IQA quality parsers |
+| annotation/enrichment/ | 7 | Enrichment manager + providers |
+| annotation/schemas/ | 6 | Pydantic schemas |
+| annotation/workflow/ | 6 | Orchestration pipeline |
+| annotation/storage/ | 3 | Parquet storage |
+| annotation/integrity/ | 3 | Atomic writes + checksums |
+| annotation/monitoring/ | 2 | Metrics + logging |
+
+**WS3 Total**: Requires recount (annotation/ package not included in previous count)
 
 ---
 
@@ -256,13 +397,18 @@ title: Complete File Inventory with Workstream Mappings
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| modal/generate_pseudo_labels.py | 1,042 | 5-model ensemble pseudo-labeling on Modal |
-| modal/arena_benchmark.py | 419 | Model benchmarking infrastructure |
 | scripts/run_model_benchmark.py | 1,486 | Local benchmark execution |
+
+### WS4 Scripts — ❌ NOT IN REPO (verify)
+
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~modal/generate_pseudo_labels.py~~ | 1,042 | ❌ Not found in current repo listing |
+| ~~modal/arena_benchmark.py~~ | 419 | ❌ Not found in current repo listing |
 
 **Note**: `src/image_preprocessing_detector/labeling/ensemble/` not found in current codebase (may be integrated into arena/ or planned)
 
-**WS4 Total**: 2,947 lines ✅ (matches LOC extraction)
+**WS4 Total**: Requires recount (2 modal scripts absent from repo)
 
 ---
 
@@ -379,14 +525,49 @@ title: Complete File Inventory with Workstream Mappings
 **Total LOC**: ~1,500+ (expanded from 1,066 after multi-task additions to config.py, generator.py, augmentation_hybrid.py, schema_adapter.py, cli.py)
 **Level 2 Doc**: [synthetic-generation/index.md](diagrams/level-2/synthetic-generation/index.md)
 
+### WS8 Files — CURRENT (package moved from augmentation/ to synthetic/)
+
+> **Path correction**: The `augmentation/` package no longer exists. All synthetic generation code is in `src/image_preprocessing_detector/synthetic/`.
+
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| src/image_preprocessing_detector/augmentation/**init**.py | 36 | Public API exports |
-| src/image_preprocessing_detector/augmentation/genalog_config.py | 294 | Pydantic config models (blur, noise, morphological, bleed-through) |
-| src/image_preprocessing_detector/augmentation/genalog_degrader.py | 314 | Genalog wrapper (degradation application) |
-| benchmarks/adapters/synthetic_iqa_adapter.py | 422 | Synthetic benchmark adapter for Arena |
+| src/image_preprocessing_detector/synthetic/config.py | TBD | 7 DPI tiers, ColorMode enum, composition weights |
+| src/image_preprocessing_detector/synthetic/generator.py | TBD | Base image generation (per-script pool pruning; bug fixed 2026-02-09) |
+| src/image_preprocessing_detector/synthetic/augmentation.py | TBD | Standard degradation pipeline |
+| src/image_preprocessing_detector/synthetic/augmentation_fast.py | TBD | Fast augmentation variant |
+| src/image_preprocessing_detector/synthetic/augmentation_hybrid.py | TBD | Hybrid augmentation (AGED/HISTORICAL profiles) |
+| src/image_preprocessing_detector/synthetic/cli.py | TBD | CLI flags (--color-mode, --skew, --orientation) |
+| src/image_preprocessing_detector/synthetic/corpus.py | TBD | Text corpus management |
+| src/image_preprocessing_detector/synthetic/fonts.py | TBD | Font selection/loading |
+| src/image_preprocessing_detector/synthetic/renderer.py | TBD | Text rendering |
+| src/image_preprocessing_detector/synthetic/schema_adapter.py | TBD | Multi-task metadata (`metadata["data"]["multi_task"]`) |
+| src/image_preprocessing_detector/synthetic/validation.py | TBD | Output validation |
 
-**WS8 Total**: ~1,500+ lines (expanded with multi-task synthetic generation; LOC extraction pending recount)
+### Stream 4C Multi-Task Dataset Scripts (WS8 extension)
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| scripts/generate_base_dataset_v3.py | TBD | v3 base dataset generation (bug fixed: per-script dict) |
+| scripts/prepare_multitask_datasets.py | TBD | 6 sub-commands: script/orientation/source/shadow/warping/merge |
+| scripts/generate_v3_shadow_view.py | TBD | 8K shadow images (edge/cast/spotlight/scanner_lid) |
+| scripts/generate_v3_warping_view.py | TBD | 5K warped images (perspective/page_curl/fold) |
+| scripts/derive_v3_orientation_view.py | TBD | Non-Latin v3 orientation component |
+| scripts/build_orientation_real_component.py | TBD | DocLayNet/RVL-CDIP PDFs, 4 rotations |
+| scripts/label_shadow_severity.py | TBD | Shadow severity labeling for L2 |
+| scripts/label_warping_severity.py | TBD | Warping severity labeling for L2 |
+| scripts/generate_multitask_labels.py | TBD | Combined multi-task label generation |
+| scripts/evaluate_dataset_diversity.py | TBD | DDR evaluation script |
+
+### WS8 Files — ❌ NOT IN REPO (stale paths)
+
+| File Path | LOC | Status |
+|-----------|-----|--------|
+| ~~`src/image_preprocessing_detector/augmentation/__init__.py`~~ | 36 | ❌ Path wrong — now synthetic/ |
+| ~~src/image_preprocessing_detector/augmentation/genalog_config.py~~ | 294 | ❌ Path wrong — now synthetic/ |
+| ~~src/image_preprocessing_detector/augmentation/genalog_degrader.py~~ | 314 | ❌ Path wrong — now synthetic/ |
+| ~~benchmarks/adapters/synthetic_iqa_adapter.py~~ | 422 | ❌ Not found in repo |
+
+**WS8 Total**: Requires full recount (package path changed; 10+ new Stream 4C scripts added)
 
 ---
 
@@ -472,6 +653,267 @@ title: Complete File Inventory with Workstream Mappings
 
 ---
 
+## NA - Architecture Diagrams
+
+**Total Files**: 153 (as of 2026-02-21)
+**Reason**: Documentation assets — PlantUML sources, rendered SVGs/PNGs, and index/narrative markdown files. Excluded from workstream LOC counts.
+
+> **Anomalies found**: Two files have accidentally nested duplicate path segments (PlantUML ran from wrong directory). These are invalid artifacts:
+>
+> - `docs/architecture/diagrams/level-2/production-runtime/docs/architecture/diagrams/level-2/production-runtime/Project_A_Worker_Architecture.svg`
+> - `docs/architecture/diagrams/level-2/schema-field-population/docs/architecture/diagrams/level-2/schema-field-population/schema-field-population-summary.svg`
+
+### Root Architecture Documents
+
+| File Path | Purpose |
+|-----------|---------|
+| docs/architecture/ARCHITECTURE_DOCUMENTATION_IMPROVEMENT_PLAN.md | Improvement tracking |
+| docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md | Maintenance procedures |
+| docs/architecture/AUDIT.md | Architecture audit results |
+| docs/architecture/DOCUMENTATION_IMPROVEMENT_SESSION_SUMMARY.md | Session summary |
+| docs/architecture/FINAL_SESSION_SUMMARY.md | Final session summary |
+| docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md | This file |
+| docs/architecture/LEVEL_2_DOCUMENTATION_TEMPLATE.md | Level 2.5 standard template |
+| docs/architecture/LEVEL_3_AGENT_ASSIGNMENTS.md | Level 3 agent assignments |
+| docs/architecture/LEVEL_3_IMPLEMENTATION_ROADMAP.md | Level 3 roadmap |
+| docs/architecture/LOC_EXTRACTION_METHODOLOGY.md | LOC extraction methodology |
+| docs/architecture/SWIMLANE_TRACEABILITY_PROPOSAL.md | Swimlane traceability proposal |
+| docs/architecture/workstream_loc_counts.json | JSON LOC counts per workstream |
+| docs/architecture/diagrams/INDEX.md | Master diagram index |
+| docs/architecture/diagrams/README.md | Diagrams README |
+| docs/architecture/diagrams/STYLE_GUIDE.md | PlantUML style guide |
+
+### Level 0 — RAG Pipeline Overview
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-0/index.md | Index |
+| docs/architecture/diagrams/level-0/rag-pipeline-overview.puml | Source |
+| docs/architecture/diagrams/level-0/rag-pipeline-overview.svg | Rendered |
+| docs/architecture/diagrams/level-0/RAG_Pipeline_Overview.png | Rendered |
+| docs/architecture/diagrams/level-0/rag-pipeline-visual.png | Rendered |
+| docs/architecture/diagrams/level-0/rag-pipeline-visual.signature.bin | Signature |
+
+### Level 1 — Project A Architecture
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-1/index.md | Index |
+| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml | Source |
+| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.svg | Rendered |
+| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.png | Rendered |
+| docs/architecture/diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml | Source |
+| docs/architecture/diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.svg | Rendered |
+| docs/architecture/diagrams/level-1/Project_A_Workflow_Hierarchy.png | Rendered |
+
+### Level 2 — Workstream Details
+
+#### WS3: Data Preparation
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/data-preparation/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/automated-data-labeling-pipeline.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/automated-data-labeling-pipeline.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/metadata-schema-architecture.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/data-preparation/metadata-schema-architecture.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.svg | Rendered | ✅ NEW |
+
+#### WS5: Labeling & Benchmarking
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/labeling-benchmarking/index.md | Index | ✅ NEW |
+| docs/architecture/diagrams/level-2/labeling-benchmarking/domain-classification-pipeline.md | Narrative | ✅ NEW |
+| docs/architecture/diagrams/level-2/labeling-benchmarking/domain-classification-pipeline.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/labeling-benchmarking/domain-classification-pipeline.svg | Rendered | ✅ NEW |
+
+#### WS6: Model Arena
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/model-arena/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/model-arena/model-arena-architecture.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/model-arena/model-arena-architecture.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-arena/model-arena-architecture.png | Rendered | ✅ |
+
+#### WS2: Model Training
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/model-training/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-distillation.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-distillation.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-distillation.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-infrastructure.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-infrastructure.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-high-level.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-high-level.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-v2.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-v2.svg | Rendered | ✅ NEW |
+
+#### WS7: Monitoring & Drift
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/monitoring-drift/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.png | Rendered | ✅ |
+
+#### WS1: Production Runtime
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/production-runtime/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-high-level.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-high-level.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-worker-architecture.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/project-a-worker-architecture.svg | Rendered | ✅ NEW |
+
+#### WS4: Pseudo-Labeling
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/pseudo-labeling/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-checkpoint-selection.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-checkpoint-selection.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-checkpoint-selection.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-inference-pipeline.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-inference-pipeline.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-inference-pipeline.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-pseudo-labeling-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-pseudo-labeling-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-training-phases.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-training-phases.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/diqa-training-phases.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/pseudo-labeling/soft-label-pipeline-integration.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/pseudo-labeling/soft-label-pipeline-integration.svg | Rendered | ✅ NEW |
+
+#### Schema Field Population (cross-workstream)
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/schema-field-population/index.md | Index | ✅ NEW |
+| docs/architecture/diagrams/level-2/schema-field-population/schema-field-population-summary.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/schema-field-population/schema-field-population-summary.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.svg | Rendered | ✅ NEW |
+
+#### WS8: Synthetic Generation
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/synthetic-generation/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/synthetic-generation/synthetic-generation-architecture.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/synthetic-generation/synthetic-generation-architecture.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/synthetic-generation/synthetic-generation-architecture.png | Rendered | ✅ |
+
+#### Downstream Context (informational)
+
+| File Path | Type | Status |
+|-----------|------|--------|
+| docs/architecture/diagrams/level-2/downstream-context/index.md | Index | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-d-vectorstore-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/project-d-vectorstore-workflow.png | Rendered | ✅ |
+
+### Level 3 — Module Implementation (all NEW)
+
+#### WS3: Data Preparation
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/data-preparation/index.md | Index |
+| docs/architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.png | Rendered |
+| docs/architecture/diagrams/level-3/data-preparation/label-parsing-generation.md | Narrative |
+| docs/architecture/diagrams/level-3/data-preparation/metadata-schema-versioning.md | Narrative |
+
+#### WS2: Model Training
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/model-training/index.md | Index |
+| docs/architecture/diagrams/level-3/model-training/model-training-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/model-training/model-training-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/model-training/model-training-swimlane.png | Rendered |
+| docs/architecture/diagrams/level-3/model-training/layout-fusion-downsampler.md | Narrative (legacy) |
+
+#### WS7: Monitoring & Drift
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/monitoring-drift/index.md | Index |
+| docs/architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.png | Rendered |
+| docs/architecture/diagrams/level-3/monitoring-drift/end-to-end-lifecycle.md | Narrative |
+
+#### WS1: Production Runtime
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/production-runtime/index.md | Index |
+| docs/architecture/diagrams/level-3/production-runtime/production-runtime-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/production-runtime/production-runtime-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/production-runtime/production-runtime-swimlane.png | Rendered |
+| docs/architecture/diagrams/level-3/production-runtime/device-orchestrator.md | Narrative |
+| docs/architecture/diagrams/level-3/production-runtime/pipeline-state-machine.md | Narrative |
+
+#### WS4: Pseudo-Labeling
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/pseudo-labeling/index.md | Index |
+| docs/architecture/diagrams/level-3/pseudo-labeling/pseudo-labeling-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/pseudo-labeling/pseudo-labeling-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/pseudo-labeling/ensemble-stacking.md | Narrative |
+
+#### WS8: Synthetic Generation
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-3/synthetic-generation/index.md | Index |
+| docs/architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.puml | Source |
+| docs/architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.svg | Rendered |
+| docs/architecture/diagrams/level-3/synthetic-generation/augmentation-pipeline.md | Narrative |
+
+### Deprecated Diagrams
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/deprecated/README.md | README |
+| docs/architecture/diagrams/deprecated/benchmarking/index.md | Index |
+| docs/architecture/diagrams/deprecated/benchmarking/project-a-benchmark-workflow.puml | Source |
+| docs/architecture/diagrams/deprecated/benchmarking/project-a-benchmark-workflow.svg | Rendered |
+| docs/architecture/diagrams/deprecated/benchmarking/project-a-benchmark-workflow.png | Rendered |
+
+---
+
 ## Validation Checks
 
 ### Check 1: All LOC Extraction Files Exist
@@ -486,29 +928,34 @@ grep -oP 'src/[^"]+' scripts/extract_workstream_loc.sh
 
 ### Check 2: All Workstream Totals Match
 
-| Workstream | LOC Script | This Inventory | Match |
-|------------|------------|----------------|-------|
-| WS1: Production Runtime | 16,910 | 16,910 | ✅ |
-| WS2: Model Training | 7,058 | 7,058 | ✅ |
-| WS3: Data Preparation | 4,066 | 4,066 | ✅ |
-| WS4: Pseudo-Labeling | 2,947 | 2,947 | ✅ |
-| WS5: Labeling & Benchmarking | 0 | 0 | ✅ |
-| WS6: Model Arena | 6,340 | 6,340 | ✅ |
-| WS7: Monitoring & Drift | 5,348 | 5,353 | ⚠️ ~0.1% variance |
-| WS8: Synthetic Generation | 1,066 | ~1,500+ | ⚠️ Expanded (recount needed) |
+> ⚠️ LOC counts are stale as of 2026-02-21. Many source files were added/removed since the last extraction run. All workstreams need a recount via `scripts/extract_workstream_loc.sh`.
 
-**Result**: ✅ All workstreams match within ±1%, except WS8 (Synthetic Generation) which was expanded with multi-task additions and requires a LOC recount
+| Workstream | Last Known LOC | Current Status |
+|------------|----------------|----------------|
+| WS1: Production Runtime | 16,910 | ⚠️ Stale — 30+ new files untracked |
+| WS2: Model Training | 7,058 | ❌ Stale — training/ package deleted, 6 new modal scripts |
+| WS3: Data Preparation | 4,066 | ❌ Stale — annotation/ package (~19,600 LOC) untracked |
+| WS4: Pseudo-Labeling | 2,947 | ⚠️ Stale — 2 modal scripts absent from repo |
+| WS5: Labeling & Benchmarking | 0 | ✅ Still 0 (planned only) |
+| WS6: Model Arena | 6,340 | ✅ Likely current |
+| WS7: Monitoring & Drift | 5,348 | ✅ Likely current |
+| WS8: Synthetic Generation | ~1,500+ | ❌ Stale — package path changed + 10 new scripts |
 
 ### Check 3: Unassigned Files Need Review
 
-**Unassigned Python Files**: 30 files, ~500 LOC
+**Unassigned Python Files**: 30+ files
 
 **Recommended Actions**:
 
 1. `schema.py` → Assign to WS1 (output schema)
 2. `tensor_cache.py` → Assign to WS1 (performance optimization)
-3. `datasets/iqa_dataset.py` → Assign to WS2 (training dataset)
-4. Shared utilities (`logger.py`, `gcs_uploader.py`) → Mark as NA
+3. `utils/gcs_uploader.py`, `utils/log_config.py`, etc. → Mark as NA - Shared utility
+4. `src/image_preprocessing_detector/annotation/` entire package → Assign to WS3
+5. `src/image_preprocessing_detector/orchestration/` → Assign to WS1
+6. `src/image_preprocessing_detector/api/` → Assign to WS1
+7. `src/image_preprocessing_detector/labeling/domain/` → Assign to WS5/WS6
+8. New `modal/train_*.py` scripts → Assign to WS2
+9. ~~`src/image_preprocessing_detector/datasets/iqa_dataset.py`~~ — ❌ not in repo
 
 ---
 

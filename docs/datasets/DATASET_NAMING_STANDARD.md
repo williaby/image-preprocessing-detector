@@ -105,7 +105,8 @@ title: Dataset Naming Standard
 | `smartdoc-qa` | smartdoc-qa | smartdoc_qa | ✅ | Mobile capture quality assessment |
 | `sroie` | sroie_icdar2019 | sroie-receipts, sroie-icdar2019 | ✅ | ICDAR 2019 SROIE Malaysian receipts (973 images) |
 | `staindoc` | StainDoc | stain_doc, stain-doc | ✅ | Stain removal (WACV 2025, ~5,000 pairs) |
-| `synth-multiscript-250k` | synthetic_250k | synth-multiscript, synthetic_250k | 🔄 | Synthetic multi-script 250K (27 scripts, SigLIP training) |
+| ~~`synth-multiscript-250k`~~ | ~~synthetic_250k~~ | ~~synth-multiscript, synthetic_250k~~ | ❌ DELETED (v2) | v2 DELETED — see `synth-multiscript-v3` below |
+| `synth-multiscript-v3` | synth_multiscript_v3 | synth-multiscript-v3, synthetic_v3 | ✅ | Synthetic multi-script v3 (350,012 images, 27 scripts, GCS-complete — ⚠️ imbalanced distribution) |
 | `synthetic-iqa` | synthetic_iqa | synthetic_iqa | ✅ | Synthetic IQA test samples |
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |

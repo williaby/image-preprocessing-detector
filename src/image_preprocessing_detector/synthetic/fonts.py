@@ -97,20 +97,42 @@ class FontCache:
     default_font: FontInfo | None = None
 
 
-# Mapping from font name patterns to ISO 15924 script codes
+# Mapping from font name patterns to ISO 15924 script codes.
+# Patterns are matched case-insensitively against the font filename stem
+# (after stripping NotoSans/NotoSerif/Noto prefixes and style suffixes).
+# More specific patterns must come before generic ones to avoid false matches.
 FONT_NAME_TO_SCRIPT: dict[str, str] = {
-    # CJK
+    # CJK — Simplified Chinese
     "SC": "Hans",
     "SimplifiedChinese": "Hans",
+    "ZCOOL": "Hans",            # ZCOOLXiaoWei, ZCOOLKuaiLe
+    "MaShan": "Hans",           # MaShanZheng (brush calligraphy)
+    "LiuJian": "Hans",          # LiuJianMaoCao (Chinese handwriting)
+    "LongCang": "Hans",         # LongCang (Chinese handwriting)
+    "ZhiMang": "Hans",          # ZhiMangXing (Chinese handwriting)
+    # CJK — Traditional Chinese
     "TC": "Hant",
     "TraditionalChinese": "Hant",
+    # CJK — Japanese
     "JP": "Jpan",
     "Japanese": "Jpan",
-    "KR": "Kore",
-    "Korean": "Kore",
-    # Indic
+    # CJK — Korean Hangul (ISO 15924 "Hang"; ML class "KORE")
+    "KR": "Hang",
+    "Korean": "Hang",
+    "Hangul": "Hang",
+    "Nanum": "Hang",            # NanumGothic, NanumBrushScript, NanumPenScript
+    "Gothic": "Hang",           # GothicA1
+    # Indic — Devanagari
     "Devanagari": "Deva",
+    "Kalam": "Deva",            # Hindi handwriting Google Font
+    "Lohit": "Deva",            # Lohit-Devanagari
+    # Indic — Bengali
     "Bengali": "Beng",
+    "Galada": "Beng",           # Galada (Bengali decorative)
+    "Atma": "Beng",             # Atma (Bengali)
+    "Kalpurush": "Beng",        # Kalpurush
+    "SolaimanLipi": "Beng",     # SolaimanLipi
+    # Indic — other
     "Tamil": "Taml",
     "Telugu": "Telu",
     "Gujarati": "Gujr",
@@ -121,20 +143,54 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Gurmukhi": "Guru",
     # Southeast Asian
     "Thai": "Thai",
+    "Sarabun": "Thai",          # Sarabun (Thai)
+    "Prompt": "Thai",           # Prompt (Thai)
+    "Charm": "Thai",            # Charm (Thai decorative)
+    "Kodchasan": "Thai",        # Kodchasan (Thai)
     "Khmer": "Khmr",
     "Myanmar": "Mymr",
     "Lao": "Laoo",
     "Tibetan": "Tibt",
-    # Middle Eastern
+    "Jomolhari": "Tibt",        # Jomolhari (Tibetan)
+    # Middle Eastern — Arabic
     "Arabic": "Arab",
-    "Hebrew": "Hebr",
     "NaskhArabic": "Arab",
     "NastaliqUrdu": "Arab",
-    # European/Other
+    "Amiri": "Arab",            # Amiri (classical Arabic calligraphy)
+    "Scheherazade": "Arab",     # ScheherazadeNew (Arabic serif)
+    "ArefRuqaa": "Arab",        # ArefRuqaa (Arabic Ruqaa style)
+    "Lateef": "Arab",           # Lateef (Nastaliq/Urdu)
+    "Harmattan": "Arab",        # Harmattan (West African Arabic)
+    "Awami": "Arab",            # AwamiNastaliq (Urdu)
+    "Cairo": "Arab",            # Cairo (Arabic web font)
+    # Middle Eastern — Hebrew
+    "Hebrew": "Hebr",
+    "Heebo": "Hebr",            # Heebo (Hebrew sans-serif)
+    "FrankRuhl": "Hebr",        # Frank Ruhl Libre (Hebrew serif)
+    "SuezOne": "Hebr",          # Suez One (Hebrew display)
+    # Middle Eastern — Syriac (OOD anchor script)
+    "Syriac": "Syrc",
+    # European — Armenian
     "Armenian": "Armn",
+    # European — Georgian (OOD anchor script)
     "Georgian": "Geor",
+    # European — Mongolian (OOD anchor script)
+    "Mongolian": "Mong",
+    # European — Ethiopic
     "Ethiopic": "Ethi",
+    "Abyssinica": "Ethi",       # AbyssinicaSIL
+    # European — Greek
     "Greek": "Grek",
+    "GFSDidot": "Grek",         # GFS Didot (Greek academic font)
+    # Latin / generic (scripts that fall back to Latin font shapes)
+    "Gentium": "Latn",          # GentiumPlus, GentiumBookPlus (covers Greek ext.)
+    "Doulos": "Latn",           # Doulos SIL
+    "Charis": "Latn",           # Charis SIL
+    "Andika": "Latn",           # Andika (SIL literacy)
+    "Garamond": "Latn",         # EB Garamond
+    "Playfair": "Latn",         # Playfair Display (serif)
+    "Merriweather": "Latn",     # Merriweather (serif)
+    "Tiro": "Deva",             # Tiro Devanagari (also covers Latin, prefer Deva)
 }
 
 
@@ -325,12 +381,12 @@ class FontManager:
         style = _extract_style_from_font_name(name)
         is_noto = name.lower().startswith("noto")
 
-        # CJK locale to script mapping
+        # CJK locale to script mapping (KR → "Hang" matches the ISO 15924 rename in ALL_SCRIPTS)
         cjk_scripts = {
             "SC": "Hans",  # Simplified Chinese
             "TC": "Hant",  # Traditional Chinese
             "JP": "Jpan",  # Japanese
-            "KR": "Kore",  # Korean
+            "KR": "Hang",  # Korean Hangul (ISO 15924 code; ML class KORE)
         }
 
         fonts = []

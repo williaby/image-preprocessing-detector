@@ -21,7 +21,7 @@ partition "Pass 0: Synthetic Generation" #E0F7FA {
 }
 
 partition "Pass 1: Base Metadata Annotation" #ADD8E6 {
-  :annotate_base_metadata.py\n+ DATASET_CONFIGS + DocLayout-YOLO;
+  :annotate_base_metadata.py\n+ DATASET_CONFIGS + docling-layout;
   note right
     **Tier 1-2: Config + ML**
     Fields: capture, resolution, domain,

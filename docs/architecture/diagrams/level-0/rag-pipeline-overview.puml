@@ -4,14 +4,14 @@ skinparam backgroundColor #FEFEFE
 skinparam packageStyle rectangle
 skinparam componentStyle rectangle
 
-' Layout controls - increased for clearer vertical separation
-skinparam ranksep 150
-skinparam nodesep 100
+' Layout controls
+skinparam ranksep 140
+skinparam nodesep 90
 
 top to bottom direction
 
 title Foundry RAG Pipeline - Multi-Track Architecture\nLevel 0: Pipeline Context (Cloud Workflows Orchestrated)
-footer Foundry Pipeline Overview | v4.0 | December 2025
+footer Foundry Pipeline Overview | v5.0 | February 2026
 
 ' ============================================================================
 ' ORCHESTRATION LAYER: CLOUD WORKFLOWS
@@ -26,27 +26,47 @@ cloud "Google Cloud Workflows\n<size:10>Orchestrator | trace_id propagation</siz
 storage "GCS: gs://rag-pipeline-{env}/{trace_id}/\n<size:10>Canonical artifact store</size>" as GCS #FFF3E0
 
 ' ============================================================================
-' ROW 1: INGEST (Single Entry Point)
+' ROW 1: INGEST — Four Input Tracks
 ' ============================================================================
 
 package "Ingest (foundry-ingest)\n<size:10><color:green>■ Active</color></size>\n<size:10>POST /process | GET /status | 1000+ files/hr</size>" as Ingest #FFEBEE {
-  artifact "Document Track" as DocSources {
-    file "PDF, Office, Images"
+  artifact "Native Text Track" as NativeText {
+    file "DOCX, HTML, MD, LaTeX\nCSV, XML, EPUB, VTT"
+  }
+  artifact "Image Track" as ImageTrack {
+    file "JPG, PNG, TIFF\nWebP, BMP"
+  }
+  artifact "PDF Track" as PDFTrack {
+    file "PDF (all variants)\n<size:9>born-digital | scanned | hybrid</size>"
   }
   artifact "Audio Track" as AudioSources {
-    file "Audio, Video"
+    file "WAV, MP3, MP4\nAudio / Video"
   }
 }
 
 ' ============================================================================
-' ROW 2: PREPROCESSING LAYER (Parallel Tracks - side by side)
+' ROW 1.5: STAGE 0 — DOCUMENT TYPE ROUTER (New — previously missing step)
+' ============================================================================
+
+rectangle "Stage 0 — Document Type Router\n<size:10><color:orange>◐ Planned</color></size>\n<size:10>Format detect · PDF sub-classify · Text-layer validity check · <20ms CPU</size>" as Stage0Router #FFF9C4 {
+  component "Format Detector\n<size:9>MIME type + content signature</size>" as FormatDet
+  component "PDF Sub-Classifier\n<size:9>born_digital | scanned | hybrid | born_digital_degraded</size>" as PDFClass
+}
+
+' ============================================================================
+' ROW 2: THREE PROCESSING PATHS (side by side)
 ' ============================================================================
 
 together {
-  rectangle "Prepare-Doc (foundry-prepare-doc)\n<size:10><color:green>■ Active</color></size>\n<size:10>10-page: <30s | 100-page: <2min</size>" as PrepareDoc #E8F5E9 {
-    component "IQA & Corrections" as IQA
-    component "Layout Detection" as Layout
-    component "DQS & Routing" as DQS
+
+  rectangle "Fast Path\n<size:10><color:green>■ Active (pass-through)</color></size>\n<size:10>Native text + born-digital PDFs\nNo image preprocessing required</size>" as FastPath #E8F0FE {
+    component "Pass-Through\n<size:9>DOCX · HTML · MD · LaTeX\nCSV · XML · EPUB · VTT\nborn-digital PDF</size>" as PassThru
+  }
+
+  rectangle "Prepare-Doc (foundry-prepare-doc)\n<size:10><color:green>■ Active</color></size>\n<size:10>Images + scanned/hybrid PDFs · ~55ms GPU total</size>" as PrepareDoc #E8F5E9 {
+    component "Stage 1: Pre-Correction Gate\n<size:9>MobileNetV4 ~3ms | Orientation | Skew | Resolution</size>" as Stage1
+    component "Stage 2: Multi-Task Analysis\n<size:9>SigLIP 2 ~50ms | IQA | Script | Handwriting | Page Attrs</size>" as Stage2
+    component "DQS & Routing Metadata" as DQS
   }
 
   rectangle "Prepare-Audio (foundry-prepare-audio)\n<size:10><color:green>■ Active</color></size>\n<size:10><1 min per hour of audio</size>" as PrepareAudio #E8F5E9 {
@@ -54,10 +74,11 @@ together {
     component "Deepgram Nova-2" as Deepgram
     component "Diarization" as Diarize
   }
+
 }
 
 ' ============================================================================
-' ROW 3: UNIFY - OCR & DOM UNIFICATION
+' ROW 3: UNIFY — OCR & DOM UNIFICATION
 ' ============================================================================
 
 package "Unify (foundry-unify)\n<size:10><color:gray>○ Not Yet Started</color></size>\n<size:10>Multi-engine OCR | Docling DOM unification</size>" as Unify #E0E0E0 {
@@ -70,7 +91,7 @@ package "Unify (foundry-unify)\n<size:10><color:gray>○ Not Yet Started</color>
 }
 
 ' ============================================================================
-' ROW 4: CHUNK - TRUST & CHUNKING
+' ROW 4: CHUNK — TRUST & CHUNKING
 ' ============================================================================
 
 together {
@@ -88,31 +109,37 @@ together {
 }
 
 ' ============================================================================
-' MAIN FLOW CONNECTIONS (Top to Bottom)
+' FLOW CONNECTIONS
 ' ============================================================================
 
 ' Orchestration
 Ingest -up-> Orchestrator : initiates workflow\n(POST /execute)
 
-' Row 1 → Row 2: Ingest to Preprocessing (fork to parallel tracks)
-DocSources -down-> PrepareDoc : Documents/Images
-AudioSources -down-> PrepareAudio : Audio/Video
+' Row 1 → Stage 0: document tracks enter router
+NativeText -down-> Stage0Router
+ImageTrack -down-> Stage0Router
+PDFTrack -down-> Stage0Router
 
-' Row 2 → Row 3: Preprocessing to Unify (merge from parallel tracks)
-PrepareDoc -down-> Unify : gs://.../01-preprocessed/
+' Audio bypasses Stage 0 entirely
+AudioSources -down-> PrepareAudio : Audio/Video\n(bypasses router)
+
+' Stage 0 → Row 2: three routing outcomes
+Stage0Router -down-> FastPath : native text\nborn-digital PDFs
+Stage0Router -down-> PrepareDoc : images\nscanned PDFs\nhybrid PDF pages
+
+' Row 2 → Row 3: all three paths converge at Unify
+FastPath -down-> Unify : direct — no preprocessing
+PrepareDoc -down-> Unify : gs://.../01-preprocessed/\nDocumentMetadata.json
 PrepareAudio -down-> Unify : gs://.../02-transcribed/
 
 ' Row 3 internal: OCR to DOM
 OCRLayer -right-> DoclingDOM
 
-' Row 3 → Row 4: Unify to Chunk
+' Row 3 → Row 4
 DoclingDOM -down-> Chunk : gs://.../03-docling-dom/
 
-' Row 4 → Row 5: Chunk to Embed
+' Row 4 → Row 5
 Chunk -right-> Embed : gs://.../04-chunks/
-
-' Note: Ingest polls GET /status/{trace_id} for completion (not shown to simplify layout)
-
 
 ' ============================================================================
 ' LEGEND
@@ -122,12 +149,15 @@ legend bottom
   |= Color |= Meaning |
   | <#E3F2FD> | Orchestration (Cloud Workflows) |
   | <#FFF3E0> | Data Store (GCS) |
-  | <#FFEBEE> | Web UI Frontend (Ingest) |
+  | <#FFEBEE> | Ingest (Entry Point) |
+  | <#FFF9C4> | Stage 0: Document Type Router (new) |
+  | <#E8F0FE> | Fast Path (Native Text / Born-Digital PDF) |
   | <#E8F5E9> | Active Development |
   | <#E0E0E0> | Not Yet Started |
 endlegend
 
 ' Note: Diagram hierarchy and traceability tables are documented in index.md
-' to keep the diagram focused on architecture flow
+' PDF sub-classification detail: docs/tmp_cleanup/docling_format_routing_analysis.md
+' Stage 0 routing design: docs/planning/ (planned)
 
 @enduml

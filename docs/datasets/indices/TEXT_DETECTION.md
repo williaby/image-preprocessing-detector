@@ -60,11 +60,11 @@
 
 | Dataset | Images | Scripts | Status | Link |
 |---------|--------|---------|--------|------|
-| synth-multiscript-250k | 250,000 | 27 scripts + 8 IQA dimensions | 🔄 In Progress | [../training/synth-multiscript-250k.md](../training/synth-multiscript-250k.md) |
+| synth-multiscript-v3 | 350,012 | 27 scripts + 8 IQA dimensions | ⚠️ Complete — Imbalanced | [../training/synth-multiscript-v3.md](../training/synth-multiscript-v3.md) |
 
 **Purpose**: Phase 10B script detection training
 **Generation**: From OpenLID v2 corpus
-**Status**: ~27,000 partial, 250,000 target
+**Status**: ✅ Complete on GCS (350,012 images) — ⚠️ Imbalanced distribution; rebalancing required. v2 (250K) DELETED.
 
 ---
 
@@ -85,7 +85,7 @@
 **Classes**: 27+ scripts (Latin, Arabic, Chinese, Devanagari, Cyrillic, etc.)
 **Training Data**:
 
-- Primary: synth-multiscript-250k (balanced across 27 scripts)
+- Primary: synth-multiscript-v3 (350,012, 27 scripts on GCS — ⚠️ rebalancing required before training)
 - Augmentation: mdiw13 (13 scripts, real-world), mlt19 (10 languages)
 - Script-specific: Use domain datasets for fine-tuning
 

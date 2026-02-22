@@ -10,7 +10,7 @@ skinparam nodesep 40
 
 title Project A (Prepare-Doc) - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
 
-footer Project A | 8 Workstreams | Last Updated: 2025-12-19
+footer Project A | Stage 0 + 8 Workstreams | Last Updated: 2026-02-22
 
 ' ============================================================================
 ' LEGEND
@@ -37,19 +37,23 @@ cloud "RAG Processor\nWeb UI" as UI #DDDDDD {
 ' PRIMARY PRODUCTION FLOW (CENTER - Vertical Top-to-Bottom)
 ' ============================================================================
 package "WS 1: Production Runtime\n<150ms/page (GPU) | ≥6 pages/sec" #E8F5E9 {
+  rectangle "Stage 0:\nDocument Type Router" as Stage0 #FFF9C4 {
+    card "Format Detector\n& PDF Sub-Classifier"
+    card "Native Text /\nAudio Fast-Path Gate"
+  }
+
   rectangle "Pre-flight &\nIngestion" as Preflight {
     card "DPI Detection\n& Upscaling"
     card "300 DPI\nStandardization"
   }
 
   rectangle "Classification" as Class {
-    card "PDF Type\nClassifier"
     card "Text Gate"
   }
 
   rectangle "Quality\nAnalysis" as QA {
     card "Classical IQA"
-    card "ML IQA\n(Student/Teacher)"
+    card "ML IQA\n(MobileNetV4\n+ SigLIP 2)"
     card "Layout-Lite"
   }
 
@@ -120,7 +124,9 @@ package "WS 5: Labeling\nModels" #E0F7FA {
 ' ============================================================================
 ' PRIMARY PRODUCTION FLOW (BOLD ARROWS TOP-TO-BOTTOM)
 ' ============================================================================
-DocSubmit -[#000000,thickness=4]down-> Preflight : **PDF/Image**
+DocSubmit -[#000000,thickness=4]down-> Stage0 : **Any Format**
+Stage0 -[#000000,thickness=4]down-> Preflight : **Image / Scanned PDF\n/ Hybrid PDF pages**
+Stage0 -[#4CAF50,dashed,thickness=2]right-> Downstream : native text +\nborn-digital PDF\n(fast path)
 Preflight -[#000000,thickness=4]down-> Class : **300 DPI Pages**
 Class -[#000000,thickness=4]down-> QA : **Routed**
 QA -[#000000,thickness=4]down-> Correction : **Analyzed**
