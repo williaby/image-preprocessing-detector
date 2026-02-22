@@ -19,7 +19,7 @@ title: 'Model Card: HyperIQA'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-hyperiqa` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | ⭐ TOP TIER 1 CANDIDATE |
 | **Priority** | P1 (High - best efficient model) |

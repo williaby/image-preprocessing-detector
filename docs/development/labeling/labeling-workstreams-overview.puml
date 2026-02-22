@@ -31,7 +31,7 @@ package "Shared Components" {
   }
 }
 
-package "Project A: Arena Benchmarking" as arena #LightCoral {
+package "Prepare-Doc: Arena Benchmarking" as arena #LightCoral {
   [ArenaRunner] as runner
   [InferenceBackend] as inference
   [ArenaMetrics] as metrics
@@ -42,7 +42,7 @@ package "Project A: Arena Benchmarking" as arena #LightCoral {
   metrics --> leaderboard : aggregate
 }
 
-package "Project B: Quantization" as quant #LightGreen {
+package "Unify: Quantization" as quant #LightGreen {
   [QuantizationPipeline] as qpipeline
   [QuantizationRecipe] as recipe
   [Backend\n(bnb/GPTQ/AWQ)] as qbackend
@@ -53,7 +53,7 @@ package "Project B: Quantization" as quant #LightGreen {
   qbackend --> packaged : package
 }
 
-package "Project C: Fine-Tuning" as finetune #LightSkyBlue {
+package "Chunk: Fine-Tuning" as finetune #LightSkyBlue {
   [DIQADatasetAdapter] as adapter
   [DIQARegressionModel] as regmodel
   [DIQATrainer] as trainer
@@ -72,16 +72,16 @@ hf --> modelspec
 local --> modelspec
 api --> modelspec
 
-' Project A flow
+' Prepare-Doc flow
 modelspec --> runner : base model
 dataset --> runner : test data
 leaderboard --> results : results
 
-' Project B flow
+' Unify flow
 modelspec --> qpipeline : base model
 packaged --> registry : quantized model
 
-' Project C flow
+' Chunk flow
 modelspec --> regmodel : base encoder
 dataset --> adapter : train/val data
 manifest --> registry : finetuned model
@@ -106,9 +106,9 @@ end note
 
 legend right
   |= Workflow |= Purpose |
-  | Project A | Standardized benchmarking |
-  | Project B | Model compression |
-  | Project C | Task-specific training |
+  | Prepare-Doc | Standardized benchmarking |
+  | Unify | Model compression |
+  | Chunk | Task-specific training |
 endlegend
 
 @enduml

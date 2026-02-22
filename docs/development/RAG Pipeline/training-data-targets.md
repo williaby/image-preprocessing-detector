@@ -8,12 +8,12 @@ owner: "docs-team"
 purpose: "Define training data requirements and readiness criteria for Projects A, B, C, and D."
 ---
 
-## Project B – OCR Orchestration, Layout & Reading Order
+## Unify – OCR Orchestration, Layout & Reading Order
 
 **Scope:** Layout detection, table structure detection, reading order, parasitic content, handwriting vs print regions, language flags. OCR engines are mostly external but need **evaluation sets**.
 
 ```markdown
-## Project B – Data Readiness Matrix
+## Unify – Data Readiness Matrix
 
 | Task / Capability                           | Target Train Set (Scale)                                           | Target Validation Set                           | Coverage Dimensions (Must Include)                                                                                         | Readiness Criteria (You’re Done When…)                                                                                     | Current Status (Fill In) |
 |--------------------------------------------|--------------------------------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------|
@@ -29,12 +29,12 @@ purpose: "Define training data requirements and readiness criteria for Projects 
 | B10 – Complex layouts (stress set)         | 500–1k “nightmare pages” specifically curated for stress-testing layout+RO                              | 200–300 pages                                    | Multi-column + nested tables + sidebars + equations + images; historical messy scans                                     | These pages are mostly “handled” (no total meltdown); qualitative review shows stable behavior                             |                          |
 ```
 
-## Project D – Embedding & Vector Store Integration (RAG)
+## Embed – Embedding & Vector Store Integration (RAG)
 
 **Scope:** Use normalized chunks & trust metrics from C to create embeddings, index into vector DB, and validate retrieval performance.
 
 ```markdown
-## Project D – Data Readiness Matrix
+## Embed – Data Readiness Matrix
 
 | Task / Capability                           | Target Train / Eval Set (Scale)                                       | Coverage Dimensions (Must Include)                                                                                     | Readiness Criteria (You’re Done When…)                                                                                     | Current Status (Fill In) |
 |--------------------------------------------|------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------|

@@ -170,7 +170,7 @@ class ScriptRouter:
             iso15924_code: 4-letter ISO 15924 script code
 
         Returns:
-            Engine name string (e.g., "rapidocr", "paddleocr", "tesseract")
+            Engine name string (e.g., "rapidocr", "tesseract", "auto")
         """
         config = self.get_engine_config(iso15924_code)
         return str(config.get("engine", self._default_engine))
@@ -291,7 +291,7 @@ class ScriptRouter:
         """Get configuration for a specific OCR engine.
 
         Args:
-            engine: Engine name (e.g., "rapidocr", "paddleocr")
+            engine: Engine name (e.g., "rapidocr", "tesseract")
 
         Returns:
             Engine-specific configuration dict

@@ -39,7 +39,7 @@ title: Architecture Documentation Maintenance Guide
 ```
 Level 0: Multi-Project Pipeline (6 projects)
     ↓
-Level 1: Project A Architecture (8 workstreams)
+Level 1: Prepare-Doc Architecture (8 workstreams)
     ↓
 Level 2: Workstream Details (component architecture + workflows)
     ↓
@@ -75,15 +75,15 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
 
 ---
 
-### Level 1: Project A (Prepare-Doc) Architecture
+### Level 1: Prepare-Doc (Prepare-Doc) Architecture
 
 **Location**: `docs/architecture/diagrams/level-1/`
 
 **Required Files**:
 
 - `index.md` - 8 workstreams overview, data flows, downstream context
-- `PROJECT_A_ARCHITECTURE_OVERVIEW.puml` - Production-centric 8-workstream architecture
-- `PROJECT_A_WORKFLOW_HIERARCHY.puml` - Swimlane data flow (4 workstreams)
+- `PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml` - Production-centric 8-workstream architecture
+- `PREPARE_DOC_WORKFLOW_HIERARCHY.puml` - Swimlane data flow (4 workstreams)
 - `*.svg` files - Generated from PUMLs (auto-generated)
 
 **Scope**: 8 workstreams interactions, high-level flows
@@ -168,7 +168,7 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
 | Event | Level to Update | Required Actions |
 |-------|----------------|------------------|
 | **New project added to pipeline** | Level 0 | Update rag-pipeline-overview.puml, add project description |
-| **New workstream created** | Level 1 | Update PROJECT_A_ARCHITECTURE_OVERVIEW.puml, add to index.md |
+| **New workstream created** | Level 1 | Update PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml, add to index.md |
 | **Workstream interaction changes** | Level 1, Level 2 | Update data flow diagrams, dependency sections |
 | **New component added** | Level 2 | Update workstream index.md, component tables, traceability |
 | **Source file moved/renamed** | Level 2, Level 3 | Update all diagrams referencing file, update LOC extraction script |
@@ -210,7 +210,7 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
    ```
 
 2. **If workstream interactions changed**:
-   - Update `PROJECT_A_ARCHITECTURE_OVERVIEW.puml`
+   - Update `PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml`
    - Regenerate SVG
    - Update data flow description in index.md
 
@@ -940,7 +940,7 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
 **Start Here**:
 
 1. [Level 0: RAG Pipeline Overview](diagrams/level-0/index.md) - Understand the multi-project context
-2. [Level 1: Project A Architecture](diagrams/level-1/index.md) - Understand the 8 workstreams
+2. [Level 1: Prepare-Doc Architecture](diagrams/level-1/index.md) - Understand the 8 workstreams
 3. [LEVEL_2_DOCUMENTATION_TEMPLATE.md](LEVEL_2_DOCUMENTATION_TEMPLATE.md) - How to write Level 2 docs
 
 ### For Documentation Writers
@@ -1086,7 +1086,7 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
 
 ### I'm a new developer - Where do I start?
 
-1. Read [Level 1: Project A Architecture](diagrams/level-1/index.md) - Understand the 8 workstreams
+1. Read [Level 1: Prepare-Doc Architecture](diagrams/level-1/index.md) - Understand the 8 workstreams
 2. Read relevant [Level 2 doc](diagrams/level-2/) for your workstream
 3. Check Level 2 "Source File Traceability" table to find files you need
 4. If complex algorithm, check if Level 3 doc exists

@@ -3,7 +3,7 @@ title: Docling Integration Gap Report
 schema_type: planning
 status: active
 owner: ml-team
-purpose: "Identifies gaps, inconsistencies, and improvement areas in Project A's docling
+purpose: "Identifies gaps, inconsistencies, and improvement areas in Prepare-Doc's docling
   integration and handoff specification."
 tags:
 - routing
@@ -15,7 +15,7 @@ source: Internal analysis of docling integration codebase
 # Docling Integration Gap Report
 
 > **Scope**: Covers `DoclingRoutingParams`, `DoclingRoutingEngine`, `ScriptRouter`,
-> `PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md`, `project-b-ocr-layout-workflow.puml`,
+> `PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md`, `unify-ocr-layout-workflow.puml`,
 > and `rag-pipeline-overview.puml`.
 >
 > **Reference**: [docs/reference/DOCLING_CONFIGURATION_REFERENCE.md](../reference/DOCLING_CONFIGURATION_REFERENCE.md)
@@ -26,22 +26,22 @@ source: Internal analysis of docling integration codebase
 
 ## Executive Summary
 
-**Architectural boundary** (clarified 2026-02-22): Project A's role is to be an analysis oracle.
+**Architectural boundary** (clarified 2026-02-22): Prepare-Doc's role is to be an analysis oracle.
 It delivers rich `DocumentMetadata` signals — DQS, script detection, orientation, quality scores,
-page attributes, handwriting assessment — and Project B translates those signals into docling
-configuration. Project A does **not** determine which docling engine, model, or CLI flags to
-invoke. That is Project B's responsibility.
+page attributes, handwriting assessment — and Unify translates those signals into docling
+configuration. Prepare-Doc does **not** determine which docling engine, model, or CLI flags to
+invoke. That is Unify's responsibility.
 
 This boundary has two consequences for this report:
 
-1. **Correctness bugs in existing Project A code** (Section 1) remain valid and should be fixed —
+1. **Correctness bugs in existing Prepare-Doc code** (Section 1) remain valid and should be fixed —
    wrong engine keys in docstrings, missing CLI flag emission, and undocumented VLM behavior are
    real bugs regardless of where docling config ultimately lives.
 
 2. **Recommendations to expand `DoclingRoutingParams`** (formerly Section 2) are architecturally
-   wrong — adding more docling-specific fields to Project A would push the boundary in the wrong
+   wrong — adding more docling-specific fields to Prepare-Doc would push the boundary in the wrong
    direction. Section 2 is now reframed as a **signal coverage audit**: for each docling lever
-   Project B might want to tune, we verify that Project A already exposes the right analysis
+   Unify might want to tune, we verify that Prepare-Doc already exposes the right analysis
    signal.
 
 The most critical existing bug is a **wrong engine key** (`paddleocr`) embedded in schema
@@ -56,10 +56,10 @@ docstrings and router code — PaddleOCR is accessible in docling only via the `
 
 | Layer | Owner | Responsibility |
 |-------|-------|----------------|
-| **Analysis signals** | Project A | Detect quality, script, orientation, layout attributes, handwriting, shadow/warping severity |
-| **Docling configuration** | Project B | Translate signals into `PipelineOptions`, OCR engine selection, enrichment flags, layout model variant, VLM model choice, CLI invocation |
+| **Analysis signals** | Prepare-Doc | Detect quality, script, orientation, layout attributes, handwriting, shadow/warping severity |
+| **Docling configuration** | Unify | Translate signals into `PipelineOptions`, OCR engine selection, enrichment flags, layout model variant, VLM model choice, CLI invocation |
 
-Project A's `DocumentMetadata.json` is the contract. Everything in it is an analysis result, not a
+Prepare-Doc's `DocumentMetadata.json` is the contract. Everything in it is an analysis result, not a
 docling instruction.
 
 ### 0.2 `DoclingRoutingEngine` and `DoclingRoutingParams` Are Architecturally Misplaced
@@ -70,17 +70,17 @@ docling instruction.
 - [src/image_preprocessing_detector/schema.py](../../src/image_preprocessing_detector/schema.py) —
   `DoclingRoutingParams`, including `to_cli_args()`
 
-These components — a six-rule engine that converts Project A analysis into docling CLI arguments —
-belong in Project B, not Project A. Project A should not be emitting `--pipeline=vlm` or
-`--no-tables`; that translation is Project B's job.
+These components — a six-rule engine that converts Prepare-Doc analysis into docling CLI arguments —
+belong in Unify, not Prepare-Doc. Prepare-Doc should not be emitting `--pipeline=vlm` or
+`--no-tables`; that translation is Unify's job.
 
-**Impact**: Low urgency while Project B is not yet implemented. The existing code is not harmful
-(Project B may choose to adopt these components as a starting point), but should be tracked.
+**Impact**: Low urgency while Unify is not yet implemented. The existing code is not harmful
+(Unify may choose to adopt these components as a starting point), but should be tracked.
 
-**Recommendation**: When Project B begins integration work, migrate `DoclingRoutingEngine` and
-`DoclingRoutingParams.to_cli_args()` to Project B's codebase. Project A retains `DocumentMetadata`
+**Recommendation**: When Unify begins integration work, migrate `DoclingRoutingEngine` and
+`DoclingRoutingParams.to_cli_args()` to Unify's codebase. Prepare-Doc retains `DocumentMetadata`
 as the output contract; `DoclingRoutingParams` may evolve into a lighter "advisory hints" struct
-that Project B can accept or override.
+that Unify can accept or override.
 
 ---
 
@@ -125,10 +125,10 @@ Docling's registered engine keys are: `auto`, `rapidocr`, `easyocr`, `tesseract`
 
 **Problem**: The `tables_enabled` field exists in `DoclingRoutingParams` but `to_cli_args()`
 never emits `--no-tables` when `tables_enabled=False`. Because docling defaults to tables
-enabled, the current code has no way to signal table-skip to Project B via CLI args — an
+enabled, the current code has no way to signal table-skip to Unify via CLI args — an
 optimization that matters for throughput on simple text-only documents.
 
-While `to_cli_args()` will ultimately move to Project B (§0.2), the immediate fix ensures the
+While `to_cli_args()` will ultimately move to Unify (§0.2), the immediate fix ensures the
 advisory hint is correctly serializable in the interim.
 
 **Fix required**: Add to `to_cli_args()`:
@@ -149,28 +149,28 @@ if not self.tables_enabled:
 
 **Problem**: When the VLM pipeline is triggered, `params.vlm_model` remains `None` throughout
 all six routing rules. `DoclingRoutingParams.vlm_model` defaults to `None` and `to_cli_args()`
-only emits `--vlm-model=<value>` when it is not None. Project B therefore receives
+only emits `--vlm-model=<value>` when it is not None. Unify therefore receives
 `--pipeline=vlm` with no model specification.
 
 Docling's default VLM is `granite_docling` (IBM Granite DocLing model). This may be intentional
-but it is undocumented and untestable. Per §0.2, VLM model selection is Project B's decision
+but it is undocumented and untestable. Per §0.2, VLM model selection is Unify's decision
 anyway — but the intent should be documented.
 
 **Fix required**:
 
 1. Add a docstring note to `DoclingRoutingParams.vlm_model` and `_apply_vlm_escalation_rule()`
-   stating that `None` means "use docling default (`granite_docling`)" and that Project B should
+   stating that `None` means "use docling default (`granite_docling`)" and that Unify should
    make the final VLM model selection based on the escalation reason supplied in `DocumentMetadata`
 2. Expose the VLM escalation reason (e.g., `handwriting_detected`, `low_dqs_degradation`,
-   `unknown_script`) in `DocumentMetadata` so Project B has the signal to choose the right VLM
+   `unknown_script`) in `DocumentMetadata` so Unify has the signal to choose the right VLM
 
 ---
 
-## Section 2 — Signal Coverage Audit for Project B
+## Section 2 — Signal Coverage Audit for Unify
 
-This section maps docling configuration levers to the Project A analysis signals that Project B
+This section maps docling configuration levers to the Prepare-Doc analysis signals that Unify
 can use to set them. Where a signal is missing from `DocumentMetadata`, the recommendation is
-to ensure Project A exposes it — not to add the docling config parameter to Project A.
+to ensure Prepare-Doc exposes it — not to add the docling config parameter to Prepare-Doc.
 
 ### 2.1 OCR Enablement → `text_layer_quality`, `text_layer_skip_ocr`
 
@@ -179,9 +179,9 @@ to ensure Project A exposes it — not to add the docling config parameter to Pr
 **Signals available in `DocumentMetadata`**:
 
 - `pages[].text_layer_quality` — 0–1 score of native text layer quality
-- `pages[].text_layer_skip_ocr` — boolean: Project A recommends skipping OCR
+- `pages[].text_layer_skip_ocr` — boolean: Prepare-Doc recommends skipping OCR
 
-**Coverage**: ✅ Complete. Project B can set `ocr_enabled=False` and `force_backend_text=True`
+**Coverage**: ✅ Complete. Unify can set `ocr_enabled=False` and `force_backend_text=True`
 when `text_layer_quality >= 0.90` and `text_layer_skip_ocr=True`.
 
 ---
@@ -196,7 +196,7 @@ when `text_layer_quality >= 0.90` and `text_layer_skip_ocr=True`.
 - `script_detection.ml_class` — grouped ML class (e.g., `LATN`, `ARAB`, `CJK`)
 - `script_detection.confidence` — detection confidence 0–1
 
-**Coverage**: ✅ Complete. Project B's engine selection table:
+**Coverage**: ✅ Complete. Unify's engine selection table:
 
 | Script class | Recommended engine |
 |-------------|-------------------|
@@ -220,8 +220,8 @@ when `text_layer_quality >= 0.90` and `text_layer_skip_ocr=True`.
 
 **Coverage**: ✅ Largely complete. **One gap**: warping escalation should use the
 *post-correction* warping state, not the raw detection score. The existing
-`DoclingRoutingEngine` triggers VLM on `warping_score > 0.75` but Project A's correction
-pipeline already applies perspective correction. Project B should check whether correction
+`DoclingRoutingEngine` triggers VLM on `warping_score > 0.75` but Prepare-Doc's correction
+pipeline already applies perspective correction. Unify should check whether correction
 was applied (`transform_history` in `PageMetadata`) before escalating on warping alone.
 
 ---
@@ -235,7 +235,7 @@ was applied (`transform_history` in `PageMetadata`) before escalating on warping
 - `page_layout_summary[].has_tables` — table presence per page
 - `dqs.structural_complexity_score` — document-level complexity
 
-**Coverage**: ✅ Complete. Project B can:
+**Coverage**: ✅ Complete. Unify can:
 
 - Disable table extraction when no page has `has_tables=True` (throughput optimization)
 - Use `TableFormerMode.ACCURATE` when `structural_complexity_score >= 0.7`
@@ -257,14 +257,14 @@ was applied (`transform_history` in `PageMetadata`) before escalating on warping
 
 - **Chart extraction**: No domain classification signal in `DocumentMetadata` currently.
   `has_figures=True` is necessary but not sufficient — charts are figures, but not all figures
-  are charts. Project A could expose a `figure_type_distribution` or domain hint (financial/
-  scientific) to help Project B decide whether `do_chart_extraction` is worthwhile.
-- **Picture description quality gate**: Project B should check `pages[].overall_quality >= 0.6`
+  are charts. Prepare-Doc could expose a `figure_type_distribution` or domain hint (financial/
+  scientific) to help Unify decide whether `do_chart_extraction` is worthwhile.
+- **Picture description quality gate**: Unify should check `pages[].overall_quality >= 0.6`
   before enabling picture description enrichment — describing blurry/degraded images wastes
   compute.
 
 **Recommendation**: No new `DoclingRoutingParams` fields needed. Ensure `DocumentMetadata`
-exposes `pages[].overall_quality` at the page level for Project B to use as a quality gate,
+exposes `pages[].overall_quality` at the page level for Unify to use as a quality gate,
 and consider adding a `domain_hints` field (e.g., `financial`, `scientific`) derived from
 content analysis in a future SigLIP 2 head.
 
@@ -280,7 +280,7 @@ vs `DOCLING_LAYOUT_EGRET_XLARGE`)
 - `dqs.structural_complexity_score` — 0–1 complexity metric
 - `page_layout_summary[].has_tables`, `.has_figures` — content flags
 
-**Coverage**: ✅ Complete. Project B can apply:
+**Coverage**: ✅ Complete. Unify can apply:
 
 - `HERON` (fast, 4GB): `structural_complexity_score < 0.5`, simple single/multi-column
 - `EGRET_LARGE` (8GB): `structural_complexity_score >= 0.5` or `has_tables=True`
@@ -298,7 +298,7 @@ vs `DOCLING_LAYOUT_EGRET_XLARGE`)
 - `pages[].char_height_px` — median character height in pixels (MobileNetV4 measurement)
 - `pages[].dpi_effective` — effective DPI after upscaling
 
-**Coverage**: ✅ Complete. Project B can map:
+**Coverage**: ✅ Complete. Unify can map:
 
 | `resolution_quality` | Recommended `images_scale` |
 |--------------------|--------------------------|
@@ -317,7 +317,7 @@ vs `DOCLING_LAYOUT_EGRET_XLARGE`)
 - `pages[].orientation.detected_angle` — 0/90/180/270
 - `page_layout_summary[].layout_type` — single_column/multi_column/complex
 
-**Coverage**: ✅ Complete. Project B can:
+**Coverage**: ✅ Complete. Unify can:
 
 - Set PSM 0 (auto OSD) when orientation correction was skipped
 - Set PSM 6 (single block) for single-column simple layouts
@@ -327,9 +327,9 @@ vs `DOCLING_LAYOUT_EGRET_XLARGE`)
 
 ## Section 3 — Inconsistencies in Documentation
 
-### 3.1 `PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md` Is Significantly Outdated
+### 3.1 `PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md` Is Significantly Outdated
 
-**File**: [docs/planning/PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md](PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md)
+**File**: [docs/planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md)
 **Date on file**: 2026-01-12
 
 The specification predates significant architectural decisions and does not reflect the current
@@ -346,23 +346,23 @@ system. Specific gaps:
 | 6-rule routing engine | Spec shows simplified 5-row decision table |
 | 7-class capture method classification | Not mentioned |
 | `code_content_ratio` head | Not mentioned |
-| **Architectural boundary** | Spec implies Project A prescribes docling config; reality is Project B owns configuration decisions |
+| **Architectural boundary** | Spec implies Prepare-Doc prescribes docling config; reality is Unify owns configuration decisions |
 
 **Recommendation**: Update the spec to v2 reflecting:
 
 1. Complete `DocumentMetadata` JSON schema including all fields added since January 2026
-2. Clear architectural boundary statement: Project A = analysis signals, Project B = docling
+2. Clear architectural boundary statement: Prepare-Doc = analysis signals, Unify = docling
    configuration translation
-3. The advisory role of `DoclingRoutingParams` — Project B may use or override it
+3. The advisory role of `DoclingRoutingParams` — Unify may use or override it
 4. SigLIP 2 16-head output fields
 5. Remove "4.3 ML IQA Architecture Gap" section (resolved by SigLIP 2)
 6. Remove pseudo-label gap (different model architecture now)
 
 ---
 
-### 3.2 `project-b-ocr-layout-workflow.puml` Does Not Reflect Docling Usage
+### 3.2 `unify-ocr-layout-workflow.puml` Does Not Reflect Docling Usage
 
-**File**: [docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.puml](../architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.puml)
+**File**: [docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml](../architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml)
 
 The diagram describes a custom multi-engine OCR architecture that does not match what
 docling provides. Specific inconsistencies:
@@ -387,13 +387,13 @@ docling-based implementation.
 
 | Diagram Label | Project Docs Label | Issue |
 |---------------|--------------------|-------|
-| "Unify (foundry-unify)" | "Project B (OCR Orchestration)" | Different names for same component |
+| "Unify (foundry-unify)" | "Unify (OCR Orchestration)" | Different names for same component |
 | "Docling DOM" | — | Mentioned only as data store, not as OCR orchestration |
-| "foundry-prepare-doc" | "Project A" | Service name vs project name inconsistency |
+| "foundry-prepare-doc" | "Prepare-Doc" | Service name vs project name inconsistency |
 
 The level-0 diagram uses service/microservice names (`foundry-*`) that differ from the project
 names used in all other documentation. **Recommendation**: Align naming — either adopt
-`foundry-*` names throughout or use `Project A/B/C/D` throughout. Document the canonical
+`foundry-*` names throughout or use `Prepare-Doc/B/C/D` throughout. Document the canonical
 naming convention in CLAUDE.md.
 
 ---
@@ -428,29 +428,29 @@ an invalid engine value at runtime and either silently fall back to `auto` or ra
 ### 4.1 VLM Warping Trigger May Double-Compensate
 
 [docling_router.py:325](../../src/image_preprocessing_detector/routing/docling_router.py#L325)
-triggers VLM escalation when `warping_score > 0.75`. However, Project A's correction pipeline
+triggers VLM escalation when `warping_score > 0.75`. However, Prepare-Doc's correction pipeline
 already applies perspective correction for detected warping (via `correction/perspective_correction.py`).
 The image delivered to docling has already been corrected.
 
-Project B should check `transform_history` in `PageMetadata` to determine whether perspective
+Unify should check `transform_history` in `PageMetadata` to determine whether perspective
 correction was applied before deciding to escalate on a raw `warping_score` from the pre-correction
 analysis.
 
 ### 4.2 No Page-Range Signal for Selective Processing
 
-For very large documents where Project A detects quality problems on specific page ranges
+For very large documents where Prepare-Doc detects quality problems on specific page ranges
 (e.g., pages 50–80 have extreme shadow severity), docling supports `page_range` in the
-`convert()` call. Project A currently has no way to flag specific page ranges as needing
+`convert()` call. Prepare-Doc currently has no way to flag specific page ranges as needing
 different treatment.
 
-This is a lower-priority enhancement. If Project B supports per-page decisions, `PageMetadata`
-is already per-page; Project B can filter pages by quality score and invoke docling selectively.
+This is a lower-priority enhancement. If Unify supports per-page decisions, `PageMetadata`
+is already per-page; Unify can filter pages by quality score and invoke docling selectively.
 
 ### 4.3 `do_picture_classification` Model Availability
 
 The `--enrich-picture-classes` flag requires the picture classification model which may not be
-downloaded by default. Project B should validate model availability before enabling this
-enrichment based on Project A's `has_figures` signal. Failure mode: silent skip or runtime error.
+downloaded by default. Unify should validate model availability before enabling this
+enrichment based on Prepare-Doc's `has_figures` signal. Failure mode: silent skip or runtime error.
 
 ---
 
@@ -466,26 +466,26 @@ enrichment based on Project A's `has_figures` signal. Failure mode: silent skip 
 | P0-4 | Emit `--no-tables` in `to_cli_args()` when `tables_enabled=False` | `schema.py:794` |
 | P0-5 | Document VLM default behavior (granite_docling) and expose escalation reason in `DocumentMetadata` | `docling_router.py`, `schema.py` |
 
-### P1 — Before Project B Integration Design
+### P1 — Before Unify Integration Design
 
 | ID | Action | File |
 |----|--------|------|
-| P1-1 | Update `PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md` to v2 — reflect current schema and architectural boundary | Planning doc |
+| P1-1 | Update `PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md` to v2 — reflect current schema and architectural boundary | Planning doc |
 | P1-2 | Fix field name: `docling_parameters` → `docling_params` in `PROJECT_OVERVIEW_DETAILED.md` | `PROJECT_OVERVIEW_DETAILED.md:362` |
-| P1-3 | Redraw or clarify `project-b-ocr-layout-workflow.puml` | PUML diagram |
-| P1-4 | Add migration note to `DoclingRoutingEngine` / `to_cli_args()` that these components belong in Project B (§0.2) | `docling_router.py`, `schema.py` |
+| P1-3 | Redraw or clarify `unify-ocr-layout-workflow.puml` | PUML diagram |
+| P1-4 | Add migration note to `DoclingRoutingEngine` / `to_cli_args()` that these components belong in Unify (§0.2) | `docling_router.py`, `schema.py` |
 
 ### P2 — Enhancement Phase
 
 | ID | Action | File |
 |----|--------|------|
-| P2-1 | Add `domain_hints` field to `DocumentMetadata` for Project B chart/enrichment decisions | `schema.py` |
-| P2-2 | Ensure `pages[].overall_quality` is present at page level for Project B quality gating | `schema.py` |
-| P2-3 | Align level-0 diagram naming (`foundry-*` vs `Project A/B/C/D`) | `rag-pipeline-overview.puml` |
+| P2-1 | Add `domain_hints` field to `DocumentMetadata` for Unify chart/enrichment decisions | `schema.py` |
+| P2-2 | Ensure `pages[].overall_quality` is present at page level for Unify quality gating | `schema.py` |
+| P2-3 | Align level-0 diagram naming (`foundry-*` vs `Prepare-Doc/B/C/D`) | `rag-pipeline-overview.puml` |
 | P2-4 | Reassess VLM warping trigger (use post-correction state from `transform_history`) | `docling_router.py:325` |
-| P2-5 | Migrate `DoclingRoutingEngine` and `to_cli_args()` to Project B codebase | Project B integration work |
+| P2-5 | Migrate `DoclingRoutingEngine` and `to_cli_args()` to Unify codebase | Unify integration work |
 
 ---
 
 *Report generated 2026-02-22 based on review of docling main branch + project source files.
-Updated 2026-02-22 to reflect architectural boundary: Project A = analysis signals, Project B = docling configuration.*
+Updated 2026-02-22 to reflect architectural boundary: Prepare-Doc = analysis signals, Unify = docling configuration.*

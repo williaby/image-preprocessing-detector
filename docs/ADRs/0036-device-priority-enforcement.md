@@ -20,7 +20,7 @@ purpose: "Document device priority enforcement strategy for GPU/CPU/Modal infere
 
 ## Context
 
-Project A's ML inference must operate across heterogeneous environments:
+Prepare-Doc's ML inference must operate across heterogeneous environments:
 
 - Local GPU (development, GPU-enabled production)
 - Local CPU (most production deployments)

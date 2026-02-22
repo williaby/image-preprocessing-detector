@@ -1,13 +1,13 @@
 ---
 schema_type: common
-title: "Project A → Project B Interface Contract"
-description: "Comprehensive contract defining all handoffs between Project A (Preprocessing & IQA) and Project B (OCR Orchestration)"
+title: "Prepare-Doc → Unify Interface Contract"
+description: "Comprehensive contract defining all handoffs between Prepare-Doc and Unify (OCR Orchestration)"
 tags:
   - pipeline
   - integration
 status: published
 owner: core-maintainer
-purpose: "Define the complete interface contract between Project A and Project B, including data formats, model registry, and processing recommendations."
+purpose: "Define the complete interface contract between Prepare-Doc and Unify, including data formats, model registry, and processing recommendations."
 ---
 
 Version 2.0.0 | Last Updated: 2025-11
@@ -16,8 +16,8 @@ Version 2.0.0 | Last Updated: 2025-11
 
 This document defines the complete interface contract between:
 
-- **Project A (Preprocessing & IQA)**: Document ingestion, quality assessment, corrections, layout detection, and element classification
-- **Project B (OCR Orchestration)**: Docling-based document parsing with tiered VLM validation and hierarchical chunking
+- **Prepare-Doc**: Document ingestion, quality assessment, corrections, layout detection, and element classification
+- **Unify (OCR Orchestration)**: Docling-based document parsing with tiered VLM validation and hierarchical chunking
 
 The contract covers three handoff types:
 
@@ -31,7 +31,7 @@ The contract covers three handoff types:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           PROJECT A                                     │
+│                           PREPARE-DOC                                     │
 │                    (Preprocessing & IQA)                                │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
@@ -40,13 +40,13 @@ The contract covers three handoff types:
 │  OUTPUTS:                                                               │
 │  ├── DocumentMetadata.json (per document)                              │
 │  ├── Corrected page images (300 DPI PNG)                               │
-│  └── Model Registry (ONNX models for Project B)                        │
+│  └── Model Registry (ONNX models for Unify)                        │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           PROJECT B                                     │
+│                           UNIFY                                     │
 │                    (OCR Orchestration)                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
@@ -57,7 +57,7 @@ The contract covers three handoff types:
 │                                                                         │
 │  Processing: Docling → Element Routing → Specialists → VLM Validation  │
 │                                                                         │
-│  OUTPUT: OCRDocument.json → Project C                                  │
+│  OUTPUT: OCRDocument.json → Chunk                                  │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -198,7 +198,7 @@ Replaces the previous `ocr_routing_recommendation` enum with richer guidance:
 
 #### Processing Tiers
 
-| Tier | Trigger Conditions | Project B Action |
+| Tier | Trigger Conditions | Unify Action |
 |------|-------------------|------------------|
 | `standard` | DQS < 0.3, born_digital, simple layout | Docling StandardPipeline |
 | `vlm_assisted` | 0.3 ≤ DQS < 0.6, tables/math, moderate complexity | Docling + Granite-Docling VLM |
@@ -390,7 +390,7 @@ Page-level summary of parasitic content for quick filtering:
 
 ## 3. Model Handoff: Model Registry
 
-Project A trains and exports models that Project B loads for inference. Each model ships in **full** and **light** variants for flexible deployment based on available compute resources.
+Prepare-Doc trains and exports models that Unify loads for inference. Each model ships in **full** and **light** variants for flexible deployment based on available compute resources.
 
 ### 3.1 Registry Location
 
@@ -547,7 +547,7 @@ Based on Phase 4 benchmarks, local GPUs (P2000, RTX A500) provide minimal benefi
 
 ### 3.4 Model Loading Contract
 
-Project B MUST load models using this interface with variant support:
+Unify MUST load models using this interface with variant support:
 
 ```python
 from pathlib import Path
@@ -558,7 +558,7 @@ import json
 VariantType = Literal["full", "light", "auto"]
 
 class ProjectAModelRegistry:
-    """Load and manage models trained by Project A with variant support."""
+    """Load and manage models trained by Prepare-Doc with variant support."""
 
     def __init__(self, registry_path: Path, default_variant: VariantType = "auto"):
         with open(registry_path / "registry.json") as f:
@@ -643,12 +643,12 @@ class ProjectAModelRegistry:
 
 ### 3.5 Version Compatibility
 
-| Project A Model Version | Compatible Project B Versions |
+| Prepare-Doc Model Version | Compatible Unify Versions |
 |------------------------|------------------------------|
-| registry v1.0.x | Project B v1.0.x |
-| registry v1.1.x | Project B v1.0.x, v1.1.x |
+| registry v1.0.x | Unify v1.0.x |
+| registry v1.1.x | Unify v1.0.x, v1.1.x |
 
-**Breaking Changes Requiring Project B Update:**
+**Breaking Changes Requiring Unify Update:**
 
 - Class additions to DocLayout-YOLO (new element types)
 - Input size changes
@@ -660,7 +660,7 @@ class ProjectAModelRegistry:
 
 ### 4.1 Threshold Configuration
 
-Project A provides calibrated thresholds that Project B uses for routing:
+Prepare-Doc provides calibrated thresholds that Unify uses for routing:
 
 ```yaml
 # configs/project_b_thresholds.yaml
@@ -737,9 +737,9 @@ ocr_actions:
 
 ## 5. Validation Requirements
 
-### 5.1 Project A Output Validation
+### 5.1 Prepare-Doc Output Validation
 
-Before handoff, Project A MUST validate:
+Before handoff, Prepare-Doc MUST validate:
 
 ```python
 from pydantic import BaseModel, Field, field_validator
@@ -798,13 +798,13 @@ class DocumentMetadata(BaseModel):
         return v
 ```
 
-### 5.2 Project B Input Validation
+### 5.2 Unify Input Validation
 
-Project B MUST validate received data:
+Unify MUST validate received data:
 
 ```python
 def validate_handoff(metadata_path: Path, output_dir: Path) -> list[str]:
-    """Validate Project A handoff package."""
+    """Validate Prepare-Doc handoff package."""
     errors = []
 
     # Load and validate JSON
@@ -843,7 +843,7 @@ def validate_handoff(metadata_path: Path, output_dir: Path) -> list[str]:
 
 ### 6.1 Processing Errors
 
-When Project A encounters errors, it MUST still produce valid output:
+When Prepare-Doc encounters errors, it MUST still produce valid output:
 
 ```json
 {
@@ -878,9 +878,9 @@ When Project A encounters errors, it MUST still produce valid output:
 }
 ```
 
-### 6.2 Project B Error Response
+### 6.2 Unify Error Response
 
-Project B MUST handle:
+Unify MUST handle:
 
 | Error Type | Response |
 |------------|----------|
@@ -894,7 +894,7 @@ Project B MUST handle:
 
 ## 7. Performance Requirements
 
-### 7.1 Project A Outputs
+### 7.1 Prepare-Doc Outputs
 
 | Metric | Requirement |
 |--------|-------------|
@@ -918,7 +918,7 @@ Project B MUST handle:
 
 ### 8.1 Schema Versioning
 
-- **Major version** (X.0.0): Breaking changes requiring Project B code updates
+- **Major version** (X.0.0): Breaking changes requiring Unify code updates
 - **Minor version** (0.X.0): New optional fields, backward compatible
 - **Patch version** (0.0.X): Bug fixes, no schema changes
 
@@ -936,7 +936,7 @@ Key changes from v1.0 (original handoff doc) to v2.0:
 
 **Backward Compatibility:**
 
-Project B v1.x can read v2.0 metadata by ignoring new fields. Project B v2.x requires v2.0 metadata.
+Unify v1.x can read v2.0 metadata by ignoring new fields. Unify v2.x requires v2.0 metadata.
 
 ---
 
@@ -968,8 +968,8 @@ Project B v1.x can read v2.0 metadata by ignoring new fields. Project B v2.x req
 
 | Role | Responsibility |
 |------|----------------|
-| Project A Team | Schema changes, model updates, IQA issues |
-| Project B Team | Routing logic, OCR integration, chunking |
+| Prepare-Doc Team | Schema changes, model updates, IQA issues |
+| Unify Team | Routing logic, OCR integration, chunking |
 | Shared | Threshold calibration, performance optimization |
 
 **Change Request Process:**
@@ -977,8 +977,8 @@ Project B v1.x can read v2.0 metadata by ignoring new fields. Project B v2.x req
 1. Propose change in GitHub issue
 2. Review impact on both projects
 3. Update contract document
-4. Implement in Project A
-5. Update Project B
+4. Implement in Prepare-Doc
+5. Update Unify
 6. Integration testing
 7. Deploy
 

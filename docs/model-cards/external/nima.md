@@ -19,7 +19,7 @@ title: 'Model Card: NIMA'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-nima` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Evaluation) |
 | **Status** | ❌ NOT RECOMMENDED |
 | **Priority** | N/A (Evaluation Only) |

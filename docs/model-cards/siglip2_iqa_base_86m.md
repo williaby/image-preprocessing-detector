@@ -20,7 +20,7 @@ title: 'Model Card: SigLIP2-IQA-Base-86M'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `siglip2-iqa-base-86m-v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Research / Candidate for Production |
 | **Status** | `trained` |
 | **Priority** | P1 (High - SOTA document IQA) |

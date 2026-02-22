@@ -42,7 +42,7 @@ Pre-release validation checklist for Image Preprocessing Detector.
 - [x] Deployment guide complete (local, Docker, Modal)
 - [x] Model cards updated (teacher/student specs)
 - [x] ADRs current (35-36 added)
-- [x] Project B handoff guide complete
+- [x] Unify handoff guide complete
 - [x] CHANGELOG updated
 
 ### Testing

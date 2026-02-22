@@ -27,7 +27,7 @@ The metadata schema system implements a **three-layer architectural pattern** fo
 For interactive Mermaid diagrams showing entity relationships, class structures, and data flows:
 
 - [Layer 2 Enrichment Schema Visualization](../../../../schema/layer2_enrichment_schema.md) - ER diagrams, class diagrams, enum values
-- [Document Metadata Schema Visualization](../../../../schema/document_metadata_schema.md) - Output schema for Project B handoff
+- [Document Metadata Schema Visualization](../../../../schema/document_metadata_schema.md) - Output schema for Unify handoff
 
 **JSON Schema Definitions**: `docs/schema/layer2_enrichment.schema.json`, `docs/schema/document_metadata.schema.json`
 

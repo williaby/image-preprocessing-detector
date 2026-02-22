@@ -15,7 +15,7 @@ title: 'Model Card: Layout YOLOv10 DocLayNet'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `layout_yolov10_doclaynet_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 2 (Layout-Lite Detection) |
 | **Status** | `pretrained` |
 | **Priority** | P1 (High) |
@@ -51,7 +51,7 @@ title: 'Model Card: Layout YOLOv10 DocLayNet'
 
 - **Primary**: Detect 11 DocLayNet element classes for structural complexity scoring
 - **Secondary**: Provide coarse page attributes (has_tables, has_figures, has_formulas)
-- **Out of Scope**: Fine-grained table structure extraction (Project B), reading order prediction
+- **Out of Scope**: Fine-grained table structure extraction (Unify), reading order prediction
 
 ---
 
@@ -131,7 +131,7 @@ title: 'Model Card: Layout YOLOv10 DocLayNet'
 
 - **Coarse Layout Only**: Designed for page-level element detection, not fine-grained structure
 - **DocLayNet Bias**: Optimized for business/scientific documents; may underperform on other domains
-- **No Reading Order**: Does not predict reading order (Project B responsibility)
+- **No Reading Order**: Does not predict reading order (Unify responsibility)
 
 ### Known Failure Modes
 
@@ -207,7 +207,7 @@ output:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-01-10 | Initial integration from pretrained weights | Project A Team |
+| v1.0.0 | 2025-01-10 | Initial integration from pretrained weights | Prepare-Doc Team |
 
 ---
 
@@ -234,7 +234,7 @@ output:
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Review Cadence** | Quarterly (P1 model) |
 

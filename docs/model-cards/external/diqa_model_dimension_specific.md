@@ -23,7 +23,7 @@ title: 'Model Card: DIQA_model (Dimension-Specific)'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `DIQA_model` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External VLM (DIQA Track A Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Component) |
 | **Priority** | P1 (High - dimension specialists) |

@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "Model Cards Directory"
-description: "Centralized repository for all ML model documentation in Project A"
+description: "Centralized repository for all ML model documentation in Prepare-Doc"
 tags:
 - reference
 - machine_learning
@@ -11,7 +11,7 @@ status: published
 owner: core-maintainer
 purpose: Documentation for Model Cards Directory.
 ---
-This directory contains standardized documentation for all ML models used in Project A (Preprocessing, IQA & Coarse Layout Gateway).
+This directory contains standardized documentation for all ML models used in Prepare-Doc.
 
 ## Directory Structure
 

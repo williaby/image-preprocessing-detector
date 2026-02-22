@@ -21,7 +21,7 @@ For each dataset in the inventory, validate that:
 
 ## Context
 
-Project A uses a three-layer metadata architecture:
+Prepare-Doc uses a three-layer metadata architecture:
 
 - **Layer 1 (Immutable)**: Original source labels preserved exactly as-is
 - **Layer 2 (Enrichment)**: Derived annotations from ML models + analysis

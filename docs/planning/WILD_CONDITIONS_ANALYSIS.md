@@ -37,14 +37,14 @@ each head must handle, along with current training coverage and gap severity.
 
 ## Degradation Classification Framework
 
-Research consistently identifies three distinct categories of OCR degradation. Project A's
+Research consistently identifies three distinct categories of OCR degradation. Prepare-Doc's
 preprocessing system targets only the first category. The other two require model-level or
 engineering-level solutions.
 
-### Category 1: Deterministic Degradations (Project A Scope)
+### Category 1: Deterministic Degradations (Prepare-Doc Scope)
 
 These are physically caused, directly measurable, and correctable through signal processing.
-Project A detects, quantifies, and corrects these before handoff to Project B.
+Prepare-Doc detects, quantifies, and corrects these before handoff to Unify.
 
 | Degradation | Detect Method | Correct Method | Implementation |
 | --- | --- | --- | --- |
@@ -65,7 +65,7 @@ Project A detects, quantifies, and corrects these before handoff to Project B.
 
 These arise from the relationship between model training distribution and production data.
 Preprocessing cannot resolve these — they require model-level intervention or routing.
-Project A's monitoring layer (`drift/`) detects these conditions and escalates.
+Prepare-Doc's monitoring layer (`drift/`) detects these conditions and escalates.
 
 | Condition | Detection Signal | Response |
 | --- | --- | --- |
@@ -147,7 +147,7 @@ structured rejection metadata with a specific reason code.
 
 **Resolution note from research**: The "300 DPI rule" is a practical guideline, not a
 universal law. The correct gate is measured character pixel height, not declared DPI —
-declared DPI from EXIF can be wrong or absent. Project A's `resolution_quality.py`
+declared DPI from EXIF can be wrong or absent. Prepare-Doc's `resolution_quality.py`
 correctly implements character-height-aware scoring via PaddleOCR + KDE mode.
 
 ---
@@ -251,8 +251,8 @@ handwriting_script (3-class), handwriting_content_type (2-class), handwriting_de
 **Coverage Score**: 0/9 fully covered (0%) — Critical remediation required
 
 **Important**: Non-Latin handwriting recognition is a **Statistical** degradation beyond the
-scope of Project A's preprocessing. Project A's role is to **detect and classify** handwriting
-presence, legibility, and density so that Project B can route to the appropriate specialized
+scope of Prepare-Doc's preprocessing. Prepare-Doc's role is to **detect and classify** handwriting
+presence, legibility, and density so that Unify can route to the appropriate specialized
 HWR model. Preprocessing cannot make Arabic cursive recognizable to a Latin-trained model.
 
 ---
@@ -357,7 +357,7 @@ Same conditions as SigLIP 2 Group 5 resolution quality — see above.
 
 ## Conditions Out of Scope (Impractical for Preprocessing)
 
-The following conditions cannot be resolved through image preprocessing. Project A's role
+The following conditions cannot be resolved through image preprocessing. Prepare-Doc's role
 is to **detect, classify, and route** documents exhibiting these conditions — not to correct
 them. Where noted, the system should produce rejection metadata or escalate to human review.
 
@@ -390,17 +390,17 @@ These require model routing, domain adaptation, or retraining — not preprocess
 | Calligraphic / decorative fonts not in training | Visual representation outside training distribution | Route to vision-language model with OCR post-correction |
 | Mathematical equation recognition | Requires specialized equation model (MathPix-class) | Route to specialized equation OCR |
 | Handwriting in unsupported script | Training data absent; preprocessing doesn't change model weights | Route to appropriate HWR model based on script detection |
-| Real-word OCR substitutions (59% of OCR errors) | Valid words substituted; undetectable via image preprocessing | Post-OCR correction with language model (Project C) |
+| Real-word OCR substitutions (59% of OCR errors) | Valid words substituted; undetectable via image preprocessing | Post-OCR correction with language model (Chunk) |
 | Model confidence calibration drift | Statistical property of model, not of image | Trigger ECE-based model recalibration in `drift/` |
 
 ### 4. Semantic / Layout Problems Requiring Model-Level Solutions
 
 | Condition | Why Preprocessing Cannot Help | Correct Routing |
 | --- | --- | --- |
-| Ambiguous reading order in complex layouts | Semantic problem: visual preprocessing cannot infer intent | Layout model with directed graph reading order (Project B) |
-| Table cell merging across OCR output | Structural extraction failure after correct recognition | Table structure model (Project B) |
-| Multi-column text flow coordination | Global document understanding required | Layout-aware OCR mode (Project B) |
-| Footnote / endnote association | Discourse-level, not pixel-level | NLP model (Project C) |
+| Ambiguous reading order in complex layouts | Semantic problem: visual preprocessing cannot infer intent | Layout model with directed graph reading order (Unify) |
+| Table cell merging across OCR output | Structural extraction failure after correct recognition | Table structure model (Unify) |
+| Multi-column text flow coordination | Global document understanding required | Layout-aware OCR mode (Unify) |
+| Footnote / endnote association | Discourse-level, not pixel-level | NLP model (Chunk) |
 
 ### 5. Prevention-Only Problems (Engineering Discipline)
 

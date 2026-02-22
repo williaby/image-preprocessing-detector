@@ -1,7 +1,7 @@
 ---
 schema_type: common
-title: "Level 1: Project A Architecture"
-description: "System architecture and workstream data flow for Project A"
+title: "Level 1: Prepare-Doc Architecture"
+description: "System architecture and workstream data flow for Prepare-Doc"
 tags:
 - architecture
 - diagrams
@@ -11,24 +11,24 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Provide system-level view of Project A architecture showing all eight workstreams
+purpose: "Provide system-level view of Prepare-Doc architecture showing all eight workstreams
   and their interactions."
 ---
-This level provides the complete system architecture for Project A (image-detection repository), showing how the eight workstreams interact to deliver the preprocessing, IQA, and routing gateway functionality.
+This level provides the complete system architecture for Prepare-Doc (image-detection repository), showing how the eight workstreams interact to deliver the preprocessing, IQA, and routing gateway functionality.
 
 ---
 
 ## Technical Diagram
 
-![Project A Architecture Overview](PROJECT_A_ARCHITECTURE_OVERVIEW.svg)
+![Prepare-Doc Architecture Overview](PREPARE_DOC_ARCHITECTURE_OVERVIEW.svg)
 
-*PlantUML source: [`PROJECT_A_ARCHITECTURE_OVERVIEW.puml`](PROJECT_A_ARCHITECTURE_OVERVIEW.puml)*
+*PlantUML source: [`PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml`](PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml)*
 
 ---
 
-## Project A Overview
+## Prepare-Doc Overview
 
-Project A serves as the "front door" for the RAG document pipeline, responsible for:
+Prepare-Doc serves as the "front door" for the RAG document pipeline, responsible for:
 
 - **Document ingestion** and page extraction
 - **Image Quality Assessment** (IQA) using classical CV and ML models
@@ -40,7 +40,7 @@ Project A serves as the "front door" for the RAG document pipeline, responsible 
 
 ## Eight Workstreams
 
-Project A is organized into eight interconnected workstreams:
+Prepare-Doc is organized into eight interconnected workstreams:
 
 ### 1. Production Runtime (Green)
 
@@ -257,13 +257,13 @@ Each Level 2 diagram drills down into component boxes that map to Level 3 module
 
 ## Downstream Projects Context
 
-Project A (Prepare-Doc) outputs are consumed by three downstream projects in the RAG pipeline:
+Prepare-Doc (Prepare-Doc) outputs are consumed by three downstream projects in the RAG pipeline:
 
-| Project | Consumes from Project A | Purpose | Contract Document |
+| Project | Consumes from Prepare-Doc | Purpose | Contract Document |
 |---------|------------------------|---------|-------------------|
-| **Project B (Unify)** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | Multi-engine OCR orchestration, Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
-| **Project C (Chunk)** | Docling DOM (via Project B) | Trust scoring, semantic RAG chunking | TBD |
-| **Project D (Embed)** | Text chunks (via Project C) | Vector embeddings, retrieval API | TBD |
+| **Unify (Unify)** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | Multi-engine OCR orchestration, Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
+| **Chunk (Chunk)** | Docling DOM (via Unify) | Trust scoring, semantic RAG chunking | TBD |
+| **Embed (Embed)** | Text chunks (via Chunk) | Vector embeddings, retrieval API | TBD |
 
 **Key Handoff Artifacts**:
 
@@ -273,7 +273,7 @@ Project A (Prepare-Doc) outputs are consumed by three downstream projects in the
 - **Document Quality Score (DQS)**: 0-1 composite score (degradation + structural complexity)
 - **Pre-OCR Risk**: 0-1 risk score for OCR failure likelihood
 
-See [Downstream Context](../level-2/downstream-context/index.md) for detailed workflow diagrams showing how Projects B, C, and D consume Project A outputs.
+See [Downstream Context](../level-2/downstream-context/index.md) for detailed workflow diagrams showing how Projects B, C, and D consume Prepare-Doc outputs.
 
 ---
 
@@ -295,5 +295,5 @@ See [Downstream Context](../level-2/downstream-context/index.md) for detailed wo
 
 ## Source Files
 
-- **PlantUML**: [`PROJECT_A_ARCHITECTURE_OVERVIEW.puml`](PROJECT_A_ARCHITECTURE_OVERVIEW.puml)
+- **PlantUML**: [`PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml`](PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml)
 - **Traceability**: [INDEX.md](../INDEX.md)

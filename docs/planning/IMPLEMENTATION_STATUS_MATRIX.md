@@ -47,7 +47,7 @@ tags:
 | [SIGLIP2_LARGE_400M_TRAINING_LOG.md](#siglip2_large_400m_training_logmd) | 📋 | 0% | None (planning) | 2026-02-10 |
 | [SYNTHETIC_REAL_TRAINING_METHODOLOGY.md](#synthetic_real_training_methodologymd) | 📋 | 0% | None | 2026-02-10 |
 | [SCRIPT_TAXONOMY.md](#script_taxonomymd) | ⚠️ | 70% | `schema_utils/script_ml_mapping.py` | 2026-02-10 |
-| [PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md](#project_a_to_b_handoff_specificationmd) | ⚠️ | 80% | `schema.py`, `output/` | 2026-02-10 |
+| [PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](#project_a_to_b_handoff_specificationmd) | ⚠️ | 80% | `schema.py`, `output/` | 2026-02-10 |
 | [ANNOTATION_TEST_ANALYSIS.md](#annotation_test_analysismd) | 📊 | N/A | Analysis document | 2026-02-10 |
 | [DATA_AVAILABILITY_REPORT.md](#data_availability_reportmd) | 📊 | N/A | Reference document | 2026-02-10 |
 | [DATASET_AUDIT_REPORT.md](#dataset_audit_reportmd) | 📊 | N/A | Reference document | 2026-02-10 |
@@ -422,11 +422,11 @@ tags:
 
 ---
 
-### PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md
+### PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md
 
 **Status**: ⚠️ Partial (80%)
 
-**Description**: Complete specification of DocumentMetadata.json format for Project B handoff.
+**Description**: Complete specification of DocumentMetadata.json format for Unify handoff.
 
 **Implementation Status**:
 
@@ -448,7 +448,7 @@ tags:
 
 **Missing**:
 
-- ❌ Full validation against Project B ingestion requirements
+- ❌ Full validation against Unify ingestion requirements
 - ❌ Schema versioning/migration support
 - ⚠️ Layout-lite accuracy (<85% F1 currently)
 

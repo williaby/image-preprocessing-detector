@@ -1,5 +1,5 @@
 ---
-title: Project A — System Overview (Detailed Reference)
+title: Prepare-Doc (foundry-prepare-doc) — System Overview (Detailed Reference)
 schema_type: common
 status: active
 owner: core-maintainer
@@ -9,7 +9,7 @@ tags:
 - reference
 ---
 
-# Project A — System Overview (Detailed Reference)
+# Prepare-Doc — System Overview (Detailed Reference)
 
 > **Audience**: Engineers implementing, debugging, or extending the system.
 > **Scope**: Target-state system — complete module map, schema contract, config reference,
@@ -24,7 +24,7 @@ tags:
 
 ---
 
-## 1. What Is Project A?
+## 1. What Is Prepare-Doc?
 
 Document quality in real-world collections is highly variable. Pages arrive rotated, skewed,
 blurred, shadowed, or photographed under poor lighting. Scripts span dozens of writing systems.
@@ -32,18 +32,18 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Project A is the **preprocessing, IQA, and coarse layout gateway** for a four-project RAG
+Prepare-Doc (foundry-prepare-doc) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
-dimensions, applies physical corrections, and produces two outputs for Project B (OCR
+dimensions, applies physical corrections, and produces two outputs for Unify (OCR
 Orchestration): a corrected page image and a `DocumentMetadata.json` record containing
-everything Project B needs to make informed routing decisions.
+everything Unify needs to make informed routing decisions.
 
 ```text
 Raw Documents (PDF, image, any condition)
         │
         ▼
 ┌────────────────────────────────────────┐
-│               PROJECT A                │
+│             PREPARE-DOC                  │
 │  Preprocessing, IQA & Coarse Gateway   │
 │                                        │
 │  • Orientation / skew correction       │
@@ -59,15 +59,15 @@ Raw Documents (PDF, image, any condition)
                  │  + Corrected page images
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│     PROJECT B       │ ─▶ │     PROJECT C       │ ─▶ │     PROJECT D       │
-│  OCR Orchestration  │    │   Fusion & Trust    │    │   Vector Indexing   │
-│  Full Layout        │    │   Multi-Engine      │    │   Embeddings        │
-│  Reading Order      │    │   Trust Scoring     │    │   Semantic Search   │
-│  Table Structure    │    │   RAG Chunking      │    │                     │
+│      UNIFY          │ ─▶ │     CHUNK           │ ─▶ │     EMBED           │
+│  (foundry-unify)    │    │  (foundry-chunk)    │    │  (foundry-embed)    │
+│  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
+│  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
+│  Reading Order      │    │  RAG Chunking       │    │  Semantic Search    │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
-Project A makes no OCR decisions. It provides structured, validated metadata so Project B can
+Prepare-Doc makes no OCR decisions. It provides structured, validated metadata so Unify can
 select the right engine, reading order strategy, and table extraction approach per page.
 
 ---
@@ -77,7 +77,7 @@ select the right engine, reading order strategy, and table extraction approach p
 The core design insight is that **image quality assessment and content analysis cannot be done
 reliably on an uncorrected image**. A document rotated 90° will fool a script detector, produce
 invalid IQA metrics, and trigger false negatives in a text detection gate. Low resolution makes
-every other analysis unreliable. Project A therefore splits processing into two stages.
+every other analysis unreliable. Prepare-Doc therefore splits processing into two stages.
 
 ### Stage 1 — Pre-correction Gate
 
@@ -205,7 +205,7 @@ PDF/Image Input
     — 4 routing strategies: ocr_fast / ocr_advanced / vision_simple / vision_structured
         │
         ▼
-[json_generator.py] ── DocumentMetadata.json + corrected images ──▶ Project B
+[json_generator.py] ── DocumentMetadata.json + corrected images ──▶ Unify
 ```
 
 **Total latency**: ~55–65ms GPU (3ms Stage 1 + 50ms Stage 2 + I/O overhead).
@@ -337,7 +337,7 @@ All output is serialized to `DocumentMetadata.json`. Key Pydantic v2 models:
 - `category`: `ElementCategory` (11 DocLayNet classes: CAPTION, FOOTNOTE, FORMULA,
   LIST_ITEM, PAGE_FOOTER, PAGE_HEADER, PICTURE, SECTION_HEADER, TABLE, TEXT, TITLE;
   plus HANDWRITING, IMAGE, TEXT_BLOCK)
-- `bbox`: `[x, y, width, height]` — COCO format (required for Project B LayoutParser)
+- `bbox`: `[x, y, width, height]` — COCO format (required for Unify LayoutParser)
 - `quality_issues`: list of `DetectedIssue` (element-level hybrid IQA)
 
 **`PageMetadata`** — Per-page analysis output:
@@ -357,14 +357,14 @@ All output is serialized to `DocumentMetadata.json`. Key Pydantic v2 models:
 - `dqs`: Document Quality Score (degradation + structural complexity)
 - `pre_ocr_risk`: 0–1 combined risk for OCR failure
 - `ocr_routing_recommendation`: ocr_fast / ocr_advanced / vision_simple / vision_structured
-- `docling_parameters`: structured params for docling-layout integration
+- `docling_params`: structured params for docling-layout integration
 - `detected_languages`: list of ISO 639-1 codes
 - `scripts`: list of ISO 15924 script codes
 - `transform_history`: list of applied corrections with parameters
 - `pages`: list of `PageMetadata`
 
 > **COCO bbox contract**: All bounding boxes use `[x, y, width, height]` format throughout —
-> **never** `[x1, y1, x2, y2]`. This is required for LayoutParser compatibility in Project B.
+> **never** `[x1, y1, x2, y2]`. This is required for LayoutParser compatibility in Unify.
 
 ### 4.2 Schema Utilities
 
@@ -457,7 +457,7 @@ DQS drives the four-strategy routing decision: `ocr_fast` (DQS > 0.8), `ocr_adva
 ### Script and Language Detection
 
 The 10-class script classifier (Phase 1) identifies the primary writing system. This
-determination drives OCR engine selection in Project B. The architecture expands to 108
+determination drives OCR engine selection in Unify. The architecture expands to 108
 OpenLID-aligned classes in Phase 2 without backbone retraining.
 
 Script taxonomy documentation: `docs/planning/SCRIPT_TAXONOMY.md`
@@ -663,7 +663,7 @@ The architecture uses a 4-level hierarchy with automated link validation:
 | Level | Description | Location |
 | ----- | ----------- | -------- |
 | 0 | Multi-project RAG pipeline (Projects A–D context) | `docs/architecture/diagrams/level-0/` |
-| 1 | Project A architecture and 8-workstream overview | `docs/architecture/diagrams/level-1/` |
+| 1 | Prepare-Doc architecture and 8-workstream overview | `docs/architecture/diagrams/level-1/` |
 | 2 | Workstream details ("Level 2.5" standard with code examples) | `docs/architecture/diagrams/level-2/` |
 | 3 | Module implementation swimlanes with LOC annotations | `docs/architecture/diagrams/level-3/` |
 
@@ -676,10 +676,10 @@ Key Level 2 diagrams by topic:
 
 | Topic | File |
 | ----- | ---- |
-| Data preparation pipeline | `diagrams/level-2/data-preparation/project-a-training-data-ingestion.puml` |
-| Training workflow | `diagrams/level-2/model-training/project-a-training-workflow-high-level.puml` |
-| Distillation cascade | `diagrams/level-2/model-training/project-a-distillation.puml` |
-| Production runtime (detailed) | `diagrams/level-2/production-runtime/project-a-primary-workflow-detailed.puml` |
+| Data preparation pipeline | `diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.puml` |
+| Training workflow | `diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml` |
+| Distillation cascade | `diagrams/level-2/model-training/prepare-doc-distillation.puml` |
+| Production runtime (detailed) | `diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml` |
 | Schema field population | `diagrams/level-2/schema-field-population/schema-field-population-workflow.puml` |
 | Resolution quality labeling | `diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.puml` |
 | Skew/orientation labeling | `diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.puml` |
@@ -707,7 +707,7 @@ java -jar ~/.vscode-server/extensions/jebbs.plantuml-2.18.1/plantuml.jar -tsvg <
 | Image processing | OpenCV + Pillow | `ingestion/pdf_upscaler.py`, `correction/corrections.py` | Geometric corrections, CLAHE, 5 upscaling algorithms |
 | Script taxonomy | 3-tier ISO 15924 architecture | `schema_utils/script_ml_mapping.py`, `config/script_ml_classes.yaml` | Tier independence: storage / training / routing configurable separately |
 | Layout taxonomy | 57-class canonical hub | `schema_utils/layout_taxonomy.py`, `config/layout_taxonomy.yaml` | Cross-schema conversion: DocLayNet ↔ Docling ↔ PubLayNet |
-| Schema | Pydantic v2 + JSON | `schema.py` | Type-safe; COCO-aligned bboxes; versioned Project B contract |
+| Schema | Pydantic v2 + JSON | `schema.py` | Type-safe; COCO-aligned bboxes; versioned Unify contract |
 | Training platform | Modal A10G/A100 | `modal/train_siglip2_multitask.py` | Serverless GPU; budget-controlled; GCS integration |
 | Dataset storage | Google Cloud Storage | `utils/gcs_uploader.py` | `gs://image_detection_b/` — training manifests + images |
 | Task orchestration | Celery + Redis | `workers/celery_app.py`, `workers/tasks.py` | 3 queues: default / gpu / batch |

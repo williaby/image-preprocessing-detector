@@ -91,7 +91,7 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md) - **Accepted** (2025-01-15)
 - [ADR-015: YOLOv8 for Layout Detection](0015-yolov8-layout-detection.md) - **Accepted** (2025-01-15)
 - [ADR-016: Defer Superscript/Footnote to Post-OCR](0016-defer-superscript-footnote-detection.md) - **Accepted** (2025-01-15)
-- [ADR-029: Project A Scope Boundaries in RAG Pipeline](0029-project-a-scope-boundaries.md) - **Accepted** (2025-11-15)
+- [ADR-029: Prepare-Doc Scope Boundaries in RAG Pipeline](0029-prepare-doc-scope-boundaries.md) - **Accepted** (2025-11-15)
 
 ### Technology Stack
 

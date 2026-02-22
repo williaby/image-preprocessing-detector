@@ -1,5 +1,5 @@
 ---
-title: Project A — System Overview
+title: Prepare-Doc (foundry-prepare-doc) — System Overview
 schema_type: common
 status: active
 owner: core-maintainer
@@ -9,7 +9,7 @@ tags:
 - reference
 ---
 
-# Project A — System Overview
+# Prepare-Doc — System Overview
 
 > **Audience**: Engineers joining the project or reviewing its design.
 > **Scope**: Target-state system — what it does, how it works, and why the design is reliable.
@@ -22,7 +22,7 @@ tags:
 
 ---
 
-## 1. What Is Project A?
+## 1. What Is Prepare-Doc?
 
 Document quality in real-world collections is highly variable. Pages arrive rotated, skewed,
 blurred, shadowed, or photographed under poor lighting. Scripts span dozens of writing systems.
@@ -30,7 +30,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Project A is the **preprocessing, IQA, and coarse layout gateway** for a four-project RAG
+Prepare-Doc (foundry-prepare-doc) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs: a corrected page image and
 a `DocumentMetadata.json` record containing everything the downstream OCR system needs to
@@ -41,7 +41,8 @@ Raw Documents (PDF, image, any condition)
         │
         ▼
 ┌────────────────────────────────────────┐
-│               PROJECT A                │
+│            PREPARE-DOC                 │
+│  (foundry-prepare-doc)                 │
 │  Preprocessing, IQA & Coarse Gateway   │
 │                                        │
 │  • Orientation / skew correction       │
@@ -57,18 +58,19 @@ Raw Documents (PDF, image, any condition)
                  │  + Corrected page images
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│     PROJECT B       │ ─▶ │     PROJECT C       │ ─▶ │     PROJECT D       │
-│  OCR Orchestration  │    │   Fusion & Trust    │    │   Vector Indexing   │
-│  Full Layout        │    │   Multi-Engine      │    │   Embeddings        │
-│  Reading Order      │    │   Trust Scoring     │    │   Semantic Search   │
-│  Table Structure    │    │   RAG Chunking      │    │                     │
+│       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │       EMBED         │
+│  (foundry-unify)    │    │  (foundry-chunk)    │    │  (foundry-embed)    │
+│  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
+│  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
+│  Reading Order      │    │  Trust Scoring      │    │  Semantic Search    │
+│  Table Structure    │    │  RAG Chunking       │    │                     │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
-Project A makes no OCR decisions. It provides structured, validated metadata so Project B can
+Prepare-Doc makes no OCR decisions. It provides structured, validated metadata so Unify can
 select the right engine, reading order strategy, and table extraction approach per page. The
 scope boundary is strict: full layout detection, table structure extraction, and reading order
-prediction are Project B's responsibility.
+prediction are Unify's responsibility.
 
 ---
 
@@ -77,7 +79,7 @@ prediction are Project B's responsibility.
 The central insight behind the architecture is that **content analysis cannot be done reliably
 on an uncorrected image**. A document rotated 90° will fool a script detector, produce invalid
 IQA metrics, and generate misleading layout signals. Low resolution makes every other analysis
-unreliable. Project A solves this by splitting processing into two sequential stages, each with
+unreliable. Prepare-Doc solves this by splitting processing into two sequential stages, each with
 a distinct purpose.
 
 ### Stage 1 — Pre-correction Gate (MobileNetV4-Conv-S, ~3ms GPU)
@@ -116,7 +118,7 @@ Total pipeline latency is approximately 55–65ms GPU across both stages.
 ## 3. What the System Detects
 
 All 16 prediction heads are organized into five task groups, each feeding a specific downstream
-decision in Project B.
+decision in Unify.
 
 **Image Quality Assessment** (6 heads). Five regression heads score blur, noise, contrast, skew
 severity, and compression artifacts on a 0–1 scale; a sixth produces an overall quality
@@ -127,7 +129,7 @@ image-dominant pages, and `vision_structured` for documents with tables and figu
 specialist extraction.
 
 **Script and Language** (1 head). A 10-class script classifier identifies the primary writing
-system from the document image. This determination drives OCR engine selection in Project B —
+system from the document image. This determination drives OCR engine selection in Unify —
 different engines handle Latin, CJK, Arabic, Devanagari, and Cyrillic scripts with very
 different accuracy profiles. The architecture is designed to expand to 108 OpenLID-aligned
 classes in Phase 2 without backbone retraining; only the classification head and its training
@@ -140,7 +142,7 @@ Stage 2 orientation reading conflicts with Stage 1, a correction escalation is t
 **Handwriting** (5 heads). Three classification heads assess presence (none/partial/dominant),
 legibility (unreadable through excellent), and content type (printed/cursive/mixed/annotation/
 diagram label). Two regression heads score density and script family. Together these determine
-whether Project B should route to a handwriting-specialized OCR engine and at what priority.
+whether Unify should route to a handwriting-specialized OCR engine and at what priority.
 
 **Page Attributes** (5 heads). A 7-class capture method classifier distinguishes born-digital,
 flatbed scanner, ADF scanner, smartphone camera, dedicated camera, synthetic, and unknown
@@ -172,7 +174,7 @@ No head exists because ML seemed like the right approach in principle.
 ### Dataset Diversity Validation
 
 A system trained on narrow data will fail on out-of-distribution inputs without warning. To
-prevent this, every training dataset used in Project A is evaluated across 14 diversity
+prevent this, every training dataset used in Prepare-Doc is evaluated across 14 diversity
 dimensions before being admitted to training: capture method, domain, script family, script
 code, resolution range, text density, layout type, content flags, degradation type, content
 type, paper size, color mode (binarized/grayscale/color), document age (modern/aged/historical),
@@ -220,8 +222,8 @@ deferred until the SigLIP 2 teacher is fully trained and validated.
 
 All output is serialized using Pydantic v2 models with strict type enforcement. Bounding boxes
 use COCO format (`[x, y, width, height]`) throughout — never `[x1, y1, x2, y2]` — because
-Project B's LayoutParser expects COCO conventions. The `DocumentMetadata.json` schema is
-versioned; breaking changes require an explicit contract negotiation with the Project B team.
+Unify's LayoutParser expects COCO conventions. The `DocumentMetadata.json` schema is
+versioned; breaking changes require an explicit contract negotiation with the Unify team.
 
 ---
 
@@ -236,7 +238,7 @@ versioned; breaking changes require an explicit contract negotiation with the Pr
 | PDF ingestion | PyMuPDF | DPI-aware extraction; 100% accuracy on DPI metadata |
 | Image corrections | OpenCV + Pillow | 5 upscaling algorithms, CLAHE, Hough deskew, perspective correction |
 | Script architecture | 3-tier ISO 15924 design | Storage / ML training / OCR routing are independently configurable |
-| Schema | Pydantic v2 + JSON | Type-safe; COCO-aligned bounding boxes; versioned Project B contract |
+| Schema | Pydantic v2 + JSON | Type-safe; COCO-aligned bounding boxes; versioned Unify contract |
 | Training | Modal A10G/A100 (serverless) | Budget-controlled GPU; GCS dataset integration |
 | Orchestration | Celery + Redis (3 queues) | Separates default, GPU, and batch workloads |
 | Monitoring | Prometheus + Grafana | Per-head drift detection; active learning integration |

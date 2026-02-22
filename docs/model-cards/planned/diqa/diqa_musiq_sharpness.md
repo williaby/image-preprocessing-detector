@@ -13,7 +13,7 @@ title: 'Model Card: DIQA MUSIQ Sharpness'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `diqa_musiq_sharpness_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | DIQA (Pseudo-Labeling Ensemble) |
 | **Status** | `trained` |
 | **Priority** | P1 (High) |
@@ -244,6 +244,6 @@ Track A (IQA Models)
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Trained (Phase 1) - Ready for ensemble evaluation |

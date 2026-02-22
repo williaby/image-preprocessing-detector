@@ -248,7 +248,7 @@ The Layer 2 enrichment schema v2.1.0 fields are populated through an 8-pass sequ
 | `ocr_quality_before_correction` | -- | -- | -- | -- | NOT STARTED |
 | `ocr_quality_after_correction` | -- | -- | -- | -- | NOT STARTED |
 
-**Note**: OCRImpactInfo is Project B scope (P2 future-proofing). Schema defined but no population path implemented. No action needed for Project A.
+**Note**: OCRImpactInfo is Unify scope (P2 future-proofing). Schema defined but no population path implemented. No action needed for Prepare-Doc.
 
 ### Layout Detections (6 fields per detection + 4 taxonomy fields)
 
@@ -369,7 +369,7 @@ Pass 8: Metadata Aggregation (statistics)
 
 | Schema Object | Field(s) | Reason |
 |--------------|----------|--------|
-| **OCRImpactInfo** | All 15 fields | Project B scope (P2 future-proofing) |
+| **OCRImpactInfo** | All 15 fields | Unify scope (P2 future-proofing) |
 
 ---
 
@@ -435,7 +435,7 @@ This section maps population scripts to implementation files with LOC counts.
 
 | Level | Diagram | Description |
 |-------|---------|-------------|
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Data Preparation](../data-preparation/index.md) | Automated data labeling pipeline |
 | **Level 2** | [Pseudo-Labeling](../pseudo-labeling/index.md) | DIQA 5-model ensemble |
 | **Level 2** | [Model Training](../model-training/index.md) | Training pipeline |

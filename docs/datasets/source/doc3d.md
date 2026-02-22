@@ -128,7 +128,7 @@ doc3d/data/doc3d/
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
 
-**Parser Status**: ℹ️ Not Implemented - P3 priority dataset, specialized 3D geometry GT not part of Project A core mission (IQA, layout-lite, routing). If dewarping preprocessing becomes required, revisit parser development.
+**Parser Status**: ℹ️ Not Implemented - P3 priority dataset, specialized 3D geometry GT not part of Prepare-Doc core mission (IQA, layout-lite, routing). If dewarping preprocessing becomes required, revisit parser development.
 
 ##### 2.7 Ground Truth Provenance
 

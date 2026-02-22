@@ -116,7 +116,7 @@ rus
 
 1. ❌ No script codes (inferior to OpenLID-v2)
 2. ❌ OpenLID-v2 provides superior integration
-3. ❌ No immediate use case for Project A
+3. ❌ No immediate use case for Prepare-Doc
 
 ### License & Usage Restrictions
 
@@ -151,7 +151,7 @@ rus
 3. ❌ No layout - cannot train layout detection
 4. ❌ Superseded by OpenLID-v2 - better coverage with script codes
 
-**Project A Requirements**:
+**Prepare-Doc Requirements**:
 
 - Image preprocessing and quality assessment
 - Visual layout detection

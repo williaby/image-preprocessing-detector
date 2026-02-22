@@ -20,7 +20,7 @@ purpose: "Document the decision to use Modal for GPU compute in training and inf
 
 ## Context
 
-Project A requires GPU compute for:
+Prepare-Doc requires GPU compute for:
 
 1. **Training**: ResNet teacher-student knowledge distillation (~12-24 hours)
 2. **Inference**: Teacher model validation on flagged documents (~5% of traffic)

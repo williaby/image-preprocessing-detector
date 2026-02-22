@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "Level 2: Model Training"
-description: "Detailed model training workflow diagrams for Project A"
+description: "Detailed model training workflow diagrams for Prepare-Doc"
 tags:
 - architecture
 - diagrams
@@ -23,7 +23,7 @@ This level provides detailed diagrams for the Model Training workstream - traini
 
 Overview of the complete model training pipeline from data preparation to model registry.
 
-![Training Workflow High Level](project-a-training-workflow-high-level.svg)
+![Training Workflow High Level](prepare-doc-training-workflow-high-level.svg)
 
 ---
 
@@ -31,7 +31,7 @@ Overview of the complete model training pipeline from data preparation to model 
 
 Detailed flow of the 3-step virtuous training cycle: MobileNetV4-Conv-S bootstrap, SigLIP 2 multi-task training, and MobileNetV4 distillation refinement.
 
-![Multi-Task Training Pipeline](project-a-distillation.svg)
+![Multi-Task Training Pipeline](prepare-doc-distillation.svg)
 
 ---
 
@@ -953,6 +953,6 @@ This section maps training pipeline stages to implementation files with LOC coun
 
 | Level | Diagram | Description |
 |-------|---------|-------------|
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Data Preparation](../data-preparation/index.md) | Dataset ingestion |
 | **Level 2** | [Pseudo-Labeling](../pseudo-labeling/index.md) | Label generation |

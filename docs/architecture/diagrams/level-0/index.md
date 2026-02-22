@@ -11,7 +11,7 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Provide pipeline-level context showing how Project A fits into the larger
+purpose: "Provide pipeline-level context showing how Prepare-Doc fits into the larger
   RAG system."
 ---
 This level provides the highest-level view of the RAG document pipeline, showing how multiple projects work together.
@@ -172,7 +172,7 @@ Core design decisions that govern all projects in the pipeline:
 |-----------|----------|-----------|
 | **Canonical Store** | Google Cloud Storage (GCS) | Durable, scalable, native GCP integration |
 | **Artifact Structure** | `gs://bucket/{trace_id}/{stage}/` | Clear separation by processing stage |
-| **Vector Storage** | Per-deployment Vector DB | Each Project D instance owns its vector database |
+| **Vector Storage** | Per-deployment Vector DB | Each Embed instance owns its vector database |
 
 ### Service Design
 
@@ -251,10 +251,10 @@ Standardized naming across documentation, repositories, and code:
 | Legacy ID | Service Name | Repository | Primary Function | Level 1 Diagram |
 |-----------|--------------|------------|------------------|-----------------|
 | ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI frontend, file upload, workflow triggering | TBD |
-| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality assessment, corrections, routing | [Level 1](../level-1/index.md) |
-| ~~Project C~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
-| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
-| ~~Project D~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring | TBD |
+| ~~Prepare-Doc~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality assessment, corrections, routing | [Level 1](../level-1/index.md) |
+| ~~Chunk~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
+| ~~Unify~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
+| ~~Embed~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring | TBD |
 | ~~Project E~~ | **Embed** | `foundry-embed` | Vector embedding, storage, retrieval API | TBD |
 
 **Naming Conventions:**
@@ -383,7 +383,7 @@ Each project boundary has formal contract documentation defining inputs, outputs
 
 | Contract | Document | Status | Description |
 |----------|----------|--------|-------------|
-| **Ingest -> Prepare-Doc** | [rag-processor-project-a-contract.md](../../../development/RAG%20Pipeline/rag-processor-project-a-contract.md) | Defined | ProcessingRequest, callbacks, job lifecycle, security |
+| **Ingest -> Prepare-Doc** | [ingest-prepare-doc-contract.md](../../../development/RAG%20Pipeline/ingest-prepare-doc-contract.md) | Defined | ProcessingRequest, callbacks, job lifecycle, security |
 | **Prepare-Doc -> Unify** | [prepare-doc-unify-contract.md](../../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) | Defined | DocumentMetadata.json, corrected image URIs, routing |
 | **Prepare-Audio -> Unify** | TBD | To Be Defined | TranscriptMetadata.json schema, speaker segments |
 | **Unify -> Chunk** | TBD | To Be Defined | Docling DOM schema, page-level metadata |
@@ -421,7 +421,7 @@ Each project boundary has formal contract documentation defining inputs, outputs
 
 | Level | Diagram | Description |
 |-------|---------|-------------|
-| **Level 1** | [PROJECT_A_ARCHITECTURE_OVERVIEW](../level-1/index.md) | Project A internal architecture |
+| **Level 1** | [PREPARE_DOC_ARCHITECTURE_OVERVIEW](../level-1/index.md) | Prepare-Doc internal architecture |
 | **Level 2** | [Production Runtime](../level-2/production-runtime/index.md) | Runtime workflow details |
 | **Level 2** | [Model Training](../level-2/model-training/index.md) | Training pipeline |
 

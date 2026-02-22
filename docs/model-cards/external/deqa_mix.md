@@ -23,7 +23,7 @@ title: 'Model Card: DeQA-Mix'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `DeQA-Mix` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External VLM (DIQA Track A Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Component) |
 | **Priority** | P1 (High - efficient multi-task) |

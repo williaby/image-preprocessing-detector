@@ -19,7 +19,7 @@ title: 'Model Card: PaQ-2-PiQ'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-paq2piq` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Evaluation) |
 | **Status** | ❌ NOT RECOMMENDED |
 | **Priority** | N/A (Evaluation Only) |

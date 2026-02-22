@@ -586,7 +586,7 @@ endlegend
 
 ### Existing Swimlane Example
 
-- `level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml` - Pattern for LOC annotations
+- `level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml` - Pattern for LOC annotations
 
 ---
 

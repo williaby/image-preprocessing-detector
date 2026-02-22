@@ -335,7 +335,7 @@ note right
   **Output:**
   - DocumentMetadata.json (Pydantic schema)
   - Corrected page images (PNG)
-  - Upload to GCS for Project B handoff
+  - Upload to GCS for Unify handoff
 
   **Total:** 503 lines
 end note

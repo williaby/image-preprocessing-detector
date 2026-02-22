@@ -13,7 +13,7 @@ title: 'Model Card: PDF Type Classifier'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `pdftype_classifier_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 2 (Core Components) |
 | **Status** | `complete` |
 | **Priority** | P1 (High) |
@@ -201,7 +201,7 @@ monitoring:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-01-08 | Initial release | Project A Team |
+| v1.0.0 | 2025-01-08 | Initial release | Prepare-Doc Team |
 
 ---
 
@@ -210,7 +210,7 @@ monitoring:
 ```bibtex
 @misc{pdftype_classifier_v1.0.0,
   title={{PDF Type Classifier: Document type detection for OCR routing}},
-  author={{Project A Team}},
+  author={{Prepare-Doc Team}},
   year={{2025}},
   note={{Internal classifier for document preprocessing pipeline}}
 }
@@ -222,7 +222,7 @@ monitoring:
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Review Cadence** | Semi-annually (rule-based classifier) |
 

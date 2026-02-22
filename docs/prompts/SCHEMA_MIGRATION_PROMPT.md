@@ -11,7 +11,7 @@ tags:
 
 ## Context
 
-You are working on Project A, an image preprocessing and quality assessment system for a multi-project RAG document pipeline. The system uses a three-layer metadata architecture to track dataset annotations:
+You are working on Prepare-Doc, an image preprocessing and quality assessment system for a multi-project RAG document pipeline. The system uses a three-layer metadata architecture to track dataset annotations:
 
 - **Layer 1 (Immutable)**: Original dataset labels, never modified
 - **Layer 2 (Enrichment)**: Derived annotations from ML models and analysis

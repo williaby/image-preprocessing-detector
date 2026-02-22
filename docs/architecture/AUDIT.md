@@ -9,7 +9,7 @@ title: PlantUML Diagram Audit and Recommendations
 ---
 
 **Date**: February 2026 (updated from December 2025 original)
-**Scope**: Project A - Preprocessing, IQA, Layout & Routing Gateway
+**Scope**: Prepare-Doc - Preprocessing, IQA, Layout & Routing Gateway
 **Author**: Claude Code Analysis
 
 ## Executive Summary
@@ -23,21 +23,21 @@ The broader RAG pipeline consists of multiple repositories working together:
 | Repository | Purpose | Status |
 |------------|---------|--------|
 | [rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) | Pipeline frontend, job orchestration | In Development |
-| **image_detection** (THIS REPO) | Project A: Preprocessing, IQA, Layout | Active Development |
+| **image_detection** (THIS REPO) | Prepare-Doc: Preprocessing, IQA, Layout | Active Development |
 | [audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) | Audio track: Transcription, diarization | In Development |
-| Project B | OCR orchestration (multi-engine) | **Not Yet Started** |
-| Project C | Fusion & chunking | Not Yet Started |
-| Project D | Vector store integration | Not Yet Started |
+| Unify | OCR orchestration (multi-engine) | **Not Yet Started** |
+| Chunk | Fusion & chunking | Not Yet Started |
+| Embed | Vector store integration | Not Yet Started |
 
-**Scope Update**: Layout analysis (docling-layout with 11 DocLayNet classes, reading order, table structure) was moved from Project B to Project A for simplification. Project B will focus solely on OCR orchestration.
+**Scope Update**: Layout analysis (docling-layout with 11 DocLayNet classes, reading order, table structure) was moved from Unify to Prepare-Doc for simplification. Unify will focus solely on OCR orchestration.
 
 ## Project Architecture Context
 
-Project A serves as the "front door" for a four-project RAG document pipeline. The system architecture consists of four interconnected workstreams:
+Prepare-Doc serves as the "front door" for a four-project RAG document pipeline. The system architecture consists of four interconnected workstreams:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           PROJECT A WORKSTREAMS                              │
+│                           PREPARE-DOC WORKSTREAMS                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐       │
@@ -79,33 +79,33 @@ Project A serves as the "front door" for a four-project RAG document pipeline. T
 |------|----------|---------|
 | `rag-pipeline-overview.puml` | `docs/architecture/diagrams/` | Multi-track RAG pipeline overview (Document + Audio tracks) |
 
-#### Level 1: Project A Architecture (NEW)
+#### Level 1: Prepare-Doc Architecture (NEW)
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `PROJECT_A_ARCHITECTURE_OVERVIEW.puml` | `docs/` | **NEW** - Complete system architecture showing all workstreams |
-| `PROJECT_A_WORKFLOW_HIERARCHY.puml` | `docs/` | **NEW** - Swimlane diagram showing data flow between workstreams |
+| `PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml` | `docs/` | **NEW** - Complete system architecture showing all workstreams |
+| `PREPARE_DOC_WORKFLOW_HIERARCHY.puml` | `docs/` | **NEW** - Swimlane diagram showing data flow between workstreams |
 
 #### Level 2: Production Runtime
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `project-a-primary-workflow-high-level.puml` | `docs/planning/` | End-to-end document processing (simplified) |
-| `project-a-primary-workflow-detailed.puml` | `docs/planning/` | Detailed implementation with module references |
-| `project-a-device-selection-flow.puml` | `docs/development/RAG Pipeline/` | Device priority and teacher escalation logic |
+| `prepare-doc-primary-workflow-high-level.puml` | `docs/planning/` | End-to-end document processing (simplified) |
+| `prepare-doc-primary-workflow-detailed.puml` | `docs/planning/` | Detailed implementation with module references |
+| `prepare-doc-device-selection-flow.puml` | `docs/development/RAG Pipeline/` | Device priority and teacher escalation logic |
 
 #### Level 2: Model Training
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `project-a-distillation.puml` | `docs/development/RAG Pipeline/` | Knowledge distillation (teacher → student) |
-| `project-a-training-workflow-high-level.puml` | `docs/planning/` | ML training lifecycle overview |
+| `prepare-doc-distillation.puml` | `docs/development/RAG Pipeline/` | Knowledge distillation (teacher → student) |
+| `prepare-doc-training-workflow-high-level.puml` | `docs/planning/` | ML training lifecycle overview |
 
 #### Level 2: Data Preparation
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `project-a-training-data-ingestion.puml` | `docs/development/RAG Pipeline/` | Dataset collection and preparation |
+| `prepare-doc-training-data-ingestion.puml` | `docs/development/RAG Pipeline/` | Dataset collection and preparation |
 | `automated-data-labeling-pipeline.puml` | `docs/planning/` | Three-layer labeling architecture |
 
 #### Level 2: Pseudo-Labeling
@@ -127,17 +127,17 @@ Project A serves as the "front door" for a four-project RAG document pipeline. T
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `project-a-primary-workflow-test-coverage.puml` | `docs/planning/` | High-level with test annotations |
-| `project-a-primary-workflow-detailed-test-coverage.puml` | `docs/planning/` | Detailed with test annotations |
-| `project-a-training-workflow-test-coverage.puml` | `docs/planning/` | Training with test annotations |
+| `prepare-doc-primary-workflow-test-coverage.puml` | `docs/planning/` | High-level with test annotations |
+| `prepare-doc-primary-workflow-detailed-test-coverage.puml` | `docs/planning/` | Detailed with test annotations |
+| `prepare-doc-training-workflow-test-coverage.puml` | `docs/planning/` | Training with test annotations |
 
 #### Related Projects (Downstream Context)
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `project-b-ocr-layout-workflow.puml` | `docs/development/RAG Pipeline/` | Project B OCR orchestration |
-| `project-c-fusion-chunking-workflow.puml` | `docs/development/RAG Pipeline/` | Project C fusion pipeline |
-| `project-d-vectorstore-workflow.puml` | `docs/development/RAG Pipeline/` | Project D embedding pipeline |
+| `unify-ocr-layout-workflow.puml` | `docs/development/RAG Pipeline/` | Unify OCR orchestration |
+| `chunk-fusion-chunking-workflow.puml` | `docs/development/RAG Pipeline/` | Chunk fusion pipeline |
+| `embed-vectorstore-workflow.puml` | `docs/development/RAG Pipeline/` | Embed embedding pipeline |
 
 ### Diagrams to Remove (Redundant/Draft)
 
@@ -145,22 +145,22 @@ Project A serves as the "front door" for a four-project RAG document pipeline. T
 
 | File | Reason |
 |------|--------|
-| `project-a-runtime-device-teacher-gating.puml` | Duplicate of `project-a-device-selection-flow.puml` |
+| `prepare-doc-runtime-device-teacher-gating.puml` | Duplicate of `prepare-doc-device-selection-flow.puml` |
 
 #### Labeling Workstream Confusion
 
 | File | Reason |
 |------|--------|
-| `labeling-workstreams-overview.puml` | Uses "Project A/B/C" naming that conflicts with main pipeline Projects A-D. Should be renamed or removed. |
-| `project-a-arena-benchmarking.puml` | Arena concept replaced by benchmark workflow |
-| `project-b-quantization.puml` | Out of scope for Project A |
-| `project-c-finetuning.puml` | Covered by diqa-training-phases.puml |
+| `labeling-workstreams-overview.puml` | Uses "Prepare-Doc/B/C" naming that conflicts with main pipeline Projects A-D. Should be renamed or removed. |
+| `prepare-doc-arena-benchmarking.puml` | Arena concept replaced by benchmark workflow |
+| `project-b-quantization.puml` | Out of scope for Prepare-Doc |
+| `chunk-finetuning.puml` | Covered by diqa-training-phases.puml |
 
 #### Opus Workflows (Superseded)
 
 | File | Reason |
 |------|--------|
-| `workflows_opus/model_artifact_promotion.puml` | Promote to docs if needed, otherwise redundant with project-a-distillation.puml export section |
+| `workflows_opus/model_artifact_promotion.puml` | Promote to docs if needed, otherwise redundant with prepare-doc-distillation.puml export section |
 | `workflows_opus/unified_primary_workflow.puml` | Too detailed; functionality split across retained diagrams |
 
 #### All tmp_cleanup Diagrams (Per User Request)
@@ -181,8 +181,8 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 
 **Status**: MISSING (CRITICAL after scope change)
 **Need**: Dedicated workflow for docling-layout training
-**Impact**: Full layout analysis moved to Project A; no documentation for how the layout model is trained
-**Scope Change**: Layout analysis (including reading order, table structure) now in Project A, not Project B
+**Impact**: Full layout analysis moved to Prepare-Doc; no documentation for how the layout model is trained
+**Scope Change**: Layout analysis (including reading order, table structure) now in Prepare-Doc, not Unify
 **Recommendation**: Create `project-a-layout-training.puml` covering:
 
 - DocLayNet dataset preparation (80K pages, 11 classes)
@@ -197,7 +197,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 **Status**: MISSING
 **Need**: Task queue architecture diagram
 **Impact**: Phase 4 worker pool implementation (98% complete) has no documentation
-**Recommendation**: Create `project-a-worker-architecture.puml` covering:
+**Recommendation**: Create `prepare-doc-worker-architecture.puml` covering:
 
 - Worker pool topology (default, GPU, batch queues)
 - Task routing logic
@@ -214,7 +214,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 **Status**: MENTIONED BUT NOT DETAILED
 **Need**: Dedicated workflow for cost controls
 **Impact**: Three-tier budget enforcement (doc/batch/monthly) referenced but not visualized
-**Recommendation**: Add section to `project-a-device-selection-flow.puml` or create separate diagram
+**Recommendation**: Add section to `prepare-doc-device-selection-flow.puml` or create separate diagram
 
 ### Minor Gaps
 
@@ -223,7 +223,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 **Status**: IMPLICIT
 **Need**: Inference session management details
 **Impact**: Provider selection, session caching not documented
-**Recommendation**: Add notes to `project-a-primary-workflow-detailed.puml`
+**Recommendation**: Add notes to `prepare-doc-primary-workflow-detailed.puml`
 
 #### 6. Error Handling Taxonomy
 
@@ -240,7 +240,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 
 | Source | YOLO Variant Referenced |
 |--------|------------------------|
-| `project-a-primary-workflow-detailed.puml` | "DocLayout-YOLO" |
+| `prepare-doc-primary-workflow-detailed.puml` | "DocLayout-YOLO" |
 | `tmp_cleanup/workflows_copilot/layout_training_phase3_yolov8.puml` | "YOLOv8n/s" |
 | `tmp_cleanup/workflows_sonnet/04_phase6_doclayout_yolo_training.puml` | "YOLOv10-nano" |
 | CLAUDE.md | "YOLOv10-doc (specifically trained on DocLayNet)" |
@@ -255,28 +255,28 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 | `01_document_processing_pipeline.puml` | blur=0.25, noise=0.20, contrast=0.15, skew=0.15, lighting=0.12, compression=0.08, bleed-through=0.05 |
 | CLAUDE.md (Phase 1C) | Weight calibration mentioned but values not specified |
 
-**Resolution**: Document canonical weights in `project-a-primary-workflow-detailed.puml` and ensure consistency with `src/image_preprocessing_detector/metrics/dqs_calculator.py`.
+**Resolution**: Document canonical weights in `prepare-doc-primary-workflow-detailed.puml` and ensure consistency with `src/image_preprocessing_detector/metrics/dqs_calculator.py`.
 
 ### Labeling Workstream Naming Conflict
 
-The `docs/development/labeling/` folder uses "Project A/B/C" to mean:
+The `docs/development/labeling/` folder uses "Prepare-Doc/B/C" to mean:
 
-- Project A = Arena Benchmarking
-- Project B = Quantization
-- Project C = Fine-Tuning
+- Prepare-Doc = Arena Benchmarking
+- Unify = Quantization
+- Chunk = Fine-Tuning
 
 This conflicts with the main pipeline where:
 
-- Project A = Preprocessing, IQA & Full Layout (this repo)
-- Project B = OCR Orchestration only (layout moved to A)
-- Project C = Fusion & Chunking
-- Project D = Vector Store
+- Prepare-Doc = Preprocessing, IQA & Full Layout (this repo)
+- Unify = OCR Orchestration only (layout moved to A)
+- Chunk = Fusion & Chunking
+- Embed = Vector Store
 
 **Resolution**: Rename labeling workstreams to avoid confusion:
 
-- "Arena Benchmarking Workstream" (not "Project A")
-- "Quantization Workstream" (not "Project B")
-- "Fine-Tuning Workstream" (not "Project C")
+- "Arena Benchmarking Workstream" (not "Prepare-Doc")
+- "Quantization Workstream" (not "Unify")
+- "Fine-Tuning Workstream" (not "Chunk")
 
 Or better: consolidate into the DIQA pseudo-labeling diagrams which already cover this.
 
@@ -298,20 +298,20 @@ Or better: consolidate into the DIQA pseudo-labeling diagrams which already cove
 
 Three diagrams cover essentially the same content:
 
-1. `project-a-runtime-device-teacher-gating.puml` (45 lines)
-2. `project-a-device-selection-flow.puml` (similar content)
+1. `prepare-doc-runtime-device-teacher-gating.puml` (45 lines)
+2. `prepare-doc-device-selection-flow.puml` (similar content)
 3. `06_teacher_escalation_decision.puml` (347 lines, most detailed)
 
-**Resolution**: Keep `project-a-device-selection-flow.puml`, update with detail from sonnet version, delete duplicates.
+**Resolution**: Keep `prepare-doc-device-selection-flow.puml`, update with detail from sonnet version, delete duplicates.
 
 ### Redundant Primary Workflow Diagrams
 
 Five variations exist in `docs/planning/`:
 
-1. `project-a-primary-workflow-high-level.puml` (75 lines)
-2. `project-a-primary-workflow-detailed.puml` (detailed)
-3. `project-a-primary-workflow-test-coverage.puml` (annotated)
-4. `project-a-primary-workflow-detailed-test-coverage.puml` (combo)
+1. `prepare-doc-primary-workflow-high-level.puml` (75 lines)
+2. `prepare-doc-primary-workflow-detailed.puml` (detailed)
+3. `prepare-doc-primary-workflow-test-coverage.puml` (annotated)
+4. `prepare-doc-primary-workflow-detailed-test-coverage.puml` (combo)
 5. `unified_primary_workflow.puml` (735 lines)
 
 Plus 3+ in `tmp_cleanup/`.
@@ -332,10 +332,10 @@ Plus 3+ in `tmp_cleanup/`.
 1. **Delete tmp_cleanup diagrams**: Remove all 14 files in `tmp_cleanup/workflows_*/`
 
 2. **Delete duplicates**:
-   - `project-a-runtime-device-teacher-gating.puml`
+   - `prepare-doc-runtime-device-teacher-gating.puml`
    - `workflows_opus/unified_primary_workflow.puml`
 
-3. **Rename labeling diagrams**: Update naming in `docs/development/labeling/` to avoid Project A/B/C confusion
+3. **Rename labeling diagrams**: Update naming in `docs/development/labeling/` to avoid Prepare-Doc/B/C confusion
 
 ### Short-Term Actions (Next Sprint)
 
@@ -378,9 +378,9 @@ docs/architecture/diagrams/
 ├── level-0/                               ◄─── Pipeline Context (1 diagram)
 │   └── rag-pipeline-overview.puml
 │
-├── level-1/                               ◄─── Project A Architecture (2 diagrams)
-│   ├── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
-│   └── PROJECT_A_WORKFLOW_HIERARCHY.puml
+├── level-1/                               ◄─── Prepare-Doc Architecture (2 diagrams)
+│   ├── PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml
+│   └── PREPARE_DOC_WORKFLOW_HIERARCHY.puml
 │
 ├── level-2/                               ◄─── Workstream Details (28 diagrams)
 │   ├── production-runtime/          (WS1)   6 diagrams
@@ -436,15 +436,15 @@ The following actions were taken to bring documentation in sync with the actual 
 
 ### Remaining Gaps (from original audit)
 
-- ~~**Layout Model Training workflow**~~: **RESOLVED** (February 2026) - Created `project-a-training-infrastructure.puml` covering dataset assembly, ILP allocation, Modal GPU training, phased head training, active learning loop, and ONNX export
-- ~~**Celery Worker architecture**~~: **RESOLVED** (February 2026) - Created `project-a-worker-architecture.puml` covering FastAPI, Redis broker, 3 worker pools, device orchestration, circuit breaker, and monitoring
+- ~~**Layout Model Training workflow**~~: **RESOLVED** (February 2026) - Created `prepare-doc-training-infrastructure.puml` covering dataset assembly, ILP allocation, Modal GPU training, phased head training, active learning loop, and ONNX export
+- ~~**Celery Worker architecture**~~: **RESOLVED** (February 2026) - Created `prepare-doc-worker-architecture.puml` covering FastAPI, Redis broker, 3 worker pools, device orchestration, circuit breaker, and monitoring
 - **Budget Enforcement details**: Partial (covered in worker-architecture diagram + device-orchestrator.md Level 3 doc)
 - ~~**Level 3 for WS4, WS8**~~: **RESOLVED** (February 2026) - Created swimlane + module docs for both pseudo-labeling and synthetic-generation
 - **Level 3 for WS5, WS6**: **DEFERRED** - WS5 has 0 LOC implemented; WS6 has simple linear flow with self-contained components (both explicitly state Level 3 not required in their index.md)
 
 ### PUML Syntax Issues
 
-- ~~`project-a-training-data-ingestion.puml`~~: **FIXED** (February 2026) - Replaced stereotype-based partition colors with inline `#Color` syntax
+- ~~`prepare-doc-training-data-ingestion.puml`~~: **FIXED** (February 2026) - Replaced stereotype-based partition colors with inline `#Color` syntax
 - ~~`schema-field-population-workflow.puml`~~: **RESOLVED** (February 2026) - Created simplified `schema-field-population-summary.puml` for SVG rendering; full 387-line diagram kept as text reference
 
 ---
@@ -476,7 +476,7 @@ The following actions were taken to bring documentation in sync with the actual 
 
 ### docs/development/RAG Pipeline/
 
-- `project-a-runtime-device-teacher-gating.puml` (duplicate)
+- `prepare-doc-runtime-device-teacher-gating.puml` (duplicate)
 
 ### docs/planning/workflows_opus/
 
@@ -486,6 +486,6 @@ The following actions were taken to bring documentation in sync with the actual 
 ### docs/development/labeling/ (rename or merge)
 
 - `labeling-workstreams-overview.puml` → merge into diqa diagrams
-- `project-a-arena-benchmarking.puml` → merge into benchmark workflow
+- `prepare-doc-arena-benchmarking.puml` → merge into benchmark workflow
 - `project-b-quantization.puml` → out of scope
-- `project-c-finetuning.puml` → covered by diqa-training-phases
+- `chunk-finetuning.puml` → covered by diqa-training-phases

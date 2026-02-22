@@ -16,7 +16,7 @@ title: 'Model Card: IQA ResNet-50 Teacher'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `iqa_resnet50_teacher_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 3 (Teacher-Student ML IQA) |
 | **Status** | `trained` |
 | **Priority** | P0 (Critical) |
@@ -206,7 +206,7 @@ escalation:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-01-15 | Initial release | Project A Team |
+| v1.0.0 | 2025-01-15 | Initial release | Prepare-Doc Team |
 
 ---
 
@@ -215,7 +215,7 @@ escalation:
 ```bibtex
 @misc{iqa_resnet50_teacher_v1.0.0,
   title={{IQA ResNet-50 Teacher: High-capacity IQA for document preprocessing}},
-  author={{Project A Team}},
+  author={{Prepare-Doc Team}},
   year={{2025}},
   note={{Internal model for document preprocessing pipeline}}
 }
@@ -227,7 +227,7 @@ escalation:
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Review Cadence** | Monthly (P0 model) |
 

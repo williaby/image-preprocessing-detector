@@ -828,7 +828,7 @@ docs/planning/
 | Level | Document | Description |
 |-------|----------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Eight workstreams overview |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Eight workstreams overview |
 | **Level 2** | [Production Model Training](../model-training/index.md) | Training pipeline (generates models for Arena) |
 | **Level 2** | [Monitoring & Drift Detection](../monitoring-drift/index.md) | Drift triggers Arena re-benchmarks |
 | **Level 2** | [Labeling & Benchmarking Models](../labeling-benchmarking/index.md) | Labeling model training (Phase 1 baselines) |

@@ -19,7 +19,7 @@ title: 'Model Card: EfficientNet-B4 ImageNet1K'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `EfficientNet-B4-ImageNet-IQA` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Dependency (Baseline Evaluation) |
 | **Status** | `pretrained` |
 | **Priority** | P3 (Evaluation/Research) |

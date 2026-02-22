@@ -19,7 +19,7 @@ title: 'Model Card: NIQE'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-niqe` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Evaluation) |
 | **Status** | 📊 REFERENCE BASELINE |
 | **Priority** | N/A (Reference Only) |

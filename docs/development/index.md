@@ -86,12 +86,12 @@ See [Architecture Documentation](../architecture/) for detailed system design.
 
 ### RAG Pipeline Context
 
-This project is **Project A** in a four-project RAG pipeline:
+This project is **Prepare-Doc** in a four-project RAG pipeline:
 
-- **Project A** (This): Preprocessing & IQA
-- **Project B**: OCR Orchestration
-- **Project C**: Fusion & Trust
-- **Project D**: Vector Indexing
+- **Prepare-Doc** (This): Preprocessing & IQA
+- **Unify**: OCR Orchestration
+- **Chunk**: Fusion & Trust
+- **Embed**: Vector Indexing
 
 See [RAG Pipeline Overview](RAG%20Pipeline/RAG-pipeline-project-overview.md) for the complete architecture.
 

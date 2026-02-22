@@ -54,7 +54,7 @@
 
 ## Layout-Lite vs Full Layout
 
-**Layout-Lite (Project A - THIS REPO)**:
+**Layout-Lite (Prepare-Doc - THIS REPO)**:
 
 - **Coarse page attributes**: has_tables, has_figures, has_dense_math, has_handwriting
 - **Complexity scoring**: Structural complexity for routing decisions
@@ -62,7 +62,7 @@
 - **Fast inference**: < 50ms per page
 - **Purpose**: Routing recommendations (ocr_fast/advanced, vision_simple/structured)
 
-**Full Layout (Project B - OUT OF SCOPE)**:
+**Full Layout (Unify - OUT OF SCOPE)**:
 
 - Semantic layout detection (reading order, hierarchy)
 - Table structure extraction (PubTables-1M)

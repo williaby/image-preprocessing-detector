@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "Level 2: Production Runtime"
-description: "Detailed production runtime workflow diagrams for Project A"
+description: "Detailed production runtime workflow diagrams for Prepare-Doc"
 tags:
 - architecture
 - diagrams
@@ -23,7 +23,7 @@ This level provides detailed diagrams for the Production Runtime workstream - th
 
 How the system selects the optimal inference device (Local GPU, Modal GPU, or CPU) based on availability, budget, and document characteristics.
 
-![Device Selection Flow](project-a-device-selection-flow.svg)
+![Device Selection Flow](prepare-doc-device-selection-flow.svg)
 
 ---
 
@@ -31,7 +31,7 @@ How the system selects the optimal inference device (Local GPU, Modal GPU, or CP
 
 Celery worker pools, FastAPI routing, device orchestration, and message broker configuration.
 
-![Worker Architecture](project-a-worker-architecture.svg)
+![Worker Architecture](prepare-doc-worker-architecture.svg)
 
 **Key Components**:
 
@@ -50,7 +50,7 @@ Celery worker pools, FastAPI routing, device orchestration, and message broker c
 
 High-level view of the document processing pipeline from ingestion to output.
 
-![Primary Workflow High Level](project-a-primary-workflow-high-level.svg)
+![Primary Workflow High Level](prepare-doc-primary-workflow-high-level.svg)
 
 ---
 
@@ -58,7 +58,7 @@ High-level view of the document processing pipeline from ingestion to output.
 
 Detailed activity diagram showing every step in the document processing pipeline.
 
-![Primary Workflow Detailed](project-a-primary-workflow-detailed.svg)
+![Primary Workflow Detailed](prepare-doc-primary-workflow-detailed.svg)
 
 ---
 
@@ -337,7 +337,7 @@ BudgetConfig(
 
 | Workstream | Provided Artifacts | Purpose |
 |------------|-------------------|---------|
-| **Project B (Unify)** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
+| **Unify (Unify)** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
 | **Workstream 7 (Monitoring & Drift)** | Predictions, quality scores, latency metrics | Drift detection, active learning sample harvesting |
 
 ### External Dependencies
@@ -719,7 +719,7 @@ if fallback_triggered:
 | Level | Diagram | Description |
 |-------|---------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project pipeline context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Model Training](../model-training/index.md) | Training pipeline |
 | **Level 2** | [Monitoring & Drift](../monitoring-drift/index.md) | Continuous improvement integration |
 | **Level 2** | [Model Arena](../model-arena/index.md) | Model validation and graduation |
@@ -732,7 +732,7 @@ if fallback_triggered:
 
 **Rationale**:
 
-- **15,000+ lines of production code** - Largest codebase in Project A
+- **15,000+ lines of production code** - Largest codebase in Prepare-Doc
 - **Mission-critical pipeline** - Core business logic for document processing
 - **Complex state management** - 13 states with intricate error handling
 - **Device orchestration** - Multi-tier fallback with budget enforcement
@@ -781,7 +781,7 @@ See [ARCHITECTURE_DOCUMENTATION_IMPROVEMENT_PLAN.md](../../ARCHITECTURE_DOCUMENT
 | Level | Diagram | Description |
 |-------|---------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project pipeline context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Model Training](../model-training/index.md) | Training pipeline |
 | **Level 3** | [Pipeline State Machine](../../level-3/production-runtime/pipeline-state-machine.md) | Complete state machine specification |
 | **Level 3** | [Device Orchestrator](../../level-3/production-runtime/device-orchestrator.md) | Device selection and budget enforcement |

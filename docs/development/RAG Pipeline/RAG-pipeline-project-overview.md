@@ -11,14 +11,14 @@ purpose: "Define the complete four-project RAG pipeline architecture with clear 
 ## Updated Project Structure & Division of Responsibilities
 
 **Version:** 2.0
-**Scope:** Applies to Project A, Project B, Project C, and Project D
+**Scope:** Applies to Prepare-Doc, Unify, Chunk, and Embed
 **Purpose:** Ensure project teams understand what they own, what they consume, and what they must not duplicate.
 
-## 2. Project A — Preprocessing, IQA & Coarse Layout
+## 2. Prepare-Doc — Preprocessing, IQA & Coarse Layout
 
 ### Mission
 
-Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Project B should use.
+Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Unify should use.
 
 ### Inputs
 
@@ -48,7 +48,7 @@ Deliver clean, corrected, quality-scored page images with reliable metadata that
 * Learned DIQA (teacher→student)
 * Guarded corrections (deskew, binarize, upscale, etc.)
 * **Lightweight layout classification** using OmniDocBench page attributes
-* Emit routing metadata for Project B
+* Emit routing metadata for Unify
 
 ### Out of Scope (MUST NOT implement)
 
@@ -57,7 +57,7 @@ Deliver clean, corrected, quality-scored page images with reliable metadata that
 * OCR of any type
 * Chunking or RAG logic
 
-## 4. Project C — Fusion, Trust, Noise & RAG Chunking
+## 4. Chunk — Fusion, Trust, Noise & RAG Chunking
 
 ### Mission
 
@@ -65,7 +65,7 @@ Determine the “ground-truth” text via multi-engine fusion, suppress noise, c
 
 ### Inputs
 
-* OCRDocument.json from Project B
+* OCRDocument.json from Unify
 * Paragraph structure from Marker
 * Multi-engine text (Marker + DeepSeek-OCR)
 
@@ -123,7 +123,7 @@ Each artifact has a JSON schema in `/docs/schema/`.
 
 ### 3. Reliability Through Multi-Engine Validation
 
-Marker + DeepSeek-OCR comparisons are normalized in Project C rather than buried upstream.
+Marker + DeepSeek-OCR comparisons are normalized in Chunk rather than buried upstream.
 
 ### 4. Trust & Noise Are First-Class Signals
 

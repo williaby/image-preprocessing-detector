@@ -18,7 +18,7 @@ title: Swimlane Diagram Traceability Proposal
 - **Diagram → Code**: Each workflow step links to implementing files
 - **Code → Diagram**: LOC extraction can verify all files appear in diagrams
 
-**Inspired By**: [`level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml`](diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml) - excellent script traceability but only covers 4 workstreams
+**Inspired By**: [`level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml`](diagrams/level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml) - excellent script traceability but only covers 4 workstreams
 
 ---
 
@@ -1001,7 +1001,7 @@ Add to each Level 2 index.md:
 
 ## References
 
-- **Inspiration**: [level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml](diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml)
+- **Inspiration**: [level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml](diagrams/level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml)
 - **LOC Script**: [scripts/extract_workstream_loc.sh](../../scripts/extract_workstream_loc.sh)
 - **Link Validator**: [scripts/validate_architecture_links.sh](../../scripts/validate_architecture_links.sh)
 - **Level 2.5 Template**: [LEVEL_2_DOCUMENTATION_TEMPLATE.md](LEVEL_2_DOCUMENTATION_TEMPLATE.md)

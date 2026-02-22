@@ -19,7 +19,7 @@ title: 'Model Card: QualiCLIP'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-qualiclip` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | `pretrained` |
 | **Priority** | P2 (DIQA Color Specialist Candidate) |

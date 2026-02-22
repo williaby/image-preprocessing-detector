@@ -254,7 +254,7 @@ poetry run modal app logs iqa-phase2-training --follow
 
 ### Phase 3: YOLO-Doc Layout Detection (Future)
 
-**Purpose**: Train lightweight layout detector for routing signals in Project A.
+**Purpose**: Train lightweight layout detector for routing signals in Prepare-Doc.
 
 ```bash
 # Start training (using helper script)
@@ -288,7 +288,7 @@ poetry run modal run modal/train_phase3_yolov8.py
 
 **Modal is for TRAINING ONLY, not production inference.**
 
-### Project A Device Strategy
+### Prepare-Doc Device Strategy
 
 **Training (Phase 2-3)**:
 

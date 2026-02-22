@@ -19,7 +19,7 @@ title: 'Model Card: BRISQUE'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-brisque` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Evaluation) |
 | **Status** | 📊 REFERENCE BASELINE |
 | **Priority** | N/A (Reference Only) |

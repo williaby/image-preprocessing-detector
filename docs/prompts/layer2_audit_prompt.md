@@ -13,7 +13,7 @@ You are conducting a comprehensive Layer 2 metadata enrichment audit for the **{
 
 ### Project Context
 
-This is Project A of a four-project RAG document pipeline. Project A handles preprocessing, IQA, and coarse layout detection. Layer 2 metadata enrichment adds derived annotations (domain classification, content flags, layout detections, language/script, capture method, quality scores, etc.) to each document image. These annotations drive downstream training pipelines and routing decisions.
+This is Prepare-Doc of a four-project RAG document pipeline. Prepare-Doc handles preprocessing, IQA, and coarse layout detection. Layer 2 metadata enrichment adds derived annotations (domain classification, content flags, layout detections, language/script, capture method, quality scores, etc.) to each document image. These annotations drive downstream training pipelines and routing decisions.
 
 The metadata follows a three-layer architecture:
 
@@ -573,7 +573,7 @@ data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
 ### KI-008: Docling Multi-Column Text Extraction (HIGH, OPEN)
 
 **Applies to**: All multi-column documents processed through Docling OCR
-**Symptom**: When Docling misclassifies multi-column text as `Table`, the downstream text extraction produces garbled output (wrong reading order). This is a Project B (OCR) concern documented here because the root cause is in layout detection.
+**Symptom**: When Docling misclassifies multi-column text as `Table`, the downstream text extraction produces garbled output (wrong reading order). This is a Unify (OCR) concern documented here because the root cause is in layout detection.
 **Fix**: No automated fix yet. Document as a known limitation. Proposed fixes are tracked in `docs/known_issues/KI-008-docling-multicolumn-text-extraction.md`.
 
 ---

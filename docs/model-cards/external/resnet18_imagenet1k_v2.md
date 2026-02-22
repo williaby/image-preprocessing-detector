@@ -19,7 +19,7 @@ title: 'Model Card: ResNet-18 ImageNet1K V2'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `ResNet18-ImageNet-IQA` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Dependency (Baseline Evaluation) |
 | **Status** | `pretrained` |
 | **Priority** | P3 (Evaluation/Research) |

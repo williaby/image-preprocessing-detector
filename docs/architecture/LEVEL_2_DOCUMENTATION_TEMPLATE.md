@@ -305,7 +305,7 @@ def distillation_loss(student_logits, teacher_logits, ground_truth, alpha=0.7, t
 
 | Workstream | Provided Artifacts | Purpose |
 |------------|-------------------|---------|
-| **Project B (Unify)** | `DocumentMetadata.json`, corrected images | OCR orchestration input |
+| **Unify (Unify)** | `DocumentMetadata.json`, corrected images | OCR orchestration input |
 | **Workstream 7 (Monitoring)** | Predictions, latency metrics | Drift detection, active learning |
 
 ### External Dependencies
@@ -508,7 +508,7 @@ Deploy to Runtime (Workstream 1)
 | Level | Document | Description |
 |-------|----------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Eight workstreams overview |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Eight workstreams overview |
 | **Level 2** | [[Related Workstream 1]](../[path]/index.md) | [Relationship] |
 | **Level 2** | [[Related Workstream 2]](../[path]/index.md) | [Relationship] |
 | **Planning** | [[Relevant Planning Doc]](../../../planning/[doc].md) | [What it contains] |

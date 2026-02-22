@@ -13,7 +13,7 @@ title: 'Model Card: Handwriting Classifier'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `classify_resnet18_handwriting_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 9 (Element Classification) |
 | **Status** | `planned` |
 | **Priority** | P2 (Medium) |
@@ -166,6 +166,6 @@ title: 'Model Card: Handwriting Classifier'
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Planned - Phase 9 |

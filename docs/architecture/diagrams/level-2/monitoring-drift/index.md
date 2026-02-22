@@ -862,7 +862,7 @@ Developers should read source files directly for implementation details. This Le
 | Level | Document | Description |
 |-------|----------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Performance degradation scenarios |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Eight workstreams overview |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Eight workstreams overview |
 | **Level 2** | [Production Runtime](../production-runtime/index.md) | Production inference pipeline |
 | **Level 2** | [Model Arena Benchmark](../model-arena/index.md) | Validates retrained models |
 | **Level 2** | [Production Model Training](../model-training/index.md) | Retraining pipeline |

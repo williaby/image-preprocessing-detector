@@ -13,7 +13,7 @@ title: 'Model Card: DIQA Qwen2.5-VL Generalist'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `diqa_qwen3vl_generalist_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | DIQA (Pseudo-Labeling Ensemble) |
 | **Status** | `planned` |
 | **Priority** | P1 (High) |
@@ -207,6 +207,6 @@ Track B (VLM Models)
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Planned - awaiting implementation |

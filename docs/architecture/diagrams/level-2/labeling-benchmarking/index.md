@@ -413,7 +413,7 @@ This workstream is planned but has no implementation files yet. The labeling mod
 | Level | Document | Description |
 |-------|----------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Eight workstreams overview |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Eight workstreams overview |
 | **Level 2** | [Data Preparation](../data-preparation/index.md) | Provides training datasets |
 | **Level 2** | [Pseudo-Labeling](../pseudo-labeling/index.md) | Consumes labeling models |
 | **Level 2** | [Model Arena](../model-arena/index.md) | Benchmarks labeling models (Phase 1) |

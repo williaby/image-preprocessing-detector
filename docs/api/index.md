@@ -62,7 +62,7 @@ Results serialization and export:
 - DocumentMetadata JSON generation
 - Corrected image output
 - COCO-format bounding boxes
-- Routing recommendations for Project B
+- Routing recommendations for Unify
 
 ## Architecture Patterns
 

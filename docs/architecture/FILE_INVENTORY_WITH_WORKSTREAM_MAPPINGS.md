@@ -218,6 +218,19 @@ The following directories are **by design not tracked** in workstream diagrams. 
 | src/image_preprocessing_detector/utils/log_config.py | Shared Utility |
 | src/image_preprocessing_detector/utils/metadata_generator.py | Shared Utility |
 | src/image_preprocessing_detector/utils/model_config.py | Shared Utility |
+
+**WS1 Planned files** (referenced in PUML diagrams; not yet in repo):
+
+| File Path | Suggested WS1 Sub-Area | Diagram Source |
+|-----------|------------------------|----------------|
+| src/image_preprocessing_detector/routing/document_type_router.py | Metrics & Routing | prepare-doc-primary-workflow-detailed.puml, prepare-doc-primary-workflow-high-level.puml, PREPARE_DOC_WORKFLOW_HIERARCHY.puml |
+| src/image_preprocessing_detector/detection/mobilenetv4_precorrection.py | Detection - Text Gate & IQA | prepare-doc-primary-workflow-detailed.puml, production-runtime-swimlane.puml |
+| src/image_preprocessing_detector/detection/stage_gate.py | Detection - Text Gate & IQA | prepare-doc-primary-workflow-detailed.puml, production-runtime-swimlane.puml |
+
+**Additional WS1 files (continued)**:
+
+| File Path | Suggested WS1 Sub-Area |
+|-----------|------------------------|
 | src/image_preprocessing_detector/utils/path_security.py | Shared Utility |
 | src/image_preprocessing_detector/schema.py | WS1 - Output Schema |
 | src/image_preprocessing_detector/cli.py | WS1 - Entry Point |
@@ -258,6 +271,31 @@ The following directories are **by design not tracked** in workstream diagrams. 
 | modal/train_phase3_doclayout_yolo.py | TBD | docling-layout fine-tuning |
 | modal/train_phase6_layout_lite.py | TBD | Layout-lite training |
 | config/siglip2_multitask.yaml | TBD | SigLIP 2 model architecture, head configs, training hyperparams (phase 1/2 LR, loss weights, EMA, mixed precision, go/no-go thresholds) |
+
+### Shared Training Utilities — CURRENT (in repo)
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| `modal/shared/__init__.py` | ~5 | Package init |
+| modal/shared/metrics_utils.py | 223 | Training metrics (PLCC, SRCC, MAE) shared across training scripts |
+| modal/shared/gcs_utils.py | 130 | GCS auth setup, upload/download helpers |
+| modal/shared/dataset_utils.py | 61 | Dataset loading utilities shared across training scripts |
+| modal/shared/constants.py | 58 | Shared constants (bucket names, paths, class labels) |
+
+### Training Scripts — PLANNED (not yet in repo)
+
+> Referenced in level-3 model-training swimlane and level-1 workflow hierarchy.
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| modal/train_mobilenetv4.py | TBD | MobileNetV4-Conv-S bootstrap + distillation training (Steps 1 and 3 of virtuous cycle) |
+| modal/export_onnx.py | TBD | ONNX export for both SigLIP 2 and MobileNetV4 models |
+| src/image_preprocessing_detector/training/siglip2_trainer.py | TBD | SigLIP 2 multi-task training configuration and loop |
+| src/image_preprocessing_detector/training/mobilenetv4_trainer.py | TBD | MobileNetV4 bootstrap + distillation trainer |
+| src/image_preprocessing_detector/training/generate_soft_labels.py | TBD | Generate SigLIP 2 soft labels for MobileNetV4 distillation |
+| src/image_preprocessing_detector/models/siglip2_naflex.py | TBD | SigLIP 2 NAFlex model definition (88M params, 22 heads) |
+| src/image_preprocessing_detector/models/mobilenetv4_gate.py | TBD | MobileNetV4-Conv-S pre-correction gate (3 heads) |
+| src/image_preprocessing_detector/datasets/multitask_dataset.py | TBD | PyTorch MultiTaskDataset (parquet loading, per-task transforms, SHA256-keyed splits) |
 
 ---
 
@@ -408,6 +446,13 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 
 **Note**: `src/image_preprocessing_detector/labeling/ensemble/` not found in current codebase (may be integrated into arena/ or planned)
 
+### WS4 Planned Files (referenced in PUML diagrams)
+
+| File Path | LOC | Diagram Source |
+|-----------|-----|----------------|
+| modal/stage1_deqa_inference.py | TBD | pseudo-labeling-swimlane.puml, schema-field-population-workflow.puml |
+| modal/teacher_inference.py | TBD | pseudo-labeling-swimlane.puml, schema-field-population-workflow.puml |
+
 **WS4 Total**: Requires recount (2 modal scripts absent from repo)
 
 ---
@@ -430,6 +475,13 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 - `src/image_preprocessing_detector/labeling/models/` (wrappers, ~300 lines)
 
 **Expected Total**: ~1,300 lines when implemented
+
+### WS5 Planned Files (referenced in PUML diagrams)
+
+| File Path | LOC | Diagram Source |
+|-----------|-----|----------------|
+| src/image_preprocessing_detector/labeling/deqa/config.py | TBD | metadata-schema-architecture.puml |
+| src/image_preprocessing_detector/labeling/finetuning/dataset.py | TBD | metadata-schema-architecture.puml |
 
 ---
 
@@ -623,6 +675,7 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 |-----------|-----|---------|
 | pyproject.toml | 180 | Project metadata, dependencies, tool configs |
 | uv.lock | 1,200+ | Dependency lockfile |
+| config/layout_taxonomy.yaml | TBD | Unified layout label taxonomy (57 canonical classes, 6 schemas); referenced in schema-field-population-workflow.puml |
 | configs/training/*.yaml | ~200 | Training hyperparameters |
 | configs/monitoring/*.yaml | ~100 | Prometheus alert rules |
 | .github/workflows/*.yml | ~400 | CI/CD pipelines |
@@ -694,16 +747,16 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | docs/architecture/diagrams/level-0/rag-pipeline-visual.png | Rendered |
 | docs/architecture/diagrams/level-0/rag-pipeline-visual.signature.bin | Signature |
 
-### Level 1 — Project A Architecture
+### Level 1 — Prepare-Doc Architecture
 
 | File Path | Type |
 |-----------|------|
 | docs/architecture/diagrams/level-1/index.md | Index |
-| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml | Source |
-| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.svg | Rendered |
-| docs/architecture/diagrams/level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.png | Rendered |
-| docs/architecture/diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml | Source |
-| docs/architecture/diagrams/level-1/PROJECT_A_WORKFLOW_HIERARCHY.svg | Rendered |
+| docs/architecture/diagrams/level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml | Source |
+| docs/architecture/diagrams/level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.svg | Rendered |
+| docs/architecture/diagrams/level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.png | Rendered |
+| docs/architecture/diagrams/level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml | Source |
+| docs/architecture/diagrams/level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.svg | Rendered |
 | docs/architecture/diagrams/level-1/Project_A_Workflow_Hierarchy.png | Rendered |
 
 ### Level 2 — Workstream Details
@@ -717,9 +770,9 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | docs/architecture/diagrams/level-2/data-preparation/automated-data-labeling-pipeline.png | Rendered | ✅ |
 | docs/architecture/diagrams/level-2/data-preparation/metadata-schema-architecture.puml | Source | ✅ NEW |
 | docs/architecture/diagrams/level-2/data-preparation/metadata-schema-architecture.svg | Rendered | ✅ NEW |
-| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.svg | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/data-preparation/project-a-training-data-ingestion.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.png | Rendered | ✅ |
 | docs/architecture/diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.puml | Source | ✅ NEW |
 | docs/architecture/diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.svg | Rendered | ✅ NEW |
 | docs/architecture/diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.puml | Source | ✅ NEW |
@@ -748,17 +801,17 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | File Path | Type | Status |
 |-----------|------|--------|
 | docs/architecture/diagrams/level-2/model-training/index.md | Index | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-distillation.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-distillation.svg | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-distillation.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-infrastructure.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-infrastructure.svg | Rendered | ✅ NEW |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-high-level.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-high-level.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-test-coverage.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-test-coverage.svg | Rendered | ✅ NEW |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-v2.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/model-training/project-a-training-workflow-v2.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-distillation.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-distillation.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-distillation.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-infrastructure.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-infrastructure.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-v2.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-v2.svg | Rendered | ✅ NEW |
 
 #### WS7: Monitoring & Drift
 
@@ -774,19 +827,19 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | File Path | Type | Status |
 |-----------|------|--------|
 | docs/architecture/diagrams/level-2/production-runtime/index.md | Index | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.svg | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-device-selection-flow.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed-test-coverage.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-detailed-test-coverage.svg | Rendered | ✅ NEW |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-high-level.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-high-level.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-test-coverage.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-primary-workflow-test-coverage.svg | Rendered | ✅ NEW |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-worker-architecture.puml | Source | ✅ NEW |
-| docs/architecture/diagrams/level-2/production-runtime/project-a-worker-architecture.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-device-selection-flow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-device-selection-flow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-device-selection-flow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-high-level.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-high-level.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-test-coverage.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-test-coverage.svg | Rendered | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-worker-architecture.puml | Source | ✅ NEW |
+| docs/architecture/diagrams/level-2/production-runtime/prepare-doc-worker-architecture.svg | Rendered | ✅ NEW |
 
 #### WS4: Pseudo-Labeling
 
@@ -831,14 +884,14 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | File Path | Type | Status |
 |-----------|------|--------|
 | docs/architecture/diagrams/level-2/downstream-context/index.md | Index | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.svg | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-b-ocr-layout-workflow.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.svg | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-c-fusion-chunking-workflow.png | Rendered | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-d-vectorstore-workflow.puml | Source | ✅ |
-| docs/architecture/diagrams/level-2/downstream-context/project-d-vectorstore-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.svg | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.png | Rendered | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml | Source | ✅ |
+| docs/architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.png | Rendered | ✅ |
 
 ### Level 3 — Module Implementation (all NEW)
 

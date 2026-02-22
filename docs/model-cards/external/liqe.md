@@ -19,7 +19,7 @@ title: 'Model Card: LIQE'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-liqe` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | ⭐⭐ HIGHLY RECOMMENDED |
 | **Priority** | P1 (High - second best performer) |
