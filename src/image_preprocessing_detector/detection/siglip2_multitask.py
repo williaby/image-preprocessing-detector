@@ -317,7 +317,7 @@ class SigLIP2MultiTaskDetector:
 
             def __init__(
                 self,
-                bb: nn.Module,
+                bb: Any,
                 hds: nn.ModuleDict,
                 htypes: dict[str, str],
             ) -> None:
@@ -385,6 +385,7 @@ class SigLIP2MultiTaskDetector:
             rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(rgb)
 
+        assert self._processor is not None
         inputs = self._processor(
             images=pil_image,
             return_tensors="pt",
@@ -414,7 +415,7 @@ class SigLIP2MultiTaskDetector:
             logits: torch.Tensor, classes: tuple[str, ...] | tuple[int, ...],
         ) -> ClassificationResult:
             probs = torch.softmax(logits[0], dim=-1)
-            idx = probs.argmax().item()
+            idx = int(probs.argmax().item())
             dist = {str(c): p.item() for c, p in zip(classes, probs, strict=True)}
             return ClassificationResult(
                 predicted_class=str(classes[idx]),
@@ -471,6 +472,8 @@ class SigLIP2MultiTaskDetector:
             raise ValueError(msg)
 
         self._ensure_initialized()
+        assert self._device is not None
+        assert self._model is not None
         start = time.perf_counter()
 
         inputs = self._preprocess(image)
