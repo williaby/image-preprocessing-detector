@@ -82,14 +82,14 @@ Fill in based on dataset documentation review:
 
 | Property | Value | Source |
 |----------|-------|--------|
-| Is synthetic? | | Dataset documentation |
-| Primary language(s) | | Dataset documentation |
-| Primary script(s) | | Dataset documentation |
-| Capture method | | Dataset documentation |
-| Expected splits | | Dataset documentation / parser |
-| Total samples | | Parser manifest |
-| Has ground truth files? | | Dataset structure |
-| Multi-column documents? | | Dataset documentation |
+| Is synthetic? | No | Dataset documentation |
+| Primary language(s) | en | Dataset documentation |
+| Primary script(s) | Latn | Dataset documentation |
+| Capture method | scanner_flatbed | Dataset documentation |
+| Expected splits | See source doc | Dataset documentation |
+| Total samples | 1414 | Parser manifest |
+| Has ground truth files? | See source doc | Dataset structure |
+| Multi-column documents? | See source doc | Dataset documentation |
 
 ---
 
@@ -107,15 +107,15 @@ Document expected values based on documentation (ground truth for validation):
 
 | Field | Expected Value | Source | Confidence |
 |-------|---------------|--------|------------|
-| `capture_method` | | Dataset documentation | |
-| `iso639_language` | | Dataset documentation | |
-| `iso15924_script` | | Dataset documentation | |
-| `script_family` | | Derived from script | |
-| `split` | | Parser manifest | |
-| `is_synthetic` | | Dataset characteristics | |
-| `domain_level1` | | Dataset content type | |
+| `capture_method` | scanner_flatbed | Dataset documentation | HIGH |
+| `iso639_language` | en | Dataset documentation | HIGH |
+| `iso15924_script` | Latn | Dataset documentation | HIGH |
+| `script_family` | latin | Derived from script | HIGH |
+| `split` | See source doc | Parser manifest | MEDIUM |
+| `is_synthetic` | false | Dataset characteristics | HIGH |
+| `domain_level1` | FIN | Dataset content type | HIGH |
 
-**Notes**:
+**Notes**: Invoice knowledge graph dataset. 1,414 invoice images. Scanned documents.
 
 ---
 

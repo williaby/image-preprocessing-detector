@@ -585,57 +585,48 @@ Official COCO-Text benchmark uses:
 
 #### 11. Layer 2 Audit Summary
 
-> **Status**: AUDIT COMPLETE (2026-02-13)
-> **Audit Artifacts**: [scripts/audit/results/cocotext/](../../scripts/audit/results/cocotext/)
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
 ##### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-13 | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: C (81.5/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 76.0 | 0.25 | 15 prescreening fields, avg 76% pass rate |
-| Field Validity | 99.9 | 0.25 | 27 fields validated, 97.2% schema compliance |
-| Doc Completeness | 36.4 | 0.15 | 4/11 sections populated |
-| Defect Rate | 88.0 | 0.15 | 6 defects (5 accepted, 1 open) |
-| Cross Source Agreement | 11.2 | 0.10 | Language: OpenLID vs LLM (998 overlapping) |
-| VLM Accuracy | 100.0 | 0.10 | 43/43 content flags correct |
-| **Overall** | **73.8** | | **Grade C** |
+| Field Coverage | 87.5 | 15% |  |
+| Field Validity | 96.2 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 88.0 | 10% |  |
+| Cross-Source Agreement | 11.2 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **81.5** | | **Grade C** |
 
 ##### 11.2 Key Defects
 
+> **Total**: 6 defects (5 accepted, 1 open)
+
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| DEF-001 | layout_detections | low | accepted | No layout extraction run (100% empty) |
-| DEF-002 | domain_level1 | medium | accepted | 97.5% UNK (expected for scene text, KI-007) |
-| DEF-003 | iso639_language | medium | accepted | 81.1% "und" (coarse parser labels, KI-009) |
-| DEF-004 | text_has_content | low | accepted | 80.95% false (69K unannotated images) |
-| DEF-005 | text_scope_content_type | low | open | 2.8% invalid values from LLM enrichment |
-| DEF-006 | cross_source_agreement | info | accepted | 11.2% language agreement (KI-009) |
+| DEF-001 | layout_detections | low | ACCEPTED | No layout detection source available for cocotext. All 123,287 samples have empt |
+| DEF-002 | domain_level1 | medium | ACCEPTED | domain_level1 is UNK for 97.5% of samples (120,266/123,287). Only 3,021 samples  |
+| DEF-003 | iso639_language | medium | ACCEPTED | iso639_language is "und" for 81.1% of samples (99,926/123,287). Only English-ann |
+| DEF-004 | text_has_content | low | ACCEPTED | text_has_content is false for 80.95% of samples (99,802/123,287). Only 23,485 im |
+| DEF-005 | text_scope_content_type | low | OPEN | text_scope_content_type has 2.8% invalid values from LLM enrichment (3,503/123,2 |
+| DEF-006 | cross_source_agreement | info | ACCEPTED | Language agreement between OpenLID and LLM enrichment is only 11.2% across 998 o |
 
 ##### 11.3 VLM Inspection Summary
 
-> **Inspected**: 43 stratified samples (sqrt scaling, N=123,287)
-> **Method**: VLM in-session visual inspection (claude-opus-4-6 multimodal)
-
-| Flag | True Count | False Count | Error Rate | Notes |
-|------|----------:|----------:|--------:|-------|
-| has_table | 0 | 43 | 0% | No tables in scene text images |
-| has_figure | 0 | 43 | 0% | Scene photos are not embedded figures |
-| has_formula | 0 | 43 | 0% | No mathematical formulas |
-| has_handwriting | 3 | 40 | 0% | Child art (433224), sticky notes (432859), cake text (517246) |
-| has_code | 0 | 43 | 0% | No code in natural scenes |
-| has_signature | 0 | 43 | 0% | No signatures |
-
-**Scene text presence**: 19/43 (44%) contain readable text (product labels, signs, banners)
-**Text direction**: All ltr where text present
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
 
 ##### 11.4 Cross-Dataset Findings
 
-- **KI-006**: LLM formula confusion - confirmed N/A (0 formulas in 43 inspected)
-- **KI-007**: UNK domain - confirmed 97.5% UNK in LLM enrichment (expected for diverse COCO scenes)
-- **KI-008**: script_family - re-derived from ISO 15924 in integration script
-- **KI-009**: Unreliable language - confirmed: OpenLID avg_confidence=0.437, only 11.2% agreement with LLM
+- **KI-007**: ACCEPTED --
+- **KI-009**: ACCEPTED --
+- **KI-009**: ACCEPTED --
+
+**Audit Artifacts**: [scripts/audit/results/cocotext/](../../scripts/audit/results/cocotext/)
 
 #### 12. Reliability & Bottlenecks
 
@@ -698,3 +689,22 @@ Official COCO-Text benchmark uses:
 | v1.1 | 2026-02-13 | Layer 2 audit complete, template v1.4.0 alignment |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 123,287 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 123,287 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

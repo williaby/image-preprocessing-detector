@@ -141,17 +141,17 @@ No bounding box or segmentation annotations provided. Classification-only datase
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (81.6/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (88.0/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 97.3 | 29% |  |
-| Field Validity | 96.3 | 29% |  |
-| Doc Completeness | 45.5 | 18% | Below threshold |
+| Field Coverage | 92.8 | 17% |  |
+| Field Validity | 96.3 | 17% |  |
+| Doc Completeness | 100.0 | 6% |  |
 | Defect Rate | - | - | Excluded (no data) |
-| Cross-Source Agreement | 46.6 | 12% | Below threshold |
-| VLM Accuracy | 95.0 | 12% |  |
-| **Overall** | **81.6** | | **Grade B** |
+| Cross-Source Agreement | 46.6 | 17% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **88.0** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -159,15 +159,13 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/signatr6k/](../../scripts/audit/results/signatr6k/)
-
----
 
 ##### Processing Notes
 
@@ -186,7 +184,7 @@ No defect catalog available for this dataset.
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 12,514 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 12,514 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 

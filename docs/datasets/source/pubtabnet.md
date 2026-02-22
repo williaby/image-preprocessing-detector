@@ -342,65 +342,58 @@ At 519K images, PubTabNet is the largest dataset in the audit pipeline. Processi
 | **Registration** | None required |
 | **Citation** | Zhong et al., ECCV 2020 |
 
-##### Layer 2 Audit Summary
+##### 11. Layer 2 Audit Summary
 
-> **Audit Date**: 2026-02-13/14 | **Auditor**: claude-opus-4-6 | **Methodology**: v2.3.0 | **Tier**: 1 (Standard)
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
 ###### 11.1 Quality Scorecard
 
+> **Audit Date**: 2026-02-15 | **Grade**: B (90.1/100) | **Auditor**: claude-opus-4-6
+
 | Dimension | Score | Weight | Notes |
-|-----------|-------|--------|-------|
-| **Field Coverage** | 93.2 | 0.25 | 15 fields, avg pass rate 93.2% |
-| **Field Validity** | 96.4 | 0.25 | 27 fields validated; layout_detections at 1.8% (test split) |
-| **Doc Completeness** | 100.0 | 0.15 | 11/11 template v1.4.0 sections populated |
-| **Defect Rate** | 80.0 | 0.15 | 10 defects cataloged (20.0 penalty) |
-| **Cross Source Agreement** | 60.0 | 0.10 | Limited by 2 enrichment sources |
-| **VLM Accuracy** | 100.0 | 0.10 | 165 images inspected, 0 corrections needed |
-| **Overall** | **90.4** | | **Grade A** |
+|-----------|------:|-------:|-------|
+| Field Coverage | 91.2 | 15% |  |
+| Field Validity | 96.4 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 80.0 | 10% |  |
+| Cross-Source Agreement | 60.0 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **90.1** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
+> **Total**: 10 defects (10 open)
+
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | split | HIGH | RESOLVED | Split field empty — populated from JSONL annotations |
-| D02 | script_family | HIGH | RESOLVED | Empty — re-derived via get_script_family(Latn) |
-| D03 | layout_detections | HIGH | RESOLVED | Empty — integrated from extracted COCO layout batches |
-| D04 | text_has_content | HIGH | RESOLVED | Empty — integrated from extracted OCR batches |
-| D05 | orientation_class | MEDIUM | RESOLVED | Empty — set to 0 (born-digital, no rotation) |
-| D06 | image_properties | MEDIUM | RESOLVED | color_mode empty — set to RGB |
-| D07 | handwriting_present | MEDIUM | RESOLVED | Empty — set to false (born-digital) |
-| D08 | text_direction | LOW | RESOLVED | v2.3.0 field — set to ltr |
-| D09 | text_directions_present | LOW | RESOLVED | v2.3.0 field — set to ["ltr"] |
-| D10 | content_flags | LOW | RESOLVED | Only has_table populated — added has_formula/figure/handwriting/code |
+| D01 | split | CRITICAL | OPEN |  |
+| D02 | script_family | CRITICAL | OPEN |  |
+| D03 | layout_detections | HIGH | OPEN |  |
+| D04 | text_has_content | HIGH | OPEN |  |
+| D05 | orientation_class | MEDIUM | OPEN |  |
+| D06 | image_properties_color_mode | MEDIUM | OPEN |  |
+| D07 | handwriting_present | MEDIUM | OPEN |  |
+| D08 | text_direction | LOW | OPEN |  |
+| D09 | text_directions_present | LOW | OPEN |  |
+| D10 | content_flags_confidence | LOW | OPEN |  |
 
 ###### 11.3 VLM Inspection Summary
 
-| Track | Images | Method | Finding |
-|-------|--------|--------|---------|
-| A (Content flags) | 40 | Individual reads | 0 FP, all flags correct |
-| B (Batch classification) | 105 | 7 contact sheets | 100% born-digital, Latin, English, upright |
-| C (Passing validation) | 20 | Individual reads | 100% accuracy (160/160 field checks) |
-
-**Adaptive expansion**: Not triggered (FP rate = 0%)
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
 
 ###### 11.4 Cross-Dataset Findings
 
-- **KI-008** (script_family directionality): Applicable, resolved by re-deriving from iso15924_script
-- **KI-009** (language claims unreliable): Applicable but low impact — VLM confirms English-dominant
+- **KI-008**: OPEN --
 
-**Audit artifacts**: `scripts/audit/results/pubtabnet/`
-
----
+**Audit Artifacts**: [scripts/audit/results/pubtabnet/](../../scripts/audit/results/pubtabnet/)
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 (PRE-INTEGRATION) | **Samples**: 519,030 | **Avg Min Confidence**: 0.000
->
-> **Note**: This section reflects pre-integration state. Post-integration (v2, schema 2.3.0),
-> 93.2% of prescreening fields pass. Re-materialize with:
-> `uv run python3 scripts/materialize_reliability_summary.py --datasets pubtabnet --update-docs --force`
+> **Computed**: 2026-02-16 | **Samples**: 519,030 | **Avg Min Confidence**: 0.000
 
-**Composite Category Distribution** (pre-integration, to be updated):
+**Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
@@ -409,7 +402,7 @@ At 519K images, PubTabNet is the largest dataset in the audit pipeline. Processi
 | active_learning | 0 | 0.0% |
 | unreliable | 519,030 | 100.0% |
 
-**Top Bottleneck Fields** (pre-integration, to be updated):
+**Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|

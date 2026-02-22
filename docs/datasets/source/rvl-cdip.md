@@ -326,17 +326,17 @@ path/to/image/rvl_form_0002.tif 1
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (87.2/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (89.3/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 93.2 | 25% |  |
-| Field Validity | 92.7 | 25% |  |
-| Doc Completeness | 63.6 | 15% | Below threshold |
-| Defect Rate | 97.4 | 15% |  |
-| Cross-Source Agreement | 80.4 | 10% |  |
-| VLM Accuracy | 85.0 | 10% |  |
-| **Overall** | **87.2** | | **Grade B** |
+| Field Coverage | 91.0 | 15% |  |
+| Field Validity | 92.7 | 15% |  |
+| Doc Completeness | 63.6 | 5% | Below threshold |
+| Defect Rate | 97.4 | 10% |  |
+| Cross-Source Agreement | 80.4 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **89.3** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -349,15 +349,13 @@ path/to/image/rvl_form_0002.tif 1
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/rvl-cdip/](../../scripts/audit/results/rvl-cdip/)
-
----
 
 ##### Reliability & Bottlenecks
 

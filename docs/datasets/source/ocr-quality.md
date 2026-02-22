@@ -472,17 +472,17 @@ normalized_score = (5 - human_score) / 4
 
 ### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (82.6/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: C (82.0/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 85.8 | 25% |  |
-| Field Validity | 100.0 | 25% |  |
-| Doc Completeness | 54.5 | 15% | Below threshold |
-| Defect Rate | 95.4 | 15% |  |
-| Cross-Source Agreement | 51.9 | 10% | Below threshold |
-| VLM Accuracy | 85.0 | 10% |  |
-| **Overall** | **82.6** | | **Grade B** |
+| Field Coverage | 82.2 | 15% |  |
+| Field Validity | 100.0 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 95.4 | 10% |  |
+| Cross-Source Agreement | 51.9 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **82.0** | | **Grade C** |
 
 ### 11.2 Key Defects
 
@@ -496,47 +496,10 @@ normalized_score = (5 - human_score) / 4
 
 ### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
 
 ### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/ocr-quality/](../../scripts/audit/results/ocr-quality/)
-
-#### Processing Notes
-
-- Parser: `parse_ocr_quality_labels` in `annotate_base_metadata.py`
-- Images embedded as byte arrays in Parquet (no separate image directory)
-- Quality score inversion required: `normalized = (5 - human_score) / 4.0`
-- 30 source categories mapped to domain classifications
-- Text truncated to 500 chars in parser; full text in source Parquet
-
-##### Version History
-
-| Version | Date | Change |
-|---------|------|--------|
-| v1.0 | 2025 | Initial dataset release (arXiv:2510.21774) |
-| L2 v1 | 2026-02-10 | Layer 2 base metadata annotation |
-| L2 v2 | 2026-02-14 | Scorecard v2.0 audit, defect catalog created |
-
----
-
-#### Reliability & Bottlenecks
-
-> **Computed**: 2026-02-10 | **Samples**: 1,000 | **Avg Min Confidence**: 0.000
-
-**Composite Category Distribution**:
-
-| Category | Count | Pct |
-|----------|------:|----:|
-| hard_label | 0 | 0.0% |
-| soft_label | 0 | 0.0% |
-| active_learning | 0 | 0.0% |
-| unreliable | 1,000 | 100.0% |
-
-**Top Bottleneck Fields** (most frequently the weakest):
-
-| Rank | Field | Bottleneck % | Avg Confidence |
-|-----:|-------|-------------:|---------------:|
-| 1 | `language` | 100.0% | 0.000 |

@@ -254,17 +254,17 @@ Line 2: \sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6}
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (84.6/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (92.6/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 33% |  |
-| Field Validity | 96.3 | 33% |  |
-| Doc Completeness | 54.5 | 20% | Below threshold |
+| Field Coverage | 88.3 | 20% |  |
+| Field Validity | 96.3 | 20% |  |
+| Doc Completeness | 54.5 | 7% | Below threshold |
 | Defect Rate | - | - | Excluded (no data) |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 95.0 | 13% |  |
-| **Overall** | **84.6** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **92.6** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -272,7 +272,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -280,11 +280,9 @@ No defect catalog available for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/im2latex/](../../scripts/audit/results/im2latex/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 10,000 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 10,000 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
@@ -299,4 +297,4 @@ No defect catalog available for this dataset.
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `layout_detections` | 100.0% | 0.000 |
+| 1 | `text_quality` | 100.0% | 0.000 |

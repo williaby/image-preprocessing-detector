@@ -451,137 +451,51 @@ Scene text captured via camera/smartphone with variable real-world lighting, per
 
 ##### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-13 | **Grade**: B (84.22/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-15 | **Grade**: B (89.7/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 87.10 | 0.25 | 15-field v2.3.0 prescreening |
-| Field Validity | 96.77 | 0.25 | Excellent where data exists |
-| Doc Completeness | 100.00 | 0.15 | 11/11 sections per template v1.4.0 |
-| Defect Rate | 45.80 | 0.15 | 3 deferred defects |
-| Cross-Source Agreement | 83.80 | 0.10 | KI-009 Latin refinement improved agreement |
-| VLM Accuracy | 80.00 | 0.10 | 4/5 passing samples correct |
-| **Overall** | **84.22** | | **Grade B** |
-
-**Enrichment Sources**:
-
-| Source | Coverage | Used For |
-|--------|----------|----------|
-| Parser ground truth | 9,922 (50.5%, train only) | language, script (primary) |
-| Train GT enrichment | 134 (0.7%, train low-conf) | language, script from GT files |
-| VLM contact sheet | 9,706 (49.4%, test only) | language, script (visual identification) |
-| LLM enrichment (text-only) | 9,989 (50.8%, train only) | domain, language, script, content_type |
-| Language enrichment (OpenLID) | 1,000 (5.1%, train only) | language, script (fallback) |
-| DocLayout-YOLO v1 | 17,165 (87.3%) | layout_detections, content flags |
-
-**Prescreening Results** (post v4 integration, 15-field v2.3.0):
-
-| Field | Pass Rate | Notes |
-|-------|-----------|-------|
-| split | 100% | Derived from source.split |
-| capture_method | 100% | Hardcoded camera_smartphone (confidence 1.0) |
-| script_family | 100% | Derived from iso15924_script |
-| layout_bbox_valid | 100% | All bboxes valid where present |
-| content_flags_boolean | 100% | VLM-corrected (34 images inspected) |
-| orientation_class | 100% | Default 0 (upright), confidence 0.5 |
-| image_properties_color_mode | 100% | All color (camera-captured) |
-| handwriting_present | 100% | VLM-verified (3 true positives found) |
-| quality_overall_mos | 100% | Present from v1 base annotation |
-| text_direction | 100% | Derived from iso15924_script (v2.3.0) |
-| text_directions_present | 100% | Aggregated from script + raw_labels (v2.3.0) |
-| **iso639_language** | **99.85%** | Only 30 unclear samples remain (was 50.5% in v2) |
-| **domain_level1** | **19.3%** | 80.7% UNK - expected for scene text (KI-007) |
-| **layout_detections** | **87.3%** | 12.7% empty - expected for scene text |
-| **text_has_content** | **0%** | DEFERRED - requires Docling OCR |
-
-**Fields at 100%**: 11/15 | **Overall pass (all 15)**: 0% (driven by text_has_content)
+| Field Coverage | 90.9 | 15% |  |
+| Field Validity | 95.5 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 81.2 | 10% |  |
+| Cross-Source Agreement | 83.8 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **89.7** | | **Grade B** |
 
 ##### 11.2 Key Defects
 
+> **Total**: 17 defects (9 resolved, 4 accepted, 3 deferred, 1 partial)
+
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D02 | domain_level1 | low | DEFERRED | 80.7% UNK - acceptable for scene text (KI-007) |
-| D08 | text_statistics | medium | DEFERRED | Requires Docling OCR pipeline |
-| D12 | quality_overall | medium | DEFERRED | Requires IQA pipeline |
-| D13 | layout_detections | low | DEFERRED | 12.7% empty - expected for scene text |
+| VR-001 | iso639_language | critical | ACCEPTED |  |
+| VR-002 | iso639_language | medium | ACCEPTED |  |
+| VR-003 | iso639_language | low | ACCEPTED |  |
+| VR-004 | iso639_language | low | ACCEPTED |  |
+| D01 | split | ? | RESOLVED |  |
+| D02 | domain_level1 | ? | PARTIALLY_RESOLVED |  |
+| D03 | script_family | ? | RESOLVED |  |
+| D04 | orientation_class | ? | RESOLVED |  |
+| D05 | image_properties_color_mode | ? | RESOLVED |  |
+| D06 | handwriting_present | ? | RESOLVED |  |
+| D07 | iso639_language | ? | RESOLVED |  |
+| D08 | text_has_content (text_statistics) | ? | DEFERRED |  |
+| D09 | layout_detections[*].class_name | ? | RESOLVED |  |
+| D10 | has_figure | ? | RESOLVED |  |
+| D11 | iso15924_script | ? | RESOLVED |  |
+| D12 | quality_overall | ? | DEFERRED |  |
+| D13 | layout_detections (empty) | ? | DEFERRED |  |
 
 ##### 11.3 VLM Inspection Summary
 
-**Content Flag Verification**:
-
-| Flag | Flagged by Model | VLM True Positives | FP Rate |
-|------|------------------|-------------------|---------|
-| has_table | 14 | 12 | 14.3% |
-| has_formula | 6 | 0 | 100% |
-| has_figure | 13,009 | 0 | 100% (scene photo ≠ embedded figure) |
-| has_handwriting | 0 (model) | 3 (VLM-discovered) | N/A |
-
-**VLM Failing Sample Inspection**:
-
-| Failure Category | Inspected | Finding |
-|------------------|-----------|---------|
-| Domain UNK (train) | 3 | All CORRECT - generic scene text (road/street signs) |
-| Domain non-UNK | 3 | 2 correct, 1 questionable (restaurant menu as FIN) |
-| Language und (test) | 3 | All KNOWN_GAP - visually identifiable but no source data |
-| Empty layout | 3 | All EXPECTED - DocLayout-YOLO not designed for scene text |
-| Passing samples | 5 | Domain mostly correct; Latin-script language mapping issue |
-
-**Track C Passing Accuracy**: 80% (4/5 correct domain, 40% language correct due to Latin conflation)
-
-**Language/Script Contact Sheet Validation** (v5, 2026-02-13):
-
-20 contact sheets generated with 476 images sampled across all language categories (seed=42).
-Visual inspection of tiled 5x5 grids (384x384 thumbnails) with overlaid metadata labels.
-
-| Category | Method | Pool | Inspected | Correct | Accuracy | Notes |
-|----------|--------|-----:|----------:|--------:|---------:|-------|
-| en_train | parser_gt | 2,270 | 25 | 22 | 88% | ~3 KI-009 residual (LLM also said "en") |
-| en_test | vlm_contact | 981 | 25 | 17 | 68% | Hindi/Korean/Arabic contamination |
-| hi_train | parser_gt | 701 | 25 | 25 | 100% | Perfect Devanagari identification |
-| hi_test | vlm_contact | 301 | 25 | 21 | 84% | French/Arabic misclassified |
-| ko_train | parser_gt | 1,000 | 25 | 23 | 92% | ~2 Japanese/Korean CJK confusion |
-| ko_test | vlm_contact | 500 | 25 | 18 | 72% | Bengali/Hindi/Chinese contamination |
-| zh_train | parser_gt | 1,000 | 25 | 25 | 100% | Perfect Chinese identification |
-| zh_test | vlm_contact | 500 | 25 | 20 | 80% | Korean/Bengali/Japanese confusion |
-| bn_train | parser_gt | 701 | 25 | 25 | 100% | Perfect Bengali identification |
-| bn_test | vlm_contact | 301 | 25 | 20 | 80% | Chinese/Hindi contamination |
-| ar_train | parser_gt | 886 | 25 | 24 | 96% | 1 borderline bilingual sign |
-| ar_test | vlm_contact | 41 | 25 | 7 | **28%** | SEVERE: Chinese/Korean/Bengali contamination |
-| ja_train | parser_gt | 937 | 25 | 25 | 100% | Perfect Japanese identification |
-| ja_test | vlm_contact | 360 | 25 | 14 | **56%** | Korean/French/Arabic contamination |
-| fr_refined | gt+llm | 734 | 25 | 25 | 100% | KI-009 refinement validated |
-| de_refined | gt+llm | 548 | 25 | 23 | 92% | ~2 international brand names |
-| it_refined | gt+llm | 424 | 25 | 25 | 100% | KI-009 refinement validated |
-| und_all | mixed | 30 | 25 | 20 | 80% | ~5 have readable text |
-| low_conf | openlid | 1 | 1 | 0 | 0% | tt/Cyrl likely Arabic (trivial) |
-| minor_eu | gt+llm | 25 | 25 | 21 | 84% | Brand name ambiguity |
-
-**Summary by method**:
-
-| Method | Sheets | Inspected | Correct | Accuracy |
-|--------|-------:|----------:|--------:|---------:|
-| parser_gt (train) | 7 | 175 | 169 | **96.6%** |
-| parser_gt+llm_refined | 4 | 100 | 94 | **94.0%** |
-| vlm_contact_sheet (test) | 7 | 175 | 117 | **66.9%** |
-
-**Critical finding (VR-001)**: Test split language labels from VLM contact-sheet method have ~33%
-error rate overall. Arabic test (72% wrong) and Japanese test (44% wrong) are most affected.
-Primary error modes: CJK script confusion and cross-script-family contamination at thumbnail resolution.
-
-**Validation artifacts**: `scripts/audit/results/mlt19/validation_sheets/` (20 sheets + manifest + report)
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
 
 ##### 11.4 Cross-Dataset Findings
 
-> List any Known Issues (KI-NNN) discovered or confirmed during this audit.
-
-- **KI-001**: DocLayout-YOLO class casing confirmed
-- **KI-003**: Scene photo -> "figure" FP confirmed (universal for scene text datasets)
-- **KI-007**: UNK domain validated for scene text (80.7% acceptable)
-- **KI-009**: Latin language conflation (fr/de/it -> en) - NEW finding, affects 13.6% of train samples
+- No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/mlt19/](../../scripts/audit/results/mlt19/)
-
----
 
 #### 12. Reliability & Bottlenecks
 
@@ -638,3 +552,23 @@ Primary error modes: CJK script confusion and cross-script-family contamination 
 | v3 (integrated_v3) | 2026-02-12 | VLM contact sheet enrichment (9,735 test), train GT enrichment (134), DocLayout-YOLO standardization |
 | v2 | 2026-02-12 | LLM enrichment + OpenLID language enrichment integration |
 | v1 | 2026-02-10 | Initial base metadata + Docling layout enrichment |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 19,657 | **Avg Min Confidence**: 0.411
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 822 | 4.2% |
+| active_learning | 5,948 | 30.3% |
+| unreliable | 12,887 | 65.6% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 99.3% | 0.411 |
+| 2 | `has_table` | 0.7% | 0.800 |

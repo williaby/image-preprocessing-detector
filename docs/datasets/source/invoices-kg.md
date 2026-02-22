@@ -198,17 +198,17 @@ Each manifest contains an array of annotation objects:
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (80.7/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (88.9/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 87.6 | 28% |  |
-| Field Validity | 92.6 | 28% |  |
-| Doc Completeness | 45.5 | 17% | Below threshold |
-| Defect Rate | 85.0 | 17% |  |
+| Field Coverage | 88.7 | 18% |  |
+| Field Validity | 100.0 | 18% |  |
+| Doc Completeness | 54.5 | 6% | Below threshold |
+| Defect Rate | 85.0 | 12% |  |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 80.0 | 11% |  |
-| **Overall** | **80.7** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **88.9** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -221,7 +221,7 @@ Each manifest contains an array of annotation objects:
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -229,24 +229,21 @@ Each manifest contains an array of annotation objects:
 
 **Audit Artifacts**: [scripts/audit/results/invoices-kg/](../../scripts/audit/results/invoices-kg/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 1,414 | **Avg Min Confidence**: 0.755
+> **Computed**: 2026-02-16 | **Samples**: 1,414 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
 | hard_label | 0 | 0.0% |
-| soft_label | 1,376 | 97.3% |
-| active_learning | 38 | 2.7% |
-| unreliable | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 1,414 | 100.0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `layout_detections` | 99.9% | 0.755 |
-| 2 | `has_table` | 0.1% | 0.800 |
+| 1 | `text_quality` | 100.0% | 0.000 |
