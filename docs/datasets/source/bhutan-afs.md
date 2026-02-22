@@ -33,7 +33,7 @@
 |--------|---------|
 | **Domain** | Government financial reporting + tax legislation |
 | **Document Types** | Dzongkha financial statements (AFS), bilingual tax legislation |
-| **Language** | Dzongkha (96.3%, Tibetan script) + English (3.0%, Latin script) |
+| **Language** | Dzongkha (96.3%, Tibetan script) + English (3.0%, Latin script) + Blank/Undetermined (0.7%) |
 | **Table Characteristics** | Multi-column layouts, footnotes, decimal-aligned numbers |
 
 ##### IQA Profile

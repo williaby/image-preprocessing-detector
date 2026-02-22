@@ -1,4 +1,4 @@
- @startuml ProjectB_OCR_Layout_RO
+@startuml ProjectB_OCR_Layout_RO
 
 title Project B - OCR, Layout Detection & Reading Order
 
@@ -20,7 +20,7 @@ endif
 
 partition "Per-page routing" {
   if ("Page has_text == false") then (Yes)
-    :Skip heavy OCR.\nFlag as image_only;\nPrepare page-level\nlayout stub;
+    :Skip heavy OCR.\nFlag as image_only;\nRun layout detection without\nOCR text spans;
   else (No)
     :Run primary OCR engine\n(e.g., Marker / Llama-4 Maverick)\nwith layout awareness;
     :Run secondary OCR engine(s)\n(e.g., DeepSeek-OCR\nfor hard images);

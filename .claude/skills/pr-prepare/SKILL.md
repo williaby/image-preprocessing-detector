@@ -55,6 +55,8 @@ Use this template format:
 
 [1-3 sentences: what changed and why]
 
+@coderabbitai summary
+
 ## Changes
 
 - **[Component]**: [What changed and why]
@@ -143,6 +145,7 @@ Follow-up: Add Microsoft provider support
 ---
 
 Ready to copy! Push with:
+
 ```bash
 git push -u origin HEAD
 gh pr create --fill

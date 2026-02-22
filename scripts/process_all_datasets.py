@@ -289,7 +289,10 @@ def _process_single_dataset(
         for err in result.errors[:3]:
             logger.warning(f"  Error: {err}")
 
-    return result.samples_processed, result.samples_failed
+    errors = result.samples_failed
+    if not result.success and errors == 0:
+        errors = max(len(result.errors), 1)
+    return result.samples_processed, errors
 
 
 def process_tier(

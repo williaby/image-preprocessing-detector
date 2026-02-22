@@ -129,14 +129,14 @@
 
 ##### 2.7 Ground Truth Provenance
 
-| Field | Value |
-|-------|-------|
+| Aspect | Details |
+|--------|---------|
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
 | **Annotator Details** | Multiple human annotators |
 | **Inter-Annotator Agreement** | [NEEDS_VERIFICATION] |
 | **Quality Assurance** | Scene text annotation with legibility and class attributes |
-| **GT Label Coverage** | 100% (all 64K images with text region annotations) |
+| **GT Label Coverage** | 100% of COCO-Text subset (63,686 images annotated; 69,601 COCO 2014 images without text annotations excluded) |
 
 #### 3. Project Integration
 
@@ -227,7 +227,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 63,686 |
+| **Annotated Images** | 63,686 (COCO-Text subset; 123,287 total COCO 2014 images) |
 | **Training Split** | 43,686 (68.6%) |
 | **Validation Split** | 10,000 (15.7%) |
 | **Test Split** | 10,000 (15.7%) |
@@ -525,7 +525,7 @@ Key limitations include coarse language labels (KI-009), no quality scores, and 
 
 ##### Related Works
 
-- [MLT19](mlt19.md) - Multi-lingual scene text (9 scripts, more diverse than COCO-Text)
+- [MLT19](mlt19.md) - Multilingual scene text (9 scripts, more diverse than COCO-Text)
 - [HierText](hiertext.md) - Hierarchical scene text with paragraph/line annotations
 - [TextOCR](textocr.md) - Scene text recognition on Open Images
 

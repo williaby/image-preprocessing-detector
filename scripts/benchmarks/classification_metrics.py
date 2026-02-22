@@ -74,8 +74,25 @@ def compute_confusion_matrix(
         Confusion matrix of shape (num_classes, num_classes).
         Row i, column j = count of samples with true label i predicted as j.
     """
-    y_t = np.asarray(y_true, dtype=np.intp)
-    y_p = np.asarray(y_pred, dtype=np.intp)
+    y_t = np.asarray(y_true, dtype=np.intp).ravel()
+    y_p = np.asarray(y_pred, dtype=np.intp).ravel()
+    if len(y_t) != len(y_p):
+        raise ValueError(
+            f"y_true and y_pred must have the same length; "
+            f"got {len(y_t)} and {len(y_p)}"
+        )
+    if num_classes <= 0:
+        raise ValueError(f"num_classes must be >= 1; got {num_classes}")
+    if y_t.size and (y_t.min() < 0 or y_t.max() >= num_classes):
+        raise ValueError(
+            f"y_true labels must be in [0, {num_classes}); "
+            f"got min={y_t.min()}, max={y_t.max()}"
+        )
+    if y_p.size and (y_p.min() < 0 or y_p.max() >= num_classes):
+        raise ValueError(
+            f"y_pred labels must be in [0, {num_classes}); "
+            f"got min={y_p.min()}, max={y_p.max()}"
+        )
     matrix = np.zeros((num_classes, num_classes), dtype=np.intp)
     for true_label, pred_label in zip(y_t, y_p):
         matrix[true_label, pred_label] += 1
@@ -276,10 +293,11 @@ def _compute_roc_auc(
         tpr_points.append(tp_count / num_positive)
         fpr_points.append(fp_count / num_negative)
 
-    # Trapezoidal rule
+    # numpy <2.0 uses np.trapz; np.trapezoid was added in 2.0
+    _trapz = getattr(np, "trapezoid", np.trapz)
     tpr_arr = np.array(tpr_points)
     fpr_arr = np.array(fpr_points)
-    auc = float(np.trapezoid(tpr_arr, fpr_arr))
+    auc = float(_trapz(tpr_arr, fpr_arr))
     return auc
 
 

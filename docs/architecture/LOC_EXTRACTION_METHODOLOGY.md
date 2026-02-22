@@ -351,7 +351,7 @@ find src/image_preprocessing_detector/detection -name "*.py" \
 
 ### Step 3: Sum All Paths
 
-```
+```text
 Ingestion:        2,235
 Classification:     472
 Detection:        9,917
@@ -381,7 +381,7 @@ src/image_preprocessing_detector/labeling/arena/  # Entire arena/ directory
 
 The Arena infrastructure includes:
 
-```
+```text
 labeling/arena/
 ├── __init__.py                 # ~50 lines (public API)
 ├── runner.py                   # ~630 lines (ArenaRunner)

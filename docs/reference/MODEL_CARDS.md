@@ -566,6 +566,54 @@ complexity = calculate_complexity(
 - Threshold varies by DPI: adjust for 150 vs 300 DPI
 - High ratio may also indicate halftone patterns
 
+### Illumination Detection (9-Region Uniformity)
+
+| Metric | Method | Threshold |
+|--------|--------|-----------|
+| Uniformity Score | 9-region intensity analysis | <0.7 = non-uniform |
+
+**Calibration Notes**:
+
+- Divides image into 9 regions, compares mean intensities
+- Detects vignetting via edge-to-center ratio
+- Score range: 0.0-1.0 (higher = better uniformity)
+
+### JPEG Blockiness (DCT Block Boundary)
+
+| Metric | Method | Threshold |
+|--------|--------|-----------|
+| Blockiness Score | DCT block boundary analysis | >0.3 = significant artifacts |
+
+**Calibration Notes**:
+
+- Analyzes 8x8 block boundary discontinuities
+- Estimates original JPEG quality factor (1-100)
+- Score range: 0.0-1.0 (higher = more blocky)
+
+### Binarization Quality (Histogram Bimodality)
+
+| Metric | Method | Threshold |
+|--------|--------|-----------|
+| Binarization Quality | Histogram bimodality analysis | <0.5 = poor separation |
+
+**Calibration Notes**:
+
+- Measures separation between foreground/background peaks
+- Useful for scanned documents with faded text
+- Score range: 0.0-1.0 (higher = better text/background separation)
+
+### Bleed-Through Detection (Verso Content)
+
+| Metric | Method | Threshold |
+|--------|--------|-----------|
+| Bleed-Through Score | Verso content detection | >0.3 = bleed-through present |
+
+**Calibration Notes**:
+
+- Detects show-through from reverse side of scanned pages
+- Common in thin paper and newspaper scans
+- Score range: 0.0-1.0 (higher = more bleed-through)
+
 ---
 
 ## Threshold Calibration
@@ -595,7 +643,7 @@ DQS = (
 | 0.2 - 0.4 | Good quality | Low-Medium |
 | 0.4 - 0.6 | Moderate quality | Medium |
 | 0.6 - 0.8 | Poor quality | High |
-| 0.8 - 1.0 | Very poor quality | Very High |
+| 0.8 - 1.0 | Severely poor quality | Critical |
 
 ### Routing Thresholds
 

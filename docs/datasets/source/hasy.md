@@ -117,14 +117,14 @@ path,symbol_id,latex,user_id
 
 ###### 2.7 Ground Truth Provenance
 
-| Field | Value |
-|-------|-------|
+| Aspect | Details |
+|--------|---------|
 | **Annotation Method** | Crowdsourced |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
-| **Annotator Details** | ~100K contributors via write-math.com |
-| **Inter-Annotator Agreement** | Crowd consensus (multiple contributors per symbol class) |
-| **Quality Assurance** | Crowdsource verification with contributor agreement filtering |
-| **GT Label Coverage** | 100% (all 168K symbol images with class labels) |
+| **Annotator Details** | ~100K contributors via write-math.com (reported in source) |
+| **Inter-Annotator Agreement** | Crowd consensus (reported in source) |
+| **Quality Assurance** | Crowdsource verification with contributor agreement filtering (reported in source) |
+| **GT Label Coverage** | 100% (all 168K symbol images with class labels) (reported in source) |
 
 ##### Dataset Statistics
 

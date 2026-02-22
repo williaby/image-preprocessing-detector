@@ -411,9 +411,10 @@ def _extract_jsonl_html(
     import re
 
     samples = []
+    collected = 0
     with open(annotation_file) as fh:
         for i, line in enumerate(fh):
-            if limit and i >= limit:
+            if limit is not None and collected >= limit:
                 break
             try:
                 entry = json.loads(line)
@@ -424,6 +425,7 @@ def _extract_jsonl_html(
                 if text and len(text) > 20:
                     img_id = entry.get("filename", str(i))
                     samples.append((img_id, text[:4000], "ground_truth"))
+                    collected += 1
             except json.JSONDecodeError:
                 continue
     return samples

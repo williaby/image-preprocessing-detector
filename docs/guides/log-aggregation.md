@@ -69,7 +69,7 @@ All logs follow this JSON structure:
 Application → Filebeat → Logstash → Elasticsearch → Kibana
      ↓
   JSON Logs
-```text
+```
 
 ### Filebeat Configuration
 
@@ -246,7 +246,7 @@ Application → Vector → (Multiple Sinks)
               ├─→ CloudWatch
               ├─→ S3/GCS
               └─→ Datadog
-```text
+```
 
 ### Vector Configuration
 

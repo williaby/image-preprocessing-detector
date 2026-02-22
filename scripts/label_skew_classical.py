@@ -235,7 +235,14 @@ _ANGLE_BINS: list[tuple[str, float, float]] = [
 
 
 def _compute_angle_distribution(angles: list[float]) -> dict[str, int]:
-    """Bin angles into named distribution buckets."""
+    """Bin angles into named distribution buckets.
+
+    Args:
+        angles: Raw skew angles in degrees.
+
+    Returns:
+        Mapping of bucket label to count.
+    """
     abs_angles = [abs(a) for a in angles]
     return {
         label: sum(1 for a in abs_angles if low <= a < high)
@@ -244,7 +251,14 @@ def _compute_angle_distribution(angles: list[float]) -> dict[str, int]:
 
 
 def _descriptive_stats(values: list[float]) -> dict[str, float]:
-    """Compute descriptive statistics for a list of values."""
+    """Compute descriptive statistics for a list of values.
+
+    Args:
+        values: Sequence of numeric values.
+
+    Returns:
+        Summary statistics keyed by mean, median, std, min, and max.
+    """
     return {
         "mean": round(float(np.mean(values)), 4),
         "median": round(float(np.median(values)), 4),

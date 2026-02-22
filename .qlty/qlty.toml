@@ -43,6 +43,8 @@ exclude_patterns = [
   "**/testdata/**",
   "**/tmp_cleanup/**",
   "**/vendor/**",
+  # Generated PR comment tracking files - not source code, no analysis value
+  "**/docs/planning/UNRESOLVED_*.md",
 ]
 
 test_patterns = [

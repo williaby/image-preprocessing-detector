@@ -438,7 +438,7 @@ def generate_dataset(
                 {ann["document"] for ann in parasitic_annotations.values()}
             ),
             "total_pages": len(
-                {ann["page_number"] for ann in parasitic_annotations.values()}
+                {ann["image_id"] for ann in parasitic_annotations.values()}
             ),
         },
     }

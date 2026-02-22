@@ -364,17 +364,23 @@ def process_ground_truth_dataset(
 def _categorize_confidence(
     confidence: float, method: str, stats: dict[str, int]
 ) -> None:
-    """Increment the appropriate stats counter based on confidence level."""
+    """Increment stats counters for a confidence bucket.
+
+    Args:
+        confidence: Computed confidence score.
+        method: Detection method string for the sample.
+        stats: Stats accumulator updated in-place.
+    """
     if confidence <= CONFIDENCE_HARD_FAILURE:
         stats["hard_failure"] += 1
     elif confidence <= CONFIDENCE_SILENT_FAILURE:
         stats["silent_failure"] += 1
     elif confidence <= CONFIDENCE_IMAGE_ONLY:
         stats["image_only"] += 1
-    elif confidence <= CONFIDENCE_SHORT_TEXT:
-        stats["short_text"] += 1
     elif method == "docling_ocr_partial_formula":
         stats["formula_partial"] += 1
+    elif confidence <= CONFIDENCE_SHORT_TEXT:
+        stats["short_text"] += 1
     else:
         stats["normal"] += 1
 
@@ -388,6 +394,14 @@ def _compute_pass1_confidences(
 
     Writes initial confidence values into sample enrichment data and
     returns (sample_idx, confidence) pairs for cap computation.
+
+    Args:
+        samples: Metadata samples to process.
+        docling_index: Map of image_id to confidence tuples.
+        stats: Stats accumulator updated in-place.
+
+    Returns:
+        List of (sample_idx, confidence) pairs for cap computation.
     """
     sample_confidences: list[tuple[int, float]] = []
 
@@ -429,7 +443,14 @@ def _apply_quality_cap(
     cap: float,
     stats: dict[str, int],
 ) -> None:
-    """Pass 2: apply dataset-level quality cap to samples exceeding it."""
+    """Pass 2: apply dataset-level quality cap to samples exceeding it.
+
+    Args:
+        samples: Metadata samples to update.
+        sample_confidences: List of (sample_idx, confidence) pairs.
+        cap: Cap value to apply.
+        stats: Stats accumulator updated in-place.
+    """
     all_confidences = [c for _, c in sample_confidences]
     low_count = sum(1 for c in all_confidences if c < SAMPLE_LOW_QUALITY_THRESHOLD)
     low_rate = low_count / len(all_confidences) if all_confidences else 0

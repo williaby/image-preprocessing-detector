@@ -10,6 +10,7 @@ This document provides quick-reference summaries of development standards. For c
 ## Quick Reference by Domain
 
 ### Code Quality
+
 **Full Spec**: `/standards/python.md`, `/standards/linting.md`
 
 ```bash
@@ -25,6 +26,7 @@ uv run mypy src         # Type check
 - Docstrings required (Google style)
 
 ### Security
+
 **Full Spec**: `/standards/security.md`
 
 ```bash
@@ -42,6 +44,7 @@ uv run bandit -r src    # Security lint
 - No secrets in code
 
 ### Testing
+
 **Full Spec**: `/commands/testing.md`
 
 ```bash
@@ -57,6 +60,7 @@ pytest --cov=src --cov-report=html              # Full suite
 - TDD encouraged (hook available)
 
 ### Git Workflow
+
 **Full Spec**: `/standards/git-workflow.md`
 
 ```bash
@@ -73,6 +77,7 @@ gh pr create                    # Create PR
 - Branch naming: `feature/`, `fix/`, `docs/`
 
 ## Naming Conventions
+
 **Full Spec**: `/commands/quality-naming-conventions.md`
 
 | Type | Convention | Example |
@@ -85,6 +90,7 @@ gh pr create                    # Create PR
 | Config files | kebab-case | docker-compose.yml |
 
 ## Documentation Standards
+
 **Full Spec**: `/standards/python.md` (docstrings), `/commands/quality.md` (markdown)
 
 - **Python**: Google-style docstrings with type hints
@@ -92,6 +98,7 @@ gh pr create                    # Create PR
 - **YAML**: 2-space indentation, 120-char lines
 
 ## Environment Setup
+
 **Full Spec**: `CLAUDE.md`
 
 **Required Tools**:
@@ -102,6 +109,7 @@ gh pr create                    # Create PR
 - Pre-commit hooks
 
 **Quick Setup**:
+
 ```bash
 # Install and configure
 $HOME/.claude/install.sh
@@ -111,6 +119,7 @@ $HOME/.claude/scripts/validate-mcp-env.sh
 ```
 
 ## Pre-Commit Checklist
+
 **Full Spec**: `/commands/quality-precommit-validate.md`
 
 - [ ] Code formatted (`black .`)
@@ -123,6 +132,7 @@ $HOME/.claude/scripts/validate-mcp-env.sh
 ## Common Commands by Task
 
 ### Starting New Feature
+
 ```bash
 git checkout main && git pull
 git checkout -b feature/my-feature
@@ -133,11 +143,13 @@ git add . && git commit -S -m "feat: Add my feature"
 ```
 
 ### Before Commit
+
 ```bash
 uv run pre-commit run --all-files
 ```
 
 ### Before Push
+
 ```bash
 # Ensure all tests pass
 uv run pytest --cov=src --cov-fail-under=80
@@ -151,6 +163,7 @@ git log --show-signature -5
 ```
 
 ## File Organization
+
 **Full Spec**: `PROJECT-ORGANIZATION-GUIDE.md`
 
 - **Global config**: `$HOME/.claude/` (this repository)

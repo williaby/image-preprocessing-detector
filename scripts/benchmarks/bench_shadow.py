@@ -129,7 +129,12 @@ def evaluate_samples(
             )
 
         start = time.perf_counter()
-        result = detector.detect(img)
+        try:
+            result = detector.detect(img)
+        except Exception as exc:
+            failures += 1
+            logger.warning("Detector failed for %s: %s", img_path, exc)
+            continue
         elapsed = (time.perf_counter() - start) * 1000
         latencies_ms.append(elapsed)
 

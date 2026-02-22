@@ -13,6 +13,7 @@ Usage:
 import argparse
 import json
 import logging
+import mimetypes
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,6 +74,9 @@ class ProcessingResult:
 def _extract_text_content(result_data: dict) -> tuple[str, str]:
     """Extract text and markdown from a Docling API response.
 
+    Args:
+        result_data: Parsed Docling API response.
+
     Returns:
         Tuple of (text, markdown).
     """
@@ -90,6 +94,9 @@ def _extract_layout_and_tables(
     result_data: dict,
 ) -> tuple[list[dict], list]:
     """Extract layout elements and tables from a Docling API response.
+
+    Args:
+        result_data: Parsed Docling API response.
 
     Returns:
         Tuple of (layout_elements, tables).
@@ -204,11 +211,25 @@ class LocalDatasetProcessor:
             )
 
     def _call_docling_api(self, file_path: Path) -> Any:
-        """Send a file to the Docling API and return the response."""
+        """Send a file to the Docling API and return the response.
+
+        Args:
+            file_path: Path to the input image.
+
+        Returns:
+            Docling API response.
+        """
         with open(file_path, "rb") as f:
             file_content = f.read()
 
-        files = {"file": (file_path.name, file_content, "image/jpeg")}
+        mime_type, _ = mimetypes.guess_type(file_path.name)
+        files = {
+            "file": (
+                file_path.name,
+                file_content,
+                mime_type or "application/octet-stream",
+            )
+        }
         data = {
             "options": json.dumps(
                 {
@@ -224,7 +245,7 @@ class LocalDatasetProcessor:
             data=data,
         )
 
-    def save_results(self, results: list[ProcessingResult], batch_num: int):
+    def save_results(self, results: list[ProcessingResult], batch_num: int) -> None:
         """Save batch results to output directory."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -265,7 +286,12 @@ class LocalDatasetProcessor:
         results: list[ProcessingResult],
         batch_num: int,
     ) -> None:
-        """Save layout annotations in COCO format."""
+        """Save layout annotations in COCO format.
+
+        Args:
+            results: Batch processing results.
+            batch_num: Batch index.
+        """
         coco_path = self.output_dir / f"layout_coco_batch_{batch_num:04d}.json"
         coco_data: dict = {
             "info": {
@@ -353,7 +379,16 @@ class LocalDatasetProcessor:
         batch_num: int,
         num_batches: int,
     ) -> tuple[int, int, float]:
-        """Process a single batch and return (success_count, failed_count, time_ms)."""
+        """Process a single batch and return batch statistics.
+
+        Args:
+            batch_files: Files to process in this batch.
+            batch_num: Zero-based batch index.
+            num_batches: Total number of batches.
+
+        Returns:
+            Tuple of (success_count, failed_count, time_ms).
+        """
         logger.info(
             f"=== Batch {batch_num + 1}/{num_batches} ({len(batch_files)} files) ==="
         )

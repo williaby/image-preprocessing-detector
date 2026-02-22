@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(frozen=True)
 class ShadowDetectionResult:
     """Result of shadow detection analysis.
 

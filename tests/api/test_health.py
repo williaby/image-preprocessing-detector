@@ -22,6 +22,7 @@ def test_settings() -> APISettings:
         title="Test API",
         version="0.0.1-test",
         cors_enabled=True,
+        cors_origins=["http://localhost:3000"],
         rate_limit_enabled=False,
         auth_enabled=False,
     )
@@ -169,11 +170,11 @@ class TestCORSMiddleware:
         # Preflight should return 200 with CORS headers
         assert response.status_code == 200
 
-    def test_cors_allows_all_origins_by_default(
-        self, test_settings: APISettings
-    ) -> None:
-        """Default settings allow all origins."""
-        assert "*" in test_settings.cors_origins
+    def test_cors_defaults_to_no_origins(self) -> None:
+        """Default settings have no allowed origins (secure by default)."""
+        settings = APISettings()
+        assert settings.cors_origins == []
+        assert settings.cors_allow_credentials is False
 
 
 class TestLoggingMiddleware:

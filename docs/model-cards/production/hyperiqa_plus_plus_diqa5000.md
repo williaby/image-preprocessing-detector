@@ -135,8 +135,8 @@ The VQualA 2025 score uses PLCC (not SRCC) with official 40%/30%/30% weights:
 ```text
 VQualA = 0.4 × PLCC_overall + 0.3 × PLCC_sharpness + 0.3 × PLCC_color
        = 0.4 × 0.8865 + 0.3 × 0.8942 + 0.3 × 0.8699
-       = 0.3546 + 0.2683 + 0.2610
-       = 0.8838 ✅
+       = 0.35460 + 0.26826 + 0.26097
+       = 0.88383 → 0.8838 ✅
 ```
 
 **VQualA 2025 Protocol**: Uses PLCC (Pearson correlation) with 40%/30%/30% weighting
@@ -262,7 +262,7 @@ print(f"Color Fidelity: {output['color']['score'].item():.3f}")
 
 - **Compute-Intensive**: 1600x1600 input requires significant GPU memory
 - **Domain-Specific**: Trained on document images; may not generalize to natural images
-- **Soft Labels**: Requires ground truth soft label distributions for training
+- **Soft Labels**: Requires ground-truth soft label distributions for training
 
 ### Known Failure Modes
 

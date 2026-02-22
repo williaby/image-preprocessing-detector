@@ -96,8 +96,8 @@ cvsi/
 
 ###### 2.7 Ground Truth Provenance
 
-| Field | Value |
-|-------|-------|
+| Aspect | Details |
+|--------|---------|
 | **Annotation Method** | Human Expert |
 | **Provenance Tier** | Tier 1 (Annotation - human-labeled) |
 | **Annotator Details** | [NEEDS_VERIFICATION] |

@@ -104,7 +104,7 @@ Page Rendering (300 DPI)
 [Merge IQA Metrics]
     ↓
 DQS + Routing → Project B
-```text
+```
 
 ### Training Strategy
 

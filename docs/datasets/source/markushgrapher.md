@@ -337,13 +337,13 @@ markushgrapher/
 ##### Primary Citation
 
 ```bibtex
-@article{smolensky2024markushgrapher,
+@article{morin2025markushgrapher,
   title={MarkushGrapher: Automatic Generation of Markush Structures
          for IP-Aware Molecular Representation},
-  author={Smolensky, Andrey and Staar, Peter W. J. and others},
-  journal={arXiv preprint},
-  year={2024},
-  url={https://huggingface.co/datasets/ds4sd/MarkushGrapher-Datasets}
+  author={Morin, Lucas and Staar, Peter W. J. and others},
+  journal={arXiv preprint arXiv:2503.16096},
+  year={2025},
+  url={https://huggingface.co/datasets/docling-project/MarkushGrapher-Datasets}
 }
 ```
 

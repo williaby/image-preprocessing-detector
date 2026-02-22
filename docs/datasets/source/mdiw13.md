@@ -8,7 +8,7 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Full Name** | Multi-lingual Database for Script Identification |
+| **Full Name** | Multilingual Database for Script Identification |
 | **Version** | February 2025 |
 | **Source** | [Zenodo](https://zenodo.org/records/6376096) |
 | **Paper** | [Cognitive Computation 2023](https://link.springer.com/article/10.1007/s12559-023-10193-w) |
@@ -161,7 +161,7 @@
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
 | **Images** | `01_base_data/language/mdiw13/` | ✅ Available | 290,213 PNG files |
-| **Text/GT** | Native annotations | ⚠️ Partial | Labels: Word-level script/language labels (not full text transcriptions) |
+| **Text/GT** | Native annotations | ⚠️ Partial | Labels: word-level script/language labels (not full text transcriptions) |
 | **Text/OCR Extracted** | `extracted/mdiw13/ocr_batch_*.jsonl` | ⚠️ Empty | Docling OCR returns empty for word-level crops |
 | **Layout Extracted** | `extracted/mdiw13/layout_batch_*.json` | ✅ Available | 1,162 batches, 289,941 images matched (99.91%) |
 | **Layer 2 Metadata** | `metadata_registry/json/mdiw13_metadata.json` | ✅ Available | 1.47 GB, 290,213 samples, schema v2.3.0 |
@@ -380,7 +380,7 @@
 ##### Related Works
 
 - [SIW-13](siw13.md) - Related script identification dataset (same scripts)
-- [MLT-19](mlt19.md) - Multi-lingual text dataset (10 languages)
+- [MLT-19](mlt19.md) - Multilingual text dataset (10 languages)
 - [synth-multiscript-250k](synth-multiscript-250k.md) - Synthetic multi-script (27 scripts)
 
 ##### Competition

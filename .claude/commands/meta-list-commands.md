@@ -22,7 +22,7 @@ Display all available universal slash commands organized by category: $ARGUMENTS
 
 ### Quality Commands (`quality-*.md`)
 
-**Code formatting and quality validation across file types**
+#### Code formatting and quality validation across file types
 
 #### `/universal:quality-format-code`
 
@@ -96,7 +96,7 @@ Display all available universal slash commands organized by category: $ARGUMENTS
 
 ### Security Commands (`security-*.md`)
 
-**Security validation and environment checks**
+#### Security validation and environment checks
 
 #### `/universal:security-validate-env`
 
@@ -112,7 +112,7 @@ Display all available universal slash commands organized by category: $ARGUMENTS
 
 ### Workflow Commands (`workflow-*.md`)
 
-**Development workflow helpers and validation**
+#### Development workflow helpers and validation
 
 #### `/universal:workflow-git-helpers`
 
@@ -128,7 +128,7 @@ Display all available universal slash commands organized by category: $ARGUMENTS
 
 ### Meta Commands (`meta-*.md`)
 
-**Command management and discovery utilities**
+#### Command management and discovery utilities
 
 #### `/universal:meta-list-commands`
 

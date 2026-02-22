@@ -196,6 +196,14 @@ class TestConstants:
         assert isinstance(GCS_BUCKET, str)
         assert GCS_BUCKET.startswith("gs://")
 
+    def test_gcs_credentials_defined(self) -> None:
+        """Test GCS_CREDENTIALS is defined and points to expected path."""
+        from generate_dataset_status import GCS_CREDENTIALS
+
+        assert isinstance(GCS_CREDENTIALS, Path)
+        assert GCS_CREDENTIALS.name == "service-account.json"
+        assert ".gcp" in str(GCS_CREDENTIALS)
+
 
 class TestMain:
     """Tests for main entry point."""

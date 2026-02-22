@@ -1,5 +1,3 @@
-# Grade B Improvement Roadmap
-
 > **Generated**: 2026-02-14 | **Scorecard Config**: v1.1.0
 > **Total Datasets**: 58 with scorecards | **Target**: All datasets Grade B (80+)
 

@@ -17,8 +17,10 @@ Populates ``DocumentMetadata.text_layer_quality`` and
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 try:
     import fitz  # PyMuPDF
@@ -112,7 +114,25 @@ class TextLayerAnalyzer:
             raise ImportError(msg)
 
         self._skip_ocr_threshold = skip_ocr_threshold
-        self._weights = dict(weights) if weights is not None else dict(_DEFAULT_WEIGHTS)
+
+        if weights is not None:
+            valid_keys = set(_DEFAULT_WEIGHTS.keys())
+            for key, value in weights.items():
+                if key not in valid_keys:
+                    msg = (
+                        f"Invalid weight key {key!r}. "
+                        f"Valid keys are: {sorted(valid_keys)}"
+                    )
+                    raise ValueError(msg)
+                if not isinstance(value, (int, float)) or value < 0:
+                    msg = (
+                        f"Weight for {key!r} must be a non-negative numeric value, "
+                        f"got {value!r}"
+                    )
+                    raise ValueError(msg)
+            self._weights = dict(weights)
+        else:
+            self._weights = dict(_DEFAULT_WEIGHTS)
 
         # Normalise weights so they sum to 1.
         weight_sum = sum(self._weights.values())
@@ -123,24 +143,27 @@ class TextLayerAnalyzer:
     # Public API
     # ------------------------------------------------------------------
 
-    def analyze(self, pdf_path: str) -> TextLayerAnalysisResult:
+    def analyze(self, pdf_path: str | Path) -> TextLayerAnalysisResult:
         """Analyse the text layer of *pdf_path*.
 
         Args:
-            pdf_path: Filesystem path to a PDF file.
+            pdf_path: Filesystem path to a PDF file (str or Path).
 
         Returns:
             A :class:`TextLayerAnalysisResult` with per-signal scores and
             an aggregate quality metric.
 
         Raises:
-            FileNotFoundError: When *pdf_path* does not exist.
+            FileNotFoundError: When *pdf_path* does not exist or is not a file.
             ImportError: When PyMuPDF is not installed.
-            RuntimeError: When the PDF cannot be opened.
+            ValueError: When *pdf_path* fails security validation (path traversal).
+            fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
         """
-        logger.info("Analysing PDF text layer", path=pdf_path)
+        path = validate_safe_path(pdf_path, must_exist=True)
 
-        doc = fitz.open(pdf_path)
+        logger.info("Analysing PDF text layer", path=str(path))
+
+        doc = fitz.open(str(path))
         try:
             page_count: int = doc.page_count
             if page_count == 0:
@@ -222,7 +245,7 @@ class TextLayerAnalyzer:
 
         logger.info(
             "Text layer analysis complete",
-            path=pdf_path,
+            path=str(path),
             quality=result.text_layer_quality,
             skip_ocr=result.text_layer_skip_ocr,
             pages=page_count,
@@ -333,21 +356,23 @@ class TextLayerAnalyzer:
 # ------------------------------------------------------------------
 
 
-def analyze_text_layer(pdf_path: str) -> TextLayerAnalysisResult:
+def analyze_text_layer(pdf_path: str | Path) -> TextLayerAnalysisResult:
     """Analyse the PDF text layer at *pdf_path* with default settings.
 
     This is a thin wrapper around :class:`TextLayerAnalyzer` for quick,
     one-shot usage.
 
     Args:
-        pdf_path: Filesystem path to a PDF file.
+        pdf_path: Filesystem path to a PDF file (str or Path).
 
     Returns:
         A :class:`TextLayerAnalysisResult`.
 
     Raises:
         ImportError: When PyMuPDF (``fitz``) is not installed.
-        FileNotFoundError: When *pdf_path* does not exist.
+        FileNotFoundError: When *pdf_path* does not exist or is not a file.
+        ValueError: When *pdf_path* fails path-traversal security validation.
+        fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
     """
     analyzer = TextLayerAnalyzer()
     return analyzer.analyze(pdf_path)

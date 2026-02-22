@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from datasets import load_dataset
+    from datasets import concatenate_datasets, load_dataset
     from PIL import Image
 except ImportError as e:
     print(f"Missing required dependency: {e}")
@@ -111,11 +111,10 @@ def _load_hf_dataset(
 
     if isinstance(dataset, dict):
         logger.info(f"Dataset splits: {list(dataset.keys())}")
-        all_data = []
         for split_name, split_data in dataset.items():
             logger.info(f"  {split_name}: {len(split_data)} samples")
-            all_data.extend(split_data)
-        total_samples = sum(len(split) for split in dataset.values())
+        all_data = concatenate_datasets(list(dataset.values()))
+        total_samples = len(all_data)
     else:
         all_data = dataset
         total_samples = len(dataset)

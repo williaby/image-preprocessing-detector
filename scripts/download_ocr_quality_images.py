@@ -70,7 +70,11 @@ def download_image(
 
 
 def _print_failures(failed: list[tuple[int, str]]) -> None:
-    """Print summary of failed downloads."""
+    """Print a summary of failed downloads.
+
+    Args:
+        failed: List of (index, error_message) tuples for failed downloads.
+    """
     if not failed:
         return
     print(f"\nFailed downloads ({len(failed)}):")
@@ -83,7 +87,13 @@ def _print_failures(failed: list[tuple[int, str]]) -> None:
 def _write_download_manifest(
     output_dir: Path, final_count: int, failed: list[tuple[int, str]]
 ) -> None:
-    """Write download summary manifest file."""
+    """Write a download summary manifest file.
+
+    Args:
+        output_dir: Output directory for downloaded images.
+        final_count: Number of successfully downloaded images.
+        failed: List of (index, error_message) tuples for failed downloads.
+    """
     manifest_path = output_dir.parent / "download_manifest.txt"
     with open(manifest_path, "w") as f:
         f.write("OCR-Quality Dataset Download\n")

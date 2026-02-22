@@ -28,6 +28,7 @@ from typing import Any
 from defusedxml import ElementTree
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 
 @dataclass
@@ -189,36 +190,6 @@ DEGRADATION_TYPE_MAPPING = {
     "stamp": "watermark",
     "background_pattern": "watermark",
 }
-
-
-def validate_safe_path(
-    file_path: str | Path, allowed_base: str | Path | None = None
-) -> Path:
-    """Validate file path to prevent directory traversal attacks.
-
-    Args:
-        file_path: Path to validate
-        allowed_base: Optional base directory to restrict access to
-
-    Returns:
-        Resolved absolute path
-
-    Raises:
-        ValueError: If path contains traversal patterns or escapes allowed_base
-    """
-    path = Path(file_path).resolve()
-
-    # Check for path traversal patterns
-    if ".." in str(file_path):
-        raise ValueError(f"Path traversal detected: {file_path}")
-
-    # If allowed_base specified, ensure path is within it
-    if allowed_base:
-        base = Path(allowed_base).resolve()
-        if not str(path).startswith(str(base)):
-            raise ValueError(f"Path {path} is outside allowed base {base}")
-
-    return path
 
 
 def parse_doccreator_xml(xml_path: str | Path) -> DocCreatorLabel:

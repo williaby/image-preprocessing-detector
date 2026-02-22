@@ -11,6 +11,7 @@ generation pipeline works correctly before running the full 100K generation.
 Duration: ~10-15 minutes
 """
 
+import shutil
 import subprocess  # nosec B404 - subprocess used to invoke generation script with hardcoded args
 from pathlib import Path
 
@@ -30,9 +31,14 @@ def main():
         print("Aborted.")
         return
 
+    # Resolve uv executable path
+    uv_path = shutil.which("uv")
+    if uv_path is None:
+        raise FileNotFoundError("uv executable not found on PATH")
+
     # Create test configuration by modifying the main script
     cmd = [
-        "uv",
+        uv_path,
         "run",
         "python",
         str(PROJECT_ROOT / "scripts/generate_100k_iqa_dataset.py"),

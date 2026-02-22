@@ -432,6 +432,8 @@ def _load_dataset_metadata(input_file: Path) -> dict[str, Any] | str:
             return json.load(f)
     except json.JSONDecodeError as e:
         return str(e)
+    except OSError as e:
+        return f"File error: {e}"
 
 
 def _migrate_sample_versions(
@@ -669,7 +671,7 @@ def _discover_migration_datasets(args: argparse.Namespace) -> list[str]:
     if args.dataset:
         return [args.dataset]
     metadata_files = list(args.input_dir.glob("*_metadata.json"))
-    return sorted(f.stem.replace("_metadata", "") for f in metadata_files)
+    return sorted(f.stem.removesuffix("_metadata") for f in metadata_files)
 
 
 def _build_migration_report(
@@ -677,9 +679,10 @@ def _build_migration_report(
     dry_run: bool,
 ) -> dict[str, Any]:
     """Aggregate per-dataset results into a migration report."""
+    now = datetime.now(UTC)
     return {
-        "migration_date": datetime.now(UTC).strftime("%Y-%m-%d"),
-        "migration_timestamp": datetime.now(UTC).isoformat(),
+        "migration_date": now.strftime("%Y-%m-%d"),
+        "migration_timestamp": now.isoformat(),
         "script_version": SCRIPT_VERSION,
         "format_version": MIGRATION_FORMAT_VERSION,
         "dry_run": dry_run,
@@ -734,7 +737,11 @@ def main() -> int:
     schema_validator = None
     if args.validate:
         schema_validator = _load_schema_validator(args.schema_path)
-        if schema_validator is None and not HAS_JSONSCHEMA:
+        if schema_validator is None:
+            logger.error(
+                "Schema validation requested but validator could not be loaded. "
+                "Ensure jsonschema is installed and schema path is valid."
+            )
             return 1
 
     datasets = _discover_migration_datasets(args)

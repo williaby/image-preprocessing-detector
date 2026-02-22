@@ -10,7 +10,7 @@ Provides configuration for:
 from functools import lru_cache
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,11 +44,11 @@ class APISettings(BaseSettings):
         description="Enable CORS middleware",
     )
     cors_origins: list[str] = Field(
-        default=["*"],
+        default=[],
         description="Allowed CORS origins",
     )
     cors_allow_credentials: bool = Field(
-        default=True,
+        default=False,
         description="Allow credentials in CORS requests",
     )
     cors_allow_methods: list[str] = Field(
@@ -59,6 +59,36 @@ class APISettings(BaseSettings):
         default=["*"],
         description="Allowed headers for CORS",
     )
+
+    @model_validator(mode="after")
+    def validate_cors_credentials_with_origins(self) -> "APISettings":
+        """Reject wildcard origins when credentials are enabled.
+
+        Browsers silently ignore ``Access-Control-Allow-Origin: *`` when
+        credentials are included in a request, so the combination of
+        ``allow_credentials=True`` and ``allow_origins=["*"]`` is both
+        ineffective and a security misconfiguration.  Raise early so
+        operators receive an explicit error rather than a silent misbehaviour.
+
+        When ``cors_enabled`` is False the CORS middleware is not mounted, so
+        legacy ``cors_origins`` / ``cors_allow_credentials`` values are
+        irrelevant and must not block startup.
+
+        Raises:
+            ValueError: If cors_enabled is True, cors_allow_credentials is
+                True, and "*" appears in cors_origins.
+        """
+        if not self.cors_enabled:
+            return self
+        if self.cors_allow_credentials and "*" in self.cors_origins:
+            msg = (
+                "CORS misconfiguration: cors_allow_credentials=True cannot be "
+                "combined with cors_origins=['*']. Browsers block credentialed "
+                "requests to wildcard origins. Specify explicit allowed origins "
+                "or set cors_allow_credentials=False."
+            )
+            raise ValueError(msg)
+        return self
 
     # Rate limiting
     rate_limit_enabled: bool = Field(

@@ -138,10 +138,10 @@ class TestSplitDataset:
         assert len(val) == 20
 
     def test_ratios_must_sum_to_one(self, tmp_path: Path) -> None:
-        """Test that invalid ratios raise assertion error."""
+        """Test that invalid ratios raise ValueError."""
         pairs = [(tmp_path / "img.png", tmp_path / "batch.csv", {})]
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             split_dataset(pairs, (0.5, 0.3), seed=42)
 
 

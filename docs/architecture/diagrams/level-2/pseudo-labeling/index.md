@@ -117,7 +117,7 @@ labeler = EnsembleLabeler(
         "internvl3": load_model("gs://.../internvl3/v1.0.0_adapter.safetensors")
     },
     stacker="hierarchical",  # Variance-weighted stacking
-    device="modal_gpu"
+    device="cuda"  # Modal GPU automatically available; falls back to CPU if needed
 )
 
 # Generate pseudo-labels for unlabeled images

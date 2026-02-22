@@ -24,7 +24,7 @@ Ensure commit messages follow Conventional Commits standard:
 
 ## Conventional Commits Format
 
-```
+```text
 <type>(<scope>): <description>
 
 [optional body]

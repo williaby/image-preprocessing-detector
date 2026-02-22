@@ -1,5 +1,3 @@
-# Layer 2 Metadata Audit Tracking Index
-
 > **Version**: 4.0.0
 > **Last Updated**: 2026-02-14
 > **Purpose**: Central dashboard for tracking Layer 2 metadata audit progress across all datasets

@@ -816,6 +816,16 @@ def multi_language_consensus(
     - Unicode detects: Latn (40%), Tibt (60%)
     - OpenLID detects: en_Latn (0.75), bo_Tibt (0.85)
     - Result: mul, detected_languages=["en", "bo"]
+
+    Args:
+        text: Input text to analyze.
+        fasttext_model: Optional fastText language identification model.
+        lingua_detector: Optional Lingua language detector instance.
+        openlid_detector: Optional OpenLID detector instance.
+
+    Returns:
+        MultiLanguageResult containing detected languages, scripts,
+        confidence score, and consensus metadata.
     """
     # Step 1: Detect ALL scripts via Unicode
     script_breakdown = detect_all_scripts(text)
@@ -836,6 +846,8 @@ def multi_language_consensus(
     significant_scripts = [
         sc for sc in script_breakdown if sc.percentage >= MIN_LANGUAGE_PERCENTAGE
     ]
+    if not significant_scripts:
+        significant_scripts = [script_breakdown[0]]
     detected_scripts: list[str] = [sc.script for sc in significant_scripts]
     detected_languages: list[str] = []
 
@@ -1067,7 +1079,7 @@ def _resolve_image_path(orig_path: str, dataset_path: Path) -> Path | None:
         Path(orig_path),
         BASE_DATA_PATH / orig_path,
     ]:
-        if candidate.exists():
+        if candidate.is_file():
             return candidate
     return None
 
@@ -1162,7 +1174,7 @@ def process_dataset(
     logger.info(f"Found {len(samples_to_process)} samples needing language enrichment")
 
     # Apply slice
-    end = end_idx or len(samples_to_process)
+    end = len(samples_to_process) if end_idx is None else end_idx
     samples_to_process = samples_to_process[start_idx:end]
     logger.info(
         f"Processing {len(samples_to_process)} samples (index {start_idx} to {end})"

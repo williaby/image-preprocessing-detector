@@ -521,9 +521,12 @@ class TestCeleryAppFunctions:
             check_broker_connection,
         )
 
-        # Mock connection to fail
+        # Mock connection to fail - the code uses a context manager so we need
+        # __enter__ to return a mock whose ensure_connection raises.
         with patch.object(celery_app, "connection") as mock_conn:
             mock_connection = MagicMock()
+            mock_connection.__enter__ = MagicMock(return_value=mock_connection)
+            mock_connection.__exit__ = MagicMock(return_value=False)
             mock_connection.ensure_connection.side_effect = Exception(
                 "Connection refused"
             )
