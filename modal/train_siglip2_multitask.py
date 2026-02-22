@@ -1029,9 +1029,7 @@ def _validate_manifest_no_ood(samples: list[dict[str, Any]]) -> None:
         ValueError: If one or more samples have ``split_type='ood'``.
     """
     ood_items = [
-        s.get("image_path", "?")
-        for s in samples
-        if s.get("split_type") == "ood"
+        s.get("image_path", "?") for s in samples if s.get("split_type") == "ood"
     ]
     if ood_items:
         raise ValueError(

@@ -171,8 +171,7 @@ _NEGATIVE_DATASETS: list[DatasetConfig] = [
 
 # All dataset name → config lookup
 _ALL_CONFIGS: dict[str, DatasetConfig] = {
-    cfg.name: cfg
-    for cfg in _POSITIVE_DATASETS + _NEGATIVE_DATASETS
+    cfg.name: cfg for cfg in _POSITIVE_DATASETS + _NEGATIVE_DATASETS
 }
 
 
@@ -279,14 +278,16 @@ def _build_all_handwritten_records(
         img_path = base_dir / original_path
         if not img_path.exists():
             continue
-        records.append({
-            "image_path": str(Path(config.base_subdir) / original_path),
-            "source_dataset": config.name,
-            "handwriting_presence": True,
-            "handwriting_score": 1.0,
-            "split": _normalize_split(raw_split),
-            "label_method": "dataset_class",
-        })
+        records.append(
+            {
+                "image_path": str(Path(config.base_subdir) / original_path),
+                "source_dataset": config.name,
+                "handwriting_presence": True,
+                "handwriting_score": 1.0,
+                "split": _normalize_split(raw_split),
+                "label_method": "dataset_class",
+            }
+        )
 
     if config.max_samples and len(records) > config.max_samples:
         records = rng.sample(records, config.max_samples)
@@ -333,14 +334,16 @@ def _build_model_derived_records(
         # Model confidence: 0.8 for positive detections (avoid overconfidence on
         # DocLayout-YOLO which has moderate precision for handwriting class)
         score = 0.8 if has_hw else 0.0
-        records.append({
-            "image_path": str(Path(config.base_subdir) / original_path),
-            "source_dataset": config.name,
-            "handwriting_presence": has_hw,
-            "handwriting_score": score,
-            "split": _normalize_split(raw_split),
-            "label_method": "l2_model_doclayout",
-        })
+        records.append(
+            {
+                "image_path": str(Path(config.base_subdir) / original_path),
+                "source_dataset": config.name,
+                "handwriting_presence": has_hw,
+                "handwriting_score": score,
+                "split": _normalize_split(raw_split),
+                "label_method": "l2_model_doclayout",
+            }
+        )
 
     if config.max_samples and len(records) > config.max_samples:
         records = rng.sample(records, config.max_samples)
@@ -383,14 +386,16 @@ def _build_all_printed_records(
         raw_split = sample.get("source", {}).get("split", "train")
         if not original_path:
             continue
-        records.append({
-            "image_path": str(Path(config.base_subdir) / original_path),
-            "source_dataset": config.name,
-            "handwriting_presence": False,
-            "handwriting_score": 0.0,
-            "split": _normalize_split(raw_split),
-            "label_method": "dataset_class",
-        })
+        records.append(
+            {
+                "image_path": str(Path(config.base_subdir) / original_path),
+                "source_dataset": config.name,
+                "handwriting_presence": False,
+                "handwriting_score": 0.0,
+                "split": _normalize_split(raw_split),
+                "label_method": "dataset_class",
+            }
+        )
 
     effective_cap = target_count or config.max_samples
     if effective_cap and len(records) > effective_cap:
@@ -455,14 +460,16 @@ def _build_iam_records_from_filesystem(
         else:
             split = "test"
         rel_path = form_path.relative_to(base_data_root)
-        records.append({
-            "image_path": str(rel_path),
-            "source_dataset": "iam",
-            "handwriting_presence": True,
-            "handwriting_score": 1.0,
-            "split": split,
-            "label_method": "dataset_class",
-        })
+        records.append(
+            {
+                "image_path": str(rel_path),
+                "source_dataset": "iam",
+                "handwriting_presence": True,
+                "handwriting_score": 1.0,
+                "split": split,
+                "label_method": "dataset_class",
+            }
+        )
     return records
 
 
@@ -484,8 +491,12 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
 
     click.echo(f"\nManifest summary:")
     click.echo(f"  Total records  : {total:>8,}")
-    click.echo(f"  Positive (True): {positive:>8,}  ({100*positive/max(total,1):.1f}%)")
-    click.echo(f"  Negative (False): {negative:>7,}  ({100*negative/max(total,1):.1f}%)")
+    click.echo(
+        f"  Positive (True): {positive:>8,}  ({100 * positive / max(total, 1):.1f}%)"
+    )
+    click.echo(
+        f"  Negative (False): {negative:>7,}  ({100 * negative / max(total, 1):.1f}%)"
+    )
     click.echo(f"  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
     if verbose:
         click.echo("\n  Per-dataset counts:")
@@ -632,7 +643,9 @@ def main(  # noqa: PLR0913
         # Check directory before loading potentially large L2 file
         neg_dir = base_data_root / config.base_subdir
         if not neg_dir.exists():
-            logger.warning("Skipping %s (negatives) — directory not found: %s", ds_name, neg_dir)
+            logger.warning(
+                "Skipping %s (negatives) — directory not found: %s", ds_name, neg_dir
+            )
             continue
         samples = _load_l2_metadata(l2_dir, ds_name)
         if not samples:

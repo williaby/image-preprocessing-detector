@@ -86,7 +86,8 @@ def _find_images(input_dir: Path, recursive: bool) -> list[Path]:
     """
     pattern = "**/*" if recursive else "*"
     images = [
-        p for p in input_dir.glob(pattern)
+        p
+        for p in input_dir.glob(pattern)
         if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
     ]
     images.sort()
@@ -235,7 +236,9 @@ def _prediction_to_label_record(
             "shadow_uncertain": shadow_flag,
             "warping_uncertain": warping_flag,
             "max_classification_entropy": max(
-                script_entropy, source_entropy, orient_entropy,
+                script_entropy,
+                source_entropy,
+                orient_entropy,
             ),
         },
         "inference_time_ms": prediction.inference_time_ms,
@@ -269,7 +272,10 @@ def _process_single_image(
 
     prediction = detector.predict(image)
     return _prediction_to_label_record(
-        image_path, input_dir, prediction, entropy_threshold,
+        image_path,
+        input_dir,
+        prediction,
+        entropy_threshold,
     )
 
 
@@ -299,7 +305,8 @@ def _process_batch_worker(
 
     config = SigLIP2MultiTaskConfig(device=device) if device else None
     detector = SigLIP2MultiTaskDetector(
-        checkpoint_path=checkpoint_path, config=config,
+        checkpoint_path=checkpoint_path,
+        config=config,
     )
 
     input_dir = Path(input_dir_str)
@@ -307,15 +314,20 @@ def _process_batch_worker(
     for path_str in image_paths:
         try:
             record = _process_single_image(
-                detector, Path(path_str), input_dir, entropy_threshold,
+                detector,
+                Path(path_str),
+                input_dir,
+                entropy_threshold,
             )
             results.append(record)
         except Exception:
             logger.exception("Failed to process %s", path_str)
-            results.append({
-                "image_path": str(Path(path_str).relative_to(input_dir)),
-                "error": "processing_exception",
-            })
+            results.append(
+                {
+                    "image_path": str(Path(path_str).relative_to(input_dir)),
+                    "error": "processing_exception",
+                }
+            )
     return results
 
 
@@ -356,7 +368,9 @@ def run_labeling(args: argparse.Namespace) -> int:
 
     logger.info(
         "Found %d images in %s (recursive=%s)",
-        len(images), args.input_dir, args.recursive,
+        len(images),
+        args.input_dir,
+        args.recursive,
     )
 
     results: list[dict[str, Any]] = []
@@ -393,11 +407,13 @@ def run_labeling(args: argparse.Namespace) -> int:
 
         config = SigLIP2MultiTaskConfig(device=args.device) if args.device else None
         detector = SigLIP2MultiTaskDetector(
-            checkpoint_path=args.checkpoint, config=config,
+            checkpoint_path=args.checkpoint,
+            config=config,
         )
 
         try:
             from tqdm import tqdm
+
             progress: Any = tqdm(images, desc="Labeling", unit="img")
         except ImportError:
             progress = images
@@ -406,15 +422,20 @@ def run_labeling(args: argparse.Namespace) -> int:
         for image_path in progress:
             try:
                 record = _process_single_image(
-                    detector, image_path, args.input_dir, args.entropy_threshold,
+                    detector,
+                    image_path,
+                    args.input_dir,
+                    args.entropy_threshold,
                 )
                 results.append(record)
             except Exception:
                 logger.exception("Failed to process %s", image_path)
-                results.append({
-                    "image_path": str(image_path.relative_to(args.input_dir)),
-                    "error": "processing_exception",
-                })
+                results.append(
+                    {
+                        "image_path": str(image_path.relative_to(args.input_dir)),
+                        "error": "processing_exception",
+                    }
+                )
 
     # Compute summary statistics
     for record in results:

@@ -91,7 +91,7 @@ _LIGHT_STYLES: list[str] = ["friendly", "colorful", "tango", "murphy", "paraiso-
 
 # DPI tiers: (width_px, font_size) pairs for varied resolution
 _DPI_CONFIGS: list[tuple[int, int]] = [
-    (800, 12),   # 72 dpi equivalent — small/compressed
+    (800, 12),  # 72 dpi equivalent — small/compressed
     (1024, 14),  # 96 dpi equivalent — standard screen
     (1200, 16),  # 150 dpi equivalent — retina-style
     (1600, 18),  # 300 dpi equivalent — high-res
@@ -824,7 +824,9 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
         # Header: fake paragraph lines
         for row_y in range(12, header_h - 8, 14):
             line_w = random.randint(img_w // 3, int(img_w * 0.85))  # noqa: S311
-            draw.rectangle([padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC")
+            draw.rectangle(
+                [padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC"
+            )
 
         # Code block background
         block_top = header_h + padding
@@ -833,7 +835,9 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
             fill=code_bg,
         )
         # Left accent bar
-        draw.rectangle([padding, block_top, padding + 3, block_top + code_block_h], fill="#4A90D9")
+        draw.rectangle(
+            [padding, block_top, padding + 3, block_top + code_block_h], fill="#4A90D9"
+        )
 
         # Code text
         for idx, line in enumerate(lines):
@@ -844,7 +848,9 @@ def _render_printed_code(spec: CodeImageSpec, out_path: Path) -> bool:
         footer_top = block_top + code_block_h + 12
         for row_y in range(footer_top, footer_top + footer_h - 8, 14):
             line_w = random.randint(img_w // 4, int(img_w * 0.9))  # noqa: S311
-            draw.rectangle([padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC")
+            draw.rectangle(
+                [padding, row_y, padding + line_w, row_y + 8], fill="#CCCCCC"
+            )
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(out_path, "PNG", optimize=True)
@@ -942,16 +948,18 @@ def _generate_positives(
             if not success:
                 continue
 
-        records.append({
-            "image_path": str(rel_path),
-            "source_dataset": "synthetic_code",
-            "code_present": True,
-            "code_confidence": 1.0,
-            "language": spec.language,
-            "theme": spec.style,
-            "split": _assign_split(idx, total, _SPLIT_FRACS),
-            "label_method": "synthetic_param",
-        })
+        records.append(
+            {
+                "image_path": str(rel_path),
+                "source_dataset": "synthetic_code",
+                "code_present": True,
+                "code_confidence": 1.0,
+                "language": spec.language,
+                "theme": spec.style,
+                "split": _assign_split(idx, total, _SPLIT_FRACS),
+                "label_method": "synthetic_param",
+            }
+        )
 
     return records
 
@@ -1019,9 +1027,7 @@ def _gather_negatives(
         # Filter: has_code=False (or field absent → no code expected by design)
         filtered: list[dict[str, Any]] = []
         for s in samples:
-            enr = (
-                s.get("enrichments", {}).get("versions", [{}])[-1].get("data", {})
-            )
+            enr = s.get("enrichments", {}).get("versions", [{}])[-1].get("data", {})
             has_code = enr.get("has_code")
             if has_code is True:
                 continue  # skip code pages
@@ -1054,16 +1060,20 @@ def _gather_negatives(
             if norm_split not in ("train", "val", "test"):
                 norm_split = "train"
 
-            all_neg.append({
-                "image_path": img_path_rel,
-                "source_dataset": ds_name,
-                "code_present": False,
-                "code_confidence": 0.0,
-                "language": None,
-                "theme": None,
-                "split": norm_split,
-                "label_method": "l2_metadata" if base_dir.exists() else "dataset_class",
-            })
+            all_neg.append(
+                {
+                    "image_path": img_path_rel,
+                    "source_dataset": ds_name,
+                    "code_present": False,
+                    "code_confidence": 0.0,
+                    "language": None,
+                    "theme": None,
+                    "split": norm_split,
+                    "label_method": "l2_metadata"
+                    if base_dir.exists()
+                    else "dataset_class",
+                }
+            )
             taken += 1
 
     return all_neg
@@ -1095,8 +1105,12 @@ def _print_summary(records: list[dict[str, Any]], verbose: bool) -> None:
 
     click.echo("\nDataset summary:")
     click.echo(f"  Total records  : {total:>7,}")
-    click.echo(f"  Positive (code): {positive:>7,}  ({100*positive/max(total,1):.1f}%)")
-    click.echo(f"  Negative       : {negative:>7,}  ({100*negative/max(total,1):.1f}%)")
+    click.echo(
+        f"  Positive (code): {positive:>7,}  ({100 * positive / max(total, 1):.1f}%)"
+    )
+    click.echo(
+        f"  Negative       : {negative:>7,}  ({100 * negative / max(total, 1):.1f}%)"
+    )
     click.echo(f"  Splits: " + ", ".join(f"{k}={v}" for k, v in sorted(splits.items())))
 
     if verbose:
@@ -1240,7 +1254,9 @@ def main(  # noqa: PLR0913
         dry_run=dry_run,
     )
 
-    click.echo(f"Generating {n_screenshot} code screenshots + {n_printed} printed-code images…")
+    click.echo(
+        f"Generating {n_screenshot} code screenshots + {n_printed} printed-code images…"
+    )
     positive_records = _generate_positives(cfg, rng)
     click.echo(f"  Generated {len(positive_records):,} positive records.")
 

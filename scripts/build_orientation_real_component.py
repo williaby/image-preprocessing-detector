@@ -56,12 +56,8 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # GCS paths for source PDFs
-GCS_DOCLAYNET_PREFIX = (
-    "01_base_data/document_understanding/doclaynet/documents"
-)
-GCS_RVLCDIP_PREFIX = (
-    "01_base_data/document_understanding/rvlcdip"
-)
+GCS_DOCLAYNET_PREFIX = "01_base_data/document_understanding/doclaynet/documents"
+GCS_RVLCDIP_PREFIX = "01_base_data/document_understanding/rvlcdip"
 
 # Rotation degrees for orientation labels
 ROTATIONS = (0, 90, 180, 270)
@@ -171,7 +167,9 @@ def _render_pdf_page(pdf_bytes: bytes, page_idx: int, dpi: int) -> np.ndarray | 
         page = doc[page_idx]
         mat = fitz.Matrix(dpi / 72.0, dpi / 72.0)
         pix = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB)
-        rgb_arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
+        rgb_arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+            pix.height, pix.width, 3
+        )
         return cv2.cvtColor(rgb_arr, cv2.COLOR_RGB2BGR)
     except Exception:
         logger.debug("Failed to render PDF page %d", page_idx, exc_info=True)
@@ -277,7 +275,9 @@ def _process_pdf_page(
 
         if not dry_run:
             rotated = _rotate_image(base_image, deg)  # type: ignore[possibly-undefined]
-            ok, buf = cv2.imencode(".jpg", rotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+            ok, buf = cv2.imencode(
+                ".jpg", rotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY]
+            )
             if ok:
                 out_path.write_bytes(buf.tobytes())
 
@@ -392,7 +392,9 @@ def _build_source_configs(
 # ---------------------------------------------------------------------------
 
 
-def _check_mixing_cap(results: list[_OrientResult], max_single_source_pct: float) -> None:
+def _check_mixing_cap(
+    results: list[_OrientResult], max_single_source_pct: float
+) -> None:
     """Warn if any single source exceeds the mixing cap.
 
     Args:
@@ -451,11 +453,17 @@ def run_build(args: argparse.Namespace) -> int:
     errors = 0
 
     for source in source_configs:
-        logger.info("Processing source: %s (max_base_docs=%d)", source.name, source.max_base_docs)
+        logger.info(
+            "Processing source: %s (max_base_docs=%d)",
+            source.name,
+            source.max_base_docs,
+        )
         pdf_keys = _list_pdf_blobs(bucket, source.gcs_prefix)
 
         if not pdf_keys:
-            logger.warning("No PDFs found at gs://%s/%s", bucket_name, source.gcs_prefix)
+            logger.warning(
+                "No PDFs found at gs://%s/%s", bucket_name, source.gcs_prefix
+            )
             continue
 
         logger.info("Found %d PDFs for %s", len(pdf_keys), source.name)
@@ -466,7 +474,10 @@ def run_build(args: argparse.Namespace) -> int:
 
         try:
             from tqdm import tqdm  # type: ignore[import-untyped]
-            progress: Any = tqdm(selected_keys, desc=f"Real orient ({source.name})", unit="pdf")
+
+            progress: Any = tqdm(
+                selected_keys, desc=f"Real orient ({source.name})", unit="pdf"
+            )
         except ImportError:
             progress = selected_keys
 

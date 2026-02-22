@@ -117,11 +117,13 @@ ALL_SCRIPTS = [
 # Images generated for these scripts have split_type="ood" in their sidecar metadata.
 # Mongolian (Mong) and Syriac (Syrc) are listed here but NOT in ALL_SCRIPTS yet;
 # they will be added once Noto Sans fonts are installed (see docs/planning/... font setup).
-OOD_ONLY_SCRIPTS: frozenset[str] = frozenset({
-    "Geor",   # Georgian — Noto Sans Georgian (OFL); OOD anchor
-    "Mong",   # Mongolian — Noto Sans Mongolian (OFL); TTB script; OOD anchor
-    "Syrc",   # Syriac — Noto Sans Syriac (OFL); RTL script; OOD anchor
-})
+OOD_ONLY_SCRIPTS: frozenset[str] = frozenset(
+    {
+        "Geor",  # Georgian — Noto Sans Georgian (OFL); OOD anchor
+        "Mong",  # Mongolian — Noto Sans Mongolian (OFL); TTB script; OOD anchor
+        "Syrc",  # Syriac — Noto Sans Syriac (OFL); RTL script; OOD anchor
+    }
+)
 
 
 def _compute_distribution(
@@ -151,7 +153,9 @@ def _compute_distribution(
     return distribution
 
 
-def _load_audit_distribution(audit_path: Path, total_images: int) -> tuple[list[str], dict[str, int]]:
+def _load_audit_distribution(
+    audit_path: Path, total_images: int
+) -> tuple[list[str], dict[str, int]]:
     """Load a targeted fill distribution from an audit JSON file.
 
     Reads the output of ``audit_v3_per_script_counts.py`` and derives a
@@ -912,7 +916,9 @@ def main() -> int:
 
     # Dry run
     if args.dry_run:
-        distribution = audit_distribution or _compute_distribution(args.total_images, scripts)
+        distribution = audit_distribution or _compute_distribution(
+            args.total_images, scripts
+        )
         _show_distribution_plan(distribution, args.output_dir, args.seed, args.workers)
         return 0
 
@@ -965,7 +971,9 @@ def main() -> int:
 
     # Track the audit-guided per-script budget across chunks.
     # We copy it so we can decrement each script's remaining budget as chunks complete.
-    audit_budget: dict[str, int] | None = dict(audit_distribution) if audit_distribution else None
+    audit_budget: dict[str, int] | None = (
+        dict(audit_distribution) if audit_distribution else None
+    )
 
     while True:
         if audit_budget is not None:
@@ -999,7 +1007,9 @@ def main() -> int:
             # Correct for rounding so chunk_distribution sums to chunk_total exactly.
             diff = chunk_total - sum(chunk_distribution.values())
             if diff != 0:
-                adj_script = max(chunk_distribution, key=lambda k: chunk_distribution[k])
+                adj_script = max(
+                    chunk_distribution, key=lambda k: chunk_distribution[k]
+                )
                 chunk_distribution[adj_script] += diff
         else:
             # Each script receives base_count or base_count+1 images so that the

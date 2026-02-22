@@ -135,7 +135,9 @@ def _load_splits_pool(
         Mapping from script folder name to list of ``_ImageRecord``.
     """
     splits_key = f"{v3_prefix}/splits.jsonl"
-    logger.info("Downloading splits registry from gs://%s/%s …", bucket.name, splits_key)
+    logger.info(
+        "Downloading splits registry from gs://%s/%s …", bucket.name, splits_key
+    )
     content = bucket.blob(splits_key).download_as_text()
 
     pool: dict[str, list[_ImageRecord]] = {}
@@ -156,7 +158,9 @@ def _load_splits_pool(
         parts = Path(source_path).parts
 
         try:
-            v3_idx = next(i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3")
+            v3_idx = next(
+                i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3"
+            )
             script = parts[v3_idx + 1]
             uuid = Path(parts[v3_idx + 2]).stem
         except (StopIteration, IndexError):
@@ -204,7 +208,9 @@ def _stratified_sample(
 
     base_quota = count // n_scripts
     remainder = count % n_scripts
-    extra_scripts = set(sorted(scripts, key=lambda s: len(pool[s]), reverse=True)[:remainder])
+    extra_scripts = set(
+        sorted(scripts, key=lambda s: len(pool[s]), reverse=True)[:remainder]
+    )
 
     sampled: list[_ImageRecord] = []
     for script in scripts:
@@ -259,7 +265,9 @@ def _apply_perspective_warp(
     dst[:, 1] = np.clip(dst[:, 1], 0, h - 1)
 
     M = cv2.getPerspectiveTransform(src, dst)
-    return cv2.warpPerspective(image, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    return cv2.warpPerspective(
+        image, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE
+    )
 
 
 def _apply_page_curl(
@@ -309,7 +317,9 @@ def _apply_page_curl(
                 map_x[y, x] = float(x)
                 map_y[y, x] = float(y)
 
-    return cv2.remap(image, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+    return cv2.remap(
+        image, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT
+    )
 
 
 def _apply_fold_warp(
@@ -395,7 +405,9 @@ def _augment_image(
         h, w = image.shape[:2]
         if max(h, w) > max_side:
             scale = max_side / max(h, w)
-            image = cv2.resize(image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+            image = cv2.resize(
+                image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA
+            )
 
     warp_fn = _WARP_FNS.get(warp_type, _apply_perspective_warp)
     warped = warp_fn(image, severity, rng)
@@ -499,6 +511,7 @@ def run_generation(args: argparse.Namespace) -> int:
 
     try:
         from tqdm import tqdm  # type: ignore[import-untyped]
+
         progress: Any = tqdm(candidates, desc="Warp view", unit="img")
     except ImportError:
         progress = candidates

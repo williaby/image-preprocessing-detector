@@ -167,7 +167,9 @@ def _load_splits_pool_with_orientation(
     content = bucket.blob(splits_key).download_as_text()
 
     # First pass: collect non-excluded candidates grouped by script
-    candidates_by_script: dict[str, list[tuple[str, str]]] = {}  # script → [(uuid, split)]
+    candidates_by_script: dict[
+        str, list[tuple[str, str]]
+    ] = {}  # script → [(uuid, split)]
     for line in content.splitlines():
         line = line.strip()
         if not line:
@@ -181,7 +183,9 @@ def _load_splits_pool_with_orientation(
         split = record.get("split", "train")
         parts = Path(source_path).parts
         try:
-            v3_idx = next(i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3")
+            v3_idx = next(
+                i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3"
+            )
             script = parts[v3_idx + 1]
             uuid = Path(parts[v3_idx + 2]).stem
         except (StopIteration, IndexError):
@@ -212,7 +216,10 @@ def _load_splits_pool_with_orientation(
     fetched = 0
     skipped = 0
 
-    logger.info("Fetching sidecar JSONs for orientation labels (limit %d/class) …", batch_sidecar_limit)
+    logger.info(
+        "Fetching sidecar JSONs for orientation labels (limit %d/class) …",
+        batch_sidecar_limit,
+    )
 
     for script, uuid, split in all_candidates:
         # Stop early if all orientation classes are saturated
@@ -282,7 +289,9 @@ def _balanced_sample(
         take = min(target_per_class, len(records))
         chosen = rng.sample(records, take)
         sampled.extend(chosen)
-        logger.info("Orientation %d°: taking %d / %d available", orientation, take, len(records))
+        logger.info(
+            "Orientation %d°: taking %d / %d available", orientation, take, len(records)
+        )
 
     rng.shuffle(sampled)
     return sampled
@@ -380,12 +389,16 @@ def run_derivation(args: argparse.Namespace) -> int:
     bucket_name, v3_prefix = _parse_gcs_prefix(args.v3_gcs_prefix)
     bucket = _get_gcs_bucket(bucket_name)
 
-    exclude_scripts: set[str] = set(args.exclude_scripts) if args.exclude_scripts else {LATIN_SCRIPT_FOLDER}
+    exclude_scripts: set[str] = (
+        set(args.exclude_scripts) if args.exclude_scripts else {LATIN_SCRIPT_FOLDER}
+    )
     logger.info("Excluding scripts: %s", sorted(exclude_scripts))
 
     # Sidecar limit: fetch enough candidates per class to cover target + headroom
     sidecar_limit = args.target_per_class * 3
-    pool = _load_splits_pool_with_orientation(bucket, v3_prefix, exclude_scripts, sidecar_limit)
+    pool = _load_splits_pool_with_orientation(
+        bucket, v3_prefix, exclude_scripts, sidecar_limit
+    )
 
     candidates = _balanced_sample(pool, args.target_per_class, rng)
     if not candidates:
@@ -401,6 +414,7 @@ def run_derivation(args: argparse.Namespace) -> int:
 
     try:
         from tqdm import tqdm  # type: ignore[import-untyped]
+
         progress: Any = tqdm(candidates, desc="Orientation (v3)", unit="img")
     except ImportError:
         progress = candidates
@@ -410,7 +424,9 @@ def run_derivation(args: argparse.Namespace) -> int:
 
     for record in progress:
         try:
-            result = _process_record(record, bucket, args.target_size, images_dir, args.dry_run)
+            result = _process_record(
+                record, bucket, args.target_size, images_dir, args.dry_run
+            )
             results.append(result)
         except Exception:
             logger.exception("Failed on %s/%s", record.script, record.uuid)

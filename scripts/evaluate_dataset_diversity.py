@@ -15,6 +15,7 @@ Usage:
     # List available datasets
     python scripts/evaluate_dataset_diversity.py --list-datasets
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -42,9 +43,9 @@ DATASET_REGISTRY: dict[str, dict[str, Any]] = {
         "notes": "50K images; 60% real DocLayNet/RVL-CDIP + 40% v3 synthetic",
         # Orientation manifest uses non-standard field names — alias to DDR standard
         "field_aliases": {
-            "orientation_class": "orientation",   # int {0,1,2,3} → orientation dim
+            "orientation_class": "orientation",  # int {0,1,2,3} → orientation dim
             "orientation_degrees": "skew_angle",  # degrees → skew dim (optional)
-            "source_dataset": "source",           # dataset name → source dim
+            "source_dataset": "source",  # dataset name → source dim
         },
     },
     "skew": {
@@ -118,20 +119,20 @@ DATASET_REGISTRY: dict[str, dict[str, Any]] = {
 
 # The 14 diversity dimensions (from DATASET_DIVERSITY_REQUIREMENTS.md)
 DIVERSITY_DIMENSIONS: list[str] = [
-    "script",           # ISO 15924 script code
-    "orientation",      # 0/90/180/270 degrees
-    "source",           # scanned/camera/born_digital
-    "shadow",           # 0-1 severity
-    "warping",          # 0-1 severity
-    "document_type",    # form/book/receipt/newspaper/etc
-    "color_mode",       # binarized/grayscale/color
-    "document_age",     # modern/aged/historical
-    "language",         # ISO 639-1 language code
-    "resolution_dpi",   # effective DPI bucket
-    "capture_device",   # scanner/phone/born_digital/screen_recapture
-    "noise_level",      # 0-1 severity
-    "blur_level",       # 0-1 severity
-    "compression",      # 0-1 severity
+    "script",  # ISO 15924 script code
+    "orientation",  # 0/90/180/270 degrees
+    "source",  # scanned/camera/born_digital
+    "shadow",  # 0-1 severity
+    "warping",  # 0-1 severity
+    "document_type",  # form/book/receipt/newspaper/etc
+    "color_mode",  # binarized/grayscale/color
+    "document_age",  # modern/aged/historical
+    "language",  # ISO 639-1 language code
+    "resolution_dpi",  # effective DPI bucket
+    "capture_device",  # scanner/phone/born_digital/screen_recapture
+    "noise_level",  # 0-1 severity
+    "blur_level",  # 0-1 severity
+    "compression",  # 0-1 severity
 ]
 
 # Wild conditions per dataset (from WILD_CONDITIONS_ANALYSIS.md)
@@ -308,8 +309,7 @@ def _compute_wild_condition_score(
 
     score = (covered + partial * 0.5) / total * 100
     conditions_list = [
-        {"condition": cond, "status": status}
-        for cond, status in conditions
+        {"condition": cond, "status": status} for cond, status in conditions
     ]
     return score, conditions_list
 
@@ -398,8 +398,7 @@ def _label_quality_score(
         "completeness": complete_count / total * 100,
         "tier_distribution": dict(tier_counts),
         "per_field_coverage": {
-            field: count / total * 100
-            for field, count in field_coverage.items()
+            field: count / total * 100 for field, count in field_coverage.items()
         },
         "total_samples": total,
     }
@@ -624,7 +623,11 @@ def _load_dataset_samples(dataset_name: str) -> list[dict[str, Any]]:
 
     # Directory: search for a known manifest file inside
     if path.is_dir():
-        for candidate_name in ("merge_manifest.json", "manifest.json", "train/labels.json"):
+        for candidate_name in (
+            "merge_manifest.json",
+            "manifest.json",
+            "train/labels.json",
+        ):
             candidate = path / candidate_name
             try:
                 if candidate.exists():
@@ -666,7 +669,11 @@ def _get_required_fields(dataset_name: str) -> list[str]:
         List of field name strings that must be non-null for a complete sample.
     """
     field_map: dict[str, list[str]] = {
-        "orientation": ["image_path", "orientation", "source"],  # orientation_class/source_dataset aliased
+        "orientation": [
+            "image_path",
+            "orientation",
+            "source",
+        ],  # orientation_class/source_dataset aliased
         "skew": ["image_path", "skew_angle", "orientation"],
         "resolution-quality": ["image_path", "resolution_score", "char_height"],
         "iqa-curated": ["image_path", "blur", "noise", "contrast", "overall"],
@@ -790,7 +797,11 @@ def _render_section_3(
         f"**Label completeness**: {label_quality['completeness']:.1f}%",
         "",
         "**Required fields**: "
-        + (", ".join(f"`{f}`" for f in required_fields) if required_fields else "*(not defined)*"),
+        + (
+            ", ".join(f"`{f}`" for f in required_fields)
+            if required_fields
+            else "*(not defined)*"
+        ),
         "",
     ]
     tier_dist: dict[str, int] = label_quality.get("tier_distribution", {})
@@ -965,11 +976,7 @@ def _compute_dim_distributions(
     """
     dim_distributions: dict[str, Counter[str]] = {}
     for dim in DIVERSITY_DIMENSIONS:
-        values = [
-            str(s[dim])
-            for s in samples
-            if s.get(dim) is not None
-        ]
+        values = [str(s[dim]) for s in samples if s.get(dim) is not None]
         if values:
             dim_distributions[dim] = Counter(values)
     return dim_distributions
@@ -1032,16 +1039,20 @@ def _run_statistical_tests(
         if not dist:
             continue
         chi_sq, passes = _chi_square_test(dist)
-        stat_results.append({
-            "dimension": dim,
-            "chi_sq": round(chi_sq, 2),
-            "passes": passes,
-            "n_categories": len(dist),
-        })
+        stat_results.append(
+            {
+                "dimension": dim,
+                "chi_sq": round(chi_sq, 2),
+                "passes": passes,
+                "n_categories": len(dist),
+            }
+        )
         if passes:
             pass_count += 1
 
-    statistical_score = pass_count / max(len(stat_results), 1) * 100 if stat_results else 50.0
+    statistical_score = (
+        pass_count / max(len(stat_results), 1) * 100 if stat_results else 50.0
+    )
     return statistical_score, stat_results
 
 
@@ -1131,11 +1142,7 @@ def _generate_ddr(
     label_score = label_quality["completeness"] if samples else 50.0
 
     # Section 4: OOD leakage
-    image_paths = [
-        Path(s["image_path"])
-        for s in samples
-        if s.get("image_path")
-    ]
+    image_paths = [Path(s["image_path"]) for s in samples if s.get("image_path")]
     ood_hashes = _load_ood_registry(ood_registry_path)
     has_leakage, leakage_count = _check_ood_leakage_for_ddr(
         image_paths[:1000], ood_registry_path
@@ -1163,19 +1170,27 @@ def _generate_ddr(
     sections: list[list[str]] = [
         _build_report_header(dataset_name, registry_info, len(samples)),
         sep,
-        _render_section_1(wild_score, wild_conditions, covered_count, partial_count, missing_count),
+        _render_section_1(
+            wild_score, wild_conditions, covered_count, partial_count, missing_count
+        ),
         sep,
         _render_section_2(diversity_score, dim_distributions, len(samples)),
         sep,
         _render_section_3(label_score, label_quality, required_fields),
         sep,
-        _render_section_4(ood_registry_path, has_leakage, leakage_count, len(ood_hashes)),
+        _render_section_4(
+            ood_registry_path, has_leakage, leakage_count, len(ood_hashes)
+        ),
         sep,
         _render_section_5(statistical_score, stat_results),
         sep,
         _render_section_6(
-            overall_score, wild_score, diversity_score,
-            label_score, statistical_score, overall_grade,
+            overall_score,
+            wild_score,
+            diversity_score,
+            label_score,
+            statistical_score,
+            overall_grade,
         ),
         sep,
         _render_section_7(dataset_name, heads),
@@ -1318,9 +1333,7 @@ def main(
         click.echo("-" * 70)
         for r in results:
             score_str = f"{r['overall_score']:.1f}"
-            grade_short = (
-                "Cleared" if r["overall_score"] >= 70 else "Remediate"
-            )
+            grade_short = "Cleared" if r["overall_score"] >= 70 else "Remediate"
             click.echo(f"{r['dataset']:<30} {score_str:>6}  {grade_short}")
 
 

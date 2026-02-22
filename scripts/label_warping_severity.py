@@ -155,8 +155,14 @@ def _resolve_wsrd_pair(
 
 # Ordered alphabetically: init_1=bill, init_2=book, ..., init_8=two_column
 _ANYPHOTODOC_TYPE_NAMES: list[str] = [
-    "bill", "book", "complex", "education",
-    "invoice", "magazine", "single_column", "two_column",
+    "bill",
+    "book",
+    "complex",
+    "education",
+    "invoice",
+    "magazine",
+    "single_column",
+    "two_column",
 ]
 
 
@@ -415,9 +421,7 @@ def _label_dataset(
     counts = {"labelled": 0, "skipped": 0, "errors": 0, "already_done": 0}
 
     if spot_check > 0:
-        _run_spot_check(
-            dataset_name, samples, resolver, dataset_base, spot_check
-        )
+        _run_spot_check(dataset_name, samples, resolver, dataset_base, spot_check)
         return counts
 
     modified = False
@@ -481,13 +485,16 @@ def _run_spot_check(
         n: Number of pairs to check.
     """
     eligible = [
-        s for s in samples
+        s
+        for s in samples
         if resolver(s.get("source", {}).get("original_path", ""), dataset_base)
         is not None
     ]
 
     if not eligible:
-        click.echo(f"[{dataset_name}] No eligible pairs found for spot-check!", err=True)
+        click.echo(
+            f"[{dataset_name}] No eligible pairs found for spot-check!", err=True
+        )
         return
 
     sample_set = random.sample(eligible, min(n, len(eligible)))
@@ -496,7 +503,7 @@ def _run_spot_check(
 
     click.echo(f"\n[{dataset_name}] Spot-checking {len(sample_set)} pairs …")
     click.echo(f"  {'path':<55} {'sev':>6} {'type'}")
-    click.echo(f"  {'-'*55} {'------':>6} ------")
+    click.echo(f"  {'-' * 55} {'------':>6} ------")
 
     for sample in sample_set:
         orig = sample.get("source", {}).get("original_path", "")
@@ -520,9 +527,13 @@ def _run_spot_check(
         return
 
     arr = np.array(severities)
-    click.echo(f"\n[{dataset_name}] Spot-check summary ({len(severities)} of {n} pairs):")
-    click.echo(f"  min={arr.min():.4f}  max={arr.max():.4f}  "
-               f"mean={arr.mean():.4f}  median={np.median(arr):.4f}")
+    click.echo(
+        f"\n[{dataset_name}] Spot-check summary ({len(severities)} of {n} pairs):"
+    )
+    click.echo(
+        f"  min={arr.min():.4f}  max={arr.max():.4f}  "
+        f"mean={arr.mean():.4f}  median={np.median(arr):.4f}"
+    )
     click.echo(f"  failures: {failures}")
     click.echo(
         "\nINSPECT: warpdoc should show higher severity for 'crumple'/'fold' "
@@ -601,7 +612,12 @@ def main(
             param_hint="--datasets",
         )
 
-    total: dict[str, int] = {"labelled": 0, "skipped": 0, "errors": 0, "already_done": 0}
+    total: dict[str, int] = {
+        "labelled": 0,
+        "skipped": 0,
+        "errors": 0,
+        "already_done": 0,
+    }
 
     for dataset_name in datasets:
         counts = _label_dataset(

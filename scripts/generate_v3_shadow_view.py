@@ -139,7 +139,9 @@ def _load_splits_pool(
         Mapping from script folder name to list of ``_ImageRecord``.
     """
     splits_key = f"{v3_prefix}/splits.jsonl"
-    logger.info("Downloading splits registry from gs://%s/%s …", bucket.name, splits_key)
+    logger.info(
+        "Downloading splits registry from gs://%s/%s …", bucket.name, splits_key
+    )
     content = bucket.blob(splits_key).download_as_text()
 
     pool: dict[str, list[_ImageRecord]] = {}
@@ -245,7 +247,9 @@ def _apply_edge_shadow(
     """Gradient shadow from one edge (scanner lid effect)."""
     h, w = image.shape[:2]
     side = rng.choice(("left", "right", "top", "bottom"))
-    coverage = max(1, int((0.25 + severity * 0.55) * (w if side in ("left", "right") else h)))
+    coverage = max(
+        1, int((0.25 + severity * 0.55) * (w if side in ("left", "right") else h))
+    )
     opacity = 0.15 + severity * 0.75
 
     mask = np.zeros((h, w), dtype=np.float32)
@@ -494,6 +498,7 @@ def run_generation(args: argparse.Namespace) -> int:
     # Progress bar
     try:
         from tqdm import tqdm  # type: ignore[import-untyped]
+
         progress: Any = tqdm(candidates, desc="Shadow view", unit="img")
     except ImportError:
         progress = candidates

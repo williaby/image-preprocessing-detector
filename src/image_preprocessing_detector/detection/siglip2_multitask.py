@@ -31,9 +31,25 @@ logger = get_logger(__name__)
 # ============================================================================
 
 SCRIPT_ML_CLASSES: tuple[str, ...] = (
-    "LATN", "CYRL", "GREK", "ARAB", "HEBR", "DEVA", "BENG", "TAML",
-    "TELU", "HANS", "HANT", "JPAN", "KORE", "THAI", "TIBT",
-    "INDIC_OTHER", "SE_ASIAN_OTHER", "OTHER", "UNKNOWN",
+    "LATN",
+    "CYRL",
+    "GREK",
+    "ARAB",
+    "HEBR",
+    "DEVA",
+    "BENG",
+    "TAML",
+    "TELU",
+    "HANS",
+    "HANT",
+    "JPAN",
+    "KORE",
+    "THAI",
+    "TIBT",
+    "INDIC_OTHER",
+    "SE_ASIAN_OTHER",
+    "OTHER",
+    "UNKNOWN",
 )
 
 SOURCE_CLASSES: tuple[str, ...] = ("scanned", "camera", "born_digital")
@@ -224,7 +240,8 @@ class SigLIP2MultiTaskDetector:
             )
             state_dict = ckpt.get("model_state_dict", ckpt)
             missing, unexpected = self._model.load_state_dict(
-                state_dict, strict=False,
+                state_dict,
+                strict=False,
             )
             logger.info(
                 "checkpoint_loaded",
@@ -262,36 +279,52 @@ class SigLIP2MultiTaskDetector:
         # Head configurations (must match training)
         head_configs: dict[str, dict[str, Any]] = {
             "overall": {
-                "hidden_dim": 256, "output_dim": 2,
-                "dropout": 0.3, "type": "regression_uncertainty",
+                "hidden_dim": 256,
+                "output_dim": 2,
+                "dropout": 0.3,
+                "type": "regression_uncertainty",
             },
             "sharpness": {
-                "hidden_dim": 256, "output_dim": 2,
-                "dropout": 0.3, "type": "regression_uncertainty",
+                "hidden_dim": 256,
+                "output_dim": 2,
+                "dropout": 0.3,
+                "type": "regression_uncertainty",
             },
             "color": {
-                "hidden_dim": 256, "output_dim": 2,
-                "dropout": 0.3, "type": "regression_uncertainty",
+                "hidden_dim": 256,
+                "output_dim": 2,
+                "dropout": 0.3,
+                "type": "regression_uncertainty",
             },
             "script": {
-                "hidden_dim": 256, "output_dim": len(SCRIPT_ML_CLASSES),
-                "dropout": 0.3, "type": "classification",
+                "hidden_dim": 256,
+                "output_dim": len(SCRIPT_ML_CLASSES),
+                "dropout": 0.3,
+                "type": "classification",
             },
             "source": {
-                "hidden_dim": 64, "output_dim": len(SOURCE_CLASSES),
-                "dropout": 0.0, "type": "classification",
+                "hidden_dim": 64,
+                "output_dim": len(SOURCE_CLASSES),
+                "dropout": 0.0,
+                "type": "classification",
             },
             "orientation": {
-                "hidden_dim": 64, "output_dim": len(ORIENTATION_CLASSES),
-                "dropout": 0.0, "type": "classification",
+                "hidden_dim": 64,
+                "output_dim": len(ORIENTATION_CLASSES),
+                "dropout": 0.0,
+                "type": "classification",
             },
             "shadow": {
-                "hidden_dim": 64, "output_dim": 2,
-                "dropout": 0.0, "type": "regression_uncertainty",
+                "hidden_dim": 64,
+                "output_dim": 2,
+                "dropout": 0.0,
+                "type": "regression_uncertainty",
             },
             "warping": {
-                "hidden_dim": 64, "output_dim": 2,
-                "dropout": 0.0, "type": "regression_uncertainty",
+                "hidden_dim": 64,
+                "output_dim": 2,
+                "dropout": 0.0,
+                "type": "regression_uncertainty",
             },
         }
 
@@ -328,7 +361,8 @@ class SigLIP2MultiTaskDetector:
                 for hname, hcfg in head_configs.items():
                     if hcfg["type"] == "regression_uncertainty":
                         self.register_buffer(
-                            f"temp_{hname}", torch.tensor(1.0),
+                            f"temp_{hname}",
+                            torch.tensor(1.0),
                         )
 
             def forward(
@@ -365,7 +399,8 @@ class SigLIP2MultiTaskDetector:
         return _MultiTaskModel(backbone, heads, head_types)
 
     def _preprocess(
-        self, image: np.ndarray,
+        self,
+        image: np.ndarray,
     ) -> dict[str, Any]:
         """Convert BGR/grayscale numpy image to model inputs.
 
@@ -412,7 +447,8 @@ class SigLIP2MultiTaskDetector:
         import torch
 
         def _cls_result(
-            logits: torch.Tensor, classes: tuple[str, ...] | tuple[int, ...],
+            logits: torch.Tensor,
+            classes: tuple[str, ...] | tuple[int, ...],
         ) -> ClassificationResult:
             probs = torch.softmax(logits[0], dim=-1)
             idx = int(probs.argmax().item())
@@ -478,9 +514,12 @@ class SigLIP2MultiTaskDetector:
 
         inputs = self._preprocess(image)
 
-        with torch.no_grad(), torch.amp.autocast(
-            device_type=self._device.type,
-            enabled=self.config.use_fp16,
+        with (
+            torch.no_grad(),
+            torch.amp.autocast(
+                device_type=self._device.type,
+                enabled=self.config.use_fp16,
+            ),
         ):
             outputs = self._model(**inputs)
 
@@ -587,9 +626,18 @@ def prediction_to_dict(prediction: MultiTaskPrediction) -> dict[str, Any]:
     """
     return {
         "iqa": {
-            "overall": {"mu": prediction.iqa_overall.mu, "sigma_sq": prediction.iqa_overall.sigma_sq},
-            "sharpness": {"mu": prediction.iqa_sharpness.mu, "sigma_sq": prediction.iqa_sharpness.sigma_sq},
-            "color": {"mu": prediction.iqa_color.mu, "sigma_sq": prediction.iqa_color.sigma_sq},
+            "overall": {
+                "mu": prediction.iqa_overall.mu,
+                "sigma_sq": prediction.iqa_overall.sigma_sq,
+            },
+            "sharpness": {
+                "mu": prediction.iqa_sharpness.mu,
+                "sigma_sq": prediction.iqa_sharpness.sigma_sq,
+            },
+            "color": {
+                "mu": prediction.iqa_color.mu,
+                "sigma_sq": prediction.iqa_color.sigma_sq,
+            },
         },
         "script": {
             "predicted": prediction.script.predicted_class,

@@ -53,7 +53,10 @@ nn = pytest.importorskip("torch.nn")
 def sample_bgr_image() -> np.ndarray:
     """Create a small BGR test image."""
     return np.random.default_rng(42).integers(
-        0, 256, (100, 150, 3), dtype=np.uint8,
+        0,
+        256,
+        (100, 150, 3),
+        dtype=np.uint8,
     )
 
 
@@ -61,7 +64,10 @@ def sample_bgr_image() -> np.ndarray:
 def sample_gray_image() -> np.ndarray:
     """Create a small grayscale test image."""
     return np.random.default_rng(42).integers(
-        0, 256, (100, 150), dtype=np.uint8,
+        0,
+        256,
+        (100, 150),
+        dtype=np.uint8,
     )
 
 
@@ -233,8 +239,10 @@ class TestClassificationResult:
     def test_frozen(self) -> None:
         """ClassificationResult is frozen."""
         result = ClassificationResult(
-            predicted_class="X", predicted_idx=0,
-            confidence=1.0, distribution={},
+            predicted_class="X",
+            predicted_idx=0,
+            confidence=1.0,
+            distribution={},
         )
         with pytest.raises(AttributeError):
             result.predicted_class = "Y"  # type: ignore[misc]
@@ -275,7 +283,8 @@ class TestMultiTaskPrediction:
     """Tests for MultiTaskPrediction dataclass."""
 
     def test_all_fields_present(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """All 8 task results + metadata are accessible."""
         assert isinstance(sample_prediction.iqa_overall, IQAScore)
@@ -288,26 +297,30 @@ class TestMultiTaskPrediction:
         assert isinstance(sample_prediction.warping, RegressionResult)
 
     def test_script_prediction_property(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """script_prediction returns the predicted class string."""
         assert sample_prediction.script_prediction == "LATN"
 
     def test_orientation_degrees_property(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """orientation_degrees returns int degrees."""
         assert sample_prediction.orientation_degrees == 0
         assert isinstance(sample_prediction.orientation_degrees, int)
 
     def test_source_type_property(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """source_type returns the document source string."""
         assert sample_prediction.source_type == "scanned"
 
     def test_overall_quality_property(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """overall_quality returns IQA overall mu."""
         assert sample_prediction.overall_quality == 0.80
@@ -637,13 +650,20 @@ class TestPredictionToDict:
         """Serialized dict has all expected top-level keys."""
         result = prediction_to_dict(sample_prediction)
         expected_keys = {
-            "iqa", "script", "source", "orientation",
-            "shadow", "warping", "inference_time_ms", "device",
+            "iqa",
+            "script",
+            "source",
+            "orientation",
+            "shadow",
+            "warping",
+            "inference_time_ms",
+            "device",
         }
         assert set(result.keys()) == expected_keys
 
     def test_iqa_nested_structure(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """IQA section has overall, sharpness, color with mu/sigma_sq."""
         result = prediction_to_dict(sample_prediction)
@@ -660,7 +680,8 @@ class TestPredictionToDict:
         assert isinstance(result["script"]["distribution"], dict)
 
     def test_orientation_section(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """Orientation section has degrees and confidence."""
         result = prediction_to_dict(sample_prediction)
@@ -674,7 +695,8 @@ class TestPredictionToDict:
         assert result["source"]["confidence"] == 0.88
 
     def test_severity_sections(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """Shadow/warping sections have severity and sigma_sq."""
         result = prediction_to_dict(sample_prediction)
@@ -684,7 +706,8 @@ class TestPredictionToDict:
         assert result["warping"]["sigma_sq"] == 0.02
 
     def test_metadata_fields(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """inference_time_ms and device are preserved."""
         result = prediction_to_dict(sample_prediction)
@@ -692,7 +715,8 @@ class TestPredictionToDict:
         assert result["device"] == "cpu"
 
     def test_json_serializable(
-        self, sample_prediction: MultiTaskPrediction,
+        self,
+        sample_prediction: MultiTaskPrediction,
     ) -> None:
         """Result dict is JSON-serializable (no tensors, numpy, etc.)."""
         import json

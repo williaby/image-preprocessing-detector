@@ -105,11 +105,11 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     # CJK — Simplified Chinese
     "SC": "Hans",
     "SimplifiedChinese": "Hans",
-    "ZCOOL": "Hans",            # ZCOOLXiaoWei, ZCOOLKuaiLe
-    "MaShan": "Hans",           # MaShanZheng (brush calligraphy)
-    "LiuJian": "Hans",          # LiuJianMaoCao (Chinese handwriting)
-    "LongCang": "Hans",         # LongCang (Chinese handwriting)
-    "ZhiMang": "Hans",          # ZhiMangXing (Chinese handwriting)
+    "ZCOOL": "Hans",  # ZCOOLXiaoWei, ZCOOLKuaiLe
+    "MaShan": "Hans",  # MaShanZheng (brush calligraphy)
+    "LiuJian": "Hans",  # LiuJianMaoCao (Chinese handwriting)
+    "LongCang": "Hans",  # LongCang (Chinese handwriting)
+    "ZhiMang": "Hans",  # ZhiMangXing (Chinese handwriting)
     # CJK — Traditional Chinese
     "TC": "Hant",
     "TraditionalChinese": "Hant",
@@ -120,18 +120,18 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "KR": "Hang",
     "Korean": "Hang",
     "Hangul": "Hang",
-    "Nanum": "Hang",            # NanumGothic, NanumBrushScript, NanumPenScript
-    "Gothic": "Hang",           # GothicA1
+    "Nanum": "Hang",  # NanumGothic, NanumBrushScript, NanumPenScript
+    "Gothic": "Hang",  # GothicA1
     # Indic — Devanagari
     "Devanagari": "Deva",
-    "Kalam": "Deva",            # Hindi handwriting Google Font
-    "Lohit": "Deva",            # Lohit-Devanagari
+    "Kalam": "Deva",  # Hindi handwriting Google Font
+    "Lohit": "Deva",  # Lohit-Devanagari
     # Indic — Bengali
     "Bengali": "Beng",
-    "Galada": "Beng",           # Galada (Bengali decorative)
-    "Atma": "Beng",             # Atma (Bengali)
-    "Kalpurush": "Beng",        # Kalpurush
-    "SolaimanLipi": "Beng",     # SolaimanLipi
+    "Galada": "Beng",  # Galada (Bengali decorative)
+    "Atma": "Beng",  # Atma (Bengali)
+    "Kalpurush": "Beng",  # Kalpurush
+    "SolaimanLipi": "Beng",  # SolaimanLipi
     # Indic — other
     "Tamil": "Taml",
     "Telugu": "Telu",
@@ -143,31 +143,31 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Gurmukhi": "Guru",
     # Southeast Asian
     "Thai": "Thai",
-    "Sarabun": "Thai",          # Sarabun (Thai)
-    "Prompt": "Thai",           # Prompt (Thai)
-    "Charm": "Thai",            # Charm (Thai decorative)
-    "Kodchasan": "Thai",        # Kodchasan (Thai)
+    "Sarabun": "Thai",  # Sarabun (Thai)
+    "Prompt": "Thai",  # Prompt (Thai)
+    "Charm": "Thai",  # Charm (Thai decorative)
+    "Kodchasan": "Thai",  # Kodchasan (Thai)
     "Khmer": "Khmr",
     "Myanmar": "Mymr",
     "Lao": "Laoo",
     "Tibetan": "Tibt",
-    "Jomolhari": "Tibt",        # Jomolhari (Tibetan)
+    "Jomolhari": "Tibt",  # Jomolhari (Tibetan)
     # Middle Eastern — Arabic
     "Arabic": "Arab",
     "NaskhArabic": "Arab",
     "NastaliqUrdu": "Arab",
-    "Amiri": "Arab",            # Amiri (classical Arabic calligraphy)
-    "Scheherazade": "Arab",     # ScheherazadeNew (Arabic serif)
-    "ArefRuqaa": "Arab",        # ArefRuqaa (Arabic Ruqaa style)
-    "Lateef": "Arab",           # Lateef (Nastaliq/Urdu)
-    "Harmattan": "Arab",        # Harmattan (West African Arabic)
-    "Awami": "Arab",            # AwamiNastaliq (Urdu)
-    "Cairo": "Arab",            # Cairo (Arabic web font)
+    "Amiri": "Arab",  # Amiri (classical Arabic calligraphy)
+    "Scheherazade": "Arab",  # ScheherazadeNew (Arabic serif)
+    "ArefRuqaa": "Arab",  # ArefRuqaa (Arabic Ruqaa style)
+    "Lateef": "Arab",  # Lateef (Nastaliq/Urdu)
+    "Harmattan": "Arab",  # Harmattan (West African Arabic)
+    "Awami": "Arab",  # AwamiNastaliq (Urdu)
+    "Cairo": "Arab",  # Cairo (Arabic web font)
     # Middle Eastern — Hebrew
     "Hebrew": "Hebr",
-    "Heebo": "Hebr",            # Heebo (Hebrew sans-serif)
-    "FrankRuhl": "Hebr",        # Frank Ruhl Libre (Hebrew serif)
-    "SuezOne": "Hebr",          # Suez One (Hebrew display)
+    "Heebo": "Hebr",  # Heebo (Hebrew sans-serif)
+    "FrankRuhl": "Hebr",  # Frank Ruhl Libre (Hebrew serif)
+    "SuezOne": "Hebr",  # Suez One (Hebrew display)
     # Middle Eastern — Syriac (OOD anchor script)
     "Syriac": "Syrc",
     # European — Armenian
@@ -178,19 +178,19 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Mongolian": "Mong",
     # European — Ethiopic
     "Ethiopic": "Ethi",
-    "Abyssinica": "Ethi",       # AbyssinicaSIL
+    "Abyssinica": "Ethi",  # AbyssinicaSIL
     # European — Greek
     "Greek": "Grek",
-    "GFSDidot": "Grek",         # GFS Didot (Greek academic font)
+    "GFSDidot": "Grek",  # GFS Didot (Greek academic font)
     # Latin / generic (scripts that fall back to Latin font shapes)
-    "Gentium": "Latn",          # GentiumPlus, GentiumBookPlus (covers Greek ext.)
-    "Doulos": "Latn",           # Doulos SIL
-    "Charis": "Latn",           # Charis SIL
-    "Andika": "Latn",           # Andika (SIL literacy)
-    "Garamond": "Latn",         # EB Garamond
-    "Playfair": "Latn",         # Playfair Display (serif)
-    "Merriweather": "Latn",     # Merriweather (serif)
-    "Tiro": "Deva",             # Tiro Devanagari (also covers Latin, prefer Deva)
+    "Gentium": "Latn",  # GentiumPlus, GentiumBookPlus (covers Greek ext.)
+    "Doulos": "Latn",  # Doulos SIL
+    "Charis": "Latn",  # Charis SIL
+    "Andika": "Latn",  # Andika (SIL literacy)
+    "Garamond": "Latn",  # EB Garamond
+    "Playfair": "Latn",  # Playfair Display (serif)
+    "Merriweather": "Latn",  # Merriweather (serif)
+    "Tiro": "Deva",  # Tiro Devanagari (also covers Latin, prefer Deva)
 }
 
 

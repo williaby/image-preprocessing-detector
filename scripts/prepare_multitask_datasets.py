@@ -73,12 +73,30 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 SCRIPT_ML_CLASSES = (
-    "LATN", "CYRL", "GREK", "ARAB", "HEBR", "DEVA", "BENG",
-    "TAML", "TELU", "HANS", "HANT", "JPAN", "KORE", "THAI", "TIBT",
-    "INDIC_OTHER", "SE_ASIAN_OTHER", "OTHER", "UNKNOWN",
+    "LATN",
+    "CYRL",
+    "GREK",
+    "ARAB",
+    "HEBR",
+    "DEVA",
+    "BENG",
+    "TAML",
+    "TELU",
+    "HANS",
+    "HANT",
+    "JPAN",
+    "KORE",
+    "THAI",
+    "TIBT",
+    "INDIC_OTHER",
+    "SE_ASIAN_OTHER",
+    "OTHER",
+    "UNKNOWN",
 )
 VALID_SCRIPTS: frozenset[str] = frozenset(SCRIPT_ML_CLASSES)
-VALID_SOURCES: frozenset[str] = frozenset(("scanned", "camera", "born_digital", "synthetic"))
+VALID_SOURCES: frozenset[str] = frozenset(
+    ("scanned", "camera", "born_digital", "synthetic")
+)
 # ISO 15924 folder names in synth-multiscript-v3 reserved for OOD evaluation.
 # Must stay in sync with OOD_ONLY_SCRIPTS in scripts/generate_base_dataset_v3.py.
 _V3_OOD_ISO_FOLDERS: frozenset[str] = frozenset({"Geor", "Mong", "Syrc"})
@@ -89,14 +107,14 @@ VALID_ORIENTATIONS: frozenset[int] = frozenset((0, 90, 180, 270))
 # once ≥2K examples per sub-class are available.
 L2_TO_SOURCE_CLASS: dict[str, str | None] = {
     "born_digital": "born_digital",
-    "scanner": "scanned",           # bare value used by rvl_cdip L2 enrichment
+    "scanner": "scanned",  # bare value used by rvl_cdip L2 enrichment
     "scanner_flatbed": "scanned",
-    "scanner_adf": "scanned",       # merged into scanned for v1
-    "camera": "camera",             # bare value for generic camera captures
+    "scanner_adf": "scanned",  # merged into scanned for v1
+    "camera": "camera",  # bare value for generic camera captures
     "camera_smartphone": "camera",
     "camera_professional": "camera",
-    "fax": "scanned",               # merged into scanned for v1
-    "synthetic": "synthetic",       # DocSynth300K, synth-multiscript-v3
+    "fax": "scanned",  # merged into scanned for v1
+    "synthetic": "synthetic",  # DocSynth300K, synth-multiscript-v3
     "unknown": None,
 }
 
@@ -371,11 +389,23 @@ def _upload_manifest(
         dry_run: Skip actual upload if True.
     """
     if dry_run:
-        logger.info("[DRY-RUN] Would upload %d records to gs://%s/%s", len(records), bucket.name, gcs_key)
+        logger.info(
+            "[DRY-RUN] Would upload %d records to gs://%s/%s",
+            len(records),
+            bucket.name,
+            gcs_key,
+        )
         return
     blob = bucket.blob(gcs_key)
-    blob.upload_from_string(json.dumps(records, indent=2), content_type="application/json")
-    logger.info("Uploaded manifest (%d records) → gs://%s/%s", len(records), bucket.name, gcs_key)
+    blob.upload_from_string(
+        json.dumps(records, indent=2), content_type="application/json"
+    )
+    logger.info(
+        "Uploaded manifest (%d records) → gs://%s/%s",
+        len(records),
+        bucket.name,
+        gcs_key,
+    )
 
 
 def _upload_images(
@@ -398,6 +428,7 @@ def _upload_images(
     """
     try:
         from tqdm import tqdm  # type: ignore[import-untyped]
+
         progress: Any = tqdm(image_records, desc="Uploading images", unit="img")
     except ImportError:
         progress = image_records
@@ -453,12 +484,19 @@ def _read_l2_records(
     for dataset in dataset_names:
         paths = _resolve_l2_paths(l2_dir, dataset)
         if not paths:
-            logger.warning("L2 metadata not found for dataset %r at %s", dataset, l2_dir)
+            logger.warning(
+                "L2 metadata not found for dataset %r at %s", dataset, l2_dir
+            )
             continue
         for jf in paths:
             records.extend(_parse_l2_file(jf, field, dataset))
 
-    logger.info("L2 metadata: loaded %d records with '%s' from %s", len(records), field, dataset_names)
+    logger.info(
+        "L2 metadata: loaded %d records with '%s' from %s",
+        len(records),
+        field,
+        dataset_names,
+    )
     return records
 
 
@@ -512,7 +550,9 @@ def _get_field_from_l2_sample(sample: dict[str, Any], field: str) -> Any:
     if value is not None:
         return value
     # 3. Latest enrichment version data dict
-    versions: list[dict[str, Any]] = (sample.get("enrichments") or {}).get("versions", [])
+    versions: list[dict[str, Any]] = (sample.get("enrichments") or {}).get(
+        "versions", []
+    )
     if versions:
         latest_data = versions[-1].get("data", {})
         value = latest_data.get(field)
@@ -582,14 +622,16 @@ def _parse_l2_file(
             continue
 
         image_path = _get_image_path_from_l2_sample(sample)
-        results.append({
-            "image_path": image_path,
-            field: float(value),
-            "provenance": "real_paired",
-            "source_dataset": dataset_name,
-            "split_type": "train",
-            "ood_categories": [],
-        })
+        results.append(
+            {
+                "image_path": image_path,
+                field: float(value),
+                "provenance": "real_paired",
+                "source_dataset": dataset_name,
+                "split_type": "train",
+                "ood_categories": [],
+            }
+        )
 
     return results
 
@@ -684,16 +726,20 @@ def _parse_capture_method_file(
             continue  # Exclude synthetic and unknown
 
         image_path = _get_image_path_from_l2_sample(sample)
-        results.append({
-            "image_path": image_path,
-            "source": source_class,
-            "provenance": "real_scan" if source_class == "scanned" else (
-                "real_camera" if source_class == "camera" else "real_born_digital"
-            ),
-            "source_dataset": dataset_name,
-            "split_type": "train",
-            "ood_categories": [],
-        })
+        results.append(
+            {
+                "image_path": image_path,
+                "source": source_class,
+                "provenance": "real_scan"
+                if source_class == "scanned"
+                else (
+                    "real_camera" if source_class == "camera" else "real_born_digital"
+                ),
+                "source_dataset": dataset_name,
+                "split_type": "train",
+                "ood_categories": [],
+            }
+        )
 
     return results
 
@@ -727,7 +773,12 @@ def _write_task_manifest(
             json.dump(records, f, indent=2)
         logger.info("Wrote %d records → %s", len(records), manifest_path)
     else:
-        logger.info("[DRY-RUN] Would write %d %s records → %s", len(records), task_name, manifest_path)
+        logger.info(
+            "[DRY-RUN] Would write %d %s records → %s",
+            len(records),
+            task_name,
+            manifest_path,
+        )
     return manifest_path
 
 
@@ -743,9 +794,9 @@ def _print_task_report(
         task_name: Human-readable task label.
         label_field: Dict key for the class/value label.
     """
-    click.echo(f"\n{'='*60}")
+    click.echo(f"\n{'=' * 60}")
     click.echo(f"  {task_name.upper()} DATASET REPORT")
-    click.echo(f"{'='*60}")
+    click.echo(f"{'=' * 60}")
     click.echo(f"  Total samples: {len(records)}")
 
     # Provenance breakdown
@@ -755,7 +806,7 @@ def _print_task_report(
         provenance[p] = provenance.get(p, 0) + 1
     click.echo("  Provenance:")
     for p, n in sorted(provenance.items()):
-        click.echo(f"    {p}: {n} ({n/len(records)*100:.1f}%)")
+        click.echo(f"    {p}: {n} ({n / len(records) * 100:.1f}%)")
 
     # Split breakdown
     splits: dict[str, int] = {}
@@ -803,19 +854,19 @@ def cli(ctx: click.Context, verbose: bool) -> None:
 
 _MDIW13_NAME_TO_ISO: dict[str, str] = {
     # English folder names used in the SIW_MultiscriptDatabase layout
-    "Arabic":    "Arab",
-    "Roman":     "Latn",
-    "Hindi":     "Deva",
-    "Bangla":    "Beng",
-    "Japanese":  "Jpan",
-    "Thai":      "Thai",
-    "Tamil":     "Taml",
-    "Telugu":    "Telu",
-    "Kannada":   "Knda",
+    "Arabic": "Arab",
+    "Roman": "Latn",
+    "Hindi": "Deva",
+    "Bangla": "Beng",
+    "Japanese": "Jpan",
+    "Thai": "Thai",
+    "Tamil": "Taml",
+    "Telugu": "Telu",
+    "Kannada": "Knda",
     "Malayalam": "Mlym",
-    "Gujrati":   "Gujr",
-    "Gurmukhi":  "Guru",
-    "Oriya":     "Orya",
+    "Gujrati": "Gujr",
+    "Gurmukhi": "Guru",
+    "Oriya": "Orya",
     # ISO 15924 codes are also accepted directly
 }
 
@@ -839,7 +890,9 @@ def _load_mdiw13_records(
     Returns:
         Mapping from ML class name to list of image record dicts.
     """
-    from image_preprocessing_detector.schema_utils.script_ml_mapping import ScriptMLMapping
+    from image_preprocessing_detector.schema_utils.script_ml_mapping import (
+        ScriptMLMapping,
+    )
 
     mapper = ScriptMLMapping()
     pool: dict[str, list[dict[str, Any]]] = {}
@@ -858,22 +911,25 @@ def _load_mdiw13_records(
 
         # Collect images recursively (handles train/test sub-split dirs)
         images = [
-            p for p in script_folder.rglob("*")
+            p
+            for p in script_folder.rglob("*")
             if p.is_file() and p.suffix.lower() in image_exts
         ]
         for img_path in images:
             doc_id = hashlib.sha256(
                 str(img_path.relative_to(mdiw13_dir)).encode()
             ).hexdigest()[:24]
-            pool.setdefault(ml_class, []).append({
-                "image_path": str(img_path),  # absolute local path
-                "script": ml_class,
-                "provenance": "real_scan",
-                "source_dataset": "mdiw13",
-                "document_id": doc_id,
-                "split_type": "train",
-                "ood_categories": [],
-            })
+            pool.setdefault(ml_class, []).append(
+                {
+                    "image_path": str(img_path),  # absolute local path
+                    "script": ml_class,
+                    "provenance": "real_scan",
+                    "source_dataset": "mdiw13",
+                    "document_id": doc_id,
+                    "split_type": "train",
+                    "ood_categories": [],
+                }
+            )
 
     total = sum(len(v) for v in pool.values())
     logger.info("MDIW13: %d images across %d ML classes", total, len(pool))
@@ -893,7 +949,9 @@ def _load_v3_script_records(
     Returns:
         Mapping from ML class name to list of record dicts.
     """
-    from image_preprocessing_detector.schema_utils.script_ml_mapping import ScriptMLMapping
+    from image_preprocessing_detector.schema_utils.script_ml_mapping import (
+        ScriptMLMapping,
+    )
 
     mapper = ScriptMLMapping()
     bucket_name, prefix = _parse_gcs_path(v3_gcs_prefix)
@@ -921,7 +979,9 @@ def _load_v3_script_records(
         parts = Path(source_path).parts
 
         try:
-            v3_idx = next(i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3")
+            v3_idx = next(
+                i for i, p in enumerate(parts) if p == "synthetic_multiscript_v3"
+            )
             iso_folder = parts[v3_idx + 1]
             uuid = Path(parts[v3_idx + 2]).stem
         except (StopIteration, IndexError):
@@ -937,19 +997,26 @@ def _load_v3_script_records(
             continue
 
         gcs_key = f"{prefix}/{iso_folder}/{uuid}.jpg"
-        pool.setdefault(ml_class, []).append({
-            "gcs_image_key": gcs_key,
-            "script": ml_class,
-            "provenance": "synthetic_v3",
-            "source_dataset": "synth_multiscript_v3",
-            "document_id": uuid,
-            "split": split,
-            "split_type": "train",
-            "ood_categories": [],
-        })
+        pool.setdefault(ml_class, []).append(
+            {
+                "gcs_image_key": gcs_key,
+                "script": ml_class,
+                "provenance": "synthetic_v3",
+                "source_dataset": "synth_multiscript_v3",
+                "document_id": uuid,
+                "split": split,
+                "split_type": "train",
+                "ood_categories": [],
+            }
+        )
 
     total = sum(len(v) for v in pool.values())
-    logger.info("v3 script pool: %d images across %d ML classes (%d skipped)", total, len(pool), skipped)
+    logger.info(
+        "v3 script pool: %d images across %d ML classes (%d skipped)",
+        total,
+        len(pool),
+        skipped,
+    )
     return pool
 
 
@@ -992,7 +1059,8 @@ def _merge_script_pools(
             if synth_records:
                 logger.warning(
                     "[script] Class %r has no real data — using synthetic only (%d samples)",
-                    cls, min(max_synth, len(synth_records)),
+                    cls,
+                    min(max_synth, len(synth_records)),
                 )
 
         n_synth = min(max_synth, len(synth_records))
@@ -1012,22 +1080,40 @@ def _merge_script_pools(
 
         logger.debug(
             "[script] %s: %d real + %d synthetic = %d total",
-            cls, n_real, len(chosen_synth), n_real + len(chosen_synth),
+            cls,
+            n_real,
+            len(chosen_synth),
+            n_real + len(chosen_synth),
         )
 
     return merged
 
 
 @cli.command()
-@click.option("--mdiw13-dir", type=Path, default=None,
-              help="Local MDIW13 root directory (ISO script sub-folders).")
-@click.option("--v3-gcs-prefix", type=str,
-              default="gs://image_detection_b/synth_multiscript_v3",
-              help="GCS prefix for v3 synthetic dataset.")
-@click.option("--output-dir", type=Path, required=True,
-              help="Output directory for script_manifest.json.")
-@click.option("--min-per-class", type=int, default=5_800,
-              help="Minimum samples per class (padded with synthetic). Default: 5800.")
+@click.option(
+    "--mdiw13-dir",
+    type=Path,
+    default=None,
+    help="Local MDIW13 root directory (ISO script sub-folders).",
+)
+@click.option(
+    "--v3-gcs-prefix",
+    type=str,
+    default="gs://image_detection_b/synth_multiscript_v3",
+    help="GCS prefix for v3 synthetic dataset.",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    required=True,
+    help="Output directory for script_manifest.json.",
+)
+@click.option(
+    "--min-per-class",
+    type=int,
+    default=5_800,
+    help="Minimum samples per class (padded with synthetic). Default: 5800.",
+)
 @click.option("--seed", type=int, default=42, help="Random seed.")
 @click.option("--dry-run", is_flag=True, help="Report counts without writing output.")
 @click.pass_context
@@ -1049,14 +1135,20 @@ def script(
     if mdiw13_dir and mdiw13_dir.is_dir():
         real_pool = _load_mdiw13_records(mdiw13_dir)
     else:
-        logger.warning("MDIW13 dir not provided or not found — using synthetic only for all classes.")
+        logger.warning(
+            "MDIW13 dir not provided or not found — using synthetic only for all classes."
+        )
 
     # Load synthetic data (v3) — skip GCS in dry-run mode (no credentials needed)
     synth_pool: dict[str, list[dict[str, Any]]] = {}
     if not dry_run:
-        synth_pool = _load_v3_script_records(v3_gcs_prefix, exclude_scripts=set(_V3_OOD_ISO_FOLDERS))
+        synth_pool = _load_v3_script_records(
+            v3_gcs_prefix, exclude_scripts=set(_V3_OOD_ISO_FOLDERS)
+        )
     else:
-        logger.info("[dry-run] Skipping v3 GCS download — real pool only for count check.")
+        logger.info(
+            "[dry-run] Skipping v3 GCS download — real pool only for count check."
+        )
 
     # Merge with mixing cap
     records = _merge_script_pools(
@@ -1070,7 +1162,9 @@ def script(
     # Assign splits using document_id (respects v3 registry for v3 images)
     for rec in records:
         if "split" not in rec:
-            rec["split"] = _deterministic_split(rec.get("document_id", rec["image_path"]))
+            rec["split"] = _deterministic_split(
+                rec.get("document_id", rec["image_path"])
+            )
 
     _check_mixing_ratio(records, SYNTHETIC_CAPS["script"], "script")
 
@@ -1097,7 +1191,11 @@ def script(
             json.dump(manifest_data, f, indent=2)
         logger.info("Wrote %d script records → %s", len(records), manifest_path)
     else:
-        logger.info("[DRY-RUN] Would write %d script records → %s/script_manifest.json", len(records), output_dir)
+        logger.info(
+            "[DRY-RUN] Would write %d script records → %s/script_manifest.json",
+            len(records),
+            output_dir,
+        )
 
     if not dry_run:
         ood_registry_path = Path("metadata_registry/ood_registry.jsonl")
@@ -1113,12 +1211,24 @@ def script(
 
 
 @cli.command()
-@click.option("--real-metadata", type=Path, required=True,
-              help="Path to orientation_real_metadata.json from build_orientation_real_component.py.")
-@click.option("--synthetic-metadata", type=Path, default=None,
-              help="Path to orientation_synthetic_metadata.json from derive_v3_orientation_view.py.")
-@click.option("--output-dir", type=Path, required=True,
-              help="Output directory for orientation_manifest.json.")
+@click.option(
+    "--real-metadata",
+    type=Path,
+    required=True,
+    help="Path to orientation_real_metadata.json from build_orientation_real_component.py.",
+)
+@click.option(
+    "--synthetic-metadata",
+    type=Path,
+    default=None,
+    help="Path to orientation_synthetic_metadata.json from derive_v3_orientation_view.py.",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    required=True,
+    help="Output directory for orientation_manifest.json.",
+)
 @click.option("--seed", type=int, default=42, help="Random seed.")
 @click.option("--dry-run", is_flag=True, help="Report counts without writing output.")
 @click.pass_context
@@ -1147,7 +1257,9 @@ def orientation(
         deg = rec.get("orientation")
         if deg not in VALID_ORIENTATIONS:
             continue
-        rec["split"] = _deterministic_split(rec.get("document_id", rec.get("image_path", "")))
+        rec["split"] = _deterministic_split(
+            rec.get("document_id", rec.get("image_path", ""))
+        )
         records.append(rec)
 
     logger.info("Loaded %d real orientation records", len(records))
@@ -1162,7 +1274,9 @@ def orientation(
             if deg not in VALID_ORIENTATIONS:
                 continue
             if "split" not in rec:
-                rec["split"] = _deterministic_split(rec.get("document_id", rec.get("image_path", "")))
+                rec["split"] = _deterministic_split(
+                    rec.get("document_id", rec.get("image_path", ""))
+                )
             records.append(rec)
 
         logger.info("Loaded %d synthetic orientation records", len(synth_records))
@@ -1184,16 +1298,34 @@ def orientation(
 
 
 @cli.command()
-@click.option("--l2-metadata-dir", type=Path,
-              default=Path("/mnt/e/image_detection/metadata_registry/json"),
-              help="Root L2 metadata registry directory.")
-@click.option("--l2-datasets", type=str, multiple=True,
-              default=("doclaynet", "rvlcdip", "smartdoc-qa", "realdae", "midv500"),
-              help="Datasets to query for capture_method.")
-@click.option("--max-scanned", type=int, default=10_000, help="Cap on scanned class samples.")
-@click.option("--max-born-digital", type=int, default=10_000, help="Cap on born_digital class samples.")
-@click.option("--output-dir", type=Path, required=True,
-              help="Output directory for source_manifest.json.")
+@click.option(
+    "--l2-metadata-dir",
+    type=Path,
+    default=Path("/mnt/e/image_detection/metadata_registry/json"),
+    help="Root L2 metadata registry directory.",
+)
+@click.option(
+    "--l2-datasets",
+    type=str,
+    multiple=True,
+    default=("doclaynet", "rvlcdip", "smartdoc-qa", "realdae", "midv500"),
+    help="Datasets to query for capture_method.",
+)
+@click.option(
+    "--max-scanned", type=int, default=10_000, help="Cap on scanned class samples."
+)
+@click.option(
+    "--max-born-digital",
+    type=int,
+    default=10_000,
+    help="Cap on born_digital class samples.",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    required=True,
+    help="Output directory for source_manifest.json.",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -1211,7 +1343,10 @@ def source(
     rng = random.Random(seed)
 
     if not l2_metadata_dir.exists():
-        logger.warning("L2 metadata dir not found: %s — source sub-command may produce empty results.", l2_metadata_dir)
+        logger.warning(
+            "L2 metadata dir not found: %s — source sub-command may produce empty results.",
+            l2_metadata_dir,
+        )
 
     all_records = _read_l2_capture_method_records(l2_metadata_dir, list(l2_datasets))
 
@@ -1249,7 +1384,12 @@ def source(
     scanned_sample = rng.sample(scanned, min(max_scanned, len(scanned)))
     born_d_sample = rng.sample(born_digital, min(max_born_digital, len(born_digital)))
 
-    records: list[dict[str, Any]] = [*scanned_sample, *camera, *born_d_sample, *synthetic]
+    records: list[dict[str, Any]] = [
+        *scanned_sample,
+        *camera,
+        *born_d_sample,
+        *synthetic,
+    ]
     for rec in records:
         rec["split"] = _deterministic_split(rec.get("image_path", ""))
 
@@ -1269,16 +1409,31 @@ def source(
 
 
 @cli.command()
-@click.option("--synthetic-metadata", type=Path, required=True,
-              help="shadow_metadata.json from generate_v3_shadow_view.py.")
-@click.option("--l2-metadata-dir", type=Path,
-              default=Path("/mnt/e/image_detection/metadata_registry/json"),
-              help="Root L2 metadata registry directory.")
-@click.option("--l2-datasets", type=str, multiple=True,
-              default=("sd7k", "wsrd"),
-              help="Real shadow datasets to query for shadow_severity.")
-@click.option("--output-dir", type=Path, required=True,
-              help="Output directory for shadow_manifest.json.")
+@click.option(
+    "--synthetic-metadata",
+    type=Path,
+    required=True,
+    help="shadow_metadata.json from generate_v3_shadow_view.py.",
+)
+@click.option(
+    "--l2-metadata-dir",
+    type=Path,
+    default=Path("/mnt/e/image_detection/metadata_registry/json"),
+    help="Root L2 metadata registry directory.",
+)
+@click.option(
+    "--l2-datasets",
+    type=str,
+    multiple=True,
+    default=("sd7k", "wsrd"),
+    help="Real shadow datasets to query for shadow_severity.",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    required=True,
+    help="Output directory for shadow_manifest.json.",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -1312,7 +1467,9 @@ def shadow(
 
     # Real component (from L2 metadata)
     if l2_metadata_dir.exists():
-        real_records = _read_l2_records(l2_metadata_dir, list(l2_datasets), "shadow_severity")
+        real_records = _read_l2_records(
+            l2_metadata_dir, list(l2_datasets), "shadow_severity"
+        )
         for rec in real_records:
             # Map 'shadow_severity' → 'shadow' for training contract
             if "shadow_severity" in rec and "shadow" not in rec:
@@ -1322,10 +1479,16 @@ def shadow(
             records.append(rec)
         logger.info("Loaded %d real shadow records from L2", len(real_records))
     else:
-        logger.warning("L2 metadata dir not found: %s — no real shadow data loaded.", l2_metadata_dir)
+        logger.warning(
+            "L2 metadata dir not found: %s — no real shadow data loaded.",
+            l2_metadata_dir,
+        )
 
     if not records:
-        click.echo("ERROR: No shadow records found. Run Phase 1.1 first and ensure L2 metadata exists.", err=True)
+        click.echo(
+            "ERROR: No shadow records found. Run Phase 1.1 first and ensure L2 metadata exists.",
+            err=True,
+        )
         raise SystemExit(1)
 
     _check_mixing_ratio(records, SYNTHETIC_CAPS["shadow"], "shadow")
@@ -1344,16 +1507,31 @@ def shadow(
 
 
 @cli.command()
-@click.option("--synthetic-metadata", type=Path, required=True,
-              help="warping_metadata.json from generate_v3_warping_view.py.")
-@click.option("--l2-metadata-dir", type=Path,
-              default=Path("/mnt/e/image_detection/metadata_registry/json"),
-              help="Root L2 metadata registry directory.")
-@click.option("--l2-datasets", type=str, multiple=True,
-              default=("warpdoc", "anyphotodoc6300", "docalign12k", "docreal"),
-              help="Real warping datasets to query for warping_severity.")
-@click.option("--output-dir", type=Path, required=True,
-              help="Output directory for warping_manifest.json.")
+@click.option(
+    "--synthetic-metadata",
+    type=Path,
+    required=True,
+    help="warping_metadata.json from generate_v3_warping_view.py.",
+)
+@click.option(
+    "--l2-metadata-dir",
+    type=Path,
+    default=Path("/mnt/e/image_detection/metadata_registry/json"),
+    help="Root L2 metadata registry directory.",
+)
+@click.option(
+    "--l2-datasets",
+    type=str,
+    multiple=True,
+    default=("warpdoc", "anyphotodoc6300", "docalign12k", "docreal"),
+    help="Real warping datasets to query for warping_severity.",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    required=True,
+    help="Output directory for warping_manifest.json.",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -1386,7 +1564,9 @@ def warping(
 
     # Real component (from L2 metadata)
     if l2_metadata_dir.exists():
-        real_records = _read_l2_records(l2_metadata_dir, list(l2_datasets), "warping_severity")
+        real_records = _read_l2_records(
+            l2_metadata_dir, list(l2_datasets), "warping_severity"
+        )
         for rec in real_records:
             if "warping_severity" in rec and "warping" not in rec:
                 rec["warping"] = rec["warping_severity"]
@@ -1395,10 +1575,16 @@ def warping(
             records.append(rec)
         logger.info("Loaded %d real warping records from L2", len(real_records))
     else:
-        logger.warning("L2 metadata dir not found: %s — no real warping data loaded.", l2_metadata_dir)
+        logger.warning(
+            "L2 metadata dir not found: %s — no real warping data loaded.",
+            l2_metadata_dir,
+        )
 
     if not records:
-        click.echo("ERROR: No warping records found. Run Phase 1.2 first and ensure L2 metadata exists.", err=True)
+        click.echo(
+            "ERROR: No warping records found. Run Phase 1.2 first and ensure L2 metadata exists.",
+            err=True,
+        )
         raise SystemExit(1)
 
     _check_mixing_ratio(records, SYNTHETIC_CAPS["warping"], "warping")
@@ -1473,14 +1659,25 @@ def _remap_image_paths(
 @click.option("--source-dir", type=Path, default=None)
 @click.option("--shadow-dir", type=Path, default=None)
 @click.option("--warping-dir", type=Path, default=None)
-@click.option("--gcs-output-prefix", type=str, required=True,
-              help="GCS prefix for upload (e.g. gs://image_detection_b/datasets/multitask_training).")
-@click.option("--output-dir", type=Path, default=Path("/tmp/multitask_merged"),
-              help="Local dir to write merged manifests before GCS upload.")
+@click.option(
+    "--gcs-output-prefix",
+    type=str,
+    required=True,
+    help="GCS prefix for upload (e.g. gs://image_detection_b/datasets/multitask_training).",
+)
+@click.option(
+    "--output-dir",
+    type=Path,
+    default=Path("/tmp/multitask_merged"),
+    help="Local dir to write merged manifests before GCS upload.",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
-@click.option("--skip-image-upload", is_flag=True,
-              help="Skip image upload; only upload manifests.")
+@click.option(
+    "--skip-image-upload",
+    is_flag=True,
+    help="Skip image upload; only upload manifests.",
+)
 @click.pass_context
 def merge(
     ctx: click.Context,
@@ -1533,7 +1730,9 @@ def merge(
     # Assign splits for any records without one
     for rec in all_records:
         if "split" not in rec:
-            rec["split"] = _deterministic_split(rec.get("document_id", rec.get("image_path", "")))
+            rec["split"] = _deterministic_split(
+                rec.get("document_id", rec.get("image_path", ""))
+            )
 
     train_records = [r for r in all_records if r.get("split") == "train"]
     val_records = [r for r in all_records if r.get("split") == "val"]
@@ -1541,9 +1740,9 @@ def merge(
     rng.shuffle(train_records)
     rng.shuffle(val_records)
 
-    click.echo(f"\n{'='*60}")
+    click.echo(f"\n{'=' * 60}")
     click.echo("  MERGE SUMMARY")
-    click.echo(f"{'='*60}")
+    click.echo(f"{'=' * 60}")
     click.echo(f"  Total: {len(all_records)}")
     click.echo(f"  Train: {len(train_records)}")
     click.echo(f"  Val:   {len(val_records)}")
@@ -1587,7 +1786,9 @@ def merge(
 
     click.echo("\nMerge complete. Next steps:")
     click.echo("  1. Upload task images to GCS (use --skip-image-upload to skip).")
-    click.echo("  2. Copy GCS data to Modal Volume: modal volume put multitask-datasets ...")
+    click.echo(
+        "  2. Copy GCS data to Modal Volume: modal volume put multitask-datasets ..."
+    )
     click.echo("  3. Run: uv run modal run modal/train_siglip2_multitask.py --test")
 
 

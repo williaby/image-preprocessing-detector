@@ -15,6 +15,7 @@ Options:
     --fail-below        Exit with code 1 if any script is below --min-families
     --json              Output results as JSON instead of table
 """
+
 from __future__ import annotations
 
 import json
@@ -27,10 +28,33 @@ import click
 # ISO 15924 codes for the 27 scripts in synth-multiscript-v3
 # (Mongolian / Mong is explicitly ABSENT — OOD candidate)
 V3_SCRIPTS: list[str] = [
-    "Latn", "Arab", "Deva", "Hans", "Hant", "Cyrl", "Jpan", "Hang",
-    "Thai", "Beng", "Gujr", "Guru", "Knda", "Mlym", "Orya", "Taml",
-    "Telu", "Tibt", "Mymr", "Khmr", "Sinh", "Laoo", "Cher", "Cans",
-    "Ethi", "Geor", "Hebr",
+    "Latn",
+    "Arab",
+    "Deva",
+    "Hans",
+    "Hant",
+    "Cyrl",
+    "Jpan",
+    "Hang",
+    "Thai",
+    "Beng",
+    "Gujr",
+    "Guru",
+    "Knda",
+    "Mlym",
+    "Orya",
+    "Taml",
+    "Telu",
+    "Tibt",
+    "Mymr",
+    "Khmr",
+    "Sinh",
+    "Laoo",
+    "Cher",
+    "Cans",
+    "Ethi",
+    "Geor",
+    "Hebr",
 ]
 
 # Map ISO 15924 codes to common font naming patterns used in font filenames.
@@ -73,7 +97,9 @@ SYSTEM_FONT_PATHS: list[Path] = [
     Path("/mnt/e/image_detection/fonts"),
 ]
 
-_FONT_EXTENSIONS: frozenset[str] = frozenset({".ttf", ".otf", ".woff", ".woff2", ".ttc"})
+_FONT_EXTENSIONS: frozenset[str] = frozenset(
+    {".ttf", ".otf", ".woff", ".woff2", ".ttc"}
+)
 
 
 def _collect_font_paths(fonts_dir: Path) -> list[Path]:

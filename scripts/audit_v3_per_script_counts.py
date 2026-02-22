@@ -25,6 +25,7 @@ Notes:
     - The --output JSON is consumed by generate_base_dataset_v3.py
       --resume-from-audit when that flag is implemented.
 """
+
 from __future__ import annotations
 
 import json
@@ -43,10 +44,33 @@ DEFAULT_PER_SCRIPT = DEFAULT_TOTAL // DEFAULT_NUM_SCRIPTS  # 12,962
 
 # Known script codes in v3 (27 scripts, Mongolian excluded as OOD candidate)
 V3_SCRIPTS: list[str] = [
-    "Latn", "Arab", "Deva", "Hans", "Hant", "Cyrl", "Jpan", "Hang",
-    "Thai", "Beng", "Gujr", "Guru", "Knda", "Mlym", "Orya", "Taml",
-    "Telu", "Tibt", "Mymr", "Khmr", "Sinh", "Laoo", "Cher", "Cans",
-    "Ethi", "Geor", "Hebr",
+    "Latn",
+    "Arab",
+    "Deva",
+    "Hans",
+    "Hant",
+    "Cyrl",
+    "Jpan",
+    "Hang",
+    "Thai",
+    "Beng",
+    "Gujr",
+    "Guru",
+    "Knda",
+    "Mlym",
+    "Orya",
+    "Taml",
+    "Telu",
+    "Tibt",
+    "Mymr",
+    "Khmr",
+    "Sinh",
+    "Laoo",
+    "Cher",
+    "Cans",
+    "Ethi",
+    "Geor",
+    "Hebr",
 ]
 
 # Candidate locations for splits.jsonl, checked in order
@@ -153,7 +177,9 @@ def _count_from_gcs(gcs_path: str) -> dict[str, int]:
     Returns:
         Dict mapping script code to image count.
     """
-    click.echo(f"Listing GCS path: {gcs_path} (this may take several minutes)...", err=True)
+    click.echo(
+        f"Listing GCS path: {gcs_path} (this may take several minutes)...", err=True
+    )
     try:
         result = subprocess.run(
             ["gsutil", "ls", "-r", gcs_path],
@@ -354,7 +380,9 @@ def main(
 
     unknown_count = counts.get("UNKNOWN", 0)
     if unknown_count:
-        click.echo(f"{'UNKNOWN':<8} {unknown_count:>10,} {'':>10} {'':>8}  (unclassified)")
+        click.echo(
+            f"{'UNKNOWN':<8} {unknown_count:>10,} {'':>10} {'':>8}  (unclassified)"
+        )
 
     click.echo(f"\nTotal images : {total:,} / {target_total:,} target")
     click.echo(f"Below target : {len(below_target)} — {below_target}")
