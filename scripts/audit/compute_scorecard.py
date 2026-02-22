@@ -423,9 +423,7 @@ def _collect_pairwise_agreements(
     field_agreements: dict[str, list[bool]] = {}
     for sample in samples:
         for field_name, field_data in sample.get("fields", {}).items():
-            for pair_label, matches in field_data.get(
-                "pairwise_matches", {}
-            ).items():
+            for pair_label, matches in field_data.get("pairwise_matches", {}).items():
                 if isinstance(matches, bool) and not _pair_excluded(
                     field_name, pair_label
                 ):
