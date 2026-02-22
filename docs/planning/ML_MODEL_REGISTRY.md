@@ -1,7 +1,7 @@
-# ML Model Registry — Project A
+# ML Model Registry — Prepare-Doc
 
 > **Status**: Living Reference Document
-> **Scope**: All ML models and classical detectors used in Project A (production inference,
+> **Scope**: All ML models and classical detectors used in Prepare-Doc (production inference,
 > labeling pipeline, training, and planned/deferred).
 > **Last Updated**: 2026-02-21
 > **Related Plans**: [SIGLIP2_MULTITASK_REQUIREMENTS.md](SIGLIP2_MULTITASK_REQUIREMENTS.md),
@@ -536,7 +536,7 @@ Aggregate: DQS + pre_ocr_risk + routing recommendation
 Remaining corrections: CLAHE, sharpen, denoise
     │
     ▼
-DocumentMetadata.json + corrected images → Project B
+DocumentMetadata.json + corrected images → Unify
 
 Total GPU: ~55–65ms (3ms MobileNetV4 + 50ms SigLIP 2 + overhead)
 Total CPU: ~500–600ms (SigLIP 2 single-pass fallback)

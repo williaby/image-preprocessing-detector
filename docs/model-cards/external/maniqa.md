@@ -19,7 +19,7 @@ title: 'Model Card: MANIQA'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-maniqa` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | 🏆 BEST PERFORMER (teacher/oracle role) |
 | **Priority** | P0 (Critical - highest accuracy) |

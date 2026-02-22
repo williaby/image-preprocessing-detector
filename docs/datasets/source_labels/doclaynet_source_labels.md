@@ -184,7 +184,7 @@ doclaynet/
 
 ---
 
-## Usage in Project A
+## Usage in Prepare-Doc
 
 **Parser**: `src/image_preprocessing_detector/annotation/parsers/layout/doclaynet.py`
 

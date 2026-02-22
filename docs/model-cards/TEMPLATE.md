@@ -88,7 +88,7 @@ REQUIRED: A concise 2-3 sentence summary covering:
 | Field | Value |
 |-------|-------|
 | **Model ID** | `{task}_{architecture}_{variant}_v{major}.{minor}.{patch}` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase {X} ({description}) |
 | **Status** | `trained` / `pretrained` / `planned` / `deprecated` |
 | **Priority** | P0 (Critical) / P1 (High) / P2 (Medium) / P3 (Low) |
@@ -515,7 +515,7 @@ storage:
 ```bibtex
 @misc{{model_id},
   title={{{model_name}: {purpose}}},
-  author={{Project A Team}},
+  author={{Prepare-Doc Team}},
   year={{2025}},
   note={{Internal model for document preprocessing pipeline}}
 }

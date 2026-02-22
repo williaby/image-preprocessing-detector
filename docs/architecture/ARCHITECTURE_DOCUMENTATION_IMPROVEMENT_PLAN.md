@@ -46,7 +46,7 @@ docs/architecture/diagrams/
 ├── level-0/
 │   └── index.md                          # ✅ Complete: RAG pipeline (6 projects)
 ├── level-1/
-│   └── index.md                          # ✅ Complete: Project A (8 workstreams)
+│   └── index.md                          # ✅ Complete: Prepare-Doc (8 workstreams)
 ├── level-2/
 │   ├── production-runtime/
 │   │   └── index.md                      # ✅ ENRICHED (66 → 670+ lines)
@@ -301,7 +301,7 @@ docs/architecture/diagrams/
   ### Downstream Consumers
   | Workstream | Provided Artifacts | Purpose |
   |------------|-------------------|---------|
-  | **Project B (Unify)** | DocumentMetadata.json, corrected images | OCR orchestration input |
+  | **Unify (Unify)** | DocumentMetadata.json, corrected images | OCR orchestration input |
   | **Workstream 7 (Monitoring)** | Predictions, latency metrics | Drift detection, active learning |
 
   ### Internal Dependencies
@@ -478,13 +478,13 @@ docs/architecture/diagrams/
   ```markdown
   ## Downstream Projects Context
 
-  Project A (Prepare-Doc) outputs are consumed by three downstream projects:
+  Prepare-Doc (Prepare-Doc) outputs are consumed by three downstream projects:
 
   | Project | Consumes | Purpose | Contract Document |
   |---------|----------|---------|-------------------|
-  | **Project B (Unify)** | DocumentMetadata.json, corrected images | OCR orchestration, Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
-  | **Project C (Chunk)** | Docling DOM (via Project B) | Trust scoring, RAG chunking | TBD |
-  | **Project D (Embed)** | Chunks (via Project C) | Vector embeddings, retrieval | TBD |
+  | **Unify (Unify)** | DocumentMetadata.json, corrected images | OCR orchestration, Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
+  | **Chunk (Chunk)** | Docling DOM (via Unify) | Trust scoring, RAG chunking | TBD |
+  | **Embed (Embed)** | Chunks (via Chunk) | Vector embeddings, retrieval | TBD |
 
   See [Downstream Context](../level-2/downstream-context/index.md) for detailed workflow diagrams.
   ```
@@ -1105,7 +1105,7 @@ docs/architecture/diagrams/
 ## 🔗 Related Documents
 
 - [Level 0: RAG Pipeline Overview](diagrams/level-0/index.md)
-- [Level 1: Project A Architecture](diagrams/level-1/index.md)
+- [Level 1: Prepare-Doc Architecture](diagrams/level-1/index.md)
 - [Level 2: All Workstreams](diagrams/level-2/)
 - [Level 2.5 Documentation Template](LEVEL_2_DOCUMENTATION_TEMPLATE.md) (to be created in Issue 3.2)
 

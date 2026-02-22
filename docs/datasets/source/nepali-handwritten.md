@@ -322,7 +322,7 @@
 
 ###### 9.1 Annotation Caveats
 
-- **PASCAL VOC Format**: Standard format but requires conversion to COCO for Project A pipeline
+- **PASCAL VOC Format**: Standard format but requires conversion to COCO for Prepare-Doc pipeline
 - **Bounding Box Granularity**: Dataset documentation unclear on word vs character level
 - **XML Validation**: Unknown if all XML files are well-formed (requires testing)
 - **Difficult Flag**: PASCAL VOC `<difficult>` flag may be present but usage unclear

@@ -11,7 +11,7 @@ purpose: "Entity relationship diagram for the Layer 2 enrichment metadata schema
 ---
 
 > **Schema**: `layer2_enrichment.schema.json`
-> **Purpose**: Project A Layer 2 Enrichment - Derived annotations with full provenance tracking
+> **Purpose**: Prepare-Doc Layer 2 Enrichment - Derived annotations with full provenance tracking
 
 ## Entity Relationship Diagram
 

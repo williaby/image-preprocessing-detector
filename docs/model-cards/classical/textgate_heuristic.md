@@ -13,7 +13,7 @@ title: 'Model Card: Text Gate Heuristic'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `textgate_heuristic_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 1 (MVP) |
 | **Status** | `complete` |
 | **Priority** | P0 (Critical) |
@@ -191,7 +191,7 @@ monitoring:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-01-03 | Initial release with 3-method ensemble | Project A Team |
+| v1.0.0 | 2025-01-03 | Initial release with 3-method ensemble | Prepare-Doc Team |
 
 ---
 
@@ -200,7 +200,7 @@ monitoring:
 ```bibtex
 @misc{textgate_heuristic_v1.0.0,
   title={{Text Gate Heuristic: Fast text detection for document routing}},
-  author={{Project A Team}},
+  author={{Prepare-Doc Team}},
   year={{2025}},
   note={{Internal routing gate for document preprocessing pipeline}}
 }
@@ -212,7 +212,7 @@ monitoring:
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Review Cadence** | Semi-annually (critical gate) |
 

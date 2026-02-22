@@ -64,24 +64,24 @@ routing_rules:
   # CJK - PaddleOCR best, but memory intensive
   # ==========================================================================
   HANS:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 2  # Memory intensive
     lang_hint: "ch"
     notes: "Simplified Chinese - reduce batch for memory"
 
   HANT:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 2
     lang_hint: "chinese_cht"
     notes: "Traditional Chinese"
 
   JPAN:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 2
     lang_hint: "japan"
 
   KORE:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 2
     lang_hint: "korean"
 
@@ -89,29 +89,29 @@ routing_rules:
   # Indic scripts - PaddleOCR has good support
   # ==========================================================================
   DEVA:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "devanagari"
     notes: "Hindi, Marathi, Nepali, Sanskrit"
 
   BENG:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "bengali"
 
   TAML:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "tamil"
 
   TELU:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "telugu"
 
   # Grouped Indic - test to find best
   INDIC_OTHER:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     notes: "TODO(script-routing): Test individual Indic scripts, may need per-script engine selection"
 
@@ -119,7 +119,7 @@ routing_rules:
   # Southeast Asian
   # ==========================================================================
   THAI:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "thai"
 
@@ -165,14 +165,14 @@ iso15924_overrides:
 
   # Myanmar has dedicated PaddleOCR support
   Mymr:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "myanmar"
     notes: "PaddleOCR has Myanmar support"
 
   # Khmer also has PaddleOCR support
   Khmr:
-    engine: "paddleocr"
+    engine: "rapidocr"
     batch_size: 4
     lang_hint: "khmer"
 
@@ -187,9 +187,9 @@ vlm_escalation:
   always_escalate:
     - "Tibt"  # Tibetan - very limited OCR support
     - "Ethi"  # Ethiopic - limited OCR support
-    # Note: Mymr has iso15924_overrides routing to PaddleOCR for basic OCR,
+    # Note: Mymr has iso15924_overrides routing to rapidocr for basic OCR,
     # but remains in always_escalate for full pipeline escalation review
-    - "Mymr"  # Myanmar - escalate for review even with PaddleOCR override
+    - "Mymr"  # Myanmar - escalate for review even with rapidocr override
 
   # Escalate if script is unknown
   escalate_unknown: true
@@ -206,11 +206,8 @@ engine_configs:
     gpu_memory_limit_mb: 2048
     cpu_fallback: true
 
-  paddleocr:
-    max_batch_size: 4
-    gpu_memory_limit_mb: 4096
-    use_angle_cls: true
-    use_gpu: true
+  # Note: paddleocr is NOT a valid Docling CLI engine key; all CJK/Indic routes now use rapidocr.
+  # rapidocr config is defined above.
 
   tesseract:
     max_batch_size: 8

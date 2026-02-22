@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "QA/QC Production Readiness Report"
-description: "Production readiness assessment for Project A"
+description: "Production readiness assessment for Prepare-Doc"
 tags:
   - quality_assurance
   - evaluation
@@ -13,7 +13,7 @@ authors:
 purpose: "Document production readiness evaluation and compliance status."
 ---
 
-**Project**: Project A - Image Preprocessing & IQA Gateway
+**Project**: Prepare-Doc - Image Preprocessing & IQA Gateway
 **Report Date**: 2025-11-25
 **Report Version**: 1.0
 **Status**: PRODUCTION READY WITH MINOR GAPS
@@ -22,7 +22,7 @@ purpose: "Document production readiness evaluation and compliance status."
 
 ## Executive Summary
 
-This report provides a comprehensive Quality Assurance and Quality Control evaluation of the Project A codebase against the PROJECT_PLAN.md sprints/milestones and Project_A_F_NF.md functional/non-functional requirements.
+This report provides a comprehensive Quality Assurance and Quality Control evaluation of the Prepare-Doc codebase against the PROJECT_PLAN.md sprints/milestones and Project_A_F_NF.md functional/non-functional requirements.
 
 ### Overall Assessment: **92% COMPLETE - PRODUCTION READY**
 
@@ -347,7 +347,7 @@ This report provides a comprehensive Quality Assurance and Quality Control evalu
 | Gap | Impact | Mitigation |
 |-----|--------|------------|
 | YOLOv10-doc Layout Model | No 11-class detection | Layout-lite heuristics provide basic coverage |
-| Office Document Support | .docx/.xlsx/.pptx not processed | Defer to Project B |
+| Office Document Support | .docx/.xlsx/.pptx not processed | Defer to Unify |
 | Warping/Perspective Correction | Book scans may have issues | Accept as limitation |
 
 ### Medium Gaps (Should Address Before Full Production)
@@ -420,7 +420,7 @@ This report provides a comprehensive Quality Assurance and Quality Control evalu
 
 ### Production Readiness: **APPROVED WITH CONDITIONS**
 
-The Project A codebase demonstrates excellent engineering quality with:
+The Prepare-Doc codebase demonstrates excellent engineering quality with:
 
 - ✅ **Complete Phase 0-3 implementation** (Foundation through ML IQA)
 - ✅ **Robust CI/CD pipeline** with comprehensive security scanning
@@ -437,7 +437,7 @@ The Project A codebase demonstrates excellent engineering quality with:
 **Deferred to Post-Release**:
 
 - YOLOv10-doc layout model (use heuristic layout-lite)
-- Office document support (defer to Project B)
+- Office document support (defer to Unify)
 - Advanced corrections (dewarping, perspective)
 - Specialized content detection (formulas, signatures)
 

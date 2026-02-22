@@ -1057,7 +1057,7 @@ The following diagrams need updates to reflect soft-label integration:
 |---------|-----------------|
 | [automated-data-labeling-pipeline.puml](automated-data-labeling-pipeline.puml) | Add soft-label pseudo-prediction step in Layer 2 |
 | [diqa-pseudo-labeling-workflow.puml](diqa-pseudo-labeling-workflow.puml) | Update to show soft-label distribution output instead of scalar |
-| [labeling-workstreams-overview.puml](../development/labeling/labeling-workstreams-overview.puml) | Update Project C to show KL-div loss instead of MSE |
+| [labeling-workstreams-overview.puml](../development/labeling/labeling-workstreams-overview.puml) | Update Chunk to show KL-div loss instead of MSE |
 
 ### Backward Compatibility
 

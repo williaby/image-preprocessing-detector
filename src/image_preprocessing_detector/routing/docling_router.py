@@ -339,6 +339,10 @@ class DoclingRoutingEngine:
 
         if reasons:
             params.pipeline = "vlm"
+            # vlm_model stays None here intentionally: when pipeline="vlm" and no explicit
+            # model is set, Docling uses its built-in default VLM (SmolDocling or configured
+            # default). To specify a model, set DoclingRoutingParams.vlm_model explicitly
+            # before calling to_cli_args(). See Bug 1.3 in DOCLING_INTEGRATION_GAP_REPORT.md.
             params.vlm_reasons.extend(reasons)
             params.rule_trace.append("vlm_escalation")
             logger.debug(

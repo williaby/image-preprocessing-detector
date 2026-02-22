@@ -19,7 +19,7 @@ title: 'Model Card: TOPIQ-NR (KonIQ-10k)'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-topiq_nr` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Ensemble Candidate) |
 | **Status** | `pretrained` |
 | **Priority** | P1 (High - Best Performing Baseline) |

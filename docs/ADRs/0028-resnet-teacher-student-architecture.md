@@ -26,11 +26,11 @@ purpose: "Document the decision to use a two-tier teacher-student ML IQA strateg
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md)
 - [ADR-026: Transfer Learning](0026-transfer-learning-imagenet-coco.md)
-- [Project A Implementation Plan](../development/RAG%20Pipeline/project-a-project-plan.md)
+- [Prepare-Doc Implementation Plan](../development/RAG%20Pipeline/project-a-project-plan.md)
 
 ## Context
 
-Project A serves as the preprocessing and IQA gateway for a multi-project RAG pipeline. ML-based IQA is critical for detecting image quality issues (blur, noise, skew, illumination, compression artifacts) that classical methods may miss or measure inaccurately.
+Prepare-Doc serves as the preprocessing and IQA gateway for a multi-project RAG pipeline. ML-based IQA is critical for detecting image quality issues (blur, noise, skew, illumination, compression artifacts) that classical methods may miss or measure inaccurately.
 
 **Key Requirements**:
 
@@ -103,7 +103,7 @@ Page Rendering (300 DPI)
     ↓
 [Merge IQA Metrics]
     ↓
-DQS + Routing → Project B
+DQS + Routing → Unify
 ```
 
 ### Training Strategy
@@ -264,4 +264,4 @@ DQS + Routing → Project B
 - [ResNet Paper: Deep Residual Learning](https://arxiv.org/abs/1512.03385)
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md)
-- [Project A F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)
+- [Prepare-Doc F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)

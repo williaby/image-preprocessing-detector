@@ -787,7 +787,7 @@ This section maps synthetic generation pipeline components to implementation fil
 | Level | Document | Description |
 |-------|----------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Eight workstreams overview |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Eight workstreams overview |
 | **Level 2** | [Production Model Training](../model-training/index.md) | Consumes synthetic data for training |
 | **Level 2** | [Data Preparation](../data-preparation/index.md) | Provides clean source images |
 | **Level 2** | [Monitoring & Drift](../monitoring-drift/index.md) | Uses synthetic augmentation for retraining |

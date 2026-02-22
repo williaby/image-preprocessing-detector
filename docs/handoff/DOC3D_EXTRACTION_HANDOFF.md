@@ -9,7 +9,7 @@
 
 Doc3D is a 100,000-image dataset of synthetically warped documents with 3D geometry ground truth (DewarpNet, ICCV 2019). It's relevant for training geometric distortion/warping detection models for the IQA pipeline.
 
-**Project A use case**: Detect document warping/curling as an IQA quality issue. The primary data we need are the **document images** (`img/`) and optionally the **depth maps** (`dmap/`) for warping severity labels.
+**Prepare-Doc use case**: Detect document warping/curling as an IQA quality issue. The primary data we need are the **document images** (`img/`) and optionally the **depth maps** (`dmap/`) for warping severity labels.
 
 ## 2. Current State
 
@@ -40,7 +40,7 @@ Doc3D is a 100,000-image dataset of synthetically warped documents with 3D geome
 
 ## 3. What to Download
 
-### Minimum (for Project A IQA)
+### Minimum (for Prepare-Doc IQA)
 
 | Priority | Type | ZIP Count | Est. Size | Justification |
 |----------|------|-----------|-----------|---------------|
@@ -262,5 +262,5 @@ After completing extraction, update these files:
 - **License**: CC-BY-NC-SA-4.0 - Research use only, no commercial use
 - **Split strategy**: Train/test splits must be by mesh ID (not random) to prevent data leakage. See GitHub issue #8.
 - **GCS**: This dataset is intentionally excluded from GCS replication due to size (~209 GB compressed, ~400+ GB extracted)
-- **Not blocking**: Project A current phases do not require doc3d. This is P3 priority for future warping detection work.
+- **Not blocking**: Prepare-Doc current phases do not require doc3d. This is P3 priority for future warping detection work.
 - **Disk budget**: E: drive has 828 GB free. Downloading img + dmap will use ~50-70 GB additional. Full extraction could use ~200 GB more. Monitor space.

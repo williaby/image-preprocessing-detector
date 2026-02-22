@@ -14,10 +14,10 @@ purpose: Architecture documentation for models.
 This document catalogs the models used across the four projects in the document
 pipeline:
 
-- **Project A** – Preprocessing & Image Quality Assessment (IQA)
-- **Project B** – OCR, layout & structural extraction
-- **Project C** – Post-processing, normalization & QA
-- **Project D** – Downstream RAG applications
+- **Prepare-Doc** – Preprocessing & Image Quality Assessment (IQA)
+- **Unify** – OCR, layout & structural extraction
+- **Chunk** – Post-processing, normalization & QA
+- **Embed** – Downstream RAG applications
 
 The goal is:
 
@@ -42,9 +42,9 @@ The goal is:
 
 ---
 
-## 2. Project A – Preprocessing & IQA Models
+## 2. Prepare-Doc – Preprocessing & IQA Models
 
-Project A is responsible for **file intake, IQA, corrections, and routing
+Prepare-Doc is responsible for **file intake, IQA, corrections, and routing
 metadata**. It favors deterministic CV and compact CNNs.
 
 ### 2.1 IQA Backbone: Teacher–Student Pair
@@ -73,7 +73,7 @@ degradation / DQS features.
       - Contrast / color fidelity
     - Integrated with classical CV metrics to produce IQA features and DQS inputs.
 
-**Device policy (Project A):**
+**Device policy (Prepare-Doc):**
 
 - **Preferred:** Local GPU (if available and adequate).
 - **Fallback:** Local CPU.
@@ -128,7 +128,7 @@ appropriate OCR.
 
 ### 2.6 Layout Detection for Routing (Lightweight)
 
-**Purpose:** Cheap **high-level layout signals** in Project A to inform routing,
+**Purpose:** Cheap **high-level layout signals** in Prepare-Doc to inform routing,
 without full structural extraction.
 
 - **Model:** `layout_router_doclayout_yolo`
@@ -144,14 +144,14 @@ without full structural extraction.
 - **Usage:**
   - Used only in A to:
     - Estimate structural complexity.
-    - Provide early hints to Project B for which branches to call.
+    - Provide early hints to Unify for which branches to call.
   - Detailed element/reading-order logic is delegated to B.
 
 ---
 
-## 3. Project B – OCR & Layout / Structure Extraction
+## 3. Unify – OCR & Layout / Structure Extraction
 
-Project B is the “heavy” processing stage: OCR, layout detection, table/figure
+Unify is the “heavy” processing stage: OCR, layout detection, table/figure
 structure, and hierarchical text grouping.
 
 ### 3.1 Primary OCR Engine
@@ -165,7 +165,7 @@ structure, and hierarchical text grouping.
     - Basic structural cues (headings, lists, captions, etc.).
 - **Role in pipeline:**
   - Main text extraction for high-quality and mid-quality documents.
-  - Produces paragraph-level chunks to reduce complexity for Project C and D.
+  - Produces paragraph-level chunks to reduce complexity for Chunk and D.
 
 ### 3.2 Secondary OCR / Validation
 
@@ -174,7 +174,7 @@ structure, and hierarchical text grouping.
 - **Model:** **DeepSeek-OCR** (or equivalent high-accuracy OCR model)
 - **Usage:**
   - Invoked on:
-    - Very noisy / low-quality pages signaled by Project A.
+    - Very noisy / low-quality pages signaled by Prepare-Doc.
     - Complex visual regions: dense tables, figures, scientific layouts.
   - Used for:
     - Cross-checking Marker output.
@@ -250,9 +250,9 @@ performance loss.
 
 ---
 
-## 4. Project C – Post-Processing, Normalization & QA
+## 4. Chunk – Post-Processing, Normalization & QA
 
-Project C consumes B’s structured output and performs **cleanup, normalization,
+Chunk consumes B’s structured output and performs **cleanup, normalization,
 consistency checks, and QA** before RAG ingestion.
 
 ### 4.1 Core Helper LLM (v1)
@@ -280,7 +280,7 @@ consistency checks, and QA** before RAG ingestion.
 
 **Deployment:**
 
-- **Primary:** Local GPU (if adequate) in Project C container.
+- **Primary:** Local GPU (if adequate) in Chunk container.
 - **Fallback:** Local CPU 4-bit for low-volume workloads.
 - **Overflow / heavy batch:** Remote GPU on Modal.
 
@@ -298,9 +298,9 @@ changing the base model.
 
 ---
 
-## 5. Project D – RAG Applications
+## 5. Embed – RAG Applications
 
-Project D is **per-domain**: each RAG application (tax & estate, ballistics,
+Embed is **per-domain**: each RAG application (tax & estate, ballistics,
 network infrastructure, etc.) has its own configuration over shared
 infrastructure.
 
@@ -330,7 +330,7 @@ each domain using the cleaned and structured content produced by A–C.
 
 - Local GPU on Unraid for low-latency private workloads.
 - Modal GPU hosting for heavier or spiky workloads.
-- Same CPU → local GPU → remote GPU selection policy as Project C, adapted per
+- Same CPU → local GPU → remote GPU selection policy as Chunk, adapted per
   project.
 
 ### 5.2 Embedding / Vector Models
@@ -372,24 +372,24 @@ adequate GPU budget.
 To keep costs manageable and behavior predictable, the following principles
 apply:
 
-1. **Project A**
+1. **Prepare-Doc**
    - **Train:** ResNet50 teacher and ResNet18 student, IQA thresholds, and
      routing logic on dedicated GPU (local or Modal).
    - **Infer (prod):** ResNet18 student + classical CV, preferring local GPU,
      falling back to local CPU. No Modal calls for steady-state inference.
 
-2. **Project B**
+2. **Unify**
    - **Train:** Layout detector (`doclayout_yolo_full`), optional table/math
      models, on GPU (likely remote).
    - **Infer (prod):** Layout detector + OCR engines locally where possible;
      remote GPU only for heavy OCR variants if absolutely necessary.
 
-3. **Project C**
+3. **Chunk**
    - **Train:** Qwen3-4B-Instruct helper via Unsloth (QLoRA) on GPU (Modal or
      local).
    - **Infer (prod):** Prefer local GPU; CPU or Modal as fallbacks per workload.
 
-4. **Project D**
+4. **Embed**
    - **Train:** Per-domain LLMs as Unsloth LoRAs on GPU (Modal or local).
    - **Infer (prod):** Domain-specific LLMs and embedding model run in the
      RAG stack; GPU location and size is per-project and per-SLA.
@@ -413,7 +413,7 @@ a concrete use case demonstrates sufficient value:
 - **Math OCR (Nougat / pix2tex)**
   - Only for math-heavy domains.
 
-- **Domain-specific helper LoRAs in Project C**
+- **Domain-specific helper LoRAs in Chunk**
   - Only when domain-specific behavior diverges significantly.
 
 - **Multimodal VLM (ColPali-class)**

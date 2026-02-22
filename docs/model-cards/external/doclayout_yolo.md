@@ -8,11 +8,11 @@ tags:
 title: 'Model Card: DocLayout-YOLO'
 ---
 
-> ⚠️ **SUPERSEDED** — DocLayout-YOLO has been replaced in Project A by `docling-layout-egret-xlarge` (accuracy) and `docling-layout-heron` (speed). This card is retained for reference.
+> ⚠️ **SUPERSEDED** — DocLayout-YOLO has been replaced in Prepare-Doc by `docling-layout-egret-xlarge` (accuracy) and `docling-layout-heron` (speed). This card is retained for reference.
 
 ## Model Summary
 
-> DocLayout-YOLO is a YOLO-based document layout detection model trained on DocLayNet (80,863 pages). Provides fast detection of 11 document element types with 70-82% mAP. Used in Project A for layout-lite detection to classify page attributes and compute structural complexity scores for OCR routing.
+> DocLayout-YOLO is a YOLO-based document layout detection model trained on DocLayNet (80,863 pages). Provides fast detection of 11 document element types with 70-82% mAP. Used in Prepare-Doc for layout-lite detection to classify page attributes and compute structural complexity scores for OCR routing.
 
 ---
 
@@ -21,7 +21,7 @@ title: 'Model Card: DocLayout-YOLO'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `DocLayout-YOLO` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 2 - Layout-Lite Detection |
 | **Status** | `pretrained` (External) |
 | **Priority** | P0 (Critical - Production) |
@@ -85,7 +85,7 @@ title: 'Model Card: DocLayout-YOLO'
 - Structural complexity scoring
 - OCR routing decision support
 
-### NOT Used For (Project B responsibility)
+### NOT Used For (Unify responsibility)
 
 - Full semantic layout extraction
 - Table structure detection (PubTables-1M)
@@ -101,7 +101,7 @@ title: 'Model Card: DocLayout-YOLO'
 | **Dataset** | DocLayNet (IBM) |
 | **Dataset Size** | 80,863 document pages |
 | **Training** | External (Julio Zhao) |
-| **Project A Role** | Inference only (no retraining) |
+| **Prepare-Doc Role** | Inference only (no retraining) |
 
 **DocLayNet Domains**:
 - Financial reports
@@ -140,7 +140,7 @@ title: 'Model Card: DocLayout-YOLO'
 | Text | 0.81 | 0.77 | 0.79 |
 | Title | 0.85 | 0.81 | 0.83 |
 
-### Project A Integration
+### Prepare-Doc Integration
 
 | Metric | Value |
 |--------|-------|
@@ -172,7 +172,7 @@ title: 'Model Card: DocLayout-YOLO'
 3. **Rotated Pages**: Requires pre-rotation (handled by Phase 1 deskew)
 4. **Low-Resolution Input**: <150 DPI causes significant mAP drop
 
-### Project A Mitigations
+### Prepare-Doc Mitigations
 
 - Pre-flight DPI upscaling to 300 DPI (Phase 1B)
 - Deskew correction before layout detection (Phase 1)

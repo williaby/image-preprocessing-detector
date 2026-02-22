@@ -19,7 +19,7 @@ title: "Level 3: Synthetic Generation - Module Implementation"
 ## Related Diagrams
 
 - **Level 0**: [RAG Pipeline Overview](../../level-0/index.md)
-- **Level 1**: [Project A Architecture](../../level-1/index.md)
+- **Level 1**: [Prepare-Doc Architecture](../../level-1/index.md)
 - **Level 2**: [Synthetic Generation](../../level-2/synthetic-generation/index.md)
 
 ## Contents

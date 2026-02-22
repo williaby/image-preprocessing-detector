@@ -20,7 +20,7 @@ title: 'Model Card: HyperIQA++ DIQA-5000'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `hyperiqa_plus_plus_diqa5000_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | VQualA 2025 Enhancement |
 | **Status** | `trained` |
 | **Priority** | P0 (Critical) |

@@ -1,7 +1,7 @@
 # Table Structure Datasets
 
 > **Purpose**: Datasets for table detection and structure extraction
-> **Scope**: Table detection (Project A), structure extraction (Project B)
+> **Scope**: Table detection (Prepare-Doc), structure extraction (Unify)
 > **Label Type**: COCO boxes + HTML/Cell structure (where available)
 
 ---
@@ -37,14 +37,14 @@
 
 ## Training Use Cases
 
-### Project A (Layout-Lite) - THIS REPO
+### Prepare-Doc (Layout-Lite) - THIS REPO
 
 **Task**: Detect table presence for routing decisions
 **Model**: YOLOv10-doc (single "Table" class from 11 DocLayNet classes)
 **Training Data**: DocLayNet train (69,375) + TableBank train (260,582)
 **Purpose**: Set `has_tables: bool` flag for OCR routing
 
-### Project B (Table Structure) - OUT OF SCOPE
+### Unify (Table Structure) - OUT OF SCOPE
 
 **Task**: Extract table structure (rows, columns, cells)
 **Model**: TableFormer or similar

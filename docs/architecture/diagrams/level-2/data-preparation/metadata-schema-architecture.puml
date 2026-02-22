@@ -5,7 +5,7 @@ skinparam packageStyle rectangle
 skinparam componentStyle rectangle
 
 title Metadata Schema Architecture (V2)\nThree-Layer Data Flow (Immutable → Enrichment → Training)
-footer Project A - Data Preparation | v2.0 | January 2026
+footer Prepare-Doc - Data Preparation | v2.0 | January 2026
 
 ' ============================================================================
 ' COLOR DEFINITIONS

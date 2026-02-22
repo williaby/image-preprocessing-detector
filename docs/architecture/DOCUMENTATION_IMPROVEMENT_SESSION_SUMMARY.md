@@ -146,7 +146,7 @@ Based on multi-model AI consensus (Gemini 3 Pro, GPT-5.1, DeepSeek R1), improve 
 
 6. **Workstream Dependencies** (30 lines):
    - Upstream: None (entry point)
-   - Downstream: Project B (Unify), Workstream 7 (Monitoring)
+   - Downstream: Unify (Unify), Workstream 7 (Monitoring)
    - External: Modal GPU, Local GPU, GCS, Prometheus
 
 **Impact**: Transformed from diagram-only to comprehensive documentation matching "Level 2.5" standard

@@ -49,15 +49,15 @@ source: project-a
 
 - Phase 4, 6, 8, 10 (skipped 0-3, 5, 7, 9)
 - Rationale: Aligned phase numbers with project milestones across A-B-C-D pipeline
-- Problem: Caused confusion within Project A development team
+- Problem: Caused confusion within Prepare-Doc development team
 
 ### New System (December 2025 – Current)
 
-**Sequential Numbering** - Clear progression for Project A:
+**Sequential Numbering** - Clear progression for Prepare-Doc:
 
 - Phase 0-9 (sequential, no gaps)
 - Sub-phases use letter suffixes (e.g., Phase 1B, Phase 1C)
-- Rationale: Easier to understand for Project A developers
+- Rationale: Easier to understand for Prepare-Doc developers
 - Benefit: Clear dependencies and progression
 
 ---
@@ -266,7 +266,7 @@ source: project-a
 
 **Status**: ⏳ NOT STARTED
 
-**Why Added**: Element classifiers migrated from Project B scope
+**Why Added**: Element classifiers migrated from Unify scope
 
 **Deliverables**:
 
@@ -276,7 +276,7 @@ source: project-a
 - Parasitic content detector (watermark, stamp, signature)
 - Model registry integration
 
-**Rationale**: Project A has training infrastructure and datasets; Project B will consume via model registry
+**Rationale**: Prepare-Doc has training infrastructure and datasets; Unify will consume via model registry
 
 **Dependencies**: Phase 3 (ML infrastructure)
 
@@ -319,9 +319,9 @@ When encountering old phase references in code, comments, or documentation:
 
 ### Pitfall 1: Assuming Phase Numbers Align Across Projects
 
-**Wrong**: "Project A Phase 6 corresponds to Project B Phase 6"
+**Wrong**: "Prepare-Doc Phase 6 corresponds to Unify Phase 6"
 
-**Right**: Phase numbers are **independent per project**. Use the **Project A/B contract** to understand handoffs, not phase numbers.
+**Right**: Phase numbers are **independent per project**. Use the **Prepare-Doc/B contract** to understand handoffs, not phase numbers.
 
 **Reference**: `docs/development/RAG Pipeline/project-ab-contract.md`
 
@@ -341,7 +341,7 @@ When encountering old phase references in code, comments, or documentation:
 
 **Wrong**: Searching for "layout-lite" implementation
 
-**Right**: Project A uses **full DocLayout-YOLO** (11 classes), not simplified version
+**Right**: Prepare-Doc uses **full DocLayout-YOLO** (11 classes), not simplified version
 
 **Implementation**: `src/detection/doclayout_yolo.py`
 
@@ -405,7 +405,7 @@ feat(phase-2): add DocLayout-YOLO detector with 11 classes
 
 ### Q1: Why did the phase numbering change?
 
-**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the four-project RAG pipeline architecture but caused confusion within Project A. Sequential numbering (0-9) is clearer for Project A developers.
+**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the four-project RAG pipeline architecture but caused confusion within Prepare-Doc. Sequential numbering (0-9) is clearer for Prepare-Doc developers.
 
 ---
 
@@ -449,11 +449,11 @@ Keeping them in separate phases created artificial boundaries.
 
 - **Current Planning**: `docs/planning/PROJECT_PLAN.md` (authoritative source)
 - **Deprecated Docs**: `docs/DEPRECATED_DOCS.md` (list of deleted files)
-- **Project A/B Contract**: `docs/development/RAG Pipeline/project-ab-contract.md`
+- **Prepare-Doc/B Contract**: `docs/development/RAG Pipeline/project-ab-contract.md`
 - **Phase Comparison**: `tmp_cleanup/.tmp-planning-docs-comparison-20250201.md` (detailed analysis)
 
 ---
 
 **Last Reviewed**: 2025-12-01
-**Maintained By**: Project A Core Team
+**Maintained By**: Prepare-Doc Core Team
 **Questions**: Consult development team or reference this guide

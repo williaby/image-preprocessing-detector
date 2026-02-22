@@ -13,7 +13,7 @@ title: 'Model Card: DIQA InternVL3 Overall'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `diqa_internvl3_overall_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | DIQA (Pseudo-Labeling Ensemble) |
 | **Status** | `planned` |
 | **Priority** | P2 (Medium) |
@@ -205,6 +205,6 @@ Track B (VLM Models)
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Planned - awaiting implementation |

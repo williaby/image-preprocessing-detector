@@ -19,7 +19,7 @@ title: 'Model Card: DBCNN'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-dbcnn` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | ✅ RECOMMENDED (ensemble member) |
 | **Priority** | P2 (Medium - ensemble candidate) |

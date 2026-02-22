@@ -7,7 +7,7 @@ last_updated: 2026-02-10
 
 # Technical Debt Tracker
 
-This document tracks known technical debt in the Project A (Image Preprocessing & IQA) codebase. Items are prioritized by severity and impact on development velocity, maintainability, and production readiness.
+This document tracks known technical debt in the Prepare-Doc (Image Preprocessing & IQA) codebase. Items are prioritized by severity and impact on development velocity, maintainability, and production readiness.
 
 ## Summary Table
 

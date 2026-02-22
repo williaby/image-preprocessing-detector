@@ -561,7 +561,7 @@ Official COCO-Text benchmark uses:
 - **Metrics**: Precision, Recall, F-score for detection; Edit distance for recognition
 - **Baseline models**: EAST, FOTS, ABCNet (documented in paper)
 
-##### 10.4 Integration with Project A
+##### 10.4 Integration with Prepare-Doc
 
 **Phase 1 Usage**:
 

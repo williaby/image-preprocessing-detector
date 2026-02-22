@@ -13,7 +13,7 @@ title: 'Model Card: Table Type Classifier'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `classify_resnet18_table_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 9 (Element Classification) |
 | **Status** | `planned` |
 | **Priority** | P2 (Medium) |
@@ -43,13 +43,13 @@ title: 'Model Card: Table Type Classifier'
 | **Primary Task** | Table type classification |
 | **Role in Pipeline** | Post-detection classifier for table elements |
 | **Upstream Dependencies** | Layout-Lite (YOLOv10) table detections |
-| **Downstream Consumers** | Routing Engine, Project B (table structure) |
+| **Downstream Consumers** | Routing Engine, Unify (table structure) |
 
 ### Intended Use
 
 - **Primary**: Classify detected table regions into complexity categories
 - **Secondary**: Inform OCR strategy for table extraction
-- **Out of Scope**: Table detection (use YOLOv10), table structure extraction (Project B)
+- **Out of Scope**: Table detection (use YOLOv10), table structure extraction (Unify)
 
 ### Classification Categories
 
@@ -165,6 +165,6 @@ title: 'Model Card: Table Type Classifier'
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Planned - Phase 9 |

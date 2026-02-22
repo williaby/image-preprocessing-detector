@@ -645,7 +645,7 @@ TOTAL: 66-70 hours over 4 weeks
 - ✅ LOC extraction script provides baseline
 - ✅ File inventory provides complete mapping
 - ✅ Diagram-maintenance-agent updated with standards
-- ✅ Existing swimlane example (PROJECT_A_WORKFLOW_HIERARCHY.puml) provides pattern
+- ✅ Existing swimlane example (PREPARE_DOC_WORKFLOW_HIERARCHY.puml) provides pattern
 
 **No Blockers** - Ready to proceed!
 

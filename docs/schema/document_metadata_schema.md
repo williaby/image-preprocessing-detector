@@ -11,7 +11,7 @@ purpose: "Entity relationship diagram for the document metadata output schema."
 ---
 
 > **Schema**: `document_metadata.schema.json`
-> **Purpose**: Project A output schema for Project B handoff - Preprocessing, IQA & Coarse Layout Gateway
+> **Purpose**: Prepare-Doc output schema for Unify handoff - Preprocessing, IQA & Coarse Layout Gateway
 
 ## Entity Relationship Diagram
 
@@ -343,7 +343,7 @@ classDiagram
     }
 ```
 
-## Data Flow - Project A to Project B Handoff
+## Data Flow - Prepare-Doc to Unify Handoff
 
 ```mermaid
 flowchart TB
@@ -351,7 +351,7 @@ flowchart TB
         PDF[("PDF/Image<br/>File")]
     end
 
-    subgraph ProjectA["Project A Processing"]
+    subgraph ProjectA["Prepare-Doc Processing"]
         direction TB
 
         subgraph DocLevel["Document-Level Analysis"]
@@ -380,7 +380,7 @@ flowchart TB
         JSON[("JSON<br/>Output")]
     end
 
-    subgraph ProjectB["Project B (Downstream)"]
+    subgraph ProjectB["Unify (Downstream)"]
         OCR["OCR<br/>Orchestration"]
     end
 

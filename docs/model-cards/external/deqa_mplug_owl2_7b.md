@@ -22,7 +22,7 @@ title: 'Model Card: DeQA-Doc mPLUG-Owl2-7B'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `DeQA-mPLUG-Owl2-7B` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External VLM (DIQA Track A/B Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Champion) |
 | **Priority** | P1 (High - competition winner) |

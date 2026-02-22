@@ -12,41 +12,41 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Document the downstream projects that consume Project A output - OCR orchestration,
+purpose: "Document the downstream projects that consume Prepare-Doc output - OCR orchestration,
   fusion, and vector store."
 ---
-This level provides context diagrams for the downstream projects in the RAG pipeline that consume Project A output.
+This level provides context diagrams for the downstream projects in the RAG pipeline that consume Prepare-Doc output.
 
 ---
 
-## Project B: OCR & Layout Workflow
+## Unify: OCR & Layout Workflow
 
-OCR orchestration and full layout detection (receives Project A output).
+OCR orchestration and full layout detection (receives Prepare-Doc output).
 
-![Project B OCR Layout Workflow](project-b-ocr-layout-workflow.svg)
+![Unify OCR Layout Workflow](unify-ocr-layout-workflow.svg)
 
 ---
 
-## Project C: Fusion & Chunking Workflow
+## Chunk: Fusion & Chunking Workflow
 
 Multi-engine fusion, trust scoring, and RAG chunking.
 
-![Project C Fusion Chunking Workflow](project-c-fusion-chunking-workflow.svg)
+![Chunk Fusion Chunking Workflow](chunk-fusion-chunking-workflow.svg)
 
 ---
 
-## Project D: Vector Store Workflow
+## Embed: Vector Store Workflow
 
 Embedding generation and vector database storage.
 
-![Project D Vector Store Workflow](project-d-vectorstore-workflow.svg)
+![Embed Vector Store Workflow](embed-vectorstore-workflow.svg)
 
 ---
 
 ## Pipeline Flow
 
 ```text
-Project A (THIS REPO)  →  Project B  →  Project C  →  Project D
+Prepare-Doc (THIS REPO)  →  Unify  →  Chunk  →  Embed
 Preprocessing & IQA       OCR Layout     Fusion        Vector Store
 ───────────────────       ──────────     ──────        ────────────
 • IQA & Corrections       • Full Layout  • Trust       • Embeddings
@@ -58,7 +58,7 @@ Preprocessing & IQA       OCR Layout     Fusion        Vector Store
 
 ## A→B Contract
 
-Project A outputs that Project B consumes:
+Prepare-Doc outputs that Unify consumes:
 
 | Output | Format | Description |
 |--------|--------|-------------|
@@ -74,5 +74,5 @@ Project A outputs that Project B consumes:
 | Level | Diagram | Description |
 |-------|---------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | Project A system |
-| **Level 2** | [Production Runtime](../production-runtime/index.md) | Project A workflow |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | Prepare-Doc system |
+| **Level 2** | [Production Runtime](../production-runtime/index.md) | Prepare-Doc workflow |

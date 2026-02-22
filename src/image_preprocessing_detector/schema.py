@@ -763,7 +763,7 @@ class DoclingRoutingParams(BaseModel):
     )
     ocr_engine: str = Field(
         default="auto",
-        description="OCR engine: 'auto', 'rapidocr', 'paddleocr', 'tesseract'",
+        description="OCR engine: 'auto', 'rapidocr', 'tesseract' (note: 'paddleocr' is not a valid Docling engine key)",
     )
     ocr_lang: str | None = Field(
         None,
@@ -816,7 +816,10 @@ class DoclingRoutingParams(BaseModel):
         if self.psm is not None:
             args.append(f"--psm={self.psm}")
 
-        args.append(f"--table-mode={self.table_mode}")
+        if not self.tables_enabled:
+            args.append("--no-tables")
+        else:
+            args.append(f"--table-mode={self.table_mode}")
 
         if self.enrich_code:
             args.append("--enrich-code")

@@ -63,9 +63,9 @@ This level provides comprehensive documentation for the Data Preparation workstr
 
 High-level flow for collecting, normalizing, and splitting training datasets.
 
-![Training Data Ingestion](project-a-training-data-ingestion.svg)
+![Training Data Ingestion](prepare-doc-training-data-ingestion.svg)
 
-*PlantUML source: [`project-a-training-data-ingestion.puml`](project-a-training-data-ingestion.puml)*
+*PlantUML source: [`prepare-doc-training-data-ingestion.puml`](prepare-doc-training-data-ingestion.puml)*
 
 ---
 
@@ -190,7 +190,7 @@ The data preparation pipeline implements a versioned metadata schema with three 
 **Schema Visualizations** (Mermaid diagrams with ER, class, and data flow views):
 
 - [Layer 2 Enrichment Schema](../../../../schema/layer2_enrichment_schema.md) - Derived annotations with provenance tracking
-- [Document Metadata Schema](../../../../schema/document_metadata_schema.md) - Project A → Project B handoff schema
+- [Document Metadata Schema](../../../../schema/document_metadata_schema.md) - Prepare-Doc → Unify handoff schema
 
 **JSON Schema Definitions**:
 
@@ -1363,7 +1363,7 @@ tests/
 | Level | Diagram | Description |
 |-------|---------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../../level-0/index.md) | Multi-project pipeline context |
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Pseudo-Labeling](../pseudo-labeling/index.md) | Downstream: ensemble labeling |
 | **Level 2** | [Model Training](../model-training/index.md) | Downstream: production training |
 | **Level 2** | [Synthetic Generation](../synthetic-generation/index.md) | Downstream: data augmentation |
@@ -1376,7 +1376,7 @@ tests/
 
 ### Diagrams
 
-- **Training Ingestion**: [`project-a-training-data-ingestion.puml`](project-a-training-data-ingestion.puml)
+- **Training Ingestion**: [`prepare-doc-training-data-ingestion.puml`](prepare-doc-training-data-ingestion.puml)
 - **Labeling Pipeline**: [`automated-data-labeling-pipeline.puml`](automated-data-labeling-pipeline.puml)
 - **Resolution Quality**: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)
 - **Skew/Orientation**: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)

@@ -1,6 +1,6 @@
 ---
 schema_type: common
-title: "Project A Functional and Non-Functional Requirements v2.0"
+title: "Prepare-Doc Functional and Non-Functional Requirements v2.0"
 tags:
   - rag_pipeline
   - architecture
@@ -43,7 +43,7 @@ purpose: Architecture documentation for project a functional and non-functional 
 
 ### 1.1 Purpose
 
-Project A is the **front-door** for all documents entering the four-project OCR/RAG pipeline. Its mission:
+Prepare-Doc is the **front-door** for all documents entering the four-project OCR/RAG pipeline. Its mission:
 
 **"Identify, Assess, Correct, Route"**
 
@@ -52,14 +52,14 @@ Project A is the **front-door** for all documents entering the four-project OCR/
 - **Detect** all layout elements, specialized content, and quality issues
 - **Correct** quality defects with do-no-harm guardrails
 - **Calculate** Document Quality Score (DQS) for intelligent routing
-- **Route** to appropriate downstream workflows in Project B
-- **Hand off** cleaned images + rich structured metadata to Project B
+- **Route** to appropriate downstream workflows in Unify
+- **Hand off** cleaned images + rich structured metadata to Unify
 
-Project A must be good enough that if OCR fails later, no one can blame preprocessing with a straight face.
+Prepare-Doc must be good enough that if OCR fails later, no one can blame preprocessing with a straight face.
 
 ### 1.2 Scope
 
-**In Scope (Project A Responsibilities)**
+**In Scope (Prepare-Doc Responsibilities)**
 
 - **Input handling:**
   - Images: `.jpg`, `.jpeg`, `.png`, `.tiff`, `.bmp`
@@ -75,7 +75,7 @@ Project A must be good enough that if OCR fails later, no one can blame preproce
   - Model: YOLOv10-doc (specifically trained on DocLayNet)
   - Classes: Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title
   - Output: Bounding boxes (COCO format), coarse attributes, structural complexity
-  - **NOT full semantic layout** (no reading order, no element linking - that's Project B)
+  - **NOT full semantic layout** (no reading order, no element linking - that's Unify)
 
 - **Specialized content detection:**
   - Formulas, watermarks, stamps/seals, signatures, margin annotations, handwriting, vertical text
@@ -90,35 +90,35 @@ Project A must be good enough that if OCR fails later, no one can blame preproce
 - **Device-priority execution:**
   - Local GPU → Local CPU → Modal GPU (in that order)
 
-**Out of Scope (Project B/C/D Responsibilities)**
+**Out of Scope (Unify/C/D Responsibilities)**
 
-- Full OCR text extraction (Project B)
-- Reading order prediction (Project B)
-- Full semantic layout with element linking (Project B)
-- Footnote reference linking (Project B)
-- Figure-caption semantic linking (Project B)
-- Table structure reconstruction (rows/columns/cells) (Project B)
-- Multi-engine OCR fusion (Project C)
-- Trust scoring (Project C)
-- RAG-optimized chunking (Project C)
-- Vector embeddings and DB ingestion (Project D)
-- Semantic search and retrieval (Project D)
+- Full OCR text extraction (Unify)
+- Reading order prediction (Unify)
+- Full semantic layout with element linking (Unify)
+- Footnote reference linking (Unify)
+- Figure-caption semantic linking (Unify)
+- Table structure reconstruction (rows/columns/cells) (Unify)
+- Multi-engine OCR fusion (Chunk)
+- Trust scoring (Chunk)
+- RAG-optimized chunking (Chunk)
+- Vector embeddings and DB ingestion (Embed)
+- Semantic search and retrieval (Embed)
 
-### 1.3 Project A Philosophy
+### 1.3 Prepare-Doc Philosophy
 
-**What Project A Does:**
+**What Prepare-Doc Does:**
 
 - Detect WHERE elements are (bounding boxes, quality scores, presence flags)
 - Assess WHAT QUALITY elements have (blur, noise, contrast, per-element)
 - Apply TARGETED CORRECTIONS (only where needed, with rollback safety)
 - Provide ROUTING INTELLIGENCE (DQS, complexity, recommendations)
 
-**What Project A Does NOT Do:**
+**What Prepare-Doc Does NOT Do:**
 
-- Determine WHAT'S IN elements (that requires OCR/text extraction - Project B)
-- Determine HOW TO READ elements sequentially (reading order - Project B)
-- Determine HOW ELEMENTS RELATE semantically (linking - Project B)
-- Determine HOW TO CHUNK for RAG (semantic chunking - Project C)
+- Determine WHAT'S IN elements (that requires OCR/text extraction - Unify)
+- Determine HOW TO READ elements sequentially (reading order - Unify)
+- Determine HOW ELEMENTS RELATE semantically (linking - Unify)
+- Determine HOW TO CHUNK for RAG (semantic chunking - Chunk)
 
 ---
 
@@ -161,19 +161,19 @@ The system SHALL accept single file input via:
    - Quality detection (FR-3.x classical + ML IQA)
    - Corrections with guardrails (FR-6.x)
    - Per-element metadata generation
-3. Hand off preprocessed images + metadata to Project B
-4. **Project B** handles office text extraction and structure parsing (using Docling)
+3. Hand off preprocessed images + metadata to Unify
+4. **Unify** handles office text extraction and structure parsing (using Docling)
 
 **Scope Boundary:**
 
-- Project A: Extract and preprocess embedded images only
-- Project B: Parse office text, tables, formatting, structure
+- Prepare-Doc: Extract and preprocess embedded images only
+- Unify: Parse office text, tables, formatting, structure
 
 **Rationale:**
 
 - Office documents contain embedded images (charts, diagrams, photos, scanned inserts) that benefit from IQA and correction
 - Text and structure parsing is better handled by specialized office processors (Docling has native .docx/.xlsx/.pptx support)
-- Separation of concerns: Project A owns image quality, Project B owns text/structure extraction
+- Separation of concerns: Prepare-Doc owns image quality, Unify owns text/structure extraction
 
 **Out of Scope:**
 
@@ -314,13 +314,13 @@ The system SHALL analyze all `.pdf` files and classify as:
 
 **Routing Impact:**
 
-- `image_only` → Project B uses vision-based OCR (Marker vision mode)
-- `born_digital` → Project B uses text extraction (PyMuPDF fast path)
-- `hybrid` → Project B uses both (vision OCR + text extraction, reconcile conflicts)
+- `image_only` → Unify uses vision-based OCR (Marker vision mode)
+- `born_digital` → Unify uses text extraction (PyMuPDF fast path)
+- `hybrid` → Unify uses both (vision OCR + text extraction, reconcile conflicts)
 
 **Rationale:**
 
-- Critical for routing decisions in Project B
+- Critical for routing decisions in Unify
 - Avoids expensive vision OCR on born-digital PDFs
 - Enables hybrid strategy for documents with both digital text and scanned images
 
@@ -335,7 +335,7 @@ The system SHALL identify office document types:
 **Processing:**
 
 - Route to Docling for embedded image extraction
-- Extract images → Apply preprocessing pipeline → Hand off to Project B
+- Extract images → Apply preprocessing pipeline → Hand off to Unify
 
 #### FR-2.3: Learned Quality Assessment (ML IQA)
 
@@ -709,7 +709,7 @@ The system SHALL use **YOLOv10-doc** for layout detection.
 - Better architecture than YOLOv8 (improved speed/accuracy tradeoff)
 - Native support for document layout characteristics
 
-**Project A Usage (Light Layout):**
+**Prepare-Doc Usage (Light Layout):**
 
 - Detect all 11 classes, output bounding boxes
 - Aggregate to coarse categories for DQS calculation
@@ -720,9 +720,9 @@ The system SHALL use **YOLOv10-doc** for layout detection.
   - Reading order prediction
   - Element hierarchy construction
 
-**Project B Usage (Full Layout):**
+**Unify Usage (Full Layout):**
 
-- Use same YOLOv10-doc detections from Project A
+- Use same YOLOv10-doc detections from Prepare-Doc
 - Add semantic relationships
 - Predict reading order
 - Link footnotes, captions, etc.
@@ -757,7 +757,7 @@ The system SHALL detect and provide bounding boxes for ALL 11 DocLayNet classes:
 - `confidence`: float (0-1, YOLOv10-doc detection confidence)
 - `page_number`: int
 
-**Additional Metadata (Project A Light Layout):**
+**Additional Metadata (Prepare-Doc Light Layout):**
 
 - `quality_issues`: List[DetectedIssue] (from hybrid IQA, FR-3.14)
 - `needs_correction`: bool
@@ -769,16 +769,16 @@ The system SHALL detect and provide bounding boxes for ALL 11 DocLayNet classes:
 - Presence flags (e.g., `has_headers: true`, `has_footers: true`)
 - Structural complexity contribution
 
-**Project A Scope Boundary:**
+**Prepare-Doc Scope Boundary:**
 
 - ✅ Detect all 11 classes
 - ✅ Provide bounding boxes
 - ✅ Assess per-element quality (hybrid IQA)
 - ✅ Calculate complexity scores
-- ❌ Do NOT link captions to figures (Project B)
-- ❌ Do NOT link footnotes to references (Project B)
-- ❌ Do NOT predict reading order (Project B)
-- ❌ Do NOT extract table structure (Project B)
+- ❌ Do NOT link captions to figures (Unify)
+- ❌ Do NOT link footnotes to references (Unify)
+- ❌ Do NOT predict reading order (Unify)
+- ❌ Do NOT extract table structure (Unify)
 
 #### FR-4.3: Bounding Box Format (COCO) (RESTORED)
 
@@ -831,31 +831,31 @@ The system SHALL detect parasitic content (headers, footers, watermarks) that sh
 - Mark regions as `parasitic: true` in JSON
 - Add `parasitic_content_ratio`: float (proportion of page that is parasitic)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect and flag parasitic regions
 - Calculate parasitic content ratio for DQS
 
-**Project B/C Responsibility:**
+**Unify/C Responsibility:**
 
 - Filter parasitic content from OCR output
 - Exclude from RAG chunks
 
 #### FR-4.5: Footnote Detection
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect Footnote class regions via layout detection (FR-4.2)
 - Provide bounding boxes (COCO format)
 - Spatial metadata (position at page bottom, estimated count)
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Link footnote reference markers (e.g., superscript numbers) to footnote text
 - OCR text extraction from footnote regions
 - Semantic association for proper document structure
 
-**Output (Project A):**
+**Output (Prepare-Doc):**
 
 ```json
 {
@@ -872,20 +872,20 @@ The system SHALL detect parasitic content (headers, footers, watermarks) that sh
 
 #### FR-4.6: Figure-Caption Detection
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect Caption class regions via layout detection (FR-4.2)
 - Detect Picture class regions via layout detection (FR-4.2)
 - Calculate spatial proximity (nearest Picture to each Caption)
 - Provide proximity hints
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - OCR text from Caption regions
 - Pattern matching (e.g., "Figure 3:", "Fig. 2a")
 - Semantic linking (associate Caption with correct Picture)
 
-**Output (Project A):**
+**Output (Prepare-Doc):**
 
 ```json
 {
@@ -916,11 +916,11 @@ The system SHALL detect vertical text orientation.
 - `text_orientation`: Literal[0, 90, 180, 270] (degrees)
 - `script_type`: Optional[Literal["horizontal_latin", "vertical_asian", "rotated_label"]]
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect orientation, flag in metadata
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Rotate text regions to 0° before OCR
 - Use language-specific OCR for Asian vertical scripts
@@ -941,11 +941,11 @@ The system SHALL detect handwritten text regions.
 - Classify each page as `handwriting_present: bool`
 - Optionally classify proportion (small/medium/high)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect handwriting presence (page-level or region-level if computationally feasible)
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Route handwritten regions to specialized handwriting OCR (Microsoft Azure Read API, Google Cloud Vision)
 
@@ -955,7 +955,7 @@ The system SHALL detect handwritten text regions.
 
 #### FR-4.11: Table Quality Assessment (RESTORED)
 
-**Project A Responsibility (Quality Assessment):**
+**Prepare-Doc Responsibility (Quality Assessment):**
 
 - Apply IQA detectors (FR-3.1 through FR-3.14) to table regions
 - Assess table-specific quality:
@@ -964,7 +964,7 @@ The system SHALL detect handwritten text regions.
   - Contrast (text vs background)
 - Estimate structural complexity (heuristics for row/column count)
 
-**Output (Project A):**
+**Output (Prepare-Doc):**
 
 ```json
 {
@@ -986,23 +986,23 @@ The system SHALL detect handwritten text regions.
 }
 ```
 
-**Project B Responsibility (Structure Extraction):**
+**Unify Responsibility (Structure Extraction):**
 
 - Extract row/column structure using PubTables-1M model
 - Parse cell contents with OCR
 - Generate table-to-JSON representation
-- Use quality scores from Project A for correction decisions
+- Use quality scores from Prepare-Doc for correction decisions
 
 #### FR-4.12: Layout Spatial Hints for Reading Order (RESTORED)
 
-**Project A Responsibility (Spatial Hints):**
+**Prepare-Doc Responsibility (Spatial Hints):**
 
 - Detect multi-column layouts (2-3 column detection)
 - Assign column membership to text blocks
 - Calculate vertical position (top/middle/bottom)
 - Identify spatial proximity between elements
 
-**Output (Project A):**
+**Output (Prepare-Doc):**
 
 ```json
 {
@@ -1019,39 +1019,39 @@ The system SHALL detect handwritten text regions.
 }
 ```
 
-**Project B Responsibility (Reading Order Prediction):**
+**Unify Responsibility (Reading Order Prediction):**
 
-- Use spatial hints from Project A
+- Use spatial hints from Prepare-Doc
 - Predict sequential reading order (critical for RAG)
 - Handle complex layouts (sidebars, callout boxes, footnotes)
 - Multi-column reading order (top-to-bottom per column, then next column)
 
 **Rationale:**
 
-- Spatial hints are layout-based (Project A strength)
-- Reading order prediction requires semantic understanding (Project B strength)
+- Spatial hints are layout-based (Prepare-Doc strength)
+- Reading order prediction requires semantic understanding (Unify strength)
 - Reading order is critical for RAG (5-29% performance impact per OHR-Bench)
 
 ---
 
 ### FR-5: Specialized Content Detection
 
-**Philosophy:** Project A detects specialized content and provides metadata. Project B handles specialized processing/extraction.
+**Philosophy:** Prepare-Doc detects specialized content and provides metadata. Unify handles specialized processing/extraction.
 
 #### FR-5.1: Mathematical Content (Formula Detection) (RESTORED)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect Formula class via layout detection (FR-4.2)
 - Provide bounding boxes (COCO format)
 - Assess formula quality via hybrid IQA (FR-3.14)
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Route formula regions to specialized math OCR (Nougat, pix2tex, MathPix)
 - Extract LaTeX representation
 
-**Output (Project A):**
+**Output (Prepare-Doc):**
 
 ```json
 {
@@ -1090,18 +1090,18 @@ The system SHALL perform language detection.
 - `has_non_latin`: bool (e.g., Arabic, Chinese, Japanese)
 - `script_types`: List[str] (e.g., `["latin", "arabic", "han"]`)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect languages, provide hints
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Use language hints for OCR language pack selection
 - Handle multi-script documents appropriately
 
 #### FR-5.4: Watermark Detection (RESTORED)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect watermarks via frequency domain analysis
 - Pattern recognition (text vs image watermarks)
@@ -1120,12 +1120,12 @@ The system SHALL perform language detection.
 }
 ```
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Flag watermark regions in OCR output
 - May require VLM for semantic interpretation of watermark content
 
-**Project C Responsibility:**
+**Chunk Responsibility:**
 
 - Filter watermark text from RAG chunks (avoid noise)
 
@@ -1138,7 +1138,7 @@ The system SHALL perform language detection.
 
 #### FR-5.5: Stamp/Seal Detection (RESTORED)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect stamps/seals via:
   - Circle detection (Hough transform for circular seals)
@@ -1157,7 +1157,7 @@ The system SHALL perform language detection.
 }
 ```
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Preserve stamp metadata (important for legal documents)
 - May require VLM for stamp content interpretation
@@ -1171,7 +1171,7 @@ The system SHALL perform language detection.
 
 #### FR-5.6: Signature Detection (RESTORED)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect signatures via:
   - Continuous stroke detection
@@ -1190,7 +1190,7 @@ The system SHALL perform language detection.
 }
 ```
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Handle per compliance requirements:
   - Redact for privacy (if required)
@@ -1206,7 +1206,7 @@ The system SHALL perform language detection.
 
 #### FR-5.7: Margin Annotation Detection (RESTORED)
 
-**Project A Responsibility:**
+**Prepare-Doc Responsibility:**
 
 - Detect margin annotations via:
   - Edge detection (notes typically in margins)
@@ -1225,7 +1225,7 @@ The system SHALL perform language detection.
 }
 ```
 
-**Project B Responsibility:**
+**Unify Responsibility:**
 
 - Separate from main text
 - Preserve for scholarly/historical analysis
@@ -1940,9 +1940,9 @@ The application SHALL run with least privilege:
 
 ### Q2: Office Document Processing (Docling Integration)
 
-- [ ] Confirm Docling integration scope for Project A (image extraction only)
-- [ ] Confirm Docling integration scope for Project B (text extraction)
-- [ ] Document handoff interface between Project A and Project B for office documents
+- [ ] Confirm Docling integration scope for Prepare-Doc (image extraction only)
+- [ ] Confirm Docling integration scope for Unify (text extraction)
+- [ ] Document handoff interface between Prepare-Doc and Unify for office documents
 
 ### Q3: YOLOv10-doc Model Availability
 

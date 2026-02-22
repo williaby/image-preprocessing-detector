@@ -8,7 +8,7 @@ When Docling's layout model misclassifies multi-column text as `Table` (see [KI-
 
 ## Scope
 
-All multi-column documents processed through Docling's full text extraction pipeline (OCR). Affects both synthetic and real-world documents. This is a **Project B** (OCR Orchestration) concern but is documented here because the root cause is in the layout detection stage (Project A scope).
+All multi-column documents processed through Docling's full text extraction pipeline (OCR). Affects both synthetic and real-world documents. This is a **Unify** (OCR Orchestration) concern but is documented here because the root cause is in the layout detection stage (Prepare-Doc scope).
 
 ## Docling Text Extraction Pipeline
 

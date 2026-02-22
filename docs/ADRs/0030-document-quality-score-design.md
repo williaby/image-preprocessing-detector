@@ -25,12 +25,12 @@ purpose: "Document the decision to compute a two-component Document Quality Scor
 
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-028: ResNet Teacher-Student Architecture](0028-resnet-teacher-student-architecture.md)
-- [ADR-029: Project A Scope Boundaries](0029-project-a-scope-boundaries.md)
-- [Project A F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)
+- [ADR-029: Prepare-Doc Scope Boundaries](0029-prepare-doc-scope-boundaries.md)
+- [Prepare-Doc F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)
 
 ## Context
 
-Project A processes diverse document types ranging from pristine born-digital PDFs to heavily degraded scans. Downstream projects (B: OCR, C: Fusion, D: Indexing) need a **single holistic quality signal** to make intelligent routing decisions.
+Prepare-Doc processes diverse document types ranging from pristine born-digital PDFs to heavily degraded scans. Downstream projects (B: OCR, C: Fusion, D: Indexing) need a **single holistic quality signal** to make intelligent routing decisions.
 
 **Current State**:
 
@@ -41,16 +41,16 @@ Project A processes diverse document types ranging from pristine born-digital PD
 
 **Downstream Needs**:
 
-1. **OCR Engine Selection** (Project B):
+1. **OCR Engine Selection** (Unify):
    - High-quality, simple layout → Fast OCR (Tesseract)
    - Degraded or complex layout → Advanced OCR (PaddleOCR, EasyOCR)
    - Handwriting present → Specialized OCR (TrOCR, IAM-trained models)
 
-2. **Confidence Thresholds** (Project C):
+2. **Confidence Thresholds** (Chunk):
    - High-quality documents → Trust single OCR engine
    - Low-quality documents → Require multi-engine consensus
 
-3. **Retrieval Strategy** (Project D):
+3. **Retrieval Strategy** (Embed):
    - Low-complexity documents → Standard chunking
    - High-complexity documents → Semantic chunking with layout awareness
 
@@ -365,7 +365,7 @@ dqs:
 
 ### Alternative 2: Vector of Raw Metrics (No Aggregation)
 
-**Approach**: Pass all 10+ IQA metrics to Project B, let it decide
+**Approach**: Pass all 10+ IQA metrics to Unify, let it decide
 
 **Pros**:
 
@@ -374,9 +374,9 @@ dqs:
 
 **Cons**:
 
-- Pushes complexity to Project B (violates separation of concerns)
+- Pushes complexity to Unify (violates separation of concerns)
 - Duplicates routing logic across multiple projects
-- Harder to evolve (changes in Project A break Project B)
+- Harder to evolve (changes in Prepare-Doc break Unify)
 - **REJECTED**: Poor separation of concerns, integration friction
 
 ### Alternative 3: ML Model for DQS
@@ -465,4 +465,4 @@ dqs:
 - [BRISQUE: No-Reference Image Quality Assessment](https://live.ece.utexas.edu/research/quality/BRISQUE_release.zip)
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-028: ResNet Teacher-Student Architecture](0028-resnet-teacher-student-architecture.md)
-- [Project A F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)
+- [Prepare-Doc F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)

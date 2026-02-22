@@ -2,7 +2,7 @@
 
 ## Context
 
-Project A (Preprocessing, IQA & Coarse Layout Gateway) needs to produce a `DocumentMetadata` JSON that drives Docling OCR routing decisions in Project B. The current pipeline has significant gaps: no script/language detection, no handwriting assessment, and limited page attribute classification. SigLIP 2 NAFlex (88M params, VQualA 0.886 on DIQA-5000) is the chosen backbone for a **unified multi-task model** that will handle all vision-based classification and regression tasks in a single inference pass.
+Prepare-Doc needs to produce a `DocumentMetadata` JSON that drives Docling OCR routing decisions in Unify. The current pipeline has significant gaps: no script/language detection, no handwriting assessment, and limited page attribute classification. SigLIP 2 NAFlex (88M params, VQualA 0.886 on DIQA-5000) is the chosen backbone for a **unified multi-task model** that will handle all vision-based classification and regression tasks in a single inference pass.
 
 This plan identifies every model requirement in the pipeline, maps them to either SigLIP 2 or other models, and specifies the training datasets needed.
 
@@ -239,7 +239,7 @@ Aggregate: DQS, pre-OCR risk, routing recommendation
 Remaining corrections: CLAHE, sharpen, denoise (from classical IQA triggers)
     |
     v
-Output: DocumentMetadata.json + corrected images --> Project B (Docling)
+Output: DocumentMetadata.json + corrected images --> Unify (Docling)
 
 Total GPU: ~55-65ms (3ms MobileNet + 50ms SigLIP + overhead)
 Total CPU fallback: ~500-600ms (SigLIP handles everything in single-pass)
@@ -526,7 +526,7 @@ pre_ocr_risk = 0.30 * degradation_score        # from IQA
 |---|---|---|
 | `modal/train_siglip2_iqa_v2.py` | Add multi-task head groups, phased training loop, PCGrad | Multi-task training |
 | `src/image_preprocessing_detector/schema.py` | Add DocumentScriptDetection, bridge HandwritingAssessment, add capture_method | Schema alignment |
-| `docs/handoff/PROJECT_A_OUTPUT_SPECIFICATION.md` | Add script detection, handwriting, page attributes sections | Handoff contract |
+| `docs/handoff/PREPARE_DOC_OUTPUT_SPECIFICATION.md` | Add script detection, handwriting, page attributes sections | Handoff contract |
 | `docs/schema/document_metadata.schema.json` | Add missing fields (capture_method, text_scope, etc.) | JSON schema |
 | `src/image_preprocessing_detector/routing/recommendation_engine.py` | Add script-aware routing, handwriting escalation | OCR routing |
 | `src/image_preprocessing_detector/metrics/dqs_calculator.py` | Update pre_ocr_risk formula with script/handwriting | Quality scoring |

@@ -1,0 +1,109 @@
+@startuml
+title Prepare-Doc - Primary Document Processing Workflow (High Level)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+start
+
+partition "Input" {
+  :Raw Document\n(any format);
+}
+
+partition "Stage 0 — Document Type Router" #FFF9C4 {
+  :Detect file format\n(extension + MIME + content signature);
+  :Classify PDF sub-type\n(born_digital / born_digital_degraded\n/ scanned / hybrid);
+  note right
+    **4-way PDF classification:**
+    born_digital → fast path
+    born_digital_degraded → image pipeline
+    scanned / hybrid → image pipeline
+
+    **src (planned):**
+    src/routing/document_type_router.py
+  end note
+
+  if (native text format\nOR born_digital PDF?) then (fast path)
+    :Pass to Unify directly\n(no image preprocessing);
+    note right
+      Saves ~55ms GPU per document.
+      DOCX, HTML, MD, LaTeX, CSV,
+      XML, EPUB, born-digital PDF
+    end note
+    stop
+  else (image / scanned PDF\nor born_digital_degraded\nor hybrid)
+  endif
+}
+
+partition "Ingestion & Pre-flight" {
+  :DPI Detection &\nUpscaling (if needed);
+  :PDF → Page Images\n(300 DPI target);
+}
+
+partition "Text Gate" {
+  :Fast Text Detection\n(< 10ms heuristics);
+  if (Text detected?) then (yes)
+    :Text-detected path;
+  else (no)
+    :No-text path;
+  endif
+}
+
+partition "IQA Analysis" {
+  :Classical IQA\n(blur, noise, contrast, skew);
+  :MobileNetV4-Conv-S\npre-correction (3 heads:\norientation, skew, resolution);
+  :Apply pre-corrections\n(orientation, deskew, resolution);
+  :SigLIP 2 NAFlex\nmulti-task analysis\n(22 heads, 5 groups);
+  if (Low confidence heads?) then (yes)
+    :Classical fallback\n(6 head-specific rules);
+  endif
+}
+
+partition "Layout-Lite" #LightBlue {
+  :Coarse page attributes\n(tables, figures, handwriting);
+  :Structural complexity score;
+  note right: Phase 6 feature
+}
+
+partition "Corrections" {
+  :Apply corrections\n(deskew, CLAHE, denoise,\nborder removal, perspective);
+  :Track transform history;
+}
+note right
+  corrections.py
+  border_removal.py
+  perspective_correction.py
+end note
+
+partition "Quality Scoring" {
+  :Calculate DQS\n(degradation + complexity);
+  :Calculate Pre-OCR Risk;
+}
+
+partition "Routing" {
+  :Determine OCR strategy\n(fast/advanced/vision);
+}
+
+partition "Output" {
+  :DocumentMetadata.json;
+  note right
+    New Stage 0 fields:
+    - document_class
+    - file_format
+    - router_confidence
+    - page_type_map (hybrid PDFs)
+  end note
+  :Corrected page images;
+  note right
+    Handoff to Unify
+    (OCR Orchestration)
+  end note
+}
+
+stop
+
+@enduml

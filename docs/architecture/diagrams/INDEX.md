@@ -46,32 +46,32 @@ docs/architecture/diagrams/
 │   ├── index.md
 │   └── rag-pipeline-overview.puml
 │
-├── level-1/                               # Project A Architecture
+├── level-1/                               # Prepare-Doc Architecture
 │   ├── index.md
-│   ├── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
-│   └── PROJECT_A_WORKFLOW_HIERARCHY.puml
+│   ├── PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml
+│   └── PREPARE_DOC_WORKFLOW_HIERARCHY.puml
 │
 ├── level-2/                               # Workstream Details
 │   ├── production-runtime/                # WS1
 │   │   ├── index.md
-│   │   ├── project-a-primary-workflow-high-level.puml
-│   │   ├── project-a-primary-workflow-detailed.puml
-│   │   ├── project-a-device-selection-flow.puml
-│   │   ├── project-a-worker-architecture.puml
-│   │   ├── project-a-primary-workflow-test-coverage.puml
-│   │   └── project-a-primary-workflow-detailed-test-coverage.puml
+│   │   ├── prepare-doc-primary-workflow-high-level.puml
+│   │   ├── prepare-doc-primary-workflow-detailed.puml
+│   │   ├── prepare-doc-device-selection-flow.puml
+│   │   ├── prepare-doc-worker-architecture.puml
+│   │   ├── prepare-doc-primary-workflow-test-coverage.puml
+│   │   └── prepare-doc-primary-workflow-detailed-test-coverage.puml
 │   │
 │   ├── model-training/                    # WS2
 │   │   ├── index.md
-│   │   ├── project-a-training-workflow-high-level.puml
-│   │   ├── project-a-training-infrastructure.puml
-│   │   ├── project-a-training-workflow-v2.puml  (LEGACY)
-│   │   ├── project-a-distillation.puml
-│   │   └── project-a-training-workflow-test-coverage.puml
+│   │   ├── prepare-doc-training-workflow-high-level.puml
+│   │   ├── prepare-doc-training-infrastructure.puml
+│   │   ├── prepare-doc-training-workflow-v2.puml  (LEGACY)
+│   │   ├── prepare-doc-distillation.puml
+│   │   └── prepare-doc-training-workflow-test-coverage.puml
 │   │
 │   ├── data-preparation/                  # WS3
 │   │   ├── index.md
-│   │   ├── project-a-training-data-ingestion.puml
+│   │   ├── prepare-doc-training-data-ingestion.puml
 │   │   ├── automated-data-labeling-pipeline.puml
 │   │   ├── metadata-schema-architecture.puml
 │   │   ├── resolution-quality-labeling-pipeline.puml
@@ -111,9 +111,9 @@ docs/architecture/diagrams/
 │   │
 │   └── downstream-context/                # External
 │       ├── index.md
-│       ├── project-b-ocr-layout-workflow.puml
-│       ├── project-c-fusion-chunking-workflow.puml
-│       └── project-d-vectorstore-workflow.puml
+│       ├── unify-ocr-layout-workflow.puml
+│       ├── chunk-fusion-chunking-workflow.puml
+│       └── embed-vectorstore-workflow.puml
 │
 ├── level-3/                               # Module Implementation
 │   ├── production-runtime/                # WS1 details
@@ -171,24 +171,24 @@ docs/architecture/diagrams/
 | rag-processor | github.com/ByronWilliamsCPA/rag-processor | PROJECT_A_INTEGRATION_GUIDE.md |
 | Web UI / Content Routing | rag-processor | - |
 | **Track 1: Document Processing** |||
-| Project A | image-detection (this repo) | CLAUDE.md, PROJECT_PLAN.md |
-| Project B | (Not yet started) | project-b-f-nf.md |
+| Prepare-Doc | image-detection (this repo) | CLAUDE.md, PROJECT_PLAN.md |
+| Unify | (Not yet started) | project-b-f-nf.md |
 | **Track 2: Audio/Video Processing** |||
 | Audio Processor | github.com/ByronWilliamsCPA/audio-processor | PIPELINE-INTEGRATION-SUMMARY.md |
 | **Downstream Processing** |||
-| Project C | (Not yet started) | project-c-f-nf.md |
-| Project D | (Not yet started) | - |
+| Chunk | (Not yet started) | chunk-f-nf.md |
+| Embed | (Not yet started) | - |
 
 **Content Sources**:
 
 | Source Type | Formats | Routing Target |
 |-------------|---------|----------------|
-| Documents | PDF, DOCX, PPTX | Project A |
-| Images | PNG, JPG, TIFF | Project A |
+| Documents | PDF, DOCX, PPTX | Prepare-Doc |
+| Images | PNG, JPG, TIFF | Prepare-Doc |
 | Audio | MP3, WAV, M4A, FLAC, OGG, AAC | Audio Processor |
 | Video | MP4, MOV, AVI, MKV, WEBM | Audio Processor |
 
-**API Contract (rag-processor -> Project A)**:
+**API Contract (rag-processor -> Prepare-Doc)**:
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -199,7 +199,7 @@ docs/architecture/diagrams/
 
 **Integration Points**:
 
-- **Project B DOM Unification**: Single Docling instance handles all preprocessed inputs (document + audio)
+- **Unify DOM Unification**: Single Docling instance handles all preprocessed inputs (document + audio)
 - **Downstream Transparency**: Unified Docling DOM consumed identically by Projects C & D
 - **Performance**: 10-page doc <30s, 100-page <2min; audio <1min/hour
 
@@ -212,7 +212,7 @@ docs/architecture/diagrams/
 
 ## Level 1: Architecture Overview
 
-### PROJECT_A_ARCHITECTURE_OVERVIEW.puml
+### PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml
 
 **Location**: `level-1/`
 
@@ -226,7 +226,7 @@ docs/architecture/diagrams/
 | Data Preparation | See Data Preparation table | DATASET_CATALOG.md |
 | Pseudo-Labeling | See Pseudo-Labeling table | benchmarks/README.md |
 
-### PROJECT_A_WORKFLOW_HIERARCHY.puml
+### PREPARE_DOC_WORKFLOW_HIERARCHY.puml
 
 **Location**: `level-1/`
 
@@ -236,7 +236,7 @@ docs/architecture/diagrams/
 
 ## Data Preparation Workstream
 
-### project-a-training-data-ingestion.puml
+### prepare-doc-training-data-ingestion.puml
 
 **Location**: `level-2/data-preparation/`
 
@@ -294,7 +294,7 @@ docs/architecture/diagrams/
 | Schema | Visualization | Description |
 |--------|---------------|-------------|
 | layer2_enrichment.schema.json | [layer2_enrichment_schema.md](../../../schema/layer2_enrichment_schema.md) | Layer 2 enrichment with provenance tracking |
-| document_metadata.schema.json | [document_metadata_schema.md](../../../schema/document_metadata_schema.md) | Project A → Project B handoff schema |
+| document_metadata.schema.json | [document_metadata_schema.md](../../../schema/document_metadata_schema.md) | Prepare-Doc → Unify handoff schema |
 
 **Diagram Types in Each Visualization**:
 
@@ -386,7 +386,7 @@ docs/architecture/diagrams/
 
 ## Model Training Workstream
 
-### project-a-distillation.puml
+### prepare-doc-distillation.puml
 
 **Location**: `level-2/model-training/`
 
@@ -409,13 +409,13 @@ docs/architecture/diagrams/
 
 > **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (16 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
 
-### project-a-training-workflow-high-level.puml
+### prepare-doc-training-workflow-high-level.puml
 
 **Location**: `level-2/model-training/`
 
 **Purpose**: ML training lifecycle overview.
 
-### project-a-training-infrastructure.puml
+### prepare-doc-training-infrastructure.puml
 
 **Location**: `level-2/model-training/`
 
@@ -442,13 +442,13 @@ docs/architecture/diagrams/
 
 ## Production Runtime Workstream
 
-### project-a-primary-workflow-high-level.puml
+### prepare-doc-primary-workflow-high-level.puml
 
 **Location**: `level-2/production-runtime/`
 
 **Purpose**: End-to-end document processing overview.
 
-### project-a-primary-workflow-detailed.puml
+### prepare-doc-primary-workflow-detailed.puml
 
 **Location**: `level-2/production-runtime/`
 
@@ -496,7 +496,7 @@ docs/architecture/diagrams/
 | Schema | src/.../schema.py | api/schema.md |
 | JSON Generator | src/.../output/json_generator.py | api/output.md |
 
-### project-a-device-selection-flow.puml
+### prepare-doc-device-selection-flow.puml
 
 **Location**: `level-2/production-runtime/`
 
@@ -511,7 +511,7 @@ docs/architecture/diagrams/
 | Tensor Cache | src/.../utils/tensor_cache.py | - |
 | Modal Inference | modal/teacher_inference.py (legacy; migrating to multi-task inference) | reference/MODAL_QUICK_REFERENCE.md |
 
-### project-a-worker-architecture.puml
+### prepare-doc-worker-architecture.puml
 
 **Location**: `level-2/production-runtime/`
 
@@ -562,23 +562,23 @@ docs/architecture/diagrams/
 
 ## Downstream Context
 
-### project-b-ocr-layout-workflow.puml
+### unify-ocr-layout-workflow.puml
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Project B OCR orchestration context.
+**Purpose**: Unify OCR orchestration context.
 
-### project-c-fusion-chunking-workflow.puml
-
-**Location**: `level-2/downstream-context/`
-
-**Purpose**: Project C fusion and chunking context.
-
-### project-d-vectorstore-workflow.puml
+### chunk-fusion-chunking-workflow.puml
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Project D vector store context.
+**Purpose**: Chunk fusion and chunking context.
+
+### embed-vectorstore-workflow.puml
+
+**Location**: `level-2/downstream-context/`
+
+**Purpose**: Embed vector store context.
 
 ---
 
@@ -759,10 +759,10 @@ Level 3 provides detailed module-level documentation with LOC annotations and sw
 | ADR | Related Diagrams | Key Source Files |
 |-----|------------------|------------------|
 | 0007-hybrid-iqa-approach.md | level-2/production-runtime/*.puml | detection/hybrid_iqa.py |
-| 0008-multi-stage-pipeline-architecture.md | level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml | - |
+| 0008-multi-stage-pipeline-architecture.md | level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml | - |
 | 0010-300-dpi-normalization.md | level-2/data-preparation/*.puml | ingestion/pdf_resolution.py |
 | 0014-classical-ml-hybrid-iqa.md | level-2/production-runtime/*.puml | detection/iqa_classical.py |
-| 0015-yolov8-layout-detection.md | level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml | detection/doclayout_yolo.py |
+| 0015-yolov8-layout-detection.md | level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml | detection/doclayout_yolo.py |
 | 0028-resnet-teacher-student.md **(SUPERSEDED by SigLIP 2 + MobileNetV4 two-model pipeline)** | level-2/model-training/*.puml | training/*.py, models/resnet_*.py |
 | 0030-document-quality-score.md | level-2/production-runtime/*.puml | metrics/dqs_calculator.py |
 | 0035-modal-gpu-integration.md | level-2/pseudo-labeling/*.puml | modal/*.py |
@@ -783,7 +783,7 @@ Level 3 provides detailed module-level documentation with LOC annotations and sw
 | api/detection.md | level-2/production-runtime/*.puml |
 | api/correction.md | level-2/production-runtime/*.puml |
 | api/schema.md | level-2/production-runtime/*.puml |
-| guides/project-b-handoff.md | level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml |
+| guides/project-b-handoff.md | level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml |
 | monitoring/drift-detection.md | level-2/monitoring-drift/*.puml, level-3/monitoring-drift/*.puml |
 | reference/MODAL_QUICK_REFERENCE.md | level-2/pseudo-labeling/*.puml, level-2/model-training/*.puml |
 
@@ -803,7 +803,7 @@ Level 3 provides detailed module-level documentation with LOC annotations and sw
 
 6. **Maintain folder structure**: New diagrams must be placed in the appropriate level folder:
    - `level-0/` - Multi-repo pipeline context
-   - `level-1/` - Project A architecture
+   - `level-1/` - Prepare-Doc architecture
    - `level-2/{workstream}/` - Workstream details
    - `level-3/{workstream}/` - Module implementation with LOC annotations
    - `deprecated/{workstream}/` - Superseded diagrams

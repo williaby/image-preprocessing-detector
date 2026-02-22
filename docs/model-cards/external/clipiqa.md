@@ -19,7 +19,7 @@ title: 'Model Card: CLIP-IQA'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-clipiqa` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Candidate) |
 | **Status** | ⚠️ REQUIRES FINE-TUNING |
 | **Priority** | P2 (Fine-tuning candidate) |

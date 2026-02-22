@@ -19,7 +19,7 @@ title: 'Model Card: ARNIQA'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `PyIQA-arniqa` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Evaluation) |
 | **Status** | ❌ NOT RECOMMENDED |
 | **Priority** | N/A (Evaluation Only) |

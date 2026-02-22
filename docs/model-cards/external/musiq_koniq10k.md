@@ -58,7 +58,7 @@ model-index:
 | Field | Value |
 |-------|-------|
 | **Model ID** | `musiq_koniq10k` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Pretrained (DIQA Base) |
 | **Status** | `pretrained` |
 | **Priority** | P0 (Critical) |
@@ -393,7 +393,7 @@ print(f"Color: {outputs['color'].item():.4f}")
 
 ---
 
-## 10. Usage in Project A
+## 10. Usage in Prepare-Doc
 
 ### Role in DIQA Pipeline
 
@@ -432,7 +432,7 @@ External Pretrained Models
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-12-18 | Initial model card | Project A Team |
+| v1.0.0 | 2025-12-18 | Initial model card | Prepare-Doc Team |
 
 ---
 
@@ -482,7 +482,7 @@ External Pretrained Models
 |------|---------|
 | **Model Owner** | Google Research (original) |
 | **PyIQA Maintainer** | Chaofeng Chen |
-| **Project A Integration** | Core Team |
+| **Prepare-Doc Integration** | Core Team |
 | **Review Cadence** | On fine-tuning milestones |
 
 ---

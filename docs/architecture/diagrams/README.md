@@ -45,9 +45,9 @@ docs/architecture/diagrams/
 ├── level-0/                               # Pipeline Context
 │   └── rag-pipeline-overview.puml
 │
-├── level-1/                               # Project A Architecture
-│   ├── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
-│   └── PROJECT_A_WORKFLOW_HIERARCHY.puml
+├── level-1/                               # Prepare-Doc Architecture
+│   ├── PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml
+│   └── PREPARE_DOC_WORKFLOW_HIERARCHY.puml
 │
 ├── level-2/                               # Workstream Details
 │   ├── production-runtime/          (WS1) # 6 diagrams
@@ -80,7 +80,7 @@ docs/architecture/diagrams/
 | Level | Scope | Location | Diagrams |
 |-------|-------|----------|----------|
 | **Level 0** | Multi-project pipeline context | `level-0/` | 1 |
-| **Level 1** | Project A system architecture | `level-1/` | 2 |
+| **Level 1** | Prepare-Doc system architecture | `level-1/` | 2 |
 | **Level 2** | Workstream implementation details | `level-2/{workstream}/` | 28 |
 | **Level 3** | Module implementation with LOC | `level-3/{workstream}/` | 6 |
 | **Deprecated** | Superseded diagrams | `deprecated/{workstream}/` | 1 |
@@ -93,14 +93,14 @@ The RAG document pipeline spans multiple repositories:
 |---------|---------|
 | [rag-pipeline-overview.puml](level-0/rag-pipeline-overview.puml) | Multi-track architecture (Document + Audio) |
 
-### Level 1: Project A Architecture
+### Level 1: Prepare-Doc Architecture
 
 High-level views of this repository's architecture:
 
 | Diagram | Purpose |
 |---------|---------|
-| [PROJECT_A_ARCHITECTURE_OVERVIEW.puml](level-1/PROJECT_A_ARCHITECTURE_OVERVIEW.puml) | System components and workstreams |
-| [PROJECT_A_WORKFLOW_HIERARCHY.puml](level-1/PROJECT_A_WORKFLOW_HIERARCHY.puml) | Swimlane data flow between workstreams |
+| [PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml](level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml) | System components and workstreams |
+| [PREPARE_DOC_WORKFLOW_HIERARCHY.puml](level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml) | Swimlane data flow between workstreams |
 
 ### Level 2: Workstream Details
 
@@ -166,7 +166,7 @@ Use PlantUML's link syntax with relative paths:
 ```plantuml
 note right
   **Detailed:**
-  [[level-2/production-runtime/project-a-primary-workflow-detailed.puml]]
+  [[level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml]]
 end note
 ```
 
@@ -214,7 +214,7 @@ For complex changes, invoke the specialized agent:
 {scope}-{topic}-{detail-level}.puml
 
 Examples:
-- project-a-primary-workflow-high-level.puml
+- prepare-doc-primary-workflow-high-level.puml
 - project-a-layout-training.puml
 - diqa-inference-pipeline.puml
 ```
@@ -224,7 +224,7 @@ Examples:
 | Diagram Type | Location |
 |--------------|----------|
 | Multi-repo pipeline | `level-0/` |
-| Project A architecture | `level-1/` |
+| Prepare-Doc architecture | `level-1/` |
 | Workstream implementation | `level-2/{workstream}/` |
 
 ### Template
@@ -235,7 +235,7 @@ Examples:
 skinparam backgroundColor #FEFEFE
 
 title Diagram Title\nSubtitle
-footer Project A | v1.0 | Month Year
+footer Prepare-Doc | v1.0 | Month Year
 
 ' Components with traceability
 rectangle "Component" as Comp {
@@ -261,8 +261,8 @@ Current identified gaps (from audit):
 
 | Gap | Priority | Status |
 |-----|----------|--------|
-| ~~Layout Model Training workflow~~ | ~~Critical~~ | **FILLED** (project-a-training-infrastructure.puml) |
-| ~~Celery Worker architecture~~ | ~~High~~ | **FILLED** (project-a-worker-architecture.puml) |
+| ~~Layout Model Training workflow~~ | ~~Critical~~ | **FILLED** (prepare-doc-training-infrastructure.puml) |
+| ~~Celery Worker architecture~~ | ~~High~~ | **FILLED** (prepare-doc-worker-architecture.puml) |
 | ~~Monitoring & Drift Detection~~ | ~~Medium~~ | **FILLED** (level-2 + level-3) |
 | Budget Enforcement details | Low | Partial (covered in worker-architecture + device-orchestrator.md) |
 | ~~Level 3 for WS4, WS8~~ | ~~Low~~ | **FILLED** (swimlane + module docs) |

@@ -10,7 +10,7 @@ title: 'Model Card: ResNet-50 ImageNet1K V2'
 
 ## Model Summary
 
-> ResNet-50 pretrained on ImageNet-1K using the improved V2 training recipe from torchvision. Serves as the backbone feature extractor for the IQA Teacher model, providing 2048-dimensional features for document image quality assessment in Project A's preprocessing pipeline.
+> ResNet-50 pretrained on ImageNet-1K using the improved V2 training recipe from torchvision. Serves as the backbone feature extractor for the IQA Teacher model, providing 2048-dimensional features for document image quality assessment in Prepare-Doc's preprocessing pipeline.
 
 ---
 
@@ -19,7 +19,7 @@ title: 'Model Card: ResNet-50 ImageNet1K V2'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `resnet50_imagenet1k_v2` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | External Dependency (Phase 3 backbone) |
 | **Status** | `pretrained` |
 | **Priority** | P0 (Critical) |
@@ -92,7 +92,7 @@ Output (C_out channels)
 
 - **Primary**: Backbone feature extractor for IQA Teacher model training
 - **Secondary**: Reference architecture for model design decisions
-- **Out of Scope**: Direct ImageNet classification in Project A
+- **Out of Scope**: Direct ImageNet classification in Prepare-Doc
 
 ### Why ResNet-50?
 
@@ -278,7 +278,7 @@ input_tensor = transform(image).unsqueeze(0)  # Add batch dimension
 
 ---
 
-## 5. Usage in Project A
+## 5. Usage in Prepare-Doc
 
 ### Integration with IQA Teacher
 
@@ -296,9 +296,9 @@ feature_extractor = nn.Sequential(*list(backbone.children())[:-1])
 # Output shape: (batch_size, 2048, 1, 1)
 ```
 
-### Project A Modifications
+### Prepare-Doc Modifications
 
-| Component | Original | Project A |
+| Component | Original | Prepare-Doc |
 |-----------|----------|-----------|
 | Final Layer | Linear(2048 → 1000) | Removed |
 | Output | 1000-class logits | 2048-dim features |
@@ -350,7 +350,7 @@ class ResNetTeacher(nn.Module):
 - **Object Bias**: Features optimized for object recognition, not quality assessment
 - **Resolution Bias**: High-resolution details lost in 224x224 downsampling
 
-### Mitigations in Project A
+### Mitigations in Prepare-Doc
 
 | Issue | Mitigation |
 |-------|------------|
@@ -377,7 +377,7 @@ class ResNetTeacher(nn.Module):
 | DEFAULT (V1) | torchvision 0.1 | 76.13% | Original recipe |
 | IMAGENET1K_V2 | torchvision 0.13 | 80.86% | Improved training |
 
-### Dependent Models in Project A
+### Dependent Models in Prepare-Doc
 
 | Model | Relationship |
 |-------|--------------|
@@ -525,7 +525,7 @@ preprocessing:
 |------|---------|
 | **Original Authors** | He, Zhang, Ren, Sun (Microsoft Research) |
 | **PyTorch Maintainers** | PyTorch Core Team |
-| **Project A Integration** | Core Team |
+| **Prepare-Doc Integration** | Core Team |
 | **Review Cadence** | Annually (check for torchvision updates) |
 
 ---

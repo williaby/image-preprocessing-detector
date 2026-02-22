@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "Level 2: Pseudo-Labeling"
-description: "Detailed pseudo-labeling workflow diagrams for Project A"
+description: "Detailed pseudo-labeling workflow diagrams for Prepare-Doc"
 tags:
 - architecture
 - diagrams
@@ -216,6 +216,6 @@ This section maps pseudo-labeling pipeline stages to implementation files with L
 
 | Level | Diagram | Description |
 |-------|---------|-------------|
-| **Level 1** | [Project A Architecture](../../level-1/index.md) | System architecture |
+| **Level 1** | [Prepare-Doc Architecture](../../level-1/index.md) | System architecture |
 | **Level 2** | [Data Preparation](../data-preparation/index.md) | Dataset ingestion |
 | **Level 2** | [Model Training](../model-training/index.md) | Training pipeline |

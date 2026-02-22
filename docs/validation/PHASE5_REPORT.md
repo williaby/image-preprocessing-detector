@@ -125,7 +125,7 @@ Duration:  ~3 minutes
 | 5.3.2 | Deployment guide | `docs/guides/deployment.md` |
 | 5.3.3 | Model cards | `docs/reference/MODEL_CARDS.md` |
 | 5.3.4 | ADRs | `docs/ADRs/0035-*.md`, `0036-*.md` |
-| 5.3.5 | Project B handoff | `docs/guides/project-b-handoff.md` |
+| 5.3.5 | Unify handoff | `docs/guides/project-b-handoff.md` |
 | 5.3.6 | Release checklist | `docs/project/RELEASE_CHECKLIST.md` |
 
 ### Documentation Highlights
@@ -158,7 +158,7 @@ Duration:  ~3 minutes
 - ADR-0035: Modal GPU Integration Strategy
 - ADR-0036: Device Priority Enforcement and Budgets
 
-**Project B Handoff**:
+**Unify Handoff**:
 
 - Schema specification
 - Example payloads (3 scenarios)
@@ -232,7 +232,7 @@ Duration:  ~3 minutes
 2. Integrate DocLayout-YOLO (Phase 6)
 3. End-to-end pipeline validation (Phase 10)
 
-### Integration with Project B
+### Integration with Unify
 
 1. Share DocumentMetadata schema
 2. Validate routing recommendations
@@ -256,7 +256,7 @@ Phase 5 successfully delivered:
 - **Deployment**: Docker and Compose configs
 - **Documentation**: API guide, deployment guide, model cards, ADRs
 
-The project is ready for Phase 6+ development and Project B integration.
+The project is ready for Phase 6+ development and Unify integration.
 
 ---
 

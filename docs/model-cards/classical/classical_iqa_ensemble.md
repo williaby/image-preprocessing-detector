@@ -13,7 +13,7 @@ title: 'Model Card: Classical IQA Ensemble'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `classical_iqa_ensemble_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 1C (Enhanced Classical IQA) |
 | **Status** | `complete` |
 | **Priority** | P0 (Critical) |
@@ -200,7 +200,7 @@ monitoring:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| v1.0.0 | 2025-01-05 | Initial release with 8 detectors | Project A Team |
+| v1.0.0 | 2025-01-05 | Initial release with 8 detectors | Prepare-Doc Team |
 
 ---
 
@@ -209,7 +209,7 @@ monitoring:
 ```bibtex
 @misc{classical_iqa_ensemble_v1.0.0,
   title={{Classical IQA Ensemble: Rule-based document quality assessment}},
-  author={{Project A Team}},
+  author={{Prepare-Doc Team}},
   year={{2025}},
   note={{Internal detector ensemble for document preprocessing pipeline}}
 }
@@ -221,7 +221,7 @@ monitoring:
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Review Cadence** | Semi-annually (classical detector) |
 

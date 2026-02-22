@@ -1,0 +1,183 @@
+@startuml
+title Prepare-Doc - Training Infrastructure & Optimization Loop
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+partition "Dataset Assembly\n(WS3 + WS8)" #FFF3E0 {
+  :10 purpose-built datasets\n(~503K total images);
+  note right
+    **Sources:**
+    - Orientation (50K, ready at E:\03_training_datasets)
+    - Skew (40K, generation needed)
+    - Resolution (30K, generation needed)
+    - IQA (16K DIQA/OHR + 100K pseudo-labels)
+    - Script (108K MDIW13 + synth-multiscript)
+    - Handwriting (60K HierText + COCO-Text + IAM)
+    - Capture (50K RVL-CDIP + DocLayNet)
+    - Shadow (15K RealDAE + Doc3D)
+    - Warping (20K Doc3D + SmartDoc-QA)
+    - Code (10K synthetic)
+
+    **From WS3 data-preparation + WS8 synthetic generation**
+  end note
+}
+
+partition "ILP Sample Allocation" #FFF3E0 {
+  :PuLP/OR-Tools optimization;
+  :Distribute ~25 sources\nacross 10 datasets;
+  :Apply 14 diversity\nconstraints;
+  note right
+    **Diversity Dimensions:**
+    - Domain (TAX/FIN/SCI/EDU/MED/...)
+    - Capture method (digital/scanner/camera/...)
+    - Script (Latin/CJK/Arabic/...)
+    - Color mode (binary/gray/color)
+    - Document age (modern/aged/historical)
+    - IQA degradation levels
+    - Layout complexity
+    - Resolution tiers
+  end note
+  :Generate SHA256-keyed\nglobal split registry;
+  note right
+    **Prevents train/test leakage**
+    across all datasets
+  end note
+}
+
+partition "Modal GPU Infrastructure" #E3F2FD {
+  :Initialize Modal environment;
+  note right
+    - Modal serverless GPU (A10, 24GB)
+    - GCS dataset streaming
+    - Cost: ~$10 per training run
+    - No session timeouts
+  end note
+  :Load SigLIP 2 backbone\nfrom HuggingFace;
+  note right
+    **Model:** SigLIP 2 ViT-B/16
+    (~88M params, frozen backbone)
+  end note
+  :Stream training data\nfrom GCS buckets;
+}
+
+partition "Phased Head Training" #E3F2FD {
+  :Phase 1 Warmup:\nIQA + Script heads\n(5 epochs);
+  note right
+    Group 1: IQA (6 regression)
+    Group 2: Script (1 classification)
+
+    Freeze backbone, train heads only
+  end note
+
+  :Phase 2 Expand:\n+ Orientation + Skew heads\n(5 epochs);
+  note right
+    Group 3: Orientation (1 cls) + Skew (1 reg)
+
+    Unfreeze backbone with low LR (1/10x)
+  end note
+
+  :Phase 3 Full:\nAll 19 heads unfrozen\n(20-40 epochs);
+  note right
+    Group 4: Handwriting (3 cls + 2 reg)
+    Group 5: Page Attrs (1 cls + 4 reg)
+
+    **Multi-task loss:**
+    - Kendall uncertainty weighting
+    - PCGrad gradient surgery
+    - Balanced batch sampling
+  end note
+
+  :Phase 4 Refine:\nFine-tune underperforming\nheads (5-10 epochs);
+  note right
+    Target heads with:
+    - Loss > 2x median
+    - Per-head early stopping
+    - Layer-wise LR decay (LLRD)
+  end note
+}
+
+if (All heads pass\ngraduation thresholds?) then (yes)
+  partition "Export & Registration" {
+    :Export SigLIP 2 to ONNX\n(16 output heads);
+    :Export MobileNetV4 to ONNX\n(3 output heads);
+    note right
+      **MobileNetV4 heads:**
+      - Orientation (4-class)
+      - Skew (regression)
+      - Resolution quality (0-1)
+    end note
+    :Upload to GCS\nmodel registry;
+    :Arena validation\n(per-head thresholds);
+    note right
+      **WS6 Arena Phase 2:**
+      - IQA: VQualA >= 0.92
+      - Script: Accuracy >= 90%
+      - Orientation: Accuracy >= 98%
+      - Skew: MAE < 0.3°
+      - Handwriting: Accuracy >= 85%
+    end note
+  }
+  stop
+else (no)
+  partition "Active Learning Loop" #FFEBEE {
+    :Identify failure clusters;
+    note right
+      **Triggers:**
+      - Any head loss > 2x median
+      - Any dimension error > 1.5x average
+      - Tibetan accuracy < 80%
+      - Vertical Japanese misclassified as 270°
+    end note
+
+    :Generate targeted samples\n(WS8 synthetic);
+    note right
+      - Synthetic generation for identified gaps
+      - Style transfer for Tibetan (if needed)
+      - Balanced sampling for minority classes
+    end note
+
+    :Augment training set\nwith new samples;
+
+    :Re-enter Phased\nHead Training;
+    note right
+      **Iteration limit:** 3 cycles max
+
+      If plateau after 2 cycles,
+      trigger Bayesian Optimization
+      for hyperparameter tuning
+    end note
+  }
+endif
+
+:Pipeline complete;
+note right
+  **Source Files (Training Scripts)**:
+  - modal/train_siglip2_iqa_v2.py (1,597 LOC)
+  - modal/shared/metrics_utils.py (223 LOC)
+  - modal/shared/gcs_utils.py (130 LOC)
+  - modal/shared/dataset_utils.py (61 LOC)
+  - modal/shared/constants.py (58 LOC)
+
+  **Status**: PLANNED
+  (train_siglip2_iqa_v2.py exists for IQA-only;
+   multi-task scripts not yet implemented)
+
+  **Design Specifications**:
+  SIGLIP2_MULTITASK_REQUIREMENTS.md
+  TRAINING_OPTIMIZATION_PLAN.md
+  DATASET_DIVERSITY_REQUIREMENTS.md
+end note
+stop
+
+@enduml

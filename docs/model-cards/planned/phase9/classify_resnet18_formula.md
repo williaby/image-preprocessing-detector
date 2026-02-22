@@ -13,7 +13,7 @@ title: 'Model Card: Formula Classifier'
 | Field | Value |
 |-------|-------|
 | **Model ID** | `classify_resnet18_formula_v1.0.0` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase 9 (Element Classification) |
 | **Status** | `planned` |
 | **Priority** | P3 (Low) |
@@ -43,7 +43,7 @@ title: 'Model Card: Formula Classifier'
 | **Primary Task** | Formula type classification |
 | **Role in Pipeline** | Post-detection classifier for formula elements |
 | **Upstream Dependencies** | Layout-Lite (YOLOv10) formula detections |
-| **Downstream Consumers** | Routing Engine, Project B (formula extraction) |
+| **Downstream Consumers** | Routing Engine, Unify (formula extraction) |
 
 ### Intended Use
 
@@ -167,6 +167,6 @@ title: 'Model Card: Formula Classifier'
 
 | Role | Contact |
 |------|---------|
-| **Model Owner** | Project A Core Team |
+| **Model Owner** | Prepare-Doc Core Team |
 | **Technical Contact** | See project repository |
 | **Status** | Planned - Phase 9 (Low Priority) |

@@ -19,7 +19,7 @@ title: "Level 3: Model Training - Module Implementation"
 ## Related Diagrams
 
 - **Level 0**: [RAG Pipeline Overview](../../level-0/index.md)
-- **Level 1**: [Project A Architecture](../../level-1/index.md)
+- **Level 1**: [Prepare-Doc Architecture](../../level-1/index.md)
 - **Level 2**: [Model Training](../../level-2/model-training/index.md)
 
 ## Contents

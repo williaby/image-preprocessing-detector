@@ -9,7 +9,7 @@ tags:
 title: PlantUML Style Guide
 ---
 
-> **Purpose**: Comprehensive styling and notation standards for all Project A diagrams.
+> **Purpose**: Comprehensive styling and notation standards for all Prepare-Doc diagrams.
 
 ## File Structure
 
@@ -23,7 +23,7 @@ skinparam packageStyle rectangle
 skinparam componentStyle rectangle
 
 title Diagram Title\nOptional Subtitle
-footer Project A - Description | vX.Y | Month Year
+footer Prepare-Doc - Description | vX.Y | Month Year
 ```
 
 ### Section Comments
@@ -399,8 +399,8 @@ end note
 ```plantuml
 note right
   **Scope Change:**
-  Component moved from Project B
-  to Project A for efficiency
+  Component moved from Unify
+  to Prepare-Doc for efficiency
 
   **Impact:**
   - Added to architecture overview

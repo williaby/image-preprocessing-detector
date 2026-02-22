@@ -2,7 +2,7 @@
 schema_type: common
 title: "Model Cards & Registry"
 description: "Comprehensive model documentation, versioning, and inventory for all
-  ML models in Project A"
+  ML models in Prepare-Doc"
 tags:
 - reference
 - machine_learning
@@ -21,7 +21,7 @@ purpose: "Document model architectures, training data, performance metrics, and 
 
 **Version:** 2.0.0
 **Date:** December 2025
-**Purpose:** Centralized model documentation, versioning, and inventory for all ML models in Project A
+**Purpose:** Centralized model documentation, versioning, and inventory for all ML models in Prepare-Doc
 
 ---
 
@@ -57,7 +57,7 @@ purpose: "Document model architectures, training data, performance metrics, and 
 
 ## Overview
 
-Project A uses a **teacher-student architecture** for learned IQA, combined with classical computer vision methods for deterministic quality assessment. This document provides:
+Prepare-Doc uses a **teacher-student architecture** for learned IQA, combined with classical computer vision methods for deterministic quality assessment. This document provides:
 
 - **Standardized model card template** for all models
 - **Complete inventory** of all models (trained, pretrained, planned)
@@ -81,7 +81,7 @@ Project A uses a **teacher-student architecture** for learned IQA, combined with
 
 ### Standard Model Card Format
 
-Every trained model in Project A MUST have a `MODEL_CARD.md` following this template. This template extends Appendix C from the DIQA-5000 specification to cover all project models.
+Every trained model in Prepare-Doc MUST have a `MODEL_CARD.md` following this template. This template extends Appendix C from the DIQA-5000 specification to cover all project models.
 
 ```markdown
 # Model Card: {model_name}
@@ -91,7 +91,7 @@ Every trained model in Project A MUST have a `MODEL_CARD.md` following this temp
 | Field | Value |
 |-------|-------|
 | **Model ID** | `{task}_{architecture}_{variant}_v{major}.{minor}.{patch}` |
-| **Project** | Project A (Preprocessing & IQA Gateway) |
+| **Project** | Prepare-Doc |
 | **Phase** | Phase X (Description) |
 | **Status** | `trained` / `pretrained` / `planned` / `deprecated` |
 | **Last Updated** | YYYY-MM-DD |
@@ -243,7 +243,7 @@ Every trained model in Project A MUST have a `MODEL_CARD.md` following this temp
     ```bibtex
     @misc{model_id,
       title={Model Name: Purpose},
-      author={Project A Team},
+      author={Prepare-Doc Team},
       year={2025},
       note={Internal model for document preprocessing pipeline}
     }
@@ -721,7 +721,7 @@ python scripts/export_onnx.py \
 
 ### Layout-Lite Model
 
-1. **Coarse Only**: Not suitable for detailed element detection (use Project B)
+1. **Coarse Only**: Not suitable for detailed element detection (use Unify)
 2. **Novel Layouts**: May misclassify unusual document formats
 3. **Handwriting**: Limited handwriting detection accuracy
 
@@ -1061,7 +1061,7 @@ from typing import Literal
 
 @dataclass
 class ModelRegistryEntry:
-    """Schema for Project A model registry entries."""
+    """Schema for Prepare-Doc model registry entries."""
 
     # Identity
     model_id: str                    # e.g., "iqa_resnet50_teacher_v1.0.0"
@@ -1245,4 +1245,4 @@ gsutil -m cp -r models/iqa/v1.0.0/ gs://image_detection_b/models/phase2_iqa/v1.0
 ---
 
 *Document Version 2.0.0 — December 2025*
-*Project A: Preprocessing, IQA & Coarse Layout Gateway*
+*Prepare-Doc: Preprocessing, IQA & Coarse Layout Gateway*

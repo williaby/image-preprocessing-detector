@@ -14,7 +14,7 @@ tags:
 
 # Docling Configuration Reference
 
-> **Purpose**: Master reference for all configurable levers in docling that Project A can influence
+> **Purpose**: Master reference for all configurable levers in docling that Prepare-Doc can influence
 > via `DoclingRoutingParams`. Covers programmatic API, CLI flags, and engine-specific options.
 >
 > **Source**: [docling-project/docling](https://github.com/docling-project/docling)
@@ -22,7 +22,7 @@ tags:
 >
 > **Related documents**:
 >
-> - [docs/planning/PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md](../planning/PROJECT_A_TO_B_HANDOFF_SPECIFICATION.md) — handoff contract
+> - [docs/planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](../planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md) — handoff contract
 > - [src/image_preprocessing_detector/routing/docling_router.py](../../src/image_preprocessing_detector/routing/docling_router.py) — our routing engine
 > - [src/image_preprocessing_detector/schema.py](../../src/image_preprocessing_detector/schema.py) — DoclingRoutingParams
 
@@ -39,7 +39,7 @@ The top-level lever that determines which processing path docling uses.
 | `legacy` | `--pipeline=legacy` | `LEGACY` | Backward compatibility only |
 | `asr` | `--pipeline=asr` | `ASR` | Audio/video transcription (not relevant for docs) |
 
-**Our usage**: Project A's `DoclingRoutingParams.pipeline` selects between `standard` and `vlm`.
+**Our usage**: Prepare-Doc's `DoclingRoutingParams.pipeline` selects between `standard` and `vlm`.
 VLM is triggered by: handwriting, DQS < 0.4, low script confidence, extreme warping, complex
 degradation, or script-based escalation from `script_routing.yaml`.
 
@@ -54,7 +54,7 @@ degradation, or script-based escalation from `script_routing.yaml`.
 | `--ocr` / `--no-ocr` | `PdfPipelineOptions.do_ocr` | `True` | Enable/disable OCR entirely |
 | `--force-ocr` | `PdfPipelineOptions.force_full_page_ocr` | `False` | Force OCR even on born-digital with text layer |
 
-**Our usage**: Project A sets `ocr_enabled=False` when `text_layer_quality >= 0.90` and
+**Our usage**: Prepare-Doc sets `ocr_enabled=False` when `text_layer_quality >= 0.90` and
 `text_layer_skip_ocr=True`. This emits `--no-ocr` via `to_cli_args()`.
 
 **Gap**: `force_backend_text` (`PdfPipelineOptions.force_backend_text`) — when `True`, tells
@@ -197,10 +197,10 @@ Docling ships with pre-configured layout model specs:
 | `DOCLING_LAYOUT_EGRET_LARGE` | Egret-Large | Slower | High | ~8GB |
 | `DOCLING_LAYOUT_EGRET_XLARGE` | Egret-XLarge | Slowest | Highest | ~12GB |
 
-> **Our current usage**: Project A's `ARCHITECTURE_DOCUMENTATION_IMPROVEMENT_PLAN.md` and
+> **Our current usage**: Prepare-Doc's `ARCHITECTURE_DOCUMENTATION_IMPROVEMENT_PLAN.md` and
 > CLAUDE.md specify `docling-layout-egret-xlarge` for accuracy and `docling-layout-heron` for
-> speed. However, **Project A does not currently expose layout model selection** in
-> `DoclingRoutingParams` — Project B must decide this independently. This is a gap.
+> speed. However, **Prepare-Doc does not currently expose layout model selection** in
+> `DoclingRoutingParams` — Unify must decide this independently. This is a gap.
 
 ### 3.3 Layout Batch Size
 
@@ -229,7 +229,7 @@ when `complexity_score >= 0.6` or `has_merged_cells == True`; otherwise `"fast"`
 
 **Gap in `to_cli_args()`**: The `--no-tables` flag is never emitted even when
 `tables_enabled=False`. The `--tables` flag is always omitted from our CLI args, which means
-it always defaults to `True` regardless of what Project A recommends.
+it always defaults to `True` regardless of what Prepare-Doc recommends.
 
 ### 4.2 TableFormer Model
 
@@ -251,10 +251,11 @@ These are opt-in enrichment passes that run after the standard pipeline.
 | `--enrich-chart-extraction` | `PdfPipelineOptions.do_chart_extraction` | `False` | Convert charts to tabular data |
 
 **Our usage**:
+
 - `DoclingRoutingEngine._apply_enrichment_rule()` sets `enrich_code=True` when `has_code=True`
 - Sets `enrich_formula=True` when `has_dense_math=True`
 
-**Gaps**: Project A does not set `enrich_picture_description`, `enrich_picture_classes`, or
+**Gaps**: Prepare-Doc does not set `enrich_picture_description`, `enrich_picture_classes`, or
 `enrich_chart_extraction`. All three are unrepresented in `DoclingRoutingParams`.
 
 ---
@@ -311,7 +312,7 @@ Known VLM presets in docling:
 
 **Gap**: `DoclingRoutingParams.vlm_model` is set to `None` by default and never populated
 by `DoclingRoutingEngine._apply_vlm_escalation_rule()`. When `pipeline = "vlm"`, docling
-will use its own default (`granite_docling`). Project A has no mechanism to select which VLM.
+will use its own default (`granite_docling`). Prepare-Doc has no mechanism to select which VLM.
 
 ---
 
@@ -324,7 +325,7 @@ will use its own default (`granite_docling`). Project A has no mechanism to sele
 | *(none)* | `--pdf-password=<pass>` | Decrypt password-protected PDFs |
 
 **Gap**: Not exposed in `DoclingRoutingParams`. For complex or malformed PDFs where one backend
-fails, Project A cannot recommend a fallback. Project A already classifies `pdf_type`, which
+fails, Prepare-Doc cannot recommend a fallback. Prepare-Doc already classifies `pdf_type`, which
 could inform backend selection.
 
 ---
@@ -338,7 +339,7 @@ could inform backend selection.
 | *(none)* | `PdfPipelineOptions.generate_page_images` | `False` | Render full page as image in output |
 | *(none)* | `PdfPipelineOptions.generate_picture_images` | `False` | Extract picture regions as images |
 
-**Gap**: `images_scale` is particularly relevant for Project A — the resolution quality score
+**Gap**: `images_scale` is particularly relevant for Prepare-Doc — the resolution quality score
 could directly inform this value. A document with `resolution_quality=0.3` (marginal) might
 benefit from `images_scale=2.0` to improve picture extraction quality.
 
@@ -365,8 +366,8 @@ benefit from `images_scale=2.0` to improve picture extraction quality.
 
 Environment variable overrides: `DOCLING_NUM_THREADS`, `OMP_NUM_THREADS`.
 
-**Gap**: Not exposed in `DoclingRoutingParams`. Project A's device orchestration layer knows
-which accelerator is available — this information could be passed to Project B.
+**Gap**: Not exposed in `DoclingRoutingParams`. Prepare-Doc's device orchestration layer knows
+which accelerator is available — this information could be passed to Unify.
 
 ### 9.2 Threading and Batch Sizes
 
@@ -392,7 +393,7 @@ Layout and table batch sizes are not separately controlled.
 | *(via convert())* | `page_range` | all | Specific page subset to process |
 
 **Gap**: `document_timeout` not in `DoclingRoutingParams`. For documents with DQS indicating
-complex degradation, a longer timeout might be recommended by Project A.
+complex degradation, a longer timeout might be recommended by Prepare-Doc.
 
 ---
 
@@ -420,7 +421,7 @@ layout models, or pipeline stages under the `"layout_engines"`, `"ocr_engines"`,
 | `--to=doctags` | DocTags | IBM Granite-native XML-like format |
 | *(default)* | DoclingDocument | In-memory Python object |
 
-**Chunking** (downstream of conversion, relevant to Project C):
+**Chunking** (downstream of conversion, relevant to Chunk):
 
 | Chunker | Config | Best For |
 |---------|--------|---------|
