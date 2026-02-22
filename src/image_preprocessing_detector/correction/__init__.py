@@ -4,6 +4,10 @@ Phase 1: Classical corrections (deskew, CLAHE, sharpening)
 Phase 2-3: ML-based enhancements
 Phase 8: Orientation correction (90°, 180°, 270° rotation)
 
+Stream 6: Geometric corrections
+- BorderRemover: Scanner/camera border cropping
+- PerspectiveCorrector: Camera perspective distortion fix
+
 Provides correction classes for detected image quality issues:
 - DeskewCorrector: Rotation correction for skewed documents
 - ContrastEnhancer: CLAHE-based contrast enhancement
@@ -13,10 +17,16 @@ Provides correction classes for detected image quality issues:
 - IlluminationNormalizer: Morphological illumination normalization (Phase 4)
 - BleedThroughSuppressor: Cross-channel bleed-through removal (Phase 4)
 - OrientationCorrector: Page rotation correction (Phase 8)
+- BorderRemover: Scanner/camera border cropping (Stream 6)
+- PerspectiveCorrector: Camera perspective correction (Stream 6)
 
 All correctors include guardrails to prevent quality degradation.
 """
 
+from image_preprocessing_detector.correction.border_removal import (
+    BorderRemover,
+    remove_borders,
+)
 from image_preprocessing_detector.correction.corrections import (
     # Core correction classes
     BinarizationCorrector,
@@ -38,25 +48,33 @@ from image_preprocessing_detector.correction.corrections import (
     sharpen_image,
     suppress_bleed_through,
 )
+from image_preprocessing_detector.correction.perspective_correction import (
+    PerspectiveCorrector,
+    correct_perspective,
+)
 
 __all__ = [
     # Core classes
     "BinarizationCorrector",
     "BleedThroughSuppressor",
+    "BorderRemover",
     "ContrastEnhancer",
     "CorrectionResult",
     "Denoiser",
     "DeskewCorrector",
     "IlluminationNormalizer",
     "OrientationCorrector",
+    "PerspectiveCorrector",
     "Sharpener",
     # Convenience functions
     "correct_binarization",
     "correct_orientation",
+    "correct_perspective",
     "correct_skew",
     "denoise_image",
     "enhance_contrast",
     "normalize_illumination",
+    "remove_borders",
     "sharpen_image",
     "suppress_bleed_through",
 ]

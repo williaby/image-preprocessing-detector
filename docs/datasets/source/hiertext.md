@@ -259,17 +259,17 @@ image
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (81.7/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-15 | **Grade**: B (87.0/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 99.7 | 25% |  |
-| Field Validity | 94.5 | 25% |  |
-| Doc Completeness | 36.4 | 15% | Below threshold |
-| Defect Rate | 80.0 | 15% |  |
-| Cross-Source Agreement | 62.2 | 10% | Below threshold |
-| VLM Accuracy | 95.0 | 10% |  |
-| **Overall** | **81.7** | | **Grade B** |
+| Field Coverage | 91.4 | 15% |  |
+| Field Validity | 94.5 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 80.0 | 10% |  |
+| Cross-Source Agreement | 62.2 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **87.0** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -293,15 +293,13 @@ image
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 3425 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 3425 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/hiertext/](../../scripts/audit/results/hiertext/)
-
----
 
 ##### Processing Notes
 
@@ -321,7 +319,7 @@ image
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 11,639 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 11,639 | **Avg Min Confidence**: 0.401
 
 **Composite Category Distribution**:
 
@@ -329,11 +327,13 @@ image
 |----------|------:|----:|
 | hard_label | 0 | 0.0% |
 | soft_label | 0 | 0.0% |
-| active_learning | 0 | 0.0% |
-| unreliable | 11,639 | 100.0% |
+| active_learning | 4,279 | 36.8% |
+| unreliable | 7,360 | 63.2% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `language` | 100.0% | 0.000 |
+| 1 | `domain` | 44.5% | 0.485 |
+| 2 | `layout_detections` | 37.5% | 0.542 |
+| 3 | `has_table` | 18.1% | 0.600 |

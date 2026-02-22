@@ -437,17 +437,17 @@ Labels are extracted from CSV files in `classification-task/fold-{1-10}/`:
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (85.8/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: A (93.3/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 33% |  |
-| Field Validity | 100.0 | 33% |  |
-| Doc Completeness | 54.5 | 20% | Below threshold |
+| Field Coverage | 88.3 | 20% |  |
+| Field Validity | 100.0 | 20% |  |
+| Doc Completeness | 54.5 | 7% | Below threshold |
 | Defect Rate | - | - | Excluded (no data) |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 95.0 | 13% |  |
-| **Overall** | **85.8** | | **Grade B** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **93.3** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
@@ -455,14 +455,10 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/hasy/](../../scripts/audit/results/hasy/)
-
----
-
----

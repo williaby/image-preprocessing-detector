@@ -257,66 +257,48 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Audit Version**: 2.3.0 | **Date**: 2026-02-14 | **Grade**: B (86.4/100)
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
-###### Scorecard
+###### 11.1 Quality Scorecard
 
-| Dimension | Score | Weight | Weighted |
-|-----------|-------|--------|----------|
-| Field Coverage | 100.0 | 0.28 | 27.78 |
-| Field Validity | 100.0 | 0.28 | 27.78 |
-| Doc Completeness | 63.6 | 0.17 | 10.61 |
-| Defect Rate | 86.0 | 0.17 | 14.33 |
-| Cross Source Agreement | — | — | (excluded) |
-| VLM Accuracy | 52.8 | 0.11 | 5.87 |
-| **Total** | **86.4** | **1.00** | **86.36** |
+> **Audit Date**: 2026-02-16 | **Grade**: C (86.2/100) | **Auditor**: claude-opus-4-6
+> **Grade Cap**: B -> C (see notes below)
 
-###### Defect Summary
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 94.2 | 18% |  |
+| Field Validity | 100.0 | 18% |  |
+| Doc Completeness | 100.0 | 6% |  |
+| Defect Rate | 86.0 | 12% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **86.2** | | **Grade C** |
 
-| ID | Severity | Description | Resolution |
-|----|----------|-------------|------------|
-| D01 | CRITICAL | COCO batch ID collision across 6 layout batches | FIXED: Per-batch processing |
-| D02 | CRITICAL | Filename mismatch metadata vs layout/OCR batches | FIXED: Arrow filename mapping |
-| D03 | HIGH | has_handwriting=false but ~47% contain handwriting | DEFERRED: Requires detection model |
-| D04 | HIGH | Schema v2.1 missing v2.3.0 fields | FIXED: Integration script v1.1.0 |
-| D05 | MEDIUM | 2/36 samples contain German text, labeled English | ACCEPTED: <1% of dataset |
-| D06 | MEDIUM | LLM enrichment not available | ACCEPTED: Documentation defaults sufficient |
-| D07 | LOW | script_family was "ltr" (text direction, not script) | FIXED: KI-008 re-derivation |
+**Grade Cap Applied**:
+> Grade capped from B to C: label_accuracy=52.8% (min 70%). Per-field label accuracy below 70% means labels are unreliable for training. Must improve enrichment quality before use.
 
-###### v2.3.0 Field Coverage
+###### 11.2 Key Defects
 
-| Field | Populated | Source |
-|-------|-----------|--------|
-| `split` | 100% (1026 train, 113 test) | Filename convention |
-| `capture_method` | 100% (scanner_adf) | Dataset documentation |
-| `domain_level1` | 100% (ADM) | Dataset documentation |
-| `iso639_language` | 100% (en) | Known language |
-| `script_family` | 100% (latin) | Derived from ISO 15924 |
-| `layout_detections` | 100% (177,724 annotations) | DocLayout-YOLO batch extraction |
-| `orientation_class` | 100% (portrait) | Dataset documentation |
-| `image_properties_color_mode` | 100% (color) | Original file metadata |
-| `handwriting_present` | 100% (false) | Default (no detection model) |
-| `text_has_content` | 100% | Docling OCR extraction |
-| `text_direction` | 100% (ltr) | v2.3.0 new field |
-| `text_directions_present` | 100% (["ltr"]) | v2.3.0 new field |
+> **Total**: 7 defects (7 open)
 
-###### VLM Inspection
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | ? | CRITICAL | OPEN | COCO batch ID collision across 6 layout batches (all use IDs 0-199, 939 overlapp |
+| D02 | ? | CRITICAL | OPEN | Metadata filenames (funsd_plus_test_0000.jpg) do not match layout/OCR batch file |
+| D03 | ? | HIGH | OPEN | has_handwriting=false for all samples but ~47% contain handwritten entries/signa |
+| D04 | ? | HIGH | OPEN | Schema v2.1 missing v2.3.0 fields: text_direction, text_directions_present, orie |
+| D05 | ? | MEDIUM | OPEN | 2/36 VLM samples contain German text but labeled as English (iso639_language=en) |
+| D06 | ? | MEDIUM | OPEN | LLM enrichment not available (OPENROUTER_API_KEY not set) |
+| D07 | ? | LOW | OPEN | script_family was 'ltr' in v1 enrichment (text direction, not script family) |
 
-- **Method**: 4 contact sheets (3x3 @ 500px) + 3 individual deep inspections
-- **Sample accuracy**: 52.8% (19/36 fully correct)
-- **Field-level accuracy**: 92.5% (233/252 field-checks correct)
-- **Key issue**: has_handwriting systematically incorrect (forms dataset with inherent handwritten answers)
-- **Language**: 2 German samples detected (test_0099, train_0742)
+###### 11.3 VLM Inspection Summary
 
-###### Integration Script
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 52.8%
 
-- **Script**: `scripts/integrate_funsd_plus_enrichments.py` (v1.1.0)
-- **Key feature**: HuggingFace Arrow filename mapping (metadata uses renamed files, batches use original HF IDs)
-- **Sources**: DocLayout-YOLO layout (6 batches), Docling OCR (6 batches), dataset documentation, language enrichment
+###### 11.4 Cross-Dataset Findings
 
-###### Version History
+- No cross-dataset known issues identified for this dataset.
 
-| Version | Date | Change |
-|---------|------|--------|
-| v2.1 | 2026-02-08 | Initial base metadata |
-| v2.3.0 | 2026-02-14 | Full audit: integration v2, v2.3.0 fields, VLM inspection |
+**Audit Artifacts**: [scripts/audit/results/funsd-plus/](../../scripts/audit/results/funsd-plus/)

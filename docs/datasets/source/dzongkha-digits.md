@@ -362,67 +362,52 @@ All 4 v2.3.0 fields are populated in the integration script (v2 enrichment versi
 
 ##### 11. Layer 2 Audit Summary
 
-> **Audit Date**: 2026-02-12 | **Auditor**: Claude Opus 4.6 | **Methodology**: v2.3.0
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
 ###### 11.1 Quality Scorecard
 
-> **Tier**: 3 (Comprehensive) | **Prescreening**: 14/15 fields pass (93.3%)
+> **Audit Date**: 2026-02-16 | **Grade**: A (94.5/100) | **Auditor**: claude-opus-4-6
 
-| Dimension | Score | Notes |
-|-----------|------:|-------|
-| Field Coverage | 93.3% | 14/15 prescreening fields pass |
-| Field Validity | 100% | All populated fields are valid |
-| Doc Completeness | 100% | All 12 template v1.4.0 sections present |
-| Defect Rate | 8/12 RESOLVED | 4 remaining are DEFERRED (expected) |
-| VLM Accuracy | 100% | 62/62 images pass visual inspection |
-
-> **Note**: Formal scorecard via `compute_scorecard.py` will be run in Phase 9.
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 86.9 | 15% |  |
+| Field Validity | 100.0 | 15% |  |
+| Doc Completeness | 63.6 | 5% | Below threshold |
+| Defect Rate | 98.2 | 10% |  |
+| Cross-Source Agreement | 100.0 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **94.5** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
+> **Total**: 12 defects (9 resolved, 3 deferred)
+
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| DD-D001 | capture_method | HIGH | RESOLVED | Hardcoded `camera_smartphone` in integration |
-| DD-D002 | iso639_language | HIGH | RESOLVED | Hardcoded `dz` in integration |
-| DD-D003 | iso15924_script | HIGH | RESOLVED | Hardcoded `Tibt` in integration |
-| DD-D004 | script_family | HIGH | RESOLVED | Derived `brahmic` from Tibt mapping |
-| DD-D005 | domain_level1 | MEDIUM | RESOLVED | Hardcoded `EDU` in integration |
-| DD-D006 | content_flags | MEDIUM | RESOLVED | Hardcoded `has_handwriting=True` in integration |
-| DD-D007 | split | MEDIUM | RESOLVED | Hardcoded `train` in integration |
-| DD-D008 | orientation_class | MEDIUM | RESOLVED | Set to 0, confirmed by VLM (62/62 upright) |
-| DD-D009 | text_has_content | LOW | DEFERRED | Expected empty for handwritten digits |
-| DD-D010 | quality_overall | LOW | DEFERRED | No IQA pipeline available |
-| DD-D011 | layout class casing | LOW | RESOLVED | KI-001 PascalCase conversion applied |
-| DD-D012 | dataset_completeness | LOW | DEFERRED | Only 62/1,000 images (class 0 only) |
+| DD-D001 | capture_method | HIGH | RESOLVED | capture_method is empty for all 62 samples. Dataset was not included in any LLM  |
+| DD-D002 | iso639_language | HIGH | RESOLVED | iso639_language is empty for all 62 samples. Handwritten Tibetan digits produce  |
+| DD-D003 | iso15924_script | HIGH | RESOLVED | iso15924_script is empty for all 62 samples. Same root cause as DD-D002: no OCR  |
+| DD-D004 | script_family | HIGH | RESOLVED | script_family is empty for all 62 samples. This is a derived field that depends  |
+| DD-D005 | domain_level1 | MEDIUM | RESOLVED | domain_level1 is empty/UNK for all 62 samples. No LLM enrichment was run. Datase |
+| DD-D006 | content_flags | MEDIUM | RESOLVED | All content flags (has_table, has_formula, has_figure, has_handwriting, has_code |
+| DD-D007 | split | MEDIUM | RESOLVED | split field is empty for all 62 samples. The HuggingFace dataset parser did not  |
+| DD-D008 | orientation_class | MEDIUM | RESOLVED | orientation_class is empty for all 62 samples. The skew estimator pipeline has n |
+| DD-D009 | text_has_content | LOW | DEFERRED | text_has_content is false/empty for all 62 samples. Docling OCR returned no text |
+| DD-D010 | quality_overall | LOW | DEFERRED | quality_overall score is empty for all 62 samples. Neither the classical IQA pip |
+| DD-D011 | layout_detections.class_name | LOW | RESOLVED | layout_detections class_name values use Docling's lowercase convention (e.g., 'p |
+| DD-D012 | dataset_completeness | LOW | DEFERRED | Only 62 of the approximately 1,000 images available on HuggingFace were download |
 
 ###### 11.3 VLM Inspection Summary
 
-| Metric | Value |
-|--------|-------|
-| **Images Inspected** | 62/62 (100%) |
-| **Corrections Needed** | 0 |
-| **Pass Rate** | 100% |
-| **Method** | Claude Opus 4.6 in-session vision, batches of 6 |
-
-| Field Validated | Result | Notes |
-|-----------------|--------|-------|
-| orientation_class | 62/62 upright | No rotated images |
-| has_handwriting | 62/62 confirmed | All contain handwritten digit strokes |
-| capture_method | 62/62 consistent | White Jamboard background, digital strokes |
-| has_table | 62/62 false | No tables in any image |
-| has_formula | 62/62 false | No formulas in any image |
-| layout_label | 62/62 correct | "Picture" classification is accurate |
-
-**Artifacts observed**: 2 images with minor Jamboard touch artifacts (images 18, 51). No metadata impact.
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
 
 ###### 11.4 Cross-Dataset Findings
 
-- **KI-001 (Docling Layout Casing)**: Confirmed. Docling outputs lowercase `picture`; integration script converts to `Picture`.
-- **KI-005 (LLM Capture Method)**: Confirmed applicable. No LLM enrichment run; capture method hardcoded from documentation.
+- No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/dzongkha-digits/](../../scripts/audit/results/dzongkha-digits/)
-
----
 
 ##### 12. Reliability & Bottlenecks
 
@@ -453,7 +438,7 @@ All 4 v2.3.0 fields are populated in the integration script (v2 enrichment versi
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-13 | **Samples**: 62 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 62 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 

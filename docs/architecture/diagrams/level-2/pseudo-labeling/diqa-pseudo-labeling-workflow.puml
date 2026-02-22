@@ -31,7 +31,7 @@ package "1. Input Stage" as InputStage #FFF3E0 {
 ' PREPROCESSING - LAYOUT MASK GENERATION
 ' ============================================================================
 package "2. Layout Mask Generation" as LayoutStage #FFF3E0 {
-  component "DocLayout-YOLO\n(DocStructBench)" as DocLayoutYOLO
+  component "docling-layout\n(DocStructBench)" as DocLayoutYOLO
   storage "Mask Cache\n(~2.5GB for 5000 imgs)" as MaskCache
 
   note right of DocLayoutYOLO

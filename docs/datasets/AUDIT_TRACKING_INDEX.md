@@ -33,7 +33,7 @@
 
 **Key Insights**:
 
-- **58 datasets scored** (52 original + 6 newly onboarded), 3 deferred (doc3d, docsynth, synth-multiscript-250k)
+- **58 datasets scored** (52 original + 6 newly onboarded), 3 deferred (doc3d, docsynth, synth-multiscript-v3 — v2 at 250K DELETED; v3 complete on GCS, formal audit pending)
 - **v2.0 scoring**: Accuracy-focused with 7 dimensions and 8 grade caps
 - **37 datasets at B+ (63.8%)**: 6 Grade A + 31 Grade B
 - **Content flag inspection complete** for 51/58 datasets (provenance-based assessment)
@@ -51,64 +51,64 @@
 
 | Dataset | Score | Grade | Cov | Valid | Doc | Defect | Agree | Label | Conf | Updated |
 |---------|-------|-------|-----|------|-----|--------|-------|-------|------|---------|
-| anyphotodoc6300 | 90.7 | B | 85 | 100 | 100 | 94 | - | 75 | 100 | 2026-02-15 |
-| arabic-docs-ocr | 87.3 | B | 89 | 88 | - | - | - | 80 | 92 | 2026-02-15 |
-| bhutan-afs | 89.5 | B | 94 | 89 | 45 | 72 | 98 | 90 | 100 | 2026-02-15 |
-| cc-ocr | 85.2 | B | 85 | 96 | 55 | - | - | 85 | 85 | 2026-02-15 |
-| cocotext | 81.5 | C | 87 | 96 | 100 | 88 | 11 | 100 | 92 | 2026-02-15 |
-| cvsi | 92.3 | B | 89 | 95 | 55 | - | 100 | 95 | 94 | 2026-02-15 |
-| dibco | 87.6 | B | 91 | 93 | 55 | - | - | 80 | 97 | 2026-02-15 |
-| diqa-5000 | 81.7 | C | 92 | 96 | 100 | 84 | 72 | 47 | 98 | 2026-02-15 |
-| docalign12k | 68.1 | D | 81 | 96 | 64 | 95 | - | 8 | 85 | 2026-02-15 |
-| doclaynet | 94.5 | A | 93 | 97 | 100 | 90 | 84 | 98 | 99 | 2026-02-15 |
-| docreal | 85.3 | C | 82 | 96 | 100 | 90 | - | 58 | 100 | 2026-02-15 |
-| document-haystack | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| drccbi | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| dzongkha-digits | 94.5 | A | 87 | 100 | 64 | 98 | 100 | 100 | 92 | 2026-02-15 |
-| financebench | 92.9 | B | 88 | 100 | 64 | 85 | - | 95 | 100 | 2026-02-15 |
-| fintabnet | 93.8 | A | 91 | 100 | 45 | 98 | - | 95 | 100 | 2026-02-15 |
-| funsd | 88.6 | B | 94 | 100 | 73 | 18 | 100 | 95 | 100 | 2026-02-15 |
-| funsd-plus | 86.2 | C | 94 | 100 | 100 | 86 | - | 53 | 100 | 2026-02-15 |
-| hasy | 93.3 | A | 88 | 100 | 55 | - | - | 95 | 100 | 2026-02-15 |
-| hiertext | 87.0 | B | 91 | 94 | 100 | 80 | 62 | 95 | 89 | 2026-02-15 |
-| hindi-synth | 94.8 | A | 88 | 93 | 100 | - | - | 95 | 100 | 2026-02-15 |
-| iam | 45.5 | F | - | - | 45 | - | - | - | - | 2026-02-15 |
-| im2latex | 92.6 | B | 88 | 96 | 55 | - | - | 95 | 100 | 2026-02-15 |
-| indicdlp | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| invoices-kg | 88.9 | B | 89 | 100 | 55 | 85 | - | 80 | 100 | 2026-02-15 |
-| jssoda | 92.5 | B | 88 | 94 | 45 | 90 | 100 | 95 | 100 | 2026-02-15 |
-| markushgrapher | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| mathverse | 93.3 | A | 91 | 100 | 45 | - | - | 95 | 100 | 2026-02-15 |
-| mdiw13 | 89.8 | B | 88 | 90 | 64 | 94 | - | 97 | 88 | 2026-02-15 |
-| midv500 | 85.2 | B | 87 | 96 | 55 | 97 | 58 | 90 | 92 | 2026-02-15 |
-| mle2e | 93.0 | B | 90 | 94 | 55 | - | 100 | 95 | 97 | 2026-02-15 |
-| mlt19 | 89.7 | B | 91 | 96 | 100 | 81 | 84 | 80 | 100 | 2026-02-15 |
-| muharaf | 89.3 | B | 87 | 90 | 55 | - | 84 | 95 | 97 | 2026-02-15 |
-| multimodal-textbook | 91.2 | B | 87 | 100 | 45 | 97 | - | 95 | 92 | 2026-02-15 |
-| nepali-handwritten | 88.6 | B | 88 | 100 | 73 | 96 | 52 | 96 | 100 | 2026-02-15 |
-| nist-sd19 | 91.7 | B | 88 | 96 | 45 | 90 | - | 95 | 100 | 2026-02-15 |
-| nist-sd2 | 87.8 | B | 88 | 96 | 55 | 85 | 73 | 90 | 100 | 2026-02-15 |
-| nist-sd6 | 87.4 | B | 88 | 93 | 64 | 85 | 71 | 90 | 100 | 2026-02-15 |
-| ocr-quality | 82.0 | C | 82 | 100 | 100 | 95 | 52 | 85 | 77 | 2026-02-15 |
-| ohr-bench | 80.6 | C | 94 | 92 | 100 | 86 | 0 | 97 | 99 | 2026-02-15 |
-| omnidocbench | 84.8 | C | 70 | 99 | 100 | 90 | - | 90 | 74 | 2026-02-15 |
-| pubtabnet | 90.1 | B | 91 | 96 | 100 | 80 | 60 | 100 | 100 | 2026-02-15 |
-| pucit-ohul | 89.5 | B | 89 | 100 | 55 | 75 | - | 95 | 92 | 2026-02-15 |
-| q-doc | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| realdae | 83.1 | C | 92 | 93 | 100 | 91 | 53 | 75 | 92 | 2026-02-15 |
-| rvl-cdip | 89.3 | B | 91 | 93 | 64 | 97 | 80 | 85 | 99 | 2026-02-15 |
-| sd7k | 79.9 | C | 85 | 96 | 100 | 90 | - | 33 | 100 | 2026-02-15 |
-| signatr6k | 88.0 | B | 93 | 96 | 100 | - | 47 | 95 | 99 | 2026-02-15 |
-| siw13 | 89.1 | B | 89 | 94 | 45 | - | 100 | 85 | 92 | 2026-02-15 |
-| smartdoc-qa | 88.4 | B | 92 | 92 | 100 | 84 | 68 | 92 | 93 | 2026-02-15 |
-| sroie | 95.9 | A | 94 | 100 | 82 | 97 | - | 93 | 100 | 2026-02-15 |
-| staindoc | 8.0 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-15 |
-| tablebank | 91.4 | B | 91 | 100 | 64 | 98 | - | 80 | 100 | 2026-02-15 |
-| tibhcr | 91.7 | B | 88 | 100 | 55 | - | - | 95 | 94 | 2026-02-15 |
-| tobacco800 | 86.5 | B | 94 | 93 | 100 | 86 | 50 | 89 | 99 | 2026-02-15 |
-| warpdoc | 77.9 | C | 82 | 96 | 100 | 94 | - | 25 | 100 | 2026-02-15 |
-| wsrd | 94.3 | A | 85 | 96 | 100 | 96 | - | 92 | 100 | 2026-02-15 |
-| yarmouk | 93.3 | A | 91 | 89 | 100 | - | - | 90 | 100 | 2026-02-15 |
+| anyphotodoc6300 | 90.7 | B | 85 | 100 | 100 | 94 | - | 75 | 100 | 2026-02-16 |
+| arabic-docs-ocr | 87.3 | B | 89 | 88 | - | - | - | 80 | 92 | 2026-02-16 |
+| bhutan-afs | 89.3 | B | 94 | 89 | 45 | 72 | 96 | 90 | 100 | 2026-02-16 |
+| cc-ocr | 85.2 | B | 85 | 96 | 55 | - | - | 85 | 85 | 2026-02-16 |
+| cocotext | 81.5 | C | 87 | 96 | 100 | 88 | 11 | 100 | 92 | 2026-02-16 |
+| cvsi | 92.3 | B | 89 | 95 | 55 | - | 100 | 95 | 94 | 2026-02-16 |
+| dibco | 87.5 | B | 91 | 93 | 55 | - | 87 | 80 | 97 | 2026-02-16 |
+| diqa-5000 | 82.8 | C | 92 | 96 | 100 | 84 | 80 | 47 | 98 | 2026-02-16 |
+| docalign12k | 68.1 | D | 81 | 96 | 64 | 95 | - | 8 | 85 | 2026-02-16 |
+| doclaynet | 93.6 | A | 93 | 97 | 100 | 90 | 79 | 98 | 99 | 2026-02-16 |
+| docreal | 85.3 | C | 82 | 96 | 100 | 90 | - | 58 | 100 | 2026-02-16 |
+| document-haystack | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| drccbi | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| dzongkha-digits | 93.5 | A | 87 | 100 | 64 | 98 | - | 100 | 92 | 2026-02-16 |
+| financebench | 92.3 | B | 88 | 100 | 55 | 85 | - | 95 | 100 | 2026-02-16 |
+| fintabnet | 93.8 | A | 91 | 100 | 45 | 98 | - | 95 | 100 | 2026-02-16 |
+| funsd | 88.6 | B | 94 | 100 | 73 | 18 | 100 | 95 | 100 | 2026-02-16 |
+| funsd-plus | 85.7 | C | 94 | 100 | 91 | 86 | - | 53 | 100 | 2026-02-16 |
+| hasy | 93.3 | A | 88 | 100 | 55 | - | - | 95 | 100 | 2026-02-16 |
+| hiertext | 88.2 | B | 91 | 94 | 100 | 80 | 70 | 95 | 89 | 2026-02-16 |
+| hindi-synth | 90.5 | B | 88 | 93 | 100 | - | 69 | 95 | 100 | 2026-02-16 |
+| iam | 36.4 | F | - | - | 45 | - | - | - | - | 2026-02-16 |
+| im2latex | 92.6 | B | 88 | 96 | 55 | - | - | 95 | 100 | 2026-02-16 |
+| indicdlp | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| invoices-kg | 87.1 | B | 89 | 100 | 55 | 85 | 77 | 80 | 100 | 2026-02-16 |
+| jssoda | 92.5 | B | 88 | 94 | 45 | 90 | 100 | 95 | 100 | 2026-02-16 |
+| markushgrapher | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| mathverse | 93.3 | A | 91 | 100 | 45 | - | - | 95 | 100 | 2026-02-16 |
+| mdiw13 | 89.8 | B | 88 | 90 | 64 | 94 | - | 97 | 88 | 2026-02-16 |
+| midv500 | 85.2 | B | 87 | 96 | 55 | 97 | 58 | 90 | 92 | 2026-02-16 |
+| mle2e | 92.9 | B | 90 | 94 | 55 | - | 99 | 95 | 97 | 2026-02-16 |
+| mlt19 | 91.5 | B | 91 | 96 | 100 | 81 | 96 | 80 | 100 | 2026-02-16 |
+| muharaf | 91.2 | B | 87 | 90 | 55 | - | 96 | 95 | 97 | 2026-02-16 |
+| multimodal-textbook | 91.2 | B | 87 | 100 | 45 | 97 | - | 95 | 92 | 2026-02-16 |
+| nepali-handwritten | 93.9 | A | 88 | 100 | 73 | 96 | 88 | 96 | 100 | 2026-02-16 |
+| nist-sd19 | 91.7 | B | 88 | 96 | 45 | 90 | - | 95 | 100 | 2026-02-16 |
+| nist-sd2 | 85.3 | B | 88 | 96 | 55 | 85 | 56 | 90 | 100 | 2026-02-16 |
+| nist-sd6 | 84.7 | C | 88 | 93 | 64 | 85 | 53 | 90 | 100 | 2026-02-16 |
+| ocr-quality | 80.7 | C | 82 | 100 | 73 | 95 | 52 | 85 | 77 | 2026-02-16 |
+| ohr-bench | 94.9 | A | 94 | 92 | 100 | 86 | - | 97 | 99 | 2026-02-16 |
+| omnidocbench | 84.8 | C | 70 | 99 | 100 | 90 | - | 90 | 74 | 2026-02-16 |
+| pubtabnet | 91.1 | B | 91 | 96 | 100 | 80 | 67 | 100 | 100 | 2026-02-16 |
+| pucit-ohul | 89.5 | B | 89 | 100 | 55 | 75 | - | 95 | 92 | 2026-02-16 |
+| q-doc | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| realdae | 83.7 | C | 92 | 93 | 100 | 91 | 57 | 75 | 92 | 2026-02-16 |
+| rvl-cdip | 87.9 | B | 91 | 93 | 64 | 97 | 71 | 85 | 99 | 2026-02-16 |
+| sd7k | 79.9 | C | 85 | 96 | 100 | 90 | - | 33 | 100 | 2026-02-16 |
+| signatr6k | 93.1 | A | 93 | 96 | 100 | - | 78 | 95 | 99 | 2026-02-16 |
+| siw13 | 89.1 | B | 89 | 94 | 45 | - | 100 | 85 | 92 | 2026-02-16 |
+| smartdoc-qa | 89.2 | B | 92 | 92 | 100 | 84 | 74 | 92 | 93 | 2026-02-16 |
+| sroie | 94.5 | A | 94 | 100 | 82 | 97 | 86 | 93 | 100 | 2026-02-16 |
+| staindoc | 6.4 | F | 0 | - | 64 | - | - | - | 0 | 2026-02-16 |
+| tablebank | 91.4 | B | 91 | 100 | 64 | 98 | - | 80 | 100 | 2026-02-16 |
+| tibhcr | 91.7 | B | 88 | 100 | 55 | - | - | 95 | 94 | 2026-02-16 |
+| tobacco800 | 88.2 | B | 94 | 93 | 100 | 86 | 61 | 89 | 99 | 2026-02-16 |
+| warpdoc | 77.9 | C | 82 | 96 | 100 | 94 | - | 25 | 100 | 2026-02-16 |
+| wsrd | 94.3 | A | 85 | 96 | 100 | 96 | - | 92 | 100 | 2026-02-16 |
+| yarmouk | 94.4 | A | 91 | 89 | 100 | - | 100 | 90 | 100 | 2026-02-16 |
 
 <!-- SCORECARD_TABLE_END -->
 
@@ -138,7 +138,7 @@ Datasets directly used for SigLIP 2 / MobileNetV4 / YOLOv10-doc training.
 | **pubtabnet** | ✅ Complete | **A** (90.4) | 519,030 | Yes | 10 defects (all resolved). VLM 100% (165 images). OOM-safe streaming |
 | **tablebank** | ✅ Complete | **B** (88.5) | 278,582 | Yes | VLM 80%. Coverage 93%, validity 96%, defect rate 98% |
 | **fintabnet** | ✅ Complete | **B** (87.1) | 97,475 | Yes | VLM 95%. Coverage 93%, validity 96%, defect rate 98% |
-| **synth-multiscript-250k** | ⏸️ Deferred | - | 250,000 (generating) | No | Synthetic dataset, generation in progress |
+| **synth-multiscript-v3** | ⏸️ Deferred (pre-audit) | - | 350,012 (GCS-complete) | No | Generation complete — ⚠️ imbalanced distribution; formal L2 audit pending. v2 (250K) DELETED. |
 | **realdae** | ✅ Complete | **B** (83.9) | 1,200 | Yes | 5 defects. Coverage 99%, VLM 75%. IQA before/after pairs |
 | **hiertext** | ✅ Complete | **B** (81.7) | 11,639 | Yes | 13 defects (11 resolved, 1 partial). Parser GT gold standard handwriting. VLM 95% |
 
@@ -241,7 +241,7 @@ Summary of known issues affecting multiple datasets. See [CROSS_DATASET_KNOWN_IS
 | **KI-002** | Docling Table detection unreliable on multi-column text | HIGH | Synthetic + multi-column datasets | ⚠️ Manual VLM verification required |
 | **KI-003** | Docling Picture detection unreliable on dense text | MEDIUM | Synthetic + dense text datasets | ⚠️ Manual VLM verification required |
 | **KI-004** | LLM handwriting detection unreliable on synthetic | HIGH | All synthetic datasets | ✅ Pattern established (override) |
-| **KI-005** | LLM cannot detect synthetic capture method | HIGH | jssoda, synth-multiscript-250k, docsynth300k | ✅ Pattern established (override) |
+| **KI-005** | LLM cannot detect synthetic capture method | HIGH | jssoda, synth-multiscript-v3, docsynth300k | ✅ Pattern established (override) |
 | **KI-006** | LLM formula detection over-flags scientific text | MEDIUM | All datasets with LLM enrichment | ⚠️ Manual VLM verification required |
 | **KI-007** | LLM domain classification high UNK rate on generic content | LOW | Generic/narrative content datasets | ✅ Accepted (taxonomy limitation) |
 | **KI-008** | Nepali handwritten label noise (character variants) | LOW | nepali-handwritten | ⚠️ Dataset-specific |
@@ -375,7 +375,7 @@ python scripts/audit/compute_scorecard.py --dataset jssoda --update-index
 
 ### Long-Term
 
-1. **Deferred datasets**: doc3d, docsynth, synth-multiscript-250k when generation/enrichment ready
+1. **Deferred datasets**: doc3d, docsynth, synth-multiscript-v3 (v3 GCS-complete; formal audit pending)
 2. **Cross-dataset analysis**: Compute aggregate defect statistics, identify new KI patterns
 3. **Doc completeness sprint**: 25 datasets at doc_completeness <55% -- expand source docs
 

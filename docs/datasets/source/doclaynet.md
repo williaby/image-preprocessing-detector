@@ -411,90 +411,96 @@ At 81K images, DocLayNet processing requires:
 | **Registration** | None required |
 | **Citation** | Pfitzmann et al., KDD 2022 |
 
-##### Layer 2 Audit Summary
+##### 11. Layer 2 Audit Summary
 
-> **Audit Date**: 2026-02-13 | **Auditor**: claude-opus-4-6 | **Methodology**: v2.3.0 | **Tier**: 2 (Scale-adjusted)
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
 ###### 11.1 Quality Scorecard
 
+> **Audit Date**: 2026-02-15 | **Grade**: A (94.5/100) | **Auditor**: claude-opus-4-6
+
 | Dimension | Score | Weight | Notes |
-|-----------|-------|--------|-------|
-| **Field Coverage** | 98.9 | 0.25 | 15 fields, avg pass rate 98.9% |
-| **Field Validity** | 97.0 | 0.25 | 27 fields validated |
-| **Doc Completeness** | 100.0 | 0.15 | 11/11 template v1.4.0 sections populated |
-| **Defect Rate** | 90.0 | 0.15 | 13 defects (12 resolved, 1 partial), 10.0 penalty |
-| **Cross Source Agreement** | 84.4 | 0.10 | Multi-source comparison (GT + LLM + Docling) |
-| **VLM Accuracy** | 97.9 | 0.10 | 95 images inspected, 97.9% accuracy |
-| **Overall** | **95.7** | | **Grade A** |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.5 | 15% |  |
+| Field Validity | 97.0 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 90.0 | 10% |  |
+| Cross-Source Agreement | 84.4 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **94.5** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
+> **Total**: 13 defects (12 resolved, 1 partial)
+
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | split | HIGH | RESOLVED | Not derived from COCO GT -- built filename-to-split index |
-| D02 | domain_level1 | HIGH | RESOLVED | 100% UNK -- mapped GT doc_category -> domain codes |
-| D03 | script_family | HIGH | RESOLVED | KI-008: "ltr" -> re-derived via get_script_family() |
-| D04 | iso639_language | MEDIUM | RESOLVED | Blanket "en" -> langdetect on GT cells text (22 languages) |
-| D05 | layout_detections | HIGH | PARTIAL | 12,368 (15.2%) missing Docling layout; COCO GT content flags used |
-| D06 | text_has_content | MEDIUM | RESOLVED | Empty -> populated from GT cells text |
-| D07 | orientation_class | MEDIUM | RESOLVED | Missing -> set 0 (born-digital) |
-| D08 | color_mode | LOW | RESOLVED | Missing -> derived from color_space (RGB) |
-| D09 | handwriting_present | LOW | RESOLVED | Missing -> set false (born-digital) |
-| D10 | text_direction | MEDIUM | RESOLVED | v2.3.0 field -> derived from script direction |
-| D11 | text_directions_present | MEDIUM | RESOLVED | v2.3.0 field -> derived from GT text Unicode analysis |
-| D12 | schema_version | LOW | RESOLVED | v2.1 -> v2.3.0 upgrade |
-| D13 | content_flags | MEDIUM | RESOLVED | Docling soft labels -> COCO GT categories (confidence 1.0) |
+| D01 | split | ? | RESOLVED | Split not derived from COCO GT membership. All samples had split=unknown. |
+| D02 | domain_level1 | ? | RESOLVED | Domain classification was 100% UNK. GT JSON doc_category provides ground truth d |
+| D03 | script_family | ? | RESOLVED | KI-008: script_family contained 'ltr' (directionality) instead of proper ISO 159 |
+| D04 | iso639_language | ? | RESOLVED | KI-009: Blanket 'en' from language enrichment stub misclassified non-English pag |
+| D05 | layout_detections | ? | PARTIAL | 12,368 samples missing layout detections. Docling layout preserved for 69,103 sa |
+| D06 | text_has_content | ? | RESOLVED | text_has_content was FALSE/null for all samples despite GT JSON containing word- |
+| D07 | orientation_class | ? | RESOLVED | Orientation class not populated. Born-digital dataset has no rotation. |
+| D08 | image_properties_color_mode | ? | RESOLVED | Color mode not populated. |
+| D09 | handwriting_present | ? | RESOLVED | Handwriting flag not populated. Born-digital professional documents have no hand |
+| D10 | text_direction | ? | RESOLVED | v2.3.0 text_direction field not populated. |
+| D11 | text_directions_present | ? | RESOLVED | v2.3.0 text_directions_present field not populated. |
+| D12 | schema_version | ? | RESOLVED | Schema version was v2.1, needed upgrade to v2.3.0. |
+| D13 | content_flags | ? | RESOLVED | Content flags were from Docling only (soft labels). COCO GT provides ground trut |
 
 ###### 11.3 VLM Inspection Summary
 
-| Track | Images | Method | Finding |
-|-------|--------|--------|---------|
-| A (Content flags) | 45 | Contact sheets (3 sheets) | 100% accuracy -- COCO GT content flags verified |
-| B (Non-English language) | 25 | Contact sheet (1 sheet) | 92% accuracy -- 1 potential mismatch, 1 hard to verify |
-| C (Passing validation) | 25 | Contact sheet (1 sheet) | 100% accuracy -- all domain/language/fields correct |
-| **Overall** | **95** | **5 contact sheets** | **97.9% accuracy** |
+> **Samples Inspected**: 95 | **Corrections**: 0 | **Passing Accuracy**: 97.9%
 
-**Key findings**:
+| Field | Correct | Incorrect | Accuracy | Notes |
+|-------|--------:|----------:|---------:|-------|
+| has_table | 20 | 0 | 100.0% |  |
+| has_figure | 15 | 0 | 100.0% |  |
+| has_formula | 10 | 0 | 100.0% |  |
+| domain_level1 | 25 | 0 | 100.0% |  |
+| iso639_language | 23 | 2 | 92.0% |  |
 
-- COCO GT-derived content flags achieve 100% visual accuracy (Track A)
-- GT `doc_category` -> domain mapping is 100% accurate (Track C)
-- Language detection via langdetect on GT text is 92% accurate, edge cases in rare languages
-- Overall accuracy well above 95% target
+**Content Flag Distribution** (in inspected samples):
+
+| Flag | Count | Percentage |
+|------|------:|-----------:|
+| has_table | 20 | 44.4% |
+| has_figure | 15 | 33.3% |
+| has_formula | 10 | 22.2% |
+| has_handwriting | 0 | 0.0% |
+| has_code | 0 | 0.0% |
+
+**VLM Grade Cap**: Removed (accuracy 0.0% >= 90% threshold)
 
 ###### 11.4 Cross-Dataset Findings
 
-- **KI-007** (domain 100% UNK): Resolved -- GT `doc_category` provides ground-truth domain classification
-- **KI-008** (script_family directionality): Resolved -- re-derived from `iso15924_script` via `get_script_family()`
-- **KI-009** (blanket "en" language): Resolved -- langdetect on GT text reveals 22 languages
-- **GT exploitation** documented as reusable pattern for datasets with rich ground truth
+- No cross-dataset known issues identified for this dataset.
 
-**Audit artifacts**: `scripts/audit/results/doclaynet/`
-
----
+**Audit Artifacts**: [scripts/audit/results/doclaynet/](../../scripts/audit/results/doclaynet/)
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 (PRE-INTEGRATION) | **Samples**: 81,471 | **Avg Min Confidence**: 0.255
->
-> **Note**: This section reflects pre-integration state. Post-integration (v2, schema 2.3.0),
-> 84.35% of prescreening fields pass. Re-materialize with:
-> `uv run python3 scripts/materialize_reliability_summary.py --datasets doclaynet --update-docs --force`
+> **Computed**: 2026-02-16 | **Samples**: 81,471 | **Avg Min Confidence**: 0.806
 
-**Composite Category Distribution** (pre-integration, to be updated):
+**Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
-| hard_label | 0 | 0.0% |
+| hard_label | 69,102 | 84.8% |
 | soft_label | 0 | 0.0% |
 | active_learning | 0 | 0.0% |
-| unreliable | 81,471 | 100.0% |
+| unreliable | 12,369 | 15.2% |
 
-**Top Bottleneck Fields** (pre-integration, to be updated):
+**Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `domain` | 84.8% | 0.300 |
-| 2 | `has_table` | 15.2% | 0.848 |
+| 1 | `resolution` | 84.8% | 0.950 |
+| 2 | `layout_detections` | 15.2% | 0.848 |
+| 3 | `domain` | 0.0% | 1.000 |
 
 ##### Processing Notes
 

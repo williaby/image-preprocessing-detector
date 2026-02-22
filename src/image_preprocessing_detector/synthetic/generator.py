@@ -290,6 +290,7 @@ class MultiScriptDocumentGenerator:
 
         # Initialize corpus
         logger.info("Initializing text corpus...")
+        loaded = 0
         try:
             if download_corpus:
                 loaded = self.corpus_manager.load_from_cache_or_download(
@@ -301,25 +302,33 @@ class MultiScriptDocumentGenerator:
                 if loaded == 0:
                     logger.info("No cache found, using built-in sample texts")
                     loaded = self.corpus_manager.load_sample_texts(self.config.scripts)
-
-            if loaded == 0:
-                logger.warning("No corpus data loaded. Text generation may be limited.")
         except Exception as e:
             logger.error("Failed to initialize corpus: %s", e)
             return False
 
+        if loaded == 0:
+            raise RuntimeError(
+                "Corpus empty — cannot generate diverse text. "
+                "Run corpus download or set use_sample_fallback=True to proceed "
+                "with built-in sample texts (low diversity)."
+            )
+
         # Initialize fonts
         logger.info("Scanning fonts...")
+        found = 0
         try:
             if scan_fonts:
                 found = self.font_manager.scan_fonts()
-                if found == 0:
-                    logger.warning(
-                        "No fonts found. Install Noto fonts for best results."
-                    )
         except Exception as e:
             logger.error("Failed to scan fonts: %s", e)
             return False
+
+        if scan_fonts and found == 0:
+            raise RuntimeError(
+                "No fonts found for any configured script. "
+                "Install Noto fonts: "
+                "https://fonts.google.com/noto or run scripts/install_fonts.sh"
+            )
 
         # Create output directory if needed
         if self.config.output_dir:
@@ -969,11 +978,44 @@ class MultiScriptDocumentGenerator:
         - four_plus (3%): Four+ script documents
         - priority_pairs (5%): High-priority script combinations
 
+        Per-script enforcement: each script is limited to ``samples_per_script``
+        primary-script credits.  Once a script's counter reaches its target it is
+        removed from the pool of available scripts so the remaining budget is
+        filled by the under-represented scripts.  Multi-script compositions credit
+        only the *first* (primary) script of the document.
+
+        Corpus or font initialization failures are surfaced as RuntimeError rather
+        than silent empty output so the caller (e.g. worker process) can detect
+        the problem early and log a meaningful error.
+
         Yields:
             GeneratedSample objects
+
+        Raises:
+            RuntimeError: If the generator has not been initialised via
+                ``initialize()``.
         """
         if not self._initialized:
             raise RuntimeError(_NOT_INITIALIZED_MSG)
+
+        # Harden corpus/font availability check before entering the hot loop.
+        # initialize() already validates these, but a subsequent corpus eviction
+        # or font manager reset would leave the generator in a broken state that
+        # previously produced only None samples and silent failures.
+        if self._corpus_manager is not None:
+            loaded_scripts = self._corpus_manager.get_available_scripts()
+            if not loaded_scripts:
+                raise RuntimeError(
+                    "Corpus manager has no loaded scripts.  "
+                    "Ensure initialize() completed successfully."
+                )
+        if self._font_manager is not None:
+            font_scripts = self._font_manager.get_available_scripts()
+            if not font_scripts:
+                raise RuntimeError(
+                    "Font manager has no available scripts.  "
+                    "Install Noto fonts or provide a valid fonts directory."
+                )
 
         self._stats = GenerationStats()
         layout_types = self.config.layout_types or list(LayoutType)
@@ -995,6 +1037,13 @@ class MultiScriptDocumentGenerator:
         if not available_scripts:
             logger.error("No valid scripts in configuration")
             return
+
+        # Per-script counter: tracks primary-script credits so no single script
+        # can overshoot its samples_per_script target.  Scripts are pruned from
+        # available_scripts once they hit the limit, preventing the Latn/Arab/Deva
+        # overshoot observed in the v3 run caused by the chunk_per_script bug.
+        per_script_counts: dict[str, int] = dict.fromkeys(available_scripts, 0)
+        script_target = self.config.samples_per_script
 
         samples_generated = 0
 
@@ -1164,6 +1213,25 @@ class MultiScriptDocumentGenerator:
                     self._stats.samples_per_profile[profile_name] = (
                         self._stats.samples_per_profile.get(profile_name, 0) + 1
                     )
+
+                    # Per-script enforcement: credit the primary script and prune
+                    # scripts that have reached their individual target.  Using the
+                    # sorted-first script as the primary credit mirrors _save_sample's
+                    # directory assignment logic so the counter stays consistent.
+                    primary_script = sorted(sample.scripts)[0]
+                    if primary_script in per_script_counts:
+                        per_script_counts[primary_script] += 1
+                        if per_script_counts[primary_script] >= script_target:
+                            available_scripts = [
+                                s for s in available_scripts if s != primary_script
+                            ]
+                            logger.debug(
+                                "Script %s reached target %d; removed from pool "
+                                "(%d scripts remaining)",
+                                primary_script,
+                                script_target,
+                                len(available_scripts),
+                            )
 
                     # Save if configured
                     if self.config.save_images and self.config.output_dir:

@@ -86,15 +86,15 @@ package "Pass 0: Synthetic Generation" as pass0 <<tier0>> {
 ' SECTION 3: PASS 1 - BASE METADATA ANNOTATION (TIER 0-2)
 ' ============================================================================
 package "Pass 1: Base Metadata Annotation" as pass1 {
-    component "annotate_base_metadata.py\n(DATASET_CONFIGS + DocLayout-YOLO)" as base_annotator {
+    component "annotate_base_metadata.py\n(DATASET_CONFIGS + docling-layout)" as base_annotator {
         [Layer 1: OriginalFileMetadata\n(SHA256, dimensions, format)]
         [Layer 2 Base: capture_method,\ndomain, structure, quality]
-        [DocLayout-YOLO Inference\n(11 DocLayNet classes)]
+        [docling-layout Inference\n(11 DocLayNet classes)]
         [Content Flag Derivation\n(has_table, has_formula, has_code)]
     }
 
     component "DATASET_CONFIGS\n(per-dataset config dicts)" as ds_configs <<tier1>>
-    component "DocLayout-YOLO\n(docling-layout model)" as doclayout <<tier2>>
+    component "docling-layout\n(egret-xlarge / heron)" as doclayout <<tier2>>
 
     note bottom of base_annotator
         **Fields Populated (Pass 1)**:
@@ -259,22 +259,36 @@ package "Planned ML Models [NOT YET TRAINED]" as planned_ml <<gap>> {
     }
 
     component "SigLIP 2 NAFlex\n(~50ms full analysis)" as siglip2 {
-        [Group 1: IQA (5 heads)]
-        [Group 2: Script (3 heads)]
-        [Group 3: Orientation + Skew (3 heads)]
-        [Group 4: Handwriting (2 heads)]
-        [Group 5: Shadow + Warping (3 heads)]
+        [Group 1: IQA (6 heads: blur/noise/contrast/skew/compression + overall_quality)]
+        [Group 2: Script (3 heads: script_code cls + has_non_latin + has_rtl)]
+        [Group 3: Orientation + Skew (3 heads: orientation_cls + skew_reg + confidence)]
+        [Group 4: Handwriting (5 heads: 3 cls presence/legibility/content_type + 2 reg scores)]
+        [Group 5: Page Attributes (5 heads: capture_cls + shadow/warping/code/resolution_quality reg)]
     }
 
     note bottom of planned_ml
         **Fields These Will Populate**:
+        -- MobileNetV4 Heads --
         GeometricInfo.orientation_class (MNv4 H1 / SigLIP G3)
         GeometricInfo.skew_angle_degrees (MNv4 H2 / SigLIP G3)
-        ResolutionInfo.resolution_quality_score (MNv4 H3)
-        PhysicalDegradationInfo.shadow_severity/type (SigLIP G5)
-        PhysicalDegradationInfo.warping_severity/type (SigLIP G5)
-        ContentFlags.has_handwriting (SigLIP G4)
+        ResolutionInfo.resolution_quality_score (MNv4 H3 / SigLIP G5)
+        -- SigLIP G1: IQA --
+        MLImageQualityInfo.blur_score, .noise_score, .contrast_score
+        MLImageQualityInfo.compression_score, .skew_score, .overall_score
+        -- SigLIP G2: Script --
+        LanguageInfo.iso15924_script (script_code)
+        LanguageInfo.has_non_latin, .has_rtl
+        -- SigLIP G4: Handwriting --
+        HandwritingAssessment.presence_class, .legibility_class, .content_type
+        HandwritingAssessment.presence_score, .legibility_score
+        ContentFlags.has_handwriting (derived from presence_class)
+        -- SigLIP G5: Page Attributes --
+        CaptureMethodInfo.method (capture_cls)
+        PhysicalDegradationInfo.shadow_severity (shadow_reg)
+        PhysicalDegradationInfo.warping_severity (warping_reg)
+        ContentFlags.has_code, .code_confidence (code_reg)
         **Status**: PLANNED (datasets ready/in-progress)
+        **Total**: 22 task heads across 5 groups
     end note
 }
 

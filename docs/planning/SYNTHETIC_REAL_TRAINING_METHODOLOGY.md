@@ -24,9 +24,9 @@ Stage 4: Active Learning (production feedback loop)
 
 ## Stage 1: Synthetic Foundation
 
-### Dataset: 250K Multi-Script Synthetic Documents
+### Dataset: synth-multiscript-v3 (350K Multi-Script Synthetic Documents)
 
-**Source**: `data/synthetic_250k/` (currently generating)
+**Source**: `gs://image_detection_b/synth_multiscript_v3/` (✅ Complete on GCS — ⚠️ imbalanced distribution; v2 at 250K DELETED)
 
 **Composition**:
 
@@ -66,7 +66,7 @@ STAGE1_CONFIG = {
 
 | Source | Samples | Ratio | Purpose |
 |--------|---------|-------|---------|
-| Synthetic 250K | 175K | 70% | Maintain broad coverage |
+| synth-multiscript-v3 (350K) | 175K | 70% | Maintain broad coverage |
 | DIQA-5000 | 3,500 | 1.4% | Real degradation patterns |
 | OHR-Bench | 10K | 4% | OCR-specific documents |
 | TableBank (sampled) | 30K | 12% | Table documents |
@@ -74,7 +74,7 @@ STAGE1_CONFIG = {
 | FUNSD+ | 1,113 | 0.4% | Form documents |
 | DocLayNet (sampled) | 5K | 2% | Multi-class layout |
 
-**Total**: ~250K samples (70% synthetic, 30% real)
+**Total**: ~250K samples (70% synthetic from v3, 30% real)
 
 **Training Configuration**:
 
@@ -283,7 +283,7 @@ modal run modal/train_curriculum_stage3.py --pretrained stage2
 
 | Phase | Duration | Deliverable |
 |-------|----------|-------------|
-| Synthetic generation | 24-48h | 250K samples with labels |
+| ~~Synthetic generation~~ | ~~24-48h~~ | ✅ DONE — synth-multiscript-v3 (350,012 samples on GCS) |
 | Real document labeling | 1 week | Harmonized labels for 75K real docs |
 | Stage 1 training | 4h (GPU) | Synthetic-pretrained model |
 | Stage 2 training | 3h (GPU) | Mixed-trained model |

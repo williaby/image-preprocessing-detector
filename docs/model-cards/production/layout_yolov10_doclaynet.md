@@ -8,6 +8,8 @@ tags:
 title: 'Model Card: Layout YOLOv10 DocLayNet'
 ---
 
+> ⚠️ **DEPRECATED** — This model (`layout_yolov10_doclaynet_v1.0.0`) has been superseded by the Docling layout models: `docling-layout-egret-xlarge` (accuracy) and `docling-layout-heron` (speed). Retain for historical reference only.
+
 ## Overview
 
 | Field | Value |

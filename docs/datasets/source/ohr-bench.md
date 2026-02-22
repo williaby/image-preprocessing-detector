@@ -460,77 +460,64 @@ The dataset provides 12 OCR noise variants per page:
 > after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
 > [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
-##### 11.1 Audit Metadata
+##### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Methodology**: v2.3.0 (15-field prescreening) | **Samples**: 8,303
+> **Audit Date**: 2026-02-15 | **Grade**: C (80.6/100) | **Auditor**: claude-opus-4-6
 
-**Audit Scope**:
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 93.7 | 15% |  |
+| Field Validity | 91.5 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 86.0 | 10% |  |
+| Cross-Source Agreement | 0.0 | 15% | No cross-source data |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **80.6** | | **Grade C** |
 
-- **Prescreening Fields**: 15 (split, capture_method, domain_level1, iso639_language, script_family, content_flags, layout_detections, layout_bbox_valid, orientation, color_mode, handwriting, text_has_content, text_direction, text_directions_present, quality_overall_mos)
-- **Overall Pass Rate**: 94.7% (7,863/8,303 samples)
+##### 11.2 Key Defects
 
-##### 11.2 Prescreening Results
+> **Total**: 7 defects (2 resolved, 5 open)
 
-| Field | Pass Rate | Failure Rate | Notes |
-|-------|----------:|-------------:|-------|
-| split | 100% | 0% | All samples "train" |
-| capture_method | 100% | 0% | All BORN_DIGITAL |
-| domain_level1 | 100% | 0% | 5 standardized codes |
-| iso639_language | 96.34% | 3.66% | 304 undetermined (minimal text) |
-| script_family | 100% | 0% | Latin/CJK/Other |
-| content_flags | 100% | 0% | Docling GPU extraction |
-| layout_detections | 97.65% | 2.35% | 195 pages missing layout |
-| layout_bbox_valid | 99.14% | 0.86% | 71 pages malformed bboxes |
-| orientation | 100% | 0% | All portrait |
-| color_mode | 100% | 0% | All RGB |
-| handwriting | 100% | 0% | All false (born-digital) |
-| text_has_content | 99.87% | 0.13% | 11 pages minimal text |
-| text_direction | 100% | 0% | 96.3% LTR, 3.7% null |
-| text_directions_present | 100% | 0% | All populated |
-| quality_overall_mos | 100% | 0% | Not applicable (no MOS) |
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | critical | OPEN | All samples have split='unknown' |
+| D02 | iso639_language | critical | OPEN | Language enrichment truncated to 1,000 of 8,259 records |
+| D03 | layout_detections | high | OPEN | 195 samples missing layout annotations |
+| D04 | layout_bbox_valid | high | OPEN | 71 samples with invalid bounding boxes |
+| D05 | text_has_content | medium | OPEN | 11 samples flagged as having no text content |
+| D06 | integration_script | medium | RESOLVED | Layout batch files use overlapping image_id ranges |
+| D07 | domain_level1 | low | RESOLVED | Domain path mapping had incorrect subdirectory names |
 
-##### 11.3 Fields at 0% Failure
+##### 11.3 VLM Inspection Summary
 
-11 of 15 prescreening fields achieved 0% failure:
+> **Samples Inspected**: 36 | **Corrections**: 4 | **Passing Accuracy**: 94.4%
 
-- split, capture_method, domain_level1, script_family, content_flags
-- orientation, color_mode, handwriting, text_direction, text_directions_present, quality_overall_mos
+| Field | Correct | Incorrect | Accuracy | Notes |
+|-------|--------:|----------:|---------:|-------|
+| iso639_language | 36 | 0 | 100.0% |  |
+| script_family | 36 | 0 | 100.0% |  |
+| domain_level1 | 36 | 0 | 100.0% | 3 borderline cases accepted per dataset subdirectory mapping |
+| orientation | 36 | 0 | 100.0% |  |
+| capture_method | 34 | 2 | 94.4% | 2 GNHK handwriting samples have camera-captured content in born-digital PDF |
+| has_handwriting | 34 | 2 | 94.4% | 2 GNHK samples need correction from false to true |
 
-##### 11.4 Integration Details
+**Content Flag Distribution** (in inspected samples):
 
-| Aspect | Details |
-|--------|---------|
-| **Integration Script** | `scripts/integrate_ohr_bench_enrichments.py` |
-| **Enrichment Version** | v2 (integrated_v2) |
-| **Known Issues Applied** | KI-001 (layout label casing), KI-005 (capture method), KI-008 (script_family re-derivation) |
-| **v2.3.0 Fields** | text_direction populated for 96.3% (ltr), text_directions_present for 100% |
+| Flag | Count | Percentage |
+|------|------:|-----------:|
+| has_table | 10 | 27.8% |
+| has_figure | 7 | 19.4% |
+| has_formula | 1 | 2.8% |
+| has_handwriting | 2 | 5.6% |
+| has_code | 0 | 0.0% |
 
-##### 11.5 Key Findings
+**VLM Grade Cap**: Removed (accuracy 94.4% >= 90% threshold)
 
-**Strengths**:
+##### 11.4 Cross-Dataset Findings
 
-- **11/15 fields at 0% failure**: High-quality automated enrichment
-- **Consistent capture method**: All born-digital, no mixed sources
-- **Domain coverage**: 5 standardized codes with clean mapping
-- **Layout extraction**: 97.65% coverage from Docling GPU
-
-**Remaining Issues**:
-
-1. **iso639_language 3.66% failure**: 304 pages with undetermined language (minimal text content)
-2. **layout_detections 2.35% failure**: 195 pages missing Docling layout annotations
-3. **layout_bbox_valid 0.86% failure**: 71 pages with malformed bounding boxes
-4. **text_has_content 0.13% failure**: 11 pages with minimal text
-
-**Recommended Actions**:
-
-- **iso639_language**: Accept as valid (pages truly have minimal text)
-- **layout_detections**: Re-run Docling GPU on 195 failed pages
-- **layout_bbox_valid**: Investigate and fix bbox parsing for 71 pages
-- **text_has_content**: Manual inspection of 11 edge cases
+- **KI-001**: OPEN -- 71 samples with invalid bounding boxes
 
 **Audit Artifacts**: [scripts/audit/results/ohr-bench/](../../scripts/audit/results/ohr-bench/)
-
----
 
 #### 12. Reliability & Bottlenecks
 
@@ -624,3 +611,23 @@ The dataset provides 12 OCR noise variants per page:
 **Last Updated**: 2026-02-14
 **Template Version**: 1.4.0
 **Maintainer**: Documentation Team
+
+### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 8,303 | **Avg Min Confidence**: 0.781
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 8,108 | 97.7% |
+| active_learning | 0 | 0.0% |
+| unreliable | 195 | 2.3% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_table` | 97.7% | 0.800 |
+| 2 | `layout_detections` | 2.3% | 0.830 |

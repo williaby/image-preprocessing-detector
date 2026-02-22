@@ -421,17 +421,17 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: A (95.7/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-15 | **Grade**: A (95.9/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 100.0 | 28% |  |
-| Field Validity | 100.0 | 28% |  |
-| Doc Completeness | 81.8 | 17% |  |
-| Defect Rate | 97.2 | 17% |  |
+| Field Coverage | 94.1 | 18% |  |
+| Field Validity | 100.0 | 18% |  |
+| Doc Completeness | 81.8 | 6% |  |
+| Defect Rate | 97.2 | 12% |  |
 | Cross-Source Agreement | - | - | Excluded (no data) |
-| VLM Accuracy | 93.0 | 11% |  |
-| **Overall** | **95.7** | | **Grade A** |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **95.9** | | **Grade A** |
 
 ###### 11.2 Key Defects
 
@@ -456,7 +456,7 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 93.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -464,29 +464,24 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 
 **Audit Artifacts**: [scripts/audit/results/sroie/](../../scripts/audit/results/sroie/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-14 | **Samples**: 973 | **Enrichment Version**: v2
+> **Computed**: 2026-02-16 | **Samples**: 973 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
 | hard_label | 0 | 0.0% |
-| soft_label | 973 | 100.0% |
+| soft_label | 0 | 0.0% |
 | active_learning | 0 | 0.0% |
-| unreliable | 0 | 0.0% |
+| unreliable | 973 | 100.0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `language` | ~80% | 0.70-0.80 |
-| 2 | `content_flags` | ~20% | 0.80 |
-
----
+| 1 | `text_quality` | 100.0% | 0.000 |
 
 ##### Processing Notes
 

@@ -1,0 +1,255 @@
+@startuml stream-4c-dataset-preparation
+!theme plain
+title Stream 4C — Multi-Task Dataset Preparation Pipeline
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+' Color definitions
+skinparam component {
+    BackgroundColor<<source>> LightPink
+    BackgroundColor<<stage1>> LightBlue
+    BackgroundColor<<stage2>> LightGoldenRodYellow
+    BackgroundColor<<stage3>> LightGreen
+    BackgroundColor<<output>> LightGray
+    BackgroundColor<<registry>> Lavender
+    BackgroundColor<<constraint>> MistyRose
+}
+
+' =====================================================================
+' INPUT SOURCES
+' =====================================================================
+
+package "Input Sources" as sources_pkg <<source>> {
+    database "synth-multiscript-v3\n(190,485 images on GCS)" as v3_gcs
+    database "MDIW13 local\n(753 images, 9 scripts)" as mdiw13
+    database "L2 Metadata Registry\n(metadata_registry/json/)" as l2_registry
+    collections "DocLayNet / RVL-CDIP PDFs\n(on GCS)" as pdf_sources
+    note right of l2_registry
+        Inputs: capture_method, script,
+        orientation_class, split_type fields
+    end note
+}
+
+' =====================================================================
+' STAGE 1: AUGMENTATION GENERATION (parallel)
+' =====================================================================
+
+package "Stage 1 — Augmentation Generation (parallel)" as stage1_pkg <<stage1>> {
+
+    package "Shadow Views" as shadow_gen {
+        component "generate_v3_shadow_view.py" as shadow_script {
+            [4 shadow types per image:]
+            [  edge / cast / spotlight / scanner_lid]
+            [Target: 8,000 synthetic images]
+            [Source: v3 GCS pool (non-Latin bias)]
+        }
+    }
+
+    package "Warping Views" as warp_gen {
+        component "generate_v3_warping_view.py" as warp_script {
+            [3 distortion types per image:]
+            [  perspective / page_curl / fold]
+            [Target: 5,000 synthetic images]
+        }
+    }
+
+    package "Orientation — Synthetic Component" as orient_synth {
+        component "derive_v3_orientation_view.py" as orient_synth_script {
+            [Non-Latin v3 images only]
+            [Fetch orientation_class from sidecars]
+            [Cap: ≤20,000 synthetic samples]
+        }
+    }
+
+    package "Orientation — Real Component" as orient_real {
+        component "build_orientation_real_component.py" as orient_real_script {
+            [DocLayNet + RVL-CDIP PDFs from GCS]
+            [PyMuPDF page rendering]
+            [4 rotations × source_image]
+            [Target: ≤30,000 real samples]
+        }
+    }
+}
+
+' =====================================================================
+' STAGE 2: LABEL COMPUTATION (L2 metadata enrichment)
+' =====================================================================
+
+package "Stage 2 — Label Computation" as stage2_pkg <<stage2>> {
+
+    package "Severity Labeling" as severity_pkg {
+        component "label_shadow_severity.py" as shadow_label {
+            [Paired image comparison (sd7k/wsrd)]
+            [Metric: luminance-delta severity]
+            [Writes shadow_severity → L2 metadata]
+        }
+
+        component "label_warping_severity.py" as warp_label {
+            [Paired image comparison (warpdoc/wsrd/etc.)]
+            [Metric: SSIM-based severity]
+            [Writes warping_severity → L2 metadata]
+        }
+    }
+
+    package "Handwriting Harmonization" as handwriting_pkg {
+        component "harmonize_handwriting_labels.py" as hw_label {
+            [Sources: IAM / FUNSD / HierText / COCO-Text]
+            [L2 DocLayout inference as fallback]
+            [Unified handwriting_present boolean]
+        }
+    }
+
+    package "Pseudo-Label Generation" as pseudo_pkg {
+        component "generate_multitask_labels.py" as pseudo_label {
+            [SigLIP 2 teacher in eval mode]
+            [Unlabeled corpus → soft distributions]
+            [Used for active learning triggers]
+        }
+    }
+}
+
+' =====================================================================
+' STAGE 3: AUDIT & MANIFEST ASSEMBLY
+' =====================================================================
+
+package "Stage 3 — Audit & Manifest Assembly" as stage3_pkg <<stage3>> {
+
+    package "Pre-Assembly Audits" as audit_pkg {
+        component "audit_font_coverage.py" as font_audit {
+            [Check: ≥5 font families per script]
+            [Source: fonts/synthetic-gen/]
+            [Exit non-zero if below threshold]
+        }
+
+        component "audit_v3_per_script_counts.py" as count_audit {
+            [GCS image counts vs target (12,963/script)]
+            [Generates resume-points for generator]
+        }
+    }
+
+    package "prepare_multitask_datasets.py\n(main orchestrator)" as prepare_pkg <<stage3>> {
+        component "script sub-command" as cmd_script {
+            [MDIW13 + v3 GCS splits.jsonl]
+            [≤60% synthetic cap enforced]
+            [Compute class weights]
+        }
+        component "orientation sub-command" as cmd_orient {
+            [Phase 1 real + synthetic outputs]
+            [Validates ≥60% real]
+        }
+        component "source sub-command" as cmd_source {
+            [L2 capture_method → scanned/camera/born_digital]
+        }
+        component "shadow sub-command" as cmd_shadow {
+            [Stage 1 shadow output + L2 severity]
+            [≤60% synthetic cap]
+        }
+        component "warping sub-command" as cmd_warp {
+            [Stage 1 warping output + L2 severity]
+            [≤60% synthetic cap]
+        }
+        component "merge sub-command" as cmd_merge {
+            [Combine all 5 task manifests]
+            [OOD leakage check (_check_ood_leakage)]
+            [Split: train / val / ood]
+        }
+    }
+
+    package "Diversity Validation" as diversity_pkg {
+        component "evaluate_dataset_diversity.py" as ddr {
+            [14 diversity dimensions:]
+            [  script, capture, domain, color_mode,]
+            [  document_age, resolution, shadow, warping,]
+            [  orientation, skew, handwriting, layout,]
+            [  code, language_family]
+            [OOD holdout validation]
+            [Output: markdown DDR report]
+        }
+    }
+}
+
+' =====================================================================
+' OUTPUT
+' =====================================================================
+
+package "Output Artifacts" as output_pkg <<output>> {
+    file "train_manifest.json\n(flat JSON list)" as train_manifest
+    file "val_manifest.json\n(flat JSON list)" as val_manifest
+
+    note right of train_manifest
+        **Per-record fields:**
+        image_path (relative to /data/)
+        script, source, orientation
+        shadow, warping (float 0-1)
+        split_type: "train"/"val"/"ood"
+    end note
+
+    database "GCS: gs://image_detection_b/\nmultitask-datasets/" as gcs_out
+    database "Modal Volume:\nmultitask-datasets /data/" as modal_vol
+}
+
+package "OOD Constraints" as ood_pkg <<constraint>> {
+    note as ood_note
+        **OOD Non-Leakage Rules**
+        Scripts reserved: Mongolian, Syriac, Georgian
+        Never appear in train/val splits
+        Validated by _check_ood_leakage()
+        in all 5 sub-commands + train script
+        Tracked in metadata_registry/ood_registry.jsonl
+    end note
+}
+
+' =====================================================================
+' DATA FLOW ARROWS
+' =====================================================================
+
+' Stage 1 inputs
+v3_gcs --> shadow_script : "source images"
+v3_gcs --> warp_script : "source images"
+v3_gcs --> orient_synth_script : "non-Latin pool"
+pdf_sources --> orient_real_script : "PDF pages"
+
+' Stage 1 → Stage 2 (severity needs paired images)
+l2_registry --> shadow_label : "existing records"
+l2_registry --> warp_label : "existing records"
+l2_registry --> hw_label : "DocLayout inferences"
+
+' Stage 2 feedback to L2
+shadow_label --> l2_registry : "shadow_severity written"
+warp_label --> l2_registry : "warping_severity written"
+
+' Stage 1 + Stage 2 → Stage 3
+shadow_script --> cmd_shadow : "8K shadow images"
+warp_script --> cmd_warp : "5K warped images"
+orient_synth_script --> cmd_orient : "synth orientations"
+orient_real_script --> cmd_orient : "real orientations"
+l2_registry --> cmd_source : "capture_method"
+l2_registry --> cmd_shadow : "shadow_severity"
+l2_registry --> cmd_warp : "warping_severity"
+mdiw13 --> cmd_script : "753 local images"
+v3_gcs --> cmd_script : "splits.jsonl"
+
+' Stage 3 internal flow
+cmd_script --> cmd_merge
+cmd_orient --> cmd_merge
+cmd_source --> cmd_merge
+cmd_shadow --> cmd_merge
+cmd_warp --> cmd_merge
+font_audit --> cmd_script : "font coverage gate"
+count_audit --> cmd_script : "per-script counts"
+cmd_merge --> ddr : "merged manifests"
+
+' Stage 3 → Output
+cmd_merge --> train_manifest
+cmd_merge --> val_manifest
+train_manifest --> gcs_out : "upload"
+val_manifest --> gcs_out : "upload"
+gcs_out --> modal_vol : "modal volume\ncp /data/"
+
+' OOD constraint applies throughout
+ood_note -[dashed]-> cmd_merge : "enforced"
+ood_note -[dashed]-> cmd_script : "enforced"
+
+@enduml

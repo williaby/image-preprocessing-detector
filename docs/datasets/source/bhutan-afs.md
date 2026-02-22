@@ -130,17 +130,17 @@
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (83.5/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (89.5/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 99.5 | 25% |  |
-| Field Validity | 89.0 | 25% |  |
-| Doc Completeness | 45.5 | 15% | Below threshold |
-| Defect Rate | 72.0 | 15% |  |
-| Cross-Source Agreement | 97.7 | 10% |  |
-| VLM Accuracy | 89.6 | 10% |  |
-| **Overall** | **83.5** | | **Grade B** |
+| Field Coverage | 93.9 | 15% |  |
+| Field Validity | 89.0 | 15% |  |
+| Doc Completeness | 45.5 | 5% | Below threshold |
+| Defect Rate | 72.0 | 10% |  |
+| Cross-Source Agreement | 97.7 | 15% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **89.5** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -165,15 +165,13 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 89.6%
 
 ###### 11.4 Cross-Dataset Findings
 
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/bhutan-afs/](../../scripts/audit/results/bhutan-afs/)
-
----
 
 ##### Reliability & Known Issues
 
@@ -184,3 +182,22 @@
 | KI-001 | HIGH | Docling layout label casing (lowercase -> DocLayNet PascalCase) | ✅ Mitigated |
 | KI-003 | MEDIUM | VLM has_figure: 13 flagged, all verified correct (0% FP) | ✅ Verified |
 | KI-009 | HIGH | Documentation language claims unreliable | ✅ Validated & corrected |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 135 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 135 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

@@ -336,12 +336,68 @@ Base metadata extraction complete via `annotate_base_metadata_lite.py`. Layer 2 
 
 #### 11. Layer 2 Audit Summary
 
-Prescreening pass rate: 0% (base metadata only, expected gaps). Schema compliance: 100% (27 fields, all valid). Defect catalog: 6 defects (5 accepted gaps, 1 resolved text_scope fix). Overall grade: D (60-63/100, expected for base-only enrichment).
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
 
----
+##### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-16 | **Grade**: A (94.3/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 85.4 | 18% |  |
+| Field Validity | 96.3 | 18% |  |
+| Doc Completeness | 100.0 | 6% |  |
+| Defect Rate | 96.0 | 12% |  |
+| Cross-Source Agreement | - | - | Excluded (no data) |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **94.3** | | **Grade A** |
+
+##### 11.2 Key Defects
+
+> **Total**: 6 defects (4 resolved, 2 accepted)
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | low | RESOLVED |  |
+| D02 | domain_level1 | medium | RESOLVED |  |
+| D03 | iso639_language | low | RESOLVED |  |
+| D04 | layout_detections | low | ACCEPTED |  |
+| D05 | text_has_content | low | ACCEPTED |  |
+| D06 | text_scope | medium | RESOLVED |  |
+
+##### 11.3 VLM Inspection Summary
+
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 91.7%
+
+##### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/wsrd/](../../scripts/audit/results/wsrd/)
 
 #### 12. Reliability & Bottlenecks
 
 Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enrichments (domain, language, layout, text). Suitable for: Shadow removal training (enrichment gaps not blocking).
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 4,500 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 4,500 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `resolution` | 100.0% | 0.000 |

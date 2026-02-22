@@ -82,14 +82,14 @@ Fill in based on dataset documentation review:
 
 | Property | Value | Source |
 |----------|-------|--------|
-| Is synthetic? | | Dataset documentation |
-| Primary language(s) | | Dataset documentation |
-| Primary script(s) | | Dataset documentation |
-| Capture method | | Dataset documentation |
-| Expected splits | | Dataset documentation / parser |
-| Total samples | | Parser manifest |
-| Has ground truth files? | | Dataset structure |
-| Multi-column documents? | | Dataset documentation |
+| Is synthetic? | No (real camera-captured) | Dataset documentation |
+| Primary language(s) | Chinese (76%), English (19%) | LLM analysis (KI-009: paper claims English-only) |
+| Primary script(s) | Hans (76.3%), Latn (22.6%) | LLM analysis |
+| Capture method | camera_smartphone (inputs) / scanner_flatbed (GT) | Dataset documentation |
+| Expected splits | train=900 / test=300 (no validation) | Dataset documentation |
+| Total samples | 1,200 (600 pairs), 583 in L2 | Parser manifest |
+| Has ground truth files? | Yes - pixel-aligned paired images (_in/_gt) | Dataset structure |
+| Multi-column documents? | Unknown | Not documented |
 
 ---
 
@@ -107,15 +107,15 @@ Document expected values based on documentation (ground truth for validation):
 
 | Field | Expected Value | Source | Confidence |
 |-------|---------------|--------|------------|
-| `capture_method` | | Dataset documentation | |
-| `iso639_language` | | Dataset documentation | |
-| `iso15924_script` | | Dataset documentation | |
-| `script_family` | | Derived from script | |
-| `split` | | Parser manifest | |
-| `is_synthetic` | | Dataset characteristics | |
-| `domain_level1` | | Dataset content type | |
+| `capture_method` | camera_smartphone | Dataset documentation + KI-005 override | HIGH |
+| `iso639_language` | zh (76%), en (19%), mixed (5%) | LLM enrichment (NOT paper) | MEDIUM |
+| `iso15924_script` | Hans (76.3%), Latn (22.6%) | LLM enrichment | MEDIUM |
+| `script_family` | cjk (76.8%), latin (22.6%), indic (0.5%) | Derived from script | HIGH |
+| `split` | train/test (by task directory) | Parser manifest | HIGH |
+| `is_synthetic` | false | Dataset characteristics | HIGH |
+| `domain_level1` | EDU (45%), PER (11%), FIN (9%), SCI (8%) | LLM enrichment | MEDIUM |
 
-**Notes**:
+**Notes**: CRITICAL KI-009 - paper claims English, actual 74% Chinese. KI-005 - LLM misclassifies 38.8% camera as scanner. KI-008 - script_family had 'ltr' instead of proper codes. All 3 KIs resolved in integration v2. Only input images in L2 (583/1200). 14 defects: 10 resolved, 2 partially resolved, 2 deferred.
 
 ---
 

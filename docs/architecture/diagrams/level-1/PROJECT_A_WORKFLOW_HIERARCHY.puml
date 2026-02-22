@@ -1,9 +1,9 @@
-@startuml Project_A_Workflow_Hierarchy
+@startuml PROJECT_A_WORKFLOW_HIERARCHY
 !theme plain
 skinparam backgroundColor #FEFEFE
 
 title Project A - Workflow Hierarchy & Data Dependencies\nHow Workstreams Connect
-footer Preprocessing, IQA & Routing Gateway | v2.0 | December 2025
+footer Preprocessing, IQA & Routing Gateway | v3.0 | February 2026
 
 ' ============================================================================
 ' SWIMLANES BY WORKSTREAM
@@ -159,7 +159,8 @@ partition "Production Model Training" {
   note right
     **Purpose:**
     Full document analysis model
-    16 heads across 5 groups
+    22 heads across 5 groups
+    (IQA[6], Script[3], Orient+Skew[3], HW[5], PageAttrs[5])
     (~50ms GPU inference)
 
     **Data:**
@@ -256,13 +257,45 @@ partition "Model Export" {
 |Production Runtime|
 
 partition "Document Processing" {
-  :Receive document\n(PDF/Image);
+  :Receive document\n(any format);
+
+  :Stage 0 — Document Type Router;
+  note right
+    **Format detection + PDF sub-classification — <20ms CPU**
+
+    PDF sub-types:
+    - born_digital: valid text layer → fast path
+    - scanned: no text layer → image pipeline
+    - hybrid: per-page routing
+    - born_digital_degraded: garbage text → image pipeline
+
+    **Outputs:**
+    document_class, file_format, router_confidence,
+    page_type_map (hybrid PDFs only)
+
+    **Source (planned):**
+    - src/.../routing/document_type_router.py
+      (promotes classification/pdf_type_classifier.py)
+
+    **Reference:**
+    docs/tmp_cleanup/docling_format_routing_analysis.md
+  end note
+
+  if (document_class?) then (native text OR\nborn-digital PDF)
+    :Pass to Unify directly\n(no image preprocessing);
+    note right
+      Fast path: DOCX, HTML, MD, LaTeX, CSV,
+      XML, EPUB, VTT, born-digital PDF
+      Saves ~55ms GPU per document
+    end note
+    stop
+  else (image / scanned PDF\nor hybrid PDF pages)
+  endif
 
   :Pre-flight analysis;
   note right
     - DPI detection
     - Upscaling if needed
-    - PDF type classification
 
     **Workflow:**
     [[project-a-primary-workflow-high-level.puml]]
@@ -271,7 +304,6 @@ partition "Document Processing" {
     - src/.../ingestion/pdf_analyzer.py
     - src/.../ingestion/pdf_resolution.py
     - src/.../ingestion/pdf_upscaler.py
-    - src/.../classification/pdf_type_classifier.py
 
     **Documentation:**
     [[docs/api/ingestion.md]]
@@ -304,7 +336,7 @@ partition "Document Processing" {
       resolution quality (~3ms)
     end note
 
-    :SigLIP 2 NAFlex\nMulti-Task (16 heads);
+    :SigLIP 2 NAFlex\nMulti-Task (22 heads);
     note right
       **5 Head Groups (~50ms):**
       IQA, Script, Orientation+Skew,

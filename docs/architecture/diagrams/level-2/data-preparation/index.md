@@ -132,6 +132,57 @@ Dataset-agnostic CPU-only pipeline for predicting document skew angle and page o
 
 ---
 
+### Stream 4C — Multi-Task Dataset Preparation Pipeline
+
+> **Status**: ⚠️ Diagram planned — scripts exist, diagram not yet created.
+
+Three-stage pipeline that prepares the 5-task training manifest for SigLIP 2 multi-task training. Enforces OOD non-leakage, ≤60% synthetic mixing cap, and 14-dimension diversity requirements.
+
+**Stage 1 — Augmentation Generation** (parallel):
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/generate_v3_shadow_view.py` | 8K shadow images from v3 (edge/cast/spotlight/scanner_lid) |
+| `scripts/generate_v3_warping_view.py` | 5K warped images from v3 (perspective/page_curl/fold) |
+| `scripts/derive_v3_orientation_view.py` | Non-Latin v3 orientation labels from sidecars (≤20K synth) |
+| `scripts/build_orientation_real_component.py` | DocLayNet/RVL-CDIP PDFs → 4 rotations (≤30K real) |
+
+**Stage 2 — Label Computation** (L2 metadata enrichment):
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/label_shadow_severity.py` | Luminance-delta severity for sd7k/wsrd → writes to L2 metadata |
+| `scripts/label_warping_severity.py` | SSIM-based severity for warpdoc/wsrd/anyphotodoc6300 → writes to L2 metadata |
+| `scripts/harmonize_handwriting_labels.py` | Handwriting manifest from IAM/FUNSD/HierText/COCO-Text |
+| `scripts/generate_multitask_labels.py` | SigLIP 2 teacher pseudo-labels for active learning |
+
+**Stage 3 — Audit & Manifest Assembly**:
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/audit_font_coverage.py` | Verify ≥5 font families/script; exits non-zero if under threshold |
+| `scripts/audit_v3_per_script_counts.py` | Count v3 images per script vs target; generate resume-points |
+| `scripts/prepare_multitask_datasets.py` | **Main orchestrator**: 6 sub-commands (script/orientation/source/shadow/warping/merge) + OOD checks |
+| `scripts/evaluate_dataset_diversity.py` | DDR generator: 14 dimensions, OOD validation, markdown reports |
+
+*Diagram to be created: [`stream-4c-dataset-preparation.puml`](stream-4c-dataset-preparation.puml)*
+
+---
+
+### L2 Metadata Enrichment Pipeline
+
+> **Status**: ⚠️ Diagram planned — `label_shadow_severity.py`, `label_warping_severity.py`, and `harmonize_handwriting_labels.py` write back to L2 registry; no current diagram captures this feedback loop.
+
+Three labeling scripts inject new severity/label fields directly into the L2 metadata registry, making it a living annotation system rather than read-only:
+
+- `label_shadow_severity.py` → `shadow_severity` field in `{dataset}_metadata.json`
+- `label_warping_severity.py` → `warping_severity` field in `{dataset}_metadata.json`
+- `harmonize_handwriting_labels.py` → unified `handwriting_present` label across datasets
+
+*Diagram to be created: [`l2-metadata-enrichment.puml`](l2-metadata-enrichment.puml)*
+
+---
+
 ## Three-Layer Metadata Architecture
 
 The data preparation pipeline implements a versioned metadata schema with three distinct layers.
@@ -385,7 +436,7 @@ The annotation system uses a hub-and-spoke canonical superset for normalizing la
 | Schema | Classes | Source | Config Key |
 |--------|---------|--------|------------|
 | **DocLayNet** | 11 | IBM DocLayNet dataset | `doclaynet` |
-| **DocStructBench** | 10 | DocLayout-YOLO training data | `docstructbench` |
+| **DocStructBench** | 10 | docling-layout training data | `docstructbench` |
 | **PubLayNet** | 5 | PubLayNet dataset | `publaynet` |
 | **Docling (DocItemLabel)** | 23 | `docling-core` library | `docling` |
 | **D4LA** | 27 | VGT/ICCV 2023 | `d4la` |
@@ -506,7 +557,7 @@ src/image_preprocessing_detector/annotation/
 │   └── providers/
 │       ├── __init__.py
 │       ├── base.py                 # EnrichmentProvider protocol
-│       ├── yolo.py                 # DocLayout-YOLO provider
+│       ├── yolo.py                 # docling-layout provider
 │       └── siglip.py               # SigLIP weak labeling
 ├── storage/
 │   ├── __init__.py
@@ -779,7 +830,7 @@ All datasets have been successfully annotated with three-layer metadata (immutab
 
 - **Tier 0** (by construction): 8 datasets - Content known from dataset purpose
 - **Tier 1** (existing annotations): 5 datasets - COCO, MOS, or OCR ground truth
-- **Tier 2** (YOLO inference): 11 datasets - DocLayout-YOLO layout detection
+- **Tier 2** (YOLO inference): 11 datasets - docling-layout layout detection
 
 ---
 

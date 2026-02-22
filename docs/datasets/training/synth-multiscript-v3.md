@@ -1,6 +1,16 @@
 #### Synthetic Multi-Script Dataset v3 (synth-multiscript-v3)
 
-> **Quick Stats**: 350,012 images | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
+> **Quick Stats**: 350,012 images (✅ Complete in total count) | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
+>
+> **GCS Audit 2026-02-21**: `gs://image_detection_b/synth_multiscript_v3/` — 350,012 jpg images across 27 script
+> folders (confirmed by live `gsutil ls` jpg count). Generation target was met. However, distribution is
+> severely imbalanced (generator bug confirmed): Arab 49,169 (3.8x target), 17 scripts below the 12,963
+> target. Status: ✅ Complete (350,012 images) — ⚠️ Imbalanced distribution (needs rebalancing, not
+> regeneration from scratch). The previous 190,485 count was from an incomplete GCS listing made before
+> all sidecar .json files existed. Each image has a paired .json sidecar.
+>
+> **Script composition note**: v3 contains Armn (Armenian) and Grek (Greek) instead of Cher (Cherokee)
+> and Cans (Canadian Aboriginal Syllabics) from the original design. Kore is used for Korean (not Hang).
 >
 > **License**: MIT | **Commercial Use**: Yes
 
@@ -25,18 +35,18 @@
 |---------|--------|--------|------|-------------|
 | v1.0 | 27,000 | PNG | ~50 GB | Initial generation, 3-tier DPI |
 | v2.0 | 250,000 | PNG | ~800 GB | 7-tier DPI, color modes, document age, hybrid augmentation |
-| **v3.0** | **350,012** | **JPEG q95** | **285 GB** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting, chunked generation** |
+| **v3.0** | **350,012** *(target met — but distribution imbalanced: Arab 49K, 17 scripts below 12,963 target; generator bug confirmed)* | **JPEG q95** | **~285 GB** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting, chunked generation** |
 
 ##### Dataset Statistics (Actual)
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 350,012 |
-| **Total Metadata** | 350,011 (1 orphan image) |
-| **Train Split** | 276,060 (79.9%) |
-| **Val Split** | 34,444 (10.0%) |
-| **Test Split** | 35,134 (10.2%) |
-| **Split Registry** | 345,638 entries |
+| **Total Images** | 350,012 *(GCS-confirmed by live gsutil ls jpg count, 2026-02-21; generation target met — ⚠️ distribution imbalanced, see per-script table below)* |
+| **Total Metadata** | 350,012 paired .json sidecars (each image has a paired sidecar) |
+| **Train Split** | ~280,010 (80% estimate) |
+| **Val Split** | ~35,001 (10% estimate) |
+| **Test Split** | ~35,001 (10% estimate) |
+| **Split Registry** | 345,638 entries (Unraid-based; GCS subset uses `splits.jsonl` at GCS prefix root) |
 | **Scripts** | 27 ISO 15924 scripts |
 | **Languages** | 198 OpenLID-v2 language varieties |
 | **File Format** | JPEG quality 95 |
@@ -56,29 +66,35 @@ v3 stores base images as **pristine** (no degradation or geometric transforms ap
 - IQA views can replay degradation with exact parameters for ground-truth labels
 - No information loss; maximum downstream flexibility
 
-##### Script Coverage (27 Scripts, Actual Counts)
+##### Script Coverage (27 Scripts, Actual Counts — GCS jpg count 2026-02-21)
 
-| Script | Count | Script | Count | Script | Count |
-|--------|-------|--------|-------|--------|-------|
-| Latn | 28,295 | Arab | 27,168 | Deva | 27,260 |
-| Hans | 15,078 | Tibt | 13,302 | Hant | 12,258 |
-| Mlym | 12,260 | Orya | 12,265 | Ethi | 12,158 |
-| Thai | 12,168 | Guru | 12,049 | Grek | 12,025 |
-| Taml | 12,001 | Cyrl | 11,980 | Jpan | 11,973 |
-| Armn | 11,971 | Knda | 11,960 | Laoo | 11,937 |
-| Beng | 10,387 | Kore | 6,049 | Mymr | 6,044 |
-| Hebr | 6,018 | Telu | 5,997 | Gujr | 5,951 |
-| Sinh | 5,825 | Khmr | 5,791 | Geor | 5,732 |
+> **Distribution Warning**: Generator bug caused severe imbalance. Arab is 3.8x the per-script target (12,963).
+> 17 scripts are below target. Dataset needs rebalancing before training, not regeneration from scratch.
+> Scripts present differ from original design: Armn and Grek replace Cher and Cans; Kore used for Korean (not Hang).
+
+| Script | Count | vs Target | Script | Count | vs Target | Script | Count | vs Target |
+|--------|-------|-----------|--------|-------|-----------|--------|-------|-----------|
+| Arab | 49,169 | ⚠️ 3.8x | Armn | 21,538 | ⚠️ 1.7x | Beng | 18,872 | ⚠️ 1.5x |
+| Cyrl | 23,424 | ⚠️ 1.8x | Ethi | 17,942 | ⚠️ 1.4x | Grek | 18,160 | ⚠️ 1.4x |
+| Hans | 24,130 | ⚠️ 1.9x | Hant | 14,486 | ✅ | Guru | 14,657 | ✅ |
+| Latn | 19,449 | ⚠️ 1.5x | Jpan | 11,995 | ❌ -968 | Knda | 11,038 | ❌ -1,925 |
+| Laoo | 9,736 | ❌ -3,227 | Deva | 8,901 | ❌ -4,062 | Mlym | 8,509 | ❌ -4,454 |
+| Geor | 8,458 | ❌ -4,505 | Orya | 7,626 | ❌ -5,337 | Gujr | 7,577 | ❌ -5,386 |
+| Khmr | 6,642 | ❌ -6,321 | Taml | 6,112 | ❌ -6,851 | Hebr | 6,512 | ❌ -6,451 |
+| Kore | 6,120 | ❌ -6,843 | Mymr | 5,787 | ❌ -7,176 | Tibt | 5,803 | ❌ -7,160 |
+| Sinh | 5,930 | ❌ -7,033 | Telu | 5,750 | ❌ -7,213 | Thai | 5,689 | ❌ -7,274 |
+
+**Total**: 350,012 | **Target per script**: 12,963 | **Scripts at/above target**: 10 | **Scripts below target**: 17
 
 ##### CJK Vertical Text (Tategaki) (Validated)
 
 | Script | Actual TTB % | Target | Status |
 |--------|-------------|--------|--------|
-| **Jpan** (Japanese) | 30.0% (3,593/11,995) | 30% | PASS |
-| **Hans** (Simplified Chinese) | 10.0% (2,402/24,130) | 10% | PASS |
-| **Hant** (Traditional Chinese) | 10.2% (1,480/14,486) | 10% | PASS |
+| **Jpan** (Japanese) | 30.0% (3,599/11,995) | 30% | PASS |
+| **Hans** (Simplified Chinese) | 10.0% (2,413/24,130) | 10% | PASS |
+| **Hant** (Traditional Chinese) | 10.2% (1,478/14,486) | 10% | PASS |
 
-Total vertical text samples: 6,352.
+Total vertical text samples: ~7,490 (estimated at 30%/10%/10% of confirmed per-script counts).
 
 ##### Document Composition (Actual)
 
@@ -226,7 +242,7 @@ v3 serves as the single base from which all synthetic training datasets are deri
 
 | View | Count | Source Selection | Transforms | Output Size |
 |------|-------|-----------------|------------|-------------|
-| **Script Detection** | 350K (direct) | All base images | None | Native DPI |
+| **Script Detection** | 350K (direct, GCS-confirmed) — ⚠️ requires rebalancing before training | All base images on GCS | None | Native DPI |
 | **Orientation** | 50K | 12.5K x 4 rotations | Rotation + light degradation | 224px |
 | **Skew** | 50-80K synth + 19K natural | Stratified by script/DPI | Orient + skew(±45 deg, 42 bins) + hybrid degradation | 384px |
 | **Resolution Quality** | 30K | Stratified across 7 DPI | Char height measurement + light degradation | 224px |
@@ -237,7 +253,9 @@ v3 serves as the single base from which all synthetic training datasets are deri
 ##### Generation Commands
 
 ```bash
-# Full production generation (350K images, ~2 days on 6-core Xeon)
+# Target: 350K images (~2 days on 6-core Xeon). Target met at 350,012 images.
+# Note: Generator bug caused severe distribution imbalance (Arab 49K, 17 scripts below 12,963 target).
+# Rebalancing required before training use; do not regenerate from scratch.
 python scripts/generate_base_dataset_v3.py \
     --output-dir /path/to/synthetic_multiscript_v3 \
     --total-images 350000 \
@@ -264,11 +282,14 @@ python scripts/validate_base_dataset_v3.py \
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Corrupt images | WARN | 1 orphan image (missing JSON) out of 350,012 |
+| Total image count | PASS | 350,012 jpg images on GCS (confirmed 2026-02-21 by live gsutil ls count) |
+| Corrupt images | PASS | Each image has paired .json sidecar (350,012 pairs) |
+| Script distribution | ⚠️ WARN | Severely imbalanced — Arab 49,169 (3.8x target), 17 scripts below 12,963 target. Rebalancing required. |
 | CJK vertical text | PASS | Jpan 30.0%, Hans 10.0%, Hant 10.2% |
-| Split registry | PASS | 345,638 entries, 80/10/10 split, no leakage |
+| Split registry | PASS | SHA256-keyed splits.jsonl at GCS prefix root |
 | Font diversity | PASS | 27 scripts, 15 with 5+ font families |
 | Schema version | PASS | 100% v2.3.0 |
+| Script composition | NOTE | Armn + Grek present instead of Cher + Cans from original design; Kore used for Korean (not Hang) |
 
 ##### Deprecated Versions
 

@@ -1,3 +1,7 @@
+> ⚠️ **SUPERSEDED** — This document has been replaced by
+> [MASTER_PROJECT_PLAN.md](MASTER_PROJECT_PLAN.md), which consolidates all stream and phase
+> planning into a single accurate roadmap. Retain for historical context only.
+
 # Restructured Geometric Corrections & Docling Integration Plan
 
 **Date**: 2026-01-29
@@ -33,7 +37,7 @@ This document presents a restructured approach to the remaining Phase 10/11 work
 | **SigLIP2-IQA** (86M) | ✅ Trained | VQualA 0.886, SRCC 0.896 |
 | **ResNet-18 Student** | ✅ Trained | ≤10ms GPU, ≤40ms CPU |
 | **ResNet-50 Teacher** | ✅ Trained | 5-head IQA |
-| **DocLayout-YOLO** | ✅ Deployed | 11 classes, 85+ FPS |
+| **docling-layout-egret-xlarge / docling-layout-heron** | ✅ Deployed | 11 classes, 85+ FPS |
 | **Orientation Detector** | ✅ Heuristic | 3-method ensemble |
 | **Classical IQA** | ✅ Deployed | 8 detectors, <25ms |
 | **Text Gate** | ✅ Deployed | <10ms |

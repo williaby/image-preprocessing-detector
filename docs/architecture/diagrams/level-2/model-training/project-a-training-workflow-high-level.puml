@@ -29,7 +29,7 @@ endif
 
 |Step 2: SigLIP 2 Multi-Task|
 :Load SigLIP 2 NAFlex backbone\n(~88M, frozen ViT-B/16);
-:Attach 16 task heads\n(5 groups: IQA, Script,\nOrientation+Skew, Handwriting,\nPage Attrs);
+:Attach 22 task heads\n(5 groups: IQA[6], Script[3],\nOrientation+Skew[3], Handwriting[5],\nPage Attrs[5]);
 :Train heads on all 10 datasets\n(weighted multi-task loss);
 if (All heads pass\ngraduation thresholds?) then (yes)
   :Export SigLIP 2 checkpoint;
@@ -43,7 +43,7 @@ endif
 :Re-train MobileNetV4-Conv-S\nwith KL-divergence (T=3);
 if (Improved thresholds?\norientation > 98%?) then (yes)
   :Export to ONNX (3 heads);
-  :Export SigLIP 2 to ONNX (16 heads);
+  :Export SigLIP 2 to ONNX (22 heads);
 else (no)
   :Adjust alpha, temperature;
   :Retrain MobileNetV4;

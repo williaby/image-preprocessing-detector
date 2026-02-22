@@ -111,7 +111,7 @@ fork again
 
     **Models**:
     - MobileNetV4-Conv-S (~3ms, 3 heads)
-    - SigLIP 2 NAFlex (~50ms, 16 heads)
+    - SigLIP 2 NAFlex (~50ms, 22 heads)
 
     **Features**:
     - Quality score predictions

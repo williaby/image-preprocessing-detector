@@ -9,6 +9,8 @@ tags:
 title: 'Model Card: IQA ResNet-50 Teacher'
 ---
 
+> ⚠️ **DEPRECATED** — This model (`iqa_resnet50_teacher_v1.0.0`) has been superseded by **SigLIP 2 NAFlex** as the multi-task teacher model (Phase 2+, Stream 4C). The ResNet-50 teacher was trained for Phase 3 and is no longer part of the active pipeline. See [`docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) for the current architecture.
+
 ## Overview
 
 | Field | Value |

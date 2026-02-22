@@ -106,7 +106,15 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 
 ## Project Overview
 
-**Project A - Preprocessing, IQA & Coarse Layout Gateway** - Front door for the four-project RAG document pipeline. Analyzes raw documents (PDFs, images), assesses quality, applies corrections, and provides intelligent routing metadata to downstream OCR processing.
+**Project A - Preprocessing, IQA & Coarse Layout Gateway** - Front door for the four-project RAG document pipeline. Accepts raw documents in any condition, assesses quality along multiple dimensions, applies geometric and quality corrections, and delivers `DocumentMetadata.json` + corrected images to Project B.
+
+> **Full system narrative**: [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)
+> — explains what the system does, how the two-model pipeline works, and why the design is sound.
+>
+> **Current roadmap and status**: [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md)
+> — consolidated plan replacing PROJECT_PLAN.md and PHASE_10_11_RESTRUCTURED_PLAN.md.
+>
+> **Last synchronized**: 2026-02-21
 
 ### Four-Project RAG Pipeline Architecture
 
@@ -115,9 +123,10 @@ Project A (THIS REPO)     →    Project B          →    Project C         →
 Preprocessing & IQA              OCR Orchestration       Fusion & Trust         Vector Indexing
 ─────────────────────           ─────────────────       ──────────────         ───────────────
 • IQA & Corrections             • Full Layout           • Multi-Engine         • Embeddings
-• Text Gate                     • Reading Order           Fusion               • Vector DB
-• DQS Calculation               • Table Structure       • Trust Scoring        • Retrieval
-• Routing Metadata              • Multi-Engine OCR      • RAG Chunking         • Search
+• Script Detection              • Reading Order           Fusion               • Vector DB
+• Orientation/Skew              • Table Structure       • Trust Scoring        • Retrieval
+• Handwriting Analysis          • Multi-Engine OCR      • RAG Chunking         • Search
+• Routing Metadata
 
 OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
 DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
@@ -126,22 +135,19 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 
 **Project A Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Project B should use.
 
-**Key Innovation**: Multi-stage pipeline with **text detection gate** that routes documents to specialized processing paths:
+**Current Architecture** (two-model pipeline):
 
-- **No-text path**: Classical CV + ML IQA (teacher-student ResNet architecture)
-- **Text-detected path**: Layout-lite classification + hybrid IQA on embedded images
+- **MobileNetV4-Conv-S** (~3ms GPU): Pre-correction gate — orientation, skew, resolution
+- **SigLIP 2 NAFlex** (~50ms GPU): Multi-task teacher — 16 heads across IQA, Script, Orientation, Handwriting, Page Attributes
+- **docling-layout** (egret-large / heron): Layout detection (replaced YOLOv10-doc)
+- **Classical IQA layer**: 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew)
 
 **Scope Boundaries**:
 
-- **IN SCOPE**: IQA, corrections, DQS, layout-lite (coarse page attributes), routing recommendations
+- **IN SCOPE**: IQA, corrections, DQS, script/orientation/handwriting detection, routing recommendations
 - **OUT OF SCOPE**: Full layout detection, table structure, reading order (Project B responsibility)
 
-**Current Phase**: Phases 0-3, 6 ✅ COMPLETE, Phase 4 (Device Priority) ✅ 98% COMPLETE
-
-> **Note**: This CLAUDE.md provides high-level project overview. For detailed phase breakdown,
-> sprint plans, and current status, see [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
->
-> **Last synchronized**: 2025-02-05
+**Current Status**: Phases 0–6 ✅ COMPLETE | Streams 1–4C ✅ COMPLETE | Dataset assembly ⚠️ IN PROGRESS | Training ❌ PENDING
 
 ## Development Philosophy (MANDATORY)
 
@@ -502,7 +508,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - **Device Priority**: Local GPU → Local CPU → Modal GPU
 - **Exports**: ONNX + TorchScript, model registry integration
 - **Training**: 50 epochs (teacher), 30 epochs (student) on OHR-Bench dataset
-- See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)
+- See [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md)
 
 **Phase 2: Layout-Lite & DQS & Routing** ✅ COMPLETE
 
@@ -510,7 +516,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - **Page attributes**: fuzzy_scan, watermark, colorful_background
 - **Structural complexity score**: 0-1 metric for routing decisions
 - **Classes**: All 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
-- **Model**: YOLOv10-doc (specifically trained on DocLayNet dataset)
+- **Model**: docling-layout-egret-xlarge (accuracy) / docling-layout-heron (speed)
 - **Document Quality Score**: Aggregates degradation (IQA) + structural complexity (layout-lite)
 - **Pre-OCR Risk**: Single 0-1 score combining quality and layout signals
 - **Routing Recommendations**: 4 strategies based on DQS, pdf_type, and complexity
@@ -629,9 +635,9 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 ### Phased Development
 
-**Current Status**: Phases 0-3, 6 ✅ COMPLETE | Phases 4, 5, 8 ⚠️ PARTIAL | Phases 7, 9 ❌ NOT STARTED
+**Current Status**: Phases 0–6 ✅ COMPLETE | Streams 1–4C ✅ COMPLETE | Stream 4B dataset assembly ⚠️ IN PROGRESS | SigLIP 2 training ❌ PENDING
 
-> **Detailed Planning**: See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md) for complete sprint breakdown and current status.
+> **Detailed Planning**: See [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md) for current status, dependency tiers, and remaining work.
 
 #### Completed Phases ✅
 
@@ -660,7 +666,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 - **Phase 2** (Weeks 7-9): Core Components & Schema Alignment - ✅ **100% COMPLETE**
   - PDF type classification (image_only/born_digital/hybrid)
-  - Layout-lite detection (11 DocLayNet classes, YOLOv10-doc)
+  - Layout-lite detection (11 DocLayNet classes, docling-layout-egret-xlarge / docling-layout-heron)
   - DQS calculator (degradation + complexity)
   - Pre-OCR risk scoring
   - Routing engine (4 strategies)
@@ -752,7 +758,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - **ResNet-50/ResNet-18**: Teacher-student ML IQA (NOT MobileNetV3/EfficientNet)
   - Teacher: val_loss=0.27 (50 epochs)
   - Student: val_loss=0.14 (30 epochs)
-- **YOLOv10-doc**: Layout detection (document-optimized for DocLayNet)
+- **docling-layout-egret-xlarge / docling-layout-heron**: Layout detection (document-optimized for DocLayNet)
   - **Pre-trained models available (no additional training required)**
   - 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
   - Performance: 85+ FPS, 70-80% mAP
@@ -910,16 +916,16 @@ python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
 
 **Key Datasets**:
 
-- **IQA Training**: ohr-bench (8.5K), diqa-5000 (5.5K), iqa_phase7_165k (165K), realdae (1.2K)
+- **IQA Training**: ohr-bench (8.5K), diqa-5000 (5.5K), realdae (1.2K) *(iqa_phase7_165k EXCLUDED — dataset flawed; see docs/datasets/reviews/BATCH_1_IQA_SUMMARY.md §5)*
 - **Layout Detection**: doclaynet (81K), pubtabnet (568K), tablebank (278K), fintabnet (97K)
-- **Script Detection**: synth-multiscript-250k (250K, generating), mdiw13 (290K), mlt19 (20K)
+- **Script Detection**: synth-multiscript-v3 (190K GCS-actual, generator bug — v2/250K DELETED), mdiw13 (290K), mlt19 (20K)
 - **Text Detection**: cocotext (64K), mlt19 (20K), cc-ocr (6.5K)
 
 ## Training Dataset Inventory
 
 > **Token Optimized**: Two-tier documentation structure for training datasets
 > **Location**: `E:\image_detection\03_training_datasets\`
-> **Total Training Images**: 50K ready + 250K target (synthetic_multiscript in progress)
+> **Total Training Images**: 140K ready (orientation 50K + skew 90K) + 190K GCS-complete (synth-multiscript-v3 — generator bug stopped at 190K)
 
 ### Documentation Tiers
 
@@ -944,7 +950,7 @@ python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
 | Dataset | Purpose | Images | Status | Design Spec |
 |---------|---------|--------|--------|-------------|
 | orientation | Orientation Detection | 50,000 | ✅ Ready | [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](docs/planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md) |
-| synthetic_multiscript | Script Detection | 250K target (~27K partial) | 🔄 In Progress | [synth-multiscript-250k_review.md](docs/datasets/reviews/synth-multiscript-250k_review.md) |
+| synth-multiscript-v3 | Script Detection | 190,485 (GCS-actual, generator bug — treat as complete) | ⚠️ Partial | [training/synth-multiscript-v3.md](docs/datasets/training/synth-multiscript-v3.md) |
 
 ### Usage Guidelines for Claude Code
 

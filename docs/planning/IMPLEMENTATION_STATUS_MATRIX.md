@@ -12,8 +12,8 @@ tags:
 
 # Planning Document Implementation Status Matrix
 
-> **Last Updated**: 2026-02-10
-> **Documents Tracked**: 19
+> **Last Updated**: 2026-02-21
+> **Documents Tracked**: 21
 > **Purpose**: Map each planning document to its implementation status and source code modules
 
 ## Status Legend
@@ -32,7 +32,9 @@ tags:
 
 | Document | Status | % Complete | Key Modules | Last Verified |
 |----------|--------|------------|-------------|---------------|
-| [PROJECT_PLAN.md](#project_planmd) | ⚠️ | 75% | Multiple (see phases) | 2026-02-10 |
+| **[MASTER_PROJECT_PLAN.md](#master_project_planmd)** | ✅ | **Primary** | **Consolidated roadmap — use this** | 2026-02-21 |
+| [docs/PROJECT_OVERVIEW.md](#project_overviewmd) | ✅ | Reference | System narrative — target-state architecture | 2026-02-21 |
+| [PROJECT_PLAN.md](#project_planmd) | 🔄 | Superseded | See MASTER_PROJECT_PLAN.md | 2026-02-21 |
 | [SIGLIP2_MULTITASK_REQUIREMENTS.md](#siglip2_multitask_requirementsmd) | 📋 | 0% | None | 2026-02-10 |
 | [DATASET_DIVERSITY_REQUIREMENTS.md](#dataset_diversity_requirementsmd) | ⚠️ | 25% | `synthetic/` | 2026-02-10 |
 | [TRAINING_OPTIMIZATION_PLAN.md](#training_optimization_planmd) | 📋 | 0% | None | 2026-02-10 |
@@ -50,7 +52,7 @@ tags:
 | [DATA_AVAILABILITY_REPORT.md](#data_availability_reportmd) | 📊 | N/A | Reference document | 2026-02-10 |
 | [DATASET_AUDIT_REPORT.md](#dataset_audit_reportmd) | 📊 | N/A | Reference document | 2026-02-10 |
 | [DATASET_GAPS_REPORT.md](#dataset_gaps_reportmd) | 📊 | N/A | Reference document | 2026-02-10 |
-| [PHASE_10_11_RESTRUCTURED_PLAN.md](#phase_10_11_restructured_planmd) | 📋 | 0% | None | 2026-02-10 |
+| [PHASE_10_11_RESTRUCTURED_PLAN.md](#phase_10_11_restructured_planmd) | 🔄 | Superseded | See MASTER_PROJECT_PLAN.md | 2026-02-21 |
 
 ---
 
@@ -58,39 +60,19 @@ tags:
 
 ### PROJECT_PLAN.md
 
-**Status**: ⚠️ Partial (75%)
+**Status**: 🔄 Superseded
 
-**Phase Breakdown**:
+> **Superseded by [PHASE_10_11_RESTRUCTURED_PLAN.md](#phase_10_11_restructured_planmd)** (2026-02-21).
+> Retain for historical context. Phase numbering (0–9), layout model (YOLOv10-doc), and ML IQA
+> architecture (ResNet-50/18) in this document are outdated. Current architecture uses SigLIP 2 +
+> MobileNetV4, and docling-layout-egret-xlarge / docling-layout-heron.
 
-- Phase 0 (Foundation): ✅ 100% - CI/CD, schema, pre-commit, security
-- Phase 1 (Classical MVP): ✅ 100% - Ingestion, text gate, 3 IQA detectors, corrections
-- Phase 1B (DPI Upscaling): ✅ 100% - `ingestion/pdf_upscaler.py`, `ingestion/pdf_resolution.py`
-- Phase 1C (Enhanced IQA): ✅ 100% - 8 classical detectors in `detection/iqa_classical.py`
-- Phase 2 (Core Components): ✅ 100% - Layout-lite, DQS, routing engine
-- Phase 3 (ML IQA): ✅ 100% - Teacher-student ResNet models trained
-- Phase 4 (Device Priority): ⚠️ 98% - `orchestration/device_orchestrator.py` (async I/O deferred)
-- Phase 5 (Testing & Deploy): ⚠️ 40% - API framework exists, endpoints stubbed
-- Phase 6 (Monitoring): ✅ 95% - `drift/` module (7500+ lines)
-- Phase 7 (ML Optimization): ❌ 0% - Not started
-- Phase 8 (DQS Calibration): ⚠️ 60% - Infrastructure done, real OCR calibration pending
-- Phase 9 (Element Classifiers): ❌ 0% - Not started
+**Historical Phase Completion (as of supersession)**:
 
-**Key Modules**:
-
-- `ingestion/` - PDF/image loading, upscaling, resolution detection
-- `detection/` - IQA (classical + ML), text gate, layout-lite
-- `correction/` - Deskew, CLAHE, sharpening, denoising
-- `metrics/` - DQS calculation
-- `routing/` - OCR routing recommendations
-- `orchestration/` - Device priority execution
-- `drift/` - Monitoring, alerting, active learning
-
-**Blockers**:
-
-- Phase 4: Async I/O deferred to Phase 5
-- Phase 5: API endpoints need implementation
-- Phase 8: Requires Project B OCR data for calibration
-- Phase 7/9: Not critical path for MVP
+- Phase 0–3, 6: ✅ Complete
+- Phase 4: ✅ 98% (async I/O deferred)
+- Phase 5: ⚠️ 40% (API endpoints stubbed)
+- Phase 7, 9: ❌ Not started (absorbed into value streams in PHASE_10_11_RESTRUCTURED_PLAN.md)
 
 ---
 
@@ -545,17 +527,33 @@ tags:
 
 ### PHASE_10_11_RESTRUCTURED_PLAN.md
 
-**Status**: 📋 Design-Only (0%)
+**Status**: ⚠️ Active (current master plan)
 
-**Description**: Phase 10 (Production Reliability) and Phase 11 (Geometric Corrections) restructured plan.
+**Description**: Value-stream-organized plan for remaining work. Supersedes PROJECT_PLAN.md
+(Phase 0–9 structure). 5-model consensus validated (avg 8.4/10). Organizes work into 8 parallel
+streams: Schema, Heuristics, Benchmarking, Teacher Model (SigLIP 2), DoclingRouter, Classical
+Geometric Corrections, Pseudo-Labeling, Student Distillation.
 
-**Implementation Status**:
+**Stream Status** (as of 2026-02-21):
 
-- ❌ Not started (superseded by current PROJECT_PLAN.md phase structure)
-- ❌ Most Phase 10 concepts absorbed into Phase 4 (Device Priority) and Phase 5 (Testing & Deploy)
-- ❌ Phase 11 geometric corrections partially exist in `correction/` module but not as structured phase
+- Stream 1 (Schema): ✅ Complete — schema_utils/, config/
+- Stream 2 (Heuristics): ✅ Complete — shadow, warping, orientation heuristics
+- Stream 3 (Benchmarking): ✅ Complete — go/no-go decisions confirmed
+- Stream 4A (Architecture): ✅ Complete — `modal/train_siglip2_multitask.py` written
+- Stream 4B (Dataset Prep): ⚠️ In progress — Phase 3 severity labeling running; Phases 5–7 deferred
+- Stream 4C (OOD/Diversity): ✅ Complete — DDR framework, OOD registry, remediation plan
+- Stream 5 (DoclingRouter): ⚠️ In progress — `routing/docling_router.py` exists
+- Stream 6 (Geometric): ⚠️ In progress — border removal, perspective correction created
+- Stream 7–8 (Pseudo-labels, Distillation): ❌ Not started — gated on Stream 4 training
 
-**Note**: This planning document appears superseded by the current phase structure in PROJECT_PLAN.md. Phase numbering and scope have evolved since this was written.
+**Layout model**: docling-layout-egret-xlarge (accuracy) / docling-layout-heron (speed)
+
+**Key Documents**:
+
+- [STREAM_4_IMPLEMENTATION_PLAN.md](STREAM_4_IMPLEMENTATION_PLAN.md) — Stream 4 detail
+- [STREAM_4C_DATASET_HANDOFF.md](STREAM_4C_DATASET_HANDOFF.md) — Dataset prep handoff
+- [HANDOFF_REMAINING_PHASES.md](HANDOFF_REMAINING_PHASES.md) — Phases 5–7 deferred work
+- [ML_MODEL_REGISTRY.md](ML_MODEL_REGISTRY.md) — All model specs
 
 ---
 
