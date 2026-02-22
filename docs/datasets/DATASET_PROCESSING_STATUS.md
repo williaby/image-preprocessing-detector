@@ -121,7 +121,7 @@ Format conversion, label extraction, or generation currently underway.
 
 | Dataset | Images | Format Status | Labels Status | Blocker | Next Steps | ETA |
 |---------|--------|---------------|---------------|---------|------------|-----|
-| **synth-multiscript-250k** | 250,000 | 🔄 Generating | ✅ Auto-generated | Generation in progress (40/250K) | 1. Complete synthetic generation<br>2. Generated from OpenLID v2 text corpus<br>3. 27 scripts + 8 IQA dimensions | Week 2-3 |
+| **synth-multiscript-v3** | 350,012 | ✅ Complete (GCS) | ✅ Auto-generated | ⚠️ Distribution imbalance — Arab 49K (3.8× target); 17 scripts below target | Rebalancing before training; v2 (250K) DELETED | ✅ Done |
 | **doc3d** | 100,000 | 🔄 ZIP→PNG (not extracted) | ✅ 7 GT types available | 16 ZIPs (209GB), user-defined splits | 1. Extract 16 ZIP files<br>2. Verify mesh ID structure<br>3. Decision: Parser needed? | Deferred (P3 priority) |
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
@@ -130,7 +130,7 @@ Format conversion, label extraction, or generation currently underway.
 
 **Priority Order**:
 
-1. **P0 (SigLIP Training)**: synth-multiscript-250k (250,000 images) - script detection critical
+1. ~~**P0 (SigLIP Training)**: synth-multiscript-v3 (350,012 images) — ✅ Complete on GCS; rebalancing needed before training~~
 2. **P2 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
 3. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
 4. **P3 (Receipts)**: mobile_receipts (size unknown) - assess priority
@@ -175,7 +175,7 @@ Text-only corpora used for synthetic dataset generation.
 
 | Dataset | Samples | Languages | Usage | Notes |
 |---------|---------|-----------|-------|-------|
-| **openlid-v2** | 116M+ text samples | 201 language varieties | Source for synth-multiscript-250k generation | Text-only corpus, no images. Used to generate 250K synthetic multi-script documents for SigLIP training. |
+| **openlid-v2** | 116M+ text samples | 201 language varieties | Source for synth-multiscript-v3 generation | Text-only corpus, no images. Used to generate synth-multiscript-v3 (350,012 images on GCS). v2 (250K) DELETED. |
 
 ---
 

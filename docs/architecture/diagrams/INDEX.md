@@ -73,7 +73,11 @@ docs/architecture/diagrams/
 │   │   ├── index.md
 │   │   ├── project-a-training-data-ingestion.puml
 │   │   ├── automated-data-labeling-pipeline.puml
-│   │   └── metadata-schema-architecture.puml
+│   │   ├── metadata-schema-architecture.puml
+│   │   ├── resolution-quality-labeling-pipeline.puml
+│   │   ├── skew-orientation-labeling-pipeline.puml
+│   │   ├── stream-4c-dataset-preparation.puml  [PLANNED — Stream 4C 3-stage pipeline]
+│   │   └── l2-metadata-enrichment.puml         [PLANNED — labeling scripts → L2 registry feedback]
 │   │
 │   ├── pseudo-labeling/                   # WS4
 │   │   ├── index.md
@@ -473,7 +477,7 @@ docs/architecture/diagrams/
 | Discrepancy | src/.../detection/discrepancy.py | - |
 | Orientation | src/.../detection/orientation_detector.py | - |
 | **Layout Detection** |||
-| DocLayout-YOLO | src/.../detection/doclayout_yolo.py | - |
+| docling-layout | src/.../detection/doclayout_yolo.py | - |
 | Layout-Lite Analyzer | src/.../detection/layout_lite/analyzer.py | - |
 | Column Detector | src/.../detection/layout_lite/column_detector.py | - |
 | Table Detector | src/.../detection/layout_lite/table_detector.py | - |

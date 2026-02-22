@@ -51,7 +51,7 @@ CORRECTIONS (if needed):
     └── Group 5: Page attributes (1 cls + 3 reg)
     |
     v (parallel)
-[DocLayout-YOLO (docling-layout)] (~25ms GPU) + [Classical IQA] (~25ms CPU) --- on corrected image ---
+[docling-layout-egret-xlarge / docling-layout-heron] (~25ms GPU) + [Classical IQA] (~25ms CPU) --- on corrected image ---
     |
     v
 Aggregate + Remaining Corrections + Output
@@ -108,7 +108,7 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 |---|---|---|---|---|
 | **IQA: blur/noise/contrast/skew/compression** | ResNet-18 student | SigLIP 2 Head Group 1 | 5x regression (0-1) | P0 |
 | **IQA: overall_quality** | ResNet-18 student | SigLIP 2 Head Group 1 | 1x regression (0-1) | P0 |
-| **Script: script_code (ISO 15924)** | NONE (gap) | SigLIP 2 Head Group 2 | Classification (10-20 classes) | P0 |
+| **Script: script_code (ISO 15924)** | NONE (gap) | SigLIP 2 Head Group 2 | Classification (10 classes Phase 1, full OpenLID Phase 2+; Mong/Syrc/Geor OOD-reserved) | P0 |
 | **Script: script_family, has_non_latin, has_rtl** | NONE (gap) | Derived from script_code | Rule-based derivation | P0 |
 | **Orientation: detected_angle (0/90/180/270)** | Classical CV ensemble | SigLIP 2 Head Group 3 | Classification (4 classes) | P1 |
 | **Skew: residual_skew_degrees** | Classical Hough (0.5° precision) | SigLIP 2 Head Group 3 | Regression (continuous, ±45°) | P1 |
@@ -120,9 +120,9 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 | **Page: warping_score** | NONE (gap) | SigLIP 2 Head Group 5 | Regression (0-1) | P2 |
 | **Page: code_confidence** | NONE (gap) | SigLIP 2 Head Group 5 | Regression (0-1) | P2 |
 | **Page: capture_method** | NONE (gap) | SigLIP 2 Head Group 5 | Classification (7 classes) | P2 |
-| **Layout: 11 DocLayNet elements + bboxes** | DocLayout-YOLO (docling-layout) | **Keep DocLayout-YOLO (docling-layout)** | Object detection | N/A |
-| **Layout: layout_type** | Derived from YOLO | **Keep derivation** | Rule-based | N/A |
-| **Layout: has_tables/figures/math** | DocLayout-YOLO (docling-layout) | **Keep DocLayout-YOLO (docling-layout)** | Boolean from element presence | N/A |
+| **Layout: 11 DocLayNet elements + bboxes** | docling-layout-egret-xlarge / docling-layout-heron | **Keep docling-layout** | Object detection | N/A |
+| **Layout: layout_type** | Derived from docling-layout | **Keep derivation** | Rule-based | N/A |
+| **Layout: has_tables/figures/math** | docling-layout-egret-xlarge / docling-layout-heron | **Keep docling-layout** | Boolean from element presence | N/A |
 | **Layout: complexity_score** | DQS calculator | **Keep aggregation** | Rule-based | N/A |
 | **PDF type: born_digital/image_only/hybrid** | Rule-based (text layer) | **Keep rule-based** | Heuristic | N/A |
 | **DPI: dpi_input, dpi_effective** | PyMuPDF | **Keep PyMuPDF** | Metadata extraction | N/A |
@@ -137,7 +137,7 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 **16 task heads across 5 head groups:**
 
 - **Group 1 (IQA)**: 5 regression heads (blur, noise, contrast, skew, compression) + overall_quality
-- **Group 2 (Script)**: 1 classification head (10 classes Phase 1, expandable to 20+)
+- **Group 2 (Script)**: 1 classification head (10 classes Phase 1, expanding to full OpenLID coverage; Mong/Syrc/Geor permanently excluded as OOD anchors)
 - **Group 3 (Orientation + Skew)**: 1 classification head (4 classes: 0/90/180/270) + 1 regression head (fine skew in degrees)
 - **Group 4 (Handwriting)**: 3 classification heads (presence, legibility, content_type) + 2 regression (presence_score, legibility_score)
 - **Group 5 (Page Attributes)**: 1 classification head (capture_method) + 4 regression (shadow, warping, code, resolution_quality)
@@ -147,10 +147,11 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 | Model | Task | Why Keep |
 |---|---|---|
 | **MobileNetV4-Conv-S** | Pre-correction stage gate: orientation (4-class) + skew (regression) + resolution quality (regression) | Ultra-fast (~3ms GPU) pre-correction before SigLIP. Ensures SigLIP sees correctly oriented, properly resolved images. Already designed for Phase 10A. |
-| **DocLayout-YOLO (docling-layout)** | Layout element detection (11 classes + bboxes) | Object detection with localization - YOLO excels here, SigLIP is image-level only |
+| **DocLayout-YOLO (docling-layout)** | Layout element detection (11 classes + bboxes) | Object detection with localization - YOLO excels here, SigLIP is image-level only. **Two inference variants**: `egret-xlarge` (accuracy-priority, higher mAP) and `heron` (speed-priority, lower latency); variant selected by deployment configuration, not training |
 | **Classical IQA (8 detectors)** | Validation/fallback for blur, noise, skew etc. | Zero-latency, deterministic, no GPU needed. Also triggers corrections |
 | **Classical Text Gate** | Fast text presence routing (<10ms) | Pre-filter before expensive model inference |
 | **Classical Orientation** | Fallback when MobileNetV4 + SigLIP unavailable | CPU-only heuristic path (85% accuracy) |
+| **Classical Handwriting (Stroke Analysis)** | Handwriting presence fallback when SigLIP 2 Group 4 confidence <0.5 | Stroke width variance on connected components + run-length encoding on binarized image; implemented in `detection/iqa_classical.py`; outputs `has_handwriting` bool and `handwriting_confidence` (0-1). Activation threshold: Group 4 any head confidence <0.5 |
 | **OpenCV Corrections** | Deskew, CLAHE, sharpen, denoise | Image transforms, not classification |
 | **PyMuPDF** | DPI detection, PDF text layer analysis | Metadata extraction, not vision |
 
@@ -230,7 +231,7 @@ CORRECTIONS (gated by confidence):
     |  Group 5: Page attrs (1 cls + 4 reg, incl. resolution_quality)
     |
     v  (parallel, on corrected image)
-[DocLayout-YOLO (docling-layout)] (25ms GPU) --> 11 layout elements with bboxes
+[docling-layout-egret-xlarge / docling-layout-heron] (25ms GPU) --> 11 layout elements with bboxes
 [Classical IQA] (25ms CPU) --> Validation, correction triggers
     |
     v
@@ -267,15 +268,31 @@ Total CPU fallback: ~500-600ms (SigLIP handles everything in single-pass)
 
 **Recommendation**: Train with DIQA-5000 3-dim scheme (overall, sharpness, color) as primary quality scores. Classical IQA (8 detectors) continues to provide specific issue detection (blur, noise, skew etc.) and triggers corrections. SigLIP 2 IQA replaces ResNet for the aggregate quality signal that feeds DQS.
 
-### Group 2: Script Detection (10+ classes)
+### Group 2: Script Detection (10+ classes, expanding to full OpenLID)
 
 **Status**: CRITICAL GAP. Datasets exist but need assembly.
 
 **Phase 1 classes (10)**: Latin, CJK Mixed, Japanese, Korean, Tibetan, Arabic, Devanagari, Cyrillic, Thai, Hebrew
 
+**Phase 2+ target**: Full OpenLID coverage (~107 languages, ~60+ ISO 15924 scripts). Training scope
+expands beyond the 10-class Phase 1 set to cover all scripts supported by OpenLID. This
+significantly changes what constitutes a truly OOD script — most scripts will become in-training
+after Phase 2 completes.
+
+> **RESERVED SCRIPTS (PERMANENT OOD EXCLUSION)**: Mongolian (Mong), Syriac (Syrc), and
+> Georgian (Geor) must **never** appear in any training manifest regardless of Phase. These
+> 3 scripts are permanently reserved for OOD holdout evaluation only:
+>
+> - Mongolian (Mong): Top-to-bottom (TTB) orientation anchor
+> - Syriac (Syrc): Right-to-left (RTL) anchor
+> - Georgian (Geor): Left-to-right (LTR) anchor with unique letterforms
+>
+> The `_validate_no_reserved_scripts()` guard in `prepare_multitask_datasets.py` enforces this.
+> See [OOD Dataset Design — Script Reservation Policy](OOD_DATASET_DESIGN.md#script-reservation-policy).
+
 | Dataset | Images | Scripts Covered | Status | Notes |
 |---|---|---|---|---|
-| **synth-multiscript-250k** | 250,000 | 27 scripts, 8 IQA dims | Ready (GCS) | Full dataset available on GCS; local copy is partial remnant |
+| **synth-multiscript-v3** | 190,485 (actual — generator bug stopped early; treat as complete) | 27 scripts, 8 IQA dims | Complete (GCS) — ⚠️ Imbalanced distribution | v2 (250K) DELETED; Arab 3.8x target; Mong absent (OOD-reserved); rebalancing required before training |
 | **MDIW13** | 232,170 train | 13 scripts (doc/line/word levels) | Ready | Largest script dataset available |
 | **MLT19** | 10,000 train | 10 languages | Ready | BENCHMARK RESERVED (val/test) |
 | **SIW13** | 16,291 | 13 scripts | Ready | Competition dataset |
@@ -293,7 +310,7 @@ Total CPU fallback: ~500-600ms (SigLIP handles everything in single-pass)
 
 **Critical gap: Japanese vertical text** - Must be explicitly included and labeled as 0 degree orientation (not 270 degree). ~1,050 samples needed per design doc.
 
-**Recommendation**: Start Phase 2 training with synth-multiscript-250k (250K, 27 scripts on GCS) + MDIW13 (232K, 13 scripts) as the foundation, supplemented by SIW13 + CVSI. The 10-class grouping maps ISO 15924 codes to ML classes via `config/script_ml_classes.yaml`.
+**Recommendation**: Start Phase 2 training with synth-multiscript-v3 (190,485 images actual, 27 scripts on GCS — ⚠️ rebalancing required before training; Mong absent by design) + MDIW13 (232K, 13 scripts) as the foundation, supplemented by SIW13 + CVSI. The 10-class Phase 1 grouping maps ISO 15924 codes to ML classes via `config/script_ml_classes.yaml`. Phase 2+ expands to full OpenLID; reserved scripts (Mong/Syrc/Geor) are blocked at manifest generation time.
 
 ### Group 3: Orientation + Skew Detection (4 classes + 1 regression)
 
@@ -485,7 +502,7 @@ pre_ocr_risk = 0.30 * degradation_score        # from IQA
 | ~~**Orientation dataset generation** (50K)~~ | ~~10 days~~ | ~~Phase 4 training~~ | ✅ DONE - available at `E:\image_detection\03_training_datasets\orientation\` |
 | **Skew dataset generation** (40K) | 3-5 days | Phase 4 training + MobileNetV4 | HIGH - can share sources with orientation |
 | **Resolution quality dataset** (30K) | 3-4 days | MobileNetV4 + SigLIP Group 5 | HIGH - multi-DPI renders with char height labels |
-| ~~**synth-multiscript completion** (250K)~~ | ~~5-7 days~~ | ~~Phase 2~~ | ✅ DONE - full 250K available on GCS |
+| ~~**synth-multiscript completion** (350K)~~ | ~~5-7 days~~ | ~~Phase 2~~ | ✅ DONE - 350,012 images on GCS (v3, imbalanced distribution — rebalancing needed) |
 | **Handwriting label harmonization** | 3 days | Phase 3 training | HIGH |
 | **Capture method labeling** for RVL-CDIP | 2-3 days | Phase 5 training | MEDIUM |
 | **Shadow/warping enrichment** from Doc3D | 2-3 days | Phase 5 training | MEDIUM |

@@ -311,7 +311,7 @@ docs/architecture/diagrams/
   | **Text Gate** | `src/detection/text_gate.py` | Fast text presence detection |
   | **Classical IQA** | `src/detection/iqa_classical.py` | 7 classical CV detectors |
   | **ML IQA** | `src/detection/iqa_ml.py` | Teacher-student ResNet models |
-  | **Layout Lite** | `src/detection/layout_lite.py` | DocLayout-YOLO (11 classes) |
+  | **Layout Lite** | `src/detection/layout_lite.py` | docling-layout (11 classes) |
   | **Corrections** | `src/correction/` | Deskew, CLAHE, denoising |
   | **DQS Calculator** | `src/metrics/dqs_calculator.py` | Document Quality Score |
   | **Routing Engine** | `src/routing/` | OCR strategy recommendation |

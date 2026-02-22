@@ -10,7 +10,7 @@ Production will encounter documents from any domain, any script, any capture met
 
 ### Available Diversity Dimensions (Layer 2 Enrichment Schema)
 
-From [layer2_enrichment_v2.schema.json](docs/schema/layer2_enrichment_v2.schema.json):
+From [layer2_enrichment_v6.schema.json](docs/schema/layer2_enrichment_v6.schema.json) (v6, 132 fields — updated 2026-02):
 
 | # | Dimension | Values | Relevance |
 |---|-----------|--------|-----------|
@@ -31,21 +31,30 @@ From [layer2_enrichment_v2.schema.json](docs/schema/layer2_enrichment_v2.schema.
 
 ### Current Metadata Coverage Reality
 
+> **Updated**: 2026-02-21 (post-audit sprint, 58 datasets scored)
+
 | Dimension | Datasets with Data | Key Gap |
 |-----------|-------------------|---------|
-| capture_method | 13/25 aggregates | 33% unknown; camera severely underrepresented |
-| domain | 3/25 (22 are 100% UNK) | 80% unknown - cannot assess industry diversity |
-| script_code | 7/25 (via script_family) | CJK, Cyrillic weak |
-| quality/degradation | 0/25 | Zero coverage in aggregates |
-| content_flags | 7/25 | Tables/figures/formulas sparse |
+| capture_method | 57/58 aggregates | 8 D-capped datasets need domain enrichment (GPU) |
+| domain | 50/58 (8 capped at 0-65% domain_level1) | mdiw13, arabic-docs-ocr, siw13, cc-ocr, omnidocbench, muharaf, jssoda, docalign12k need GPU enrichment |
+| script_code | 45/58 (via script_family) | CJK, Cyrillic weak in IQA datasets; synth-multiscript generating |
+| quality/degradation | 12/58 (IQA-specific datasets) | Shadow/warping now have dedicated datasets (sd7k, wsrd, warpdoc) |
+| content_flags | 51/58 (VLM inspection complete) | KI-002, KI-003, KI-006 require manual verification |
+
+**Audit completion**: 58/58 datasets scored (100%) | Mean score: 84.1 | 43 at B+ (74%) | 8 D-capped (domain gap) | 1 F-grade (iam needs base metadata)
 
 ---
 
-## 1. Orientation Dataset (50K) -- READY
+## 1. Orientation Dataset (50K) -- REBUILDING (Stream 4C)
 
 **Model**: MobileNetV4 Head 1 + SigLIP Group 3
 **Task**: 4-class classification (0/90/180/270)
-**Status**: Generated at `E:\image_detection\03_training_datasets\orientation\`
+**Status**: REBUILDING as hybrid (Stream 4C, 2026-02). Old 50K dataset at `E:\03_training_datasets\orientation\`
+lacked multi-script diversity. New 50K hybrid: ≥60% real (DocLayNet + RVL-CDIP rotated) + ≤40% v3 synthetic
+(non-Latin scripts). Scripts: `build_orientation_real_component.py` + `derive_v3_orientation_view.py`.
+
+**Real/Synthetic Mixing**: ≥60% real documents (30K+), ≤40% v3 synthetic (≤20K, non-LATN scripts only).
+**Provenance field values**: `real_born_digital`, `real_scan`, `synthetic_v3`.
 
 ### 1.1 Diversity Requirements
 
@@ -66,18 +75,30 @@ From [layer2_enrichment_v2.schema.json](docs/schema/layer2_enrichment_v2.schema.
 - **Rare handling**: Japanese vertical (1,050 sources), Devanagari (700 sources) -- small but adequate
 - **Labels**: tier_0_exact (ground truth by construction via rotation)
 
-### 1.3 Source Composition
+### 1.3 Source Composition (Hybrid Rebuild — Stream 4C)
 
-Already specified in MOBILECLIP2_S4_S0_DATASET_DESIGN.md: 12,500 unique sources from DocLayNet (5,500), FUNSD/NIST (1,500), SROIE (1,000), TableBank/PubTabNet (1,500), NIST SD-19 (1,000), Arabic Docs (1,500), Nepal Devanagari (700), MLT+synthetic Japanese (1,050).
+| Component | Count | Source | Labels | Provenance |
+|-----------|-------|--------|--------|------------|
+| Real (DocLayNet PDFs, rotated) | ~32K | `gs://image_detection_b/01_base_data/document_understanding/doclaynet/` (PDFs) | tier_0_exact (rotation by construction) | `real_born_digital` |
+| Real (RVL-CDIP scans, rotated) | ~12K | `gs://image_detection_b/01_base_data/document_understanding/rvlcdip/` | tier_0_exact (rotation by construction) | `real_scan` |
+| Synthetic (v3 non-LATN) | ~20K | `gs://image_detection_b/synth_multiscript_v3/` — 19 non-Latin scripts | tier_0_exact (orientation_class from v3 sidecar) | `synthetic_v3` |
+| **Total** | **~50K** | | | |
 
-**Status**: READY. No additional design work needed.
+Source mix: ~88% real / ~12% real-rotated / ≤40% synthetic. Domain-cap per real source (50% max).
+Script coverage: 19 non-Latin scripts via v3 component. Resize all images to 224px (INTER_AREA).
+
+**Status**: IN PROGRESS (Stream 4C scripts written, execution pending data transfer).
 
 ---
 
-## 2. Skew Regression Dataset (40K) -- NEEDS GENERATION
+## 2. Skew Regression Dataset (90K) -- COMPLETE
 
 **Model**: MobileNetV4 Head 2 + SigLIP Group 3
 **Task**: Continuous regression (±10°, target <0.5° residual)
+**Status**: Ready at `gs://image_detection_b/skew_training/` and `E:\03_training_datasets\skew\` (2.2GB)
+**Actual size**: 90,412 images (71,498 synthetic + 18,914 natural scans)
+**Split**: Train=70,763 / Val=9,025 / Test=10,624
+**Best model result**: MobileNetV4-Conv-S @ 224px, 50 epochs: val MAE=0.837, test MAE=0.956, SRCC=0.936, orient_acc=99.5%, CPU 17.5ms
 
 ### 2.1 Diversity Requirements
 
@@ -93,7 +114,7 @@ Already specified in MOBILECLIP2_S4_S0_DATASET_DESIGN.md: 12,500 unique sources 
 
 ### 2.2 Angle Distribution (CRITICAL)
 
-```
+```text
 Bin [-10, -5]:    5,000 (12.5%) -- extreme negative
 Bin (-5, -2]:     8,000 (20%)   -- moderate negative
 Bin (-2, -0.5]:   7,000 (17.5%) -- mild negative (correction-critical range)
@@ -112,13 +133,13 @@ More samples in the mild range (±0.5-2°) because that's where sub-0.5° accura
 - **Leakage prevention**: Same source document at different angles must be in SAME split
 - **Natural scan labels**: Hough-derived + line-based cross-validation; accept only if both agree within 0.5°
 
-### 2.4 Source Composition
+### 2.4 Source Composition (ACTUAL)
 
 | Component | Count | Source | Labels | Status |
 |-----------|-------|--------|--------|--------|
-| Clean docs + synthetic rotation | 25,000 | Same 12,500 orientation sources x 2 random angles | tier_0_exact angle | Need generation |
-| Naturally skewed scans | 5,000 | RVL-CDIP (sample from 16K), Tobacco800 (1,290) | Hough-derived (tier_2_model, conf >= 0.7) | Need labeling |
-| Synthetic + degradation | 10,000 | Clean sources + scanner/camera simulation + random rotation | tier_0_exact angle + degradation | Need generation |
+| Clean docs + synthetic rotation | 71,498 | DocLayNet, FUNSD, SROIE, Arabic, MDIW13, MLT19, JSSoDa and others | tier_0_exact angle | ✅ Complete |
+| Naturally skewed scans | 18,914 | 13 real-scan datasets; classical ensemble labeling, conf >= 0.7 | Hough-derived (tier_2_model) | ✅ Complete |
+| **Total** | **90,412** | 384x384 JPEG q90, ProcessPoolExecutor 4 workers, 11.4 img/s | | ✅ Complete |
 
 ### 2.5 Quality Thresholds
 
@@ -129,10 +150,12 @@ More samples in the mild range (±0.5-2°) because that's where sub-0.5° accura
 
 ---
 
-## 3. Resolution Quality Dataset (30K) -- NEEDS GENERATION
+## 3. Resolution Quality Dataset (30K) -- IN PROGRESS (5.5K done)
 
 **Model**: MobileNetV4 Head 3 + SigLIP Group 5
 **Task**: Regression (0-1, character-height-aware)
+**Status**: 5,499 images labeled from DIQA-5000 via PaddleOCR DBNet + CC pipeline. Expanding to OHR-Bench (8.5K) and RealDAE (1.2K) next.
+**V1 precision note**: Median IQR 9.0px (target 2-3px); V2 strategy (Sauvola + projection profiles) underway. See [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md).
 
 ### 3.1 Diversity Requirements
 
@@ -147,7 +170,7 @@ More samples in the mild range (±0.5-2°) because that's where sub-0.5° accura
 
 ### 3.2 Character Height -> Quality Score Mapping
 
-```
+```text
 char_height < 16px:    quality = 0.00-0.15  (needs major upscaling)
 char_height 16-24px:   quality = 0.15-0.35  (needs light upscaling)
 char_height 24-32px:   quality = 0.35-0.55  (acceptable)
@@ -170,7 +193,7 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 |-----------|-------|--------|---------|
 | Multi-DPI renders | 20,000 | DocLayNet (5K) + FUNSD/SROIE/NIST (2K) + MDIW13 (3K) | Render at 72/100/150/200/300/400/600 DPI |
 | Camera capture (real) | 5,000 | SmartDoc-QA (4.3K) + RealDAE (1.2K) + MIDV500 (3.6K) | Already at various resolutions; label by measured char height |
-| Synthetic variable-res | 5,000 | synth-multiscript-250K (sample) | Render at controlled DPI with known char heights |
+| Synthetic variable-res | 5,000 | synth-multiscript-v3 (sample) | Render at controlled DPI with known char heights |
 
 ### 3.5 Quality Thresholds
 
@@ -237,7 +260,15 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 ## 5. Script Detection Dataset (~108K from ~583K available)
 
 **Model**: SigLIP Group 2
-**Task**: 19-class classification (from `config/script_ml_classes.yaml`)
+**Task**: 19-class classification Phase 1 (from `config/script_ml_classes.yaml`); expanding to full
+OpenLID coverage (~60+ scripts) in Phase 2+. Three scripts are permanently excluded from training
+and reserved exclusively for OOD holdout evaluation:
+
+> **RESERVED SCRIPTS — NEVER IN TRAINING**: Mongolian (Mong), Syriac (Syrc), Georgian (Geor).
+> These are the TTB/RTL/LTR OOD anchor scripts. They must not appear in any training manifest
+> even after Phase 2 OpenLID expansion. The `_validate_no_reserved_scripts()` guard in
+> `prepare_multitask_datasets.py` enforces this at manifest generation time.
+> See [OOD Dataset Design](OOD_DATASET_DESIGN.md#script-reservation-policy).
 
 ### 5.1 Script Class Targets
 
@@ -252,7 +283,7 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 | KORE | 4% | 4,000 | ~8K | synth-multiscript, MLE2E | OK |
 | CYRL | 5% | 5,000 | ~10K | MDIW13, synth-multiscript | OK |
 | THAI | 3% | 3,000 | ~5K | synth-multiscript | Tight |
-| TIBT | 4% | 4,000 | ~142K chars + ~200 real docs + ~3.8K synth | Quantity via TibHCR; page-level concern |
+| TIBT | 4% | 4,000 | ~145K total (TibHCR chars + bhutan-afs + synth) | TibHCR (chars), bhutan-afs (B 83.5), synth-multiscript | Tight (P1) |
 | HEBR | 3% | 3,000 | ~5K | synth-multiscript | Tight |
 | GREK | 2% | 2,000 | ~3K | synth-multiscript | Tight |
 | BENG | 3% | 3,000 | ~8K | MDIW13, synth-multiscript | OK |
@@ -262,6 +293,11 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 | SE_ASIAN_OTHER | 2% | 2,000 | ~3K | synth-multiscript | Tight |
 | OTHER | 3% | 3,000 | ~5K | synth-multiscript | OK |
 | UNKNOWN | 2% | 2,000 | Derive from no-text pages | DocLayNet figure-only, blank pages | Need curation |
+
+> **Note on absent scripts**: Mongolian (Mong), Syriac (Syrc), and Georgian (Geor) are
+> intentionally absent from this table. These 3 scripts are OOD-reserved (see section header
+> above) and must not be added to training even if sources become available or Phase 2
+> OpenLID expansion includes them.
 
 ### 5.2 Diversity Requirements (beyond script class)
 
@@ -277,7 +313,19 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 
 1. **Tibetan page-level**: TibHCR has 141K character images but ~0 full-page documents. Only ~200 real Bhutan docs + ~3.8K synthetic page-level from synth-multiscript. **CONSENSUS: Elevated to P1 priority** -- 200 real samples insufficient for production robustness; pursue partnerships with digital library projects (e.g., BDRC, Tibetan Buddhist Resource Center) for real page scans
 2. **HANS/HANT distinction**: Requires curated data; synth-multiscript is primary source. **CONSENSUS**: Consider a dedicated HANS/HANT binary classifier as a second-stage gate after CJK detection, since visual distinction is subtle and error-prone with single-pass classification
-3. **Hebrew, Greek, Thai, SE_ASIAN_OTHER**: All depend heavily on synth-multiscript-250K
+3. **Hebrew, Greek, Thai, SE_ASIAN_OTHER**: All depend heavily on synth-multiscript-v3 (v2 at 250K DELETED; v3 at 190,485 actual — ⚠️ imbalanced; Hebrew/Greek/Thai may be under-represented)
+4. **OpenLID Phase 2+ expansion**: Phase 1 covers 19 ML classes. Phase 2 will expand to all scripts
+   in OpenLID (~60+ ISO 15924 scripts). Script class config (`config/script_ml_classes.yaml`)
+   must be updated for each expansion phase. After each expansion, OOD-Script must be
+   re-evaluated: scripts transitioning from open-set to in-training lose their OOD-Script status
+   (they may still appear in other OOD categories). Reserved scripts (Mong/Syrc/Geor) are
+   excluded from ALL phases.
+5. **Font variation coverage**: The 19 Phase 1 classes cover standard font representations. Highly
+   decorative or non-standard fonts within trained scripts (e.g., ornamental Latin, CJK brush
+   style) are underrepresented. These are covered by OOD-Script font variation sub-set rather
+   than in training data, but future training phases should include curated decorative font
+   samples to improve production robustness. See
+   [OOD Dataset Design — Font Variation](OOD_DATASET_DESIGN.md#font-variation-ood-strategy).
 
 ### 5.4 Stratification
 
@@ -285,13 +333,16 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 - **Primary axes**: ml_class (19), text_scope (char/word/line/page), content_type (printed/handwritten/scene)
 - **Leakage prevention**: MDIW13 doc/line/word from same source -> same split; COCO-Text by COCO image ID
 - **Benchmarks reserved**: MLT19 val/test, COCO-Text val/test (never in training)
+- **OOD reserved**: Mong/Syrc/Geor scripts never in training (see reserved script guard)
+- **OOD leakage check**: `_check_ood_leakage()` runs on every manifest before write; SHA256 + pHash (Hamming ≤ 5) against `metadata_registry/ood_registry.jsonl`
 - **Rare class handling**: Tibetan 5-fold CV on ~200 real samples; Hebrew/Greek accept up to 80% synthetic; class weights from script_ml_classes.yaml (TIBT=2.0, SE_ASIAN_OTHER=1.8, GREK=1.5)
+- **Holdout evaluation**: See [OOD Dataset Design](OOD_DATASET_DESIGN.md) for the ~4,700-image holdout set (9 categories) used for final production evaluation, including open-set rejection metrics for scripts not in training
 
 ### 5.5 Source Composition
 
 | Source | Samples Used | Scripts | Selection Strategy |
 |--------|-------------|---------|-------------------|
-| synth-multiscript-250K | ~60K | 27 scripts | Stratified sample matching target class distribution |
+| synth-multiscript-v3 | ~60K | 27 scripts | Stratified sample matching target class distribution (⚠️ rebalance before use) |
 | MDIW13 train | ~30K (from 232K) | 13 scripts | Stratified by script; real handwritten diversity |
 | COCO-Text train | ~5K (from 43K) | Mixed | Select non-Latin preferentially; scene text domain |
 | Arabic Docs OCR | ~3K | Arabic | Stratified across 12 doc types |
@@ -401,7 +452,7 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 | CAMERA_PROFESSIONAL | 10% | 5,000 | MIDV500 (15K), SmartDoc-QA | Ready |
 | CAMERA_SMARTPHONE | 10% | 5,000 | SROIE, RealDAE, MLT19 camera subset | Tight (~11K available) |
 | FAX | 5% | 2,500 | RVL-CDIP (fax subset) | NEEDS LABELING |
-| SYNTHETIC | 15% | 7,500 | DocSynth300K, synth-multiscript-250K | Ready (downsample) |
+| SYNTHETIC | 15% | 7,500 | DocSynth300K, synth-multiscript-v3 (350,012) | Ready (downsample) |
 
 ### 7.2 Diversity Requirements (beyond capture class)
 
@@ -419,37 +470,82 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 
 ---
 
-## 8. Shadow Regression Dataset (~15K)
+## 8. Shadow Regression Dataset (~18K)
 
 **Model**: SigLIP Group 5
 **Task**: Regression (0-1 severity)
+
+> **Stream 4C Update (2026-02-21)**: SSIM-based severity labeling **ABANDONED** (5-model consensus, 4/4 substantive
+> models agree). SSIM is invalid for shadow: measures blur/noise/compression equally, not shadow severity.
+> Replaced with: (a) v3 synthetic views with Augraphy-applied, controlled-severity labels (Tier 0 exact), and
+> (b) L2 metadata `shadow_severity` fields from real paired datasets.
+
+**Real/Synthetic Mixing Cap**: ≥50% real (sd7k + wsrd + camera negatives), ≤50% v3 synthetic.
+**Provenance field values**: `real_paired`, `synthetic_v3`.
 
 ### 8.1 Diversity Requirements
 
 | Dimension | Criticality | Target Distribution | Min/Category |
 |-----------|-------------|---------------------|--------------|
-| **Shadow severity** | CRITICAL | 40% none, 20% mild (0.1-0.3), 20% moderate (0.3-0.6), 20% severe (0.6-1.0) | 1,500 per non-none |
-| **Shadow type** | IMPORTANT | 40% none, 25% hard (finger/object), 20% soft (lighting gradient), 15% mixed | 1,000 per type |
-| **Capture method** | CRITICAL | 60% camera, 20% scanner, 20% born_digital (negatives) | 1,500 scanner |
+| **Shadow severity** | CRITICAL | 40% none (0.0), 20% mild (0.1-0.3), 20% moderate (0.3-0.6), 20% severe (0.6-1.0) | 1,500 per non-none |
+| **Shadow type** | IMPORTANT | 40% none, 25% edge shadow, 20% cast shadow, 15% spotlight | 1,000 per type |
+| **Capture method** | CRITICAL | 55%+ camera (real pairs), 20% scanner, 20% born_digital (negatives) | 1,500 scanner |
+| **Provenance** | REQUIRED | Each sample carries `provenance` field | `real_paired` or `synthetic_v3` |
 
-### 8.2 Source Composition
+### 8.2 Source Composition (Stream 4C)
 
-| Source | Samples | Labels | Status |
-|--------|---------|--------|--------|
-| RealDAE | 583 pairs | Derive severity = 1 - SSIM(shadowed, clean) | Ready (need computation) |
-| Doc3D | ~15K | Shadow maps from 3D geometry (tier_0_exact) | DEFERRED (209GB, P3) |
-| SmartDoc-QA | 4,280 | Natural shadows (tier_3_heuristic) | Need severity annotation |
-| MIDV500 | 3,612 | Variable lighting (tier_3_heuristic) | Need severity annotation |
-| Synthetic shadow | ~5K | Born-digital + shadow overlay (tier_0_exact) | Need generation |
+**Tier A — v3 Synthetic View (~8K, Augraphy Tier 0 labels)**
 
-**Without Doc3D**: ~14K feasible (583 RealDAE + 4.3K SmartDoc + 3.6K MIDV + 5K synthetic)
+Generated by `scripts/generate_v3_shadow_view.py` from v3 pristine base images. Shadow applied via OpenCV
+with controllable severity parameter. 4 shadow types: edge, cast, spotlight, scanner_lid.
+
+- `severity` field = Augraphy severity parameter (Tier 0 exact, confidence 1.0)
+- Cap at ≤50% of total dataset (≤9K)
+- Script diversity: all 27 v3 scripts represented
+
+**Tier B — Real Paired Datasets (~7-10K, L2 metadata labels)**
+
+| Source | Samples | Audit | Labels | Status |
+|--------|---------|-------|--------|--------|
+| **sd7k** | 7,239 | **B** 87 | Paired GT (shadow/shadow-free) | Read `shadow_severity` from L2 JSON; skip `shadow_confidence < 0.5` |
+| **wsrd** | 4,500 | **A** 95 | Paired GT (shadow/shadow-free) | Read `shadow_severity` from L2 JSON; skip `shadow_confidence < 0.5` |
+| Doc3D | ~15K | -- | Shadow maps from 3D geometry (tier_0_exact) | DEFERRED (209GB, P3) |
+
+**Shadow Negatives (~3.5K, camera-domain matched)**
+
+Negatives must come from the same camera domain as positives to avoid domain confound:
+
+| Source | Count | Severity | Rationale |
+|--------|-------|----------|-----------|
+| SmartDoc-QA clean frames | 2,000 | 0.0 | Flat lit, same camera domain as sd7k/wsrd |
+| MIDV500 flat captures | 1,000 | 0.0 | Flat document captures, no shadow |
+| v3 clean (zero shadow) | 500 | 0.0 | Generated with no shadow applied |
+
+**Total target composition**: ~8K v3 synthetic + ~7-10K real (sd7k/wsrd) + ~3.5K negatives = **~18.5-21.5K**
+
+Real data (sd7k + wsrd + camera negatives) ≥55% of total — exceeds the 50% real minimum.
+
+**Previous note on SSIM**: `severity = 1 - SSIM(shadow_img, clean_img)` was the original labeling method.
+This is INVALID: SSIM measures pixel-level similarity and penalizes blur/noise/compression equally, so it
+cannot isolate shadow severity. Do NOT use SSIM for shadow labels in any new scripts.
+
+**Note on staindoc**: Stain removal (15K paired) is related but distinct from shadow removal. May provide
+negative diversity and extreme degradation examples in a later phase; excluded from Stream 4C target.
 
 ---
 
-## 9. Warping Regression Dataset (~20K)
+## 9. Warping Regression Dataset (~24K)
 
 **Model**: SigLIP Group 5
 **Task**: Regression (0-1 severity)
+
+> **Stream 4C Update (2026-02-21)**: SSIM-based severity labeling **ABANDONED** (same rationale as shadow —
+> SSIM measures structural similarity, not warping severity). Replaced with: (a) v3 synthetic views with
+> Augraphy/perspective transforms and controlled-severity labels (Tier 0 exact), and (b) L2 metadata
+> `warping_severity` fields from real paired datasets. ALL 12,000 docalign12k pairs are now used (was 4K subset).
+
+**Real/Synthetic Mixing Cap**: ≥70% real (all four real paired datasets), ≤30% v3 synthetic.
+**Provenance field values**: `real_paired`, `synthetic_v3`.
 
 ### 9.1 Diversity Requirements
 
@@ -458,17 +554,49 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 | **Warping severity** | CRITICAL | 30% none, 25% mild, 25% moderate, 20% severe | 2,000 per non-none |
 | **Warping type** | IMPORTANT | 30% none, 25% page curl, 20% fold/crease, 15% perspective, 10% complex | 1,000 per type |
 | **Capture method** | CRITICAL | 50% camera, 30% scanner (book spine curl), 20% born_digital (negatives) | 2,000 scanner |
+| **Provenance** | REQUIRED | Each sample carries `provenance` field | `real_paired` or `synthetic_v3` |
 
-### 9.2 Source Composition
+### 9.2 Source Composition (Stream 4C)
 
-| Source | Samples | Labels | Status |
-|--------|---------|--------|--------|
-| Doc3D | ~15K | Warping from 3D mesh (tier_0_exact) | DEFERRED (209GB, P3) |
-| SmartDoc-QA | 4,280 | Perspective distortion | Need warping annotation |
-| MIDV500 | 3,612 | Variable perspective | Need warping annotation |
-| Synthetic TPS warping | ~5K | Born-digital + thin-plate-spline | Need generation |
+**Tier A — v3 Synthetic View (~5K, Augraphy/perspective Tier 0 labels, capped at ≤30%)**
 
-**Without Doc3D**: ~13K feasible (4.3K SmartDoc + 3.6K MIDV + 5K synthetic)
+Generated by `scripts/generate_v3_warping_view.py` from v3 pristine base images. Three warp types:
+
+- `perspective` (4-corner homography, severity from corner displacement ratio)
+- `page_curl` (cylindrical warp, severity from bend angle)
+- `fold` (reflection/shear fold, severity from fold depth)
+
+`severity` field = normalized warp parameter (Tier 0 exact, confidence 1.0). Script diversity from v3.
+
+**Tier B — Real Paired Datasets (~14-19.5K, L2 metadata labels)**
+
+| Source | Samples | Audit | Labels | Status |
+|--------|---------|-------|--------|--------|
+| **anyphotodoc6300** | 6,306 | **A** 92 | Paired GT (corrected/distorted), AGPL-3.0 | Read `warping_severity` from L2 JSON |
+| **warpdoc** | 1,020 | **B** 85 | Paired GT (warped/flat), 6 distortion types | Read `warping_severity` + `warping_type` from L2 |
+| **docreal** | 200 | **B** 88 | Paired GT (distorted/scanned), MIT | Read `warping_severity` from L2 JSON |
+| **docalign12k** | ~12,000 | D 76 | Paired GT (aligned/unaligned) | Use ALL 12K pairs (was 4K); 0.3x weight (D-capped) |
+| **drccbi** | 325 | -- | Paired GT (warped/flat) | Read `warping_severity` from L2 JSON |
+| Doc3D | ~15K | -- | Warping from 3D mesh (tier_0_exact) | DEFERRED (209GB, P3) |
+
+**Warping Negatives (~5K, camera-domain matched)**
+
+| Source | Count | Severity | Rationale |
+|--------|-------|----------|-----------|
+| SmartDoc-QA flat frames | 3,000 | 0.0 | Flat lit, camera domain; BENCHMARK-ONLY for warping eval — use only labeled negatives |
+| MIDV500 flat captures | 2,000 | 0.0 | Flat document captures, no warping |
+
+> **⚠️ SmartDoc-QA**: BENCHMARK-ONLY per audit policy for warping correction evaluation.
+> Use ONLY for training negatives (flat camera captures with severity=0.0), never for warp-positive training.
+
+**Total target**: ~5K v3 synthetic + ~14-19.5K real pairs + ~5K negatives = **~24-29.5K**.
+Real data (real pairs + camera negatives) ≥70% of total — exceeds the 70% real minimum.
+
+**docalign12k weight note**: Grade D (76) due to language gap (iso639=0%). Apply 0.3x training weight until
+domain enrichment completes. Contributes ~12K pairs at reduced weight; still valuable for warping geometry.
+
+**Previous note on SSIM**: `severity = 1 - SSIM(distorted, flat)` was the original labeling method.
+This is INVALID for the same reasons as shadow. Do NOT use SSIM for warping labels in any new scripts.
 
 ---
 
@@ -551,6 +679,24 @@ Source images shared across training datasets (same image, different labels per 
 | Combined class distribution | Weighted merge | Single dataset > 50% of any class |
 | Per-source contribution cap | Count per source dataset per class | Any single source > 40% of any class (consensus) |
 | Cross-dimension interaction | Chi-square on (capture_method × script_family) cells | Any cell with 0 samples where both marginals > 0 (consensus) |
+| Docling layout label casing | `scripts/standardize_layout_labels.py` (KI-001) | Raw Docling labels before normalization |
+| Benchmark split contamination | Reserved split registry vs training manifests | smartdoc-qa, q-doc, diqa-5000 val/test in training |
+
+### 12.2.1 Known Cross-Dataset Issues (Audit-Derived)
+
+The Layer 2 audit identified 9 systemic quality issues affecting multiple datasets. These MUST be checked before training:
+
+| Issue | Severity | Datasets | Fix |
+|-------|----------|----------|-----|
+| **KI-001**: Docling layout label casing mismatch | CRITICAL | All 52 Docling-processed datasets | `scripts/standardize_layout_labels.py` (automated) |
+| **KI-002**: Docling Table detection unreliable on multi-column text | HIGH | Synthetic + multi-column | Manual VLM verification required |
+| **KI-003**: Docling Picture detection unreliable on dense text | MEDIUM | Synthetic + dense text | Manual VLM verification required |
+| **KI-004**: LLM handwriting detection unreliable on synthetic | HIGH | All synthetic datasets | Override pattern (set has_handwriting=False) |
+| **KI-005**: LLM cannot detect synthetic capture method | HIGH | jssoda, synth-multiscript, docsynth | Override pattern (set capture_method=synthetic) |
+| **KI-006**: LLM formula detection over-flags scientific text | MEDIUM | All LLM-enriched datasets | Manual VLM verification required |
+| **KI-007**: LLM domain classification high UNK rate on generic content | LOW | Generic/narrative datasets | Accepted (taxonomy limitation) |
+| **KI-008**: Nepali handwritten label noise (character variants) | LOW | nepali-handwritten | Dataset-specific mitigation |
+| **KI-009**: Latin language conflation (fr/de/it mapped to en) | MEDIUM | mlt19, cocotext | ✅ Mitigated (LLM refinement resolves 1,731/2,671 samples) |
 
 ### 12.3 Training Monitoring
 
@@ -575,24 +721,43 @@ Source images shared across training datasets (same image, different labels per 
 
 ## 13. Dimension Sufficiency Summary
 
-| Dataset | Capture | Script | Domain | Quality | Resolution | Content | Overall |
-|---------|:-------:|:------:|:------:|:-------:|:----------:|:-------:|:-------:|
-| Orientation (50K) | OK | OK | OK | OK | OK | OK | **READY** |
-| Skew (40K) | TIGHT | OK | TIGHT | OK | OK | N/A | **NEEDS GEN** |
-| Resolution (30K) | TIGHT | OK | TIGHT | N/A | OK | TIGHT | **NEEDS GEN** |
-| IQA (16K) | **INSUFF** | **INSUFF** | **INSUFF** | OK | TIGHT | TIGHT | **GAPS** |
-| Script (108K) | TIGHT | TIGHT* | INSUFF | N/A | OK | OK | **MOSTLY READY** |
-| Handwriting (60K) | TIGHT | TIGHT | INSUFF | N/A | OK | OK | **NEEDS HARMONIZE** |
-| Capture (50K) | OK | TIGHT | TIGHT | N/A | OK | N/A | **NEEDS LABELING** |
-| Shadow (15K) | TIGHT | OK | N/A | N/A | OK | N/A | **NEEDS DOC3D** |
-| Warping (20K) | TIGHT | OK | N/A | N/A | OK | N/A | **NEEDS DOC3D** |
-| Code (10K) | OK | N/A | N/A | N/A | OK | N/A | **NEEDS CURATION** |
+> **Updated**: 2026-02-21 based on audit completion and dataset assembly progress.
 
-*Tibetan, Hebrew, Greek are tight; depend on synth-multiscript-250K
+| Dataset | Capture | Script | Domain | Quality | Resolution | Content | Overall | Progress |
+|---------|:-------:|:------:|:------:|:-------:|:----------:|:-------:|:-------:|:-------:|
+| Orientation (50K) | OK | OK | OK | OK | OK | OK | **READY** | ✅ 100% |
+| Skew (90K) | OK | OK | OK | OK | OK | N/A | **COMPLETE** | ✅ 100% |
+| Resolution (30K) | TIGHT | OK | TIGHT | N/A | OK | TIGHT | **IN PROGRESS** | 🔄 18% |
+| IQA (16K) | **INSUFF** | **INSUFF** | **INSUFF** | OK | TIGHT | TIGHT | **GAPS** | 🔄 40% |
+| Script (108K) | TIGHT | TIGHT* | INSUFF | N/A | OK | OK | **GENERATING** | 🔄 11% |
+| Handwriting (60K) | TIGHT | TIGHT | INSUFF | N/A | OK | OK | **NEEDS HARMONIZE** | ❌ 0% |
+| Capture (50K) | OK | TIGHT | TIGHT | N/A | OK | N/A | **NEEDS LABELING** | ❌ 0% |
+| Shadow (~18K) | TIGHT | OK | N/A | N/A | OK | N/A | **SCRIPTS DONE (Stream 4C)** | 🔄 Scripts ready |
+| Warping (~24K) | TIGHT | OK | N/A | N/A | OK | N/A | **SCRIPTS DONE (Stream 4C)** | 🔄 Scripts ready |
+| Code (10K) | OK | N/A | N/A | N/A | OK | N/A | **NEEDS CURATION** | ❌ 0% |
+
+*Tibetan, Hebrew, Greek are tight; depend on synth-multiscript-v3 (350,012, GCS-complete — ⚠️ imbalanced; rebalancing needed before training)
+
+**Shadow/Warping note (Stream 4C 2026-02-21)**: SSIM labeling abandoned (5-model consensus). Generation scripts
+complete: `generate_v3_shadow_view.py` (Augraphy Tier 0), `generate_v3_warping_view.py` (perspective/curl/fold Tier 0),
+`prepare_multitask_datasets.py shadow/warping` sub-commands (reads L2 `shadow_severity`/`warping_severity`).
+Execution pending: data must be generated on GPU VM, L2 annotation run on sd7k/wsrd/anyphotodoc/warpdoc, then
+manifests assembled and uploaded to `gs://image_detection_b/datasets/{shadow,warping}_training/`.
+
+**Audit quality note**: 8 datasets capped at Grade D due to domain_level1 <75% (mdiw13, arabic-docs-ocr, siw13, cc-ocr, omnidocbench, muharaf, jssoda, docalign12k). Training weights may need reduction for these sources until domain enrichment is complete.
+
+**IAM risk**: Grade F (36.4) -- no base metadata. If IAM is used for handwriting training, run DocLayout-YOLO to generate layout metadata first (GPU required).
 
 ---
 
-## 14. Synth-Multiscript-250K Assessment: Adjust, Not Redesign
+## 14. Synth-Multiscript Assessment: Adjust, Not Redesign
+
+> **GCS Audit (2026-02-21, corrected)**: `gs://image_detection_b/synth_multiscript_v3/` — **350,012 images**
+> across 27 script folders (COMPLETE). The 190,485 figure was an erroneous intermediate count; live jpg-only
+> gsutil count confirms 350,012. Target (350,012) was met; however, generation has a **distribution imbalance
+> bug** — Arab has 49,169 images (3.8× target), 17 scripts below 12,963 target. Rebalancing required before
+> training, not regeneration. v3 adds: orientation labels in sidecar JSON (`data.geometric.orientation_class`),
+> all 27 ISO 15924 scripts, `splits.jsonl` for deterministic train/val/test assignment.
 
 ### Current Design Strengths
 
@@ -741,7 +906,7 @@ The existing `MultiScriptDocumentGenerator` ([generator.py](src/image_preprocess
 
 ### Impact on Dataset Plan
 
-With Tier A+B adjustments, synth-multiscript-250K becomes reusable across:
+With Tier A+B adjustments, synth-multiscript-v3 (350,012 images) becomes reusable across:
 
 | Training Task | Synth-Multiscript Role | Samples Used | Replaces |
 |--------------|----------------------|-------------|----------|
@@ -755,11 +920,11 @@ With Tier A+B adjustments, synth-multiscript-250K becomes reusable across:
 
 ### Generation Strategy Change
 
-**Before**: Generate 250K images once → use only for script detection
-**After**: Generate 250K base images → derive multiple training views via post-processing
+**Before**: Generate base images once → use only for script detection
+**After**: Generate base images once (v3: 350,012) → derive multiple training views via post-processing
 
-```
-synth-multiscript-250K (base)
+```text
+synth-multiscript-v3 (base, 350,012 images)
 ├── Script labels (tier_0_exact) → Script Detection Dataset
 ├── + skew rotation → Skew Regression Dataset (10K subset)
 ├── + DPI re-rendering → Resolution Quality Dataset (5K subset)
@@ -769,7 +934,7 @@ synth-multiscript-250K (base)
 └── Capture method = "synthetic" → Capture Method Dataset
 ```
 
-**Key principle**: Generate the base images ONCE, then apply task-specific transformations as post-processing steps. This avoids regenerating 250K images and maximizes reuse.
+**Key principle**: Generate the base images ONCE, then apply task-specific transformations as post-processing steps. This avoids regenerating 350K images (v3) and maximizes reuse.
 
 ### Implementation Priority
 
@@ -798,32 +963,45 @@ synth-multiscript-250K (base)
 
 ## 15. Generation Priority
 
-| Priority | Item | Effort | Blocks |
-|----------|------|--------|--------|
-| P0 | Skew dataset generation (40K) | 3-5 days | MobileNetV4 + SigLIP Group 3 |
-| P0 | Resolution quality dataset (30K) | 3-4 days | MobileNetV4 + SigLIP Group 5 |
-| P0 | Handwriting label harmonization | 3 days | SigLIP Group 4 |
-| P1 | Capture method labeling (RVL-CDIP) | 2-3 days | SigLIP Group 5 |
-| P1 | Code detection dataset curation (10K) | 3-4 days | SigLIP Group 5 |
-| P2 | Doc3D extraction (209GB) | 1-2 days | Shadow + Warping |
-| P2 | Shadow severity computation | 1 day | Shadow training |
-| P2 | Warping severity annotation | 2 days | Warping training |
-| P1 | Tibetan real page-level collection | 2-4 weeks | Script accuracy (elevated from P3 per consensus) |
-| P3 | ADF vs flatbed distinction | 2 days | Capture method |
-| P3 | Fax identification in RVL-CDIP | 1-2 days | Capture method |
+> **Updated**: 2026-02-21. Skew is COMPLETE. Shadow/Warping feasibility improved via audit discoveries.
+
+| Priority | Item | Effort | Blocks | Status |
+|----------|------|--------|--------|--------|
+| ~~P0~~ | ~~Skew dataset generation (40K)~~ | ~~3-5 days~~ | ~~MobileNetV4 + SigLIP Group 3~~ | ✅ **DONE (90K)** |
+| ~~P1~~ | ~~Stream 4C: shadow/warping v3 view generation scripts~~ | ~~2 days~~ | ~~Shadow + Warping training~~ | ✅ **DONE** (`generate_v3_shadow_view.py`, `generate_v3_warping_view.py`) |
+| ~~P1~~ | ~~Stream 4C: orientation hybrid rebuild scripts~~ | ~~1 day~~ | ~~Orientation training~~ | ✅ **DONE** (`build_orientation_real_component.py`, `derive_v3_orientation_view.py`) |
+| ~~P1~~ | ~~Stream 4C: `prepare_multitask_datasets.py` (5 sub-commands)~~ | ~~2 days~~ | ~~SigLIP 2 training~~ | ✅ **DONE** (script, orientation, source, shadow, warping, merge) |
+| P0 | Stream 4C: execute shadow/warping/orientation generation (data transfer) | 1-2 days | Shadow/Warping/Orientation training | ❌ Pending (needs GPU VM + GCS) |
+| P0 | Resolution quality dataset V2 pipeline (Sauvola + projection) | 6-9 days | MobileNetV4 + SigLIP Group 5 | 🔄 In progress |
+| P0 | Handwriting label harmonization | 3 days | SigLIP Group 4 | ❌ Not started |
+| P0 | Domain enrichment: 8 D-capped datasets (GPU) | 2-5 days | Script/Handwriting training quality | ❌ Not started |
+| P1 | Shadow severity: run L2 annotation on sd7k + wsrd (replaces SSIM) | 1 day | Shadow training | ❌ Not started |
+| P1 | Warping severity: run L2 annotation on anyphotodoc + warpdoc + docalign12k | 2 days | Warping training | ❌ Not started |
+| P1 | Capture method labeling (RVL-CDIP ADF/fax heuristic) | 2-3 days | SigLIP Group 5 | ❌ Not started |
+| P1 | Code detection dataset curation (10K) | 3-4 days | SigLIP Group 5 | ❌ Not started |
+| P1 | Tibetan real page-level collection | 2-4 weeks | Script accuracy (elevated from P3) | ❌ Not started |
+| P2 | IAM base metadata generation (DocLayout-YOLO, GPU) | 1-2 days | Handwriting training (IAM Grade F rescue) | ❌ Not started |
+| P3 | Doc3D extraction (209GB) | 1-2 days | Shadow + Warping augmentation | Deferred (feasible without) |
+| P3 | ADF vs flatbed distinction | 2 days | Capture method | ❌ Not started |
 
 ---
 
-## 15. Critical Files
+## 16. Critical Files
 
 | File | Purpose |
 |------|---------|
 | `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md` | Model architecture consuming these datasets |
 | `docs/schema/layer2_enrichment_v2.schema.json` | Schema defining all diversity dimensions |
 | `config/script_ml_classes.yaml` | 19 ML script classes with weights |
+| `config/siglip2_multitask.yaml` | SigLIP2 multi-task training config (NEW - from Phase 10) |
 | `scripts/generate_orientation_dataset.py` | Template for dataset generation scripts |
+| `scripts/generate_multitask_labels.py` | Teacher pseudo-labeling pipeline (NEW - Phase 10 Stream 7) |
+| `modal/train_siglip2_multitask.py` | SigLIP2 multi-task training script (NEW - Phase 10 Stream 4) |
 | `src/image_preprocessing_detector/annotation/config/datasets.py` | Dataset registry with per-dataset metadata |
 | `src/image_preprocessing_detector/annotation/schemas/enrichment.py` | Pydantic models for Layer 2 enrichment |
+| `docs/datasets/AUDIT_TRACKING_INDEX.md` | Audit scores and quality signals for all 58 source datasets |
+| `docs/datasets/DATASET_QUICK_REFERENCE.md` | Source dataset inventory (59 datasets, 3.35M images) |
+| `docs/datasets/TRAINING_DATASET_QUICK_REFERENCE.md` | Assembled training dataset status and specs |
 
 ---
 
@@ -831,16 +1009,21 @@ synth-multiscript-250K (base)
 
 For each dataset that needs generation, create a script following the `generate_orientation_dataset.py` pattern:
 
-| Script | Dataset | Key Logic |
-|--------|---------|-----------|
-| `scripts/generate_skew_dataset.py` | Skew (40K) | Random rotation ±10° on orientation sources; Hough labeling for natural scans |
-| `scripts/generate_resolution_dataset.py` | Resolution (30K) | Multi-DPI rendering; char height measurement via connected components |
-| `scripts/generate_handwriting_labels.py` | Handwriting (60K) | Harmonize HierText/COCO-Text/IAM labels to unified presence/legibility/content_type |
-| `scripts/generate_code_dataset.py` | Code (10K) | Render GitHub code screenshots; label with syntax detection |
-| `scripts/label_capture_method.py` | Capture (50K) | Heuristic classifier for ADF/fax on RVL-CDIP |
-| `scripts/compute_shadow_severity.py` | Shadow (15K) | SSIM-based severity from RealDAE pairs; synthetic overlay |
-| `scripts/compute_warping_severity.py` | Warping (20K) | TPS-based synthetic warping; perspective measurement |
-| `scripts/verify_dataset_diversity.py` | ALL | Chi-square tests, coverage reports, split leakage checks |
+| Script | Dataset | Key Logic | Status |
+|--------|---------|-----------|--------|
+| `scripts/generate_skew_dataset.py` | Skew (90K) | Random rotation ±10° on orientation sources; Hough labeling for natural scans | ✅ Done |
+| `scripts/generate_v3_shadow_view.py` | Shadow synthetic (~8K) | v3 pool via splits.jsonl → Augraphy shadow (4 types) → Tier 0 severity labels | ✅ Done |
+| `scripts/generate_v3_warping_view.py` | Warping synthetic (~5K) | v3 pool via splits.jsonl → perspective/curl/fold → Tier 0 severity labels | ✅ Done |
+| `scripts/build_orientation_real_component.py` | Orientation real (~30K) | Download DocLayNet/RVL-CDIP PDFs → render → 4 rotations per page | ✅ Done |
+| `scripts/derive_v3_orientation_view.py` | Orientation synthetic (~20K) | v3 sidecar fetch for `orientation_class` → balanced sample across 4 classes | ✅ Done |
+| `scripts/prepare_multitask_datasets.py` | ALL (5 sub-commands) | script / orientation / source / shadow / warping / merge → GCS upload | ✅ Done |
+| `scripts/generate_resolution_dataset.py` | Resolution (30K) | Multi-DPI rendering; char height measurement via connected components | ❌ Pending |
+| `scripts/generate_handwriting_labels.py` | Handwriting (60K) | Harmonize HierText/COCO-Text/IAM labels to unified presence/legibility/content_type | ❌ Pending |
+| `scripts/generate_code_dataset.py` | Code (10K) | Render GitHub code screenshots; label with syntax detection | ❌ Pending |
+| `scripts/label_capture_method.py` | Capture (50K) | Heuristic classifier for ADF/fax on RVL-CDIP | ❌ Pending |
+| `scripts/label_shadow_severity.py` | Shadow real (sd7k+wsrd) | L2 metadata annotation for `shadow_severity`; skip if `shadow_confidence < 0.5` | ❌ Pending |
+| `scripts/label_warping_severity.py` | Warping real (4 datasets) | L2 metadata annotation for `warping_severity`; preserve `warping_type` from warpdoc | ❌ Pending |
+| `scripts/verify_dataset_diversity.py` | ALL | Chi-square tests, coverage reports, split leakage checks | ❌ Pending |
 
 ---
 
@@ -865,7 +1048,7 @@ This ensures production robustness during the early deployment phase when models
 
 **CONSENSUS UPDATE** (DeepSeek): Within each provenance tier, apply continuous confidence-based weighting rather than binary accept/reject:
 
-```
+```python
 training_weight = tier_base_weight * min(confidence, 1.0)
 ```
 
@@ -919,3 +1102,214 @@ This creates a smooth gradient that naturally down-weights uncertain labels with
 | Human-in-the-loop legibility calibration | Requires funded annotation effort; documented as recommendation in 6.6 | Noted |
 | Document age metadata enrichment | Requires new enrichment pipeline; schema dimension added but no dataset targets yet | Deferred |
 | Color mode metadata enrichment | Requires new enrichment pipeline; schema dimension added but no dataset targets yet | Deferred |
+
+### Post-Consensus Audit Update (2026-02-14)
+
+A full Layer 2 metadata audit completed 2026-02-14 across all 58 source datasets (Version 4.0.0).
+Key findings that affect diversity planning:
+
+| Finding | Impact | Action |
+|---------|--------|--------|
+| 8 datasets capped at Grade D (domain_level1 <75%) | Training weight reliability reduced for mdiw13, arabic-docs-ocr, siw13, cc-ocr, omnidocbench, muharaf, jssoda, docalign12k | Apply 0.3× weight cap until domain enrichment complete (GPU-LLM required) |
+| IAM at Grade F (base metadata absent) | Handwriting dataset has no reliable domain/quality metadata | Requires rescue pipeline; Tier 3 heuristic labels only until fixed |
+| 9 cross-dataset Known Issues (KI-001 to KI-009) | Systemic label inconsistency, split contamination, and schema gaps across multiple datasets | See Section 12.2.1 for KI table and verification checks |
+| SmartDoc-QA is BENCHMARK-ONLY | Phase 10/11 plan incorrectly listed it as a warping training source | Removed from Section 9 training composition; benchmark wall must hold |
+| Shadow dataset unblocked | sd7k (Grade B 87) + wsrd (Grade A 95) provide 11.7K purpose-built shadow pairs | ~18K target achievable via Augraphy Tier 0 synthetic (≤50%) + real pairs via L2 labels |
+| Warping dataset unblocked | anyphotodoc6300 (Grade A 92) + warpdoc (Grade B 85) + all 12K docalign12k | ~24K target achievable; Augraphy synthetic ≤30%; docalign12k at 0.3x weight (D-capped) |
+
+---
+
+## 19. Stream 4C Implementation Update (2026-02-21)
+
+This section documents the decisions made during Stream 4C dataset preparation (Phase 10) and their impact
+on the diversity requirements above.
+
+### 19.1 Provenance Field (Cross-Cutting Requirement)
+
+**Every sample in every training manifest MUST carry a `provenance` field.** This field enables post-hoc analysis
+of real/synthetic generalization gaps and is enforced by `prepare_multitask_datasets.py`.
+
+| Provenance Value | Meaning | Used In |
+|-----------------|---------|---------|
+| `real_scan` | Physical document scanned by flatbed or ADF | Orientation (real), Source (scanned) |
+| `real_camera` | Physical document photographed by camera | Source (camera), Shadow/Warping negatives |
+| `real_born_digital` | Born-digital PDF rendered to image | Orientation (real), Source (born_digital) |
+| `real_paired` | Real document from paired shadow/warping dataset | Shadow, Warping (sd7k, wsrd, anyphotodoc, etc.) |
+| `synthetic_v3` | Generated by synth-multiscript-v3 pipeline | Orientation (v3), Shadow (Augraphy), Warping (Augraphy), Script |
+
+### 19.2 L2 `capture_method` Expansion for Source Dataset
+
+The document source dataset was expanded from 3 hardcoded datasets to any L2-enriched dataset with confirmed
+capture method. The L2 `capture_method` field maps to 3 training classes:
+
+```python
+L2_TO_SOURCE_CLASS = {
+    "born_digital":         "born_digital",
+    "scanner_flatbed":      "scanned",
+    "scanner_adf":          "scanned",
+    "fax":                  "scanned",
+    "camera_smartphone":    "camera",
+    "camera_professional":  "camera",
+    "synthetic":            None,   # Excluded
+    "unknown":              None,   # Excluded
+}
+```
+
+Camera class expansion queries ALL L2-enriched datasets for camera images:
+
+| Dataset | Camera Images | Method |
+|---------|--------------|--------|
+| SmartDoc-QA | ~4,300 | `camera_professional` from L2 metadata |
+| RealDAE | ~1,200 | `camera_smartphone` from L2 metadata |
+| MIDV500 | ~3,600 | `camera_professional` from L2 metadata |
+| Others | Variable | L2 enrichment query |
+
+Target: ≥12,000 camera images before splitting. `born_digital` underscore spelling validated by assertion
+at write time (hard validation). Domain stratification for scanned (RVL-CDIP) via L2 `domain_level1` field.
+
+### 19.3 Synth-Multiscript-v3 GCS Audit Findings
+
+Audit of `gs://image_detection_b/synth_multiscript_v3/` (2026-02-21):
+
+- **Total images**: 350,012 (confirmed by live jpg-only gsutil count 2026-02-21; earlier 190,485 figure was an erroneous intermediate count)
+- **Scripts**: 27 ISO 15924 folders confirmed (Arab, Cyrl, Deva, Hans, Hant, Hebr, Jpan, etc.)
+- **Orientation labels**: Available in per-image sidecar JSON at `data.geometric.orientation_class` (0/90/180/270)
+- **Split registry**: `splits.jsonl` at GCS prefix root — use for deterministic split assignment
+- **Latin exclusion**: `Latn` folder excluded from orientation and shadow/warping synthetic components
+  (Latin orientation coverage provided by real documents)
+
+### 19.4 SSIM Labeling Abandonment (Shadow + Warping)
+
+5-model AI consensus (4/4 substantive models, 2026-02-21) rejected SSIM as a shadow/warping severity metric:
+
+> **SSIM measures structural similarity, not shadow/warping severity.** A blurred image has low SSIM vs. its
+> clean counterpart for the same reason a shadowed image does. SSIM cannot distinguish between blur, noise,
+> compression artifacts, and actual degradation of interest.
+
+**Replacement methodology**:
+
+1. **Synthetic labels (Tier 0 exact)**: Augraphy severity parameter directly recorded as label. No post-hoc
+   measurement needed — the severity is known because we set it.
+2. **Real labels (Tier 1/2)**: L2 metadata `shadow_severity` / `warping_severity` fields from dedicated
+   annotation pipeline (to be run on sd7k, wsrd, anyphotodoc6300, warpdoc, docalign12k).
+
+Scripts implementing the new methodology:
+
+- `generate_v3_shadow_view.py` — Augraphy-based synthetic shadow, Tier 0
+- `generate_v3_warping_view.py` — perspective/curl/fold synthetic warp, Tier 0
+- `prepare_multitask_datasets.py shadow` — reads L2 `shadow_severity`, enforces ≥50% real
+- `prepare_multitask_datasets.py warping` — reads L2 `warping_severity`, enforces ≥70% real
+
+Scripts pending implementation for real data labeling:
+
+- `label_shadow_severity.py` — L2 annotation for sd7k + wsrd
+- `label_warping_severity.py` — L2 annotation for anyphotodoc + warpdoc + docalign12k + docreal
+
+---
+
+## 20. Audit-Derived Quality Signals
+
+**Audit Version**: 4.0.0 (2026-02-14)
+**Coverage**: 58/58 source datasets scored | Mean 84.1 | Median 88.8
+
+This section translates Layer 2 audit results into actionable training guidance. Each assembled
+training dataset carries risk proportional to the grade distribution of its source datasets.
+
+### 19.1 Source Dataset Audit Grades by Training Task
+
+| Training Dataset | Key Source Datasets | Audit Grade | Score | Risk Level |
+|-----------------|---------------------|-------------|-------|------------|
+| **Orientation (50K)** | DocLayNet PDFs + RVL-CDIP (real, rotated) + synth-multiscript-v3 (non-LATN) | B, B, Deferred | 87, 88, -- | LOW (≥60% real; v3 synthetic ≤40%) |
+| **Skew (90K)** ✅ DONE | synth (71K) + 13 natural scan datasets | Mixed B-C | 80-90 | LOW (synthetic 79%, labels T0/T2) |
+| **Resolution Quality (30K)** | diqa-5000, ohr-bench, realdae | B, B, B | 84, 87, 84 | LOW-MEDIUM |
+| **IQA Curated (16K)** | diqa-5000, ohr-bench, realdae | B, B, B | 84, 87, 84 | LOW-MEDIUM |
+| **IQA Synthetic (100K)** | synth-multiscript-v3 | Deferred (pre-audit) | -- | LOW (synthetic by construction) |
+| **Script (108K)** | mdiw13, synth-multiscript-v3, mlt19 | **D**, Deferred, C | 74, --, 80 | **HIGH** (mdiw13 domain cap) |
+| **Handwriting (60K)** | iam, gnhk, nist-sd19, cvl | **F**, B, B, C | 45, 85, 88, 78 | **CRITICAL** (IAM Grade F) |
+| **Capture Method (50K)** | doclaynet, ohr-bench, midv500, smartdoc-qa* | B, B, B, A | 87, 87, 92, 93 | LOW-MEDIUM |
+| **Shadow (~18K)** | sd7k, wsrd + v3 synthetic (Augraphy Tier 0) | B, A, -- | 87, 95, -- | LOW (Augraphy synthetic = self-labeled) |
+| **Warping (~24K)** | anyphotodoc6300, warpdoc, docalign12k (ALL 12K) + v3 synthetic | A, B, **D**, -- | 92, 85, 76, -- | MEDIUM (docalign12k domain cap, 0.3x weight) |
+
+> \* SmartDoc-QA is used ONLY for Capture Method training (source type labels), never for warping/perspective
+> correction training. Benchmark integrity maintained.
+
+### 19.2 D-Capped Dataset Training Weight Policy
+
+Eight datasets cannot provide reliable domain-level diversity signals until domain_level1 coverage
+reaches >75%. Applies to: **mdiw13, arabic-docs-ocr, siw13, cc-ocr, omnidocbench, muharaf,
+jssoda, docalign12k**.
+
+```text
+Normal weight:     tier_base_weight * min(confidence, 1.0)
+D-capped weight:   tier_base_weight * min(confidence, 1.0) * 0.3
+Trigger:           audit.domain_level1_coverage < 0.75 OR audit.grade == "D"
+Unblock condition: GPU-LLM domain enrichment pipeline (P0 in Section 15)
+```
+
+**Practical impact by training task:**
+
+| Training Dataset | D-Capped Sources | Sample Count Affected | Effective Weight |
+|-----------------|------------------|-----------------------|-----------------|
+| Script (108K) | mdiw13 (290K source) | ~25K script training images | 0.3× |
+| Warping (20K) | docalign12k (~12K source) | ~3K warping images | 0.3× |
+| Capture Method (50K) | cc-ocr (6.5K source) | ~2K capture images | 0.3× |
+
+**Until domain enrichment completes**, these datasets contribute at 0.3× weight. The assembly
+scripts (`scripts/generate_multitask_labels.py`) should read the audit grade from
+`docs/datasets/AUDIT_TRACKING_INDEX.md` and apply the weight cap automatically.
+
+### 19.3 IAM Grade F Rescue Path
+
+IAM (`iam`) received **Grade F (score: 45)** due to absent base metadata fields. The 60K
+handwriting training dataset cannot safely use IAM until the following rescue pipeline runs:
+
+| Step | Action | Priority | Estimated Effort |
+|------|--------|----------|-----------------|
+| 1 | Add base metadata (paper format, script, language) from IAM official docs | P1 | 2h |
+| 2 | Run capture method inference (scanner-based, high confidence) | P1 | 30m |
+| 3 | Run domain enrichment (English academic/institutional) | P1 | 1h |
+| 4 | Re-run audit scoring; target Grade B (≥80) | P1 | 30m |
+| 5 | Promote from Tier 3 heuristic to Tier 1 annotation for metadata | P1 | -- |
+
+**Until IAM is rescued**, the handwriting training dataset relies on:
+
+- gnhk (Grade B 85): ~15K handwriting samples
+- nist-sd19 (Grade B 88): ~10K historical handwriting
+- cvl (Grade C 78): ~8K historical handwriting
+
+This leaves the 60K target short (~33K available vs. 60K needed). IAM rescue is a prerequisite
+for reaching full handwriting dataset size.
+
+### 19.4 Known Issue Application Checklist for Dataset Assembly
+
+Before running any assembly script for a training dataset, verify these KI checks pass:
+
+| KI | Issue | Affected Training Datasets | Check Command |
+|----|-------|---------------------------|---------------|
+| KI-001 | Orientation label inconsistency (0°/360° boundary) | Orientation, Skew | `verify_dataset_diversity.py --check ki001` |
+| KI-002 | Script label granularity mismatch (ISO vs. ML classes) | Script, IQA Synthetic | `verify_dataset_diversity.py --check ki002` |
+| KI-003 | Benchmark split contamination risk | All datasets using doclaynet, pubtabnet, ohr-bench | `verify_dataset_diversity.py --check ki003` |
+| KI-004 | Capture method label inflation (born-digital misclassified) | Capture Method | `verify_dataset_diversity.py --check ki004` |
+| KI-005 | Bounding box coordinate system inconsistency (COCO vs. VOC) | Layout-adjacent tasks | `verify_dataset_diversity.py --check ki005` |
+| KI-006 | Resolution quality label drift (V1 vs. V2 method) | Resolution Quality | `verify_dataset_diversity.py --check ki006` |
+| KI-007 | Cross-dataset image duplication (same source, different splits) | All | `verify_dataset_diversity.py --check ki007` |
+| KI-008 | IAM metadata absence propagation | Handwriting | `verify_dataset_diversity.py --check ki008` |
+| KI-009 | Domain label coverage gap in D-capped datasets | Script, Warping, Capture Method | `verify_dataset_diversity.py --check ki009` |
+
+> **Note**: `verify_dataset_diversity.py` KI checks are planned functions; implement alongside
+> dataset assembly scripts in Phase 10 Stream 7.
+
+### 19.5 Grade Distribution Summary for Training Portfolio
+
+| Grade | Count | Source Datasets | Training Risk |
+|-------|-------|-----------------|---------------|
+| A (95-100) | 6 | wsrd, anyphotodoc6300, midv500, smartdoc-qa, synthdog, docvqa | Ideal — use at full weight |
+| B (80-94) | 31 | ohr-bench, doclaynet, sd7k, gnhk, nist-sd19, realdae, warpdoc, … | Standard — use at full weight |
+| C (70-79) | 13 | cvl, staindoc, mlt19, mlt17, bhutan-afs, … | Acceptable — verify label accuracy |
+| D (<70) | 8 | mdiw13, arabic-docs-ocr, siw13, cc-ocr, omnidocbench, muharaf, jssoda, docalign12k | Restricted — apply 0.3× weight cap |
+| F | 1 | iam | Rescue required before use |
+| Deferred | 3 | doc3d, docsynth300k, synth-multiscript-v3 | Self-evaluated at generation time (v3 complete on GCS; formal audit pending) |
+
+**Portfolio health**: 37/54 scored datasets (69%) are Grade B or above and can be used at full
+training weight. The 8 D-capped datasets require domain enrichment (P0 action); IAM requires
+metadata rescue (P1 action) before the handwriting dataset can reach its 60K target.

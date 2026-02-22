@@ -101,12 +101,12 @@ note right
   **Architecture**:
   - SigLIP 2 NAFlex ViT-B/16
   - ~88M params (backbone frozen)
-  - 16 task heads across 5 groups:
-    G1: IQA (6 regression)
-    G2: Script (1 classification)
-    G3: Orientation+Skew (1 cls + 1 reg)
-    G4: Handwriting (3 heads)
-    G5: Page Attrs (4 heads)
+  - 22 task heads across 5 groups:
+    G1: IQA (6 heads: blur/noise/contrast/skew/compression + overall_quality)
+    G2: Script (3 heads: script_code cls + has_non_latin + has_rtl)
+    G3: Orientation+Skew (3 heads: orientation_cls + skew_reg + confidence)
+    G4: Handwriting (5 heads: 3 cls presence/legibility/content_type + 2 reg scores)
+    G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality reg)
 
   **Variable resolution via NAFlex packing**
   (no downsampling required)
@@ -142,12 +142,17 @@ end note
 :Save SigLIP 2 Multi-Task Checkpoint;
 note left
   **Graduation Thresholds (Step 2)**:
-  - IQA PLCC > 0.65
-  - Script acc > 90%
-  - Orientation acc > 95%
-  - Skew MAE < 0.5 deg
-  - Handwriting F1 > 0.85
-  - Resolution MAE < 0.1
+  - IQA VQualA >= 0.92 (DIQA-5000 test)
+  - Script overall acc >= 90% (MLT19 + held-out MDIW13)
+  - Script Tibetan acc (real only) >= 80% (5-fold CV)
+  - Orientation acc >= 95% (orientation test set)
+  - Orientation vertical Japanese >= 95% as 0-degree
+  - Skew MAE < 0.5 deg; >= 90% within 0.5 deg of GT
+  - Handwriting presence acc >= 88% (HierText val)
+  - Handwriting legibility acc >= 85% (HierText val)
+  - Capture method acc >= 85% (RVL-CDIP val)
+  - Shadow/warping MAE < 0.08 (Doc3D val)
+  - Resolution quality MAE < 0.1
 end note
 
 |Step 3: MobileNetV4 Distillation|
@@ -287,7 +292,7 @@ stop
 
 legend right
   |= Component |= Status |= Notes |
-  | **SigLIP 2 NAFlex** | Primary | 16 heads, ~50ms GPU |
+  | **SigLIP 2 NAFlex** | Primary | 22 heads, ~50ms GPU |
   | **MobileNetV4-Conv-S** | Primary | 3 heads, ~3ms GPU |
   | **Docling Layout (egret-xlarge)** | Primary | Pre-trained, accuracy |
   | **Docling Layout (heron)** | Primary | Pre-trained, speed |

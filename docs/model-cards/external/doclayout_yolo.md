@@ -8,6 +8,8 @@ tags:
 title: 'Model Card: DocLayout-YOLO'
 ---
 
+> ⚠️ **SUPERSEDED** — DocLayout-YOLO has been replaced in Project A by `docling-layout-egret-xlarge` (accuracy) and `docling-layout-heron` (speed). This card is retained for reference.
+
 ## Model Summary
 
 > DocLayout-YOLO is a YOLO-based document layout detection model trained on DocLayNet (80,863 pages). Provides fast detection of 11 document element types with 70-82% mAP. Used in Project A for layout-lite detection to classify page attributes and compute structural complexity scores for OCR routing.

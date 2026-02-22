@@ -92,12 +92,12 @@
 
 | Dataset | Images | Scripts | Status | Link |
 |---------|--------|---------|--------|------|
-| synth-multiscript-250k | 250,000 | 27 scripts + 8 IQA dimensions | 🔄 In Progress | [../training/synth-multiscript-250k.md](../training/synth-multiscript-250k.md) |
+| synth-multiscript-v3 | 350,012 | 27 scripts + 8 IQA dimensions | ⚠️ Complete — Imbalanced | [../training/synth-multiscript-v3.md](../training/synth-multiscript-v3.md) |
 
 **Purpose**: Phase 10B script detection training
 **Generation Source**: OpenLID v2 text corpus
-**Status**: ~27,000 partial, 250,000 target
-**Scripts**: Balanced coverage across all 27 scripts
+**Status**: ✅ Complete on GCS (350,012 images) — ⚠️ Imbalanced distribution (Arab 3.8× target; 17 scripts below target); rebalancing required before training. v2 (250K) DELETED.
+**Scripts**: 27 scripts (imbalanced — see training doc for per-script counts)
 
 ---
 
@@ -107,7 +107,7 @@
 
 **Primary Training Data**:
 
-- synth-multiscript-250k (250K, balanced across 27 scripts)
+- synth-multiscript-v3 (350,012, 27 scripts on GCS — ⚠️ rebalancing required before training)
 - mdiw13 train split (232,170, 13 scripts, real-world)
 - mlt19 train split (10,000, 10 languages)
 
@@ -140,7 +140,7 @@
 | **Cyrillic** | Russian, Bulgarian, etc. | MDIW13 subset | TBD |
 | **Hebrew** | Hebrew | MDIW13 subset | TBD |
 
-**Total Coverage**: 27+ scripts across 779K+ real images + 250K synthetic target
+**Total Coverage**: 27+ scripts across 779K+ real images + 350,012 synthetic (v3, GCS-complete)
 
 ---
 

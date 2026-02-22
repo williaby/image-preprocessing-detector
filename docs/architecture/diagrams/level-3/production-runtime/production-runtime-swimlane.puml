@@ -1,9 +1,9 @@
-@startuml Production_Runtime_Complete_Swimlane
+@startuml production-runtime-swimlane
 !theme plain
 skinparam backgroundColor #FEFEFE
 
 title Production Runtime Workstream - Complete Swimlane with LOC Traceability
-footer Workstream 1: Production Runtime | Total LOC: 16,910 | 44 Files | Last Updated: 2025-01-16
+footer Workstream 1: Production Runtime | Total LOC: 16,910 | 44 Files | Last Updated: 2026-02-21
 
 ' ============================================================================
 ' SWIMLANES BY PROCESSING STAGE
@@ -20,11 +20,18 @@ footer Workstream 1: Production Runtime | Total LOC: 16,910 | 44 Files | Last Up
 |Ingestion & Preflight|
 start
 
-:Receive document (PDF/image);
+:Receive document (any format);
 note right
   **Entry Points:**
   - API: src/image_preprocessing_detector/api/routes/process.py (estimated)
   - CLI: src/image_preprocessing_detector/cli.py (estimated)
+
+  **Stage 0 (planned — <20ms CPU):**
+  Document Type Router classifies format
+  before any image pipeline is entered.
+  Native text + born_digital PDF → Unify (fast path)
+  Images + scanned/hybrid/born_digital_degraded → this pipeline
+  src/routing/document_type_router.py (planned)
 end note
 
 :Load and process document;
@@ -81,25 +88,29 @@ endif
 ' ============================================================================
 |Classification & Routing|
 
-:Classify PDF type;
+:Classify PDF type (Stage 0 promoted);
 note left
   **Source Files:**
   - src/image_preprocessing_detector/classification/__init__.py (21 lines)
   - src/image_preprocessing_detector/classification/pdf_type_classifier.py (135 lines)
   - src/image_preprocessing_detector/classification/pdf_image_detector.py (194 lines)
   - src/image_preprocessing_detector/classification/pdf_text_extractor.py (122 lines)
+  - src/routing/document_type_router.py (planned — promotes above to Stage 0)
 
   **Purpose:**
-  - Classify as image_only/born_digital/hybrid
+  - Classify as image_only/born_digital/born_digital_degraded/hybrid
   - Detect if PDF contains images
-  - Extract text for born-digital detection
+  - Extract text + validate quality for born-digital detection
+  - born_digital_degraded: text layer present but extraction yields garbage
+    (~18% of born-digital PDFs per PDF Association 2025)
 
-  **Classes:**
+  **Classes (4-way):**
   - image_only: Scanned documents
-  - born_digital: Digital PDFs (Word, LaTeX)
-  - hybrid: Mix of scanned and digital
+  - born_digital: Digital PDFs with valid text layer
+  - born_digital_degraded: Corrupt text layer → falls back to image pipeline
+  - hybrid: Mix of scanned and digital pages (per-page routing)
 
-  **Total:** 472 lines
+  **Total:** 472 lines (existing) + Stage 0 router (planned)
 end note
 
 :Text detection gate (<10ms);
@@ -192,19 +203,17 @@ partition "MobileNetV4-Conv-S (Pre-Correction)" {
   :Run MobileNetV4-Conv-S (3 heads);
   note left
     **Source Files:**
-    - src/image_preprocessing_detector/detection/iqa_ml.py (1,303 lines)
-    - src/image_preprocessing_detector/detection/hybrid_iqa.py (351 lines)
+    - src/image_preprocessing_detector/detection/mobilenetv4_precorrection.py
+    - src/image_preprocessing_detector/detection/stage_gate.py (orchestrator)
 
     **Model:**
-    - MobileNetV4-Conv-S
-    - 3 heads: orientation, skew, resolution quality
+    - MobileNetV4-Conv-S (~4M params)
+    - 3 heads: orientation (4-class), skew (±10° reg), resolution quality (0-1 reg)
 
     **Device Selection:**
     - Local GPU (preferred, ~3ms)
     - Modal GPU (fallback, ~5ms)
     - CPU (last resort, 8-12ms)
-
-    **Total:** 1,654 lines
 
     **Documentation:**
     [[level-3/production-runtime/device-orchestrator.md]]
@@ -214,22 +223,24 @@ partition "MobileNetV4-Conv-S (Pre-Correction)" {
 }
 
 partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
-  :Run SigLIP 2 NAFlex (16 heads, 5 groups);
+  :Run SigLIP 2 NAFlex (22 heads, 5 groups);
   note left
+    **Source File:**
+    - src/image_preprocessing_detector/detection/siglip2_multitask.py
+
     **Model:**
     - SigLIP 2 NAFlex (88M params)
-    - 16 heads across 5 groups:
-      Group 1: IQA, Group 2: Script,
-      Group 3: Orientation+Skew,
-      Group 4: Handwriting, Group 5: Page Attrs
+    - 22 heads across 5 groups:
+      G1: IQA (6 heads: blur/noise/contrast/skew/compression + overall)
+      G2: Script (3 heads: script_code + has_non_latin + has_rtl)
+      G3: Orientation+Skew (3 heads: cls + reg + confidence)
+      G4: Handwriting (5 heads: 3 cls + 2 reg)
+      G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality)
 
     **Device:**
     - Local GPU (~50ms)
     - Modal GPU (~60ms)
     - CPU (~150ms)
-
-    **Source:**
-    - Integrated in detection/iqa_ml.py
   end note
 
   if (Any head confidence below threshold?) then (yes)
@@ -308,7 +319,8 @@ note left
 
   **Decision Factors:**
   - DQS score
-  - PDF type (image_only/born_digital/hybrid)
+  - PDF type (image_only/born_digital/born_digital_degraded/hybrid)
+  - document_class (from Stage 0 router)
   - Structural complexity
 
   **Total:** 150 lines
@@ -376,12 +388,13 @@ legend right
   │  ├─ pdf_resolution: 264
   │  └─ pdf_upscaler: 330
   │
-  ├─ **Classification & Routing:** 806 lines (5 files)
+  ├─ **Classification & Routing:** 806 lines (5 files) + Stage 0 router (planned)
   │  ├─ classification/__init__: 21
-  │  ├─ pdf_type_classifier: 135
+  │  ├─ pdf_type_classifier: 135 (promoted to Stage 0)
   │  ├─ pdf_image_detector: 194
   │  ├─ pdf_text_extractor: 122
-  │  └─ text_gate: 334
+  │  ├─ text_gate: 334
+  │  └─ routing/document_type_router: TBD (planned — 4-way PDF + format routing)
   │
   ├─ **Quality Analysis:** 9,917 lines (23 files)
   │  ├─ detection/__init__: 190

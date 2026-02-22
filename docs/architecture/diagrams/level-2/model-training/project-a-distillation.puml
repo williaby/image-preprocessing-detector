@@ -41,12 +41,12 @@ partition "Step 1: MobileNetV4-Conv-S Bootstrap" {
 
 partition "Step 2: SigLIP 2 NAFlex Multi-Task" {
   :Load SigLIP 2 NAFlex backbone\n(~88M params, frozen ViT-B/16);
-  :Attach 16 task heads\nacross 5 groups:
-  G1: IQA (6 regression)
-  G2: Script (1 classification)
-  G3: Orientation+Skew (1 cls + 1 reg)
-  G4: Handwriting (3 heads)
-  G5: Page Attrs (4 heads);
+  :Attach 22 task heads\nacross 5 groups:
+  G1: IQA (6 heads: blur/noise/contrast/skew/compression + overall_quality)
+  G2: Script (3 heads: script_code cls + has_non_latin + has_rtl)
+  G3: Orientation+Skew (3 heads: orientation_cls + skew_reg + confidence)
+  G4: Handwriting (5 heads: 3 cls presence/legibility/content_type + 2 reg)
+  G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality reg);
   :Train on all 10 datasets\n(frozen backbone, heads only);
   :Weighted multi-task loss\n(per-group weights);
   if (All heads pass\ngraduation thresholds?) then (yes)

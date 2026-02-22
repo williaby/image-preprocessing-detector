@@ -19,7 +19,7 @@ start
 
 fork
   :Generate Layout Masks
-  via DocLayout-YOLO;
+  via docling-layout;
 
   note right
     **LayoutMaskGenerator**

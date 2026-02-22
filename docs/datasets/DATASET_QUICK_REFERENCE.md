@@ -38,7 +38,7 @@ title: Dataset Quick Reference
 | **B** | 32 | 81-89 | Strong base metadata + VLM inspection |
 | **D** | 8 | 76-87 | Critical-field-capped (domain/language <75%) |
 | **F** | 1 | 36 | Missing base metadata (iam) |
-| **Deferred** | 3 | -- | doc3d, docsynth, synth-multiscript-250k |
+| **Deferred** | 2 | -- | doc3d, docsynth |
 
 **Audit Coverage**: 52/55 audited (95%) | Mean 85.2 | Median 85.9 | 43 at B+ (83%)
 
@@ -215,7 +215,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 
 | Dataset | Images | Scripts/Languages | Train Split | License |
 |---------|-------:|-------------------|-------------|---------|
-| synth-multiscript-250k | 250,000 | 27 scripts + 8 IQA dims | All (synthetic) | MIT |
+| synth-multiscript-v3 | 350,012 | 27 scripts + 8 IQA dims | All (synthetic) — ⚠️ Imbalanced | MIT |
 | mdiw13 | 290,213 | 13 scripts (doc/line/word) | 232,170 | Academic |
 | mlt19 | 20,000 | 10 languages (word boxes) | 10,000 | MIT |
 | siw13 | 16,291 | 13 scripts | All | Academic |

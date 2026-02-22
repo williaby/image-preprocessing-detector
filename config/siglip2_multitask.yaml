@@ -1,0 +1,175 @@
+# SigLIP 2 Multi-Task Teacher Configuration
+# Reference: docs/planning/STREAM_4_IMPLEMENTATION_PLAN.md
+# Training script: modal/train_siglip2_multitask.py
+
+version: "1.0.0"
+description: "Multi-task teacher model configuration for document analysis"
+
+# Model architecture
+model:
+  backbone: "google/siglip2-base-patch16-naflex"
+  variant: "base"  # "base" (86M) or "so400m" (400M)
+  max_num_patches: 784
+  pretrained_iqa_checkpoint: "siglip2_iqa_best.pt"  # From train_siglip2_iqa_v2.py
+
+# Task head definitions
+heads:
+  # IQA heads (EXISTING - loaded from pretrained checkpoint)
+  iqa:
+    dimensions: ["overall", "sharpness", "color"]
+    hidden_dim: 256
+    dropout: 0.3
+    uncertainty: true
+    freeze_during_phase1: true
+
+  # Script detection (NEW)
+  script:
+    num_classes: 19  # Matches config/script_ml_classes.yaml
+    hidden_dim: 256
+    dropout: 0.3
+    class_weights: "balanced"  # Auto-compute from dataset distribution
+
+  # Document source classification (NEW)
+  document_source:
+    num_classes: 3  # scanned, camera, born_digital
+    hidden_dim: 64
+    dropout: 0.0
+
+  # Orientation detection (NEW)
+  orientation:
+    num_classes: 4  # 0, 90, 180, 270 degrees
+    hidden_dim: 64
+    dropout: 0.0
+
+  # Shadow severity regression (NEW)
+  shadow:
+    hidden_dim: 64
+    dropout: 0.0
+    uncertainty: true
+
+  # Warping severity regression (NEW)
+  warping:
+    hidden_dim: 64
+    dropout: 0.0
+    uncertainty: true
+
+# Training configuration
+training:
+  phase1:
+    description: "Frozen backbone, train new detection heads only"
+    epochs: 15
+    lr: 2.0e-4
+    freeze_backbone: true
+    freeze_iqa_heads: true
+    batch_size: 8
+    gradient_accumulation_steps: 4
+
+  phase2:
+    description: "Unfreeze backbone with differential LR"
+    epochs: 30
+    lr: 1.0e-5
+    backbone_lr_multiplier: 0.1
+    iqa_lr_multiplier: 0.01
+    use_pcgrad: true
+    use_llrd: true
+    llrd_decay: 0.9
+    batch_size: 8
+    gradient_accumulation_steps: 4
+
+  # Optimizer
+  optimizer:
+    weight_decay: 0.01
+    gradient_clip: 1.0
+
+  # Scheduler
+  scheduler: "cosine_annealing"
+  min_lr: 1.0e-6
+
+  # EMA
+  ema:
+    enabled: true
+    decay: 0.999
+    start_epoch: 35
+
+  # Mixed precision
+  mixed_precision:
+    enabled: true
+    dtype: "bfloat16"  # "bfloat16" (A100) or "float16" (T4/V100)
+  gradient_checkpointing: true
+
+  # Early stopping
+  early_stopping:
+    patience: 20
+    monitor: "val_loss"
+
+# Loss functions
+loss:
+  # Per-task loss type
+  script: "cross_entropy"
+  document_source: "cross_entropy"
+  orientation: "cross_entropy"
+  shadow: "gaussian_nll"
+  warping: "gaussian_nll"
+  iqa: "norm_in_norm + gaussian_nll"
+
+  # Per-task weight multipliers
+  task_weights:
+    overall: 1.0
+    sharpness: 1.0
+    color: 1.0
+    script: 1.0
+    source: 0.5
+    orientation: 0.5
+    shadow: 0.3
+    warping: 0.3
+
+# Target metrics (Phase E evaluation thresholds)
+targets:
+  iqa_vquala_floor: 0.86
+  script_accuracy: 0.85
+  orientation_accuracy: 0.95
+  source_accuracy: 0.90
+  shadow_mae: 0.12
+  warping_mae: 0.12
+
+# Phase 2 Go/No-Go criteria
+# Run Phase 2 if ANY of these fail after Phase 1:
+go_nogo:
+  script_accuracy_min: 0.85
+  orientation_accuracy_min: 0.95
+  source_accuracy_min: 0.90
+  shadow_mae_max: 0.12
+  warping_mae_max: 0.12
+
+# GCS dataset locations
+datasets:
+  bucket: "image_detection_b"
+  prefixes:
+    script: "datasets/script_training"
+    source: "datasets/source_training"
+    orientation: "datasets/orientation_training"
+    shadow: "datasets/shadow_training"
+    warping: "datasets/warping_training"
+    iqa: "datasets/diqa-5000-original"
+
+# Script class mapping (reference only - authoritative source is config/script_ml_classes.yaml)
+script_classes:
+  - LATN
+  - CYRL
+  - GREK
+  - ARAB
+  - HEBR
+  - DEVA
+  - BENG
+  - TAML
+  - TELU
+  - HANS
+  - HANT
+  - JPAN
+  - KORE
+  - THAI
+  - TIBT
+  - INDIC_OTHER
+  - SE_ASIAN_OTHER
+  - OTHER
+  - UNKNOWN

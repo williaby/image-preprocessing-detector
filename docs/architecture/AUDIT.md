@@ -29,7 +29,7 @@ The broader RAG pipeline consists of multiple repositories working together:
 | Project C | Fusion & chunking | Not Yet Started |
 | Project D | Vector store integration | Not Yet Started |
 
-**Scope Update**: Layout analysis (DocLayout-YOLO with 11 DocLayNet classes, reading order, table structure) was moved from Project B to Project A for simplification. Project B will focus solely on OCR orchestration.
+**Scope Update**: Layout analysis (docling-layout with 11 DocLayNet classes, reading order, table structure) was moved from Project B to Project A for simplification. Project B will focus solely on OCR orchestration.
 
 ## Project Architecture Context
 
@@ -180,7 +180,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 #### 1. Layout Model Training Workflow
 
 **Status**: MISSING (CRITICAL after scope change)
-**Need**: Dedicated workflow for DocLayout-YOLO training
+**Need**: Dedicated workflow for docling-layout training
 **Impact**: Full layout analysis moved to Project A; no documentation for how the layout model is trained
 **Scope Change**: Layout analysis (including reading order, table structure) now in Project A, not Project B
 **Recommendation**: Create `project-a-layout-training.puml` covering:
@@ -245,7 +245,7 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 | `tmp_cleanup/workflows_sonnet/04_phase6_doclayout_yolo_training.puml` | "YOLOv10-nano" |
 | CLAUDE.md | "YOLOv10-doc (specifically trained on DocLayNet)" |
 
-**Resolution**: Standardize on "DocLayout-YOLO (YOLOv10-nano)" to indicate both the model name and underlying architecture.
+**Resolution**: ~~Standardize on "DocLayout-YOLO (YOLOv10-nano)"~~ **SUPERSEDED**: Current standard is `docling-layout-egret-xlarge` (accuracy) / `docling-layout-heron` (speed). See [ML_MODEL_REGISTRY.md](../../planning/ML_MODEL_REGISTRY.md).
 
 ### DQS Weight Configurations
 
@@ -339,11 +339,11 @@ Plus 3+ in `tmp_cleanup/`.
 
 ### Short-Term Actions (Next Sprint)
 
-1. **Create layout training workflow**: Document DocLayout-YOLO training process
+1. **Create layout training workflow**: Document docling-layout training process
 
 2. **Create worker architecture diagram**: Document Celery worker integration
 
-3. **Standardize model naming**: Update all diagrams to use "DocLayout-YOLO (YOLOv10-nano)"
+3. **Standardize model naming**: ~~"DocLayout-YOLO (YOLOv10-nano)"~~ **DONE**: Use `docling-layout-egret-xlarge` (accuracy) / `docling-layout-heron` (speed)
 
 4. **Document DQS weights**: Add canonical weights to detailed workflow with source reference
 

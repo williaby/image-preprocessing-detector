@@ -22,6 +22,10 @@ component: "Strategy"
 source: "Merged from remote branch claude/update-root-project-plan-011NESKE9dRWrXSMWEqoDi9L"
 ---
 
+> ⚠️ **SUPERSEDED** — This document reflects the original Phase 0–9 structure and the ResNet-based
+> ML IQA architecture. The current master plan is
+> [MASTER_PROJECT_PLAN.md](MASTER_PROJECT_PLAN.md). Retain for historical context only.
+
 **Project**: Project A - Image Preprocessing Detection & Quality Assessment for RAG Applications
 **Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues,
 and provides routing metadata for downstream OCR/RAG processing

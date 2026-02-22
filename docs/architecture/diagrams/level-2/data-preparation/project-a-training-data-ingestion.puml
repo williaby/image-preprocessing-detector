@@ -67,7 +67,7 @@ partition "Layer 3: TRAINING (build_training_labels.py)" #FFFFE0 {
 }
 
 partition "Multi-Task Training Ready Sets" {
-  :Create SigLIP 2 training sets\n(16 heads, 5 groups, multi-task);
+  :Create SigLIP 2 training sets\n(22 heads, 5 groups, multi-task);
   :Create MobileNetV4 training sets\n(3 heads, pre-correction);
   :Persist manifests\n(dataset versions,\nlicenses, splits,\nprovenance metadata);
 }

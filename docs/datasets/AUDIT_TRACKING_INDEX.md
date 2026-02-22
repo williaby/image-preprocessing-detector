@@ -33,7 +33,7 @@
 
 **Key Insights**:
 
-- **58 datasets scored** (52 original + 6 newly onboarded), 3 deferred (doc3d, docsynth, synth-multiscript-250k)
+- **58 datasets scored** (52 original + 6 newly onboarded), 3 deferred (doc3d, docsynth, synth-multiscript-v3 — v2 at 250K DELETED; v3 complete on GCS, formal audit pending)
 - **v2.0 scoring**: Accuracy-focused with 7 dimensions and 8 grade caps
 - **37 datasets at B+ (63.8%)**: 6 Grade A + 31 Grade B
 - **Content flag inspection complete** for 51/58 datasets (provenance-based assessment)
@@ -138,7 +138,7 @@ Datasets directly used for SigLIP 2 / MobileNetV4 / YOLOv10-doc training.
 | **pubtabnet** | ✅ Complete | **A** (90.4) | 519,030 | Yes | 10 defects (all resolved). VLM 100% (165 images). OOM-safe streaming |
 | **tablebank** | ✅ Complete | **B** (88.5) | 278,582 | Yes | VLM 80%. Coverage 93%, validity 96%, defect rate 98% |
 | **fintabnet** | ✅ Complete | **B** (87.1) | 97,475 | Yes | VLM 95%. Coverage 93%, validity 96%, defect rate 98% |
-| **synth-multiscript-250k** | ⏸️ Deferred | - | 250,000 (generating) | No | Synthetic dataset, generation in progress |
+| **synth-multiscript-v3** | ⏸️ Deferred (pre-audit) | - | 350,012 (GCS-complete) | No | Generation complete — ⚠️ imbalanced distribution; formal L2 audit pending. v2 (250K) DELETED. |
 | **realdae** | ✅ Complete | **B** (83.9) | 1,200 | Yes | 5 defects. Coverage 99%, VLM 75%. IQA before/after pairs |
 | **hiertext** | ✅ Complete | **B** (81.7) | 11,639 | Yes | 13 defects (11 resolved, 1 partial). Parser GT gold standard handwriting. VLM 95% |
 
@@ -241,7 +241,7 @@ Summary of known issues affecting multiple datasets. See [CROSS_DATASET_KNOWN_IS
 | **KI-002** | Docling Table detection unreliable on multi-column text | HIGH | Synthetic + multi-column datasets | ⚠️ Manual VLM verification required |
 | **KI-003** | Docling Picture detection unreliable on dense text | MEDIUM | Synthetic + dense text datasets | ⚠️ Manual VLM verification required |
 | **KI-004** | LLM handwriting detection unreliable on synthetic | HIGH | All synthetic datasets | ✅ Pattern established (override) |
-| **KI-005** | LLM cannot detect synthetic capture method | HIGH | jssoda, synth-multiscript-250k, docsynth300k | ✅ Pattern established (override) |
+| **KI-005** | LLM cannot detect synthetic capture method | HIGH | jssoda, synth-multiscript-v3, docsynth300k | ✅ Pattern established (override) |
 | **KI-006** | LLM formula detection over-flags scientific text | MEDIUM | All datasets with LLM enrichment | ⚠️ Manual VLM verification required |
 | **KI-007** | LLM domain classification high UNK rate on generic content | LOW | Generic/narrative content datasets | ✅ Accepted (taxonomy limitation) |
 | **KI-008** | Nepali handwritten label noise (character variants) | LOW | nepali-handwritten | ⚠️ Dataset-specific |
@@ -375,7 +375,7 @@ python scripts/audit/compute_scorecard.py --dataset jssoda --update-index
 
 ### Long-Term
 
-1. **Deferred datasets**: doc3d, docsynth, synth-multiscript-250k when generation/enrichment ready
+1. **Deferred datasets**: doc3d, docsynth, synth-multiscript-v3 (v3 GCS-complete; formal audit pending)
 2. **Cross-dataset analysis**: Compute aggregate defect statistics, identify new KI patterns
 3. **Doc completeness sprint**: 25 datasets at doc_completeness <55% -- expand source docs
 

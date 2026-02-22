@@ -73,7 +73,7 @@ The project now has **59 source datasets** (up from 51 at original planning) and
 
 | Head | Source Datasets | Total Images | Status |
 |---|---|---|---|
-| **Script** | synth-multiscript-250k (250K, 27 scripts), MDIW13 (290K, 13 scripts), SIW13 (16K), CVSI (10K), tibhcr (142K), hindi-synth (80K), arabic-docs (10K), Script Detection assembled (108K generating from 108 scripts via OpenLID v2) | **~900K+** available | ✅ Ample data; OpenLID v2 generation in progress |
+| **Script** | synth-multiscript-v3 (350,012, 27 scripts, ⚠️ imbalanced dist.), MDIW13 (290K, 13 scripts), SIW13 (16K), CVSI (10K), tibhcr (142K), hindi-synth (80K), arabic-docs (10K), Script Detection assembled (108K generating from 108 scripts via OpenLID v2) | **~950K+** available | ✅ Ample data; v2 (250K) DELETED; v3 complete on GCS; OpenLID v2 generation in progress |
 | **Script (eval)** | MLT-2019 (10K, 10 languages) | 10K | ✅ RESERVED for eval |
 | **Document Source** | SmartDoc-QA (4.3K camera), RVL-CDIP (16K scanned), DocLayNet (81K born-digital), tobacco800 (1.3K scanned), realdae (1.2K camera), midv500 (3.6K camera) | **~107K** available | ✅ Labels extractable from metadata |
 | **Orientation** | Assembled orientation dataset (50K, 4-class) | 50K | ✅ Ready |
@@ -450,7 +450,7 @@ class MultiTaskBatchSampler:
 
 **Sources** (much richer than original plan):
 
-- synth-multiscript-250k (250K, 27 scripts, GCS) ✅ Ready
+- synth-multiscript-v3 (350,012, 27 scripts, GCS) ✅ Ready — ⚠️ Imbalanced distribution; rebalancing needed
 - MDIW13 (290K, 13 scripts, GCS) ✅ Ready
 - SIW13 (16K, 13 scripts) ✅ Ready
 - CVSI (10K, 10 scripts) ✅ Ready
@@ -460,7 +460,7 @@ class MultiTaskBatchSampler:
 
 Tasks:
 
-- [ ] Verify GCS paths and accessibility for synth-multiscript-250k and MDIW13
+- [ ] Verify GCS paths and accessibility for synth-multiscript-v3 and MDIW13
 - [ ] Assess OpenLID v2 generation progress — determine if 108K script dataset will be ready for Stream 4 training
 - [ ] Create ISO 15924 → 12-class mapping in `config/script_ml_classes.yaml` (if not done in Stream 1)
 - [ ] Write `ScriptDataset` manifest generator:
@@ -841,8 +841,8 @@ def export_to_onnx(
 | PCGrad memory overhead with 8 tasks | MEDIUM | MEDIUM | Gradient accumulation (8 tasks × 4 steps); reduce batch size if OOM | Unchanged |
 | Dataset quality issues (noisy labels) | LOW | MEDIUM | Label cleaning scripts; confidence-based sample weighting; Layer 2 audit grades (57 datasets audited) | Unchanged |
 | Training wall-clock > 7 days on Modal | LOW | LOW | Background execution; early stopping; Phase 2 optional | Unchanged |
-| CJK confusion (Chinese vs Japanese vs Korean) | **LOW** (was MEDIUM) | MEDIUM | synth-multiscript-250k (27 scripts) + MDIW13 (13 scripts) + jssoda (2K Japanese vert+horiz) + hindi-synth (80K Hindi) provide explicit script annotations; test on MLT-2019 | **REDUCED** — more diverse script data available |
-| OpenLID v2 script generation not ready in time | MEDIUM | LOW | 108K dataset being generated; can proceed with synth-multiscript-250k (250K, 27 scripts) + MDIW13 (232K) as fallback | **NEW** — generation in progress |
+| CJK confusion (Chinese vs Japanese vs Korean) | **LOW** (was MEDIUM) | MEDIUM | synth-multiscript-v3 (350,012, 27 scripts) + MDIW13 (13 scripts) + jssoda (2K Japanese vert+horiz) + hindi-synth (80K Hindi) provide explicit script annotations; test on MLT-2019 | **REDUCED** — more diverse script data available |
+| OpenLID v2 script generation not ready in time | MEDIUM | LOW | 108K dataset being generated; can proceed with synth-multiscript-v3 (350,012, 27 scripts) + MDIW13 (232K) as fallback | **NEW** — generation in progress |
 | Shadow/warping severity label quality | LOW | MEDIUM | sd7k + wsrd provide paired GT (shadow/clean); SSIM-based severity computation is deterministic and reproducible | **REDUCED** — was higher risk when only Doc3D enrichment was planned |
 
 ---
