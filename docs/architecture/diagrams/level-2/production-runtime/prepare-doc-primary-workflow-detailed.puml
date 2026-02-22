@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-primary-workflow-detailed
 title Prepare-Doc - Primary Document Processing Workflow (Detailed)
 
 skinparam dpi 150
@@ -78,7 +78,8 @@ partition "Stage 0 — Document Type Router" #FFF9C4 {
   endif
 }
 note right
-  src/routing/document_type_router.py (planned)
+  src/.../classification/pdf_type_classifier.py
+  src/.../routing/document_type_router.py (planned)
   Promotes classification/pdf_type_classifier.py
   to front of pipeline + adds format detection.
   Target: <20ms CPU
@@ -343,6 +344,40 @@ partition "Image Output" {
 }
 
 :Handoff to Unify\n(OCR Orchestration);
+
+note right
+  **Source:**
+  - src/.../ingestion/pdf_loader.py
+  - src/.../ingestion/pdf_resolution.py
+  - src/.../ingestion/pdf_upscaler.py
+  - src/.../ingestion/pdf_analyzer.py
+  - src/.../ingestion/image_loader.py
+  - src/.../classification/pdf_type_classifier.py
+  - src/.../detection/text_gate.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../detection/orientation_detector.py
+  - src/.../detection/layout_lite/analyzer.py
+  - src/.../correction/corrections.py
+  - src/.../correction/border_removal.py
+  - src/.../correction/perspective_correction.py
+  - src/.../metrics/dqs_calculator.py
+  - src/.../routing/recommendation_engine.py
+  - src/.../routing/docling_router.py
+  - src/.../output/json_generator.py
+  - src/.../schema.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0008-multi-stage-pipeline-architecture.md]]
+  [[docs/ADRs/0017-pydantic-v2-json-schema.md]]
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+end note
 
 stop
 

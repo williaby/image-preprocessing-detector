@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-training-workflow-high-level
 title Prepare-Doc - Training Workflow (High Level)
 
 skinparam dpi 150
@@ -57,7 +57,7 @@ endif
 stop
 
 note right
-  Training infrastructure:
+  **Training Infrastructure:**
   - Modal serverless GPU (A10)
   - GCS for datasets
   - HuggingFace for SigLIP 2 backbone
@@ -66,6 +66,32 @@ note right
   **PLANNED (Deferred)**:
   MobileCLIP-2 distillation cascade
   for edge/mobile deployment
+
+  ====
+
+  **Source:**
+  - modal/train_siglip2_multitask.py
+  - modal/train_siglip2_iqa_v2.py
+  - modal/train_skew_estimator.py
+  - modal/shared/metrics_utils.py
+  - modal/shared/gcs_utils.py
+  - modal/shared/dataset_utils.py
+
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+  - scripts/generate_skew_dataset.py
+  - scripts/derive_v3_orientation_view.py
+
+  **Documentation:**
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/planning/TRAINING_OPTIMIZATION_PLAN.md]]
+  [[docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
+  [[docs/ADRs/0022-synthetic-data-generation.md]]
 end note
 
 @enduml

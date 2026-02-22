@@ -1,4 +1,4 @@
-@startuml ProjectD_Embedding_VectorStore
+@startuml embed-vectorstore-workflow
 
 title Embed - Embedding, Indexing & RAG Vector Store Integration
 
@@ -37,5 +37,24 @@ partition "Vector store operations" {
 :Emit ingestion result:\n- collection / index ID\n- document handle\n- summary statistics;
 
 stop
+
+note right
+  **CONTEXT DIAGRAM**
+  This diagram shows the downstream Embed project's workflow.
+  It is provided here to illustrate how Prepare-Doc quality
+  provenance flows through to vector store metadata.
+  Embed internals are NOT part of the Prepare-Doc codebase.
+
+  **Prepare-Doc Outputs Consumed (via Unify + Chunk):**
+  - Trust scores derived from Prepare-Doc IQA metrics
+  - OCR engine provenance rooted in Prepare-Doc routing
+
+  **Documentation:**
+  [[docs/development/RAG Pipeline/RAG-pipeline-project-overview.md]]
+  [[docs/architecture/diagrams/level-2/downstream-context/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+end note
 
 @enduml

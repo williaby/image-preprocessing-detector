@@ -1,4 +1,4 @@
- @startuml
+@startuml prepare-doc-distillation
 title Prepare-Doc - Multi-Task Training Pipeline (3-Step Virtuous Cycle)
 
 skinparam dpi 150
@@ -68,7 +68,7 @@ partition "Step 3: MobileNetV4 Distillation Refinement" {
 }
 
 partition "Export & Registration" {
-  :Export SigLIP 2 to ONNX\n(16 output heads);
+  :Export SigLIP 2 to ONNX\n(22 output heads, 5 groups);
   :Export MobileNetV4 to ONNX\n(3 output heads);
   :Register in model registry\n(GCS bucket);
   :Arena validation\n(per-head thresholds);
@@ -77,8 +77,38 @@ partition "Export & Registration" {
 note right
   **PLANNED (Deferred)**:
   Distillation cascade for edge/mobile:
-  SigLIP 2 → MobileCLIP-2 S4 (~35M)
-  → MobileCLIP-2 S0 (~11.4M)
+  SigLIP 2 --> MobileCLIP-2 S4 (~35M)
+  --> MobileCLIP-2 S0 (~11.4M)
+
+  ====
+
+  **Source:**
+  - modal/train_siglip2_multitask.py
+  - modal/train_siglip2_iqa_v2.py
+  - modal/train_skew_estimator.py
+  - modal/shared/metrics_utils.py
+  - modal/shared/gcs_utils.py
+  - modal/shared/dataset_utils.py
+  - modal/shared/constants.py
+
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+  - scripts/generate_skew_dataset.py
+  - scripts/generate_v3_shadow_view.py
+  - scripts/generate_v3_warping_view.py
+  - scripts/derive_v3_orientation_view.py
+
+  **Documentation:**
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/planning/TRAINING_OPTIMIZATION_PLAN.md]]
+  [[docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0027-int8-quantization-onnx.md]]
+  [[docs/ADRs/0022-synthetic-data-generation.md]]
 end note
 
 stop

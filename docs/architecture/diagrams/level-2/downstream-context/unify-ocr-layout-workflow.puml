@@ -1,4 +1,4 @@
-@startuml ProjectB_OCR_Layout_RO
+@startuml unify-ocr-layout-workflow
 
 title Unify - OCR, Layout Detection & Reading Order
 
@@ -29,7 +29,14 @@ partition "Per-page routing" {
 }
 
 partition "Layout & structure" {
-  :Run layout detection model\n(YOLOv8 / OmniDocBench model)\nusing DocLayNet labels:\nText, Title, Section-Header,\nTable, Picture, Caption,\nPage-Header, Page-Footer, etc.;
+  note right #FFF3E0
+    **Scope Note:**
+    Coarse layout detection (11 DocLayNet classes) is performed
+    upstream by Prepare-Doc and provided in DocumentMetadata.json.
+    Unify performs full reading order + table structure analysis only.
+    Source: docs/architecture/diagrams/level-2/downstream-context/index.md
+  end note
+  :Consume coarse layout\nfrom Prepare-Doc\n(DocumentMetadata.json);
 
   :Attach text spans from OCR\ninto LayoutElements\n(using bounding box overlap);
 
@@ -53,5 +60,26 @@ partition "Reading order & links" {
 :Emit OCRDocument\n(to Chunk);
 
 stop
+
+note right
+  **CONTEXT DIAGRAM**
+  This diagram shows the downstream Unify project's workflow.
+  It is provided here to illustrate how Prepare-Doc outputs
+  (DocumentMetadata.json + corrected images) are consumed.
+  Unify internals are NOT part of the Prepare-Doc codebase.
+
+  **Prepare-Doc Outputs Consumed:**
+  - DocumentMetadata.json (DQS, IQA metrics, routing recommendation)
+  - Corrected page images (deskewed, enhanced)
+  - Coarse layout detections (11 DocLayNet classes)
+
+  **Documentation:**
+  [[docs/development/RAG Pipeline/ingest-prepare-doc-contract.md]]
+  [[docs/development/RAG Pipeline/prepare-doc-unify-contract.md]]
+  [[docs/architecture/diagrams/level-2/downstream-context/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+end note
 
 @enduml

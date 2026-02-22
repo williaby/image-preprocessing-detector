@@ -33,7 +33,7 @@ partition "Dataset Collection" {
     [[prepare-doc-training-data-ingestion.puml]]
 
     **Documentation:**
-    [[docs/DATASET_CATALOG.md]]
+    [[docs/datasets/README.md]]
 
     **Scripts:**
     - scripts/download_*.py
@@ -63,10 +63,8 @@ partition "Dataset Collection" {
 partition "Multi-Model Ensemble Training" {
   :Train Track A IQA models;
   note right
-    **Models (accuracy-optimized):**
-    - MUSIQ (sharpness specialist)
-    - QualiCLIP (color specialist)
-    - DocIQ-Replica (overall)
+    **Purpose:** Accuracy-optimized IQA models
+    (specialist heads for sharpness, color, overall)
 
     **Workflow:**
     [[diqa-training-phases.puml]]
@@ -75,9 +73,8 @@ partition "Multi-Model Ensemble Training" {
 
   :Train Track B VLM models;
   note right
-    **Models:**
-    - Qwen3-VL-8B (LoRA)
-    - InternVL3-8B (LoRA)
+    **Purpose:** VLM models fine-tuned with LoRA
+    for pseudo-label generation
 
     **Workflow:**
     [[diqa-training-phases.puml]]
@@ -159,54 +156,35 @@ partition "Production Model Training" {
   note right
     **Purpose:**
     Full document analysis model
-    22 heads across 5 groups
-    (IQA[6], Script[3], Orient+Skew[3], HW[5], PageAttrs[5])
     (~50ms GPU inference)
 
-    **Data:**
-    10 purpose-built datasets (~503K)
-
-    **Source:**
-    - src/.../training/siglip2_trainer.py
-    - src/.../models/siglip2_naflex.py
+    **Workflow:**
+    [[prepare-doc-training-workflow-high-level.puml]]
 
     **Scripts:**
     - modal/train_siglip2_multitask.py
   end note
 
-  :Train MobileNetV4-Conv-S;
+  :Train MobileNetV4-Conv-S Pre-Correction;
   note right
-    **Process (3-step virtuous cycle):**
-    1. Train on synthetic GT labels
-    2. Train SigLIP 2 multi-task
-    3. Re-train with SigLIP 2 soft labels
-       (KL-divergence, T=3)
+    **Purpose:**
+    Fast pre-correction model
+    (~3ms GPU inference)
 
     **Workflow:**
     [[prepare-doc-distillation.puml]]
 
-    **Source:**
-    - src/.../training/mobilenetv4_trainer.py
-    - src/.../training/generate_soft_labels.py
-
-    **ADR:**
-    [[docs/ADRs/0028-resnet-teacher-student.md]]
-    (SUPERSEDED by SigLIP 2 multi-task)
+    **Scripts:**
+    - modal/train_mobilenetv4_precorrection.py
   end note
 
   :Export MobileNetV4 Pre-Correction;
   note right
     **Purpose:**
-    Fast pre-correction model
-    3 heads (~3ms inference)
-    orientation, skew, resolution quality
-
-    **Source:**
-    - src/.../training/mobilenetv4_trainer.py
-    - src/.../models/mobilenetv4_conv_s.py
+    ONNX export for production deployment
 
     **Scripts:**
-    - modal/train_mobilenetv4_precorrection.py
+    - modal/export_phase7_onnx.py
   end note
 }
 

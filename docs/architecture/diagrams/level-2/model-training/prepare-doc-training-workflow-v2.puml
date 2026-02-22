@@ -14,6 +14,13 @@ footer Updated: 2025-12-16 | Phase 7 MVP Dataset
 
 |#LightBlue|Data Preparation|
 start
+note right #FFCCCC
+  WARNING: LEGACY DIAGRAM (Phase 3)
+  ResNet-50/18 Teacher-Student Architecture
+  SUPERSEDED by SigLIP 2 + MobileNetV4 pipeline.
+  See: prepare-doc-training-workflow-high-level.puml
+  and prepare-doc-distillation.puml
+end note
 :Collect from 16 sources\n(E: drive organized);
 note right
   **01_base_data/** (Training)
@@ -123,5 +130,30 @@ legend right
   | TorchScript Export | DONE | - |
   | Model Registry | DONE | - |
 endlegend
+
+note right
+  **Source:**
+  - modal/train_siglip2_iqa.py (legacy Phase 3 predecessor)
+  - modal/train_siglip2_iqa_v2.py (IQA-only train script)
+  - modal/shared/metrics_utils.py
+  - modal/shared/gcs_utils.py
+
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml]]
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
+
+  **SUPERSEDED BY:**
+  prepare-doc-training-workflow-high-level.puml
+  prepare-doc-distillation.puml
+end note
 
 @enduml

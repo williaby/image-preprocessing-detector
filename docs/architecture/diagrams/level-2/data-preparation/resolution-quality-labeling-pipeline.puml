@@ -200,4 +200,17 @@ note right of scoring_pkg
     12.1 img/s on A100 GPU
 end note
 
+note right
+    **Source Files:**
+    - src/.../schema_utils/resolution_quality.py
+
+    **Scripts:**
+    - scripts/label_resolution_quality.py
+    - scripts/integrate_resolution_quality.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/data-preparation/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+end note
+
 @enduml

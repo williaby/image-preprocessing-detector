@@ -148,20 +148,29 @@ note left of ConfigLayer
 end note
 
 ' === TRACEABILITY ===
-note as TraceSummary
+note right of BenchmarkDB
   **Level 2: Synthetic Data Generation**
 
-  **Status**: Infrastructure complete (~1,070 lines)
+  **Status**: Infrastructure complete
   **Workstream**: #8 (Magenta)
+
+  **Source Files:**
+  - src/.../synthetic/config.py (1,172 lines)
+  - src/.../synthetic/generator.py (1,719 lines)
+  - src/.../synthetic/augmentation_hybrid.py (644 lines)
+  - src/.../synthetic/schema_adapter.py (800 lines)
+  - src/.../synthetic/cli.py (558 lines)
+
+  **Total LOC:** 4,893 lines
 
   **Purpose**: Generate labeled synthetic degraded
   images for training augmentation, detector
   validation, and drift detection baselines
 
   **Key Components**:
-  1. Configuration (4 degradation types) - ✅
-  2. Degradation engine (batch processing) - 🚧
-  3. Benchmarking adapter (5 subsets) - ✅
+  1. Configuration (4 degradation types) - done
+  2. Degradation engine (batch processing) - done
+  3. Benchmarking adapter (5 subsets) - done
 
   **Integration Points**:
   - WS 2: Training augmentation (30% synthetic)
@@ -174,12 +183,6 @@ note as TraceSummary
   - NumPy RNG (reproducibility)
 
   **Cost Savings**: $24,500 (98% vs manual)
-
-  **Source Files**:
-  - src/.../synthetic/config.py
-  - src/.../synthetic/generator.py
-  - src/.../synthetic/augmentation_hybrid.py
-  - src/.../synthetic/schema_adapter.py
 end note
 
 @enduml

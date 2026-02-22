@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-training-infrastructure
 title Prepare-Doc - Training Infrastructure & Optimization Loop
 
 skinparam dpi 150
@@ -87,7 +87,7 @@ partition "Phased Head Training" #E3F2FD {
     Unfreeze backbone with low LR (1/10x)
   end note
 
-  :Phase 3 Full:\nAll 19 heads unfrozen\n(20-40 epochs);
+  :Phase 3 Full:\nAll 22 heads unfrozen\n(20-40 epochs);
   note right
     Group 4: Handwriting (3 cls + 2 reg)
     Group 5: Page Attrs (1 cls + 4 reg)
@@ -109,7 +109,7 @@ partition "Phased Head Training" #E3F2FD {
 
 if (All heads pass\ngraduation thresholds?) then (yes)
   partition "Export & Registration" {
-    :Export SigLIP 2 to ONNX\n(16 output heads);
+    :Export SigLIP 2 to ONNX\n(22 output heads, 5 groups);
     :Export MobileNetV4 to ONNX\n(3 output heads);
     note right
       **MobileNetV4 heads:**
@@ -162,8 +162,10 @@ endif
 
 :Pipeline complete;
 note right
-  **Source Files (Training Scripts)**:
+  **Source:**
+  - modal/train_siglip2_multitask.py
   - modal/train_siglip2_iqa_v2.py (1,597 LOC)
+  - modal/train_skew_estimator.py
   - modal/shared/metrics_utils.py (223 LOC)
   - modal/shared/gcs_utils.py (130 LOC)
   - modal/shared/dataset_utils.py (61 LOC)
@@ -171,12 +173,27 @@ note right
 
   **Status**: PLANNED
   (train_siglip2_iqa_v2.py exists for IQA-only;
-   multi-task scripts not yet implemented)
+   train_siglip2_multitask.py is the multi-task version)
 
-  **Design Specifications**:
-  SIGLIP2_MULTITASK_REQUIREMENTS.md
-  TRAINING_OPTIMIZATION_PLAN.md
-  DATASET_DIVERSITY_REQUIREMENTS.md
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+  - scripts/generate_skew_dataset.py
+  - scripts/generate_v3_shadow_view.py
+  - scripts/generate_v3_warping_view.py
+  - scripts/derive_v3_orientation_view.py
+  - scripts/evaluate_dataset_diversity.py
+
+  **Documentation:**
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/planning/TRAINING_OPTIMIZATION_PLAN.md]]
+  [[docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
+  [[docs/ADRs/0022-synthetic-data-generation.md]]
+  [[docs/ADRs/0024-active-learning-annotation.md]]
 end note
 stop
 
