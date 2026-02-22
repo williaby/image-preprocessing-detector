@@ -50,8 +50,9 @@ Ingest                                                                        (f
                                                           Trust scoring + RAG chunking
                                                                     │
                                                                     ▼
-                                                          Embed (foundry-embed)
-                                                          Embeddings + Vector DB
+                                                          Application Embedding
+                                                          (per-application — each AI app
+                                                           handles embedding per its own needs)
 ```
 
 ### Service Naming Glossary
@@ -61,12 +62,12 @@ backwards compatibility for readers of older documents.
 
 | Legacy ID | Service Name | Repository | Primary Function |
 | --- | --- | --- | --- |
+| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) |
+| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification |
+| ~~Project C~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service |
+| ~~Project E~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization |
 | ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI, file upload, Cloud Workflows triggering |
-| ~~Prepare-Doc~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) |
-| ~~Chunk~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization |
-| ~~Unify~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification |
-| ~~Embed~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring |
-| ~~Project E~~ | **Embed** | `foundry-embed` | Vector embeddings, retrieval API |
 
 **Naming rules**: Use service names in all documentation and code. Legacy IDs appear only in
 `docs/_archived/` with ~~strikethrough~~ notation.
@@ -581,6 +582,34 @@ Each student stage targets the same 16 prediction heads with progressive latency
 | Capture method | 0 | 50K | Assemble from L2-enriched datasets by capture_method field | Data acquisition |
 | Shadow | 0 | 15K | Run Phase 5 view generation after Tier 0 | Tier 0 severity labeling |
 | Warping | 0 | 20K | warpdoc complete; wsrd warping labels queued | wsrd warping labels |
+
+---
+
+### Chunk Service Transition (foundry-chunk)
+
+The future `foundry-chunk` service will be built by refactoring `williaby/data_ingestor`, which
+contains working chunking code developed in parallel with this project. Transition begins after
+Prepare-Doc SigLIP 2 training is complete and validated (Tier 3 dependency).
+
+**data_ingestor → foundry-chunk migration inventory:**
+
+| Module | data_ingestor path | Disposition |
+| --- | --- | --- |
+| Chunking algorithms | `chunking/by_title_chunker.py`, `token_chunker.py` | **Keep** — core Chunk logic |
+| Document router | `pipeline/router.py` | **Keep** — entry point classification |
+| PDF parsers | `parsers/pdf_parser.py` | **Audit** — may overlap with Unify |
+| DocLayNet evaluation | `evaluation/doclaynet_evaluator.py` | **Keep** — QA framework |
+| Benchmarking suite | `benchmarking/` | **Keep** — performance baseline |
+| PDF resolution utils | `utils/pdf_resolution.py`, `pdf_upscaler.py` | **Already extracted** into this repo |
+| Export | `export/exporter.py` | **Keep** — JSON/Markdown output |
+| Trust scoring | *(not built)* | **New work** — must consume Prepare-Doc IQA fields |
+| GCS artifact I/O | *(not built)* | **New work** — read from `02-unified/`, write to `04-chunks/` |
+| Old Ref Docs | `docs/Ref Docs/RAG Pipeline/project-a/b/c/d-*` | **Archive** to `docs/_archived/` in data_ingestor |
+
+**Contract requirement**: The output `RAGChunkSet.json` must include `trust_score`,
+`ocr_engine_provenance`, `chunk_id`, `document_id`, and `trace_id` per
+[chunk-embed-contract.md](../development/RAG%20Pipeline/chunk-embed-contract.md). These fields
+are mandatory — all per-application embedding implementations depend on them.
 
 ---
 

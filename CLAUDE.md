@@ -116,24 +116,23 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 >
 > **Last synchronized**: 2026-02-21
 
-### Four-Project RAG Pipeline Architecture
+### Six-Service RAG Pipeline Architecture
 
 ```text
-Project A (THIS REPO)     →    Project B          →    Project C         →    Project D
-Preprocessing & IQA              OCR Orchestration       Fusion & Trust         Vector Indexing
-─────────────────────           ─────────────────       ──────────────         ───────────────
-• IQA & Corrections             • Full Layout           • Multi-Engine         • Embeddings
-• Script Detection              • Reading Order           Fusion               • Vector DB
-• Orientation/Skew              • Table Structure       • Trust Scoring        • Retrieval
-• Handwriting Analysis          • Multi-Engine OCR      • RAG Chunking         • Search
-• Routing Metadata
+Ingest            →  Prepare-Doc / Prepare-Audio  →  Unify  →  Chunk  →  App Embedding
+(foundry-ingest)     (foundry-prepare-doc)            (foundry-unify)  (foundry-chunk)  (per-app)
+──────────────────   (foundry-prepare-audio)          ───────────────  ───────────────  ─────────
+• Web UI upload      Document track: IQA, corrections,   Multi-engine OCR    Trust scoring
+• File routing         layout, routing metadata           Docling DOM         RAG chunking
+• Job status         Audio track: FFmpeg + Deepgram,    unification
+• Cloud Workflows      diarization, TranscriptMetadata
 
-OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
-DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
-+ Corrected Images
+OUTPUT:              DocumentMetadata.json               OCRDocument.json    RAGChunkSet.json
+                     + Corrected Images                                      (each app embeds
+                     TranscriptMetadata.json                                  per its own needs)
 ```text
 
-**Project A Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Project B should use.
+**Prepare-Doc Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Unify should use.
 
 **Current Architecture** (two-model pipeline):
 
@@ -145,7 +144,7 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 **Scope Boundaries**:
 
 - **IN SCOPE**: IQA, corrections, DQS, script/orientation/handwriting detection, routing recommendations
-- **OUT OF SCOPE**: Full layout detection, table structure, reading order (Project B responsibility)
+- **OUT OF SCOPE**: Full layout detection, table structure, reading order (Unify's responsibility)
 
 **Current Status**: Phases 0–6 ✅ COMPLETE | Streams 1–4C ✅ COMPLETE | Dataset assembly ⚠️ IN PROGRESS | Training ❌ PENDING
 

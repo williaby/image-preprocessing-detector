@@ -101,11 +101,7 @@ together {
     component "Normalization" as Normalize
   }
 
-  package "Embed (foundry-embed)\n<size:10><color:gray>○ Not Yet Started</color></size>\n<size:10>Output: RAG-ready collection ID</size>" as Embed #E0E0E0 {
-    component "Embedding Gen" as Embedding
-    database "Vector DB" as VectorDB
-    component "Retrieval API" as Retrieval
-  }
+  rectangle "Application Embedding\n<size:10><color:gray>● Per-application implementation</color></size>\n<size:10>Must conform to RAGChunkSet contract</size>\n<size:10>See: chunk-embed-contract.md</size>" as AppEmbed #F5F5F5
 }
 
 ' ============================================================================
@@ -139,7 +135,7 @@ OCRLayer -right-> DoclingDOM
 DoclingDOM -down-> Chunk : gs://.../03-docling-dom/
 
 ' Row 4 → Row 5
-Chunk -right-> Embed : gs://.../04-chunks/
+Chunk -right-> AppEmbed : gs://.../04-chunks/\nRAGChunkSet + TrustMetrics
 
 ' ============================================================================
 ' LEGEND
@@ -154,6 +150,7 @@ legend bottom
   | <#E8F0FE> | Fast Path (Native Text / Born-Digital PDF) |
   | <#E8F5E9> | Active Development |
   | <#E0E0E0> | Not Yet Started |
+  | <#F5F5F5> | Application-specific (per-app; shared contract) |
 endlegend
 
 ' Note: Diagram hierarchy and traceability tables are documented in index.md

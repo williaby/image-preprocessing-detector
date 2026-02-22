@@ -102,37 +102,27 @@ The Docling DOM is the critical data structure that enables consistent downstrea
 
 ### Chunk (foundry-chunk)
 
-Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics, and structural coherence. Low-trust content can be flagged for human review or processed with different retrieval weights.
+Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics from Prepare-Doc, and structural coherence signals from Unify. Low-trust content can be flagged for human review or processed with reduced retrieval weight.
 
-The chunking algorithm produces overlapping text segments optimized for semantic search, respecting document structure (avoiding splits mid-sentence or mid-paragraph) while maintaining consistent chunk sizes. Each chunk carries full source traceability: document -> page -> element -> chunk, enabling precise citation in RAG responses. Output is `ChunkSet.json` containing all chunks with their trust scores, source attribution, and semantic boundaries.
+The chunking algorithm produces semantically coherent text segments that respect document structure — avoiding splits mid-sentence or mid-paragraph — while maintaining consistent token counts. Each chunk carries full source traceability: document → page → element → chunk, enabling precise citation in RAG responses. Output is `RAGChunkSet.json` containing all chunks with trust scores, `ocr_engine_provenance`, source attribution, and semantic boundaries. See [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md) for the mandatory contract all downstream embedding implementations must satisfy.
 
-### Embed (foundry-embed)
+**Source codebase**: `williaby/data_ingestor` — working implementations of TokenChunker, ByTitleChunker, DocumentRouter, and DocLayNet evaluation harness. Transition to `foundry-chunk` is planned after Prepare-Doc SigLIP 2 training stabilizes (Tier 3 dependency). Trust scoring and GCS artifact I/O are new work not yet built.
 
-Embed is the final processing stage, converting text chunks into dense vector representations and storing them for retrieval. It generates embeddings using state-of-the-art models optimized for semantic search, then indexes these vectors in a vector database. Each deployment of Embed owns its own vector database instance, enabling multi-tenant isolation.
+### Application Embedding (per-application)
 
-**Technical Stack [TBD]:**
+Embedding is **not a shared foundry service** — each AI application that uses this pipeline implements its own embedding component, tailored to its retrieval needs. However, all embedding implementations MUST conform to the mandatory contract defined in [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md).
 
-| Component | Decision | Status |
-|-----------|----------|--------|
-| **Embedding Model** | [TBD: OpenAI text-embedding-3-large, Cohere embed-v3, or custom?] | To Be Decided |
-| **Vector Dimensions** | [TBD: 1536, 3072, or model-dependent?] | To Be Decided |
-| **Vector Database** | [TBD: Qdrant, Pinecone, Weaviate, or Vertex AI Vector Search?] | To Be Decided |
-| **Index Type** | [TBD: HNSW, IVF, or database default?] | To Be Decided |
-| **Retrieval Strategy** | [TBD: Dense only, hybrid (dense + sparse), or with reranking?] | To Be Decided |
+The contract requires that every embedding implementation:
 
-**Multi-Tenancy**: Each `collection_id` provides logical isolation. Physical isolation strategy [TBD].
+- Accepts `RAGChunkSet.json` from Chunk (at `gs://rag-pipeline-{env}/{trace_id}/04-chunks/`)
+- Preserves `chunk_id` as a searchable/filterable field in its vector store
+- Preserves `trust_score` as metadata for retrieval quality filtering
+- Preserves `ocr_engine_provenance` for audit and debugging
+- Preserves `document_id` and `trace_id` for cross-service traceability
 
-**Performance Targets [TBD]:**
+Within those constraints, each application is free to choose its own embedding model (OpenAI, Cohere, custom), vector dimensions, vector database (Qdrant, Pinecone, Weaviate, pgvector), similarity metric, and chunk selection strategy.
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Embedding throughput | [TBD] chunks/second | To Be Defined |
-| Query latency (P95) | [TBD] ms | To Be Defined |
-| Concurrent queries | [TBD] QPS | To Be Defined |
-
-The service exposes a retrieval API for semantic search queries, returning ranked chunks with similarity scores and full source attribution. The `EmbeddingManifest.json` records metadata about the embedding process (model version, dimensions, indexing parameters) for reproducibility. Upon completion, Embed returns the `collection_id` to Ingest, which the user can use for subsequent RAG queries against this document set.
-
-> **Note**: Embed requirements document (`embed-f-nf.md`) is pending. The [TBD] items above will be resolved during Embed project initiation.
+The Level 2 diagram [Chunk → Application Embedding Contract Workflow](../level-2/downstream-context/index.md) is the authoritative interface specification. The collection identifier returned by each application's embedding process is what Ingest surfaces to users for subsequent RAG queries against that document set.
 
 ---
 
@@ -142,12 +132,12 @@ This Level 0 diagram establishes the pipeline context. Each box on this diagram 
 
 | Level 0 Box | Level 1 Location | Repository |
 |-------------|------------------|------------|
-| **Ingest** | `foundry-ingest/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Ingest** | `foundry-ingest/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
 | **Prepare-Doc** | [level-1/index.md](../level-1/index.md) | This repo (`image_detection`) |
-| **Prepare-Audio** | `foundry-prepare-audio/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Prepare-Audio** | `foundry-prepare-audio/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
 | **Unify** | `foundry-unify/docs/architecture/diagrams/level-1/index.md` | TBD |
-| **Chunk** | `foundry-chunk/docs/architecture/diagrams/level-1/index.md` | TBD |
-| **Embed** | `foundry-embed/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Chunk** | `foundry-chunk/docs/architecture/diagrams/level-1/index.md` | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) (planned refactor → `foundry-chunk`) |
+| **Embed** | *(per-application — no shared foundry service)* | N/A — each AI app implements per `chunk-embed-contract.md` |
 
 Each Level 1 diagram then drills down into component boxes that map to Level 2 index files within that project.
 
@@ -250,12 +240,12 @@ Standardized naming across documentation, repositories, and code:
 
 | Legacy ID | Service Name | Repository | Primary Function | Level 1 Diagram |
 |-----------|--------------|------------|------------------|-----------------|
-| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI frontend, file upload, workflow triggering | TBD |
-| ~~Prepare-Doc~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality assessment, corrections, routing | [Level 1](../level-1/index.md) |
-| ~~Chunk~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
-| ~~Unify~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
-| ~~Embed~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring | TBD |
-| ~~Project E~~ | **Embed** | `foundry-embed` | Vector embedding, storage, retrieval API | TBD |
+| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) | [Level 1](../level-1/index.md) |
+| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
+| ~~Project C~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring (source: `data_ingestor`) | TBD |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service | TBD |
+| ~~Project E~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
+| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI, file upload, Cloud Workflows triggering | TBD |
 
 **Naming Conventions:**
 
