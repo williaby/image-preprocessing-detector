@@ -224,6 +224,22 @@ note bottom of layer2
     Existing records continue to work.
 end note
 
+note right
+    **Source:**
+    - src/.../annotation/schemas/enrichment.py
+    - src/.../annotation/schemas/immutable.py
+    - src/.../annotation/enrichment/manager.py
+    - src/.../labeling/arena/runner.py
+
+    **Scripts:**
+    - modal/train_siglip2_multitask.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/pseudo-labeling/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+    [[docs/planning/PSEUDO_LABELING_PROJECT_PLAN.md]]
+end note
+
 legend right
     |= Color |= Meaning |
     | <#LightBlue> | Immutable (unchanged) |

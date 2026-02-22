@@ -191,4 +191,19 @@ note bottom of output_pkg
     - per-sample enrichment results
 end note
 
+note right
+    **Source Files:**
+    - src/.../labeling/domain/classifier.py
+    - src/.../labeling/domain/openrouter_client.py
+    - src/.../labeling/domain/prompts.py
+    - src/.../labeling/domain/config.py
+
+    **Scripts:**
+    - scripts/enrich_metadata_from_llm.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/labeling-benchmarking/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+end note
+
 @enduml

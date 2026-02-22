@@ -44,7 +44,7 @@ note right of Sources
   - /mnt/e/image_detection/02_benchmark_only/
 
   **Documentation:**
-  [[docs/DATASET_CATALOG.md]]
+  [[docs/datasets/README.md]]
   [[docs/schema/LABEL_MAPPING_SPECIFICATION.md]]
 
   **Registry:**
@@ -173,13 +173,21 @@ package "Layer 3: TRAINING" as L3 #TRAINING_COLOR {
 note right of L3
   **Source:**
   - modal/train_siglip2_iqa_v2.py
-  - src/.../labeling/deqa/config.py
-  - src/.../labeling/finetuning/dataset.py
+  - scripts/build_training_labels.py
+  - src/.../annotation/schemas/immutable.py
+  - src/.../annotation/schemas/enrichment.py
+
+  **Scripts:**
+  - scripts/annotate_base_metadata.py
+  - scripts/build_training_labels.py
 
   **V2 Storage:**
   Hive-style partitioning
   O(1) per-dataset writes
   pyarrow.dataset unified view
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/data-preparation/index.md]]
 
   **Head Mapping:**
   |= Schema |= Training |= Head |

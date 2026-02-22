@@ -1,4 +1,4 @@
-@startuml DIQA Training Phases
+@startuml diqa-training-phases
 !theme plain
 skinparam backgroundColor #FEFEFE
 
@@ -285,5 +285,24 @@ with performance metrics;
 for batch inference;
 
 stop
+
+note right
+  **Source:**
+  - src/.../labeling/arena/runner.py
+  - src/.../labeling/arena/datasets/diqa5000.py
+  - src/.../labeling/arena/inference/modal.py
+  - src/.../labeling/model_spec.py
+
+  **Scripts:**
+  - modal/train_siglip2_multitask.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/pseudo-labeling/index.md]]
+  [[docs/planning/PSEUDO_LABELING_PROJECT_PLAN.md]]
+  [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+end note
 
 @enduml

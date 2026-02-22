@@ -8,7 +8,7 @@ skinparam packageStyle rectangle
 skinparam ranksep 60
 skinparam nodesep 40
 
-title Prepare-Doc (Prepare-Doc) - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
+title Prepare-Doc - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
 
 footer Prepare-Doc | Stage 0 + 8 Workstreams | Last Updated: 2026-02-22
 
@@ -53,7 +53,7 @@ package "WS 1: Production Runtime\n<150ms/page (GPU) | ≥6 pages/sec" #E8F5E9 {
 
   rectangle "Quality\nAnalysis" as QA {
     card "Classical IQA"
-    card "ML IQA\n(MobileNetV4\n+ SigLIP 2)"
+    card "ML IQA Models"
     card "Layout-Lite"
   }
 

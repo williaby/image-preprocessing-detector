@@ -1,4 +1,4 @@
- @startuml
+@startuml prepare-doc-device-selection-flow
 title Prepare-Doc - Device Selection & IQA Execution Flow
 
 skinparam dpi 150
@@ -56,7 +56,7 @@ partition "Pre-Correction Application" {
 
 partition "SigLIP 2 NAFlex Multi-Task Analysis" {
   :Run SigLIP 2 NAFlex\non primary_device\nfor all pages (~50ms GPU);
-  :Extract 16-head predictions\nacross 5 groups:\n(IQA, Script, Orient+Skew,\nHandwriting, Page Attrs);
+  :Extract 22-head predictions\nacross 5 groups:\n(IQA[6], Script[3], Orient+Skew[3],\nHandwriting[5], Page Attrs[5]);
   :Compute per-head confidence scores;
 }
 
@@ -89,6 +89,28 @@ else (no)
 endif
 
 :Return final multi-task metrics\n(MobileNetV4 + SigLIP 2 + classical fallback)\nto downstream corrections,\nDQS, and routing;
+
+note right
+  **Source:**
+  - src/.../utils/device_probe.py
+  - src/.../orchestration/device_orchestrator.py
+  - src/.../orchestration/modal_client.py
+  - src/.../workers/celery_app.py
+  - src/.../workers/tasks.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/orientation_detector.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+  [[docs/architecture/diagrams/level-3/production-runtime/device-orchestrator.md]]
+
+  **ADR:**
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0020-cpu-first-deployment-strategy.md]]
+end note
 
 stop
 

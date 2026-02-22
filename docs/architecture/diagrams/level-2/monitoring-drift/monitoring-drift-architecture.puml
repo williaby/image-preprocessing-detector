@@ -195,14 +195,14 @@ legend right
     **Total Lines**: ~7,400 (implementation) + 5,400 (tests)
 
     **Source Traceability**:
-    • [[src/image_preprocessing_detector/drift/__init__.py]]
-    • [[src/image_preprocessing_detector/drift/performance.py]]
-    • [[src/image_preprocessing_detector/drift/alerting.py]]
-    • [[src/image_preprocessing_detector/drift/active_learning.py]]
-    • [[src/image_preprocessing_detector/drift/privacy_review.py]]
-    • [[src/image_preprocessing_detector/drift/retraining.py]]
+    - src/image_preprocessing_detector/drift/__init__.py
+    - src/image_preprocessing_detector/drift/performance.py
+    - src/image_preprocessing_detector/drift/alerting.py
+    - src/image_preprocessing_detector/drift/active_learning.py
+    - src/image_preprocessing_detector/drift/privacy_review.py
+    - src/image_preprocessing_detector/drift/retraining.py
 endlegend
 
-footer Last Updated: 2025-12-19 | [[docs/architecture/diagrams/level-2/monitoring-drift/index.md|Documentation Index]]
+footer Last Updated: 2025-12-19 | docs/architecture/diagrams/level-2/monitoring-drift/index.md
 
 @enduml

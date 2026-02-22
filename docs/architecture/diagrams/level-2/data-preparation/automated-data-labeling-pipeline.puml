@@ -232,4 +232,28 @@ note right of layer2
     Tier 3: Heuristics (fallback)
 end note
 
+note right
+    **Source Files:**
+    - src/.../annotation/workflow/pipeline.py
+    - src/.../annotation/workflow/scanner.py
+    - src/.../annotation/workflow/preflight.py
+    - src/.../annotation/workflow/orchestrator.py
+    - src/.../annotation/parsers/base.py
+    - src/.../annotation/enrichment/manager.py
+    - src/.../annotation/enrichment/providers/docling_layout.py
+    - src/.../annotation/enrichment/providers/siglip.py
+    - src/.../annotation/monitoring/metrics.py
+
+    **Scripts:**
+    - scripts/annotate_base_metadata.py
+    - scripts/build_training_labels.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/data-preparation/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+
+    **ADR:**
+    [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+end note
+
 @enduml

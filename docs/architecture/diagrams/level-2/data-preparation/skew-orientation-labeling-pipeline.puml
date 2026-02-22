@@ -211,4 +211,24 @@ note right of integration_pkg
     orientation_corrected (None)
 end note
 
+note right
+    **Source Files:**
+    - src/.../models/skew_estimator.py
+
+    **Scripts:**
+    - scripts/label_skew_orientation.py
+    - scripts/label_skew_classical.py
+    - scripts/integrate_skew_orientation.py
+
+    **Modal:**
+    - modal/train_skew_estimator.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/data-preparation/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+
+    **ADR:**
+    [[docs/ADRs/0036-device-priority-enforcement.md]]
+end note
+
 @enduml

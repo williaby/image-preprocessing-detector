@@ -1,5 +1,5 @@
-@startuml
-title Prepare-Doc – Primary Document Processing Workflow\n(High Level with Test Coverage)
+@startuml prepare-doc-primary-workflow-test-coverage
+title Prepare-Doc - Primary Document Processing Workflow\n(High Level with Test Coverage)
 
 skinparam dpi 150
 skinparam shadowing false
@@ -95,14 +95,19 @@ partition "IQA Analysis" {
   if (High uncertainty?) then (yes)
     :Teacher inference\n(ResNet-50);
   endif
-  note right #Orange
-    **Tests:**
-    • test_iqa_ml.py (15 tests)
-    • test_resnet_teacher.py (SKIPPED - torch)
-    • test_loss_functions.py (SKIPPED - torch)
-    • test_iqa_ml_integration.py
+  note right #FFCCCC
+    **LEGACY (Phase 3): ResNet-18/50 architecture**
+    **superseded by MobileNetV4-Conv-S + SigLIP 2**
+    **NAFlex two-model pipeline.**
+    Current: MobileNetV4 (3ms) + SigLIP 2 (50ms, 22 heads)
+
+    **Tests (Phase 3 legacy):**
+    - test_iqa_ml.py (15 tests)
+    - test_resnet_teacher.py (SKIPPED - torch)
+    - test_loss_functions.py (SKIPPED - torch)
+    - test_iqa_ml_integration.py
     **FR:** FR-2.3
-    **Status:** Partial - ML models not deployed
+    **Status:** Partial - ML models superseded
   end note
 }
 
@@ -171,6 +176,41 @@ partition "Output" {
   end note
 }
 
+note right
+  **Source:**
+  - src/.../ingestion/pdf_loader.py
+  - src/.../ingestion/pdf_resolution.py
+  - src/.../ingestion/pdf_upscaler.py
+  - src/.../ingestion/pdf_analyzer.py
+  - src/.../ingestion/image_loader.py
+  - src/.../classification/pdf_type_classifier.py
+  - src/.../detection/text_gate.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../correction/corrections.py
+  - src/.../metrics/dqs_calculator.py
+  - src/.../routing/recommendation_engine.py
+  - src/.../output/json_generator.py
+
+  **E2E Tests:**
+  - test_pipeline_e2e.py (11 tests)
+  - test_real_fixtures.py (14 tests)
+
+  **Integration Tests:**
+  - test_pipeline.py
+  - test_pdf_upscaling_integration.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0008-multi-stage-pipeline-architecture.md]]
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+end note
+
 stop
 
 legend right
@@ -178,16 +218,7 @@ legend right
   | <#LightGreen> | Well tested (>80% coverage) |
   | <#Orange> | Partially tested or SKIPPED |
   | <#LightBlue> | Future phase (not implemented) |
+  | <#FFCCCC> | LEGACY - superseded content |
 end legend
-
-note right of "Output"
-  **E2E Tests:**
-  • test_pipeline_e2e.py (11 tests)
-  • test_real_fixtures.py (14 tests)
-
-  **Integration Tests:**
-  • test_pipeline.py
-  • test_pdf_upscaling_integration.py
-end note
 
 @enduml

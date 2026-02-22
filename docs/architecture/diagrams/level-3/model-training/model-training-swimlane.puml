@@ -29,8 +29,7 @@ end note
 
 :Create PyTorch MultiTaskDataset;
 note left
-  **datasets/multitask_dataset.py**
-  LOC: ~350 lines (TBD)
+  **datasets/multitask_dataset.py** (not yet implemented)
 
   **Functionality**:
   - Load parquet files
@@ -44,8 +43,7 @@ end note
 
 :Initialize MobileNetV4-Conv-S;
 note right
-  **models/mobilenetv4_gate.py**
-  LOC: TBD
+  **models/mobilenetv4_gate.py** (not yet implemented)
 
   **Architecture**:
   - MobileNetV4-Conv-Small backbone
@@ -60,8 +58,7 @@ end note
 
 :Configure MobileNetV4 Bootstrap Training;
 note left
-  **training/mobilenetv4_trainer.py**
-  LOC: TBD
+  **training/mobilenetv4_trainer.py** (not yet implemented)
 
   **Training Config**:
   - Optimizer: AdamW
@@ -73,8 +70,7 @@ end note
 
 :Run MobileNetV4 Bootstrap (Modal GPU);
 note right
-  **modal/train_mobilenetv4.py**
-  LOC: TBD
+  **modal/train_mobilenetv4.py** (not yet implemented)
 
   **Modal Config**:
   - GPU: A10
@@ -95,8 +91,7 @@ end note
 
 :Load SigLIP 2 NAFlex Backbone (Frozen);
 note right
-  **models/siglip2_multitask.py**
-  LOC: TBD
+  **models/siglip2_multitask.py** (not yet implemented)
 
   **Architecture**:
   - SigLIP 2 NAFlex ViT-B/16
@@ -114,8 +109,7 @@ end note
 
 :Configure SigLIP 2 Multi-Task Training;
 note left
-  **training/siglip2_trainer.py**
-  LOC: TBD
+  **training/siglip2_trainer.py** (not yet implemented)
 
   **Training Config**:
   - Optimizer: AdamW
@@ -129,8 +123,7 @@ end note
 
 :Run SigLIP 2 Multi-Task Training (Modal GPU);
 note right
-  **modal/train_siglip2_multitask.py**
-  LOC: TBD
+  **modal/train_siglip2_multitask.py** (2,679 lines)
 
   **Modal Config**:
   - GPU: A10
@@ -159,8 +152,7 @@ end note
 
 :Generate SigLIP 2 Soft Labels;
 note right
-  **training/generate_soft_labels.py**
-  LOC: TBD
+  **training/generate_soft_labels.py** (not yet implemented)
 
   **Process**:
   - Load SigLIP 2 checkpoint
@@ -173,7 +165,7 @@ end note
 
 :Configure MobileNetV4 Distillation;
 note left
-  **training/mobilenetv4_trainer.py**
+  **training/mobilenetv4_trainer.py** (not yet implemented)
   (distillation mode)
 
   **Training Config**:
@@ -186,7 +178,7 @@ end note
 
 :Run MobileNetV4 Distillation (Modal GPU);
 note right
-  **modal/train_mobilenetv4.py**
+  **modal/train_mobilenetv4.py** (not yet implemented)
   (distillation mode)
 
   **Modal Config**:
@@ -211,8 +203,7 @@ end note
 
 :Export SigLIP 2 to ONNX;
 note right
-  **modal/export_onnx.py**
-  LOC: TBD
+  **modal/export_onnx.py** (not yet implemented)
 
   **ONNX Export (SigLIP 2)**:
   - 16 output heads
@@ -274,8 +265,7 @@ end note
 
 :Load Models for Inference;
 note right
-  **models/batch_inference.py**
-  LOC: TBD
+  **models/batch_inference.py** (not yet implemented)
 
   **Capabilities**:
   - Batch processing

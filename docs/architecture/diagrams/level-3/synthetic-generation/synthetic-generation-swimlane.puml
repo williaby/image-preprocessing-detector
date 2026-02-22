@@ -16,11 +16,14 @@ skinparam note {
 start
 :Load generation config\n(DPI tier, color mode,\naugmentation profile);
 note right
-  **Source**: src/.../synthetic/config.py
-  **LOC**: ~300
+  **Source Files:**
+  - src/.../synthetic/config.py (1,172 lines)
+
   7 DPI tiers: 72/100/150/200/300/400/600
   ColorMode: COLOR(60%), GRAYSCALE(30%), BINARIZED(10%)
   Pydantic v2 config models
+
+  **Total Step LOC**: 1,172 lines
 end note
 :Select scripts and fonts\n(30+ ISO 15924 scripts);
 :Determine composition\n(text blocks, spacing,\nmargins, columns);
@@ -30,10 +33,13 @@ end note
 :Apply font-specific adjustments\n(size, kerning, line height);
 :Compose page layout\n(single/multi-column,\nheaders, footers);
 note right
-  **Source**: src/.../synthetic/generator.py
-  **LOC**: ~400
+  **Source Files:**
+  - src/.../synthetic/generator.py (1,719 lines)
+
   MultiScriptDocumentGenerator class
   _render_text_blocks() method
+
+  **Total Step LOC**: 1,719 lines
 end note
 
 |Geometric Transforms|
@@ -61,11 +67,14 @@ else (5% HISTORICAL)
   :Apply edge degradation;
 endif
 note right
-  **Source**: src/.../synthetic/augmentation_hybrid.py
-  **LOC**: ~350
+  **Source Files:**
+  - src/.../synthetic/augmentation_hybrid.py (644 lines)
+
   HybridAugmenter class
   AGED/HISTORICAL profiles use
   Albumentations transforms
+
+  **Total Step LOC**: 644 lines
 end note
 
 |Measurement|
@@ -79,8 +88,9 @@ end note
 :Set Tier 0 confidence\n(all fields = 1.0);
 :Record generation provenance\n(config hash, timestamp, seed);
 note right
-  **Source**: src/.../synthetic/schema_adapter.py
-  **LOC**: ~200
+  **Source Files:**
+  - src/.../synthetic/schema_adapter.py (800 lines)
+
   Fields populated:
   - CaptureMethodInfo (3 fields)
   - ResolutionInfo (6 fields)
@@ -91,6 +101,8 @@ note right
   - TextScopeInfo (5 fields)
   - PaperSizeInfo (5 fields)
   - CodeDetection (4 fields)
+
+  **Total Step LOC**: 800 lines
 end note
 
 |Output|
@@ -98,14 +110,21 @@ end note
 :Write JSON with full detail;
 :Update generation manifest\n(sample count, config hash);
 note right
-  **CLI**: src/.../synthetic/cli.py (~150 LOC)
+  **Source Files:**
+  - src/.../synthetic/cli.py (558 lines)
+  - scripts/generate_v3_shadow_view.py (649 lines)
+  - scripts/generate_v3_warping_view.py (658 lines)
+
   imgprep synth generate
   --color-mode, --skew, --orientation
   --augmenter hybrid
+
+  **Total Step LOC**: 1,865 lines
 end note
 note right
   **WS8 Synthetic Generation Pipeline**
-  Total: ~1,400 LOC across 5 source files
+  Total: 6,200 LOC across 8 source files
+  (1,172 + 1,719 + 644 + 800 + 558 + 649 + 658)
   Target: 250K multi-script documents
   All labels at Tier 0 confidence (exact by construction)
   Downstream: WS3 data prep, WS2 model training

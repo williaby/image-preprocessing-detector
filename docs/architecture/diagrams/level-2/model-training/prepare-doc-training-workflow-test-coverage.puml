@@ -1,5 +1,5 @@
-@startuml
-title Prepare-Doc – Training Workflow (High Level with Test Coverage)
+@startuml prepare-doc-training-workflow-test-coverage
+title Prepare-Doc - Training Workflow (High Level with Test Coverage)
 
 skinparam dpi 150
 skinparam shadowing false
@@ -43,6 +43,11 @@ note right #Orange
 end note
 
 |Teacher Training|
+note right #FFCCCC
+  WARNING: LEGACY (Phase 3) - ResNet-50/18 Teacher-Student.
+  SUPERSEDED by SigLIP 2 + MobileNetV4 pipeline.
+  Test coverage below reflects Phase 3 implementation only.
+end note
 :Initialize ResNet-50 backbone\n(ImageNet pretrained);
 note right #Orange
   **Tests:**
@@ -164,25 +169,43 @@ note right
   **Training Test Coverage Summary:**
 
   **Covered (but SKIPPED without PyTorch):**
-  • test_resnet_teacher.py - Teacher model architecture
-  • test_loss_functions.py - Loss function implementations
-  • test_distillation_loss.py - KD loss calculations
-  • test_model_optimizer.py - ONNX/TorchScript export
+  - test_resnet_teacher.py - Teacher model architecture
+  - test_loss_functions.py - Loss function implementations
+  - test_distillation_loss.py - KD loss calculations
+  - test_model_optimizer.py - ONNX/TorchScript export
 
   **Not Covered (Manual/Infrastructure):**
-  • Dataset collection and preparation
-  • Training loop execution
-  • Hyperparameter tuning
-  • Model registry operations
-  • Deployment procedures
+  - Dataset collection and preparation
+  - Training loop execution
+  - Hyperparameter tuning
+  - Model registry operations
+  - Deployment procedures
 
   **Recommendation:**
   Run tests with PyTorch installed to validate
   training components:
-  ```
-  poetry install --with ml
-  poetry run pytest -v -m "not requires_full_dataset"
-  ```
+  uv sync --extra ml
+  uv run pytest -v -m "not requires_full_dataset"
+end note
+
+note right
+  **Source:**
+  - modal/train_siglip2_iqa_v2.py
+  - modal/train_skew_estimator.py
+  - modal/shared/metrics_utils.py
+  - src/image_preprocessing_detector/detection/iqa_ml.py
+
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+
+  **Documentation:**
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0027-int8-quantization-onnx.md]]
 end note
 
 @enduml
