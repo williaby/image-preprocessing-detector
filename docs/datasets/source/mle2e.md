@@ -461,17 +461,17 @@ mle2e/
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (85.3/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (93.0/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 90.9 | 29% |  |
-| Field Validity | 93.9 | 29% |  |
-| Doc Completeness | 45.5 | 18% | Below threshold |
+| Field Coverage | 89.7 | 17% |  |
+| Field Validity | 93.9 | 17% |  |
+| Doc Completeness | 54.5 | 6% | Below threshold |
 | Defect Rate | - | - | Excluded (no data) |
-| Cross-Source Agreement | 99.6 | 12% |  |
-| VLM Accuracy | 95.0 | 12% |  |
-| **Overall** | **85.3** | | **Grade B** |
+| Cross-Source Agreement | 99.6 | 17% |  |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **93.0** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -479,7 +479,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -487,11 +487,9 @@ No defect catalog available for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/mle2e/](../../scripts/audit/results/mle2e/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 1,816 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 1,816 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
@@ -506,4 +504,4 @@ No defect catalog available for this dataset.
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `has_table` | 100.0% | 0.000 |
+| 1 | `text_quality` | 100.0% | 0.000 |

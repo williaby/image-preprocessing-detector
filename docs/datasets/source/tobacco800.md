@@ -310,17 +310,17 @@
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: A (90.8/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (86.5/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 99.7 | 25% |  |
-| Field Validity | 96.3 | 25% |  |
-| Doc Completeness | 100.0 | 15% |  |
-| Defect Rate | 86.0 | 15% |  |
-| Cross-Source Agreement | 49.8 | 10% | Below threshold |
-| VLM Accuracy | 89.0 | 10% |  |
-| **Overall** | **90.8** | | **Grade A** |
+| Field Coverage | 93.7 | 15% |  |
+| Field Validity | 92.7 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 86.0 | 10% |  |
+| Cross-Source Agreement | 49.8 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **86.5** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -338,7 +338,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 89.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -346,11 +346,9 @@
 
 **Audit Artifacts**: [scripts/audit/results/tobacco800/](../../scripts/audit/results/tobacco800/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 1,290 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 1,290 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 

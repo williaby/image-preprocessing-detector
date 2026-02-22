@@ -103,17 +103,17 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 ###### 11.1 Quality Scorecard
 
-> **Audit Date**: 2026-02-14 | **Grade**: B (82.1/100) | **Auditor**: claude-opus-4-6
+> **Audit Date**: 2026-02-16 | **Grade**: B (85.2/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 25% |  |
-| Field Validity | 96.6 | 25% |  |
-| Doc Completeness | 45.5 | 15% | Below threshold |
-| Defect Rate | 97.4 | 15% |  |
-| Cross-Source Agreement | 58.3 | 10% | Below threshold |
-| VLM Accuracy | 90.0 | 10% |  |
-| **Overall** | **82.1** | | **Grade B** |
+| Field Coverage | 86.9 | 15% |  |
+| Field Validity | 96.2 | 15% |  |
+| Doc Completeness | 54.5 | 5% | Below threshold |
+| Defect Rate | 97.4 | 10% |  |
+| Cross-Source Agreement | 58.3 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **85.2** | | **Grade B** |
 
 ###### 11.2 Key Defects
 
@@ -126,7 +126,7 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
 
 ###### 11.4 Cross-Dataset Findings
 
@@ -134,11 +134,9 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 **Audit Artifacts**: [scripts/audit/results/midv500/](../../scripts/audit/results/midv500/)
 
----
-
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 15,050 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-16 | **Samples**: 15,050 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
@@ -153,4 +151,4 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `has_table` | 100.0% | 0.000 |
+| 1 | `text_quality` | 100.0% | 0.000 |

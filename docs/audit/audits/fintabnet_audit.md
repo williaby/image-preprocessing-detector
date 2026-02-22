@@ -82,14 +82,14 @@ Fill in based on dataset documentation review:
 
 | Property | Value | Source |
 |----------|-------|--------|
-| Is synthetic? | | Dataset documentation |
-| Primary language(s) | | Dataset documentation |
-| Primary script(s) | | Dataset documentation |
-| Capture method | | Dataset documentation |
-| Expected splits | | Dataset documentation / parser |
-| Total samples | | Parser manifest |
-| Has ground truth files? | | Dataset structure |
-| Multi-column documents? | | Dataset documentation |
+| Is synthetic? | No (born-digital from SEC EDGAR PDFs) | Dataset documentation |
+| Primary language(s) | English | Dataset documentation |
+| Primary script(s) | Latin (Latn) | Dataset documentation |
+| Capture method | born_digital | Dataset documentation |
+| Expected splits | No official split | Dataset documentation |
+| Total samples | 97,475 | Parser manifest |
+| Has ground truth files? | Yes - JSONL (cell bboxes) | Dataset structure |
+| Multi-column documents? | Yes (financial tables with merged cells) | Dataset documentation |
 
 ---
 
@@ -107,15 +107,15 @@ Document expected values based on documentation (ground truth for validation):
 
 | Field | Expected Value | Source | Confidence |
 |-------|---------------|--------|------------|
-| `capture_method` | | Dataset documentation | |
-| `iso639_language` | | Dataset documentation | |
-| `iso15924_script` | | Dataset documentation | |
-| `script_family` | | Derived from script | |
-| `split` | | Parser manifest | |
-| `is_synthetic` | | Dataset characteristics | |
-| `domain_level1` | | Dataset content type | |
+| `capture_method` | born_digital | Dataset documentation | HIGH |
+| `iso639_language` | eng | Dataset documentation | HIGH |
+| `iso15924_script` | Latn | Dataset documentation | HIGH |
+| `script_family` | latin | Derived from script | HIGH |
+| `split` | N/A (no official split) | Dataset documentation | HIGH |
+| `is_synthetic` | false | Dataset characteristics | HIGH |
+| `domain_level1` | FIN | Financial (SEC annual reports) | HIGH |
 
-**Notes**:
+**Notes**: IBM Research dataset. Cell-level annotations only (text region bboxes, no row/empty cell positions). Custom IBM license restricts commercial use. Corrected version FinTabNet.c (2023) exists. Only 1 OPEN defect (text_has_content). Grade A (93.8).
 
 ---
 

@@ -392,52 +392,45 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Audit Date**: 2026-02-12 | **Grade**: B (87.7/100) | **Auditor**: claude-opus-4-6
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-16 | **Grade**: B (88.6/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 86.7 | 0.278 | 13/15 fields pass (layout_detections, text_has_content fail) |
-| Field Validity | 100.0 | 0.278 | All populated fields pass validation |
-| Doc Completeness | 54.5 | 0.167 | 6/11 doc sections populated |
-| Defect Rate | 96.2 | 0.167 | 5 defects (1 resolved, 1 open, 3 deferred) |
-| VLM Accuracy | 96.2 | 0.111 | 12 Track C samples, 96.2% accuracy |
-| **Overall** | **87.7** | | **Grade B** |
+| Field Coverage | 88.4 | 15% |  |
+| Field Validity | 100.0 | 15% |  |
+| Doc Completeness | 72.7 | 5% |  |
+| Defect Rate | 96.2 | 10% |  |
+| Cross-Source Agreement | 52.5 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **88.6** | | **Grade B** |
 
-**Prescreening**: 13/15 fields at 100% pass rate. Failures due to missing Docling layout/OCR extractions (deferred).
+###### 11.2 Key Defects
 
-###### 11.1 Key Defects
+> **Total**: 5 defects (1 resolved, 3 deferred, 1 open)
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| NH-D001 | layout_detections | MEDIUM | DEFERRED | No Docling layout extractions available |
-| NH-D002 | text_content | LOW | DEFERRED | No OCR text content available |
-| NH-D003 | capture_method | LOW | RESOLVED | v1 `scanner_flatbed` corrected to `camera_smartphone` |
-| NH-D004 | has_figure | MEDIUM | OPEN | 344 Docling Picture disagreements, ~8% true positive rate from VLM sample |
-| NH-D005 | quality_overall | LOW | DEFERRED | No IQA quality scores available |
+| NH-D001 | layout_detections | MEDIUM | DEFERRED | No layout detections available. Docling layout extraction was planned (5 batches |
+| NH-D002 | text_content | LOW | DEFERRED | No OCR text content available. Docling OCR extraction was planned but not execut |
+| NH-D003 | capture_method | LOW | RESOLVED | v1 metadata had capture_method='scanner_flatbed' (from dataset_config defaults). |
+| NH-D004 | has_figure | MEDIUM | OPEN | Comparison report shows 344 disagreements for has_figure between Docling layout  |
+| NH-D005 | quality_overall_score | LOW | DEFERRED | No IQA quality scores available (no LLM enrichment, no classical IQA pipeline).  |
 
-###### 11.2 VLM Inspection Summary
+###### 11.3 VLM Inspection Summary
 
-| Flag | Inspected | FP Rate | Notes |
-|------|----------:|--------:|-------|
-| has_table | 12 | 91.7% | 1 true positive (sample 207 - grid table) |
-| has_figure | 12 | 91.7% | 1 true positive (sample 437 - hand-drawn design) |
-| has_formula | 12 | 100% | No true positives found |
-| has_handwriting | 12 | 0% | 100% correct (all samples are handwritten) |
-| has_signature | 12 | 83.3% | 2 true positives (samples 736, 704 - legal signatures) |
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 96.2%
 
-**Track C Passing Accuracy**: 96.2% (12 samples, excluding orientation)
+###### 11.4 Cross-Dataset Findings
 
-> **Note**: ~42% of samples are rotated 90 degrees CCW. Orientation accuracy is 58.3% (orientation_class defaults to UP). Dataset contains legal/court documents and formal letters alongside educational content.
+- No cross-dataset known issues identified for this dataset.
 
-###### 11.3 Cross-Dataset Findings
-
-- **KI-003** (Docling Picture FP on dense text): Confirmed. Dense Devanagari handwriting blocks trigger false Picture detections. Estimated ~92% FP rate from 12-sample VLM inspection.
-- **KI-005** (LLM capture method): Applicable. v1 metadata used incorrect `scanner_flatbed` default. Fixed via dataset documentation override.
-- **KI-008** (script_family `ltr` bug): Confirmed and fixed. `get_script_family("Deva")` now returns `indic`.
-
-**Audit Artifacts**: [scripts/audit/results/nepali-handwritten/](../../../scripts/audit/results/nepali-handwritten/)
-
----
+**Audit Artifacts**: [scripts/audit/results/nepali-handwritten/](../../scripts/audit/results/nepali-handwritten/)
 
 ##### 12. Reliability & Bottlenecks
 
@@ -447,6 +440,25 @@
 > (no IQA pipeline has been run, NH-D005). This is the sole bottleneck field; all other
 > enrichment fields were populated by the v3 integration script with confidence 0.80-0.90.
 > See Layer 2 Audit Summary (Section 11) above for post-integration quality assessment.
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 958 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-16 | **Samples**: 958 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 

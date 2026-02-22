@@ -380,38 +380,56 @@ realdae/
 
 ---
 
-##### Layer 2 Audit Summary
+##### 11. Layer 2 Audit Summary
 
-> **Audit Date**: 2026-02-12 | **Grade**: B (85.9/100) | **Auditor**: claude-opus-4-6
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+
+###### 11.1 Quality Scorecard
+
+> **Audit Date**: 2026-02-15 | **Grade**: C (83.1/100) | **Auditor**: claude-opus-4-6
 
 | Dimension | Score | Weight | Notes |
 |-----------|------:|-------:|-------|
-| Field Coverage | 99.0 | 0.278 | 13/13 fields screened |
-| Field Validity | 92.6 | 0.278 | 27 fields audited |
-| Doc Completeness | 54.6 | 0.167 | 6/11 sections populated |
-| Defect Rate | 91.4 | 0.167 | 14 defects (11 resolved, 1 partial, 2 deferred) |
-| VLM Accuracy | 75.0 | 0.111 | 57 images inspected (45 Track A + 12 Track C) |
-| **Overall** | **85.9** | | **Grade B** |
+| Field Coverage | 92.2 | 15% |  |
+| Field Validity | 92.5 | 15% |  |
+| Doc Completeness | 100.0 | 5% |  |
+| Defect Rate | 91.4 | 10% |  |
+| Cross-Source Agreement | 52.8 | 15% | Below threshold |
+| VLM Accuracy | - | - | Excluded (no data) |
+| **Overall** | **83.1** | | **Grade C** |
 
-**Prescreening**: 87.5% pass rate (510/583), 9/13 fields at 100%
+###### 11.2 Key Defects
 
-**Key Defects Resolved**:
+> **Total**: 14 defects (11 resolved, 2 deferred, 1 partial)
 
-- D03/D04 (CRITICAL): Language/script corrected from English/Latn to per-sample LLM values
-- D05 (HIGH): script_family corrected from `ltr` to `cjk`/`latin`/`indic`
-- D06 (HIGH): Docling layout integrated (581/583 samples)
-- D07 (HIGH): Content flags derived from LLM + Docling layout
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | split | high | RESOLVED |  |
+| D02 | domain_level1 | medium | PARTIALLY_RESOLVED |  |
+| D03 | iso639_language | critical | RESOLVED |  |
+| D04 | iso15924_script | critical | RESOLVED |  |
+| D05 | script_family | high | RESOLVED |  |
+| D06 | layout_detections[*].class_name | high | RESOLVED |  |
+| D07 | content_flags.* | high | RESOLVED |  |
+| D08 | capture_method | medium | RESOLVED |  |
+| D09 | text_has_content / text_scope | medium | RESOLVED |  |
+| D10 | orientation_class | medium | RESOLVED |  |
+| D11 | image_properties_color_mode | low | RESOLVED |  |
+| D12 | handwriting_present | medium | RESOLVED |  |
+| D13 | quality_overall_score | medium | DEFERRED |  |
+| D14 | resolution_dpi | low | DEFERRED |  |
 
-**VLM Inspection Results** (57 images):
+###### 11.3 VLM Inspection Summary
 
-| Flag | Inspected | FP Rate | Notes |
-|------|----------:|--------:|-------|
-| has_formula | 15 | 6.7% | 1 FP (medical notes misclassified) |
-| has_table | 10 | 0% | Clean; 4 FN found in other inspections |
-| has_handwriting | 10 | 30% | 3 FP (printed text misclassified as handwritten) |
-| has_figure | 10 | 0% primary | High secondary FP rate across Track A |
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 75.0%
 
-**Audit Artifacts**: [scripts/audit/results/realdae/](../../../scripts/audit/results/realdae/)
+###### 11.4 Cross-Dataset Findings
+
+- No cross-dataset known issues identified for this dataset.
+
+**Audit Artifacts**: [scripts/audit/results/realdae/](../../scripts/audit/results/realdae/)
 
 ##### Processing Notes
 
@@ -432,12 +450,7 @@ realdae/
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-12 | **Samples**: 583 | **Avg Min Confidence**: 0.000
->
-> **Note**: All samples show as "unreliable" because `text_quality` (D13, deferred)
-> has 0.000 confidence. This is the sole bottleneck field; all other enrichment fields
-> were populated by the integration script. See Layer 2 Audit Summary above for
-> post-integration quality assessment.
+> **Computed**: 2026-02-16 | **Samples**: 583 | **Avg Min Confidence**: 0.000
 
 **Composite Category Distribution**:
 
