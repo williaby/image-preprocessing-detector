@@ -91,11 +91,11 @@ insufficient regardless of image count.
 | **Batch E — Handwriting (P1)** | | | | | | | | |
 | SIG-G4-1 | presence_cls | [sig-g4-presence-cls.md](har/sig-g4-presence-cls.md) | `handwriting_assessment.presence` | ❌ 0 intermediate classes; NONE >350K | ❌ 0/60K blocked | 5 | ❌ 32/100 | ✅ Done |
 | SIG-G4-2 | legibility_cls | [sig-g4-legibility-cls.md](har/sig-g4-legibility-cls.md) | `handwriting_assessment.legibility` | ❌ ILLEGIBLE/POOR: 0 labeled (curation bias) | ❌ 0/60K blocked | 4 | ❌ 21/100 | ✅ Done |
-| SIG-G4-3 | content_type_cls | [sig-g4-content-type-cls.md](har/sig-g4-content-type-cls.md) | `handwriting_assessment.content_type` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
-| SIG-G4-4 | presence_reg | [sig-g4-presence-reg.md](har/sig-g4-presence-reg.md) | `handwriting_assessment.presence_score` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
-| SIG-G4-5 | legibility_reg | [sig-g4-legibility-reg.md](har/sig-g4-legibility-reg.md) | `handwriting_assessment.legibility_score` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
+| SIG-G4-3 | content_type_cls | [sig-g4-content-type-cls.md](har/sig-g4-content-type-cls.md) | `handwriting_assessment.content_type` | ❌ MIXED_PRINTED_HW ~150; MIXED_TYPED_HW ~0 | ❌ 0/60K blocked | 6 | ❌ 25/100 | ✅ Done |
+| SIG-G4-4 | presence_reg | [sig-g4-presence-reg.md](har/sig-g4-presence-reg.md) | `handwriting_assessment.presence_score` | ❌ bimodal 0/1; mid-range (0.2–0.7) void | ❌ 0/60K blocked | 4 | ❌ 26/100 | ✅ Done |
+| SIG-G4-5 | legibility_reg | [sig-g4-legibility-reg.md](har/sig-g4-legibility-reg.md) | `handwriting_assessment.legibility_score` | ❌ ILLEGIBLE (0–0.2) void; N_A sentinel defect | ❌ 0/60K blocked | 6 | ❌ 14/100 | ✅ Done |
 | **Batch F — Page Attributes (P2)** | | | | | | | | |
-| SIG-G5-1 | capture_cls | [sig-g5-capture-cls.md](har/sig-g5-capture-cls.md) | `capture_method.method` | ⏳ Pending | ⏳ 0/50K | TBD | TBD | ⏳ Pending |
+| SIG-G5-1 | capture_cls | [sig-g5-capture-cls.md](har/sig-g5-capture-cls.md) | `capture_method.method` | ⚠️ 3/7 classes viable; CAMERA_PROF/ADF/FAX: 0 | ⚠️ Partial; schema reduction needed | 4 | ⚠️ 59/100 | ✅ Done |
 | SIG-G5-2 | shadow_reg | [sig-g5-shadow-reg.md](har/sig-g5-shadow-reg.md) | `physical_degradation.shadow_severity` | ⏳ Pending | ⏳ 0/15K | TBD | TBD | ⏳ Pending |
 | SIG-G5-3 | warping_reg | [sig-g5-warping-reg.md](har/sig-g5-warping-reg.md) | `physical_degradation.warping_severity` | ⏳ Pending | ⏳ 0/20K | TBD | TBD | ⏳ Pending |
 | SIG-G5-4 | code_reg | [sig-g5-code-reg.md](har/sig-g5-code-reg.md) | `content_flags.has_code` | ⏳ Pending | ⏳ 0/10K | TBD | TBD | ⏳ Pending |
@@ -110,9 +110,9 @@ insufficient regardless of image count.
 | B — IQA | 6 | 6 | 2 | 0 |
 | C — Script | 1 | 1 | 0 | 0 |
 | D — Resolution | 2 | 2 | 0 | 0 |
-| E — Handwriting | 5 | 2 | 2 | 0 |
-| F — Page Attributes | 4 | 0 | TBD | TBD |
-| **Total** | **22** | **15** | **4** | **0** |
+| E — Handwriting | 5 | 5 | 5 | 0 |
+| F — Page Attributes | 4 | 1 | 0 | 0 |
+| **Total** | **22** | **19** | **7** | **0** |
 
 ---
 

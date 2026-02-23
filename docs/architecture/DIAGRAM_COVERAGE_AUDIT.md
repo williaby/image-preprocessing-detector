@@ -2,13 +2,13 @@
 title: Diagram File Coverage Audit
 schema_type: common
 status: active
-owner: core-maintainer
-purpose: Track which architecture diagram files have corresponding SVG renders and inventory mappings.
+owner: docs-team
+purpose: Audit report mapping git-tracked diagram files to workstream inventory entries.
 ---
 
 # Diagram File Coverage Audit
 
-> **Generated**: 2026-02-22 21:13
+> **Generated**: 2026-02-23 07:34
 > **Script**: `scripts/audit_diagram_file_coverage.py`
 > **Inventory**: `docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md`
 
