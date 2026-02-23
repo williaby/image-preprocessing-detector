@@ -3,7 +3,7 @@
 > **Status**: 🔄 In Progress
 > **Version**: 1.0
 > **Created**: 2026-02-22
-> **Updated**: 2026-02-22
+> **Updated**: 2026-02-23
 > **Branch**: `docs/har-systematic-head-review`
 >
 > Systematic per-head dataset audit for all 22 training heads.
@@ -72,10 +72,10 @@ insufficient regardless of image count.
 | Head ID | Head Name | HAR File | L2 Field | Pool Status | Assembly Status | P0 Gaps | Adequacy | Consensus |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Batch A — Geometry (P0)** | | | | | | | | |
-| MNV4-H1 | orientation | [mnv4-h1-orientation.md](har/mnv4-h1-orientation.md) | `geometric.orientation_class` | ⏳ Pending | ✅ 50K ready | TBD | TBD | ⏳ Pending |
-| SIG-G3-1 | orientation_cls | [sig-g3-orientation-cls.md](har/sig-g3-orientation-cls.md) | `geometric.orientation_class` | ⏳ Pending | ✅ 50K ready | TBD | TBD | ⏳ Pending |
-| MNV4-H2 | skew_reg | [mnv4-h2-skew.md](har/mnv4-h2-skew.md) | `geometric.skew_angle_degrees` | ⏳ Pending | ✅ 90K ready | TBD | TBD | ⏳ Pending |
-| SIG-G3-2 | skew_reg | [sig-g3-skew-reg.md](har/sig-g3-skew-reg.md) | `geometric.skew_angle_degrees` | ⏳ Pending | ✅ 90K ready | TBD | TBD | ⏳ Pending |
+| MNV4-H1 | orientation | [mnv4-h1-orientation.md](har/mnv4-h1-orientation.md) | `geometric.orientation_class` | ✅ 50K assembled | ✅ 50K ready | 0 | ⚠️ 63/100 | ✅ Done |
+| SIG-G3-1 | orientation_cls | [sig-g3-orientation-cls.md](har/sig-g3-orientation-cls.md) | `geometric.orientation_class` | ✅ 50K assembled | ✅ 50K ready | 0 | ⚠️ 52/100 | ✅ Done |
+| MNV4-H2 | skew_reg | [mnv4-h2-skew.md](har/mnv4-h2-skew.md) | `geometric.skew_angle_degrees` | ✅ 90K assembled | ✅ 90K ready | 0 | ⚠️ 55/100 | ✅ Done |
+| SIG-G3-2 | skew_reg | [sig-g3-skew-reg.md](har/sig-g3-skew-reg.md) | `geometric.skew_angle_degrees` | ✅ 90K assembled | ✅ 90K ready | 0 | ⚠️ 46/100 | ✅ Done |
 | **Batch B — IQA (P0)** | | | | | | | | |
 | SIG-G1-6 | overall_quality | [sig-g1-overall-quality.md](har/sig-g1-overall-quality.md) | `ml_image_quality.overall_score` | ⏳ Pending | 🔄 16K Phase 1 | TBD | TBD | ⏳ Pending |
 | SIG-G1-1 | blur_score | [sig-g1-blur-score.md](har/sig-g1-blur-score.md) | `ml_image_quality.blur_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
@@ -106,7 +106,7 @@ insufficient regardless of image count.
 
 | Batch | Heads | Completed | Blocked | Ready |
 | --- | --- | --- | --- | --- |
-| A — Geometry | 4 | 0 | TBD | TBD |
+| A — Geometry | 4 | 4 | 0 | 0 |
 | B — IQA | 6 | 0 | TBD | TBD |
 | C — Script | 1 | 0 | TBD | TBD |
 | D — Resolution | 2 | 0 | TBD | TBD |
