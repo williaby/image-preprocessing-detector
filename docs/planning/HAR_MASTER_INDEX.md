@@ -3,7 +3,7 @@
 > **Status**: 🔄 In Progress
 > **Version**: 1.0
 > **Created**: 2026-02-22
-> **Updated**: 2026-02-23
+> **Updated**: 2026-02-24
 > **Branch**: `docs/har-systematic-head-review`
 >
 > Systematic per-head dataset audit for all 22 training heads.
@@ -86,11 +86,11 @@ insufficient regardless of image count.
 | **Batch C — Script (P0)** | | | | | | | | |
 | SIG-G2-1 | script_code | [sig-g2-script-code.md](har/sig-g2-script-code.md) | `language.script_code` | ❌ 4 classes no real data; 8.6× imbalance | ❌ 0/108K target | 5 | ⚠️ 32/100 | ✅ Done |
 | **Batch D — Resolution (P0/P1)** | | | | | | | | |
-| MNV4-H3 | resolution_quality | [mnv4-h3-resolution-quality.md](har/mnv4-h3-resolution-quality.md) | `resolution.resolution_quality_score` | ⏳ Pending | ⏳ 0/30K | TBD | TBD | ⏳ Pending |
-| SIG-G5-5 | resolution_quality_reg | [sig-g5-resolution-quality-reg.md](har/sig-g5-resolution-quality-reg.md) | `resolution.resolution_quality_score` | ⏳ Pending | ⏳ 0/30K | TBD | TBD | ⏳ Pending |
+| MNV4-H3 | resolution_quality | [mnv4-h3-resolution-quality.md](har/mnv4-h3-resolution-quality.md) | `resolution.resolution_quality_score` | ⚠️ 5.5K/30K (DIQA-5000 only) | ❌ 0/30K blocked | 3 | ⚠️ 26/100 | ✅ Done |
+| SIG-G5-5 | resolution_quality_reg | [sig-g5-resolution-quality-reg.md](har/sig-g5-resolution-quality-reg.md) | `resolution.resolution_quality_score` | ⚠️ 5.5K/30K (corrected-image path) | ❌ 0/30K blocked | 4 | ⚠️ 39/100 | ✅ Done |
 | **Batch E — Handwriting (P1)** | | | | | | | | |
-| SIG-G4-1 | presence_cls | [sig-g4-presence-cls.md](har/sig-g4-presence-cls.md) | `handwriting_assessment.presence` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
-| SIG-G4-2 | legibility_cls | [sig-g4-legibility-cls.md](har/sig-g4-legibility-cls.md) | `handwriting_assessment.legibility` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
+| SIG-G4-1 | presence_cls | [sig-g4-presence-cls.md](har/sig-g4-presence-cls.md) | `handwriting_assessment.presence` | ❌ 0 intermediate classes; NONE >350K | ❌ 0/60K blocked | 5 | ❌ 32/100 | ✅ Done |
+| SIG-G4-2 | legibility_cls | [sig-g4-legibility-cls.md](har/sig-g4-legibility-cls.md) | `handwriting_assessment.legibility` | ❌ ILLEGIBLE/POOR: 0 labeled (curation bias) | ❌ 0/60K blocked | 4 | ❌ 21/100 | ✅ Done |
 | SIG-G4-3 | content_type_cls | [sig-g4-content-type-cls.md](har/sig-g4-content-type-cls.md) | `handwriting_assessment.content_type` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
 | SIG-G4-4 | presence_reg | [sig-g4-presence-reg.md](har/sig-g4-presence-reg.md) | `handwriting_assessment.presence_score` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
 | SIG-G4-5 | legibility_reg | [sig-g4-legibility-reg.md](har/sig-g4-legibility-reg.md) | `handwriting_assessment.legibility_score` | ⏳ Pending | ⏳ 0/60K | TBD | TBD | ⏳ Pending |
@@ -109,10 +109,10 @@ insufficient regardless of image count.
 | A — Geometry | 4 | 4 | 0 | 0 |
 | B — IQA | 6 | 6 | 2 | 0 |
 | C — Script | 1 | 1 | 0 | 0 |
-| D — Resolution | 2 | 0 | TBD | TBD |
-| E — Handwriting | 5 | 0 | TBD | TBD |
+| D — Resolution | 2 | 2 | 0 | 0 |
+| E — Handwriting | 5 | 2 | 2 | 0 |
 | F — Page Attributes | 4 | 0 | TBD | TBD |
-| **Total** | **22** | **11** | **2** | **0** |
+| **Total** | **22** | **15** | **4** | **0** |
 
 ---
 
