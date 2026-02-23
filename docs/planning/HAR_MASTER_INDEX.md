@@ -81,10 +81,10 @@ insufficient regardless of image count.
 | SIG-G1-1 | blur_score | [sig-g1-blur-score.md](har/sig-g1-blur-score.md) | `ml_image_quality.blur_score` | ❌ 0 labeled / 116K | ❌ 0/100K synth | 3 | ⚠️ 45/100 | ✅ Done |
 | SIG-G1-2 | noise_score | [sig-g1-noise-score.md](har/sig-g1-noise-score.md) | `ml_image_quality.noise_score` | ❌ 0 labeled / detector broken | ❌ 0/100K synth | 3 | ❌ 32/100 | ✅ Done |
 | SIG-G1-3 | contrast_score | [sig-g1-contrast-score.md](har/sig-g1-contrast-score.md) | `ml_image_quality.contrast_score` | ❌ 0 labeled / 116K | ❌ 0/100K synth | 3 | ⚠️ 49/100 | ✅ Done |
-| SIG-G1-4 | skew_score | [sig-g1-skew-score.md](har/sig-g1-skew-score.md) | `ml_image_quality.skew_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
-| SIG-G1-5 | compression_score | [sig-g1-compression-score.md](har/sig-g1-compression-score.md) | `ml_image_quality.compression_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
+| SIG-G1-4 | skew_score | [sig-g1-skew-score.md](har/sig-g1-skew-score.md) | `ml_image_quality.skew_score` | ❌ 0 labeled / transfer fn undefined | ❌ 0/100K synth | 3 | ⚠️ 54/100 | ✅ Done |
+| SIG-G1-5 | compression_score | [sig-g1-compression-score.md](har/sig-g1-compression-score.md) | `ml_image_quality.compression_score` | ❌ 0 labeled / DCT viable | ❌ 0/100K synth | 4 | ⚠️ 65/100 | ✅ Done |
 | **Batch C — Script (P0)** | | | | | | | | |
-| SIG-G2-1 | script_code | [sig-g2-script-code.md](har/sig-g2-script-code.md) | `language.script_code` | ⏳ Pending | 🔄 190K partial | TBD | TBD | ⏳ Pending |
+| SIG-G2-1 | script_code | [sig-g2-script-code.md](har/sig-g2-script-code.md) | `language.script_code` | ❌ 4 classes no real data; 8.6× imbalance | ❌ 0/108K target | 5 | ⚠️ 32/100 | ✅ Done |
 | **Batch D — Resolution (P0/P1)** | | | | | | | | |
 | MNV4-H3 | resolution_quality | [mnv4-h3-resolution-quality.md](har/mnv4-h3-resolution-quality.md) | `resolution.resolution_quality_score` | ⏳ Pending | ⏳ 0/30K | TBD | TBD | ⏳ Pending |
 | SIG-G5-5 | resolution_quality_reg | [sig-g5-resolution-quality-reg.md](har/sig-g5-resolution-quality-reg.md) | `resolution.resolution_quality_score` | ⏳ Pending | ⏳ 0/30K | TBD | TBD | ⏳ Pending |
@@ -107,12 +107,12 @@ insufficient regardless of image count.
 | Batch | Heads | Completed | Blocked | Ready |
 | --- | --- | --- | --- | --- |
 | A — Geometry | 4 | 4 | 0 | 0 |
-| B — IQA | 6 | 4 | 2 | 0 |
-| C — Script | 1 | 0 | TBD | TBD |
+| B — IQA | 6 | 6 | 2 | 0 |
+| C — Script | 1 | 1 | 0 | 0 |
 | D — Resolution | 2 | 0 | TBD | TBD |
 | E — Handwriting | 5 | 0 | TBD | TBD |
 | F — Page Attributes | 4 | 0 | TBD | TBD |
-| **Total** | **22** | **8** | **2** | **0** |
+| **Total** | **22** | **11** | **2** | **0** |
 
 ---
 
