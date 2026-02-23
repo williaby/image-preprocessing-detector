@@ -15,7 +15,7 @@ title: Dataset Quick Reference
 > **Purpose**: Concise dataset lookup for training planning and task selection
 > **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
-> **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (16 heads) + Docling Layout (pre-trained)
+> **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (19 heads) + Docling Layout (pre-trained)
 
 ---
 
@@ -51,7 +51,7 @@ title: Dataset Quick Reference
 | Model | Params | Purpose | Inference | Training |
 |-------|--------|---------|-----------|----------|
 | **MobileNetV4-Conv-S** | ~4M | Pre-correction gate: orientation (4-class), skew (regression), resolution quality (0-1) | ~3ms GPU / ~17ms CPU | Step 1 + Step 3 |
-| **SigLIP 2 NAFlex** | ~88M | Full analysis: 16 heads across 5 groups (IQA, Script, Orient+Skew, Handwriting, Page Attrs) | ~50ms GPU | Step 2 |
+| **SigLIP 2 NAFlex** | ~88M | Full analysis: 19 heads across 5 groups (IQA, Script, Orient+Skew, Handwriting, Page Attrs) | ~50ms GPU | Step 2 |
 | **Docling egret-xlarge** | ~55M | Layout detection (high accuracy, 23+ classes) | GPU | Pre-trained (no training) |
 | **Docling heron** | ~14M | Layout detection (fast path) | CPU/GPU | Pre-trained (no training) |
 

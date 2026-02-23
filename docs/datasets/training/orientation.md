@@ -1,3 +1,23 @@
+---
+l4_category: training-dataset
+l4_dataset: orientation
+l4_workstream: WS2
+l4_source_datasets:
+  - doclaynet
+  - tablebank
+  - pubtabnet
+  - rvl-cdip
+  - funsd
+  - sroie
+  - nist-sd19
+  - jssoda
+  - arabic-docs
+  - bhutan-afs
+l4_generation_script: scripts/generate_orientation_dataset.py
+l4_image_count: 50000
+l4_status: active
+---
+
 ## orientation
 
 > **Quick Stats**: 50,000 images | 4-class balanced | 12,500 unique documents

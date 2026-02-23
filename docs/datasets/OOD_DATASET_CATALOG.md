@@ -33,6 +33,26 @@ See [Script Reservation Policy](../planning/OOD_DATASET_DESIGN.md#script-reserva
 
 ---
 
+## Training Dataset Dependencies
+
+Each OOD category evaluates robustness in conditions not represented in its corresponding training dataset. The canonical three-way mapping (Head ↔ Training Dataset ↔ OOD Category) lives in [TRAINING_DATASET_QUICK_REFERENCE.md — Head ↔ Dataset ↔ OOD Cross-Reference](TRAINING_DATASET_QUICK_REFERENCE.md#head--dataset--ood-cross-reference). The table below summarises at the category level for acquisition planning.
+
+| OOD Category | Training Dataset(s) | # | Heads Evaluated | Gap / Stress Scenario |
+|---|---|---|---|---|
+| **OOD-Script** | script-detection | 5 | SIG-G2-1 | Reserved scripts (Mong/Syrc/Geor) never seen; open-set rejection; Phase 2 preview scripts (Grek/Armn/Ethi) |
+| **OOD-Geometry** | orientation, skew | 1, 2 | MNV4-H1, MNV4-H2, SIG-G3-1, SIG-G3-2 | 0°/180° disambiguation on symmetric docs; extreme perspective; Japanese TTB convention (labeled 0°, not 270°) |
+| **OOD-Capture** | capture-method, warping | 7, 9 | SIG-G5-1, SIG-G5-3 | Screen recapture moiré/aliasing (no training analog); ADF curl artifacts; 4th-gen photocopy degradation |
+| **OOD-Degradation** | iqa, shadow | 4, 8 | SIG-G1-1, SIG-G1-2, SIG-G1-3, SIG-G1-4, SIG-G1-5, SIG-G1-6, SIG-G5-2 | ≥5 simultaneous distortion types; book gutter shadow gradient not in sd7k; binarized `color_mode` absent |
+| **OOD-Handwriting** | handwriting | 6 | SIG-G4-1, SIG-G4-2, SIG-G4-3, SIG-G4-4, SIG-G4-5 | ILLEGIBLE class absent from training; non-Latin handwriting (Arab/CJK/Deva); `specialized` content type |
+| **OOD-Resolution** | resolution-quality | 3 | MNV4-H3, SIG-G5-5 | Born-digital low-DPI paradox (large font → high char-height at 72 DPI); 2×/4× upscale artifact detection |
+| **OOD-Domain** | script-detection (secondary) | 5 | All 22 heads (robustness) | Novel domain combos: government forms, religious texts, thermal receipts — cross-domain generalization |
+| **OOD-Code** | code-detection | 10 | SIG-G5-4 | IDE screenshots, mixed prose+code (arXiv/Jupyter), terminal output — outside generation-script distribution |
+| **OOD-Mixed** | orientation, skew, iqa, shadow, warping | 1, 2, 4, 8, 9 | MNV4-H1, MNV4-H2, SIG-G1-1, SIG-G1-2, SIG-G1-3, SIG-G1-4, SIG-G1-5, SIG-G1-6, SIG-G3-1, SIG-G3-2, SIG-G5-2, SIG-G5-3 | Cascade failures: Mongolian TTB + aged + perspective; CJK HW + gutter shadow; binarized + extreme compression |
+
+> **Note**: OOD-Domain tests all 22 heads for general robustness. Its secondary link to #5 (script-detection) reflects the Fraktur/Ottoman Arabic sub-sources in Phase 1 of acquisition.
+
+---
+
 ## Acquisition Roadmap
 
 ### Phase 1: Script OOD (OOD-Script) — P0
@@ -61,7 +81,7 @@ See [Script Reservation Policy](../planning/OOD_DATASET_DESIGN.md#script-reserva
 
 #### 1c. Syriac manuscripts — target: 120 images
 
-- Source: SANA corpus (https://ufal.mff.cuni.cz/sana), OpenITI Syriac subset
+- Source: SANA corpus ([ufal.mff.cuni.cz/sana](https://ufal.mff.cuni.cz/sana)), OpenITI Syriac subset
 - Acquisition: Download + sample 120 pages
 - Labels required: `script=Syrc`, `open_set=true`, `orientation`, `text_direction=rtl`,
   `capture_method=scanner_flatbed`, `document_age=historical`

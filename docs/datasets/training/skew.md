@@ -1,3 +1,27 @@
+---
+l4_category: training-dataset
+l4_dataset: skew
+l4_workstream: WS2
+l4_source_datasets:
+  - funsd
+  - doclaynet
+  - sroie
+  - rvl-cdip
+  - nist-sd2
+  - nist-sd6
+  - ohr-bench
+  - iam
+  - arabic-docs
+  - tobacco800
+  - smartdoc-qa
+  - fintabnet
+  - hiertext
+l4_generation_script: scripts/generate_skew_dataset.py
+l4_gcs_path: gs://image_detection_b/skew_training/
+l4_image_count: 90412
+l4_status: active
+---
+
 ## skew
 
 > **Quick Stats**: 90,412 images | 71K synthetic + 19K natural scans | 384×384 JPEG q90

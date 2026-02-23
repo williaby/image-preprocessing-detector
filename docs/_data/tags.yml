@@ -232,6 +232,8 @@ allowed:
   - level_1
   - level_2
   - level_3
+  - level_4
+  - registry
   - data_preparation
   - workstream_3
   - downstream_context

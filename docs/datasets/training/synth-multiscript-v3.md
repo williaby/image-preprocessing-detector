@@ -1,3 +1,13 @@
+---
+l4_category: training-dataset
+l4_dataset: synth-multiscript-v3
+l4_workstream: WS2
+l4_generation_script: scripts/generate_base_dataset_v3.py
+l4_gcs_path: gs://image_detection_b/synth_multiscript_v3/
+l4_image_count: 350012
+l4_status: active
+---
+
 #### Synthetic Multi-Script Dataset v3 (synth-multiscript-v3)
 
 > **Quick Stats**: 350,012 images (✅ Complete in total count) | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
