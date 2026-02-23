@@ -77,10 +77,10 @@ insufficient regardless of image count.
 | MNV4-H2 | skew_reg | [mnv4-h2-skew.md](har/mnv4-h2-skew.md) | `geometric.skew_angle_degrees` | ✅ 90K assembled | ✅ 90K ready | 0 | ⚠️ 55/100 | ✅ Done |
 | SIG-G3-2 | skew_reg | [sig-g3-skew-reg.md](har/sig-g3-skew-reg.md) | `geometric.skew_angle_degrees` | ✅ 90K assembled | ✅ 90K ready | 0 | ⚠️ 46/100 | ✅ Done |
 | **Batch B — IQA (P0)** | | | | | | | | |
-| SIG-G1-6 | overall_quality | [sig-g1-overall-quality.md](har/sig-g1-overall-quality.md) | `ml_image_quality.overall_score` | ⏳ Pending | 🔄 16K Phase 1 | TBD | TBD | ⏳ Pending |
-| SIG-G1-1 | blur_score | [sig-g1-blur-score.md](har/sig-g1-blur-score.md) | `ml_image_quality.blur_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
-| SIG-G1-2 | noise_score | [sig-g1-noise-score.md](har/sig-g1-noise-score.md) | `ml_image_quality.noise_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
-| SIG-G1-3 | contrast_score | [sig-g1-contrast-score.md](har/sig-g1-contrast-score.md) | `ml_image_quality.contrast_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
+| SIG-G1-6 | overall_quality | [sig-g1-overall-quality.md](har/sig-g1-overall-quality.md) | `ml_image_quality.overall_score` | ❌ 5.5K/116K (DIQA only) | ❌ 0/116K assembled | 3 | ❌ 37/100 | ✅ Done |
+| SIG-G1-1 | blur_score | [sig-g1-blur-score.md](har/sig-g1-blur-score.md) | `ml_image_quality.blur_score` | ❌ 0 labeled / 116K | ❌ 0/100K synth | 3 | ⚠️ 45/100 | ✅ Done |
+| SIG-G1-2 | noise_score | [sig-g1-noise-score.md](har/sig-g1-noise-score.md) | `ml_image_quality.noise_score` | ❌ 0 labeled / detector broken | ❌ 0/100K synth | 3 | ❌ 32/100 | ✅ Done |
+| SIG-G1-3 | contrast_score | [sig-g1-contrast-score.md](har/sig-g1-contrast-score.md) | `ml_image_quality.contrast_score` | ❌ 0 labeled / 116K | ❌ 0/100K synth | 3 | ⚠️ 49/100 | ✅ Done |
 | SIG-G1-4 | skew_score | [sig-g1-skew-score.md](har/sig-g1-skew-score.md) | `ml_image_quality.skew_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
 | SIG-G1-5 | compression_score | [sig-g1-compression-score.md](har/sig-g1-compression-score.md) | `ml_image_quality.compression_score` | ⏳ Pending | 🔄 Phase 1+2 | TBD | TBD | ⏳ Pending |
 | **Batch C — Script (P0)** | | | | | | | | |
@@ -107,12 +107,12 @@ insufficient regardless of image count.
 | Batch | Heads | Completed | Blocked | Ready |
 | --- | --- | --- | --- | --- |
 | A — Geometry | 4 | 4 | 0 | 0 |
-| B — IQA | 6 | 0 | TBD | TBD |
+| B — IQA | 6 | 4 | 2 | 0 |
 | C — Script | 1 | 0 | TBD | TBD |
 | D — Resolution | 2 | 0 | TBD | TBD |
 | E — Handwriting | 5 | 0 | TBD | TBD |
 | F — Page Attributes | 4 | 0 | TBD | TBD |
-| **Total** | **22** | **0** | **TBD** | **TBD** |
+| **Total** | **22** | **8** | **2** | **0** |
 
 ---
 
