@@ -3,7 +3,7 @@
 > **Status**: 🔄 In Progress
 > **Version**: 1.0
 > **Created**: 2026-02-22
-> **Updated**: 2026-02-24
+> **Updated**: 2026-02-25
 > **Branch**: `docs/har-systematic-head-review`
 >
 > Systematic per-head dataset audit for all 22 training heads.
@@ -96,9 +96,9 @@ insufficient regardless of image count.
 | SIG-G4-5 | legibility_reg | [sig-g4-legibility-reg.md](har/sig-g4-legibility-reg.md) | `handwriting_assessment.legibility_score` | ❌ ILLEGIBLE (0–0.2) void; N_A sentinel defect | ❌ 0/60K blocked | 6 | ❌ 14/100 | ✅ Done |
 | **Batch F — Page Attributes (P2)** | | | | | | | | |
 | SIG-G5-1 | capture_cls | [sig-g5-capture-cls.md](har/sig-g5-capture-cls.md) | `capture_method.method` | ⚠️ 3/7 classes viable; CAMERA_PROF/ADF/FAX: 0 | ⚠️ Partial; schema reduction needed | 4 | ⚠️ 59/100 | ✅ Done |
-| SIG-G5-2 | shadow_reg | [sig-g5-shadow-reg.md](har/sig-g5-shadow-reg.md) | `physical_degradation.shadow_severity` | ⏳ Pending | ⏳ 0/15K | TBD | TBD | ⏳ Pending |
-| SIG-G5-3 | warping_reg | [sig-g5-warping-reg.md](har/sig-g5-warping-reg.md) | `physical_degradation.warping_severity` | ⏳ Pending | ⏳ 0/20K | TBD | TBD | ⏳ Pending |
-| SIG-G5-4 | code_reg | [sig-g5-code-reg.md](har/sig-g5-code-reg.md) | `content_flags.has_code` | ⏳ Pending | ⏳ 0/10K | TBD | TBD | ⏳ Pending |
+| SIG-G5-2 | shadow_reg | [sig-g5-shadow-reg.md](har/sig-g5-shadow-reg.md) | `physical_degradation.shadow_severity` | ❌ 0/15K — L2 field unpopulated; label_shadow_severity.py missing | ❌ 0/15K blocked | 3 | ❌ 28/100 | ✅ Done |
+| SIG-G5-3 | warping_reg | [sig-g5-warping-reg.md](har/sig-g5-warping-reg.md) | `physical_degradation.warping_severity` | ❌ 0/20K — derivation formula undefined; label_warping_severity.py missing | ❌ 0/20K blocked | 4 | ❌ 17/100 | ✅ Done |
+| SIG-G5-4 | code_reg | [sig-g5-code-reg.md](har/sig-g5-code-reg.md) | `content_flags.has_code` | ⚠️ 8.6K/10K from dry-run; negative contamination unvalidated | ⚠️ 0/10K (full run pending) | 5 | ⚠️ 55/100 | ✅ Done |
 
 ---
 
@@ -111,8 +111,8 @@ insufficient regardless of image count.
 | C — Script | 1 | 1 | 0 | 0 |
 | D — Resolution | 2 | 2 | 0 | 0 |
 | E — Handwriting | 5 | 5 | 5 | 0 |
-| F — Page Attributes | 4 | 1 | 0 | 0 |
-| **Total** | **22** | **19** | **7** | **0** |
+| F — Page Attributes | 4 | 4 | 2 | 0 |
+| **Total** | **22** | **22** | **9** | **0** |
 
 ---
 
