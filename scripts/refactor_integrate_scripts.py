@@ -66,6 +66,7 @@ _DOCLING_COMMENT_RE = re.compile(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _build_func_pattern(name: str) -> re.Pattern[str]:
     """Return a regex that matches ``def name(...)`` through its entire body."""
     # Match from `def name` at column 0 through the next line that starts a
@@ -222,7 +223,9 @@ def process_file(path: Path, dry_run: bool = False) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dry-run", action="store_true", help="Print diffs, do not write")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print diffs, do not write"
+    )
     parser.add_argument(
         "--file",
         type=Path,

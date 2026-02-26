@@ -105,6 +105,7 @@ def next_version_number(enrichments: dict[str, Any]) -> int:
 # Data loaders (identical across all integrate_* scripts)
 # ---------------------------------------------------------------------------
 
+
 def load_metadata(path: Path) -> dict[str, Any]:
     """Load Layer 2 metadata JSON.
 
@@ -243,6 +244,7 @@ def load_resolution_labels(path: Path) -> dict[str, dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Computation helpers (identical across all integrate_* scripts)
 # ---------------------------------------------------------------------------
+
 
 def compute_text_statistics(text: str) -> dict[str, Any]:
     """Compute basic text statistics from transcription text.

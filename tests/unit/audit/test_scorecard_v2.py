@@ -572,15 +572,17 @@ class TestGroupIProvenanceValidator:
         assert ok
 
     def test_provenance_tier_invalid(self) -> None:
-        data = {"method": "manual_guess"}
+        # An explicitly-set but unrecognised value must fail.
+        data = {"provenance_tier": "manual_guess"}
         ok, detail = _check_provenance_tier_valid(data)
         assert not ok
         assert "not in allowed set" in (detail or "")
 
     def test_provenance_tier_missing(self) -> None:
-        ok, detail = _check_provenance_tier_valid({})
-        assert not ok
-        assert "missing" in (detail or "")
+        # pass-if-absent: until integration scripts populate the field,
+        # absence must not penalise every sample.
+        ok, _detail = _check_provenance_tier_valid({})
+        assert ok
 
 
 class TestCoreExtendedRegistrySplit:

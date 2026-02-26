@@ -137,7 +137,13 @@ IQA_DIMENSIONS = ("overall", "sharpness", "color")
 # Task group definitions
 IQA_TASKS = IQA_DIMENSIONS
 CLASSIFICATION_TASKS = ("script", "source", "orientation", "code_cls")
-REGRESSION_TASKS = ("shadow", "warping", "skew_reg", "presence_score", "legibility_score")
+REGRESSION_TASKS = (
+    "shadow",
+    "warping",
+    "skew_reg",
+    "presence_score",
+    "legibility_score",
+)
 ALL_TASKS = IQA_TASKS + CLASSIFICATION_TASKS + REGRESSION_TASKS
 
 # Head architecture configurations
@@ -201,7 +207,7 @@ HEAD_CONFIGS: dict[str, dict[str, Any]] = {
     # Formerly misnamed "code_reg" with MSE loss.  Metrics: AUC, F1.
     "code_cls": {
         "hidden_dim": 64,
-        "output_dim": 2,   # 0=no code, 1=has code
+        "output_dim": 2,  # 0=no code, 1=has code
         "dropout": 0.0,
         "type": "classification",
     },
@@ -211,7 +217,7 @@ HEAD_CONFIGS: dict[str, dict[str, Any]] = {
     # Shares assembled 90K skew dataset with MNV4-H2 (identical label convention).
     "skew_reg": {
         "hidden_dim": 64,
-        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
+        "output_dim": 2,  # [mu, sigma_sq] for Gaussian NLL
         "dropout": 0.0,
         "type": "regression_uncertainty",
     },
@@ -220,13 +226,13 @@ HEAD_CONFIGS: dict[str, dict[str, Any]] = {
     # Masked loss already handled by MultiTaskLoss via task_masks dict.
     "presence_score": {
         "hidden_dim": 64,
-        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
+        "output_dim": 2,  # [mu, sigma_sq] for Gaussian NLL
         "dropout": 0.0,
         "type": "regression_uncertainty",
     },
     "legibility_score": {
         "hidden_dim": 64,
-        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
+        "output_dim": 2,  # [mu, sigma_sq] for Gaussian NLL
         "dropout": 0.0,
         "type": "regression_uncertainty",
     },
