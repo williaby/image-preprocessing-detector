@@ -17,7 +17,15 @@ Usage:
         uv run python3 scripts/integrate_mle2e_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'mle2e'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/multilingual/mle2e.py'
+
+
 
 import argparse
 import json

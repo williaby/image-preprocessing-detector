@@ -35,7 +35,15 @@ Usage:
         uv run python3 scripts/integrate_mdiw13_enrichments.py
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'mdiw13'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/multilingual/mdiw13.py'
+
+
 
 import argparse
 import json

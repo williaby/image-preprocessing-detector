@@ -32,7 +32,14 @@ Usage:
         uv run python3 scripts/integrate_dzongkha_digits_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'dzongkha-digits'
+__l4_workstream__    = 'WS3'
+
+
 
 import argparse
 import json

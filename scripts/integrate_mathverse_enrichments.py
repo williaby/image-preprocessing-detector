@@ -23,7 +23,15 @@ Usage:
         uv run python3 scripts/integrate_mathverse_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'mathverse'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/handwriting/maths_handwriting.py'
+
+
 
 import argparse
 import json

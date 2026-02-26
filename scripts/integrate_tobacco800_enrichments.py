@@ -18,7 +18,15 @@ Usage:
         uv run python3 scripts/integrate_tobacco800_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'tobacco800'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/document/tobacco800.py'
+
+
 
 import argparse
 import hashlib

@@ -42,7 +42,15 @@ Usage:
     PYTHONPATH=... uv run python3 scripts/integrate_hiertext_enrichments.py
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'hiertext'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/multilingual/hiertext.py'
+
+
 
 import argparse
 import json

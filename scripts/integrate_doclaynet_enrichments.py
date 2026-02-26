@@ -30,7 +30,15 @@ Usage:
     PYTHONPATH=. uv run python3 scripts/integrate_doclaynet_enrichments.py
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'doclaynet'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/layout/doclaynet.py'
+
+
 
 import argparse
 import json

@@ -14,7 +14,15 @@ Usage:
         uv run python3 scripts/integrate_nist_sd2_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'nist-sd2'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/handwriting/nist_db2.py'
+
+
 
 import argparse
 import json

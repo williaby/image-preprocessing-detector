@@ -22,7 +22,15 @@ Usage:
         uv run python3 scripts/integrate_iam_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__      = 'integrate-script'
+__l4_dataset__       = 'iam'
+__l4_workstream__    = 'WS3'
+__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/handwriting/iam.py'
+
+
 
 import argparse
 import json
