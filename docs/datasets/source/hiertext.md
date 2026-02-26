@@ -337,3 +337,55 @@ image
 | 1 | `domain` | 44.5% | 0.485 |
 | 2 | `layout_detections` | 37.5% | 0.542 |
 | 3 | `has_table` | 18.1% | 0.600 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~11,639 | Negatives only | Scene photos from Open Images — upright by construction; no rotated splits provided |
+| MNV4-H2 | skew_reg | ➖ | ~11,639 | Negatives only | Scene photos are upright; no skew angle labels available |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~11,639 | Derived | Camera variation introduces natural resolution spread; no RQ labels yet (D09 deferred) |
+| SIG-G1-1 | blur_score | 🟡 | ~11,639 | Derived/VLM | Camera photos span sharp to blurry scenes; IQA labels not yet computed |
+| SIG-G1-2 | noise_score | 🟡 | ~11,639 | Derived/VLM | Outdoor/indoor lighting variation creates natural noise range |
+| SIG-G1-3 | contrast_score | 🟡 | ~11,639 | Derived/VLM | Wide contrast range across scene types (outdoor sun to indoor low-light) |
+| SIG-G1-4 | skew_score | ➖ | ~11,639 | Negatives only | Images are upright scene photos; skew quality near-zero throughout |
+| SIG-G1-5 | compression_score | 🟡 | ~11,639 | Derived/VLM | JPG format with variable compression; compression artifacts possible |
+| SIG-G1-6 | overall_quality | 🟡 | ~11,639 | Derived/VLM | Camera photos span real quality variation; requires IQA VLM labeling (prompt v2.0) |
+| SIG-G2-1 | script_cls | ✅ | ~11,542 Latn + ~97 other | GT-derived | 99.2% Latn from 20+ languages; minority samples: Cyrl(12), Hant(10), Deva(6), Grek(6), Jpan(17), Hang(5); strong primary for Latn |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~11,639 | Negatives only | All images upright; no post-correction orientation variation |
+| SIG-G3-2 | skew_reg (post) | ➖ | ~11,639 | Negatives only | No skew angle labels; scene photos upright by construction |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~11,639 | GT-derived | Gold-standard: 18% images have handwriting (2,095); presence_ratio derivable from word-level `handwritten` flags; maps to NONE/SPARSE/MODERATE/SUBSTANTIAL/DOMINANT |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ | ~2,095 | GT-derived | Word-level `legible` flag on handwritten words; legibility_ratio derivable; 6-class mapping requires bucket thresholding |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 | ~2,095 | GT-derived | Binary handwritten flag at word level; content type (note/form/annotation etc.) requires per-image inference from context |
+| SIG-G4-4 | presence_reg | ✅ | ~11,639 | GT-derived | Continuous presence_ratio = handwritten_words / total_words; 1.2M word annotations enable precise ratio |
+| SIG-G4-5 | legibility_reg | ✅ | ~2,095 | GT-derived | Continuous legibility_ratio = legible_handwritten / handwritten_words; direct from source labels |
+| SIG-G5-1 | capture_method_cls | ✅ | ~11,639 | GT (100% real) | 100% camera_smartphone; real images qualify for 100% real requirement; maps to `camera` class |
+| SIG-G5-2 | shadow_reg | 🟡 | ~11,639 | Derived | Outdoor scene photos contain natural shadow variation; no shadow severity labels yet |
+| SIG-G5-3 | warping_reg | ➖ | ~11,639 | Negatives only | Flat scene photography; negligible page warping (not document scans) |
+| SIG-G5-4 | code_cls | 🟡 | ~11,639 | Derived | ~2 images tagged source_code; 2.7% datasheets may contain inline code; marginal contributor |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~11,639 | Derived | Camera images span natural resolution range; RQ labeling not yet run (D09 deferred) |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | Latn 99.2% (11,542), CJK 0.3% (36), Cyrl 0.1% (12), Grek 0.1% (6), Indic 0.1% (11), Other 0.3% (32); 14 distinct ISO 15924 codes |
+| 2 | Capture method | ✅ | 100% camera_smartphone (natural scene photography from Open Images) |
+| 3 | Document domain | ✅ | ADM 50.5%, TEC 17.8%, FIN 13.0%, EDU 6.7%, PER 4.9%, SCI 3.0%, MED 2.3%, LEG 1.7%; diverse multi-domain |
+| 4 | Layout type | 🟡 | Scene text (not structured documents); signs, posters, receipts, books, menus; no formal layout taxonomy applied |
+| 5 | Text density | ✅ | Wide range from single-word signs to dense multi-paragraph documents; 1.2M word annotations |
+| 6 | Degradation types | 🟡 | Natural camera degradation only (motion blur, noise, low-light); no document-specific degradation; no L2 degradation labels |
+| 7 | Resolution/DPI range | 🟡 | Variable natural scene image sizes; no explicit DPI metadata; RQ labeling deferred (D09) |
+| 8 | Document age | 🟡 | Mix of modern and historical content (historical_document/record content types present); no explicit age labels |
+| 9 | Text scope | ✅ | 100% word-level annotations; also line and paragraph levels in hierarchy |
+| 10 | Content flags | ✅ | has_handwriting: 18.0% (2,095), has_table: 2.1% (241); VLM/GT-confirmed |
+| 11 | Binarization status | ❌ | All color RGB; no binarized images |
+| 12 | Artifact types | 🟡 | Camera artifacts only (JPEG compression, motion blur, noise, lens distortion); no scan/print artifacts |
+| 13 | Color mode | ✅ | 100% color RGB (D08 notes scene photos always color; confirmed) |
+| 14 | Font variety | ✅ | Extreme variety — natural scenes capture commercial signage, handwriting, print, chalk, neon, painted text |
+
+### 13.3 Corpus Role & Constraints
+
+HierText is the **primary gold-standard source for graded handwriting assessment** (G4-1 through G4-5), providing 1.2M word-level `handwritten` and `legible` binary annotations across 11,639 real camera images that enable derivation of continuous presence/legibility ratios. It also contributes as a strong primary for Latin script (G2-1) with 20+ language varieties, and as the sole 100%-real camera dataset eligible for capture_method_cls (G5-1). The CC-BY-SA-4.0 license requires ShareAlike on derivative works, which constrains how training labels derived from HierText can be redistributed. Mongolian (Mong), Syriac (Syrc), and Georgian (Geor) scripts are absent from this dataset and remain OOD exclusions for G2-1.

@@ -13,10 +13,30 @@ l4_status: planned
 
 # Code Detection
 
+> **P0 ARCHITECTURAL ISSUE — CODE-G05**
+>
+> The training head is currently named `code_reg` in `SIGLIP2_MULTITASK_REQUIREMENTS.md`
+> and `modal/train_siglip2_multitask.py`. This is an architectural misnomer.
+>
+> **The training signal is boolean** (`has_code` = True/False). This must be:
+>
+> - Binary classification (sigmoid activation + BCE loss)
+> - Renamed to `code_cls` everywhere
+>
+> **Files requiring rename before training**:
+>
+> - `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`
+> - `modal/train_siglip2_multitask.py`
+> - The head registry / model architecture definition
+>
+> **Status**: 8,613/10,000 dry-run confirmed. Full run BLOCKED pending this rename.
+
+---
+
 > **Quick Stats**: 10,000 images (target) | Binary classification — does page contain code? |
 > `has_code` bool label
 >
-> **Status**: 🔄 In Progress | **HAR Score**: 55/100 | **P0 Gaps**: 5
+> **Status**: 8,613/10,000 dry-run confirmed. Full generation run blocked pending CODE-G05 (architectural rename) resolution. | **HAR Score**: 55/100 | **P0 Gaps**: 5
 
 ---
 
@@ -489,6 +509,18 @@ FPR ≤ 10% constraint on academic documents, whichever is more stringent.
 | Head | Val AUC | Val F1 | Test AUC | Test F1 | Status |
 |------|---------|--------|----------|---------|--------|
 | `code_reg` / `code_cls` | — | — | — | — | ❌ Not trained |
+
+---
+
+## P0 Gap Registry
+
+| Gap ID | One-Line Description | Acceptance Criterion |
+|--------|---------------------|---------------------|
+| CODE-G05 | Head named `code_reg` but must be `code_cls` (binary classification) | Rename complete in all 3 files; training run passes with BCE loss |
+| CODE-G01 | Negative contamination unvalidated — doclaynet negatives may contain code | Manual sample of 100 negatives confirms <5% contain code |
+| CODE-G02 | Full generation run not executed (8,613/10,000 dry-run only) | Full 10,000-image run complete and manifest validated |
+| CODE-G04 | Printed-code-in-doc vs screenshot ratio unenforced | 60/40 split enforced in generation script |
+| CODE-G03 | Evaluation metrics not formally defined as classification metrics | Precision/recall/F1 defined; accuracy >=85% on val set |
 
 ---
 

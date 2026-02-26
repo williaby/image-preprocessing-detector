@@ -572,3 +572,57 @@ Scene text captured via camera/smartphone with variable real-world lighting, per
 |-----:|-------|-------------:|---------------:|
 | 1 | `layout_detections` | 99.3% | 0.411 |
 | 2 | `has_table` | 0.7% | 0.800 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~10,000 | VLM-derived (train only; test ~33% error) | Scene text signs appear at various angles; train-split orientation labels (D04 resolved) are usable but not primary orientation source; test split VLM labels have ~33% error (VR-001) and should be excluded |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | No document skew labels; camera perspective distortion is not equivalent to document page skew |
+| MNV4-H3 | resolution_quality_reg | ➖ | 0 | N/A | No resolution quality labels computed; PaddleOCR pipeline not run |
+| SIG-G1-1 | blur_score | ➖ | 0 | N/A | No IQA blur labels; scene blur from camera distance/motion is present but unlabeled |
+| SIG-G1-2 | noise_score | ➖ | 0 | N/A | No IQA noise labels; outdoor high-ISO noise present but unlabeled |
+| SIG-G1-3 | contrast_score | ➖ | 0 | N/A | No IQA contrast labels; outdoor lighting variance present but unlabeled |
+| SIG-G1-4 | skew_score | ➖ | 0 | N/A | No skew score labels; camera perspective != document skew metric |
+| SIG-G1-5 | compression_score | ➖ | 0 | N/A | No IQA compression labels; JPEG artifacts present but unlabeled |
+| SIG-G1-6 | overall_quality | ➖ | 0 | N/A | No IQA overall quality labels |
+| SIG-G2-1 | script_cls | ✅ Primary | ~19,657 | Human GT (train 10K) + VLM-derived (test 9.6K, lower accuracy) | 7 ISO 15924 classes: Latn(54.5%), Deva(10.4%), Hang(6.0%), Arab(5.2%), Hans(5.1%), Jpan(4.8%), Beng(4.6%); train GT is 96.6% accurate; test VLM accuracy ~67% overall (arabic 28%, japanese 56%; see VR-001); use train split preferentially for high-confidence script labels |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~10,000 | VLM-derived (train only) | Scene-captured text signs appear rotated; post-correction orientation signal available from train split with ~96% language accuracy; test split excluded due to VR-001 |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | N/A | Camera perspective distortion is not post-correction document skew; no applicable labels |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | ~3 | N/A | content_flags has_handwriting = 0.0% (only 3 of 19,657 samples); essentially all printed scene text; not a useful handwriting source |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting content; no legibility labels |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting content; no content type labels |
+| SIG-G4-4 | presence_reg | ❌ | 0 | N/A | Effectively 0.0 presence score for all samples; not useful for regression training |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting; no legibility regression labels |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~19,657 | Derived from dataset capture method (100% camera_smartphone) | 100% real labels; pure "camera" class contribution; 19,657 samples for the camera/smartphone stratum of the 7-class capture_method head; all real (no synthetic mixing) |
+| SIG-G5-2 | shadow_reg | ➖ | 0 | N/A | Natural scene shadows present but no shadow severity labels; would require dedicated shadow labeling pipeline |
+| SIG-G5-3 | warping_reg | ➖ | 0 | N/A | Camera perspective present but no warping severity labels; no warping annotation pipeline run |
+| SIG-G5-4 | code_cls | ❌ | 0 | N/A | Scene text (street signs, billboards); no code/programming content present |
+| SIG-G5-5 | resolution_quality_reg | ➖ | 0 | N/A | No resolution quality labels computed; variable camera resolution but unlabeled |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | 6 families: Latin (54.5%), CJK (16.7% — Han/Hangul/Jpan), Indic (15.0% — Deva+Beng), Arabic (5.2%), Other/symbols (8.6%), Cyrillic (0.0%); 11 distinct ISO 15924 codes; complements mdiw13 with camera-captured scene text perspective |
+| 2 | Capture method | 🟡 Partial | 100% camera_smartphone; excellent camera representation; no scanner or born_digital diversity; ideal complement to mdiw13 (scanner) for capture_method head |
+| 3 | Document domain | ✅ Well-covered | domain_level1 = SCN (scene text) for 100%; broad scene diversity: street signs, billboards, menus, shop fronts, traffic signs across 10 countries |
+| 4 | Layout type | ❌ Not present | No layout_type labels; DocLayout-YOLO returns 12.7% empty detections on scene text (KI-003); scene text is not document-layout structured |
+| 5 | Text density | 🟡 Partial | text_scope=phrase for 100% (word/phrase level); scene images have variable text density but density is not directly labeled |
+| 6 | Degradation types | ❌ Not present | No degradation type labels; degradation_types dict empty in aggregates; natural scene degradation (blur, lighting, compression) present but unlabeled |
+| 7 | Resolution/DPI range | ✅ Well-covered | Variable camera resolution (consumer smartphones to DSLRs); scene photos span low to high pixel density; text size varies 8-72pt on signage at varying distances |
+| 8 | Document age | ❌ Not present | No document_age labels; scene photography from 2019 (modern); historical content absent |
+| 9 | Text scope | 🟡 Partial | 100% phrase-level text scope; word/phrase crops from scene images; no full-page or document-level scope |
+| 10 | Content flags | 🟡 Partial | has_table=0.1% (12 samples), has_handwriting=0.0% (3 samples); no formula/code flags; largely print-only scene text |
+| 11 | Binarization status | ❌ Not present | All color RGB images (D05 resolved); no binarized samples; no binarization status labels |
+| 12 | Artifact types | 🟡 Partial | JPEG compression artifacts present (variable quality); motion blur common; no artifact type labels; natural real-world imaging conditions cover broad artifact space |
+| 13 | Color mode | 🟡 Partial | 100% color RGB (camera_smartphone); no grayscale or binarized variety; good color diversity from real-world scene photography |
+| 14 | Font variety | ✅ Well-covered | Extremely high font diversity — commercial signage across 10 countries uses varied display, serif, sans-serif, handwritten-style, and custom fonts; multilingual typography across 7 script families |
+
+### 13.3 Corpus Role & Constraints
+
+MLT19 is a primary contributor to SIG-G2-1 `script_cls` for the camera-captured scene text distribution, providing 10,000 human-GT-labeled train images (96.6% language accuracy) and 9,657 VLM-labeled test images (67% accuracy; test split should be downweighted or excluded for high-precision script heads). It is the sole 100%-camera dataset for SIG-G5-1 `capture_method_cls`, contributing all 19,657 images to the camera/smartphone stratum. The Latin language conflation (KI-009: all European Latin-script languages mapped to "en" for train split, partially resolved via LLM refinement in v5) means Latin-script subclass precision is reduced; this does not affect the script-family level classification but limits language-level training signal.

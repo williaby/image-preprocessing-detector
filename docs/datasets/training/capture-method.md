@@ -22,6 +22,43 @@ l4_status: planned
 
 ---
 
+## HAR Assessment (5-Model Consensus Review, 2026-02-21)
+
+HAR Score: 59/100 — Needs Work
+Status: ❌ BLOCKED — 3 of 7 classes have near-zero examples
+
+---
+
+## P0 Gaps
+
+| Gap | Class Affected | Description | Path to Resolution |
+|-----|---------------|-------------|-------------------|
+| CAP-P0-1 | CAMERA_PROFESSIONAL | No source dataset contains camera images labeled as professional camera (DSLR/mirrorless) | Either acquire labeled data or merge with CAMERA_SMARTPHONE → CAMERA (see recommendation) |
+| CAP-P0-2 | FAX | FAX transmission artifacts require synthesis; no real FAX datasets in inventory | Synthesize using half-tone moiré + vertical scanning artifacts; ~2K samples |
+| CAP-P0-3 | SCANNER_ADF | L2 metadata has no field distinguishing ADF from flatbed scanners; rvl_cdip uses bare "scanner" | ADF heuristic: look for paper curl at edges + streaking artifacts; or heuristic label from document type |
+| CAP-P0-4 | ALL | Modern CIS flatbed scanners (post-2010) have zero representation in training data | Source: acquire ≥1,500 samples from modern flatbed scanners |
+
+---
+
+## Class Reduction Recommendation (P1 Decision)
+
+4-model consensus recommends reducing from 7 classes to 6 classes:
+
+- Merge CAMERA_PROFESSIONAL + CAMERA_SMARTPHONE → **CAMERA**
+
+**Rationale**:
+
+- CAMERA_PROFESSIONAL has no source dataset
+- In practice, the distinction between professional and smartphone cameras is not
+  reliably determinable from document image quality alone
+- 6-class model is more trainable with available data
+
+**Tradeoff**: Loses granularity for professional camera use cases (uncommon in practice)
+
+**Status**: Design decision pending. Training must not start until this is resolved.
+
+---
+
 ## Section 1 — Identity
 
 | Field | Value |
@@ -152,6 +189,13 @@ Current usable: ~0. ADF visual heuristics (edge-parallel dark bands 2–5 px, sy
 RVL-CDIP images via `scripts/label_capture_method.py`. Many ADF artifacts are destroyed in
 RVL-CDIP preprocessing; usable pool estimated at 20–40% of total, yielding ~5,000–15,000 candidates
 before confidence filtering. Target 2,500 at confidence ≥ 0.7.
+
+> **ADF/Flatbed Indistinguishability (P0 data quality gap)**: rvl_cdip uses the bare `"scanner"`
+> label in L2 metadata with no ADF/flatbed field. Cannot distinguish ADF from flatbed without:
+> (a) manual annotation of paper curl/streak artifacts, or (b) a heuristic based on document
+> appearance. This is a P0 data quality gap. The `scripts/label_capture_method.py` script
+> (which does not yet exist) must implement this heuristic and write `"scanner_adf"` explicitly
+> into L2 sidecars before any ADF-class records can be assembled.
 
 **CAMERA_PROFESSIONAL** — Target: 5,000
 
@@ -541,4 +585,5 @@ the ADF-specific correction pathway.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-02-23 | Added HAR Assessment section, P0 Gaps summary table, Class Reduction Recommendation section, ADF/flatbed indistinguishability callout in SCANNER_ADF source pool |
 | 1.0.0 | 2026-02-23 | Initial creation from HAR sig-g5-capture-cls.md and DDR capture_method_ddr.md |

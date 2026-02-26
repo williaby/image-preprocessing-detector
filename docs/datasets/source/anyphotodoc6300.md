@@ -17,7 +17,7 @@ documentation_status: partial
 
 > **Quick Stats**: 6,306 images | Camera-captured | Warped + flat GT pairs | Dewarping benchmark
 >
-> **License**: GPL-3.0 (code; check dataset terms) | **Commercial Use**: No (GPL-3.0)
+> **License**: GPL-3.0 (dataset, per HuggingFace card); AGPL-3.0 (code repo, per GitHub) | **Commercial Use**: No
 
 ##### 1. Overview
 
@@ -30,7 +30,7 @@ documentation_status: partial
 | **Paper** | [DvD: Decoupled Dewarping](https://github.com/hanquansanren/DvD) |
 | **Repository** | [GitHub: hanquansanren/DvD](https://github.com/hanquansanren/DvD) |
 | **HuggingFace** | [hanquansanren/AnyPhotoDoc6300](https://huggingface.co/datasets/hanquansanren/AnyPhotoDoc6300) |
-| **License** | GPL-3.0 (code; verify dataset license separately) |
+| **License** | GPL-3.0 (dataset, per HuggingFace card); AGPL-3.0 (code repo, per GitHub) |
 | **Documentation Status** | Partial |
 
 #### 2. Source Data Inventory
@@ -234,11 +234,11 @@ Documents exhibit real-world camera capture degradations including perspective d
 | **Unique Characteristics** | Camera-captured warped documents with flat GT |
 | **Complementary Datasets** | Doc3D (synthetic warping), WarpDoc, DocReal |
 | **Benchmark Suitability** | HIGH - Paired GT enables quantitative evaluation (SSIM/MS-SSIM/LD) |
-| **Known Limitations** | GPL-3.0 license may restrict commercial use |
+| **Known Limitations** | GPL-3.0 (dataset) and AGPL-3.0 (code) both restrict commercial use; AGPL-3.0 also requires network-use disclosure |
 
 #### 7. Known Issues & Limitations
 
-- **License Uncertainty**: Code is GPL-3.0; dataset license may differ - verify before commercial use
+- **License Clarified (2026-02-24)**: Dataset is GPL-3.0 (per HuggingFace card); code repo (DvD) is AGPL-3.0 (per GitHub). No separate dataset license file exists. Both restrict commercial use.
 - **No Explicit Quality Scores**: Quality must be computed from paired comparison (SSIM, MS-SSIM)
 - **No Layout Annotations**: Dataset focused on dewarping, lacks semantic layout labels
 - **No Text GT**: No ground truth text transcriptions provided
@@ -294,7 +294,7 @@ Documents exhibit real-world camera capture degradations including perspective d
 
 | Property | Value |
 |----------|-------|
-| **License** | GPL-3.0 (code; verify dataset terms) |
+| **License** | GPL-3.0 (dataset, per HuggingFace card); AGPL-3.0 (code repo, per GitHub) |
 | **Commercial Use** | No |
 | **Image Format** | PNG |
 | **Color Space** | RGB |
@@ -376,3 +376,61 @@ Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enric
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | 0 | N/A | No explicit orientation GT; camera angle varies unpredictably |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | Warping ≠ page skew; no skew GT |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | N/A | No resolution quality labels |
+| SIG-G1-1 | blur_score | 🟡 | ~1,500 | tier_3_heuristic | Some motion/focus blur from camera capture; warping is primary degradation |
+| SIG-G1-2 | noise_score | 🟡 | ~1,500 | tier_3_heuristic | Camera sensor noise (warped images only; flat GT is clean) |
+| SIG-G1-3 | contrast_score | 🟡 | ~3,100 | tier_3_heuristic | 3 lighting conditions including low light; paired GT enables quality comparison |
+| SIG-G1-4 | skew_score | ❌ | 0 | N/A | No quality-based skew degradation |
+| SIG-G1-5 | compression_score | ❌ | 0 | N/A | PNG format (lossless) — no compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 | ~3,100 | tier_3_heuristic | Wide quality range: degraded camera to pristine flat GT |
+| SIG-G2-1 | script_cls | ➖ | ~500 | derived | Domain (scientific papers, magazines) suggests Latn-dominant; no explicit script labels |
+| SIG-G3-1 | orientation_cls | ❌ | 0 | N/A | No orientation GT |
+| SIG-G3-2 | skew_reg | ❌ | 0 | N/A | No skew GT |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~3,100 | derived | Printed documents → reliable NONE-class negatives |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting |
+| SIG-G4-4 | presence_reg | ➖ | ~3,100 | derived | 0.0 area ratio (all printed) |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting |
+| SIG-G5-1 | capture_method_cls | ✅ | ~3,100 | tier_1_annotation | 3,153 camera_smartphone images (warped set); inferred from dataset design |
+| SIG-G5-2 | shadow_reg | 🟡 | ~500 | tier_3_heuristic | Uneven lighting conditions create cast shadows in subset of warped images |
+| SIG-G5-3 | warping_reg | ✅ | ~3,100 | derived | Largest real camera-warped pool; severity computed via SSIM vs flat GT pairs |
+| SIG-G5-4 | code_cls | ❌ | 0 | N/A | No code content labels |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | N/A | No resolution quality labels |
+
+Contribution legend: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 | Domain suggests Latn-dominant (scientific papers, magazines); no explicit script labels |
+| 2 | Capture method | ✅ | camera_smartphone (warped set ~3,153); flat GT reference images |
+| 3 | Document domain | 🟡 | GENERAL — diverse: scientific papers, magazines, mixed documents (8 layout categories) |
+| 4 | Layout type | ✅ | Mixed (8 layout categories across 3 warping patterns) |
+| 5 | Text density | ✅ | Variable (document type diversity) |
+| 6 | Degradation types | ✅ | Perspective distortion, surface warping, uneven lighting, motion blur, noise |
+| 7 | Resolution/DPI range | ✅ | Camera-native (PNG, variable DPI) |
+| 8 | Document age | ✅ | Modern documents |
+| 9 | Text scope | ✅ | Document-level (full-page camera captures) |
+| 10 | Content flags | 🟡 | No confirmed has_handwriting/has_code/has_table flags; mixed document types |
+| 11 | Binarization status | ❌ | All color RGB PNG |
+| 12 | Artifact types | ✅ | Surface warping (primary), perspective distortion, uneven lighting, shadow |
+| 13 | Color mode | ✅ | Color |
+| 14 | Font variety | ✅ | Varied — diverse document types (scientific papers, magazines, mixed) |
+
+Coverage: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+AnyPhotoDoc6300 is the **primary source for `warping_reg` head training**, providing 3,153+ real camera-captured warped documents with flat GT pairs that enable SSIM-derived severity scoring (warping severity 0–1 must be computed from image pair comparison before training). It is also a significant contributor to `capture_method_cls` (~3.1K camera images) and IQA heads (contrast/blur from 3 lighting conditions × 3 warping patterns × 8 layout categories). Warping severity labels are not provided natively and must be pre-computed via `scripts/label_warping_severity.py`. The GPL-3.0 applies to the associated code repository; the dataset terms should be verified separately before commercial deployment.

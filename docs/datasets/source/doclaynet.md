@@ -518,3 +518,55 @@ At 81K images, DocLayNet processing requires:
 | 2.0 | 2026-02-13 | Integration script v2 (schema 2.3.0, GT exploitation, 13 defects resolved) |
 | 1.0 | 2026-02-10 | Initial base metadata extraction, Docling layout, LLM enrichment |
 | 0.1 | 2026-02-08 | Reliability summary materialized |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~81K | Derived (all 0°) | Born-digital, no rotation; provides UPRIGHT negatives only |
+| MNV4-H2 | skew_reg | ➖ | ~81K | Derived (all ~0°) | Born-digital, no physical skew; provides near-zero negatives only |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~69K | Computed | 1025×1025px fixed-size PNG; consistent high quality — useful as clean-document upper-bound examples |
+| SIG-G1-1 | blur_score | 🟡 | ~69K | Computed | Born-digital source; text and grid elements provide good reference for sharp-document lower-bound scores |
+| SIG-G1-2 | noise_score | 🟡 | ~69K | Computed | Clean PDF renders; useful as low-noise negatives across all 6 domain categories |
+| SIG-G1-3 | contrast_score | 🟡 | ~69K | Computed | High-contrast professional typesetting; solid representation of good-contrast examples |
+| SIG-G1-4 | skew_score | ➖ | ~81K | Derived (all ~0°) | Born-digital, no skew; contributes 0° skew negatives only |
+| SIG-G1-5 | compression_score | 🟡 | ~69K | Computed | Lossless PNG; zero-compression baseline — useful as artifact-free negatives |
+| SIG-G1-6 | overall_quality | 🟡 | ~69K | Computed | High-quality professional documents across 6 domains; strong clean-document upper-bound pool |
+| SIG-G2-1 | script_cls | 🟡 | ~80K Latn / ~572 CJK / ~501 Cyrl | GT-derived | 98.5% Latin (Latn); minor Cyrillic (0.6%), CJK (0.7%), Japanese (0.4%); useful secondary contributor for Latin |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~81K | Derived (all 0°) | All images upright; provides UPRIGHT class negatives only |
+| SIG-G3-2 | skew_reg (post) | ➖ | ~81K | Derived (all ~0°) | No physical skew present; near-zero regression negatives only |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~81K | GT-derived | 100% printed professional documents; provides NONE-class negatives |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-4 | presence_reg | ➖ | ~81K | GT-derived | All samples score 0.0 presence; provides zero-handwriting regression anchors |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | ~81K | GT label | 100% born_digital (confirmed); clean single-class signal for BORN_DIGITAL class |
+| SIG-G5-2 | shadow_reg | ➖ | ~81K | Computed | No shadows in born-digital renders; provides zero-shadow regression anchors |
+| SIG-G5-3 | warping_reg | ➖ | ~81K | Computed | No warping in born-digital renders; provides zero-warping regression anchors |
+| SIG-G5-4 | code_cls | 🟡 | ~2K–5K est. | Derived | SCI (17.4%) and TEC (29.4%) domains include technical papers and manuals with code snippets; minor contributor |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~69K | Computed | Fixed 1025×1025px high-quality renders; useful upper-bound examples for resolution quality |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | 98.5% Latin dominant; minor Cyrillic (0.6%), CJK (0.7%), Japanese (0.4%), Korean (0.1%); Arabic only 1 sample — not multi-script balanced |
+| 2 | Capture method | 🟡 | 100% born_digital; zero scanner/camera representation — single-class contributor only |
+| 3 | Document domain | ✅ | FIN 32.2%, TEC 29.4%, SCI 17.4%, LEG 15.6%, ADM 5.4% — strong multi-domain coverage across 6 professional categories |
+| 4 | Layout type | ✅ | Mixed layouts: multi-column, single-column, text-heavy, figure-heavy, table-heavy; 11 layout classes annotated |
+| 5 | Text density | ✅ | Variable: dense body text, sparse headers, mixed formula/table/text pages across 6 domains |
+| 6 | Degradation types | ❌ | No degradation present; all born-digital clean renders — zero contribution to degradation variety |
+| 7 | Resolution/DPI range | ❌ | Fixed 1025×1025px for all images; no DPI variation — uniform resolution tier |
+| 8 | Document age | ❌ | Contemporary professional documents only (2022 dataset); no historical or aged documents |
+| 9 | Text scope | ✅ | Page-level scope 100%; full-page professional documents covering complete documents |
+| 10 | Content flags | ✅ | Tables 26.0%, Figures 29.1%, Formulas 8.1%; good coverage of mixed content types via COCO GT |
+| 11 | Binarization status | ❌ | All RGB color images; no binarized versions available |
+| 12 | Artifact types | ❌ | No artifacts present; clean born-digital source — zero artifact variety contribution |
+| 13 | Color mode | 🟡 | RGB 100%; no grayscale or binarized variants — single color mode |
+| 14 | Font variety | ✅ | Rich font metadata (name, size, color per word) across 6 document categories; strong font diversity for professional document types |
+
+### 13.3 Corpus Role & Constraints
+
+DocLayNet's primary role is as a **negative pool for IQA degradation heads** (providing high-quality, undegraded born-digital examples as upper-bound anchors) and a **primary contributor for SIG-G5-1 capture_method_cls** (81K clean born_digital labels). It is also a **strong secondary contributor for SIG-G2-1 script_cls** (Latin) and all SIG-G1 IQA heads as clean-document reference examples. License is CDLA-Permissive-1.0 (commercial use permitted). No OOD exclusions apply to this dataset — the single Arabic sample is negligible and does not trigger the Mongolian/Syriac/Georgian OOD rule.

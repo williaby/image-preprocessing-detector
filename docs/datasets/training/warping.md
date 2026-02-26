@@ -17,16 +17,85 @@ l4_status: blocked
 
 # warping
 
+> ❌ **P0 BLOCKED — 3D-mesh-to-scalar derivation formula undefined** | HAR Score: 17/100 — LOWEST OF ALL 22 HEADS | Status: 0/20,000 assembled. Sufficient raw data EXISTS (102K doc3d images) but severity derivation formula is UNDEFINED. This is a DESIGN DECISION BLOCKER, not a data acquisition blocker.
+>
 > **Quick Stats**: 20,000 images (target) | Warping severity regression 0–1 | SigLIP 2 NAFlex
 >
 > **Status**: ❌ Blocked | **HAR Score**: 17/100 | **P0 Gaps**: 4
-
+>
 > **Note on HAR consensus**: During the multi-model consensus run for this head, 3 of 4 models
 > experienced context contamination from prior consensus sessions and answered about the
 > `code_reg` head rather than `warping_reg`. Only the Gemini 2.5 Pro response is treated as
 > valid for this HAR. The ratings, formula recommendations, and gap analysis below reflect
 > exclusively the Gemini 2.5 Pro review (9/10 confidence), crosschecked against the analyst's
 > independent assessment in the HAR.
+
+---
+
+## Data vs. Formula Gap
+
+Unlike most blocked datasets, warping is NOT blocked by missing data:
+
+| Available | Status |
+|-----------|--------|
+| doc3d images (warped) | ✅ ~102,000 images with 3D mesh metadata |
+| NONE class candidates (flat documents) | ✅ ~86,000 images (DocLayNet + RVL-CDIP flatbed) |
+| smartdoc-qa, anyphotodoc6300, warpdoc | ✅ Available |
+
+The blocker is: **how to convert 3D mesh data into a scalar severity score (0–1)**.
+This formula must be defined before any labeling script can be written.
+
+---
+
+## Formula Design Options (Decision Required — WARP-G02)
+
+Three candidate approaches for the 3D-mesh → scalar severity formula:
+
+### Option A: Mesh Deformation Magnitude
+
+- Metric: L2 norm of the 3D displacement field from a flat reference plane
+- Pros: Physically meaningful; directly measures deformation
+- Cons: Requires 3D mesh normalization; scale-dependent
+- Formula: `severity = clip(mean(||d_i||) / max_deformation, 0, 1)`
+
+### Option B: Bounding Box Deformation Ratio
+
+- Metric: Ratio of warped document area to idealized flat document area
+- Pros: Simple; requires only 2D bounding box of page corners
+- Cons: Doesn't capture local curvature; misses gutter-only warps
+- Formula: `severity = 1 - (actual_area / expected_flat_area)`
+
+### Option C: Boundary Straightness Score
+
+- Metric: Deviation of document edges from straight lines
+- Pros: Perceptually correlated; no 3D mesh needed
+- Cons: Only captures edge curvature, not page interior warping
+- Formula: `severity = mean(polyfit_residuals / document_diagonal)`
+
+**Status**: No option selected. Design decision required before WARP-G02 can be closed.
+**Recommendation**: Option A preferred (most physically meaningful) but requires doc3d
+mesh format analysis first. The HAR uses `clip(k * std(Z_grid_normalized), 0, 1)` as the
+primary formula candidate (a variant of Option A); calibration constant `k` requires
+2-person spot-check achieving SRCC ≥ 0.70 before adoption.
+
+---
+
+## Prerequisite Chain (Before Any Training)
+
+```text
+WARP-G02: Define derivation formula          (Step 1: Design decision — blocked)
+      ↓
+WARP-G01: Build label_warping_severity.py    (Step 2: Implement chosen formula)
+      ↓
+WARP-G04: Execute labeling on doc3d          (Step 3: ~3-4 hours on A100 for 102K images)
+WARP-G03: Identify NONE class path (parallel) (Step 3b: Select ~7K flat-document negatives)
+      ↓
+prepare_multitask_datasets.py warping sub-cmd (Step 4: Assemble 20K training set)
+      ↓
+Modal volume upload                          (Step 5: Upload to multitask-datasets volume)
+      ↓
+Training                                     (Step 6: SIG-G5-3 head training)
+```
 
 ---
 

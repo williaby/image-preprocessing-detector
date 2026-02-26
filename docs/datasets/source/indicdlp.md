@@ -427,3 +427,55 @@ indicdlp/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~40K | Derived (assume 0°) | No explicit rotation labels; most documents likely upright; contributes as 0° class with uncertainty |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~20K scanned | Derived via classical IQA | Scanned subset will have natural skew; classical ensemble labeling applicable |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~40K | Derived via IQA | Mixed quality range (born-digital high, scanned variable); useful mid-range diversity |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~119K | Derived via IQA | Scanned subset contributes blur diversity; born-digital subset provides clean anchors |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~119K | Derived via IQA | Scanned historical documents contribute noise variation |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~119K | Derived via IQA | Variable contrast from historical scans and born-digital |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~20K scanned | Derived via classical IQA | Scanned subset has real skew; flat rendered subset scores 0 |
+| SIG-G1-5 | compression_score | 🟡 Secondary | ~119K | Derived via IQA | JPEG compression variable across scanned and born-digital images |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~119K | Derived via IQA | Wide quality range adds distribution diversity |
+| SIG-G2-1 | script_cls | ✅ Primary | ~119K | Derived from language tags | 12 language tags map to Deva, Beng, Taml, Telu, Knda, Mlym, Gujr, Orya, Guru, Arab ISO codes; critical Indic script diversity |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~40K | Derived (assume 0°) | Same caveats as MNV4-H1; useful for upright Indic document coverage |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~20K scanned | Derived via classical IQA | Post-correction skew reference for scanned Indic documents |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~119K | Derived (mostly printed) | Predominantly printed documents; strong negative class; some historical docs may have handwritten annotations |
+| SIG-G4-2 | handwriting_legibility_cls | ➖ Negative | 0 | N/A | No explicit handwriting legibility annotations; excluded to avoid noise |
+| SIG-G4-3 | handwriting_content_type_cls | ➖ Negative | 0 | N/A | No handwriting content type labels available |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | ~119K | Derived (mostly 0.0) | Near-0.0 printed document anchor; small fraction may have handwritten notes |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | 0 | N/A | No handwriting legibility labels; excluded |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~119K | Derived from capture method | Mixed born-digital + scanned; real images qualify — born_digital and scanner labels derivable |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | No shadow labels; scanned documents may have minor shadows but not annotated |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | No warping labels; minimal physical warping in flatbed scans |
+| SIG-G5-4 | code_cls | 🟡 Secondary | ~5K (est.) | Derived from layout | 42 layout classes may include code/technical text blocks in scientific/educational documents |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~119K | Derived via IQA | Mixed DPI range; scanned subset adds lower-resolution diversity |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Good | 10 distinct Indic scripts: Devanagari (DEVA), Bengali (BENG), Tamil (TAML), Telugu (TELU), Kannada (KNDA), Malayalam (MLYM), Gujarati (GUJR), Odia (ORYA), Gurmukhi (GURU), Arabic (ARAB); critical diversity gap-filler for Indic scripts |
+| 2 | Capture method | ✅ Good | Mixed born-digital (programmatic) + flatbed scanner; real images qualify for SIG-G5-1; both capture method classes present |
+| 3 | Document domain | 🟡 Partial | Government, educational, and publication documents across Indian languages; domain labels not fully documented but inferrable |
+| 4 | Layout type | ✅ Good | 42 Indic-specific layout classes covering multi-column books, newspapers, forms, official documents, single-column text |
+| 5 | Text density | ✅ Good | High text density typical of Indic publications; newspapers (dense) through forms (sparse) represented |
+| 6 | Degradation types | 🟡 Partial | Scanner artifacts (noise, yellowing, JPEG blocking) present in scanned subset; born-digital subset is clean; no explicit degradation labels |
+| 7 | Resolution/DPI range | 🟡 Partial | Variable DPI from mixed sources; born-digital uniform high; scanned subset spans 150-400 DPI range (estimated) |
+| 8 | Document age | 🟡 Partial | Mix of modern born-digital and historical scanned documents; temporal range not fully documented but likely spans decades |
+| 9 | Text scope | 🟡 Partial | Document-level and region-level layout boxes; no word/character-level text GT |
+| 10 | Content flags | ✅ Good | Tables, figures, formulas, headers, footers, captions all present via 42-class COCO taxonomy; no handwriting or code flags |
+| 11 | Binarization status | ❌ None | No binarized documents; color/grayscale scans and born-digital only |
+| 12 | Artifact types | 🟡 Partial | Scanner noise, page curl (minor), yellowing (historical), JPEG blocking present in scanned subset; no explicit artifact labels |
+| 13 | Color mode | 🟡 Partial | Mixed: color born-digital + grayscale/color scans; no forced color-mode curation |
+| 14 | Font variety | ✅ Good | High regional font diversity across 12 languages and 10 scripts; Indic typefaces vary significantly across regions and publishers |
+
+### 13.3 Corpus Role & Constraints
+
+IndicDLP's primary training contribution is SIG-G2-1 (script_cls) — it is the largest source of real document images for 10 Indic script families (Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Odia, Gurmukhi, Arabic), all of which are critically underrepresented in other layout and IQA datasets. It also contributes to SIG-G5-1 (capture_method_cls) as a real mixed-capture dataset. The MIT license permits unrestricted commercial use with no synthetic mixing constraints. The parser is not yet implemented (Layer 2 metadata pending), so script labels must be derived from the language metadata field in the COCO JSON; shadow and warping regression heads require additional labeling work before this dataset can contribute there.

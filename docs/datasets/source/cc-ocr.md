@@ -207,3 +207,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `has_table` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | — | Benchmark evaluation set only; no orientation augmentation in source |
+| MNV4-H2 | skew_reg | ➖ | 0 | — | Images are clean/benchmark-prepared; no skew distribution |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~3,000 | Pseudo-label via pipeline | Mixed DPI (41% real-world scene + 59% synthetic renders); useful for mid-quality range |
+| SIG-G1-1 | blur_score | 🟡 | ~2,700 | Pseudo-label via pipeline | Real-world subset (41%) provides natural blur variation; synthetic is uniformly clean |
+| SIG-G1-2 | noise_score | 🟡 | ~2,700 | Pseudo-label via pipeline | Real scene images contribute noise diversity; synthetic component adds clean negatives |
+| SIG-G1-3 | contrast_score | 🟡 | ~2,700 | Pseudo-label via pipeline | Scene/document mix provides contrast range; synthetic has uniform high contrast |
+| SIG-G1-4 | skew_score | ➖ | 0 | — | Benchmark set; images are pre-aligned and standardized |
+| SIG-G1-5 | compression_score | 🟡 | ~2,700 | Pseudo-label via pipeline | JPEG artifacts present in real-world subset; PNG synthetic is lossless |
+| SIG-G1-6 | overall_quality | 🟡 | ~2,700 | Pseudo-label via pipeline | Mixed quality real-world subset adds useful mid-tier IQA samples |
+| SIG-G2-1 | script_cls | ✅ | ~6,500 | Ground truth (ISO 15924) | Hans script label confirmed; 4 tracks cover Chinese + multilingual; CJK-only but high volume |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | — | Pre-aligned benchmark; no orientation variation to exploit |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | — | Pre-aligned benchmark; no skew variation |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~6,500 | Derived from content_type=printed | 100% printed text confirmed by metadata; clean NONE-class samples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | No handwriting present |
+| SIG-G4-4 | presence_reg | ✅ | ~6,500 | Derived (0.0 score) | All printed; contributes 0.0 anchor values to presence regression |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ➖ | 0 | — | capture_method=unknown in metadata; cannot assert real-capture class confidently |
+| SIG-G5-2 | shadow_reg | ➖ | 0 | — | No shadow annotations; synthetic portion has no shadow by design |
+| SIG-G5-3 | warping_reg | ➖ | 0 | — | No warping annotations; benchmark images are flat/corrected |
+| SIG-G5-4 | code_cls | 🟡 | ~500 | Derived from OCR text | Some images contain code-like formatting (LaTeX formulas preserved in annotations); minority |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~3,000 | Pseudo-label via pipeline | Same as MNV4-H3; mixed real/synthetic provides mid-quality range |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | CJK only (Hans=100% per metadata); multilingual track includes English but not separately labeled in L2 metadata |
+| 2 | Capture method | 🟡 | 41% real-world (scene photos + scanned docs) + 59% synthetic renders; capture_method field = unknown in metadata |
+| 3 | Document domain | ❌ | domain_level1=UNK for all 6,284 samples; benchmark covers business/academic/scene but unstratified |
+| 4 | Layout type | 🟡 | 4 tracks cover scene text, structured documents (KIE), and document parsing; layout_types field unpopulated |
+| 5 | Text density | 🟡 | text_scope=mixed for all samples; range from sparse scene text to dense document pages |
+| 6 | Degradation types | 🟡 | Real-world 41% subset has natural degradation (compression, noise, perspective); degradation_types field unpopulated |
+| 7 | Resolution/DPI range | 🟡 | Real-world images vary widely; synthetic renders are consistent; no DPI metadata available |
+| 8 | Document age | ❌ | Modern content only; no historical or aged document representation |
+| 9 | Text scope | ✅ | text_scope=mixed confirmed; covers word-level (multi-scene), line-level, and page-level text |
+| 10 | Content flags | 🟡 | has_table=15% (942/6,284); no other content flags in metadata |
+| 11 | Binarization status | ❌ | No binarized images; all color or grayscale originals |
+| 12 | Artifact types | 🟡 | JPEG compression artifacts in real-world subset; otherwise minimal; no artifact labels |
+| 13 | Color mode | 🟡 | Mixed; real-world images are color/grayscale; synthetic renders are color; no explicit color_mode field |
+| 14 | Font variety | ✅ | Strong CJK font variety across 39 subsets; Chinese Simplified + Traditional + Latin fonts represented |
+
+### 13.3 Corpus Role & Constraints
+
+CC-OCR is a **primary contributor for CJK script detection (SIG-G2-1)** and a **secondary IQA contributor** via its 41% real-world subset. The MIT license removes all commercial-use barriers, making it the preferred CJK benchmark alternative to research-licensed M6Doc. The dataset's L2 metadata has domain_level1=UNK for all samples (Grade D audit), so it cannot be used for domain-stratified sampling until enrichment is complete; for script training, Hans=100% ground truth is reliable.

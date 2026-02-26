@@ -14,9 +14,58 @@ l4_status: blocked
 
 # shadow
 
+> ❌ **P0 BLOCKED — label_shadow_severity.py script not yet created** | HAR Score: 28/100 (Blocked) | Status: 0/15,000 assembled. All L2 shadow_severity fields are null. Training BLOCKED until labeling script is built and run.
+
 > **Quick Stats**: 15,000 images (target) | Shadow severity regression 0–1 | float label per image
 >
 > **Status**: ❌ Blocked | **HAR Score**: 28/100 | **P0 Gaps**: 3
+
+---
+
+## Label Sentinel Convention
+
+| Value | Meaning |
+|-------|---------|
+| 0.0 | NO shadow (valid measurement — document is shadow-free) |
+| 0.0–0.25 | Mild shadow |
+| 0.25–0.60 | Moderate shadow |
+| >0.60 | Severe shadow |
+| shadow_unmeasurable=true | Cannot measure severity (e.g., entire document is binarized 1-bit; gradient destroyed) |
+
+⚠️ CRITICAL: 0.0 is a VALID reading meaning "no shadow". Do NOT use 0.0 as a
+catch-all for failed measurements or absent data. Unmeasurable cases must use
+the `shadow_unmeasurable=true` flag in the metadata.
+
+---
+
+## Book Gutter Shadow Gap (P1)
+
+The sd7k dataset contains only flat-document shadows (cast shadows on horizontal surfaces).
+It does NOT contain book gutter shadows — the curved shadow created by page binding
+at the inner margin of open books.
+
+- Book gutter shadows are one of the most common scan artifacts in real-world document processing
+- Current source datasets have 0 labeled book gutter examples
+- Required: ≥1,000 gutter shadow examples with paired clean scans
+- Acquisition path: scan physical books (double-page spreads) or synthetic 3D rendering
+
+---
+
+## Prerequisite Chain (Before Any Training)
+
+```text
+label_shadow_severity.py     (Step 1: CREATE this script — does not exist)
+      ↓
+Run labeling on sd7k/wsrd    (Step 2: Execute on GPU; ~2-3 hours on A100)
+      ↓
+Integrate into L2 metadata   (Step 3: Run integrate_sd7k_enrichments.py with shadow field)
+      ↓
+prepare_multitask_datasets.py shadow subcommand  (Step 4: Assemble 15K training set)
+      ↓
+Modal volume upload          (Step 5: Upload to multitask-datasets volume at /data/shadow/)
+      ↓
+Training                     (Step 6: SIG-G5-2 head training)
+```
 
 ---
 
@@ -514,4 +563,5 @@ blur, noise, warping, and compression.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-02-23 | Added P0 BLOCKED notice, Label Sentinel Convention section, Book Gutter Shadow Gap section, Prerequisite Chain section |
 | 1.0.0 | 2026-02-23 | Initial creation from HAR sig-g5-shadow-reg.md v2.0 and shadow_ddr.md |

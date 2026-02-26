@@ -2,7 +2,24 @@
 
 > **Quick Stats**: 100,000 images | 3D geometry GT | Warped documents | Synthetic + rendered
 >
-> **License**: CC-BY-NC-SA | **Commercial Use**: Research only
+> **License**: MIT | **Commercial Use**: Yes (with attribution)
+>
+> **⚠️ LICENSE CORRECTION (2026-02-24)**: Catalog previously stated CC-BY-NC-SA (research only). Independent
+> validation against the GitHub LICENSE file and HuggingFace dataset card confirmed the actual license is **MIT**.
+> No non-commercial restriction exists. Both the dataset repo (`doc3D-dataset`) and the DewarpNet code repo
+> use identical MIT text. Note: some upstream input textures used during synthetic generation were sourced from
+> CC-licensed material (Yes! Magazine), but the published dataset itself is MIT-licensed. HuggingFace access
+> is gated (requires sharing contact info), but this is a data-sharing agreement, not a license restriction.
+>
+> **⚠️ CAPTURE METHOD WARNING — HISTORICAL PATH MISLOCATION**
+> Doc3D is stored on disk under `01_base_data/camera_captured/doc3d/` due to a
+> historical naming error at download time. **Every image in this dataset is a
+> fully synthetic 3D Blender render — no real camera was ever involved.**
+> `capture_method` is explicitly set to `CaptureMethod.SYNTHETIC` in
+> `datasets.py`. Do NOT infer capture_method from the folder path. A regression
+> test in `tests/unit/annotation/config/test_datasets.py`
+> (`TestCameraCaptureFolderSyntheticGuard`) enforces this value and will fail
+> if it is changed without justification. See **Section 10.5** below for full context.
 
 ##### 1. Overview
 
@@ -15,7 +32,7 @@
 | **Paper** | [DewarpNet: Single-Image Document Unwarping (ICCV 2019)](https://www3.cs.stonybrook.edu/~cvl/projects/dewarpnet/storage/paper.pdf) |
 | **Repository** | [GitHub: cvlab-stonybrook/doc3D-dataset](https://github.com/cvlab-stonybrook/doc3D-dataset) |
 | **HuggingFace** | [StonyBrook-CVLab/doc3D-dataset](https://huggingface.co/datasets/StonyBrook-CVLab/doc3D-dataset) |
-| **License** | CC-BY-NC-SA-4.0 |
+| **License** | MIT (validated 2026-02-24; see correction note above) |
 | **GCS** | **⚠️ EXCLUDED** - Intentionally not replicated to GCS due to size (~209GB) |
 | **Documentation Status** | Partial (v1.2.0 in progress) |
 
@@ -222,5 +239,93 @@ doc3d/data/doc3d/
 - 3D Mesh Files (OBJ format)
 - Contact: [Authors listed in ICCV 2019 paper]
 
+##### 10.5 Historical Path Mislocation and Capture Method Guard
+
+Doc3D was placed under `01_base_data/camera_captured/` when it was first
+downloaded in 2025. The folder name was chosen because the rendered images
+visually resemble camera-captured warped documents (realistic lighting,
+perspective, shadows). However:
+
+- All 102,064 images are **Blender 3D renders** from 21 source mesh IDs.
+- The dataset paper (DewarpNet, ICCV 2019) explicitly describes synthetic
+  generation via 3D mesh deformation.
+- Ground truth types (depth maps, UV maps, backward mapping, surface normals)
+  are only available because the generation process is synthetic.
+
+**Discovered**: 2026-02-24 during a systematic `camera_captured/` audit
+triggered by a Layer 2 metadata review.
+
+**Resolution applied**:
+
+1. `datasets.py` — `capture_method=CaptureMethod.SYNTHETIC` hardcoded with a
+   warning comment. This is the authoritative value; the folder path is not used.
+2. `validate_dataset_configs()` — new check flags any `camera_captured/` dataset
+   with `capture_method=UNKNOWN` so future additions cannot slip through.
+3. `test_datasets.py` — `TestCameraCaptureFolderSyntheticGuard` regression suite
+   pins `doc3d.capture_method == SYNTHETIC` and asserts all `camera_captured/`
+   datasets have an explicit (non-UNKNOWN) capture method.
+
+**Files NOT moved**: The 102K images remain at their current path to avoid
+breaking the `audit_config.py` entry, `download_doc3d_images.py`, and any
+external references. The metadata is correct; the storage path is the artefact.
+
 ---
----
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | - | - | Fixed 448x448 rendered images; orientation not varied across samples |
+| MNV4-H2 | skew_reg | ❌ | - | - | No planar skew angle labels; 3D deformation ≠ 2D skew |
+| MNV4-H3 | resolution_quality_reg | ❌ | - | - | Fixed 448x448 synthetic resolution; not representative of real DPI variation |
+| SIG-G1-1 | blur_score | ❌ | - | - | Synthetic renders are uniformly sharp; no blur degradation |
+| SIG-G1-2 | noise_score | ❌ | - | - | Synthetic renders have no camera sensor noise |
+| SIG-G1-3 | contrast_score | ❌ | - | - | Uniform synthetic lighting; no real contrast degradation |
+| SIG-G1-4 | skew_score | ❌ | - | - | skew_score = quality degradation 0-1; not applicable to 3D warp geometry |
+| SIG-G1-5 | compression_score | ❌ | - | - | PNG format; no compression artifacts |
+| SIG-G1-6 | overall_quality | ❌ | - | - | Synthetic renders have consistent quality; no IQA variation to learn |
+| SIG-G2-1 | script_cls | ❌ | - | - | Language/script unknown; not annotated |
+| SIG-G3-1 | orientation_cls (post) | ❌ | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~102,000 | Negative class | Rendered printed documents; useful as large-scale negative examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ | ~102,000 | Negative class | Rendered printed docs → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | ➖ | ~102,000 | Synthetic (negative for real classes) | Synthetic renders; useful as synthetic class examples if model includes synthetic category |
+| SIG-G5-2 | shadow_reg | ❌ | - | - | Albedo maps model reflectance not shadow; no shadow severity labels |
+| SIG-G5-3 | warping_reg | ✅ | ~102,000 | Derivable from backward mapping / depth maps | Primary dataset for 3D document warping; backward mapping + depth maps enable warping severity computation |
+| SIG-G5-4 | code_cls | ❌ | - | - | General rendered documents; no code content indicated |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ | - | - | Fixed synthetic resolution; not representative of real DPI variation |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ | Script unknown; rendered from mixed source docs but unverified |
+| 2 | Capture method | 🟡 | Synthetic rendering via 3D mesh deformation; distinct from camera or scanner |
+| 3 | Document domain | ❌ | Unknown domain; source documents for rendering not documented |
+| 4 | Layout type | ❌ | No layout annotations; varied by source document |
+| 5 | Text density | ❌ | Not measured; variable across rendered documents |
+| 6 | Degradation types | ✅ | 3D warping (folding, bending, curving, page curl) — most comprehensive warp geometry dataset available |
+| 7 | Resolution/DPI range | ❌ | Fixed 448x448 synthetic resolution; no DPI variation |
+| 8 | Document age | ❌ | All modern synthetic renders; no aging artifacts |
+| 9 | Text scope | ✅ | Page-level (full document page renders) |
+| 10 | Content flags | ❌ | No content flags annotated |
+| 11 | Binarization status | ❌ | RGBA color renders only |
+| 12 | Artifact types | ✅ | 3D geometric deformation: fold, bend, curl — seven GT types including depth and normal maps |
+| 13 | Color mode | 🟡 | RGBA (4-channel); alpha channel present but unusual for training |
+| 14 | Font variety | ❌ | Derived from source documents; not systematically varied |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+Doc3D's dominant contribution to the unified training corpus is the `warping_reg` head (SIG-G5-3), where its 102,064 synthetically rendered 3D-deformed documents with accompanying backward mapping and depth map annotations provide the richest geometric warp supervision of any available dataset. Because all samples are synthetic renders at fixed 448x448 resolution with no noise, blur, or real camera artifacts, the dataset contributes only minimally to IQA heads and cannot be used for capture method, resolution quality, or script classification training. The MIT license permits commercial use with attribution, and at ~209 GB the dataset is intentionally excluded from GCS; warping severity labels must be derived by extracting scalar statistics from the existing backward mapping NPY files, which have been downloaded but not yet extracted.

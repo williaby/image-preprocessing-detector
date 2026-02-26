@@ -264,3 +264,67 @@ No defect catalog available for this dataset.
 ---
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~1,539 forms | tier_1_annotation | Forms are standard portrait orientation; contributes upright examples, minor volume |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~13,353 lines | tier_3_heuristic | Natural handwriting skew in line images; classical heuristic labeling required |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~13,353 lines | tier_2_model | 300 DPI scans; char-height derivable via PaddleOCR pipeline; moderate char heights |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~1,539 forms | tier_2_model | Scan sharpness varies by writer and scan quality; VLM or classical labeling needed |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~1,539 forms | tier_2_model | Scanner noise present; ink density variation adds noise signal |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~1,539 forms | tier_2_model | Grayscale scans with variable ink density; contrast varies across writers |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~13,353 lines | tier_3_heuristic | Handwriting line skew derivable; represents quality-degrading skew |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~1,539 forms | N/A | PNG lossless — no JPEG compression artifacts; useful as clean class-0 |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~1,539 forms | tier_2_model | Variable scan quality across 657 writers; requires VLM labeling; lines.txt ok/err flag usable as coarse proxy |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~13,353 lines | tier_0_exact | 100% Latin (Latn); secondary contributor — main script training from synth-multiscript-v3 |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~1,539 forms | tier_1_annotation | Same as MNV4-H1; post-correction upright forms as clean examples |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~13,353 lines | tier_3_heuristic | Narrow residual skew in handwriting lines after correction; requires classical labeling |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~1,539 forms | tier_0_exact | All forms are DOMINANT handwriting (writers copied full sentences); gold-standard presence labels |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | ~13,353 lines | tier_1_annotation | lines.txt ok/err flag provides coarse legibility; writer variability spans full legibility range |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | ~13,353 lines | tier_0_exact | All content is CURSIVE (writers copied English sentences in running handwriting) |
+| SIG-G4-4 | presence_reg | ✅ Primary | ~1,539 forms | tier_1_annotation | Forms have machine-printed prompts + handwritten text; handwriting area ratio derivable from bboxes |
+| SIG-G4-5 | legibility_reg | ✅ Primary | ~13,353 lines | tier_1_annotation | Continuous legibility spectrum across 657 writers; ok/err flag plus writer variability enables regression labels |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~1,539 forms | tier_0_exact | 100% flatbed scanner at 300 DPI; SCANNER class, confirmed by acquisition method |
+| SIG-G5-2 | shadow_reg | ➖ Negatives only | ~1,539 forms | N/A | Clean flatbed scans with no shadow artifacts; contributes shadow=0 negatives |
+| SIG-G5-3 | warping_reg | ➖ Negatives only | ~1,539 forms | N/A | Flatbed scans with no page warping; contributes warping=0 negatives |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~1,539 forms | N/A | Handwritten English sentences — no source code content; contributes code=0 negatives |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~13,353 lines | tier_2_model | 300 DPI consistent; char-height at line level derivable; contributes to mid-to-high resolution examples |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | Latin (Latn) only — English handwriting; no non-Latin scripts |
+| 2 | Capture method | ✅ Well-covered | 100% flatbed scanner at 300 DPI |
+| 3 | Document domain | 🟡 Partial | Handwritten English sentences (LOB corpus); no financial, scientific, or forms domain |
+| 4 | Layout type | 🟡 Partial | Form-level: mixed printed+handwritten layout; line-level: single-line freeform |
+| 5 | Text density | 🟡 Partial | Moderate-to-dense handwritten text; full pages at form level, sparse at word level |
+| 6 | Degradation types | 🟡 Partial | Natural scan variation, ink density, minor noise; no blur/compression/binarization artifacts |
+| 7 | Resolution/DPI range | ✅ Well-covered | Consistently 300 DPI; PNG grayscale; char-height ~20-50px typical |
+| 8 | Document age | 🟡 Partial | Modern (2002 collection); no aged or historical documents |
+| 9 | Text scope | ✅ Well-covered | Multi-level: form (page), line, word, component (stroke) levels all available |
+| 10 | Content flags | 🟡 Partial | has_handwriting=100%; no tables, no formulas, no figures, no code |
+| 11 | Binarization status | ✅ Well-covered | Grayscale (not binarized, not color); consistent across entire dataset |
+| 12 | Artifact types | ❌ Not present | No shadow, warping, watermarks, folds, or creases — clean flatbed scans |
+| 13 | Color mode | 🟡 Partial | Grayscale only; no color or monochrome (binary) examples |
+| 14 | Font variety | ✅ Well-covered | 657 distinct writer styles covering the full cursive handwriting spectrum; no printed fonts |
+
+### 13.3 Corpus Role & Constraints
+
+IAM is the primary English cursive handwriting dataset for SIG-G4 heads. Its 657-writer diversity
+provides the broadest natural spread of handwriting legibility and style available in a single
+English-language corpus, making it the anchor dataset for `handwriting_legibility_cls`,
+`handwriting_content_type_cls` (all CURSIVE), `presence_reg`, and `legibility_reg`. The lines.txt
+`ok/err` segmentation flag is directly usable as a coarse legibility label, and the bounding box
+hierarchy (form → line → word) enables handwriting area ratio derivation without additional
+annotation. For SIG-G5-1 (`capture_method_cls`), IAM provides a clean SCANNER class contribution.
+License is research-only (no commercial use), which is acceptable for model training but prohibits
+redistribution of derived datasets commercially. The dataset is not benchmark-reserved, so the
+full 130K image pool is available for training. As a Latin-only, grayscale, no-degradation-artifact
+dataset, IAM is intentionally narrow on dimensions 1, 6, 12, and 13 and should be combined with
+multilingual handwriting datasets (Muharaf, PUCIT-OHUL, TIBHCR) and degraded scan datasets for
+full head coverage.

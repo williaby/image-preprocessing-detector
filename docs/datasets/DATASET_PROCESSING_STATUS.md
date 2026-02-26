@@ -11,7 +11,7 @@ tags:
 title: Dataset Processing Status
 ---
 
-> **Last Updated**: 2026-02-15
+> **Last Updated**: 2026-02-25
 > **Purpose**: Operational tracking of dataset processing pipeline
 > **Usage**: Check current state, identify blockers, track conversion progress
 > **Audience**: Development team working on dataset preparation
@@ -27,15 +27,15 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 54/68 datasets training-ready (79.4%), 2 benchmark-ready
+**Current Status**: 54/73 datasets training-ready (74.0%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 54 | 79.4% | Format standardized + labels extracted |
-| ✅ **Benchmark-Ready** | 2 | 2.9% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 6 | 8.8% | Format conversion, label extraction, or generating |
-| 📚 **Non-Image Corpus** | 1 | 1.5% | Text-only corpus (openlid-v2, used for generation) |
-| ❌ **Blocked** | 5 | 7.4% | Fundamental issue preventing use |
+| ✅ **Training-Ready** | 54 | 74.0% | Format standardized + labels extracted |
+| ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
+| 🔄 **In Progress** | 11 | 15.1% | Format conversion, label extraction, or generating |
+| 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
+| ❌ **Blocked** | 5 | 6.8% | Fundamental issue preventing use |
 
 ---
 
@@ -65,13 +65,14 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | im2latex | 10,000 | ✅ PNG | ✅ Formula labels | ✅ Complete | Math formulas |
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
-| jssoda | 2,000 | ✅ PNG | ✅ Manifest labels | ✅ Complete | Japanese signboard orientation |
+| jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
+| midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
 | multilingual_scripts | 3,279 | ✅ PNG | ✅ Script labels | ✅ Complete | 27 scripts synthetic |
 | multimodal-textbook | 1,113 | ✅ PNG | ⚠️ Sample only | ⚠️ Partial | STEM content (sample, no Parquet) |
@@ -121,6 +122,11 @@ Format conversion, label extraction, or generation currently underway.
 
 | Dataset | Images | Format Status | Labels Status | Blocker | Next Steps | ETA |
 |---------|--------|---------------|---------------|---------|------------|-----|
+| **ndl-docl** | ~2,290 | ❌ Not downloaded | ❌ Parser ready, needs download | Requires GitHub clone: github.com/ndl-lab/layout-dataset | 1. Clone repo 2. Run parser (ndl_docl.py) 3. Layer 2 enrichment | P2 |
+| **ndl-minhon** | ~32,822 | ❌ Not downloaded | ❌ Parser ready, needs IIIF download | Images at IIIF endpoints; requires download script; CC-BY-SA 4.0 (copyleft) | 1. Run download_ndl_minhon.py 2. Parser (ndl_minhon.py) 3. Layer 2 enrichment | P2 |
+| **pdmocr-part1** | ~2,713 | ❌ Not downloaded | ❌ Parser ready, needs download | Requires GitHub clone: github.com/ndl-lab/pdmocrdataset-part1 | 1. Clone repo 2. Run parser (pdmocr.py) 3. Layer 2 enrichment | P2 |
+| **pdmocr-part2** | ~3,997 | ❌ Not downloaded | ❌ Parser ready, needs download | Requires GitHub clone: github.com/ndl-lab/pdmocrdataset-part2 | 1. Clone repo 2. Run parser (pdmocr.py) 3. Layer 2 enrichment | P2 |
+| **vjroda** | ~100 | ❌ Not downloaded | ❌ Parser ready, needs GitLab clone | Requires GitLab clone: gitlab.llm-jp.nii.ac.jp/datasets/vjroda; OOD eval only (too small for training) | 1. Clone repo 2. Run parser (vjroda.py) 3. OOD eval set only | P3 |
 | **synth-multiscript-v3** | 350,012 | ✅ Complete (GCS) | ✅ Auto-generated | ⚠️ Distribution imbalance — Arab 49K (3.8× target); 17 scripts below target | Rebalancing before training; v2 (250K) DELETED | ✅ Done |
 | **doc3d** | 100,000 | 🔄 ZIP→PNG (not extracted) | ✅ 7 GT types available | 16 ZIPs (209GB), user-defined splits | 1. Extract 16 ZIP files<br>2. Verify mesh ID structure<br>3. Decision: Parser needed? | Deferred (P3 priority) |
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |

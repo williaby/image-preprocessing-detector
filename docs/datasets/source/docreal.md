@@ -395,3 +395,64 @@ Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enric
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ Not applicable | - | - | No orientation labels; distorted images lack rotation ground truth |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No geometric skew angle labels provided |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~201 | Inferred | Camera-captured images have variable resolution; no explicit DPI label |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~201 | Inferred | Some motion/focus blur expected in camera-captured distorted images |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~201 | Inferred | Low noise per IQA profile; camera sensor noise present but secondary |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~201 | Inferred | Lighting variation from camera capture; no explicit contrast label |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | Skew degradation quality score not relevant; dataset is dewarping-focused |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | PNG format; no JPEG compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~201 | Inferred from SSIM vs GT | No direct MOS labels; overall quality inferrable by comparing distorted to scanned GT via SSIM |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~201 | Inferred CJK | Aggregate stats show 100% Hani/zh (Chinese); confirms CJK script presence (note: language detection may be noisy at 200-sample audit) |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~201 | Implicit NONE class | Printed documents; no handwriting; useful as negative examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~201 | Implicit 0.0 | Printed docs provide zero-handwriting anchor for regression |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~201 | camera_smartphone (distorted); scanner_flatbed (50 GT) | Clean capture-method labels from directory structure; both camera and scanner classes represented |
+| SIG-G5-2 | shadow_reg | 🟡 Secondary | ~201 | Inferred | Lighting variation from camera capture may include shadow effects; no explicit severity label |
+| SIG-G5-3 | warping_reg | ✅ Primary | ~201 | Paired GT (high warping) | Distorted images have perspective distortion and warping; scanned GT provides implicit low-warping anchor; warping severity derivable via SSIM |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~201 | Implicit NONE class | General printed documents; no code-containing pages expected |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | 🟡 Secondary | ~201 | Inferred | Variable camera resolution; same inference path as MNV4-H3 |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 Partial | Aggregate stats: 100% CJK (Hani/zh); language detection may be unreliable due to no OCR run; likely Chinese-language documents |
+| 2 | Capture method | ✅ Well-covered | Both camera_smartphone (201 distorted) and scanner_flatbed (50 GT) represented |
+| 3 | Document domain | 🟡 Partial | GENERAL domain; ~50 unique documents; limited subject diversity |
+| 4 | Layout type | ❌ Not present | No layout annotations; DocLayout-YOLO not yet run |
+| 5 | Text density | ❌ Not present | Not annotated; no OCR run |
+| 6 | Degradation types | ✅ Well-covered | Perspective distortion and warping primary; lighting variation secondary; blur present |
+| 7 | Resolution/DPI range | 🟡 Partial | Variable camera resolution; bottleneck field (100% low confidence); no DPI metadata available |
+| 8 | Document age | ❌ Not present | All recent captures; no aged or historical material |
+| 9 | Text scope | 🟡 Partial | Aggregate stats show 100% page-level text scope |
+| 10 | Content flags | ❌ Not present | No content flags; content_flags empty in aggregate stats |
+| 11 | Binarization status | ❌ Not present | Not annotated; PNG format (likely full-color RGB) |
+| 12 | Artifact types | ✅ Well-covered | Perspective distortion, warping, lighting variation, mild blur and noise all present |
+| 13 | Color mode | 🟡 Partial | Mixed B&W and color documents noted; not explicitly labelled per image |
+| 14 | Font variety | ❌ Not present | No font metadata; CJK printed documents inferred |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+DocReal is a small (251-image) dewarping benchmark with MIT license whose primary training contribution is to the warping_reg and capture_method_cls heads, providing real paired camera-distorted and flatbed-scanned examples of perspective distortion and warping. At only 201 distorted images the dataset is too small to serve as a standalone training source and is best used as a held-out evaluation benchmark or combined with larger dewarping datasets such as AnyPhotoDoc6300 or Doc3D. The Layer 2 audit grade of C (label_accuracy 58.3%) and 100% unreliable composite category indicate enrichment gaps in domain, language, layout, and resolution fields that must be addressed before using metadata-derived labels for training.

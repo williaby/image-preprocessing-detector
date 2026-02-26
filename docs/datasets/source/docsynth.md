@@ -324,3 +324,55 @@ class name mappings.
 ```
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~50K | Synthetic (all 0°) | All images upright by construction; contributes only as negative class diversity |
+| MNV4-H2 | skew_reg | ➖ Negative | 0 | N/A | No skew variation in synthetic generation; would hurt regression calibration |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~50K | Derived (uniform high) | All high-quality rendered images; provides upper-bound anchor only |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~50K | Derived via IQA | Clean renders score near 1.0; useful as high-quality anchor |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~50K | Derived via IQA | Clean renders score near 1.0; useful as high-quality anchor |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~50K | Derived via IQA | High contrast by construction; useful as positive anchor |
+| SIG-G1-4 | skew_score | ➖ Negative | 0 | N/A | No skew variation; all images at 0°; would bias regression |
+| SIG-G1-5 | compression_score | 🟡 Secondary | ~50K | Derived via IQA | JPEG compression at consistent quality; limited score range |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~50K | Derived via IQA | High-quality anchor; contributes upper end of quality distribution |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~300K | Derived from content | Primarily Latin (LATN); lacks script diversity but large Latin volume |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~50K | Synthetic (all 0°) | Same as MNV4-H1; all upright, no post-correction diversity |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | N/A | No skew to correct; excluded from post-correction head |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~300K | Synthetic (all printed) | 100% printed text; strong negative class for handwriting presence |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | 0 | N/A | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | 0 | N/A | No handwriting present |
+| SIG-G4-4 | presence_reg | ✅ Primary | ~300K | Synthetic (all 0.0) | Strong printed-only signal; contributes 0.0 presence regression anchor |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | 0 | N/A | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ❌ Not applicable | 0 | N/A | Synthetic dataset; 100% real images required — excluded |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | No shadow variation in synthetic generation |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | No physical distortion; flat rendered images |
+| SIG-G5-4 | code_cls | 🟡 Secondary | ~30K (est.) | Derived from layout | 74-class taxonomy likely includes code/formula blocks; derivable from layout class |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~50K | Derived via IQA | High-resolution rendered images; upper-end anchor only |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | Primarily Latin (LATN); limited script diversity from synthetic rendering of English/European document templates |
+| 2 | Capture method | ❌ None | 100% synthetic/born-digital; no real scanned or camera-captured images |
+| 3 | Document domain | ✅ Good | 74 layout classes spanning academic, business, scientific, and mixed document types via generative templates |
+| 4 | Layout type | ✅ Good | High diversity — multi-column, single-column, complex multi-element layouts from Mesh-candidate BestFit algorithm |
+| 5 | Text density | ✅ Good | Range of element counts per page (1–32 annotations); high layout element density variation |
+| 6 | Degradation types | ❌ None | Clean synthetic renders only; no blur, noise, scan artifacts, or physical degradation |
+| 7 | Resolution/DPI range | ❌ None | Uniform ~1240×1198 px rendered at consistent DPI; no resolution diversity |
+| 8 | Document age | ❌ None | Synthetic modern documents only; no historical aging simulated |
+| 9 | Text scope | 🟡 Partial | Document-level and region-level (layout element bboxes); no word/character-level text |
+| 10 | Content flags | 🟡 Partial | Tables and figures derivable from class taxonomy; formulas possible; no handwriting, no shadow/warping |
+| 11 | Binarization status | ❌ None | All color/grayscale rendered; no binarized documents present |
+| 12 | Artifact types | ❌ None | Synthetic origin — no JPEG blocking, scanner lines, bleed-through, or physical artifacts |
+| 13 | Color mode | 🟡 Partial | Primarily color/grayscale rendered; limited binary; no forced color-mode diversity |
+| 14 | Font variety | ✅ Good | Diverse fonts across generated templates; wide variety of typefaces and sizes across 300K images |
+
+### 13.3 Corpus Role & Constraints
+
+DocSynth300K's primary role is layout pre-training — it supplies large-scale (300K) annotated layout examples for initializing DocLayout-YOLO before fine-tuning on real datasets such as DocLayNet. Being 100% synthetic, it is excluded from SIG-G5-1 (capture_method_cls), all IQA degradation heads where clean renders bias the score distribution, and all skew/warping heads. The Apache-2.0 license permits unrestricted commercial use; no synthetic mixing cap applies at the source level, but downstream task manifests should treat DocSynth300K images as born-digital synthetic and apply the ≤60% synthetic cap where required.

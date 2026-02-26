@@ -426,3 +426,67 @@ N/A - No dataset-specific quality tiers or scoring systems
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ Negatives only | ~5,590 | tier_0_exact | All forms are standard portrait orientation — contributes upright class-0 examples only |
+| MNV4-H2 | skew_reg | ➖ Negatives only | ~5,590 | N/A | Synthesized forms have zero skew by construction; contributes clean skew=0 examples |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~5,590 | tier_2_model | 300 DPI binary B&W; char-height derivable but binary images limit PaddleOCR accuracy |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~5,590 | N/A | Synthesized clean images — no blur; contributes blur=0 negatives |
+| SIG-G1-2 | noise_score | ➖ Negatives only | ~5,590 | N/A | Synthesized clean images — no noise; contributes noise=0 negatives |
+| SIG-G1-3 | contrast_score | ➖ Negatives only | ~5,590 | N/A | Binary B&W with maximum contrast — contributes high-contrast class-0 for degradation |
+| SIG-G1-4 | skew_score | ➖ Negatives only | ~5,590 | N/A | No skew in synthesized forms; contributes skew_score=0 negatives |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~5,590 | N/A | PNG lossless — no JPEG artifacts; contributes compression=0 negatives |
+| SIG-G1-6 | overall_quality | ➖ Negatives only | ~5,590 | N/A | Synthesized clean data has uniformly high quality; useful as pristine class anchor |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~5,590 | tier_0_exact | 100% Latin (Latn) confirmed by L2 stats; small volume, secondary contributor |
+| SIG-G3-1 | orientation_cls (post) | ➖ Negatives only | ~5,590 | tier_0_exact | All upright portrait forms; post-correction clean upright examples |
+| SIG-G3-2 | skew_reg (post) | ➖ Negatives only | ~5,590 | N/A | No skew in synthesized forms; contributes residual_skew=0 examples |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 Secondary | ~5,590 | tier_1_annotation | L2 stats show has_handwriting=100%; synthesized handprint fills in form fields — MODERATE/SUBSTANTIAL expected; limited style diversity |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 Secondary | ~5,590 | tier_1_annotation | Synthesized handprint is machine-generated; legibility is uniformly clean — limited spectrum; narrows training distribution if over-weighted |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 Secondary | ~5,590 | tier_0_exact | Form fields contain PRINTED handprint (block letters) rather than cursive; contributes PRINTED sub-class |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | ~5,590 | tier_1_annotation | Handwriting present in form field regions; field-level bbox coverage allows area ratio estimation |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | ~5,590 | tier_1_annotation | Synthesized handprint is uniformly legible; contributes only the high-legibility end of the regression range |
+| SIG-G5-1 | capture_method_cls | 🟡 Secondary | ~5,590 | tier_1_annotation | L2 metadata marks as scanner_flatbed but dataset is actually computer-synthesized; label requires correction to SYNTHETIC before training use |
+| SIG-G5-2 | shadow_reg | ➖ Negatives only | ~5,590 | N/A | Synthesized images have no shadow; contributes shadow=0 negatives |
+| SIG-G5-3 | warping_reg | ➖ Negatives only | ~5,590 | N/A | Synthesized images have no warping; contributes warping=0 negatives |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~5,590 | N/A | Tax forms contain no source code; contributes code=0 negatives |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~5,590 | tier_2_model | 300 DPI consistent; binary B&W limits char-height measurement reliability; mid-high resolution anchor |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ Not present | Latin (Latn) only — 100% English tax forms; no non-Latin script diversity |
+| 2 | Capture method | 🟡 Partial | Synthesized (computer-generated); L2 incorrectly labels as scanner_flatbed — must be corrected to SYNTHETIC before use in SIG-G5-1 training |
+| 3 | Document domain | 🟡 Partial | Government/financial (GOV per L2); IRS 1040 tax forms only; narrow domain, 1988 vintage layouts |
+| 4 | Layout type | 🟡 Partial | Structured forms with fixed field grids; single layout type across all 5,590 pages |
+| 5 | Text density | 🟡 Partial | Moderate density — partially filled form fields; many fields may be empty |
+| 6 | Degradation types | ❌ Not present | Synthesized clean images — no blur, noise, contrast, compression, or binarization artifacts |
+| 7 | Resolution/DPI range | ✅ Well-covered | Consistently 300 DPI; fixed 2560×3300 px; binary (1-bit) B&W |
+| 8 | Document age | 🟡 Partial | Modern digitally synthesized (1992); but represents 1988 tax year forms — content is historical |
+| 9 | Text scope | 🟡 Partial | Page-level only (per L2 text_scopes); field-level granularity not spatially annotated |
+| 10 | Content flags | 🟡 Partial | has_handwriting=100%; has_formula=3.6%; has_figure=0.4%; no tables or code |
+| 11 | Binarization status | ✅ Well-covered | Binary (1-bit B&W) — pure binarized images; unique in dataset collection |
+| 12 | Artifact types | ❌ Not present | No shadow, warping, watermarks, folds, or creases — synthesized clean data |
+| 13 | Color mode | 🟡 Partial | Binary (monochrome 1-bit) only; no grayscale or color examples |
+| 14 | Font variety | 🟡 Partial | Synthesized handprint uses limited font styles; machine-printed form fields use a single IRS form typeface |
+
+### 13.3 Corpus Role & Constraints
+
+NIST-SD2 is a narrow-domain supplementary dataset whose primary value is providing clean
+negative examples for IQA degradation heads (all ➖) and binary B&W form images for the
+binarization-status diversity dimension. Its synthesized handprint contributes to SIG-G4 heads
+at secondary weight only, because the uniform legibility distribution (machine-generated fills)
+understates natural handwriting variability and would distort legibility regression if used as a
+primary source. The most critical constraint is the L2 metadata capture_method error: all 5,590
+samples are labeled `scanner_flatbed` but the dataset is programmatically generated — this must
+be corrected to `SYNTHETIC` before use in SIG-G5-1 (`capture_method_cls`) training to avoid
+mislabeling the SCANNER class. The dataset is public domain (no license restrictions) and not
+benchmark-reserved, so the full 5,590-page pool is available. Given the 1988 vintage form
+layouts and synthesized nature, NIST-SD2 should be treated as a diversity supplement rather than
+a primary training source for any head, and should be balanced against real scanned form datasets
+(FUNSD, SROIE) for form-domain coverage.

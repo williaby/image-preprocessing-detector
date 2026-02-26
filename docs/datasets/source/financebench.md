@@ -266,17 +266,20 @@ This benchmark exposes significant LLM limitations on financial document underst
 ##### 10.3 External Resources
 
 - **HuggingFace Dataset**: Contains JSONL files only (no PDFs)
-- **GitHub Repository**: Contains PDFs, JSONL, and documentation
+- **GitHub Repository**: Contains PDFs, JSONL, and documentation — ⚠️ **No LICENSE file** in the GitHub repo (HTTP 404); license is only declared on HuggingFace. Pulling from GitHub without HuggingFace card is technically all-rights-reserved under copyright law.
 - **GCS Bucket**: `gs://image_detection_b/image-preprocessing-detector/datasets/financebench/` (converted images)
 - **Download**: Requires git clone of full repository to access PDFs
 
 ##### 10.4 License Restrictions
 
-- **License**: CC-BY-NC-4.0 (Non-Commercial)
+- **License**: CC-BY-NC-4.0 (Non-Commercial) — validated 2026-02-24 against HuggingFace card (SPDX: `cc-by-nc-4.0`)
+- **License Scope**: Applies to Patronus AI's benchmark annotations (Q&A pairs, evidence citations, metadata). Covers only the open-source sample (150 Q&A pairs); full 10,231-question benchmark requires separate agreement (<contact@patronus.ai>).
+- **GitHub inconsistency**: No LICENSE file in the GitHub repo (validated 2026-02-24). Canonical distribution point for license terms is HuggingFace.
 - **Training Prohibited**: **NEVER use for model training** - benchmark integrity + license restriction
 - **Evaluation Use**: Permitted for academic research and non-commercial benchmarking
 - **Commercial Use**: Requires separate licensing agreement with Patronus AI
 - **Attribution Required**: Must cite Islam et al. 2023 paper in any publications
+- **SEC Filing PDF Copyright**: The underlying PDFs (10-K, 10-Q, 8-K filings) are copyrighted by the filing companies, not the US government. They are **not public domain** (17 U.S.C. § 105 applies to works by federal employees, not to company filings). While companies rarely enforce copyright on their SEC filings in research contexts, this is not equivalent to a public domain declaration. The CC-BY-NC-4.0 license covers Patronus AI's annotations only.
 
 **Critical Enforcement**:
 
@@ -339,3 +342,55 @@ Generated augmented datasets with labels, ready for model training.
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/financebench/](../../scripts/audit/results/financebench/)
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| MNV4-H2 | skew_reg | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-1 | blur_score | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-2 | noise_score | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-3 | contrast_score | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-4 | skew_score | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G1-6 | overall_quality | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G2-1 | script_cls | ❌ | 0 | — | Benchmark reserved; Latin/English only anyway |
+| SIG-G3-1 | orientation_cls (post) | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | — | Benchmark reserved; 100% printed content, no handwriting present |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | Benchmark reserved; 100% printed content, no handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | Benchmark reserved; 100% printed content, no handwriting present |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | Benchmark reserved; 100% printed content, no handwriting present |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | Benchmark reserved; 100% printed content, no handwriting present |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | — | Benchmark reserved; 100% born_digital confirmed by L2 stats |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | Benchmark reserved; no degradation present in L2 metadata |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | Benchmark reserved; no degradation present in L2 metadata |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | Benchmark reserved; financial documents contain no source code |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | Latin only (100% Latn per L2 stats); no script diversity |
+| 2 | Capture method | ❌ | Born-digital only (100% born_digital per L2 stats); no scanning or camera samples |
+| 3 | Document domain | ❌ | Finance only (100% FIN per L2 stats); no domain diversity |
+| 4 | Layout type | ❌ | Benchmark reserved; L2 layout_types empty (DocLayout-YOLO not yet run) |
+| 5 | Text density | ❌ | Benchmark reserved; L2 text_densities empty (not profiled) |
+| 6 | Degradation types | ❌ | No degradation present (official SEC filings, professionally formatted); L2 degradation fields empty |
+| 7 | Resolution/DPI range | ❌ | Benchmark reserved; all images converted at fixed 300 DPI via PyMuPDF |
+| 8 | Document age | ❌ | Modern only (2015–2023 SEC filings); no historical or aged documents |
+| 9 | Text scope | ❌ | Page-level only (100% page per L2 stats) |
+| 10 | Content flags | ❌ | Benchmark reserved; L2 flags tables only (has_table: 100%); financial docs contain tables and text blocks |
+| 11 | Binarization status | ❌ | Born-digital color PDFs; no binarization diversity |
+| 12 | Artifact types | ❌ | No artifacts (clean SEC filings; no scanning artifacts, no camera noise) |
+| 13 | Color mode | ❌ | Born-digital color mode only; no grayscale or binarized samples |
+| 14 | Font variety | ❌ | Benchmark reserved; financial documents use a narrow set of professional serif/sans-serif fonts |
+
+### 13.3 Corpus Role & Constraints
+
+FinanceBench is a **benchmark-only evaluation corpus** — it MUST NOT contribute to any training pipeline under any circumstances. The CC-BY-NC-4.0 license prohibits commercial and training use, and training on this dataset would compromise benchmark integrity for RAG pipeline evaluation (Phase 10). All 54,120 images are stored under `02_benchmark_only/` and must remain exclusively in the OOD evaluation path.

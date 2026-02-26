@@ -391,3 +391,55 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~260K | Derived (all 0°) | Born-digital page images, no rotation; provides UPRIGHT negatives only |
+| MNV4-H2 | skew_reg | ➖ | ~260K | Derived (all ~0°) | Born-digital, no physical skew; near-zero regression negatives only |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~260K | Computed | Page-level images (avg 623×799px); consistent high-quality born-digital renders — useful as clean upper-bound examples |
+| SIG-G1-1 | blur_score | 🟡 | ~260K | Computed | Grid lines and thin cell borders are high-sensitivity blur targets; provides good reference for sharp-document lower-bound scores |
+| SIG-G1-2 | noise_score | 🟡 | ~260K | Computed | Born-digital JPEG source; minor compression noise present — useful as low-noise negatives with real-world JPEG encoding |
+| SIG-G1-3 | contrast_score | 🟡 | ~260K | Computed | High contrast (black table lines on white) consistently; useful as high-contrast reference examples |
+| SIG-G1-4 | skew_score | ➖ | ~260K | Derived (all ~0°) | Born-digital, no skew; zero-skew regression anchors only |
+| SIG-G1-5 | compression_score | 🟡 | ~260K | Computed | JPEG format with variable quality; grid lines and thin borders compress poorly — provides real JPEG compression examples |
+| SIG-G1-6 | overall_quality | 🟡 | ~260K | Computed | High-quality academic page images; useful as clean-document upper-bound pool despite single domain |
+| SIG-G2-1 | script_cls | 🟡 | ~260K | GT label | 100% Latin (en); confirmed from stats — single-script contributor; useful for Latin class volume |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~260K | Derived (all 0°) | All page images upright; UPRIGHT class negatives only |
+| SIG-G3-2 | skew_reg (post) | ➖ | ~260K | Derived (all ~0°) | No skew present; near-zero regression negatives only |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~260K | GT-derived | 100% printed born-digital; provides large NONE-class negative pool for handwriting presence |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-4 | presence_reg | ➖ | ~260K | GT-derived | All samples score 0.0 presence; zero-handwriting regression anchor pool |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | ~260K | GT label | 100% born_digital (confirmed from stats); clean single-class pool for BORN_DIGITAL class |
+| SIG-G5-2 | shadow_reg | ➖ | ~260K | Computed | No shadows in born-digital renders; zero-shadow regression anchor pool |
+| SIG-G5-3 | warping_reg | ➖ | ~260K | Computed | No warping in born-digital renders; zero-warping regression anchor pool |
+| SIG-G5-4 | code_cls | 🟡 | ~10K–20K est. | Derived | LaTeX subset (72%, ~187K images) from arXiv papers; technical papers and algorithms commonly include code listings — secondary contributor |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~260K | Computed | Page-level images (avg 623×799px) with full document context; useful upper-bound examples for resolution quality head |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | 100% Latin (en); single-script — no multi-script diversity contribution |
+| 2 | Capture method | 🟡 | 100% born_digital; large single-class pool but no scanner/camera representation |
+| 3 | Document domain | ❌ | 100% SCI (scientific: LaTeX arXiv + Word academic); no domain diversity — single-domain bias |
+| 4 | Layout type | 🟡 | Page images with table annotations; 70% LaTeX / 30% Word creates two rendering styles; limited to academic document layout |
+| 5 | Text density | 🟡 | Variable density between sparse table regions and denser page content; limited range as all pages contain at least one table |
+| 6 | Degradation types | ❌ | No degradation present; born-digital source with minor JPEG compression only |
+| 7 | Resolution/DPI range | ❌ | Variable page dimensions (499–842×595–1152px) but all born-digital renders at fixed PDF resolution; no DPI tier variation |
+| 8 | Document age | ❌ | Contemporary academic documents only (pre-2019); no historical or aged documents |
+| 9 | Text scope | ✅ | Page-level scope 100%; full document pages including table context |
+| 10 | Content flags | 🟡 | has_table 100%; single flag well-covered — no figures, formulas, or code flags available from detection annotations |
+| 11 | Binarization status | ❌ | All JPEG RGB; no binarized versions available |
+| 12 | Artifact types | 🟡 | JPEG compression artifacts present (variable quality); thin cell borders and grid lines susceptible to JPEG blocking — real compression examples |
+| 13 | Color mode | 🟡 | Primarily grayscale/near-grayscale content (black text/lines on white); JPEG RGB format but visual content is effectively monochrome |
+| 14 | Font variety | 🟡 | LaTeX and Word academic typography; standard academic fonts (serif/sans-serif, math notation); limited to scientific domain fonts |
+
+### 13.3 Corpus Role & Constraints
+
+TableBank's primary role is as a **BORN_DIGITAL negative pool** for SIG-G5-1 capture_method_cls (~260K labels), a **large handwriting-absence pool** for SIG-G4-1/G4-4, and a **secondary contributor for SIG-G1 IQA heads** as high-quality clean-document reference examples — particularly valuable for compression score (SIG-G1-5) because its JPEG format exposes real grid-line compression artifacts. It is also a **secondary contributor for SIG-G5-4 code_cls** via its LaTeX arXiv subset. License is Apache-2.0 with research-use intent (commercial use requires review). No OOD script exclusions apply — 100% Latin with no non-Latin content.

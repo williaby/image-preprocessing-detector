@@ -21,6 +21,28 @@ l4_status: in_progress
 
 ---
 
+## HAR Assessment (5-Model Consensus Review, 2026-02-21)
+
+| Head | HAR Score | Grade | Key Finding |
+|------|-----------|-------|-------------|
+| MNV4-H3 (resolution gate) | 26/100 | Needs Work | 4 P0 blockers; only 18% of target labeled |
+| SIG-G5-5 (resolution validation) | 39/100 | Needs Work | Corrected-image assembly not started |
+
+**Overall Status**: IN PROGRESS — 5,499/30,000 labeled (18%)
+
+---
+
+## P0 Blockers
+
+| Blocker ID | Head | Description | Acceptance Criterion |
+|------------|------|-------------|---------------------|
+| RQ-P0-1 | MNV4-H3 | OHR-Bench (8.5K images) not yet labeled with V2 resolution quality pipeline | All 8.5K images labeled; labels integrated into L2 metadata |
+| RQ-P0-2 | MNV4-H3 | RealDAE (1.2K images) not yet labeled | All 1.2K images labeled; labels integrated into L2 metadata |
+| RQ-P0-3 | MNV4-H3 | Multi-DPI renders pipeline not built (need renders of same doc at 72/100/150/200/300 DPI for train diversity) | Pipeline built; generates min 5 DPI variants per source document |
+| RQ-P0-4 | SIG-G5-5 | Corrected-image assembly not started (SIG-G5-5 needs labeled images AFTER geometric correction to validate resolution post-correction) | Assembly complete; SIG-G5-5 training split exists |
+
+---
+
 ## Section 1 — Identity
 
 | Field | Value |
@@ -109,6 +131,18 @@ tier_2_model (Sauvola binarization + ensemble + calibration) once implemented.
 | RQ-MNV4-D01 | DIQA-5000 | `resolution.char_height_px` | V1 median IQR = 9.0px vs. 2–3px target; 54% cross-bucket rate near boundary values | Open — V2 Sauvola strategy planned |
 | RQ-MNV4-D02 | DIQA-5000 | `resolution.resolution_quality_score` | Score compression: 83% of images fall in 2.5–3.2 MOS range after bucket normalization, limiting regression gradient signal | Open — V2 score distribution review needed |
 | RQ-MNV4-D03 | DIQA-5000 | `resolution.char_height_px` | CJK radical fragmentation: disconnected strokes fragment into short CCs, deflating median char_height for CJK documents | Open — V2 Phase A morphological closing addresses this |
+
+### V1 Precision Assessment
+
+The V1 labeling pipeline (PaddleOCR DBNet + CC analysis) produced:
+
+- Median IQR: 9.0px (target: 2–3px) — PRECISION FAILURE
+- Cross-bucket rate: 54% (target: <20%) — PRECISION FAILURE
+- Score range: 0.159 (insufficient discrimination)
+- SRCC vs. MOS: r=0.18 (geometric != perceptual quality)
+
+**Decision**: V1 labels are NOT suitable for MNV4-H3 training. V2 Sauvola strategy required.
+See: `docs/planning/RESOLUTION_QUALITY_V2_STRATEGY.md`
 
 ### Known Issues
 
@@ -296,6 +330,18 @@ below reflect human analysis of DIQA-5000 characteristics and planned source com
 | Image-only pages (no text; PaddleOCR detects nothing) | `structure.has_text` = false | ⚠️ Partial | Label falls back to DPI-based heuristic; label quality is lower for text-absent pages. Gap RQ-MNV4-G10. |
 | CLAHE over-enhancement on already-sharp images (SIG-G5-5 only) | Post-correction image properties | ❌ Missing | SIG-G5-5 specific: CLAHE applied to high-contrast images may create artificial sharpness signal. OOD sub-source 6c needed. Gap RQ-SIG-G04. |
 | Post-deskew blank margins affecting edge char_height measurement (SIG-G5-5 only) | Image geometry post-deskew | ❌ Missing | SIG-G5-5 specific: severely skewed documents introduce blank triangular margins after deskew; PaddleOCR may detect zero characters in these regions. Gap RQ-SIG-G04. |
+
+### Resolution Paradox (P1 Wild Condition)
+
+A vector PDF rendered at 72 DPI with large fonts (e.g., a title slide) will have:
+
+- Visually readable text at that DPI
+- Large char_height_px values (100+ px) that look "high resolution" to the model
+- But the document is actually low-DPI and may need upscaling for body text
+
+MNV4-H3 must NOT recommend upscaling for this case. The pipeline needs a
+"born_digital + low DPI" detector that overrides the char_height signal.
+Status: Not yet addressed in training data.
 
 ---
 

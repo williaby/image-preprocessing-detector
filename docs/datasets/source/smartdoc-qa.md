@@ -297,3 +297,61 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-1 | blur_score | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-2 | noise_score | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-3 | contrast_score | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-4 | skew_score | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-5 | compression_score | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G1-6 | overall_quality | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G2-1 | script_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G3-1 | orientation_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G3-2 | skew_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G4-4 | presence_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G5-3 | warping_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G5-4 | code_cls | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | N/A | BENCHMARK ONLY — training prohibited |
+
+Contribution legend: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ✅ | Predominantly LATN (modern documents, receipts, administrative letters) |
+| 2 | Capture method | ✅ | camera_smartphone (robotic arm, Samsung Galaxy S4) — controlled environment |
+| 3 | Document domain | 🟡 | 3 document types: modern documents, receipts, old administrative letters |
+| 4 | Layout type | 🟡 | Mixed single-column and multi-column |
+| 5 | Text density | ✅ | Varied across document types |
+| 6 | Degradation types | ✅ | Blur, perspective distortion, lighting variation, noise, folds |
+| 7 | Resolution/DPI range | ✅ | Camera-native 3264–4128 × 2448–3096 px |
+| 8 | Document age | 🟡 | Modern + old administrative letters |
+| 9 | Text scope | ✅ | Document-level (full-page captures) |
+| 10 | Content flags | 🟡 | No confirmed tables/figures/formulas/code/handwriting flags |
+| 11 | Binarization status | ❌ | All color RGB |
+| 12 | Artifact types | ✅ | Perspective, blur, folds, uneven lighting |
+| 13 | Color mode | ✅ | Color |
+| 14 | Font variety | 🟡 | Limited — 3 document type categories |
+
+Coverage: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+SmartDoc-QA is a **benchmark-only dataset** designed for evaluating IQA methods via OCR accuracy as proxy quality score; training on this dataset is explicitly prohibited (see §7 and §8). Despite having 4,260 camera-smartphone images with controlled single/multiple distortions, the robotic-arm capture environment and benchmark-design intent make it unsuitable for augmenting training distributions. The dataset resides at `02_benchmark_only/smartdoc-qa/` and should only be used for post-training evaluation of capture method, IQA, and warping head performance on mobile-captured documents.

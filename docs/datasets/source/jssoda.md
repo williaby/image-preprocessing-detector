@@ -202,3 +202,55 @@
 - **D08** (quality_overall): Requires VLM IQA pipeline (prompt v2.0 validation in progress)
 - **D09** (resolution_category): Requires GPU + PaddleOCR DBNet (next Vultr session)
 - **D12** (layout_bbox_valid): 17 samples (0.85%), Docling bbox post-processing edge case
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ✅ | ~2,000 | GT-exact | Explicit is_vertical flag per image; ~991 vertical (0°), ~1,009 horizontal (0°); CRITICAL: vertical Japanese text labeled as 0° (upright), not 270° |
+| MNV4-H2 | skew_reg | ➖ | ~2,000 | Negatives only | Synthetically rendered — zero skew by construction; all samples anchor 0° skew |
+| MNV4-H3 | resolution_quality_reg | ➖ | 0 | Not applicable | Synthetic clean images; resolution is uniform and perfect; not informative for RQ training |
+| SIG-G1-1 | blur_score | ➖ | 0 | Not applicable | Synthetic rendered text; no blur; provides negatives only (all "no blur") |
+| SIG-G1-2 | noise_score | ➖ | 0 | Not applicable | Synthetic rendered text; no noise; provides negatives only |
+| SIG-G1-3 | contrast_score | ➖ | 0 | Not applicable | Synthetic rendered text; uniform clean contrast; not informative for contrast variation training |
+| SIG-G1-4 | skew_score | ➖ | 0 | Not applicable | Zero skew by construction; not useful for skew quality training |
+| SIG-G1-5 | compression_score | ➖ | 0 | Not applicable | PNG format, lossless; no compression artifacts |
+| SIG-G1-6 | overall_quality | ➖ | 0 | Not applicable | Perfect synthetic quality; contributes only "perfect quality" negatives; SRCC requirement not achievable on synthetic |
+| SIG-G2-1 | script_cls | ✅ | ~2,000 | GT-exact | 100% Jpan (ISO 15924); critical Japanese script contribution; provides Hiragana, Katakana, Kanji (Hans/Hant mixture); within 19-class scope |
+| SIG-G3-1 | orientation_cls (post) | ✅ | ~2,000 | GT-exact | All orientation_class = 0° upright (parser-confirmed); post-correction orientation reference; vertical text correctly labeled 0° |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | Not applicable | Zero skew by construction; no post-correction residual to learn |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | Not applicable | 100% printed synthetic text; VLM-confirmed no handwriting; all samples = NONE class |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | Not applicable | No handwriting present; cannot provide legibility labels |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | Not applicable | No handwriting present |
+| SIG-G4-4 | presence_reg | ❌ | 0 | Not applicable | Presence ratio = 0.0 for all samples; only contributes "zero presence" anchor point |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | Not applicable | No handwriting; legibility ratio undefined |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | Not applicable | 100% synthetic; capture_method_cls requires 100% real images; excluded |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | Not applicable | Synthetic clean renders; no shadow variation |
+| SIG-G5-3 | warping_reg | ❌ | 0 | Not applicable | Synthetic renders; no page warping |
+| SIG-G5-4 | code_cls | ❌ | 0 | Not applicable | Japanese text corpus; no programming code content |
+| SIG-G5-5 | resolution_quality_reg | ➖ | 0 | Not applicable | Perfect synthetic resolution; not informative for RQ regression |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | 100% CJK (Jpan); provides exclusive Japanese script coverage — Hiragana, Katakana, and Kanji (Hans/Hant mix) |
+| 2 | Capture method | ✅ | 100% synthetic (programmatically rendered); single capture method — important for synthetic-capture representation |
+| 3 | Document domain | 🟡 | ADM 31.1%, EDU 9.3%, SCI 8.7%, PER 5.5%, MED 4.1%, TEC 3.7%, LEG 1.7%, FIN 1.1%; 34.7% UNK (LLM limitation on generic Japanese text) |
+| 4 | Layout type | ✅ | Critical: explicit vertical (ttb) vs horizontal (ltr) text layout; 1–4 column configurations; unique for vertical text layout training |
+| 5 | Text density | ✅ | Column count 1–4 introduces text density variation; letters/memos vs research reports vary significantly |
+| 6 | Degradation types | ❌ | No degradation — synthetic clean renders only; all samples are pristine |
+| 7 | Resolution/DPI range | ❌ | Uniform synthetic resolution; no DPI variation; RQ labeling deferred (D09) |
+| 8 | Document age | ❌ | Synthetic modern renders; no aged/historical content |
+| 9 | Text scope | ✅ | 100% printed (from text_scopes); word and line-level text in structured columns |
+| 10 | Content flags | 🟡 | has_formula: 0.1% (2 confirmed math expressions); no tables, figures, or handwriting |
+| 11 | Binarization status | ❌ | All color (color_mode=color confirmed); no binarized images |
+| 12 | Artifact types | ❌ | No artifacts — synthetic renders are clean by construction |
+| 13 | Color mode | ✅ | 100% color (VLM-confirmed); well-documented |
+| 14 | Font variety | 🟡 | Synthetic generation uses a set of Japanese fonts; font variety limited to generator's font pool; covers common mincho/gothic families |
+
+### 13.3 Corpus Role & Constraints
+
+JSSODa is the **primary contributor for Japanese script (Jpan) in G2-1 script_cls** and provides critical vertical-text orientation anchors for MNV4-H1 and SIG-G3-1, where the correct convention — vertical Japanese text labeled as 0° (upright) rather than 270° — is explicitly enforced by the parser. Its 100% synthetic nature makes it ineligible for G5-1 (capture_method_cls requires real images) and contributes only degenerate negatives to all IQA heads, so usage must be limited to script detection and orientation training tasks. The CC-BY-4.0 license permits unrestricted use without ShareAlike constraints.

@@ -415,3 +415,64 @@ Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enric
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~1,020 | Synthetic rotation | 6 distortion types include rotation; synthetic 90°/180°/270° augmentation viable |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | Perspective and rotation are geometric but not OCR-angle skew; no skew angle GT |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | - | - | No resolution quality labels; camera capture with no DPI metadata |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~1,020 | Inferred | Camera-captured; some motion/focus blur expected; no explicit blur labels |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~1,020 | Inferred | Camera noise incidental; not primary degradation signal |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~1,020 | Inferred | Lighting variation present in camera captures; no explicit contrast labels |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | skew_score is a quality degradation metric (0-1); no such labels present |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | JPG artifacts incidental; no compression quality labels |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~1,020 | Inferred | Shadow-free images usable as "high quality" reference; warped as "degraded" |
+| SIG-G2-1 | script_cls | ➖ Negatives only | ~1,020 | Inferred Latin | 100% Latin (en) per stats; useful as Latin examples but no multi-script signal |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~1,020 | Synthetic rotation | Rotating distortion type maps directly; other types at canonical orientation |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No sub-degree skew angle ground truth; Perspective/Fold are not OCR skew |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~1,020 | Inferred | Printed documents only (scientific papers, magazines, envelopes); no handwriting |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~1,020 | Inferred | Printed documents → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 1,020 | Hard label | 100% camera_smartphone per stats; high-confidence label |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | - | - | No shadow degradation; lighting variation is incidental, not annotated shadow |
+| SIG-G5-3 | warping_reg | ✅ Primary | ~1,020 | 6-class distortion type | Core warping dataset; Fold, Curved, Perspective, Random, Incomplete, Rotating all map to warping severity; no continuous 0-1 severity GT — needs derivation from distortion class + paired GT pixel difference |
+| SIG-G5-4 | code_cls | ❌ Not applicable | - | - | Scientific papers/magazines may contain code but no code annotations |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ Not applicable | - | - | No resolution quality labels; DPI metadata not available |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ➖ Latin only | 100% Latn (en) per stats; no multi-script coverage |
+| 2 | Capture method | ✅ Well-covered | 100% camera_smartphone (1,020 images) |
+| 3 | Document domain | 🟡 Partial | 100% GENERAL; diverse types (scientific papers, magazines, envelopes) but no domain breakdown |
+| 4 | Layout type | ❌ Not present | No layout annotations; varied real-world layouts but uncharacterized |
+| 5 | Text density | ❌ Not present | No text density labels; diverse documents imply variable density |
+| 6 | Degradation types | ✅ Well-covered | 6 geometric distortion types: Fold, Curved, Incomplete, Random, Rotating, Perspective; ~170 per type |
+| 7 | Resolution/DPI range | ❌ Not present | No DPI metadata; camera-captured at unknown native resolution |
+| 8 | Document age | ❌ Not present | No document age annotations; mixed modern documents implied |
+| 9 | Text scope | 🟡 Partial | 100% page-level scope per stats; no word/line granularity |
+| 10 | Content flags | ❌ Not present | No content flags in L2 metadata (tables, figures, formulas not annotated) |
+| 11 | Binarization status | ❌ Not present | RGB color documents; not binarized |
+| 12 | Artifact types | ✅ Well-covered | 6 controlled distortion types provide high-quality artifact taxonomy; lighting variation secondary |
+| 13 | Color mode | 🟡 Partial | RGB per stats; mixed B&W and color documents per dataset description but not labeled |
+| 14 | Font variety | ❌ Not present | No font annotations; scientific papers and magazines imply varied fonts |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+WarpDoc serves as the primary labeled source for the `warping_reg` head (SIG-G5-3) and `capture_method_cls` head (SIG-G5-1), providing 1,020 camera-captured documents with 6 controlled geometric distortion types. Its chief constraint is the absence of continuous warping severity scores — the distortion class labels (Fold/Curved/Perspective/etc.) must be converted to a 0-1 severity proxy, likely via pixel-wise difference between warped input and the digital GT extension, before this dataset can contribute hard labels to `warping_reg` training. License is unspecified; verify with SG-ViLab before using in any commercial pipeline.

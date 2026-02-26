@@ -54,7 +54,7 @@ The following concepts are NEW and need to be reflected in architecture document
 ### 3.1 Two-Model ML Pipeline
 
 **Previous**: ResNet-50 teacher / ResNet-18 student (single IQA task)
-**New**: MobileNetV4-Conv-S (~3ms, 3 heads) + SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups)
+**New**: MobileNetV4-Conv-S (~3ms, 3 heads) + SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups)
 
 | Model | Heads | Purpose | Latency |
 |-------|-------|---------|---------|
@@ -215,7 +215,7 @@ These describe the system architecture and pipeline flow:
 
 | Section in CLAUDE.md | What to Update |
 |---------------------|---------------|
-| "Key Technologies > Deep Learning" | Add SigLIP 2 NAFlex (16 heads, 5 groups) and MobileNetV4-Conv-S (3 heads). Note DocLayout-YOLO replacing YOLOv10-doc. |
+| "Key Technologies > Deep Learning" | Add SigLIP 2 NAFlex (19 heads, 5 groups) and MobileNetV4-Conv-S (3 heads). Note DocLayout-YOLO replacing YOLOv10-doc. |
 | "Architecture > Pipeline Flow" | Update diagram to show two-model inference path (MobileNetV4 pre-correction -> SigLIP 2 full analysis). |
 | "Architecture > Module Responsibilities" | Add `synthetic/` module description covering multi-task generation capabilities. |
 | "Phased Development > Phase 9" | Expand scope description to reflect SigLIP 2 multi-task heads (not just "Element Classification"). |

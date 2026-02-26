@@ -298,3 +298,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | — | All formulas rendered upright (0°); no orientation variety |
+| MNV4-H2 | skew_reg | ➖ | 0 | — | Programmatic rendering; zero skew by construction |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~10,000 | Pseudo-label | Variable formula sizes (64px height); useful after RQ labeling — spans quality range |
+| SIG-G1-1 | blur_score | 🟡 | ~10,000 | Pseudo-label | Extreme blur sensitivity documented (thin strokes); clean baseline with degradation augmentation potential |
+| SIG-G1-2 | noise_score | 🟡 | ~10,000 | Pseudo-label | Born-digital, noise-free baseline; useful as low-noise anchor |
+| SIG-G1-3 | contrast_score | 🟡 | ~10,000 | Pseudo-label | High-contrast black-on-transparent renders; good contrast anchor |
+| SIG-G1-4 | skew_score | ➖ | 0 | — | No skew in rendered output |
+| SIG-G1-5 | compression_score | 🟡 | ~10,000 | Pseudo-label | Extreme JPEG sensitivity documented; useful for compression quality head with degradation augmentation |
+| SIG-G1-6 | overall_quality | 🟡 | ~10,000 | Pseudo-label | High-quality born-digital renders; provides "good quality" anchor samples |
+| SIG-G2-1 | script_cls | 🟡 | ~10,000 | Native (Latn) | Latin class only (math rendered as Latin chars + symbols); unusual math-domain Latin not representative of general Latin text |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | — | Same as pre-correction — upright only |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | — | No skew to correct |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~10,000 | Native (False) | Programmatically rendered formulas; reliable negative (no handwriting) examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G5-1 | capture_method_cls | ✅ | ~10,000 | Native (born_digital) | 100% born_digital; confirmed real signal — contributes to born_digital class in G5-1 |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | Born-digital renders on transparent/white background; no shadow |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | Flat programmatic renders; no geometric distortion |
+| SIG-G5-4 | code_cls | ✅ | ~10,000 | Native (LaTeX) | LaTeX is a markup/programming language; formulas are code content — primary code_cls signal |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~10,000 | Pseudo-label | Same as MNV4-H3 — variable formula dimensions useful after RQ labeling |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | 100% Latin (Latn); math-domain Latin only — not representative of general Latin document text |
+| 2 | Capture method | ✅ | 100% born_digital; homogeneous but valid G5-1 training signal |
+| 3 | Document domain | 🟡 | 100% EDU/SCI (ArXiv formulas); single domain — no cross-domain variety |
+| 4 | Layout type | ❌ | Formula crops only; no page-level layout variation |
+| 5 | Text density | ❌ | Formula-level crops; no meaningful text density variation |
+| 6 | Degradation types | ❌ | Clean born-digital renders; zero real degradation |
+| 7 | Resolution/DPI range | 🟡 | Variable formula dimensions (64px height fixed, variable width 38-997 char equivalents); limited DPI range |
+| 8 | Document age | ❌ | Modern digital only; no aged or historical examples |
+| 9 | Text scope | ✅ | 100% formula-level scope; comprehensive mathematical formula coverage |
+| 10 | Content flags | ✅ | 100% has_formula; dedicated math formula dataset — strong formula content signal |
+| 11 | Binarization status | 🟡 | Black symbols on transparent/white; effectively binarized by construction |
+| 12 | Artifact types | ❌ | No scan artifacts, JPEG compression, shadows, or warping present |
+| 13 | Color mode | 🟡 | Black-and-white rendered symbols; no color or grayscale variation |
+| 14 | Font variety | 🟡 | LaTeX Computer Modern and related math fonts; limited to standard LaTeX font families |
+
+### 13.3 Corpus Role & Constraints
+
+This dataset is the **primary source for the `code_cls` head** (G5-4) given that LaTeX formulas constitute markup/programming language content, and it provides reliable **born_digital** samples for G5-1. Licensed CC0 (public domain) with no usage restrictions. The 10,000-sample annotated subset is the working pool; the full 103,556-formula corpus could expand code_cls coverage. Being born-digital with no degradation, its IQA contribution is limited to providing "clean quality" anchors; augmentation would be required to generate blur/compression/noise signal from this source.

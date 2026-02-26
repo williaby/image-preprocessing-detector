@@ -163,3 +163,57 @@ VLM inspection (2026-02-13): passing_sample_accuracy=0.90. Content flags verifie
 | **Text/OCR Extracted** | - | Not extracted | Docling OCR not yet run (optional, native OCR already available) |
 | **Layout Extracted** | `metadata_registry/extracted/yarmouk/` | Available | Docling GPU: 106 layout batches, 15,062 images |
 | **Layer 2 Metadata** | `metadata_registry/json/yarmouk_ocr_metadata.json` | Complete | 15,062 samples (2026-02-09) |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 | ~15,062 | Pseudo-label (rotation augment) | Scanned Arabic documents; orientation can be synthesised via 4-way rotation |
+| MNV4-H2 | skew_reg | 🟡 | ~15,062 | Pseudo-label (classical) | Scanner documents have mild real skew; classical estimation applicable |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~15,062 | Pseudo-label (classical) | PDFs extracted at 300 DPI — mostly good quality with scanner variation |
+| SIG-G1-1 | blur_score | 🟡 | ~15,062 | Pseudo-label (classical) | Scanner blur artifacts; generally low-blur but some scanning variation |
+| SIG-G1-2 | noise_score | 🟡 | ~15,062 | Pseudo-label (classical) | Scanner noise, aging artifacts in older academic documents |
+| SIG-G1-3 | contrast_score | 🟡 | ~15,062 | Pseudo-label (classical) | Variable contrast from different scanner settings across 6K PDFs |
+| SIG-G1-4 | skew_score | 🟡 | ~15,062 | Pseudo-label (classical) | Real scanner skew present in handwritten pages |
+| SIG-G1-5 | compression_score | 🟡 | ~15,062 | Pseudo-label (classical) | PDF-extracted images have JPEG compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 | ~15,062 | Pseudo-label (classical) | Mixed quality: printed academic docs + handwritten pages |
+| SIG-G2-1 | script_cls | ✅ | 15,062 | Hard label (metadata) | 100% Arab; secondary contributor for Arabic script class balance |
+| SIG-G3-1 | orientation_cls (post) | 🟡 | ~15,062 | Pseudo-label (rotation augment) | Page-level images suitable for post-correction orientation training |
+| SIG-G3-2 | skew_reg (post) | 🟡 | ~15,062 | Pseudo-label (classical) | Page-level scanner skew measurable; suitable for ±2° post-correction head |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | 15,062 | Hard label (metadata) | has_handwriting=True for all samples per L2 metadata (note: some pages may be printed-only) |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 | ~15,062 | Pseudo-label (VLM) | Arabic handwriting legibility varies; VLM scoring feasible |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ | 15,062 | Hard label (derived) | Academic Arabic documents → mixed (text + handwritten annotations) |
+| SIG-G4-4 | presence_reg | ✅ | 15,062 | Hard label (metadata) | All flagged has_handwriting=True → 1.0 continuous score (caveat: possible printed-only subset) |
+| SIG-G4-5 | legibility_reg | 🟡 | ~15,062 | Pseudo-label (VLM) | Legibility varies across student/formal handwriting styles |
+| SIG-G5-1 | capture_method_cls | ✅ | 15,062 | Hard label (metadata) | 100% scanner (L2: capture_method=scanner, confirmed in aggregate) |
+| SIG-G5-2 | shadow_reg | ➖ | 0 | N/A | Flatbed scanner; shadows not applicable to scanned PDFs |
+| SIG-G5-3 | warping_reg | ➖ | 0 | N/A | Flatbed scanner produces flat images; warping not present |
+| SIG-G5-4 | code_cls | ✅ | 15,062 | Hard label (derived) | Arabic academic documents; no code content → code_present=False |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~15,062 | Pseudo-label (classical) | 300 DPI extraction; resolution quality derivable from effective text size |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | 100% Arabic script (Arab); single-script dataset |
+| 2 | Capture method | ✅ | 100% scanner (flatbed scanning of academic PDFs) |
+| 3 | Document domain | ✅ | 100% EDU (Yarmouk University academic documents) |
+| 4 | Layout type | 🟡 | Primarily single-column academic text; no explicit layout labels; some multi-column detected via Docling |
+| 5 | Text density | 🟡 | High text density typical of academic documents; not explicitly labeled |
+| 6 | Degradation types | 🟡 | Scanner artifacts, aging, ink variation in handwritten pages; no explicit degradation labels |
+| 7 | Resolution/DPI range | ✅ | Consistent 300 DPI (PDF extraction standard); narrow range |
+| 8 | Document age | 🟡 | Academic documents from Yarmouk University (Jordan); likely modern (post-2000) but some older materials possible |
+| 9 | Text scope | ✅ | 100% page-level (full document pages extracted from PDFs) |
+| 10 | Content flags | ✅ | has_handwriting=True for all 15,062; has_table=2 (0.01%); content flags well-populated |
+| 11 | Binarization status | ❌ | All grayscale/color scanner output; no binarized samples |
+| 12 | Artifact types | 🟡 | Scanner: binding shadows (rare), page curvature (rare), ink bleed; no explicit artifact labels |
+| 13 | Color mode | 🟡 | Predominantly grayscale (scanner output); some color possible; not profiled per aggregate |
+| 14 | Font variety | 🟡 | Arabic handwriting variety (different writers); printed pages have limited Naskh/Nastaliq font variety |
+
+### 13.3 Corpus Role & Constraints
+
+Yarmouk is a primary contributor to SIG-G4 (handwriting) heads as the largest Arabic-script handwritten document dataset in the pool (15,062 pages), pairing well with muharaf and pucit-ohul for Arab-script handwriting diversity across formal and informal registers. The has_handwriting=True flag covers all samples though a printed-only subset likely exists — VLM review is recommended before using for binary handwriting-presence training. Research-only license from Yarmouk University; not cleared for commercial deployment.

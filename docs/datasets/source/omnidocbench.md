@@ -27,8 +27,8 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **License** | Research |
-| **Commercial Use** | Research only |
+| **License** | Apache-2.0 (code); Custom non-commercial (data: "research purposes only, not for commercial use") |
+| **Commercial Use** | No (data explicitly prohibited; code Apache-2.0) |
 | **Citation** | Chen et al. (2024). OmniDocBench: Benchmarking Diverse PDF Document Parsing. CVPR 2025. arXiv:2412.07626 |
 
 #### Overview
@@ -313,3 +313,65 @@
 |-----:|-------|-------------:|---------------:|
 | 1 | `language` | 76.7% | 0.222 |
 | 2 | `has_table` | 23.3% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+OmniDocBench is designated **benchmark-only** (`02_benchmark_only/` path, evaluation-only design per
+official documentation). The 1,355-page corpus is too small and too narrow (born-digital only, no
+degradation) to serve as a primary training source for any head. A stratified internal split exists
+for development use, but it does not change the fundamental assessment: this dataset contributes
+**negatives/hard-negatives** for IQA heads (clean born-digital reference pages) and is **not
+applicable** for heads that require scan degradation, real-world capture diversity, or script variety
+beyond Latn/Hans.
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~1,355 | Derived (all 0°) | Born-digital PDFs at canonical orientation; usable only as negative examples (0° class) — no rotated variants in source |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | No skew variation; born-digital PDFs have zero skew by construction |
+| MNV4-H3 | resolution_quality_reg | ➖ | ~1,355 | Derived (high quality) | 300 DPI born-digital renders are high-quality anchors; usable as top-score negatives but add no degradation diversity |
+| SIG-G1-1 | blur_score | ➖ | ~1,355 | Derived (near-zero) | Clean renders; useful as hard negatives (no blur) but contribute nothing to degraded end of distribution |
+| SIG-G1-2 | noise_score | ➖ | ~1,355 | Derived (near-zero) | Same as blur: clean reference only |
+| SIG-G1-3 | contrast_score | ➖ | ~1,355 | Derived (high contrast) | Born-digital PDFs have consistent high contrast; useful as positive-end anchors |
+| SIG-G1-4 | skew_score | ❌ | 0 | N/A | No skew labels and no skew variation present |
+| SIG-G1-5 | compression_score | ➖ | ~1,355 | Derived (lossless PNG) | All images are PNG (lossless); provides clean-end reference for compression head only |
+| SIG-G1-6 | overall_quality | ➖ | ~1,355 | Derived (high quality) | Benchmark-grade clean pages; useful as high-quality reference examples |
+| SIG-G2-1 | script_cls | 🟡 | ~1,355 | Derived (Latn/Hans) | 94.7% Latn + 5.3% Hans (Simplified Chinese); narrow coverage — two script families only; too small for primary contribution |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~1,355 | Derived (all 0°) | Same constraint as MNV4-H1 — canonical orientation only, no rotated variants |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | N/A | No skew variation post-correction either |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 | ~60–100 | Derived | Dataset includes a "Handwritten Notes" document type among 9 types; ~5–8% of pages may carry handwriting, usable as positive examples only — no L2 handwriting labels confirmed |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No legibility labels; L2 audit shows 100% unreliable samples — cannot derive reliable legibility ground truth |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No content-type labels for handwriting segments |
+| SIG-G4-4 | presence_reg | ❌ | 0 | N/A | No continuous handwriting-presence regression labels available |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No legibility regression labels available |
+| SIG-G5-1 | capture_method_cls | ➖ | ~1,355 | L2 confirmed | 100% born_digital per L2 stats; provides single-class coverage only — no scanner or camera examples |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | N/A | No shadow variation; born-digital renders have no shadow |
+| SIG-G5-3 | warping_reg | ❌ | 0 | N/A | No warping; flat digital renders |
+| SIG-G5-4 | code_cls | 🟡 | ~100–200 | Derived | Academic papers in corpus may contain code blocks; no explicit code labels but has_formula=23.3% suggests STEM content — small positive contribution as code-present examples |
+| SIG-G5-5 | resolution_quality_reg | ➖ | ~1,355 | Derived (high quality) | All pages rendered at 300 DPI with no degradation; contributes high-quality anchors only |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | Latn 94.7%, Hans 5.3% (L2 confirmed); only 2 of the 7 required script families — Latn dominant |
+| 2 | Capture method | 🟡 | 100% born_digital (L2 confirmed); single-method dataset — no scanner or camera diversity |
+| 3 | Document domain | 🟡 | 9 document types per paper (academic, textbooks, financial reports, newspapers, handwritten notes, slides, etc.); domain_level1=0% in L2 (grade cap defect ODB-D01) — domain labels unverified at field level |
+| 4 | Layout type | ✅ | 4 layout types, 19 layout categories, 28,614 Docling annotations extracted; strong structural variety across document types |
+| 5 | Text density | ✅ | Ranges from sparse (slides) to very dense (newspapers, academic papers); 80,000+ span-level elements across 1,355 pages |
+| 6 | Degradation types | ❌ | No degradation present; born-digital 300 DPI renders are pristine — zero entries in L2 degradation fields |
+| 7 | Resolution/DPI range | ❌ | Fixed 300 DPI across entire dataset; no DPI variation |
+| 8 | Document age | ❌ | Modern documents only (2024 release); no historical or aged document examples |
+| 9 | Text scope | 🟡 | Page-level scope only (100% page per L2); no word/line/paragraph sub-level annotations for training |
+| 10 | Content flags | ✅ | has_figure=15.1%, has_table=6.1%, has_formula=23.3% (L2 confirmed); rich content variety — strong for layout-aware training |
+| 11 | Binarization status | ❌ | 100% color RGB (PNG renders); no binarized examples |
+| 12 | Artifact types | ❌ | No real-world artifacts (no JPEG compression, no scan noise, no bleed-through, no stains); synthetic OCR noise variants are research-only |
+| 13 | Color mode | 🟡 | 100% RGB color per L2; single color mode — no grayscale or binarized variety |
+| 14 | Font variety | ✅ | 9 document types span diverse typographic conventions (academic serif, newspaper, textbook, slide fonts); born-digital ensures clean font rendering across styles |
+
+### 13.3 Corpus Role & Constraints
+
+OmniDocBench is a **benchmark-only evaluation corpus** (path: `02_benchmark_only/omnidocbench/`) reserved for Phase 10 pipeline evaluation; it must not enter training manifests unless the stratified internal split is explicitly activated. Its primary training utility is as a source of **clean born-digital reference pages** that anchor the high-quality end of IQA head distributions, and as a **layout-rich corpus** with 19 layout categories and strong content-type diversity (figures, tables, formulas). The research-only license and the single-capture-method limitation (100% born_digital, 300 DPI, no degradation) mean it cannot contribute to any head requiring scan artifacts, camera distortion, skew, shadow, or warping examples.

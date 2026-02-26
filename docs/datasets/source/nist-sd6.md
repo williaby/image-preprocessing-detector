@@ -375,3 +375,57 @@
 | 1 | `layout_detections` | 99.5% | 0.572 |
 | 2 | `text_quality` | 0.5% | 0.800 |
 | 3 | `has_table` | 0.0% | 0.800 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~5,595 | tier_1_annotation | Upright scanned forms; augment with rotations to derive 4-class orientation labels |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~5,595 | tier_3_heuristic | No native skew labels; classical detector can estimate skew on form grid alignment |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~5,595 | tier_2_model | Fixed 300 DPI scans; char-height pipeline assigns resolution quality scores |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~5,595 | tier_3_heuristic | Laplacian variance derivable; binary format limits precision |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~5,595 | tier_3_heuristic | Binary scan noise estimable via heuristic; no grayscale channel |
+| SIG-G1-3 | contrast_score | ➖ Negatives only | ~5,595 | tier_3_heuristic | 1-bit binary images; effectively maximum contrast — useful as high-contrast negative class |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~5,595 | tier_3_heuristic | Form grid provides strong skew quality signal; classical estimator applicable |
+| SIG-G1-5 | compression_score | ❌ Not applicable | 0 | N/A | PNG lossless; no JPEG compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~5,595 | tier_2_model | Quality spread from synthesized handprint variability; VLM or heuristic scoring applicable |
+| SIG-G2-1 | script_cls | ✅ Primary | 5,591 | tier_0_exact | Latin (Latn) 99.9%; trace Hant/Beng in ~4 samples; English census forms — clean Latn contributor |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~5,595 | tier_1_annotation | Same orientation labels as MNV4-H1; augmentation-derived |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~1,500 | tier_3_heuristic | Narrow ±2° residual filter applied to classical skew estimate subset |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | 5,595 | tier_0_exact | 100% has_handwriting; mixed printed form + handprint overlay — SUBSTANTIAL/MODERATE class |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | 5,595 | tier_1_annotation | Synthesized from 900 writers; natural legibility range; field-level GT enables annotation |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | 5,595 | tier_0_exact | MIXED class — printed form structure overlaid with PRINTED handprint entries |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | 5,595 | tier_2_model | Handwriting fills only a subset of each page (form fields); presence_reg < 1.0; derivable from field density |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | 5,595 | tier_2_model | Handprint quality varies by simulated respondent; legibility score derivable via VLM |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 5,595 | tier_0_exact | 100% scanner_flatbed; confirms SCANNER class (synthesized forms scanned at 300 DPI) |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | Flatbed synthesis; no shadow artifacts present |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | Flatbed synthesis; no page warping present |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | N/A | Tax/census forms with handprint; no source code content |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~5,595 | tier_2_model | Fixed 300 DPI; scores cluster at optimal tier; adds SCANNER form examples |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | Latin (Latn) 99.9%; negligible Hant (3) and Beng (1) outliers from handwriting variation |
+| 2 | Capture method | ✅ Well-covered | scanner_flatbed 100% (5,595 samples); strong SCANNER anchor |
+| 3 | Document domain | 🟡 Partial | GOV (government tax/census forms) 100%; narrow domain — 1988 US Census only |
+| 4 | Layout type | 🟡 Partial | Structured forms (grid/table layout); 20 form types from 1988 Census; no free-form or multi-column |
+| 5 | Text density | 🟡 Partial | Moderate density — printed form skeleton with variable handwritten field fills |
+| 6 | Degradation types | ❌ Not present | Synthesized binary scans; no documented degradation variation in L2 metadata |
+| 7 | Resolution/DPI range | 🟡 Partial | Fixed 300 DPI (2560×3300 px); no resolution variation |
+| 8 | Document age | 🟡 Partial | Based on 1988 Census forms; period-appropriate form design; aged but not historical |
+| 9 | Text scope | 🟡 Partial | Page-level scope; field-level transcriptions available but no word/character bounding boxes |
+| 10 | Content flags | 🟡 Partial | has_handwriting 100%; has_formula 3.6% (200 samples); has_figure 0.1% (6 samples) |
+| 11 | Binarization status | ✅ Well-covered | Binary (1-bit) 100%; strong binarized document class |
+| 12 | Artifact types | ❌ Not present | Flatbed synthesis; no shadows, warping, watermarks, or folds documented |
+| 13 | Color mode | 🟡 Partial | Monochrome (binary 1-bit) only; no grayscale or color |
+| 14 | Font variety | 🟡 Partial | Printed form uses fixed typeface; handprint from 900 simulated respondents adds writer-style variety |
+
+### 13.3 Corpus Role & Constraints
+
+NIST SD-6 is a **secondary handwriting contributor** that complements NIST SD-19 by providing mixed printed-form / handprint pages rather than pure handwriting. Its primary value for the multi-task pipeline is: (1) reinforcing the SCANNER capture class for `capture_method_cls`; (2) adding MIXED content-type examples for `handwriting_content_type_cls` (printed form skeleton + printed handprint entries); and (3) providing MODERATE/SUBSTANTIAL handwriting presence examples for `handwriting_presence_cls` where the handwriting fills only the form fields, not the full page.
+
+The dataset is public domain with no license restrictions and no benchmark-reserved splits. It is NOT a benchmark dataset and the full 5,595 images are available for training. Key limitations: the synthesized nature (900 simulated respondents rather than real census submissions) reduces diversity compared to real-world form datasets; the 1-bit binary format limits IQA head contributions; and the 1988 form design may not generalize to modern form layouts. The `capture_method` of `scanner_flatbed` is technically correct for the synthesis process (flatbed-scanned output) and should be retained in training. Orientation and skew labels require synthetic augmentation and classical estimation respectively, as no native geometric labels are provided.

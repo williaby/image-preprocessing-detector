@@ -232,7 +232,7 @@ versioned; breaking changes require an explicit contract negotiation with the Un
 | Component | Technology | Design Rationale |
 | --------- | ---------- | ---------------- |
 | Pre-correction gate | MobileNetV4-Conv-S (~3ms GPU) | Fast enough to run before any other analysis; orientation/resolution must be known first |
-| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 16 heads in one pass |
+| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 19 heads in one pass |
 | Classical IQA baseline | OpenCV — 8 detectors (~25ms CPU) | Interpretable; sub-25ms; validated anchor for each ML head; no GPU dependency |
 | Layout detection | docling-layout (egret-large / heron) | Validated over YOLOv10-doc in Stream 3 benchmarking |
 | PDF ingestion | PyMuPDF | DPI-aware extraction; 100% accuracy on DPI metadata |

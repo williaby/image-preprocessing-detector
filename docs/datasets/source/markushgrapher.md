@@ -391,3 +391,55 @@ markushgrapher/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ Not applicable | 0 | N/A | Chemical diagrams have no meaningful document orientation; rotation is symmetric |
+| MNV4-H2 | skew_reg | ❌ Not applicable | 0 | N/A | No page skew concept; diagrams are axis-aligned by construction |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~50K | Derived via IQA | Clean high-resolution vector renders; useful upper-bound anchor only |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~50K | Derived via IQA | Clean born-digital renders score near 1.0; provides high-quality anchor |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~50K | Derived via IQA | Clean renders; noise-free; scores near 1.0 |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~50K | Derived via IQA | Binary line drawings have high contrast; positive anchor |
+| SIG-G1-4 | skew_score | ❌ Not applicable | 0 | N/A | No page skew; diagram orientation not meaningful for document skew |
+| SIG-G1-5 | compression_score | 🟡 Secondary | ~50K | Derived via IQA | Rasterized from SVG/PNG at consistent quality; limited range |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~50K | Derived via IQA | High-quality chemical diagrams; contributes upper end of quality distribution |
+| SIG-G2-1 | script_cls | ❌ Not applicable | 0 | N/A | Chemical notation (not a natural-language script); no ISO 15924 code applies |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | 0 | N/A | Not a page-orientation dataset; post-correction head irrelevant |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | N/A | No skew correction context applicable |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~235K | Synthetic (all printed) | 100% machine-generated; strong negative class (no handwriting) |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | 0 | N/A | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | 0 | N/A | No handwriting present |
+| SIG-G4-4 | presence_reg | ✅ Primary | ~235K | Synthetic (all 0.0) | Strong 0.0 anchor; all machine-generated line diagrams |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | 0 | N/A | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ❌ Not applicable | 0 | N/A | Synthetic/programmatic generation; 100% real images required — excluded |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | No shadow phenomena in born-digital chemical diagrams |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | No physical warping; flat programmatically generated images |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | N/A | Chemical structure notation is not source code; class is not meaningful here |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~50K | Derived via IQA | High-resolution vector-sourced images; upper-end anchor only |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ None | Chemical notation (SMILES, atom labels) — no ISO 15924 natural-language scripts; atom labels use Latin characters but as a notational system, not text |
+| 2 | Capture method | ❌ None | 100% programmatically generated (born-digital synthetic); no real acquisition |
+| 3 | Document domain | 🟡 Partial | Exclusively scientific/chemistry domain (pharmaceutical patents); very narrow — does not contribute domain diversity for general document training |
+| 4 | Layout type | ❌ None | Single element type (chemical structure diagram); no document-level layout variety |
+| 5 | Text density | ❌ None | Atom/bond labels only; no running text; not applicable to document text density dimension |
+| 6 | Degradation types | ❌ None | Clean born-digital renders; no degradation simulated |
+| 7 | Resolution/DPI range | ❌ None | Uniform high-resolution vector-sourced renders; no DPI diversity |
+| 8 | Document age | ❌ None | Modern synthetic generation only; no historical simulation |
+| 9 | Text scope | ❌ None | Chemical formula labels only; not document text at any scope level |
+| 10 | Content flags | 🟡 Partial | All images contain chemical diagrams (figures); no tables, no handwriting, no code, no shadow, no warping |
+| 11 | Binarization status | 🟡 Partial | Line drawings approximate binary (black lines on white); but not binarized document scans |
+| 12 | Artifact types | ❌ None | Clean born-digital; potential rasterization artifacts from SVG-to-PNG only (minor) |
+| 13 | Color mode | 🟡 Partial | Predominantly black-and-white line drawings; some color atom highlighting in complex structures |
+| 14 | Font variety | ❌ None | Standardized chemical notation fonts (ACS style); no meaningful font variety for document training |
+
+### 13.3 Corpus Role & Constraints
+
+MarkushGrapher is a highly specialized chemical structure dataset with very limited applicability to the core 22 training heads — its primary contribution is as a strong negative class for handwriting heads (G4-1, G4-4) and as high-quality IQA anchors (G1-1 through G1-3, G1-5, G1-6). The dataset is excluded from all script, orientation, skew, capture method, shadow, and warping heads due to its synthetic born-digital nature and domain specificity. The CC-BY-4.0 license permits unrestricted commercial use, but low training priority is confirmed (Phase 9, specialized element detection only); this dataset should not be included in general multi-task training manifests.

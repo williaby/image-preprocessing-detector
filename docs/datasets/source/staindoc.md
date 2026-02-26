@@ -372,3 +372,62 @@ staindoc/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | - | - | No orientation metadata; camera docs may vary but unlabeled |
+| MNV4-H2 | skew_reg | ❌ | - | - | No skew angle labels; geometric skew not primary focus |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~5,000 | Inferred from stained images | Camera captures include resolution variation; no explicit score |
+| SIG-G1-1 | blur_score | 🟡 | ~5,000 | Inferred from stained images | Camera focus blur present as secondary artifact |
+| SIG-G1-2 | noise_score | 🟡 | ~5,000 | Inferred from stained images | Camera sensor noise present at low levels |
+| SIG-G1-3 | contrast_score | 🟡 | ~5,000 | Inferred from stained images | Stains reduce text/background contrast |
+| SIG-G1-4 | skew_score | ❌ | - | - | skew_score = quality degradation 0-1, not geometric angle; stains unrelated |
+| SIG-G1-5 | compression_score | ❌ | - | - | PNG/JPG format; no JPEG blocking artifacts noted |
+| SIG-G1-6 | overall_quality | 🟡 | ~5,000 | SSIM-derivable from stained/clean pairs | Paired GT enables SSIM-based quality MOS derivation |
+| SIG-G2-1 | script_cls | ❌ | - | - | Language/script unknown; not annotated |
+| SIG-G3-1 | orientation_cls (post) | ❌ | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~5,000 | Negative class | Printed documents only; useful as negative examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ | ~5,000 | Negative class | Printed documents → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | ✅ | ~5,000 | camera_smartphone (hard label) | All images camera-captured; confirmed from paper |
+| SIG-G5-2 | shadow_reg | 🟡 | ~5,000 | Inferred from stained images | Page curl/uneven illumination creates lighting variation; no explicit severity label |
+| SIG-G5-3 | warping_reg | ➖ | ~5,000 | Negative/low-end range | Camera capture introduces mild perspective distortion; not primary focus |
+| SIG-G5-4 | code_cls | ❌ | - | - | General documents; no code content indicated |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | 🟡 | ~5,000 | Inferred from stained images | Variable camera resolution; no explicit label |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ | Script unknown; likely Latin but unverified |
+| 2 | Capture method | ✅ | 100% camera_smartphone — strong single-method anchor |
+| 3 | Document domain | 🟡 | Unknown domain; general mixed printed documents |
+| 4 | Layout type | ❌ | No layout annotations; varied but unlabeled |
+| 5 | Text density | ❌ | Not measured; variable across printed documents |
+| 6 | Degradation types | ✅ | Stain, bleed-through, water damage, yellowing, foxing — diverse stain catalog |
+| 7 | Resolution/DPI range | 🟡 | Variable smartphone camera resolution; not DPI-profiled |
+| 8 | Document age | 🟡 | Mix of natural aging (foxing/yellowing) and recent staining; exact age unknown |
+| 9 | Text scope | ✅ | Page-level (full document pages) |
+| 10 | Content flags | ❌ | No content flags annotated |
+| 11 | Binarization status | ❌ | Color RGB images only |
+| 12 | Artifact types | ✅ | Stains, bleed-through, water damage as explicit paired degradation |
+| 13 | Color mode | ✅ | Color (RGB) — all camera captures |
+| 14 | Font variety | ❌ | Unknown; not annotated |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+StainDoc's primary contribution to the unified training corpus is as a `capture_method=camera_smartphone` anchor for the SIG-G5-1 head, providing ~5,000 confirmed camera-captured real-world documents. As a paired stained/clean correction dataset, it also offers SSIM-derivable overall_quality labels useful for SIG-G1-6 training, and represents the stain/bleed-through degradation class that is underrepresented in most IQA datasets. The dataset is restricted to research use pending parser implementation; the MIT license permits broad use but the parser must be built before L2 metadata and training manifests can be generated.

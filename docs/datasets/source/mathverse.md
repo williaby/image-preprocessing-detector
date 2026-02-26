@@ -151,3 +151,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation; must not be used in training |
+| MNV4-H2 | skew_reg | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-1 | blur_score | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-2 | noise_score | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-3 | contrast_score | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-4 | skew_score | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G1-6 | overall_quality | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G2-1 | script_cls | ❌ | 0 | — | BENCHMARK-ONLY — Latn only; no training use permitted |
+| SIG-G3-1 | orientation_cls (post) | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | Not applicable — no handwriting; also BENCHMARK-ONLY |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | Not applicable — no handwriting; also BENCHMARK-ONLY |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | Not applicable — no handwriting; also BENCHMARK-ONLY |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | Not applicable — no handwriting; also BENCHMARK-ONLY |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | — | BENCHMARK-ONLY — despite born_digital label, training use prohibited |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | BENCHMARK-ONLY — despite formula content, training use prohibited |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | — | BENCHMARK-ONLY — reserved for evaluation |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | 100% Latin (Latn); BENCHMARK-ONLY — no training contribution permitted |
+| 2 | Capture method | ❌ | 100% born_digital; BENCHMARK-ONLY — no training contribution permitted |
+| 3 | Document domain | ❌ | 100% EDU; BENCHMARK-ONLY — no training contribution permitted |
+| 4 | Layout type | ❌ | Mixed geometric diagrams + math text; BENCHMARK-ONLY |
+| 5 | Text density | ❌ | Variable (vision-only to text-dominant versions); BENCHMARK-ONLY |
+| 6 | Degradation types | ❌ | Variable quality (clean to photographed); BENCHMARK-ONLY |
+| 7 | Resolution/DPI range | ❌ | Wide range 63–6,840 px width; BENCHMARK-ONLY |
+| 8 | Document age | ❌ | Modern; BENCHMARK-ONLY |
+| 9 | Text scope | ❌ | Paragraph-level per stats; BENCHMARK-ONLY |
+| 10 | Content flags | ❌ | 100% has_formula + has_figure; BENCHMARK-ONLY |
+| 11 | Binarization status | ❌ | Mixed color/grayscale/B&W; BENCHMARK-ONLY |
+| 12 | Artifact types | ❌ | Minimal artifacts; BENCHMARK-ONLY |
+| 13 | Color mode | ❌ | Mixed; BENCHMARK-ONLY |
+| 14 | Font variety | ❌ | Varied math fonts in diagrams; BENCHMARK-ONLY |
+
+### 13.3 Corpus Role & Constraints
+
+MathVerse is a **benchmark-only dataset** stored at `02_benchmark_only/mathverse/` and must not contribute to any training head. All 6,940 samples are reserved exclusively for evaluating geometric diagram IQA and mathematical visual reasoning quality. The dataset is MIT-licensed with no commercial restriction, but the project-level decision to reserve it as a held-out benchmark takes precedence — using it in training would contaminate evaluation results for fine-line quality and diagram clarity assessments.

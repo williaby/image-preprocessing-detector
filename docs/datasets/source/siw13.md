@@ -163,3 +163,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | N/A | Word/line crops — no document orientation signal |
+| MNV4-H2 | skew_reg | ➖ | 0 | N/A | Line-level crops already axis-aligned; skew not annotated |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~16,291 | Pseudo-label (classical) | Variable camera quality; IQA pseudo-labels derivable |
+| SIG-G1-1 | blur_score | 🟡 | ~16,291 | Pseudo-label (classical) | Camera captures have real blur variation from Street View |
+| SIG-G1-2 | noise_score | 🟡 | ~16,291 | Pseudo-label (classical) | Outdoor lighting introduces real noise patterns |
+| SIG-G1-3 | contrast_score | 🟡 | ~16,291 | Pseudo-label (classical) | Variable outdoor lighting creates contrast diversity |
+| SIG-G1-4 | skew_score | ➖ | 0 | N/A | Word-level crops; perspective corrected by construction |
+| SIG-G1-5 | compression_score | 🟡 | ~16,291 | Pseudo-label (classical) | JPEG compression from Street View imagery pipeline |
+| SIG-G1-6 | overall_quality | 🟡 | ~16,291 | Pseudo-label (classical) | Scene text quality varies widely across 13 scripts |
+| SIG-G2-1 | script_cls | ✅ | 16,291 | Hard label (human) | Primary: 13 scripts; Mong=1,192 is OOD-excluded at inference but trains robustness; Tibt+Hebr critical |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | N/A | Word-level crops; not page-level orientation |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | N/A | Word-level crops; no document skew signal |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | 16,291 | Hard label (derived) | All images are printed scene text → NONE |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G4-4 | presence_reg | ✅ | 16,291 | Hard label (derived) | All printed → 0.0 continuous score |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | 16,291 | Hard label (metadata) | 100% camera (Google Street View); note aggregate file incorrectly records scanner_flatbed — IQA Profile is authoritative |
+| SIG-G5-2 | shadow_reg | 🟡 | ~16,291 | Pseudo-label (classical) | Outdoor shadows present in Street View imagery |
+| SIG-G5-3 | warping_reg | ➖ | 0 | N/A | Word crops; no page-level warping |
+| SIG-G5-4 | code_cls | ✅ | 16,291 | Hard label (derived) | No code content; scene text only → code_present=False |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~16,291 | Pseudo-label (classical) | Street View images vary in effective resolution |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | 8 families: Indic (33.8%), CJK (25.0%), Hebrew (7.6%), Latin (7.5%), Cyrillic (6.3%), Greek (6.2%), Arabic (6.2%), Other/Mongolian (7.3%) |
+| 2 | Capture method | ✅ | 100% camera (Google Street View outdoor photography) |
+| 3 | Document domain | ❌ | 100% UNK per aggregate; scene text (storefronts, signs) — domain label not populated |
+| 4 | Layout type | ❌ | Word/line crops only; no page-level layout information |
+| 5 | Text density | ❌ | Word-level crops; text density not applicable at this granularity |
+| 6 | Degradation types | 🟡 | Real-world: motion blur, variable lighting, perspective distortion, JPEG compression; no explicit labels |
+| 7 | Resolution/DPI range | 🟡 | Variable (video/camera captures); no DPI metadata, image dimensions not profiled |
+| 8 | Document age | ❌ | Scene text only; document age concept does not apply |
+| 9 | Text scope | ✅ | 100% word-level crops (per aggregate: text_scope=word) |
+| 10 | Content flags | ❌ | No content flags populated in aggregate |
+| 11 | Binarization status | ❌ | All color RGB; no binarized samples |
+| 12 | Artifact types | 🟡 | Camera: motion blur, JPEG compression, lens distortion; no explicit artifact labels |
+| 13 | Color mode | ✅ | 100% color RGB (outdoor/scene photography) |
+| 14 | Font variety | ✅ | High: signage, storefronts, advertisements across 13 scripts and diverse typographic styles |
+
+### 13.3 Corpus Role & Constraints
+
+SIW-13 is a secondary contributor to SIG-G2-1 (script_cls), providing the only camera-captured real-world scene text for Tibetan (1,177) and Hebrew (1,242), scripts that are sparsely represented elsewhere; it also contributes Mongolian (1,192) samples which are OOD-excluded at inference but useful for boundary robustness training. The capture_method aggregate (scanner_flatbed) is a known metadata error — the IQA Profile and paper confirm Google Street View camera capture. Research-only license limits use to non-commercial training pipelines.

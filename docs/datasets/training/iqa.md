@@ -21,6 +21,44 @@ l4_status: in_progress
 
 ---
 
+## HAR Assessment (5-Model Consensus Review, 2026-02-21)
+
+| Head | HAR Score | Grade |
+|------|-----------|-------|
+| G1-1 blur | 45/100 | Needs Work |
+| G1-2 noise | 37/100 | Needs Work |
+| G1-3 contrast | 49/100 | Needs Work |
+| G1-4 skew_severity | 54/100 | Needs Work |
+| G1-5 compression | 65/100 | Marginal |
+| G1-6 overall_quality | 37/100 | Needs Work |
+
+Average: ~47/100 | Phase 2 synthetic pipeline: NOT STARTED (0/100,000 images)
+
+---
+
+## Consolidated P0 Gap Registry
+
+All 13 P0 blockers that must be resolved before Phase 2 training can begin, consolidated from the
+six G1 HAR files. Ordered by head, then by impact within each head.
+
+| Gap ID | Head | One-Line Issue | Acceptance Criterion | Blocking Dependency |
+|--------|------|----------------|---------------------|---------------------|
+| IQA-BLUR-G01 | G1-1 | Phase 2 synthetic pipeline not created (0/100K assembled) | 100K blur images assembled with tier_0_exact labels | `prepare_multitask_datasets.py iqa` sub-command must be implemented |
+| IQA-BLUR-G02 | G1-1 | Motion blur entirely absent from Phase 2 plan | ≥30% of Phase 2 G1-1 samples use linear kernel motion blur | IQA-BLUR-G01 (pipeline must exist first) |
+| IQA-NOISE-G01 | G1-2 | Classical noise detector zero-variance — blocks all Phase 1 G1-2 labeling | Targeted VLM noise pilot run; SRCC vs. known sigma ≥ 0.55 measured | GPU VM required for injected-sigma pilot |
+| IQA-NOISE-G03 | G1-2 | Phase 2 noise pipeline not created (0/100K assembled) | 100K noise images assembled with tier_0_exact labels | `prepare_multitask_datasets.py iqa` sub-command |
+| IQA-CONTRAST-G01 | G1-3 | Semantic definition of contrast_score not documented; all labeling invalid until resolved | Definition documented in L2 schema guide: text-background separation via Michelson contrast at Canny edges | Blocks all G1-3 labeling |
+| IQA-CONTRAST-G02 | G1-3 | `iqa_classical.py` uses global histogram spread — wrong metric for text documents | `label_contrast_classical.py` (edge-aware Michelson) built and run on DIQA-5000/OHR-Bench/RealDAE | IQA-CONTRAST-G01 must be resolved first |
+| IQA-CONTRAST-G03 | G1-3 | Phase 2 contrast pipeline not created (0/100K assembled) | 100K contrast images assembled; spatial illumination gradient augmentation included | IQA-CONTRAST-G01; `prepare_multitask_datasets.py iqa` |
+| IQA-COMP-G01 | G1-5 | Phase 2 re-save pipeline not created (0/100K assembled) | 100K re-saved images at QF 10/20/40/60/80; manifests with `compression_score = 1.0 - (QF/100)` | `prepare_iqa_compression_dataset.py` not yet created |
+| IQA-COMP-G03 | G1-5 | Score convention conflict between scaffold v1.0 and head spec (quality vs. severity inversion) | Severity convention (0=pristine, 1=severe) adopted throughout; assertion added to assembly script | Must resolve before any labeling runs |
+| IQA-COMP-G04 | G1-5 | Multi-generation JPEG re-compress absent from training | ≥10K chained JPEG samples in Phase 2; labels from DCT estimate of final level | IQA-COMP-G01 (addon) |
+| IQA-SKEW-G01 | G1-4 | Severity transfer function undefined; naive angle-to-severity mapping is perceptually invalid | 300–500 human MOS calibration images collected; DPI-normalized piecewise transfer function fit; SRCC ≥ 0.65 validated | Human annotation budget required |
+| IQA-SKEW-G03 | G1-4 | Phase 2 skew pipeline not created (0/100K assembled) | 100K skew images assembled with validated transfer function labels | IQA-SKEW-G01 must be resolved first |
+| IQA-OVERALL-G01 | G1-6 | VLM SRCC 0.53 (non-rotated) below 0.65 gate; blocks OHR-Bench labeling | VLM prompt v2.0 validated on 30–50 images; SRCC > 0.65 achieved | Prompt v2.0 must be developed and re-validated before bulk labeling |
+
+---
+
 ## Section 1 — Identity
 
 | Field | Value |
@@ -119,7 +157,56 @@ labeled independently per head using different labeling methods per head.
 | G1-2 `noise_score` | VLM only (classical zero-variance defect on DIQA) | ❌ Blocked (zero variance) | SRCC unmeasured for noise | 0 |
 | G1-4 `skew_score` | VLM or human MOS calibration | ❌ No classical path | Rotation construct mismatch risk | 0 |
 
+### Critical Per-Head Gaps (Phase 1 and Phase 2)
+
+**G1-1 blur_score — Motion Blur Absence**
+
+WARNING — CRITICAL GAP: Motion blur is the most common real-world blur type (camera shake,
+subject motion) and is ENTIRELY ABSENT from both Phase 1 and the planned Phase 2
+pipeline. The current dataset covers only Gaussian/defocus blur.
+
+This is the single highest-risk gap across all IQA heads — motion blur is what
+users actually encounter in the wild.
+
+**G1-2 noise_score — Zero Variance Detector**
+
+WARNING — DETECTOR FAILURE: Classical DIQA noise detectors have zero variance on this dataset
+(all documents appear clean to the detector). This means:
+
+- VLM SRCC for noise has not been measured
+- Camera-origin noise patterns are absent from Phase 2 plans
+- Must run VLM pilot specifically for noise before Phase 2 starts
+
+**G1-4 skew_score — Construct Conflict with G3-2**
+
+WARNING — CONSTRUCT CONFLICT WITH G3-2: G1-4 measures skew as a DEGRADATION SEVERITY (0–1 scale,
+where 1.0 = perfect quality / no skew). G3-2 measures skew as a GEOMETRIC ANGLE (degrees).
+
+DO NOT use G3-2 skew angle data as a proxy for G1-4 skew severity.
+They are different constructs with different label schemas. Using angle data for
+severity training would corrupt the G1-4 head.
+
+**G1-6 overall_quality — VLM SRCC Decision Gate**
+
+Current status: SRCC = 0.53 (non-rotated subset) — GATE NOT MET
+
+- SRCC >= 0.65: Proceed with VLM labels at scale (2–5K images)
+- SRCC 0.60–0.65: Use with warning; flag in label provenance metadata
+- SRCC < 0.60: HALT VLM labeling; use Phase 2 synthetic tier_0_exact labels instead
+
+Required action: Re-validate 30–50 images with prompt v2.0 (orientation-independent
+scoring, finer granularity). If SRCC > 0.60, proceed. Currently blocked.
+
 ### Phase 2 — Synthetic Pipeline (100K Target)
+
+WARNING: Phase 2 pipeline (100,000 synthetic images with tier_0_exact labels) is
+ENTIRELY UNBUILT as of 2026-02-21. No code has been written for:
+
+- Motion blur augmentation pipeline
+- Camera noise pattern simulation
+- Edge-aware contrast measurement
+- Multi-generation JPEG re-save pipeline
+- Compound distortion combination
 
 Phase 2 derives images from `synth-multiscript-v3` (190,485 images on GCS at
 `gs://image_detection_b/synth_multiscript_v3/`) with augmentation parameters as tier_0_exact labels.

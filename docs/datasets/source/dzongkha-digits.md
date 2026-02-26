@@ -454,3 +454,57 @@ All 4 v2.3.0 fields are populated in the integration script (v2 enrichment versi
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ Not applicable | 0 | — | Isolated digit images; all captured at consistent 0° on Jamboard canvas; orientation variation absent |
+| MNV4-H2 | skew_reg | ❌ Not applicable | 0 | — | Single-character images on digital whiteboard; no document baseline for skew measurement |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | 0 | — | All images are identical 7408×4167px Jamboard exports; no resolution variation |
+| SIG-G1-1 | blur_score | ❌ Not applicable | 0 | — | Digital stroke images have no optical blur; not representative of real-world blur degradation |
+| SIG-G1-2 | noise_score | ❌ Not applicable | 0 | — | Clean white digital background; no noise variation present |
+| SIG-G1-3 | contrast_score | ❌ Not applicable | 0 | — | Uniform high-contrast digital strokes; no contrast variation |
+| SIG-G1-4 | skew_score | ❌ Not applicable | 0 | — | No document layout context for skew quality scoring |
+| SIG-G1-5 | compression_score | ❌ Not applicable | 0 | — | PNG lossless; no compression artifacts |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | 0 | — | Digitally rendered images do not represent real document quality; SRCC requirement cannot be met |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Hard label | Tibetan (Tibt) digit characters; supplements tibhcr but negligible volume; full 1,000-image download needed for meaningful contribution |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | 0 | — | No document orientation context |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | — | No document geometry |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Hard label | 100% handwritten; DOMINANT class; very small volume limits primary contribution |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Hard label | 100 writers; legibility variation present but dataset too small for standalone contribution |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Hard label | PRINTED (block Tibetan digit strokes on digital canvas); no cursive content |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Derived | Presence score = 1.0 (all handwritten); high-end anchor for regression range |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Derived | Writer variation provides some legibility spread; small volume only |
+| SIG-G5-1 | capture_method_cls | 🟡 Secondary | ~62 (local) / ~1,000 (full) | Hard label | camera_smartphone (Jamboard stylus); atypical digital whiteboard capture; small volume |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | — | White digital background; no shadow possible |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | — | Digital canvas; no physical page warping |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | — | Tibetan numeral digits only; no code content |
+| SIG-G5-5 | resolution_quality_reg | ❌ Not applicable | 0 | — | Uniform oversized Jamboard exports; no resolution quality variation |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | 100% Tibetan (Tibt); supplements tibhcr for Tibt class; digits only (10 classes) vs full character set |
+| 2 | Capture method | 🟡 Partial | 100% camera_smartphone (Google Jamboard); atypical digital whiteboard — differs from real camera captures |
+| 3 | Document domain | 🟡 Partial | 100% EDU; single domain; no real document types |
+| 4 | Layout type | ❌ Not present | Isolated digit images; no document layout |
+| 5 | Text density | ❌ Not present | Single digit per image; text density not applicable |
+| 6 | Degradation types | ❌ Not present | Clean digital images; no degradation; quality_scores array empty |
+| 7 | Resolution/DPI range | ❌ Not present | All images identical at 7408×4167px (Jamboard export default) |
+| 8 | Document age | ❌ Not present | Contemporary (2022 collection); no historical content |
+| 9 | Text scope | 🟡 Partial | 100% character-level; no word, line, or document scope |
+| 10 | Content flags | 🟡 Partial | has_handwriting=100%; no other content flags applicable |
+| 11 | Binarization status | ❌ Not present | RGB PNG only; no binarized variants |
+| 12 | Artifact types | ❌ Not present | Occasional Jamboard touch marks (2/62); otherwise artifact-free |
+| 13 | Color mode | 🟡 Partial | RGB with white background and gray/black strokes; effectively grayscale content in color container |
+| 14 | Font variety | 🟡 Partial | 100 writers; digit-only scope limits variety; 10 character classes only |
+
+### 13.3 Corpus Role & Constraints
+
+Dzongkha-digits is a **supplementary Tibetan (Tibt) script source** with negligible volume (62 images locally, 1,000 full dataset) that contributes only to Tibt script diversity in SIG-G2-1 and G4 handwriting heads. CC-BY-4.0 license permits unrestricted commercial use with attribution. The dataset's primary constraint is size — only digit class 0 is downloaded locally; full 1,000-image download across all 10 digit classes is required before this dataset can provide meaningful training signal beyond what tibhcr already covers.

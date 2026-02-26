@@ -272,3 +272,69 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+> **CRITICAL**: DIBCO is a **benchmark-only** dataset. Competition test sets (131 images) are
+> RESERVED and must NEVER be used for training. The 212 train-split images are technically
+> processable but the dataset is designated evaluation-only by the project. All training heads
+> are marked accordingly — use only for evaluation/validation pipelines.
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ Not applicable | - | - | Benchmark only; no orientation labels provided |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | Benchmark only; no skew angle labels |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | - | - | Benchmark only; resolution varies but no RQ labels |
+| SIG-G1-1 | blur_score | ❌ Not applicable | - | - | Benchmark only; degradation present but no IQA scores |
+| SIG-G1-2 | noise_score | ❌ Not applicable | - | - | Benchmark only; historical noise present but unlabeled for training |
+| SIG-G1-3 | contrast_score | ❌ Not applicable | - | - | Benchmark only; contrast variance from fading/staining present but unlabeled |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | - | - | Benchmark only; binarization GT ≠ IQA MOS |
+| SIG-G2-1 | script_cls | ❌ Not applicable | - | - | Benchmark only; 100% Latin (Latn) but reserved for evaluation |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G4-1 | handwriting_presence_cls | ❌ Not applicable | - | - | Benchmark only; 100% has_handwriting per L2 but reserved — do not use for training |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G4-4 | presence_reg | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G5-1 | capture_method_cls | ❌ Not applicable | - | - | Benchmark only; 100% scanner_flatbed per L2 but reserved |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G5-4 | code_cls | ❌ Not applicable | - | - | Benchmark only |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ Not applicable | - | - | Benchmark only |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 Partial | 100% Latin (Latn/en) per L2 aggregates; historical European manuscripts only |
+| 2 | Capture method | 🟡 Partial | 100% scanner_flatbed per L2; relevant for binarization evaluation context only |
+| 3 | Document domain | ❌ Not present | 100% GOV (historical documents) per L2; no domain diversity |
+| 4 | Layout type | ❌ Not present | No layout annotations; mix of handwritten and printed pages |
+| 5 | Text density | ❌ Not present | No text density labels; full-page historical documents |
+| 6 | Degradation types | ✅ Well-covered | Bleed-through, staining, fading, uneven illumination — extreme historical degradation cases across 11 competition years |
+| 7 | Resolution/DPI range | 🟡 Partial | 351–4161 × 259–2206 px (avg 1551 × 719); variable across years; no DPI metadata |
+| 8 | Document age | ✅ Well-covered | Historical documents spanning centuries; maximum age diversity for binarization challenge |
+| 9 | Text scope | ❌ Not present | No text scope labels; text_scope=document (full-page) per L2 |
+| 10 | Content flags | 🟡 Partial | has_handwriting 100% per L2 (includes both handwritten and printed competition subsets) |
+| 11 | Binarization status | ✅ Well-covered | Binary GT masks provided (pixel-perfect); 36% of images are binary per L2 color space |
+| 12 | Artifact types | ✅ Well-covered | Staining, foxing, bleed-through, fading, uneven illumination — comprehensive historical degradation coverage |
+| 13 | Color mode | 🟡 Partial | RGB 64% + Binary 36% per L2; no grayscale-only examples |
+| 14 | Font variety | ✅ Well-covered | Wide variety of historical scripts and handwriting styles across 2009–2019 competitions |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+DIBCO is designated as a **benchmark-only** dataset for this project — the competition test sets (131 images) are permanently reserved for evaluation, and the project policy is to never train on any DIBCO split to preserve benchmark validity for measuring binarization and degradation-handling quality. The dataset's unique value lies in its gold-standard pixel-level binarization ground truth and extreme historical degradation cases (bleed-through, staining, fading) that serve as held-out stress tests for the IQA pipeline's contrast, noise, and artifact-handling capabilities. Any future relaxation of benchmark-only status would require explicit project approval, as contaminating this evaluation set would invalidate years of competition-comparable metrics.

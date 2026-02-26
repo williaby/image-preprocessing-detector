@@ -16,9 +16,65 @@ l4_status: blocked
 
 # Handwriting Training Dataset
 
+> ❌ **P0 BLOCKED — 17 open gaps across 5 heads**
+> Status: 38,967 records dry-run (2026-02-21). Actual dataset: 0 assembled.
+> Training BLOCKED until N_A sentinel defect resolved (see below).
+
 > **Quick Stats**: 60,000 images (target) | 5 heads across 3 classification + 2 regression tasks | Multi-label
 >
 > **Status**: ❌ Blocked | **HAR Scores**: G4-1: 32/100, G4-2: 21/100, G4-3: 25/100, G4-4: 26/100, G4-5: 14/100 | **P0 Gaps**: 17 total across all 5 heads
+
+---
+
+## HAR Assessment (5-Model Consensus Review, 2026-02-21)
+
+| Head | HAR Score | Grade |
+|------|-----------|-------|
+| G4-1 handwriting_presence_cls | 32/100 | Needs Work |
+| G4-2 handwriting_legibility_cls | 21/100 | Needs Work |
+| G4-3 handwriting_content_type_cls | 25/100 | Needs Work |
+| G4-4 handwriting_presence_reg | 26/100 | Needs Work |
+| G4-5 handwriting_legibility_reg | 14/100 | Blocked |
+
+Average: ~24/100
+
+---
+
+## ⚠️ BLOCKING DEFECT: N_A Sentinel Encoding
+
+**Defect**: N_A (not applicable / handwriting absent from this page) is currently
+encoded as 0.0. This is WRONG and corrupts training.
+
+- 0.0 in regression heads (G4-2 legibility, G4-5 legibility_reg) means "illegible"
+- N_A must be encoded as **-1.0** with masked loss during training
+- Using 0.0 conflates "no handwriting present" with "handwriting is illegible"
+- This corrupts ALL 5 heads simultaneously
+
+**Required fix**:
+
+- Update label schema: N_A → -1.0
+- Update label generation scripts to output -1.0 for absent-handwriting pages
+- Update training loop: apply mask where label == -1.0; exclude from loss computation
+- Verify: presence_reg head output for all-printed pages must cluster near 0.0, not -1.0
+
+---
+
+## ILLEGIBLE Class Gap (P0)
+
+Current training examples for ILLEGIBLE class: **0**
+Required: ≥5,000 examples
+
+The ILLEGIBLE class requires samples where handwriting IS present but cannot be read
+(heavily degraded, extreme stylization, water damage, faded ink).
+
+**Acquisition blockers**:
+
+| Dataset | Status | Note |
+|---------|--------|------|
+| KHATT (Arabic cursive) | ⏳ Pending acquisition | Public dataset; download required |
+| CASIA-HWDB (CJK handwriting) | ⏳ Access request pending | 2–4 week approval process |
+| IIIT-INDIC (Devanagari) | ⏳ Pending acquisition | Public access |
+| HKR (Kazakh/Russian cursive) | ⏳ Pending acquisition | Public access |
 
 ---
 
@@ -50,7 +106,7 @@ l4_status: blocked
 | SIG-G4-4 | `presence_reg` | Regression (Gaussian NLL) | 0.0–1.0 (area ratio) | Pearson r ≥ 0.80 + MAE ≤ 0.10 on mid-range holdout |
 | SIG-G4-5 | `legibility_reg` | Regression (Gaussian NLL) | 0.0–1.0 (0 = illegible, 1 = perfect) | Pearson r ≥ 0.55 vs human MOS (revised from 0.80; IAA ceiling) |
 
-All five heads are trained on the same 60,000-image dataset. Each image carries all five labels simultaneously. The `presence_cls` output is the gate for all secondary heads: when `presence = NONE`, all of `legibility_cls`, `content_type_cls`, `legibility_score` receive N_A / masked loss, and `presence_score` receives 0.0.
+All five heads are trained on the same 60,000-image dataset. Each image carries all five labels simultaneously. The `presence_cls` output is the gate for all secondary heads: when `presence = NONE`, all of `legibility_cls`, `content_type_cls`, `legibility_score`, and `presence_score` receive the **-1.0 N_A masked sentinel** (task_mask=0 → MultiTaskLoss skips these samples). Using 0.0 as the sentinel is the Defect 1 bug — corrected in harmonize_handwriting_labels.py.
 
 ---
 
@@ -152,8 +208,8 @@ Urdu/Nastaliq handwriting corpus. All pages DOMINANT. Labels:
 - G4-1: NONE by `all_printed` strategy.
 - G4-2: N_A (no handwriting present — deterministic, no annotation required).
 - G4-3: N_A (DocLayNet/TableBank); PRINTED or TYPED (RVL-CDIP, requires VLM split).
-- G4-4: presence_score = 0.0 (corpus-level heuristic).
-- G4-5: masked loss (sentinel -1.0).
+- G4-4: presence_score = -1.0 (N_A sentinel, task_mask=0 — Defect 1 fix).
+- G4-5: legibility_score = -1.0 (N_A sentinel, task_mask=0).
 - These sources are trivially abundant; all require sampling caps.
 
 ### Critical Class and Score Gaps
@@ -273,7 +329,7 @@ Urdu/Nastaliq handwriting corpus. All pages DOMINANT. Labels:
 }
 ```
 
-For printed negatives (presence = NONE): `handwriting_presence = "NONE"`, `handwriting_legibility = "N_A"`, `handwriting_content_type = "N_A"`, `handwriting_presence_score = 0.0`, `handwriting_legibility_score = -1.0`, `na_mask_legibility_score = true`.
+For printed negatives (presence = NONE): `handwriting_presence = "NONE"`, `handwriting_legibility = "N_A"`, `handwriting_content_type = "N_A"`, `presence_score = -1.0` (N_A sentinel — Defect 1 fix; was incorrectly 0.0), `legibility_score = -1.0`, `na_mask_presence_score = true`, `na_mask_legibility_score = true`.
 
 ---
 
@@ -505,7 +561,7 @@ uv run python scripts/prepare_multitask_datasets.py handwriting
 
 `scripts/harmonize_handwriting_labels.py` (binary presence detection, not 5-class) was run as a dry-run. Results:
 
-- Total records: 38,967
+- Total records: 38,967 — **this is a dry-run estimate only; actual assembled dataset = 0 images**
 - Positive (has_handwriting = 1): 9,289 (24% of target 40K positive; short due to GCS-only Muharaf/PUCIT-OHUL)
 - Label format: binary flag only — NOT 5-class enum; does not feed any G4 head in current form
 - GCS-only datasets (Muharaf, PUCIT-OHUL): 0 records loaded locally
@@ -684,4 +740,5 @@ No G4 head has been trained. Training cannot begin until the 17 P0 blockers are 
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-02-23 | Added P0 BLOCKED notice, HAR Assessment section, N_A Sentinel Encoding defect section, ILLEGIBLE Class Gap section with acquisition blockers table; clarified dry-run estimate vs. actual assembled count |
 | 1.0.0 | 2026-02-23 | Initial creation from HAR batch E (G4-1 through G4-5) and DDR |

@@ -37,6 +37,19 @@ with classical-ensemble-labeled natural scans from 13 real-document source datas
 
 **Design Reference**: [DATASET_DIVERSITY_REQUIREMENTS.md](../../planning/DATASET_DIVERSITY_REQUIREMENTS.md)
 
+## SIG-G3-2 Narrow-Range Dataset (Separate Deliverable)
+
+The 90K skew dataset covers the full ±45° angular range, which is appropriate for
+MobileNetV4-H2 (42-bin hybrid classification + regression).
+
+SigLIP G3-2 requires a **separate** ±2° narrow-range dataset (~20,000 images) that
+concentrates on sub-degree precision (0°, ±0.25°, ±0.5°, ±0.75°, ±1°, ±1.5°, ±2°).
+
+- This is a distinct, unbuilt deliverable — it does NOT exist yet
+- The 90K full-range dataset cannot substitute for it
+- Priority: P0 per corpus review 2026-02-21
+- Source: derive from existing natural scan sources + synth-multiscript-v3 with fine-grained rotation
+
 ### Configuration
 
 | Attribute | Value |

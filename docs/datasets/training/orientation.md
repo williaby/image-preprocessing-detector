@@ -22,7 +22,11 @@ l4_status: active
 
 > **Quick Stats**: 50,000 images | 4-class balanced | 12,500 unique documents
 >
-> **Status**: ✅ Ready | **Created**: 2026-01-25
+> **Status**: ⚠️ LATIN-BIASED | **Created**: 2026-01-25
+>
+> The review (2026-02-21) found <1% non-Latin images across source documents. This fails the
+> corpus diversity requirement and the MNV4-H1 bootstrap must use this dataset with awareness
+> that non-Latin orientation detection is undertrained.
 
 ### Overview
 
@@ -31,6 +35,14 @@ Orientation detection training dataset for Phase 10A. Each unique source documen
 **Purpose**: Train MobileNetV4-Conv-S orientation classifier for preprocessing pipeline.
 
 **Design Specification**: [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md)
+
+## Known Gaps
+
+| Gap | Priority | Description |
+|-----|----------|-------------|
+| ORIENT-G01 | P1 | orientation_ambiguous class not labeled — symmetric documents (squares, circles) have no valid orientation label; these must be identified and excluded or given a 5th class |
+| ORIENT-G02 | P1 | Latin dominance: <1% non-Latin images in source documents; non-Latin script orientation detection is undertrained |
+| ORIENT-G03 | P1 | Needs non-Latin source augmentation (Arabic RTL, Japanese TTB, Hebrew) before SigLIP G3-1 fine-tuning |
 
 ### Configuration
 
@@ -152,3 +164,6 @@ uv run python scripts/prepare_orientation_dataset.py --output /mnt/e/image_detec
 | Overall Accuracy | ≥98% | ≥97% |
 | Per-class Accuracy | ≥97% | ≥95% |
 | Vertical Japanese | ≥95% (as 0°) | ≥93% (as 0°) |
+
+**Usability**: This dataset is usable for initial MNV4-H1 bootstrap but must be rebalanced with
+non-Latin sources before SigLIP G3-1 fine-tuning. Do not use as-is for the SigLIP orientation head.

@@ -631,3 +631,64 @@ The dataset provides 12 OCR noise variants per page:
 |-----:|-------|-------------:|---------------:|
 | 1 | `has_table` | 97.7% | 0.800 |
 | 2 | `layout_detections` | 2.3% | 0.830 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | 0 | — | Benchmark-only; training_suitable=false |
+| MNV4-H2 | skew_reg | ❌ | 0 | — | Born-digital — zero skew present; no geometric angle labels |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | — | Uniform 300 DPI, no char-height quality variation to label |
+| SIG-G1-1 | blur_score | ❌ | 0 | — | Born-digital baseline; no blur degradation present |
+| SIG-G1-2 | noise_score | ❌ | 0 | — | Born-digital baseline; no noise present |
+| SIG-G1-3 | contrast_score | ❌ | 0 | — | Born-digital optimal contrast; no contrast labels |
+| SIG-G1-4 | skew_score | ❌ | 0 | — | No skew — not a useful IQA signal source |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | PNG lossless format; no compression artifacts |
+| SIG-G1-6 | overall_quality | ❌ | 0 | — | No MOS or overall quality scores — benchmark only |
+| SIG-G2-1 | script_cls | ❌ | 0 | — | Benchmark-only; training_suitable=false excludes from script training |
+| SIG-G3-1 | orientation_cls (post) | ❌ | 0 | — | Benchmark-only |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | — | No skew labels; born-digital |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | — | 0% handwriting (born-digital PDFs); not used even for NONE class negatives given benchmark status |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | No handwriting present |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | No handwriting signal |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | No handwriting signal |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | — | Benchmark-only; all BORN_DIGITAL but excluded from training |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | Born-digital — no shadow artifacts |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | Born-digital — no warping or deformation |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | 0.7% pages have code (55 pages); excluded due to benchmark status |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ | 0 | — | Uniform 300 DPI, no resolution quality variation |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 Partial | Latin 94.4%, CJK (Hans/Hant) 1.9%, Indic 0.04%, Undetermined 3.7% |
+| 2 | Capture method | ❌ Not present | 100% born_digital — no capture method diversity |
+| 3 | Document domain | ✅ Well-covered | 5 domains: GOV 30.4%, FIN 25.7%, TEC 20.8%, EDU 17.2%, MED 5.9% |
+| 4 | Layout type | 🟡 Partial | Tables 25.2%, Figures 31.0%, Formulas 1.3% — no layout type labels in L2 |
+| 5 | Text density | ❌ Not present | No text density labels in L2 metadata |
+| 6 | Degradation types | ❌ Not present | Born-digital — zero degradation; degradation_types={} in stats |
+| 7 | Resolution/DPI range | ❌ Not present | Uniform 300 DPI — no DPI variation |
+| 8 | Document age | ❌ Not present | All modern digital documents; no aged/historical content |
+| 9 | Text scope | ✅ Well-covered | 100% printed text (text_scopes: printed=8,303) |
+| 10 | Content flags | 🟡 Partial | Tables (25.2%), Figures (31.0%), Formulas (1.3%); no code flag despite 55 pages |
+| 11 | Binarization status | ❌ Not present | Not binarized — full RGB color at 300 DPI |
+| 12 | Artifact types | ❌ Not present | No artifacts — born-digital source |
+| 13 | Color mode | 🟡 Partial | RGB only; no grayscale or binarized samples |
+| 14 | Font variety | ✅ Well-covered | High font diversity across 5 domains and 7 document types |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+OHR-Bench is explicitly designated as a benchmark-only dataset (`training_suitable=false`) and contributes zero samples to any of the 22 training heads. Its value is confined to evaluation: measuring how OCR quality errors propagate through RAG pipelines using controlled semantic and formatting noise variants across 8,498 Q&A pairs. The dataset's born-digital origin means it provides high-quality baseline pages free of scan artifacts, skew, blur, or compression noise, making it an ideal clean reference for evaluating IQA detector false-positive rates — but this evaluation role is distinct from training. Any attempt to use OHR-Bench samples for training should be explicitly blocked at the dataloader level.

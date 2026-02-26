@@ -4,20 +4,40 @@ l4_dataset: synth-multiscript-v3
 l4_workstream: WS2
 l4_generation_script: scripts/generate_base_dataset_v3.py
 l4_gcs_path: gs://image_detection_b/synth_multiscript_v3/
-l4_image_count: 350012
+l4_image_count: 190485
 l4_status: active
 ---
 
 #### Synthetic Multi-Script Dataset v3 (synth-multiscript-v3)
 
-> **Quick Stats**: 350,012 images (✅ Complete in total count) | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
+##### Distribution Problem (P0 Blocker)
+
+> WARNING: P0 BLOCKER — DO NOT USE FOR TRAINING UNTIL RESOLVED
+
+Arab script is at 3.8x its target budget:
+
+- Arab actual: ~49,000 images
+- Arab budget cap: ~13,000 images (max 3x of per-script floor)
+- Constraint: no single script may exceed 3x its proportional budget
+
+Additionally, 17 scripts are BELOW their minimum floor.
+
+**Rebalancing plan**:
+
+1. Cap Arab images at <=13,000 (drop ~36,000 Arab images from training set)
+2. Redistribute freed budget proportionally to the 17 under-represented scripts
+3. Re-run `prepare_multitask_datasets.py script` sub-command with --cap-arab 13000
+4. Verify: no script exceeds 3x floor AND all 17 scripts meet minimum
+
+---
+
+> **Quick Stats**: 190,485 GCS-confirmed images | 27 scripts | 198 languages | Synthetic documents | Layer 2 v2.3
 >
-> **GCS Audit 2026-02-21**: `gs://image_detection_b/synth_multiscript_v3/` — 350,012 jpg images across 27 script
-> folders (confirmed by live `gsutil ls` jpg count). Generation target was met. However, distribution is
+> **GCS Audit 2026-02-21**: `gs://image_detection_b/synth_multiscript_v3/` — 190,485 jpg images across 27 script
+> folders. The 350K figure was the generation target. A per-script pool exhaustion bug stopped generation at
+> 190,485 images. This count is now treated as the final count — no regeneration planned. Distribution is
 > severely imbalanced (generator bug confirmed): Arab 49,169 (3.8x target), 17 scripts below the 12,963
-> target. Status: ✅ Complete (350,012 images) — ⚠️ Imbalanced distribution (needs rebalancing, not
-> regeneration from scratch). The previous 190,485 count was from an incomplete GCS listing made before
-> all sidecar .json files existed. Each image has a paired .json sidecar.
+> target. Status: ⚠️ IMBALANCED — Rebalancing Required Before Training. Each image has a paired .json sidecar.
 >
 > **Script composition note**: v3 contains Armn (Armenian) and Grek (Greek) instead of Cher (Cherokee)
 > and Cans (Canadian Aboriginal Syllabics) from the original design. Kore is used for Korean (not Hang).
@@ -45,18 +65,18 @@ l4_status: active
 |---------|--------|--------|------|-------------|
 | v1.0 | 27,000 | PNG | ~50 GB | Initial generation, 3-tier DPI |
 | v2.0 | 250,000 | PNG | ~800 GB | 7-tier DPI, color modes, document age, hybrid augmentation |
-| **v3.0** | **350,012** *(target met — but distribution imbalanced: Arab 49K, 17 scripts below 12,963 target; generator bug confirmed)* | **JPEG q95** | **~285 GB** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting, chunked generation** |
+| **v3.0** | **190,485 GCS-confirmed** *(generation target was 350K; a per-script pool exhaustion bug stopped generation at 190,485 images — this count is treated as final, no regeneration planned; distribution imbalanced: Arab 49K, 17 scripts below 12,963 target)* | **JPEG q95** | **~285 GB** | **Pristine base, v2.3 schema, CJK vertical text, generation provenance, ±22 deg skew, English secondary weighting, chunked generation** |
 
 ##### Dataset Statistics (Actual)
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 350,012 *(GCS-confirmed by live gsutil ls jpg count, 2026-02-21; generation target met — ⚠️ distribution imbalanced, see per-script table below)* |
-| **Total Metadata** | 350,012 paired .json sidecars (each image has a paired sidecar) |
-| **Train Split** | ~280,010 (80% estimate) |
-| **Val Split** | ~35,001 (10% estimate) |
-| **Test Split** | ~35,001 (10% estimate) |
-| **Split Registry** | 345,638 entries (Unraid-based; GCS subset uses `splits.jsonl` at GCS prefix root) |
+| **Total Images** | 190,485 GCS-confirmed *(generation target was 350K; per-script pool exhaustion bug stopped generation at 190,485 — treated as final count, no regeneration planned; ⚠️ distribution imbalanced, see per-script table below)* |
+| **Total Metadata** | 190,485 paired .json sidecars (each image has a paired sidecar) |
+| **Train Split** | ~152,388 (80% estimate) |
+| **Val Split** | ~19,049 (10% estimate) |
+| **Test Split** | ~19,049 (10% estimate) |
+| **Split Registry** | GCS subset uses `splits.jsonl` at GCS prefix root |
 | **Scripts** | 27 ISO 15924 scripts |
 | **Languages** | 198 OpenLID-v2 language varieties |
 | **File Format** | JPEG quality 95 |
@@ -94,7 +114,7 @@ v3 stores base images as **pristine** (no degradation or geometric transforms ap
 | Kore | 6,120 | ❌ -6,843 | Mymr | 5,787 | ❌ -7,176 | Tibt | 5,803 | ❌ -7,160 |
 | Sinh | 5,930 | ❌ -7,033 | Telu | 5,750 | ❌ -7,213 | Thai | 5,689 | ❌ -7,274 |
 
-**Total**: 350,012 | **Target per script**: 12,963 | **Scripts at/above target**: 10 | **Scripts below target**: 17
+**Total**: 190,485 GCS-confirmed | **Target per script**: 12,963 | **Scripts at/above target**: 10 | **Scripts below target**: 17
 
 ##### CJK Vertical Text (Tategaki) (Validated)
 
@@ -252,7 +272,7 @@ v3 serves as the single base from which all synthetic training datasets are deri
 
 | View | Count | Source Selection | Transforms | Output Size |
 |------|-------|-----------------|------------|-------------|
-| **Script Detection** | 350K (direct, GCS-confirmed) — ⚠️ requires rebalancing before training | All base images on GCS | None | Native DPI |
+| **Script Detection** | 190,485 GCS-confirmed — ⚠️ requires rebalancing before training | All base images on GCS | None | Native DPI |
 | **Orientation** | 50K | 12.5K x 4 rotations | Rotation + light degradation | 224px |
 | **Skew** | 50-80K synth + 19K natural | Stratified by script/DPI | Orient + skew(±45 deg, 42 bins) + hybrid degradation | 384px |
 | **Resolution Quality** | 30K | Stratified across 7 DPI | Char height measurement + light degradation | 224px |
@@ -263,9 +283,10 @@ v3 serves as the single base from which all synthetic training datasets are deri
 ##### Generation Commands
 
 ```bash
-# Target: 350K images (~2 days on 6-core Xeon). Target met at 350,012 images.
-# Note: Generator bug caused severe distribution imbalance (Arab 49K, 17 scripts below 12,963 target).
-# Rebalancing required before training use; do not regenerate from scratch.
+# Generation target was 350K images. A per-script pool exhaustion bug stopped generation at
+# 190,485 images (GCS-confirmed). This count is treated as final — do not regenerate from scratch.
+# Generator bug caused severe distribution imbalance (Arab 49K, 17 scripts below 12,963 target).
+# Rebalancing required before training use via prepare_multitask_datasets.py script sub-command.
 python scripts/generate_base_dataset_v3.py \
     --output-dir /path/to/synthetic_multiscript_v3 \
     --total-images 350000 \
@@ -292,8 +313,8 @@ python scripts/validate_base_dataset_v3.py \
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Total image count | PASS | 350,012 jpg images on GCS (confirmed 2026-02-21 by live gsutil ls count) |
-| Corrupt images | PASS | Each image has paired .json sidecar (350,012 pairs) |
+| Total image count | PASS | 190,485 GCS-confirmed jpg images (generation stopped at this count due to per-script pool exhaustion bug; treated as final) |
+| Corrupt images | PASS | Each image has paired .json sidecar (190,485 pairs) |
 | Script distribution | ⚠️ WARN | Severely imbalanced — Arab 49,169 (3.8x target), 17 scripts below 12,963 target. Rebalancing required. |
 | CJK vertical text | PASS | Jpan 30.0%, Hans 10.0%, Hant 10.2% |
 | Split registry | PASS | SHA256-keyed splits.jsonl at GCS prefix root |
@@ -312,6 +333,16 @@ python scripts/validate_base_dataset_v3.py \
 | Linux copy | `data/synthetic_250k/` | **DELETED** |
 
 All old dataset copies and metadata were removed to prevent confusion with v3.
+
+##### Pre-Training Checklist
+
+Before using this dataset for any training run, verify ALL of the following:
+
+- [ ] Arab script capped at <=13,000 images in the assembled split
+- [ ] All 17 previously under-represented scripts now meet their minimum floor
+- [ ] Split registry validation passes (no SHA256 collisions across train/val/test)
+- [ ] No MDIW13 images appear in val or test splits (MDIW13 = training-only)
+- [ ] Distribution imbalance check: no script exceeds 3x its proportional budget
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 dataset_id: wsrd
 version: "1.0"
-license: Unspecified
+license: CC-BY-NC-SA-4.0
 commercial_use: false
 iqa_profiles:
   - shadow
@@ -17,7 +17,7 @@ documentation_status: partial
 
 > **Quick Stats**: ~1,200 images | Camera-captured | Shadow + shadow-free GT pairs | NTIRE challenge
 >
-> **License**: Unspecified | **Commercial Use**: Unknown (verify with authors)
+> **License**: CC-BY-NC-SA-4.0 | **Commercial Use**: No (academic research only; contact Computer Vision Lab, University of Wurzburg for commercial use)
 
 ##### 1. Overview
 
@@ -29,7 +29,7 @@ documentation_status: partial
 | **Maintainer** | Florin Vasluianu et al. |
 | **Paper** | [NTIRE 2023/2024 Document Shadow Removal Challenge](https://github.com/fvasluianu97/WSRD-DNSR) |
 | **Repository** | [GitHub: fvasluianu97/WSRD-DNSR](https://github.com/fvasluianu97/WSRD-DNSR) |
-| **License** | Unspecified (NTIRE challenge dataset; verify with organizers) |
+| **License** | CC-BY-NC-SA-4.0 (per GitHub README; academic research only) |
 | **Documentation Status** | Partial |
 
 #### 2. Source Data Inventory
@@ -401,3 +401,64 @@ Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enric
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~1,200 | Synthetic rotation | Documents are at canonical orientation; synthetic 90°/180°/270° rotation augmentation viable |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No skew angle ground truth; camera capture may have minor tilt but not annotated |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | - | - | No resolution quality labels; PNG format but no DPI metadata |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~1,200 | Inferred | Target (shadow-free) images serve as high-quality, low-blur examples |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~1,200 | Inferred | Camera-captured input images have incidental noise; target images are clean reference |
+| SIG-G1-3 | contrast_score | ✅ Primary | ~1,200 | Paired GT | Shadow regions cause measurable contrast loss; PSNR/SSIM delta between input/target quantifies this |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | skew_score is a quality degradation metric (0-1); not annotated |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | PNG format; no JPEG compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~1,200 | Paired GT | Input/target pairs enable overall quality contrast; shadow-free target = high quality anchor |
+| SIG-G2-1 | script_cls | ➖ Negatives only | ~1,200 | Inferred Latin | 100% Latin (en) per stats; useful as Latin examples only |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~1,200 | Synthetic rotation | Canonical orientation images; rotation augmentation applicable |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No sub-degree skew angle ground truth |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~1,200 | Inferred | Printed documents with cast shadows; no handwriting content present |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~1,200 | Inferred | Printed documents → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~1,200 | Hard label | 100% camera_smartphone per stats; input images are camera captures |
+| SIG-G5-2 | shadow_reg | ✅ Primary | ~1,200 | Paired GT (derivable) | Core shadow removal dataset; paired shadow/shadow-free images enable PSNR/SSIM-based severity derivation; no direct 0-1 severity label but pixel-difference method yields reliable proxy |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | - | - | No geometric distortion; documents are flat with cast shadows only |
+| SIG-G5-4 | code_cls | ❌ Not applicable | - | - | Mixed printed documents; no code content annotations |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ Not applicable | - | - | No resolution quality labels |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ➖ Latin only | 100% Latn (en) per stats; NTIRE challenge dataset implies English-dominant documents |
+| 2 | Capture method | ✅ Well-covered | 100% camera_smartphone (~1,200 input images); target images are digital references |
+| 3 | Document domain | 🟡 Partial | 100% GENERAL; mixed printed documents with controlled shadow placement |
+| 4 | Layout type | ❌ Not present | No layout annotations extracted |
+| 5 | Text density | ❌ Not present | No text density labels; variable across mixed document types |
+| 6 | Degradation types | ✅ Well-covered | Shadow (cast), illumination gradients, contrast reduction; paired GT enables severity derivation |
+| 7 | Resolution/DPI range | ❌ Not present | PNG images; no DPI metadata in L2 |
+| 8 | Document age | ❌ Not present | No document age annotations; modern documents implied |
+| 9 | Text scope | 🟡 Partial | 100% page-level scope per stats |
+| 10 | Content flags | ❌ Not present | No content flags in L2 metadata |
+| 11 | Binarization status | ❌ Not present | RGB color documents; not binarized |
+| 12 | Artifact types | ✅ Well-covered | Shadow degradation well-represented; NTIRE challenge diversity (controlled placement, variable intensity) |
+| 13 | Color mode | 🟡 Partial | RGB per stats; mixed document types imply color and grayscale content but not labeled |
+| 14 | Font variety | ❌ Not present | No font annotations |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+WSRD is a primary contributor to the `shadow_reg` head (SIG-G5-2) and `capture_method_cls` head (SIG-G5-1), providing ~1,200 paired shadow/shadow-free document images from the NTIRE 2023/2024 challenge benchmark. Shadow severity scores must be derived from the paired GT via pixel-difference metrics (e.g., PSNR/SSIM) since no direct 0-1 severity label is provided; this derivation is straightforward given the high-quality paired structure. The dataset is smaller than SD7K (~1,200 vs ~7,239 pairs) but offers a pre-split train/val/test structure and established NTIRE benchmark credentials. License is unspecified (NTIRE challenge terms may apply); verify with challenge organizers before non-research use.

@@ -503,3 +503,64 @@ normalized_score = (5 - human_score) / 4
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/ocr-quality/](../../scripts/audit/results/ocr-quality/)
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ Not applicable | - | - | No orientation labels; born-digital/scanned pages at standard orientation |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No skew angle labels provided |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~1,000 | Derived from human_score | Human quality score correlates with resolution adequacy; normalize (5-score)/4.0; SRCC to DPI-based RQ uncertain |
+| SIG-G1-1 | blur_score | ❌ Not applicable | - | - | No blur-specific labels; overall quality score conflates all degradation types |
+| SIG-G1-2 | noise_score | ❌ Not applicable | - | - | No noise-specific labels |
+| SIG-G1-3 | contrast_score | ❌ Not applicable | - | - | No contrast-specific labels |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | No skew degradation labels |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | No compression artifact labels |
+| SIG-G1-6 | overall_quality | ✅ Primary | 1,000 | Human annotation (inverted) | Human crowd-scored 1–4 scale; normalize to 0–1 via (5-score)/4.0; 81.2% Tier1+2, 18.8% degraded; use for cross-validation against DeQA-Doc predictions |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~738 | Estimated from source | Hans ~50.2% + Latin ~23.6%; remaining ~26.2% unverified — run language detection enrichment before use |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~1,000 | Inferred | All samples are digital/scanned printed documents; useful as NONE-class negatives |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ❌ Not applicable | - | - | No handwriting presence regression labels |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting legibility labels |
+| SIG-G5-1 | capture_method_cls | ❌ Not applicable | - | - | Capture method unknown per L2; mixed born-digital/scanned but unverified — cannot provide reliable labels |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | - | - | No shadow labels; digital/scanned documents |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | - | - | No warping labels; 300 DPI standard scan/digital |
+| SIG-G5-4 | code_cls | ❌ Not applicable | - | - | No code detection labels; textbook/paper content only |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | 🟡 Secondary | ~1,000 | Derived from human_score | Same as MNV4-H3; human quality score as weak RQ proxy; CRITICAL: invert scale before use |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 Partial | Han (CJK) ~50.2%, Latin ~23.6%, Mixed/Unknown ~26.2%; no Arabic, Cyrillic, or Indic confirmed |
+| 2 | Capture method | ❌ Not present | Unknown per L2; mix inferred from sources (zhishilei/baiyun = likely born-digital; theeye-pdf/escholarship = born-digital); no reliable labels |
+| 3 | Document domain | 🟡 Partial | General documents — textbooks (50.2%), academic papers (23.6%), e-books, mixed; 12.9% UNK per L2 audit (D01) |
+| 4 | Layout type | ❌ Not present | No layout annotations; D02 defect (open) — DocLayout-YOLO not yet run |
+| 5 | Text density | ❌ Not present | No text density labels; 300 DPI standard pages with high text density inferred |
+| 6 | Degradation types | 🟡 Partial | Quality tiers 3–4 represent degraded documents (18.8%); no explicit degradation type labels (blur/noise/etc.) |
+| 7 | Resolution/DPI range | 🟡 Partial | 830–9230 × 1063–12313 px at 300 DPI; consistent resolution; no DPI variance |
+| 8 | Document age | ❌ Not present | Contemporary documents (2025 release); no historical or aged content |
+| 9 | Text scope | ❌ Not present | No text scope labels; D03 defect (deferred) — no text transcription labels in L2 |
+| 10 | Content flags | ❌ Not present | No content flag labels in L2; D02 open (no layout detections) |
+| 11 | Binarization status | ❌ Not present | All images RGB; no binarized samples |
+| 12 | Artifact types | 🟡 Partial | Tier 3–4 quality samples represent OCR-impeding artifacts; no explicit artifact type categorization |
+| 13 | Color mode | 🟡 Partial | 100% RGB per L2; no color mode diversity |
+| 14 | Font variety | 🟡 Partial | Mix of CJK typefaces (Chinese textbooks) and Latin fonts (English papers); no font metadata available |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+OCR-Quality's primary contribution is the SIG-G1-6 overall_quality head, providing 1,000 human-annotated quality scores that serve as an independent cross-validation source for DeQA-Doc predictions — the SRCC target is >0.80 against this dataset. The dataset is CC0 (public domain) with unrestricted commercial use, making it one of the most license-friendly in the corpus. Key constraints are its small size (1,000 images), the inverted 1-best/4-worst scoring scale that requires normalization before any training use, and the unknown capture method that limits its utility for SIG-G5-1; it should be treated as a validation and calibration dataset rather than a primary training source for any head other than overall_quality.

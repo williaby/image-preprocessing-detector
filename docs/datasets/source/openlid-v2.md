@@ -368,3 +368,59 @@ This corpus feeds the `synth-multiscript-250k` synthetic dataset (see TRAINING_D
 - **POC Script**: `scripts/poc_openlid_v2.py`
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | 0 | N/A | Text-only corpus — no images |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | Text-only corpus — no images |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | N/A | Text-only corpus — no images |
+| SIG-G1-1 | blur_score | ❌ | 0 | N/A | No images; feeds synth-multiscript-v3 as text source |
+| SIG-G1-2 | noise_score | ❌ | 0 | N/A | No images |
+| SIG-G1-3 | contrast_score | ❌ | 0 | N/A | No images |
+| SIG-G1-4 | skew_score | ❌ | 0 | N/A | No images |
+| SIG-G1-5 | compression_score | ❌ | 0 | N/A | No images |
+| SIG-G1-6 | overall_quality | ❌ | 0 | N/A | No images |
+| SIG-G2-1 | script_cls | ❌ | 0 | N/A | Indirect: ISO 15924 codes drive font selection in synth-multiscript-v3 (see §13.3) |
+| SIG-G3-1 | orientation_cls | ❌ | 0 | N/A | No images |
+| SIG-G3-2 | skew_reg | ❌ | 0 | N/A | No images |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | N/A | No images |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No images |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No images |
+| SIG-G4-4 | presence_reg | ❌ | 0 | N/A | No images |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No images |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | N/A | No images |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | N/A | No images |
+| SIG-G5-3 | warping_reg | ❌ | 0 | N/A | No images |
+| SIG-G5-4 | code_cls | ❌ | 0 | N/A | No images |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | N/A | No images |
+
+Contribution legend: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ | No visual images; 27 ISO 15924 scripts present in text only |
+| 2 | Capture method | ❌ | No images |
+| 3 | Document domain | ❌ | Wikipedia/web text — not document images |
+| 4 | Layout type | ❌ | No images |
+| 5 | Text density | ❌ | 5-level character density categorized but no images |
+| 6 | Degradation types | ❌ | No images |
+| 7 | Resolution/DPI range | ❌ | No images |
+| 8 | Document age | ❌ | No images |
+| 9 | Text scope | ❌ | Sentence-level text but no visual counterpart |
+| 10 | Content flags | ❌ | No images |
+| 11 | Binarization status | ❌ | No images |
+| 12 | Artifact types | ❌ | No images |
+| 13 | Color mode | ❌ | No images |
+| 14 | Font variety | ❌ | No images |
+
+Coverage: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+OpenLID-v2 is a **text-only corpus** (116M+ samples, 201 language-script pairs, 27 ISO 15924 scripts) with no image component and no direct contribution to any of the 22 training heads. Its critical role in the pipeline is as an indispensable upstream text source for `synth-multiscript-v3`: its ISO 15924 codes drive script-aware font selection and rendering, producing the 190K+ synthetic images that directly contribute to SIG-G2-1 (`script_cls`) training. MIT license permits unrestricted commercial use. No traditional parser or download is required — accessed via HuggingFace streaming API through `TextCorpusManager` with three-tier local/GCS/streaming caching.

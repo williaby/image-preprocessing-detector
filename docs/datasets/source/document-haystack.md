@@ -365,3 +365,55 @@ document-haystack/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ | 0 | — | Benchmark reserved; CC-BY-NC-4.0 prohibits training use |
+| MNV4-H2 | skew_reg | ❌ | 0 | — | Benchmark reserved; text-only dataset with no page images |
+| MNV4-H3 | resolution_quality_reg | ❌ | 0 | — | Benchmark reserved; no image data for quality measurement |
+| SIG-G1-1 | blur_score | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G1-2 | noise_score | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G1-3 | contrast_score | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G1-4 | skew_score | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G1-6 | overall_quality | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G2-1 | script_cls | ❌ | 0 | — | Benchmark reserved; English-only (Latin), no script diversity |
+| SIG-G3-1 | orientation_cls (post) | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | — | No page images; text-only retrieval benchmark |
+| SIG-G4-1 | handwriting_presence_cls | ❌ | 0 | — | No page images; born-digital text documents with no handwriting |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | No page images; born-digital text documents with no handwriting |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | No page images; born-digital text documents with no handwriting |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | No page images; born-digital text documents with no handwriting |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | No page images; born-digital text documents with no handwriting |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | — | Benchmark reserved; born_digital only, no visual capture diversity |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | No page images; no shadow artifacts possible in born-digital text |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | No page images; no warping artifacts possible in born-digital text |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | Benchmark reserved; research papers/manuals may contain code but dataset is text-only |
+| SIG-G5-5 | resolution_quality_reg | ❌ | 0 | — | No page images; not applicable to text-only content |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | English only (Latin script); no multilingual or multi-script content |
+| 2 | Capture method | ❌ | Born-digital only (programmatic extraction from PDFs/TXT); no scanning or camera samples |
+| 3 | Document domain | ❌ | Multi-domain (research papers, technical reports, manuals, articles) but domain metadata not fully documented; no structured domain labels available |
+| 4 | Layout type | ❌ | Not applicable; text-only benchmark with no visual layout analysis |
+| 5 | Text density | ❌ | Not applicable as a training dimension; all documents are long-form (10K–100K+ chars) by design |
+| 6 | Degradation types | ❌ | No degradation; clean born-digital text with occasional PDF extraction artifacts only |
+| 7 | Resolution/DPI range | ❌ | Not applicable; text-only dataset, no image DPI metadata |
+| 8 | Document age | ❌ | Modern only (2020s publications); no historical documents |
+| 9 | Text scope | ❌ | Document-level only; benchmark uses full document context for retrieval |
+| 10 | Content flags | ❌ | Not applicable; no visual content flags (tables, figures, formulas) extractable from this dataset |
+| 11 | Binarization status | ❌ | Not applicable; text-only dataset with no image data |
+| 12 | Artifact types | ❌ | No visual artifacts; occasional PDF text extraction errors only |
+| 13 | Color mode | ❌ | Not applicable; no image data |
+| 14 | Font variety | ❌ | Not applicable; text extracted as plain string without font metadata |
+
+### 13.3 Corpus Role & Constraints
+
+Document Haystack is a **benchmark-only text-retrieval corpus** with no page image data, making it inapplicable to every visual training head in the pipeline. The CC-BY-NC-4.0 license prohibits training use, and the dataset's design as a long-context retrieval benchmark (400 documents, 8,250 queries) reserves it exclusively for RAG pipeline evaluation (Phase 10). No parser has been implemented yet, and no Layer 2 metadata exists for this dataset.
