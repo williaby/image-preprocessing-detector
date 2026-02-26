@@ -46,7 +46,15 @@ Example:
     5
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "docsynth"
+__l4_workstream__ = "WS3"
+__l4_task__ = "layout"
+__l4_l2_file__ = "docsynth_metadata.json"
+
 
 import logging
 from pathlib import Path

@@ -46,7 +46,16 @@ Example:
     hi
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "mdiw13"
+__l4_workstream__ = "WS3"
+__l4_task__ = "multilingual"
+__l4_l2_file__ = "mdiw13_metadata.json"
+__l4_integrate__ = "scripts/integrate_mdiw13_enrichments.py"
+
 
 import logging
 import re

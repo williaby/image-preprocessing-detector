@@ -50,7 +50,16 @@ Example:
     15  # Number of layout elements detected
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "rvl-cdip"
+__l4_workstream__ = "WS3"
+__l4_task__ = "document"
+__l4_l2_file__ = "rvl_cdip_metadata.json"
+__l4_integrate__ = "scripts/integrate_rvl_cdip_enrichments.py"
+
 
 import json
 import logging

@@ -71,10 +71,13 @@ from .mdiw13 import Mdiw13Parser
 from .mle2e import Mle2eParser
 from .mlt19 import Mlt19Parser
 from .multilingual_scripts import MultilingualScriptsParser
+from .ndl_docl import NdlDoclParser
 from .nepali_handwritten import NepaliHandwrittenParser
+from .pdmocr import PdmocrParser
 from .siw13 import Siw13Parser
 from .synth_multiscript import SynthMultiscriptParser
 from .tibhcr import TibhcrParser
+from .vjroda import VjrodaParser
 from .yarmouk import YarmoukParser
 
 
@@ -100,6 +103,9 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     registry.register(HiertextParser())
     registry.register(SynthMultiscriptParser())
     registry.register(JssodaParser())
+    registry.register(VjrodaParser())
+    registry.register(NdlDoclParser())
+    registry.register(PdmocrParser())
 
 
 __all__ = [
@@ -114,10 +120,13 @@ __all__ = [
     "Mle2eParser",
     "Mlt19Parser",
     "MultilingualScriptsParser",
+    "NdlDoclParser",
     "NepaliHandwrittenParser",
+    "PdmocrParser",
     "Siw13Parser",
     "SynthMultiscriptParser",
     "TibhcrParser",
+    "VjrodaParser",
     "YarmoukParser",
     "register_multilingual_parsers",
 ]

@@ -1,5 +1,16 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
+
+
+# --- Level 4 registry metadata ---
+from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "hasy"
+__l4_workstream__ = "WS3"
+__l4_task__ = "handwriting"
+__l4_l2_file__ = "hasy_metadata.json"
+__l4_integrate__ = "scripts/integrate_hasy_enrichments.py"
 r"""Parser for HASYv2 (Handwritten Symbol) dataset.
 
 This parser extracts symbol class labels from the HASYv2 CSV files.
@@ -49,7 +60,6 @@ Example:
     'A'
 """
 
-from __future__ import annotations
 
 import csv
 import logging

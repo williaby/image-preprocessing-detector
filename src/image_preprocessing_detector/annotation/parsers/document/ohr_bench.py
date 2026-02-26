@@ -61,7 +61,16 @@ Example:
     85.5
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "ohr-bench"
+__l4_workstream__ = "WS3"
+__l4_task__ = "document"
+__l4_l2_file__ = "ohr_bench_metadata.json"
+__l4_integrate__ = "scripts/integrate_ohr_bench_enrichments.py"
+
 
 import logging
 from pathlib import Path

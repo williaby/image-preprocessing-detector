@@ -45,7 +45,16 @@ Example:
     ['Arabic', 'Latin']
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "mlt19"
+__l4_workstream__ = "WS3"
+__l4_task__ = "multilingual"
+__l4_l2_file__ = "mlt19_metadata.json"
+__l4_integrate__ = "scripts/integrate_mlt19_enrichments.py"
+
 
 import logging
 from pathlib import Path

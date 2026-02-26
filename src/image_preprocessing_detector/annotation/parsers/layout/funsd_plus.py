@@ -44,7 +44,16 @@ Example:
     answer
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "funsd-plus"
+__l4_workstream__ = "WS3"
+__l4_task__ = "layout"
+__l4_l2_file__ = "funsd_plus_metadata.json"
+__l4_integrate__ = "scripts/integrate_funsd_plus_enrichments.py"
+
 
 import json
 import logging

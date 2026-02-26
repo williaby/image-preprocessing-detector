@@ -1,5 +1,16 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
+
+
+# --- Level 4 registry metadata ---
+from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "im2latex"
+__l4_workstream__ = "WS3"
+__l4_task__ = "formula"
+__l4_l2_file__ = "im2latex_metadata.json"
+__l4_integrate__ = "scripts/integrate_im2latex_enrichments.py"
 r"""Parser for im2latex-100k formula dataset.
 
 im2latex-100k provides rendered LaTeX formulas from ArXiv papers with
@@ -65,7 +76,6 @@ Example:
     'train'
 """
 
-from __future__ import annotations
 
 import logging
 import re

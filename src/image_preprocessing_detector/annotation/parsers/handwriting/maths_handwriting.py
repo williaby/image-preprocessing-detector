@@ -30,7 +30,16 @@ Example:
     'train'
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "mathverse"
+__l4_workstream__ = "WS3"
+__l4_task__ = "handwriting"
+__l4_l2_file__ = "mathverse_metadata.json"
+__l4_integrate__ = "scripts/integrate_mathverse_enrichments.py"
+
 
 from pathlib import Path
 from typing import Any

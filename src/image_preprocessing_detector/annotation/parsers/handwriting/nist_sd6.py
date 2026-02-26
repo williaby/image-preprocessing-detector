@@ -55,7 +55,16 @@ Example:
     'census'
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "nist-sd6"
+__l4_workstream__ = "WS3"
+__l4_task__ = "handwriting"
+__l4_l2_file__ = "nist_sd6_metadata.json"
+__l4_integrate__ = "scripts/integrate_nist_sd6_enrichments.py"
+
 
 import logging
 from pathlib import Path

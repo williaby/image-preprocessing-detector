@@ -46,7 +46,16 @@ Example:
     4.5
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "smartdoc-qa"
+__l4_workstream__ = "WS3"
+__l4_task__ = "quality"
+__l4_l2_file__ = "smartdoc_qa_metadata.json"
+__l4_integrate__ = "scripts/integrate_smartdoc_qa_enrichments.py"
+
 
 import logging
 import re
