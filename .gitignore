@@ -215,3 +215,6 @@ pal_generated.code
 rag_architecture.png
 .annotate_progress.json
 .coveragerc-ml
+
+# Binary planning documents (use .md equivalents instead)
+*.docx
