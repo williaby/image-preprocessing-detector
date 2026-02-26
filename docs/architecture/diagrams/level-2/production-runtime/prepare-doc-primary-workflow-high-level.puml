@@ -58,7 +58,7 @@ partition "IQA Analysis" {
   :Classical IQA\n(blur, noise, contrast, skew);
   :MobileNetV4-Conv-S\npre-correction (3 heads:\norientation, skew, resolution);
   :Apply pre-corrections\n(orientation, deskew, resolution);
-  :SigLIP 2 NAFlex\nmulti-task analysis\n(22 heads, 5 groups);
+  :SigLIP 2 NAFlex\nmulti-task analysis\n(19 heads, 5 groups);
   if (Low confidence heads?) then (yes)
     :Classical fallback\n(6 head-specific rules);
   endif
@@ -138,5 +138,11 @@ note right
 end note
 
 stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

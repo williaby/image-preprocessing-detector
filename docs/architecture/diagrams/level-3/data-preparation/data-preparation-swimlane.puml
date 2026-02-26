@@ -111,7 +111,7 @@ fork again
 
     **Models**:
     - MobileNetV4-Conv-S (~3ms, 3 heads)
-    - SigLIP 2 NAFlex (~50ms, 22 heads)
+    - SigLIP 2 NAFlex (~50ms, 19 heads)
 
     **Features**:
     - Quality score predictions
@@ -333,5 +333,10 @@ legend right
   **Level 3 Documentation**
   **Generated: 2026-02-22**
 endlegend
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/data-preparation/index.md
+'   └─ prepare-doc-training-data-ingestion.puml  (WS3 primary)
 
 @enduml

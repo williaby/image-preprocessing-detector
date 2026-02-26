@@ -305,4 +305,13 @@ note right
   [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
 end note
 
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS4 Swimlane: docs/architecture/diagrams/level-3/pseudo-labeling/pseudo-labeling-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
 @enduml

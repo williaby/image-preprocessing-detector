@@ -49,6 +49,12 @@ partition "Step 2: SigLIP 2 NAFlex Multi-Task" {
   G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality reg);
   :Train on all 10 datasets\n(frozen backbone, heads only);
   :Weighted multi-task loss\n(per-group weights);
+  note right
+    Phased training schedule (4 phases):
+    warmup → expand → full → refine.
+    See: prepare-doc-siglip2-phased-training.puml
+    Source: docs/planning/TRAINING_OPTIMIZATION_PLAN.md
+  end note
   if (All heads pass\ngraduation thresholds?) then (yes)
     :Save SigLIP 2\nmulti-task checkpoint;
   else (no)
@@ -112,5 +118,11 @@ note right
 end note
 
 stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

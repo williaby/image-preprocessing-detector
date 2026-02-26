@@ -28,13 +28,16 @@ This level provides the complete system architecture for Prepare-Doc (image-dete
 
 ## Prepare-Doc Overview
 
-Prepare-Doc serves as the "front door" for the RAG document pipeline, responsible for:
+Prepare-Doc receives all non-audio files directly from Ingest. Its first internal step is **Stage 0 — Document Type Router** — which classifies the file and assigns it to a processing track. Prepare-Doc is responsible for:
 
-- **Document ingestion** and page extraction
-- **Image Quality Assessment** (IQA) using classical CV and ML models
-- **Layout detection** with Docling layout models (egret-xlarge / heron, 11+ DocLayNet classes)
-- **Corrections** (deskew, CLAHE, denoising)
+- **Stage 0 — Document Type Router** (first step): MIME detection, PDF sub-classification, text-layer quality validation; assigns each file to one of six tracks: `native_text`, `image_only`, `born_digital`, `born_digital_degraded`, `scanned`, `hybrid`. PDFs with a text layer that fail quality validation (word recognition rate, character entropy, text/image layer overlap) are reclassified as `born_digital_degraded` and routed to the image pipeline rather than the fast path.
+- **Pre-Correction Pipeline** (Steps 1–4): Rasterization (PDFs only, 300 DPI fallback), lossless PNG conversion, MobileNetV4-Conv-S pre-correction gate (3 heads: orientation, skew, resolution quality), geometric corrections + border removal, adaptive resolution
+- **Image Quality Assessment** (IQA) using classical CV (8 detectors) and SigLIP 2 NAFlex multi-task model (19 heads) — runs on corrected, lossless images
+- **Layout detection** with Docling layout models (egret-xlarge / heron, 11+ DocLayNet classes) — conditional on text gate result
+- **Quality Corrections** (CLAHE, sharpening, denoising) — applied *after* IQA measurement to preserve original quality scores for DQS/routing decisions
 - **Document Quality Score** calculation and routing recommendations
+
+> **Note**: Audio/video files bypass Prepare-Doc entirely — Ingest routes them directly to Prepare-Audio. Stage 0 is the first step *inside* Prepare-Doc, not a separate upstream service.
 
 ---
 
@@ -44,15 +47,24 @@ Prepare-Doc is organized into eight interconnected workstreams:
 
 ### 1. Production Runtime (Green)
 
-The live processing pipeline that handles incoming documents. This is the only workstream that performs DPI normalization (to 300 DPI).
+The live processing pipeline that handles incoming documents end-to-end, from document routing through quality analysis to corrected output.
 
-| Component | Purpose |
-|-----------|---------|
-| Ingestion & Pre-flight | DPI detection, PDF upscaling to 300 DPI, page extraction |
-| Classification & Routing | PDF type classification, text gate |
-| Quality Analysis | Classical IQA (7 detectors), MobileNetV4-Conv-S pre-correction (3 heads), SigLIP 2 NAFlex multi-task (16 heads, 5 groups) |
-| Layout Analysis | Docling layout models: egret-xlarge (accuracy) / heron (speed), 11+ DocLayNet classes |
-| Correction & Scoring | Deskew, CLAHE, denoising, DQS calculation, routing |
+> **Upstream context**: Ingest routes audio/video directly to Prepare-Audio. All other file types (native text, images, PDFs) come here. Stage 0 is the **first component inside Production Runtime** — it is not a separate upstream service.
+
+| Step | Component | Purpose |
+|------|-----------|---------|
+| Stage 0 | Document Type Router | MIME detect, PDF sub-classify, text-layer quality validation (<20ms CPU); assigns to `native_text`, `image_only`, `born_digital`, `born_digital_degraded`, `scanned`, or `hybrid` track |
+| 1 | Rasterization | PDFs only — use embedded DPI if ≥ 150 DPI, otherwise 300 DPI fallback; images pass through |
+| 1b | Lossless Conversion | Convert all inputs to PNG; eliminates JPEG block artifacts before any ML analysis |
+| 2 | MobileNetV4-Conv-S Pre-Correction Gate | ~3ms GPU; 3 heads: orientation (4-class + confidence), skew angle, resolution quality |
+| 3 | Geometric Corrections + Border Removal | Rotate (if orient_conf ≥ 90%), deskew, crop scanner-bed borders |
+| 4 | Adaptive Resolution | Use resolution quality score from Step 2 to upscale if below target (32-48px character height); safety rails: 150 DPI floor, 600 DPI ceiling |
+| 5 | Text Gate | Fast ensemble heuristics (<10ms) on corrected, lossless image; blank page → early exit |
+| 6a | Classical IQA | 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew); measures original quality |
+| 6b | SigLIP 2 NAFlex Multi-Task | ~50ms GPU; 19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs. Group 3 (Orientation+Skew) and Group 5 (Resolution quality) duplicate MobileNetV4 outputs intentionally — for teacher-signal distillation back to MobileNetV4, prediction validation/discrepancy flagging, CPU-only single-pass fallback, and self-consistency checking. |
+| 6c | Layout Analysis | Docling layout models: egret-xlarge (accuracy) / heron (speed), 11+ DocLayNet classes; conditional on text gate |
+| 7 | Quality Corrections | CLAHE, sharpening, denoising — applied *after* IQA measurement so scores reflect original quality |
+| 8 | DQS + Routing | Document Quality Score (degradation + structural complexity) and OCR routing recommendation |
 
 ### 2. Production Model Training (Blue)
 
@@ -60,8 +72,8 @@ Training and optimization of models used in Production Runtime (Workstream 1). I
 
 | Model | Architecture | Purpose |
 |-------|--------------|---------|
-| Pre-Correction | MobileNetV4-Conv-S (~3ms, 3 heads) | Fast orientation, skew, resolution quality for pre-correction |
-| Multi-Task Analysis | SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups) | Full document analysis: IQA, script, orientation/skew, handwriting, page attrs |
+| Pre-Correction | MobileNetV4-Conv-S (~3ms, 3 heads) | Fast orientation (4-class), skew angle, resolution quality — runs before SigLIP 2 so corrections apply first |
+| Multi-Task Analysis | SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups) | Full document analysis: IQA, script (refinement), orientation+skew (verification), handwriting, page attrs |
 | Layout (Accuracy) | docling-layout-egret-xlarge | Layout detection (11+ DocLayNet classes, accuracy-optimized) |
 | Layout (Speed) | docling-layout-heron | Layout detection (11+ DocLayNet classes, speed-optimized) |
 
@@ -268,7 +280,7 @@ Prepare-Doc (Prepare-Doc) outputs are consumed by three downstream projects in t
 **Key Handoff Artifacts**:
 
 - **DocumentMetadata.json**: Quality scores, layout summary, routing recommendations (`OCR_FAST`, `OCR_ADVANCED`, `VISION_SIMPLE`, `VISION_STRUCTURED`)
-- **Corrected Images**: Deskewed, CLAHE-enhanced, 300 DPI normalized PNG files
+- **Corrected Images**: Deskewed, CLAHE-enhanced PNG files at script-aware adaptive resolution (character-height optimized, 150-600 DPI safety rails)
 - **PDF Type**: Classification enum (`image_only`, `born_digital`, `hybrid`)
 - **Document Quality Score (DQS)**: 0-1 composite score (degradation + structural complexity)
 - **Pre-OCR Risk**: 0-1 risk score for OCR failure likelihood
@@ -282,7 +294,7 @@ See [Downstream Context](../level-2/downstream-context/index.md) for detailed wo
 | Level | Diagram | Description |
 |-------|---------|-------------|
 | **Level 0** | [RAG Pipeline Overview](../level-0/index.md) | Multi-project pipeline context |
-| **Level 1** | [Workflow Hierarchy](workflow-hierarchy.md) | Swimlane data flow |
+| **Level 1** | [Workflow Hierarchy](PREPARE_DOC_WORKFLOW_HIERARCHY.svg) | Swimlane data flow |
 | **Level 2** | [Production Runtime](../level-2/production-runtime/index.md) | Runtime workflow details |
 | **Level 2** | [Model Training](../level-2/model-training/index.md) | Training pipeline |
 | **Level 2** | [Data Preparation](../level-2/data-preparation/index.md) | Dataset ingestion |

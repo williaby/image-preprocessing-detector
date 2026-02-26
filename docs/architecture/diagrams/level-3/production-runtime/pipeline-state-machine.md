@@ -262,9 +262,9 @@ state SIGLIP2_ANALYSIS {
   DeviceSelection2 --> [*] : All devices unavailable
 }
 SIGLIP2_ANALYSIS : **Entry**: Confidence check complete, multi-task analysis needed
-SIGLIP2_ANALYSIS : **Exit**: SigLIP 2 NAFlex inference complete (16 heads, 5 groups)
+SIGLIP2_ANALYSIS : **Exit**: SigLIP 2 NAFlex inference complete (19 heads, 5 groups)
 SIGLIP2_ANALYSIS : **Timeout**: 200s
-SIGLIP2_ANALYSIS : **Model**: SigLIP 2 NAFlex, 88M params, 16 heads across 5 groups
+SIGLIP2_ANALYSIS : **Model**: SigLIP 2 NAFlex, 88M params, 19 heads across 5 groups
 SIGLIP2_ANALYSIS : **Groups**: IQA, Script, Orientation+Skew, Handwriting, Page Attrs
 SIGLIP2_ANALYSIS : **Performance**: ~50ms (GPU), ~150ms (CPU)
 SIGLIP2_ANALYSIS : **Source**: detection/iqa_ml.py (1,303 lines)
@@ -444,7 +444,7 @@ stateDiagram-v2
 
     note right of SIGLIP2_ANALYSIS
         SigLIP 2 NAFlex:
-        16 heads, 5 groups, ~50ms GPU
+        19 heads, 5 groups, ~50ms GPU
         IQA, Script, Orient, Handwriting, PageAttrs
     end note
 
@@ -479,7 +479,7 @@ stateDiagram-v2
 | **MOBILENET_PRECORRECTION** | Layout complete | MobileNetV4-Conv-S inference complete (3 heads) | PRE_CORRECTION | ~3ms (GPU), 8-12ms (CPU) |
 | **PRE_CORRECTION** | MobileNetV4 complete | Orientation/skew/resolution corrections applied | CONFIDENCE_CHECK | 10-20ms |
 | **CONFIDENCE_CHECK** | Pre-correction complete | Per-head confidence evaluated | SIGLIP2_ANALYSIS or CORRECTION | 1-5s |
-| **SIGLIP2_ANALYSIS** | Multi-task analysis needed | SigLIP 2 NAFlex inference complete (16 heads) | CORRECTION | ~50ms (GPU), ~150ms (CPU) |
+| **SIGLIP2_ANALYSIS** | Multi-task analysis needed | SigLIP 2 NAFlex inference complete (19 heads) | CORRECTION | ~50ms (GPU), ~150ms (CPU) |
 | **CORRECTION** | IQA complete | Corrections applied | DQS_CALCULATION | 20-50s |
 | **DQS_CALCULATION** | Corrections complete | DQS computed | ROUTING | 5-10s |
 | **ROUTING** | DQS computed | Routing recommendation generated | OUTPUT | 1-5s |

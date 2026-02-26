@@ -69,8 +69,8 @@ Four agents ran in parallel to resolve remaining Medium and Low-priority items.
 | `prepare-doc-training-workflow-high-level.puml` | Full traceability block added (referencing `modal/train_siglip2_multitask.py`, `modal/train_skew_estimator.py`, ADRs) |
 | `prepare-doc-training-workflow-v2.puml` | Visible `#FFCCCC` LEGACY banner added; full traceability with SUPERSEDED BY section |
 | `prepare-doc-training-workflow-test-coverage.puml` | LEGACY banner on Phase 3 ResNet section; traceability block added |
-| `prepare-doc-distillation.puml` | Documentation and ADR sections added to existing note; 22 heads confirmed correct |
-| `prepare-doc-training-infrastructure.puml` | "19 heads" → "22 heads"; Scripts/Documentation/ADR sections added |
+| `prepare-doc-distillation.puml` | Documentation and ADR sections added to existing note; head count subsequently corrected to 19 (see Feb 2026 correction) |
+| `prepare-doc-training-infrastructure.puml` | "19 heads" → "22 heads" (at audit time); subsequently corrected back to 19 heads (see Feb 2026 correction — 22 was wrong: Script[1] not [3], Orient+Skew[2] not [3]) |
 | `metadata-schema-architecture.puml` (data-prep) | Stale `docs/DATASET_CATALOG.md` → `docs/datasets/README.md` |
 
 #### Agent 3: Pseudo-Labeling, Downstream-Context, Data-Preparation (14 files)

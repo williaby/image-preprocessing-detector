@@ -99,7 +99,7 @@ partition "IQA Analysis" {
     **LEGACY (Phase 3): ResNet-18/50 architecture**
     **superseded by MobileNetV4-Conv-S + SigLIP 2**
     **NAFlex two-model pipeline.**
-    Current: MobileNetV4 (3ms) + SigLIP 2 (50ms, 22 heads)
+    Current: MobileNetV4 (3ms) + SigLIP 2 (50ms, 19 heads)
 
     **Tests (Phase 3 legacy):**
     - test_iqa_ml.py (15 tests)
@@ -220,5 +220,11 @@ legend right
   | <#LightBlue> | Future phase (not implemented) |
   | <#FFCCCC> | LEGACY - superseded content |
 end legend
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

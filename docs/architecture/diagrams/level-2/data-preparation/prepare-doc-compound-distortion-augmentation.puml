@@ -1,0 +1,202 @@
+@startuml prepare-doc-compound-distortion-augmentation
+!theme plain
+title Prepare-Doc - Compound Distortion Augmentation Pipeline
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+skinparam component {
+    BackgroundColor<<source>>     LightPink
+    BackgroundColor<<distort>>    LightBlue
+    BackgroundColor<<label>>      LightGoldenRodYellow
+    BackgroundColor<<output>>     LightGray
+    BackgroundColor<<constraint>> MistyRose
+}
+
+' =====================================================================
+' INPUT SOURCE IMAGES
+' =====================================================================
+
+package "Input Source Images\n(base images — NOT modified in-place)" as input_pkg <<source>> {
+    database "OHR-Bench\n(8,500 real document quality images)" as ohr
+    database "DIQA-5000\n(5,500 real quality benchmark images)" as diqa
+    note right of input_pkg
+        Total input pool: ~14,000 images.
+        Source images are copied to a separate
+        compound output directory — originals preserved.
+        Both datasets are real (not synthetic) — ensures
+        compound examples have realistic base textures.
+    end note
+}
+
+' =====================================================================
+' COMPOUND DISTORTION ENGINE
+' =====================================================================
+
+package "Compound Distortion Engine\n(apply 2-5 distortions per image)" as distort_pkg <<distort>> {
+
+    package "Distortion Type Library\n(7 distortion types)" as distort_types {
+        component "gaussian_blur\n(sigma = 0.5 to 3.0 px)" as d_blur
+        component "gaussian_noise\n(sigma = 5 to 50 intensity)" as d_noise
+        component "jpeg_compression\n(quality = 15 to 70)" as d_jpeg
+        component "brightness_shift\n(factor = 0.4 to 1.6)" as d_bright
+        component "skew_rotate\n(angle = 0.5 to 8.0 deg)" as d_skew
+        component "contrast_stretch\n(CLAHE clip = 1.0 to 4.0)" as d_contrast
+        component "yellowing\n(aged profile: hue shift + desaturation)" as d_yellow
+    }
+
+    component "distortion_sampler.py\n(new — weighted random selection)" as sampler {
+        [Sample N distortions where N in {2,3,4,5}:]
+        [  P(N=2) = 0.30]
+        [  P(N=3) = 0.35]
+        [  P(N=4) = 0.25]
+        [  P(N=5) = 0.10]
+        [Constraints:]
+        [  Must include >= 1 spatial distortion]
+        [  Must include >= 1 tonal distortion]
+        [  No duplicate distortion types per image]
+        [  (e.g., jpeg + jpeg not allowed)]
+    }
+
+    component "apply_distortions_sequential.py\n(new — ordered application)" as applier {
+        [Application order (spatial first, tonal second):]
+        [  skew_rotate -> gaussian_noise -> gaussian_blur]
+        [  -> jpeg_compression -> brightness_shift]
+        [  -> contrast_stretch -> yellowing]
+        [Safety checks:]
+        [  Reject if output is fully black (< 2% non-zero)]
+        [  Reject if output is fully white (> 98% max)]
+        [  Fallback: reduce N by 1 and retry]
+    }
+}
+
+' =====================================================================
+' ANALYTICAL LABEL COMPUTATION
+' =====================================================================
+
+package "Analytical Label Computation\n(no model inference needed)" as label_pkg <<label>> {
+    component "compute_compound_labels.py\n(new — Tier 0 provenance labels)" as label_compute {
+        [For each applied distortion, compute severity:]
+        [  blur_severity = normalize(sigma_gaussian / 3.0)]
+        [  noise_severity = normalize(sigma_noise / 50.0)]
+        [  compression_severity = (100 - quality) / 85.0]
+        [  contrast_severity = (clip_limit - 1.0) / 3.0]
+        [  skew_severity = abs(angle) / 10.0]
+        [  illumination_severity = abs(1 - factor)]
+        [  overall_quality = 1 - max(all severities)]
+        [Labels are analytically derived from parameters]
+        [Provenance tier: Tier 0 (by construction)]
+        [No cross-dataset leakage possible]
+    }
+}
+
+' =====================================================================
+' DIVERSITY VALIDATION
+' =====================================================================
+
+package "Diversity Validation" as valid_pkg {
+    component "evaluate_dataset_diversity.py\n(--task iqa_compound)" as ddr_compound {
+        [Validates distortion type balance:]
+        [  No single type > 50% of all applications]
+        [Validates compound vs single count ratio:]
+        [  compound: single ~ 60:40 in final IQA set]
+        [Validates script / domain balance]
+        [  (inherited from base image sources)]
+        [Target output: 25K-40K compound examples]
+    }
+}
+
+' =====================================================================
+' OUTPUT ARTIFACTS
+' =====================================================================
+
+package "Output Artifacts" as output_pkg <<output>> {
+    file "compound_distortion_manifest.json\n(flat JSON list)" as compound_manifest
+    note right of compound_manifest
+        Per-record fields:
+        image_path (relative to /data/)
+        applied_distortions: list of {type, severity}
+        blur_severity: float 0-1
+        noise_severity: float 0-1
+        compression_severity: float 0-1
+        contrast_severity: float 0-1
+        skew_severity: float 0-1
+        illumination_severity: float 0-1
+        overall_quality: float 0-1
+        source_dataset: "ohr-bench" or "diqa-5000"
+        split_type: train / val
+          (no ood — synthetic images do not hold out scripts)
+    end note
+    database "GCS: gs://image_detection_b/iqa-compound/" as gcs_compound
+}
+
+package "Synthetic Mixing Constraint" as mix_pkg <<constraint>> {
+    note as mix_note
+        IQA Dataset Mixing Cap: =< 60% synthetic
+        iqa_curated (real images): ~16K — fixed
+        iqa_compound (synthetic): =< 24K max
+          (to stay =< 60% of ~40K total target)
+        Enforced by prepare_multitask_datasets.py
+        iqa sub-command (to be added)
+        Source: DATASET_DIVERSITY_REQUIREMENTS.md §4
+    end note
+}
+
+' =====================================================================
+' DATA FLOW ARROWS
+' =====================================================================
+
+ohr --> sampler : "source images"
+diqa --> sampler : "source images"
+sampler --> d_blur
+sampler --> d_noise
+sampler --> d_jpeg
+sampler --> d_bright
+sampler --> d_skew
+sampler --> d_contrast
+sampler --> d_yellow
+d_blur --> applier
+d_noise --> applier
+d_jpeg --> applier
+d_bright --> applier
+d_skew --> applier
+d_contrast --> applier
+d_yellow --> applier
+applier --> label_compute : "distorted image\n+ applied distortion list"
+label_compute --> ddr_compound : "labeled compound images"
+ddr_compound --> compound_manifest : "validated manifest"
+compound_manifest --> gcs_compound : "upload"
+mix_note -[dashed]-> compound_manifest : "cap enforced at merge"
+
+note right
+    **Problem this solves:**
+    Single-distortion IQA training causes
+    15-25% metric drop on real compound
+    degradations in wild-condition documents.
+
+    **Target output:**
+    25K-40K compound images with Tier 0 labels.
+    Analytically derived — no human annotation needed.
+
+    **Scripts (all new):**
+    - scripts/generate_compound_distortion_dataset.py
+      (orchestrates sampler + applier + label_compute)
+    - scripts/compute_compound_labels.py
+
+    **Source:**
+    - docs/planning/DIVERSITY_REMEDIATION_PLAN.md P0-1
+    - docs/architecture/diagrams/level-2/
+        data-preparation/index.md
+
+    **ADR:**
+    [[docs/ADRs/0022-synthetic-data-generation.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

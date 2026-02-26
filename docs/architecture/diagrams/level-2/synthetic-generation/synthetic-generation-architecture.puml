@@ -185,4 +185,13 @@ note right of BenchmarkDB
   **Cost Savings**: $24,500 (98% vs manual)
 end note
 
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS8 Swimlane: docs/architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
 @enduml

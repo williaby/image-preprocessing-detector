@@ -131,4 +131,9 @@ note right
 end note
 stop
 
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/synthetic-generation/index.md
+'   └─ synthetic-generation-architecture.puml  (WS8 primary)
+
 @enduml

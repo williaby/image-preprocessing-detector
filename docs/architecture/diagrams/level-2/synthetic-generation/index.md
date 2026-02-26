@@ -418,7 +418,7 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
 
 5. Train Multi-Task Models (Workstream 2)
    ├─ MobileNetV4-Conv-S (~3ms): 3 heads (orientation, skew, resolution quality)
-   └─ SigLIP 2 NAFlex (~50ms): 16 heads across 5 groups (IQA, Script,
+   └─ SigLIP 2 NAFlex (~50ms): 19 heads across 5 groups (IQA, Script,
       Orientation+Skew, Handwriting, Page Attrs)
 ```
 

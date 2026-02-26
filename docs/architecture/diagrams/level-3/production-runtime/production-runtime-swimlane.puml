@@ -223,17 +223,17 @@ partition "MobileNetV4-Conv-S (Pre-Correction)" {
 }
 
 partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
-  :Run SigLIP 2 NAFlex (22 heads, 5 groups);
+  :Run SigLIP 2 NAFlex (19 heads, 5 groups);
   note left
     **Source File:**
     - src/image_preprocessing_detector/detection/siglip2_multitask.py
 
     **Model:**
     - SigLIP 2 NAFlex (88M params)
-    - 22 heads across 5 groups:
+    - 19 heads across 5 groups:
       G1: IQA (6 heads: blur/noise/contrast/skew/compression + overall)
-      G2: Script (3 heads: script_code + has_non_latin + has_rtl)
-      G3: Orientation+Skew (3 heads: cls + reg + confidence)
+      G2: Script (1 head: script_class; has_non_latin+has_rtl rule-derived)
+      G3: Orientation+Skew (2 heads: cls + reg; confidence implicit)
       G4: Handwriting (5 heads: 3 cls + 2 reg)
       G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality)
 
@@ -451,5 +451,10 @@ legend right
   - [[pipeline-state-machine.md]]
   - [[device-orchestrator.md]]
 endlegend
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/production-runtime/index.md
+'   └─ prepare-doc-primary-workflow-detailed.puml  (WS1 primary)
 
 @enduml

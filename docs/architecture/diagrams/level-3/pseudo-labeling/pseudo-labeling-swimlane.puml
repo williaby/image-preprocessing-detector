@@ -109,4 +109,9 @@ note right
 end note
 stop
 
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/pseudo-labeling/index.md
+'   └─ diqa-training-phases.puml  (WS4 primary)
+
 @enduml

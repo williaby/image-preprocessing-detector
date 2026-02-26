@@ -29,7 +29,7 @@ endif
 
 |Step 2: SigLIP 2 Multi-Task|
 :Load SigLIP 2 NAFlex backbone\n(~88M, frozen ViT-B/16);
-:Attach 22 task heads\n(5 groups: IQA[6], Script[3],\nOrientation+Skew[3], Handwriting[5],\nPage Attrs[5]);
+:Attach 19 task heads\n(5 groups: IQA[6], Script[1],\nOrientation+Skew[2], Handwriting[5],\nPage Attrs[5]);
 :Train heads on all 10 datasets\n(weighted multi-task loss);
 if (All heads pass\ngraduation thresholds?) then (yes)
   :Export SigLIP 2 checkpoint;
@@ -43,7 +43,7 @@ endif
 :Re-train MobileNetV4-Conv-S\nwith KL-divergence (T=3);
 if (Improved thresholds?\norientation > 98%?) then (yes)
   :Export to ONNX (3 heads);
-  :Export SigLIP 2 to ONNX (22 heads);
+  :Export SigLIP 2 to ONNX (19 heads);
 else (no)
   :Adjust alpha, temperature;
   :Retrain MobileNetV4;
@@ -93,5 +93,14 @@ note right
   [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
   [[docs/ADRs/0022-synthetic-data-generation.md]]
 end note
+
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS2 Swimlane: docs/architecture/diagrams/level-3/model-training/model-training-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

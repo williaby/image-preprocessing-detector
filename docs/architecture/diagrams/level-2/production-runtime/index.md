@@ -69,7 +69,7 @@ Detailed activity diagram showing every step in the document processing pipeline
 | Device Orchestrator | `src/utils/device_orchestrator.py` | Device selection and fallback |
 | Ingestion | `src/ingestion/` | PDF/image loading and DPI handling |
 | Text Gate | `src/detection/text_gate.py` | Fast text presence detection |
-| Classical IQA | `src/detection/iqa_classical.py` | 7 classical CV detectors |
+| Classical IQA | `src/detection/iqa_classical.py` | 8 classical CV detectors |
 | ML IQA | `src/detection/iqa_ml.py` | MobileNetV4-Conv-S pre-correction + SigLIP 2 NAFlex multi-task analysis |
 | Layout Detection | `src/detection/layout_lite.py` | Docling layout models (egret-xlarge accuracy, heron speed) |
 | Corrections | `src/correction/` | Deskew, CLAHE, denoising |
@@ -95,7 +95,7 @@ The production runtime processes documents through a series of well-defined stat
 | **MOBILENET_PRECORRECTION** | IQA route determined | MobileNetV4-Conv-S inference complete (3 heads: orientation, skew, resolution quality) | 15s | Fallback to classical only |
 | **PRE_CORRECTION** | MobileNetV4 inference complete | Orientation/skew/resolution corrections applied | 20s | Skip pre-corrections, flag in metadata |
 | **CONFIDENCE_CHECK** | Pre-correction complete | Per-head confidence evaluated across all model heads | 5s | Skip SigLIP 2, use classical fallback |
-| **SIGLIP2_ANALYSIS** | Low confidence on any head | SigLIP 2 NAFlex multi-task inference complete (16 heads, 5 groups) | 200s | Use classical fallback for low-confidence heads |
+| **SIGLIP2_ANALYSIS** | Low confidence on any head | SigLIP 2 NAFlex multi-task inference complete (19 heads, 5 groups) | 200s | Use classical fallback for low-confidence heads |
 | **CLASSICAL_FALLBACK** | Head confidence below threshold | Head-specific classical fallback applied (6 rules) | 30s | Use default values for failed heads |
 | **CORRECTION** | IQA complete (classical + ML) | Corrections applied (deskew, CLAHE, etc.) | 50s | Skip corrections, flag in metadata |
 | **DQS_CALCULATION** | Corrections complete | Document Quality Score computed | 10s | Default DQS = 0.5 |
@@ -660,7 +660,7 @@ mobilenet = load_production_model(
     device="cuda"
 )
 
-# Load multi-task analysis model (16 heads, 5 groups)
+# Load multi-task analysis model (19 heads, 5 groups)
 siglip2 = load_production_model(
     model_type="siglip2",
     backend="onnx",

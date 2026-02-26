@@ -17,7 +17,7 @@ title: Diagram Index & Traceability Matrix
 | Workstream | Level | Primary Diagrams | Key Documentation |
 |------------|-------|------------------|-------------------|
 | [Pipeline Context](#level-0-pipeline-context) | 0 | level-0/rag-pipeline-overview.puml | - |
-| [Architecture Overview](#level-1-architecture-overview) | 1 | level-1/PROJECT_A_*.puml | This document |
+| [Architecture Overview](#level-1-architecture-overview) | 1 | level-1/PREPARE_DOC_*.puml | This document |
 | [Production Runtime](#production-runtime-workstream) | 2 | level-2/production-runtime/*.puml | api/*.md |
 | [Model Training](#model-training-workstream) | 2 | level-2/model-training/*.puml | SIGLIP2_MULTITASK_REQUIREMENTS.md |
 | [Data Preparation](#data-preparation-workstream) | 2 | level-2/data-preparation/*.puml | DATASET_CATALOG.md |
@@ -76,8 +76,10 @@ docs/architecture/diagrams/
 │   │   ├── metadata-schema-architecture.puml
 │   │   ├── resolution-quality-labeling-pipeline.puml
 │   │   ├── skew-orientation-labeling-pipeline.puml
-│   │   ├── stream-4c-dataset-preparation.puml  [PLANNED — Stream 4C 3-stage pipeline]
-│   │   └── l2-metadata-enrichment.puml         [PLANNED — labeling scripts → L2 registry feedback]
+│   │   ├── stream-4c-dataset-preparation.puml      [Stream 4C 3-stage pipeline]
+│   │   ├── l2-metadata-enrichment.puml             [labeling scripts → L2 v2.4.0 registry feedback]
+│   │   ├── unified-training-corpus-architecture.puml  [UTC: one corpus, all heads via filtered views]
+│   │   └── corpus-split-lifecycle.puml             [split assignment, reserved pool, OOD promotion]
 │   │
 │   ├── pseudo-labeling/                   # WS4
 │   │   ├── index.md
@@ -285,6 +287,39 @@ docs/architecture/diagrams/
 
 **Purpose**: Three-layer metadata architecture (Immutable → Enrichment → Training) showing data flow from source datasets through schema utilities to training.
 
+### unified-training-corpus-architecture.puml
+
+**Location**: `level-2/data-preparation/`
+
+**Purpose**: Unified Training Corpus (UTC) architecture — single corpus serving all 25 training heads via filtered views. Replaces the N per-head dataset approach.
+
+| Component | Source Files | Documentation |
+|-----------|--------------|---------------|
+| Tier A Synthetic | synth-multiscript-v3 + 7 derived task views | docs/datasets/training/synth-multiscript-v3.md |
+| Tier B Real-World | 57 source datasets, ~3.3M total samples | docs/datasets/DATASET_QUICK_REFERENCE.md |
+| L2 Enrichment v2.4.0 | annotation/ pipeline | docs/schema/layer2_enrichment_v2.schema.json |
+| Corpus Manifest | corpus_manifest_v1 (sha256 PK, split_type, ood_source) | docs/schema/corpus_manifest_v1.schema.json |
+| Split Assignment | DatasetSplitSpec + source_native splits | docs/schema/dataset_split_spec_v1.schema.json |
+| Reserved Pool | ~88% at construction, first OOD expansion source | corpus_manifest_v1.schema.json |
+| Per-Head Views | 25 heads (22 SigLIP 2 + 3 MobileNetV4) | docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md |
+
+### corpus-split-lifecycle.puml
+
+**Location**: `level-2/data-preparation/`
+
+**Purpose**: State machine for corpus record lifecycle — from ingestion through split assignment, reserved pool, activation, and OOD promotion with clean/contaminated boundary tracking.
+
+| State Transition | Trigger | Key Fields Set |
+|-----------------|---------|----------------|
+| → EXCLUDED | Near-dup (Hamming ≤ 5) or disqualified | exclusion_reason, near_duplicate_of |
+| → RESERVED | Within ingest_sample_size but outside active ratios | reserved_at |
+| → ACTIVE TRAIN | Active train ratio or source_native train | split_type=train, split_source |
+| → ACTIVE VAL/TEST | Val/test ratio or source_native | val/test_immutable_since (LOCK) |
+| RESERVED → TRAIN | Activation for training | activated_at |
+| RESERVED → OOD | Direct OOD promotion (clean boundary) | ood_source=promoted_from_reserved |
+| TRAIN → OOD | Post-construction promotion (last resort) | promoted_to_ood_at, ood_source=promoted_from_train |
+| → OOD (construction) | ood_predesignations in DatasetSplitSpec | ood_source=predesignated, ood_predesignated=true |
+
 ### Schema Visualizations (Mermaid)
 
 **Location**: `docs/schema/`
@@ -390,7 +425,7 @@ docs/architecture/diagrams/
 
 **Location**: `level-2/model-training/`
 
-**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
+**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
 
 | Component | Source Files | Scripts | Documentation |
 |-----------|--------------|---------|---------------|
@@ -407,7 +442,7 @@ docs/architecture/diagrams/
 | ONNX Export | src/.../models/model_optimizer.py | modal/export_phase7_onnx.py | - |
 | GCS Upload | src/.../utils/gcs_uploader.py | - | MODEL_STORAGE.md |
 
-> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (16 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
+> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (19 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
 
 ### prepare-doc-training-workflow-high-level.puml
 

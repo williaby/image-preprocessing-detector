@@ -205,4 +205,13 @@ endlegend
 
 footer Last Updated: 2025-12-19 | docs/architecture/diagrams/level-2/monitoring-drift/index.md
 
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS7 Swimlane: docs/architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
 @enduml

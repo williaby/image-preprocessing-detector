@@ -213,4 +213,10 @@ note right
     [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
 end note
 
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
 @enduml

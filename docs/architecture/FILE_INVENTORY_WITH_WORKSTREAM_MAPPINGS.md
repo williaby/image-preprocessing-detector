@@ -11,6 +11,11 @@ tags:
 title: Complete File Inventory with Workstream Mappings
 ---
 
+> ⚠️ **STALE** — Last accurate: January 2025. WS1/2/3/4/8 file counts are out of date
+> due to Stream 4C scripts, annotation package additions, and schema_utils growth.
+> Use `scripts/extract_workstream_loc.sh` to regenerate current LOC counts.
+> This file is kept for workstream mapping structure; not for LOC accuracy.
+
 **Purpose**: Cross-validate that:
 
 1. All source files are assigned to workstreams
@@ -41,7 +46,7 @@ title: Complete File Inventory with Workstream Mappings
 | **WS7: Monitoring & Drift** | 7 | 5,348 | ✅ Assigned |
 | **WS8: Synthetic Generation** | 11 | ~1,500+ | ⚠️ Stale — package moved from augmentation/ to synthetic/ |
 | **NA - Tests** | ~300 | ~15,000 | ℹ️ Excluded from LOC |
-| **NA - Architecture Diagrams** | 153 | ~8,000 | ℹ️ Excluded from LOC — see dedicated section below |
+| **NA - Architecture Diagrams** | 163 | ~9,000 | ℹ️ Excluded from LOC — see dedicated section below |
 | **NA - Documentation** | ~200 | ~8,000 | ℹ️ Excluded from LOC |
 | **NA - Configuration** | ~50 | ~2,000 | ℹ️ Excluded from LOC |
 | **NA - Infrastructure** | ~100 | ~3,000 | ℹ️ Excluded from LOC |
@@ -260,7 +265,7 @@ The following directories are **by design not tracked** in workstream diagrams. 
 
 ### Training Scripts — CURRENT (in repo)
 
-> **NOTE**: The two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
+> **NOTE**: The two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
@@ -293,7 +298,7 @@ The following directories are **by design not tracked** in workstream diagrams. 
 | src/image_preprocessing_detector/training/siglip2_trainer.py | TBD | SigLIP 2 multi-task training configuration and loop |
 | src/image_preprocessing_detector/training/mobilenetv4_trainer.py | TBD | MobileNetV4 bootstrap + distillation trainer |
 | src/image_preprocessing_detector/training/generate_soft_labels.py | TBD | Generate SigLIP 2 soft labels for MobileNetV4 distillation |
-| src/image_preprocessing_detector/models/siglip2_naflex.py | TBD | SigLIP 2 NAFlex model definition (88M params, 22 heads) |
+| src/image_preprocessing_detector/models/siglip2_naflex.py | TBD | SigLIP 2 NAFlex model definition (88M params, 19 heads) |
 | src/image_preprocessing_detector/models/mobilenetv4_gate.py | TBD | MobileNetV4-Conv-S pre-correction gate (3 heads) |
 | src/image_preprocessing_detector/datasets/multitask_dataset.py | TBD | PyTorch MultiTaskDataset (parquet loading, per-task transforms, SHA256-keyed splits) |
 
@@ -394,6 +399,12 @@ These 10 scripts form the **Stream 4C dataset preparation sub-system** for SigLI
 | scripts/evaluate_dataset_diversity.py | TBD | Dataset Diversity Report (DDR) generator; evaluates 14 dimensions, markdown reports, OOD checks |
 
 **Note**: `label_shadow_severity.py` and `label_warping_severity.py` write back into L2 metadata registry — see planned [L2 Metadata Enrichment diagram](../diagrams/level-2/data-preparation/).
+
+### Level 4 Tooling
+
+| File Path | LOC | Workflow Step |
+|-----------|-----|---------------|
+| scripts/generate_level4_registries.py | TBD | Harvest `__l4_*` headers from adapter files + `l4_*` YAML front-matter from training dataset docs; generate Level 4 registry Markdown tables; `--check` mode for CI gate; `--scaffold` for new adapter stubs |
 
 ---
 
@@ -708,7 +719,7 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 
 ## NA - Architecture Diagrams
 
-**Total Files**: 153 (as of 2026-02-21)
+**Total Files**: 163 (as of 2026-02-23)
 **Reason**: Documentation assets — PlantUML sources, rendered SVGs/PNGs, and index/narrative markdown files. Excluded from workstream LOC counts.
 
 > **Anomalies found**: Two files have accidentally nested duplicate path segments (PlantUML ran from wrong directory). These are invalid artifacts:
@@ -954,6 +965,40 @@ The `src/image_preprocessing_detector/annotation/` package (~60 files, ~19,600 L
 | docs/architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.puml | Source |
 | docs/architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.svg | Rendered |
 | docs/architecture/diagrams/level-3/synthetic-generation/augmentation-pipeline.md | Narrative |
+
+### Level 4 — Instance Registries (all NEW — 2026-02-23)
+
+Markdown table registries cataloguing the 116+ dataset adapter instances (parsers, providers, integrate scripts, training datasets) that are intentionally excluded from PUML workflow diagrams. Auto-generated by `scripts/generate_level4_registries.py`.
+
+#### Top-Level
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-4/index.md | Index |
+
+#### WS3: Data Preparation
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-4/data-preparation/index.md | Index |
+| docs/architecture/diagrams/level-4/data-preparation/annotation-parser-registry.md | Registry (AUTO) |
+| docs/architecture/diagrams/level-4/data-preparation/annotation-provider-registry.md | Registry (AUTO) |
+| docs/architecture/diagrams/level-4/data-preparation/annotation-integrate-registry.md | Registry (AUTO) |
+
+#### WS2: Model Training
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-4/model-training/index.md | Index |
+| docs/architecture/diagrams/level-4/model-training/training-dataset-registry.md | Registry (SEMI) |
+| docs/architecture/diagrams/level-4/model-training/model-checkpoint-registry.md | Registry (MANUAL) |
+
+#### WS1: Production Runtime
+
+| File Path | Type |
+|-----------|------|
+| docs/architecture/diagrams/level-4/production-runtime/index.md | Index |
+| docs/architecture/diagrams/level-4/production-runtime/schema-field-population-registry.md | Registry (SEMI) |
 
 ### Deprecated Diagrams
 

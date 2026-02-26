@@ -282,7 +282,7 @@ stop
 
 legend right
   |= Component |= Status |= Notes |
-  | **SigLIP 2 NAFlex** | Primary | 22 heads, ~50ms GPU |
+  | **SigLIP 2 NAFlex** | Primary | 19 heads, ~50ms GPU |
   | **MobileNetV4-Conv-S** | Primary | 3 heads, ~3ms GPU |
   | **Docling Layout (egret-xlarge)** | Primary | Pre-trained, accuracy |
   | **Docling Layout (heron)** | Primary | Pre-trained, speed |
@@ -307,5 +307,10 @@ legend right
   **Level 3 Documentation**
   **Updated: 2026-02-09**
 endlegend
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/model-training/index.md
+'   └─ prepare-doc-training-workflow-high-level.puml  (WS2 primary)
 
 @enduml

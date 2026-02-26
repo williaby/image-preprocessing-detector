@@ -87,7 +87,7 @@ partition "Phased Head Training" #E3F2FD {
     Unfreeze backbone with low LR (1/10x)
   end note
 
-  :Phase 3 Full:\nAll 22 heads unfrozen\n(20-40 epochs);
+  :Phase 3 Full:\nAll 19 heads unfrozen\n(20-40 epochs);
   note right
     Group 4: Handwriting (3 cls + 2 reg)
     Group 5: Page Attrs (1 cls + 4 reg)
@@ -196,5 +196,11 @@ note right
   [[docs/ADRs/0024-active-learning-annotation.md]]
 end note
 stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

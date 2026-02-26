@@ -42,8 +42,8 @@ The RAG document pipeline is a multi-track architecture supporting both document
 
 | Short Name | Repository | Status | Purpose |
 |------------|------------|--------|---------|
-| **Ingest** | `foundry-ingest` | Active | Web UI frontend, file upload, workflow trigger |
-| **Prepare-Doc** | `foundry-prepare-doc` | Active | IQA, corrections, layout, routing |
+| **Ingest** | `foundry-ingest` | Active | Web UI frontend, file upload; routes audio/video directly to Prepare-Audio and all other types to Prepare-Doc |
+| **Prepare-Doc** | `foundry-prepare-doc` | Active | Stage 0 document type routing, track assignment, IQA, corrections, layout, routing metadata |
 | **Prepare-Audio** | `foundry-prepare-audio` | Active | Transcription, diarization |
 | **Unify** | `foundry-unify` | Not Started | Multi-engine OCR, Docling DOM unification |
 | **Chunk** | `foundry-chunk` | Not Started | Trust scoring, RAG chunking |
@@ -52,19 +52,21 @@ The RAG document pipeline is a multi-track architecture supporting both document
 ### Data Flow
 
 ```text
-Document Track: Ingest -> Prepare-Doc -> Unify (OCR) -> Chunk -> Embed
-Audio Track:    Ingest -> Prepare-Audio -> Unify (DOM only) -> Chunk -> Embed
+Audio/Video: Ingest -[audio]-> Prepare-Audio -> Unify (DOM only) -> Chunk -> Embed
+All others:  Ingest -[others]-> Prepare-Doc (Stage 0 → track assignment → ML) -> Unify (OCR) -> Chunk -> Embed
 ```
 
-1. **Ingestion**: Ingest receives file, generates `trace_id`, uploads to GCS
-2. **Routing**: Cloud Workflows routes to appropriate preprocessing track
-3. **Document Track**:
-   - **Prepare-Doc**: IQA analysis, corrections, layout detection
-   - **Unify**: Multi-engine OCR -> Docling DOM
-4. **Audio Track**:
-   - **Prepare-Audio**: Transcription, diarization
-   - **Unify**: Transcript -> Docling DOM (no OCR, DOM unification only)
-5. **Chunking**: Chunk receives Docling DOM from either track, applies trust scoring, RAG chunking
+1. **Ingestion**: Ingest receives any file, generates `trace_id`, stores to GCS raw, detects audio vs. non-audio:
+   - **Audio / Video** (WAV, MP3, MP4) → Prepare-Audio directly — bypasses Stage 0 entirely
+   - **Everything else** (native text, images, PDFs) → Prepare-Doc (enters at Stage 0)
+2. **Prepare-Doc** (document track) — first step is Stage 0:
+   - **Stage 0 — Document Type Router**: MIME detect, PDF sub-classify, text-layer validity (<20ms CPU); assigns to `native_text`, `image_only`, `born_digital`, `scanned`, or `hybrid` track
+   - **ML analysis**: MobileNetV4 pre-correction gate, SigLIP 2 multi-task analysis
+   - **Corrections & scoring**: deskew, CLAHE, DQS calculation, routing recommendations
+3. **Prepare-Audio** (audio track):
+   - **Transcription + diarization** (FFmpeg + Deepgram Nova-2)
+4. **Unify**: Both tracks converge — OCR → Docling DOM (document) or Transcript → Docling DOM (audio)
+5. **Chunking**: Chunk receives Docling DOM, applies trust scoring, RAG chunking
 6. **Embedding**: Embed generates embeddings, stores in vector database
 7. **Completion**: `trace_id` and `collection_id` returned to Ingest
 
@@ -78,13 +80,28 @@ Each Level 0 box represents a distinct project with its own repository, architec
 
 ### Ingest (foundry-ingest)
 
-The Ingest service is the user-facing entry point for the entire RAG pipeline. It provides a web UI for file upload supporting documents (PDF, Office, Images) and audio/video content. When a file is uploaded, Ingest uploads the source file to GCS, then **initiates** the appropriate Cloud Workflow execution passing the GCS URI and file type. Cloud Workflows generates a unique `trace_id` (workflow execution ID) that follows the document through every downstream service.
+The Ingest service is the user-facing entry point for the entire RAG pipeline. It provides a web UI for file upload supporting any file type — documents (PDF, Office, Images), audio, and video. When a file is uploaded, Ingest uploads the source file to GCS raw storage and performs a simple file type check to route to the correct processing service:
 
-Key responsibilities include input validation, file type detection, user authentication, and job status tracking. The service exposes REST endpoints (`POST /process`, `GET /status/{trace_id}`) and maintains a job queue that can handle 1000+ files per hour. Ingest is the only service with direct user interaction - all other services are internal processing components.
+| File Type | Examples | Routed To |
+|-----------|----------|-----------|
+| **Audio / Video** | WAV, MP3, MP4 | → Prepare-Audio **directly** (bypasses Stage 0) |
+| **Everything else** | DOCX, HTML, JPG, PNG, PDF (all), etc. | → Prepare-Doc (enters at Stage 0) |
+
+The service exposes REST endpoints (`POST /process`, `GET /status/{trace_id}`) and maintains a job queue that can handle 1000+ files per hour. Cloud Workflows generates a unique `trace_id` that follows the file through every downstream service. Ingest is the only service with direct user interaction — all other services are internal processing components.
 
 ### Prepare-Doc (foundry-prepare-doc)
 
-Prepare-Doc is the document preprocessing and quality assurance gateway. It receives raw document images from Ingest and performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
+Prepare-Doc is the document preprocessing and quality assurance gateway. It receives all non-audio files from Ingest. Its first internal step is **Stage 0 — the Document Type Router** — which detects the file format and classifies the file into one of five processing tracks:
+
+| Track | Input Type | Processing Path |
+|-------|-----------|-----------------|
+| `native_text` | DOCX, HTML, MD, LaTeX, CSV, XML, EPUB, VTT | Minimal processing (no image analysis) |
+| `image_only` | JPG, PNG, TIFF, WebP, BMP | Full IQA + correction pipeline |
+| `born_digital` | Born-digital PDF | Text-layer extraction + optional IQA |
+| `scanned` | Scanned PDF | Full IQA + OCR routing for all pages |
+| `hybrid` | Hybrid PDF | Mixed per-page routing |
+
+After track assignment, Prepare-Doc performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
 
 Beyond quality, Prepare-Doc performs layout-lite detection to identify coarse page attributes (tables, figures, dense math, handwriting) and classifies PDF type (born-digital, image-only, hybrid). These signals feed into the Document Quality Score (DQS) calculator, which produces routing recommendations (`OCR_FAST`, `OCR_ADVANCED`, `VISION_SIMPLE`, `VISION_STRUCTURED`) that tell Unify which OCR strategy to use. Output includes corrected 300 DPI page images and `DocumentMetadata.json` containing all quality metrics and routing decisions.
 

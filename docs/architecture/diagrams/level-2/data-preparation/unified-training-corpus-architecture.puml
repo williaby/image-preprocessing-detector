@@ -1,0 +1,219 @@
+@startuml unified-training-corpus-architecture
+!theme plain
+title Unified Training Corpus (UTC) Architecture\nOne Enrichment Pass per Source Dataset → All Heads Served via Filtered Views
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+skinparam component {
+    BackgroundColor<<source>> LightPink
+    BackgroundColor<<enrichment>> LightBlue
+    BackgroundColor<<corpus>> Lavender
+    BackgroundColor<<head>> LightGreen
+    BackgroundColor<<ood>> #FFE4B5
+}
+
+' =====================================================================
+' TIER A — SYNTHETIC SOURCES
+' =====================================================================
+
+package "Tier A — Synthetic Sources" as tier_a <<source>> {
+    database "synth-multiscript-v3\n~350K images · 19 scripts\nGCS: image_detection_b/\nsynth_multiscript_v3/\nPristine base images" as v3_db
+
+    component "7 Derived Task Views\n(generated once from pristine base,\nreused across all relevant heads)\nscript · orientation · skew\nresolution · shadow (8K)\nwarping (5K) · IQA compound" as v3_views
+
+    v3_db ..> v3_views : Phase 1 scripts\n(generate_v3_*.py)
+}
+
+' =====================================================================
+' TIER B — REAL-WORLD SOURCES
+' =====================================================================
+
+package "Tier B — Real-World Sources\n57 Datasets · ~3.3M Total Samples" as tier_b <<source>> {
+    database "IQA / Quality\n(ohr-bench 8.5K, diqa-5000 5.5K\nrealdae 1.2K, smartdoc-qa 5K...)" as iqa_src
+    database "Script / Multilingual\n(mdiw13, mlt19, cc-ocr,\narabic-docs, cvsi + 10 others)" as script_src
+    database "Correction / Distortion\n(sd7k 7K, wsrd, warpdoc,\nanyphotodoc6300, docalign12k)" as distort_src
+    database "Layout / Document\n(doclaynet 81K, rvl_cdip 400K\npubtabnet 519K, tablebank 278K...)" as layout_src
+    database "Handwriting\n(iam, nist_sd19, pucit-ohul\nsignatr6k + 8 others)" as hw_src
+    database "28 additional datasets\n(formulas, tables, text detection\nbenchmarks, multilingual...)" as other_src
+
+    note right of layout_src
+        **Scale insight**:
+        Initial training targets ~450K active images.
+        Only ~12% of 3.3M source samples activated.
+        ~88% start as **reserved** — available for
+        OOD expansion without disturbing active train.
+
+        Large datasets are intentionally supersampled:
+        ingest more than needed (e.g., 80K from RVL-CDIP
+        400K) to build a reserve buffer at construction.
+    end note
+}
+
+' =====================================================================
+' L2 ENRICHMENT — ONE PASS PER SOURCE DATASET
+' =====================================================================
+
+package "L2 Metadata Enrichment (v2.4.0)\nEnrich each source dataset ONCE — covers ALL heads" as l2_pkg <<enrichment>> {
+
+    component "annotation/ pipeline\n(per-dataset enrichment pass)" as l2_pipeline
+
+    note right of l2_pipeline
+        **Fields written per image (covers all 25 training heads):**
+
+        Core:
+          capture_method · orientation_class · color_mode
+          script_ml_class · document_age · domain_level1
+
+        Quality (IQA heads):
+          blur_score · noise_score · contrast_score
+          jpeg_blockiness_score · illumination_score
+          binarization_score · bleed_through_score
+          ink_degradation_score ← v2.4.0 NEW
+          paper_degradation_score ← v2.4.0 NEW
+          geometric_distortion_score ← v2.4.0 NEW
+
+        Correction (page attribute heads):
+          shadow_severity · shadow_unmeasurable ← v2.4.0 NEW
+          warping_severity · warping_region ← v2.4.0 NEW
+
+        Resolution (MobileNetV4 head):
+          resolution.char_height_px
+          resolution.coarse_bucket ← v2.4.0 NEW
+          (needs_major_upscale/needs_light_upscale/optimal/good/oversized)
+
+        Handwriting / Code:
+          handwriting_present · has_code
+    end note
+}
+
+' =====================================================================
+' CORPUS MANIFEST — CENTRAL REGISTRY
+' =====================================================================
+
+package "Corpus Manifest (corpus_manifest_v1)\nOne record per ingested image · sha256 primary key" as corpus_pkg <<corpus>> {
+
+    database "Corpus Manifest\n(JSON/Parquet, keyed by sha256)" as manifest_db
+
+    component "Split Assignment Layer" as split_layer {
+        [source_native: RVL-CDIP, DocLayNet, DocStructBench native splits]
+        [corpus_assigned: DatasetSplitSpec (seed, ratios, stratify_by)]
+        [Val + Test IMMUTABLE — lock cross-model and cross-dataset benchmarks]
+    }
+
+    component "Reserved Pool\n(corpus_status=reserved, split_type=null)\nNever seen by any model.\nFirst source for OOD expansion.\nActivate subsets on demand.\n~88% of images at construction." as reserved_pool <<ood>>
+
+    component "OOD Expansion" as ood_expansion <<ood>> {
+        [1. Predesignated at construction (clean boundary)]
+        [2. Promoted from reserved (clean boundary)]
+        [3. Promoted from train (timestamp audit required)]
+    }
+
+    note right of manifest_db
+        **Per-record key fields:**
+        corpus_id: sha256:{64-hex} (PK + global dedup)
+        corpus_status: active | reserved | excluded
+        split_type: train | val | test | ood | null
+        split_source: source_native | corpus_assigned
+        l2_sample_id: UUID → L2 enrichment record
+        l2_min_confidence_category: hard_label | soft_label | ...
+        training_eligible_heads: [head_id_list]
+        ood_source: predesignated |
+                    promoted_from_reserved |
+                    promoted_from_train
+        val_immutable_since / test_immutable_since
+    end note
+}
+
+' =====================================================================
+' PER-HEAD TRAINING VIEWS — 25 TOTAL
+' =====================================================================
+
+package "Per-Head Training Views (25 total)\nFiltered queries: WHERE split_type='train' AND {label} NOT NULL" as heads_pkg <<head>> {
+
+    component "SigLIP 2 Group 1 — IQA\n(8+ regression heads)" as g1 {
+        [blur · noise · contrast · jpeg_blockiness]
+        [illumination · binarization · bleed_through]
+        [ink_deg · paper_deg · geo_distortion (v2.4.0)]
+    }
+
+    component "SigLIP 2 Group 2 — Script\n(1 classification head)" as g2 {
+        [script_cls: 19 ML classes (LATN/ARAB/HANS/DEVA...)]
+    }
+
+    component "SigLIP 2 Group 3 — Orientation + Skew\n(2 heads)" as g3 {
+        [orientation_cls (4-class: 0 / 90 / 180 / 270)]
+        [skew_reg (±45° continuous regression)]
+    }
+
+    component "SigLIP 2 Group 4 — Handwriting\n(3 heads)" as g4 {
+        [handwriting_cls · cursive_cls]
+        [handwriting_density_reg]
+    }
+
+    component "SigLIP 2 Group 5 — Page Attributes\n(8+ heads)" as g5 {
+        [shadow_reg · warping_reg · code_reg]
+        [capture_cls · source_cls · color_mode_cls · doc_age_cls]
+        [resolution_quality_reg · coarse_bucket_cls (v2.4.0)]
+    }
+
+    component "MobileNetV4 — Pre-Correction Gate\n(3 fast heads, ~3ms CPU)" as mobile {
+        [orientation_cls_mobile · skew_reg_mobile]
+        [resolution_quality (coarse_bucket)]
+    }
+}
+
+' =====================================================================
+' FLOW ARROWS
+' =====================================================================
+
+' Sources → L2 Enrichment
+v3_views --> l2_pipeline : enrich\n(Tier 0: labels known\nfrom generation params)
+iqa_src --> l2_pipeline : enrich\n(one pass per dataset)
+script_src --> l2_pipeline : enrich
+distort_src --> l2_pipeline : enrich
+layout_src --> l2_pipeline : enrich
+hw_src --> l2_pipeline : enrich
+other_src --> l2_pipeline : enrich
+
+' Sources → Corpus Manifest (ingest)
+v3_views --> manifest_db : ingest\n(corpus_status: active\nor reserved per ratio)
+tier_b --> manifest_db : ingest\n(supersample strategy\nper DatasetSplitSpec)
+
+' L2 → Corpus Manifest (link)
+l2_pipeline --> manifest_db : link via l2_sample_id\ncompute training_eligible_heads
+
+' Split/OOD layer → Manifest
+split_layer --> manifest_db : assign split_type
+reserved_pool --> manifest_db : track lifecycle
+ood_expansion --> manifest_db : record one-way promotion
+
+' Manifest → Per-head views
+manifest_db --> g1 : WHERE split_type='train'\nAND iqa_fields NOT NULL
+manifest_db --> g2 : WHERE split_type='train'\nAND script_ml_class NOT NULL
+manifest_db --> g3 : WHERE split_type='train'\nAND orientation + skew NOT NULL
+manifest_db --> g4 : WHERE split_type='train'\nAND handwriting_present NOT NULL
+manifest_db --> g5 : WHERE split_type='train'\nAND page_attr fields NOT NULL
+manifest_db --> mobile : WHERE split_type='train'\nAND orient + skew + resolution present
+
+note bottom of manifest_db
+    **Core design principles:**
+    1. One L2 enrichment pass per source dataset — covers ALL 25 training heads simultaneously.
+    2. Global split_type applies to ALL heads at once — no per-head leakage (shared backbone).
+    3. Reserved pool (~88% at construction) = preferred OOD source, never seen by model.
+    4. Frozen val/test assignments enable cross-model and cross-dataset metric comparison.
+    5. sha256 primary key prevents duplicate images receiving different split assignments.
+end note
+
+' ── Schema References ────────────────────────────────────────────────────────
+' docs/schema/layer2_enrichment_v2.schema.json     (v2.4.0)
+' docs/schema/corpus_manifest_v1.schema.json
+' docs/schema/dataset_split_spec_v1.schema.json
+'
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

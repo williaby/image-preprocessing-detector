@@ -67,7 +67,7 @@ src/image_preprocessing_detector/workers/          # Celery task definitions
 **Owned Directories/Files**:
 
 ```bash
-modal/train_siglip2_multitask.py              # SigLIP 2 NAFlex multi-task training (16 heads)
+modal/train_siglip2_multitask.py              # SigLIP 2 NAFlex multi-task training (19 heads)
 modal/train_mobilenetv4_precorrection.py     # MobileNetV4-Conv-S pre-correction (3 heads)
 modal/export_phase7_onnx.py                   # Model export to ONNX/TorchScript
 src/image_preprocessing_detector/training/   # Training utilities, loss functions, dataloaders

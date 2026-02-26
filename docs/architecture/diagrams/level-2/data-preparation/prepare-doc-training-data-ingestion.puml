@@ -67,7 +67,7 @@ partition "Layer 3: TRAINING (build_training_labels.py)" #FFFFE0 {
 }
 
 partition "Multi-Task Training Ready Sets" {
-  :Create SigLIP 2 training sets\n(22 heads, 5 groups, multi-task);
+  :Create SigLIP 2 training sets\n(19 heads, 5 groups, multi-task);
   :Create MobileNetV4 training sets\n(3 heads, pre-correction);
   :Persist manifests\n(dataset versions,\nlicenses, splits,\nprovenance metadata);
 }
@@ -103,5 +103,14 @@ note right
 end note
 
 stop
+
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS3 Swimlane: docs/architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

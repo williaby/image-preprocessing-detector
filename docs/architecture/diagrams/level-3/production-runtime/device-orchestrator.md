@@ -867,7 +867,7 @@ class MLIQAInference:
         image: np.ndarray,
         context: ProcessingContext
     ) -> SigLIP2Prediction:
-        """Run SigLIP 2 NAFlex multi-task inference (16 heads, 5 groups)."""
+        """Run SigLIP 2 NAFlex multi-task inference (19 heads, 5 groups)."""
 
         # Select device using orchestrator (~2GB VRAM needed)
         device = self.select_device(context, model_type="siglip2")
@@ -1041,7 +1041,7 @@ iqa_circuit_breaker_blocks_total{service}
 
 - Orchestrate device selection
 - Run MobileNetV4-Conv-S pre-correction inference (3 heads)
-- Run SigLIP 2 NAFlex multi-task inference (16 heads, 5 groups)
+- Run SigLIP 2 NAFlex multi-task inference (19 heads, 5 groups)
 - Handle device fallback and classical fallback
 - Track budget usage
 
