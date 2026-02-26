@@ -116,8 +116,6 @@ _VALID_SPLITS = frozenset({"train", "test"})
 
 # Sub-dataset identifiers (matched against path components)
 _KKANJI_MARKERS = frozenset({"kkanji", "kkanji2"})
-_KMNIST_MARKERS = frozenset({"kmnist", "k-mnist"})
-_K49_MARKERS = frozenset({"k49", "k-49"})
 
 # Native resolutions per sub-dataset (px, square)
 _RESOLUTION_MAP = {

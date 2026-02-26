@@ -53,6 +53,10 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
 )
 
+from l2_integration_utils import (
+    compute_reliability_summary,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -189,46 +193,6 @@ def _resolution_category(px: int) -> str:
     if px == 300:
         return "standard_300"
     return "high_>300"
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary from enrichment data."""
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]:
-        confidence = float(data.get(conf_key) or 0.0)
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-    min_field = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def _build_enrichment_data(entry: dict[str, Any]) -> dict[str, Any]:

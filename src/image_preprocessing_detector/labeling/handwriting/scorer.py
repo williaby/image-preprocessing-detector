@@ -343,7 +343,7 @@ class HwLegibilityScorer:
                     ratio = max_px / max(img.size)
                     new_w = int(img.size[0] * ratio)
                     new_h = int(img.size[1] * ratio)
-                    img = img.resize((new_w, new_h), PILImage.LANCZOS)  # type: ignore[assignment]
+                    img = img.resize((new_w, new_h), PILImage.Resampling.LANCZOS)  # type: ignore[assignment]
 
                 buf = io.BytesIO()
                 img.save(buf, format="JPEG", quality=85)

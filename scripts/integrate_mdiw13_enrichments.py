@@ -49,7 +49,6 @@ __l4_parser__ = (
 import argparse
 import json
 import logging
-import re
 import sys
 import time
 from collections import Counter
@@ -59,6 +58,16 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    derive_content_flags,
+    load_llm_enrichment,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
+    SCRIPT_TO_TEXT_DIRECTION,
 )
 
 logging.basicConfig(
@@ -103,22 +112,6 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 # --- KI-001: Docling layout label casing (CRITICAL) -----------------
 APPLY_KI_001_LAYOUT_CASING = True
 
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 # --- KI-005: Capture method override (HIGH) -------------------------
 # mdiw13 is a scanner-captured dataset (SIW Multi-script Database)
@@ -143,10 +136,6 @@ VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset()
 # ===================================================================
 # Content flag class mappings
 # ===================================================================
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 # ===================================================================
 # MDIW-13 Parser mappings (mirrored from Mdiw13Parser.SCRIPT_MAPPINGS)
@@ -177,10 +166,6 @@ for _name, (_script, _lang) in SCRIPT_MAPPINGS.items():
         ISO15924_TO_LANGUAGE[_script] = (_lang, _name)
 
 # Script -> text_direction mapping (v2.3.0)
-SCRIPT_TO_TEXT_DIRECTION: dict[str, str] = {
-    "Arab": "rtl",
-    # All others are LTR (including Japanese which is primarily horizontal)
-}
 
 # Script -> text_directions_present mapping (v2.3.0)
 SCRIPT_TO_DIRECTIONS_PRESENT: dict[str, list[str]] = {
@@ -193,25 +178,6 @@ SCRIPT_TO_DIRECTIONS_PRESENT: dict[str, list[str]] = {
 # ===================================================================
 # Data loaders
 # ===================================================================
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to mdiw13_metadata.json.
-
-    Returns:
-        Full metadata dict with "samples" list.
-
-    Raises:
-        FileNotFoundError: If the metadata file does not exist.
-    """
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
 def load_docling_layout_batches(
     layout_dir: Path,
 ) -> dict[str, list[dict[str, Any]]]:
@@ -324,191 +290,6 @@ def load_docling_ocr_batches(
         "  Indexed %d OCR records from %d batch files", len(index), len(batch_files)
     )
     return index
-
-
-def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load LLM enrichment and index by image_id.
-
-    Args:
-        path: Path to LLM enrichment JSON.
-
-    Returns:
-        Dict mapping image_id to enrichment record.
-    """
-    if not path.exists():
-        log.warning("LLM enrichment not found: %s", path)
-        return {}
-    log.info("Loading LLM enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d LLM records", len(index))
-    return index
-
-
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics from OCR transcription.
-
-    Counts characters, words, lines, and script-specific characters
-    for the 13 scripts in MDIW-13.
-
-    Args:
-        text: Raw transcription text content.
-
-    Returns:
-        Dict with char_count, word_count, line_count, has_content,
-        and avg_line_length.
-    """
-    if not text or text.strip() == "":
-        return {
-            "char_count": 0,
-            "word_count": 0,
-            "line_count": 0,
-            "has_content": False,
-        }
-
-    clean_text = text.strip()
-    lines = clean_text.split("\n")
-    non_empty_lines = [ln for ln in lines if ln.strip()]
-    words = clean_text.split()
-
-    # Script-specific character patterns (all 13 MDIW scripts)
-    deva_chars = len(re.findall(r"[\u0900-\u097f]", clean_text))
-    arab_chars = len(re.findall(r"[\u0600-\u06ff]", clean_text))
-    beng_chars = len(re.findall(r"[\u0980-\u09ff]", clean_text))
-    gujr_chars = len(re.findall(r"[\u0a80-\u0aff]", clean_text))
-    guru_chars = len(re.findall(r"[\u0a00-\u0a7f]", clean_text))
-    knda_chars = len(re.findall(r"[\u0c80-\u0cff]", clean_text))
-    mlym_chars = len(re.findall(r"[\u0d00-\u0d7f]", clean_text))
-    orya_chars = len(re.findall(r"[\u0b00-\u0b7f]", clean_text))
-    taml_chars = len(re.findall(r"[\u0b80-\u0bff]", clean_text))
-    telu_chars = len(re.findall(r"[\u0c00-\u0c7f]", clean_text))
-    thai_chars = len(re.findall(r"[\u0e00-\u0e7f]", clean_text))
-    cjk_chars = len(
-        re.findall(r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]", clean_text)
-    )
-    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
-
-    avg_line_len = 0.0
-    if non_empty_lines:
-        avg_line_len = round(
-            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines),
-            1,
-        )
-
-    stats: dict[str, Any] = {
-        "char_count": len(clean_text),
-        "word_count": len(words),
-        "line_count": len(non_empty_lines),
-        "has_content": True,
-        "avg_line_length": avg_line_len,
-    }
-
-    # Only include script-specific counts if non-zero
-    script_counts = [
-        ("devanagari_char_count", deva_chars),
-        ("arabic_char_count", arab_chars),
-        ("bengali_char_count", beng_chars),
-        ("gujarati_char_count", gujr_chars),
-        ("gurmukhi_char_count", guru_chars),
-        ("kannada_char_count", knda_chars),
-        ("malayalam_char_count", mlym_chars),
-        ("oriya_char_count", orya_chars),
-        ("tamil_char_count", taml_chars),
-        ("telugu_char_count", telu_chars),
-        ("thai_char_count", thai_chars),
-        ("cjk_char_count", cjk_chars),
-        ("latin_word_count", latin_words),
-    ]
-    stats.update({key: count for key, count in script_counts if count > 0})
-
-    return stats
-
-
-# ===================================================================
-# Derivation helpers
-# ===================================================================
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes.
-
-    Args:
-        detections: List of layout detection dicts with class_name.
-
-    Returns:
-        Dict with boolean flags: has_table, has_formula, has_figure,
-        has_code.
-    """
-    canonical_classes = {
-        d.get("class_name", "").upper() for d in detections if d.get("class_name")
-    }
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Dict with min_confidence, field counts, and field_summary.
-    """
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def standardize_class_name(class_name: str) -> str:

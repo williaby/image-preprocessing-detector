@@ -78,12 +78,6 @@ _KHATT_STEM_RE = re.compile(
     re.IGNORECASE,
 )
 
-# TSV column indices (header: image_path, split, image_stem, arabic_text)
-_TSV_PATH_COL = 0
-_TSV_SPLIT_COL = 1
-_TSV_STEM_COL = 2
-_TSV_ARABIC_COL = 3
-
 
 class KHATTParser(BaseParser):
     """Parser for KHATT Arabic Handwritten Text dataset.

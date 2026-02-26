@@ -31,7 +31,6 @@ __l4_parser__ = (
 import argparse
 import json
 import logging
-import re
 import sys
 import time
 from collections import Counter
@@ -41,6 +40,16 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    derive_content_flags,
+    load_language_enrichment,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
+    SCRIPT_TO_TEXT_DIRECTION,
 )
 
 logging.basicConfig(
@@ -65,22 +74,6 @@ ENRICHMENT_VERSION_NUMBER = 2
 
 APPLY_KI_001_LAYOUT_CASING = True
 
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 # CVSI is camera-captured scene text (video frames)
 KNOWN_CAPTURE_METHOD: str | None = "camera_smartphone"
@@ -90,10 +83,6 @@ VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset()
 VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset()
 
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 # CVSI script mappings
 SCRIPT_MAPPINGS: dict[str, tuple[str, str]] = {
@@ -114,37 +103,10 @@ SCRIPT_MAPPINGS: dict[str, tuple[str, str]] = {
     "English": ("Latn", "en"),
 }
 
-SCRIPT_TO_TEXT_DIRECTION: dict[str, str] = {"Arab": "rtl"}
 SCRIPT_TO_DIRECTIONS_PRESENT: dict[str, list[str]] = {
     "Arab": ["rtl"],
     "Jpan": ["ltr", "ttb"],
 }
-
-
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON."""
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment and index by image_id."""
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d language records", len(index))
-    return index
 
 
 def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
@@ -199,85 +161,6 @@ def load_docling_ocr_batches(ocr_dir: Path) -> dict[str, dict[str, Any]]:
                     index[filename] = rec
     log.info("  Indexed %d OCR records", len(index))
     return index
-
-
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics."""
-    if not text or text.strip() == "":
-        return {"char_count": 0, "word_count": 0, "line_count": 0, "has_content": False}
-    clean = text.strip()
-    lines = [ln for ln in clean.split("\n") if ln.strip()]
-    avg = round(sum(len(ln.strip()) for ln in lines) / max(len(lines), 1), 1)
-    stats: dict[str, Any] = {
-        "char_count": len(clean),
-        "word_count": len(clean.split()),
-        "line_count": len(lines),
-        "has_content": True,
-        "avg_line_length": avg,
-    }
-    arab = len(re.findall(r"[\u0600-\u06ff]", clean))
-    deva = len(re.findall(r"[\u0900-\u097f]", clean))
-    latin = len(re.findall(r"[a-zA-Z]+", clean))
-    if arab > 0:
-        stats["arabic_char_count"] = arab
-    if deva > 0:
-        stats["devanagari_char_count"] = deva
-    if latin > 0:
-        stats["latin_word_count"] = latin
-    return stats
-
-
-def derive_content_flags(detections: list[dict[str, Any]]) -> dict[str, bool]:
-    """Derive content flags from layout classes."""
-    classes = {
-        d.get("class_name", "").upper() for d in detections if d.get("class_name")
-    }
-    return {
-        "has_table": bool(classes & TABLE_CLASSES),
-        "has_formula": bool(classes & FORMULA_CLASSES),
-        "has_figure": bool(classes & FIGURE_CLASSES),
-        "has_code": bool(classes & CODE_CLASSES),
-    }
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary."""
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]:
-        conf = data.get(conf_key, 0.0) or 0.0
-        if conf >= 0.9:
-            cat = "hard_label"
-        elif conf >= 0.7:
-            cat = "soft_label"
-        elif conf >= 0.5:
-            cat = "active_learning"
-        else:
-            cat = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(conf, 4),
-                "category": cat,
-                "is_soft_label": cat == "soft_label",
-            }
-        )
-    min_f = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_f["confidence"],
-        "min_confidence_field": min_f["field"],
-        "min_confidence_category": min_f["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def standardize_class_name(class_name: str) -> str:

@@ -48,6 +48,12 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
 )
 
+from l2_integration_utils import (
+    compute_reliability_summary,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -74,38 +80,8 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 
 APPLY_KI_001_LAYOUT_CASING = True
 
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 KNOWN_CAPTURE_METHOD = "scanner_flatbed"
-
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
-
-
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON."""
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
 
 
 def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
@@ -180,46 +156,6 @@ def standardize_class_name(class_name: str) -> str:
     if APPLY_KI_001_LAYOUT_CASING:
         return DOCLING_TO_DOCLAYNET.get(class_name, class_name)
     return class_name
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary."""
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]:
-        confidence = data.get(conf_key, 0.0) or 0.0
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-    min_field = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def integrate_sample(

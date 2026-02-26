@@ -28,7 +28,6 @@ logger = structlog.get_logger(__name__)
 
 # Default values used when no config is passed
 _DEFAULT_COLS = 4
-_DEFAULT_ROWS = 3
 _DEFAULT_CELL_WIDTH = 512
 _DEFAULT_JPEG_QUALITY = 85
 _DEFAULT_FONT_SIZE = 20
@@ -170,7 +169,7 @@ def _load_thumbnails(
                 orig_w, orig_h = img.size
                 ratio = cell_width_px / orig_w
                 new_h = max(1, int(orig_h * ratio))
-                thumb = img.resize((cell_width_px, new_h), pil_image.LANCZOS)
+                thumb = img.resize((cell_width_px, new_h), pil_image.Resampling.LANCZOS)
                 thumbnails.append(thumb)
         except Exception:
             logger.warning("contact_sheet_load_failed", path=str(path))
@@ -220,13 +219,9 @@ def _draw_label(
     """
     draw = image_draw_module.Draw(sheet)
     padding = 4
-    try:
-        bbox = draw.textbbox((0, 0), label, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
-    except AttributeError:
-        # Older Pillow fallback
-        text_w, text_h = draw.textsize(label, font=font)  # type: ignore[attr-defined]
+    bbox = draw.textbbox((0, 0), label, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
 
     rect_x1 = x + padding
     rect_y1 = y + padding

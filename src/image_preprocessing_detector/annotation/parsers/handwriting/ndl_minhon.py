@@ -172,7 +172,7 @@ class NdlMinhonParser(BaseParser):
             if len(parts) >= 2:
                 return parts[0], ""
         except ValueError:
-            pass
+            pass  # image_path not under dataset_path; return default ("", "")
         return "", ""
 
     def _load_metadata_csv(self, dataset_root: Path) -> dict[str, dict[str, str]]:

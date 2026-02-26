@@ -68,6 +68,14 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
 )
 
+from l2_integration_utils import (
+    compute_reliability_summary,
+    derive_content_flags,
+    load_language_enrichment,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -110,32 +118,11 @@ ENRICHMENT_VERSION_NUMBER = 2
 # --- KI-001: Docling layout label casing (CRITICAL) -----------------
 APPLY_KI_001_LAYOUT_CASING = True
 
-# Full Docling lowercase -> DocLayNet PascalCase mapping.
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 # --- KI-005: Known capture method (from dataset documentation) -------
 KNOWN_CAPTURE_METHOD = "born_digital"
 
 # --- Content flag classes (canonical layout -> content flags) ---------
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 # ===================================================================
 # OHR-BENCH SPECIFIC: Domain mapping
@@ -281,49 +268,6 @@ def _extract_docname_from_filename(filename: str) -> str | None:
 # ===================================================================
 # Data loaders
 # ===================================================================
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to ohr-bench_metadata.json.
-
-    Returns:
-        Full metadata dict with "samples" list.
-    """
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment (OpenLID) and index by ohr-bench image_id.
-
-    The image_id format is "{domain}/{docname}_page{0-indexed}",
-    e.g., "academic/2305.02437v3_page0".
-
-    Args:
-        path: Path to ohr-bench_language_enrichment.json.
-
-    Returns:
-        Dict mapping image_id to language enrichment record.
-    """
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d language records", len(index))
-    return index
-
-
 def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """Load all 7 Docling layout batch files and build per-page annotation index.
 
@@ -488,93 +432,6 @@ def load_docling_ocr_batches(ocr_dir: Path) -> dict[str, dict[str, Any]]:
 # ===================================================================
 # Derivation helpers
 # ===================================================================
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes.
-
-    Scans all layout detections and checks canonical_class (or class_name)
-    against known class sets for table, formula, figure, and code.
-
-    Args:
-        detections: List of layout detection dicts.
-
-    Returns:
-        Dict with boolean flags: has_table, has_formula, has_figure, has_code.
-    """
-    canonical_classes: set[str] = set()
-    for det in detections:
-        cls = det.get("canonical_class") or det.get("class_name", "")
-        if cls:
-            canonical_classes.add(cls.upper())
-
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Assesses five field groups and produces a reliability tier for each.
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Dict with min_confidence, field counts, field_summary list,
-        and computed_at timestamp.
-    """
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
-
-
 def standardize_class_name(class_name: str) -> str:
     """Convert Docling lowercase class_name to DocLayNet PascalCase (KI-001).
 

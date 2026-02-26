@@ -293,7 +293,7 @@ def extract_json_from_response(text: str) -> dict[str, Any]:
         if isinstance(result, dict):
             return result
     except json.JSONDecodeError:
-        pass
+        pass  # Try next parsing strategy
 
     # Markdown code fence
     fence_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", stripped, re.DOTALL)
@@ -303,7 +303,7 @@ def extract_json_from_response(text: str) -> dict[str, Any]:
             if isinstance(result, dict):
                 return result
         except json.JSONDecodeError:
-            pass
+            pass  # Try next parsing strategy
 
     # First {...} with possible nested braces (allows one level of nesting)
     nested_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", stripped, re.DOTALL)
@@ -313,7 +313,7 @@ def extract_json_from_response(text: str) -> dict[str, Any]:
             if isinstance(result, dict):
                 return result
         except json.JSONDecodeError:
-            pass
+            pass  # All strategies exhausted; raise ValueError below
 
     msg = f"Could not extract valid JSON from response: {text[:300]}"
     raise ValueError(msg)

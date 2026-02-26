@@ -44,6 +44,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from l2_integration_utils import (
+    compute_reliability_summary,
+    load_metadata,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -68,22 +73,6 @@ _BASE_DATA_DIR = Path("/mnt/e/image_detection/01_base_data")
 GROUNDTRUTH_TSV = (
     _BASE_DATA_DIR / "handwriting" / "iiit-hw-hindi" / "iiit_hw_hindi_groundtruth.tsv"
 )
-
-
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to the *_metadata.json file.
-
-    Returns:
-        Full metadata dict with ``"samples"`` list.
-    """
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as fh:
-        data: dict[str, Any] = json.load(fh)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
 
 
 def load_transcription_index(tsv_path: Path) -> dict[str, str]:
@@ -114,55 +103,6 @@ def load_transcription_index(tsv_path: Path) -> dict[str, str]:
     except Exception:
         log.exception("Failed to load transcription TSV: %s", tsv_path)
     return index
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Reliability summary dict with per-field confidence breakdown.
-    """
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in field_defs:
-        confidence = float(data.get(conf_key) or 0.0)
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def integrate_sample(
