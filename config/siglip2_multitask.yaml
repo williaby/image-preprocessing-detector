@@ -53,6 +53,25 @@ heads:
     dropout: 0.0
     uncertainty: true
 
+  # Code-presence classifier (SIG-G5-4) — binary, NOT regression
+  # Defect 2 fix: formerly misnamed "code_reg" with MSE loss.
+  # 2-class cross_entropy is equivalent to sigmoid+BCE for balanced binary.
+  # Metrics: AUC ≥ 0.90, F1 ≥ 0.85.
+  code_cls:
+    num_classes: 2  # 0=no code, 1=has code
+    hidden_dim: 64
+    dropout: 0.0
+
+  # Post-correction residual skew (SIG-G3-2) — SIGNED degrees
+  # Defect 3 fix: signed angle convention (positive=clockwise), identical to MNV4-H2.
+  # Gaussian NLL preferred over SmoothL1 for heteroscedastic noise (see SKEW-SIG-G04).
+  # Shares 90K assembled skew dataset with MNV4-H2.
+  skew_reg:
+    hidden_dim: 64
+    dropout: 0.0
+    uncertainty: true  # Gaussian NLL — outputs (mu, sigma_sq)
+    label_range: [-10.0, 10.0]  # degrees, signed, positive = clockwise
+
 # Training configuration
 training:
   phase1:
@@ -111,6 +130,8 @@ loss:
   shadow: "gaussian_nll"
   warping: "gaussian_nll"
   iqa: "norm_in_norm + gaussian_nll"
+  code_cls: "cross_entropy"    # Defect 2 fix: binary classification (2-class), not MSE
+  skew_reg: "gaussian_nll"     # Defect 3 fix: heteroscedastic (mu, sigma_sq), not SmoothL1
 
   # Per-task weight multipliers
   task_weights:
@@ -122,6 +143,8 @@ loss:
     orientation: 0.5
     shadow: 0.3
     warping: 0.3
+    code_cls: 0.5      # Defect 2
+    skew_reg: 0.5      # Defect 3
 
 # Target metrics (Phase E evaluation thresholds)
 targets:
@@ -131,6 +154,9 @@ targets:
   source_accuracy: 0.90
   shadow_mae: 0.12
   warping_mae: 0.12
+  code_cls_auc: 0.90    # Defect 2: AUC replaces MAE as primary metric
+  code_cls_f1: 0.85     # Defect 2: F1 replaces MAE as secondary metric
+  skew_reg_mae: 0.30    # Defect 3: < 0.3° (gold-standard subset; see SKEW-SIG-G01)
 
 # Phase 2 Go/No-Go criteria
 # Run Phase 2 if ANY of these fail after Phase 1:
@@ -151,6 +177,8 @@ datasets:
     shadow: "datasets/shadow_training"
     warping: "datasets/warping_training"
     iqa: "datasets/diqa-5000-original"
+    code_cls: "datasets/code_detection_training"   # Defect 2
+    skew_reg: "skew_training"                      # Defect 3 (shared with MNV4-H2)
 
 # Script class mapping (reference only - authoritative source is config/script_ml_classes.yaml)
 script_classes:

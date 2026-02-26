@@ -139,7 +139,7 @@ OUTPUT:              DocumentMetadata.json               OCRDocument.json    RAG
 - **MobileNetV4-Conv-S** (~3ms GPU): Pre-correction gate — orientation, skew, resolution
 - **SigLIP 2 NAFlex** (~50ms GPU): Multi-task teacher — 16 heads across IQA, Script, Orientation, Handwriting, Page Attributes
 - **docling-layout** (egret-large / heron): Layout detection (replaced YOLOv10-doc)
-- **Classical IQA layer**: 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew)
+- **Classical IQA layer**: 9 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew, JPEG quality factor)
 
 **Scope Boundaries**:
 
@@ -550,7 +550,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 **[detection/](src/image_preprocessing_detector/detection/)** (Phase 1, 1C, 2, 3)
 
 - [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (Phase 1: ensemble stroke density, connected components, edge density)
-- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 1C: 8 detectors - Hough skew, Laplacian blur, histogram contrast, noise, illumination, JPEG blockiness, binarization, bleed-through)
+- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 1C: 9 detectors - Hough skew, Laplacian blur, histogram contrast, noise, illumination, JPEG blockiness, binarization, bleed-through, JPEG quality factor)
 - [iqa_ml.py](src/image_preprocessing_detector/detection/iqa_ml.py): Teacher-student ML IQA (Phase 3: ResNet-50 teacher, ResNet-18 student, selective inference)
 - [layout_lite.py](src/image_preprocessing_detector/detection/layout_lite.py): Coarse layout classification (Phase 2: page attributes, complexity scoring, 11 DocLayNet classes)
 
@@ -634,7 +634,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 ### Phased Development
 
-**Current Status**: Phases 0–6 ✅ COMPLETE | Streams 1–4C ✅ COMPLETE | Stream 4B dataset assembly ⚠️ IN PROGRESS | SigLIP 2 training ❌ PENDING
+**Current Status**: Phases 0–6 ✅ COMPLETE | Streams 1–4C ✅ COMPLETE | Dataset assembly ⚠️ IN PROGRESS | SigLIP 2 training ❌ PENDING
 
 > **Detailed Planning**: See [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md) for current status, dependency tiers, and remaining work.
 
@@ -749,7 +749,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - OpenCV 4.8+: Hough transform, Laplacian, histogram analysis, DPI upscaling
 - PyMuPDF: PDF extraction and DPI detection
 - Pillow: Image I/O and preprocessing
-- 8 classical IQA detectors: skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through
+- 9 classical IQA detectors: skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through, JPEG quality factor (DCT coefficient analysis)
 
 **Deep Learning** (Phase 2, 3):
 

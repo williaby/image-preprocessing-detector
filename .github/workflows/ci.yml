@@ -323,6 +323,12 @@ jobs:
           echo "🔧 Running enhanced linting..."
           uv run ruff check . --config=pyproject.toml
 
+      - name: Validate Level 4 headers
+        run: |
+          echo "📋 Validating Level 4 instance registry headers..."
+          python scripts/generate_level4_registries.py --check
+          echo "✅ All adapter files have __l4_category__ headers"
+
       # Note: Security scanning (Bandit, Safety) moved to security-analysis.yml workflow
       # This eliminates duplicate scans and consolidates security tooling
 

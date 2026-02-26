@@ -236,6 +236,18 @@ synthetic = [
     "albumentations>=2.0.8",
 ]
 
+ood = [
+    # OOD Dataset Acquisition Dependencies
+    # Used by scripts/build_ood_dataset.py and scripts/ood_utils.py
+    # Install: uv sync --extra ood
+    "imagehash>=4.3.1",         # pHash computation for near-duplicate detection
+    # Pillow>=10.0.0 already in base; required by imagehash
+    # albumentations already in ml/synthetic; required for compound degradation (4a)
+    "arxiv>=2.1.0",             # arXiv API client for arxiv-smoke-test sub-command
+    "internetarchive>=5.0.0",   # Internet Archive API for 4c book gutter shadow
+    "playwright>=1.49.0",       # Headless browser for code screenshot generation (8a)
+]
+
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
 # Annotation CLI (Phase 3 - dataset management and migrations)
