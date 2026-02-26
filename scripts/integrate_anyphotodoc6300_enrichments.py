@@ -21,11 +21,12 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__      = 'integrate-script'
-__l4_dataset__       = 'anyphotodoc6300'
-__l4_workstream__    = 'WS3'
-__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/correction/anyphotodoc6300.py'
-
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "anyphotodoc6300"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/correction/anyphotodoc6300.py"
+)
 
 
 import argparse

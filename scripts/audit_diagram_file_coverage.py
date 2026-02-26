@@ -127,8 +127,10 @@ class GapSets:
 
 def get_git_tracked_files(repo_root: Path) -> set[str]:
     """Return all git-tracked paths under SOURCE_DIRS, relative to repo root."""
-    args = ["git", "ls-files"] + SOURCE_DIRS
-    result = subprocess.run(args, cwd=repo_root, capture_output=True, text=True, check=True)
+    args = ["git", "ls-files", *SOURCE_DIRS]
+    result = subprocess.run(
+        args, cwd=repo_root, capture_output=True, text=True, check=True
+    )
     raw = set(result.stdout.splitlines())
     return _filter_source_files(raw)
 
@@ -308,7 +310,8 @@ def populate_gap_e(gaps: GapSets, repo_root: Path, git_files: set[str]) -> None:
 
         is_adapter_dir = any(filepath.startswith(d) for d in ADAPTER_DIR_PATTERNS_L4)
         is_integrate = (
-            filepath.startswith("scripts/") and _INTEGRATE_RE.match(basename) is not None
+            filepath.startswith("scripts/")
+            and _INTEGRATE_RE.match(basename) is not None
         )
 
         if not (is_adapter_dir or is_integrate):
@@ -337,7 +340,9 @@ def compute_gaps(
     all_puml_paths = {ref.normalized_path for ref in puml_refs}
 
     # Non-planned PUML paths (for GAP_D — broken references)
-    confirmed_puml_paths = {ref.normalized_path for ref in puml_refs if not ref.is_planned}
+    confirmed_puml_paths = {
+        ref.normalized_path for ref in puml_refs if not ref.is_planned
+    }
 
     gaps.new_not_in_inventory = git_files - inventory_files
     gaps.stale_not_in_git = inventory_files - git_files
@@ -348,7 +353,10 @@ def compute_gaps(
     for ref in puml_refs:
         if ref.is_planned:
             continue
-        if ref.normalized_path not in git_files and ref.normalized_path not in seen_broken:
+        if (
+            ref.normalized_path not in git_files
+            and ref.normalized_path not in seen_broken
+        ):
             seen_broken.add(ref.normalized_path)
             gaps.broken_puml_refs.append(ref)
 
@@ -360,11 +368,15 @@ def compute_gaps(
 # ---------------------------------------------------------------------------
 
 
-def _compute_coverage(git_files: set[str], puml_refs: list[PumlReference]) -> dict[str, float]:
+def _compute_coverage(
+    git_files: set[str], puml_refs: list[PumlReference]
+) -> dict[str, float]:
     """Compute coverage percentages for the summary."""
     all_puml = {ref.normalized_path for ref in puml_refs}
     inventory_coverage = 0.0  # computed in main
-    puml_coverage = len(git_files & all_puml) / len(git_files) * 100 if git_files else 0.0
+    puml_coverage = (
+        len(git_files & all_puml) / len(git_files) * 100 if git_files else 0.0
+    )
     return {"puml_coverage_pct": puml_coverage}
 
 
@@ -421,7 +433,7 @@ def generate_report(
         "# Diagram File Coverage Audit",
         "",
         f"> **Generated**: {now}  ",
-        f"> **Script**: `scripts/audit_diagram_file_coverage.py`  ",
+        "> **Script**: `scripts/audit_diagram_file_coverage.py`  ",
         f"> **Inventory**: `{INVENTORY_RELATIVE}`",
         "",
         "---",
@@ -445,8 +457,12 @@ def generate_report(
         "",
         "| Coverage | Percentage |",
         "|----------|-----------|",
-        f"| Files covered by FILE_INVENTORY | {inv_covered / len(git_files) * 100:.1f}% ({inv_covered}/{len(git_files)}) |" if git_files else "| Files covered by FILE_INVENTORY | N/A |",
-        f"| Files referenced in PUML diagrams | {puml_covered / len(git_files) * 100:.1f}% ({puml_covered}/{len(git_files)}) |" if git_files else "| Files referenced in PUML diagrams | N/A |",
+        f"| Files covered by FILE_INVENTORY | {inv_covered / len(git_files) * 100:.1f}% ({inv_covered}/{len(git_files)}) |"
+        if git_files
+        else "| Files covered by FILE_INVENTORY | N/A |",
+        f"| Files referenced in PUML diagrams | {puml_covered / len(git_files) * 100:.1f}% ({puml_covered}/{len(git_files)}) |"
+        if git_files
+        else "| Files referenced in PUML diagrams | N/A |",
         f"| Adapter files with L4 header (L4_COVERED) | {len(gaps.l4_covered) / max(len(gaps.l4_covered) + len(gaps.missing_l4_headers), 1) * 100:.1f}% ({len(gaps.l4_covered)}/{len(gaps.l4_covered) + len(gaps.missing_l4_headers)}) |",
         "",
         "---",
@@ -514,7 +530,10 @@ def generate_report(
                 lines.append(f"- `{f}`")
             lines.append("")
     else:
-        lines += ["_No gaps — all git-tracked files have at least one PUML reference._", ""]
+        lines += [
+            "_No gaps — all git-tracked files have at least one PUML reference._",
+            "",
+        ]
 
     lines += ["---", ""]
 
@@ -528,7 +547,9 @@ def generate_report(
         "",
     ]
     if gaps.broken_puml_refs:
-        for puml_src, refs in sorted(_group_broken_by_puml(gaps.broken_puml_refs).items()):
+        for puml_src, refs in sorted(
+            _group_broken_by_puml(gaps.broken_puml_refs).items()
+        ):
             # Show just the relative path from docs/architecture/
             puml_display = puml_src.replace(str(Path.cwd()) + "/", "")
             lines.append(f"### `{puml_display}`")
@@ -537,7 +558,10 @@ def generate_report(
                 lines.append(f"- `{ref.normalized_path}` (raw: `{ref.raw_path}`)")
             lines.append("")
     else:
-        lines += ["_No broken references — all PUML paths resolve to git-tracked files._", ""]
+        lines += [
+            "_No broken references — all PUML paths resolve to git-tracked files._",
+            "",
+        ]
 
     lines += ["---", ""]
 
@@ -703,7 +727,9 @@ def main() -> int:
     print(f"  GAP_C (git, no PUML reference) : {len(gaps.undocumented_in_puml)}")
     print(f"  GAP_D (broken PUML references) : {len(gaps.broken_puml_refs)}")
     print(f"  GAP_E (adapter missing L4 hdr) : {len(gaps.missing_l4_headers)}")
-    print(f"  L4_COVERED                     : {len(gaps.l4_covered)}/{l4_total} ({l4_pct:.1f}%)")
+    print(
+        f"  L4_COVERED                     : {len(gaps.l4_covered)}/{l4_total} ({l4_pct:.1f}%)"
+    )
     print()
 
     # Optionally show specific gap details on console

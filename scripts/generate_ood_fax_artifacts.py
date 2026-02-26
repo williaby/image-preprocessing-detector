@@ -11,7 +11,7 @@ Target: 200 images registered in ood_registry.jsonl under
 
 Transform pipeline:
   1. Convert to grayscale.
-  2. Floyd-Steinberg–style 1-bit dithering (error diffusion to neighbours).
+  2. Floyd-Steinberg-style 1-bit dithering (error diffusion to neighbours).
   3. Horizontal line noise: insert semi-transparent dark/white scan lines
      at random intervals to simulate transmission errors.
   4. Contrast reduction: flatten dynamic range toward mid-gray.
@@ -19,9 +19,9 @@ Transform pipeline:
 
 Labels:
   capture_method   "fax"
-  noise_score      0.60–0.70
-  compression_score 0.65–0.75
-  contrast_score   0.20–0.35
+  noise_score      0.60-0.70
+  compression_score 0.65-0.75
+  contrast_score   0.20-0.35
 
 Usage:
     # Dry run
@@ -33,6 +33,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/degradation \\
         --n-images 200
 """
+
 from __future__ import annotations
 
 import io
@@ -64,9 +65,7 @@ from scripts.ood_utils import (
 # OOD seed namespace: 0xDEADBEEF_0DD5AFEC ^ recipe_index(7)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x0000_0007) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/degradation")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -81,7 +80,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -121,9 +122,7 @@ def _floyd_steinberg_dither(gray: np.ndarray) -> np.ndarray:
     return np.clip(img, 0, 255).astype(np.uint8)
 
 
-def _add_horizontal_line_noise(
-    gray: np.ndarray, rng: random.Random
-) -> np.ndarray:
+def _add_horizontal_line_noise(gray: np.ndarray, rng: random.Random) -> np.ndarray:
     """Randomly darken or whiten horizontal bands to simulate fax line errors.
 
     Fax transmission errors typically manifest as entire horizontal scan lines
@@ -139,12 +138,12 @@ def _add_horizontal_line_noise(
     out = gray.copy().astype(np.float32)
     h, w = gray.shape
 
-    # Number of error bands: 1–4% of image height
+    # Number of error bands: 1-4% of image height
     n_bands = rng.randint(max(1, h // 80), max(2, h // 25))
 
     for _ in range(n_bands):
         y_start = rng.randint(0, h - 1)
-        band_h = rng.randint(1, 4)  # 1–4 pixel wide band
+        band_h = rng.randint(1, 4)  # 1-4 pixel wide band
         y_end = min(h, y_start + band_h)
 
         band_type = rng.choice(["dropout", "dark", "gray"])
@@ -186,7 +185,9 @@ def _apply_fax_artifacts(
     # 5. Contrast reduction (flatten toward mid-gray, simulating fax contrast loss)
     contrast_factor = rng.uniform(0.55, 0.75)
     mid = 128.0
-    flat = np.clip((noisy.astype(np.float32) - mid) * contrast_factor + mid, 0, 255).astype(np.uint8)
+    flat = np.clip(
+        (noisy.astype(np.float32) - mid) * contrast_factor + mid, 0, 255
+    ).astype(np.uint8)
 
     # 6. Convert back to BGR (3-channel grayscale)
     result_bgr = cv2.cvtColor(flat, cv2.COLOR_GRAY2BGR)
@@ -209,9 +210,7 @@ def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
     coco_train = doclaynet_dir / "ground_truth" / "coco" / "train.json"
     img_dir = doclaynet_dir / "documents" / "png"
     if not coco_train.exists() or not img_dir.exists():
-        raise FileNotFoundError(
-            f"DocLayNet train split not found at {doclaynet_dir}"
-        )
+        raise FileNotFoundError(f"DocLayNet train split not found at {doclaynet_dir}")
     with coco_train.open() as f:
         data = json.load(f)
     paths = [img_dir / entry["file_name"] for entry in data["images"]]
@@ -265,7 +264,9 @@ def main(
     known_phashes = list(ood_phashes)
 
     rng.shuffle(source_pool)
-    candidate_pool = source_pool[: n_images * 4]  # extra headroom for dithering variance
+    candidate_pool = source_pool[
+        : n_images * 4
+    ]  # extra headroom for dithering variance
 
     if not dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)

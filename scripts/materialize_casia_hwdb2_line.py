@@ -55,7 +55,8 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 
 import pyarrow.parquet as pq
 from PIL import Image
@@ -85,7 +86,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _iter_parquet_rows(parquet_path: Path, batch_size: int = 500) -> Iterator[dict[str, Any]]:
+def _iter_parquet_rows(
+    parquet_path: Path, batch_size: int = 500
+) -> Iterator[dict[str, Any]]:
     """Iterate over rows in a HuggingFace Parquet file in batches.
 
     HuggingFace image datasets store images as struct columns with keys
@@ -194,17 +197,25 @@ def materialize_split(
     if total_rows != expected:
         logger.warning(
             "%s: expected %d rows, found %d — proceeding",
-            split, expected, total_rows,
+            split,
+            expected,
+            total_rows,
         )
 
     logger.info(
         "Split %-10s │ %d images │ parquet=%s",
-        split, total_rows, parquet_path.name,
+        split,
+        total_rows,
+        parquet_path.name,
     )
 
     if dry_run:
         already = sum(1 for _ in images_dir.glob("*.png")) if images_dir.exists() else 0
-        logger.info("  Dry run — would extract %d images (%d already exist)", total_rows, already)
+        logger.info(
+            "  Dry run — would extract %d images (%d already exist)",
+            total_rows,
+            already,
+        )
         return 0, already, 0
 
     images_dir.mkdir(parents=True, exist_ok=True)
@@ -224,16 +235,28 @@ def materialize_split(
             if png_path.exists() and not overwrite:
                 n_skipped += 1
                 # Still need the index record — read text from row
-                index_records.append({"filename": filename, "text": row["text"], "char_count": len(row["text"])})
+                index_records.append(
+                    {
+                        "filename": filename,
+                        "text": row["text"],
+                        "char_count": len(row["text"]),
+                    }
+                )
                 pbar.update(1)
                 continue
 
             try:
                 png_bytes = _bytes_to_grayscale_png_bytes(row["image_bytes"])
                 png_path.write_bytes(png_bytes)
-                index_records.append({"filename": filename, "text": row["text"], "char_count": len(row["text"])})
+                index_records.append(
+                    {
+                        "filename": filename,
+                        "text": row["text"],
+                        "char_count": len(row["text"]),
+                    }
+                )
                 n_extracted += 1
-            except (ValueError, OSError, Exception) as exc:  # noqa: BLE001
+            except (ValueError, OSError, Exception) as exc:
                 logger.debug("Row %d failed: %s", idx, exc)
                 n_errors += 1
 
@@ -246,7 +269,11 @@ def materialize_split(
 
     logger.info(
         "  %s done — extracted=%d  skipped=%d  errors=%d  index=%s",
-        split, n_extracted, n_skipped, n_errors, index_path.name,
+        split,
+        n_extracted,
+        n_skipped,
+        n_errors,
+        index_path.name,
     )
     return n_extracted, n_skipped, n_errors
 
@@ -327,7 +354,9 @@ def main() -> None:
 
     logger.info(
         "All splits done — extracted=%d  skipped=%d  errors=%d",
-        total_extracted, total_skipped, total_errors,
+        total_extracted,
+        total_skipped,
+        total_errors,
     )
 
     if total_errors:

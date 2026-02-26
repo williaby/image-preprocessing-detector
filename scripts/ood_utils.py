@@ -171,8 +171,7 @@ def compute_phash(image_path: Path) -> str:
     # Flatten to 1-D, pack bits into bytes, encode as hex.
     bits = ph.hash.flatten()
     byte_values = [
-        int("".join(str(int(b)) for b in bits[i : i + 8]), 2)
-        for i in range(0, 64, 8)
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
     ]
     return bytes(byte_values).hex()
 
@@ -190,7 +189,7 @@ def hamming_distance(h1: str, h2: str) -> int:
     b1 = int(h1, 16)
     b2 = int(h2, 16)
     xor = b1 ^ b2
-    return bin(xor).count("1")
+    return xor.bit_count()
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +282,9 @@ def load_ood_registry(registry_path: Path) -> tuple[set[str], list[str]]:
             try:
                 entry = json.loads(line)
             except json.JSONDecodeError:
-                logger.warning("Skipping malformed JSON at line %d: %s", line_no, registry_path)
+                logger.warning(
+                    "Skipping malformed JSON at line %d: %s", line_no, registry_path
+                )
                 continue
             if sha256 := entry.get("sha256"):
                 sha256_set.add(sha256)
@@ -351,7 +352,7 @@ def build_ground_truth_template() -> dict[str, Any]:
     Returns:
         Dict mapping each ground truth field name to ``None``.
     """
-    return {field: None for field in _GROUND_TRUTH_FIELDS}
+    return dict.fromkeys(_GROUND_TRUTH_FIELDS)
 
 
 # ---------------------------------------------------------------------------

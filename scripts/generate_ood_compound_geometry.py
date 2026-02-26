@@ -30,6 +30,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/geometry \\
         --n-images 500
 """
+
 from __future__ import annotations
 
 import io
@@ -62,9 +63,7 @@ from scripts.ood_utils import (
 # OOD seed namespace: 0xDEADBEEF_0DD5AFEC ^ recipe_index(3)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x0000_0003) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/geometry")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -73,8 +72,8 @@ _SKEW_MIN_DEG = 3.0
 _SKEW_MAX_DEG = 10.0
 
 # Page-curl warp parameters
-_WARP_AMP_MIN = 12   # pixels
-_WARP_AMP_MAX = 30   # pixels
+_WARP_AMP_MIN = 12  # pixels
+_WARP_AMP_MAX = 30  # pixels
 
 
 def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
@@ -87,7 +86,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -106,7 +107,9 @@ def _apply_skew(img_bgr: np.ndarray, angle_deg: float) -> np.ndarray:
     cx, cy = w / 2, h / 2
     M = cv2.getRotationMatrix2D((cx, cy), angle_deg, 1.0)
     return cv2.warpAffine(
-        img_bgr, M, (w, h),
+        img_bgr,
+        M,
+        (w, h),
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255),
@@ -141,7 +144,9 @@ def _apply_page_curl(img_bgr: np.ndarray, amplitude: float) -> np.ndarray:
         map_y[y, :] = y
 
     return cv2.remap(
-        img_bgr, map_x, map_y,
+        img_bgr,
+        map_x,
+        map_y,
         interpolation=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255),
@@ -160,9 +165,7 @@ def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
     coco_train = doclaynet_dir / "ground_truth" / "coco" / "train.json"
     img_dir = doclaynet_dir / "documents" / "png"
     if not coco_train.exists() or not img_dir.exists():
-        raise FileNotFoundError(
-            f"DocLayNet train split not found at {doclaynet_dir}"
-        )
+        raise FileNotFoundError(f"DocLayNet train split not found at {doclaynet_dir}")
     with coco_train.open() as f:
         data = json.load(f)
     paths = [img_dir / entry["file_name"] for entry in data["images"]]

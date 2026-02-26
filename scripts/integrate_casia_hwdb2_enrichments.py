@@ -26,10 +26,10 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__   = "integrate-script"
-__l4_dataset__    = "casia-hwdb2"
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "casia-hwdb2"
 __l4_workstream__ = "WS4"
-__l4_parser__     = (
+__l4_parser__ = (
     "src/image_preprocessing_detector/annotation/parsers/handwriting/casia_hwdb2.py"
 )
 
@@ -91,11 +91,11 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         Reliability summary dict with per-field confidence breakdown.
     """
     field_defs = [
-        ("capture_method",    "capture_confidence"),
-        ("domain",            "domain_confidence"),
-        ("language",          "language_confidence"),
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
         ("layout_detections", "layout_confidence"),
-        ("content_flags",     "content_flags_confidence"),
+        ("content_flags", "content_flags_confidence"),
     ]
     fields: list[dict[str, Any]] = []
     for field_name, conf_key in field_defs:
@@ -108,23 +108,25 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field":         field_name,
-            "confidence":    round(confidence, 4),
-            "category":      category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
 
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
-        "min_confidence":          min_field["confidence"],
-        "min_confidence_field":    min_field["field"],
+        "min_confidence": min_field["confidence"],
+        "min_confidence_field": min_field["field"],
         "min_confidence_category": min_field["category"],
-        "assessed_field_count":    len(fields),
-        "hard_field_count":  sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count":  sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary":     fields,
-        "computed_at":       datetime.now(UTC).isoformat(),
+        "assessed_field_count": len(fields),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -163,58 +165,58 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # CASIA-HWDB2 scanned from paper using a flatbed scanner; DGRL
     # binary files are the official distribution format.
     # -------------------------------------------------------------------
-    data["capture_method"]           = "scanner_flatbed"
-    data["capture_confidence"]       = 0.95
+    data["capture_method"] = "scanner_flatbed"
+    data["capture_confidence"] = 0.95
     data["capture_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
     # DOMAIN
     # Academic handwriting research collection (CASIA / NLPR, China)
     # -------------------------------------------------------------------
-    data["domain_level1"]           = "EDU"
-    data["domain_confidence"]       = 0.9
+    data["domain_level1"] = "EDU"
+    data["domain_confidence"] = 0.9
     data["domain_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
     # LANGUAGE / SCRIPT
     # Simplified Chinese (ISO 639-1: zh) in Hans script (ISO 15924: Hans)
     # -------------------------------------------------------------------
-    data["iso639_language"]    = "zh"
-    data["iso15924_script"]    = "Hans"
+    data["iso639_language"] = "zh"
+    data["iso15924_script"] = "Hans"
     data["language_confidence"] = 0.99
-    data["script_family"]      = "cjk"  # Schema enum requires "cjk" (not "han")
-    data["text_direction"]          = "ltr"
+    data["script_family"] = "cjk"  # Schema enum requires "cjk" (not "han")
+    data["text_direction"] = "ltr"
     data["text_directions_present"] = ["ltr", "ttb"]  # Chinese: horizontal + vertical
     data["text_scope_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
     # LAYOUT DETECTIONS  (not applicable for full-page scans)
     # -------------------------------------------------------------------
-    data["layout_detections"]      = []
-    data["layout_source"]          = "none"
-    data["layout_confidence"]      = 0.0
+    data["layout_detections"] = []
+    data["layout_source"] = "none"
+    data["layout_confidence"] = 0.0
     data["layout_detection_count"] = 0
 
     # -------------------------------------------------------------------
     # CONTENT FLAGS
     # All samples are full-page Chinese handwriting
     # -------------------------------------------------------------------
-    data["has_table"]       = False
-    data["has_figure"]      = False
-    data["has_formula"]     = False
-    data["has_handwriting"] = True   # Primary characteristic of this dataset
-    data["has_signature"]   = False
-    data["has_code"]        = False
-    data["handwriting_present"]      = True
-    data["content_flags_tier"]       = "tier_3_heuristic"
-    data["content_flags_source"]     = "dataset_documentation"
+    data["has_table"] = False
+    data["has_figure"] = False
+    data["has_formula"] = False
+    data["has_handwriting"] = True  # Primary characteristic of this dataset
+    data["has_signature"] = False
+    data["has_code"] = False
+    data["handwriting_present"] = True
+    data["content_flags_tier"] = "tier_3_heuristic"
+    data["content_flags_source"] = "dataset_documentation"
     data["content_flags_confidence"] = 0.99
 
     # -------------------------------------------------------------------
     # ORIENTATION
     # -------------------------------------------------------------------
-    data["orientation_class"]            = int(v1_data.get("orientation_class", 0))
-    data["orientation_confidence"]       = float(v1_data.get("orientation_confidence", 0.7))
+    data["orientation_class"] = int(v1_data.get("orientation_class", 0))
+    data["orientation_confidence"] = float(v1_data.get("orientation_confidence", 0.7))
     data["orientation_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
@@ -222,11 +224,11 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # Full-page Chinese handwriting; transcription extracted from DGRL
     # per-line annotations during base annotation step.
     # -------------------------------------------------------------------
-    data["text_has_content"]        = True
+    data["text_has_content"] = True
     data["text_content_confidence"] = 0.9
-    data["text_content_source"]     = "dataset_documentation"
+    data["text_content_source"] = "dataset_documentation"
     data["text_scope_content_type"] = "handwritten"
-    data["text_scope"]              = "page"
+    data["text_scope"] = "page"
 
     # Preserve transcription from base annotation if present
     if "transcription" in v1_data:
@@ -253,7 +255,7 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # -------------------------------------------------------------------
     # ADDITIONAL
     # -------------------------------------------------------------------
-    data["dataset_short_code"]         = DATASET_NAME
+    data["dataset_short_code"] = DATASET_NAME
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -273,12 +275,12 @@ def run_integration(
         Stats dict with distribution Counters.
     """
     stats: dict[str, Any] = {
-        "total":               0,
-        "integrated":          0,
+        "total": 0,
+        "integrated": 0,
         "capture_method_dist": Counter(),
-        "script_family_dist":  Counter(),
-        "domain_dist":         Counter(),
-        "split_dist":          Counter(),
+        "script_family_dist": Counter(),
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
     }
     now = datetime.now(UTC).isoformat()
 
@@ -293,17 +295,17 @@ def run_integration(
 
         if not dry_run:
             new_version: dict[str, Any] = {
-                "version":        ENRICHMENT_VERSION_NUMBER,
+                "version": ENRICHMENT_VERSION_NUMBER,
                 "schema_version": "2.4.0",
-                "created_at":     now,
-                "created_by":     "integrate_casia_hwdb2_enrichments.py",
-                "method":         "tier_3_heuristic",
+                "created_at": now,
+                "created_by": "integrate_casia_hwdb2_enrichments.py",
+                "method": "tier_3_heuristic",
                 "description": (
                     f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
                     "dataset-documentation heuristics for CASIA-HWDB2 Chinese handwriting"
                 ),
                 "script_version": SCRIPT_VERSION,
-                "data":           integrated_data,
+                "data": integrated_data,
             }
             versions = sample["enrichments"]["versions"]
             replaced = False
@@ -360,10 +362,17 @@ def main() -> int:
         description=f"Integrate per-dataset enrichments into {DATASET_NAME} metadata.",
     )
     p.add_argument("--metadata", type=Path, default=METADATA_PATH)
-    p.add_argument("--output",   type=Path, default=None,
-                   help="Output path (default: overwrite input)")
-    p.add_argument("--dry-run",  action="store_true",
-                   help="Report statistics only, do not write output")
+    p.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output path (default: overwrite input)",
+    )
+    p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report statistics only, do not write output",
+    )
     args = p.parse_args()
 
     output_path = args.output or args.metadata

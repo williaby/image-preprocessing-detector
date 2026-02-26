@@ -15,11 +15,12 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__      = 'integrate-script'
-__l4_dataset__       = 'arabic-docs'
-__l4_workstream__    = 'WS3'
-__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/multilingual/arabic_docs.py'
-
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "arabic-docs"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/multilingual/arabic_docs.py"
+)
 
 
 import argparse
@@ -242,7 +243,9 @@ def integrate_sample(
     data["orientation_class"] = 0
     data["orientation_confidence"] = 0.9
     data["orientation_detection_method"] = "dataset_documentation"
-    data["capture_method"] = KNOWN_CAPTURE_METHOD  # D02: scanner_flatbed (not bare "scanner")
+    data["capture_method"] = (
+        KNOWN_CAPTURE_METHOD  # D02: scanner_flatbed (not bare "scanner")
+    )
     data["capture_confidence"] = 1.0
     data["capture_detection_method"] = "dataset_documentation"
     # Preserve existing domain classification from previous enrichment version (D03: was UNK).
@@ -250,7 +253,9 @@ def integrate_sample(
     # NEWS is now a valid schema enum after WS-6b schema extension.
     _prev_domain = v1.get("domain_level1", "UNK") or "UNK"
     data["domain_level1"] = _prev_domain if _prev_domain != "UNK" else "UNK"
-    data["domain_confidence"] = v1.get("domain_confidence", 0.3) if _prev_domain != "UNK" else 0.3
+    data["domain_confidence"] = (
+        v1.get("domain_confidence", 0.3) if _prev_domain != "UNK" else 0.3
+    )
     data["domain_detection_method"] = (
         v1.get("domain_detection_method", "none") if _prev_domain != "UNK" else "none"
     )
@@ -288,8 +293,10 @@ def integrate_sample(
 
     flags = derive_content_flags(std)
     data["has_table"] = stem in VLM_TABLE_TRUE_POSITIVES or flags["has_table"]
-    data["has_figure"] = stem in VLM_FIGURE_TRUE_POSITIVES or flags["has_figure"]   # D05
-    data["has_formula"] = stem in VLM_FORMULA_TRUE_POSITIVES or flags["has_formula"]  # D06
+    data["has_figure"] = stem in VLM_FIGURE_TRUE_POSITIVES or flags["has_figure"]  # D05
+    data["has_formula"] = (
+        stem in VLM_FORMULA_TRUE_POSITIVES or flags["has_formula"]
+    )  # D06
     data["has_handwriting"] = False  # Printed Arabic documents
     data["has_signature"] = False
     data["has_code"] = flags["has_code"]
@@ -318,7 +325,9 @@ def integrate_sample(
         data["text_statistics"] = compute_text_statistics("")
 
     data["image_properties_color_mode"] = v1.get("image_properties_color_mode", "color")
-    data["text_scope_content_type"] = "printed"  # D04: "document" → "printed" (content_type enum)
+    data["text_scope_content_type"] = (
+        "printed"  # D04: "document" → "printed" (content_type enum)
+    )
     data["text_scope"] = v1.get("text_scope", "printed")
     for f in ("resolution_category", "resolution_pixels"):
         if f in v1:

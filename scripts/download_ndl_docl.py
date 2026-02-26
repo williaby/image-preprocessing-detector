@@ -13,7 +13,6 @@ from __future__ import annotations
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import click

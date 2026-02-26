@@ -4306,7 +4306,7 @@ def parse_doc3d_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     labels.raw_labels["is_synthetic"] = True
     labels.raw_labels["correction_task"] = "dewarping"
 
-    # Warp condition bucket (numbered subdirectory 1–22)
+    # Warp condition bucket (numbered subdirectory 1-22)
     bucket = image_path.parent.name
     if bucket.isdigit():
         labels.raw_labels["warp_bucket"] = int(bucket)
@@ -4720,7 +4720,12 @@ def parse_ndl_docl_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
         # Look for VOC XML in tugidigi-annotation
         annotation_root = dataset_path.parent / "tugidigi-annotation"
         xml_candidates = [
-            annotation_root / "sample" / "data" / pid / "xml" / f"{pid}_{int(frame_str):02d}.xml",
+            annotation_root
+            / "sample"
+            / "data"
+            / pid
+            / "xml"
+            / f"{pid}_{int(frame_str):02d}.xml",
             annotation_root / "sample" / "data" / pid / "xml" / f"{stem}.xml",
         ]
         for xml_path in xml_candidates:

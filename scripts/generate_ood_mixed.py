@@ -37,6 +37,7 @@ Usage:
         --registry metadata_registry/ood_registry.jsonl \\
         --output-dir /mnt/e/image_detection/ood/mixed
 """
+
 from __future__ import annotations
 
 import io
@@ -109,7 +110,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -119,7 +122,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def _aug_add_geometry(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarray, dict]:
+def _aug_add_geometry(
+    img_bgr: np.ndarray, rng: random.Random
+) -> tuple[np.ndarray, dict]:
     """Apply mild perspective warp (adds ood_geometry dimension)."""
     h, w = img_bgr.shape[:2]
     frac = rng.uniform(0.04, 0.10)
@@ -128,13 +133,13 @@ def _aug_add_geometry(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarr
     src_pts = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     dx = rng.randint(-offset, offset)
     dy = rng.randint(-offset, offset)
-    dst_pts = np.float32([
-        [dx, dy], [w + dx, 0], [w, h + dy], [0, h]
-    ])
+    dst_pts = np.float32([[dx, dy], [w + dx, 0], [w, h + dy], [0, h]])
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     result = cv2.warpPerspective(
-        img_bgr, M, (w, h),
+        img_bgr,
+        M,
+        (w, h),
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255),
@@ -143,7 +148,9 @@ def _aug_add_geometry(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarr
     return result, {"skew_angle_degrees": round(angle, 2)}
 
 
-def _aug_add_degradation(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarray, dict]:
+def _aug_add_degradation(
+    img_bgr: np.ndarray, rng: random.Random
+) -> tuple[np.ndarray, dict]:
     """Apply JPEG + contrast reduction (adds ood_degradation dimension)."""
     # Moderate JPEG compression
     jpeg_q = rng.randint(30, 55)
@@ -154,14 +161,21 @@ def _aug_add_degradation(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.nd
     # Contrast reduction
     factor = rng.uniform(0.55, 0.80)
     mid = 128.0
-    flat = np.clip((compressed.astype(np.float32) - mid) * factor + mid, 0, 255).astype(np.uint8)
+    flat = np.clip((compressed.astype(np.float32) - mid) * factor + mid, 0, 255).astype(
+        np.uint8
+    )
 
     compression_score = round((75 - jpeg_q) / 45.0 * 0.50 + 0.20, 3)
     contrast_score = round(factor * 0.40, 3)
-    return flat, {"compression_score": compression_score, "contrast_score": contrast_score}
+    return flat, {
+        "compression_score": compression_score,
+        "contrast_score": contrast_score,
+    }
 
 
-def _aug_add_resolution(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarray, dict]:
+def _aug_add_resolution(
+    img_bgr: np.ndarray, rng: random.Random
+) -> tuple[np.ndarray, dict]:
     """Downsample then upsample (adds ood_resolution dimension)."""
     h, w = img_bgr.shape[:2]
     scale = rng.uniform(0.35, 0.55)
@@ -169,7 +183,10 @@ def _aug_add_resolution(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.nda
     small_h = max(32, int(h * scale))
     small = cv2.resize(img_bgr, (small_w, small_h), interpolation=cv2.INTER_AREA)
     upsized = cv2.resize(small, (w, h), interpolation=cv2.INTER_CUBIC)
-    return upsized, {"resolution_quality": "low", "blur_score": round(0.30 + (1 - scale) * 0.25, 3)}
+    return upsized, {
+        "resolution_quality": "low",
+        "blur_score": round(0.30 + (1 - scale) * 0.25, 3),
+    }
 
 
 def _aug_add_shadow(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarray, dict]:
@@ -191,7 +208,11 @@ def _aug_add_shadow(img_bgr: np.ndarray, rng: random.Random) -> tuple[np.ndarray
     shadow_strength = rng.uniform(0.25, 0.55)
     shadow_mask = 1.0 - shadow_strength * (1.0 - norm_dist)
 
-    out = (img_bgr.astype(np.float32) * shadow_mask[..., None]).clip(0, 255).astype(np.uint8)
+    out = (
+        (img_bgr.astype(np.float32) * shadow_mask[..., None])
+        .clip(0, 255)
+        .astype(np.uint8)
+    )
     severity = round(shadow_strength, 3)
     return out, {"shadow_severity": severity, "shadow_type": "vignette"}
 
@@ -232,7 +253,8 @@ def _pick_strategy(existing_categories: list[str], rng: random.Random) -> str | 
     Returns None if no compatible strategy exists.
     """
     compatible = [
-        s for s in _AUGMENTATION_STRATEGIES
+        s
+        for s in _AUGMENTATION_STRATEGIES
         if not any(c in existing_categories for c in _STRATEGY_INCOMPATIBLE[s])
         and _STRATEGY_ADDS[s] not in existing_categories
     ]
@@ -288,7 +310,8 @@ def main(
     click.echo(f"  Total entries: {len(all_entries):,}")
 
     candidates = [
-        e for e in all_entries
+        e
+        for e in all_entries
         if 1 <= len(e.get("ood_categories", [])) <= 2
         and "ood_mixed" not in e.get("ood_categories", [])
         and Path(e.get("source_path", "")).exists()
@@ -312,7 +335,7 @@ def main(
         output_dir.mkdir(parents=True, exist_ok=True)
 
     n_cands = n_skipped_dup = n_skipped_no_strategy = n_registered = 0
-    strategy_counts: dict[str, int] = {s: 0 for s in _AUGMENTATION_STRATEGIES}
+    strategy_counts: dict[str, int] = dict.fromkeys(_AUGMENTATION_STRATEGIES, 0)
 
     for entry in pool:
         if n_registered >= n_images:
@@ -355,7 +378,7 @@ def main(
         if not dry_run:
             out_path.write_bytes(img_bytes)
 
-        new_categories = list(existing_categories) + ["ood_mixed"]
+        new_categories = [*list(existing_categories), "ood_mixed"]
         added_dim = _STRATEGY_ADDS[strategy]
         if added_dim not in new_categories:
             new_categories.append(added_dim)
@@ -416,7 +439,9 @@ def main(
     click.echo(f"  Mixed OOD: {n_registered}/{n_images}")
     click.echo(f"  Strategy breakdown: {strategy_counts}")
     if n_skipped_no_strategy:
-        click.echo(f"  [INFO] {n_skipped_no_strategy} candidates skipped (no compatible strategy).")
+        click.echo(
+            f"  [INFO] {n_skipped_no_strategy} candidates skipped (no compatible strategy)."
+        )
 
 
 if __name__ == "__main__":

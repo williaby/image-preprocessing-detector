@@ -109,7 +109,7 @@ ALL_SUB_DATASETS = ["kmnist", "k49", "kkanji"]
 
 # Expected image counts (for validation warnings)
 _EXPECTED_KMNIST = {"train": 60_000, "test": 10_000}
-_EXPECTED_K49    = {"train": 232_365, "test": 38_547}
+_EXPECTED_K49 = {"train": 232_365, "test": 38_547}
 
 logger = logging.getLogger(__name__)
 
@@ -255,7 +255,7 @@ def _load_npz_images(path: Path) -> np.ndarray:
         NumPy array of shape (N, 28, 28), dtype uint8.
     """
     data = np.load(path)
-    key = "arr_0" if "arr_0" in data else list(data.keys())[0]
+    key = "arr_0" if "arr_0" in data else next(iter(data.keys()))
     return data[key].astype(np.uint8)
 
 
@@ -269,7 +269,7 @@ def _load_npz_labels(path: Path) -> np.ndarray:
         NumPy array of shape (N,), dtype int.
     """
     data = np.load(path)
-    key = "arr_0" if "arr_0" in data else list(data.keys())[0]
+    key = "arr_0" if "arr_0" in data else next(iter(data.keys()))
     return data[key].astype(int)
 
 
@@ -335,12 +335,14 @@ def _write_pngs_and_index(
                     pbar.update(1)
                     continue
 
-            index_records.append({
-                "filename": filename,
-                "label_int": label_int,
-                "char_unicode": char_unicode,
-                "split": split,
-            })
+            index_records.append(
+                {
+                    "filename": filename,
+                    "label_int": label_int,
+                    "char_unicode": char_unicode,
+                    "split": split,
+                }
+            )
             pbar.update(1)
 
     with index_path.open("w", encoding="utf-8") as fh:
@@ -349,7 +351,11 @@ def _write_pngs_and_index(
 
     logger.info(
         "  %s done — extracted=%d  skipped=%d  errors=%d  index=%s",
-        split, n_extracted, n_skipped, n_errors, index_path.name,
+        split,
+        n_extracted,
+        n_skipped,
+        n_errors,
+        index_path.name,
     )
     return n_extracted, n_skipped, n_errors
 
@@ -377,13 +383,13 @@ def materialize_kmnist(
         Tuple of (total_extracted, total_skipped, total_errors).
     """
     classmap = _load_classmap(data_dir / "kmnist_classmap.csv")
-    raw_dir  = data_dir / "data"
+    raw_dir = data_dir / "data"
     total_extracted = total_skipped = total_errors = 0
 
     for split in ("train", "test"):
         expected = _EXPECTED_KMNIST[split]
-        images_dir  = data_dir / "images" / split
-        index_path  = data_dir / f"{split}_index.jsonl"
+        images_dir = data_dir / "images" / split
+        index_path = data_dir / f"{split}_index.jsonl"
 
         # Try IDX first
         img_path, lbl_path = _resolve_idx_pair(raw_dir, split)
@@ -417,12 +423,18 @@ def materialize_kmnist(
             )
 
         extracted, skipped, errors = _write_pngs_and_index(
-            images, labels, classmap,
-            images_dir, index_path, split, overwrite, dry_run,
+            images,
+            labels,
+            classmap,
+            images_dir,
+            index_path,
+            split,
+            overwrite,
+            dry_run,
         )
         total_extracted += extracted
-        total_skipped   += skipped
-        total_errors    += errors
+        total_skipped += skipped
+        total_errors += errors
 
     return total_extracted, total_skipped, total_errors
 
@@ -448,11 +460,11 @@ def materialize_k49(
         Tuple of (total_extracted, total_skipped, total_errors).
     """
     classmap = _load_classmap(data_dir / "k49_classmap.csv")
-    raw_dir  = data_dir / "data"
+    raw_dir = data_dir / "data"
     total_extracted = total_skipped = total_errors = 0
 
     for split in ("train", "test"):
-        expected   = _EXPECTED_K49[split]
+        expected = _EXPECTED_K49[split]
         images_dir = data_dir / "images" / split
         index_path = data_dir / f"{split}_index.jsonl"
 
@@ -474,12 +486,18 @@ def materialize_k49(
             )
 
         extracted, skipped, errors = _write_pngs_and_index(
-            images, labels, classmap,
-            images_dir, index_path, split, overwrite, dry_run,
+            images,
+            labels,
+            classmap,
+            images_dir,
+            index_path,
+            split,
+            overwrite,
+            dry_run,
         )
         total_extracted += extracted
-        total_skipped   += skipped
-        total_errors    += errors
+        total_skipped += skipped
+        total_errors += errors
 
     return total_extracted, total_skipped, total_errors
 
@@ -511,7 +529,7 @@ def materialize_kkanji(
         Tuple of (n_indexed, 0, 0).
     """
     kkanji2_dir = data_dir / "kkanji2"
-    index_path  = data_dir / "all_index.jsonl"
+    index_path = data_dir / "all_index.jsonl"
 
     if not kkanji2_dir.exists():
         logger.error("K-Kanji directory not found: %s", kkanji2_dir)
@@ -536,20 +554,20 @@ def materialize_kkanji(
             for png_path in sorted(char_dir.glob("*.png")):
                 # filename is relative: "亡/72d56fc.png"
                 filename = f"{char}/{png_path.name}"
-                records.append({
-                    "filename": filename,
-                    "char_unicode": char,
-                    "split": "all",
-                })
+                records.append(
+                    {
+                        "filename": filename,
+                        "char_unicode": char,
+                        "split": "all",
+                    }
+                )
             pbar.update(1)
 
     with index_path.open("w", encoding="utf-8") as fh:
         for rec in records:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
-    logger.info(
-        "K-Kanji done — %d images indexed in %s", len(records), index_path.name
-    )
+    logger.info("K-Kanji done — %d images indexed in %s", len(records), index_path.name)
     return len(records), 0, 0
 
 
@@ -577,7 +595,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--sub-dataset",
-        choices=ALL_SUB_DATASETS + ["all"],
+        choices=[*ALL_SUB_DATASETS, "all"],
         default="all",
         metavar="DS",
         help="Which sub-dataset to process: kmnist | k49 | kkanji | all (default: all).",
@@ -593,7 +611,8 @@ def main() -> None:
         help="Print what would be done without writing any files.",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable DEBUG logging.",
     )
@@ -633,12 +652,14 @@ def main() -> None:
             e, s, err = materialize_kkanji(sub_dir, args.dry_run)
 
         total_extracted += e
-        total_skipped   += s
-        total_errors    += err
+        total_skipped += s
+        total_errors += err
 
     logger.info(
         "All done — extracted=%d  skipped=%d  errors=%d",
-        total_extracted, total_skipped, total_errors,
+        total_extracted,
+        total_skipped,
+        total_errors,
     )
 
     if total_errors:

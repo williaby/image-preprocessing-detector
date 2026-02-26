@@ -23,11 +23,10 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__      = 'integrate-script'
-__l4_dataset__       = 'funsd'
-__l4_workstream__    = 'WS3'
-__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/layout/funsd.py'
-
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "funsd"
+__l4_workstream__ = "WS3"
+__l4_parser__ = "src/image_preprocessing_detector/annotation/parsers/layout/funsd.py"
 
 
 import argparse

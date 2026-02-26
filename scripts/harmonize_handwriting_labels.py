@@ -286,8 +286,8 @@ def _build_all_handwritten_records(
                 "image_path": str(Path(config.base_subdir) / original_path),
                 "source_dataset": config.name,
                 "handwriting_presence": True,
-                "presence_score": 1.0,    # full page handwriting (area ratio proxy)
-                "legibility_score": -1.0, # N_A sentinel — VLM labeling pipeline pending
+                "presence_score": 1.0,  # full page handwriting (area ratio proxy)
+                "legibility_score": -1.0,  # N_A sentinel — VLM labeling pipeline pending
                 "split": _normalize_split(raw_split),
                 "label_method": "dataset_class",
             }
@@ -397,7 +397,7 @@ def _build_all_printed_records(
                 "image_path": str(Path(config.base_subdir) / original_path),
                 "source_dataset": config.name,
                 "handwriting_presence": False,
-                "presence_score": -1.0,    # N_A sentinel — no handwriting, regression head masked
+                "presence_score": -1.0,  # N_A sentinel — no handwriting, regression head masked
                 "legibility_score": -1.0,  # N_A sentinel — no handwriting, regression head masked
                 "split": _normalize_split(raw_split),
                 "label_method": "dataset_class",
@@ -471,8 +471,8 @@ def _build_iam_records_from_filesystem(
                 "image_path": str(rel_path),
                 "source_dataset": "iam",
                 "handwriting_presence": True,
-                "presence_score": 1.0,    # full page handwriting (area ratio proxy)
-                "legibility_score": -1.0, # N_A sentinel — VLM labeling pipeline pending
+                "presence_score": 1.0,  # full page handwriting (area ratio proxy)
+                "legibility_score": -1.0,  # N_A sentinel — VLM labeling pipeline pending
                 "split": split,
                 "label_method": "dataset_class",
             }

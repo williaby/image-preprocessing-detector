@@ -68,8 +68,8 @@ DEFAULT_STRATIFICATION_AXES: tuple[str, ...] = (
 # should skip image-path validation for these and mark them as
 # "no-image-audit" rather than raising path-not-found errors.
 _TEXT_CORPUS_EXCLUSIONS: tuple[str, ...] = (
-    "openlid-v2",   # Language ID text corpus — no images
-    "wili-2018",    # Language ID text corpus — superseded by openlid-v2
+    "openlid-v2",  # Language ID text corpus — no images
+    "wili-2018",  # Language ID text corpus — superseded by openlid-v2
 )
 
 
@@ -1034,12 +1034,8 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     # 3 sub-datasets: K-MNIST (70K, 28px), K-49 (271K, 28px), K-Kanji (140K, 64px).
     # Primary heads: script_cls (JPAN), handwriting_presence_cls.
     "kuzushiji": {
-        "image_base_path": (
-            _BASE_DATA_DIR / "handwriting" / "kuzushiji"
-        ),
-        "metadata_json_path": (
-            DEFAULT_METADATA_ROOT / "kuzushiji_metadata.json"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "handwriting" / "kuzushiji"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "kuzushiji_metadata.json"),
         "stratification_axes": (
             "capture_method",
             "has_handwriting",
@@ -1072,9 +1068,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     # capture_method=scanner_flatbed, iso639=zh, iso15924=Hans, text_scope=page.
     # Primary heads: handwriting_presence_cls, script_cls (Hans/CJK).
     "casia-hwdb2": {
-        "image_base_path": (
-            _BASE_DATA_DIR / "handwriting" / "casia-hwdb2" / "HWDB"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "handwriting" / "casia-hwdb2" / "HWDB"),
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "casia-hwdb2_metadata.json"),
         "stratification_axes": (
             "script_family",
@@ -1090,7 +1084,9 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         "image_base_path": (
             _BASE_DATA_DIR / "handwriting" / "casia-hwdb2-line" / "images"
         ),
-        "metadata_json_path": (DEFAULT_METADATA_ROOT / "casia-hwdb2-line_metadata.json"),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "casia-hwdb2-line_metadata.json"
+        ),
         "stratification_axes": (
             "script_family",
             "has_handwriting",
@@ -1105,9 +1101,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     # NOTE: capture_method=unknown and domain_level1=UNK for all 3279 samples.
     # Stratification uses iso15924_script as effective axis via script_family.
     "multilingual-scripts": {
-        "image_base_path": (
-            _BASE_DATA_DIR / "language" / "multilingual_scripts"
-        ),
+        "image_base_path": (_BASE_DATA_DIR / "language" / "multilingual_scripts"),
         "metadata_json_path": (
             DEFAULT_METADATA_ROOT / "multilingual_scripts_metadata.json"
         ),

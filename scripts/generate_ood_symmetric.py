@@ -32,6 +32,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/geometry \\
         --n-images 500
 """
+
 from __future__ import annotations
 
 import io
@@ -63,9 +64,7 @@ from scripts.ood_utils import (
 # OOD seed namespace: 0xDEADBEEF_0DD5AFEC ^ recipe_index(1)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x0000_0001) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/geometry")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -88,14 +87,14 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
 
-def _center_crop_and_rotate(
-    img_bgr: np.ndarray, rotation_deg: int
-) -> np.ndarray:
+def _center_crop_and_rotate(img_bgr: np.ndarray, rotation_deg: int) -> np.ndarray:
     """Crop to center fraction and apply 90°-step rotation.
 
     Args:
@@ -114,12 +113,12 @@ def _center_crop_and_rotate(
 
     if rotation_deg == 0:
         return cropped
-    elif rotation_deg == 90:
+    if rotation_deg == 90:
         return cv2.rotate(cropped, cv2.ROTATE_90_CLOCKWISE)
-    elif rotation_deg == 180:
+    if rotation_deg == 180:
         return cv2.rotate(cropped, cv2.ROTATE_180)
-    else:  # 270
-        return cv2.rotate(cropped, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    # 270
+    return cv2.rotate(cropped, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 
 def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
@@ -127,9 +126,7 @@ def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
     coco_train = doclaynet_dir / "ground_truth" / "coco" / "train.json"
     img_dir = doclaynet_dir / "documents" / "png"
     if not coco_train.exists() or not img_dir.exists():
-        raise FileNotFoundError(
-            f"DocLayNet train split not found at {doclaynet_dir}"
-        )
+        raise FileNotFoundError(f"DocLayNet train split not found at {doclaynet_dir}")
     with coco_train.open() as f:
         data = json.load(f)
     paths = [img_dir / entry["file_name"] for entry in data["images"]]

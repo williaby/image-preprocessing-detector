@@ -8,7 +8,7 @@ Recipe 9 — Vector PDF Multi-DPI Rendering (300 images):
   Simulates rendering the same document at 72, 100, and 150 DPI by
   downsampling DocLayNet 300-DPI PNG sources to the target DPI fraction,
   then keeping at that reduced size.  Each source image produces 3 output
-  images (one per DPI tier).  100 source pages × 3 tiers = 300 images.
+  images (one per DPI tier).  100 source pages x 3 tiers = 300 images.
 
   Labels: resolution_quality = "low" / "very_low"
           capture_method = "born_digital"
@@ -30,6 +30,7 @@ Usage:
         --doclaynet-dir /mnt/e/image_detection/01_base_data/documents/doclaynet \\
         --output-dir /mnt/e/image_detection/ood/resolution
 """
+
 from __future__ import annotations
 
 import io
@@ -61,9 +62,7 @@ from scripts.ood_utils import (
 # OOD seed namespace: 0xDEADBEEF_0DD5AFEC ^ recipe_index(9)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x0000_0009) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/resolution")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -77,7 +76,7 @@ _DPI_TIERS: list[tuple[int, str]] = [
     (150, "low"),
 ]
 
-# Recipe 9 source page count (100 pages × 3 tiers = 300 images)
+# Recipe 9 source page count (100 pages x 3 tiers = 300 images)
 _R9_SOURCE_PAGES = 100
 
 # Recipe 10 source count (take from 72-DPI outputs of Recipe 9)
@@ -94,7 +93,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -145,9 +146,7 @@ def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
     coco_train = doclaynet_dir / "ground_truth" / "coco" / "train.json"
     img_dir = doclaynet_dir / "documents" / "png"
     if not coco_train.exists() or not img_dir.exists():
-        raise FileNotFoundError(
-            f"DocLayNet train split not found at {doclaynet_dir}"
-        )
+        raise FileNotFoundError(f"DocLayNet train split not found at {doclaynet_dir}")
     with coco_train.open() as f:
         data = json.load(f)
     paths = [img_dir / entry["file_name"] for entry in data["images"]]
@@ -288,7 +287,9 @@ def main(
     # ------------------------------------------------------------------
     # Recipe 9: DPI downsampling
     # ------------------------------------------------------------------
-    click.echo(f"\n  Recipe 9: Rendering {len(selected_pages)} pages × {len(_DPI_TIERS)} DPI tiers...")
+    click.echo(
+        f"\n  Recipe 9: Rendering {len(selected_pages)} pages x {len(_DPI_TIERS)} DPI tiers..."
+    )
 
     for src_path in selected_pages:
         img_bgr = cv2.imread(str(src_path))
@@ -342,7 +343,9 @@ def main(
     # Recipe 10: Upscaling artefacts
     # ------------------------------------------------------------------
     r10_needed = min(_R10_TARGET, len(r10_candidates))
-    click.echo(f"\n  Recipe 10: Upscaling {r10_needed} × 72-DPI images back to 300-DPI size...")
+    click.echo(
+        f"\n  Recipe 10: Upscaling {r10_needed} x 72-DPI images back to 300-DPI size..."
+    )
 
     for down_img, src_path in r10_candidates[:r10_needed]:
         upsized = _upsample_artifact(down_img)

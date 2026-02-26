@@ -67,8 +67,8 @@ from tqdm import tqdm
 DATA_DIR = Path("/mnt/e/image_detection/01_base_data/handwriting/casia-hwdb2/HWDB")
 
 # DGRL format constants (see parser docstring for full spec)
-_IMAGE_META_BYTES = 12       # height(4) + width(4) + line_num(4)
-_LINE_POSITION_BYTES = 16    # y(4) + x(4) + h(4) + w(4)
+_IMAGE_META_BYTES = 12  # height(4) + width(4) + line_num(4)
+_LINE_POSITION_BYTES = 16  # y(4) + x(4) + h(4) + w(4)
 _DEFAULT_CODE_LENGTH = 4
 
 _STRUCT_IMAGE_META = struct.Struct("<III")
@@ -238,13 +238,25 @@ def _parse_dgrl_with_pixels(path: Path) -> PageData | None:
                 else:
                     bitmap = fh.read(bitmap_size)
                     if len(bitmap) < bitmap_size:
-                        logger.debug("Truncated bitmap in %s line %d", path.name, len(page.lines))
+                        logger.debug(
+                            "Truncated bitmap in %s line %d", path.name, len(page.lines)
+                        )
                         break
 
-                page.lines.append(LineRecord(x=x, y=y, w=w, h=h, char_count=char_num, text=text, bitmap=bitmap))
+                page.lines.append(
+                    LineRecord(
+                        x=x,
+                        y=y,
+                        w=w,
+                        h=h,
+                        char_count=char_num,
+                        text=text,
+                        bitmap=bitmap,
+                    )
+                )
 
     except OSError as exc:
-        logger.error("Cannot read %s: %s", path.name, exc)  # noqa: TRY400
+        logger.error("Cannot read %s: %s", path.name, exc)
         return None
 
     return page
@@ -376,7 +388,7 @@ def render_one(dgrl_path: Path, png_path: Path, overwrite: bool) -> RenderResult
         img = _assemble_page_image(page)
         png_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(png_path, format="PNG", optimize=True)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return RenderResult(
             dgrl_path=dgrl_path,
             png_path=png_path,
@@ -408,10 +420,10 @@ def render_one(dgrl_path: Path, png_path: Path, overwrite: bool) -> RenderResult
 class SubDatasetJob:
     """Paths and metadata for one sub-dataset directory."""
 
-    dgrl_dir: Path         # e.g. HWDB/HWDB2.0Train/
-    images_dir: Path       # e.g. HWDB/HWDB2.0Train_images/
-    index_path: Path       # e.g. HWDB/HWDB2.0Train_index.jsonl
-    sub_name: str          # e.g. "HWDB2.0Train"
+    dgrl_dir: Path  # e.g. HWDB/HWDB2.0Train/
+    images_dir: Path  # e.g. HWDB/HWDB2.0Train_images/
+    index_path: Path  # e.g. HWDB/HWDB2.0Train_index.jsonl
+    sub_name: str  # e.g. "HWDB2.0Train"
 
 
 def discover_jobs(data_dir: Path, filter_name: str | None) -> list[SubDatasetJob]:
@@ -436,12 +448,14 @@ def discover_jobs(data_dir: Path, filter_name: str | None) -> list[SubDatasetJob
 
         images_dir = data_dir / f"{dgrl_dir.name}_images"
         index_path = data_dir / f"{dgrl_dir.name}_index.jsonl"
-        jobs.append(SubDatasetJob(
-            dgrl_dir=dgrl_dir,
-            images_dir=images_dir,
-            index_path=index_path,
-            sub_name=dgrl_dir.name,
-        ))
+        jobs.append(
+            SubDatasetJob(
+                dgrl_dir=dgrl_dir,
+                images_dir=images_dir,
+                index_path=index_path,
+                sub_name=dgrl_dir.name,
+            )
+        )
 
     return jobs
 
@@ -554,7 +568,9 @@ def main() -> None:
 
     if args.dry_run:
         already_done = sum(1 for _, _, png in work_items if png.exists())
-        logger.info("Dry run — would render %d files (%d already exist)", total, already_done)
+        logger.info(
+            "Dry run — would render %d files (%d already exist)", total, already_done
+        )
         for job in jobs:
             count = sum(1 for j, _, _ in work_items if j is job)
             logger.info("  %s: %d pages → %s", job.sub_name, count, job.images_dir)
@@ -579,7 +595,7 @@ def main() -> None:
                     job = futures[future]
                     try:
                         result = future.result()
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.error("Worker crashed: %s", exc)
                         n_errors += 1
                         pbar.update(1)
@@ -588,7 +604,11 @@ def main() -> None:
                     job_results[job.sub_name].append(result)
                     if result.error:
                         n_errors += 1
-                        logger.warning("Error rendering %s: %s", result.dgrl_path.name, result.error)
+                        logger.warning(
+                            "Error rendering %s: %s",
+                            result.dgrl_path.name,
+                            result.error,
+                        )
                     elif result.skipped:
                         n_skipped += 1
                     else:
@@ -601,7 +621,9 @@ def main() -> None:
                 job_results[job.sub_name].append(result)
                 if result.error:
                     n_errors += 1
-                    logger.warning("Error rendering %s: %s", result.dgrl_path.name, result.error)
+                    logger.warning(
+                        "Error rendering %s: %s", result.dgrl_path.name, result.error
+                    )
                 elif result.skipped:
                     n_skipped += 1
                 else:

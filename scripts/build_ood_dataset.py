@@ -2,7 +2,7 @@
 """Build the OOD evaluation dataset across all 9 categories.
 
 This script is the central orchestrator for acquiring, generating, and
-registering the 12,000–15,000 image OOD holdout corpus used to validate
+registering the 12,000-15,000 image OOD holdout corpus used to validate
 all 22 model heads (MobileNetV4 + SigLIP 2) against out-of-distribution
 inputs. See ``docs/datasets/OOD_DATASET_CATALOG.md`` for the full
 specification including the per-image entry template and ground-truth
@@ -20,13 +20,13 @@ Phase 1 — P0 Zero-Cost Minimum Viable OOD (~300 images):
 Phase 2 — Programmatic Generation (~2,500 images):
   generate-synthetic-degradation   4a compound + 4b watermarks + 4d binarized + 3c photocopy
   render-vector-pdfs               6a DocLayNet at 72/150/300 DPI + 9e-1 tagging
-  generate-upscaled-rasters        6b OHR-Bench 2× and 4× bicubic upscaling
+  generate-upscaled-rasters        6b OHR-Bench 2x and 4x bicubic upscaling
   render-font-variations           1h ornamental/blackletter/CJK calligraphic fonts
   render-code-screenshots          8a source screenshots + 8b arXiv+code + 8c terminal
   generate-ood-mixed               9b-1/9b-3/9c-2/9d-3 derived from Phase 1+2
 
 Phase 3 — Public Dataset Downloads (~2,600 images):
-  download-script-reserved         1b–1h: Mongolian/Syriac/Georgian/Fraktur/script OOD
+  download-script-reserved         1b-1h: Mongolian/Syriac/Georgian/Fraktur/script OOD
   download-geometry-public         2b WarpDoc+docalign12k perspective + 2c NDL Japanese
   download-capture-public          3a DLC+MIDV screen recaptures + 3b ADF curl + 3d scanner
   download-degradation-public      4c Internet Archive+IUPR+RealDAE+Incunabula gutter shadow
@@ -88,7 +88,7 @@ for _p in (_SCRIPTS_DIR, _SRC_DIR):
     if _ps not in sys.path:
         sys.path.insert(0, _ps)
 
-from ood_utils import (  # type: ignore[import-untyped]  # noqa: E402
+from ood_utils import (  # type: ignore[import-untyped]
     OOD_SUBDIRECTORIES,
     _GROUND_TRUTH_FIELDS,
     _REQUIRED_ENTRY_FIELDS,
@@ -97,7 +97,6 @@ from ood_utils import (  # type: ignore[import-untyped]  # noqa: E402
     compute_hashes,
     create_ood_directory_structure,
     hamming_distance,
-    is_duplicate,
     load_ood_registry,
     load_training_hashes,
     log_dry_run_summary,
@@ -300,8 +299,7 @@ def _dcf_load_symmetric_page_ids(
     }
     if not sym_cat_ids:
         logger.warning(
-            "No Picture/Title categories found in %s. "
-            "Checked for names: %r",
+            "No Picture/Title categories found in %s. Checked for names: %r",
             coco_test_json,
             {_DOCLAYNET_PICTURE_CATEGORY, _DOCLAYNET_TITLE_CATEGORY},
         )
@@ -324,9 +322,7 @@ def _dcf_load_symmetric_page_ids(
         if total_area <= 0:
             continue
         sym_area = sum(
-            a["bbox"][2] * a["bbox"][3]
-            for a in anns
-            if a["category_id"] in sym_cat_ids
+            a["bbox"][2] * a["bbox"][3] for a in anns if a["category_id"] in sym_cat_ids
         )
         ratio = sym_area / total_area
         if ratio >= min_area_ratio:
@@ -343,7 +339,7 @@ def _dcf_load_page_image(
     dpi: int = 300,
     gcs_bucket_name: str = "",
     gcs_prefix: str = "",
-) -> "tuple[Any, str] | None":
+) -> tuple[Any, str] | None:
     """Load a DocLayNet page as a PIL Image.
 
     Tries strategies in order:
@@ -389,7 +385,7 @@ def _dcf_load_page_image(
             )
             img = Image.fromarray(arr, "RGB")
             return img, "pdf_render"
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Failed to render PDF %s: %s", pdf_path, exc)
 
     # Strategy 2: pre-rendered PNG in PNG/ or documents/ directory (rare layouts).
@@ -401,7 +397,7 @@ def _dcf_load_page_image(
             try:
                 img = Image.open(png_search).convert("RGB")
                 return img, "pre-rendered_png"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Failed to load PNG %s: %s", png_search, exc)
 
     # Strategy 3: stream PDF from GCS (fallback when local files not cached).
@@ -414,7 +410,9 @@ def _dcf_load_page_image(
             blob_name = f"{gcs_prefix}/{stem}.pdf" if gcs_prefix else f"{stem}.pdf"
             blob = bucket.blob(blob_name)
             if blob.exists():
-                logger.debug("Streaming PDF from GCS: gs://%s/%s", gcs_bucket_name, blob_name)
+                logger.debug(
+                    "Streaming PDF from GCS: gs://%s/%s", gcs_bucket_name, blob_name
+                )
                 pdf_bytes = blob.download_as_bytes()
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                 mat = fitz.Matrix(dpi / 72.0, dpi / 72.0)
@@ -429,10 +427,12 @@ def _dcf_load_page_image(
 
                 img = Image.fromarray(arr, "RGB")
                 return img, "gcs_pdf_stream"
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("GCS streaming failed for %s: %s", stem, exc)
 
-    logger.debug("Image not found locally or on GCS: %s (stem=%s)", image_file_name, stem)
+    logger.debug(
+        "Image not found locally or on GCS: %s (stem=%s)", image_file_name, stem
+    )
     return None
 
 
@@ -512,7 +512,7 @@ def _dcf_estimate_perspective(quad_pts: list[list[float]]) -> float:
         quad_pts: List of 4 [x, y] coordinate pairs.
 
     Returns:
-        Approximate perspective angle in degrees (0–90).
+        Approximate perspective angle in degrees (0-90).
     """
     import math
 
@@ -563,19 +563,19 @@ def _dcf_load_frame_quad(
     # Official MIDV-500 layout:
     # .../images/HA/HA39_01.tif → .../ground_truth/HA/HA39_01.json
     try:
-        cond_dir = frame_path.parent          # images/HA/
-        images_dir = cond_dir.parent          # images/
-        country_dir = images_dir.parent       # 39_rus_internalpassport/
+        cond_dir = frame_path.parent  # images/HA/
+        images_dir = cond_dir.parent  # images/
+        country_dir = images_dir.parent  # 39_rus_internalpassport/
         ann_path = (
             country_dir
             / "ground_truth"
-            / cond_dir.name                   # HA
+            / cond_dir.name  # HA
             / frame_path.with_suffix(".json").name  # HA39_01.json
         )
         if ann_path.exists():
             with ann_path.open() as fh:
                 return _dcf_parse_quad(json.load(fh))
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
     # Fallback: sidecar JSON next to the TIF (non-standard layout).
@@ -584,7 +584,7 @@ def _dcf_load_frame_quad(
         try:
             with sidecar.open() as fh:
                 return _dcf_parse_quad(json.load(fh))
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     return None
@@ -595,7 +595,7 @@ def _dcf_parse_quad(data: Any) -> list[list[float]] | None:
 
     Handles two common formats:
     - Dict with ``quad`` key containing a list: ``{"quad": [[x,y], ...]}``.
-    - Dict with ``quad`` key containing p1–p4: ``{"quad": {"p1": [x,y], ...}}``.
+    - Dict with ``quad`` key containing p1-p4: ``{"quad": {"p1": [x,y], ...}}``.
 
     Args:
         data: Parsed JSON data (dict or list from annotation file).
@@ -630,7 +630,7 @@ def _dcf_save_image_jpeg(
     Args:
         image: PIL Image object (RGB mode expected).
         output_path: Destination file path (will be created with parents).
-        quality: JPEG quality (1–95).  Default 92 matches training pipeline.
+        quality: JPEG quality (1-95).  Default 92 matches training pipeline.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(output_path, format="JPEG", quality=quality, optimize=True)
@@ -815,7 +815,9 @@ def derive_cascade_failures(
                 if out_path.exists():
                     out_path.unlink()
                 continue
-            if any(hamming_distance(phash, kp) <= hamming_threshold for kp in known_phashes):
+            if any(
+                hamming_distance(phash, kp) <= hamming_threshold for kp in known_phashes
+            ):
                 dups_intra_9a1 += 1
                 if out_path.exists():
                     out_path.unlink()
@@ -866,7 +868,7 @@ def derive_cascade_failures(
         duplicates_intra=dups_intra_9a1,
         unique=registered_9a1,
         sub_command="derive-cascade-failures/9a-1",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
     # -----------------------------------------------------------------------
@@ -878,9 +880,7 @@ def derive_cascade_failures(
     # MIDV-500 Cyrillic subset.
     if midv500_dir.exists():
         midv500_frames = _dcf_get_cyrillic_midv500_frames(midv500_dir)
-        logger.info(
-            "Found %d Cyrillic MIDV-500 frames", len(midv500_frames)
-        )
+        logger.info("Found %d Cyrillic MIDV-500 frames", len(midv500_frames))
         for fp in midv500_frames:
             perspective_sources.append((fp, "midv500", "MIT"))
     else:
@@ -921,9 +921,7 @@ def derive_cascade_failures(
             "Using all %d Cyrillic frames as fallback.",
             len(perspective_sources),
         )
-        scored_frames = [
-            (0.0, fp, src, lic) for fp, src, lic in perspective_sources
-        ]
+        scored_frames = [(0.0, fp, src, lic) for fp, src, lic in perspective_sources]
 
     frame_counter = 0
     for angle_deg, frame_path, src_name, lic in scored_frames:
@@ -941,12 +939,12 @@ def derive_cascade_failures(
 
         try:
             img_pil = Image.open(frame_path).convert("RGB")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Failed to load frame %s: %s", frame_path, exc)
             continue
 
         # MIDV-500 places ID cards flat on surfaces — measured angles are
-        # typically 3–4°, NOT the 30°+ "extreme perspective" originally
+        # typically 3-4°, NOT the 30°+ "extreme perspective" originally
         # assumed.  Label geometry and OOD category based on actual angle.
         is_extreme_perspective = angle_deg >= 15.0
         out_subdir = "ood_geometry" if is_extreme_perspective else "ood_capture"
@@ -967,7 +965,9 @@ def derive_cascade_failures(
             if out_path.exists():
                 out_path.unlink()
             continue
-        if any(hamming_distance(phash, kp) <= hamming_threshold for kp in known_phashes):
+        if any(
+            hamming_distance(phash, kp) <= hamming_threshold for kp in known_phashes
+        ):
             dups_intra_9a2 += 1
             if out_path.exists():
                 out_path.unlink()
@@ -1032,7 +1032,7 @@ def derive_cascade_failures(
         duplicates_intra=dups_intra_9a2,
         unique=registered_9a2,
         sub_command="derive-cascade-failures/9a-2",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
     total_registered = registered_9a1 + registered_9a2
@@ -1160,7 +1160,9 @@ def arxiv_smoke_test(
             if n_this_cat <= 0:
                 continue
 
-            logger.info("Querying arXiv category %s for %d papers", category, n_this_cat)
+            logger.info(
+                "Querying arXiv category %s for %d papers", category, n_this_cat
+            )
 
             try:
                 client = arxiv_lib.Client(num_retries=3, page_size=20)
@@ -1171,7 +1173,7 @@ def arxiv_smoke_test(
                     sort_order=arxiv_lib.SortOrder.Descending,
                 )
                 results_iter = client.results(search)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("arXiv query failed for %s: %s", category, exc)
                 continue
 
@@ -1191,15 +1193,15 @@ def arxiv_smoke_test(
                 if not pdf_file.exists():
                     try:
                         logger.debug("Downloading %s", pdf_url)
-                        urllib.request.urlretrieve(pdf_url, pdf_file)  # noqa: S310
-                    except Exception as exc:  # noqa: BLE001
+                        urllib.request.urlretrieve(pdf_url, pdf_file)
+                    except Exception as exc:
                         logger.warning("Failed to download %s: %s", pdf_url, exc)
                         continue
 
                 # Render pages.
                 try:
                     doc = fitz.open(str(pdf_file))
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("Failed to open %s: %s", pdf_file, exc)
                     continue
 
@@ -1213,7 +1215,9 @@ def arxiv_smoke_test(
                     page_indices = sample_range
                 else:
                     step = len(sample_range) // pages_per_paper
-                    page_indices = [sample_range[i * step] for i in range(pages_per_paper)]
+                    page_indices = [
+                        sample_range[i * step] for i in range(pages_per_paper)
+                    ]
 
                 for page_idx in page_indices:
                     page = doc[page_idx]
@@ -1221,7 +1225,9 @@ def arxiv_smoke_test(
                     # Skip near-blank / pure-figure pages (< 80 chars of text).
                     page_text = page.get_text("text").strip()
                     if len(page_text) < 80:
-                        logger.debug("Skipping low-text page %d of %s", page_idx, paper_id)
+                        logger.debug(
+                            "Skipping low-text page %d of %s", page_idx, paper_id
+                        )
                         continue
 
                     candidates += 1
@@ -1240,6 +1246,7 @@ def arxiv_smoke_test(
                         sha256, phash = compute_hashes(out_path)
                     else:
                         import hashlib
+
                         sha256 = hashlib.sha256(img_bytes).hexdigest()
                         phash = "0000000000000000"
 
@@ -1254,9 +1261,7 @@ def arxiv_smoke_test(
                         if not dry_run and out_path.exists():
                             out_path.unlink()
                         continue
-                    if any(
-                        hamming_distance(phash, kp) <= 5 for kp in known_phashes
-                    ):
+                    if any(hamming_distance(phash, kp) <= 5 for kp in known_phashes):
                         dups_intra += 1
                         if not dry_run and out_path.exists():
                             out_path.unlink()
@@ -1313,7 +1318,7 @@ def arxiv_smoke_test(
         duplicates_intra=dups_intra,
         unique=registered,
         sub_command="arxiv-smoke-test",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -1323,15 +1328,15 @@ def arxiv_smoke_test(
 
 
 def _gsd_compound_transform(
-    img_np: "Any",
-    rng: "Any",
-) -> "tuple[Any, dict[str, Any]]":
+    img_np: Any,
+    rng: Any,
+) -> tuple[Any, dict[str, Any]]:
     """Apply ≥5 simultaneous Albumentations degradations to *img_np*.
 
     CRITICAL: Uses Albumentations (NOT Augraphy) to avoid pipeline correlation
     with the shadow/warping training pipelines (OOD plan constraint).
 
-    Randomly selects 5–8 transforms from:
+    Randomly selects 5-8 transforms from:
     GaussianBlur, GaussNoise, RandomBrightnessContrast, ImageCompression,
     HueSaturationValue, CoarseDropout, Sharpen, Defocus.
 
@@ -1343,7 +1348,7 @@ def _gsd_compound_transform(
         Tuple of (augmented_array, params_dict) where params_dict records
         every parameter applied for ground-truth derivation.
     """
-    import albumentations as A  # type: ignore[import-untyped]
+    import albumentations as A  # type: ignore[import-untyped]  # noqa: N812
 
     blur_sigma = rng.uniform(1.0, 3.5)
     noise_std = rng.uniform(5.0, 30.0)
@@ -1361,8 +1366,7 @@ def _gsd_compound_transform(
         A.CoarseDropout(num_holes_range=(4, 12), p=1.0),
         A.Sharpen(alpha=(0.2, 0.5), p=1.0),
     ]
-    for t in rng.sample(extra_pool, min(n_extras, len(extra_pool))):
-        optional_extras.append(t)
+    optional_extras.extend(rng.sample(extra_pool, min(n_extras, len(extra_pool))))
 
     transform = A.Compose(
         [
@@ -1399,15 +1403,15 @@ def _gsd_compound_transform(
     return augmented, params
 
 
-def _gsd_add_gutter_shadow(img_np: "Any", rng: "Any") -> "tuple[Any, dict[str, Any]]":
+def _gsd_add_gutter_shadow(img_np: Any, rng: Any) -> tuple[Any, dict[str, Any]]:
     """Overlay a sinusoidal luminance gradient simulating a book gutter shadow.
 
-    The gradient spans 10–25% of the image width from a randomly chosen
-    left or right margin.  The shadow darkens the margin to 40–70% of its
+    The gradient spans 10-25% of the image width from a randomly chosen
+    left or right margin.  The shadow darkens the margin to 40-70% of its
     original brightness.
 
     Args:
-        img_np: Uint8 float-convertible array (H×W×3, RGB).
+        img_np: Uint8 float-convertible array (HxWx3, RGB).
         rng: ``random.Random`` instance.
 
     Returns:
@@ -1445,17 +1449,17 @@ def _gsd_add_gutter_shadow(img_np: "Any", rng: "Any") -> "tuple[Any, dict[str, A
 
 
 def _gsd_apply_watermark(
-    img_pil: "Any",
+    img_pil: Any,
     text: str,
     alpha: float,
-    rng: "Any",
-) -> "Any":
+    rng: Any,
+) -> Any:
     """Overlay a diagonal text watermark on *img_pil* (PIL Image, RGB).
 
     Args:
         img_pil: PIL Image in RGB mode.
         text: Watermark text (e.g. "DRAFT", "CONFIDENTIAL").
-        alpha: Opacity 0–1.  Corresponds to ``watermark_severity``.
+        alpha: Opacity 0-1.  Corresponds to ``watermark_severity``.
         rng: ``random.Random`` instance (for font-size jitter).
 
     Returns:
@@ -1463,13 +1467,13 @@ def _gsd_apply_watermark(
     """
     from PIL import Image, ImageDraw, ImageFont
 
-    import math
-
     w, h = img_pil.size
     font_size = int(min(w, h) * rng.uniform(0.08, 0.14))
 
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size
+        )
     except OSError:
         font = ImageFont.load_default()
 
@@ -1498,20 +1502,19 @@ def _gsd_apply_watermark(
     return base.convert("RGB")
 
 
-def _gsd_sauvola_binarize(img_np: "Any") -> "Any":
+def _gsd_sauvola_binarize(img_np: Any) -> Any:
     """Apply Sauvola binarization via cv2.ximgproc.niBlackThreshold.
 
     Parameters match plan specification: k=0.2, r=25.
     Falls back to simple Otsu threshold if opencv-contrib is unavailable.
 
     Args:
-        img_np: Uint8 numpy array (H×W×3 or H×W greyscale).
+        img_np: Uint8 numpy array (HxWx3 or HxW greyscale).
 
     Returns:
         Binary uint8 numpy array (0/255, same spatial dims, single channel).
     """
     import cv2  # type: ignore[import-untyped]
-    import numpy as np
 
     if img_np.ndim == 3:
         gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
@@ -1529,7 +1532,7 @@ def _gsd_sauvola_binarize(img_np: "Any") -> "Any":
     return binary
 
 
-def _gsd_augraphy_photocopy(img_pil: "Any", n_passes: int = 4) -> "Any":
+def _gsd_augraphy_photocopy(img_pil: Any, n_passes: int = 4) -> Any:
     """Apply Augraphy PhotoCopy augmenter ``n_passes`` times sequentially.
 
     CRITICAL: Augraphy is used ONLY for 3c (photocopies), NOT for 4a
@@ -1611,7 +1614,7 @@ def generate_synthetic_degradation(
         Logs ALL parameters for semi-automated ground-truth derivation.
 
     4b — Watermarked documents (PIL diagonal text overlay):
-        DRAFT/CONFIDENTIAL/VOID at 45°, alpha 30–70%, sans-serif.
+        DRAFT/CONFIDENTIAL/VOID at 45°, alpha 30-70%, sans-serif.
 
     4d — Binarized documents (two sources):
         - Source 1: Tobacco-800 (authentic 30+ year aging, 1-bit binary)
@@ -1619,7 +1622,7 @@ def generate_synthetic_degradation(
 
     3c — 4th-generation photocopies (two sources):
         - Source A: L3iDocCopies real physical photocopies (Eskenazi 2016)
-        - Source B: Augraphy PhotoCopy applied 4× sequentially on RVL-CDIP
+        - Source B: Augraphy PhotoCopy applied 4x sequentially on RVL-CDIP
 
     CRITICAL: 4a uses Albumentations, NOT Augraphy. Both are in use in this
     project; see the augmentation library assignment table in the plan.
@@ -1638,12 +1641,11 @@ def generate_synthetic_degradation(
         raise SystemExit(f"Source directory not found: {source_dir}")
 
     # Collect source images — limit pool size to avoid slow rglob on large Windows dirs.
-    # We only need ~4× the generation targets for adequate randomness.
+    # We only need ~4x the generation targets for adequate randomness.
     _max_pool = (n_compound + n_watermark + n_binarized + n_photocopy) * 4
     _exts = {".jpg", ".jpeg", ".png", ".tif", ".tiff"}
     _source_gen = (
-        p for p in source_dir.rglob("*")
-        if p.suffix.lower() in _exts and p.is_file()
+        p for p in source_dir.rglob("*") if p.suffix.lower() in _exts and p.is_file()
     )
     source_images: list[Path] = []
     for _p in _source_gen:
@@ -1652,7 +1654,12 @@ def generate_synthetic_degradation(
             break
     if not source_images:
         raise SystemExit(f"No images found in {source_dir}")
-    logger.info("Source pool: %d images (capped at %d) from %s", len(source_images), _max_pool, source_dir)
+    logger.info(
+        "Source pool: %d images (capped at %d) from %s",
+        len(source_images),
+        _max_pool,
+        source_dir,
+    )
 
     if not dry_run:
         create_ood_directory_structure(ood_root)
@@ -1668,14 +1675,14 @@ def generate_synthetic_degradation(
     total_candidates = total_dups_train = total_dups_intra = total_registered = 0
 
     def _try_register(
-        img_pil: "Any",
+        img_pil: Any,
         out_name: str,
-        gt_update: "dict[str, Any]",
-        ood_cats: "list[str]",
+        gt_update: dict[str, Any],
+        ood_cats: list[str],
         reason: str,
         acq_method: str,
         license_str: str,
-        gen_meta: "dict[str, Any]",
+        gen_meta: dict[str, Any],
     ) -> bool:
         """Save image, dedup, and register.  Returns True if registered."""
         nonlocal total_candidates, total_dups_train, total_dups_intra, total_registered
@@ -1686,7 +1693,9 @@ def generate_synthetic_degradation(
             img_pil.save(out_path, format="JPEG", quality=92, optimize=True)
             sha256, phash = compute_hashes(out_path)
         else:
-            import hashlib, io
+            import hashlib
+            import io
+
             buf = io.BytesIO()
             img_pil.save(buf, format="JPEG", quality=92)
             sha256 = hashlib.sha256(buf.getvalue()).hexdigest()
@@ -1741,7 +1750,7 @@ def generate_synthetic_degradation(
             break
         try:
             img_np = np.array(Image.open(src).convert("RGB"))
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
 
         degraded, albu_params = _gsd_compound_transform(img_np, rng)
@@ -1787,7 +1796,7 @@ def generate_synthetic_degradation(
             break
         try:
             img_pil = Image.open(src).convert("RGB")
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
 
         text = rng.choice(watermark_texts)
@@ -1829,7 +1838,8 @@ def generate_synthetic_degradation(
     # Source 1: Tobacco-800 authentic 1-bit scans (already binarized).
     if tobacco800_dir.exists():
         tobacco_imgs = sorted(
-            p for p in tobacco800_dir.rglob("*")
+            p
+            for p in tobacco800_dir.rglob("*")
             if p.suffix.lower() in {".png", ".tif", ".tiff"} and p.is_file()
         )
         pool_tobacco = rng.sample(tobacco_imgs, min(n_tobacco * 2, len(tobacco_imgs)))
@@ -1838,7 +1848,7 @@ def generate_synthetic_degradation(
                 break
             try:
                 img_pil = Image.open(src).convert("RGB")
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
             out_name = f"4d_tobacco_{done_4d:04d}.jpg"
             gt_4d: dict[str, Any] = {
@@ -1858,7 +1868,9 @@ def generate_synthetic_degradation(
             ):
                 done_4d += 1
     else:
-        logger.warning("Tobacco-800 not found at %s — skipping Source 1", tobacco800_dir)
+        logger.warning(
+            "Tobacco-800 not found at %s — skipping Source 1", tobacco800_dir
+        )
 
     # Source 2: Sauvola binarization on RVL-CDIP.
     pool_sauvola = rng.sample(source_images, min(n_sauvola * 2, len(source_images)))
@@ -1867,7 +1879,7 @@ def generate_synthetic_degradation(
             break
         try:
             img_np = np.array(Image.open(src).convert("RGB"))
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
         binary = _gsd_sauvola_binarize(img_np)
         # Convert single-channel binary to RGB for PIL save.
@@ -1901,7 +1913,8 @@ def generate_synthetic_degradation(
     # Source A: L3iDocCopies real physical photocopies (if available).
     if l3i_photocopy_dir is not None and l3i_photocopy_dir.exists():
         l3i_imgs = sorted(
-            p for p in l3i_photocopy_dir.rglob("*")
+            p
+            for p in l3i_photocopy_dir.rglob("*")
             if p.suffix.lower() in {".jpg", ".jpeg", ".png"} and p.is_file()
         )
         n_l3i_target = n_photocopy // 2
@@ -1911,7 +1924,7 @@ def generate_synthetic_degradation(
                 break
             try:
                 img_pil = Image.open(src).convert("RGB")
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
             out_name = f"3c_l3i_{done_3c:04d}.jpg"
             gt_3c: dict[str, Any] = {
@@ -1932,14 +1945,14 @@ def generate_synthetic_degradation(
                 n_l3i += 1
         n_augraphy = n_photocopy - done_3c
 
-    # Source B: Augraphy PhotoCopy 4× on RVL-CDIP.
+    # Source B: Augraphy PhotoCopy 4x on RVL-CDIP.
     pool_3c = rng.sample(source_images, min(n_augraphy * 2, len(source_images)))
     for src in pool_3c:
         if done_3c >= n_photocopy:
             break
         try:
             img_pil = Image.open(src).convert("RGB")
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
         photocopied = _gsd_augraphy_photocopy(img_pil, n_passes=4)
         out_name = f"3c_augraphy_{done_3c:04d}.jpg"
@@ -1948,11 +1961,13 @@ def generate_synthetic_degradation(
             "color_mode": "grayscale",
         }
         if _try_register(
-            photocopied if hasattr(photocopied, "save") else Image.fromarray(photocopied),
+            photocopied
+            if hasattr(photocopied, "save")
+            else Image.fromarray(photocopied),
             out_name,
             gt_3c_b,
             ["ood_capture"],
-            "3c photocopy: Augraphy PhotoCopy applied 4× sequentially (simulated)",
+            "3c photocopy: Augraphy PhotoCopy applied 4x sequentially (simulated)",
             "augraphy_photocopy_4x",
             "rvl_cdip_academic",
             {"source_image": str(src), "n_passes": 4, "method": "augraphy_simulated"},
@@ -1970,7 +1985,7 @@ def generate_synthetic_degradation(
         duplicates_intra=total_dups_intra,
         unique=total_registered,
         sub_command="generate-synthetic-degradation",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -1985,7 +2000,9 @@ def generate_synthetic_degradation(
 @click.option(
     "--doclaynet-coco-dir",
     type=click.Path(path_type=Path),
-    default=Path("/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/coco"),
+    default=Path(
+        "/mnt/e/image_detection/01_base_data/documents/doclaynet/ground_truth/coco"
+    ),
     show_default=True,
     help="Directory containing DocLayNet COCO JSON split files.",
 )
@@ -2016,7 +2033,7 @@ def generate_synthetic_degradation(
     type=int,
     default=(72, 150, 300),
     show_default=True,
-    help="DPI values for rendering (default 72/150/300 → 3× page count images).",
+    help="DPI values for rendering (default 72/150/300 → 3x page count images).",
 )
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -2032,7 +2049,7 @@ def render_vector_pdfs(
 ) -> None:
     """Render DocLayNet test-split PDFs at multiple DPIs (OOD-Resolution, 6a).
 
-    Produces ``n_unique_pages × len(dpis)`` images (default 100 × 3 = 300)
+    Produces ``n_unique_pages x len(dpis)`` images (default 100 x 3 = 300)
     from the DocLayNet born-digital test split — pages NOT in any training
     manifest.
 
@@ -2066,6 +2083,7 @@ def render_vector_pdfs(
         raise SystemExit(f"DocLayNet test.json not found: {coco_test_json}")
 
     import json
+
     with coco_test_json.open() as fh:
         coco_data = json.load(fh)
 
@@ -2100,12 +2118,13 @@ def render_vector_pdfs(
             try:
                 pdf_doc = fitz.open(str(local_pdf))
                 acq_method = "local_pdf"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("Local PDF open failed for %s: %s", stem, exc)
 
         if pdf_doc is None and gcs_bucket:
             try:
                 from google.cloud import storage as gcs_storage  # type: ignore[import-untyped]
+
                 bucket = gcs_storage.Client().bucket(gcs_bucket)
                 blob_name = (
                     f"{gcs_doclaynet_prefix}/{stem}.pdf"
@@ -2117,7 +2136,7 @@ def render_vector_pdfs(
                     pdf_bytes = blob.download_as_bytes()
                     pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                     acq_method = "gcs_stream"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("GCS stream failed for %s: %s", stem, exc)
 
         if pdf_doc is None:
@@ -2133,7 +2152,7 @@ def render_vector_pdfs(
                 page = pdf_doc[0]
                 pix = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB)
                 img_bytes = pix.tobytes("jpeg")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Render failed dpi=%d stem=%s: %s", dpi, stem, exc)
                 continue
 
@@ -2152,6 +2171,7 @@ def render_vector_pdfs(
                 sha256, phash = compute_hashes(out_path)
             else:
                 import hashlib
+
                 sha256 = hashlib.sha256(img_bytes).hexdigest()
                 phash = "0000000000000000"
 
@@ -2179,7 +2199,9 @@ def render_vector_pdfs(
             entry: dict[str, Any] = {
                 "sha256": sha256,
                 "phash": phash,
-                "source_path": str(out_path) if not dry_run else f"(dry-run)/{out_name}",
+                "source_path": str(out_path)
+                if not dry_run
+                else f"(dry-run)/{out_name}",
                 "ood_categories": ood_categories,
                 "reason": (
                     f"DocLayNet test page rendered at {dpi} DPI — "
@@ -2222,7 +2244,7 @@ def render_vector_pdfs(
         duplicates_intra=dups_intra,
         unique=registered,
         sub_command="render-vector-pdfs",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
     click.echo(f"  Unique pages processed: {unique_pages_done}/{n_unique_pages}")
 
@@ -2241,7 +2263,7 @@ def render_vector_pdfs(
     type=int,
     default=200,
     show_default=True,
-    help="OHR-Bench pages to upscale (n//2 at 2×, n//2 at 4×).",
+    help="OHR-Bench pages to upscale (n//2 at 2x, n//2 at 4x).",
 )
 @click.option(
     "--seed",
@@ -2266,7 +2288,7 @@ def generate_upscaled_rasters(
     implicitly treats them as OOD by registering them in the OOD registry
     with ``split_type='ood'``.  Do NOT include them in any training manifest.
 
-    Applies cv2.resize at 2× and 4× bicubic (INTER_CUBIC).  Resolution
+    Applies cv2.resize at 2x and 4x bicubic (INTER_CUBIC).  Resolution
     quality is measured on the ORIGINAL image and stored in
     ``generation_metadata``.  The upscaled version has the same visual
     content but artificially inflated pixel density — the OOD challenge is
@@ -2287,8 +2309,7 @@ def generate_upscaled_rasters(
         import cv2  # type: ignore[import-untyped]
     except ImportError as exc:
         raise SystemExit(
-            "OpenCV (cv2) is required for bicubic upscaling.\n"
-            "Install with: uv sync"
+            "OpenCV (cv2) is required for bicubic upscaling.\nInstall with: uv sync"
         ) from exc
 
     from PIL import Image
@@ -2302,7 +2323,8 @@ def generate_upscaled_rasters(
 
     # Collect all PNG images.
     all_images = sorted(
-        p for p in ohr_bench_dir.iterdir()
+        p
+        for p in ohr_bench_dir.iterdir()
         if p.suffix.lower() in {".png", ".jpg", ".jpeg"} and p.is_file()
     )
     if not all_images:
@@ -2319,7 +2341,7 @@ def generate_upscaled_rasters(
 
     output_dir = ood_root / "ood_resolution"
 
-    # Sample randomly without replacement; split half/half between 2× and 4×.
+    # Sample randomly without replacement; split half/half between 2x and 4x.
     rng = random.Random(seed)
     n_per_factor = n_images // 2
     # Use a consistent sample across both factors from the same pool.
@@ -2347,7 +2369,7 @@ def generate_upscaled_rasters(
 
         try:
             img_orig = np.array(Image.open(src_path).convert("RGB"))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Cannot open %s: %s", src_path, exc)
             return False
 
@@ -2359,19 +2381,26 @@ def generate_upscaled_rasters(
             (orig_w * factor, orig_h * factor),
             interpolation=cv2.INTER_CUBIC,
         )
-        upscaled_rgb = cv2.cvtColor(upscaled, cv2.COLOR_BGR2RGB) if upscaled.ndim == 3 else upscaled
+        upscaled_rgb = (
+            cv2.cvtColor(upscaled, cv2.COLOR_BGR2RGB)
+            if upscaled.ndim == 3
+            else upscaled
+        )
 
         out_name = f"6b_ohr_bench_{factor}x_{idx:04d}.jpg"
         out_path = output_dir / out_name
 
         if not dry_run:
             from PIL import Image as _PILImage
+
             _PILImage.fromarray(upscaled).save(
                 out_path, format="JPEG", quality=92, optimize=True
             )
             sha256, phash = compute_hashes(out_path)
         else:
-            import hashlib, io
+            import hashlib
+            import io
+
             buf = io.BytesIO()
             Image.fromarray(upscaled).save(buf, format="JPEG", quality=92)
             sha256 = hashlib.sha256(buf.getvalue()).hexdigest()
@@ -2408,7 +2437,7 @@ def generate_upscaled_rasters(
             "source_path": str(out_path) if not dry_run else f"(dry-run)/{out_name}",
             "ood_categories": ["ood_resolution"],
             "reason": (
-                f"OHR-Bench page upscaled {factor}× (bicubic INTER_CUBIC) — "
+                f"OHR-Bench page upscaled {factor}x (bicubic INTER_CUBIC) — "
                 "tests resolution_quality head with artificially inflated pixel count"
             ),
             "registered_date": date.today().isoformat(),
@@ -2438,7 +2467,7 @@ def generate_upscaled_rasters(
         registered += 1
         return True
 
-    # Process 2× upscales.
+    # Process 2x upscales.
     count_2x = 0
     for pool_img in pool_2x:
         if count_2x >= n_per_factor:
@@ -2446,7 +2475,7 @@ def generate_upscaled_rasters(
         if _process_upscale(pool_img, 2, count_2x):
             count_2x += 1
 
-    # Process 4× upscales.
+    # Process 4x upscales.
     count_4x = 0
     for pool_img in pool_4x:
         if count_4x >= n_per_factor:
@@ -2460,9 +2489,9 @@ def generate_upscaled_rasters(
         duplicates_intra=dups_intra,
         unique=registered,
         sub_command="generate-upscaled-rasters",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
-    click.echo(f"  2× upscales: {count_2x}  |  4× upscales: {count_4x}")
+    click.echo(f"  2x upscales: {count_2x}  |  4x upscales: {count_4x}")
 
 
 # ---------------------------------------------------------------------------
@@ -2470,7 +2499,7 @@ def generate_upscaled_rasters(
 # ---------------------------------------------------------------------------
 
 
-def _rcs_terminal_commands() -> "list[tuple[str, list[str]]]":
+def _rcs_terminal_commands() -> list[tuple[str, list[str]]]:
     """Return a list of (label, shell_args) terminal commands for 8c rendering.
 
     Each entry produces a different terminal output image for diversity.
@@ -2497,7 +2526,7 @@ def _rcs_render_terminal_image(
     font_path: str,
     font_size: int = 14,
     width: int = 900,
-) -> "Any":
+) -> Any:
     """Render terminal command output as a PIL Image (simulated terminal).
 
     Args:
@@ -2543,10 +2572,10 @@ def _rcs_render_terminal_image(
 
 
 def _rcs_detect_code_pages_in_pdf(
-    pdf_path: "Path",
+    pdf_path: Path,
     monospace_threshold: float = 0.20,
     max_pages: int = 20,
-) -> "list[int]":
+) -> list[int]:
     """Find page indices in a PDF where monospace font area exceeds threshold.
 
     Uses PyMuPDF text extraction with font information.  A span is
@@ -2567,12 +2596,22 @@ def _rcs_detect_code_pages_in_pdf(
     code_pages: list[int] = []
     try:
         doc = fitz.open(str(pdf_path))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return code_pages
 
     _MONO_KEYWORDS = frozenset(
-        ["courier", "mono", "consolas", "code", "fixed", "inconsolata", "jetbrains",
-         "cmtt", "lmtt", "typewriter"]
+        [
+            "courier",
+            "mono",
+            "consolas",
+            "code",
+            "fixed",
+            "inconsolata",
+            "jetbrains",
+            "cmtt",
+            "lmtt",
+            "typewriter",
+        ]
     )
 
     for page_idx in range(min(len(doc), max_pages)):
@@ -2660,31 +2699,67 @@ def render_font_variations(
     # ------------------------------------------------------------------
     _SCRIPT_SPECS: list[tuple[list[str], str, str, list[int]]] = [
         (
-            ["medieval", "cinzel", "unifraktur", "fraktur", "cormorant", "im_fell",
-             "imfell", "uncial", "chomsky"],
+            [
+                "medieval",
+                "cinzel",
+                "unifraktur",
+                "fraktur",
+                "cormorant",
+                "im_fell",
+                "imfell",
+                "uncial",
+                "chomsky",
+            ],
             "Latn",
             "The quick brown fox\nleaps over the lazy dog.\n\nPage 1 of 10\n"
             "Document Quality Assessment\nSystems and Methods",
             [150, 300],
         ),
         (
-            ["zcool", "mashan", "ma_shan", "zhi_mang", "zhimang", "noto_serif_cjk",
-             "notoserifcjk", "noto_sans_cjk", "sourcehan", "source_han"],
+            [
+                "zcool",
+                "mashan",
+                "ma_shan",
+                "zhi_mang",
+                "zhimang",
+                "noto_serif_cjk",
+                "notoserifcjk",
+                "noto_sans_cjk",
+                "sourcehan",
+                "source_han",
+            ],
             "Hans",
             "文档图像质量评估\n第一页 共十页\n快速棕色狐狸跳过懒狗\n\n文档处理系统",
             [150, 300],
         ),
         (
-            ["laila", "yatra", "tiro_devanagari", "tirodevanagari",
-             "noto_serif_devanagari", "notoserifdevanagari",
-             "noto_sans_devanagari", "amita", "baloo"],
+            [
+                "laila",
+                "yatra",
+                "tiro_devanagari",
+                "tirodevanagari",
+                "noto_serif_devanagari",
+                "notoserifdevanagari",
+                "noto_sans_devanagari",
+                "amita",
+                "baloo",
+            ],
             "Deva",
             "दस्तावेज़ छवि गुणवत्ता\nपृष्ठ एक का दस\n\nशीघ्र भूरी लोमड़ी\nलंबी छलाँग मारती है",
             [150, 300],
         ),
         (
-            ["amiri", "scheherazade", "harmattan", "reem_kufi", "reemkufi",
-             "lateef", "alkalami", "notokufi", "noto_kufi"],
+            [
+                "amiri",
+                "scheherazade",
+                "harmattan",
+                "reem_kufi",
+                "reemkufi",
+                "lateef",
+                "alkalami",
+                "notokufi",
+                "noto_kufi",
+            ],
             "Arab",
             "تقييم جودة صور المستندات\nالصفحة الأولى من عشر صفحات\n\nنظام معالجة الوثائق",
             [150, 300],
@@ -2730,9 +2805,7 @@ def render_font_variations(
             continue
         iso_script, sample_text = match
         spec_dpis = next(
-            dpi_list
-            for subs, iso, _, dpi_list in _SCRIPT_SPECS
-            if iso == iso_script
+            dpi_list for subs, iso, _, dpi_list in _SCRIPT_SPECS if iso == iso_script
         )
         for dpi_val in spec_dpis:
             font_tasks.append((fp, iso_script, sample_text, dpi_val))
@@ -2742,10 +2815,13 @@ def render_font_variations(
     if _DEJAVU.exists() and len(font_tasks) < n_images:
         for dpi_val in [150, 300]:
             font_tasks.append(
-                (_DEJAVU, "Latn",
-                 "The quick brown fox leaps over the lazy dog.\n\n"
-                 "Page 1 of 10\nDocument Quality Assessment (baseline Latin)",
-                 dpi_val)
+                (
+                    _DEJAVU,
+                    "Latn",
+                    "The quick brown fox leaps over the lazy dog.\n\n"
+                    "Page 1 of 10\nDocument Quality Assessment (baseline Latin)",
+                    dpi_val,
+                )
             )
 
     if not font_tasks:
@@ -2764,13 +2840,15 @@ def render_font_variations(
 
     _PX_PER_INCH = 1.0  # PIL font sizes are in points; DPI conversion via image size
 
-    for task_idx, (font_path, iso_script, sample_text, render_dpi) in enumerate(font_tasks):
+    for task_idx, (font_path, iso_script, sample_text, render_dpi) in enumerate(
+        font_tasks
+    ):
         if total_reg >= n_images:
             break
 
         total_cands += 1
 
-        # Image size: 8.5 × 11 inches at render_dpi
+        # Image size: 8.5 x 11 inches at render_dpi
         img_w = int(8.5 * render_dpi)
         img_h = int(11.0 * render_dpi)
         img = Image.new("RGB", (img_w, img_h), color=(255, 255, 255))
@@ -2783,7 +2861,7 @@ def render_font_variations(
 
         try:
             pil_font = ImageFont.truetype(str(font_path), size=px_size)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pil_font = ImageFont.load_default()
 
         draw.multiline_text(
@@ -2858,7 +2936,7 @@ def render_font_variations(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="render-font-variations",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -2903,13 +2981,13 @@ def render_code_screenshots(
     """Generate code-containing images (OOD-Code, 8a + 8b + 8c).
 
     8a — Source code screenshots (Playwright headless browser):
-        Pygments HTML → Playwright → screenshot at 1920×1080.
+        Pygments HTML → Playwright → screenshot at 1920x1080.
         5+ languages (Python, JS, Rust, Go, SQL), 4 themes (2 dark, 2 light).
         Labels: code_confidence=1.0, capture_method=born_digital.
 
     8b — Mixed prose + code from arXiv (60 images):
         Filter arXiv pages where monospace font area > 20% (via PyMuPDF font flags).
-        Labels: code_confidence = monospace_area_ratio (0.3–0.7 boundary range).
+        Labels: code_confidence = monospace_area_ratio (0.3-0.7 boundary range).
 
     8c — Terminal output (40 images):
         subprocess (ls, git log, pip list) → PIL+ImageDraw, DejaVu Mono,
@@ -2941,24 +3019,25 @@ def render_code_screenshots(
     _MONO_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
 
     def _register_code_img(
-        img_pil: "Any",
+        img_pil: Any,
         out_name: str,
         code_confidence: float,
         acq_method: str,
-        gen_meta: "dict[str, Any]",
+        gen_meta: dict[str, Any],
         reason: str,
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
 
         total_cands += 1
-        from PIL import Image
 
         out_path = output_dir / out_name
         if not dry_run:
             img_pil.save(out_path, format="JPEG", quality=92, optimize=True)
             sha256, phash = compute_hashes(out_path)
         else:
-            import hashlib, io
+            import hashlib
+            import io
+
             buf = io.BytesIO()
             img_pil.save(buf, format="JPEG", quality=92)
             sha256 = hashlib.sha256(buf.getvalue()).hexdigest()
@@ -3022,18 +3101,20 @@ def render_code_screenshots(
             if done_8c >= n_terminal:
                 break
             try:
-                result = subprocess.run(  # noqa: S603
+                result = subprocess.run(
                     args,
                     capture_output=True,
                     text=True,
                     timeout=5,
                     cwd=str(Path(__file__).parent.parent),
                 )
-                output = result.stdout or result.stderr or f"({label} produced no output)"
-            except Exception as exc:  # noqa: BLE001
+                output = (
+                    result.stdout or result.stderr or f"({label} produced no output)"
+                )
+            except Exception as exc:
                 output = f"$ {' '.join(args)}\n[command failed: {exc}]"
 
-            bg_dark = (done_8c % 2 == 0)
+            bg_dark = done_8c % 2 == 0
             img = _rcs_render_terminal_image(output, bg_dark, _MONO_FONT)
 
             out_name = f"8c_terminal_{done_8c:03d}_{label}.jpg"
@@ -3056,6 +3137,7 @@ def render_code_screenshots(
 
     if arxiv_pdf_dir is not None and arxiv_pdf_dir.exists():
         import fitz
+
         pdf_files = sorted(arxiv_pdf_dir.glob("*.pdf"))
         for pdf_file in pdf_files:
             if done_8b >= n_arxiv_code:
@@ -3072,19 +3154,20 @@ def render_code_screenshots(
                     pix = doc[page_idx].get_pixmap(matrix=mat, colorspace=fitz.csRGB)
                     import numpy as np
                     from PIL import Image
+
                     arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
                         pix.height, pix.width, 3
                     )
                     img_pil = Image.fromarray(arr)
                     doc.close()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     continue
 
                 out_name = f"8b_arxiv_code_{done_8b:03d}.jpg"
                 if _register_code_img(
                     img_pil,
                     out_name,
-                    0.5,  # Boundary: mixed prose+code, code_confidence in 0.3–0.7
+                    0.5,  # Boundary: mixed prose+code, code_confidence in 0.3-0.7
                     "arxiv_pdf_code_page",
                     {"pdf": str(pdf_file.name), "page_idx": page_idx},
                     f"8b arXiv page with monospace code region (page {page_idx})",
@@ -3106,6 +3189,7 @@ def render_code_screenshots(
     try:
         import playwright  # noqa: F401  # type: ignore[import-untyped]
         from playwright.sync_api import sync_playwright  # type: ignore[import-untyped]
+
         _PLAYWRIGHT_AVAILABLE = True
     except ImportError:
         logger.warning(
@@ -3115,68 +3199,88 @@ def render_code_screenshots(
         )
 
     _CODE_SNIPPETS: list[tuple[str, str, str]] = [
-        ("python", "quicksort.py", (
-            "def quicksort(arr):\n"
-            "    if len(arr) <= 1:\n"
-            "        return arr\n"
-            "    pivot = arr[len(arr) // 2]\n"
-            "    left = [x for x in arr if x < pivot]\n"
-            "    middle = [x for x in arr if x == pivot]\n"
-            "    right = [x for x in arr if x > pivot]\n"
-            "    return quicksort(left) + middle + quicksort(right)\n\n"
-            "if __name__ == '__main__':\n"
-            "    print(quicksort([3, 6, 8, 10, 1, 2, 1]))\n"
-        )),
-        ("javascript", "fetch_data.js", (
-            "async function fetchUserData(userId) {\n"
-            "  const response = await fetch(`/api/users/${userId}`);\n"
-            "  if (!response.ok) {\n"
-            "    throw new Error(`HTTP error! status: ${response.status}`);\n"
-            "  }\n"
-            "  const data = await response.json();\n"
-            "  return data;\n"
-            "}\n\n"
-            "fetchUserData(42).then(console.log).catch(console.error);\n"
-        )),
-        ("rust", "ownership.rs", (
-            "fn main() {\n"
-            "    let s1 = String::from(\"hello\");\n"
-            "    let s2 = s1.clone();\n"
-            "    println!(\"s1 = {}, s2 = {}\", s1, s2);\n\n"
-            "    let x = 5;\n"
-            "    let y = x;\n"
-            "    println!(\"x = {}, y = {}\", x, y);\n"
-            "}\n"
-        )),
-        ("go", "goroutine.go", (
-            "package main\n\nimport (\n    \"fmt\"\n    \"sync\"\n)\n\n"
-            "func worker(id int, wg *sync.WaitGroup) {\n"
-            "    defer wg.Done()\n"
-            "    fmt.Printf(\"Worker %d starting\\n\", id)\n"
-            "}\n\n"
-            "func main() {\n"
-            "    var wg sync.WaitGroup\n"
-            "    for i := 1; i <= 5; i++ {\n"
-            "        wg.Add(1)\n"
-            "        go worker(i, &wg)\n"
-            "    }\n"
-            "    wg.Wait()\n"
-            "}\n"
-        )),
-        ("sql", "analytics.sql", (
-            "SELECT\n"
-            "    u.name,\n"
-            "    COUNT(o.id) AS order_count,\n"
-            "    SUM(o.total) AS total_spent,\n"
-            "    AVG(o.total) AS avg_order\n"
-            "FROM users u\n"
-            "LEFT JOIN orders o ON u.id = o.user_id\n"
-            "WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)\n"
-            "GROUP BY u.id, u.name\n"
-            "HAVING order_count > 2\n"
-            "ORDER BY total_spent DESC\n"
-            "LIMIT 20;\n"
-        )),
+        (
+            "python",
+            "quicksort.py",
+            (
+                "def quicksort(arr):\n"
+                "    if len(arr) <= 1:\n"
+                "        return arr\n"
+                "    pivot = arr[len(arr) // 2]\n"
+                "    left = [x for x in arr if x < pivot]\n"
+                "    middle = [x for x in arr if x == pivot]\n"
+                "    right = [x for x in arr if x > pivot]\n"
+                "    return quicksort(left) + middle + quicksort(right)\n\n"
+                "if __name__ == '__main__':\n"
+                "    print(quicksort([3, 6, 8, 10, 1, 2, 1]))\n"
+            ),
+        ),
+        (
+            "javascript",
+            "fetch_data.js",
+            (
+                "async function fetchUserData(userId) {\n"
+                "  const response = await fetch(`/api/users/${userId}`);\n"
+                "  if (!response.ok) {\n"
+                "    throw new Error(`HTTP error! status: ${response.status}`);\n"
+                "  }\n"
+                "  const data = await response.json();\n"
+                "  return data;\n"
+                "}\n\n"
+                "fetchUserData(42).then(console.log).catch(console.error);\n"
+            ),
+        ),
+        (
+            "rust",
+            "ownership.rs",
+            (
+                "fn main() {\n"
+                '    let s1 = String::from("hello");\n'
+                "    let s2 = s1.clone();\n"
+                '    println!("s1 = {}, s2 = {}", s1, s2);\n\n'
+                "    let x = 5;\n"
+                "    let y = x;\n"
+                '    println!("x = {}, y = {}", x, y);\n'
+                "}\n"
+            ),
+        ),
+        (
+            "go",
+            "goroutine.go",
+            (
+                'package main\n\nimport (\n    "fmt"\n    "sync"\n)\n\n'
+                "func worker(id int, wg *sync.WaitGroup) {\n"
+                "    defer wg.Done()\n"
+                '    fmt.Printf("Worker %d starting\\n", id)\n'
+                "}\n\n"
+                "func main() {\n"
+                "    var wg sync.WaitGroup\n"
+                "    for i := 1; i <= 5; i++ {\n"
+                "        wg.Add(1)\n"
+                "        go worker(i, &wg)\n"
+                "    }\n"
+                "    wg.Wait()\n"
+                "}\n"
+            ),
+        ),
+        (
+            "sql",
+            "analytics.sql",
+            (
+                "SELECT\n"
+                "    u.name,\n"
+                "    COUNT(o.id) AS order_count,\n"
+                "    SUM(o.total) AS total_spent,\n"
+                "    AVG(o.total) AS avg_order\n"
+                "FROM users u\n"
+                "LEFT JOIN orders o ON u.id = o.user_id\n"
+                "WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)\n"
+                "GROUP BY u.id, u.name\n"
+                "HAVING order_count > 2\n"
+                "ORDER BY total_spent DESC\n"
+                "LIMIT 20;\n"
+            ),
+        ),
     ]
 
     _THEMES: list[tuple[str, str, str]] = [  # (name, bg_color, text_color)
@@ -3192,7 +3296,9 @@ def render_code_screenshots(
             from pygments.lexers import get_lexer_by_name  # type: ignore[import-untyped]
             from pygments.formatters import HtmlFormatter  # type: ignore[import-untyped]
         except ImportError:
-            logger.warning("Pygments not available; 8a skipped. Install: pip install pygments")
+            logger.warning(
+                "Pygments not available; 8a skipped. Install: pip install pygments"
+            )
             _PLAYWRIGHT_AVAILABLE = False
 
     if _PLAYWRIGHT_AVAILABLE:
@@ -3202,7 +3308,7 @@ def render_code_screenshots(
             try:
                 _playwright_instance = sync_playwright().start()
                 browser = _playwright_instance.chromium.launch()
-            except Exception as _exc:  # noqa: BLE001
+            except Exception as _exc:
                 logger.warning(
                     "Chromium launch failed: %s. "
                     "Install chromium browser with: playwright install chromium. "
@@ -3246,8 +3352,9 @@ def render_code_screenshots(
                             page.screenshot(path=str(screenshot_path))
 
                             from PIL import Image
+
                             img_pil = Image.open(screenshot_path).convert("RGB")
-                        except Exception as exc:  # noqa: BLE001
+                        except Exception as exc:
                             logger.warning("Playwright screenshot failed: %s", exc)
                             continue
 
@@ -3278,7 +3385,7 @@ def render_code_screenshots(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="render-code-screenshots",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -3316,7 +3423,7 @@ def generate_ood_mixed(
         Labels: document_age=historical.
 
     9c-2 — Arabic binarized + JPEG (50 images, OpenCV + PIL):
-        Sauvola binarization → JPEG re-encode at quality 20–40.
+        Sauvola binarization → JPEG re-encode at quality 20-40.
         Labels: script=Arab, text_direction=rtl, color_mode=binarized.
 
     9d-3 — Form fill-in + skew (40 images, Albumentations):
@@ -3355,15 +3462,15 @@ def generate_ood_mixed(
     today = date.today().isoformat()
 
     def _try_reg_mixed(
-        img_pil: "Any",
+        img_pil: Any,
         out_name: str,
         out_subdir: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
-        gen_meta: "dict[str, Any]",
+        gt: dict[str, Any],
+        gen_meta: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -3422,9 +3529,9 @@ def generate_ood_mixed(
             "Run generate-synthetic-degradation first."
         )
     else:
-        compound_files = sorted(
-            compound_images_dir.rglob("4a_compound_*.jpg")
-        )[:_N_9B1 * 2]
+        compound_files = sorted(compound_images_dir.rglob("4a_compound_*.jpg"))[
+            : _N_9B1 * 2
+        ]
 
         if not compound_files:
             logger.warning(
@@ -3450,7 +3557,7 @@ def generate_ood_mixed(
                 try:
                     src_img = Image.open(src_path).convert("RGB")
                     src_np = np.array(src_img, dtype=np.float32) / 255.0
-                except Exception:  # noqa: BLE001
+                except Exception:
                     continue
 
                 alpha = opacities[idx % len(opacities)]
@@ -3458,14 +3565,18 @@ def generate_ood_mixed(
                 if syndocds_masks:
                     mask_path = rng.choice(syndocds_masks)
                     try:
-                        mask_gray = Image.open(mask_path).convert("L").resize(
-                            (src_np.shape[1], src_np.shape[0]),
-                            Image.BILINEAR,
+                        mask_gray = (
+                            Image.open(mask_path)
+                            .convert("L")
+                            .resize(
+                                (src_np.shape[1], src_np.shape[0]),
+                                Image.BILINEAR,
+                            )
                         )
                         mask_np = np.array(mask_gray, dtype=np.float32) / 255.0
                         shadow_np = src_np * (1.0 - alpha * mask_np[:, :, None])
                         shadow_source = f"syndocds:{mask_path.name}"
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         _, shadow_meta = _gsd_add_gutter_shadow(src_np, rng)
                         _, shadow_np_tuple = _gsd_add_gutter_shadow(src_np, rng)
                         shadow_np = shadow_np_tuple
@@ -3517,14 +3628,16 @@ def generate_ood_mixed(
     src_pool_9b3: list[Path] = []
     if _rvl_cdip_path_9b3.exists():
         src_pool_9b3 = [
-            p for p in _rvl_cdip_path_9b3.rglob("*.jpg")
+            p
+            for p in _rvl_cdip_path_9b3.rglob("*.jpg")
             if p.stem not in training_sha256s
-        ][:_N_9B3 * 3]
+        ][: _N_9B3 * 3]
         rng.shuffle(src_pool_9b3)
 
     _AUGRAPHY_9B3 = False
     try:
         import augraphy  # noqa: F401  # type: ignore[import-untyped]
+
         _AUGRAPHY_9B3 = True
     except ImportError:
         logger.warning("Augraphy not installed; 9b-3 skipped. uv sync --extra ood")
@@ -3535,6 +3648,7 @@ def generate_ood_mixed(
             BleedThrough,
             ColorPaper,
         )
+
         # Faxify = monochrome fax-line effect; ColorPaper = aged/yellowed paper background
         fax_aug = Faxify(p=1.0)
         bleed_aug = BleedThrough(p=1.0)
@@ -3550,7 +3664,7 @@ def generate_ood_mixed(
                 out = bleed_aug(out)
                 out = color_aug(out)
                 out_pil = Image.fromarray(out.astype(np.uint8))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("9b-3 Augraphy failed on %s: %s", src_path.name, exc)
                 continue
 
@@ -3617,7 +3731,9 @@ def generate_ood_mixed(
                         gray, 255, cv2.THRESH_BINARY, 25, -0.2
                     )
                 else:
-                    _, bin_img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                    _, bin_img = cv2.threshold(
+                        gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+                    )
 
                 jpeg_quality = rng.randint(20, 40)
                 encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality]
@@ -3625,7 +3741,7 @@ def generate_ood_mixed(
                 if not ret:
                     continue
                 out_pil = Image.open(io.BytesIO(bytes(jpeg_buf))).convert("RGB")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("9c-2 failed on %s: %s", src_path.name, exc)
                 continue
 
@@ -3647,8 +3763,11 @@ def generate_ood_mixed(
                     f"({'ximgproc' if _HAS_XIMGPROC else 'Otsu fallback'})"
                 ),
                 gt,
-                {"source": str(src_path), "jpeg_quality": jpeg_quality,
-                 "sauvola": _HAS_XIMGPROC},
+                {
+                    "source": str(src_path),
+                    "jpeg_quality": jpeg_quality,
+                    "sauvola": _HAS_XIMGPROC,
+                },
             ):
                 done_9c2 += 1
 
@@ -3661,21 +3780,32 @@ def generate_ood_mixed(
     _N_9D3 = 40
 
     try:
-        import albumentations as A  # type: ignore[import-untyped]
+        import albumentations as A  # type: ignore[import-untyped]  # noqa: N812
+
         _A_AVAILABLE = True
     except ImportError:
-        logger.warning("Albumentations not installed; 9d-3 skipped. uv sync --extra ood")
+        logger.warning(
+            "Albumentations not installed; 9d-3 skipped. uv sync --extra ood"
+        )
         _A_AVAILABLE = False
 
     if _A_AVAILABLE:
         from PIL import ImageDraw, ImageFont
 
         _FORM_FIELDS = [
-            "Name:", "Date:", "Reference No:", "Address:", "Phone:",
-            "Signature:", "Amount:", "Department:", "Project:", "Status:",
+            "Name:",
+            "Date:",
+            "Reference No:",
+            "Address:",
+            "Phone:",
+            "Signature:",
+            "Amount:",
+            "Department:",
+            "Project:",
+            "Status:",
         ]
 
-        def _generate_blank_form(width: int = 1700, height: int = 2200) -> "Any":
+        def _generate_blank_form(width: int = 1700, height: int = 2200) -> Any:
             """Generate a blank table/form template with PIL."""
             img = Image.new("RGB", (width, height), color=(255, 255, 255))
             draw = ImageDraw.Draw(img)
@@ -3689,11 +3819,13 @@ def generate_ood_mixed(
                 body_font = ImageFont.truetype(
                     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 title_font = ImageFont.load_default()
                 body_font = title_font
 
-            draw.text((80, 80), "OFFICIAL DOCUMENT FORM", font=title_font, fill=(0, 0, 0))
+            draw.text(
+                (80, 80), "OFFICIAL DOCUMENT FORM", font=title_font, fill=(0, 0, 0)
+            )
 
             # Field rows
             field_y = 180
@@ -3704,7 +3836,9 @@ def generate_ood_mixed(
                 draw.rectangle([(60, y0), (400, y1)], outline=(0, 0, 0), width=1)
                 draw.text((70, y0 + 18), label, font=body_font, fill=(40, 40, 40))
                 # Value cell
-                draw.rectangle([(400, y0), (width - 60, y1)], outline=(0, 0, 0), width=1)
+                draw.rectangle(
+                    [(400, y0), (width - 60, y1)], outline=(0, 0, 0), width=1
+                )
 
             # Lower table section
             table_y = field_y + len(_FORM_FIELDS) * row_h + 40
@@ -3712,33 +3846,41 @@ def generate_ood_mixed(
             col_w = (width - 120) // len(cols)
             for ci, col_hdr in enumerate(cols):
                 x0 = 60 + ci * col_w
-                draw.rectangle([(x0, table_y), (x0 + col_w, table_y + 40)],
-                                outline=(0, 0, 0), width=2)
-                draw.text((x0 + 8, table_y + 8), col_hdr, font=body_font, fill=(0, 0, 0))
+                draw.rectangle(
+                    [(x0, table_y), (x0 + col_w, table_y + 40)],
+                    outline=(0, 0, 0),
+                    width=2,
+                )
+                draw.text(
+                    (x0 + 8, table_y + 8), col_hdr, font=body_font, fill=(0, 0, 0)
+                )
             for row in range(5):
                 for ci in range(len(cols)):
                     x0 = 60 + ci * col_w
                     y0 = table_y + 40 + row * 50
-                    draw.rectangle([(x0, y0), (x0 + col_w, y0 + 50)],
-                                   outline=(0, 0, 0), width=1)
+                    draw.rectangle(
+                        [(x0, y0), (x0 + col_w, y0 + 50)], outline=(0, 0, 0), width=1
+                    )
 
             return img
 
-        geom_transform = A.Compose([
-            A.Affine(
-                scale=(0.95, 1.05),
-                translate_percent=(-0.05, 0.05),
-                rotate=(-20, 20),
-                border_mode=cv2.BORDER_CONSTANT,
-                fill=(255, 255, 255),
-                p=1.0,
-            ),
-            A.Perspective(
-                scale=(0.05, 0.15),
-                keep_size=True,
-                p=0.7,
-            ),
-        ])
+        geom_transform = A.Compose(
+            [
+                A.Affine(
+                    scale=(0.95, 1.05),
+                    translate_percent=(-0.05, 0.05),
+                    rotate=(-20, 20),
+                    border_mode=cv2.BORDER_CONSTANT,
+                    fill=(255, 255, 255),
+                    p=1.0,
+                ),
+                A.Perspective(
+                    scale=(0.05, 0.15),
+                    keep_size=True,
+                    p=0.7,
+                ),
+            ]
+        )
 
         for form_idx in range(_N_9D3 * 2):
             if done_9d3 >= _N_9D3:
@@ -3750,7 +3892,7 @@ def generate_ood_mixed(
                 result = geom_transform(image=form_np)
                 aug_np = result["image"]
                 out_pil = Image.fromarray(aug_np)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("9d-3 form generation failed: %s", exc)
                 continue
 
@@ -3785,7 +3927,7 @@ def generate_ood_mixed(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="generate-ood-mixed",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -3823,7 +3965,7 @@ def download_script_reserved(
     output_dir: Path | None,
     dry_run: bool,
 ) -> None:
-    """Download rare-script OOD images (OOD-Script, 1b–1h).
+    """Download rare-script OOD images (OOD-Script, 1b-1h).
 
     Sub-sources:
         1b — synth-v3 Mongolian (GCS in-place, 50 images):
@@ -3867,13 +4009,13 @@ def download_script_reserved(
     out_script_dir = output_dir if output_dir else (ood_root / "ood_script")
 
     def _try_reg_script(
-        img_pil: "Any",
+        img_pil: Any,
         out_name: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
+        gt: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -3926,7 +4068,8 @@ def download_script_reserved(
     done_1b = 0
     _GCS_OK = False
     try:
-        from google.cloud import storage as gcs  # type: ignore[import-untyped]  # noqa: F401
+        from google.cloud import storage as gcs  # type: ignore[import-untyped]
+
         _GCS_OK = True
     except ImportError:
         pass
@@ -3934,6 +4077,7 @@ def download_script_reserved(
     if _GCS_OK:
         try:
             from google.cloud import storage as gcs  # type: ignore[import-untyped]
+
             client = gcs.Client()
             bucket_name = "image_detection_b"
             mong_prefix = f"{v3_gcs_prefix}/Mong/"
@@ -3947,7 +4091,7 @@ def download_script_reserved(
                 try:
                     raw = blob.download_as_bytes()
                     img = Image.open(io.BytesIO(raw)).convert("RGB")
-                except Exception:  # noqa: BLE001
+                except Exception:
                     continue
                 gt = build_ground_truth_template()
                 gt["capture_method"] = "born_digital"
@@ -3964,7 +4108,7 @@ def download_script_reserved(
                     gt,
                 ):
                     done_1b += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("GCS access failed for 1b Mongolian: %s", exc)
     else:
         logger.info(
@@ -3982,12 +4126,12 @@ def download_script_reserved(
     if sana_dir and sana_dir.exists():
         sana_candidates = list(sana_dir.rglob("*.jpg")) + list(sana_dir.rglob("*.png"))
         rng.shuffle(sana_candidates)
-        for img_path in sana_candidates[:120 * 2]:
+        for img_path in sana_candidates[: 120 * 2]:
             if done_1c >= 120:
                 break
             try:
                 img = Image.open(img_path).convert("RGB")
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
             gt = build_ground_truth_template()
             gt["capture_method"] = "scanner_flatbed"
@@ -4012,11 +4156,17 @@ def download_script_reserved(
 
     # 1d, 1e, 1f, 1g, 1g-2, 1g-3 all require network downloads or L3i lab access
     click.echo("  1d Georgian: 0/100 (Wikimedia Commons download required)")
-    click.echo("  1e Fraktur: 0/50 (Project Gutenberg / Wikimedia DE download required)")
+    click.echo(
+        "  1e Fraktur: 0/50 (Project Gutenberg / Wikimedia DE download required)"
+    )
     click.echo("  1f Ottoman Arabic: 0/30 (Library of Congress download required)")
-    click.echo("  1g Ethiopic/preview: 0/75 (CBETA / Unicode samples download required)")
+    click.echo(
+        "  1g Ethiopic/preview: 0/75 (CBETA / Unicode samples download required)"
+    )
     click.echo("  1g-2 KhmerST: 0/60 (L3i lab download required: l3i-share.univ-lr.fr)")
-    click.echo("  1g-3 AMADI_LontarSet: 0/40 (L3i lab download required: l3i-share.univ-lr.fr)")
+    click.echo(
+        "  1g-3 AMADI_LontarSet: 0/40 (L3i lab download required: l3i-share.univ-lr.fr)"
+    )
 
     log_dry_run_summary(
         candidates=total_cands,
@@ -4024,7 +4174,7 @@ def download_script_reserved(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-script-reserved",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -4081,12 +4231,8 @@ def download_geometry_public(
     + docalign12k (50) = 200 images total.
     """
     import hashlib
-    import io
     import random
     from datetime import date
-
-    import numpy as np
-    from PIL import Image
 
     ood_root: Path = ctx.obj["ood_root"]
     registry_path: Path = ctx.obj["registry_path"]
@@ -4107,11 +4253,11 @@ def download_geometry_public(
         img_path: Path,
         out_name: str,
         out_subdir: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
+        gt: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -4119,7 +4265,7 @@ def download_geometry_public(
 
         try:
             raw = img_path.read_bytes()
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
         sha256 = hashlib.sha256(raw).hexdigest()
@@ -4135,6 +4281,7 @@ def download_geometry_public(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
+
             shutil.copy2(img_path, out_path)
             sha256, phash = compute_hashes(out_path)
 
@@ -4180,7 +4327,7 @@ def download_geometry_public(
         if not candidates_wd:
             candidates_wd = sorted(perspective_dir.rglob("*.jpg"))
         rng.shuffle(candidates_wd)
-        for img_path in candidates_wd[:n_warpdoc * 2]:
+        for img_path in candidates_wd[: n_warpdoc * 2]:
             if done_2b_wd >= n_warpdoc:
                 break
             gt = build_ground_truth_template()
@@ -4254,7 +4401,9 @@ def download_geometry_public(
             "provide --ndl-output-dir to enable NDL Digital Collection download."
         )
     elif ndl_output_dir.exists():
-        ndl_images = list(ndl_output_dir.rglob("*.jp2")) + list(ndl_output_dir.rglob("*.jpg"))
+        ndl_images = list(ndl_output_dir.rglob("*.jp2")) + list(
+            ndl_output_dir.rglob("*.jpg")
+        )
         rng.shuffle(ndl_images)
         for img_path in ndl_images[: n_ndl * 2]:
             if done_2c >= n_ndl:
@@ -4284,7 +4433,7 @@ def download_geometry_public(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-geometry-public",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -4378,12 +4527,12 @@ def download_capture_public(
         img_path: Path,
         out_name: str,
         out_subdir: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
-        extra_fields: "dict[str, Any] | None" = None,
+        gt: dict[str, Any],
+        extra_fields: dict[str, Any] | None = None,
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -4391,7 +4540,7 @@ def download_capture_public(
 
         try:
             raw = img_path.read_bytes()
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
         sha256 = hashlib.sha256(raw).hexdigest()
@@ -4407,6 +4556,7 @@ def download_capture_public(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
+
             shutil.copy2(img_path, out_path)
             sha256, phash = compute_hashes(out_path)
 
@@ -4443,11 +4593,12 @@ def download_capture_public(
         )
         # Filter for display/screen condition if DLC uses subdirs for conditions
         display_candidates = [
-            p for p in dlc_candidates
+            p
+            for p in dlc_candidates
             if "display" in str(p).lower() or "screen" in str(p).lower()
         ] or dlc_candidates  # Fall back to all if no display subdir
         rng.shuffle(display_candidates)
-        for img_path in display_candidates[:100 * 2]:
+        for img_path in display_candidates[: 100 * 2]:
             if done_3a_dlc >= 100:
                 break
             gt = build_ground_truth_template()
@@ -4497,7 +4648,9 @@ def download_capture_public(
         distortion_type = img_path.parent.name  # fold/curved/rotate
         gt = build_ground_truth_template()
         gt["capture_method"] = "camera_smartphone"
-        gt["warping_type"] = "page_curl" if distortion_type == "curved" else distortion_type
+        gt["warping_type"] = (
+            "page_curl" if distortion_type == "curved" else distortion_type
+        )
 
         if _try_reg_cap(
             img_path,
@@ -4603,7 +4756,7 @@ def download_capture_public(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-capture-public",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -4680,8 +4833,6 @@ def download_degradation_public(
     import random
     from datetime import date
 
-    from PIL import Image
-
     ood_root: Path = ctx.obj["ood_root"]
     registry_path: Path = ctx.obj["registry_path"]
     training_sha256s: set[str] = ctx.obj["training_sha256s"]
@@ -4700,11 +4851,11 @@ def download_degradation_public(
     def _try_reg_deg(
         img_path: Path,
         out_name: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
+        gt: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -4712,7 +4863,7 @@ def download_degradation_public(
 
         try:
             raw = img_path.read_bytes()
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
         sha256 = hashlib.sha256(raw).hexdigest()
@@ -4728,6 +4879,7 @@ def download_degradation_public(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
+
             shutil.copy2(img_path, out_path)
             sha256, phash = compute_hashes(out_path)
 
@@ -4762,17 +4914,14 @@ def download_degradation_public(
 
     if not realdae_dir.exists():
         logger.warning(
-            "RealDAE directory not found at %s. "
-            "Looked for: camera_captured/realdae",
+            "RealDAE directory not found at %s. Looked for: camera_captured/realdae",
             realdae_dir,
         )
     elif not shadow_test_dir.exists():
         logger.warning("RealDAE task_shadow_test not found at %s", shadow_test_dir)
     else:
         # Use _in.jpg files (degraded input, not ground truth _gt.jpg)
-        realdae_candidates = [
-            p for p in shadow_test_dir.glob("*_in.jpg")
-        ]
+        realdae_candidates = [p for p in shadow_test_dir.glob("*_in.jpg")]
         rng.shuffle(realdae_candidates)
         for img_path in realdae_candidates[: n_realdae * 2]:
             if done_realdae >= n_realdae:
@@ -4879,6 +5028,7 @@ def download_degradation_public(
         _IA_AVAILABLE = False
         try:
             import internetarchive  # type: ignore[import-untyped]  # noqa: F401
+
             _IA_AVAILABLE = True
         except ImportError:
             logger.warning(
@@ -4929,7 +5079,7 @@ def download_degradation_public(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-degradation-public",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -5002,11 +5152,11 @@ def download_handwriting_ood(
     def _try_reg_hw(
         img_path: Path,
         out_name: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
+        gt: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -5014,7 +5164,7 @@ def download_handwriting_ood(
 
         try:
             raw = img_path.read_bytes()
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
         sha256 = hashlib.sha256(raw).hexdigest()
@@ -5030,6 +5180,7 @@ def download_handwriting_ood(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
+
             shutil.copy2(img_path, out_path)
             sha256, phash = compute_hashes(out_path)
 
@@ -5059,9 +5210,11 @@ def download_handwriting_ood(
     # hiertext (CC-BY-SA-4.0) via harvest-train-splits. Muharaf removed (NC license).
     done_5a_khatt = 0
     if khatt_dir and khatt_dir.exists():
-        khatt_candidates = list(khatt_dir.rglob("*.jpg")) + list(khatt_dir.rglob("*.png"))
+        khatt_candidates = list(khatt_dir.rglob("*.jpg")) + list(
+            khatt_dir.rglob("*.png")
+        )
         rng.shuffle(khatt_candidates)
-        for img_path in khatt_candidates[:200 * 2]:
+        for img_path in khatt_candidates[: 200 * 2]:
             if done_5a_khatt >= 200:
                 break
             gt = build_ground_truth_template()
@@ -5111,7 +5264,7 @@ def download_handwriting_ood(
     # Skip .gnt (binary format); only use image files
     casia_img = [p for p in casia_candidates if p.suffix.lower() in (".jpg", ".png")]
 
-    for img_path in casia_img[:50 * 2]:
+    for img_path in casia_img[: 50 * 2]:
         if done_5b_casia >= 50:
             break
         gt = build_ground_truth_template()
@@ -5149,15 +5302,19 @@ def download_handwriting_ood(
     if iiit_indic_dir and iiit_indic_dir.exists():
         # Safe naming offset — count files already written in previous runs.
         _hw_out_dir = ood_root / "ood_handwriting"
-        _existing_5c = sorted(_hw_out_dir.glob("5c_iiit_indic_*.jpg")) if _hw_out_dir.exists() else []
+        _existing_5c = (
+            sorted(_hw_out_dir.glob("5c_iiit_indic_*.jpg"))
+            if _hw_out_dir.exists()
+            else []
+        )
         _5c_offset = len(_existing_5c)
 
         indic_candidates = list(iiit_indic_dir.rglob("*.jpg")) + list(
             iiit_indic_dir.rglob("*.png")
         )
         rng.shuffle(indic_candidates)
-        # Search window: allow 3× the target to account for dedup hits
-        for img_path in indic_candidates[:n_iiit_indic * 3]:
+        # Search window: allow 3x the target to account for dedup hits
+        for img_path in indic_candidates[: n_iiit_indic * 3]:
             if done_5c >= n_iiit_indic:
                 break
             gt = build_ground_truth_template()
@@ -5189,7 +5346,7 @@ def download_handwriting_ood(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-handwriting-ood",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -5259,11 +5416,11 @@ def download_domain_ood(
     def _try_reg_dom(
         img_path: Path,
         out_name: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
+        gt: dict[str, Any],
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -5271,7 +5428,7 @@ def download_domain_ood(
 
         try:
             raw = img_path.read_bytes()
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
         sha256 = hashlib.sha256(raw).hexdigest()
@@ -5287,6 +5444,7 @@ def download_domain_ood(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
+
             shutil.copy2(img_path, out_path)
             sha256, phash = compute_hashes(out_path)
 
@@ -5326,7 +5484,7 @@ def download_domain_ood(
             eurlex_output_dir.rglob("*.png")
         )
         rng.shuffle(eurlex_images)
-        for img_path in eurlex_images[:n_gov_forms * 2]:
+        for img_path in eurlex_images[: n_gov_forms * 2]:
             if done_7a >= n_gov_forms:
                 break
             gt = build_ground_truth_template()
@@ -5367,7 +5525,7 @@ def download_domain_ood(
     if cord_dir and cord_dir.exists():
         cord_candidates = list(cord_dir.rglob("*.jpg")) + list(cord_dir.rglob("*.png"))
         rng.shuffle(cord_candidates)
-        for img_path in cord_candidates[:50 * 2]:
+        for img_path in cord_candidates[: 50 * 2]:
             if done_7c >= 50:
                 break
             gt = build_ground_truth_template()
@@ -5398,7 +5556,7 @@ def download_domain_ood(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="download-domain-ood",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -5469,15 +5627,15 @@ def derive_mixed_compounds(
     today = date.today().isoformat()
 
     def _try_reg_mc(
-        img_pil: "Any",
+        img_pil: Any,
         out_name: str,
         out_subdir: str,
-        ood_cats: "list[str]",
+        ood_cats: list[str],
         acq_method: str,
         license_str: str,
         reason: str,
-        gt: "dict[str, Any]",
-        gen_meta: "dict[str, Any] | None" = None,
+        gt: dict[str, Any],
+        gen_meta: dict[str, Any] | None = None,
     ) -> bool:
         nonlocal total_cands, total_dups_train, total_dups_intra, total_reg
         total_cands += 1
@@ -5545,13 +5703,15 @@ def derive_mixed_compounds(
         _A_OK = False
         _AUGR_OK = False
         try:
-            import albumentations as A  # type: ignore[import-untyped]
+            import albumentations as A  # type: ignore[import-untyped]  # noqa: N812
             import cv2
+
             _A_OK = True
         except ImportError:
             pass
         try:
             from augraphy import ColorPaper  # type: ignore[import-untyped]
+
             _AUGR_OK = True
         except ImportError:
             pass
@@ -5565,6 +5725,7 @@ def derive_mixed_compounds(
 
                 if _A_OK:
                     import cv2
+
                     perspective_t = A.Perspective(
                         scale=(0.1, 0.3), keep_size=True, p=1.0
                     )
@@ -5575,7 +5736,7 @@ def derive_mixed_compounds(
                     src_np = color_aug(src_np)
 
                 out_img = Image.fromarray(src_np.astype(np.uint8))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("9c-1 failed on %s: %s", src_path.name, exc)
                 continue
 
@@ -5620,8 +5781,9 @@ def derive_mixed_compounds(
 
         _A_OK_9B2 = False
         try:
-            import albumentations as A  # type: ignore[import-untyped]
+            import albumentations as A  # type: ignore[import-untyped]  # noqa: N812
             import cv2
+
             _A_OK_9B2 = True
         except ImportError:
             pass
@@ -5640,11 +5802,13 @@ def derive_mixed_compounds(
                     )
                     src_np = rotate_t(image=src_np)["image"]
                 out_img = Image.fromarray(src_np)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("9b-2 failed: %s", exc)
                 continue
 
-            rotation_approx = rng.choice([0, 90, 180, 270])  # approximate; needs human review
+            rotation_approx = rng.choice(
+                [0, 90, 180, 270]
+            )  # approximate; needs human review
             gt = build_ground_truth_template()
             gt["capture_method"] = "camera_smartphone"
             gt["orientation"] = rotation_approx
@@ -5669,7 +5833,9 @@ def derive_mixed_compounds(
     # Source: Wikimedia Commons Category:Medieval_manuscripts (no download needed)
     # Since these require network download, skip unless a local dir is provided
     # ------------------------------------------------------------------
-    click.echo("  9c-3 historical manuscripts: 0/40 (requires Wikimedia Commons download)")
+    click.echo(
+        "  9c-3 historical manuscripts: 0/40 (requires Wikimedia Commons download)"
+    )
 
     log_dry_run_summary(
         candidates=total_cands,
@@ -5677,7 +5843,7 @@ def derive_mixed_compounds(
         duplicates_intra=total_dups_intra,
         unique=total_reg,
         sub_command="derive-mixed-compounds",
-    dry_run=dry_run,
+        dry_run=dry_run,
     )
 
 
@@ -5877,8 +6043,8 @@ def coverage_report(
         return
 
     # Tally coverage per head and per category.
-    head_counts: dict[str, int] = {h: 0 for h in _ALL_HEADS}
-    category_counts: dict[str, int] = {s: 0 for s in OOD_SUBDIRECTORIES}
+    head_counts: dict[str, int] = dict.fromkeys(_ALL_HEADS, 0)
+    category_counts: dict[str, int] = dict.fromkeys(OOD_SUBDIRECTORIES, 0)
     license_academic = 0
     license_commercial = 0
     total_entries = 0
@@ -5923,8 +6089,10 @@ def coverage_report(
     click.echo(f"{'═' * 70}\n")
 
     click.echo("HEAD COVERAGE (non-null labeled images per head):")
-    click.echo(f"  {'Head':<35} {'Count':>6}  {'Min(50)':>7}  {'Target(100)':>11}  Status")
-    click.echo(f"  {'─'*35}  {'─'*6}  {'─'*7}  {'─'*11}  {'─'*8}")
+    click.echo(
+        f"  {'Head':<35} {'Count':>6}  {'Min(50)':>7}  {'Target(100)':>11}  Status"
+    )
+    click.echo(f"  {'─' * 35}  {'─' * 6}  {'─' * 7}  {'─' * 11}  {'─' * 8}")
     at_risk: list[str] = []
     for head in sorted(_ALL_HEADS):
         count = head_counts[head]
@@ -5935,15 +6103,19 @@ def coverage_report(
             status = "▲ LOW"
         else:
             status = "✓ OK"
-        click.echo(f"  {head:<35} {count:>6}  {'✗' if count<50 else '✓':>7}  {'✗' if count<100 else '✓':>11}  {status}")
+        click.echo(
+            f"  {head:<35} {count:>6}  {'✗' if count < 50 else '✓':>7}  {'✗' if count < 100 else '✓':>11}  {status}"
+        )
 
-    click.echo(f"\n  AT-RISK heads ({len(at_risk)}): {', '.join(at_risk) if at_risk else 'none'}")
+    click.echo(
+        f"\n  AT-RISK heads ({len(at_risk)}): {', '.join(at_risk) if at_risk else 'none'}"
+    )
 
     click.echo("\nCATEGORY COVERAGE:")
     for cat in OOD_SUBDIRECTORIES:
         click.echo(f"  {cat:<25} {category_counts[cat]:>5}")
 
-    click.echo(f"\nLICENSE BREAKDOWN:")
+    click.echo("\nLICENSE BREAKDOWN:")
     click.echo(f"  Academic/Research only: {license_academic}")
     click.echo(f"  Commercial-OK         : {license_commercial}")
 
@@ -6027,7 +6199,11 @@ def _write_gap_report(
     ]
     for head in sorted(_ALL_HEADS, key=lambda h: head_counts[h]):
         count = head_counts[head]
-        status = "⚠ AT_RISK" if count < _HEAD_MINIMUM else ("▲ LOW" if count < _HEAD_TARGET else "✓ OK")
+        status = (
+            "⚠ AT_RISK"
+            if count < _HEAD_MINIMUM
+            else ("▲ LOW" if count < _HEAD_TARGET else "✓ OK")
+        )
         lines.append(
             f"| {head} | {count} | "
             f"{'✗' if count < 50 else '✓'} | "
@@ -6080,13 +6256,13 @@ def _write_gap_report(
         "handwriting_legibility": (
             "Requires human annotation. Legibility cannot be reliably inferred "
             "automatically. Assign annotators to rate: "
-            "legible=True/False + legibility_score (0–1). "
+            "legible=True/False + legibility_score (0-1). "
             "Handwriting legibility labels are needed for images registered via "
             "harvest-train-splits (hiertext, arabic-docs, casia-hwdb2-line)."
         ),
         "handwriting_legibility_score": (
             "Same as handwriting_legibility — requires human annotation. "
-            "Score is a continuous 0–1 estimate of legibility."
+            "Score is a continuous 0-1 estimate of legibility."
         ),
         "resolution_quality": (
             "Requires the resolution_quality labeling pipeline "
@@ -6297,9 +6473,7 @@ _HTS_DATASETS: dict[str, dict[str, Any]] = {
 @click.option(
     "--mdiw13-dir",
     type=click.Path(path_type=Path),
-    default=Path(
-        "/mnt/e/image_detection/01_base_data/language/mdiw13"
-    ),
+    default=Path("/mnt/e/image_detection/01_base_data/language/mdiw13"),
     show_default=True,
     help="MDIW13 root (expects language-named subdirs e.g. Arabic/, Roman/, ...).",
 )
@@ -6324,15 +6498,57 @@ _HTS_DATASETS: dict[str, dict[str, Any]] = {
     show_default=True,
     help="NIST-SD19 root (expects images/ subdir with .png files).",
 )
-@click.option("--n-sd7k", default=1000, show_default=True, help="Images to harvest from SD7K train split.")
-@click.option("--n-hiertext", default=500, show_default=True, help="Images to harvest from HierText train split.")
-@click.option("--n-casia-hwdb2-line", default=300, show_default=True, help="Images from CASIA-HWDB2-line train.")
-@click.option("--n-mlt19", default=200, show_default=True, help="Images from MLT-19 train split.")
-@click.option("--n-mdiw13", default=150, show_default=True, help="Images from MDIW13 (all scripts, proportional).")
-@click.option("--n-midv500", default=300, show_default=True, help="Additional MIDV-500 images (beyond already-registered).")
-@click.option("--n-midv2020", default=600, show_default=True, help="Images from MIDV-2020 photo split.")
-@click.option("--n-nist-sd19", default=100, show_default=True, help="Images from NIST-SD19 (all Public Domain).")
-@click.option("--dry-run", is_flag=True, default=False, help="Preview counts without writing files or registry entries.")
+@click.option(
+    "--n-sd7k",
+    default=1000,
+    show_default=True,
+    help="Images to harvest from SD7K train split.",
+)
+@click.option(
+    "--n-hiertext",
+    default=500,
+    show_default=True,
+    help="Images to harvest from HierText train split.",
+)
+@click.option(
+    "--n-casia-hwdb2-line",
+    default=300,
+    show_default=True,
+    help="Images from CASIA-HWDB2-line train.",
+)
+@click.option(
+    "--n-mlt19", default=200, show_default=True, help="Images from MLT-19 train split."
+)
+@click.option(
+    "--n-mdiw13",
+    default=150,
+    show_default=True,
+    help="Images from MDIW13 (all scripts, proportional).",
+)
+@click.option(
+    "--n-midv500",
+    default=300,
+    show_default=True,
+    help="Additional MIDV-500 images (beyond already-registered).",
+)
+@click.option(
+    "--n-midv2020",
+    default=600,
+    show_default=True,
+    help="Images from MIDV-2020 photo split.",
+)
+@click.option(
+    "--n-nist-sd19",
+    default=100,
+    show_default=True,
+    help="Images from NIST-SD19 (all Public Domain).",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Preview counts without writing files or registry entries.",
+)
 @click.pass_context
 def harvest_train_splits(
     ctx: click.Context,
@@ -6382,7 +6598,7 @@ def harvest_train_splits(
     Excluded (license issues confirmed):
       rvl-cdip (research-only), warpdoc (unspecified/NC),
       docalign12k (unspecified/NC), anyphotodoc6300 (GPL-3.0/NC),
-      kuzushiji (28×28 char images — unsuitable for document-level OOD).
+      kuzushiji (28x28 char images — unsuitable for document-level OOD).
     """
     import hashlib
     import json
@@ -6580,10 +6796,15 @@ def harvest_train_splits(
                 gt,
                 "train",
                 "casia-hwdb2-line",
-                {"text": entry_meta.get("text", ""), "char_count": entry_meta.get("char_count", 0)},
+                {
+                    "text": entry_meta.get("text", ""),
+                    "char_count": entry_meta.get("char_count", 0),
+                },
             ):
                 done_casia += 1
-    click.echo(f"  CASIA-HWDB2-line (train)         : {done_casia}/{n_casia_hwdb2_line}")
+    click.echo(
+        f"  CASIA-HWDB2-line (train)         : {done_casia}/{n_casia_hwdb2_line}"
+    )
 
     # ------------------------------------------------------------------
     # MLT-19 — multilingual scene text, train split
@@ -6643,7 +6864,12 @@ def harvest_train_splits(
     }
 
     done_mdiw13 = 0
-    mdiw13_docs_root = mdiw13_dir / "SIW_Database" / "SIW_MultiscriptDatabase" / "MultiscriptPrintedDocuments"
+    mdiw13_docs_root = (
+        mdiw13_dir
+        / "SIW_Database"
+        / "SIW_MultiscriptDatabase"
+        / "MultiscriptPrintedDocuments"
+    )
     if not mdiw13_docs_root.exists():
         # Fallback: direct language subdirs
         mdiw13_docs_root = mdiw13_dir
@@ -6693,7 +6919,9 @@ def harvest_train_splits(
     if not midv500_dir.exists():
         click.echo(f"  [SKIP] MIDV-500 not found at {midv500_dir}")
     else:
-        midv500_candidates = list(midv500_dir.rglob("*.jpg")) + list(midv500_dir.rglob("*.tif"))
+        midv500_candidates = list(midv500_dir.rglob("*.jpg")) + list(
+            midv500_dir.rglob("*.tif")
+        )
         rng.shuffle(midv500_candidates)
         for img_path in midv500_candidates:
             if done_midv500 >= n_midv500:
@@ -6764,7 +6992,9 @@ def harvest_train_splits(
     if not nist_img_dir.exists():
         click.echo(f"  [SKIP] NIST-SD19 images/ not found at {nist_sd19_dir}")
     else:
-        nist_candidates = list(nist_img_dir.glob("*.png")) + list(nist_img_dir.glob("*.tif"))
+        nist_candidates = list(nist_img_dir.glob("*.png")) + list(
+            nist_img_dir.glob("*.tif")
+        )
         rng.shuffle(nist_candidates)
         for img_path in nist_candidates:
             if done_nist >= n_nist_sd19:
@@ -6823,7 +7053,7 @@ def harvest_train_splits(
     "--batch-size",
     default=16,
     show_default=True,
-    help="Images per contact sheet (4×4=16 or 6×6=36 recommended).",
+    help="Images per contact sheet (4x4=16 or 6x6=36 recommended).",
 )
 @click.option(
     "--thumbnail-px",
@@ -6922,8 +7152,10 @@ def label_domain(
 
     if dry_run:
         n_batches = (len(needs_label) + batch_size - 1) // batch_size
-        click.echo(f"  Would process {n_batches} batches of up to {batch_size} images each")
-        click.echo(f"  (dry-run) No API calls made.")
+        click.echo(
+            f"  Would process {n_batches} batches of up to {batch_size} images each"
+        )
+        click.echo("  (dry-run) No API calls made.")
         return
 
     if not needs_label:
@@ -6966,18 +7198,20 @@ No extra text, just the JSON array."""
                 row, col = divmod(pos, grid_side)
                 contact_sheet.paste(img, (col * thumbnail_px, row * thumbnail_px))
                 valid_positions.append(pos + 1)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
 
         if not valid_positions:
             continue
 
         import io
+
         buf = io.BytesIO()
         contact_sheet.save(buf, format="JPEG", quality=85)
         img_bytes = buf.getvalue()
 
         import base64
+
         img_b64 = base64.standard_b64encode(img_bytes).decode()
 
         prompt = _DOMAIN_PROMPT.format(n=len(batch))
@@ -7006,10 +7240,9 @@ No extra text, just the JSON array."""
             # Strip markdown code fence if present
             if raw_text.startswith("```"):
                 raw_text = raw_text.split("```")[1]
-                if raw_text.startswith("json"):
-                    raw_text = raw_text[4:]
+                raw_text = raw_text.removeprefix("json")
             domain_labels: list[dict[str, str]] = json.loads(raw_text)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             click.echo(f"  [WARN] API call failed for batch: {exc}")
             continue
 
@@ -7020,17 +7253,19 @@ No extra text, just the JSON array."""
             entry_idx = batch[pos_1based - 1]
             if "generation_metadata" not in all_entries[entry_idx]:
                 all_entries[entry_idx]["generation_metadata"] = {}
-            all_entries[entry_idx]["generation_metadata"]["domain_level1"] = label_item.get(
-                "domain_level1", "Unknown"
+            all_entries[entry_idx]["generation_metadata"]["domain_level1"] = (
+                label_item.get("domain_level1", "Unknown")
             )
-            all_entries[entry_idx]["generation_metadata"]["domain_level2"] = label_item.get(
-                "domain_level2", "Unknown"
+            all_entries[entry_idx]["generation_metadata"]["domain_level2"] = (
+                label_item.get("domain_level2", "Unknown")
             )
             total_labeled += 1
 
         batches_done += 1
         if batches_done % 10 == 0:
-            click.echo(f"  Progress: {batches_done}/{len(batch_indices)} batches, {total_labeled} labeled")
+            click.echo(
+                f"  Progress: {batches_done}/{len(batch_indices)} batches, {total_labeled} labeled"
+            )
 
     # Write updated registry
     out_path = output_registry or registry_path
@@ -7038,7 +7273,9 @@ No extra text, just the JSON array."""
         for entry in all_entries:
             fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    click.echo(f"\n  Domain labeling complete: {total_labeled} entries labeled in {batches_done} batches")
+    click.echo(
+        f"\n  Domain labeling complete: {total_labeled} entries labeled in {batches_done} batches"
+    )
     click.echo(f"  Registry written to: {out_path}")
 
 

@@ -27,6 +27,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/geometry \\
         --n-images 700
 """
+
 from __future__ import annotations
 
 import io
@@ -67,19 +68,18 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
+
 
 # Distinct OOD seed namespace (same master namespace as compound distortion)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x1234_5678) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
-_RVLCDIP_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/rvl_cdip"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
+_RVLCDIP_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/rvl_cdip")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/geometry")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -121,7 +121,10 @@ def _random_extreme_perspective(
         offsets.append((dx, dy))
 
     dst_pts = np.float32(
-        [[src_pts[i, 0] + offsets[i][0], src_pts[i, 1] + offsets[i][1]] for i in range(4)]
+        [
+            [src_pts[i, 0] + offsets[i][0], src_pts[i, 1] + offsets[i][1]]
+            for i in range(4)
+        ]
     )
 
     # Compute approximate angular deviation from the extreme corner displacement
@@ -138,7 +141,9 @@ def _random_extreme_perspective(
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     warped = cv2.warpPerspective(
-        img, M, (w, h),
+        img,
+        M,
+        (w, h),
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255),
@@ -158,7 +163,9 @@ def _load_source_pool(doclaynet_dir: Path, rvlcdip_dir: Path) -> list[Path]:
             data = json.load(f)
         dl_paths = [img_dir / entry["file_name"] for entry in data["images"]]
         pool.extend(p for p in dl_paths if p.exists())
-        click.echo(f"  DocLayNet train:  {len([p for p in dl_paths if p.exists()]):,} images")
+        click.echo(
+            f"  DocLayNet train:  {len([p for p in dl_paths if p.exists()]):,} images"
+        )
     else:
         click.echo(f"  [SKIP] DocLayNet not found at {doclaynet_dir}")
 

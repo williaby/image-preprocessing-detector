@@ -67,14 +67,18 @@ def parse_info_csv(csv_path: Path, part: int) -> list[dict]:
                     "frame": frame,
                     "filename": filename,
                     "dataset_id": dataset_id,
-                    "decade": dataset_id.split("_")[0] if "_" in dataset_id else dataset_id,
+                    "decade": dataset_id.split("_")[0]
+                    if "_" in dataset_id
+                    else dataset_id,
                 }
             )
     return records
 
 
 @click.command()
-@click.option("--part", type=click.Choice(["1", "2"]), required=True, help="Dataset part")
+@click.option(
+    "--part", type=click.Choice(["1", "2"]), required=True, help="Dataset part"
+)
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),

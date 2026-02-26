@@ -33,7 +33,9 @@ from __future__ import annotations
 __l4_category__ = "integrate-script"
 __l4_dataset__ = "kuzushiji"
 __l4_workstream__ = "WS3"
-__l4_parser__ = "src/image_preprocessing_detector/annotation/parsers/handwriting/kuzushiji.py"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/handwriting/kuzushiji.py"
+)
 
 
 import argparse
@@ -67,9 +69,7 @@ IS_SYNTHETIC_DATASET = False
 REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
 OUTPUT_PATH = REGISTRY_DIR / "json" / "kuzushiji_metadata.json"
 
-KUZUSHIJI_ROOT = Path(
-    "/mnt/e/image_detection/01_base_data/handwriting/kuzushiji"
-)
+KUZUSHIJI_ROOT = Path("/mnt/e/image_detection/01_base_data/handwriting/kuzushiji")
 
 SCRIPT_VERSION = "1.0.0"
 ENRICHMENT_VERSION_TAG = "integrated_v1"
@@ -526,7 +526,9 @@ def main() -> int:
     log.info("Loading sidecar JSONL files from %s", args.kuzushiji_root)
     entries = load_all_sidecars(args.kuzushiji_root)
     if not entries:
-        log.error("No sidecar entries found — run scripts/materialize_kuzushiji.py first")
+        log.error(
+            "No sidecar entries found — run scripts/materialize_kuzushiji.py first"
+        )
         return 1
 
     start = time.monotonic()

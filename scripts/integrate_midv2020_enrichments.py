@@ -23,11 +23,12 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__   = "integrate-script"
-__l4_dataset__    = "midv2020"
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "midv2020"
 __l4_workstream__ = "WS3"
-__l4_parser__     = "src/image_preprocessing_detector/annotation/parsers/document/midv2020.py"
-
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/document/midv2020.py"
+)
 
 
 import argparse
@@ -64,12 +65,12 @@ IS_SYNTHETIC_DATASET = False
 # ===================================================================
 REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
 
-METADATA_PATH          = REGISTRY_DIR / "json" / "midv2020_metadata.json"
-LLM_ENRICHMENT_PATH    = REGISTRY_DIR / "json" / "midv2020_llm_enrichment.json"
+METADATA_PATH = REGISTRY_DIR / "json" / "midv2020_metadata.json"
+LLM_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "midv2020_llm_enrichment.json"
 LANGUAGE_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "midv2020_language_enrichment.json"
 
-SCRIPT_VERSION          = "1.0.0"
-ENRICHMENT_VERSION_TAG  = "integrated_v2"
+SCRIPT_VERSION = "1.0.0"
+ENRICHMENT_VERSION_TAG = "integrated_v2"
 ENRICHMENT_VERSION_NUMBER = 2
 
 # ===================================================================
@@ -81,10 +82,10 @@ ENRICHMENT_VERSION_NUMBER = 2
 APPLY_KI_001_LAYOUT_CASING = False
 
 # --- Content flag overrides (ID documents only) --------------------
-VLM_TABLE_TRUE_POSITIVES: frozenset[str]       = frozenset()
-VLM_FIGURE_TRUE_POSITIVES: frozenset[str]      = frozenset()
+VLM_TABLE_TRUE_POSITIVES: frozenset[str] = frozenset()
+VLM_FIGURE_TRUE_POSITIVES: frozenset[str] = frozenset()
 VLM_HANDWRITING_TRUE_POSITIVES: frozenset[str] = frozenset()
-VLM_FORMULA_TRUE_POSITIVES: frozenset[str]     = frozenset()
+VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 
 # --- KI-005: Capture method resolved per-image from parser --------
 # midv2020 has TWO capture methods (camera + flatbed) determined per image
@@ -93,20 +94,32 @@ KNOWN_CAPTURE_METHOD: str | None = None  # resolved per-sample
 # ===================================================================
 # Content flag class mappings
 # ===================================================================
-TABLE_CLASSES   = {"TABLE"}
+TABLE_CLASSES = {"TABLE"}
 FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES  = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES    = {"CODE"}
+FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
+CODE_CLASSES = {"CODE"}
 
 # Countries with Cyrillic-primary documents in this dataset
-_CYRILLIC_COUNTRIES: frozenset[str] = frozenset({
-    "RU", "RUS", "UA", "UKR", "BY", "BLR", "BG", "BGR", "RS", "SRB",
-})
+_CYRILLIC_COUNTRIES: frozenset[str] = frozenset(
+    {
+        "RU",
+        "RUS",
+        "UA",
+        "UKR",
+        "BY",
+        "BLR",
+        "BG",
+        "BGR",
+        "RS",
+        "SRB",
+    }
+)
 
 
 # ===================================================================
 # Data loaders
 # ===================================================================
+
 
 def load_metadata(path: Path) -> dict[str, Any]:
     """Load Layer 2 metadata JSON.
@@ -188,16 +201,16 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
     lines = [ln for ln in clean.split("\n") if ln.strip()]
     words = clean.split()
     cyrillic = len(re.findall(r"[\u0400-\u04ff]", clean))
-    latin    = len(re.findall(r"[a-zA-Z]+", clean))
+    latin = len(re.findall(r"[a-zA-Z]+", clean))
 
     stats: dict[str, Any] = {
-        "char_count":  len(clean),
-        "word_count":  len(words),
-        "line_count":  len(lines),
+        "char_count": len(clean),
+        "word_count": len(words),
+        "line_count": len(lines),
         "has_content": True,
-        "avg_line_length": round(
-            sum(len(ln.strip()) for ln in lines) / len(lines), 1
-        ) if lines else 0.0,
+        "avg_line_length": round(sum(len(ln.strip()) for ln in lines) / len(lines), 1)
+        if lines
+        else 0.0,
     }
     if cyrillic:
         stats["cyrillic_char_count"] = cyrillic
@@ -209,6 +222,7 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
 # ===================================================================
 # Derivation helpers
 # ===================================================================
+
 
 def _resolve_capture_method(sample: dict[str, Any]) -> tuple[str, float]:
     """Resolve capture method from parser labels or filename path.
@@ -278,7 +292,8 @@ def resolve_language(
     parser_script = raw.get("iso15924_script", "")
     if parser_script == "Cyrl":
         lang_map_cyrl = {
-            "RUS": "rus", "SRB": "srp",
+            "RUS": "rus",
+            "SRB": "srp",
         }
         country_code = raw.get("country_code", "").upper()
         lang = lang_map_cyrl.get(country_code, "rus")
@@ -294,11 +309,16 @@ def resolve_language(
     country = (raw.get("country_code") or "").upper()
     if country in _CYRILLIC_COUNTRIES:
         lang_map = {
-            "RU": "rus", "RUS": "rus",
-            "UA": "ukr", "UKR": "ukr",
-            "BY": "bel", "BLR": "bel",
-            "BG": "bul", "BGR": "bul",
-            "RS": "srp", "SRB": "srp",
+            "RU": "rus",
+            "RUS": "rus",
+            "UA": "ukr",
+            "UKR": "ukr",
+            "BY": "bel",
+            "BLR": "bel",
+            "BG": "bul",
+            "BGR": "bul",
+            "RS": "srp",
+            "SRB": "srp",
         }
         return (lang_map.get(country, "rus"), "Cyrl", 0.90, "parser_country_code")
 
@@ -311,9 +331,9 @@ def resolve_language(
 
     # Source 3: Language enrichment
     if lang_enrichment:
-        le_lang   = lang_enrichment.get("language")
+        le_lang = lang_enrichment.get("language")
         le_script = lang_enrichment.get("script")
-        le_conf   = lang_enrichment.get("confidence", 0.5)
+        le_conf = lang_enrichment.get("confidence", 0.5)
         if le_lang and le_lang != "und":
             return (le_lang, le_script or "Zyyy", min(le_conf, 0.70), "openlid_v2")
 
@@ -331,11 +351,11 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         Reliability summary dict.
     """
     field_defs = [
-        ("capture_method",  "capture_confidence"),
-        ("domain",          "domain_confidence"),
-        ("language",        "language_confidence"),
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
         ("layout_detections", "layout_confidence"),
-        ("content_flags",   "content_flags_confidence"),
+        ("content_flags", "content_flags_confidence"),
     ]
     fields: list[dict[str, Any]] = []
     for field_name, conf_key in field_defs:
@@ -348,29 +368,32 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field":         field_name,
-            "confidence":    round(confidence, 4),
-            "category":      category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
 
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
-        "min_confidence":          min_field["confidence"],
-        "min_confidence_field":    min_field["field"],
+        "min_confidence": min_field["confidence"],
+        "min_confidence_field": min_field["field"],
         "min_confidence_category": min_field["category"],
-        "assessed_field_count":    len(fields),
-        "hard_field_count":  sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count":  sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary":     fields,
-        "computed_at":       datetime.now(UTC).isoformat(),
+        "assessed_field_count": len(fields),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
     }
 
 
 # ===================================================================
 # Per-sample integration
 # ===================================================================
+
 
 def integrate_sample(
     sample: dict[str, Any],
@@ -387,14 +410,14 @@ def integrate_sample(
     Returns:
         New enrichment data dict with all sources merged.
     """
-    filename      = sample["source"]["original_filename"]
+    filename = sample["source"]["original_filename"]
     filename_stem = Path(filename).stem
 
     v1_data: dict[str, Any] = {}
     if sample["enrichments"]["versions"]:
         v1_data = sample["enrichments"]["versions"][-1].get("data", {})
 
-    llm             = llm_index.get(filename_stem)
+    llm = llm_index.get(filename_stem)
     lang_enrichment = lang_index.get(filename_stem)
 
     data: dict[str, Any] = {}
@@ -406,27 +429,27 @@ def integrate_sample(
     # -------------------------------------------------------------------
     orig_labels = sample.get("original_labels", {})
     parser_detections = orig_labels.get("layout_detections", [])
-    v1_layout         = v1_data.get("layout_detections", parser_detections)
-    data["layout_detections"]      = v1_layout
-    data["layout_source"]          = v1_data.get("layout_source", "midv2020_annotation")
-    data["layout_confidence"]      = 1.0 if v1_layout else 0.0
+    v1_layout = v1_data.get("layout_detections", parser_detections)
+    data["layout_detections"] = v1_layout
+    data["layout_source"] = v1_data.get("layout_source", "midv2020_annotation")
+    data["layout_confidence"] = 1.0 if v1_layout else 0.0
     data["layout_detection_count"] = len(v1_layout)
 
     # -------------------------------------------------------------------
     # CAPTURE METHOD (per-image: camera or flatbed)
     # -------------------------------------------------------------------
     capture_method, capture_conf = _resolve_capture_method(sample)
-    data["capture_method"]           = capture_method
-    data["capture_confidence"]       = capture_conf
+    data["capture_method"] = capture_method
+    data["capture_confidence"] = capture_conf
     data["capture_detection_method"] = "parser_path_structure"
 
     # -------------------------------------------------------------------
     # DOMAIN (GOV for all ID documents)
     # -------------------------------------------------------------------
-    data["domain_level1"]           = "GOV"
-    data["domain_confidence"]       = 1.0
+    data["domain_level1"] = "GOV"
+    data["domain_confidence"] = 1.0
     data["domain_detection_method"] = "dataset_documentation"
-    data["domain_content_type"]     = "identity_document"
+    data["domain_content_type"] = "identity_document"
 
     # -------------------------------------------------------------------
     # LANGUAGE / SCRIPT
@@ -434,10 +457,10 @@ def integrate_sample(
     lang, script, lang_conf, lang_method = resolve_language(
         sample, llm, lang_enrichment
     )
-    data["iso639_language"]              = lang
-    data["iso15924_script"]              = script
-    data["language_confidence"]          = lang_conf
-    data["text_scope_detection_method"]  = lang_method
+    data["iso639_language"] = lang
+    data["iso15924_script"] = script
+    data["language_confidence"] = lang_conf
+    data["text_scope_detection_method"] = lang_method
 
     # -------------------------------------------------------------------
     # SCRIPT FAMILY
@@ -450,28 +473,28 @@ def integrate_sample(
     # CONTENT FLAGS
     # ID documents: portraits present, no tables/formulas/code
     # -------------------------------------------------------------------
-    data["has_table"]       = False
-    data["has_figure"]      = True   # ID docs include portrait photos
-    data["has_formula"]     = False
+    data["has_table"] = False
+    data["has_figure"] = True  # ID docs include portrait photos
+    data["has_formula"] = False
     data["has_handwriting"] = False  # Printed identity documents
-    data["has_signature"]   = False
-    data["has_code"]        = False
+    data["has_signature"] = False
+    data["has_code"] = False
 
-    data["content_flags_tier"]       = "tier_2_model"
-    data["content_flags_source"]     = "dataset_documentation"
+    data["content_flags_tier"] = "tier_2_model"
+    data["content_flags_source"] = "dataset_documentation"
     data["content_flags_confidence"] = 0.95
-    data["handwriting_present"]      = False
+    data["handwriting_present"] = False
 
     # -------------------------------------------------------------------
     # ORIENTATION (from LLM or default upright)
     # -------------------------------------------------------------------
     if llm and llm.get("orientation") is not None:
-        data["orientation_class"]            = llm.get("orientation", 0)
-        data["orientation_confidence"]       = 0.5
+        data["orientation_class"] = llm.get("orientation", 0)
+        data["orientation_confidence"] = 0.5
         data["orientation_detection_method"] = "llm_vision"
     else:
-        data["orientation_class"]            = 0
-        data["orientation_confidence"]       = 0.5
+        data["orientation_class"] = 0
+        data["orientation_confidence"] = 0.5
         data["orientation_detection_method"] = "default_upright"
 
     # -------------------------------------------------------------------
@@ -483,7 +506,7 @@ def integrate_sample(
     # TEXT SCOPE
     # -------------------------------------------------------------------
     data["text_scope_content_type"] = "identity_document"
-    data["text_scope"]              = v1_data.get("text_scope", "printed")
+    data["text_scope"] = v1_data.get("text_scope", "printed")
 
     # -------------------------------------------------------------------
     # IMAGE PROPERTIES
@@ -511,23 +534,23 @@ def integrate_sample(
     # -------------------------------------------------------------------
     transcription = sample.get("original_labels", {}).get("transcription", "") or ""
     if transcription:
-        data["text_has_content"]        = True
-        data["text_content"]            = transcription
+        data["text_has_content"] = True
+        data["text_content"] = transcription
         data["text_content_confidence"] = 0.95
-        data["text_content_source"]     = "parser_gt"
+        data["text_content_source"] = "parser_gt"
     else:
         # D08: ID documents always contain printed text (names, MRZ, document numbers)
         # even when the parser did not extract a transcription string.
-        data["text_has_content"]        = True
-        data["text_content"]            = ""
+        data["text_has_content"] = True
+        data["text_content"] = ""
         data["text_content_confidence"] = 0.5
-        data["text_content_source"]     = "dataset_documentation"
+        data["text_content_source"] = "dataset_documentation"
     data["text_statistics"] = compute_text_statistics(transcription)
 
     # -------------------------------------------------------------------
     # ADDITIONAL DERIVED FIELDS
     # -------------------------------------------------------------------
-    data["dataset_short_code"]        = DATASET_NAME
+    data["dataset_short_code"] = DATASET_NAME
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -536,6 +559,7 @@ def integrate_sample(
 # ===================================================================
 # Integration runner
 # ===================================================================
+
 
 def run_integration(
     metadata: dict[str, Any],
@@ -555,21 +579,21 @@ def run_integration(
         Stats dict with counts and distribution Counters.
     """
     stats: dict[str, Any] = {
-        "total":          0,
-        "integrated":     0,
-        "llm_matched":    0,
-        "lang_matched":   0,
-        "domain_dist":    Counter(),
-        "split_dist":     Counter(),
-        "lang_dist":      Counter(),
-        "script_dist":    Counter(),
-        "script_family_dist":  Counter(),
-        "lang_method_dist":    Counter(),
+        "total": 0,
+        "integrated": 0,
+        "llm_matched": 0,
+        "lang_matched": 0,
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "lang_dist": Counter(),
+        "script_dist": Counter(),
+        "script_family_dist": Counter(),
+        "lang_method_dist": Counter(),
         "capture_method_dist": Counter(),
-        "has_table_count":       0,
-        "has_formula_count":     0,
+        "has_table_count": 0,
+        "has_formula_count": 0,
         "has_handwriting_count": 0,
-        "has_figure_count":      0,
+        "has_figure_count": 0,
     }
 
     now = datetime.now(UTC).isoformat()
@@ -590,9 +614,15 @@ def run_integration(
         stats["split_dist"][integrated_data.get("split", "unknown")] += 1
         stats["lang_dist"][integrated_data.get("iso639_language", "und")] += 1
         stats["script_dist"][integrated_data.get("iso15924_script", "Zyyy")] += 1
-        stats["script_family_dist"][integrated_data.get("script_family", "unknown")] += 1
-        stats["lang_method_dist"][integrated_data.get("text_scope_detection_method", "unknown")] += 1
-        stats["capture_method_dist"][integrated_data.get("capture_method", "unknown")] += 1
+        stats["script_family_dist"][
+            integrated_data.get("script_family", "unknown")
+        ] += 1
+        stats["lang_method_dist"][
+            integrated_data.get("text_scope_detection_method", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
 
         if integrated_data.get("has_table"):
             stats["has_table_count"] += 1
@@ -605,17 +635,17 @@ def run_integration(
 
         if not dry_run:
             new_version: dict[str, Any] = {
-                "version":        ENRICHMENT_VERSION_NUMBER,
+                "version": ENRICHMENT_VERSION_NUMBER,
                 "schema_version": "2.4.0",  # D10: was absent
-                "created_at":     now,
-                "created_by":     f"integrate_{DATASET_NAME}_enrichments.py",
-                "method":         "tier_2_model",
+                "created_at": now,
+                "created_by": f"integrate_{DATASET_NAME}_enrichments.py",
+                "method": "tier_2_model",
                 "description": (
                     f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
                     "parser path structure + LLM vision + language enrichment"
                 ),
                 "script_version": SCRIPT_VERSION,
-                "data":           integrated_data,
+                "data": integrated_data,
             }
             versions = sample["enrichments"]["versions"]
             replaced = False
@@ -634,6 +664,7 @@ def run_integration(
 # ===================================================================
 # Summary printer
 # ===================================================================
+
 
 def print_summary(stats: dict[str, Any], total_samples: int) -> None:
     """Print integration summary.
@@ -689,6 +720,7 @@ def print_summary(stats: dict[str, Any], total_samples: int) -> None:
 # CLI
 # ===================================================================
 
+
 def main() -> int:
     """Entry point with argument parsing.
 
@@ -698,13 +730,18 @@ def main() -> int:
     p = argparse.ArgumentParser(
         description=f"Integrate all enrichment sources into {DATASET_NAME} metadata.",
     )
-    p.add_argument("--metadata",    type=Path, default=METADATA_PATH)
-    p.add_argument("--output",      type=Path, default=None,
-                   help="Output path (default: overwrite input)")
-    p.add_argument("--llm-enrichment",      type=Path, default=LLM_ENRICHMENT_PATH)
+    p.add_argument("--metadata", type=Path, default=METADATA_PATH)
+    p.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output path (default: overwrite input)",
+    )
+    p.add_argument("--llm-enrichment", type=Path, default=LLM_ENRICHMENT_PATH)
     p.add_argument("--language-enrichment", type=Path, default=LANGUAGE_ENRICHMENT_PATH)
-    p.add_argument("--dry-run",  action="store_true",
-                   help="Report only, do not write output")
+    p.add_argument(
+        "--dry-run", action="store_true", help="Report only, do not write output"
+    )
     args = p.parse_args()
 
     output_path = args.output or args.metadata
@@ -713,9 +750,9 @@ def main() -> int:
         log.error("Metadata file not found: %s", args.metadata)
         return 1
 
-    metadata        = load_metadata(args.metadata)
-    llm_index       = load_llm_enrichment(args.llm_enrichment)
-    lang_index      = load_language_enrichment(args.language_enrichment)
+    metadata = load_metadata(args.metadata)
+    llm_index = load_llm_enrichment(args.llm_enrichment)
+    lang_index = load_language_enrichment(args.language_enrichment)
 
     start = time.monotonic()
     stats = run_integration(

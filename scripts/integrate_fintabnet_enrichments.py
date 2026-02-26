@@ -22,11 +22,12 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__      = 'integrate-script'
-__l4_dataset__       = 'fintabnet'
-__l4_workstream__    = 'WS3'
-__l4_parser__        = 'src/image_preprocessing_detector/annotation/parsers/layout/fintabnet.py'
-
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "fintabnet"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/layout/fintabnet.py"
+)
 
 
 import argparse

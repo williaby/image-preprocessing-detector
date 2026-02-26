@@ -10,17 +10,17 @@ Target: 300 images registered in ood_registry.jsonl under
         [ood_degradation, ood_capture].
 
 Transform pipeline:
-  1. Downsample source image to ~screen resolution (scale factor 0.40–0.55).
+  1. Downsample source image to ~screen resolution (scale factor 0.40-0.55).
   2. Add sinusoidal RGB moiré pattern at a frequency slightly different from
-     the sampling grid (horizontal + vertical stripes at 5–10° offset).
-  3. Apply slight perspective rotation (15–25°) to simulate off-angle capture.
+     the sampling grid (horizontal + vertical stripes at 5-10° offset).
+  3. Apply slight perspective rotation (15-25°) to simulate off-angle capture.
   4. Bicubic upsample back to original size (introduces interpolation blur).
 
 Labels:
   capture_method      "screen_recapture"
-  blur_score          0.30–0.40  (interpolation softening)
-  compression_score   0.40–0.50  (JPEG + moiré information loss)
-  noise_score         0.20–0.30  (moiré as structured noise)
+  blur_score          0.30-0.40  (interpolation softening)
+  compression_score   0.40-0.50  (JPEG + moiré information loss)
+  noise_score         0.20-0.30  (moiré as structured noise)
 
 Usage:
     # Dry run
@@ -32,6 +32,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/degradation \\
         --n-images 300
 """
+
 from __future__ import annotations
 
 import io
@@ -64,9 +65,7 @@ from scripts.ood_utils import (
 # OOD seed namespace: 0xDEADBEEF_0DD5AFEC ^ recipe_index(6)
 _OOD_RNG_SEED = (0xDEAD_BEEF_0DD5_AFEC ^ 0x0000_0006) & 0xFFFFFFFF
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/degradation")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -77,7 +76,7 @@ _SCALE_HI = 0.55
 # Moiré stripe frequency range (cycles per pixel in downsampled space)
 _MOIRE_FREQ_LO = 0.08
 _MOIRE_FREQ_HI = 0.18
-_MOIRE_AMPLITUDE = 18.0  # intensity oscillation amplitude (0–255 scale)
+_MOIRE_AMPLITUDE = 18.0  # intensity oscillation amplitude (0-255 scale)
 
 # Recapture angle range (degrees from vertical)
 _ANGLE_LO = 15.0
@@ -94,7 +93,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -108,7 +109,7 @@ def _add_moire_pattern(
     channels slightly relative to G, which is characteristic of screen recapture.
 
     Args:
-        img_float: Source image as float32 (0–255 range).
+        img_float: Source image as float32 (0-255 range).
         freq: Stripe frequency in cycles-per-pixel.
         angle_deg: Stripe orientation angle in degrees.
         amplitude: Peak intensity oscillation amplitude.
@@ -130,9 +131,9 @@ def _add_moire_pattern(
 
     # Apply to each channel with slight phase offset for RGB fringing
     out = img_float.copy()
-    out[..., 0] = np.clip(out[..., 0] + stripe * 0.6, 0, 255)   # B
-    out[..., 1] = np.clip(out[..., 1] + stripe, 0, 255)          # G
-    out[..., 2] = np.clip(out[..., 2] + stripe * 0.7, 0, 255)    # R
+    out[..., 0] = np.clip(out[..., 0] + stripe * 0.6, 0, 255)  # B
+    out[..., 1] = np.clip(out[..., 1] + stripe, 0, 255)  # G
+    out[..., 2] = np.clip(out[..., 2] + stripe * 0.7, 0, 255)  # R
     return out
 
 
@@ -145,7 +146,7 @@ def _apply_slight_perspective(
 
     Args:
         img_bgr: Source BGR uint8 image.
-        tilt_deg: Apparent tilt angle (15–25°), used to compute shrink ratio.
+        tilt_deg: Apparent tilt angle (15-25°), used to compute shrink ratio.
         rng: Random generator for axis selection.
 
     Returns:
@@ -167,7 +168,9 @@ def _apply_slight_perspective(
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     return cv2.warpPerspective(
-        img_bgr, M, (w, h),
+        img_bgr,
+        M,
+        (w, h),
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255),
@@ -227,9 +230,7 @@ def _load_doclaynet_train_pool(doclaynet_dir: Path) -> list[Path]:
     coco_train = doclaynet_dir / "ground_truth" / "coco" / "train.json"
     img_dir = doclaynet_dir / "documents" / "png"
     if not coco_train.exists() or not img_dir.exists():
-        raise FileNotFoundError(
-            f"DocLayNet train split not found at {doclaynet_dir}"
-        )
+        raise FileNotFoundError(f"DocLayNet train split not found at {doclaynet_dir}")
     with coco_train.open() as f:
         data = json.load(f)
     paths = [img_dir / entry["file_name"] for entry in data["images"]]

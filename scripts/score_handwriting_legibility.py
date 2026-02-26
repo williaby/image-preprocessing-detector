@@ -130,7 +130,9 @@ def select(
 
     metadata_path = _find_l2_metadata(l2_dir, dataset)
     if metadata_path is None:
-        click.echo(f"[error] No L2 metadata found for '{dataset}' in {l2_dir}", err=True)
+        click.echo(
+            f"[error] No L2 metadata found for '{dataset}' in {l2_dir}", err=True
+        )
         sys.exit(1)
 
     samples = _load_l2_samples(metadata_path)
@@ -168,12 +170,8 @@ def select(
 
 @cli.command()
 @click.argument("manifest_path", type=click.Path(exists=True, path_type=Path))
-@click.option(
-    "--cols", default=4, show_default=True, help="Columns per contact sheet."
-)
-@click.option(
-    "--rows", default=3, show_default=True, help="Rows per contact sheet."
-)
+@click.option("--cols", default=4, show_default=True, help="Columns per contact sheet.")
+@click.option("--rows", default=3, show_default=True, help="Rows per contact sheet.")
 @click.option(
     "--cell-width",
     default=512,
@@ -259,7 +257,9 @@ def sheets(
     default=(),
     help="Model IDs to use (repeatable). Defaults to config roster.",
 )
-@click.option("--dry-run", is_flag=True, help="Print prompt and exit without API calls.")
+@click.option(
+    "--dry-run", is_flag=True, help="Print prompt and exit without API calls."
+)
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
@@ -300,6 +300,7 @@ def score(
         from image_preprocessing_detector.labeling.handwriting.config import (
             get_default_config,
         )
+
         cfg = get_default_config()
 
     if dry_run:
@@ -457,6 +458,7 @@ def aggregate(
         mean_score = sum(valid_scores) / len(valid_scores)
         variance = sum((x - mean_score) ** 2 for x in valid_scores) / len(valid_scores)
         import math as _math
+
         std_score = _math.sqrt(variance)
     else:
         mean_score = std_score = 0.0
@@ -509,9 +511,7 @@ def aggregate(
 
 
 @cli.command()
-@click.argument(
-    "consensus_path", type=click.Path(exists=True, path_type=Path)
-)
+@click.argument("consensus_path", type=click.Path(exists=True, path_type=Path))
 @click.option(
     "--l2-dir",
     type=click.Path(path_type=Path),
@@ -552,7 +552,9 @@ def integrate(
             manifest_data = json.loads(auto_manifest.read_text())
 
     if not manifest_data:
-        click.echo("[error] Manifest not found — cannot map indices to sample IDs.", err=True)
+        click.echo(
+            "[error] Manifest not found — cannot map indices to sample IDs.", err=True
+        )
         sys.exit(1)
 
     n_updated = n_skipped = n_missing = 0
@@ -738,7 +740,9 @@ def _write_l2_update(
         break
 
     if not updated:
-        logger.warning("l2_write_sample_not_found", sample_id=sample_id, path=str(l2_path))
+        logger.warning(
+            "l2_write_sample_not_found", sample_id=sample_id, path=str(l2_path)
+        )
         return
 
     if isinstance(data, list):

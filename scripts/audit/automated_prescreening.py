@@ -944,7 +944,10 @@ def _check_provenance_tier_valid(
     """
     val = data.get("provenance_tier")
     if val is None:
-        return True, None  # pass-if-absent: field not yet written by integration scripts
+        return (
+            True,
+            None,
+        )  # pass-if-absent: field not yet written by integration scripts
     if val not in VALID_PROVENANCE_TIERS:
         return False, f"provenance_tier='{val}' not in allowed set"
     return True, None

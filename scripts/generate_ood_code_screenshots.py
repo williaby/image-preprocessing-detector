@@ -27,16 +27,15 @@ Usage:
         --docs-dir docs \\
         --output-dir /mnt/e/image_detection/ood/code
 """
+
 from __future__ import annotations
 
 import io
 import random
 import sys
-import textwrap
 from pathlib import Path
 
 import click
-import numpy as np
 
 # #ASSUME: env: PIL available; pygments optional (graceful degradation)
 try:
@@ -48,8 +47,7 @@ except ImportError as exc:
 try:
     from pygments import highlight
     from pygments.formatters import ImageFormatter
-    from pygments.lexers import PythonLexer, guess_lexer_for_filename, TextLexer
-    from pygments.styles import get_style_by_name
+    from pygments.lexers import PythonLexer, guess_lexer_for_filename
 
     _PYGMENTS_AVAILABLE = True
 except ImportError:
@@ -102,7 +100,9 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
 
@@ -110,7 +110,8 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
 def _find_source_files(src_dir: Path) -> list[Path]:
     """Collect Python source files from src_dir, excluding __pycache__."""
     files = [
-        p for p in src_dir.rglob("*.py")
+        p
+        for p in src_dir.rglob("*.py")
         if "__pycache__" not in p.parts and p.stat().st_size > 200
     ]
     return sorted(files)
@@ -138,7 +139,11 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
 
 
 def _render_code_pygments(
-    source_text: str, filename: str, font_size: int, dark_theme: bool, show_linenos: bool
+    source_text: str,
+    filename: str,
+    font_size: int,
+    dark_theme: bool,
+    show_linenos: bool,
 ) -> Image.Image | None:
     """Render code with Pygments ImageFormatter.
 
@@ -242,7 +247,9 @@ def _render_markdown_image(md_text: str) -> Image.Image:
             continue
 
         if in_code_block:
-            draw.rectangle([(0, y - 1), (_CANVAS_WIDTH, y + line_height - 1)], fill=code_bg)
+            draw.rectangle(
+                [(0, y - 1), (_CANVAS_WIDTH, y + line_height - 1)], fill=code_bg
+            )
             draw.text((16, y), line[:110], fill=fg_code, font=font_code)
         else:
             # Strip simple Markdown formatting for rendering
@@ -290,8 +297,15 @@ def _render_markdown_image(md_text: str) -> Image.Image:
     show_default=True,
     help="OOD registry JSONL file.",
 )
-@click.option("--n-code", default=300, show_default=True, help="Recipe 11 target (code renders).")
-@click.option("--n-markdown", default=124, show_default=True, help="Recipe 12 target (markdown renders).")
+@click.option(
+    "--n-code", default=300, show_default=True, help="Recipe 11 target (code renders)."
+)
+@click.option(
+    "--n-markdown",
+    default=124,
+    show_default=True,
+    help="Recipe 12 target (markdown renders).",
+)
 @click.option("--dry-run", is_flag=True, help="Simulate only; do not write any files.")
 def main(
     src_dir: Path,
@@ -332,7 +346,9 @@ def main(
     # ------------------------------------------------------------------
     py_files = _find_source_files(src_dir)
     if not py_files:
-        click.echo(f"  [WARN] No Python files found under {src_dir}; skipping Recipe 11.")
+        click.echo(
+            f"  [WARN] No Python files found under {src_dir}; skipping Recipe 11."
+        )
     else:
         click.echo(f"  Recipe 11: {len(py_files)} Python source files found.")
         rng.shuffle(py_files)
@@ -428,7 +444,9 @@ def main(
     # ------------------------------------------------------------------
     md_files = _find_markdown_files(docs_dir)
     if not md_files:
-        click.echo(f"  [WARN] No Markdown files found under {docs_dir}; skipping Recipe 12.")
+        click.echo(
+            f"  [WARN] No Markdown files found under {docs_dir}; skipping Recipe 12."
+        )
     else:
         click.echo(f"  Recipe 12: {len(md_files)} Markdown files found.")
         rng.shuffle(md_files)
@@ -452,7 +470,9 @@ def main(
 
             # Slice to a window that includes at least one code block
             lines = md_text.splitlines()
-            code_line_indices = [i for i, ln in enumerate(lines) if ln.startswith("```")]
+            code_line_indices = [
+                i for i, ln in enumerate(lines) if ln.startswith("```")
+            ]
             if not code_line_indices:
                 continue
             start_line = max(0, rng.choice(code_line_indices) - 10)

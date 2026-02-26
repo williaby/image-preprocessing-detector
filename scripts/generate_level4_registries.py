@@ -43,7 +43,7 @@ import re
 import subprocess
 import sys
 import textwrap
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -55,9 +55,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPTS_DIR.parent
 
 _CANONICAL_NAMES_FILE = _REPO_ROOT / "docs" / "datasets" / "canonical_names.json"
-_LEVEL4_OUTPUT_DIR = (
-    _REPO_ROOT / "docs" / "architecture" / "diagrams" / "level-4"
-)
+_LEVEL4_OUTPUT_DIR = _REPO_ROOT / "docs" / "architecture" / "diagrams" / "level-4"
 _DATASETS_SOURCE_DIR = _REPO_ROOT / "docs" / "datasets" / "source"
 _TRAINING_DOCS_DIR = _REPO_ROOT / "docs" / "datasets" / "training"
 
@@ -372,7 +370,9 @@ def validate_headers(
         # [A] Orphan detection
         if metadata is None:
             errors.append(
-                ValidationError(rel, "ERROR", "missing __l4_category__ (GAP_E: no Level 4 header)")
+                ValidationError(
+                    rel, "ERROR", "missing __l4_category__ (GAP_E: no Level 4 header)"
+                )
             )
             return
 
@@ -519,7 +519,9 @@ def _generate_parser_registry(
 
     # Group by task
     by_task: dict[str, list[dict[str, Any]]] = {}
-    for rec in sorted(parser_records, key=lambda r: (r.get("task", ""), r.get("dataset", ""))):
+    for rec in sorted(
+        parser_records, key=lambda r: (r.get("task", ""), r.get("dataset", ""))
+    ):
         task = rec.get("task", "unknown")
         by_task.setdefault(task, []).append(rec)
 
@@ -530,7 +532,7 @@ def _generate_parser_registry(
         "l4_category: parser",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -548,7 +550,13 @@ def _generate_parser_registry(
 
     total_rows = 0
     task_order = [
-        "layout", "quality", "correction", "handwriting", "multilingual", "document", "formula",
+        "layout",
+        "quality",
+        "correction",
+        "handwriting",
+        "multilingual",
+        "document",
+        "formula",
     ]
     ordered_tasks = task_order + [t for t in sorted(by_task) if t not in task_order]
 
@@ -558,8 +566,12 @@ def _generate_parser_registry(
         task_records = by_task[task]
         lines.append(f"## {task.capitalize()} Parsers ({len(task_records)} datasets)")
         lines.append("")
-        lines.append("| Dataset | Parser File | Integrate Script | L2 Metadata File | Status |")
-        lines.append("| ------- | ----------- | ---------------- | ---------------- | ------ |")
+        lines.append(
+            "| Dataset | Parser File | Integrate Script | L2 Metadata File | Status |"
+        )
+        lines.append(
+            "| ------- | ----------- | ---------------- | ---------------- | ------ |"
+        )
         for rec in task_records:
             dataset = rec.get("dataset", "—")
             path = rec.get("_path", "—")
@@ -601,7 +613,7 @@ def _generate_provider_registry(
         "l4_category: provider",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -654,7 +666,7 @@ def _generate_integrate_registry(
         "l4_category: integrate-script",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -731,7 +743,7 @@ def _generate_training_dataset_registry(
     auto_block_lines.append("")
 
     # Read existing file if present (preserve manual sections outside fence)
-    generated_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    generated_date = datetime.now(UTC).strftime("%Y-%m-%d")
     fence_start = "<!-- AUTO-GENERATED-START -->"
     fence_end = "<!-- AUTO-GENERATED-END -->"
 
@@ -739,7 +751,7 @@ def _generate_training_dataset_registry(
         existing = output_path.read_text(encoding="utf-8")
         if fence_start in existing and fence_end in existing:
             before = existing[: existing.index(fence_start)]
-            after = existing[existing.index(fence_end) + len(fence_end):]
+            after = existing[existing.index(fence_end) + len(fence_end) :]
             new_content = (
                 before
                 + fence_start
@@ -933,7 +945,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--dataset", help="Dataset name for --scaffold mode")
     parser.add_argument("--task", help="Task name for --scaffold mode")
-    parser.add_argument("--workstream", default="WS3", help="Workstream for --scaffold mode")
+    parser.add_argument(
+        "--workstream", default="WS3", help="Workstream for --scaffold mode"
+    )
     parser.add_argument(
         "--verbose",
         action="store_true",
@@ -969,7 +983,9 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
         else:
-            print("  ✓ All Level 4 headers valid — 0 errors, 0 warnings", file=sys.stderr)
+            print(
+                "  ✓ All Level 4 headers valid — 0 errors, 0 warnings", file=sys.stderr
+            )
 
         return 1 if error_count > 0 else 0
 

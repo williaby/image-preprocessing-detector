@@ -22,9 +22,7 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-MINHON_ROOT = Path(
-    "/mnt/e/image_detection/01_base_data/handwriting/ndl-minhon"
-)
+MINHON_ROOT = Path("/mnt/e/image_detection/01_base_data/handwriting/ndl-minhon")
 
 
 @click.command()
@@ -101,7 +99,9 @@ def main(output_dir: Path, max_images: int | None, version: str) -> None:
 
                 downloaded += 1
                 if downloaded % 100 == 0:
-                    logger.info("Progress: %d downloaded, %d failed", downloaded, failed)
+                    logger.info(
+                        "Progress: %d downloaded, %d failed", downloaded, failed
+                    )
                 time.sleep(0.5)  # Rate limiting
 
             except Exception:

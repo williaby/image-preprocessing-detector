@@ -96,10 +96,10 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-DEFAULT_SFTP_HOST   = "l3i-share.univ-lr.fr"
-DEFAULT_SFTP_PORT   = 22
-REMOTE_BASE         = "/MIDV2020/dataset"
-DEFAULT_OUTPUT_DIR  = Path("/mnt/e/image_detection/01_base_data/documents/midv2020")
+DEFAULT_SFTP_HOST = "l3i-share.univ-lr.fr"
+DEFAULT_SFTP_PORT = 22
+REMOTE_BASE = "/MIDV2020/dataset"
+DEFAULT_OUTPUT_DIR = Path("/mnt/e/image_detection/01_base_data/documents/midv2020")
 
 # Tar files we always download (camera + flatbed JPG + templates)
 REQUIRED_TARS: list[str] = [
@@ -117,21 +117,21 @@ OPTIONAL_TIF_TARS: list[str] = [
 
 # MD5 checksums from server md5.txt
 KNOWN_MD5: dict[str, str] = {
-    "photo.tar":             "e716b2044a0af872cb21c9dc2f51d752",
-    "scan_upright.tar":      "f6e0aeb6981a89aa2dfc717575fcea28",
-    "scan_rotated.tar":      "3db227b453121b7e0a8c152e79988edf",
-    "templates.tar":         "5bf6bd22df4808d4c8df9500e01f4f0a",
-    "scan_rotated_tif.tar":  "03d98443b30a905780277ac566157b30",
-    "scan_upright_tif.tar":  "379e7b098166696b6ae28fbee5bc84da",
+    "photo.tar": "e716b2044a0af872cb21c9dc2f51d752",
+    "scan_upright.tar": "f6e0aeb6981a89aa2dfc717575fcea28",
+    "scan_rotated.tar": "3db227b453121b7e0a8c152e79988edf",
+    "templates.tar": "5bf6bd22df4808d4c8df9500e01f4f0a",
+    "scan_rotated_tif.tar": "03d98443b30a905780277ac566157b30",
+    "scan_upright_tif.tar": "379e7b098166696b6ae28fbee5bc84da",
 }
 
 # Approximate sizes for progress reporting (bytes)
 APPROX_SIZE: dict[str, int] = {
-    "photo.tar":             4_003_000_000,
-    "scan_upright.tar":      1_149_000_000,
-    "scan_rotated.tar":      1_123_000_000,
-    "templates.tar":           863_000_000,
-    "scan_rotated_tif.tar":  3_153_000_000,
+    "photo.tar": 4_003_000_000,
+    "scan_upright.tar": 1_149_000_000,
+    "scan_rotated.tar": 1_123_000_000,
+    "templates.tar": 863_000_000,
+    "scan_rotated_tif.tar": 3_153_000_000,
     "scan_upright_tif.tar": 26_123_000_000,
 }
 
@@ -139,6 +139,7 @@ APPROX_SIZE: dict[str, int] = {
 # ---------------------------------------------------------------------------
 # Credential helpers
 # ---------------------------------------------------------------------------
+
 
 def _read_credentials() -> tuple[str, str, str, int]:
     """Read SFTP credentials from environment variables.
@@ -149,15 +150,19 @@ def _read_credentials() -> tuple[str, str, str, int]:
     Raises:
         SystemExit: If required variables are missing.
     """
-    host     = os.environ.get("MIDV2020_SFTP_HOST", DEFAULT_SFTP_HOST)
-    user     = os.environ.get("MIDV2020_SFTP_USER", "")
+    host = os.environ.get("MIDV2020_SFTP_HOST", DEFAULT_SFTP_HOST)
+    user = os.environ.get("MIDV2020_SFTP_USER", "")
     password = os.environ.get("MIDV2020_SFTP_PASSWORD", "")
-    port     = int(os.environ.get("MIDV2020_SFTP_PORT", str(DEFAULT_SFTP_PORT)))
+    port = int(os.environ.get("MIDV2020_SFTP_PORT", str(DEFAULT_SFTP_PORT)))
 
-    missing = [v for v, val in [
-        ("MIDV2020_SFTP_USER", user),
-        ("MIDV2020_SFTP_PASSWORD", password),
-    ] if not val]
+    missing = [
+        v
+        for v, val in [
+            ("MIDV2020_SFTP_USER", user),
+            ("MIDV2020_SFTP_PASSWORD", password),
+        ]
+        if not val
+    ]
 
     if missing:
         log.error(
@@ -175,7 +180,10 @@ def _read_credentials() -> tuple[str, str, str, int]:
 # SFTP connection
 # ---------------------------------------------------------------------------
 
-def _open_connection(host: str, user: str, password: str, port: int) -> tuple[object, object]:
+
+def _open_connection(
+    host: str, user: str, password: str, port: int
+) -> tuple[object, object]:
     """Open SSH + SFTP connection using SSHClient (supports keyboard-interactive).
 
     Args:
@@ -188,7 +196,7 @@ def _open_connection(host: str, user: str, password: str, port: int) -> tuple[ob
         Tuple of (ssh_client, sftp_client).
     """
     try:
-        import paramiko as _p  # noqa: PLC0415
+        import paramiko as _p
     except ImportError:
         log.error(
             "paramiko is not installed.\n"
@@ -215,6 +223,7 @@ def _open_connection(host: str, user: str, password: str, port: int) -> tuple[ob
 # ---------------------------------------------------------------------------
 # MD5 verification
 # ---------------------------------------------------------------------------
+
 
 def _md5_of_file(path: Path, chunk: int = 1 << 20) -> str:
     """Compute MD5 hex digest of a local file.
@@ -263,6 +272,7 @@ def _verify_md5(path: Path, tar_name: str) -> bool:
 # Download
 # ---------------------------------------------------------------------------
 
+
 def _download_tar(
     sftp: object,
     tar_name: str,
@@ -281,7 +291,7 @@ def _download_tar(
         Path to downloaded file, or None on dry-run/skip.
     """
     remote_path = f"{REMOTE_BASE}/{tar_name}"
-    local_path  = output_dir / tar_name
+    local_path = output_dir / tar_name
 
     size_mb = APPROX_SIZE.get(tar_name, 0) / 1_048_576
     size_str = f"{size_mb / 1024:.1f} GB" if size_mb > 1024 else f"{size_mb:.0f} MB"
@@ -300,14 +310,17 @@ def _download_tar(
     try:
         # Use a simple callback for progress if tqdm is available
         try:
-            from tqdm import tqdm  # noqa: PLC0415
+            from tqdm import tqdm
 
             total_bytes = APPROX_SIZE.get(tar_name, 0)
-            with tqdm(total=total_bytes, unit="B", unit_scale=True,
-                      desc=tar_name, leave=True) as pbar:
+            with tqdm(
+                total=total_bytes, unit="B", unit_scale=True, desc=tar_name, leave=True
+            ) as pbar:
+
                 def _cb(transferred: int, _total: int) -> None:
                     pbar.n = transferred
                     pbar.refresh()
+
                 sftp.get(remote_path, str(local_path), callback=_cb)  # type: ignore[union-attr]
         except ImportError:
             sftp.get(remote_path, str(local_path))  # type: ignore[union-attr]
@@ -325,6 +338,7 @@ def _download_tar(
 # ---------------------------------------------------------------------------
 # Extraction
 # ---------------------------------------------------------------------------
+
 
 def _extract_tar(tar_path: Path, extract_dir: Path) -> bool:
     """Extract a tar archive into a subdirectory named after the tar stem.
@@ -354,6 +368,7 @@ def _extract_tar(tar_path: Path, extract_dir: Path) -> bool:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _build_parser() -> argparse.ArgumentParser:
     """Build the argument parser.
@@ -420,9 +435,7 @@ def main() -> int:
         tars_to_download.extend(OPTIONAL_TIF_TARS)
         log.info("TIF archives included")
 
-    total_gb = sum(
-        APPROX_SIZE.get(t, 0) for t in tars_to_download
-    ) / 1_073_741_824
+    total_gb = sum(APPROX_SIZE.get(t, 0) for t in tars_to_download) / 1_073_741_824
     log.info("Tars to download: %s", ", ".join(tars_to_download))
     log.info("Approximate total download: %.1f GB", total_gb)
 
@@ -441,8 +454,8 @@ def main() -> int:
                     continue
                 downloaded.append(path)
     finally:
-        sftp.close()          # type: ignore[union-attr]
-        ssh_client.close()    # type: ignore[union-attr]
+        sftp.close()  # type: ignore[union-attr]
+        ssh_client.close()  # type: ignore[union-attr]
 
     if args.dry_run:
         log.info("Dry run complete.")
@@ -450,7 +463,8 @@ def main() -> int:
 
     log.info(
         "Download complete. Success: %d / %d",
-        len(downloaded), len(tars_to_download),
+        len(downloaded),
+        len(tars_to_download),
     )
 
     if failed:
@@ -461,16 +475,15 @@ def main() -> int:
         extract_root = args.output / "extracted"
         for path in downloaded:
             _extract_tar(path, extract_root)
-        log.info(
-            "Extraction complete. Files in: %s", extract_root
-        )
+        log.info("Extraction complete. Files in: %s", extract_root)
 
     if downloaded and not args.extract:
         log.info(
             "Tar files saved to: %s\n"
             "Run with --extract to unpack them, or extract manually:\n"
             "  tar xf %s/photo.tar -C /path/to/dest/",
-            args.output, args.output,
+            args.output,
+            args.output,
         )
 
     return 1 if failed else 0

@@ -22,12 +22,10 @@ Usage:
 # --- Level 4 registry metadata ---
 from __future__ import annotations
 
-__l4_category__   = "integrate-script"
-__l4_dataset__    = "multilingual-scripts"
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "multilingual-scripts"
 __l4_workstream__ = "WS3"
-__l4_parser__     = (
-    "src/image_preprocessing_detector/annotation/parsers/multilingual/multilingual_scripts.py"
-)
+__l4_parser__ = "src/image_preprocessing_detector/annotation/parsers/multilingual/multilingual_scripts.py"
 
 
 import argparse
@@ -41,9 +39,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from image_preprocessing_detector.schema_utils.iso_language_script import (
-    get_script_family as _get_script_family,
-)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -77,7 +72,7 @@ _SUBDATASET_RULES: list[tuple[re.Pattern[str], dict[str, Any]]] = [
             "capture_confidence": 1.0,
             "iso639_language": "ar",
             "iso15924_script": "Arab",
-            "script_family": "arabic",   # D01: was "rtl"
+            "script_family": "arabic",  # D01: was "rtl"
             "text_direction": "rtl",
             "text_directions_present": ["rtl"],
         },
@@ -85,11 +80,11 @@ _SUBDATASET_RULES: list[tuple[re.Pattern[str], dict[str, Any]]] = [
     (
         re.compile(r"^dzongkha_digit"),
         {
-            "capture_method": "camera_smartphone",   # D03: was "unknown"
+            "capture_method": "camera_smartphone",  # D03: was "unknown"
             "capture_confidence": 0.9,
             "iso639_language": "dz",
             "iso15924_script": "Tibt",
-            "script_family": "other",   # D02: was "indic"; Tibetan not in named families
+            "script_family": "other",  # D02: was "indic"; Tibetan not in named families
             "text_direction": "ltr",
             "text_directions_present": ["ltr"],
         },
@@ -97,7 +92,7 @@ _SUBDATASET_RULES: list[tuple[re.Pattern[str], dict[str, Any]]] = [
     (
         re.compile(r"^jssoda"),
         {
-            "capture_method": "synthetic",   # D03: was "unknown"
+            "capture_method": "synthetic",  # D03: was "unknown"
             "capture_confidence": 1.0,
             "iso639_language": "ja",
             "iso15924_script": "Jpan",
@@ -109,7 +104,7 @@ _SUBDATASET_RULES: list[tuple[re.Pattern[str], dict[str, Any]]] = [
     (
         re.compile(r"^nepal"),
         {
-            "capture_method": "born_digital",   # D03: was "unknown" (PDF-derived scans)
+            "capture_method": "born_digital",  # D03: was "unknown" (PDF-derived scans)
             "capture_confidence": 0.9,
             "iso639_language": "ne",
             "iso15924_script": "Deva",
@@ -174,11 +169,11 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         Reliability summary dict.
     """
     field_defs = [
-        ("capture_method",    "capture_confidence"),
-        ("domain",            "domain_confidence"),
-        ("language",          "language_confidence"),
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
         ("layout_detections", "layout_confidence"),
-        ("content_flags",     "content_flags_confidence"),
+        ("content_flags", "content_flags_confidence"),
     ]
     fields: list[dict[str, Any]] = []
     for field_name, conf_key in field_defs:
@@ -191,23 +186,25 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
             category = "active_learning"
         else:
             category = "unreliable"
-        fields.append({
-            "field":         field_name,
-            "confidence":    round(confidence, 4),
-            "category":      category,
-            "is_soft_label": category == "soft_label",
-        })
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
 
     min_field = min(fields, key=lambda f: f["confidence"])
     return {
-        "min_confidence":          min_field["confidence"],
-        "min_confidence_field":    min_field["field"],
+        "min_confidence": min_field["confidence"],
+        "min_confidence_field": min_field["field"],
         "min_confidence_category": min_field["category"],
-        "assessed_field_count":    len(fields),
-        "hard_field_count":  sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count":  sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary":     fields,
-        "computed_at":       datetime.now(UTC).isoformat(),
+        "assessed_field_count": len(fields),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -236,25 +233,25 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # -------------------------------------------------------------------
     # CAPTURE METHOD  (D03: was "unknown" for all)
     # -------------------------------------------------------------------
-    data["capture_method"]           = sub["capture_method"]
-    data["capture_confidence"]       = sub["capture_confidence"]
+    data["capture_method"] = sub["capture_method"]
+    data["capture_confidence"] = sub["capture_confidence"]
     data["capture_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
     # DOMAIN  (UNK: subdataset-level heuristics are too coarse for L1 domain)
     # -------------------------------------------------------------------
-    data["domain_level1"]           = "UNK"
-    data["domain_confidence"]       = 0.3
+    data["domain_level1"] = "UNK"
+    data["domain_confidence"] = 0.3
     data["domain_detection_method"] = "none"
 
     # -------------------------------------------------------------------
     # LANGUAGE / SCRIPT (D01, D02: wrong script_family for Arab/Tibt)
     # -------------------------------------------------------------------
-    data["iso639_language"]    = sub["iso639_language"]
-    data["iso15924_script"]    = sub["iso15924_script"]
+    data["iso639_language"] = sub["iso639_language"]
+    data["iso15924_script"] = sub["iso15924_script"]
     data["language_confidence"] = sub["capture_confidence"]
-    data["script_family"]      = sub["script_family"]  # D01/D02: corrected per subdataset
-    data["text_direction"]          = sub["text_direction"]
+    data["script_family"] = sub["script_family"]  # D01/D02: corrected per subdataset
+    data["text_direction"] = sub["text_direction"]
     data["text_directions_present"] = sub["text_directions_present"]
     data["text_scope_detection_method"] = "dataset_documentation"
 
@@ -262,41 +259,41 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # LAYOUT DETECTIONS  (not available; future work D07)
     # -------------------------------------------------------------------
     v1_layout = v1_data.get("layout_detections", [])
-    data["layout_detections"]      = v1_layout if isinstance(v1_layout, list) else []
-    data["layout_source"]          = v1_data.get("layout_source", "none")
-    data["layout_confidence"]      = v1_data.get("layout_confidence", 0.0)
+    data["layout_detections"] = v1_layout if isinstance(v1_layout, list) else []
+    data["layout_source"] = v1_data.get("layout_source", "none")
+    data["layout_confidence"] = v1_data.get("layout_confidence", 0.0)
     data["layout_detection_count"] = len(data["layout_detections"])
 
     # -------------------------------------------------------------------
     # CONTENT FLAGS  (D06: was entirely absent)
     # All subdatasets contain printed text only — no handwriting, tables, formulas.
     # -------------------------------------------------------------------
-    data["has_table"]       = False
-    data["has_figure"]      = False
-    data["has_formula"]     = False
+    data["has_table"] = False
+    data["has_figure"] = False
+    data["has_formula"] = False
     data["has_handwriting"] = False
-    data["has_signature"]   = False
-    data["has_code"]        = False
-    data["handwriting_present"]      = False
-    data["content_flags_tier"]       = "tier_3_heuristic"
-    data["content_flags_source"]     = "dataset_documentation"
+    data["has_signature"] = False
+    data["has_code"] = False
+    data["handwriting_present"] = False
+    data["content_flags_tier"] = "tier_3_heuristic"
+    data["content_flags_source"] = "dataset_documentation"
     data["content_flags_confidence"] = 0.9
 
     # -------------------------------------------------------------------
     # ORIENTATION
     # -------------------------------------------------------------------
-    data["orientation_class"]            = int(v1_data.get("orientation_class", 0))
-    data["orientation_confidence"]       = float(v1_data.get("orientation_confidence", 0.7))
+    data["orientation_class"] = int(v1_data.get("orientation_class", 0))
+    data["orientation_confidence"] = float(v1_data.get("orientation_confidence", 0.7))
     data["orientation_detection_method"] = "dataset_documentation"
 
     # -------------------------------------------------------------------
     # TEXT CONTENT
     # -------------------------------------------------------------------
-    data["text_has_content"]        = True   # All subdatasets have readable text/digits
+    data["text_has_content"] = True  # All subdatasets have readable text/digits
     data["text_content_confidence"] = 0.8
-    data["text_content_source"]     = "dataset_documentation"
+    data["text_content_source"] = "dataset_documentation"
     data["text_scope_content_type"] = "printed"
-    data["text_scope"]              = v1_data.get("text_scope", "page")
+    data["text_scope"] = v1_data.get("text_scope", "page")
 
     # -------------------------------------------------------------------
     # IMAGE PROPERTIES
@@ -319,7 +316,7 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
     # -------------------------------------------------------------------
     # ADDITIONAL
     # -------------------------------------------------------------------
-    data["dataset_short_code"]         = DATASET_NAME
+    data["dataset_short_code"] = DATASET_NAME
     data["sample_reliability_summary"] = compute_reliability_summary(data)
 
     return data
@@ -339,12 +336,12 @@ def run_integration(
         Stats dict with distribution Counters.
     """
     stats: dict[str, Any] = {
-        "total":               0,
-        "integrated":          0,
+        "total": 0,
+        "integrated": 0,
         "capture_method_dist": Counter(),
-        "script_family_dist":  Counter(),
-        "lang_dist":           Counter(),
-        "split_dist":          Counter(),
+        "script_family_dist": Counter(),
+        "lang_dist": Counter(),
+        "split_dist": Counter(),
     }
     now = datetime.now(UTC).isoformat()
 
@@ -359,17 +356,17 @@ def run_integration(
 
         if not dry_run:
             new_version: dict[str, Any] = {
-                "version":        ENRICHMENT_VERSION_NUMBER,
-                "schema_version": "2.4.0",   # D08: was absent
-                "created_at":     now,
-                "created_by":     "integrate_multilingual_scripts_enrichments.py",
-                "method":         "tier_3_heuristic",
+                "version": ENRICHMENT_VERSION_NUMBER,
+                "schema_version": "2.4.0",  # D08: was absent
+                "created_at": now,
+                "created_by": "integrate_multilingual_scripts_enrichments.py",
+                "method": "tier_3_heuristic",
                 "description": (
                     f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
                     "per-subdataset heuristics (D01/D02/D03/D06 fixed)"
                 ),
                 "script_version": SCRIPT_VERSION,
-                "data":           integrated_data,
+                "data": integrated_data,
             }
             versions = sample["enrichments"]["versions"]
             replaced = False
@@ -422,10 +419,15 @@ def main() -> int:
         description=f"Integrate per-subdataset enrichments into {DATASET_NAME} metadata.",
     )
     p.add_argument("--metadata", type=Path, default=METADATA_PATH)
-    p.add_argument("--output",   type=Path, default=None,
-                   help="Output path (default: overwrite input)")
-    p.add_argument("--dry-run",  action="store_true",
-                   help="Report only, do not write output")
+    p.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output path (default: overwrite input)",
+    )
+    p.add_argument(
+        "--dry-run", action="store_true", help="Report only, do not write output"
+    )
     args = p.parse_args()
 
     output_path = args.output or args.metadata

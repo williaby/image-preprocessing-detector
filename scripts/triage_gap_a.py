@@ -32,7 +32,7 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -44,14 +44,14 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPTS_DIR.parent
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from audit_diagram_file_coverage import (  # noqa: E402
+from audit_diagram_file_coverage import (
     _has_l4_header,
     compute_gaps,
     get_git_tracked_files,
     parse_inventory,
     parse_puml_references,
 )
-from triage_gap_c import (  # noqa: E402
+from triage_gap_c import (
     BulkFileStats,
     SKIP_FILENAMES,
     _months_since,
@@ -102,13 +102,13 @@ OPERATIONAL_DIR_PATTERNS: tuple[str, ...] = (
 # Tuple: (label, compiled_regex)
 _OPERATIONAL_NAME_SPECS: tuple[tuple[str, str], ...] = (
     ("integrate_enrichment", r"^integrate_.+_enrichments\.py$"),
-    ("download_script",      r"^download_"),
-    ("convert_script",       r"^convert_"),
-    ("benchmark_script",     r"^benchmark_"),
-    ("setup_script",         r"^setup_"),
-    ("shell_script",         r"\.sh$"),
-    ("colab",                r"colab"),
-    ("phase_ref",            r"phase[0-9]"),
+    ("download_script", r"^download_"),
+    ("convert_script", r"^convert_"),
+    ("benchmark_script", r"^benchmark_"),
+    ("setup_script", r"^setup_"),
+    ("shell_script", r"\.sh$"),
+    ("colab", r"colab"),
+    ("phase_ref", r"phase[0-9]"),
 )
 OPERATIONAL_NAME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
     (label, re.compile(pattern, re.IGNORECASE))
@@ -118,35 +118,35 @@ OPERATIONAL_NAME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
 # Path-prefix → workstream hints (first match wins).
 # Uses the abbreviated path style (src/.../ expands to full package path at match time).
 _WS_HINT_SPECS: tuple[tuple[str, str], ...] = (
-    ("ingestion/",       "WS1"),
-    ("detection/",       "WS1"),
-    ("correction/",      "WS1"),
-    ("classification/",  "WS1"),
-    ("routing/",         "WS1"),
-    ("metrics/",         "WS1"),
-    ("output/",          "WS1"),
-    ("workers/",         "WS1"),
-    ("api/",             "WS1"),
-    ("schema_utils/",    "WS1"),
-    ("models/",          "WS1"),
-    ("pipeline/",        "WS1"),
-    ("core/",            "WS1"),
-    ("annotation/",      "WS3"),
-    ("labeling/",        "WS3"),
-    ("monitoring/",      "WS6"),
-    ("orchestration/",   "WS1"),
-    ("modal/train_",     "WS2"),
-    ("modal/",           "WS2"),
+    ("ingestion/", "WS1"),
+    ("detection/", "WS1"),
+    ("correction/", "WS1"),
+    ("classification/", "WS1"),
+    ("routing/", "WS1"),
+    ("metrics/", "WS1"),
+    ("output/", "WS1"),
+    ("workers/", "WS1"),
+    ("api/", "WS1"),
+    ("schema_utils/", "WS1"),
+    ("models/", "WS1"),
+    ("pipeline/", "WS1"),
+    ("core/", "WS1"),
+    ("annotation/", "WS3"),
+    ("labeling/", "WS3"),
+    ("monitoring/", "WS6"),
+    ("orchestration/", "WS1"),
+    ("modal/train_", "WS2"),
+    ("modal/", "WS2"),
     ("scripts/generate_", "WS3"),
-    ("scripts/prepare_",  "WS3"),
-    ("scripts/build_",    "WS3"),
-    ("scripts/label_",    "WS3"),
-    ("scripts/derive_",   "WS3"),
-    ("scripts/merge_",    "WS3"),
-    ("scripts/select_",   "WS3"),
-    ("scripts/",          "WS3"),  # fallback: most scripts are data-prep
-    ("config/",           "WS2"),  # model/training configs
-    ("tools/",            "WS1"),
+    ("scripts/prepare_", "WS3"),
+    ("scripts/build_", "WS3"),
+    ("scripts/label_", "WS3"),
+    ("scripts/derive_", "WS3"),
+    ("scripts/merge_", "WS3"),
+    ("scripts/select_", "WS3"),
+    ("scripts/", "WS3"),  # fallback: most scripts are data-prep
+    ("config/", "WS2"),  # model/training configs
+    ("tools/", "WS1"),
 )
 
 # ---------------------------------------------------------------------------
@@ -223,7 +223,7 @@ def _is_operational(filepath: str) -> tuple[bool, str]:
         if pattern in filepath:
             return True, f"operational-dir:{pattern.rstrip('/')}"
     # tools/ and config/ default to operational
-    if filepath.startswith("tools/") or filepath.startswith("config/"):
+    if filepath.startswith(("tools/", "config/")):
         return True, "tools-or-config"
     # Filename-level rules
     basename = Path(filepath).name
@@ -326,7 +326,7 @@ def classify_file(
     # --- Rule 5: scripts/ default is OPERATIONAL — virtually all scripts are
     # data-ops tooling. The only scripts in the inventory are those already
     # listed there (which would not appear in GAP_A at all).
-    if filepath.startswith("scripts/") or filepath.startswith("tools/"):
+    if filepath.startswith(("scripts/", "tools/")):
         return BUCKET_OPERATIONAL, "unclassified-script", 0
 
     # --- Fallback ---
@@ -373,7 +373,9 @@ def enrich_and_classify(
         if classification == BUCKET_ADAPTER and not _has_l4_header(repo_root, filepath):
             reason += " [MISSING_L4_HEADER]"
 
-        workstream = infer_workstream(filepath) if classification == BUCKET_INVENTORY else "—"
+        workstream = (
+            infer_workstream(filepath) if classification == BUCKET_INVENTORY else "—"
+        )
 
         records.append(
             FileRecord(
@@ -530,16 +532,16 @@ def generate_report(
         "| Bucket | Count | % | Action |",
         "| ------ | ----- | - | ------ |",
         f"| NEEDS_INVENTORY   | {counts.get(BUCKET_INVENTORY, 0):4d}"
-        f" | {counts.get(BUCKET_INVENTORY, 0)*100//total:3d}%"
+        f" | {counts.get(BUCKET_INVENTORY, 0) * 100 // total:3d}%"
         " | Add to inventory + assign workstream |",
         f"| DATASET_ADAPTER   | {counts.get(BUCKET_ADAPTER, 0):4d}"
-        f" | {counts.get(BUCKET_ADAPTER, 0)*100//total:3d}%"
+        f" | {counts.get(BUCKET_ADAPTER, 0) * 100 // total:3d}%"
         " | No action — framework already documented |",
         f"| OPERATIONAL_SCRIPT| {counts.get(BUCKET_OPERATIONAL, 0):4d}"
-        f" | {counts.get(BUCKET_OPERATIONAL, 0)*100//total:3d}%"
+        f" | {counts.get(BUCKET_OPERATIONAL, 0) * 100 // total:3d}%"
         " | Document in Known Exclusions section |",
         f"| NEEDS_TRIAGE      | {counts.get(BUCKET_TRIAGE, 0):4d}"
-        f" | {counts.get(BUCKET_TRIAGE, 0)*100//total:3d}%"
+        f" | {counts.get(BUCKET_TRIAGE, 0) * 100 // total:3d}%"
         " | Manual review required |",
         f"| **Total**         | {total:4d} |     | |",
         "",
@@ -613,7 +615,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help=f"Report output path (default: <repo-root>/{DEFAULT_OUTPUT_RELATIVE})",
     )
-    parser.add_argument("--no-write", action="store_true", help="Print report to stdout only")
+    parser.add_argument(
+        "--no-write", action="store_true", help="Print report to stdout only"
+    )
     parser.add_argument(
         "--scope",
         choices=["src", "scripts", "modal", "config", "tools", "all"],
@@ -630,7 +634,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:  # noqa: PLR0912
+def main() -> int:
     """Entry point."""
     args = _build_parser().parse_args()
     repo_root: Path = args.repo_root.resolve()

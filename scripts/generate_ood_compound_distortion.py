@@ -30,6 +30,7 @@ Usage:
         --output-dir /mnt/e/image_detection/ood/degradation \\
         --n-images 700
 """
+
 from __future__ import annotations
 
 import io
@@ -44,7 +45,6 @@ import numpy as np
 # #ASSUME: env: opencv and PIL available in the uv environment
 try:
     import cv2
-    from PIL import Image
 except ImportError as exc:
     click.echo(f"Missing dependency: {exc}. Run: uv sync --extra dev", err=True)
     sys.exit(1)
@@ -70,16 +70,17 @@ def _hashes_from_bytes(data: bytes) -> tuple[str, str]:
     img = Image.open(io.BytesIO(data))
     ph = imagehash.phash(img)
     bits = ph.hash.flatten()
-    byte_vals = [int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)]
+    byte_vals = [
+        int("".join(str(int(b)) for b in bits[i : i + 8]), 2) for i in range(0, 64, 8)
+    ]
     phash_hex = bytes(byte_vals).hex()
     return sha256, phash_hex
+
 
 # Distinct from training generator seeds (plan: OOD_SEED_NAMESPACE = 0xDEADBEEF_0DD5AFEC)
 _OOD_RNG_SEED = 0xDEAD_BEEF_0DD5_AFEC & 0xFFFFFFFF  # 32-bit slice for Python RNG
 
-_DOCLAYNET_DEFAULT = Path(
-    "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-)
+_DOCLAYNET_DEFAULT = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
 _OUTPUT_DEFAULT = Path("/mnt/e/image_detection/ood/degradation")
 _REGISTRY_DEFAULT = Path("metadata_registry/ood_registry.jsonl")
 
@@ -103,7 +104,11 @@ def _apply_compound_distortion(
 
     # 2. Gaussian noise
     noise_std = rng.uniform(15.0, 30.0)
-    noise = np.random.default_rng(int(sigma * 1e6)).normal(0, noise_std, out.shape).astype(np.float32)
+    noise = (
+        np.random.default_rng(int(sigma * 1e6))
+        .normal(0, noise_std, out.shape)
+        .astype(np.float32)
+    )
     noisy = np.clip(blurred + noise, 0, 255)
     noise_score = max(0.15, min(0.35, noise_std / 30.0 * 0.35))
 

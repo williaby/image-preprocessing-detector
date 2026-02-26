@@ -7,7 +7,7 @@ current files that are simply not yet documented in PUML diagrams.
 
 Triage buckets:
   REVIEW_REMOVE   (score >= 60) — strong staleness signals; review for deletion
-  REVIEW_NEEDED   (score 35–59) — mixed signals; needs human judgment
+  REVIEW_NEEDED   (score 35-59) — mixed signals; needs human judgment
   PROBABLY_CURRENT (score < 35)  — likely still active, just undocumented
 
 Usage:
@@ -26,7 +26,7 @@ import subprocess
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import NamedTuple
 
@@ -38,7 +38,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPTS_DIR.parent
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from audit_diagram_file_coverage import (  # noqa: E402
+from audit_diagram_file_coverage import (
     compute_gaps,
     get_git_tracked_files,
     parse_inventory,
@@ -71,7 +71,7 @@ SKIP_FILENAMES: frozenset[str] = frozenset({"py.typed", ".gitkeep", "__pycache__
 # via importlib/pkgutil auto-discovery, NOT via direct import statements. Applying
 # the no-importers signal here produces false positives.
 DYNAMIC_IMPORT_DIRS: tuple[str, ...] = (
-    "annotation/parsers/",   # registry.py auto-discovers all parser subclasses
+    "annotation/parsers/",  # registry.py auto-discovers all parser subclasses
 )
 
 # Naming patterns that indicate a file may be outdated.
@@ -87,7 +87,10 @@ STALE_PATTERNS: list[tuple[str, str, int]] = [
     ("temp", r"(?:^tmp_|^temp_)", 20),
 ]
 
-_COMPILED_PATTERNS = [(name, re.compile(pat, re.IGNORECASE), weight) for name, pat, weight in STALE_PATTERNS]
+_COMPILED_PATTERNS = [
+    (name, re.compile(pat, re.IGNORECASE), weight)
+    for name, pat, weight in STALE_PATTERNS
+]
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +137,7 @@ def _parse_git_date(date_str: str) -> datetime | None:
         # Remove timezone offset for simple parsing, treat as UTC
         parts = date_str.rsplit(" ", 1)
         dt = datetime.strptime(parts[0], "%Y-%m-%d %H:%M:%S")
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=UTC)
     except ValueError:
         return None
 
@@ -194,7 +197,7 @@ def _months_since(dt: datetime | None) -> float:
     """Return months elapsed since dt, or 999 if dt is None (never committed)."""
     if dt is None:
         return 999.0
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     delta = now - dt
     return delta.days / 30.44
 
@@ -287,7 +290,9 @@ def get_naming_flags(filepath: str) -> tuple[list[str], int]:
 
 def get_config_ref_count(repo_root: Path, filepath: str) -> int:
     """Count how many tracked Python files reference this config file by name."""
-    config_stem = Path(filepath).stem  # e.g., "siglip2_multitask" from siglip2_multitask.yaml
+    config_stem = Path(
+        filepath
+    ).stem  # e.g., "siglip2_multitask" from siglip2_multitask.yaml
     result = subprocess.run(
         ["git", "grep", "-l", config_stem, "--", "*.py"],
         cwd=repo_root,
@@ -302,12 +307,14 @@ def get_config_ref_count(repo_root: Path, filepath: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _score_age(age_months: float, base_score: int, medium_score: int, low_score: int) -> tuple[int, str]:
+def _score_age(
+    age_months: float, base_score: int, medium_score: int, low_score: int
+) -> tuple[int, str]:
     if age_months >= 18:
         return base_score, f"age≥18mo (+{base_score})"
-    elif age_months >= 12:
+    if age_months >= 12:
         return medium_score, f"age≥12mo (+{medium_score})"
-    elif age_months >= 6:
+    if age_months >= 6:
         return low_score, f"age≥6mo (+{low_score})"
     return 0, ""
 
@@ -330,7 +337,9 @@ def score_src_file(signals: FileSignals) -> None:
     reasons: list[str] = []
     is_init = signals.filepath.endswith("__init__.py")
 
-    pts, reason = _score_age(signals.creation_age_months, base_score=30, medium_score=15, low_score=5)
+    pts, reason = _score_age(
+        signals.creation_age_months, base_score=30, medium_score=15, low_score=5
+    )
     total += pts
     if reason:
         reasons.append(reason)
@@ -360,7 +369,9 @@ def score_src_file(signals: FileSignals) -> None:
 
     total += signals.naming_score
     if signals.naming_flags:
-        reasons.append(f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})")
+        reasons.append(
+            f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})"
+        )
 
     signals.score = total
     signals.score_reasons = reasons
@@ -376,7 +387,9 @@ def score_scripts_file(signals: FileSignals) -> None:
     total = 0
     reasons: list[str] = []
 
-    pts, reason = _score_age(signals.creation_age_months, base_score=35, medium_score=20, low_score=5)
+    pts, reason = _score_age(
+        signals.creation_age_months, base_score=35, medium_score=20, low_score=5
+    )
     total += pts
     if reason:
         reasons.append(reason)
@@ -396,7 +409,9 @@ def score_scripts_file(signals: FileSignals) -> None:
 
     total += signals.naming_score
     if signals.naming_flags:
-        reasons.append(f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})")
+        reasons.append(
+            f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})"
+        )
 
     signals.score = total
     signals.score_reasons = reasons
@@ -407,7 +422,9 @@ def score_config_file(signals: FileSignals) -> None:
     total = 0
     reasons: list[str] = []
 
-    pts, reason = _score_age(signals.creation_age_months, base_score=20, medium_score=10, low_score=0)
+    pts, reason = _score_age(
+        signals.creation_age_months, base_score=20, medium_score=10, low_score=0
+    )
     total += pts
     if reason:
         reasons.append(reason)
@@ -421,7 +438,9 @@ def score_config_file(signals: FileSignals) -> None:
 
     total += signals.naming_score
     if signals.naming_flags:
-        reasons.append(f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})")
+        reasons.append(
+            f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})"
+        )
 
     signals.score = total
     signals.score_reasons = reasons
@@ -432,7 +451,9 @@ def score_modal_or_tools_file(signals: FileSignals) -> None:
     total = 0
     reasons: list[str] = []
 
-    pts, reason = _score_age(signals.creation_age_months, base_score=25, medium_score=12, low_score=5)
+    pts, reason = _score_age(
+        signals.creation_age_months, base_score=25, medium_score=12, low_score=5
+    )
     total += pts
     if reason:
         reasons.append(reason)
@@ -443,7 +464,9 @@ def score_modal_or_tools_file(signals: FileSignals) -> None:
 
     total += signals.naming_score
     if signals.naming_flags:
-        reasons.append(f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})")
+        reasons.append(
+            f"naming:{','.join(signals.naming_flags)} (+{signals.naming_score})"
+        )
 
     signals.score = total
     signals.score_reasons = reasons
@@ -591,9 +614,13 @@ def _bucket_condensed(scored: list[FileSignals], bucket: str) -> list[str]:
         top = s.filepath.split("/")[0] + "/"
         if top != current_dir:
             current_dir = top
-            lines.append(f"**`{top}`** ({sum(1 for x in items if x.filepath.startswith(top.rstrip('/')))} files)")
+            lines.append(
+                f"**`{top}`** ({sum(1 for x in items if x.filepath.startswith(top.rstrip('/')))} files)"
+            )
             lines.append("")
-        lines.append(f"- `{s.filepath}` — created {_age_str(s.creation_age_months)} ago, {s.commit_count} commits, {s.loc} LOC")
+        lines.append(
+            f"- `{s.filepath}` — created {_age_str(s.creation_age_months)} ago, {s.commit_count} commits, {s.loc} LOC"
+        )
     lines.append("")
     return lines
 
@@ -610,7 +637,7 @@ def generate_report(
     bucket_counts: dict[str, int] = Counter(s.bucket for s in scored)
     dir_counts: dict[str, int] = Counter(s.filepath.split("/")[0] + "/" for s in scored)
 
-    # Summary by bucket × directory
+    # Summary by bucket x directory
     dirs = sorted(dir_counts)
     lines: list[str] = [
         "---",
@@ -636,7 +663,7 @@ def generate_report(
         "| Bucket | Count | Action |",
         "| ------ | ----- | ------ |",
         f"| REVIEW_REMOVE (score ≥ {BUCKET_REMOVE_THRESHOLD}) | {bucket_counts.get(BUCKET_REMOVE, 0)} | Review each; delete or archive if confirmed outdated |",
-        f"| REVIEW_NEEDED (score {BUCKET_NEEDED_THRESHOLD}–{BUCKET_REMOVE_THRESHOLD - 1}) | {bucket_counts.get(BUCKET_NEEDED, 0)} | Human judgment required |",
+        f"| REVIEW_NEEDED (score {BUCKET_NEEDED_THRESHOLD}-{BUCKET_REMOVE_THRESHOLD - 1}) | {bucket_counts.get(BUCKET_NEEDED, 0)} | Human judgment required |",
         f"| PROBABLY_CURRENT (score < {BUCKET_NEEDED_THRESHOLD}) | {bucket_counts.get(BUCKET_CURRENT, 0)} | Likely active; add PUML reference if warranted |",
         "",
         "| Directory | Total | REVIEW_REMOVE | REVIEW_NEEDED | PROBABLY_CURRENT |",
@@ -776,7 +803,9 @@ def main() -> int:
     log("Building import index (scanning all tracked .py files) …")
     import_index = build_import_index(repo_root, git_files)
 
-    log(f"Checking config references for {sum(1 for f in gap_c if f.startswith('config/'))} config files …")
+    log(
+        f"Checking config references for {sum(1 for f in gap_c if f.startswith('config/'))} config files …"
+    )
     scored = enrich_and_score(gap_c, repo_root, git_files, import_index, bulk_stats)
 
     # Apply min-score filter for console output
