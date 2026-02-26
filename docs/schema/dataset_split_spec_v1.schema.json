@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/project-a/dataset-split-spec-v1.schema.json",
+  "title": "DatasetSplitSpec",
+  "description": "Per-dataset split assignment specification for source datasets that do not provide their own train/val/test splits. Defines how corpus_assigned split_type values are determined reproducibly and documents any pre-planned OOD designations.\n\nOne spec per source dataset that requires corpus-assigned splits. Stored in docs/schema/split_specs/{dataset}.json. Source-native datasets (DocLayNet, RVL-CDIP, etc.) do not need a spec — their splits are applied directly.\n\nThe val and test assignments computed from this spec are immutable once applied. The seed and stratify_by fields must be preserved exactly to reproduce assignments if a dataset is re-ingested.",
+  "type": "object",
+  "required": [
+    "dataset",
+    "split_source",
+    "strategy",
+    "ingest_sample_size",
+    "ratios",
+    "seed",
+    "spec_version",
+    "created_at",
+    "created_by"
+  ],
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "description": "Canonical dataset name from DATASET_NAMING_STANDARD.md. Must match source_dataset in corpus manifest records.",
+      "examples": ["sd7k", "wsrd", "midv500", "smartdoc-qa"]
+    },
+
+    "split_source": {
+      "type": "string",
+      "const": "corpus_assigned",
+      "description": "Always 'corpus_assigned' for this schema. Source-native datasets do not require a spec."
+    },
+
+    "spec_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this spec. Increment the minor version when changing ratios or stratification (requires re-ingestion of the dataset). Increment the patch version for documentation-only changes."
+    },
+
+    "strategy": {
+      "type": "string",
+      "enum": ["stratified", "random"],
+      "description": "Split assignment strategy.\n\n'stratified': proportional sampling by stratify_by L2 fields. Ensures each split contains representative coverage across key diversity dimensions (e.g., shadow_severity bucket, capture_method). Preferred for datasets where label distribution is known.\n\n'random': purely random assignment by ratio. Use when L2 fields are not yet populated at spec creation time, or when the dataset is known to be internally homogeneous."
+    },
+
+    "stratify_by": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "L2 EnrichmentData field paths to stratify splits by. Only applies when strategy = 'stratified'. Dot-notation path from the data object (e.g., 'capture_method.method', 'physical_degradation.shadow_type'). null or empty when strategy = 'random'.",
+      "examples": [
+        ["capture_method.method"],
+        ["physical_degradation.shadow_type", "image_properties.color_mode"],
+        ["geometric.orientation_class", "language.script_family"]
+      ]
+    },
+
+    "ingest_sample_size": {
+      "type": "object",
+      "required": ["total", "rationale"],
+      "description": "How many images to ingest from this source dataset into the corpus (active + reserved combined). For large datasets, this is a deliberate supersample: ingest more than needed for initial training to build a reserve buffer for future OOD expansion and training augmentation without requiring re-ingestion.",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of images to ingest (active + reserved). For datasets smaller than this value, all images are ingested."
+        },
+        "sampling_strategy": {
+          "type": "string",
+          "enum": ["all", "stratified_sample", "random_sample", "head_of_dataset"],
+          "description": "'all': ingest every image in the dataset. 'stratified_sample': stratified by stratify_by fields. 'random_sample': random subset. 'head_of_dataset': first N images (useful for reproducibility with ordered datasets like RVL-CDIP)."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Human-readable explanation of the sample size choice. Document why this size was chosen and what reserve buffer it provides.",
+          "examples": [
+            "sd7k has 7,239 total images. Ingest all — dataset is small enough that full ingestion is practical. Provides ~1,400 reserved images (20%) as OOD/expansion buffer after initial 5,800 active assignment.",
+            "RVL-CDIP has 400K total images. Ingest 80K (20%): 50K active train + 20K reserved buffer + 10K val/test. Full ingestion would require 50GB+ of corpus manifest storage with minimal incremental value for initial training run."
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ratios": {
+      "type": "object",
+      "required": ["active_train", "active_val", "active_test"],
+      "description": "Target proportion of INGESTED samples for each split. active_train + active_val + active_test + reserved must equal 1.0. The reserved allocation is the buffer pool — images ingested but not activated. Remainder after active splits = reserved.",
+      "properties": {
+        "active_train": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Proportion of ingested samples assigned to active train."
+        },
+        "active_val": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Proportion of ingested samples assigned to active val. Immutable once assigned."
+        },
+        "active_test": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Proportion of ingested samples assigned to active test. Immutable once assigned."
+        },
+        "reserved": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Proportion of ingested samples held as reserved buffer. Computed as 1.0 - (active_train + active_val + active_test) if not specified explicitly. These images are never seen by any model until deliberately activated."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "seed": {
+      "type": "integer",
+      "description": "Random seed for reproducible split assignment and sampling. Must be preserved exactly. Changing the seed requires a new spec_version and re-ingestion. Default: 42.",
+      "default": 42
+    },
+
+    "ood_predesignations": {
+      "type": ["array", "null"],
+      "description": "Pre-planned OOD designations to apply at corpus construction time. These images are drawn from the reserved pool (preferred) or from the active train pool (fallback). Pre-designated OOD records have ood_source = 'predesignated' and ood_predesignated = true — no model ever trains on them, providing a clean evaluation boundary.",
+      "items": {
+        "type": "object",
+        "required": ["category", "target_count", "selection_criteria"],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "OOD scenario category. Must match ood_category values in corpus manifest records.",
+            "examples": ["4c_book_gutter_shadow", "4d_binarized_document", "4a_compound_distortion"]
+          },
+          "target_count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Target number of images to pre-designate as OOD from this dataset."
+          },
+          "source_pool": {
+            "type": "string",
+            "enum": ["reserved_first", "train_only", "reserved_only"],
+            "default": "reserved_first",
+            "description": "'reserved_first': draw from reserved pool; if insufficient, draw from active train (preferred default — maximizes clean OOD boundaries). 'train_only': force draw from active train (use when reserved pool does not contain the required characteristics). 'reserved_only': only draw from reserved; fail if pool is insufficient."
+          },
+          "selection_criteria": {
+            "type": "string",
+            "description": "Human-readable description of which images qualify for this OOD category.",
+            "examples": [
+              "sd7k clean reference images where the paired shadow image has shadow_type = 'book_gutter'. These are the only clean-reference analogs to book-gutter shadow examples in the dataset.",
+              "MIDV500 images captured with camera at >30 degree angle (high perspective distortion)"
+            ]
+          },
+          "selection_filter": {
+            "type": ["object", "null"],
+            "description": "Machine-readable L2 field filters used to identify OOD candidates. Key = dot-notation L2 field path, value = required value or array of accepted values. null if selection requires manual curation rather than filter.",
+            "examples": [
+              {"physical_degradation.shadow_type": "book_gutter"},
+              {"image_properties.color_mode": "binarized", "capture_method.method": ["scanner_flatbed", "scanner_adf"]}
+            ]
+          },
+          "actual_count": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Actual number designated. null until corpus construction executes this predesignation."
+          },
+          "designated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when OOD designation was executed. null until executed."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this spec was created."
+    },
+
+    "created_by": {
+      "type": "string",
+      "description": "Author or script that created this spec.",
+      "examples": ["manual:byron", "generate_split_specs_v1.py_v1.0.0"]
+    },
+
+    "applied_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this spec was applied to produce corpus manifest records. null until corpus construction runs. Once applied, val and test assignments derived from this spec are immutable."
+    },
+
+    "applied_by": {
+      "type": ["string", "null"],
+      "description": "Script version that applied this spec during corpus construction. null until applied.",
+      "examples": ["build_corpus_v1.py_v1.0.0"]
+    },
+
+    "val_immutable_since": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when val assignments from this spec were locked. Equal to applied_at. Once set, val assignments for this dataset cannot change even if the spec is revised."
+    },
+
+    "test_immutable_since": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when test assignments from this spec were locked. Equal to applied_at. Once set, test assignments for this dataset cannot change even if the spec is revised."
+    },
+
+    "notes": {
+      "type": ["string", "null"],
+      "description": "Human-readable notes about split design decisions for this dataset. Document domain-specific considerations, known biases, or deviations from the default strategy."
+    }
+  },
+
+  "additionalProperties": false
+}

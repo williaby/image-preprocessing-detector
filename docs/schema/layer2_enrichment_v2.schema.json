@@ -18,8 +18,8 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "2.3.0",
-      "description": "Schema version identifier. v2.0.0 introduces the label reliability mixin pattern. v2.1.0 adds geometric, physical degradation, ML IQA, image properties, OCR impact objects; expands ResolutionInfo, ContentFlags, StructureInfo. v2.3.0 adds text_direction to LanguageInfo, text_directions_present to StructureInfo, character_height_rendered_px and output_size_px to ResolutionInfo."
+      "const": "2.4.0",
+      "description": "Schema version identifier. v2.0.0 introduces the label reliability mixin pattern. v2.1.0 adds geometric, physical degradation, ML IQA, image properties, OCR impact objects; expands ResolutionInfo, ContentFlags, StructureInfo. v2.3.0 adds text_direction to LanguageInfo, text_directions_present to StructureInfo, character_height_rendered_px and output_size_px to ResolutionInfo. v2.4.0 adds: shadow_type specific taxonomy (cast_hard/cast_soft/book_gutter/spotlight/scanner_lid/edge), shadow_unmeasurable sentinel flag, warping_region COCO bbox, four MLImageQualityInfo dimensions (ink_degradation/paper_degradation/bleed_through/geometric_distortion), ResolutionInfo.coarse_bucket character-height bucket."
     },
     "created_at": {
       "type": "string",
@@ -368,6 +368,11 @@
           "type": ["integer", "null"],
           "minimum": 1,
           "description": "Output image size in pixels for derived training views (e.g., 224, 384, 512). Records which resolution variant this metadata corresponds to. v2.3.0 addition."
+        },
+        "coarse_bucket": {
+          "type": ["string", "null"],
+          "enum": ["needs_major_upscale", "needs_light_upscale", "optimal", "good", "oversized", null],
+          "description": "Character-height-based resolution quality bucket. Derived from character_height_px, not from DPI. Thresholds: <16px=needs_major_upscale, 16–32px=needs_light_upscale, 32–48px=optimal, 48–96px=good, >96px=oversized. MobileNetV4 Head 3 classification target. Distinct from 'category' which is DPI-based. v2.4.0 addition."
         }
       },
       "additionalProperties": false
@@ -378,7 +383,7 @@
       "properties": {
         "level1": {
           "type": "string",
-          "enum": ["TAX", "LEG", "FIN", "TEC", "SCI", "ADM", "MED", "EDU", "PER", "UNK"],
+          "enum": ["TAX", "LEG", "FIN", "TEC", "SCI", "ADM", "MED", "EDU", "PER", "GOV", "NEWS", "UNK"],
           "description": "Primary domain code"
         },
         "level2": {
@@ -1371,8 +1376,8 @@
         },
         "shadow_type": {
           "type": ["string", "null"],
-          "enum": ["none", "hard", "soft", "mixed", null],
-          "description": "Shadow type classification."
+          "enum": ["none", "cast_hard", "cast_soft", "book_gutter", "spotlight", "scanner_lid", "edge", "mixed", null],
+          "description": "Shadow type classification. cast_hard: sharp-edged from nearby object or hand. cast_soft: diffuse with gradient edges. book_gutter: hard gradient at page crease from physical binding — primary known failure mode, absent from sd7k/wsrd training data. spotlight: circular shadow from overhead or off-center light. scanner_lid: gradual edge darkening from partially closed scanner. edge: shadow at document edge from lateral light. mixed: multiple types co-present. v2.4.0: replaces generic 'hard'/'soft' with specific taxonomy."
         },
         "shadow_region": {
           "oneOf": [
@@ -1392,6 +1397,10 @@
           "maximum": 1,
           "description": "Confidence in shadow detection. null = unassessed."
         },
+        "shadow_unmeasurable": {
+          "type": ["boolean", "null"],
+          "description": "true if the image is binarized or otherwise lacks gradient information, making shadow severity unmeasurable. When true, shadow_severity MUST be null — the gradient was destroyed by thresholding, not absent because no shadow is present. Distinct from shadow_severity=0.0 which is an affirmative statement that no shadow exists. null = not assessed. v2.4.0 addition."
+        },
         "warping_severity": {
           "type": ["number", "null"],
           "minimum": 0,
@@ -1408,6 +1417,18 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Confidence in warping detection. null = unassessed."
+        },
+        "warping_region": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number", "minimum": 0},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "COCO bbox [x, y, width, height] of primary warping region. null if warping is global or region is unknown. v2.4.0 addition."
+            }
+          ]
         },
         "watermark_severity": {
           "type": ["number", "null"],
@@ -1494,6 +1515,30 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Overall image quality (0=worst, 1=best). Composite of all dimensions."
+        },
+        "ink_degradation_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ink degradation severity (0=clean, 1=severe). Covers ink bleed, ink fading, low-ink strike-through, and uneven ink distribution. Distinct from bleed_through_score which captures reverse-side show-through. v2.4.0 addition."
+        },
+        "paper_degradation_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Paper degradation severity (0=pristine, 1=severe). Covers staining, foxing, yellowing, surface texture noise, and paper tears. Distinct from document_age in ImagePropertiesInfo — this measures observable signal degradation, not age estimate. v2.4.0 addition."
+        },
+        "bleed_through_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Bleed-through / show-through severity from the reverse page side (0=none, 1=severe). Caused by ink penetrating thin paper. Distinct from ink_degradation_score which measures the front-side ink quality. v2.4.0 addition."
+        },
+        "geometric_distortion_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Geometric distortion severity excluding skew (0=none, 1=severe). Covers perspective warp, barrel/pincushion lens distortion, and wave distortion at the signal quality level. Overlaps with PhysicalDegradationInfo.warping_severity in domain but operates at IQA signal level rather than physical artifact level — warping_severity measures the physical page deformation, this measures the resulting image distortion observable as a quality signal. v2.4.0 addition."
         },
         "model_name": {
           "type": ["string", "null"],
