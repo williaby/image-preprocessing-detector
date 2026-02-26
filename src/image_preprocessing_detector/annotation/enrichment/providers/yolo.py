@@ -25,7 +25,14 @@ Example:
     ...     print(f"Found {len(enrichment.layout_detections)} elements")
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "provider"
+__l4_task__ = "layout"
+__l4_workstream__ = "WS3"
+__l4_provides__ = "yolo_layout_boxes"
+
 
 import logging
 from pathlib import Path

@@ -31,7 +31,14 @@ Example:
     >>> print(enrichment.iso15924_script)  # 'Latn'
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "provider"
+__l4_task__ = "language"
+__l4_workstream__ = "WS3"
+__l4_provides__ = "detected_script, language_code"
+
 
 import logging
 from dataclasses import dataclass

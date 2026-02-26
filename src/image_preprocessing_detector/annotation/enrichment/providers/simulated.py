@@ -31,7 +31,14 @@ For error testing:
     >>> # Some calls will raise InferenceError
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "provider"
+__l4_task__ = "iqa"
+__l4_workstream__ = "WS3"
+__l4_provides__ = "simulated_quality_labels"
+
 
 import hashlib
 from pathlib import Path
