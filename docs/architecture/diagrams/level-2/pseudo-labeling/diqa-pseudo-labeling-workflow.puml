@@ -1,4 +1,4 @@
-@startuml DIQA Pseudo-Labeling Workflow
+@startuml diqa-pseudo-labeling-workflow
 !theme plain
 skinparam backgroundColor #FEFEFE
 skinparam componentStyle rectangle
@@ -294,5 +294,33 @@ package "Training Workflows" as TrainingWorkflows {
   WeightedScore --> TrainStacker : Best checkpoints
   TrainStacker --> TrainTemp
 }
+
+note right
+  **Source:**
+  - src/.../labeling/arena/runner.py
+  - src/.../labeling/arena/datasets/diqa5000.py
+  - src/.../labeling/arena/inference/modal.py
+  - src/.../labeling/arena/inference/local.py
+  - src/.../labeling/arena/metrics.py
+  - src/.../labeling/arena/leaderboard.py
+  - src/.../labeling/model_spec.py
+
+  **Scripts:**
+  - modal/train_siglip2_multitask.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/pseudo-labeling/index.md]]
+  [[docs/planning/PSEUDO_LABELING_PROJECT_PLAN.md]]
+  [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

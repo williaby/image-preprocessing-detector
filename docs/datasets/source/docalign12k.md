@@ -30,8 +30,8 @@ documentation_status: partial
 | **Maintainer** | Jiaxin Zhang et al. (South China University of Technology) |
 | **Paper** | [DocAligner: Annotating Real-World Photographic Document Images (2023)](https://github.com/ZZZHANG-jx/DocAligner) |
 | **Repository** | [GitHub: ZZZHANG-jx/DocAligner](https://github.com/ZZZHANG-jx/DocAligner) |
-| **License** | Unspecified (verify with authors) |
-| **Commercial Use** | Unknown (verify with authors) |
+| **License** | Unspecified (no LICENSE file in GitHub repo; HCIILAB/SCUT lab pattern is non-commercial) |
+| **Commercial Use** | Unknown (likely NC based on lab pattern; contact Jiaxin Zhang / Lianwen Jin at SCUT) |
 | **Documentation Status** | Partial |
 
 #### 2. Source Data Inventory
@@ -442,3 +442,64 @@ Expected to show majority `unreliable` category due to 11/13 prescreening fields
 > **Improving Reliability**: Priority enrichment order documented in audit checklist (see `docs/audit/audits/docalign12k_audit.md`).
 
 ---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+>
+> **Aggregate Stats**: `metadata_registry/aggregates/docalign12k_stats.json` | 30,338 samples
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | - | - | No orientation labels; synthetic distortion does not systematically vary orientation |
+| MNV4-H2 | skew_reg | ❌ | - | - | No planar skew angle labels; distortion groups are geometric warp, not skew |
+| MNV4-H3 | resolution_quality_reg | ❌ | - | - | Synthetic distortion pipeline; no real DPI variation; resampling artifacts only |
+| SIG-G1-1 | blur_score | ❌ | - | - | Synthetic distortion; no real blur degradation beyond resampling |
+| SIG-G1-2 | noise_score | ❌ | - | - | Synthetic distortion; no real camera/sensor noise |
+| SIG-G1-3 | contrast_score | ❌ | - | - | Synthetic pipeline; no real illumination/contrast degradation |
+| SIG-G1-4 | skew_score | ❌ | - | - | skew_score = quality degradation 0-1; synthetic geometric warp is separate construct |
+| SIG-G1-5 | compression_score | ❌ | - | - | JPG format but no systematic JPEG blocking artifacts as degradation type |
+| SIG-G1-6 | overall_quality | 🟡 | ~30,338 | SSIM-derivable from distorted/flat pairs | Paired GT enables SSIM-based quality MOS derivation for distorted images |
+| SIG-G2-1 | script_cls | ❌ | - | - | All samples undetermined (Zyyy/und per L2 stats); needs LLM enrichment before use |
+| SIG-G3-1 | orientation_cls (post) | ❌ | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~30,338 | Negative class (printed=100%) | All printed content per L2 stats; strong large-scale negative class |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ | ~30,338 | Negative class (printed=100%) | All printed docs → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | ✅ | 30,338 | synthetic (100%, L2-confirmed) | L2 stats confirm synthetic=100%; strong synthetic class anchor |
+| SIG-G5-2 | shadow_reg | 🟡 | 543 | Explicit shadow subset | 543 shadow overlay images provide shadow training signal; small subset |
+| SIG-G5-3 | warping_reg | ✅ | ~30,338 | Inferred from 14 distortion groups | Primary degradation: perspective distortion + geometric warp across 14 groups |
+| SIG-G5-4 | code_cls | ❌ | - | - | General documents; no code content indicated |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ | - | - | Synthetic distortion; no real DPI/resolution variation |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ | 100% undetermined (Zyyy) per L2 stats; LLM enrichment required |
+| 2 | Capture method | ✅ | 100% synthetic (L2-confirmed, 30,338 samples) |
+| 3 | Document domain | 🟡 | 100% GENERAL per L2 stats; domain undetermined pending LLM enrichment |
+| 4 | Layout type | ❌ | No layout annotations; 100% missing per L2 stats |
+| 5 | Text density | ❌ | Not measured; 100% missing per L2 stats |
+| 6 | Degradation types | ✅ | Perspective distortion + geometric warping across 14 distortion groups; 543 shadow overlays |
+| 7 | Resolution/DPI range | ❌ | Synthetic pipeline; no real DPI variation |
+| 8 | Document age | ❌ | Synthetic distortion of unknown-age source docs; no aging dimension |
+| 9 | Text scope | ✅ | Page-level (text_scope=page for 100% of samples per L2 stats) |
+| 10 | Content flags | ❌ | 0% content flags per L2 stats; enrichment pending |
+| 11 | Binarization status | ❌ | Color JPG images only |
+| 12 | Artifact types | ✅ | Warping, misalignment, perspective distortion + dedicated shadow subset |
+| 13 | Color mode | ✅ | Color (RGB) — all samples |
+| 14 | Font variety | ❌ | Unknown; inherited from undocumented source documents |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+DocAlign12K is the largest available synthetic document warping dataset (30,338 images), contributing primarily to SIG-G5-3 (`warping_reg`) and SIG-G5-1 (`capture_method_cls=synthetic`). With parser implemented and base L2 metadata generated, it is the most integration-ready of the correction datasets, though 11 of 13 enrichment fields remain at 0% coverage (domain, language, script, layout, content flags). The unspecified license restricts commercial use pending author confirmation; the synthetic-only origin means this dataset cannot substitute for real camera or scanner capture distributions in heads requiring those classes.

@@ -82,8 +82,8 @@ package "Worker Pools" as Workers #E8F5E9 {
 ' ============================================================================
 
 package "IQATask (Lazy Loading)" as IQATask #E8F5E9 {
-  component "Student ONNX Session\n(ResNet-18)" as StudentModel
-  component "Teacher ONNX Session\n(ResNet-50)" as TeacherModel
+  component "MobileNetV4 ONNX Session\n(Pre-Correction, ~3ms)" as StudentModel
+  component "SigLIP 2 ONNX Session\n(Multi-Task, ~50ms)" as TeacherModel
   component "DeviceOrchestrator" as Orchestrator
   component "ModalClient\n(Circuit Breaker)" as ModalClient
 
@@ -187,8 +187,8 @@ ClientLayer --> Middleware
 ' TRACEABILITY NOTE
 ' ============================================================================
 
-note bottom of ClientLayer
-  **Source Files:**
+note right
+  **Source:**
   - src/.../workers/celery_app.py (251 LOC)
   - src/.../workers/tasks.py (472 LOC)
   - src/.../orchestration/device_orchestrator.py (685 LOC)
@@ -199,27 +199,27 @@ note bottom of ClientLayer
   - src/.../api/routes/health.py (64 LOC)
   - src/.../api/routes/process.py (192 LOC)
   - src/.../api/routes/batch.py (178 LOC)
+  - src/.../utils/budget_enforcement.py
 
   **Total Worker Infrastructure LOC**: 2,864+ lines
 
-  **Environment Variables:**
-  - CELERY_BROKER_URL (default: redis://localhost:6379/0)
-  - CELERY_RESULT_BACKEND (default: redis://localhost:6379/1)
-  - IMGPREP_INFERENCE_MODE (production | qa | development)
-  - IMGPREP_ENABLE_MODAL (default: true)
-  - IMGPREP_TEACHER_BUDGET_PER_DOC (default: 10)
-  - IMGPREP_TEACHER_BUDGET_PER_BATCH (default: 100)
-  - IMGPREP_MODAL_TIMEOUT_MS (default: 30000)
-  - IMGPREP_MODAL_CIRCUIT_BREAKER_THRESHOLD (default: 3)
-  - IMGPREP_MODAL_CIRCUIT_BREAKER_TIMEOUT (default: 60)
-
-  **Related Diagrams:**
-  - [[prepare-doc-primary-workflow-high-level.puml]] - Overall pipeline
-  - [[prepare-doc-device-selection-flow.puml]] - Device selection logic
+  **Scripts:**
+  - scripts/validate_routing_accuracy.py
 
   **Documentation:**
-  - docs/architecture/diagrams/level-3/production-runtime/device-orchestrator.md
-  - docs/reference/MODAL_QUICK_REFERENCE.md
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+  [[docs/architecture/diagrams/level-3/production-runtime/device-orchestrator.md]]
+  [[docs/reference/MODAL_QUICK_REFERENCE.md]]
+
+  **ADR:**
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
 end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

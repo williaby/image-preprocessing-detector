@@ -16,9 +16,12 @@ skinparam note {
 start
 :Load benchmark datasets\n(DIQA-5000: 5.5K, OHR-Bench: 8.5K);
 note right
-  **Source**: modal/stage1_deqa_inference.py
-  **LOC**: 492
+  **Source Files:**
+  - modal/stage1_deqa_inference.py (492 lines) (not yet implemented)
+
   GCS streaming, batch iteration
+
+  **Total Step LOC**: 492 lines
 end note
 :Validate image integrity\n(SHA256 checksums);
 :Create inference batches\n(batch_size=32);
@@ -28,20 +31,26 @@ end note
 :Run QualiCLIP inference\n(color fidelity, aesthetics);
 :Run DocIQ-Replica inference\n(document-specific overall);
 note right
-  **Source**: modal/generate_pseudo_labels.py
-  **LOC**: 1,042
+  **Source Files:**
+  - modal/generate_pseudo_labels.py (1,042 lines) (not yet implemented)
+
   Parallel inference on Modal A10 GPU
   3 models, ~500ms total per image
+
+  **Total Step LOC**: 1,042 lines
 end note
 
 |Track B: VLM Models|
 :Run Qwen3-VL-8B inference\n(structured quality assessment);
 :Run InternVL3-8B inference\n(document understanding);
 note right
-  **Source**: modal/teacher_inference.py
-  **LOC**: 419
+  **Source Files:**
+  - modal/teacher_inference.py (419 lines) (not yet implemented)
+
   VLM structured output parsing
   ~2s per image per model
+
+  **Total Step LOC**: 419 lines
 end note
 
 |Ensemble Stacking|
@@ -49,11 +58,15 @@ end note
 :Apply hierarchical stacker\n(dimension-specific voting);
 :Merge Track A + Track B\ninto unified score vector;
 note right
-  **Stacking Logic**:
+  **Source Files:**
+  - modal/shared/metrics_utils.py (215 lines)
+
+  Stacking Logic:
   - Per-dimension variance weighting
   - Higher agreement = higher weight
   - Outlier model down-weighted
-  **Metrics**: modal/shared/metrics_utils.py (223 LOC)
+
+  **Total Step LOC**: 215 lines
 end note
 
 |Calibration|
@@ -78,17 +91,27 @@ endif
 :Compute dataset statistics\n(coverage, confidence distribution);
 :Select best checkpoint\nfor model registry\n(weighted SRCC + ECE scoring);
 note right
-  **Output**: metadata_registry/parquet/
-  **GCS**: modal/shared/gcs_utils.py (130 LOC)
-  **Constants**: modal/shared/constants.py (58 LOC)
+  **Source Files:**
+  - modal/shared/gcs_utils.py (130 lines)
+  - modal/shared/constants.py (58 lines)
+
+  Output: metadata_registry/parquet/
+
+  **Total Step LOC**: 188 lines
 end note
 note right
   **WS4 Pseudo-Labeling Pipeline**
-  Total: ~2,947 LOC across Modal scripts
+  Total: ~2,356 LOC across Modal scripts
+  (492 + 1,042 + 419 + 215 + 188)
   Infrastructure: Modal serverless GPU (A10)
   Storage: GCS buckets for datasets + labels
   Downstream: WS2 training, WS6 arena validation
 end note
 stop
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/pseudo-labeling/index.md
+'   └─ diqa-training-phases.puml  (WS4 primary)
 
 @enduml

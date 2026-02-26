@@ -179,3 +179,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~5,000 | Synthetic | Orientation derivable only via synthetic document compositing; character-level images have no meaningful page orientation |
+| MNV4-H2 | skew_reg | ❌ Not applicable | 0 | — | Isolated characters; no document baseline for skew measurement |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | 0 | — | Character images lack document context required for resolution quality scoring |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~5,000 | Derived | Clean scanner captures provide clean reference examples; no blur variation present |
+| SIG-G1-2 | noise_score | ➖ Negatives only | ~5,000 | Derived | Flatbed scans are low-noise; useful as clean-class anchor |
+| SIG-G1-3 | contrast_score | ➖ Negatives only | ~5,000 | Derived | High-contrast black-on-white characters; useful as high-contrast anchor |
+| SIG-G1-4 | skew_score | ❌ Not applicable | 0 | — | No document layout to assess skew quality against |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~5,000 | Derived | JPG format but flatbed scans at consistent quality; minimal compression artifacts |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | 0 | — | Character-level images do not map to document overall quality; SRCC requirement cannot be met |
+| SIG-G2-1 | script_cls | ✅ Primary | ~50,000 | Hard label | 141,698 Tibetan (Tibt) character images — primary and sole large-scale Tibt source in training corpus; synthetic document compositing bridges character to document-level |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~5,000 | Synthetic | Same synthetic compositing path as MNV4-H1; post-correction orientation labels derivable |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | — | No document geometry; residual skew not applicable |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~50,000 | Hard label | 100% handwritten; all 141,698 images contribute DOMINANT class examples |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | ~50,000 | Hard label | 235 writers, 47 classes; high character variation provides legibility range; labeled via writer-quality proxies |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | ~50,000 | Hard label | 100% PRINTED (block Tibetan characters — isolated consonants, vowels, numerals); no cursive in Tibetan script tradition |
+| SIG-G4-4 | presence_reg | ✅ Primary | ~50,000 | Derived | Continuous presence score = 1.0 (DOMINANT); contributes high-end of presence regression range |
+| SIG-G4-5 | legibility_reg | ✅ Primary | ~50,000 | Derived | Writer-level legibility variation provides continuous score distribution |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~50,000 | Hard label | scanner_flatbed (100%); 141,698 samples — significant scanner class contribution |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | — | No shadow variation in flatbed scans; character-level images not suitable |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | — | No warping in flatbed scanner captures |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | — | No code content; Tibetan handwritten characters only |
+| SIG-G5-5 | resolution_quality_reg | ❌ Not applicable | 0 | — | Character-level images; no document-level resolution quality context |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | 100% Tibetan (Tibt) / indic family; sole large-scale Tibt source; 47 character classes |
+| 2 | Capture method | ✅ Well-covered | 100% scanner_flatbed; contributes dedicated scanner class signal |
+| 3 | Document domain | 🟡 Partial | 100% EDU; single domain; no financial, legal, or scientific content |
+| 4 | Layout type | ❌ Not present | Isolated character images; no document layout (single character fills canvas) |
+| 5 | Text density | ❌ Not present | Single-character images; text density concept not applicable at character level |
+| 6 | Degradation types | ❌ Not present | Clean flatbed scans; no degradation variation; quality_scores array is empty |
+| 7 | Resolution/DPI range | ❌ Not present | Consistent flatbed scan resolution; no DPI range variation |
+| 8 | Document age | ❌ Not present | Contemporary collection (2025); no aged or historical documents |
+| 9 | Text scope | 🟡 Partial | 100% character-level scope; no word, line, or document-level coverage |
+| 10 | Content flags | 🟡 Partial | has_handwriting=100%; no tables, figures, formulas, or code |
+| 11 | Binarization status | ❌ Not present | No binarized variants; JPG color scans only |
+| 12 | Artifact types | ❌ Not present | No artifacts documented; clean scanner captures |
+| 13 | Color mode | 🟡 Partial | JPG scans (color/grayscale scanner output); no explicit color_mode field populated |
+| 14 | Font variety | ✅ Well-covered | 235 writers across 5 Chinese provinces; high natural handwriting variation across 47 character classes |
+
+### 13.3 Corpus Role & Constraints
+
+TibHCR is the **sole large-scale Tibetan (Tibt) script source** in the training corpus, making it indispensable for SIG-G2-1 script classification and G4 handwriting heads despite being character-level rather than document-level. Academic license restricts use to research only, excluding commercial deployment pipelines. Direct use in document-level heads (MNV4-H1, IQA, skew) requires synthetic document compositing — individual characters must be assembled into simulated document pages before contributing orientation or quality training signal.

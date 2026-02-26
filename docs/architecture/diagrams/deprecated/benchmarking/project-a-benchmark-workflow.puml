@@ -1,5 +1,5 @@
-@startuml
-title Project A - IQA Model Benchmark Workflow
+@startuml project-a-benchmark-workflow-DEPRECATED
+title Project A - IQA Model Benchmark Workflow\n[DEPRECATED - Superseded by Model Arena (WS6) | Architecture: ResNet-18/50 replaced by MobileNetV4+SigLIP 2]
 
 skinparam dpi 150
 skinparam shadowing false
@@ -14,6 +14,15 @@ skinparam activity {
 
 |Configuration|
 start
+note right #FFCCCC
+  **DEPRECATED**
+  This diagram reflects the Phase 3 ResNet teacher-student
+  architecture (ResNet-50 teacher / ResNet-18 student).
+  The current architecture uses MobileNetV4-Conv-S + SigLIP 2 NAFlex.
+  See level-2/model-training/prepare-doc-training-workflow-high-level.puml
+  and level-2/model-arena/model-arena-architecture.puml for the
+  current benchmarking approach.
+end note
 :Select Model Checkpoint\n(.pt file);
 :Configure Benchmark Mode\n(full / quick / OCR-enabled);
 :Set Output Options\n(JSON / CSV update);

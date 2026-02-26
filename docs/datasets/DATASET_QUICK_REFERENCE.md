@@ -15,7 +15,7 @@ title: Dataset Quick Reference
 > **Purpose**: Concise dataset lookup for training planning and task selection
 > **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
-> **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (16 heads) + Docling Layout (pre-trained)
+> **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (19 heads) + Docling Layout (pre-trained)
 
 ---
 
@@ -23,12 +23,12 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 57 | 54 image + 2 text corpora + 1 generating |
-| **Training-Ready** | 48 | Format standardized + labels extracted |
+| **Total Datasets** | 67 | 64 image + 2 text corpora + 1 generating |
+| **Training-Ready** | 53 | Format standardized + labels extracted |
 | **In Progress** | 7 | Format conversion, label extraction, or generating |
 | **Non-Image Corpus** | 1 | openlid-v2 (text-only, feeds synth-multiscript generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
-| **Layer 2 Aggregates** | 57 | Datasets with capture/domain/script/content stats |
+| **Layer 2 Aggregates** | 62 | Datasets with capture/domain/script/content stats |
 
 ### Audit Grade Distribution
 
@@ -51,7 +51,7 @@ title: Dataset Quick Reference
 | Model | Params | Purpose | Inference | Training |
 |-------|--------|---------|-----------|----------|
 | **MobileNetV4-Conv-S** | ~4M | Pre-correction gate: orientation (4-class), skew (regression), resolution quality (0-1) | ~3ms GPU / ~17ms CPU | Step 1 + Step 3 |
-| **SigLIP 2 NAFlex** | ~88M | Full analysis: 16 heads across 5 groups (IQA, Script, Orient+Skew, Handwriting, Page Attrs) | ~50ms GPU | Step 2 |
+| **SigLIP 2 NAFlex** | ~88M | Full analysis: 19 heads across 5 groups (IQA, Script, Orient+Skew, Handwriting, Page Attrs) | ~50ms GPU | Step 2 |
 | **Docling egret-xlarge** | ~55M | Layout detection (high accuracy, 23+ classes) | GPU | Pre-trained (no training) |
 | **Docling heron** | ~14M | Layout detection (fast path) | CPU/GPU | Pre-trained (no training) |
 
@@ -91,7 +91,7 @@ title: Dataset Quick Reference
 
 ## Source Dataset Inventory
 
-59 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
+64 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
 
 **Legend**: GT = Ground Truth | Extracted = Docling OCR/DocLayout-YOLO | Converted = Schema transformation | Constructed = Built from cell-level GT | OpenLID = Detected via OpenLID-v2 | (dataset) = Dataset-level provenance | (coarse) = Binary only
 
@@ -100,6 +100,7 @@ title: Dataset Quick Reference
 | Dataset | Images | Audit | Format | Text | Layout | Language | Script |
 |---------|-------:|:-----:|--------|------|--------|----------|--------|
 | pubtabnet | 519,030 | **A** 90 | PNG | GT + Constructed | GT (PubTabNet) + Converted | GT (dataset) | GT (dataset) |
+| kuzushiji | 481,336 | **A** 100 | PNG | GT (Unicode char, 100%) | None | GT (dataset) | GT (dataset) |
 | docsynth | 300,000 | -- | PNG | None | GT (DocSynth300K) | None | None |
 | mdiw13 | 290,213 | D 87 | PNG | None | Extracted (Docling) | GT | GT |
 | tablebank | 260,025 | **B** 89 | PNG | None | GT (COCO) | GT (dataset) | GT (dataset) |
@@ -111,9 +112,11 @@ title: Dataset Quick Reference
 | indicdlp | 115,803 | ✅ | PNG | None | GT (COCO 42-class) | GT (12 Indic) | GT |
 | doc3d | 102,064 | -- | PNG | None | None | None | None |
 | fintabnet | 97,475 | **B** 87 | PNG | GT + Constructed | GT (FinTabNet) + Converted | GT (dataset) | GT (dataset) |
+| iiit-hw-hindi | 95,430 | -- | JPG | GT (word text) | None | GT (dataset) | GT (dataset) |
 | doclaynet | 81,471 | **A** 96 | PNG | GT + Extracted | GT (DocLayNet) + Converted | GT (dataset) | GT (dataset) |
 | hindi-synth | 80,009 | **A** 92 | PNG | GT | Extracted (Docling) | GT (dataset) | GT |
 | financebench | 54,121 | **B** 85 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| casia-hwdb2-line | 52,160 | -- | JPG | GT (line text) | None | GT (dataset) | GT (dataset) |
 | muharaf | 25,711 | D 81 | PNG | GT | Extracted (Docling) | GT | GT |
 | mlt19 | 19,993 | **A** 91 | JPG | GT + Converted | GT (COCO) + Converted | GT | GT |
 | siw13 | 16,291 | D 81 | JPG | Extracted | Extracted (Docling 3-cat) | GT | GT |
@@ -121,6 +124,7 @@ title: Dataset Quick Reference
 | rvl-cdip | 16,000 | **B** 87 | JPEG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
 | yarmouk | 15,062 | **A** 93 | JPG | GT (OCR) | Extracted (Docling) | GT (dataset) | GT (dataset) |
 | midv500_data | 15,050 | -- | JPG | None | None | None | None |
+| midv2020 | ~4,000 | -- | JPG | GT (quads+text) | None | Parser (country) | Parser (country) |
 | signatr6k | 12,514 | **B** 82 | PNG | Extracted | Extracted (Docling 4-cat) | None | None |
 | docalign12k | ~12,000 | D 76 | JPG | None | None | None | None |
 | hiertext | 11,641 | **B** 82 | JPG | GT + Converted | GT (COCO) + Converted | OpenLID | OpenLID |
@@ -135,6 +139,7 @@ title: Dataset Quick Reference
 | nist-sd6 | 5,595 | **B** 83 | PNG | GT + Extracted | Extracted (DocLayout-YOLO) | GT (dataset) | GT (dataset) |
 | nist-sd2 | 5,590 | **B** 82 | TIF | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
 | diqa-5000 | 5,500 | **B** 89 | JPG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| casia-hwdb2 | 5,091 | -- | DGRL→PNG | GT (char/line) | None | GT (dataset) | GT (dataset) |
 | staindoc | 15,180 | -- | JPG | Extracted | None | None | None |
 | wsrd | 4,500 | **A** 95 | JPG | None | None | None | None |
 | smartdoc-qa | 4,280 | **A** 92 | JPG | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
@@ -144,6 +149,7 @@ title: Dataset Quick Reference
 | multilingual_scripts | 3,279 | -- | PNG | GT | None | GT | GT |
 | jssoda | 2,000 | D 86 | JPG | None | Extracted (Docling) | GT (dataset) | GT (dataset) |
 | mle2e | 1,816 | **B** 85 | JPG | GT | Extracted (Docling) | GT | GT |
+| khatt | ~1,633 | -- | JPG | GT (para text) | None | GT (dataset) | GT (dataset) |
 | invoices-kg | 1,414 | **B** 81 | JPG/PNG | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
 | omnidocbench | 1,358 | D 82 | PNG/JPG | GT + Extracted | Extracted (Docling 14-cat) | None | None |
 | tobacco800 | 1,290 | **A** 91 | TIFF/PNG | Extracted | Extracted (DocLayout-YOLO) | None | None |
@@ -165,7 +171,7 @@ title: Dataset Quick Reference
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
-**Summary**: 57 datasets (54 image + 2 text corpora + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
+**Summary**: 62 datasets (59 image + 2 text corpora + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 
@@ -216,20 +222,29 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | Dataset | Images | Scripts/Languages | Train Split | License |
 |---------|-------:|-------------------|-------------|---------|
 | synth-multiscript-v3 | 350,012 | 27 scripts + 8 IQA dims | All (synthetic) — ⚠️ Imbalanced | MIT |
+| kuzushiji | 481,336 | Historical Japanese JPAN (Kuzushiji cursive) | 292,365 (K-49 train) | CC-BY-SA-4.0 |
 | mdiw13 | 290,213 | 13 scripts (doc/line/word) | 232,170 | Academic |
 | mlt19 | 20,000 | 10 languages (word boxes) | 10,000 | MIT |
+| iiit-hw-hindi | 95,430 | Hindi/Devanagari DEVA (word HW) | 69,900 (streaming) | Research |
 | siw13 | 16,291 | 13 scripts | All | Academic |
 | hindi-synth | 80,009 | Hindi/Devanagari | All | Synthetic |
 | cvsi | 10,715 | 10 scripts (video frames) | All | Academic |
+| casia-hwdb2-line | 52,160 | Simplified Chinese HANS (line HW) | 33,400 | MIT |
 | arabic-docs | 10,045 | Arabic (word + page) | All | Unknown |
 | mle2e | 1,816 | 4 scripts (Latin/Chinese/Korean/Kannada) | 1,174 | Research |
 | yarmouk | 15,062 | Arabic | All | Unknown |
+| casia-hwdb2 | 5,091 | Simplified Chinese HANS (page HW, DGRL) | 4,076 | Academic |
 | nepali-handwritten | 958 | Devanagari handwriting | All | Public |
 | pucit-ohul | 7,401 | Urdu handwriting | All | Academic |
+| khatt | ~1,633 | Arabic ARAB cursive HW (OOD eval) | OOD eval only | Academic |
 | dzongkha-digits | 62 | Tibetan digits (10 classes) | All | CC-BY-4.0 |
 | tibhcr | 141,698 | Tibetan (47 classes) | All | Academic |
 | multilingual_scripts | 3,279 | 27 scripts (prototype) | All | MIT |
 | jssoda | 2,000 | Japanese (vert + horiz) | All | CC-BY-4.0 |
+| vjroda | ~100 | Japanese vertical (govt docs, OOD eval) | OOD eval only | CC-BY-4.0 |
+| ndl-docl | 2,290 | Japanese historical (kotenseki + kindai) | All | CC-BY-4.0 |
+| pdmocr-part1 | 2,713 | Japanese pre-modern printed (char-level OCR) | All | NDL Open |
+| pdmocr-part2 | 3,997 | Japanese digitized (w/ text direction labels) | All | NDL Open |
 
 **Scripts covered**: Arabic, Chinese (Hans/Hant), Japanese, Korean, Devanagari, Cyrillic, Latin, Tibetan, Thai, Bengali, Telugu, Kannada, Tamil, Hebrew, Hangul, Urdu, and more
 **Strategy**: Multi-class classification with ISO 15924 script codes (108 classes via SigLIP 2)
@@ -259,13 +274,20 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 |---------|-------:|---------|------------|-------------|---------|
 | hiertext | 11,641 | Scene text (mixed) | `handwritten` + `legible` (word-level) | 8,281 | CC-BY-SA-4.0 |
 | iam | 130,212 | English handwriting | Word/line transcriptions, 657 writers | 6,161 lines | Research |
+| kuzushiji | 481,336 | Historical Japanese HW (char-level) | Unicode char class (3,891 classes) | 292,365 (K-49) | CC-BY-SA-4.0 |
 | coco-text | 63,686 | Scene text | `class` + `legibility` (word-level) | 43,686 | CC-BY-4.0 |
+| iiit-hw-hindi | 95,430 | Hindi HW words (Devanagari) | Word text (Devanagari Unicode) | 69,900 (streaming) | Research |
 | hasy | 168,233 | Math symbols (HW) | Symbol class (369 classes) | 151,410 | CC0 |
+| casia-hwdb2-line | 52,160 | Chinese HW lines (HANS, line-level) | Text transcriptions, 1,020 writers | 33,400 | MIT |
 | muharaf | 25,711 | Arabic cursive (historical) | Line transcriptions, variable quality | All | CC-BY-NC-SA-4.0 |
+| casia-hwdb2 | 5,091 | Chinese HW pages (HANS, page-level) | Line bboxes + char labels (DGRL) | 4,076 | Academic |
 | nist-sd19 | 3,669 | Digits + letters | Character class | All | Public |
 | nist-sd6 | 5,595 | Tax forms + handprint | Form + handprint labels | All | Public |
+| khatt | ~1,633 | Arabic cursive HW (paragraphs) | Text GT, 1,000 writers (OOD eval) | OOD eval only | Academic |
 | nepali-handwritten | 958 | Devanagari HW | Character class | All | Public |
 | pucit-ohul | 7,401 | Urdu HW | Line text | All | Academic |
+| ndl-minhon | 32,822 | Classical Japanese kuzushiji HW | Text GT (honkoku transcriptions) | All | CC-BY-SA-4.0 |
+| ndl-docl | 2,290 | Japanese historical layout (kotenseki/kindai) | VOC layout boxes | All | CC-BY-4.0 |
 
 **Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans) and COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`)
 **Strategy**: Multi-task SigLIP 2 with 3 heads: has_handwriting (binary), handwriting_ratio (regression), handwriting_confidence (regression)
@@ -289,6 +311,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | drccbi | 325 | Dewarping | Paired GT (warped/flat), YOLO labels | Unknown |
 | midv500 | 3,612 | ID documents | Mobile capture variations | MIT |
 | midv500_data | 15,050 | ID documents | Extended MIDV-500 | MIT |
+| midv2020 | ~4,000 | ID documents (camera + flatbed) | Camera + flatbed paired captures, Cyrillic | CC BY-SA 2.5 |
 
 **Common characteristics**: All correction datasets provide paired GT (degraded input + clean reference). All camera-captured.
 **Resolution quality pipeline**: PaddleOCR text detection + CC analysis, 5.5K labeled (DIQA-5000), expanding to 30K. See [RESOLUTION_QUALITY_V2_STRATEGY.md](../planning/RESOLUTION_QUALITY_V2_STRATEGY.md).
@@ -375,7 +398,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 **Research Only** (no commercial use): fintabnet, rvl-cdip, financebench (CC-BY-NC-4.0), ohr-bench, diqa-5000, realdae, smartdoc-qa, sroie, tablebank (research clause)
 
-**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT)
+**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), midv2020 (CC BY-SA 2.5 — ShareAlike, attribution + Generated Photos credit required), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT)
 
 **Unknown/Needs Review**: arabic-docs, nepali-handwritten, ocr-quality, pucit-ohul, yarmouk, q-doc, drccbi
 
@@ -385,7 +408,9 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 **Born-Digital Only** (no degradation augmentation): tablebank, pubtabnet, doclaynet, im2latex, docsynth -- programmatically generated, degradation augmentation creates unrealistic samples.
 
-**Camera-Captured** (different degradation profile): realdae, smartdoc-qa, midv500, midv500_data, sd7k, wsrd, anyphotodoc6300, warpdoc -- shadow/perspective/blur patterns differ from scanner artifacts.
+**Camera-Captured** (different degradation profile): realdae, smartdoc-qa, midv500, midv500_data, midv2020 (camera mode), sd7k, wsrd, anyphotodoc6300, warpdoc -- shadow/perspective/blur patterns differ from scanner artifacts.
+
+**Scanner-Captured (also in)**: midv2020 (flatbed mode) — paired camera+flatbed captures make this dataset unique for `source` head training.
 
 **Parquet Format** (conversion required): docsynth, iam, ohr-bench, omnidocbench, yarmouk (source). See [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md).
 
@@ -397,7 +422,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 ### Dataset Documentation
 
-- **Individual Datasets**: [source/](source/) -- 59 per-dataset files (100-500 lines each)
+- **Individual Datasets**: [source/](source/) -- 64 per-dataset files (100-500 lines each)
 - **Task Indices**: [indices/](indices/) -- 7 task-based training recipes
 - **Ground Truth Summary**: [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md) -- annotation methods and provenance tiers
 - **Processing Status**: [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) -- format conversion tracking

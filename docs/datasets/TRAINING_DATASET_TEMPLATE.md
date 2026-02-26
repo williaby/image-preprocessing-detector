@@ -1,294 +1,320 @@
 ---
-owner: docs-team
-purpose: Template for creating consistent training dataset documentation.
-schema_type: common
-status: active
-tags:
-- datasets
-- training
-- template
-title: Training Dataset Documentation Template
+l4_category: training-dataset-template
+l4_status: template
 ---
 
-> **Version**: 1.0.0
-> **Last Updated**: 2026-02-01
-> **Purpose**: Standardized template for documenting assembled training datasets
-> **Scope**: Training datasets created/assembled from source datasets for model training
+> **Version**: 2.0.0
+> **Last Updated**: 2026-02-23
+> **Purpose**: Standardized 11-section template for individual training dataset documentation files
+> **Scope**: Assembled training datasets under `docs/datasets/training/{name}.md`
+> **What Changed in v2**: Added HAR-sourced sections (source pool, gap registry, OOD cross-reference,
+> 14-dimension diversity) to match the Head Adequacy Review methodology
 
 ---
 
-## Template Overview
+## How to Use This Template
 
-Training datasets differ from source datasets:
+1. Copy this file to `docs/datasets/training/{dataset-name}.md`
+2. Replace all `{PLACEHOLDER}` values
+3. Fill in sections using the referenced HAR file(s) and DDR file as primary sources
+4. Update `TRAINING_DATASET_CATALOG.md` summary table row to point to this file
+5. Remove this instruction block and the guidance comments before committing
 
-- **Assembled/Generated**: Created from one or more source datasets via scripts
-- **Purpose-Built**: Designed for specific ML training tasks (IQA, orientation, script detection)
-- **Labeled**: May use soft labels, pseudo-labels, or parameter-based labels
-- **Reproducible**: Have generation configs and scripts for reproducibility
+**Primary sources for each section**:
 
----
-
-## Quick Reference Format (for TRAINING_DATASET_QUICK_REFERENCE.md)
-
-Use this condensed format in the quick reference table:
-
-```markdown
-| Dataset | Purpose | Images | Train/Val/Test | Label Type | Status |
-|---------|---------|--------|----------------|------------|--------|
-| stage2_diqa_ensemble | IQA ensemble training | 12,742 | 8,918/1,273/2,551 | DeQA soft-labels + MOS | ✅ Ready |
-```
-
----
-
-## Full Training Dataset Card Template
-
-For individual README.md files in each training dataset directory:
-
-```markdown
-# [Dataset Name]
-
-**Created**: YYYY-MM-DD
-**Version**: X.Y.Z
-**Status**: Ready / In Progress / Deprecated
-**Purpose**: Brief description of training purpose
+| Section | Primary Source |
+|---------|---------------|
+| 1. Identity | `SIGLIP2_MULTITASK_REQUIREMENTS.md`, L2 schema |
+| 2. Status | `HAR_MASTER_INDEX.md` |
+| 3. Source Pool | Individual HAR file(s) § Section 2 |
+| 4. Label Schema | HAR § Section 2 + L2 schema |
+| 5. Composition | HAR § Section 3 |
+| 6. Diversity | HAR § Section 4 + `diversity_reports/{name}_ddr.md` |
+| 7. Wild Conditions | HAR § Section 5 |
+| 8. OOD | HAR § Section 6 + `OOD_DATASET_CATALOG.md` |
+| 9. Assembly Pipeline | `prepare_multitask_datasets.py` or generation scripts |
+| 10. Gap Registry | HAR § Section 8 (all gap IDs verbatim) |
+| 11. Performance Targets | `SIGLIP2_MULTITASK_REQUIREMENTS.md` |
 
 ---
 
-## Overview
+# {Dataset Name}
 
-| Attribute | Value |
-|-----------|-------|
-| **Full Name** | Complete dataset name |
-| **Version** | Version number |
-| **Created** | Creation date |
-| **Training Phase** | Phase X |
-| **Model Target** | Model(s) this dataset trains |
-| **Total Images** | Count |
-| **Storage Size** | GB |
-
-[1-2 paragraph description of what this dataset is and why it was created]
+> **Quick Stats**: {N} images | {task description} | {label type}
+>
+> **Status**: {✅ Ready / 🔄 In Progress / ❌ Blocked} | **HAR Score**: {XX}/100 | **P0 Gaps**: {N}
 
 ---
 
-## Source Datasets
+## Section 1 — Identity
 
-| Source Dataset | Images Used | Selection Criteria |
-|----------------|-------------|-------------------|
-| dataset-1 | 5,000 | Random sample |
-| dataset-2 | 3,000 | Quality threshold > 0.5 |
-
-**Total Sources**: X datasets
-**Selection Script**: `scripts/assemble_xxx.py`
-
----
-
-## Composition & Splits
-
-### Split Strategy
-
-| Split | Images | Percentage | Purpose |
-|-------|--------|------------|---------|
-| Train | 10,000 | 70% | Model training |
-| Val | 1,500 | 10% | Hyperparameter tuning |
-| Test | 3,000 | 20% | Final evaluation |
-| **Total** | **14,500** | **100%** | |
-
-### Split Method
-
-- [ ] Official splits preserved (from source dataset)
-- [ ] Random split with fixed seed
-- [ ] Stratified by category/source
-- [ ] By document (no image from same doc in multiple splits)
-
-**Random Seed**: 42 (if applicable)
-**Leakage Prevention**: [Describe measures taken]
+| Field | Value |
+|-------|-------|
+| **Dataset Name** | `{name}` |
+| **Head(s) Fed** | {e.g., SIG-G5-2 `shadow_reg`} |
+| **Model(s)** | {e.g., SigLIP 2 NAFlex} |
+| **Task Type** | {e.g., Regression 0–1 continuous severity score} |
+| **Primary L2 Field(s)** | `{e.g., physical_degradation.shadow_severity}` |
+| **Training Phase** | {e.g., Phase 5 — Page Attributes} |
+| **Target Size** | {N} images |
+| **Image Size** | {e.g., 384px} |
+| **Storage Location** | `E:\image_detection\03_training_datasets\{name}\` |
+| **GCS Path** | `gs://image_detection_b/{name}_training/` |
+| **Assembly Script** | `scripts/prepare_multitask_datasets.py {subcommand}` |
+| **HAR File(s)** | [har/{name}.md](../../planning/har/{name}.md) |
+| **DDR File** | [diversity_reports/{name}_ddr.md](../diversity_reports/{name}_ddr.md) |
 
 ---
 
-## Label Format
-
-### Label Type
-
-- [ ] Hard labels (discrete classes)
-- [ ] Soft labels (probability distributions)
-- [ ] Pseudo-labels (model-generated)
-- [ ] Parameter-based (derived from augmentation params)
-- [ ] Human annotations (ground truth)
-
-### Label Schema
-
-```json
-{
-  "image_id": "string - unique identifier",
-  "source_dataset": "string - original dataset name",
-  "split": "string - train/val/test",
-  "local_path": "string - path relative to dataset root",
-
-  // Label fields (customize per dataset)
-  "label": 0.75,
-  "soft_label": [0.1, 0.2, 0.4, 0.2, 0.1],
-
-  // Optional provenance
-  "sha256": "string - file checksum"
-}
-```
-
-### Label Statistics
+## Section 2 — Status
 
 | Metric | Value |
 |--------|-------|
-| Label Range | [min, max] |
-| Mean | X.XX |
-| Std Dev | X.XX |
-| Distribution | [describe shape] |
+| **Assembly Status** | {e.g., ❌ Blocked / 🔄 In Progress / ✅ Ready} |
+| **Current Count** | {N} / {target} assembled |
+| **HAR Adequacy Score** | {XX}/100 — {✅ Ready / ⚠️ Needs Work / ❌ Blocked} |
+| **P0 Gap Count** | {N} |
+| **Primary Blocker** | {e.g., `label_shadow_severity.py` not created — or "None"} |
+| **Estimated Unblock Effort** | {e.g., 5–7 days — or "N/A"} |
+| **Last HAR Updated** | YYYY-MM-DD |
 
 ---
 
-## Generation Provenance
+## Section 3 — Source Pool Analysis
 
-### Generation Script
+> *Derived from HAR § Section 2. Identifies which source datasets contribute to this assembled
+> training dataset and how much of each is usable given the required L2 field coverage.*
 
-```bash
-python scripts/assemble_xxx.py --output /path/to/output --config config.json
-```
+**Required L2 Field**: `{field.path}` ({type}, {range/enum})
+**Confidence Threshold**: ≥ 0.7 (tier_1_annotation or better)
+**Label Provenance**: {preferred provenance tier}
 
-### Configuration
+### Candidate Source Datasets
+
+| Source Dataset | Total Images | Field Populated | Coverage % | Conf ≥ 0.7 | Usable |
+|----------------|-------------|-----------------|------------|-------------|--------|
+| {dataset-1} | {N} | {N} | {%} | {%} | {✅ N / ⚠️ N / ❌ BLOCKED} |
+| {dataset-2} | {N} | {N} | {%} | {%} | {✅ N / ⚠️ N / ❌ BLOCKED} |
+
+### Pool Summary
+
+| Metric | Value |
+|--------|-------|
+| **Total usable (current)** | {N} images |
+| **Total usable (post-P0)** | ~{N} images (projected) |
+| **Training target** | {N} images |
+| **Pool surplus/deficit** | {+N / -N} ({%} of target) |
+| **Real vs. synthetic ratio** | {X% real / Y% synthetic} |
+
+---
+
+## Section 4 — Label Schema
+
+> *The exact fields, types, and value conventions that training records must carry.*
+
+**Primary L2 Field**: `{field.path}`
+**Type**: {float / int / str / bool}
+**Range / Enum**: {e.g., 0.0–1.0 or NONE / SPARSE / MODERATE / SUBSTANTIAL / DOMINANT}
+**Provenance Tier**: {tier_0_exact / tier_1_annotation / tier_2_vlm / tier_3_weak}
+**Derivation Formula** *(if applicable)*: `{formula or "N/A"}`
+
+### Training Manifest Record Schema
 
 ```json
 {
-  "random_seed": 42,
-  "train_ratio": 0.7,
-  "val_ratio": 0.1,
-  "test_ratio": 0.2,
-  // ... other config parameters
+  "image_path": "{task}/images/{filename}.jpg",
+  "source_dataset": "{source_name}",
+  "split": "train",
+  "split_type": "train",
+  "label_provenance": "tier_0_exact",
+  "label_confidence": 1.0,
+  "{primary_label_field}": {example_value},
+  "capture_method": "{born_digital|scanner|camera_smartphone|...}"
 }
+```
+
+### Label Statistics (target / post-assembly)
+
+| Metric | Value |
+|--------|-------|
+| **Range** | {[min, max]} |
+| **Target mean** | {X.XX} |
+| **Class/bucket distribution** | {describe — or see Section 5} |
+
+---
+
+## Section 5 — Composition & Splits
+
+> *Target count, class/severity distribution, split ratios, and leakage prevention strategy.*
+
+### Target Distribution
+
+<!-- For regression tasks: use severity/value buckets -->
+<!-- For classification tasks: use class names -->
+
+| Class / Bucket | Range | Target % | Target Count |
+|----------------|-------|----------|-----------  -|
+| {class/bucket 1} | {range} | {%} | {N} |
+| {class/bucket 2} | {range} | {%} | {N} |
+
+### Split Strategy
+
+| Split | Images | Percentage |
+|-------|-------:|------------|
+| Train | {N} | 70% |
+| Val | {N} | 15% |
+| Test | {N} | 15% |
+| **Total** | **{N}** | **100%** |
+
+**Split Method**: {document-level / image-level / stratified-by-class}
+**Random Seed**: 42
+**Leakage Prevention**: {describe — e.g., source dataset test splits reserved for OOD; global split registry via SHA256}
+
+---
+
+## Section 6 — 14-Dimension Diversity
+
+> **Full DDR Audit**: [{name}_ddr.md](../diversity_reports/{name}_ddr.md)
+> **HAR Section 4 Reference**: [{har-file}.md § Section 4](../../planning/har/{har-file}.md)
+> **Overall Diversity Score**: {XX}/100 (pre-assembly estimate)
+
+*Sorted by relevance to this head. Dimensions not listed have LOW relevance and are not
+separately targeted for this dataset.*
+
+| Dimension | L2 Field | Relevance | Target | Current | Status |
+|-----------|----------|-----------|--------|---------|--------|
+| {dim-1} | `{field}` | CRITICAL | {target} | {current} | {✅ / ⚠️ / ❌} |
+| {dim-2} | `{field}` | HIGH | {target} | {current} | {✅ / ⚠️ / ❌} |
+| {dim-3} | `{field}` | MEDIUM | {target} | {current} | {✅ / ⚠️ / ❌} |
+
+### Key Diversity Gaps
+
+- {gap description — e.g., "born_digital examples absent; pool is scanner + camera only"}
+- {gap description}
+
+---
+
+## Section 7 — Wild Condition Coverage
+
+> **HAR Section 5 Reference**: [{har-file}.md § Section 5](../../planning/har/{har-file}.md)
+> **Overall Wild Condition Score**: {XX}/100
+
+*The 3–5 most critical edge cases for this head. A condition is "covered" if the source pool
+contains labeled examples and they will be included in the assembled training dataset.*
+
+| Wild Condition | L2 Evidence | Status | Gap |
+|----------------|-------------|--------|-----|
+| {condition-1} | `{l2_field}` | {✅ Covered / ⚠️ Partial / ❌ Missing} | {gap description or "None"} |
+| {condition-2} | `{l2_field}` | {✅ Covered / ⚠️ Partial / ❌ Missing} | {gap description or "None"} |
+| {condition-3} | `{l2_field}` | {✅ Covered / ⚠️ Partial / ❌ Missing} | {gap description or "None"} |
+
+---
+
+## Section 8 — OOD Cross-Reference
+
+> **Full OOD Catalog**: [OOD_DATASET_CATALOG.md](../OOD_DATASET_CATALOG.md)
+> **HAR Section 6 Reference**: [{har-file}.md § Section 6](../../planning/har/{har-file}.md)
+
+| Field | Value |
+|-------|-------|
+| **Primary OOD Category** | {e.g., OOD-Degradation} |
+| **OOD Target Images (this head)** | {N} |
+| **OOD Acquisition Status** | {⏳ Not started / 🔄 In progress / ✅ Complete} |
+
+| OOD Sub-source | Images | Relevance | Stress Scenario |
+|----------------|-------:|-----------|-----------------|
+| {sub-source-1} | {N} | {✅ Direct / ⚠️ Indirect / ❌ Not relevant} | {description} |
+| {sub-source-2} | {N} | {✅ Direct / ⚠️ Indirect / ❌ Not relevant} | {description} |
+
+**OOD Leakage Risk**: {e.g., training source X must not appear in OOD; doc3d test split reserved}
+
+---
+
+## Section 9 — Assembly Pipeline
+
+**Status**: {❌ Blocked / 🔄 Ready to run / ✅ Complete}
+
+### Assembly Commands
+
+```bash
+# Prerequisites (run in order)
+# {list any prerequisite steps, e.g., labeling scripts}
+
+# Dry run (validates without writing)
+uv run python scripts/prepare_multitask_datasets.py {subcommand} --dry-run
+
+# Full assembly
+uv run python scripts/prepare_multitask_datasets.py {subcommand}
 ```
 
 ### Dependencies
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| Python | 3.11+ | Runtime |
-| torch | 2.0+ | Model inference (if labels generated) |
+| Dependency | Status | Required For |
+|------------|--------|-------------|
+| `{script_or_field}` | {✅ Ready / ❌ Not created / ⚠️ Partial} | {what it enables} |
+| `{dataset}_metadata.json` | {✅ / ⚠️ / ❌} | Source pool labels |
+
+### Generated Outputs
+
+| File | Description |
+|------|-------------|
+| `train_manifest.json` | Flat JSON list of training records |
+| `val_manifest.json` | Flat JSON list of validation records |
+| `{name}/images/` | Dataset images (or GCS path) |
 
 ---
 
-## Directory Structure
+## Section 10 — Gap Registry
 
-```
-dataset_name/
-├── README.md                     # This file
-├── MANIFEST.json                 # Machine-readable manifest
-├── splits/
-│   ├── train.jsonl               # Training records
-│   ├── val.jsonl                 # Validation records
-│   └── test.jsonl                # Test records
-├── images/
-│   ├── source_1/
-│   │   ├── train/
-│   │   ├── val/
-│   │   └── test/
-│   └── source_2/
-│       └── ...
-├── metadata/
-│   └── generation_config.json    # Generation parameters
-├── checksums/
-│   └── all_checksums.sha256      # File integrity verification
-└── tarballs/                     # Optional: packaged splits
-    ├── train.tar.gz
-    ├── val.tar.gz
-    └── test.tar.gz
-```
+> **Source**: [{har-file}.md § Section 8](../../planning/har/{har-file}.md)
+> **HAR Adequacy Score**: {XX}/100 — {✅ Ready / ⚠️ Needs Work / ❌ Blocked}
+
+### P0 Blockers (must resolve before assembly can run)
+
+| Gap ID | Description | Root Cause | Remediation | Effort |
+|--------|-------------|------------|-------------|--------|
+| {PREFIX}-G01 | {description} | {root cause} | {action} | {N days} |
+| {PREFIX}-G02 | {description} | {root cause} | {action} | {N days} |
+
+### P1 Improvements (resolve before evaluation begins)
+
+| Gap ID | Description | Remediation | Effort |
+|--------|-------------|-------------|--------|
+| {PREFIX}-G0N | {description} | {action} | {N days} |
+
+### P2 Nice-to-Have
+
+| Gap ID | Description | Remediation |
+|--------|-------------|-------------|
+| {PREFIX}-G0N | {description} | {action} |
 
 ---
 
-## Training Usage
+## Section 11 — Performance Targets
 
-### Target Models
+> **Source**: [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md)
+> (or [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](../../planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md) for MNV4 heads)
 
-| Model | Architecture | Purpose |
-|-------|--------------|---------|
-| Model-A | ResNet-18 | Student IQA |
-| Model-B | ResNet-50 | Teacher IQA |
+| Head ID | Head Name | Task | Target Metric | Target Value | Test Set |
+|---------|-----------|------|--------------|-------------|----------|
+| {SIG-GX-Y} | `{head_name}` | {task type} | {metric} | {value} | {OOD category} |
 
-### Training Recipe
+### Achieved Results
 
-```python
-from dataset_loader import TrainingDataset
-
-# Load dataset
-train_ds = TrainingDataset(
-    root="/path/to/dataset",
-    split="train",
-    transform=train_transforms
-)
-
-# DataLoader
-train_loader = DataLoader(
-    train_ds,
-    batch_size=32,
-    shuffle=True
-)
-```
-
-### Expected Performance
-
-| Metric | Target | Achieved | Notes |
-|--------|--------|----------|-------|
-| SRCC | > 0.85 | - | Spearman correlation |
-| PLCC | > 0.85 | - | Pearson correlation |
-| MAE | < 0.15 | - | Mean absolute error |
-
----
-
-## Evaluation Strategy
-
-### Tier 1: Primary Evaluation
-
-| Dataset/Split | Ground Truth | Metrics |
-|---------------|--------------|---------|
-| This dataset test | Human MOS / Official labels | SRCC, PLCC, MAE |
-
-### Tier 2: Secondary Evaluation (if applicable)
-
-| Dataset | Ground Truth | Purpose |
-|---------|--------------|---------|
-| External benchmark | Official labels | Cross-domain generalization |
-
----
-
-## Quality Assurance
-
-### Integrity Verification
-
-```bash
-# Verify checksums
-cd /path/to/dataset
-sha256sum -c checksums/all_checksums.sha256
-```
-
-### Visual Inspection
-
-Run the inspection script to verify a random sample:
-
-```bash
-python scripts/inspect_training_dataset.py --dataset dataset_name --samples 100
-```
-
----
-
-## Known Issues & Limitations
-
-- **Issue 1**: Description and mitigation
-- **Issue 2**: Description and mitigation
+| Head | Val {metric} | Test {metric} | Status |
+|------|-------------|--------------|--------|
+| `{head_name}` | — | — | ❌ Not trained |
 
 ---
 
 ## Related Documents
 
-- [Source Dataset 1](link) - Description
-- [Generation Script](link) - Assembly script
-- [Training Plan](link) - Overall training strategy
+- **HAR File(s)**: [{har-file}.md](../../planning/har/{har-file}.md)
+- **DDR**: [{name}_ddr.md](../diversity_reports/{name}_ddr.md)
+- **Head Spec**: [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md)
+- **Diversity Spec**: [DATASET_DIVERSITY_REQUIREMENTS.md](../../planning/DATASET_DIVERSITY_REQUIREMENTS.md)
+- **HAR Synthesis**: [HAR_SYNTHESIS.md](../../planning/HAR_SYNTHESIS.md)
+- **Source Datasets**: [DATASET_QUICK_REFERENCE.md](../DATASET_QUICK_REFERENCE.md)
 
 ---
 
@@ -296,79 +322,7 @@ python scripts/inspect_training_dataset.py --dataset dataset_name --samples 100
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | YYYY-MM-DD | Initial release |
-
----
-
-*Document Version 1.0*
-
-```
-
----
-
-## MANIFEST.json Schema
-
-Each training dataset should include a machine-readable manifest:
-
-```json
-{
-  "name": "dataset_name",
-  "version": "1.0.0",
-  "created": "2025-12-19",
-  "description": "Brief description",
-  "purpose": "iqa_training | orientation | script_detection | layout | ...",
-  "phase": "phase7",
-
-  "sources": [
-    {
-      "name": "source_dataset_1",
-      "path": "01_base_data/category/source_1/",
-      "images_used": 5000
-    }
-  ],
-
-  "splits": {
-    "train": {"count": 10000, "path": "splits/train.jsonl"},
-    "val": {"count": 1500, "path": "splits/val.jsonl"},
-    "test": {"count": 3000, "path": "splits/test.jsonl"}
-  },
-
-  "totals": {
-    "images": 14500,
-    "size_gb": 12.5
-  },
-
-  "labels": {
-    "type": "soft_labels | pseudo_labels | parameter_based | hard_labels",
-    "format": "jsonl",
-    "schema_version": "1.0"
-  },
-
-  "generation": {
-    "script": "scripts/assemble_xxx.py",
-    "config": "metadata/generation_config.json",
-    "timestamp": "2025-12-19T10:00:00Z",
-    "random_seed": 42
-  },
-
-  "checksums": {
-    "algorithm": "sha256",
-    "file": "checksums/all_checksums.sha256"
-  }
-}
-```
-
----
-
-## Status Markers
-
-| Status | Meaning |
-|--------|---------|
-| ✅ Ready | Dataset complete and validated |
-| 🔄 In Progress | Generation/assembly ongoing |
-| ⚠️ Partial | Some splits/sources incomplete |
-| ❌ Blocked | Generation blocked by dependency |
-| 🗃️ Archived | Superseded by newer version |
+| 1.0.0 | YYYY-MM-DD | Initial creation |
 
 ---
 
@@ -376,4 +330,5 @@ Each training dataset should include a machine-readable manifest:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2026-02-01 | Initial template based on source dataset template patterns |
+| 2.0.0 | 2026-02-23 | Added HAR-sourced sections (source pool, gap registry, OOD, diversity); restructured from 7 to 11 sections |
+| 1.0.0 | 2026-02-01 | Initial template |

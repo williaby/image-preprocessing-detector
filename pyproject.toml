@@ -236,6 +236,18 @@ synthetic = [
     "albumentations>=2.0.8",
 ]
 
+ood = [
+    # OOD Dataset Acquisition Dependencies
+    # Used by scripts/build_ood_dataset.py and scripts/ood_utils.py
+    # Install: uv sync --extra ood
+    "imagehash>=4.3.1",         # pHash computation for near-duplicate detection
+    # Pillow>=10.0.0 already in base; required by imagehash
+    # albumentations already in ml/synthetic; required for compound degradation (4a)
+    "arxiv>=2.1.0",             # arXiv API client for arxiv-smoke-test sub-command
+    "internetarchive>=5.0.0",   # Internet Archive API for 4c book gutter shadow
+    "playwright>=1.49.0",       # Headless browser for code screenshot generation (8a)
+]
+
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
 # Annotation CLI (Phase 3 - dataset management and migrations)
@@ -360,7 +372,7 @@ known-local-folder = ["validation", "benchmarks"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
 # Annotation module - protocol-compliant method signatures have intentionally unused args
-"src/image_preprocessing_detector/annotation/parsers/**/*.py" = ["ARG002", "RUF012", "ERA001", "RUF059", "PIE810", "SIM102", "B007", "TRY300"]
+"src/image_preprocessing_detector/annotation/parsers/**/*.py" = ["ARG002", "RUF012", "ERA001", "RUF059", "PIE810", "SIM102", "B007", "TRY300", "D100", "E402"]  # D100/E402: intentional L4 registry metadata pattern (__l4_* before imports)
 "src/image_preprocessing_detector/annotation/enrichment/**/*.py" = ["ARG002", "TRY300"]
 "src/image_preprocessing_detector/annotation/workflow/**/*.py" = ["ARG001", "ARG002"]
 "src/image_preprocessing_detector/annotation/schemas/validators.py" = ["PERF401", "SIM102"]

@@ -162,3 +162,57 @@ VLM inspection (2026-02-13): passing_sample_accuracy=0.95. Direct viewing of 3 s
 | **Text/OCR Extracted** | - | Not extracted | Docling OCR not yet run |
 | **Layout Extracted** | `metadata_registry/extracted/hindi-synth/` | Available | Docling GPU: 161 layout batches, 80,009 images |
 | **Layer 2 Metadata** | `metadata_registry/json/hindi_ocr_synthetic_metadata.json` | Complete | 80,008 samples (2026-02-09) |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | — | All images upright (0°) by synthetic construction; no orientation variety |
+| MNV4-H2 | skew_reg | ➖ | 0 | — | No skew applied during generation; all images have 0° skew |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~80,008 | Pseudo-label | Clean synthetic renders; useful as high-quality anchor examples after RQ labeling |
+| SIG-G1-1 | blur_score | 🟡 | ~80,008 | Pseudo-label | Minimal blur (synthetic); useful as near-zero blur exemplars |
+| SIG-G1-2 | noise_score | 🟡 | ~80,008 | Pseudo-label | No noise (synthetic); useful as near-zero noise exemplars |
+| SIG-G1-3 | contrast_score | 🟡 | ~80,008 | Pseudo-label | Clean white background; good contrast baseline |
+| SIG-G1-4 | skew_score | ➖ | 0 | — | No skew in synthetic generation |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | PNG lossless; no compression artifact signal |
+| SIG-G1-6 | overall_quality | 🟡 | ~80,008 | Pseudo-label | High-quality synthetic renders provide "good quality" anchor distribution |
+| SIG-G2-1 | script_cls | ✅ | ~80,008 | Native (Deva) | Primary Devanagari (Deva) training data; 80K samples for one of 19 script classes |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | — | Same as pre-correction — no orientation variety in synthetic data |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | — | No skew to correct |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~80,008 | Native (False) | Confirmed printed synthetic; large-scale negative (no handwriting) examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-4 | presence_reg | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | — | Not applicable — no handwriting present |
+| SIG-G5-1 | capture_method_cls | ❌ | 0 | — | Synthetic capture method; 100% real images required — synthetic excluded |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | Clean white backgrounds; no shadow variation |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | Flat synthetic renders; no geometric distortion |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | Devanagari text lines; no code or markup content |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~80,008 | Pseudo-label | Same as MNV4-H3 — high-quality anchor after labeling pass |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | 100% Indic (Deva); single-script dataset — strong Devanagari representation |
+| 2 | Capture method | ❌ | 100% synthetic; excluded from G5-1 capture_method_cls training |
+| 3 | Document domain | 🟡 | 100% EDU; single domain — no cross-domain variety |
+| 4 | Layout type | ❌ | Single-line text crops only; no page-level layout |
+| 5 | Text density | ❌ | All images are single text lines; no density variation |
+| 6 | Degradation types | ❌ | Clean synthetic renders; zero degradation diversity |
+| 7 | Resolution/DPI range | 🟡 | Variable resolution (synthetic rendering artifacts); mostly consistent quality |
+| 8 | Document age | ❌ | Modern synthetic only; no aged or historical examples |
+| 9 | Text scope | ✅ | 100% line-level scope; comprehensive single-line Devanagari coverage |
+| 10 | Content flags | ❌ | No formulas, figures, tables, or code — plain Devanagari text only |
+| 11 | Binarization status | 🟡 | Clean white-on-white backgrounds; effectively binarized by construction |
+| 12 | Artifact types | ❌ | No scan artifacts, JPEG compression, shadows, or warping |
+| 13 | Color mode | 🟡 | Grayscale/RGB clean renders; no binarized or heavily degraded color variation |
+| 14 | Font variety | ✅ | Multiple Devanagari fonts used in synthetic generation; good intra-script font diversity |
+
+### 13.3 Corpus Role & Constraints
+
+This dataset is the **primary training source for the Devanagari (Deva) script class** in SIG-G2-1, contributing ~80K line-level images that cover diverse Devanagari font styles. It is licensed CC0 (public domain) with no usage restrictions. Being 100% synthetic, it is excluded from G5-1 `capture_method_cls` training and provides no IQA degradation signal, but it offers large-scale negative handwriting examples and high-quality anchor samples for IQA regression heads after a pseudo-labeling pass.

@@ -27,12 +27,20 @@ Usage:
         uv run python3 scripts/integrate_pubtabnet_enrichments.py
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "pubtabnet"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/layout/pubtabnet.py"
+)
+
 
 import argparse
 import json
 import logging
-import re
 import time
 from collections import Counter
 from datetime import UTC, datetime
@@ -41,6 +49,12 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    load_language_enrichment,
+    load_metadata,
 )
 
 logging.basicConfig(
@@ -81,48 +95,6 @@ COLOR_SPACE_TO_MODE: dict[str, str] = {
 # ===================================================================
 # Data loaders
 # ===================================================================
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to pubtabnet_metadata.json.
-
-    Returns:
-        Full metadata dict with "samples" list.
-    """
-    log.info("Loading metadata from %s (this may take a moment for 2.6GB)...", path)
-    start = time.monotonic()
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    elapsed = time.monotonic() - start
-    log.info("  Loaded %d samples in %.1fs", len(data.get("samples", [])), elapsed)
-    return data
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment and index by image_id.
-
-    Args:
-        path: Path to pubtabnet_language_enrichment.json.
-
-    Returns:
-        Dict mapping image_id to language record.
-    """
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d language records", len(index))
-    return index
-
-
 class LazyLayoutIndex:
     """Memory-efficient layout index with on-demand batch loading.
 
@@ -340,117 +312,6 @@ def infer_split(original_path: str) -> str:
     return "unknown"
 
 
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute text statistics from consolidated cell text.
-
-    Args:
-        text: Consolidated table text content.
-
-    Returns:
-        Dict with char_count, word_count, line_count, has_content,
-        avg_line_length, latin_word_count.
-    """
-    if not text or text.strip() == "":
-        return {
-            "char_count": 0,
-            "word_count": 0,
-            "line_count": 0,
-            "has_content": False,
-        }
-
-    clean_text = text.strip()
-    lines = clean_text.split("\n")
-    non_empty_lines = [ln for ln in lines if ln.strip()]
-    words = clean_text.split()
-
-    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
-    digit_count = len(re.findall(r"\d", clean_text))
-
-    avg_line_len = 0.0
-    if non_empty_lines:
-        avg_line_len = round(
-            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines),
-            1,
-        )
-
-    stats: dict[str, Any] = {
-        "char_count": len(clean_text),
-        "word_count": len(words),
-        "line_count": len(non_empty_lines),
-        "has_content": True,
-        "avg_line_length": avg_line_len,
-    }
-
-    if latin_words > 0:
-        stats["latin_word_count"] = latin_words
-    if digit_count > 0:
-        stats["digit_count"] = digit_count
-
-    return stats
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Assesses field groups and produces reliability tiers based on
-    confidence thresholds.
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Reliability summary dict.
-    """
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
-
-
-# ===================================================================
-# Per-sample integration
-# ===================================================================
 def integrate_sample(
     sample: dict[str, Any],
     lang_index: dict[str, dict[str, Any]],

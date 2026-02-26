@@ -348,3 +348,57 @@ dataset = load_dataset("nielsr/funsd")
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/funsd/](../../scripts/audit/results/funsd/)
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 | ~149 (train) | GT (upright assumed) | All forms scanned upright; 149 training samples; small but real-scan diversity |
+| MNV4-H2 | skew_reg | 🟡 | ~149 (train) | Pseudo-label | Scanned forms have real minor skew; classical skew labeling applicable |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~149 (train) | Pseudo-label | 754–863 px width, consistent scanner resolution; upper-mid RQ range |
+| SIG-G1-1 | blur_score | ✅ | ~149 (train) | Pseudo-label | Authentic ADF scanner blur patterns; real scanning conditions represented |
+| SIG-G1-2 | noise_score | ✅ | ~149 (train) | Pseudo-label | HIGH noise level (intentionally noisy dataset); valuable noisy examples |
+| SIG-G1-3 | contrast_score | ✅ | ~149 (train) | Pseudo-label | Variable contrast from real scans; represents mid-to-low contrast distribution |
+| SIG-G1-4 | skew_score | 🟡 | ~149 (train) | Pseudo-label | Real skew present in many samples; contributes authentic skew signal |
+| SIG-G1-5 | compression_score | 🟡 | ~149 (train) | Pseudo-label | JPEG format with scan compression artifacts present |
+| SIG-G1-6 | overall_quality | ✅ | ~149 (train) | Pseudo-label | Variable quality distribution; real-world noisy scan quality range |
+| SIG-G2-1 | script_cls | ✅ | ~149 (train) | GT (Layer 2) | 100% Latin (Latn/English); US administrative forms |
+| SIG-G3-1 | orientation_cls (post) | 🟡 | ~149 (train) | GT (upright) | Post-correction orientation; forms expected upright after deskew |
+| SIG-G3-2 | skew_reg (post) | 🟡 | ~149 (train) | Pseudo-label | Real residual skew after correction; authentic post-correction distribution |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~64 (32%) | GT (content_flags) | 64/199 forms have handwriting (32%); form fill-ins in answer fields |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 | ~64 | Pseudo-label | Form-fill handwriting; legibility varies; limited sample count |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 | ~64 | GT-derived | MIXED type (printed labels + handwritten answers); useful mixed-content signal |
+| SIG-G4-4 | presence_reg | ✅ | ~149 (train) | GT-derived | Binary presence mapped to 0.0/1.0; 32% positive rate |
+| SIG-G4-5 | legibility_reg | 🟡 | ~64 | Pseudo-label | Legibility regression for handwritten form fields; small but authentic |
+| SIG-G5-1 | capture_method_cls | ✅ | ~149 (train) | GT (Layer 2) | 100% scanner_adf; contributes to scanner class in capture_method_cls |
+| SIG-G5-2 | shadow_reg | 🟡 | ~149 (train) | Pseudo-label | Real scanner shadows possible; likely low severity but authentic |
+| SIG-G5-3 | warping_reg | ➖ | ~149 (train) | Pseudo-label | ADF scanner produces flat documents; minimal warping; low-severity negatives |
+| SIG-G5-4 | code_cls | ➖ | ~149 (train) | GT (content inspection) | Administrative forms contain no source code; clean negative examples |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~149 (train) | Pseudo-label | Consistent scanner resolution (754–863 px); mid-range RQ contribution |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | Latin only (100% Latn/English); no script diversity |
+| 2 | Capture method | ✅ | Scanner ADF (100%); contributes to scanner class; test split OOD-reserved |
+| 3 | Document domain | ❌ | Administrative only (ADM 100%); US tax and government forms |
+| 4 | Layout type | 🟡 | Form layout (labeled boxes, fields, headers); consistent structure type |
+| 5 | Text density | 🟡 | Mixed density (sparse answers, denser question/header regions) |
+| 6 | Degradation types | ✅ | Real scan noise, blur, skew, variable contrast; authentic degradation variety |
+| 7 | Resolution/DPI range | 🟡 | 754–863 px width; narrow range from consistent ADF scanner setup |
+| 8 | Document age | 🟡 | Mix of modern (1990s–2000s) US administrative forms |
+| 9 | Text scope | ✅ | Page-level scope for all 199 forms |
+| 10 | Content flags | ✅ | Handwriting: 32%, Tables: 17%, Signatures: 24%, Figures: 3% |
+| 11 | Binarization status | ❌ | Grayscale scans (color mode: L); not binarized |
+| 12 | Artifact types | ✅ | Scan noise, blur, occasional fold marks; authentic ADF scanner artifacts |
+| 13 | Color mode | 🟡 | Grayscale (L) 100%; no color or binarized variety |
+| 14 | Font variety | 🟡 | Mixed: typed/printed form labels + handwritten answers; typewriter fonts present |
+
+### 13.3 Corpus Role & Constraints
+
+FUNSD contributes **authentic scanned-form IQA diversity** — its intentionally noisy real scans make it one of the few datasets providing genuine scanner degradation signals for blur, noise, and contrast heads. Despite its small size (149 training images), the 32% handwriting rate and 24% signature rate make it a critical source of handwriting presence labels (G4-1/G4-4). The test split (50 images) is BENCHMARK RESERVED and must be excluded from all training; the CC-BY-4.0 license permits commercial use with attribution.

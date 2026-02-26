@@ -376,3 +376,57 @@ path/to/image/rvl_form_0002.tif 1
 |-----:|-------|-------------:|---------------:|
 | 1 | `layout_detections` | 74.2% | 0.576 |
 | 2 | `text_quality` | 25.8% | 0.672 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ✅ | ~320,000 | Hard | Used in stream 4 orientation training; 4 rotations applied to scanned documents; 80K per class |
+| MNV4-H2 | skew_reg | 🟡 | ~16,000 | Derived | Real scanner skew artifacts present (HIGH sensitivity); no explicit skew labels; derivable via classical estimator |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~16,000 | Derived | Max 1000px dimension; variable scan quality; char-height estimation feasible on grayscale |
+| SIG-G1-1 | blur_score | 🟡 | ~16,000 | Derived | Variable scan quality confirmed; blur estimation reliable on grayscale JPEG images |
+| SIG-G1-2 | noise_score | ✅ | ~16,000 | Derived | HIGH sensitivity confirmed; real scanner noise from 1990s-2000s digitization equipment |
+| SIG-G1-3 | contrast_score | 🟡 | ~16,000 | Derived | Authentic grayscale degradation variation; contrast diversity across 16 document classes |
+| SIG-G1-4 | skew_score | 🟡 | ~16,000 | Derived | HIGH sensitivity confirmed; real scanning skew artifacts present throughout dataset |
+| SIG-G1-5 | compression_score | 🟡 | ~16,000 | Derived | Local subset is JPEG-converted; compression artifacts present in local copy |
+| SIG-G1-6 | overall_quality | ✅ | ~16,000 | Derived | Large scale with authentic variable quality; strong spread across quality tiers |
+| SIG-G2-1 | script_cls | 🟡 | ~16,000 | Derived | 95.5% Latin dominant; minority CJK (4.3%), Indic (0.2%) — useful for Latin class weight |
+| SIG-G3-1 | orientation_cls (post) | ✅ | ~320,000 | Hard | Stream 4 confirmed use; post-correction orientation signal from 4-rotation scheme |
+| SIG-G3-2 | skew_reg (post) | 🟡 | ~16,000 | Derived | Post-correction skew residuals derivable; real-world skew range present |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 | ~6,200 | Derived | has_handwriting=6.2% (local 16K); full dataset class 3 (handwritten) = 25,000 images |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 | ~2,000 | Derived | Class 3 (handwritten) subset; quality variable; legibility estimation feasible |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 | ~25,000 | Derived | Class 3 is predominantly full-page handwritten documents; content type derivable |
+| SIG-G4-4 | presence_reg | 🟡 | ~6,200 | Derived | Continuous presence score derivable from handwritten class proportion |
+| SIG-G4-5 | legibility_reg | 🟡 | ~2,000 | Derived | Legibility regression feasible on handwritten class subset |
+| SIG-G5-1 | capture_method_cls | ✅ | 16,000 | Hard | 100% scanner confirmed by Layer 2 aggregate; clean single-class hard label |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | No shadow severity labels; no L2 severity field populated |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | No warping labels; flat-bed ADF scans with minimal geometric distortion |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | Administrative/legal/financial documents from tobacco litigation; no source code content |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~16,000 | Derived | Max 1000px; variable DPI from 1990s scanners; resolution quality estimation feasible |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | 95.5% Latin; 4.3% CJK (Hant/Hans/Hani/Jpan); 0.2% Indic (Beng/Deva/Mlym) — not suited for script_cls but covers Latin at scale |
+| 2 | Capture method | ✅ | 100% scanner; clean single-method hard label; largest scanner dataset in corpus |
+| 3 | Document domain | ✅ | COM 31%, GOV 31%, FIN 13%, SCI 13%, MEDIA 6%, TECH 6% — well-balanced 6-domain coverage |
+| 4 | Layout type | ✅ | 16 document classes: letters, forms, invoices, presentations, scientific reports, news articles, etc. — broadest layout variety in corpus |
+| 5 | Text density | ✅ | High-density (memos, letters, reports) through sparse (advertisements, forms); class-stratified diversity |
+| 6 | Degradation types | ✅ | Yellowing, staining, bleed-through, scan lines — authentic 1990s-2000s scanner degradation |
+| 7 | Resolution/DPI range | 🟡 | All images max 1000px dimension; resolution capped; variable DPI from multi-device collection |
+| 8 | Document age | ✅ | Aged/historical (1990s-2000s digitization of older documents from tobacco litigation, some pre-1970s) |
+| 9 | Text scope | 🟡 | Predominantly page-level; no word/line annotations; class 3 (handwritten) offers sub-page scope signal |
+| 10 | Content flags | 🟡 | has_formula 79% (likely layout elements), has_figure 8%, has_table 3%, has_handwriting 6% |
+| 11 | Binarization status | ❌ | All grayscale/RGB scans; no binarized images in local subset |
+| 12 | Artifact types | ✅ | Scanner noise, bleed-through, yellowing, JPEG compression (local conversion); real multi-artifact distribution |
+| 13 | Color mode | 🟡 | Grayscale (original TIFF) and RGB (local JPEG conversion); no color documents; no binary images |
+| 14 | Font variety | ✅ | 16 class types span typewriter, early desktop printing, handwriting, newspaper typesetting — broadest font variety in corpus |
+
+### 13.3 Corpus Role & Constraints
+
+RVL-CDIP is the **primary large-scale scanner training source and orientation_cls backbone dataset**, with 400K balanced images across 16 document classes providing the broadest layout, domain, and font variety of any real-scan dataset in the corpus. Its confirmed use in stream 4 orientation training (4-rotation scheme) makes it a Primary contributor to MNV4-H1 and SIG-G3-1, while its 100% scanner capture method and authentic 1990s-era degradation make it essential for capture_method_cls and IQA head training. Academic-only license (IIT-CDIP / Legacy Tobacco) prohibits commercial use; the dataset must be excluded from OOD benchmarks to prevent training leakage.

@@ -3,7 +3,7 @@
 skinparam backgroundColor #FEFEFE
 
 title Prepare-Doc - Workflow Hierarchy & Data Dependencies\nHow Workstreams Connect
-footer Preprocessing, IQA & Routing Gateway | v3.0 | February 2026
+footer Preprocessing, IQA & Routing Gateway | v4.0 | February 2026
 
 ' ============================================================================
 ' SWIMLANES BY WORKSTREAM
@@ -29,19 +29,18 @@ partition "Dataset Collection" {
     - DocLayNet (Layout)
     - LIVE/CSIQ (IQA reference)
 
-    **Workflow:**
-    [[prepare-doc-training-data-ingestion.puml]]
+    **Level 2 Detail:**
+    data-preparation/prepare-doc-training-data-ingestion.puml
 
     **Documentation:**
-    [[docs/DATASET_CATALOG.md]]
+    docs/datasets/README.md
 
     **Scripts:**
     - scripts/download_*.py
     - scripts/annotate_base_metadata.py
   end note
 
-  :Normalize to 300 DPI;
-  :Create train/val/test splits;
+  :Normalize and create splits;
   note right
     **Scripts:**
     - scripts/build_training_labels.py
@@ -50,6 +49,13 @@ partition "Dataset Collection" {
     Layer 1: IMMUTABLE (annotate_base_metadata.py)
     Layer 2: ENRICHMENT (in same script)
     Layer 3: TRAINING (build_training_labels.py)
+
+    **Stream 4C (multi-task):**
+    data-preparation/stream-4c-dataset-preparation.puml
+
+    **Schema Field Population (cross-cutting):**
+    schema-field-population/schema-field-population-summary.puml
+    schema-field-population/schema-field-population-workflow.puml
   end note
 }
 
@@ -63,24 +69,21 @@ partition "Dataset Collection" {
 partition "Multi-Model Ensemble Training" {
   :Train Track A IQA models;
   note right
-    **Models (accuracy-optimized):**
-    - MUSIQ (sharpness specialist)
-    - QualiCLIP (color specialist)
-    - DocIQ-Replica (overall)
+    **Purpose:** Accuracy-optimized IQA models
+    (specialist heads for sharpness, color, overall)
 
-    **Workflow:**
-    [[diqa-training-phases.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-training-phases.puml
     Phase 1: Track A Training
   end note
 
   :Train Track B VLM models;
   note right
-    **Models:**
-    - Qwen3-VL-8B (LoRA)
-    - InternVL3-8B (LoRA)
+    **Purpose:** VLM models fine-tuned with LoRA
+    for pseudo-label generation
 
-    **Workflow:**
-    [[diqa-training-phases.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-training-phases.puml
     Phase 2: Track B Training
   end note
 }
@@ -92,8 +95,8 @@ partition "Checkpoint Selection" {
     Weighted SRCC + ECE scoring
     Band-based selection
 
-    **Workflow:**
-    [[diqa-checkpoint-selection.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-checkpoint-selection.puml
   end note
 }
 
@@ -101,8 +104,8 @@ partition "Ensemble Stacking" {
   :Train HierarchicalStacker;
   :Apply temperature scaling;
   note right
-    **Workflow:**
-    [[diqa-training-phases.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-training-phases.puml
     Phase 3: Stacker Training
   end note
 }
@@ -114,8 +117,8 @@ partition "Batch Inference" {
     Modal serverless (A10G/A100)
     Parallel batch processing
 
-    **Workflow:**
-    [[diqa-inference-pipeline.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-inference-pipeline.puml
 
     **Scripts:**
     - modal/arena_benchmark.py
@@ -124,9 +127,6 @@ partition "Batch Inference" {
     **Source:**
     - src/.../labeling/arena/runner.py
     - src/.../labeling/arena/inference/*.py
-
-    **Documentation:**
-    [[docs/benchmarks/README.md]]
   end note
 
   :Generate pseudo-labels\nwith uncertainty;
@@ -136,8 +136,8 @@ partition "Batch Inference" {
     - per-model predictions
     - uncertainty flags
 
-    **Workflow:**
-    [[diqa-pseudo-labeling-workflow.puml]]
+    **Level 2 Detail:**
+    pseudo-labeling/diqa-pseudo-labeling-workflow.puml
 
     **Scripts:**
     - modal/generate_pseudo_labels.py
@@ -159,54 +159,36 @@ partition "Production Model Training" {
   note right
     **Purpose:**
     Full document analysis model
-    22 heads across 5 groups
-    (IQA[6], Script[3], Orient+Skew[3], HW[5], PageAttrs[5])
     (~50ms GPU inference)
 
-    **Data:**
-    10 purpose-built datasets (~503K)
-
-    **Source:**
-    - src/.../training/siglip2_trainer.py
-    - src/.../models/siglip2_naflex.py
+    **Level 2 Detail:**
+    model-training/prepare-doc-training-workflow-high-level.puml
 
     **Scripts:**
     - modal/train_siglip2_multitask.py
   end note
 
-  :Train MobileNetV4-Conv-S;
+  :Train MobileNetV4-Conv-S Pre-Correction;
   note right
-    **Process (3-step virtuous cycle):**
-    1. Train on synthetic GT labels
-    2. Train SigLIP 2 multi-task
-    3. Re-train with SigLIP 2 soft labels
-       (KL-divergence, T=3)
+    **Purpose:**
+    Fast pre-correction gate (~3ms GPU)
+    3 heads: orientation, skew,
+    resolution quality
 
-    **Workflow:**
-    [[prepare-doc-distillation.puml]]
+    **Level 2 Detail:**
+    model-training/prepare-doc-distillation.puml
 
-    **Source:**
-    - src/.../training/mobilenetv4_trainer.py
-    - src/.../training/generate_soft_labels.py
-
-    **ADR:**
-    [[docs/ADRs/0028-resnet-teacher-student.md]]
-    (SUPERSEDED by SigLIP 2 multi-task)
+    **Scripts:**
+    - modal/train_mobilenetv4_precorrection.py
   end note
 
   :Export MobileNetV4 Pre-Correction;
   note right
     **Purpose:**
-    Fast pre-correction model
-    3 heads (~3ms inference)
-    orientation, skew, resolution quality
-
-    **Source:**
-    - src/.../training/mobilenetv4_trainer.py
-    - src/.../models/mobilenetv4_conv_s.py
+    ONNX export for production deployment
 
     **Scripts:**
-    - modal/train_mobilenetv4_precorrection.py
+    - modal/export_phase7_onnx.py
   end note
 }
 
@@ -219,11 +201,6 @@ partition "Layout Model Training" {
     **Models:**
     - docling-layout-egret-xlarge (accuracy)
     - docling-layout-heron (speed)
-
-    **Scope:**
-    Full layout analysis including
-    reading order and table structure
-    (moved from Unify)
 
     **Scripts:**
     - modal/train_docling_layout.py
@@ -245,7 +222,7 @@ partition "Model Export" {
     - src/.../utils/gcs_uploader.py
 
     **Documentation:**
-    [[docs/MODEL_STORAGE.md]]
+    docs/MODEL_STORAGE.md
   end note
 }
 
@@ -263,131 +240,208 @@ partition "Document Processing" {
   note right
     **Format detection + PDF sub-classification — <20ms CPU**
 
+    PDF text layer quality validation heuristics:
+    - Word recognition rate (real words vs character soup)
+    - Character entropy (OCR garbage has unusual distribution)
+    - Text/image layer overlap (scan+OCR both at same coords)
+
     PDF sub-types:
-    - born_digital: valid text layer → fast path
-    - scanned: no text layer → image pipeline
+    - born_digital: text layer quality validated -> fast path
+    - born_digital_degraded: poor OCR text -> image pipeline
+    - scanned: no text layer -> image pipeline
     - hybrid: per-page routing
-    - born_digital_degraded: garbage text → image pipeline
 
     **Outputs:**
     document_class, file_format, router_confidence,
     page_type_map (hybrid PDFs only)
 
+    **Level 2 Detail:**
+    production-runtime/prepare-doc-primary-workflow-detailed.puml
+
     **Source (planned):**
     - src/.../routing/document_type_router.py
-      (promotes classification/pdf_type_classifier.py)
-
-    **Reference:**
-    docs/tmp_cleanup/docling_format_routing_analysis.md
   end note
 
-  if (document_class?) then (native text OR\nborn-digital PDF)
+  if (document_class?) then (native text OR\nvalidated born-digital PDF)
     :Pass to Unify directly\n(no image preprocessing);
     note right
       Fast path: DOCX, HTML, MD, LaTeX, CSV,
-      XML, EPUB, VTT, born-digital PDF
+      XML, EPUB, VTT, validated born-digital PDF
       Saves ~55ms GPU per document
     end note
     stop
-  else (image / scanned PDF\nor hybrid PDF pages)
+  else (image / scanned PDF /\nborn_digital_degraded /\nhybrid PDF pages)
   endif
 
-  :Pre-flight analysis;
+  :Step 1 — Rasterization;
   note right
-    - DPI detection
-    - Upscaling if needed
+    PDFs only — images pass through
 
-    **Workflow:**
-    [[prepare-doc-primary-workflow-high-level.puml]]
+    Scanned PDF: use embedded DPI if >= 150 DPI,
+    otherwise fallback to 300 DPI
+    Hybrid PDF: per-page — born_digital pages -> fast path,
+    scanned/image pages -> rasterize
+
+    **Level 2 Detail:**
+    production-runtime/prepare-doc-primary-workflow-high-level.puml
 
     **Source:**
     - src/.../ingestion/pdf_analyzer.py
     - src/.../ingestion/pdf_resolution.py
     - src/.../ingestion/pdf_upscaler.py
-
-    **Documentation:**
-    [[docs/api/ingestion.md]]
   end note
 
-  :Text Gate routing;
+  :Step 1b — Lossless Conversion (PNG);
   note right
-    Fast ensemble heuristics
-    <10ms per page
+    Convert all inputs to PNG before any ML analysis.
+    Eliminates JPEG block artifacts that corrupt:
+    - MobileNetV4 orientation/skew detection
+    - Character height estimation
+    - SigLIP 2 IQA sharpness scoring
+    PNG at 300 DPI letter page ~ 8-25 MB (acceptable)
+
+    **Source:**
+    - src/.../ingestion/format_normalizer.py
+  end note
+
+  :Step 2 — MobileNetV4-Conv-S\nPre-Correction Gate (~3ms GPU);
+  note right
+    **3 heads:**
+    - Orientation (4-class: 0/90/180/270) + confidence score
+    - Skew angle (regression +/- 10 deg)
+    - Resolution quality (0-1 adequacy score)
+
+    Confidence threshold: if orient_conf < 90%,
+    skip rotation (better slightly skewed than wrong 90 deg)
+
+    **Level 2 Detail:**
+    model-training/prepare-doc-distillation.puml
+
+    **Source:**
+    - src/.../detection/iqa_ml.py
+  end note
+
+  :Step 3 — Geometric Corrections\n+ Border Removal;
+  note right
+    - Rotate to upright (if MobileNetV4 confident)
+    - Deskew (if skew above threshold)
+    - Border/scanner-bed crop
+      (prevents layout analysis false positives)
+
+    **Source:**
+    - src/.../correction/corrections.py
+  end note
+
+  :Step 4 — Script-Aware\nAdaptive Resolution;
+  note right
+    Uses script class from Step 2 to select target:
+    - Latin/Cyrillic/Greek:  32-48px (target ~40px)
+    - CJK (Han/Kanji/Hangul): 40-60px (target ~50px)
+    - Arabic/Hebrew:          28-42px (target ~35px)
+    - Devanagari/Bengali:     36-52px (target ~44px)
+
+    If char_height < script_min -> upscale
+    Algorithm: Bicubic/Lanczos4 (never nearest-neighbor)
+    Safety rails: 150-600 DPI equivalent, no downscaling
+
+    **Source:**
+    - src/.../ingestion/pdf_upscaler.py
+  end note
+
+  :Step 5 — Text Gate (<10ms);
+  note right
+    Fast ensemble heuristics on corrected + lossless image.
+    Stroke density, CC analysis, edge density.
+    Informs Layout Analysis routing (Step 6c).
 
     **Source:**
     - src/.../detection/text_gate.py
 
     **Documentation:**
-    [[docs/api/detection.md]]
+    docs/api/detection.md
   end note
 
-  fork
-    :Classical IQA\n(7 detectors);
-    note left
-      **Source:**
-      src/.../detection/iqa_classical.py
-    end note
-  fork again
-    :MobileNetV4-Conv-S\nPre-Correction (3 heads);
-    note left
-      **Source:**
-      src/.../detection/iqa_ml.py
-      **Heads:** orientation, skew,
-      resolution quality (~3ms)
-    end note
-
-    :SigLIP 2 NAFlex\nMulti-Task (22 heads);
+  if (blank page?) then (yes)
+    :Record blank_page flag in metadata;
     note right
-      **5 Head Groups (~50ms):**
-      IQA, Script, Orientation+Skew,
-      Handwriting, Page Attrs
-
-      **Fallback:**
-      Confidence-based classical
-      fallback (6 head-specific rules)
-
-      **Source:**
-      - src/.../detection/iqa_ml.py
-      - src/.../orchestration/device_orchestrator.py
+      Skip SigLIP 2 + Layout analysis.
+      DQS = 0.0, routing = skip_ocr.
     end note
-  fork again
-    :Layout Analysis\n(Docling Layout Models);
-    note right
-      **Full Layout Detection:**
-      - 11+ DocLayNet classes
-      - docling-layout-egret-xlarge (accuracy)
-      - docling-layout-heron (speed)
+  else (has content)
+    fork
+      :Classical IQA\n(8 detectors);
+      note left
+        Measures ORIGINAL image quality
+        (before quality corrections)
+        Blur, noise, contrast, JPEG blockiness,
+        illumination, binarization, bleed-through
 
-      **Source:**
-      - src/.../detection/doclayout_yolo.py
-      - src/.../detection/layout_lite/*.py
+        **Source:**
+        src/.../detection/iqa_classical.py
+      end note
+    fork again
+      :SigLIP 2 NAFlex\nMulti-Task (~50ms);
+      note right
+        **5 Head Groups (19 heads total):**
+        IQA (sharpness, noise, contrast, exposure)
+        Script (16+ scripts — refinement of Step 2)
+        Orientation+Skew (verification pass)
+        Handwriting (detection)
+        Page Attrs (shadows, warping, paper type)
 
-      **Scope Change:**
-      Layout moved from Unify
-      to Prepare-Doc for efficiency
-    end note
-  end fork
+        Fallback: confidence-based classical
+        fallback (6 head-specific rules)
 
-  :Apply corrections;
+        **Level 2 Detail:**
+        model-training/prepare-doc-training-workflow-high-level.puml
+
+        **Source:**
+        - src/.../detection/iqa_ml.py
+        - src/.../orchestration/device_orchestrator.py
+      end note
+    fork again
+      :Layout Analysis\n(Docling Layout Models);
+      note right
+        11+ DocLayNet classes
+        docling-layout-egret-xlarge (accuracy)
+        docling-layout-heron (speed)
+        Runs on corrected + lossless image.
+        Conditional on text gate result (Step 5).
+
+        **Source:**
+        - src/.../detection/doclayout_yolo.py
+        - src/.../detection/layout_lite/*.py
+      end note
+    end fork
+  endif
+
+  :Step 7 — Quality Corrections;
   note left
+    CLAHE, sharpening, denoising.
+    Applied AFTER IQA measurement so that IQA
+    scores reflect original document quality.
+    Guided by Classical IQA + SigLIP 2 outputs.
+    Confidence-based classical fallback if
+    SigLIP 2 confidence is low.
+
     **Source:**
     src/.../correction/corrections.py
 
     **Documentation:**
-    [[docs/api/correction.md]]
+    docs/api/correction.md
   end note
 
-  :Calculate DQS + routing;
+  :Step 8 — Calculate DQS + routing;
   note right
     **Source:**
     - src/.../metrics/dqs_calculator.py
     - src/.../routing/recommendation_engine.py
 
     **ADR:**
-    [[docs/ADRs/0030-document-quality-score.md]]
+    docs/ADRs/0030-document-quality-score.md
 
-    **Detailed Implementation:**
-    [[prepare-doc-primary-workflow-detailed.puml]]
+    **Level 2 Detail:**
+    production-runtime/prepare-doc-primary-workflow-detailed.puml
   end note
 }
 
@@ -396,25 +450,36 @@ partition "Document Processing" {
 :Handoff to Unify;
 note right
   **AB Contract:**
-  - Quality assessment
+  - Quality assessment (original quality scores)
   - Layout detection results
   - Reading order + table structure
   - Routing recommendation
-  - Corrected page images
+  - Corrected page images (post-CLAHE)
 
   **Source:**
   - src/.../schema.py
   - src/.../output/json_generator.py
 
   **Documentation:**
-  [[docs/api/schema.md]]
-  [[docs/guides/project-b-handoff.md]]
+  docs/api/schema.md
+  docs/guides/project-b-handoff.md
+
+  **Level 2 Detail (downstream-context/):**
+  unify-ocr-layout-workflow.puml (Prepare-Doc → Unify)
+  chunk-fusion-chunking-workflow.puml (Unify → Chunk)
+  embed-vectorstore-workflow.puml (Chunk → Embed)
+  prepare-audio-transcription-workflow.puml (Prepare-Audio track)
+  foundry-chunk-migration.puml (Chunk service migration)
 
   **Unify Focus:**
   OCR orchestration only
-  (layout analysis now in A)
+  (layout analysis now in Prepare-Doc)
 end note
 
 stop
+
+' ── Level 0 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-0/index.md
+'   └─ rag-pipeline-overview.puml  (multi-service RAG pipeline context)
 
 @enduml

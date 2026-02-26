@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-primary-workflow-detailed
 title Prepare-Doc - Primary Document Processing Workflow (Detailed)
 
 skinparam dpi 150
@@ -78,7 +78,8 @@ partition "Stage 0 — Document Type Router" #FFF9C4 {
   endif
 }
 note right
-  src/routing/document_type_router.py (planned)
+  src/.../classification/pdf_type_classifier.py
+  src/.../routing/document_type_router.py (planned)
   Promotes classification/pdf_type_classifier.py
   to front of pipeline + adds format detection.
   Target: <20ms CPU
@@ -164,6 +165,9 @@ partition "Classical IQA" {
   :Skew Detection\n(Hough transform + Ensemble);
   note right: SkewDetector
 
+  :JPEG Quality Factor Detection\n(DCT coefficient analysis);
+  note right: JpegQualityDetector\nflag: quality < 80 (soft)\nhard gate: quality < 50\nfield: jpeg_quality_factor: int | None
+
   :Collect all DetectedIssues;
 }
 note right: src/detection/iqa_classical.py
@@ -191,9 +195,9 @@ partition "Pre-Correction" {
 }
 
 partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
-  :Load SigLIP 2 NAFlex model\n(88M params, 22 heads);
+  :Load SigLIP 2 NAFlex model\n(88M params, 19 heads);
   :Forward pass (~50ms GPU);
-  :Extract predictions across 5 groups:\n- Group 1: IQA (6 heads: blur/noise/contrast/skew/compression + overall)\n- Group 2: Script (3 heads: script_code + has_non_latin + has_rtl)\n- Group 3: Orientation + Skew (3 heads: cls + reg + confidence)\n- Group 4: Handwriting (5 heads: 3 cls + 2 reg)\n- Group 5: Page Attributes (5 heads: capture_cls + shadow/warping/code/resolution_quality);
+  :Extract predictions across 5 groups:\n- Group 1: IQA (6 heads: blur/noise/contrast/skew/compression + overall)\n- Group 2: Script (1 head: script_class; has_non_latin+has_rtl rule-derived)\n- Group 3: Orientation + Skew (2 heads: cls + reg; confidence implicit)\n- Group 4: Handwriting (5 heads: 3 cls + 2 reg)\n- Group 5: Page Attributes (5 heads: capture_cls + shadow/warping/code/resolution_quality);
   :Evaluate per-head confidence;
 
   if (any head confidence\nbelow threshold?) then (yes)
@@ -333,6 +337,15 @@ partition "JSON Generation" {
 
   :Serialize to JSON\n(Pydantic model_dump_json);
   :Write DocumentMetadata.json;
+  note right
+    FastAPI API surface (23 endpoint stubs):
+    DEFERRED — not active until SigLIP 2
+    mAP > 0.88 on holdout set.
+    Stubs exist in src/api/endpoints/ but
+    are not wired to production router.
+    See docs/planning/MASTER_PROJECT_PLAN.md
+    Phase 5 for activation criteria.
+  end note
 }
 note right: src/output/json_generator.py
 
@@ -344,6 +357,49 @@ partition "Image Output" {
 
 :Handoff to Unify\n(OCR Orchestration);
 
+note right
+  **Source:**
+  - src/.../ingestion/pdf_loader.py
+  - src/.../ingestion/pdf_resolution.py
+  - src/.../ingestion/pdf_upscaler.py
+  - src/.../ingestion/pdf_analyzer.py
+  - src/.../ingestion/image_loader.py
+  - src/.../classification/pdf_type_classifier.py
+  - src/.../detection/text_gate.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../detection/orientation_detector.py
+  - src/.../detection/layout_lite/analyzer.py
+  - src/.../correction/corrections.py
+  - src/.../correction/border_removal.py
+  - src/.../correction/perspective_correction.py
+  - src/.../metrics/dqs_calculator.py
+  - src/.../routing/recommendation_engine.py
+  - src/.../routing/docling_router.py
+  - src/.../output/json_generator.py
+  - src/.../schema.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0008-multi-stage-pipeline-architecture.md]]
+  [[docs/ADRs/0017-pydantic-v2-json-schema.md]]
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+end note
+
 stop
+
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS1 Swimlane: docs/architecture/diagrams/level-3/production-runtime/production-runtime-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

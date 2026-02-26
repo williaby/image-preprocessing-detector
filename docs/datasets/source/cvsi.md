@@ -348,3 +348,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | N/A | Word/scene-text crops — no document orientation signal |
+| MNV4-H2 | skew_reg | ➖ | 0 | N/A | Scene text crops; perspective distortion not equivalent to document skew |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~10,715 | Pseudo-label (classical) | Variable video frame resolution; IQA pseudo-labels derivable |
+| SIG-G1-1 | blur_score | ✅ | 10,715 | Pseudo-label (classical) | Motion blur from video frames is a primary real degradation type; high variance |
+| SIG-G1-2 | noise_score | 🟡 | ~10,715 | Pseudo-label (classical) | Video compression noise and sensor noise present |
+| SIG-G1-3 | contrast_score | 🟡 | ~10,715 | Pseudo-label (classical) | Variable contrast from Indian TV/outdoor lighting conditions |
+| SIG-G1-4 | skew_score | ➖ | 0 | N/A | Scene crops; no document skew signal |
+| SIG-G1-5 | compression_score | ✅ | 10,715 | Pseudo-label (classical) | Video encoding compression artifacts are prominent and classifiable |
+| SIG-G1-6 | overall_quality | 🟡 | ~10,715 | Pseudo-label (classical) | Overall quality lower than document scans; good low-quality examples |
+| SIG-G2-1 | script_cls | ✅ | 10,715 | Hard label (human) | Primary: 10 scripts (8 Indic + Latin + Arabic); excellent Brahmic-family differentiation training |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | N/A | Scene text crops; not page-level orientation |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | N/A | Scene text crops; no document skew signal |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | 10,715 | Hard label (derived) | All scene text from video frames is printed/typeset → NONE |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G4-4 | presence_reg | ✅ | 10,715 | Hard label (derived) | All printed scene text → 0.0 continuous score |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | 10,715 | Hard label (metadata) | 100% camera (camera_smartphone per aggregate); video frame capture from Indian media |
+| SIG-G5-2 | shadow_reg | 🟡 | ~10,715 | Pseudo-label (classical) | Natural outdoor shadows in scene text images; estimable via classical methods |
+| SIG-G5-3 | warping_reg | ➖ | 0 | N/A | Scene text crops at word level; no page warping |
+| SIG-G5-4 | code_cls | ✅ | 10,715 | Hard label (derived) | Indian video media scene text; no programming code → code_present=False |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~10,715 | Pseudo-label (classical) | Video frames have variable effective resolution; lower than document scans |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | 3 families: Indic/Brahmic (80.4%, 8 scripts: Deva/Beng/Gujr/Knda/Orya/Guru/Taml/Telu), Latin (10.6%), Arabic (9.0%) |
+| 2 | Capture method | ✅ | 100% camera (video frame extraction from Indian media; camera_smartphone per aggregate) |
+| 3 | Document domain | ✅ | 100% SCN (scene text domain per aggregate) |
+| 4 | Layout type | ❌ | Word-level scene text crops; no page-level layout information |
+| 5 | Text density | ❌ | Word-level crops; text density not applicable at this granularity |
+| 6 | Degradation types | ✅ | Real-world video: motion blur, JPEG/video compression, low resolution, perspective distortion, variable lighting; no explicit labels |
+| 7 | Resolution/DPI range | 🟡 | Variable (video frames); generally lower resolution than document scans; no DPI metadata |
+| 8 | Document age | ❌ | Scene text from video; document age concept does not apply |
+| 9 | Text scope | ✅ | 100% word-level crops (per aggregate: text_scope=word) |
+| 10 | Content flags | ❌ | No content flags populated in aggregate |
+| 11 | Binarization status | ❌ | All color RGB (video frame captures); no binarized samples |
+| 12 | Artifact types | ✅ | Video-specific: motion blur, H.264/MPEG compression blocking, low-light noise, perspective distortion; broad real-world artifact coverage |
+| 13 | Color mode | ✅ | 100% color RGB (Indian TV/outdoor video frames) |
+| 14 | Font variety | ✅ | High: broadcast typography, signage, advertisements across 10 scripts; Devanagari-family script shape variety especially strong |
+
+### 13.3 Corpus Role & Constraints
+
+CVSI-2015 is a primary contributor to SIG-G2-1 (script_cls) for Indic script differentiation, providing 8,616 samples across 8 Brahmic-family scripts (Deva, Beng, Gujr, Knda, Orya, Guru, Taml, Telu) with the most balanced per-class distribution (~1,000 per script) of any dataset in the pool; it is also the principal source of video-compression and motion-blur degradation examples for IQA heads. All 10 scripts are within the SIG-G2-1 19-class taxonomy. Research-only license from ICDAR 2015 competition.

@@ -20,6 +20,11 @@ Configuration Categories:
     - Base Training - Formulas (2): im2latex, mathverse
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
+    - Camera-captured folder / Synthetic content (1): doc3d
+      NOTE: doc3d lives under 01_base_data/camera_captured/ due to historical
+      misnaming. It is a fully synthetic 3D-rendered dataset (Blender). The
+      capture_method is explicitly set to CaptureMethod.SYNTHETIC to prevent
+      any pipeline from mislabeling its 102K samples as camera-captured.
     - OCR Quality (1): ocr_quality
     - Correction/Shadow/Dewarping (6): anyphotodoc6300, docalign12k, wsrd,
       warpdoc, docreal, sd7k
@@ -613,6 +618,17 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         text_scope="page",
         parser_name="midv500",
     ),
+    "midv2020": DatasetConfig(
+        name="midv2020",
+        path_suffix="01_base_data/documents/midv2020/extracted",
+        pattern="**/images/**/*.jpg",  # JPG only; TIF scans lack annotations
+        capture_method=CaptureMethod.UNKNOWN,  # Mixed: camera_smartphone + scanner per image
+        domain=DomainLevel1.PERSONAL,  # Government ID documents
+        is_benchmark=False,
+        has_human_mos=False,
+        text_scope="page",
+        parser_name="midv2020",
+    ),
     "bhutan_financial": DatasetConfig(
         name="bhutan_financial",
         path_suffix="01_base_data/documents/bhutan_financial",
@@ -960,6 +976,110 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_human_mos=True,
         parser_name="q_doc",
     ),
+    # =========================================================================
+    # Vertical Japanese / NDL Datasets (2026-02 Onboarding)
+    # =========================================================================
+    "jssoda": DatasetConfig(
+        name="jssoda",
+        path_suffix="01_base_data/language/multilingual_scripts/jssoda",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.BORN_DIGITAL,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="page",
+        has_handwriting=False,
+        parser_name="jssoda",
+    ),
+    "vjroda": DatasetConfig(
+        name="vjroda",
+        path_suffix="01_base_data/language/multilingual_scripts/vjroda/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.BORN_DIGITAL,
+        domain=DomainLevel1.ADMINISTRATIVE,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="page",
+        has_handwriting=False,
+        parser_name="vjroda",
+    ),
+    "ndl-docl": DatasetConfig(
+        name="ndl-docl",
+        path_suffix="01_base_data/language/multilingual_scripts/ndl-docl/full_images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="page",
+        has_handwriting=None,
+        parser_name="ndl_docl",
+    ),
+    "pdmocr-part1": DatasetConfig(
+        name="pdmocr-part1",
+        path_suffix="01_base_data/language/multilingual_scripts/pdmocr-part1/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="page",
+        has_handwriting=None,
+        parser_name="pdmocr",
+    ),
+    "pdmocr-part2": DatasetConfig(
+        name="pdmocr-part2",
+        path_suffix="01_base_data/language/multilingual_scripts/pdmocr-part2/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="page",
+        has_handwriting=None,
+        parser_name="pdmocr",
+    ),
+    "ndl-minhon": DatasetConfig(
+        name="ndl-minhon",
+        path_suffix="01_base_data/handwriting/ndl-minhon/images",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        iso639_language="ja",
+        iso15924_script="Jpan",
+        text_scope="line",
+        has_handwriting=True,
+        parser_name="ndl_minhon",
+    ),
+    # =========================================================================
+    # Camera-captured folder / Synthetic content
+    # =========================================================================
+    # WARNING: doc3d lives under 01_base_data/camera_captured/ due to a
+    # historical download-path error. Every one of its 102,064 images is a
+    # Blender-rendered 3D mesh projection — NOT a camera capture. The folder
+    # path MUST NOT be used to infer capture_method. capture_method is
+    # therefore set explicitly to CaptureMethod.SYNTHETIC here, and a
+    # companion test in test_datasets.py enforces it cannot regress.
+    # Primary head: warping_reg (SIG-G5-3) via backward-mapping NPY arrays.
+    "doc3d": DatasetConfig(
+        name="doc3d",
+        path_suffix="01_base_data/camera_captured/doc3d/data/doc3d/img",
+        pattern="*/*.png",  # 21 mesh-ID subdirs, ~5K PNG each (448x448, RGBA)
+        capture_method=CaptureMethod.SYNTHETIC,  # 3D Blender renders — NOT camera
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_paired_gt=True,  # backward mapping + depth maps in sibling ZIPs
+        has_handwriting=False,
+        has_table=False,
+        has_formula=False,
+        parser_name=None,  # No parser yet — P3 priority, warping_reg focus
+    ),
 }
 
 
@@ -1015,6 +1135,20 @@ def validate_dataset_configs() -> list[str]:
         ):
             issues.append(
                 f"{config.name}: is_benchmark=False but path not in {valid_non_benchmark_prefixes}"
+            )
+
+        # Guard: datasets under camera_captured/ must have an explicit
+        # (non-UNKNOWN) capture_method so no consumer can infer the method
+        # from the folder name.  doc3d is the canonical example — it lives
+        # under camera_captured/ but is CaptureMethod.SYNTHETIC.
+        if (
+            "camera_captured" in config.path_suffix
+            and config.capture_method == CaptureMethod.UNKNOWN
+        ):
+            issues.append(
+                f"{config.name}: path is under 'camera_captured/' but "
+                f"capture_method is UNKNOWN — set it explicitly "
+                f"(CAMERA_SMARTPHONE, CAMERA_PROFESSIONAL, or SYNTHETIC)"
             )
 
     return issues

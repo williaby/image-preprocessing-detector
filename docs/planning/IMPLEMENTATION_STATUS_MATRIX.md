@@ -80,7 +80,7 @@ tags:
 
 **Status**: 📋 Design-Only (0%)
 
-**Description**: Multi-task training plan for SigLIP 2 with 16 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attributes). Two-model pipeline with MobileNetV4-Conv-S pre-correction check.
+**Description**: Multi-task training plan for SigLIP 2 with 19 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attributes). Two-model pipeline with MobileNetV4-Conv-S pre-correction check.
 
 **Implementation Status**:
 

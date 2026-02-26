@@ -679,18 +679,30 @@ class HandwritingAssessment(BaseModel):
         description="Content type classification (what is written)",
     )
 
-    # Continuous scores for DQS integration
+    # Continuous scores for DQS integration.
+    # Inference output is always >= 0.0 (absence expressed via presence=NONE enum).
+    # Training manifests use -1.0 as the N_A masked sentinel; the data loader maps
+    # -1.0 → task_mask=0 so MultiTaskLoss skips those samples.  This schema is
+    # inference-only; the ge=0.0 constraint correctly rejects the training sentinel.
     presence_score: float = Field(
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Continuous presence score (area ratio 0-1)",
+        description=(
+            "Continuous presence score (area ratio 0-1). "
+            "Inference: 0.0 when presence=NONE. "
+            "Training manifests use -1.0 as N_A sentinel (masked loss, not stored here)."
+        ),
     )
     legibility_score: float = Field(
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Continuous legibility score (0=illegible, 1=excellent)",
+        description=(
+            "Continuous legibility score (0=illegible, 1=excellent). "
+            "Inference: 0.0 when legibility=NOT_APPLICABLE. "
+            "Training manifests use -1.0 as N_A sentinel (masked loss, not stored here)."
+        ),
     )
 
     # Confidence in predictions

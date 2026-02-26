@@ -1,0 +1,147 @@
+@startuml prepare-doc-siglip2-phased-training
+title Prepare-Doc - SigLIP 2 NAFlex Phased Training Schedule
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+partition "Inputs" {
+  :SigLIP 2 NAFlex backbone\n(frozen ViT-B/16, ~88M params);
+  note right
+    Backbone stays frozen for all 4 phases.
+    Only task heads and loss weights change.
+    Source: modal/train_siglip2_multitask.py
+  end note
+  :10 purpose-built datasets\n(~503K images, 5 task groups);
+}
+
+partition "Phase 1 — Warmup (5 epochs)" {
+  :Activate G1 (IQA, 6 heads) + G2 (Script, 1 head) only;
+  :All G3/G4/G5 heads frozen — zero loss weight;
+  :Loss weights: G1=0.50, G2=0.50;
+  :Kendall uncertainty weighting per head:\nL_total = Sum_k (1/(2*sigma_k^2)) * L_k + log(sigma_k);
+  note right
+    Kendall weighting automatically down-weights
+    high-uncertainty heads each mini-batch.
+    Prevents dominant-head collapse.
+    sigma_k is a learnable per-head parameter.
+  end note
+  if (G1 loss stable < 10% delta over 2 epochs?\nScript acc > 70%?) then (yes)
+    :Save Phase 1 checkpoint;
+  else (no)
+    :Extend by 2 epochs;
+    :Repeat convergence check;
+  endif
+}
+
+partition "Phase 2 — Expand (5 epochs)" {
+  :Add G3 (Orientation+Skew, 3 heads);
+  :G3 heads initialized fresh;
+  :G1+G2 continue from Phase 1 weights;
+  :Enable PCGrad gradient surgery;
+  note right
+    PCGrad detects conflicting gradients between head groups.
+    For heads i and j where g_i dot g_j < 0:
+      g_i = g_i - (g_i dot g_j / |g_j|^2) * g_j
+    Projects the conflicting component to zero
+    before the optimizer step.
+    Source: TRAINING_OPTIMIZATION_PLAN.md §3.2
+  end note
+  :Loss weights: G1=0.30, G2=0.25, G3=0.25,\nG4=0.10, G5=0.10;
+  if (Orientation acc > 85%?\nSkew MAE < 2.0 deg?) then (yes)
+    :Save Phase 2 checkpoint;
+  else (no)
+    :Adjust G3 loss weight +0.05;\nrepeat;
+  endif
+}
+
+partition "Phase 3 — Full Training (20-40 epochs)" {
+  :All 5 groups active (G1-G5, 16 heads);
+  :Kendall uncertainty weighting per head (all groups);
+  :PCGrad gradient surgery per batch;
+  :Loss weights:\nG1(IQA)=0.25, G2(Script)=0.20,\nG3(Orient+Skew)=0.20,\nG4(Handwriting)=0.15, G5(PageAttrs)=0.20;
+  :Cosine LR schedule with warmup (first 3 epochs);
+  :Early stopping: patience=10 on composite primary metric;
+  if (All 16 heads meet\ngraduation thresholds?) then (yes)
+    :Save full-training checkpoint\n(best composite metric);
+  else (no)
+    :Continue up to 40 epochs total;
+    :If budget exhausted → proceed to Phase 4;
+  endif
+}
+
+partition "Phase 4 — Refine (5-10 epochs)" {
+  :Identify underperforming heads\n(below 90% of graduation threshold);
+  :Boost failing head loss weight x2;
+  :Freeze well-graduated heads\n(set loss weight to zero);
+  :Reduce LR 10x from Phase 3 final LR;
+  if (All heads pass graduation thresholds?) then (yes)
+    :Save refined checkpoint;
+  else (no — epoch budget exhausted)
+    :Flag failing heads for dataset expansion;
+    note right
+      Failing heads after Phase 4 trigger
+      active learning data collection
+      (Workstream 7: Drift + Active Learning).
+    end note
+  endif
+}
+
+partition "Graduation Criteria (all heads must pass)" {
+  :IQA overall quality PLCC > 0.65;
+  :Orientation acc > 95%;
+  :Skew MAE < 0.5 deg;
+  :Resolution quality MAE < 0.1;
+  :Script classification acc > 90%;
+  :Handwriting F1 > 0.85 (when dataset available);
+  :Export both models to ONNX;
+  :Register checkpoints in GCS model registry;
+}
+
+note right
+  **Phased Schedule Summary:**
+  Phase 1: 5ep  — warmup (G1+G2 only)
+  Phase 2: 5ep  — expand (+G3, PCGrad enabled)
+  Phase 3: 20-40ep — full (all 5 groups)
+  Phase 4: 5-10ep — refine (underperformers)
+
+  **Loss Formulation:**
+  L_total = Sum_k (1/(2*sigma_k^2)) * L_k + log(sigma_k)
+  sigma_k: learnable per-head uncertainty parameter
+
+  **PCGrad Projection:**
+  g_i = g_i - (g_i dot g_j / |g_j|^2) * g_j
+  Applied when g_i dot g_j < 0 (conflicting)
+
+  **Source:**
+  - modal/train_siglip2_multitask.py
+  - docs/planning/TRAINING_OPTIMIZATION_PLAN.md
+  - docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md
+
+  **See also:**
+  prepare-doc-distillation.puml for 3-step
+  virtuous cycle context (Step 2 zoomed here).
+
+  **ADR:**
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
+end note
+
+stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

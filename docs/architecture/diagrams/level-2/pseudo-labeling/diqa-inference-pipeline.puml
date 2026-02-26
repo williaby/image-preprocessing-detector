@@ -1,4 +1,4 @@
-@startuml DIQA Inference Pipeline
+@startuml diqa-inference-pipeline
 !theme plain
 skinparam backgroundColor #FEFEFE
 skinparam componentStyle rectangle
@@ -61,5 +61,30 @@ Qwen_Inf --> Aggregator : predictions
 InternVL_Inf --> Aggregator : predictions
 
 Aggregator --> OutputBucket : Pseudo-labels JSON
+
+note right
+  **Source:**
+  - src/.../labeling/arena/runner.py
+  - src/.../labeling/arena/inference/modal.py
+  - src/.../labeling/arena/inference/api.py
+  - src/.../labeling/arena/schemas.py
+
+  **Scripts:**
+  - modal/train_siglip2_multitask.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/pseudo-labeling/index.md]]
+  [[docs/planning/PSEUDO_LABELING_PROJECT_PLAN.md]]
+  [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+
+  **ADR:**
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

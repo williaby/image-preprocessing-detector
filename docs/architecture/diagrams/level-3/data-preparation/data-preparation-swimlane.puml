@@ -5,7 +5,7 @@ skinparam defaultFontName "DejaVu Sans"
 skinparam defaultFontSize 11
 
 title Data Preparation Workstream (WS3) - Three-Layer Architecture
-caption Total LOC: 4,066 lines across 8 primary scripts | Generated: 2025-01-19
+caption Total LOC: 4,341 lines across 8 primary scripts | Generated: 2026-02-22
 
 |Layer 1: Immutable Original Data|
 start
@@ -107,11 +107,11 @@ fork again
   :Run ML IQA (Multi-Task Pipeline);
   note right
     **iqa_ml.py**
-    LOC: 1,245 lines (30.6%)
+    LOC: 1,520 lines (35.0%)
 
     **Models**:
     - MobileNetV4-Conv-S (~3ms, 3 heads)
-    - SigLIP 2 NAFlex (~50ms, 22 heads)
+    - SigLIP 2 NAFlex (~50ms, 19 heads)
 
     **Features**:
     - Quality score predictions
@@ -120,6 +120,9 @@ fork again
     - Multi-task analysis
 
     **Output**: 12-dim feature vector
+
+    Note: V2 architecture. V1 used ResNet-50/ResNet-18
+    teacher-student; replaced by SigLIP 2 + MobileNetV4.
   end note
 
 fork again
@@ -309,26 +312,31 @@ stop
 
 legend right
   |= Component |= LOC |= Percentage |= Layer |
-  | annotate_base_metadata.py | 1,235 | 30.4% | Layer 1 |
-  | iqa_ml.py | 1,245 | 30.6% | Layer 2 |
-  | iqa_classical.py | 892 | 21.9% | Layer 2 |
-  | build_training_labels.py | 590 | 14.5% | Layer 3 |
-  | layout_lite.py | 524 | 12.9% | Layer 2 |
-  | dqs_calculator.py | 170 | 4.2% | Layer 2 |
-  | (Supporting utilities) | (410) | (10.1%) | Various |
-  |= **Total** |= **4,066** |= **100%** |= — |
+  | annotate_base_metadata.py | 1,235 | 28.5% | Layer 1 |
+  | iqa_ml.py | 1,520 | 35.0% | Layer 2 |
+  | iqa_classical.py | 892 | 20.5% | Layer 2 |
+  | build_training_labels.py | 590 | 13.6% | Layer 3 |
+  | layout_lite.py | 524 | 12.1% | Layer 2 |
+  | dqs_calculator.py | 170 | 3.9% | Layer 2 |
+  | (Supporting utilities) | (410) | (9.4%) | Various |
+  |= **Total** |= **4,341** |= **100%** |= — |
 
   **Key Files**:
   - annotate_base_metadata.py: 9 parsers, COCO cache, metadata gen
   - build_training_labels.py: 45-dim vector, anchor selection
-  - iqa_ml.py: MobileNetV4 + SigLIP 2 multi-task pipeline
+  - iqa_ml.py: MobileNetV4 + SigLIP 2 multi-task pipeline (V2)
   - iqa_classical.py: 8 CV detectors
   - layout_lite.py: Docling layout models (egret-xlarge/heron), 11+ classes
   - dqs_calculator.py: Quality scoring
 
   **Workstream: WS3 - Data Preparation**
   **Level 3 Documentation**
-  **Generated: 2025-01-19**
+  **Generated: 2026-02-22**
 endlegend
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/data-preparation/index.md
+'   └─ prepare-doc-training-data-ingestion.puml  (WS3 primary)
 
 @enduml

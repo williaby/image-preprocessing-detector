@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/project-a/corpus-manifest-v1.schema.json",
+  "title": "CorpusManifestRecord",
+  "description": "Unified Training Corpus manifest record. One record per image ingested into the corpus from any source dataset. Covers both active records (train/val/test/ood) and reserved records (ingested but not yet participating in training). Reserved records are the preferred source for future OOD expansion — draw from reserved before promoting active train records.\n\nSplit assignment is GLOBAL across all training heads: an image's split_type applies to every head simultaneously. An image cannot be train for one head and test for another. Val and test are immutable once assigned. OOD is a one-way promotion from either reserved (preferred) or active train (fallback).",
+  "type": "object",
+  "required": [
+    "corpus_id",
+    "corpus_version",
+    "image_path",
+    "source_dataset",
+    "corpus_status",
+    "ingested_at",
+    "ingested_by"
+  ],
+  "properties": {
+    "corpus_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA256 hash of the raw image file content. Primary key for global dedup. Format: 'sha256:{64-char hex}'. Computed once at ingestion and never changes. Used to detect the same image appearing under different paths or in different source datasets."
+    },
+    "corpus_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Corpus build version (SemVer) when this record was first created. Records the version at ingestion, not at last modification."
+    },
+    "image_path": {
+      "type": "string",
+      "description": "Canonical GCS URI or absolute local path to the image file. For GCS: 'gs://bucket/path/image.jpg'. This is the authoritative path — all training pipelines resolve images through this field."
+    },
+    "source_dataset": {
+      "type": "string",
+      "description": "Canonical dataset name from DATASET_NAMING_STANDARD.md. Identifies which source dataset this image originated from.",
+      "examples": ["sd7k", "wsrd", "rvl_cdip", "doclaynet", "synth-multiscript-v3", "midv500"]
+    },
+
+    "corpus_status": {
+      "type": "string",
+      "enum": ["active", "reserved", "excluded"],
+      "description": "Participation status in the corpus.\n\n'active': The image has a split_type assignment and participates in training, evaluation, or OOD stress testing.\n\n'reserved': Ingested and eligible but not yet assigned to any active role. Reserved records are the FIRST source to draw from when new OOD or training samples are needed — always prefer reserved over promoting active train records. The reserved pool exists because large datasets (e.g., RVL-CDIP 400K) provide more samples than needed for initial training; ingesting a supersample at construction time creates a buffer.\n\n'excluded': Ingested but ineligible. Reasons include: near-duplicate of an active record (pHash Hamming ≤ 5), corrupted file, license restriction, or active disqualification. Excluded records are retained for audit but never used."
+    },
+
+    "split_type": {
+      "type": ["string", "null"],
+      "enum": ["train", "val", "test", "ood", null],
+      "description": "Global split assignment. Applies to ALL training heads simultaneously — there is no per-head split. null when corpus_status is 'reserved' or 'excluded'.\n\nImmutability rules:\n- 'val' and 'test': immutable once assigned. Never change.\n- 'ood': one-way assignment. Cannot revert to train or reserved.\n- 'train': can be promoted to 'ood' (one-way). Prefer promoting from reserved pool first.\n\nPromotion audit: promoted_to_ood_at records when a train record became ood. Models trained before this timestamp have seen the image; their OOD evaluation on it is informational, not rigorous."
+    },
+
+    "split_source": {
+      "type": ["string", "null"],
+      "enum": ["source_native", "corpus_assigned", null],
+      "description": "How split_type was determined. null when corpus_status is 'reserved' or 'excluded'.\n\n'source_native': the source dataset defined this split (e.g., RVL-CDIP test set, DocLayNet val set). Source-native val and test assignments are inviolable and take precedence over any corpus-assigned logic.\n\n'corpus_assigned': assigned at corpus construction time using a DatasetSplitSpec (see dataset_split_spec_v1.schema.json). Applies to source datasets that do not provide their own splits."
+    },
+
+    "ood_category": {
+      "type": ["string", "null"],
+      "description": "OOD stress scenario identifier. null when split_type != 'ood'.\n\nStandard categories (extend as new failure modes are identified):\n- '4a_compound_distortion': multiply-distorted images (≥5 distortion types simultaneously)\n- '4c_book_gutter_shadow': bound-book gutter shadows — primary known failure mode for shadow_reg\n- '4d_binarized_document': binarized documents — tests shadow_unmeasurable sentinel handling\n- '4e_scanner_lid_open': real scanner-lid shadow examples (distinct from v3 synthetic)\n\nCustom categories are permitted. Use format '{phase}_{descriptor}' for traceability.",
+      "examples": ["4a_compound_distortion", "4c_book_gutter_shadow", "4d_binarized_document"]
+    },
+
+    "ood_source": {
+      "type": ["string", "null"],
+      "enum": ["predesignated", "promoted_from_reserved", "promoted_from_train", null],
+      "description": "How this record became OOD. null when split_type != 'ood'.\n\n'predesignated': designated OOD at corpus construction time before any model training. Clean boundary — no model has seen this image during training.\n\n'promoted_from_reserved': was in the reserved pool (never used in training) and promoted to OOD. Also a clean boundary — no model trained on this image.\n\n'promoted_from_train': was an active train record and promoted to OOD post-construction. Contaminated boundary for models trained before promoted_to_ood_at. Use promoted_to_ood_at to identify affected model versions.\n\nPredesignated and promoted_from_reserved are equivalent in cleanliness. promoted_from_train requires the timestamp audit."
+    },
+
+    "ood_predesignated": {
+      "type": ["boolean", "null"],
+      "description": "Convenience flag. true if ood_source is 'predesignated' or 'promoted_from_reserved' (clean OOD boundary). false if ood_source is 'promoted_from_train' (contaminated boundary for pre-promotion models). null when split_type != 'ood'."
+    },
+
+    "promoted_to_ood_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of OOD promotion. Non-null only when ood_source = 'promoted_from_train'. Models with a training_completed_at before this timestamp have seen this image during training; their OOD evaluation result for it is informational rather than a rigorous held-out test. null for predesignated and promoted_from_reserved records."
+    },
+
+    "promoted_to_ood_reason": {
+      "type": ["string", "null"],
+      "description": "Human-readable rationale for post-construction OOD promotion. Non-null only when ood_source = 'promoted_from_train'. Documents the failure mode discovery that motivated the promotion.",
+      "examples": [
+        "Discovered book-gutter shadow failure mode in production; these images provide targeted coverage",
+        "New binarized-document test scenario added to stress suite"
+      ]
+    },
+
+    "val_immutable_since": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when 'val' assignment was locked. Non-null only when split_type = 'val'. Equal to ingested_at for corpus_assigned val records. Once set, this record's split_type can never change."
+    },
+
+    "test_immutable_since": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when 'test' assignment was locked. Non-null only when split_type = 'test'. Equal to ingested_at for corpus_assigned test records. Once set, this record's split_type can never change."
+    },
+
+    "reserved_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this record entered the reserved pool. Non-null when corpus_status was ever 'reserved'. Retained even after activation to show the record's history."
+    },
+
+    "activated_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when corpus_status changed from 'reserved' to 'active'. null if the record was active from the moment of ingestion (i.e., never passed through reserved)."
+    },
+
+    "exclusion_reason": {
+      "type": ["string", "null"],
+      "enum": ["near_duplicate", "corrupted_file", "license_restriction", "label_quality_failure", "manual_disqualification", null],
+      "description": "Reason for corpus_status = 'excluded'. null for active and reserved records."
+    },
+
+    "near_duplicate_of": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "corpus_id of the active record this was found to be a near-duplicate of (pHash Hamming ≤ 5). Non-null only when exclusion_reason = 'near_duplicate'. The active record is retained; this record is excluded."
+    },
+
+    "phash": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{16}$",
+      "description": "64-bit perceptual hash (pHash) as 16-character hex string. Used at corpus assembly time for near-duplicate detection. Hamming distance ≤ 5 against any active record = near-duplicate, trigger exclusion."
+    },
+
+    "l2_sample_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "UUID matching the sample_id field in the corresponding L2 enrichment record. null if L2 enrichment has not yet been run for this image. The L2 record carries all label fields (shadow_severity, script_code, capture_method, etc.) that heads filter on."
+    },
+
+    "l2_schema_version": {
+      "type": ["string", "null"],
+      "description": "Schema version of the linked L2 enrichment record. Enables detection of stale enrichments when the schema advances. null if L2 enrichment not yet run.",
+      "examples": ["2.4.0"]
+    },
+
+    "l2_min_confidence_category": {
+      "type": ["string", "null"],
+      "enum": ["hard_label", "soft_label", "active_learning", "unreliable", "unassessed", null],
+      "description": "Denormalized copy of data.sample_reliability_summary.min_confidence_category from the linked L2 record. Enables O(1) filtering on label quality without joining to L2. null if L2 not yet run. Refreshed whenever the L2 record is updated."
+    },
+
+    "training_eligible_heads": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "List of head identifiers for which this record has sufficient L2 labels to participate in training. Computed at corpus assembly time from L2 field population. null if L2 not yet run. Used to quickly answer 'how many training-eligible records exist for shadow_reg?'",
+      "examples": [["shadow_reg", "capture_cls", "script_cls", "blur_score"]]
+    },
+
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this record was first written to the corpus manifest."
+    },
+
+    "ingested_by": {
+      "type": "string",
+      "description": "Script name and version that ingested this record.",
+      "examples": ["build_corpus_v1.py_v1.0.0", "ingest_sd7k_v1.0.0"]
+    },
+
+    "last_modified_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the most recent modification to this record (status change, OOD promotion, L2 link update, etc.)."
+    },
+
+    "last_modified_by": {
+      "type": ["string", "null"],
+      "description": "Script or operation that last modified this record.",
+      "examples": ["promote_ood_v1.0.0", "link_l2_enrichment_v1.0.0", "activate_reserved_v1.0.0"]
+    }
+  },
+
+  "if": {
+    "properties": { "corpus_status": { "const": "active" } },
+    "required": ["corpus_status"]
+  },
+  "then": {
+    "required": ["split_type", "split_source"]
+  },
+
+  "additionalProperties": false
+}

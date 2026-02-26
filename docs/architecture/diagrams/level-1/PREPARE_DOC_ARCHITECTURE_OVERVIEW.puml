@@ -8,7 +8,7 @@ skinparam packageStyle rectangle
 skinparam ranksep 60
 skinparam nodesep 40
 
-title Prepare-Doc (Prepare-Doc) - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
+title Prepare-Doc - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
 
 footer Prepare-Doc | Stage 0 + 8 Workstreams | Last Updated: 2026-02-22
 
@@ -36,37 +36,41 @@ cloud "RAG Processor\nWeb UI" as UI #DDDDDD {
 ' ============================================================================
 ' PRIMARY PRODUCTION FLOW (CENTER - Vertical Top-to-Bottom)
 ' ============================================================================
-package "WS 1: Production Runtime\n<150ms/page (GPU) | ≥6 pages/sec" #E8F5E9 {
+package "WS 1: Production Runtime\n<150ms/page (GPU) | ≥6 pages/sec\nLevel 2 [production-runtime/]: primary-workflow-detailed (primary)\n  + device-selection-flow · worker-architecture\n  + primary-workflow-test-coverage · primary-workflow-detailed-test-coverage" #E8F5E9 {
   rectangle "Stage 0:\nDocument Type Router" as Stage0 #FFF9C4 {
     card "Format Detector\n& PDF Sub-Classifier"
-    card "Native Text /\nAudio Fast-Path Gate"
+    card "Text Layer\nQuality Validation"
   }
 
-  rectangle "Pre-flight &\nIngestion" as Preflight {
-    card "DPI Detection\n& Upscaling"
-    card "300 DPI\nStandardization"
+  rectangle "Pre-Correction\nPipeline" as Preflight {
+    card "Step 1: Rasterization\n(300 DPI fallback)"
+    card "Step 1b: Lossless\nConversion (PNG)"
+    card "Step 2: MobileNetV4-Conv-S\n(3 heads: orient · skew · res)"
+    card "Step 3: Geometric Corrections\n& Border Removal"
+    card "Step 4: Adaptive Resolution\n(char-height-aware)"
   }
 
-  rectangle "Classification" as Class {
-    card "Text Gate"
+  rectangle "Text Gate\n& Early Exit" as Class {
+    card "Text Gate (<10ms)\non corrected image"
+    card "Blank Page\nEarly Exit"
   }
 
   rectangle "Quality\nAnalysis" as QA {
-    card "Classical IQA"
-    card "ML IQA\n(MobileNetV4\n+ SigLIP 2)"
-    card "Layout-Lite"
+    card "Classical IQA\n(8 detectors)"
+    card "SigLIP 2 NAFlex\n(19 heads ~50ms)"
+    card "Layout Analysis\n(Docling, conditional)"
   }
 
-  rectangle "Correction &\nOutput" as Correction {
-    card "Correction\nPipeline"
-    card "DQS & Routing"
+  rectangle "Quality Corrections\n& Output" as Correction {
+    card "CLAHE · Sharpening\n· Denoising"
+    card "DQS & Routing\nMetadata"
   }
 }
 
 ' ============================================================================
 ' DOWNSTREAM OUTPUT (Bottom)
 ' ============================================================================
-cloud "Downstream\nProjects" as Downstream #DDDDDD {
+cloud "Downstream\nServices" as Downstream #DDDDDD {
   card "Unify\n(OCR)" as ProjectB
   card "Chunk\n(Fusion)" as ProjectC
   card "Embed\n(Vector)" as ProjectD
@@ -77,20 +81,20 @@ cloud "Downstream\nProjects" as Downstream #DDDDDD {
 ' ============================================================================
 
 ' Model Training Support (Left)
-package "WS 2: Model Training\nModal GPU | 12-24hr" #E3F2FD {
+package "WS 2: Model Training\nModal GPU | 12-24hr\nLevel 2 [model-training/]: training-workflow-high-level (primary)\n  + training-infrastructure · siglip2-phased-training\n  + stream-4d-mobilenetv4-integration · wild-conditions-remediation\n  + training-workflow-test-coverage · training-workflow-v2 (legacy)" #E3F2FD {
   card "Teacher-Student\nTraining" as Train
   card "Model\nRegistry" as Registry
 }
 
 ' Arena Support (Left)
-package "WS 6: Arena\nPLCC > 0.65 required" #FFF8E1 {
+package "WS 6: Arena\nPLCC > 0.65 required\nLevel 2: model-arena/model-arena-architecture.puml" #FFF8E1 {
   card "Phase 1:\nBase Eval" as Arena1
   card "Phase 2:\nValidation" as Arena2
   card "Phase 3:\nDrift Check" as Arena3
 }
 
 ' Monitoring Support (Left)
-package "WS 7: Monitoring\nAlert: PLCC drop > 5%" #FFEBEE {
+package "WS 7: Monitoring\nAlert: PLCC drop > 5%\nLevel 2: monitoring-drift/monitoring-drift-architecture.puml" #FFEBEE {
   card "Performance\nTracking" as PerfTrack
   card "Drift Detection\n& Harvesting" as DriftHarvest
 }
@@ -100,24 +104,24 @@ package "WS 7: Monitoring\nAlert: PLCC drop > 5%" #FFEBEE {
 ' ============================================================================
 
 ' Data Preparation Support (Right)
-package "WS 3: Data Prep\nOHR-Bench ~18GB" #FFF3E0 {
+package "WS 3: Data Prep\nOHR-Bench ~18GB\nLevel 2 [data-preparation/]: training-data-ingestion (primary)\n  + automated-data-labeling · metadata-schema-architecture\n  + resolution-quality-labeling · skew-orientation-labeling · l2-metadata-enrichment\n  + stream-4c-dataset-preparation · stream-4e-handwriting-dataset\n  + compound-distortion-augmentation" #FFF3E0 {
   card "Dataset\nIngestion" as DataIngest
   card "Cataloging" as DataCatalog
 }
 
 ' Synthetic Generation Support (Right)
-package "WS 8: Synthetic\n70% real + 30% synthetic" #FCE4EC {
+package "WS 8: Synthetic\n70% real + 30% synthetic\nLevel 2: synthetic-generation/synthetic-generation-architecture.puml" #FCE4EC {
   card "Genalog\nDegradation" as Genalog
   card "Auto Ground\nTruth" as GroundTruth
 }
 
 ' Pseudo-Labeling Support (Right)
-package "WS 4: Pseudo-Label\nEnsemble > 0.85 agreement" #F3E5F5 {
+package "WS 4: Pseudo-Label\nEnsemble > 0.85 agreement\nLevel 2 [pseudo-labeling/]: diqa-training-phases (primary)\n  + diqa-pseudo-labeling-workflow · diqa-checkpoint-selection\n  + diqa-inference-pipeline · soft-label-pipeline-integration" #F3E5F5 {
   card "Script +\nModel Ensemble" as Ensemble
 }
 
 ' Labeling Models Support (Right)
-package "WS 5: Labeling\nModels" #E0F7FA {
+package "WS 5: Labeling\nModels\nLevel 2: labeling-benchmarking/domain-classification-pipeline.puml" #E0F7FA {
   card "Pretrained IQA\nModels" as LabelModels
 }
 
@@ -125,10 +129,10 @@ package "WS 5: Labeling\nModels" #E0F7FA {
 ' PRIMARY PRODUCTION FLOW (BOLD ARROWS TOP-TO-BOTTOM)
 ' ============================================================================
 DocSubmit -[#000000,thickness=4]down-> Stage0 : **Any Format**
-Stage0 -[#000000,thickness=4]down-> Preflight : **Image / Scanned PDF\n/ Hybrid PDF pages**
-Stage0 -[#4CAF50,dashed,thickness=2]right-> Downstream : native text +\nborn-digital PDF\n(fast path)
-Preflight -[#000000,thickness=4]down-> Class : **300 DPI Pages**
-Class -[#000000,thickness=4]down-> QA : **Routed**
+Stage0 -[#000000,thickness=4]down-> Preflight : **Image / Scanned PDF\n/ born_digital_degraded\n/ Hybrid PDF pages**
+Stage0 -[#4CAF50,dashed,thickness=2]right-> Downstream : native text +\nvalidated born-digital PDF\n(fast path)
+Preflight -[#000000,thickness=4]down-> Class : **Corrected\nLossless Images**
+Class -[#000000,thickness=4]down-> QA : **Routed\n(non-blank)**
 QA -[#000000,thickness=4]down-> Correction : **Analyzed**
 Correction -[#000000,thickness=4]down-> Downstream : **DocumentMetadata.json\n+ Corrected Images**
 
@@ -172,7 +176,7 @@ DriftHarvest .[#FF0000,thickness=3].> Train : PLCC drop\n> 10%\n(Trigger Retrain
 Arena3 .[#FF0000,thickness=3].> Registry : Recovery\nValidated\n(Re-Deploy)
 
 ' ============================================================================
-' CONTEXT NOTES (Minimal)
+' CONTEXT NOTES
 ' ============================================================================
 note top of UI
   **UPSTREAM**
@@ -181,7 +185,20 @@ end note
 
 note bottom of Downstream
   **DOWNSTREAM**
-  Projects B → C → D
+  Services B -> C -> D
 end note
+
+note right of Stage0
+  **born_digital validation:**
+  Word recognition rate +
+  character entropy +
+  text/image layer overlap
+  Fail -> born_digital_degraded
+  -> image pipeline
+end note
+
+' ── Level 0 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-0/index.md
+'   └─ rag-pipeline-overview.puml  (multi-service RAG pipeline context)
 
 @enduml

@@ -1,8 +1,8 @@
 ---
 dataset_id: sd7k
 version: "1.0"
-license: Unspecified
-commercial_use: false
+license: MIT
+commercial_use: true
 iqa_profiles:
   - shadow
   - illumination
@@ -17,7 +17,7 @@ documentation_status: partial
 
 > **Quick Stats**: ~7,239 image pairs | 30+ occluder types | 350+ documents | ICCV 2023
 >
-> **License**: Unspecified | **Commercial Use**: Unknown (verify with authors)
+> **License**: MIT | **Commercial Use**: Yes
 
 ##### 1. Overview
 
@@ -29,7 +29,7 @@ documentation_status: partial
 | **Maintainer** | University of Macau (CXH-Research) |
 | **Paper** | [ICCV 2023 - High-Resolution Document Shadow Removal](https://github.com/CXH-Research/DocShadow-SD7K) |
 | **Repository** | [GitHub: CXH-Research/DocShadow-SD7K](https://github.com/CXH-Research/DocShadow-SD7K) |
-| **License** | Unspecified (verify with authors) |
+| **License** | MIT (Copyright (c) 2023 Nick Chen / Xuhang Chen, University of Macau) |
 | **Documentation Status** | Partial |
 
 #### 2. Source Data Inventory
@@ -262,7 +262,7 @@ Camera-captured documents with controlled shadow degradation from 30+ occluder t
 | **Unique Characteristics** | 30+ occluder types, 350+ documents, high-resolution |
 | **Complementary Datasets** | WSRD (NTIRE challenge), RealDAE (shadow task subset) |
 | **Benchmark Suitability** | HIGH - Pre-split train/test, ICCV 2023 benchmark |
-| **Known Limitations** | Unspecified license; train count mismatch (6,479 vs 6,478) |
+| **Known Limitations** | Train count mismatch (6,479 vs 6,478) |
 
 ##### 6.5 Benchmark Results
 
@@ -275,7 +275,7 @@ Camera-captured documents with controlled shadow degradation from 30+ occluder t
 
 #### 7. Known Issues & Limitations
 
-- **License Unspecified**: No explicit license - verify with authors before commercial use
+- **MIT License**: Repository LICENSE file confirms MIT (Copyright 2023 Nick Chen). Applies to code, models, and dataset (no separate dataset license exists).
 - **Train Count Mismatch**: 6,479 input vs 6,478 target in training set (1 unpaired image)
 - **No Validation Split**: Only train/test splits provided
 - **No Layout Annotations**: Dataset focused on shadow removal, lacks semantic layout labels
@@ -351,8 +351,8 @@ This makes SD7K the most comprehensive document shadow removal dataset, signific
 
 | Property | Value |
 |----------|-------|
-| **License** | Unspecified |
-| **Commercial Use** | Unknown (verify with authors) |
+| **License** | MIT |
+| **Commercial Use** | Yes (permitted under MIT) |
 | **Image Format** | PNG |
 | **Color Space** | RGB |
 
@@ -433,3 +433,64 @@ Min confidence: 0.1 (language detection - no OCR run). Bottleneck: Missing enric
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `resolution` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~7,239 | Synthetic rotation | Documents at canonical orientation; synthetic 90°/180°/270° rotation augmentation applicable |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No skew angle ground truth; camera capture may introduce slight tilt but not annotated |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | - | - | High-resolution images noted but no DPI metadata or resolution quality labels |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~7,239 | Inferred | Target (shadow-free) images serve as high-quality, low-blur anchor examples |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~7,239 | Inferred | Camera-captured input images have incidental noise; clean target images provide contrast |
+| SIG-G1-3 | contrast_score | ✅ Primary | ~7,239 | Paired GT | Shadow regions cause quantifiable contrast loss; PSNR/SSIM delta between input/target provides contrast degradation signal across 30+ occluder types |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | skew_score is a quality degradation metric (0-1); not annotated |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | PNG format; no JPEG compression artifacts |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~7,239 | Paired GT | Input/target pairs enable overall quality contrast scoring; largest such shadow dataset |
+| SIG-G2-1 | script_cls | ➖ Negatives only | ~7,239 | Inferred Latin | 100% Latin (en) per stats; 350+ base documents suggest predominant Latin script |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~7,239 | Synthetic rotation | Documents at canonical orientation; rotation augmentation applicable |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No sub-degree skew angle ground truth |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~7,239 | Inferred | 350+ diverse printed documents; no handwriting content |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~7,239 | Inferred | Printed documents → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting present |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 7,239 | Hard label | 100% camera_smartphone per stats; all images camera-captured |
+| SIG-G5-2 | shadow_reg | ✅ Primary | ~7,239 | Paired GT (derivable) | Largest document shadow dataset; 30+ occluder types cover regular and irregular shadow patterns; PSNR/SSIM delta between input/target yields continuous 0-1 severity proxy; no direct severity label in source but derivation is reliable |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | - | - | No geometric distortion; flat documents with cast shadows only |
+| SIG-G5-4 | code_cls | ❌ Not applicable | - | - | Diverse printed documents; no code content annotations |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❌ Not applicable | - | - | No resolution quality labels; high-resolution noted but not quantified |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ➖ Latin only | 100% Latn (en) per stats; 350+ base documents imply English-dominant coverage |
+| 2 | Capture method | ✅ Well-covered | 100% camera_smartphone (7,239 images); largest camera-captured shadow dataset |
+| 3 | Document domain | ✅ Well-covered | 100% GENERAL; 350+ diverse base documents provide broad domain representation |
+| 4 | Layout type | ❌ Not present | No layout annotations; 350+ document diversity implies varied layouts |
+| 5 | Text density | ❌ Not present | No text density labels; variable across 350+ document types |
+| 6 | Degradation types | ✅ Well-covered | Shadow (regular + irregular), illumination gradients, contrast reduction; 30+ occluder types = highest shadow diversity of any document shadow dataset |
+| 7 | Resolution/DPI range | ❌ Not present | High-resolution noted in dataset description but no DPI metadata in L2 |
+| 8 | Document age | ❌ Not present | No document age annotations; modern documents implied |
+| 9 | Text scope | 🟡 Partial | 100% page-level scope per stats |
+| 10 | Content flags | ❌ Not present | No content flags in L2 metadata |
+| 11 | Binarization status | ❌ Not present | RGB color documents; not binarized |
+| 12 | Artifact types | ✅ Well-covered | 30+ occluder types provide the most comprehensive shadow artifact taxonomy of any document dataset; regular and irregular shadow patterns both well-represented |
+| 13 | Color mode | 🟡 Partial | RGB per stats; 350+ documents imply color and grayscale content but color mode not labeled |
+| 14 | Font variety | ❌ Not present | No font annotations; 350+ base documents suggest meaningful font variety |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+SD7K is the primary and largest contributor to the `shadow_reg` head (SIG-G5-2) and a key contributor to `capture_method_cls` (SIG-G5-1), providing 7,239 camera-captured document pairs across 30+ occluder types and 350+ base documents — the most shadow-diverse document dataset available. Shadow severity labels must be derived from the paired GT using pixel-difference metrics (PSNR/SSIM) since no direct 0-1 severity field exists in the source; this derivation is reliable given the high-quality paired structure and should be completed via `label_shadow_severity.py` before final `shadow_reg` training data assembly. The training count mismatch (6,479 input vs 6,478 target) requires handling of one unpaired sample. License is MIT (Copyright 2023 Nick Chen, University of Macau); commercial use permitted.

@@ -1,6 +1,6 @@
-@startuml ProjectD_Embedding_VectorStore
+@startuml embed-vectorstore-workflow
 
-title Embed - Embedding, Indexing & RAG Vector Store Integration
+title Chunk → Application Embedding: Contract Workflow\n(Mandatory interface — all per-app embedding implementations must conform)
 
 skinparam shadowing false
 skinparam monochrome true
@@ -37,5 +37,35 @@ partition "Vector store operations" {
 :Emit ingestion result:\n- collection / index ID\n- document handle\n- summary statistics;
 
 stop
+
+note right
+  **MANDATORY INTERFACE CONTRACT**
+  Embed is NOT a shared foundry service — each AI application
+  implements its own embedding. However, ALL implementations
+  MUST conform to this contract:
+
+  **Required Inputs (what Chunk MUST produce):**
+  - RAGChunkSet with chunk_id, document_id, trace_id
+  - trust_score (0-1, derived from Prepare-Doc IQA)
+  - ocr_engine_provenance (rooted in Prepare-Doc routing)
+
+  **Required Vector Store Metadata (what apps MUST preserve):**
+  - chunk_id (must be searchable/filterable)
+  - trust_score (for retrieval quality filtering)
+  - ocr_engine_provenance (for audit/debugging)
+  - document_id + trace_id (for cross-service traceability)
+
+  **Apps are free to choose:** embedding model, vector
+  dimensions, similarity metric, index type.
+
+  **Prose contract:** chunk-embed-contract.md
+  **ADR:** docs/ADRs/0029-prepare-doc-scope-boundaries.md
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

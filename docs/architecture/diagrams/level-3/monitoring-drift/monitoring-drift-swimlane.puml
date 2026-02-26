@@ -575,4 +575,9 @@ legend right
   - [[level-3/monitoring-drift/end-to-end-lifecycle.md]]
 endlegend
 
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/monitoring-drift/index.md
+'   └─ monitoring-drift-architecture.puml  (WS7 primary)
+
 @enduml

@@ -1,4 +1,4 @@
-@startuml DIQA Checkpoint Selection
+@startuml diqa-checkpoint-selection
 !theme plain
 skinparam backgroundColor #FEFEFE
 
@@ -98,5 +98,22 @@ legend bottom
   - If ECE weight increased to 50%: C would win (score=0.69 vs A=0.74)
   - Band prevents selecting E even with perfect ECE
 endlegend
+
+note right
+  **Source:**
+  - src/.../labeling/arena/runner.py
+  - src/.../labeling/arena/metrics.py
+  - src/.../labeling/arena/schemas.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/pseudo-labeling/index.md]]
+  [[docs/planning/PSEUDO_LABELING_PROJECT_PLAN.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

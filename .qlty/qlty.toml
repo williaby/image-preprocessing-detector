@@ -351,6 +351,83 @@ match.rules = ["semgrep:cli-path-traversal-open"]
 match.file_patterns = ["**/annotation/parsers/**"]
 set.ignored = true
 
+# Ignore subprocess usage in scripts/ - CLI tools intentionally invoke git/system commands
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B404", "bandit:B603", "bandit:B607"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore try-except-continue in scripts/ - intentional skip-on-error for batch processing
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B112"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore B108 (temp file/dir) in scripts/ - CLI tools use /tmp as default output directories;
+# no sensitive data is written, only review contact sheets and CSVs
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B108"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore urlopen in scripts/ - download scripts use plain HTTP for open public datasets
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B310"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore AutoAddPolicy, MD5, tarfile.extractall in download/materialize scripts -
+# intentional for fetching and extracting public datasets from known sources
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B507", "bandit:B324", "bandit:B202"]
+match.file_patterns = ["scripts/download_*.py", "scripts/materialize_*.py", "scripts/render_*.py"]
+set.ignored = true
+
+# Ignore xml.etree (B405/B314) in scripts/ and annotation parsers - parsing trusted XML
+# dataset annotations (COCO, ALTO, PascalVOC); input is from controlled dataset archives
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B405", "bandit:B314"]
+match.file_patterns = ["scripts/**", "**/annotation/parsers/**"]
+set.ignored = true
+
+# Ignore regex/string analysis radarlint rules in scripts/ - patterns are intentional:
+# S5869 duplicate char class, S5361 re.sub vs str.replace, S5713 redundant exception,
+# S3358 nested ternary, S107 too many params, S6019 reluctant quantifier
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = [
+  "radarlint-python:python:S5869",
+  "radarlint-python:python:S5361",
+  "radarlint-python:python:S5713",
+  "radarlint-python:python:S3358",
+  "radarlint-python:python:S107",
+  "radarlint-python:python:S6019",
+]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore hardcoded font path constants in contact_sheet.py - these are OS-standard font
+# paths used as fallback candidates for PIL font loading; not a security risk
+[[triage]]
+match.plugins = ["semgrep"]
+match.rules = ["semgrep:hardcoded-absolute-path"]
+match.file_patterns = ["**/labeling/handwriting/contact_sheet.py"]
+set.ignored = true
+
+# Ignore cognitive complexity in labeling module - multi-model consensus aggregation
+# requires branching logic that cannot be trivially decomposed
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/labeling/**"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 

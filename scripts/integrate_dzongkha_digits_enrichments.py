@@ -32,7 +32,13 @@ Usage:
         uv run python3 scripts/integrate_dzongkha_digits_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "dzongkha-digits"
+__l4_workstream__ = "WS3"
+
 
 import argparse
 import json
@@ -46,6 +52,12 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+from l2_integration_utils import (
+    compute_reliability_summary,
+    derive_content_flags,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
 )
 
 logging.basicConfig(
@@ -100,24 +112,6 @@ ENRICHMENT_VERSION_NUMBER = 2
 # If False, layout labels are assumed already in PascalCase.
 APPLY_KI_001_LAYOUT_CASING = True
 
-# Full Docling lowercase -> DocLayNet PascalCase mapping.
-# Covers core 11 DocLayNet classes plus Docling extensions.
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 # --- KI-002: Table detection multi-column FP (HIGH) -----------------
 # No tables in single digit images.
@@ -144,10 +138,6 @@ VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset()
 # ===================================================================
 # Content flag class mappings (canonical layout -> content flags)
 # ===================================================================
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 
 # ===================================================================
@@ -156,123 +146,6 @@ CODE_CLASSES = {"CODE"}
 # Only load_metadata is needed for this dataset. All other enrichment
 # sources are absent -- values are hardcoded from documentation.
 # ===================================================================
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to the dataset's *_metadata.json file.
-
-    Returns:
-        Full metadata dict with "samples" list.
-
-    Raises:
-        FileNotFoundError: If the metadata file does not exist.
-    """
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-# ===================================================================
-# Derivation helpers
-# ===================================================================
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes.
-
-    Scans all layout detections and checks canonical_class against
-    known class sets for table, formula, figure, and code.
-
-    Args:
-        detections: List of layout detection dicts, each containing
-            at minimum a "canonical_class" key.
-
-    Returns:
-        Dict with boolean flags: has_table, has_formula, has_figure,
-        has_code.
-    """
-    canonical_classes = {
-        d.get("canonical_class", "").upper()
-        for d in detections
-        if d.get("canonical_class")
-    }
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Assesses five field groups (capture, domain, language, layout,
-    content_flags) and produces a reliability tier for each based on
-    confidence thresholds:
-      >= 0.9 -> hard_label
-      >= 0.7 -> soft_label
-      >= 0.5 -> active_learning
-      <  0.5 -> unreliable
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Dict with min_confidence, min_confidence_field,
-        min_confidence_category, field counts, field_summary list,
-        and computed_at timestamp.
-    """
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
-
-
 def standardize_class_name(class_name: str) -> str:
     """Convert layout extractor class_name to DocLayNet PascalCase.
 

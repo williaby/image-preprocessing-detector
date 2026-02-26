@@ -42,8 +42,8 @@ The RAG document pipeline is a multi-track architecture supporting both document
 
 | Short Name | Repository | Status | Purpose |
 |------------|------------|--------|---------|
-| **Ingest** | `foundry-ingest` | Active | Web UI frontend, file upload, workflow trigger |
-| **Prepare-Doc** | `foundry-prepare-doc` | Active | IQA, corrections, layout, routing |
+| **Ingest** | `foundry-ingest` | Active | Web UI frontend, file upload; routes audio/video directly to Prepare-Audio and all other types to Prepare-Doc |
+| **Prepare-Doc** | `foundry-prepare-doc` | Active | Stage 0 document type routing, track assignment, IQA, corrections, layout, routing metadata |
 | **Prepare-Audio** | `foundry-prepare-audio` | Active | Transcription, diarization |
 | **Unify** | `foundry-unify` | Not Started | Multi-engine OCR, Docling DOM unification |
 | **Chunk** | `foundry-chunk` | Not Started | Trust scoring, RAG chunking |
@@ -52,19 +52,21 @@ The RAG document pipeline is a multi-track architecture supporting both document
 ### Data Flow
 
 ```text
-Document Track: Ingest -> Prepare-Doc -> Unify (OCR) -> Chunk -> Embed
-Audio Track:    Ingest -> Prepare-Audio -> Unify (DOM only) -> Chunk -> Embed
+Audio/Video: Ingest -[audio]-> Prepare-Audio -> Unify (DOM only) -> Chunk -> Embed
+All others:  Ingest -[others]-> Prepare-Doc (Stage 0 → track assignment → ML) -> Unify (OCR) -> Chunk -> Embed
 ```
 
-1. **Ingestion**: Ingest receives file, generates `trace_id`, uploads to GCS
-2. **Routing**: Cloud Workflows routes to appropriate preprocessing track
-3. **Document Track**:
-   - **Prepare-Doc**: IQA analysis, corrections, layout detection
-   - **Unify**: Multi-engine OCR -> Docling DOM
-4. **Audio Track**:
-   - **Prepare-Audio**: Transcription, diarization
-   - **Unify**: Transcript -> Docling DOM (no OCR, DOM unification only)
-5. **Chunking**: Chunk receives Docling DOM from either track, applies trust scoring, RAG chunking
+1. **Ingestion**: Ingest receives any file, generates `trace_id`, stores to GCS raw, detects audio vs. non-audio:
+   - **Audio / Video** (WAV, MP3, MP4) → Prepare-Audio directly — bypasses Stage 0 entirely
+   - **Everything else** (native text, images, PDFs) → Prepare-Doc (enters at Stage 0)
+2. **Prepare-Doc** (document track) — first step is Stage 0:
+   - **Stage 0 — Document Type Router**: MIME detect, PDF sub-classify, text-layer validity (<20ms CPU); assigns to `native_text`, `image_only`, `born_digital`, `scanned`, or `hybrid` track
+   - **ML analysis**: MobileNetV4 pre-correction gate, SigLIP 2 multi-task analysis
+   - **Corrections & scoring**: deskew, CLAHE, DQS calculation, routing recommendations
+3. **Prepare-Audio** (audio track):
+   - **Transcription + diarization** (FFmpeg + Deepgram Nova-2)
+4. **Unify**: Both tracks converge — OCR → Docling DOM (document) or Transcript → Docling DOM (audio)
+5. **Chunking**: Chunk receives Docling DOM, applies trust scoring, RAG chunking
 6. **Embedding**: Embed generates embeddings, stores in vector database
 7. **Completion**: `trace_id` and `collection_id` returned to Ingest
 
@@ -78,13 +80,28 @@ Each Level 0 box represents a distinct project with its own repository, architec
 
 ### Ingest (foundry-ingest)
 
-The Ingest service is the user-facing entry point for the entire RAG pipeline. It provides a web UI for file upload supporting documents (PDF, Office, Images) and audio/video content. When a file is uploaded, Ingest uploads the source file to GCS, then **initiates** the appropriate Cloud Workflow execution passing the GCS URI and file type. Cloud Workflows generates a unique `trace_id` (workflow execution ID) that follows the document through every downstream service.
+The Ingest service is the user-facing entry point for the entire RAG pipeline. It provides a web UI for file upload supporting any file type — documents (PDF, Office, Images), audio, and video. When a file is uploaded, Ingest uploads the source file to GCS raw storage and performs a simple file type check to route to the correct processing service:
 
-Key responsibilities include input validation, file type detection, user authentication, and job status tracking. The service exposes REST endpoints (`POST /process`, `GET /status/{trace_id}`) and maintains a job queue that can handle 1000+ files per hour. Ingest is the only service with direct user interaction - all other services are internal processing components.
+| File Type | Examples | Routed To |
+|-----------|----------|-----------|
+| **Audio / Video** | WAV, MP3, MP4 | → Prepare-Audio **directly** (bypasses Stage 0) |
+| **Everything else** | DOCX, HTML, JPG, PNG, PDF (all), etc. | → Prepare-Doc (enters at Stage 0) |
+
+The service exposes REST endpoints (`POST /process`, `GET /status/{trace_id}`) and maintains a job queue that can handle 1000+ files per hour. Cloud Workflows generates a unique `trace_id` that follows the file through every downstream service. Ingest is the only service with direct user interaction — all other services are internal processing components.
 
 ### Prepare-Doc (foundry-prepare-doc)
 
-Prepare-Doc is the document preprocessing and quality assurance gateway. It receives raw document images from Ingest and performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
+Prepare-Doc is the document preprocessing and quality assurance gateway. It receives all non-audio files from Ingest. Its first internal step is **Stage 0 — the Document Type Router** — which detects the file format and classifies the file into one of five processing tracks:
+
+| Track | Input Type | Processing Path |
+|-------|-----------|-----------------|
+| `native_text` | DOCX, HTML, MD, LaTeX, CSV, XML, EPUB, VTT | Minimal processing (no image analysis) |
+| `image_only` | JPG, PNG, TIFF, WebP, BMP | Full IQA + correction pipeline |
+| `born_digital` | Born-digital PDF | Text-layer extraction + optional IQA |
+| `scanned` | Scanned PDF | Full IQA + OCR routing for all pages |
+| `hybrid` | Hybrid PDF | Mixed per-page routing |
+
+After track assignment, Prepare-Doc performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
 
 Beyond quality, Prepare-Doc performs layout-lite detection to identify coarse page attributes (tables, figures, dense math, handwriting) and classifies PDF type (born-digital, image-only, hybrid). These signals feed into the Document Quality Score (DQS) calculator, which produces routing recommendations (`OCR_FAST`, `OCR_ADVANCED`, `VISION_SIMPLE`, `VISION_STRUCTURED`) that tell Unify which OCR strategy to use. Output includes corrected 300 DPI page images and `DocumentMetadata.json` containing all quality metrics and routing decisions.
 
@@ -102,37 +119,27 @@ The Docling DOM is the critical data structure that enables consistent downstrea
 
 ### Chunk (foundry-chunk)
 
-Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics, and structural coherence. Low-trust content can be flagged for human review or processed with different retrieval weights.
+Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics from Prepare-Doc, and structural coherence signals from Unify. Low-trust content can be flagged for human review or processed with reduced retrieval weight.
 
-The chunking algorithm produces overlapping text segments optimized for semantic search, respecting document structure (avoiding splits mid-sentence or mid-paragraph) while maintaining consistent chunk sizes. Each chunk carries full source traceability: document -> page -> element -> chunk, enabling precise citation in RAG responses. Output is `ChunkSet.json` containing all chunks with their trust scores, source attribution, and semantic boundaries.
+The chunking algorithm produces semantically coherent text segments that respect document structure — avoiding splits mid-sentence or mid-paragraph — while maintaining consistent token counts. Each chunk carries full source traceability: document → page → element → chunk, enabling precise citation in RAG responses. Output is `RAGChunkSet.json` containing all chunks with trust scores, `ocr_engine_provenance`, source attribution, and semantic boundaries. See [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md) for the mandatory contract all downstream embedding implementations must satisfy.
 
-### Embed (foundry-embed)
+**Source codebase**: `williaby/data_ingestor` — working implementations of TokenChunker, ByTitleChunker, DocumentRouter, and DocLayNet evaluation harness. Transition to `foundry-chunk` is planned after Prepare-Doc SigLIP 2 training stabilizes (Tier 3 dependency). Trust scoring and GCS artifact I/O are new work not yet built.
 
-Embed is the final processing stage, converting text chunks into dense vector representations and storing them for retrieval. It generates embeddings using state-of-the-art models optimized for semantic search, then indexes these vectors in a vector database. Each deployment of Embed owns its own vector database instance, enabling multi-tenant isolation.
+### Application Embedding (per-application)
 
-**Technical Stack [TBD]:**
+Embedding is **not a shared foundry service** — each AI application that uses this pipeline implements its own embedding component, tailored to its retrieval needs. However, all embedding implementations MUST conform to the mandatory contract defined in [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md).
 
-| Component | Decision | Status |
-|-----------|----------|--------|
-| **Embedding Model** | [TBD: OpenAI text-embedding-3-large, Cohere embed-v3, or custom?] | To Be Decided |
-| **Vector Dimensions** | [TBD: 1536, 3072, or model-dependent?] | To Be Decided |
-| **Vector Database** | [TBD: Qdrant, Pinecone, Weaviate, or Vertex AI Vector Search?] | To Be Decided |
-| **Index Type** | [TBD: HNSW, IVF, or database default?] | To Be Decided |
-| **Retrieval Strategy** | [TBD: Dense only, hybrid (dense + sparse), or with reranking?] | To Be Decided |
+The contract requires that every embedding implementation:
 
-**Multi-Tenancy**: Each `collection_id` provides logical isolation. Physical isolation strategy [TBD].
+- Accepts `RAGChunkSet.json` from Chunk (at `gs://rag-pipeline-{env}/{trace_id}/04-chunks/`)
+- Preserves `chunk_id` as a searchable/filterable field in its vector store
+- Preserves `trust_score` as metadata for retrieval quality filtering
+- Preserves `ocr_engine_provenance` for audit and debugging
+- Preserves `document_id` and `trace_id` for cross-service traceability
 
-**Performance Targets [TBD]:**
+Within those constraints, each application is free to choose its own embedding model (OpenAI, Cohere, custom), vector dimensions, vector database (Qdrant, Pinecone, Weaviate, pgvector), similarity metric, and chunk selection strategy.
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Embedding throughput | [TBD] chunks/second | To Be Defined |
-| Query latency (P95) | [TBD] ms | To Be Defined |
-| Concurrent queries | [TBD] QPS | To Be Defined |
-
-The service exposes a retrieval API for semantic search queries, returning ranked chunks with similarity scores and full source attribution. The `EmbeddingManifest.json` records metadata about the embedding process (model version, dimensions, indexing parameters) for reproducibility. Upon completion, Embed returns the `collection_id` to Ingest, which the user can use for subsequent RAG queries against this document set.
-
-> **Note**: Embed requirements document (`embed-f-nf.md`) is pending. The [TBD] items above will be resolved during Embed project initiation.
+The Level 2 diagram [Chunk → Application Embedding Contract Workflow](../level-2/downstream-context/index.md) is the authoritative interface specification. The collection identifier returned by each application's embedding process is what Ingest surfaces to users for subsequent RAG queries against that document set.
 
 ---
 
@@ -142,12 +149,12 @@ This Level 0 diagram establishes the pipeline context. Each box on this diagram 
 
 | Level 0 Box | Level 1 Location | Repository |
 |-------------|------------------|------------|
-| **Ingest** | `foundry-ingest/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Ingest** | `foundry-ingest/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
 | **Prepare-Doc** | [level-1/index.md](../level-1/index.md) | This repo (`image_detection`) |
-| **Prepare-Audio** | `foundry-prepare-audio/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Prepare-Audio** | `foundry-prepare-audio/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
 | **Unify** | `foundry-unify/docs/architecture/diagrams/level-1/index.md` | TBD |
-| **Chunk** | `foundry-chunk/docs/architecture/diagrams/level-1/index.md` | TBD |
-| **Embed** | `foundry-embed/docs/architecture/diagrams/level-1/index.md` | TBD |
+| **Chunk** | `foundry-chunk/docs/architecture/diagrams/level-1/index.md` | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) (planned refactor → `foundry-chunk`) |
+| **Embed** | *(per-application — no shared foundry service)* | N/A — each AI app implements per `chunk-embed-contract.md` |
 
 Each Level 1 diagram then drills down into component boxes that map to Level 2 index files within that project.
 
@@ -250,12 +257,12 @@ Standardized naming across documentation, repositories, and code:
 
 | Legacy ID | Service Name | Repository | Primary Function | Level 1 Diagram |
 |-----------|--------------|------------|------------------|-----------------|
-| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI frontend, file upload, workflow triggering | TBD |
-| ~~Prepare-Doc~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality assessment, corrections, routing | [Level 1](../level-1/index.md) |
-| ~~Chunk~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
-| ~~Unify~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
-| ~~Embed~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring | TBD |
-| ~~Project E~~ | **Embed** | `foundry-embed` | Vector embedding, storage, retrieval API | TBD |
+| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) | [Level 1](../level-1/index.md) |
+| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
+| ~~Project C~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring (source: `data_ingestor`) | TBD |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service | TBD |
+| ~~Project E~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
+| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI, file upload, Cloud Workflows triggering | TBD |
 
 **Naming Conventions:**
 

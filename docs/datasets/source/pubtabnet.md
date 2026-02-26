@@ -424,3 +424,55 @@ At 519K images, PubTabNet is the largest dataset in the audit pipeline. Processi
 | 2.0 | 2026-02-13 | Integration script v2 (schema 2.3.0, text_direction, script_family) |
 | 1.0 | 2026-02-12 | Initial base metadata extraction and language enrichment |
 | 0.1 | 2026-02-10 | Layout conversion and text extraction |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~519K | Derived (all 0°) | Born-digital table crops, no rotation; provides UPRIGHT negatives only |
+| MNV4-H2 | skew_reg | ➖ | ~519K | Derived (all ~0°) | Born-digital, no physical skew; near-zero regression negatives only |
+| MNV4-H3 | resolution_quality_reg | ➖ | ~519K | Computed | Very small table crop images (avg 450×209px); limited utility — character heights may be below optimal range at small sizes |
+| SIG-G1-1 | blur_score | ➖ | ~509K | Computed | Small table crops (64–1220px wide) with variable font sizes; blur assessment complicated by crop size variability — low utility |
+| SIG-G1-2 | noise_score | ➖ | ~509K | Computed | Born-digital, no noise; provides zero-noise negatives but small image size limits representativeness |
+| SIG-G1-3 | contrast_score | ➖ | ~509K | Computed | High contrast born-digital tables; useful only as high-contrast reference — limited domain breadth |
+| SIG-G1-4 | skew_score | ➖ | ~519K | Derived (all ~0°) | Born-digital, no skew; zero-skew regression anchors only |
+| SIG-G1-5 | compression_score | ➖ | ~509K | Computed | Lossless PNG; zero-compression baseline; very small crops have limited value as IQA training examples |
+| SIG-G1-6 | overall_quality | ➖ | ~509K | Computed | High-quality table crops; narrow domain (scientific only) limits overall quality head diversity |
+| SIG-G2-1 | script_cls | 🟡 | ~518K Latn | GT-derived | 99.97% Latin; trace CJK (0.02%), Devanagari (0.003%) — effectively single-script Latin contributor |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~519K | Derived (all 0°) | All table crops upright; UPRIGHT class negatives only |
+| SIG-G3-2 | skew_reg (post) | ➖ | ~519K | Derived (all ~0°) | No skew present; near-zero regression negatives only |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~519K | GT-derived | 100% printed born-digital; provides large NONE-class negative pool for handwriting presence |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G4-4 | presence_reg | ➖ | ~519K | GT-derived | All samples score 0.0 presence; large zero-handwriting regression anchor pool |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting content; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | ~519K | GT label | 100% born_digital (confirmed from stats); very large clean single-class pool for BORN_DIGITAL |
+| SIG-G5-2 | shadow_reg | ➖ | ~519K | Computed | No shadows in born-digital renders; large zero-shadow regression anchor pool |
+| SIG-G5-3 | warping_reg | ➖ | ~519K | Computed | No warping in born-digital renders; large zero-warping regression anchor pool |
+| SIG-G5-4 | code_cls | ➖ | ~519K | Derived | Table crops only — no surrounding paper context captured; code blocks excluded from table region images |
+| SIG-G5-5 | resolution_quality_reg | ➖ | ~509K | Computed | Very small crop images (avg 450×209px); many crops fall below optimal character-height range — limited utility for resolution quality training |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | 99.97% Latin; trace CJK and Devanagari — effectively mono-script, not useful for multi-script training |
+| 2 | Capture method | 🟡 | 100% born_digital; provides a very large BORN_DIGITAL pool but no scanner/camera representation |
+| 3 | Document domain | ❌ | 100% SCI (scientific/PubMed Central); no domain diversity — single-domain bias |
+| 4 | Layout type | ❌ | Table crops only; no page-level layout variation — all images are isolated table regions |
+| 5 | Text density | 🟡 | Variable cell density (sparse to dense tables); limited range as all content is tabular |
+| 6 | Degradation types | ❌ | No degradation present; all born-digital clean PNG renders |
+| 7 | Resolution/DPI range | ❌ | Variable crop sizes (64–1220px width) but all born-digital at PDF render resolution; no DPI tier variation |
+| 8 | Document age | ❌ | Contemporary scientific publications only; no historical or aged documents |
+| 9 | Text scope | ❌ | Table-region crops only, not full-page scope; text scope is sub-page/element level |
+| 10 | Content flags | 🟡 | has_table 100%; single content flag — no figures, formulas, or code represented at page level |
+| 11 | Binarization status | ❌ | All RGB PNG; no binarized versions available |
+| 12 | Artifact types | ❌ | No artifacts; clean born-digital source — zero artifact variety |
+| 13 | Color mode | 🟡 | RGB 100%; occasional colored cell backgrounds but no grayscale or binarized variants |
+| 14 | Font variety | 🟡 | Scientific paper fonts (8–14pt mixed sizes, subscripts, superscripts, math notation); limited to academic typography |
+
+### 13.3 Corpus Role & Constraints
+
+PubTabNet's primary training value is as a **large-scale BORN_DIGITAL negative pool** for SIG-G5-1 capture_method_cls (~519K labels) and as a **large handwriting-absence pool** for SIG-G4-1/G4-4. Its contribution to IQA heads (G1 group) and resolution quality (MNV4-H3, SIG-G5-5) is limited by the small table-crop image size and single-domain scientific bias. License is CDLA-Sharing-1.0 (share-alike commercial use permitted). No OOD script exclusions apply — the trace non-Latin samples (<0.04%) are negligible.

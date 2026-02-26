@@ -2,7 +2,7 @@
 
 > **Purpose**: Datasets grouped by script/language for script detection training
 > **Target Model**: Script classifier (Phase 10B)
-> **Coverage**: 27+ scripts across 779K+ images
+> **Coverage**: 27+ scripts across 1.3M+ images
 
 ---
 
@@ -52,14 +52,31 @@
 
 ### East Asian Scripts (CJK)
 
-| Dataset | Images | Scripts | Link |
-|---------|--------|---------|------|
-| jssoda | 2,000 | Japanese (Hiragana, Katakana, Kanji) | [jssoda.md](../source/jssoda.md) |
-| mle2e | 1,816 | Chinese, Korean, Latin, Kannada | [mle2e.md](../source/mle2e.md) |
-| cc-ocr | 7,058 | CJK mixed | [cc-ocr.md](../source/cc-ocr.md) |
+| Dataset | Images | Scripts | License | Link |
+|---------|--------|---------|---------|------|
+| jssoda | 2,000 | Japanese (Hiragana, Katakana, Kanji) | CC-BY-4.0 | [jssoda.md](../source/jssoda.md) |
+| vjroda | ~100 | Japanese vertical (Jpan) — OOD eval only | CC-BY-4.0 | [vjroda.md](../source/vjroda.md) |
+| ndl-docl | ~2,290 | Japanese (Jpan) — kuzushiji + modern | PDM 1.0 | [ndl-docl.md](../source/ndl-docl.md) |
+| pdmocr-part1 | ~2,713 | Japanese (Jpan) — 1870s-1940s historical | PDM 1.0 | [pdmocr-part1.md](../source/pdmocr-part1.md) |
+| pdmocr-part2 | ~3,997 | Japanese (Jpan) — 1870s-1960s, direction GT | PDM 1.0 | [pdmocr-part2.md](../source/pdmocr-part2.md) |
+| ndl-minhon | ~32,822 | Japanese (Jpan) — kuzushiji manuscripts | CC-BY-SA 4.0 | [ndl-minhon.md](../source/ndl-minhon.md) |
+| mle2e | 1,816 | Chinese, Korean, Latin, Kannada | Research | [mle2e.md](../source/mle2e.md) |
+| cc-ocr | 7,058 | CJK mixed | Research | [cc-ocr.md](../source/cc-ocr.md) |
+| casia-hwdb2-line | 52,160 | Chinese Simplified (Hans) — handwritten lines | MIT | [casia-hwdb2-line.md](../source/casia-hwdb2-line.md) |
+| casia-hwdb2 | ~1,097 pages | Chinese Simplified (Hans) — full pages 300 DPI | Academic only | [casia-hwdb2.md](../source/casia-hwdb2.md) |
+| kuzushiji (K-49) | 270,912 | Japanese Hiragana historical cursive (Jpan) | CC BY-SA 4.0 | [kuzushiji.md](../source/kuzushiji.md) |
+| kuzushiji (K-Kanji) | 140,424 | Japanese Kanji historical (Jpan) | CC BY-SA 4.0 | [kuzushiji.md](../source/kuzushiji.md) |
+| kuzushiji (K-MNIST) | 70,000 | Japanese Hiragana historical (Jpan, 10 classes) | CC BY-SA 4.0 | [kuzushiji.md](../source/kuzushiji.md) |
 
-**Total**: ~11K images
-**Scripts**: Chinese (Simplified/Traditional), Japanese, Korean (Hangul)
+**Total**: ~587K images (was ~545K — **+42K with NDL Japanese additions**)
+**Scripts**: Chinese Simplified (Hans/HANS), Japanese (Jpan/JPAN), Korean (Hangul — cc-ocr subset)
+
+**HANS gap addressed**: casia-hwdb2-line (52K) + casia-hwdb2 pages (~1K) add 53K handwritten HANS samples.
+**JPAN gap addressed**: Kuzushiji adds 481K handwritten JPAN (vs. prior ~10K mostly printed). K-49 train alone adds 232K. NDL datasets add ~42K historical Japanese (kuzushiji + typography) with direction GT.
+⚠️ Kuzushiji CC BY-SA 4.0: ShareAlike applies to published derivatives.
+⚠️ ndl-minhon CC BY-SA 4.0: ShareAlike applies to published derivatives.
+⚠️ CASIA-HWDB2 page-level: Academic license only — no commercial use.
+⚠️ vjroda: OOD evaluation only (100 images, too small for training).
 
 ---
 
@@ -135,12 +152,12 @@
 | **Latin** | 15 languages | 6 datasets | ~738K |
 | **Arabic** | Arabic, Farsi, Urdu | 4 datasets | ~57K |
 | **Indic** | Devanagari, Bengali, Telugu, Kannada, Tamil, Malayalam | 3 datasets | ~83K |
-| **CJK** | Chinese, Japanese, Korean | 3 datasets | ~11K |
+| **CJK** | Chinese (Hans), Japanese (Jpan), Korean | 13 datasets | ~587K |
 | **Tibetan** | Tibetan, Dzongkha | 2 datasets | ~143K |
 | **Cyrillic** | Russian, Bulgarian, etc. | MDIW13 subset | TBD |
 | **Hebrew** | Hebrew | MDIW13 subset | TBD |
 
-**Total Coverage**: 27+ scripts across 779K+ real images + 350,012 synthetic (v3, GCS-complete)
+**Total Coverage**: 27+ scripts across 1.3M+ real images + 350,012 synthetic (v3, GCS-complete)
 
 ---
 

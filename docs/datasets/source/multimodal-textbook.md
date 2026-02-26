@@ -145,3 +145,57 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `language` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~1,100 | Derived (0°/90°/180°/270° rotation) | Born-digital video frames; standard landscape orientation; low geometric variation but usable with augmentation |
+| MNV4-H2 | skew_reg | ➖ Negative | 0 | N/A | Video keyframes have no physical skew; frames are digitally aligned — not appropriate for skew training |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~1,100 | Pseudo-label (RQ pipeline) | Variable resolution (648–720px height); video compression artifacts make this a realistic low-quality sample pool |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~1,100 | Pseudo-label | Video motion/compression blur present; adds diversity to IQA blur training |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~1,100 | Pseudo-label | Video encoding noise (H.264/H.265 artifacts) provides authentic compression-noise examples |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~1,100 | Pseudo-label | Variable contrast from video production; presentation slides vs. whiteboard scenes differ significantly |
+| SIG-G1-4 | skew_score | ➖ Negative | 0 | N/A | Born-digital video frames; no physical skew — not useful for skew IQA training |
+| SIG-G1-5 | compression_score | ✅ Primary | ~1,100 | Pseudo-label | Authentic JPEG/video compression artifacts from YouTube encoding — strong primary contributor |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~1,100 | Pseudo-label (IQA pipeline) | Mixed quality from video capture; broadens overall IQA coverage for educational/STEM domain |
+| SIG-G2-1 | script_cls | ✅ Primary | ~1,100 | Ground truth (Latin/en metadata) | 100% Latin script confirmed; strong clean Latin sample for script classification |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~1,100 | Derived (synthetic rotation) | Same as MNV4-H1 rationale; post-correction orientation useful via augmentation |
+| SIG-G3-2 | skew_reg (post) | ➖ Negative | 0 | N/A | No physical skew in video frames — not applicable post-correction either |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~1,100 | Ground truth (printed only) | 100% printed; strong negative class for handwriting presence detection |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | ~1,100 | Derived (not-handwritten class) | All samples cleanly represent the "no handwriting" class — useful as hard negatives |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | ~1,100 | Derived (not-handwritten class) | Printed STEM content provides strong negatives for content-type classification |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | ~1,100 | Derived (0.0 presence score) | All samples score 0.0 handwriting presence; useful floor-calibration samples |
+| SIG-G4-5 | legibility_reg | ➖ Negative | 0 | N/A | No handwriting present; legibility regression score undefined for purely printed content |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~1,100 | Ground truth (born_digital=100%) | 100% born-digital confirmed; clean primary contributor to born_digital class |
+| SIG-G5-2 | shadow_reg | ➖ Negative | 0 | N/A | Born-digital video frames have no physical shadow artifacts — not appropriate for shadow training |
+| SIG-G5-3 | warping_reg | ➖ Negative | 0 | N/A | Born-digital video frames have no page warp — not appropriate for warping training |
+| SIG-G5-4 | code_cls | 🟡 Secondary | ~90 | Pseudo-label | CS content ~8% of dataset (~90 samples); some frames likely show code on slides/textbooks — secondary contributor |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~1,100 | Pseudo-label (RQ pipeline) | Same rationale as MNV4-H3; video-frame resolution variation is realistic and contributes diversity |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | Latin only (100%); no CJK, Arabic, Devanagari, or other scripts — limited to English STEM content |
+| 2 | Capture method | ✅ Strong | Born-digital (100%); consistent and clean — solid single-method coverage with no ambiguity |
+| 3 | Document domain | ✅ Strong | EDU/STEM (100%); rich sub-domain mix: Math 18%, Engineering 15%, Physics 10%, CS 8%, Chemistry 5% |
+| 4 | Layout type | 🟡 Partial | Mixed: presentation slides, whiteboard captures, textbook pages, diagrams; no layout annotations yet (D01 defect open) |
+| 5 | Text density | 🟡 Partial | Variable — slides may be sparse, textbook pages dense; no text-density labels extracted yet |
+| 6 | Degradation types | 🟡 Partial | Video compression artifacts (JPEG/H.264), motion blur, variable contrast; no scan-type degradations (no physical document) |
+| 7 | Resolution/DPI range | 🟡 Partial | Narrow: 648–720px height, 960–1280px width (video frame dimensions); no high-DPI or sub-150px extremes |
+| 8 | Document age | ❌ Not applicable | All content is modern (YouTube 2015–2024); no historical or aged documents |
+| 9 | Text scope | ✅ Strong | Printed (100%); consistent scope — all machine-rendered or on-screen text from educational media |
+| 10 | Content flags | ✅ Strong | has_formula (100%), has_figure (100%); every sample has both — exceptional formula/figure diversity for STEM tasks |
+| 11 | Binarization status | ❌ Not applicable | All color/grayscale RGB video frames; no binarized documents in this dataset |
+| 12 | Artifact types | 🟡 Partial | Video compression (JPEG blocking, H.264 noise, motion blur); absence of scan artifacts (no ink bleed, no shadow, no fold) |
+| 13 | Color mode | 🟡 Partial | RGB only (100%); no grayscale or binarized samples — limited color-mode diversity |
+| 14 | Font variety | ✅ Strong | High variety: presentation fonts, textbook typefaces, handwritten equation renderers, LaTeX-rendered math, engineering diagrams |
+
+### 13.3 Corpus Role & Constraints
+
+Multimodal Textbook serves as a **primary born-digital contributor** for capture method classification and Latin script coverage, and as a uniquely strong source of formula- and figure-rich STEM content for IQA and overall quality heads. Its Apache-2.0 license imposes no usage restrictions, and its fully born-digital origin means it correctly maps to the `born_digital` capture class with no synthetic mixing concerns (real-only for SIG-G5-1 is fully satisfied). The dataset's video-frame origin limits its utility for scan-related degradation heads (shadow, warping, skew) and restricts script diversity to Latin/English only, making it a complement rather than a replacement for document-origin datasets in multi-script or physical-degradation heads.

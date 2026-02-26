@@ -27,15 +27,20 @@ Usage:
         --output /path/to/output.json
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "diqa-5000"
+__l4_workstream__ = "WS3"
+__l4_parser__ = "src/image_preprocessing_detector/annotation/parsers/quality/diqa.py"
+
 
 import argparse
 import csv
 import json
 import logging
 import math
-import re
-import statistics
 import time
 from collections import Counter
 from datetime import datetime, UTC
@@ -44,6 +49,17 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    derive_content_flags,
+    load_language_enrichment,
+    load_llm_enrichment,
+    load_metadata,
+    FIGURE_CLASSES,
+    FORMULA_CLASSES,
+    TABLE_CLASSES,
 )
 
 logging.basicConfig(
@@ -75,10 +91,6 @@ ENRICHMENT_VERSION_TAG = "integrated_v5"
 IQA_CACHE_PATH = REGISTRY_DIR / "extracted" / "diqa-5000-classical-iqa.json"
 
 # Content flag derivation from canonical layout classes
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 # Docling layout category -> canonical class mapping (for content flag derivation)
 DOCLING_CATEGORY_TO_CANONICAL: dict[str, str] = {
@@ -396,46 +408,6 @@ def load_classical_iqa_cache(path: Path) -> dict[str, dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Data loaders
 # ---------------------------------------------------------------------------
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load main metadata JSON."""
-    log.info("Loading metadata from %s ...", path)
-    with open(path) as fh:
-        data = json.load(fh)
-    log.info("  Loaded %d samples", len(data["samples"]))
-    return data
-
-
-def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load LLM enrichment, indexed by original_filename."""
-    log.info("Loading LLM enrichment from %s ...", path)
-    with open(path) as fh:
-        data = json.load(fh)
-
-    index: dict[str, dict[str, Any]] = {}
-    for sample in data["samples"]:
-        # image_id is like "test_ori_00001", need "test_ori_00001.jpg"
-        filename = sample["image_id"] + ".jpg"
-        index[filename] = sample
-
-    log.info("  Indexed %d LLM enrichment records", len(index))
-    return index
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment, indexed by original_filename."""
-    log.info("Loading language enrichment from %s ...", path)
-    with open(path) as fh:
-        data = json.load(fh)
-
-    index: dict[str, dict[str, Any]] = {}
-    for sample in data["samples"]:
-        filename = sample["image_id"] + ".jpg"
-        index[filename] = sample
-
-    log.info("  Indexed %d language enrichment records", len(index))
-    return index
-
-
 def load_layout_batches(batch_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """Load all Docling GPU layout batches, indexed by filename.
 
@@ -638,47 +610,6 @@ def load_mos_scores(
 # ---------------------------------------------------------------------------
 # Text statistics computation
 # ---------------------------------------------------------------------------
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics from OCR output."""
-    if not text or text.strip() == "":
-        return {
-            "char_count": 0,
-            "word_count": 0,
-            "line_count": 0,
-            "has_content": False,
-        }
-
-    # Clean up image placeholders
-    clean_text = text.replace("<!-- image -->", "").strip()
-
-    lines = clean_text.split("\n")
-    non_empty_lines = [ln for ln in lines if ln.strip()]
-    words = clean_text.split()
-
-    # Detect CJK characters (Chinese, Japanese, Korean)
-    cjk_pattern = re.compile(
-        r"[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f\u3040-\u309f"
-        r"\u30a0-\u30ff\uac00-\ud7af]"
-    )
-    cjk_chars = len(cjk_pattern.findall(clean_text))
-    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
-
-    return {
-        "char_count": len(clean_text),
-        "word_count": len(words),
-        "line_count": len(non_empty_lines),
-        "cjk_char_count": cjk_chars,
-        "latin_word_count": latin_words,
-        "has_content": len(clean_text) > 0,
-        "avg_line_length": round(statistics.mean(len(ln) for ln in non_empty_lines), 1)
-        if non_empty_lines
-        else 0,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Paper size estimation
-# ---------------------------------------------------------------------------
 def estimate_paper_size(
     width_px: int,
     height_px: int,
@@ -776,27 +707,6 @@ def load_orphan_corrections(path: Path) -> dict[str, dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Derive content flags from layout detections
 # ---------------------------------------------------------------------------
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes."""
-    canonical_classes = {
-        d.get("canonical_class", "").upper()
-        for d in detections
-        if d.get("canonical_class")
-    }
-
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Derive physical degradation for ori/ images
-# ---------------------------------------------------------------------------
 def infer_ori_degradation_category(filename: str) -> str | None:
     """Infer distortion category for ori/ images from filename pattern.
 
@@ -830,65 +740,6 @@ def mos_to_normalized(mos: float) -> float:
 
 # ---------------------------------------------------------------------------
 # Reliability summary computation
-# ---------------------------------------------------------------------------
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict."""
-    fields: list[dict[str, Any]] = []
-
-    # Define field -> (confidence_key, tier) mappings
-    field_defs = [
-        ("capture_method", "capture_confidence", "capture_detection_method"),
-        ("domain", "domain_confidence", None),
-        ("language", "language_confidence", None),
-        ("layout_detections", "layout_confidence", None),
-        ("content_flags", "content_flags_confidence", None),
-        ("text_quality", "text_quality_confidence", None),
-        ("image_properties", "image_properties_confidence", None),
-        ("geometric", "geometric_confidence", None),
-        ("quality_scores", "quality_scores_confidence", None),
-        ("text_content", "text_content_confidence", None),
-    ]
-
-    for field_name, conf_key, _method_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        # Categorize by confidence
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
-
-
-# ---------------------------------------------------------------------------
-# integrate_sample helpers (private)
 # ---------------------------------------------------------------------------
 def _resolve_llm_for_res(
     filename: str,

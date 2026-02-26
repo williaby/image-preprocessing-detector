@@ -198,6 +198,13 @@ package "OOD Constraints" as ood_pkg <<constraint>> {
         Validated by _check_ood_leakage()
         in all 5 sub-commands + train script
         Tracked in metadata_registry/ood_registry.jsonl
+
+        **OOD Registry Population Targets:**
+        Minimum: ≥600 entries total
+        Mongolian: ~400 (from synth-multiscript-v3 pool)
+        Syriac: ~100 (external acquisition needed)
+        Georgian: ~100 (external acquisition needed)
+        Current: 0 entries — population PENDING
     end note
 }
 
@@ -251,5 +258,31 @@ gcs_out --> modal_vol : "modal volume\ncp /data/"
 ' OOD constraint applies throughout
 ood_note -[dashed]-> cmd_merge : "enforced"
 ood_note -[dashed]-> cmd_script : "enforced"
+
+note right
+    **Source Files:**
+    - src/.../annotation/schemas/enrichment.py
+    - src/.../annotation/workflow/pipeline.py
+
+    **Scripts:**
+    - scripts/prepare_multitask_datasets.py
+    - scripts/generate_v3_shadow_view.py
+    - scripts/generate_v3_warping_view.py
+    - scripts/label_shadow_severity.py
+    - scripts/label_warping_severity.py
+
+    **Modal:**
+    - modal/train_siglip2_multitask.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/data-preparation/index.md]]
+    [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

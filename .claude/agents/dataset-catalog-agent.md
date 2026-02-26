@@ -44,7 +44,7 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 
 **Gate 0**: All prerequisites must pass before proceeding.
 
-- [ ] **Template version check**: docs/datasets/DATASET_TEMPLATE.md v1.4.0 or later
+- [ ] **Template version check**: docs/datasets/DATASET_TEMPLATE.md v1.6.0 or later
 - [ ] Dataset directory exists: `01_base_data/{category}/{dataset}/` or `02_benchmark_only/{dataset}/`
 - [ ] Canonical name validated in docs/datasets/DATASET_NAMING_STANDARD.md
 - [ ] Template readable: docs/datasets/DATASET_TEMPLATE.md
@@ -54,10 +54,10 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 
 **Actions**:
 1. Use TodoWrite to create task list for all phases
-2. **Verify template version** (MUST be v1.2.0+ for Section 5.2-5.3, 6.5, 10 compliance)
+2. **Verify template version** (MUST be v1.6.0+ for Section 13 compliance)
 3. Check dataset directory exists using Glob
 4. Verify canonical name in naming standard
-5. If template version < 1.4.0 → STOP, update template first
+5. If template version < 1.6.0 → STOP, update template first
 6. If any other pre-flight fails, document blockers and STOP
 
 ### Phase 1: Current State Analysis
@@ -99,6 +99,10 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 | 10. Dataset-Specific Notes | Yes/No | Full/Partial/Empty | Optional |
 | 11. Layer 2 Audit Summary | Yes/No | Full/Partial/Empty | If audited |
 | 12. Reliability & Bottlenecks | Yes/No | Full/Partial/Empty | Auto-generated |
+| 13. Training Head Coverage | Yes/No | Full/Partial/Empty | NEW v1.6.0 — 22-head table + 14 diversity dims |
+| → 13.1 Head Contribution Summary | Yes/No | Full/Partial/Empty | 22 heads: MNV4 (3) + SigLIP (19) |
+| → 13.2 Diversity Dimension Coverage | Yes/No | Full/Partial/Empty | 14 dimensions |
+| → 13.3 Corpus Role & Constraints | Yes/No | Full/Partial/Empty | License, splits, OOD notes |
 
 **Output**: Gap analysis saved to `tmp_cleanup/.tmp-{dataset}-gap-analysis.md`
 
@@ -327,7 +331,7 @@ uv run python scripts/validate_annotation_output.py --dataset {dataset_name} 2>/
 ```
 
 **Final Checklist**:
-- [ ] Catalog entry follows DATASET_TEMPLATE.md v1.4.0
+- [ ] Catalog entry follows DATASET_TEMPLATE.md v1.6.0
 - [ ] Canonical name used throughout all files
 - [ ] All template sections populated or appropriately marked
 - [ ] Parser audit complete with schema-derived matrix
@@ -347,7 +351,7 @@ uv run python scripts/validate_annotation_output.py --dataset {dataset_name} 2>/
 
 ### Documentation Files
 
-- **Template**: docs/datasets/DATASET_TEMPLATE.md (v1.4.0) - Authoritative format
+- **Template**: docs/datasets/DATASET_TEMPLATE.md (v1.6.0) - Authoritative format
 - **Gaps Report**: docs/planning/DATASET_GAPS_REPORT.md - Known issues and priorities
 - **Catalog**: docs/datasets/source/{dataset-name}.md
 - **Quick Reference**: docs/datasets/DATASET_QUICK_REFERENCE.md
@@ -522,7 +526,7 @@ Only after user approval:
 
 | Scenario | Action |
 |----------|--------|
-| Template version < 1.2.0 | STOP pre-flight, update template first |
+| Template version < 1.6.0 | STOP pre-flight, update template first |
 | Paper not available | Mark documentation_status: "inferred", use [Inferred] markers. **Note**: License CANNOT be inferred |
 | Parser doesn't exist | Document as "Not Implemented", skip Gate 4, add to development backlog |
 | Text not available and no OCR | Document blocker, skip Gate 5, add to Processing Status as P2 priority |

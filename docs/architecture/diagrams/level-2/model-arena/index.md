@@ -146,7 +146,7 @@ Graduate to Production if Improvement > Threshold
 
 **Production Graduation Criteria** (Multi-Metric Per-Head Thresholds):
 
-The SigLIP 2 NAFlex multi-task model has 16 heads across 5 groups. Each head has an independent graduation threshold:
+The SigLIP 2 NAFlex multi-task model has 19 heads across 5 groups. Each head has an independent graduation threshold:
 
 | Head Group | Head | Metric | Graduation Threshold |
 |------------|------|--------|---------------------|
@@ -175,7 +175,7 @@ The SigLIP 2 NAFlex multi-task model has 16 heads across 5 groups. Each head has
 
 ### Multi-Task Arena Evaluation
 
-The SigLIP 2 NAFlex multi-task model (16 heads, 5 groups) requires independent benchmarking per head using dataset-specific test sets:
+The SigLIP 2 NAFlex multi-task model (19 heads, 5 groups) requires independent benchmarking per head using dataset-specific test sets:
 
 **Per-Head Benchmark Datasets**:
 

@@ -1,0 +1,132 @@
+@startuml stream-4d-mobilenetv4-integration
+title Prepare-Doc - Stream 4D: MobileNetV4-Conv-S Production Pipeline Integration
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+partition "Trained Model Status" {
+  :MobileNetV4-Conv-S (conv_small @ 224px)\nbest_model.pt — epoch 47;
+  note right
+    Run ID: 20260212_155402
+    Val MAE: 0.837 deg (epoch 47)
+    Test MAE: 0.956 deg, SRCC: 0.936
+    Orientation acc: 99.5%
+    CPU inference: mean 17.5ms, p95 18.8ms
+    GCS: gs://image-detection-models/
+            candidates/mobilenetv4/best_model.pt
+    STATUS: Trained but NOT in production pipeline.
+  end note
+}
+
+partition "Step 1 — ONNX Export (3-head)" {
+  :Load best_model.pt into fresh SkewEstimatorNet();
+  note right
+    CRITICAL: Load pre-QAT checkpoint directly.
+    QAT state_dict adds weight_fake_quant /
+    activation_post_process keys — incompatible
+    with pre-QAT checkpoint. Use strict=False
+    or load into fresh model before QAT prepare.
+    model.train() MUST be called BEFORE prepare_qat().
+  end note
+  :Export to ONNX with 3 named output heads:\n- orientation: 4-class logits\n- skew_bins: 42-class logits\n- skew_residual: per-bin regression scalar;
+  :Apply INT8 post-training quantization\n(ONNX Runtime quantize_dynamic);
+  :Validate ONNX vs PyTorch output:\nmax absolute diff < 0.01 on 100-image sample;
+  if (Validation passes?) then (yes)
+    :Save mobilenetv4_v1.0.0_int8.onnx\nto GCS candidates/;
+  else (no)
+    :Debug ONNX export\n(check output_names, dynamic_axes);
+    :Retry export;
+  endif
+}
+
+partition "Step 2 — Integration Tests" {
+  :Create src/detection/mobilenetv4_precorrection.py\n(ONNXModelRunner wrapper for 3-head decode);
+  :Implement 3-head decode logic:\n- orientation_class = argmax(orientation_logits)\n- skew_angle = bin_center[argmax(skew_bins)]\n  + clamp(residual, +/- half_bin_width)\n- resolution_quality = sigmoid(res_logit);
+  note right
+    42 non-uniform skew bins:
+    Critical zone +/-5 deg: 0.5 deg bins
+    Moderate zone +/-5-15 deg: 2.0 deg bins
+    Extreme zone +/-15-45 deg: 5.0 deg bins
+    Per-bin residual clamping:
+      Critical: +/-0.25 deg max
+      Moderate: +/-1.0 deg max
+      Extreme: +/-2.5 deg max
+  end note
+  :Run integration test suite;
+  if (Orientation acc > 95%?\nSkew test MAE < 1.2 deg?\nCPU inference < 25ms?) then (yes)
+  else (no)
+    :Debug decode or threshold logic;\nretest;
+  endif
+}
+
+partition "Step 3 — Wire into Primary Pipeline" {
+  :Amend src/detection/stage_gate.py\nto insert MobileNetV4 BEFORE SigLIP 2;
+  :Apply pre-correction with thresholds:\n- Orientation: apply if confidence > 0.9\n- Skew: apply if |angle| > 0.3 deg\n- Resolution: flag only (no upsample at gate);
+  note right
+    Corrected image (not original) is passed
+    to SigLIP 2 for multi-task analysis.
+    SigLIP 2 G3 (orientation/skew) acts as
+    validation / soft teacher for MobileNetV4 gate.
+  end note
+}
+
+partition "Step 4 — Correction Application" {
+  :CorrectionsManager applies:\n- Orientation: cv2.rotate (0/90/180/270 deg)\n- Skew: cv2.warpAffine deskew\n  (skipped if |angle| < 0.3 deg)\n- Resolution: flag only at gate stage;
+  :Record all corrections in correction_history\n(audit trail in DocumentMetadata.json);
+  :Emit Prometheus metric:\nmobilenetv4_inference_ms (histogram);
+}
+
+partition "Arena Validation" {
+  :Run Model Arena on 10K held-out test images;
+  :Evaluate per-head thresholds:\n- Orientation acc > 95% (target: 99%+)\n- Skew MAE < 0.5 deg (target ~ 0.9 deg)\n- GPU latency < 5ms\n- CPU latency < 25ms;
+  if (All thresholds pass?) then (yes)
+    :Promote to production/mobilenetv4/;
+    :Update config:\n  mobilenetv4_version: "v1.0.0";
+  else (no — skew MAE above target)
+    :Extend MobileNetV4 training\n(add epochs up to 70 total);
+    :Re-export + re-validate;
+  endif
+}
+
+note right
+  **Dependency:** Tier 1 — unblocked.
+  MobileNetV4 already trained (epoch 47).
+
+  **Integration Files (to create/amend):**
+  - src/detection/mobilenetv4_precorrection.py (new)
+  - src/detection/stage_gate.py (amend)
+  - modal/export_onnx.py (add MobileNetV4 path)
+
+  **Trained Model:**
+  - modal/train_skew_estimator.py
+  - Run: 20260212_155402
+
+  **Documentation:**
+  - docs/planning/MASTER_PROJECT_PLAN.md (Stream 4D)
+  - docs/architecture/diagrams/level-2/
+      model-training/index.md
+
+  **ADR:**
+  [[docs/ADRs/0027-int8-quantization-onnx.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+end note
+
+stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

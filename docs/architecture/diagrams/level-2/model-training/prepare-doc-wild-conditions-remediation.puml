@@ -1,0 +1,175 @@
+@startuml prepare-doc-wild-conditions-remediation
+!theme plain
+title Prepare-Doc - Wild Condition Coverage & Remediation Status
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam component {
+    BackgroundColor<<covered>>    #C8E6C9
+    BackgroundColor<<partial>>    #FFF9C4
+    BackgroundColor<<uncovered>>  #FFCDD2
+    BackgroundColor<<p0_action>>  #FFCCBC
+    BackgroundColor<<p1_action>>  #FFF3E0
+}
+
+' =====================================================================
+' COVERAGE STATUS — HEAD GROUPS
+' =====================================================================
+
+package "Coverage by Head Group\n(Overall: 3% — 2 of 60 conditions fully covered)" as coverage_pkg {
+
+    package "G1: IQA (6 heads)" as g1 {
+        component "blur / noise / contrast:\nSingle-distortion coverage only" as g1_base <<partial>>
+        component "JPEG compression:\n0% compound-condition coverage" as g1_comp <<uncovered>>
+        component "illumination / overall quality:\n0% wild multi-degradation coverage" as g1_ill <<uncovered>>
+        note right of g1
+            P0 Gap: Single-distortion training causes
+            15-25% metric drop on real compound
+            degradations (blur + skew + noise together).
+            Fix: compound distortion augmentation
+            pipeline (25K-40K synthetic examples).
+        end note
+    }
+
+    package "G2: Script (3 heads)" as g2 {
+        component "30 scripts — 11% covered:\n3 scripts with real wild-capture examples" as g2_cov <<partial>>
+        component "Low-resource scripts:\n0% real-world scan coverage" as g2_gap <<uncovered>>
+        note right of g2
+            P1 Gap: Syriac and Georgian real-scan
+            examples needed (>=200 each).
+            Current coverage dominated by synthetic.
+            Historical typography / decorative fonts:
+            route to specialized models (no fix planned).
+        end note
+    }
+
+    package "G3: Orientation + Skew (2 heads)" as g3 {
+        component "Orientation:\n0% symmetric document coverage\n(0 deg / 180 deg ambiguity)" as g3_orient <<uncovered>>
+        component "Skew:\n0% ADF feed-skew artifacts\n0% multi-column page-level skew" as g3_skew <<uncovered>>
+        note right of g3
+            P0 Gap: Multi-column skew — global Hough
+            fails across column gutters. Need projection
+            profile second estimator + disagreement flag.
+            P1 Gap: ADF feed-skew (see ADF note below).
+        end note
+    }
+
+    package "G4: Handwriting (5 heads)" as g4 {
+        component "All 5 heads: 0% coverage\n(Stream 4E dataset pending)" as g4_cov <<uncovered>>
+        note right of g4
+            Blocked by Stream 4E dataset acquisition.
+            Datasets needed: KHATT (Arabic), CASIA-HWDB
+            (CJK), IIIT-INDIC (Devanagari), HKR (Cyrillic),
+            FUNSD expansion (Latin).
+            See: stream-4e-handwriting-dataset.puml
+        end note
+    }
+
+    package "G5: Page Attributes (5 heads)" as g5 {
+        component "Capture method: 0%\n(no ADF / CIS flatbed / screen examples)" as g5_cap <<uncovered>>
+        component "Shadow: 0%\n(no real book-gutter shadow examples)" as g5_shad <<uncovered>>
+        component "Warping: 20%\n(wsrd / warpdoc partially covered)" as g5_warp <<partial>>
+        component "Resolution: 0%\n(vector PDF / upscaled raster confounds)" as g5_res <<uncovered>>
+        note right of g5
+            P0 Gap: Screen recapture / moire patterns
+            (phone photographing monitor). RGB moire
+            not in any training set.
+            P0 Gap: Vector PDF resolution confound
+            (DPI != rendered character size).
+        end note
+    }
+}
+
+' =====================================================================
+' P0 REMEDIATION ACTIONS
+' =====================================================================
+
+package "P0 Remediation Actions\n(Tier 1 — can start immediately)" as p0_pkg {
+    component "Compound distortion augmentation\n(2-5 distortions per image, 25K-40K synthetic)" as p0_compound <<p0_action>>
+    component "Multi-column skew cross-detector\n(projection profile second estimator)" as p0_multicol <<p0_action>>
+    component "Vector PDF resolution confounds\n(synthetic confound dataset — char-height vs DPI)" as p0_vector <<p0_action>>
+    component "ECE calibration tracking\n(Expected Calibration Error per head)" as p0_ece <<p0_action>>
+}
+
+' =====================================================================
+' P1 REMEDIATION ACTIONS
+' =====================================================================
+
+package "P1 Remediation Actions\n(Tier 1-3 — some blocked by data acquisition)" as p1_pkg {
+
+    component "ADF scanner data sourcing\n(500 examples commissioned)" as p1_adf <<p1_action>>
+    note right of p1_adf
+        **ADF Scanner Artifacts (P1-6, P1-7, P2-6)**
+        Enterprise auto-document feeder (ADF) scanners
+        produce artifacts absent from flatbed training data:
+          - Edge-curl at sheet ends (top/bottom pages)
+          - Feed-skew: per-sheet angular deviation
+          - Moire from scanner glass contact pressure
+        RVL-CDIP (current training) uses 1990s CCD
+        flatbed — does NOT capture ADF artifacts.
+        Action: Commission 500 ADF scan examples.
+        Sources: enterprise scanner labs or
+        scanning-as-a-service providers.
+        DIVERSITY_REMEDIATION_PLAN: P1-6, P1-7, P2-6
+    end note
+
+    component "Screen recapture / moire detection\n(400+ phone-captures-monitor examples)" as p1_screen <<p1_action>>
+    note right of p1_screen
+        Phone-photographed-monitor: RGB moire pattern
+        from pixel grid interference.
+        Detection: Moran's I z-statistic.
+        Add as 8th capture_method class.
+        DEFERRED to Tier 3 (data acquisition complex).
+    end note
+
+    component "Low-resource script acquisition\n(Syriac >= 100, Georgian >= 100 real scans)" as p1_script <<p1_action>>
+}
+
+' =====================================================================
+' LINKAGE — REMEDIATION TO HEAD GROUP
+' =====================================================================
+
+p0_compound --> g1 : "fixes IQA compound gap"
+p0_compound --> g5 : "fixes shadow + warping compound"
+p0_multicol --> g3 : "fixes multi-column skew"
+p0_vector --> g5 : "fixes resolution vector confound"
+p0_ece --> coverage_pkg : "calibration across all heads"
+p1_adf --> g3 : "fixes ADF feed-skew in G3"
+p1_adf --> g5 : "adds ADF to capture method G5"
+p1_screen --> g5 : "adds moire / screen recapture to G5"
+p1_script --> g2 : "fills low-resource script gap in G2"
+
+note right
+    **Coverage Metric Definition:**
+    "Fully covered" = real wild-condition examples
+    present in training data for that degradation type.
+    3% overall = 2 of 60 conditions across all heads.
+
+    **Source Documents:**
+    - docs/planning/WILD_CONDITIONS_ANALYSIS.md
+    - docs/planning/DIVERSITY_REMEDIATION_PLAN.md
+
+    **Related Diagrams:**
+    - prepare-doc-compound-distortion-augmentation.puml
+    - stream-4e-handwriting-dataset.puml
+    - stream-4c-dataset-preparation.puml (OOD)
+
+    **Stereotype Legend:**
+    GREEN  <<covered>>   = real wild examples in training
+    YELLOW <<partial>>   = some coverage, gaps remain
+    RED    <<uncovered>> = no wild-condition coverage
+    ORANGE <<p0_action>> = P0 remediation (Tier 1)
+    CREAM  <<p1_action>> = P1 remediation (Tier 1-3)
+
+    **ADR:**
+    [[docs/ADRs/0022-synthetic-data-generation.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

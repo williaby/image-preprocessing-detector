@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-primary-workflow-high-level
 title Prepare-Doc - Primary Document Processing Workflow (High Level)
 
 skinparam dpi 150
@@ -19,12 +19,13 @@ partition "Stage 0 — Document Type Router" #FFF9C4 {
   :Classify PDF sub-type\n(born_digital / born_digital_degraded\n/ scanned / hybrid);
   note right
     **4-way PDF classification:**
-    born_digital → fast path
-    born_digital_degraded → image pipeline
-    scanned / hybrid → image pipeline
+    born_digital -> fast path
+    born_digital_degraded -> image pipeline
+    scanned / hybrid -> image pipeline
 
     **src (planned):**
-    src/routing/document_type_router.py
+    src/.../classification/pdf_type_classifier.py
+    src/.../routing/document_type_router.py (planned)
   end note
 
   if (native text format\nOR born_digital PDF?) then (fast path)
@@ -57,7 +58,7 @@ partition "IQA Analysis" {
   :Classical IQA\n(blur, noise, contrast, skew);
   :MobileNetV4-Conv-S\npre-correction (3 heads:\norientation, skew, resolution);
   :Apply pre-corrections\n(orientation, deskew, resolution);
-  :SigLIP 2 NAFlex\nmulti-task analysis\n(22 heads, 5 groups);
+  :SigLIP 2 NAFlex\nmulti-task analysis\n(19 heads, 5 groups);
   if (Low confidence heads?) then (yes)
     :Classical fallback\n(6 head-specific rules);
   endif
@@ -104,6 +105,44 @@ partition "Output" {
   end note
 }
 
+note right
+  **Source:**
+  - src/.../ingestion/pdf_loader.py
+  - src/.../ingestion/pdf_resolution.py
+  - src/.../ingestion/pdf_upscaler.py
+  - src/.../ingestion/pdf_analyzer.py
+  - src/.../ingestion/image_loader.py
+  - src/.../detection/text_gate.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../detection/orientation_detector.py
+  - src/.../detection/layout_lite/analyzer.py
+  - src/.../classification/pdf_type_classifier.py
+  - src/.../correction/corrections.py
+  - src/.../correction/border_removal.py
+  - src/.../correction/perspective_correction.py
+  - src/.../metrics/dqs_calculator.py
+  - src/.../routing/recommendation_engine.py
+  - src/.../routing/docling_router.py
+  - src/.../output/json_generator.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0008-multi-stage-pipeline-architecture.md]]
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+end note
+
 stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

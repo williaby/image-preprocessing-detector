@@ -462,3 +462,59 @@ No defect catalog available for this dataset.
 - No cross-dataset known issues identified for this dataset.
 
 **Audit Artifacts**: [scripts/audit/results/hasy/](../../scripts/audit/results/hasy/)
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ❌ Not applicable | 0 | N/A | 32×32 isolated symbols; no document orientation concept applicable |
+| MNV4-H2 | skew_reg | ❌ Not applicable | 0 | N/A | Isolated symbols too small for meaningful skew estimation |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | 0 | N/A | Fixed 32×32 px images; resolution quality concept not applicable at symbol scale |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~151,410 | tier_3_heuristic | Tiny binary images; most symbols are sharp; contributes low-blur / clear-stroke examples |
+| SIG-G1-2 | noise_score | ➖ Negatives only | ~151,410 | tier_3_heuristic | Crowdsourced binary; occasional noisy samples usable as noise negative class only |
+| SIG-G1-3 | contrast_score | ❌ Not applicable | 0 | N/A | Binary 1-bit images; contrast not meaningful at 32×32 symbol scale |
+| SIG-G1-4 | skew_score | ❌ Not applicable | 0 | N/A | Isolated symbols; skew quality degradation not meaningful at this scale |
+| SIG-G1-5 | compression_score | ❌ Not applicable | 0 | N/A | PNG lossless; no JPEG compression present |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | 0 | N/A | Symbol-level quality not comparable to page-level MOS; scale mismatch |
+| SIG-G2-1 | script_cls | ❌ Not applicable | 0 | N/A | Mathematical symbols use ISO 15924 Zyyy (Common); excluded from 19-class script model |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | 0 | N/A | Isolated symbols; no post-correction orientation concept |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | N/A | Not applicable at symbol scale |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 Secondary | ~151,410 | tier_0_exact | 100% handwritten symbols; useful as DOMINANT-class examples within EDU/math context |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 Secondary | ~151,410 | tier_1_annotation | Symbol clarity varies by crowdsource contributor; legible/illegible classification derivable |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | 151,410 | tier_0_exact | MATHEMATICAL class — 168K handwritten math symbols; primary contributor for MATHEMATICAL subclass |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~151,410 | tier_0_exact | Isolated symbols = presence_reg 1.0 conceptually, but no page-level area ratio applicable; use as anchors only |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | ~151,410 | tier_2_model | Crowdsourced quality variation enables legibility regression; user_id filtering recommended |
+| SIG-G5-1 | capture_method_cls | 🟡 Secondary | 151,410 | tier_0_exact | scanner_flatbed per L2 metadata (crowdsourced tablet/pen input); contributes SCANNER examples but domain mismatch with documents |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | 32×32 isolated symbols; no shadow artifact concept applicable |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | 32×32 isolated symbols; no warping artifact concept applicable |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | N/A | Mathematical symbols are not source code; \sum, \alpha etc. are not code_cls positives |
+| SIG-G5-5 | resolution_quality_reg | ❌ Not applicable | 0 | N/A | 32×32 px fixed; scale mismatch with document resolution quality concept |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ Not present | ISO 15924 Zyyy (Common/mathematical) — not part of the 19-class script model; excluded from SIG-G2-1 |
+| 2 | Capture method | 🟡 Partial | scanner_flatbed 100% per L2 (168,233 samples); crowdsourced pen-tablet input mapped to scanner; domain differs from document scanners |
+| 3 | Document domain | 🟡 Partial | EDU (educational/math) 100%; narrow — mathematical symbol recognition only, not document understanding |
+| 4 | Layout type | ❌ Not present | Isolated symbols (32×32 px); no document layout concept |
+| 5 | Text density | ❌ Not present | Single symbol per image; text density concept not applicable |
+| 6 | Degradation types | ❌ Not present | No documented degradation in L2 metadata; crowdsourced quality variation not mapped to standard degradation types |
+| 7 | Resolution/DPI range | ❌ Not present | Fixed 32×32 px (upscaled legacy: 232×231); no DPI information; extreme low-resolution extreme |
+| 8 | Document age | 🟡 Partial | Released 2017, collected ~2016; modern crowdsourced data; not aged or historical |
+| 9 | Text scope | 🟡 Partial | Character-level scope (one symbol per image); narrowest scope in the dataset pool |
+| 10 | Content flags | 🟡 Partial | has_handwriting 100% (168,233); no tables, figures, or code; math symbols partially overlap has_formula |
+| 11 | Binarization status | ✅ Well-covered | Binary (1-bit) 100%; strong binarized symbol class |
+| 12 | Artifact types | ❌ Not present | No shadows, warping, watermarks, or folds applicable at 32×32 scale |
+| 13 | Color mode | 🟡 Partial | Binary (original 32×32); legacy upscaled variant is RGBA 232×231; no grayscale or true color |
+| 14 | Font variety | ❌ Not present | Handwritten symbols only; 369 symbol class variety replaces font variety; no typeface information |
+
+### 13.3 Corpus Role & Constraints
+
+HASYv2 has a **narrow but unique role** in the multi-task pipeline: it is the **primary contributor for the MATHEMATICAL subclass** of `handwriting_content_type_cls` (SIG-G4-3), providing 151,410 training-eligible samples of handwritten math symbols across 369 LaTeX classes. No other dataset in the pool provides comparable coverage of mathematical handwriting at this scale.
+
+Outside the MATHEMATICAL content-type head, HASYv2's utility is limited by its 32×32 pixel scale. The images are too small for orientation, skew, resolution quality, IQA, script detection, shadow/warping, or page-level analyses. The Zyyy (Common) script code explicitly excludes it from the 19-class `script_cls` head. Capture method is technically scanner_flatbed per L2 metadata but the actual input was crowdsourced pen-tablet drawing, creating a minor domain mismatch with document scanner classes.
+
+**License constraint**: ODC ODbL v1.0 requires attribution (cite Martin Thoma, arXiv:1701.08380) and any published dataset derived from HASYv2 must remain open under the same license. Model weights trained on HASYv2 are not subject to the share-alike clause. **Benchmark protection**: the 16,823 test samples across all 10 folds are RESERVED and must not be used for training or validation. Use only the 151,410 training-split samples. The legacy `maths_handwriting/` subset (15K images) has lost its labels and should not be used; use `hasyv2_original/hasy-data/` exclusively.

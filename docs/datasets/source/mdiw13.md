@@ -504,3 +504,57 @@
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 63.6% | 0.000 |
 | 2 | `language` | 36.4% | 0.604 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | N/A | All scanner_flatbed crops are upright (orientation_class=0 for 100%); no rotation diversity; not useful for orientation training |
+| MNV4-H2 | skew_reg | ➖ | 0 | N/A | Flatbed scans have near-zero skew; word/line crops have no meaningful skew signal |
+| MNV4-H3 | resolution_quality_reg | ➖ | 0 | N/A | No resolution quality labels computed; consistent scan resolution throughout |
+| SIG-G1-1 | blur_score | ➖ | 0 | N/A | No IQA labels; scanned documents have minimal blur — useful only as implicit "clean" negative |
+| SIG-G1-2 | noise_score | ➖ | 0 | N/A | No IQA labels; scanner noise present but unlabeled |
+| SIG-G1-3 | contrast_score | ➖ | 0 | N/A | No IQA labels; varied print quality but no contrast annotations |
+| SIG-G1-4 | skew_score | ➖ | 0 | N/A | No IQA labels; flatbed scan skew is minimal |
+| SIG-G1-5 | compression_score | ➖ | 0 | N/A | PNG lossless format; compression artifacts absent |
+| SIG-G1-6 | overall_quality | ➖ | 0 | N/A | No IQA labels present |
+| SIG-G2-1 | script_cls | ✅ Primary | ~234,400 | Human expert GT (directory + competition GT file) | 9 ML-usable ISO 15924 classes (Arab, Beng, Guru, Deva, Jpan, Latn, Mlym, Orya+Taml+Telu+Thai mapped); competition_test (55,814) RESERVED; most important real/printed multi-script document dataset |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | N/A | All samples at 0° orientation (flatbed scanner); no post-correction orientation signal |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | N/A | Flatbed scans are axis-aligned; post-correction skew effectively zero |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 Secondary | ~152,700 | Derived from directory path (handwritten_document flag) | 52.6% has_handwriting=True (152,661 samples); binary label only; printed half provides useful "no handwriting" negatives |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No legibility annotations available in dataset |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting content-type annotations |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | ~152,700 | Derived binary (0.0/1.0) | Binary presence score usable as 0.0/1.0 regression signal; same 52.6% coverage as G4-1 |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No legibility score labels available |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~234,400 | Derived from dataset capture method (100% scanner_flatbed) | 100% real labels; pure "scanned" class contribution; usable for capture_method 7-class head as "scanner" stratum |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | N/A | No shadow severity labels; flatbed scanning produces minimal shadow |
+| SIG-G5-3 | warping_reg | ❌ | 0 | N/A | No warping labels; flatbed scans have near-zero warping |
+| SIG-G5-4 | code_cls | ❌ | 0 | N/A | VLM confirmed 0% has_code across all 60 inspected samples |
+| SIG-G5-5 | resolution_quality_reg | ➖ | 0 | N/A | No resolution quality labels computed; PaddleOCR pipeline not run on this dataset |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | 5 families: Indic (56.3%), Latin (10.2%), Arabic (9.1%), CJK/Japanese (2.7%), Thai (7.6%); 13 scripts total; strongest multi-script coverage of any real document dataset |
+| 2 | Capture method | 🟡 Partial | 100% scanner_flatbed; excellent scanner representation but no camera or born_digital diversity |
+| 3 | Document domain | ❌ Not present | domain_level1 = UNK for all 290K samples (KI-007 accepted); mix of newspapers + handwritten letters but no structured domain labels |
+| 4 | Layout type | ❌ Not present | No layout_type labels; word/line/document crops at 3 granularity levels but no semantic layout categories |
+| 5 | Text density | 🟡 Partial | text_scope=word for 100% (pre-segmented crops); word-level density is implicitly single-word, not document density |
+| 6 | Degradation types | ❌ Not present | No degradation labels; degradation_types dict is empty in aggregates; scanned quality assumed acceptable |
+| 7 | Resolution/DPI range | 🟡 Partial | Consistent flatbed scanner resolution (estimated 200-400 DPI); no per-image DPI metadata; no low-resolution samples |
+| 8 | Document age | 🟡 Partial | Newspaper content spans various decades; no explicit document_age labels; mix of modern and older print |
+| 9 | Text scope | ✅ Well-covered | 100% word-level text scope (pre-segmented); document-level, line-level, and word-level granularity present in directory structure |
+| 10 | Content flags | 🟡 Partial | has_handwriting=52.6% (derived); has_table=0.0% (VLM confirmed); has_code=0% (VLM confirmed); no formula/figure flags |
+| 11 | Binarization status | 🟡 Partial | Default grayscale (D07 resolved); not explicitly binarized; scanner output is typically near-binary for text |
+| 12 | Artifact types | ❌ Not present | No artifact type labels; top_degradations list is empty; scanner artifacts (bleed-through, noise) present but unlabeled |
+| 13 | Color mode | 🟡 Partial | Default grayscale for all samples (D07 resolved); consistent single mode, no color or binarized variety |
+| 14 | Font variety | ✅ Well-covered | High font diversity across 13 scripts including newspaper print fonts and handwritten letterforms; VLM confirmed authentic script-specific letterforms |
+
+### 13.3 Corpus Role & Constraints
+
+MDIW13 is the primary real-document dataset for SIG-G2-1 `script_cls`, providing 234,399 human-expert-labeled images across 9 ML-usable ISO 15924 script classes from flatbed-scanned printed documents and handwritten letters. The competition test set (55,814 images) is permanently RESERVED for benchmark evaluation and must never be used for training. Real/printed mixing caps do not apply to G2-1 since this dataset contributes exclusively to the real-scanned stratum; the 13th script class (Zyyy/undetermined, 21.7%) corresponds to competition_test samples and is excluded from training pools.

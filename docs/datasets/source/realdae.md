@@ -466,3 +466,64 @@ realdae/
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~450 | Synthetic rotation | Camera docs with natural tilt; synthetically rotated _in images |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No skew angle labels; mild perspective distortion present but unlabeled |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~583 | Inferred from DPI | High-res camera capture (up to 4976px wide); RQ labels derivable via pipeline |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~583 | Inferred | Motion/focus blur present in camera-captured _in images; no explicit scores |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~583 | Inferred | Camera sensor noise present; severity derivable from image statistics |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~200 | Inferred | Color-cast task (200 pairs) directly exhibits contrast/illumination variance |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | No skew degradation quality labels |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | JPEG compression but no blockiness severity labels |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | - | - | No MOS or overall quality scores provided |
+| SIG-G2-1 | script_cls | 🟡 Secondary | ~583 | Derived from L2 | CJK 76.8% + Latin 22.6% + Indic 0.5%; L2 iso15924_script field available |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~450 | Synthetic rotation | Same as MNV4-H1; usable for post-correction orientation head |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No geometric skew angle labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~583 | L2 content_flags | L2 flags has_handwriting=19.7% (likely FP per audit); dataset is printed text — NONE class negatives |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting legibility labels |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting content type labels |
+| SIG-G4-4 | presence_reg | ❌ Not applicable | - | - | No handwriting presence regression labels |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting legibility regression labels |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 583 | L2 hard label | 100% camera_smartphone; audit-corrected capture method label (D08 resolved) |
+| SIG-G5-2 | shadow_reg | ✅ Primary | ~300 | Task-derived | Shadow task subset (300 pairs) provides shadow presence; severity labels need derivation |
+| SIG-G5-3 | warping_reg | 🟡 Secondary | ~583 | Inferred | Mild perspective distortion in all camera captures; no explicit warping severity GT |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~583 | Inferred | General documents; no code content — useful as negative examples |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | 🟡 Secondary | ~583 | Inferred from DPI | High-resolution camera docs; RQ labels derivable via resolution quality pipeline |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | 🟡 Partial | CJK 76.8% (Hans), Latin 22.6% (Latn), Indic 0.5% (Deva/Mlym); no Arabic/Cyrillic/other |
+| 2 | Capture method | ✅ Well-covered | 100% camera_smartphone; only real-world camera-captured document dataset with pixel-aligned GT |
+| 3 | Document domain | ✅ Well-covered | EDU 44.8%, PER 10.8%, FIN 9.1%, SCI 7.9%, ADM 6.3%, TAX 4.6%, MED 4.3%, TEC 3.1%, LEG 2.1% |
+| 4 | Layout type | ❌ Not present | No layout annotations; Docling layout extracted (10 categories) but not integrated into L2 |
+| 5 | Text density | ❌ Not present | No text density labels; all images are full-page printed documents |
+| 6 | Degradation types | ✅ Well-covered | Bleed-through, color cast, shadow — 3 task-specific degradation types with 200 pairs each |
+| 7 | Resolution/DPI range | ✅ Well-covered | 734–4,976 × 864–4,032 px; high-resolution camera capture; DPI variable (camera-native) |
+| 8 | Document age | ❌ Not present | Contemporary documents only (2023); no historical or aged documents |
+| 9 | Text scope | 🟡 Partial | 100% printed text per L2; full-page only, no word/line/region scope |
+| 10 | Content flags | 🟡 Partial | has_figure 58.8%, has_table 21.8%, has_formula 2.6%; has_handwriting 19.7% (30% FP per audit) |
+| 11 | Binarization status | ❌ Not present | All images are full-color RGB; no binarized samples |
+| 12 | Artifact types | ✅ Well-covered | Bleed-through, illumination gradient, shadow — all three subtypes with paired GT for measurement |
+| 13 | Color mode | 🟡 Partial | 100% RGB color (L2 confirmed); no grayscale or binarized variants |
+| 14 | Font variety | ❌ Not present | No font metadata; predominantly CJK typefaces with some Latin fonts |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+RealDAE serves as the primary real-world source for camera_smartphone capture method labels (SIG-G5-1) and shadow degradation examples (SIG-G5-2), with 100% of 583 samples confirmed as camera-captured after Layer 2 audit correction (D08). The dataset is research-only licensed and small (600 pairs), so it functions as a secondary or validation source for most IQA heads rather than a primary training source; its chief value is providing pixel-aligned degraded/GT pairs that enable computing PSNR/SSIM quality signals for blur, contrast, and noise heads without MOS scores. Note that the KI-009 known issue (paper claims English-only but 76% is Chinese) means script_cls labels must be sourced from L2 enrichment rather than documentation.

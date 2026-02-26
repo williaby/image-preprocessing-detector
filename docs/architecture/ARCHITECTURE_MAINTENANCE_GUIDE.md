@@ -10,7 +10,7 @@ tags:
 title: Architecture Documentation Maintenance Guide
 ---
 
-**Purpose**: Complete guide for maintaining the 4-level architecture documentation hierarchy (Level 0-3) with automated validation and traceability.
+**Purpose**: Complete guide for maintaining the 5-level architecture documentation hierarchy (Level 0-4) with automated validation and traceability.
 
 **Audience**: Developers, architects, technical writers, new team members
 
@@ -29,14 +29,15 @@ title: Architecture Documentation Maintenance Guide
 7. [Common Scenarios](#common-scenarios)
 8. [Troubleshooting](#troubleshooting)
 9. [Reference Documents](#reference-documents)
+10. [Level 4: Instance Registries](#level-4-instance-registries)
 
 ---
 
 ## Overview
 
-### The 4-Level Architecture System
+### The 5-Level Architecture System
 
-```
+```text
 Level 0: Multi-Project Pipeline (6 projects)
     ↓
 Level 1: Prepare-Doc Architecture (8 workstreams)
@@ -44,6 +45,8 @@ Level 1: Prepare-Doc Architecture (8 workstreams)
 Level 2: Workstream Details (component architecture + workflows)
     ↓
 Level 3: Module Implementation (state machines + detailed swimlanes)
+    ↓
+Level 4: Instance Registries (per-dataset adapter tables)
 ```
 
 ### Documentation Philosophy
@@ -52,6 +55,7 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
 - **Level 1**: What workstreams exist and how they interact
 - **Level 2**: What components exist and how they work ("Level 2.5" with code examples)
 - **Level 3**: How complex algorithms/workflows are implemented (with LOC traceability)
+- **Level 4**: Which specific dataset adapter instances exist ("more table than workflow")
 
 ---
 
@@ -161,6 +165,60 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
 
 ---
 
+### Level 4: Instance Registries
+
+**Location**: `docs/architecture/diagrams/level-4/`
+
+**Format**: Markdown tables — "more table than workflow"
+
+**Required Files**:
+
+```text
+level-4/
+├── index.md                                — taxonomy, controlled vocab, update guide
+├── data-preparation/
+│   ├── index.md                            — WS3 registry navigation
+│   ├── annotation-parser-registry.md       — AUTO (all parser adapters by task)
+│   ├── annotation-provider-registry.md     — AUTO (all enrichment providers)
+│   └── annotation-integrate-registry.md    — AUTO (all integrate scripts)
+├── model-training/
+│   ├── index.md                            — WS2 registry navigation
+│   ├── training-dataset-registry.md        — SEMI (10 training datasets)
+│   └── model-checkpoint-registry.md        — MANUAL (trained model checkpoints)
+└── production-runtime/
+    ├── index.md                            — WS1 registry navigation
+    └── schema-field-population-registry.md — SEMI (field → component mapping)
+```
+
+**Document Types**:
+
+| Type | How Generated | Fence Markers |
+|------|--------------|---------------|
+| AUTO | Fully overwritten by harvester | None |
+| SEMI | Fence markers protect manual sections | `<!-- AUTO-GENERATED-START/END -->` |
+| MANUAL | Human-maintained only | None |
+
+**Scope**: 135 DATASET_ADAPTER files excluded from PUML diagrams by design:
+
+- ~59 parser adapters in `src/.../annotation/parsers/`
+- 5 enrichment providers in `src/.../annotation/enrichment/providers/`
+- ~52 integrate scripts in `scripts/integrate_*_enrichments.py`
+
+**Update Frequency**: After adding/removing any adapter file; after adding `l4_*` front-matter to a training dataset doc
+
+**Maintainer**: Dataset owner or WS3 lead
+
+**Harvester Command**:
+
+```bash
+python scripts/generate_level4_registries.py --category all
+python scripts/generate_level4_registries.py --check   # CI mode
+```
+
+**See**: [Level 4 Index](diagrams/level-4/index.md) for full documentation
+
+---
+
 ## When to Update Documentation
 
 ### Trigger Events
@@ -175,6 +233,9 @@ Level 3: Module Implementation (state machines + detailed swimlanes)
 | **Algorithm changed** | Level 3 | Update state machines, sequence diagrams, code references |
 | **Sprint/Phase completed** | Level 2 | Update status, LOC counts, add new features to workflows |
 | **LOC increased >20%** | Level 1, Level 2 | Re-run LOC extraction, update counts |
+| **New dataset adapter added** | Level 4 | Add `__l4_*` header to parser + integrate script, add to `canonical_names.json`, regenerate registries |
+| **Adapter file removed/deprecated** | Level 4 | Set `__l4_status__ = "deprecated"` or remove file, regenerate registries |
+| **New training dataset assembled** | Level 4 | Add `l4_*` front-matter to `docs/datasets/training/*.md`, regenerate |
 
 ---
 
@@ -363,6 +424,88 @@ git commit -m "docs(architecture): update {workstream} for [feature/change]"
 
 ---
 
+### Updating Level 4
+
+**When to update**: After adding, removing, or deprecating any adapter file.
+
+#### Adding a New Dataset Adapter
+
+1. **Add `__l4_*` header** to the new parser file immediately after the module docstring:
+
+   ```python
+   """Parser for MyDataset."""
+
+   # --- Level 4 registry metadata ---
+   __l4_category__    = "parser"
+   __l4_dataset__     = "my-dataset"        # kebab-case canonical name
+   __l4_workstream__  = "WS3"
+   __l4_task__        = "layout"            # controlled vocab
+   __l4_l2_file__     = "my_dataset_metadata.json"   # optional
+   __l4_integrate__   = "scripts/integrate_my_dataset_enrichments.py"  # optional
+   ```
+
+2. **Add `__l4_*` header** to `scripts/integrate_my_dataset_enrichments.py`:
+
+   ```python
+   """Integrate MyDataset enrichment metadata into L2 registry."""
+
+   # --- Level 4 registry metadata ---
+   __l4_category__    = "integrate-script"
+   __l4_dataset__     = "my-dataset"
+   __l4_workstream__  = "WS3"
+   __l4_parser__      = "src/image_preprocessing_detector/annotation/parsers/layout/my_dataset.py"
+   ```
+
+3. **Add canonical name** to `docs/datasets/canonical_names.json` (kebab-case):
+
+   ```json
+   "canonical_names": ["...", "my-dataset"]
+   ```
+
+4. **Regenerate and verify**:
+
+   ```bash
+   python scripts/generate_level4_registries.py --category all
+   python scripts/generate_level4_registries.py --check
+   ```
+
+5. **Commit**:
+
+   ```bash
+   git add docs/architecture/diagrams/level-4/data-preparation/
+   git add docs/datasets/canonical_names.json
+   git commit -m "docs(architecture): add my-dataset to Level 4 parser registry"
+   ```
+
+#### Deprecating an Adapter
+
+Set `__l4_status__ = "deprecated"` in the file header, then regenerate. Deprecated
+adapters still appear in the registry but are flagged for eventual removal.
+
+#### `__l4_task__` Controlled Vocabulary
+
+| Value | Used by |
+|-------|---------|
+| `correction` | `parsers/correction/` adapters |
+| `document` | `parsers/document/` adapters |
+| `formula` | `parsers/formula/` adapters |
+| `handwriting` | `parsers/handwriting/` adapters |
+| `layout` | `parsers/layout/` adapters; docling_layout + yolo providers |
+| `multilingual` | `parsers/multilingual/` adapters |
+| `quality` | `parsers/quality/` adapters |
+| `language` | language_detector provider |
+| `iqa` | siglip + simulated providers |
+
+#### Naming Note (`__l4_*` Dunder Convention)
+
+The `__l4_*` variable names use the dunder-prefix pattern consistent with SPDX headers
+in this codebase. While PEP 8 reserves double-underscore names for Python internals,
+collision with real Python dunder names is not a practical concern for these read-only
+string constants. This choice is intentional per the multi-model consensus review
+documented in `docs/handoff/LEVEL4_ARCHITECTURE_DESIGN_HANDOFF.md`.
+
+---
+
 ## Automated Tools
 
 ### 1. LOC Extraction Script
@@ -452,7 +595,49 @@ python3 tools/generate_diagram_svgs.py --check
 
 ---
 
-### 4. File Inventory
+### 4. Level 4 Registry Harvester
+
+**Purpose**: Generate and validate Level 4 instance registries from `__l4_*` headers
+
+**Location**: `scripts/generate_level4_registries.py`
+
+**Usage**:
+
+```bash
+# Generate all registries
+python scripts/generate_level4_registries.py --category all
+
+# Validate headers only — CI mode (fails on orphaned files or missing fields)
+python scripts/generate_level4_registries.py --check
+
+# Verbose validation (shows skipped files with reasons)
+python scripts/generate_level4_registries.py --check --verbose
+
+# Generate specific category
+python scripts/generate_level4_registries.py --category parser
+
+# Emit raw harvest as JSON (debugging)
+python scripts/generate_level4_registries.py --json
+
+# Scaffold a new adapter stub
+python scripts/generate_level4_registries.py --scaffold \
+    --category parser --dataset my-dataset --task layout --workstream WS3
+```
+
+**`--check` validates**:
+
+- [A] Orphan detection — walks ADAPTER_DIR_PATTERNS directories, flags files without `__l4_*` headers (GAP_E)
+- [B] Required fields — `__l4_category__`, `__l4_dataset__`, `__l4_workstream__`
+- [C] Canonical names — `__l4_dataset__` validated against `docs/datasets/canonical_names.json`
+- [D] Path existence — `__l4_integrate__` and `__l4_parser__` paths checked on disk
+
+**Exit Codes**: `0` = pass, `1` = validation failures found
+
+**Frequency**: After adding/removing any adapter file; in CI on every PR
+
+---
+
+### 5. File Inventory
 
 **Purpose**: Complete mapping of all git-tracked files to workstreams
 
@@ -681,7 +866,7 @@ end note
    note right
      **Note**: SigLIP 2 NAFlex handles variable
      resolution natively via NAFlex packing.
-     16 heads across 5 groups.
+     19 heads across 5 groups.
      See: level-2/model-training/index.md
    end note
    ```
@@ -715,7 +900,44 @@ end note
 
 ---
 
-### Scenario 5: Quarterly Documentation Audit
+### Scenario 5: Adding a New Dataset to the Project
+
+**Example**: Adding a new dataset `best-docs` with a layout parser
+
+**Steps**:
+
+1. **Create the parser file** with `__l4_*` header:
+   `src/image_preprocessing_detector/annotation/parsers/layout/best_docs.py`
+
+2. **Create the integrate script** with `__l4_*` header:
+   `scripts/integrate_best_docs_enrichments.py`
+
+3. **Add canonical name** to `docs/datasets/canonical_names.json`:
+
+   ```bash
+   # Add "best-docs" to the canonical_names array
+   ```
+
+4. **Run harvester**:
+
+   ```bash
+   python scripts/generate_level4_registries.py --category all
+   python scripts/generate_level4_registries.py --check
+   ```
+
+5. **Validate**: Confirm `best-docs` appears in `level-4/data-preparation/annotation-parser-registry.md`
+
+6. **Commit**:
+
+   ```bash
+   git add docs/architecture/diagrams/level-4/data-preparation/
+   git add docs/datasets/canonical_names.json
+   git commit -m "docs(architecture): register best-docs in Level 4 parser registry"
+   ```
+
+---
+
+### Scenario 6: Quarterly Documentation Audit
 
 **Frequency**: Every 3 months (Jan 1, Apr 1, Jul 1, Oct 1)
 
@@ -804,8 +1026,9 @@ markdownlint --fix docs/architecture/**/*.md
 - [ ] **Traceability**: If source files added, update tables
 - [ ] **Frontmatter**: Update `last_updated` date
 - [ ] **Cross-references**: Verify all `[link](path)` references are valid
+- [ ] **Level 4 headers**: If adapter files added/removed, run `python scripts/generate_level4_registries.py --check`
 
-### CI/CD Integration (Future)
+### CI/CD Integration
 
 **GitHub Actions Workflow** (planned):
 
@@ -837,6 +1060,10 @@ jobs:
         run: |
           ./scripts/extract_workstream_loc.sh
           # Compare to committed totals (fail if >20% variance)
+
+      - name: Validate Level 4 headers
+        run: python scripts/generate_level4_registries.py --check
+        # Fails if any adapter file in ADAPTER_DIR_PATTERNS is missing __l4_* headers
 ```
 
 ---
@@ -1035,6 +1262,8 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
 - [ ] Generate file inventory
 - [ ] Fix any broken links
 - [ ] Update README.md if architecture changed
+- [ ] Run `python scripts/generate_level4_registries.py --check` — verify 0 GAP_E files
+- [ ] Regenerate Level 4 registries if adapter files were added since last quarter
 
 ---
 
@@ -1068,6 +1297,21 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
 - [LEVEL_3_IMPLEMENTATION_ROADMAP.md](LEVEL_3_IMPLEMENTATION_ROADMAP.md)
 - [LEVEL_3_AGENT_ASSIGNMENTS.md](LEVEL_3_AGENT_ASSIGNMENTS.md)
 
+### Questions About Level 4 Instance Registries
+
+**Read**:
+
+- [diagrams/level-4/index.md](diagrams/level-4/index.md) — taxonomy, controlled vocab, update guide
+- [docs/handoff/LEVEL4_ARCHITECTURE_DESIGN_HANDOFF.md](../handoff/LEVEL4_ARCHITECTURE_DESIGN_HANDOFF.md) — design spec
+- `docs/datasets/canonical_names.json` — machine-readable canonical name list
+
+**Regenerate**:
+
+```bash
+python scripts/generate_level4_registries.py --category all
+python scripts/generate_level4_registries.py --check
+```
+
 ### Need to Invoke Sub-Agent for Level 3 Work
 
 **See**: [LEVEL_3_AGENT_ASSIGNMENTS.md](LEVEL_3_AGENT_ASSIGNMENTS.md) for complete task definitions
@@ -1090,6 +1334,7 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
 2. Read relevant [Level 2 doc](diagrams/level-2/) for your workstream
 3. Check Level 2 "Source File Traceability" table to find files you need
 4. If complex algorithm, check if Level 3 doc exists
+5. For dataset adapter files, check [Level 4: Data Preparation](diagrams/level-4/data-preparation/) — the instance registry
 
 ### I'm adding a new feature - What do I update?
 
@@ -1098,8 +1343,19 @@ cat diagram.puml | plantuml -tsvg -pipe > output.svg
    - Add component to "Key Components" table
    - Add code example if significant
    - Add file to "Source File Traceability" table
-3. Run `./scripts/validate_architecture_links.sh`
-4. Commit with docs updates
+3. **If adding a dataset adapter**: add `__l4_*` header + run harvester (see Updating Level 4)
+4. Run `./scripts/validate_architecture_links.sh`
+5. Commit with docs updates
+
+### I'm adding a new dataset - What do I update?
+
+1. Add parser file with `__l4_*` header to `src/.../annotation/parsers/<task>/`
+2. Add integrate script with `__l4_*` header to `scripts/`
+3. Add canonical name to `docs/datasets/canonical_names.json`
+4. Add dataset doc to `docs/datasets/source/<name>.md`
+5. Run `python scripts/generate_level4_registries.py --category all`
+6. Run `python scripts/generate_level4_registries.py --check` (must pass)
+7. Commit all changes together
 
 ### I'm refactoring code - How do I keep docs in sync?
 

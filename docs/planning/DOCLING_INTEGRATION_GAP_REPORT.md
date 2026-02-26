@@ -342,7 +342,7 @@ system. Specific gaps:
 | `text_layer_quality`, `text_layer_skip_ocr` | Added for born-digital path |
 | `degradation_severity: "simple"/"complex"` | Added for DocRes/VLM routing |
 | Handwriting assessment fields | Added via `HandwritingAssessment` model |
-| SigLIP 2 multi-task model (16 heads) | Spec still describes 5-head ResNet-18 |
+| SigLIP 2 multi-task model (19 heads) | Spec still describes 5-head ResNet-18 |
 | 6-rule routing engine | Spec shows simplified 5-row decision table |
 | 7-class capture method classification | Not mentioned |
 | `code_content_ratio` head | Not mentioned |

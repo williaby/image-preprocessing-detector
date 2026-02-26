@@ -439,7 +439,7 @@ alt Gates Pass
   note right
     **Deployment Metadata:**
     - model_id, version (siglip2_naflex-v1.x)
-    - per_head_benchmark_results (16 heads)
+    - per_head_benchmark_results (19 heads)
     - mobilenetv4_benchmark_results (3 heads)
     - approval_timestamp
     - deployment_tier (canary/full)

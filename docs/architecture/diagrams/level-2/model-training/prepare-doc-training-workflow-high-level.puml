@@ -1,4 +1,4 @@
-@startuml
+@startuml prepare-doc-training-workflow-high-level
 title Prepare-Doc - Training Workflow (High Level)
 
 skinparam dpi 150
@@ -29,7 +29,7 @@ endif
 
 |Step 2: SigLIP 2 Multi-Task|
 :Load SigLIP 2 NAFlex backbone\n(~88M, frozen ViT-B/16);
-:Attach 22 task heads\n(5 groups: IQA[6], Script[3],\nOrientation+Skew[3], Handwriting[5],\nPage Attrs[5]);
+:Attach 19 task heads\n(5 groups: IQA[6], Script[1],\nOrientation+Skew[2], Handwriting[5],\nPage Attrs[5]);
 :Train heads on all 10 datasets\n(weighted multi-task loss);
 if (All heads pass\ngraduation thresholds?) then (yes)
   :Export SigLIP 2 checkpoint;
@@ -43,7 +43,7 @@ endif
 :Re-train MobileNetV4-Conv-S\nwith KL-divergence (T=3);
 if (Improved thresholds?\norientation > 98%?) then (yes)
   :Export to ONNX (3 heads);
-  :Export SigLIP 2 to ONNX (22 heads);
+  :Export SigLIP 2 to ONNX (19 heads);
 else (no)
   :Adjust alpha, temperature;
   :Retrain MobileNetV4;
@@ -57,7 +57,7 @@ endif
 stop
 
 note right
-  Training infrastructure:
+  **Training Infrastructure:**
   - Modal serverless GPU (A10)
   - GCS for datasets
   - HuggingFace for SigLIP 2 backbone
@@ -66,6 +66,41 @@ note right
   **PLANNED (Deferred)**:
   MobileCLIP-2 distillation cascade
   for edge/mobile deployment
+
+  ====
+
+  **Source:**
+  - modal/train_siglip2_multitask.py
+  - modal/train_siglip2_iqa_v2.py
+  - modal/train_skew_estimator.py
+  - modal/shared/metrics_utils.py
+  - modal/shared/gcs_utils.py
+  - modal/shared/dataset_utils.py
+
+  **Scripts:**
+  - scripts/prepare_multitask_datasets.py
+  - scripts/generate_skew_dataset.py
+  - scripts/derive_v3_orientation_view.py
+
+  **Documentation:**
+  [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+  [[docs/planning/TRAINING_OPTIMIZATION_PLAN.md]]
+  [[docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md]]
+  [[docs/architecture/diagrams/level-2/model-training/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+  [[docs/ADRs/0030-gcs-colab-training-workflow.md]]
+  [[docs/ADRs/0022-synthetic-data-generation.md]]
 end note
+
+
+' ── Level 3 Drill-Down ───────────────────────────────────────────────────────
+' WS2 Swimlane: docs/architecture/diagrams/level-3/model-training/model-training-swimlane.puml
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

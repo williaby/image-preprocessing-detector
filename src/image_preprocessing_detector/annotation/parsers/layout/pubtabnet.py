@@ -61,7 +61,16 @@ Example:
     Latin
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "pubtabnet"
+__l4_workstream__ = "WS3"
+__l4_task__ = "layout"
+__l4_l2_file__ = "pubtabnet_metadata.json"
+__l4_integrate__ = "scripts/integrate_pubtabnet_enrichments.py"
+
 
 import logging
 from pathlib import Path

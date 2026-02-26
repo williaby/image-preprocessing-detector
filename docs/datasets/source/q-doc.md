@@ -369,3 +369,62 @@ q-doc/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ Not applicable | - | - | Quality benchmark only; no orientation labels |
+| MNV4-H2 | skew_reg | ❌ Not applicable | - | - | No geometric angle labels provided |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~4,260 | Inferred from quality score | Quality scores correlate with resolution; no direct pixel-level label |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~3,400 | Inferred | Blur is a primary degradation factor; may map from per-degradation labels if present |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~3,400 | Inferred | Camera noise expected; inferred if degradation breakdown available |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~3,400 | Inferred | Lighting/contrast variation noted; inferred from overall quality signal |
+| SIG-G1-4 | skew_score | ❌ Not applicable | - | - | Skew degradation score not a documented quality dimension for this dataset |
+| SIG-G1-5 | compression_score | ❌ Not applicable | - | - | Low compression sensitivity noted; no JPEG compression label |
+| SIG-G1-6 | overall_quality | ✅ Primary | ~3,400 | Quality score (MOS or objective) | Core dataset purpose; image-level quality scores covering full quality range |
+| SIG-G2-1 | script_cls | ❌ Not applicable | - | - | Script unknown; no OCR or script labels; camera-captured mixed-language documents |
+| SIG-G3-1 | orientation_cls (post) | ❌ Not applicable | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives only | ~3,400 | Implicit NONE class | Printed documents; no handwriting labels; useful as negative examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ Negatives only | ~3,400 | Implicit 0.0 | Printed docs provide zero-handwriting anchor for regression |
+| SIG-G4-5 | legibility_reg | ❌ Not applicable | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | 🟡 Secondary | ~3,400 | Inferred camera_smartphone | Camera-captured documents; capture method derivable from dataset provenance |
+| SIG-G5-2 | shadow_reg | 🟡 Secondary | ~3,400 | Inferred | Shadows from camera capture expected; no explicit severity label |
+| SIG-G5-3 | warping_reg | 🟡 Secondary | ~3,400 | Inferred | Perspective distortion present; no explicit warping severity label |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~3,400 | Implicit NONE class | General document images; no code-containing documents expected |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ✅ Primary | ~3,400 | Quality score (normalised) | Same quality scores drive both MNV4-H3 and this head; train-split images |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ Not present | Language/script unknown; no OCR run; likely mixed but unverified |
+| 2 | Capture method | 🟡 Partial | Camera-smartphone only; no scanner or born-digital examples |
+| 3 | Document domain | ❌ Not present | Domain unknown; general documents with intentional quality variation |
+| 4 | Layout type | ❌ Not present | No layout labels; parser not yet implemented |
+| 5 | Text density | ❌ Not present | Not annotated; no OCR run |
+| 6 | Degradation types | ✅ Well-covered | Wide range: blur, noise, lighting, perspective distortion, contrast |
+| 7 | Resolution/DPI range | 🟡 Partial | Variable smartphone-camera resolution; no DPI metadata |
+| 8 | Document age | ❌ Not present | All recent smartphone captures; no aged or historical material |
+| 9 | Text scope | ❌ Not present | Not annotated |
+| 10 | Content flags | ❌ Not present | No content flags in annotations |
+| 11 | Binarization status | ❌ Not present | Not annotated; likely full-color RGB images |
+| 12 | Artifact types | ✅ Well-covered | Blur, noise, shadows, perspective distortion, uneven lighting all present |
+| 13 | Color mode | 🟡 Partial | Mixed RGB and grayscale; not explicitly labelled per image |
+| 14 | Font variety | ❌ Not present | No font metadata; unverified |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+Q-Doc is a pure IQA benchmark dataset whose primary contribution is image-level overall quality scores for camera-captured document images, making it a targeted source for the SIG-G1-6 overall_quality and SIG-G5-5 resolution_quality_reg heads. The dataset is small (~4,260 images), secondary qualities such as blur and noise are inferrable but not explicitly labelled per degradation dimension, and the unknown license requires author verification before any training use. Parser implementation is a prerequisite before any Layer 2 metadata or enrichment-derived labels are available.

@@ -229,9 +229,9 @@ package "Classical CV Detectors (Tier 3)" as classical {
         [NoiseDetector -> ml_image_quality.noise_score]
         [ContrastDetector -> ml_image_quality.contrast_score]
         [JPEGBlockinessDetector -> ml_image_quality.compression_score]
-        [IlluminationDetector -> quality.degradations[]]
-        [BinarizationQualityDetector -> quality.degradations[]]
-        [BleedThroughDetector -> quality.degradations[]]
+        [IlluminationDetector -> quality.degradations list]
+        [BinarizationQualityDetector -> quality.degradations list]
+        [BleedThroughDetector -> quality.degradations list]
     }
 
     component "6 Layout-Lite Detectors\n(detection/layout_lite/)" as layout_lite <<tier3>> {
@@ -399,5 +399,36 @@ note bottom of outputs
     7. SigLIP 2 Group 5 shadow/warping (datasets: 15K/20K)
     8. Code language/rendering style detection
 end note
+
+note right
+    **Source Files:**
+    - src/.../annotation/workflow/pipeline.py
+    - src/.../annotation/workflow/scanner.py
+    - src/.../annotation/workflow/preflight.py
+    - src/.../annotation/schemas/immutable.py
+    - src/.../annotation/schemas/enrichment.py
+    - src/.../annotation/enrichment/manager.py
+    - src/.../detection/iqa_classical.py
+    - src/.../detection/iqa_ml.py
+    - src/.../synthetic/generator.py
+    - src/.../synthetic/schema_adapter.py
+
+    **Scripts:**
+    - scripts/annotate_base_metadata.py
+    - scripts/build_training_labels.py
+    - scripts/materialize_reliability_summary.py
+    - scripts/aggregate_layer2_metadata.py
+
+    **Documentation:**
+    [[docs/architecture/diagrams/level-2/schema-field-population/index.md]]
+    [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+    [[docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

@@ -5,6 +5,7 @@
 This package contains parsers for document classification datasets:
 - RVL-CDIP: Document classification (16 classes)
 - MIDV-500: ID documents (50 countries)
+- MIDV-2020: ID documents (10 types, 9 countries, camera + flatbed)
 - OHR-Bench: OCR hallucination benchmark (16 categories)
 - OmniDocBench: Arrow format comprehensive benchmark
 - Tobacco800: Degraded scanned documents
@@ -17,6 +18,7 @@ This package contains parsers for document classification datasets:
 Datasets covered:
     - rvl_cdip
     - midv500
+    - midv2020
     - ohr-bench / ohr_bench
     - omnidocbench
     - tobacco800
@@ -45,6 +47,7 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     from .financebench import FinanceBenchParser
     from .markushgrapher import MarkushgrapherParser
     from .midv500 import Midv500Parser
+    from .midv2020 import Midv2020Parser
     from .multimodal_textbook import MultimodalTextbookParser
     from .ohr_bench import OhrBenchParser
     from .omnidocbench import OmnidocbenchParser
@@ -54,6 +57,7 @@ def register_document_parsers(registry: ParserRegistry) -> None:
 
     registry.register(RvlCdipParser())
     registry.register(Midv500Parser())
+    registry.register(Midv2020Parser())
     registry.register(OhrBenchParser())
     registry.register(OmnidocbenchParser())
     registry.register(Tobacco800Parser())

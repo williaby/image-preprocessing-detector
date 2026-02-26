@@ -11,6 +11,7 @@ Datasets covered:
     - sd7k (shadow removal, ~7,000 images)
     - staindoc (stain removal, WACV 2025, ~5,000 pairs)
     - drccbi (camera dewarping benchmark)
+    - doc3d (synthetic document dewarping, 102,064 images, BlenderProc)
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ def register_correction_parsers(registry: ParserRegistry) -> None:
         registry: ParserRegistry instance to register parsers with
     """
     from .anyphotodoc6300 import Anyphotodoc6300Parser
+    from .doc3d import Doc3DParser
     from .docalign12k import Docalign12KParser
     from .docreal import DocrealParser
     from .drccbi import DrccbiParser
@@ -38,6 +40,7 @@ def register_correction_parsers(registry: ParserRegistry) -> None:
 
     registry.register(Anyphotodoc6300Parser())
     registry.register(Docalign12KParser())
+    registry.register(Doc3DParser())
     registry.register(WsrdParser())
     registry.register(WarpdocParser())
     registry.register(DocrealParser())

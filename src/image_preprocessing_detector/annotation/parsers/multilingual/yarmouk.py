@@ -32,7 +32,16 @@ Example:
     train
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "yarmouk"
+__l4_workstream__ = "WS3"
+__l4_task__ = "multilingual"
+__l4_l2_file__ = "yarmouk_metadata.json"
+__l4_integrate__ = "scripts/integrate_yarmouk_enrichments.py"
+
 
 from pathlib import Path
 from typing import Any

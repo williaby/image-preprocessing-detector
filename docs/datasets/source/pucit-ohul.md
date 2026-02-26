@@ -302,3 +302,55 @@ PUCIT-OHUL includes Urdu text transcriptions in Excel spreadsheets:
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~7,401 | Derived (default UP) | Line images; PO-D06 resolved — all assumed upright; small volume |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~7,401 | Derived (classical) | Minor skew variation possible in handwritten lines; no skew GT |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | 0 | — | No resolution quality labels; IQA pipeline not run |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~7,401 | Derived (IQA pipeline pending) | 200 DPI scanner output — generally sharp; useful as high-quality negative |
+| SIG-G1-2 | noise_score | ➖ Negatives only | ~7,401 | Derived (IQA pipeline pending) | Flatbed scanner captures typically low-noise |
+| SIG-G1-3 | contrast_score | ➖ Negatives only | ~7,401 | Derived (IQA pipeline pending) | Ink-on-paper lines have good contrast; negative examples for degradation |
+| SIG-G1-4 | skew_score | ➖ Negatives only | ~7,401 | Derived (IQA pipeline pending) | Handwritten lines may have mild natural skew; low-degradation examples |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~7,401 | Derived (IQA pipeline pending) | PNG lossless format — no compression artifacts; clean negatives |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | 0 | — | No MOS/quality scores; IQA pipeline not run; SRCC ≥ 0.65 cannot be met |
+| SIG-G2-1 | script_cls | ✅ Primary | 7,401 | GT (hardcoded Arab) | 100% Arab script (Urdu Nastaliq); strong Arabic family contributor; ISO 15924 Arab |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~7,401 | Derived (default UP) | All images assumed upright; contributes post-correction UP class |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | — | No post-correction skew residual labels available |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | 7,401 | GT (has_handwriting=True) | 100% handwritten lines; maps to DOMINANT (full-page handwriting content) |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 Secondary | ~7,401 | Derived (no GT; estimated HIGH) | Urdu Nastaliq cursive lines — legibility varies by writer; no legibility GT |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | 7,401 | GT (CURSIVE) | Urdu Nastaliq is inherently cursive (ligature-based); strong CURSIVE contributor |
+| SIG-G4-4 | presence_reg | ✅ Primary | 7,401 | GT (1.0 — fully handwritten) | 100% handwritten content; continuous value = 1.0 |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | ~7,401 | Derived (no GT; estimated 0.6–0.8) | No legibility scores; writer variability means moderate-high estimate |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 7,401 | GT (scanner_flatbed) | 100% flatbed scanner; reliable real-world scanner class examples |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | — | Flatbed scanner capture has no shadow; no shadow severity labels |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | — | Line images on flatbed — no perspective warping; no warping labels |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | — | Urdu handwritten lines contain no code; all samples are negative examples |
+| SIG-G5-5 | resolution_quality_reg | ❌ Not applicable | 0 | — | No resolution quality labels; RQ pipeline not run |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | 100% Arabic family (Urdu Nastaliq) — deep coverage of one Arabic-script variant |
+| 2 | Capture method | ✅ Well-covered | 100% scanner_flatbed (7,401 samples); strong scanner class anchor |
+| 3 | Document domain | 🟡 Partial | 100% EDU; single domain — no business, legal, or technical variety |
+| 4 | Layout type | ❌ Not present | Line-level crops only; no document layout structure |
+| 5 | Text density | 🟡 Partial | All line-scope images; dense handwritten text per line, but no variation |
+| 6 | Degradation types | ❌ Not present | No degradation labels in aggregate; IQA pipeline not run |
+| 7 | Resolution/DPI range | ❌ Not present | Fixed 200 DPI; no DPI variation documented |
+| 8 | Document age | ❌ Not present | 2020 collection; modern only — no aged/historical samples |
+| 9 | Text scope | 🟡 Partial | 100% line-level; no character, word, or page-level variety |
+| 10 | Content flags | 🟡 Partial | has_handwriting=True (100%); no code, figure, or table flags |
+| 11 | Binarization status | ❌ Not present | PNG images; binarization status not documented in aggregate |
+| 12 | Artifact types | ❌ Not present | No artifact labels; scanner output has minimal artifacts |
+| 13 | Color mode | 🟡 Partial | Likely grayscale (ink-on-paper scans at 200 DPI); not explicitly confirmed in aggregate |
+| 14 | Font variety | ❌ Not present | Handwriting only — no typed fonts; writer style variation provides some diversity |
+
+### 13.3 Corpus Role & Constraints
+
+pucit-ohul is the primary real-data anchor for the Arabic script family (Urdu Nastaliq variant) in the handwriting pool, contributing 7,401 line-level GT-labeled samples to SIG-G2-1 (script_cls: Arab) and SIG-G4 (handwriting heads: DOMINANT presence, CURSIVE content type). The dataset is licensed CC0 / non-commercial research only, which restricts commercial deployment of any model trained with it. At 7,401 images it is a moderate-sized handwriting contributor but does not reach the 60K pool target on its own, requiring combination with muharaf and other Arabic-script datasets.

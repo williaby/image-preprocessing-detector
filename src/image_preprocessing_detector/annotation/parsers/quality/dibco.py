@@ -41,6 +41,14 @@ Example:
 
 from __future__ import annotations
 
+# --- Level 4 registry metadata ---
+__l4_category__ = "parser"
+__l4_dataset__ = "dibco"
+__l4_workstream__ = "WS3"
+__l4_task__ = "quality"
+__l4_l2_file__ = "dibco_metadata.json"
+__l4_integrate__ = "scripts/integrate_dibco_enrichments.py"
+
 import re
 from pathlib import Path
 from typing import Any

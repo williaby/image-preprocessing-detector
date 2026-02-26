@@ -505,3 +505,57 @@ No defect catalog available for this dataset.
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~1,500 | Mostly 0° (scene text pre-segmented, generally upright) | Scene text crops are usually captured upright; limited orientation diversity |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~800–1,200 | Classical skew labels derivable | Perspective distortion in scene text provides natural mild skew samples |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | 1,816 | Derivable via resolution quality pipeline | Variable resolution from smartphone captures; contributes low-to-mid range |
+| SIG-G1-1 | blur_score | ✅ Primary | 1,816 | IQA derivable | Motion blur and focus blur common in natural scene captures |
+| SIG-G1-2 | noise_score | ✅ Primary | 1,816 | IQA derivable | Smartphone sensor noise, outdoor lighting variability |
+| SIG-G1-3 | contrast_score | ✅ Primary | 1,816 | IQA derivable | Varied lighting conditions (outdoor, indoor, backlit signs) |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~800–1,200 | Classical derivable | Camera angle effects and perspective distortion provide natural skew variation |
+| SIG-G1-5 | compression_score | ✅ Primary | 1,816 | IQA derivable | JPEG artifacts from camera saves; quality varies by capture device |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | 1,816 | IQA derivable (text_quality bottleneck = 0.000 confidence) | Wide quality range from scene captures; text_quality label absent limits utility |
+| SIG-G2-1 | script_cls | ✅ Primary | 1,816 | 4 scripts: Latn 36.1%, Hans 25.3%, Hang 21.1%, Knda 17.4% (L2 confirmed) | Strong multi-script signal; Korean (Hang) differentiation from CJK is primary value |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~1,500 | Mostly 0°; pre-segmented crops generally upright | Post-correction signal; limited by uniform near-upright distribution |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~800–1,200 | Classical derivable post-correction | Mild perspective-induced skew residuals |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives | 1,816 | False (100%); scene text is printed/signage | All 1,816 images are printed scene text; strong negative class for handwriting |
+| SIG-G4-2 | handwriting_legibility_cls | ➖ Negatives | 1,816 | Negative examples only | No handwriting to assess for legibility |
+| SIG-G4-3 | handwriting_content_type_cls | ➖ Negatives | 1,816 | Negative examples only | No handwritten content to classify |
+| SIG-G4-4 | presence_reg | ➖ Negatives | 1,816 | 0.0 (no handwriting) | Clean zero-presence examples |
+| SIG-G4-5 | legibility_reg | ➖ Negatives | 1,816 | 0.0 (no handwriting) | Clean zero-legibility examples |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 1,816 | camera_smartphone (100% from L2 metadata) | All 1,816 confirmed camera_smartphone; clean signal for camera class |
+| SIG-G5-2 | shadow_reg | 🟡 Secondary | ~400–800 | Derivable via shadow labeling script | Outdoor lighting produces natural shadows on signage; labeling script not yet run |
+| SIG-G5-3 | warping_reg | 🟡 Secondary | ~400–800 | Derivable via warping labeling script | Perspective distortion from non-frontal sign captures; labeling not yet run |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | No source code content | Scene text (signage, storefronts) contains no programming code |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | 1,816 | Derivable via resolution quality pipeline | Small text line crops from variable-distance captures; contributes low-resolution range |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | Latin 36.1%, CJK (Hans+Hang) 46.5%, Indic (Knda) 17.4%; strong multi-family coverage for 4 scripts |
+| 2 | Capture method | ✅ | camera_smartphone 100%; confirmed by L2 metadata; all natural scene captures |
+| 3 | Document domain | ✅ | SCN (scene/natural) 100%; unique domain not covered by document datasets |
+| 4 | Layout type | ❌ | Scene text line crops only; no document layout structure; layout_types empty in L2 |
+| 5 | Text density | ✅ | Line-level scope (100%); pre-segmented single text lines; sparse by design |
+| 6 | Degradation types | 🟡 | Natural scene degradation (blur, noise, perspective, lighting); no L2 degradation labels yet |
+| 7 | Resolution/DPI range | 🟡 | Variable from smartphone cameras; no DPI metadata (scene text, not document scans) |
+| 8 | Document age | ✅ | Modern contemporary signage; dataset collected ~2016 |
+| 9 | Text scope | ✅ | Line-level scope (100%); pre-segmented text line crops |
+| 10 | Content flags | ❌ | content_flags empty in L2 aggregates; scene text lacks document content flags |
+| 11 | Binarization status | ✅ | Color/RGB (100%); natural scene images; no binarized samples |
+| 12 | Artifact types | ✅ | Perspective distortion, motion blur, outdoor lighting effects, low resolution from distant captures |
+| 13 | Color mode | ✅ | RGB (100%); natural scene color photography |
+| 14 | Font variety | ✅ | High variety; natural signage fonts across 4 scripts (storefront, billboard, menu, street sign fonts) |
+
+### 13.3 Corpus Role & Constraints
+
+mle2e's primary training value is its 4-script multi-family coverage (Latn, Hans, Hang, Knda), with Korean/Hangul differentiation from Chinese/Han being the unique contribution absent from most other datasets. It also provides authentic camera_smartphone scene-text IQA variation (blur, noise, perspective distortion). At only 1,816 samples it is too small for standalone training; it should be combined with MLT19, CVSI, and SIW13 for the script_cls head. Research-only license restricts commercial deployment.

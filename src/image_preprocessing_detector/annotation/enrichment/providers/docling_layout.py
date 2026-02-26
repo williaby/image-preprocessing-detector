@@ -23,7 +23,14 @@ Example:
     ...     print(f"Found {len(enrichment.layout_detections)} elements")
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "provider"
+__l4_task__ = "layout"
+__l4_workstream__ = "WS3"
+__l4_provides__ = "layout_type, bounding_boxes"
+
 
 import logging
 import time

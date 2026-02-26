@@ -37,7 +37,16 @@ Usage:
     PYTHONPATH=... uv run python3 scripts/integrate_cocotext_enrichments.py
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "coco-text"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/multilingual/cocotext.py"
+)
+
 
 import argparse
 import json
@@ -50,6 +59,13 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    load_language_enrichment,
+    load_llm_enrichment,
+    load_metadata,
 )
 
 logging.basicConfig(
@@ -72,10 +88,6 @@ ENRICHMENT_VERSION_TAG = "integrated_v2"
 ENRICHMENT_VERSION_NUMBER = 2
 
 # Content flag derivation classes (for layout detections, if any)
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 # COCO-Text parser language -> ISO 15924 script mapping
 # "english" is Latn; "not_english" could be anything, resolved below
@@ -142,132 +154,6 @@ def _extract_coco_image_id(filename_stem: str) -> int | None:
 # ---------------------------------------------------------------------------
 # Data loaders
 # ---------------------------------------------------------------------------
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load L2 metadata JSON."""
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-def load_llm_enrichment(path: Path) -> dict[int, dict[str, Any]]:
-    """Load LLM enrichment and index by integer COCO image_id.
-
-    Enrichment files store image_id as strings (e.g., "217925").
-    We convert to int for consistent lookup via _extract_coco_image_id().
-    """
-    if not path.exists():
-        log.warning("LLM enrichment not found: %s", path)
-        return {}
-    log.info("Loading LLM enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[int, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            try:
-                index[int(image_id)] = rec
-            except (ValueError, TypeError):
-                log.debug("Skipping non-integer image_id: %r", image_id)
-    log.info("  Indexed %d LLM records", len(index))
-    return index
-
-
-def load_language_enrichment(path: Path) -> dict[int, dict[str, Any]]:
-    """Load language enrichment (OpenLID) and index by integer COCO image_id.
-
-    Enrichment files store image_id as strings (e.g., "217925").
-    We convert to int for consistent lookup via _extract_coco_image_id().
-    """
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[int, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            try:
-                index[int(image_id)] = rec
-            except (ValueError, TypeError):
-                log.debug("Skipping non-integer image_id: %r", image_id)
-    log.info("  Indexed %d language records", len(index))
-    return index
-
-
-# ---------------------------------------------------------------------------
-# Derivation helpers
-# ---------------------------------------------------------------------------
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes."""
-    canonical_classes = {
-        d.get("canonical_class", "").upper()
-        for d in detections
-        if d.get("canonical_class")
-    }
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict."""
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
-
-
 def derive_text_direction(iso15924_script: str) -> str | None:
     """Derive text reading direction from ISO 15924 script code.
 

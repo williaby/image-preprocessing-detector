@@ -1,4 +1,4 @@
-@startuml ProjectC_Fusion_Normalization_Chunking
+@startuml chunk-fusion-chunking-workflow
 
 title Chunk - OCR Fusion, Hallucination Filtering, Normalization & RAG Chunking
 
@@ -65,5 +65,30 @@ partition "Trust scoring" {
 :Emit outputs:\n- NormalizedTextDocument\n- RAGChunkSet\n- TrustMetrics\n(to Embed);
 
 stop
+
+note right
+  **CONTEXT DIAGRAM**
+  This diagram shows the downstream Chunk project's workflow.
+  It is provided here to illustrate how Prepare-Doc quality
+  metrics feed trust scoring for RAG chunking decisions.
+  Chunk internals are NOT part of the Prepare-Doc codebase.
+
+  **Prepare-Doc Outputs Consumed (via Unify):**
+  - DocumentMetadata.json (IQA risk, page-level DQS)
+  - Trust signal: page_IQA_risk from pre_ocr_risk field
+
+  **Documentation:**
+  [[docs/development/RAG Pipeline/RAG-pipeline-project-overview.md]]
+  [[docs/architecture/diagrams/level-2/downstream-context/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

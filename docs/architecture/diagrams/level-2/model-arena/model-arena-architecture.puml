@@ -142,17 +142,26 @@ note bottom of Schemas
 end note
 
 ' Traceability
-note as N1
+note right of CLI
   **Source Traceability:**
-  • runner.py (630 lines)
-  • datasets/base.py, datasets/diqa5000.py (200 lines)
-  • inference/*.py (600 lines)
-  • metrics.py (445 lines)
-  • schemas.py (482 lines)
-  • leaderboard.py (300 lines)
-  • cli.py (200 lines)
 
-  **Total:** ~3,057 lines operational code
+  **Source Files:**
+  - src/.../arena/runner.py (630 lines)
+  - src/.../arena/datasets/base.py (100 lines)
+  - src/.../arena/datasets/diqa5000.py (100 lines)
+  - src/.../arena/inference/*.py (600 lines)
+  - src/.../arena/metrics.py (445 lines)
+  - src/.../arena/schemas.py (482 lines)
+  - src/.../arena/leaderboard.py (300 lines)
+  - src/.../arena/cli.py (200 lines)
+
+  **Total LOC:** ~2,857 lines operational code
 end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

@@ -364,3 +364,57 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | 0 | — | No orientation labels; DEF-005 confirms orientation_class unpopulated |
+| MNV4-H2 | skew_reg | ➖ | 0 | — | No skew annotations; binary images limit Hough reliability |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~1,290 | Derived | 150-300 DPI variable; char-height estimation challenging on 1-bit binary |
+| SIG-G1-1 | blur_score | 🟡 | ~1,000 | Derived | Variable scan quality; binary format limits Laplacian-based estimation |
+| SIG-G1-2 | noise_score | 🟡 | ~1,000 | Derived | Aging artifacts (speckles, foxing) present; HIGH sensitivity confirmed |
+| SIG-G1-3 | contrast_score | 🟡 | ~800 | Derived | Binary images have extreme contrast; authentic degradation variation useful |
+| SIG-G1-4 | skew_score | ➖ | 0 | — | LOW sensitivity; no skew labels; binary format limits classical estimation |
+| SIG-G1-5 | compression_score | ❌ | 0 | — | Binary TIFF/PNG format — no JPEG compression artifacts present |
+| SIG-G1-6 | overall_quality | 🟡 | ~1,290 | Derived | Authentic 4-tier quality spread (Excellent 20% / Good 50% / Poor 25% / Degraded 5%) |
+| SIG-G2-1 | script_cls | ➖ | 0 | — | 99.8% Latin only (Latn); no script diversity; DEF-002 reports invalid enum value |
+| SIG-G3-1 | orientation_cls (post) | ➖ | 0 | — | No orientation labels; DEF-005 confirms field unpopulated |
+| SIG-G3-2 | skew_reg (post) | ➖ | 0 | — | No skew labels available |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~840 | Derived | has_handwriting=65.1% (840/1,290); strong positive/negative split; DEF-007 open |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 | ~500 | Derived | Signatures + handwriting present; legibility variable due to aging/fading |
+| SIG-G4-3 | handwriting_content_type_cls | 🟡 | ~840 | Derived | Mix of signatures (63.6%) and handwritten annotations; binary images limit fine classification |
+| SIG-G4-4 | presence_reg | 🟡 | ~840 | Derived | Continuous handwriting presence score derivable from signature/annotation regions |
+| SIG-G4-5 | legibility_reg | 🟡 | ~500 | Derived | Legibility degraded by aging; fading/foxing affects readability score |
+| SIG-G5-1 | capture_method_cls | ✅ | 1,290 | Hard | 100% scanner_adf; confirmed by Layer 2 aggregate; clean single-class label |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | — | Binary 1-bit images; no shadow severity labels; no L2 severity field |
+| SIG-G5-3 | warping_reg | ❌ | 0 | — | Binary 1-bit images; no warping labels; flat scans with minimal geometric distortion |
+| SIG-G5-4 | code_cls | ❌ | 0 | — | Administrative tobacco litigation documents; no source code content |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~1,290 | Derived | 150-300 DPI variable; binary format reduces char-height estimation accuracy |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | 99.8% Latin (Latn); no meaningful script diversity |
+| 2 | Capture method | ✅ | 100% scanner_adf; clean single-method label for capture_method_cls training |
+| 3 | Document domain | ✅ | ADM 47%, LEG 18%, SCI 17%, FIN 8%, MED 3%, TEC 2% — 6+ domains from tobacco litigation era |
+| 4 | Layout type | 🟡 | Letter/memo (60%), reports (17%), invoices (3%), contracts (4%); layout annotations absent (DEF-003) |
+| 5 | Text density | 🟡 | Mix of dense letters and sparse forms; no explicit text density labels; derivable from OCR output |
+| 6 | Degradation types | ✅ | Rich authentic aging: yellowing, staining, foxing, fading, bleed-through, binarization artifacts |
+| 7 | Resolution/DPI range | 🟡 | 150-300 DPI variable; multi-device collection; DPI inconsistency adds training noise |
+| 8 | Document age | ✅ | Authentic 30-50 year aging (tobacco litigation era, 1950s-1990s documents) |
+| 9 | Text scope | ❌ | 100% page-level; no word/line/region scope annotations |
+| 10 | Content flags | ✅ | has_handwriting 65%, has_figure 77%, has_signature 64%, has_table 24%, has_formula 6% |
+| 11 | Binarization status | ✅ | 100% binarized (1-bit); unique contribution; all other training datasets are grayscale/color |
+| 12 | Artifact types | ✅ | Staining, bleed-through, foxing, scan lines — authentic multi-artifact real-world examples |
+| 13 | Color mode | ❌ | 100% binary (1-bit); no grayscale or color; color_mode field unpopulated (DEF-006) |
+| 14 | Font variety | 🟡 | Mix of typewriter, early desktop printing, and handwriting; no explicit font labels |
+
+### 13.3 Corpus Role & Constraints
+
+Tobacco800 contributes primarily as a **capture_method/scanner training source and handwriting presence signal**, with its 1,290 authentic archival scans providing genuine real-world degradation patterns (aging, foxing, bleed-through) found nowhere else in the corpus. Its binary-only format restricts applicability to IQA heads that depend on grayscale intensity variation (blur, contrast, shadow, warping) while making it uniquely valuable for binarization artifact representation. Academic-only license prohibits commercial use, and the dataset must be excluded from OOD benchmarks to prevent training leakage.

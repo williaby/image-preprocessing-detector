@@ -509,3 +509,57 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 | v1.0 | 2026-02-06 | Initial documentation (clean dataset from HuggingFace) |
 | v2.0 | 2026-02-14 | Layer 2 audit: integration script, VLM inspection, v2.3.0 fields |
 | v2.1 | 2026-02-14 | Audit scorecard Grade B (89.7/100), 14 defects (9 resolved, 1 partial, 4 deferred) |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ✅ Primary | 973 | All upright (0°); confirmed via VLM | Adds upright Latin receipt examples to orientation corpus |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~400–600 | Classical skew labels derivable | Camera-captured receipts have mild perspective skew; usable after classical labeling |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | 973 | Resolution quality derivable via pipeline | Thermal-print receipts span usable quality range; labels require labeling script |
+| SIG-G1-1 | blur_score | ✅ Primary | 973 | IQA derivable (DIQA v1 MOS available) | Camera blur and focus variation from smartphone captures |
+| SIG-G1-2 | noise_score | ✅ Primary | 973 | IQA derivable | Smartphone sensor noise present; variable capture conditions |
+| SIG-G1-3 | contrast_score | ✅ Primary | 973 | IQA derivable | Thermal-print low contrast and uneven illumination provide contrast variation |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~400–600 | Classical derivable | Perspective distortion from handheld camera shots |
+| SIG-G1-5 | compression_score | ✅ Primary | 973 | IQA derivable | JPEG compression artifacts present from camera saves |
+| SIG-G1-6 | overall_quality | ✅ Primary | 973 | DIQA v1 MOS (confidence 0.70) | Overall quality scores available; confidence limited by DIQA v1 precision |
+| SIG-G2-1 | script_cls | ✅ Primary | 973 | Latn (100% from L2 metadata) | All 973 images confirmed Latin script; clean signal for Latn class |
+| SIG-G3-1 | orientation_cls (post) | ✅ Primary | 973 | All 0° (VLM confirmed) | Post-correction orientation; all receipts are upright |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~400–600 | Classical derivable post-correction | Mild residual skew expected after deskew correction |
+| SIG-G4-1 | handwriting_presence_cls | 🟡 Secondary | 973 | Predominantly False (~85–92%); ~8–15% uncertain | Mostly printed; known undercount issue (D06): some receipts have handwritten annotations |
+| SIG-G4-2 | handwriting_legibility_cls | ➖ Negatives | ~80–150 | Negative examples only (printed receipts) | The small handwritten subset lacks legibility ground truth; negatives useful |
+| SIG-G4-3 | handwriting_content_type_cls | ➖ Negatives | ~80–150 | Negative examples only | Printed-text negatives; handwritten subset not labeled by content type |
+| SIG-G4-4 | presence_reg | 🟡 Secondary | 973 | Mostly 0.0; small subset ~0.2–0.5 | Continuous presence score; useful for near-zero end of scale |
+| SIG-G4-5 | legibility_reg | ➖ Negatives | ~80–150 | Negative examples only | Reliable negatives from fully printed receipts |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 973 | camera_smartphone (L2 uniform; ~30–40% may be flatbed) | Strong camera signal; known issue D13 means flatbed subset mis-labeled — use with caution |
+| SIG-G5-2 | shadow_reg | 🟡 Secondary | ~200–400 | Derivable via shadow labeling script | Glare and uneven illumination from camera flash present; shadow labeling not yet run |
+| SIG-G5-3 | warping_reg | 🟡 Secondary | ~200–400 | Derivable via warping labeling script | Perspective distortion common in handheld shots; warping labeling not yet run |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | No code/programming content | Financial receipts have no source code |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | 973 | Derivable via resolution quality pipeline | Variable resolution from camera/scanner; DPI metadata absent |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ | Latin only (100%); no multi-script coverage |
+| 2 | Capture method | 🟡 | camera_smartphone (100% in L2); ~30–40% estimated flatbed scanner (known issue D13, not yet differentiated) |
+| 3 | Document domain | ✅ | FIN retail receipts (100%); narrow but high-quality domain signal |
+| 4 | Layout type | 🟡 | Receipt/form layout; compact single-column with item lists; layout_types not profiled in L2 |
+| 5 | Text density | ✅ | High density (~30–50 text regions/image); compact receipt format; text_densities not in L2 stats |
+| 6 | Degradation types | 🟡 | Camera blur, glare, perspective distortion, thermal print fading; no degradation L2 labels yet |
+| 7 | Resolution/DPI range | 🟡 | 439–4961 × 605–7016 px; variable resolution from camera vs scanner; no DPI metadata |
+| 8 | Document age | ✅ | Modern (2015–2018 dated receipts); thermal paper ages quickly — some fading artifacts |
+| 9 | Text scope | ✅ | Page-level scope (100%); full receipt images |
+| 10 | Content flags | 🟡 | has_figure 11.7%, has_table 30.6%, has_formula 0.2%; handwriting presence uncertain (D06) |
+| 11 | Binarization status | ✅ | Color/grayscale (RGB); no binarized images; thermal print provides near-binary visual style |
+| 12 | Artifact types | ✅ | Glare/reflection, perspective distortion, thermal print fading, mild JPEG artifacts |
+| 13 | Color mode | ✅ | RGB (100%); image_properties_color_mode confirmed via PIL |
+| 14 | Font variety | 🟡 | Thermal receipt fonts (mostly monospace/condensed); limited variety but authentic |
+
+### 13.3 Corpus Role & Constraints
+
+SROIE contributes 973 real-world camera/scanner receipt images to the Latin-script and IQA training pools, providing authentic thermal-print degradation patterns (low contrast, fading, glare) not well represented in document datasets. License is unverified (Research Use Only conservative classification) — confirm before including in commercial training runs. The 347-image test split is competition held-out and should be treated as OOD evaluation material, not training data.

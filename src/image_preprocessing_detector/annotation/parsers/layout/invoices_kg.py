@@ -84,7 +84,16 @@ Example:
     Invoice no: 41389063 Date of issue: 03/17/2021...
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "invoices-kg"
+__l4_workstream__ = "WS3"
+__l4_task__ = "layout"
+__l4_l2_file__ = "invoices_kg_metadata.json"
+__l4_integrate__ = "scripts/integrate_invoices_kg_enrichments.py"
+
 
 import json
 import logging

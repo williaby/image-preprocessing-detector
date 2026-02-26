@@ -100,4 +100,27 @@ legend right
   | <#FFCDD2> | Gap: Not yet wired/built | -- |
 endlegend
 
+note right
+  **Scripts:**
+  - scripts/annotate_base_metadata.py
+  - scripts/build_training_labels.py
+  - scripts/materialize_reliability_summary.py
+  - scripts/aggregate_layer2_metadata.py
+
+  **Source Files:**
+  - src/.../annotation/workflow/pipeline.py
+  - src/.../annotation/schemas/enrichment.py
+  - src/.../annotation/schemas/immutable.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/schema-field-population/index.md]]
+  [[docs/planning/UNIFIED_LABELING_STRATEGY.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
 @enduml

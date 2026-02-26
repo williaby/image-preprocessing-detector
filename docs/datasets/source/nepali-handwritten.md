@@ -474,3 +474,55 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~958 | Derived (default UP) | Orientation class defaulted to UP (not independently verified); small volume |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~958 | Derived (classical) | Camera captures may have minor skew; no skew GT provided |
+| MNV4-H3 | resolution_quality_reg | ❌ Not applicable | 0 | — | No resolution quality labels; RQ pipeline not run |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~958 | Derived (IQA pipeline pending) | Camera capture — motion blur possible; useful for moderate blur examples |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~958 | Derived (IQA pipeline pending) | Smartphone ISO noise plausible; some real-world noise variation |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | ~958 | Derived (IQA pipeline pending) | Variable pen pressure and lighting affect contrast; moderate real-world variation |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~958 | Derived (IQA pipeline pending) | Handwriting on paper photographed by hand; mild page tilt likely |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~958 | Derived (IQA pipeline pending) | JPEG ~85-95 quality — minimal compression artifacts; mostly clean examples |
+| SIG-G1-6 | overall_quality | ❌ Not applicable | 0 | — | No MOS/quality scores; IQA pipeline not run; SRCC ≥ 0.65 cannot be met |
+| SIG-G2-1 | script_cls | ✅ Primary | 958 | GT (hardcoded Deva) | 100% Devanagari script (Nepali handwritten); ISO 15924 Deva; Indic family anchor |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~958 | Derived (default UP) | Assumed upright; small volume contribution |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | — | No post-correction skew residual labels |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | 958 | GT (has_handwriting=True) | 100% handwritten images; maps to DOMINANT; GT-confirmed |
+| SIG-G4-2 | handwriting_legibility_cls | 🟡 Secondary | ~958 | Derived (no GT; estimated MODERATE–HIGH) | Multiple writers; no legibility GT; camera quality generally good |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | 958 | GT (PRINTED) | Nepali Devanagari handwriting is typically PRINTED (non-cursive block letters); contributes PRINTED class |
+| SIG-G4-4 | presence_reg | ✅ Primary | 958 | GT (1.0 — fully handwritten) | 100% handwritten content; continuous value = 1.0 |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | ~958 | Derived (estimated 0.5–0.8) | Writer variability and camera conditions; no legibility scores available |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 958 | GT (camera_smartphone) | 100% camera_smartphone (NH-D003 resolved); real smartphone capture examples |
+| SIG-G5-2 | shadow_reg | 🟡 Secondary | ~958 | Derived (no GT severity) | Camera capture of paper introduces possible shadow from hand/device; no severity labels |
+| SIG-G5-3 | warping_reg | 🟡 Secondary | ~958 | Derived (no GT severity) | Smartphone photography may introduce mild page curl/perspective; no warping labels |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | — | Nepali handwritten text only; no code content; all samples are negative examples |
+| SIG-G5-5 | resolution_quality_reg | ❌ Not applicable | 0 | — | No resolution quality labels; RQ pipeline not run |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | 100% Indic family / Devanagari (Deva) — real handwritten variety complementing synthetic printed Hindi |
+| 2 | Capture method | ✅ Well-covered | 100% camera_smartphone (958 samples); verified via NH-D003 fix |
+| 3 | Document domain | 🟡 Partial | 100% EDU; single domain — no business, legal, or technical document variety |
+| 4 | Layout type | ❌ Not present | Word/sub-line crops with bounding boxes only; no full document layout |
+| 5 | Text density | 🟡 Partial | 100% word-scope (text_scopes: word); uniform density — no page-level density variation |
+| 6 | Degradation types | ❌ Not present | No degradation labels in aggregate; IQA pipeline not run (NH-D005 deferred) |
+| 7 | Resolution/DPI range | 🟡 Partial | Camera capture typically 72–200+ DPI equivalent; no explicit DPI metadata documented |
+| 8 | Document age | ❌ Not present | 2023 collection; modern only — no aged/historical samples |
+| 9 | Text scope | 🟡 Partial | 100% word-level; no character, line, or page-level variety |
+| 10 | Content flags | 🟡 Partial | has_handwriting=True (100%); has_figure=1, has_table=1 (trace); no code flag |
+| 11 | Binarization status | ❌ Not present | JPEG color/grayscale captures; no binarization documented |
+| 12 | Artifact types | ❌ Not present | No artifact labels; minor JPEG compression and lighting variation only |
+| 13 | Color mode | 🟡 Partial | Camera JPEG capture — likely color or grayscale; not explicitly segmented in aggregate |
+| 14 | Font variety | ❌ Not present | Handwriting only — no typed fonts; writer variability provides limited style diversity |
+
+### 13.3 Corpus Role & Constraints
+
+nepali-handwritten is the sole real-camera handwriting contributor for the Devanagari (Deva) script class in SIG-G2-1, providing 958 word-level images with GT script labels and confirmed camera_smartphone capture for SIG-G5-1. At only 958 images it is a supporting contributor rather than a primary training source; it fills a unique niche as real handwritten Devanagari distinct from synthetic printed data (hindi_ocr_synthetic) and must be combined with larger Indic datasets to approach the 60K handwriting pool target. The CC-BY-4.0 license permits commercial use with attribution (pending final verification per Section 9.5).

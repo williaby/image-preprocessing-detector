@@ -1,0 +1,103 @@
+@startuml prepare-audio-transcription-workflow
+
+title Prepare-Audio — Audio Signal Conditioning, Transcription & DOM Output
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+start
+
+:Receive audio/video file\nfrom GCS 00-source/\n(WAV, MP3, MP4 up to 2GB);
+
+partition "Stage 1 — Validation" {
+  if ("Magic bytes valid? Size <= 2GB?") then (No)
+    :Reject with INVALID_FILE_TYPE\nor FILE_TOO_LARGE error;
+    stop
+  endif
+}
+
+partition "Stage 2 — AudioConditioner (librosa + pydub)" {
+  :FFmpeg: extract audio from\nvideo container (if needed);
+  :Convert to WAV PCM;
+  :Resample to 16kHz (polyphase filter);
+  :Stereo -> mono (energy-based channel selection);
+  :RMS normalize to -20dBFS;
+}
+
+partition "Stage 3 — VADProcessor (Silero VAD)" {
+  :Silero VAD: 30ms sliding window,\nthreshold 0.5;
+  :Remove silence segments\n(10-30% cost and WER reduction);
+}
+
+partition "Stage 4 — QualityAssessor" {
+  :Measure SNR, clipping ratio,\nsilence ratio;
+
+  if ("Quality below threshold?") then (Yes)
+    :Reject with QUALITY_TOO_LOW error;
+    stop
+  endif
+
+  note right
+    Targets:
+    SNR > threshold,
+    clipping_ratio < 0.01,
+    speech_ratio > 0.3
+  end note
+}
+
+partition "Stage 5 — Deepgram Nova-2" {
+  :Single API call:\n  nova-2 model\n  + native diarization\n  + summarization v2\n  + smart_format\n  + utterances + paragraphs;
+
+  note right
+    Target: <10% WER
+    Cost: ~$0.348/hr
+    RTF: ~0.003x real-time
+  end note
+
+  if ("Deepgram API error?") then (Yes)
+    :Return DEEPGRAM_ERROR\nor DEEPGRAM_TIMEOUT;
+    stop
+  endif
+}
+
+partition "Stage 6 — DOMBuilder" {
+  :Map speaker turns\n-> SectionItem\n(speaker_id, speaker_label);
+  :Map utterances\n-> TextItem\n(start_ms, end_ms, confidence,\nplayback_url);
+  :Add summary\n-> special SectionItem\n(is_summary: true);
+  :Assemble Docling DOM;
+}
+
+:Write TranscriptMetadata.json\nto GCS 02-transcribed/;
+
+note right
+  Schema fields:
+  document_id, source_file,
+  audio_properties, audio_quality,
+  deepgram_metadata, transcription,
+  speakers[], summary, docling_document,
+  source_track: "audio"
+end note
+
+:Emit to Unify for DOM unification\n(no OCR -- transcript-to-DOM only);
+
+note right
+  **CONTEXT DIAGRAM**
+  Prepare-Audio is a separate service.
+  This diagram is provided to show how
+  the audio track feeds Unify alongside
+  the document track from Prepare-Doc.
+
+  **Contract:** prepare-audio-unify-contract.md
+  **Repo:** ByronWilliamsCPA/audio-processor
+end note
+
+stop
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

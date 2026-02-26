@@ -12,6 +12,10 @@ This package contains parsers for handwriting/signature datasets:
 - HASYv2: Handwritten mathematical symbols (369 classes)
 - Muharaf: Arabic historical manuscripts with PAGE XML annotations
 - IAM: English handwriting database (forms/lines/words)
+- IIIT-HW-Hindi: Hindi word-level handwriting in Devanagari script (95K images)
+- KHATT: Arabic paragraph-level handwriting (1,633 images from 1,000 writers)
+- CASIA-HWDB2: Chinese full-page handwriting (5,091 pages, DGRL binary format)
+- CASIA-HWDB2-line: Chinese line-level handwriting (52,160 lines, Teklia HF edition)
 
 Datasets covered:
     - signatr6k
@@ -23,16 +27,25 @@ Datasets covered:
     - hasyv2
     - muharaf
     - iam
+    - iiit-hw-hindi
+    - khatt
+    - casia-hwdb2
+    - casia-hwdb2-line
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .casia_hwdb2 import CasiaHwdb2Parser
+from .casia_hwdb2_line import CasiaHwdb2LineParser
 from .hasyv2 import HASYv2Parser
 from .iam import IAMParser
+from .iiit_hw_hindi import IIITHWHindiParser
+from .khatt import KHATTParser
 from .maths_handwriting import MathsHandwritingParser
 from .muharaf import MuharafParser
+from .ndl_minhon import NdlMinhonParser
 from .nist_db2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
@@ -58,13 +71,23 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(HASYv2Parser())
     registry.register(MuharafParser())
     registry.register(IAMParser())
+    registry.register(IIITHWHindiParser())
+    registry.register(KHATTParser())
+    registry.register(CasiaHwdb2Parser())
+    registry.register(CasiaHwdb2LineParser())
+    registry.register(NdlMinhonParser())
 
 
 __all__ = [
+    "CasiaHwdb2LineParser",
+    "CasiaHwdb2Parser",
     "HASYv2Parser",
     "IAMParser",
+    "IIITHWHindiParser",
+    "KHATTParser",
     "MathsHandwritingParser",
     "MuharafParser",
+    "NdlMinhonParser",
     "NistDb2Parser",
     "NistSd6Parser",
     "NistSd19Parser",

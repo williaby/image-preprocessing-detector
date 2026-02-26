@@ -22,12 +22,20 @@ Usage:
         uv run python3 scripts/integrate_pucit_ohul_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "pucit-ohul"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/handwriting/pucit_ohul.py"
+)
+
 
 import argparse
 import json
 import logging
-import re
 import sys
 import time
 from collections import Counter
@@ -37,6 +45,16 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    derive_content_flags,
+    load_language_enrichment,
+    load_llm_enrichment,
+    load_metadata,
+    DOCLING_TO_DOCLAYNET,
 )
 
 logging.basicConfig(
@@ -83,22 +101,6 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 # --- KI-001: Docling layout label casing (CRITICAL) -----------------
 APPLY_KI_001_LAYOUT_CASING = True
 
-DOCLING_TO_DOCLAYNET: dict[str, str] = {
-    "text": "Text",
-    "list_item": "List-Item",
-    "section_header": "Section-Header",
-    "table": "Table",
-    "picture": "Picture",
-    "formula": "Formula",
-    "caption": "Caption",
-    "footnote": "Footnote",
-    "page_footer": "Page-Footer",
-    "page_header": "Page-Header",
-    "title": "Title",
-    "code": "Code",
-    "checkbox_selected": "Checkbox-Selected",
-    "checkbox_unselected": "Checkbox-Unselected",
-}
 
 # --- KI-003: Picture detection dense text FP (MEDIUM) ---------------
 # pucit-ohul: Docling classifies handwriting line images as "picture".
@@ -113,82 +115,11 @@ KNOWN_CAPTURE_METHOD = "scanner_flatbed"
 # ===================================================================
 # Content flag class mappings
 # ===================================================================
-TABLE_CLASSES = {"TABLE"}
-FORMULA_CLASSES = {"FORMULA", "ISOLATE_FORMULA"}
-FIGURE_CLASSES = {"PICTURE", "FIGURE", "CHART"}
-CODE_CLASSES = {"CODE"}
 
 
 # ===================================================================
 # Data loaders
 # ===================================================================
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON.
-
-    Args:
-        path: Path to the dataset's *_metadata.json file.
-
-    Returns:
-        Full metadata dict with "samples" list.
-
-    Raises:
-        FileNotFoundError: If the metadata file does not exist.
-    """
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load LLM enrichment and index by image_id.
-
-    Args:
-        path: Path to *_llm_enrichment.json.
-
-    Returns:
-        Dict mapping image_id to enrichment record.
-    """
-    if not path.exists():
-        log.warning("LLM enrichment not found: %s", path)
-        return {}
-    log.info("Loading LLM enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d LLM records", len(index))
-    return index
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment and index by image_id.
-
-    Args:
-        path: Path to *_language_enrichment.json.
-
-    Returns:
-        Dict mapping image_id to language enrichment record.
-    """
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d language records", len(index))
-    return index
-
-
 def load_docling_layout_batches(layout_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """Load all Docling layout batch files (COCO format) and index by filename.
 
@@ -296,88 +227,6 @@ def load_docling_ocr_batches(ocr_dir: Path) -> dict[str, dict[str, Any]]:
     return index
 
 
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics from OCR/GT text.
-
-    Includes Arabic character count for Urdu/Nastaliq.
-
-    Args:
-        text: Raw transcription text content.
-
-    Returns:
-        Dict with char_count, word_count, line_count, has_content.
-    """
-    if not text or text.strip() == "":
-        return {
-            "char_count": 0,
-            "word_count": 0,
-            "line_count": 0,
-            "has_content": False,
-        }
-
-    clean_text = text.strip()
-    lines = clean_text.split("\n")
-    non_empty_lines = [ln for ln in lines if ln.strip()]
-    words = clean_text.split()
-
-    # Arabic script characters (Urdu uses Arabic script range)
-    arabic_chars = len(
-        re.findall(
-            r"[\u0600-\u06ff\u0750-\u077f\ufb50-\ufdff\ufe70-\ufeff]", clean_text
-        )
-    )
-    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
-
-    avg_line_len = 0.0
-    if non_empty_lines:
-        avg_line_len = round(
-            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines),
-            1,
-        )
-
-    stats: dict[str, Any] = {
-        "char_count": len(clean_text),
-        "word_count": len(words),
-        "line_count": len(non_empty_lines),
-        "has_content": True,
-        "avg_line_length": avg_line_len,
-    }
-
-    if arabic_chars > 0:
-        stats["arabic_char_count"] = arabic_chars
-    if latin_words > 0:
-        stats["latin_word_count"] = latin_words
-
-    return stats
-
-
-# ===================================================================
-# Derivation helpers
-# ===================================================================
-def derive_content_flags(
-    detections: list[dict[str, Any]],
-) -> dict[str, bool]:
-    """Derive content flags from canonical layout classes.
-
-    Args:
-        detections: List of layout detection dicts.
-
-    Returns:
-        Dict with boolean flags: has_table, has_formula, has_figure, has_code.
-    """
-    canonical_classes = {
-        d.get("canonical_class", "").upper()
-        for d in detections
-        if d.get("canonical_class")
-    }
-    return {
-        "has_table": bool(canonical_classes & TABLE_CLASSES),
-        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
-        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
-        "has_code": bool(canonical_classes & CODE_CLASSES),
-    }
-
-
 def derive_color_mode(original_file: dict[str, Any]) -> str:
     """Derive color mode from image channel count.
 
@@ -393,62 +242,6 @@ def derive_color_mode(original_file: dict[str, Any]) -> str:
     if channels == 4:
         return "color_alpha"
     return "color"
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary for an enrichment data dict.
-
-    Args:
-        data: The enrichment data dict being built for this sample.
-
-    Returns:
-        Dict with reliability tier assessment for each field group.
-    """
-    fields: list[dict[str, Any]] = []
-
-    field_defs = [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]
-
-    for field_name, conf_key in field_defs:
-        confidence = data.get(conf_key, 0.0)
-        if confidence is None:
-            confidence = 0.0
-
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-
-    min_field = min(fields, key=lambda f: f["confidence"])
-
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def standardize_class_name(class_name: str) -> str:

@@ -29,8 +29,8 @@ documentation_status: partial
 | **Maintainer** | HorizonParadox (GitHub user) |
 | **Paper** | [DRCCBI Paper (2025) - if available](https://github.com/HorizonParadox/DRCCBI) |
 | **Repository** | [GitHub: HorizonParadox/DRCCBI](https://github.com/HorizonParadox/DRCCBI) |
-| **License** | Unknown (unstated - verify with authors) |
-| **Commercial Use** | Unknown (verify with authors) |
+| **License** | Unknown (no LICENSE file in GitHub repo; arXiv paper is CC BY-NC-ND 4.0 but applies to paper text only) |
+| **Commercial Use** | Unknown (likely NC; contact authors at LETI / Innopolis University) |
 | **Documentation Status** | Partial |
 
 > **License Note**: License status unknown and not stated in repository. Not suitable for production use without
@@ -368,3 +368,62 @@ drccbi/
 > **Status**: Parser not implemented - no Layer 2 metadata available for reliability analysis.
 
 ---
+
+## 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models.
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❌ | - | - | No orientation labels; camera docs may have tilt but unlabeled |
+| MNV4-H2 | skew_reg | ❌ | - | - | No skew angle labels; warping ≠ geometric skew |
+| MNV4-H3 | resolution_quality_reg | 🟡 | Unknown | Inferred | Camera captures have variable resolution; no explicit score |
+| SIG-G1-1 | blur_score | 🟡 | Unknown | Inferred | Camera motion/focus blur present as secondary artifact |
+| SIG-G1-2 | noise_score | 🟡 | Unknown | Inferred | Smartphone sensor noise present at low levels |
+| SIG-G1-3 | contrast_score | 🟡 | Unknown | Inferred | Page curl creates uneven illumination affecting contrast |
+| SIG-G1-4 | skew_score | ❌ | - | - | skew_score = quality degradation 0-1; document warping is separate construct |
+| SIG-G1-5 | compression_score | ❌ | - | - | No JPEG blocking artifacts as primary degradation |
+| SIG-G1-6 | overall_quality | 🟡 | Unknown | SSIM-derivable from warped/flat pairs | Paired GT enables SSIM-based quality MOS derivation |
+| SIG-G2-1 | script_cls | ❌ | - | - | Language/script unknown; not annotated |
+| SIG-G3-1 | orientation_cls (post) | ❌ | - | - | No orientation labels |
+| SIG-G3-2 | skew_reg (post) | ❌ | - | - | No geometric skew labels |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | Unknown | Negative class | Printed documents only; useful as negative examples |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | - | - | No handwriting content |
+| SIG-G4-4 | presence_reg | ➖ | Unknown | Negative class | Printed documents → 0.0 handwriting presence score |
+| SIG-G4-5 | legibility_reg | ❌ | - | - | No handwriting content |
+| SIG-G5-1 | capture_method_cls | ✅ | Unknown | camera_smartphone (hard label) | All images camera-captured per dataset description |
+| SIG-G5-2 | shadow_reg | 🟡 | Unknown | Inferred from warped images | Page curl creates self-shadowing; medium sensitivity per IQA profile |
+| SIG-G5-3 | warping_reg | ✅ | Unknown | Inferred from warped/flat pairs | Primary degradation: page curl, cylindrical, perspective distortion |
+| SIG-G5-4 | code_cls | ❌ | - | - | General documents; no code content indicated |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | 🟡 | Unknown | Inferred | Variable camera resolution; no explicit label |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❌ | Script unknown; likely multilingual but unverified |
+| 2 | Capture method | ✅ | 100% camera_smartphone — strong single-method anchor |
+| 3 | Document domain | ❌ | Unknown domain; general printed documents |
+| 4 | Layout type | ❌ | No layout annotations; varied but unlabeled |
+| 5 | Text density | ❌ | Not measured; variable across camera-captured docs |
+| 6 | Degradation types | ✅ | Warping, perspective distortion, page curl, cylindrical distortion — focused warp catalog |
+| 7 | Resolution/DPI range | 🟡 | Variable smartphone camera resolution; not DPI-profiled |
+| 8 | Document age | ❌ | Recent smartphone captures; no historical content |
+| 9 | Text scope | 🟡 | Full page camera captures expected |
+| 10 | Content flags | ❌ | No content flags annotated |
+| 11 | Binarization status | ❌ | Color RGB images from camera |
+| 12 | Artifact types | ✅ | Warping, perspective, shadows as explicit paired degradation |
+| 13 | Color mode | ✅ | Color (RGB) — all camera captures |
+| 14 | Font variety | ❌ | Unknown; not annotated |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+### 13.3 Corpus Role & Constraints
+
+DRCCBI's primary contribution is as a real camera-captured dewarping benchmark providing both `capture_method=camera_smartphone` labels (SIG-G5-1) and real-world warping samples for SIG-G5-3 (`warping_reg`). As a paired warped/flat correction dataset with genuine camera perspective and page-curl artifacts, it complements synthetic warping sources (DocAlign12K, Doc3D) with camera-realistic warp distributions. The dataset is constrained by an unknown license (contact required before production use) and unknown total image count (repository verification required before assigning concrete sample estimates to training heads).

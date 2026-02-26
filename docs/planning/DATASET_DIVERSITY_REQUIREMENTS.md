@@ -2,7 +2,7 @@
 
 ## Context
 
-The approved model requirements plan ([SIGLIP2_MULTITASK_REQUIREMENTS.md](SIGLIP2_MULTITASK_REQUIREMENTS.md)) specifies two models needing training datasets: **MobileNetV4-Conv-S** (3 heads, fast pre-correction) and **SigLIP 2 NAFlex** (16 heads across 5 groups). This document defines the **diversity characteristics** each training dataset must exhibit to ensure robust generalization to unseen production documents.
+The approved model requirements plan ([SIGLIP2_MULTITASK_REQUIREMENTS.md](SIGLIP2_MULTITASK_REQUIREMENTS.md)) specifies two models needing training datasets: **MobileNetV4-Conv-S** (3 heads, fast pre-correction) and **SigLIP 2 NAFlex** (19 heads across 5 groups). This document defines the **diversity characteristics** each training dataset must exhibit to ensure robust generalization to unseen production documents.
 
 **Related**: [TRAINING_OPTIMIZATION_PLAN.md](TRAINING_OPTIMIZATION_PLAN.md) -- Training optimization strategy (ILP allocation, multi-task loss balancing, phased head training, active learning)
 
@@ -75,6 +75,35 @@ lacked multi-script diversity. New 50K hybrid: ≥60% real (DocLayNet + RVL-CDIP
 - **Rare handling**: Japanese vertical (1,050 sources), Devanagari (700 sources) -- small but adequate
 - **Labels**: tier_0_exact (ground truth by construction via rotation)
 
+### 1.2.1 Symmetric and Ambiguous Document Handling (Gaps 2 + 13 — P0)
+
+**Symmetric documents** (visually identical at 0° and 180°) and **blank/figure-only pages** (no
+orientation cues) are an epistemic impossibility for a pure 4-class classifier: the signal
+required to resolve orientation is absent from the image. These must be explicitly labeled and
+handled, not ignored.
+
+**Required sub-categories (~5% of dataset, ~2,500 samples)**:
+
+| Sub-category | Target Count | Label | Source |
+|-------------|-------------|-------|--------|
+| Blank pages (no text) | ~750 (1.5%) | `orientation_ambiguous` | DocLayNet blank separator pages; blank PDFs |
+| Figure/chart-only pages | ~500 (1%) | `orientation_ambiguous` | DocLayNet picture-dominant pages |
+| Symmetric content (centered title, palindromic table, numeric-only) | ~750 (1.5%) | `orientation_ambiguous` | Curated from DocLayNet + RVL-CDIP |
+| Very sparse text (< 5 words, no paragraph structure) | ~500 (1%) | `orientation_ambiguous` | Curated with confidence_flag |
+
+**Handling rules**:
+
+1. The orientation head outputs `confidence_flag: ambiguous` when symmetric/blank inputs are detected
+2. Default prediction for ambiguous inputs: `orientation_class=0` with `confidence < 0.4`
+3. The two-stage pipeline (MobileNetV4 ambiguity detection → SigLIP 2 if unambiguous) handles this at inference
+4. Integration with script detection: if `script=UNKNOWN` AND orientation requested, apply confidence dampening
+5. Do NOT fold ambiguous documents into the primary 4-class training loss — use a separate binary head or confidence-suppression target
+
+**Evaluation requirement**: Accuracy metrics reported SEPARATELY for standard (non-ambiguous) vs.
+ambiguous documents. Do not include ambiguous documents in the primary orientation accuracy metric —
+they inflate noise. Instead, report ambiguous-class abstention rate (target: ≥85% of ambiguous
+inputs flagged as low-confidence).
+
 ### 1.3 Source Composition (Hybrid Rebuild — Stream 4C)
 
 | Component | Count | Source | Labels | Provenance |
@@ -111,6 +140,14 @@ Script coverage: 19 non-Latin scripts via v3 component. Resize all images to 224
 | **Text density** | IMPORTANT | 30% sparse, 40% moderate, 30% dense | 3,000 per bin |
 | **Degradation** | IMPORTANT | 50% clean, 25% light, 25% moderate-heavy | 2,500 moderate+ |
 | **Resolution** | NICE-TO-HAVE | 30% low, 40% standard, 30% high | 3,000 per bin |
+| **Layout type** | **IMPORTANT** | ≥20% multi-column, 40% single-col, 20% form/tabular, 20% complex | **18,000 multi-column** |
+
+> **Gap 7 note**: Multi-column documents are a RAG-pipeline-critical case. Global skew deskewing
+> on a multi-column layout shears text lines along column gutters — this is an active quality
+> REDUCTION, not a neutral preprocessing step. The skew model must learn layout-aware estimation
+> or correctly abstain for multi-column inputs. Elevating layout_type to IMPORTANT and requiring
+> ≥20% multi-column samples is the minimum data-side remediation. See Section 2.3 for the
+> cross-detector agreement gate.
 
 ### 2.2 Angle Distribution (CRITICAL)
 
@@ -132,6 +169,8 @@ More samples in the mild range (±0.5-2°) because that's where sub-0.5° accura
 - **Primary axes**: skew_angle_bin (7 bins), skew_source (synthetic/natural/degraded), script_family
 - **Leakage prevention**: Same source document at different angles must be in SAME split
 - **Natural scan labels**: Hough-derived + line-based cross-validation; accept only if both agree within 0.5°
+- **Multi-column label quality gate (Gap 7 — MANDATORY)**: For multi-column layout documents, Hough + projection-profile cross-detector agreement within 0.5° is REQUIRED before accepting the label. Global projection profiles fail on multi-column layouts (column gutters create false optima). Reject multi-column samples with cross-detector disagreement > 0.5° rather than accepting with uncertainty. Do NOT apply uncertainty-based soft labels to multi-column disagreement — the measurement itself is invalid.
+- **Multi-column evaluation metric**: Report skew MAE separately for single-column vs. multi-column documents. Acceptable: multi-column MAE ≤ 1.5× single-column MAE. If multi-column MAE > 2.0× single-column, trigger alert and investigate layout-aware estimation approach.
 
 ### 2.4 Source Composition (ACTUAL)
 
@@ -173,12 +212,35 @@ More samples in the mild range (±0.5-2°) because that's where sub-0.5° accura
 ```text
 char_height < 16px:    quality = 0.00-0.15  (needs major upscaling)
 char_height 16-24px:   quality = 0.15-0.35  (needs light upscaling)
-char_height 24-32px:   quality = 0.35-0.55  (acceptable)
+char_height 24-32px:   quality = 0.35-0.55  (acceptable for Latin; INSUFFICIENT for CJK — see below)
 char_height 32-48px:   quality = 0.55-0.75  (optimal OCR range)
 char_height 48-64px:   quality = 0.75-0.85  (good, slightly oversized)
 char_height 64-96px:   quality = 0.85-0.95  (oversized)
 char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 ```
+
+**Critical limitations of this mapping (Gaps 3 + 4)**:
+
+1. **Script-specific minimums (Gap 4)**: CJK requires ≥30px (optimal 40+px) for glyph-component
+   legibility. At 24-30px, CJK is illegible while Latin at the same height is marginal-acceptable.
+   The table above is calibrated for Latin — apply script-aware adjustment at inference:
+   - CJK (HANS/HANT/JPAN/KORE): char_height < 30px → quality_score × 0.55 before returning
+   - Devanagari/Arabic/Tibetan: char_height < 24px → quality_score × 0.65
+   - These adjustments live in the inference logic layer; they do NOT require model retraining
+
+2. **Confound cases — char_height measurement is INVALID (Gap 3)**:
+   - **Pre-upscaled rasters**: Bicubic upscaling inflates CC bounding boxes — measured char_height
+     reads artificially high (e.g., 48px appears OK) but the image has low information density
+     (blurry, low-sharpness at the measured height). See Section 3.4 confound sub-dataset.
+   - **Vector PDFs**: Vector text renders correctly at any DPI. char_height measurement looks fine
+     at low output DPI, but OCR on the rasterized image fails because the effective resolution is
+     below threshold. These must be labeled by `effective_render_dpi`, not char_height alone.
+
+3. **Raw physical metric output (Gap 4 fix)**: The resolution head MUST output raw physical metrics
+   alongside quality_score: `pixel_height`, `stroke_width`, `contrast_ratio`. These raw values
+   enable script-aware and confound-aware threshold updates in the inference logic layer without
+   model retraining. The quality_score composite is a convenience output; raw metrics are the
+   authoritative measurement.
 
 ### 3.3 Stratification
 
@@ -194,6 +256,19 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 | Multi-DPI renders | 20,000 | DocLayNet (5K) + FUNSD/SROIE/NIST (2K) + MDIW13 (3K) | Render at 72/100/150/200/300/400/600 DPI |
 | Camera capture (real) | 5,000 | SmartDoc-QA (4.3K) + RealDAE (1.2K) + MIDV500 (3.6K) | Already at various resolutions; label by measured char height |
 | Synthetic variable-res | 5,000 | synth-multiscript-v3 (sample) | Render at controlled DPI with known char heights |
+| **Confound sub-dataset (Gap 3 — REQUIRED)** | **~2,000** | Upscaled rasters + vector PDF effective DPI | See below |
+
+**Confound sub-dataset details**:
+
+| Confound Type | Count | Generation | Labels |
+|--------------|-------|-----------|--------|
+| Pre-upscaled rasters | ~1,000 | Take 72/100 DPI images → bicubic 2×-4× upscale → measure inflated char_height vs. true sharpness | `upscale_factor`, `true_dpi`, `artificially_upscaled=True`, `measured_char_height`, `actual_quality` |
+| Vector PDF at low effective DPI | ~500 | Render same PDF source at 72 DPI and 300 DPI; label by `effective_render_dpi` | `effective_render_dpi`, `source_type=vector_pdf`, `quality_score_by_dpi` |
+| Mixed confound | ~500 | Upscale a scanned image (stacked: both confounds) | Both labels set |
+
+These confound samples teach the model to distinguish between "large char_height → high quality"
+(valid) and "large char_height from upscaling → low actual quality" (confound). The confound
+sub-dataset is mandatory before resolution head training.
 
 ### 3.5 Quality Thresholds
 
@@ -223,8 +298,9 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 
 | Gap | Impact | Severity |
 |-----|--------|----------|
-| Camera-captured IQA: only RealDAE (583 samples) | Camera has different quality characteristics than scanner | HIGH |
-| Script diversity: 0% script metadata on IQA datasets | Cannot verify script-fairness | HIGH |
+| **Compound/multi-degradation samples: NONE** | **15-25% expected metric drop on real-world data; blur+skew+noise compound is fundamentally harder than any single degradation — signals overlap and disentanglement fails** | **CRITICAL (Gap 1)** |
+| Camera-captured IQA: ~~only RealDAE (583)~~ ✅ Fixed (8,475 camera samples) | Camera has different quality characteristics than scanner | ~~HIGH~~ ✅ Resolved (added SmartDoc-QA + MIDV500) |
+| Script diversity: 0% script metadata on IQA datasets | Cannot verify script-fairness; CJK and Arabic IQA likely systematically mislabeled | HIGH |
 | Domain diversity: 100% UNK in DIQA-5000 and OHR-Bench | Cannot assess industry bias | MEDIUM |
 
 ### 4.3 Source Composition
@@ -243,6 +319,26 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 
 **CONSENSUS UPDATE**: Added SmartDoc-QA (4,280) and MIDV500 (3,612) to Phase 1 hard labels to address the critical camera-captured IQA gap (was 583 samples, now ~8,475 camera). These provide smartphone/professional camera diversity with natural shadows, perspective, and lighting variation. Labels derived from paired/heuristic quality assessment at tier_3_heuristic with training weight 0.5.
 
+**Phase 1B (~3K-5K, compound distortion sub-split — REQUIRED, Gap 1 remediation)**:
+
+A compound distortion sub-split is mandatory before training the IQA head. Real-world documents
+have simultaneous degradations; models trained only on single-condition samples fail on compound
+inputs with 15-25% expected metric drop.
+
+| Component | Count | Stacked Degradations | Base Images |
+|-----------|-------|---------------------|-------------|
+| blur + JPEG compression | 1,000-1,500 | Gaussian/motion blur → JPEG Q=30-50 | DIQA-5000/OHR-Bench clean samples (quality ≥ 0.6) |
+| blur + noise | 800-1,000 | Gaussian blur → add Gaussian noise | DIQA-5000/OHR-Bench |
+| noise + contrast reduction + JPEG | 600-800 | Noise → contrast degradation → JPEG | OHR-Bench clean samples |
+| shadow + blur (camera domain) | 600-800 | Shadow overlay → motion blur | SmartDoc-QA / RealDAE base |
+| blur + skew + noise (three-way) | 400-600 | Rotation → blur → noise | DIQA-5000 clean |
+
+- **Pipeline**: Albumentations stacked transforms; severity for each component sampled independently
+- **Labels**: Per-component severity fields (`blur_severity`, `noise_severity`, etc.); NO single compound score
+- **Training weight**: 1.0 (full weight — compound conditions require full signal, not soft labels)
+- **Held-out evaluation**: A SEPARATE compound distortion test split (not in training) is MANDATORY for IQA head evaluation. This is in addition to the standard val/test splits.
+- **Important**: Compound samples must be Phase 1B (hard labels), NOT folded into Phase 2 pseudo-labels.
+
 **Phase 2 (up to 100K, pseudo-labels via DocIQ-Replica)**:
 
 - Source from DocLayNet, RVL-CDIP, Tobacco800, SmartDoc-QA (provides capture/script diversity)
@@ -260,9 +356,10 @@ char_height > 96px:    quality = 0.95-1.00  (definitely oversized)
 ## 5. Script Detection Dataset (~108K from ~583K available)
 
 **Model**: SigLIP Group 2
-**Task**: 19-class classification Phase 1 (from `config/script_ml_classes.yaml`); expanding to full
-OpenLID coverage (~60+ scripts) in Phase 2+. Three scripts are permanently excluded from training
-and reserved exclusively for OOD holdout evaluation:
+**Task**: Multi-class classification targeting full OpenLID coverage. Phase 1 launches with 19
+initial ML classes (`config/script_ml_classes.yaml`); the previously deferred "Phase 2" OpenLID
+expansion (~60+ scripts) is **merged into Phase 1** and committed as a single deployment scope.
+Three scripts are permanently excluded from training and reserved exclusively for OOD holdout evaluation:
 
 > **RESERVED SCRIPTS — NEVER IN TRAINING**: Mongolian (Mong), Syriac (Syrc), Georgian (Geor).
 > These are the TTB/RTL/LTR OOD anchor scripts. They must not appear in any training manifest
@@ -314,12 +411,19 @@ and reserved exclusively for OOD holdout evaluation:
 1. **Tibetan page-level**: TibHCR has 141K character images but ~0 full-page documents. Only ~200 real Bhutan docs + ~3.8K synthetic page-level from synth-multiscript. **CONSENSUS: Elevated to P1 priority** -- 200 real samples insufficient for production robustness; pursue partnerships with digital library projects (e.g., BDRC, Tibetan Buddhist Resource Center) for real page scans
 2. **HANS/HANT distinction**: Requires curated data; synth-multiscript is primary source. **CONSENSUS**: Consider a dedicated HANS/HANT binary classifier as a second-stage gate after CJK detection, since visual distinction is subtle and error-prone with single-pass classification
 3. **Hebrew, Greek, Thai, SE_ASIAN_OTHER**: All depend heavily on synth-multiscript-v3 (v2 at 250K DELETED; v3 at 190,485 actual — ⚠️ imbalanced; Hebrew/Greek/Thai may be under-represented)
-4. **OpenLID Phase 2+ expansion**: Phase 1 covers 19 ML classes. Phase 2 will expand to all scripts
-   in OpenLID (~60+ ISO 15924 scripts). Script class config (`config/script_ml_classes.yaml`)
-   must be updated for each expansion phase. After each expansion, OOD-Script must be
-   re-evaluated: scripts transitioning from open-set to in-training lose their OOD-Script status
-   (they may still appear in other OOD categories). Reserved scripts (Mong/Syrc/Geor) are
-   excluded from ALL phases.
+4. **OpenLID expansion (Phase 1 commitment)**: The initial 19 ML classes are the first batch.
+   Full OpenLID coverage (~60+ ISO 15924 scripts) is **committed as Phase 1 scope** — there is
+   no separate "Phase 2" for script expansion. Script class config (`config/script_ml_classes.yaml`)
+   is updated incrementally as new script training data is assembled. After each batch is added,
+   OOD-Script must be re-evaluated: scripts transitioning from open-set to in-training lose their
+   OOD-Script status (they may still appear in other OOD categories). Reserved scripts
+   (Mong/Syrc/Geor) are excluded from ALL expansion batches.
+
+   **Coverage strategy for scripts not yet in training**: Confidence abstention routes to the
+   classical OpenLID language → script mapping when a script is not yet in the training set.
+   This is a production safety mechanism only — it does NOT substitute for actual training data.
+   Each OpenLID expansion batch requires real training data sourcing before that batch trains.
+   Abstention thresholds apply per Section 17.3.
 5. **Font variation coverage**: The 19 Phase 1 classes cover standard font representations. Highly
    decorative or non-standard fonts within trained scripts (e.g., ornamental Latin, CJK brush
    style) are underrepresented. These are covered by OOD-Script font variation sub-set rather
@@ -415,12 +519,20 @@ and reserved exclusively for OOD holdout evaluation:
 | IAM | ~5K | Line transcriptions, 657 writers |
 | Muharaf | ~5K | Arabic cursive, variable quality |
 | PUCIT-OHUL | ~3K | Urdu handwriting |
+| **KHATT** | **~4K** | **Arabic cursive handwriting (word/line-level); distinct from Muharaf manuscript style; Gap 6 P0** |
+| **CASIA-HWDB** | **~4K** | **CJK offline handwriting (character/page-level); covers Simplified Chinese; Gap 6 P0** |
+| **IIIT-INDIC** | **~3K** | **Devanagari + Indic handwriting (scene text + document); Gap 6 P0** |
+| **HKR** | **~2K** | **Cyrillic/Russian handwriting; 200 writers, diversity of styles; Gap 6 P0** |
 | Nepali Handwritten | 958 | Devanagari handwriting |
 | NIST SD-19 | ~2K | US census handwriting forms |
 | FUNSD | 199 | Mixed print+handwriting forms |
 | DocLayNet (negatives) | ~15K | Printed-only (NONE class) |
 | PubTabNet (negatives) | ~5K | Table-only (NONE class) |
-| **Total** | **~60K** | |
+| **Total** | **~73K** | **+13K non-Latin handwriting (Gap 6 P0 remediation)** |
+
+> **Gap 6 note**: Without KHATT, CASIA-HWDB, IIIT-INDIC, and HKR, the handwriting presence/legibility/
+> content_type heads cannot reliably classify Arabic cursive, CJK, Devanagari, or Cyrillic handwriting.
+> These four datasets are P0 prerequisites for handwriting head training — they are not supplementary.
 
 ### 6.6 Quality Thresholds
 
@@ -464,9 +576,39 @@ and reserved exclusively for OOD holdout evaluation:
 
 ### 7.3 Critical Gaps
 
-1. **SCANNER_ADF vs FLATBED**: No metadata distinguishes these. Need heuristic (edge feed marks, skew patterns)
-2. **FAX**: RVL-CDIP has doc type labels but no explicit fax label. Need manual labeling ~500 + propagation
-3. **Camera smartphone**: ~11K total; may need synthetic camera simulation on born-digital docs
+1. **SCANNER_ADF vs FLATBED**: No metadata distinguishes these. Concrete ADF identification
+   heuristic (Gap 9 remediation):
+   - Edge-parallel dark bands (thin, 2-5px near page margins from roller mechanism)
+   - Systematic micro-skew pattern (consistent 0.2-0.8° skew in same direction per batch)
+   - Paper-feed direction artifacts (horizontal streaks from roller dust/contamination)
+   - Multi-page separator marks (single-pixel horizontal lines from ADF separator)
+
+   Validation criterion: Manual verification of 100 ADF-labeled samples before propagation to
+   full RVL-CDIP corpus. Do NOT propagate heuristic labels without this spot-check.
+
+2. **SCANNER_FLATBED — Modern CIS sensor gap (Gap 8 remediation)**: RVL-CDIP, Tobacco800, NIST
+   SD-2/SD-6 are 1990s CCD technology. Modern CIS flatbeds (2010+) produce different noise
+   profiles, color rendition, and artifact patterns than 1990s CCD scanners. A model trained
+   only on 1990s scans will systematically misclassify modern scanner captures.
+   - Source MIDV-2020 or equivalent recent flatbed scan dataset for CIS sensor examples
+   - Annotate temporal gap: SCANNER_FLATBED_CCD (pre-2010) vs SCANNER_FLATBED_CIS (2010+)
+   - Minimum target: ≥1,500 modern CIS scanner samples within the SCANNER_FLATBED class
+
+3. **FAX**: RVL-CDIP has doc type labels but no explicit fax label. Fax-specific markers:
+   halftone screening, 1D banding, low SNR (typically < 150 DPI effective). Need manual labeling
+   of ~500 samples + propagation via these markers.
+
+4. **Camera smartphone**: ~11K total; may need synthetic camera simulation on born-digital docs.
+
+5. **Screen recapture / Moiré (Gap 10 — P1)**: Phone-photographing-a-monitor is a common
+   production scenario (web page screenshots, presentation slides captured on camera). Screen
+   recapture has a distinct artifact class (RGB aliasing + moiré from LCD subpixel grid) not
+   present in any other capture method.
+   - Add CAMERA_SMARTPHONE_SCREEN as a sub-class or annotation field
+   - Generate ~500-1K screen recapture samples (photograph monitor displaying document content
+     at various angles and distances)
+   - Add Moran z-ratio metric to IQA verification for moiré artifact detection
+   - Priority: P1 (after core camera classes are complete)
 
 ---
 
@@ -524,6 +666,33 @@ Negatives must come from the same camera domain as positives to avoid domain con
 **Total target composition**: ~8K v3 synthetic + ~7-10K real (sd7k/wsrd) + ~3.5K negatives = **~18.5-21.5K**
 
 Real data (sd7k + wsrd + camera negatives) ≥55% of total — exceeds the 50% real minimum.
+
+**Book Gutter / Spine Shadow (Gap 5 — P1)**:
+
+sd7k is flat-document only — it does not capture book gutter or curved-page shadow patterns.
+Book spine shadows (gradient curves from physical binding) are a distinct artifact class that a
+model trained only on flat-document shadows will systematically mislabel as "moderate edge shadow."
+
+| Option | Feasibility | Priority |
+|--------|------------|---------|
+| Synthetic Blender-rendered bent-document shadows (Python → Blender bridge) | Medium | P1 |
+| Doc3D shadow maps (209GB, ground-truth shadow geometry) | High quality, high effort | P2 |
+| DocScan-type dataset with book scanning artifacts | Requires sourcing | P1 |
+
+Target: ≥1,000 book-gutter shadow samples once a source is available. Add as a named sub-category
+to this section when sourced. Do NOT mark shadow training complete until this gap is addressed.
+
+**Stacked Degradation Sub-Split (Gap 11 — P1)**:
+
+Real camera-captured documents frequently have simultaneous shadow + warping (e.g., book page
+with spine shadow and page curl). Training on single-degradation examples produces overconfident
+predictions on the dominant signal while ignoring secondary conditions.
+
+- Generate ~500-800 samples: warp the v3 base image (page_curl type), THEN apply shadow overlay
+- Labels carry BOTH `shadow_severity` AND `warping_severity` fields
+- Weight these at 0.8× (slightly down-weighted as synthetic compound) to avoid domain shift
+- Cap at ≤5% of total shadow dataset
+- Modify `generate_v3_shadow_view.py` to accept a `--pre-warp` flag that applies page_curl before shadow
 
 **Previous note on SSIM**: `severity = 1 - SSIM(shadow_img, clean_img)` was the original labeling method.
 This is INVALID: SSIM measures pixel-level similarity and penalizes blur/noise/compression equally, so it
@@ -594,6 +763,18 @@ Real data (real pairs + camera negatives) ≥70% of total — exceeds the 70% re
 
 **docalign12k weight note**: Grade D (76) due to language gap (iso639=0%). Apply 0.3x training weight until
 domain enrichment completes. Contributes ~12K pairs at reduced weight; still valuable for warping geometry.
+
+**Stacked Degradation Sub-Split (Gap 11 — P1)**:
+
+Real book-scan documents have simultaneous warping + skew (from page curl misalignment) + blur
+(from depth-of-field at page edges). Training on isolated warping produces models that ignore
+secondary signals and misestimate compound conditions.
+
+- Modify `generate_v3_warping_view.py` to pre-apply slight skew rotation (±2-5°) BEFORE warping,
+  then apply blur post-processing — this matches the real physical capture sequence
+- Labels carry BOTH `warping_severity` AND `skew_angle` fields (multi-label)
+- Target: ≥500 stacked samples at ≤5% of total warping dataset
+- Training weight: 0.8× (compound synthetic down-weight)
 
 **Previous note on SSIM**: `severity = 1 - SSIM(distorted, flat)` was the original labeling method.
 This is INVALID for the same reasons as shadow. Do NOT use SSIM for warping labels in any new scripts.
@@ -669,6 +850,26 @@ Source images shared across training datasets (same image, different labels per 
 | Resolution spread | KS test for uniformity | p > 0.05 | Clustered at single DPI |
 | Image integrity | PIL.Image.verify() | 0 corrupt | Any corrupt |
 | Duplicate detection | pHash dedup | < 1% near-duplicates | > 5% duplicates |
+| **Script × degradation cross-tabulation** | **Count (script_family × degradation_type) cells** | **≥100 samples per cell at severity > 0.3** | **ANY cell at 0 (HALT training)** |
+
+### 12.1.1 Script × Degradation Cross-Tabulation (P0 Mandatory Requirement)
+
+For each cell in the (script_family × degradation_type) matrix, REQUIRE ≥100 training samples
+with severity > 0.3. This check is mandatory before training any head that uses both script and
+quality/degradation signals (IQA Group 1, Resolution Quality MobileNet Head 3). Different scripts
+have fundamentally different tolerance profiles for each degradation type (e.g., Arabic is more
+sensitive to stroke blur than Latin; CJK is more sensitive to low-contrast than Devanagari).
+
+| script_family | blur | noise | contrast | compression | shadow | warping |
+|---|---|---|---|---|---|---|
+| Latin | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 |
+| Arabic | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 |
+| CJK | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 |
+| Devanagari | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 |
+| Cyrillic | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 | verify ≥100 |
+
+Add cross-tabulation verification to `scripts/verify_dataset_diversity.py`. Fail and HALT if any
+cell is 0 after dataset assembly. Report as a table in the pre-training QA report.
 
 ### 12.2 Cross-Dataset Checks
 
@@ -1056,6 +1257,42 @@ Where `tier_base_weight` is: tier_0_exact=1.0, tier_1_annotation=1.0, tier_2_mod
 
 This creates a smooth gradient that naturally down-weights uncertain labels without hard cutoffs.
 
+### 17.3 OOD Generalization Strategy (Non-Script Heads)
+
+**CRITICAL DESIGN PRINCIPLE — OOD abstention is a safety mechanism, not a coverage substitute.**
+If a condition is known to occur in production (per
+[WILD_CONDITIONS_ANALYSIS.md](WILD_CONDITIONS_ANALYSIS.md)), the solution is adding training data
+for that condition. Abstention handles genuinely unseen inputs; it cannot correct for gaps in
+training coverage because the model produces high-confidence wrong predictions — not low-confidence
+ones — on conditions it has been exposed to in a distorted way.
+
+**What OOD abstention does**: When model confidence falls below the threshold, the system degrades
+to classical methods (Section 17.1) rather than serving a low-confidence ML prediction.
+
+**What OOD abstention does NOT do**: Cover conditions omitted from training data. A model that has
+never seen compound blur+warping will produce wrong predictions on those images with high
+confidence — it does not know to abstain.
+
+**Abstention thresholds by head**:
+
+| Head | Abstention Threshold | Post-Abstention Action |
+|------|---------------------|----------------------|
+| Orientation (MobileNet) | confidence < 0.5 | Classical Hough; flag `low_confidence` |
+| Skew (MobileNet) | confidence < 0.5 | Classical Hough skew; flag `low_confidence` |
+| Resolution Quality (MobileNet) | confidence < 0.45 | DPI metadata + CC char height |
+| IQA (SigLIP Group 1) | any dimension confidence < 0.45 | Classical IQA detectors (iqa_classical.py) |
+| Script Detection (SigLIP Group 2) | < 0.55 | OpenLID language → script mapping |
+| Handwriting (SigLIP Group 4) | < 0.45 | CC stroke analysis |
+
+**Non-training scripts (pending OpenLID expansion batches)**: When a script is not yet in the
+training set, the OpenLID language → script classical fallback maps it to the nearest trained
+class with reduced confidence. This is automatic — there is no human review queue in the
+production pipeline. The system continues processing with clearly flagged reduced confidence.
+
+**Required monitoring**: Track per-head abstention rates in production telemetry. If abstention
+rate for any condition exceeds 10% of documents, treat as a signal to add training data for that
+condition rather than tuning the abstention threshold.
+
 ---
 
 ## 18. Multi-Model Consensus Review Summary
@@ -1313,3 +1550,76 @@ Before running any assembly script for a training dataset, verify these KI check
 **Portfolio health**: 37/54 scored datasets (69%) are Grade B or above and can be used at full
 training weight. The 8 D-capped datasets require domain enrichment (P0 action); IAM requires
 metadata rescue (P1 action) before the handwriting dataset can reach its 60K target.
+
+---
+
+## 21. Wild Conditions Gap Remediation Update (2026-02-22)
+
+**Reference**: [WILD_CONDITIONS_ANALYSIS.md](WILD_CONDITIONS_ANALYSIS.md) — 60 documented wild conditions
+**Consensus review**: 5-model review (4/4 substantive responses, avg confidence 8.5/10, 2026-02-22)
+**Full analysis**: `tmp_cleanup/.tmp-wild-conditions-vs-ddr-analysis-20260222.md`
+
+### 21.1 Gap Remediation Status
+
+| Gap | Description | Priority | DDR Section Updated | Status |
+|-----|-------------|----------|---------------------|--------|
+| Gap 1 | Compound/multi-distorted IQA samples | P0 | Section 4.2, 4.3 Phase 1B | ✅ Added |
+| Gap 2 | Symmetric document orientation (epistemic impossibility) | P0 | Section 1.2.1 | ✅ Added |
+| Gap 3 | Resolution confounds (upscaled raster / vector PDF) | P0 | Section 3.2, 3.4 | ✅ Added |
+| Gap 4 | Script-specific quality thresholds (CJK vs Latin minimum) | P0 | Section 3.2 | ✅ Added |
+| Gap 5 | Book gutter shadow (sd7k is flat-doc only) | P1 | Section 8.2 | ✅ Noted |
+| Gap 6 | Non-Latin handwriting (KHATT, CASIA-HWDB, IIIT-INDIC, HKR absent) | P0 | Section 6.5 | ✅ Added |
+| Gap 7 | Multi-column skew — global deskewing is a RAG quality REDUCTION | P0 | Section 2.1, 2.3 | ✅ Added |
+| Gap 8 | Modern CIS scanner (2020+) absent; RVL-CDIP is 1990s CCD only | P1 | Section 7.3 | ✅ Added |
+| Gap 9 | ADF identification heuristic undefined | P1 | Section 7.3 | ✅ Added |
+| Gap 10 | Screen recapture / moiré — unique artifact class | P1 | Section 7.3 | ✅ Added |
+| Gap 11 | Compound warp+shadow+skew (single-degradation training inadequate) | P1 | Sections 8.2, 9 | ✅ Added |
+| Gap 12 | Document age dataset targets (aged/historical) — was "deferred" | P1 | Section 4.3 note | ✅ Activated |
+| Gap 13 | Blank/figure-only orientation (hallucination risk) | P0 | Section 1.2.1 (merged with Gap 2) | ✅ Added |
+| Gap 14 | Per-script IQA adequacy (~500 non-Latin total is insufficient) | P1 | Section 4.1 min raised | ✅ Noted |
+
+### 21.2 Policy Clarifications (Applied in This Update)
+
+Three DDR policies clarified following the 2026-02-22 consensus review:
+
+**Policy 1 — OOD abstention scope** (Section 17.3): OOD confidence abstention is enforced at
+production inference but is NOT a substitute for training data coverage. Known production
+conditions must have training data representation. Abstention handles genuinely unseen
+out-of-distribution inputs — not gaps in planned training coverage where the model will
+produce high-confidence wrong predictions.
+
+**Policy 2 — OpenLID expansion commitment** (Section 5): The previously deferred "Phase 2"
+OpenLID script expansion (~60+ ISO 15924 scripts) is merged into Phase 1 scope. The 19 initial
+ML classes are the first training batch. Each subsequent batch (per OpenLID language group) is
+committed as Phase 1 work. No "Phase 2" for script expansion exists.
+
+**Policy 3 — No human review routing** (Section 17.3): OOD inputs in production do NOT route to
+a human review queue. The production safeguards use confidence-based classical method fallbacks
+throughout. Human annotation workflows exist for training data preparation only, not for
+production document routing.
+
+### 21.3 Updated Wild Condition Coverage Estimate
+
+| Coverage State | Before This Update | After P0 Gaps Addressed | After P0+P1 Gaps Addressed |
+|----------------|--------------------|--------------------------|-----------------------------|
+| Fully covered | 2/60 (3%) | ~8/60 (13%) | ~16/60 (27%) |
+| Partially covered | 5/60 (8%) | ~12/60 (20%) | ~20/60 (33%) |
+| Not covered | 53/60 (88%) | ~40/60 (67%) | ~24/60 (40%) |
+
+Target deployment threshold: ≥20% fully covered (12/60 conditions). P0 remediation achieves
+this. Full coverage (60/60) is not a realistic target at any viable data budget — the goal is
+highest-frequency × highest-impact coverage, not completeness.
+
+### 21.4 Training Prerequisites (Updated Blocking Dependencies)
+
+| Head Group | BEFORE training can start | New Prerequisites Added |
+|-----------|--------------------------|------------------------|
+| Orientation | Symmetric/ambiguous sub-dataset assembled | Section 1.2.1 (~2,500 samples) |
+| Skew | ≥20% multi-column + cross-detector gate validated | Section 2.1, 2.3 |
+| Resolution Quality | Confound sub-dataset assembled; raw metric output implemented | Section 3.4 (~2,000 samples) |
+| IQA | Compound distortion Phase 1B assembled | Section 4.3 (~3K-5K samples) |
+| Script Detection | KHATT + CASIA-HWDB + IIIT-INDIC + HKR licensed and integrated | Section 6.5 (+13K samples) |
+| Handwriting | Same non-Latin datasets as Script; harmonize_handwriting_labels updated | Section 6.5 |
+| Capture Method | Modern CIS scanner examples sourced; ADF heuristic validated on 100 samples | Section 7.3 |
+| Shadow | Book gutter gap acknowledged; stacked degradation sub-split generated | Section 8.2 |
+| Warping | Stacked degradation sub-split generated | Section 9 |

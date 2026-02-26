@@ -166,3 +166,57 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~97K | Synthetic rotation | Born-digital PDFs are always upright; synthetic rotations provide negatives only |
+| MNV4-H2 | skew_reg | ➖ | ~97K | Synthetic skew | Clean digital renders have zero real skew; useful as ±0° negatives |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~97K | Pseudo-label | Born-digital PNG crops vary 148–773px wide; RQ pseudo-labeling applicable |
+| SIG-G1-1 | blur_score | ➖ | ~97K | Pseudo-label | Born-digital renders are virtually blur-free; strong clean-end negatives |
+| SIG-G1-2 | noise_score | ➖ | ~97K | Pseudo-label | Clean digital source; no authentic noise; useful as low-noise negatives |
+| SIG-G1-3 | contrast_score | 🟡 | ~97K | Pseudo-label | Financial tables have high contrast printed text; good high-contrast examples |
+| SIG-G1-4 | skew_score | ➖ | ~97K | Pseudo-label | Born-digital, no skew; negative examples only |
+| SIG-G1-5 | compression_score | 🟡 | ~97K | Pseudo-label | JPEG artifacts possible in table crops; compression score applicable |
+| SIG-G1-6 | overall_quality | 🟡 | ~97K | Pseudo-label | Mostly high quality; contributes to clean upper-range of quality distribution |
+| SIG-G2-1 | script_cls | ✅ | ~97K | GT (auto-extracted) | 100% Latin (Latn) from English SEC filings; strong Latin script signal |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~97K | Synthetic rotation | All upright after correction; synthetic negatives only |
+| SIG-G3-2 | skew_reg (post) | ➖ | ~97K | Synthetic skew | No real post-correction skew; negatives only |
+| SIG-G4-1 | handwriting_presence_cls | ➖ | ~97K | GT (content_types) | 100% printed; zero handwriting; strong negative class signal |
+| SIG-G4-2 | handwriting_legibility_cls | ❌ | 0 | N/A | No handwriting present; not applicable |
+| SIG-G4-3 | handwriting_content_type_cls | ❌ | 0 | N/A | No handwriting present; not applicable |
+| SIG-G4-4 | presence_reg | ➖ | ~97K | GT-derived | Handwriting presence = 0.0 for all; useful lower-bound negatives |
+| SIG-G4-5 | legibility_reg | ❌ | 0 | N/A | No handwriting; not applicable |
+| SIG-G5-1 | capture_method_cls | ✅ | ~97K | GT (Layer 2) | 100% born_digital; strong single-class signal for born_digital category |
+| SIG-G5-2 | shadow_reg | ➖ | ~97K | Pseudo-label | Born-digital renders have no shadow; strong shadow=0 negatives |
+| SIG-G5-3 | warping_reg | ➖ | ~97K | Pseudo-label | No physical warping in digital renders; strong warping=0 negatives |
+| SIG-G5-4 | code_cls | ➖ | ~97K | GT (content inspection) | Financial tables contain no source code; clean negative class signal |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~97K | Pseudo-label | Variable crop sizes (148–773px); RQ labels derivable for diversity |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | Latin only (100% Latn/English); no script diversity |
+| 2 | Capture method | ✅ | Born-digital only (100%); contributes full born_digital class |
+| 3 | Document domain | ❌ | Financial only (FIN 100%); SEC 10-K annual reports exclusively |
+| 4 | Layout type | 🟡 | Table-dominant (100% has_table); no layout variety within dataset |
+| 5 | Text density | 🟡 | Dense tabular text with numerical data; limited density variation |
+| 6 | Degradation types | ❌ | No authentic degradation; born-digital clean renders only |
+| 7 | Resolution/DPI range | 🟡 | PNG crops 148–773 × 93–947 px (avg 683×256); variable but no DPI metadata |
+| 8 | Document age | ❌ | Modern documents only (SEC EDGAR filings, 2001–present) |
+| 9 | Text scope | ✅ | Page-level scope for all 97K samples |
+| 10 | Content flags | 🟡 | Tables: 100%; no figures, handwriting, or signatures |
+| 11 | Binarization status | ❌ | Not binarized; full grayscale/color digital renders |
+| 12 | Artifact types | ❌ | No scan artifacts; JPEG compression only (minor) |
+| 13 | Color mode | 🟡 | RGB (100%); no grayscale or binarized mode variety |
+| 14 | Font variety | 🟡 | Financial report fonts (serif/sans-serif); limited to Fortune 500 typography |
+
+### 13.3 Corpus Role & Constraints
+
+FinTabNet serves as a **pure born_digital negative pool** for IQA heads (blur/noise/skew all near zero) and as the primary large-scale contributor for the `born_digital` class of `capture_method_cls` (SIG-G5-1). Its research-only IBM license restricts commercial deployment but permits training use; the test split should be treated as OOD-reserved given its benchmark status in ICDAR 2019. The dataset's exclusive financial-table composition provides no diversity across domain, script, or degradation dimensions.

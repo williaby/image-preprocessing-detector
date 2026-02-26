@@ -201,3 +201,57 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ✅ Primary | ~125 | Hard label | Born-digital PDF pages at consistent 0°; 29 pages contain 90° rotated tables (useful edge cases); orientation_class derivable |
+| MNV4-H2 | skew_reg | ➖ Negatives only | ~125 | Derived | Born-digital; near-zero skew (0.0°); contributes clean-class anchor for skew regression |
+| MNV4-H3 | resolution_quality_reg | ✅ Primary | ~125 | Derived | 300 DPI professional typesetting; contributes high-quality anchor for resolution quality regression |
+| SIG-G1-1 | blur_score | ➖ Negatives only | ~125 | Derived | Zero blur (born-digital PDF rasterized to PNG); provides clean-class anchor |
+| SIG-G1-2 | noise_score | ➖ Negatives only | ~125 | Derived | No noise (born-digital); clean-class anchor |
+| SIG-G1-3 | contrast_score | ✅ Primary | ~125 | Derived | High-contrast professional typography; well-defined contrast score range; strong anchor for high-contrast class |
+| SIG-G1-4 | skew_score | ➖ Negatives only | ~125 | Derived | No skew degradation; provides zero-skew anchor for skew quality scoring |
+| SIG-G1-5 | compression_score | ➖ Negatives only | ~125 | Derived | PNG lossless output; no compression artifacts; clean anchor |
+| SIG-G1-6 | overall_quality | ✅ Primary | ~125 | Derived | High-quality born-digital documents provide top-end overall quality anchor; contributes to SRCC calibration |
+| SIG-G2-1 | script_cls | ✅ Primary | ~125 | Hard label | 96.3% Tibt (130/135 pages) + 3.0% Latn (4/135 pages); document-level Tibt examples complement tibhcr character-level data; only real-document Tibt source |
+| SIG-G3-1 | orientation_cls (post) | ✅ Primary | ~125 | Hard label | Post-correction orientation = 0° for all non-rotated pages; 29 rotated-table pages provide useful diversity |
+| SIG-G3-2 | skew_reg (post) | ➖ Negatives only | ~125 | Derived | Born-digital; post-correction residual skew ≈ 0°; contributes zero-residual anchor |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | ~125 | Hard label | 0% handwriting (printed financial documents); NONE class examples — important negative for presence detection |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | ~125 | Hard label | NOT_APPLICABLE class (no handwriting present); necessary negative class |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | ~125 | Hard label | NOT_APPLICABLE class; all printed text; necessary negative for content type classification |
+| SIG-G4-4 | presence_reg | ✅ Primary | ~125 | Derived | Presence score = 0.0 (no handwriting); anchors low end of presence regression range |
+| SIG-G4-5 | legibility_reg | ✅ Primary | ~125 | Derived | Legibility score = N/A mapped to 0.0 (no handwriting); anchors regression floor |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | ~125 | Hard label | born_digital (100%); 135 real government document samples contribute to born_digital class |
+| SIG-G5-2 | shadow_reg | ➖ Negatives only | ~125 | Derived | No shadows (born-digital); provides zero-shadow anchor |
+| SIG-G5-3 | warping_reg | ➖ Negatives only | ~125 | Derived | No warping (born-digital PDF); provides zero-warping anchor |
+| SIG-G5-4 | code_cls | ➖ Negatives only | ~125 | Derived | Financial/legal documents; no programming code; provides negative code examples |
+| SIG-G5-5 | resolution_quality_reg | ✅ Primary | ~125 | Derived | 300 DPI professional PDF; high-quality anchor; complements MNV4-H3 signal |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ✅ Well-covered | Tibt/indic (96.3%) + Latn/latin (3.0%); provides rare document-level Tibetan script examples alongside Latin |
+| 2 | Capture method | ✅ Well-covered | 100% born_digital; contributes clean born_digital class signal from real government documents |
+| 3 | Document domain | ✅ Well-covered | 100% FIN (financial statements + tax legislation); government domain adds real-world financial document diversity |
+| 4 | Layout type | ✅ Well-covered | Complex multi-column layouts; tables (71.1%), figures (9.6%), mixed financial statement structure; 29 pages with rotated tables |
+| 5 | Text density | ✅ Well-covered | High text density (financial statements with dense tables and narrative); mixed with lower-density pages (covers, charts) |
+| 6 | Degradation types | ❌ Not present | No degradation (born-digital); quality_scores empty; contributes only to clean-class anchors |
+| 7 | Resolution/DPI range | 🟡 Partial | Uniform 300 DPI (rasterized from PDF); no DPI variation within dataset |
+| 8 | Document age | 🟡 Partial | Contemporary (AFS 2024-25, Tax Act 2021); modern government documents only; no historical content |
+| 9 | Text scope | ✅ Well-covered | 100% printed full-document scope; complex multi-page financial reports with tables, headers, footnotes |
+| 10 | Content flags | ✅ Well-covered | has_table=71.1%, has_figure=9.6%, has_signature=0.7%; strong table and figure diversity |
+| 11 | Binarization status | ❌ Not present | Color PNG throughout; no binarized variants |
+| 12 | Artifact types | ❌ Not present | No artifacts (born-digital); clean professional typesetting |
+| 13 | Color mode | 🟡 Partial | Color PNG (RGB); predominantly black text on white with minimal color in charts/headers; no explicit color_mode field in L2 (BA-D13 defect open) |
+| 14 | Font variety | ✅ Well-covered | Professional Tibetan and Latin typefaces; financial document typography (tabular numerals, headers, footnotes, mixed font weights) |
+
+### 13.3 Corpus Role & Constraints
+
+Bhutan-AFS serves as the **only real-document-level Tibetan (Tibt) script source** in the training corpus, bridging the gap between tibhcr's character-level images and real-world multi-page Tibetan financial documents. Public domain license permits unrestricted use. The dataset is small (135 pages) and limited to the FIN domain with no degradation, so its primary value is as a clean-class anchor for IQA heads and as the sole real-document Tibt contributor to SIG-G2-1 — it should not be relied upon as a standalone source but used in combination with tibhcr synthetic compositing.

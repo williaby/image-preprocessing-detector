@@ -29,7 +29,14 @@ Example:
     ...     print(f"Confidence: {enrichment.llm_prediction_confidence}")
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "provider"
+__l4_task__ = "iqa"
+__l4_workstream__ = "WS3"
+__l4_provides__ = "iqa_scores, quality_vector"
+
 
 import logging
 import warnings

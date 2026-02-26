@@ -134,7 +134,9 @@ Dataset-agnostic CPU-only pipeline for predicting document skew angle and page o
 
 ### Stream 4C — Multi-Task Dataset Preparation Pipeline
 
-> **Status**: ⚠️ Diagram planned — scripts exist, diagram not yet created.
+![Stream 4C Dataset Preparation](stream-4c-dataset-preparation.svg)
+
+*PlantUML source: [`stream-4c-dataset-preparation.puml`](stream-4c-dataset-preparation.puml)*
 
 Three-stage pipeline that prepares the 5-task training manifest for SigLIP 2 multi-task training. Enforces OOD non-leakage, ≤60% synthetic mixing cap, and 14-dimension diversity requirements.
 
@@ -154,7 +156,7 @@ Three-stage pipeline that prepares the 5-task training manifest for SigLIP 2 mul
 | `scripts/label_shadow_severity.py` | Luminance-delta severity for sd7k/wsrd → writes to L2 metadata |
 | `scripts/label_warping_severity.py` | SSIM-based severity for warpdoc/wsrd/anyphotodoc6300 → writes to L2 metadata |
 | `scripts/harmonize_handwriting_labels.py` | Handwriting manifest from IAM/FUNSD/HierText/COCO-Text |
-| `scripts/generate_multitask_labels.py` | SigLIP 2 teacher pseudo-labels for active learning |
+| `scripts/generate_multitask_labels.py` | **Phase B (student distillation)**: run trained SigLIP 2 to generate soft pseudo-labels for MobileCLIP-2 student training. *Phase A (SigLIP 2 training manifest assembly)* is documented in the Training Workstream — see [PROJECT_OVERVIEW_DETAILED.md §7](../../../../PROJECT_OVERVIEW_DETAILED.md) |
 
 **Stage 3 — Audit & Manifest Assembly**:
 
@@ -165,21 +167,106 @@ Three-stage pipeline that prepares the 5-task training manifest for SigLIP 2 mul
 | `scripts/prepare_multitask_datasets.py` | **Main orchestrator**: 6 sub-commands (script/orientation/source/shadow/warping/merge) + OOD checks |
 | `scripts/evaluate_dataset_diversity.py` | DDR generator: 14 dimensions, OOD validation, markdown reports |
 
-*Diagram to be created: [`stream-4c-dataset-preparation.puml`](stream-4c-dataset-preparation.puml)*
+---
+
+### Compound Distortion Augmentation Pipeline
+
+Dataset-agnostic compound-degradation generator applying 2–5 distortions per image from OHR-Bench (8.5K) and DIQA-5000 (5.5K) source images. Distortion sampler selects from 7 types (gaussian_blur, gaussian_noise, jpeg_compression, brightness_shift, skew_rotate, contrast_stretch, yellowing), enforcing ≥1 spatial + ≥1 tonal per image. All severity labels are analytically derived from augmentation parameters (Tier 0 provenance — no model inference needed). Generates 25K–40K compound examples subject to the ≤60% synthetic IQA mixing cap.
+
+![Compound Distortion Augmentation](prepare-doc-compound-distortion-augmentation.svg)
+
+*PlantUML source: [`prepare-doc-compound-distortion-augmentation.puml`](prepare-doc-compound-distortion-augmentation.puml)*
+
+---
+
+### Stream 4E — Handwriting Dataset Preparation Pipeline
+
+Acquisition plan and label harmonization pipeline for 9-class fine-grained handwriting taxonomy (Latin-Print, Latin-Cursive, CJK-Hanzi, CJK-Kanji, Arabic-Naskh, Arabic-Ruqah, Devanagari, Cyrillic, Other-Indic). Sources: KHATT (Arabic cursive), CASIA-HWDB (CJK), IIIT-INDIC (Devanagari), HKR (Cyrillic), FUNSD expansion (Latin) — all PENDING acquisition — plus local IAM Handwriting DB and NIST SD-19. Target: ≥60K images, ≥70% real. Feeds SigLIP 2 Group 4 (5 handwriting heads). Tier 3 dependency (SigLIP 2 G1+G2 for pseudo-label assist).
+
+![Stream 4E Handwriting Dataset](stream-4e-handwriting-dataset.svg)
+
+*PlantUML source: [`stream-4e-handwriting-dataset.puml`](stream-4e-handwriting-dataset.puml)*
 
 ---
 
 ### L2 Metadata Enrichment Pipeline
 
-> **Status**: ⚠️ Diagram planned — `label_shadow_severity.py`, `label_warping_severity.py`, and `harmonize_handwriting_labels.py` write back to L2 registry; no current diagram captures this feedback loop.
+![L2 Metadata Enrichment](l2-metadata-enrichment.svg)
 
-Three labeling scripts inject new severity/label fields directly into the L2 metadata registry, making it a living annotation system rather than read-only:
+*PlantUML source: [`l2-metadata-enrichment.puml`](l2-metadata-enrichment.puml)*
 
-- `label_shadow_severity.py` → `shadow_severity` field in `{dataset}_metadata.json`
-- `label_warping_severity.py` → `warping_severity` field in `{dataset}_metadata.json`
+Three labeling scripts inject new severity/label fields directly into the L2 metadata registry (v2.4.0), making it a living annotation system rather than read-only:
+
+- `label_shadow_severity.py` → `shadow_severity` + `shadow_unmeasurable` (v2.4.0) in `{dataset}_metadata.json`
+- `label_warping_severity.py` → `warping_severity` + `warping_region` (v2.4.0) in `{dataset}_metadata.json`
 - `harmonize_handwriting_labels.py` → unified `handwriting_present` label across datasets
 
-*Diagram to be created: [`l2-metadata-enrichment.puml`](l2-metadata-enrichment.puml)*
+**v2.4.0 schema additions** (see [`docs/schema/layer2_enrichment_v2.schema.json`](../../../../schema/layer2_enrichment_v2.schema.json)):
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `shadow_unmeasurable` | bool | True when binarized — gradient destroyed, severity unmeasurable. Distinct from `shadow_severity=0.0` (no shadow present). |
+| `warping_region` | COCO bbox | `[x, y, w, h]` of the primary warp zone |
+| `resolution.coarse_bucket` | enum | Character-height-based bucket: needs_major_upscale / needs_light_upscale / optimal / good / oversized |
+| `iqa.ink_degradation_score` | float 0-1 | Ink bleed, fading, uneven distribution |
+| `iqa.paper_degradation_score` | float 0-1 | Paper staining, foxing, yellowing |
+| `iqa.bleed_through_score` | float 0-1 | Reverse-page show-through |
+| `iqa.geometric_distortion_score` | float 0-1 | Perspective/barrel/wave at signal quality level |
+
+---
+
+### Unified Training Corpus (UTC) Architecture
+
+![Unified Training Corpus Architecture](unified-training-corpus-architecture.svg)
+
+*PlantUML source: [`unified-training-corpus-architecture.puml`](unified-training-corpus-architecture.puml)*
+
+Single corpus replacing N per-head purpose-built datasets. One L2 enrichment pass per source dataset covers all 25 training heads simultaneously. Each head uses a filtered view (`WHERE split_type='train' AND {head_label} NOT NULL`).
+
+**Key design decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| **One corpus, not N per-head datasets** | Eliminates cascading blocking: enriching a dataset once unblocks all heads that use it |
+| **Global split_type** | SigLIP 2 has a shared backbone — training for any head means backbone has seen the image; per-head splits would cause leakage |
+| **~88% reserved at construction** | 57 source datasets + 3.3M samples far exceed initial ~450K training targets; supersample to build a reserve buffer |
+| **Val/test immutable** | Enables cross-model and cross-dataset metric comparison; once locked, evaluation sets never change |
+| **OOD from reserved first** | Reserved images were never seen by any model — preferred clean OOD boundary |
+
+**Three schemas involved:**
+
+| Schema | File | Purpose |
+|--------|------|---------|
+| L2 Enrichment v2.4.0 | `docs/schema/layer2_enrichment_v2.schema.json` | Per-image labels covering all heads |
+| Corpus Manifest v1 | `docs/schema/corpus_manifest_v1.schema.json` | Per-image corpus role, split, OOD status |
+| Dataset Split Spec v1 | `docs/schema/dataset_split_spec_v1.schema.json` | Per-dataset split assignment rules |
+
+---
+
+### Corpus Split Lifecycle
+
+![Corpus Split Lifecycle](corpus-split-lifecycle.svg)
+
+*PlantUML source: [`corpus-split-lifecycle.puml`](corpus-split-lifecycle.puml)*
+
+State machine for how a corpus record transitions from ingestion through split assignment, reserved pool, and OOD promotion.
+
+**Lifecycle states:**
+
+| State | corpus_status | split_type | Description |
+|-------|--------------|-----------|-------------|
+| EXCLUDED | excluded | null | Near-duplicate, corrupted, or license-restricted |
+| RESERVED | reserved | null | Ingested but not yet activated; first OOD expansion source |
+| ACTIVE TRAIN | active | train | Participating in model training |
+| ACTIVE VAL | active | val | **Immutable** — locked at assignment |
+| ACTIVE TEST | active | test | **Immutable** — locked at assignment |
+| OOD | active | ood | One-way promotion from reserved (preferred) or train |
+
+**OOD source hierarchy (cleanest first):**
+
+1. `predesignated` — designated at corpus construction before any training (clean)
+2. `promoted_from_reserved` — reserved was never seen by model (clean)
+3. `promoted_from_train` — model has seen this image; `promoted_to_ood_at` timestamp identifies affected model versions (contaminated boundary)
 
 ---
 
@@ -194,7 +281,9 @@ The data preparation pipeline implements a versioned metadata schema with three 
 
 **JSON Schema Definitions**:
 
-- [layer2_enrichment.schema.json](../../../../schema/layer2_enrichment.schema.json)
+- [layer2_enrichment_v2.schema.json](../../../../schema/layer2_enrichment_v2.schema.json) — v2.4.0 (adds shadow_unmeasurable, warping_region, coarse_bucket, 4 IQA scores)
+- [corpus_manifest_v1.schema.json](../../../../schema/corpus_manifest_v1.schema.json) — Corpus record with split assignment, OOD tracking, reserved pool
+- [dataset_split_spec_v1.schema.json](../../../../schema/dataset_split_spec_v1.schema.json) — Per-dataset split rules for corpus_assigned datasets
 - [document_metadata.schema.json](../../../../schema/document_metadata.schema.json)
 
 ### Layer 1: IMMUTABLE (Original Labels)
@@ -222,7 +311,7 @@ Our derived annotations with full provenance tracking and versioning.
 | Provider | Module | Tier | Purpose |
 |----------|--------|------|---------|
 | `YOLOProvider` | `annotation/enrichment/providers/yolo.py` | Tier 2 | Layout detection (multi-schema via LayoutTaxonomy, 57 canonical classes) |
-| `SigLIPProvider` | `annotation/enrichment/providers/siglip.py` | Tier 2 | SigLIP 2 multi-task enrichment (16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
+| `SigLIPProvider` | `annotation/enrichment/providers/siglip.py` | Tier 2 | SigLIP 2 multi-task enrichment (19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
 | Built-in | `annotation/enrichment/tiering.py` | Tier 0-1 | Dataset-derived metadata |
 
 **Schema Utilities** (config-driven converters):
@@ -245,17 +334,18 @@ All labels in the enrichment pipeline are tagged with a provenance tier that det
 
 The provenance tier flows through all three metadata layers and is used by the training label builder to compute per-sample anchor weights.
 
-### Global Split Registry
+### Global Split Registry (Corpus Manifest)
 
-To prevent train/test leakage across the 10 purpose-built training datasets, a **Global Split Registry** ensures cross-dataset split consistency:
+The Unified Training Corpus implements a **global split registry** via `corpus_manifest_v1.schema.json` to prevent train/test leakage across all training heads:
 
-- **Key**: SHA256 hash of the image file content
-- **Assignment**: Each unique image is assigned exactly one split (train/val/test) at first encounter
-- **Consistency**: If the same image appears in multiple datasets (e.g., orientation + skew), it receives the same split assignment everywhere
-- **Ratios**: Default 80/10/10 (train/val/test), configurable per dataset
-- **Storage**: Registry persisted as a Parquet file keyed by SHA256 hash
+- **Key**: SHA256 hash of the image file content (primary key, global dedup)
+- **Assignment**: Each unique image has exactly one `split_type` applying to **all heads simultaneously**
+- **Authority**: `source_native` splits take precedence; `corpus_assigned` via `DatasetSplitSpec` for datasets without native splits
+- **Immutability**: Val and test assignments are locked with `val_immutable_since` / `test_immutable_since` timestamps — never change
+- **Reserved pool**: Ingested but unactivated images (~88% at construction for large datasets) — first source for OOD expansion
+- **OOD audit**: `promoted_to_ood_at` timestamp identifies which model versions have seen a train-promoted OOD image
 
-See [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for per-dataset diversity specifications.
+See [`corpus-split-lifecycle.puml`](corpus-split-lifecycle.puml) for state transitions and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for per-dataset diversity specifications.
 
 ### Layer 3: TRAINING (Computed On-Demand)
 
@@ -1380,6 +1470,9 @@ tests/
 - **Labeling Pipeline**: [`automated-data-labeling-pipeline.puml`](automated-data-labeling-pipeline.puml)
 - **Resolution Quality**: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)
 - **Skew/Orientation**: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)
+- **UTC Architecture**: [`unified-training-corpus-architecture.puml`](unified-training-corpus-architecture.puml)
+- **Split Lifecycle**: [`corpus-split-lifecycle.puml`](corpus-split-lifecycle.puml)
+- **L2 Enrichment Feedback**: [`l2-metadata-enrichment.puml`](l2-metadata-enrichment.puml) (v2.4.0)
 
 ### Core Package (V2)
 

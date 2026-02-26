@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (59 total)
+### All Datasets (64 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
@@ -74,12 +74,13 @@ title: Dataset Naming Standard
 | `im2latex` | im2latex | im2latex-100k | ✅ | Image to LaTeX formulas |
 | `indicdlp` | IndicDLP | indic-dlp, indic_dlp, indicdlp | ✅ | Indic Document Layout Parser (119K images, 42 classes, 12 languages) |
 | `invoices-kg` | invoices_kaggle | invoices_kaggle, kaggle-invoices | ✅ | Kaggle invoices dataset |
-| `jssoda` | jssoda | JSSODa (HuggingFace capitalization) | 🔄 | Japanese Simple Synthetic OCR Dataset |
+| `jssoda` | jssoda | JSSODa (HuggingFace capitalization) | ✅ | Japanese Simple Synthetic OCR Dataset (2,000 images, synthetic, orientation + script training) |
 | `mathverse` | mathverse | math-verse | ✅ | Multi-modal math problems |
 | `markushgrapher` | MarkushGrapher | markush_grapher, markush-grapher | ✅ | Chemical structure recognition (235K, DS4SD) |
 | `mdiw13` | mdiw13 | mdiw-13, mdiw_13 | ✅ | Multi-lingual document image words (13 scripts) |
 | `midv500` | midv500 | midv-500 | ✅ | Mobile ID documents (500 types) |
 | `midv500-data` | midv500_data | midv500_data, midv-500-data | ✅ | Extended MIDV-500 |
+| `midv2020` | midv2020 | midv-2020, midv_2020 | ⚠️ | Russian ID docs — camera + flatbed (CC BY-SA 2.5, pending download) |
 | `mle2e` | mle2e | ml-e2e | ✅ | Multi-lingual end-to-end |
 | `mlt19` | mlt19 | mlt-19, icdar-mlt19 | ✅ | Multi-lingual text (ICDAR 2019) |
 | `mobile-receipts` | mobile_receipts_voxel51 | mobile_receipts, receipts-voxel | 🔄 | Mobile receipts (Voxel51) |
@@ -87,6 +88,8 @@ title: Dataset Naming Standard
 | `multimodal-textbook` | multimodal_textbook | multimodal_textbook | ✅ | STEM textbook pages |
 | `openlid-v2` | openlid_v2 | openlid-v2, openlid2 | 📚 | OpenLID v2 text corpus (201 languages, 116M+ samples) |
 | `muharaf` | muharaf | muharaf_arabic_manuscripts | 🔄 | Arabic historical manuscripts |
+| `ndl-docl` | ndl_docl | ndl-layout-dataset, layout-dataset | 🔄 | NDL Document Layout Dataset — 2,290 Japanese library scans with VOC layout annotations (kuzushiji + modern) |
+| `ndl-minhon` | ndl_minhon | minhon, ndl-minhon-ocr | 🔄 | NDL Classical Books OCR Dataset (Minna de Honkoku) — 32,822 kuzushiji pages, 523K line annotations, CC-BY-SA 4.0 |
 | `nepali-handwritten` | nepali_handwritten | nepali_handwritten | ✅ | Nepali handwriting |
 | `nist-sd2` | nist_db2 | nist_sd2, nist_sd_2, nist-db2 | ✅ | NIST Special Database 2 (tax forms) |
 | `nist-sd6` | nist_sd6 | nist_sd_6 | ✅ | NIST SD-6 (forms + handprint) |
@@ -94,6 +97,8 @@ title: Dataset Naming Standard
 | `ocr-quality` | ocr_quality | ocr_quality | ✅ | OCR quality reference dataset |
 | `ohr-bench` | ohr_bench | ohr_bench, ohrbench | 🔄 | OCR hallucination benchmark |
 | `omnidocbench` | omnidocbench | omni-doc-bench | 🔄 | Multi-task benchmark framework |
+| `pdmocr-part1` | pdmocr_part1 | pdmocr-dataset-part1, ndl-pdmocr1 | 🔄 | PDM OCR Dataset Part 1 — ~2,713 images, 1870s-1940s Japanese docs, character-level bboxes, NDL+LINE |
+| `pdmocr-part2` | pdmocr_part2 | pdmocr-dataset-part2, ndl-pdmocr2 | 🔄 | PDM OCR Dataset Part 2 — ~3,997 images, 1870s-1960s, NDLOCR XML with explicit DIRECTION attribute, NDL+Morpho |
 | `pubtabnet` | pubtabnet | pub-tab-net | ✅ | Publication tables dataset |
 | `pucit-ohul` | pucit_ohul_urdu | pucit_ohul, pucit-ohul-urdu | ✅ | PUCIT Urdu handwriting |
 | `q-doc` | Q-Doc | qdoc, q_doc | ✅ | Document quality assessment benchmark (4,260 images) |
@@ -111,6 +116,7 @@ title: Dataset Naming Standard
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
+| `vjroda` | vjroda | vj-roda, vjroda-dataset | 🔄 | Vertical Japanese Real-world OCR Dataset — 100 government PDF pages, born-digital, OOD evaluation |
 | `warpdoc` | warpdoc | warp_doc, warp-doc | ✅ | Document dewarping (1,020 images), audit Grade D* |
 | `wili-2018` | wili_2018 | wili2018, wili | ❌ | Wikipedia language ID (text-only) |
 | `wsrd` | wsrd | wsrd-dnsr, ntire_shadow | ✅ | Document shadow removal (4,500 images), audit Grade D* |

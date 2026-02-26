@@ -163,3 +163,57 @@
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | 🟡 Secondary | ~3,669 | tier_1_annotation | Full-page HSF scans are upright; augment with rotations to create 4-class labels |
+| MNV4-H2 | skew_reg | 🟡 Secondary | ~3,669 | tier_3_heuristic | No native skew labels; classical detector can estimate skew on scanned pages |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | ~3,669 | tier_2_model | 300 DPI scans; char-height pipeline can assign resolution quality scores |
+| SIG-G1-1 | blur_score | 🟡 Secondary | ~3,669 | tier_3_heuristic | Laplacian variance derivable; handwriting strokes are blur-sensitive |
+| SIG-G1-2 | noise_score | 🟡 Secondary | ~3,669 | tier_3_heuristic | Binary scan noise estimable via heuristic; limited grayscale detail |
+| SIG-G1-3 | contrast_score | ➖ Negatives only | ~3,669 | tier_3_heuristic | Binary 1-bit images; contrast is effectively binary — useful as low-contrast negative class |
+| SIG-G1-4 | skew_score | 🟡 Secondary | ~3,669 | tier_3_heuristic | Page-level skew quality degradation derivable from classical skew detector output |
+| SIG-G1-5 | compression_score | ❌ Not applicable | 0 | N/A | PNG lossless format; no JPEG compression artifacts present |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | ~3,669 | tier_2_model | VLM/heuristic scoring possible; writer variability provides useful quality spread |
+| SIG-G2-1 | script_cls | ✅ Primary | 3,669 | tier_0_exact | Latin (Latn) script, 100%; digits + uppercase/lowercase letters; strong Latn contributor |
+| SIG-G3-1 | orientation_cls (post) | 🟡 Secondary | ~3,669 | tier_1_annotation | Same as MNV4-H1 — augmented rotation labels usable post-correction |
+| SIG-G3-2 | skew_reg (post) | 🟡 Secondary | ~1,000 | tier_3_heuristic | Narrow ±2° residual filter applied to skew-estimated subset |
+| SIG-G4-1 | handwriting_presence_cls | ✅ Primary | 3,669 | tier_0_exact | 100% has_handwriting; all HSF full pages are handwritten forms — DOMINANT class |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ Primary | 3,669 | tier_1_annotation | 3,600 writers creates natural legibility spread; ground truth strokes enable annotation |
+| SIG-G4-3 | handwriting_content_type_cls | ✅ Primary | 3,669 | tier_0_exact | PRINTED handwriting (isolated characters + block letters); not cursive — clear PRINTED label |
+| SIG-G4-4 | presence_reg | ✅ Primary | 3,669 | tier_0_exact | 100% handwritten pages; presence_reg = 1.0 for all — useful DOMINANT anchor |
+| SIG-G4-5 | legibility_reg | 🟡 Secondary | 3,669 | tier_2_model | Writer quality varies across 3,600 writers; legibility score derivable via VLM or model |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 3,669 | tier_0_exact | 100% scanner_flatbed; strong SCANNER class contributor |
+| SIG-G5-2 | shadow_reg | ❌ Not applicable | 0 | N/A | Flatbed scans; no shadow artifacts present |
+| SIG-G5-3 | warping_reg | ❌ Not applicable | 0 | N/A | Flatbed scans; no page warping present |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | N/A | Handwritten characters only; no source code content |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | ~3,669 | tier_2_model | 300 DPI fixed; scores clusterable around optimal tier; adds SCANNER-origin examples |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 Partial | Latin (Latn) only — 100% of 3,669 samples; no multi-script coverage |
+| 2 | Capture method | ✅ Well-covered | scanner_flatbed 100% (3,669 samples); strong single-method anchor |
+| 3 | Document domain | 🟡 Partial | GOV (government/personal forms) 100%; narrow domain — handwriting forms only |
+| 4 | Layout type | 🟡 Partial | Forms layout (structured fields + handwritten entries); no multi-column or free-form pages |
+| 5 | Text density | 🟡 Partial | Moderate-to-dense handwriting; isolated characters + full-page form fills |
+| 6 | Degradation types | ❌ Not present | Binary flatbed scans; no blur/noise/compression variation documented in L2 metadata |
+| 7 | Resolution/DPI range | 🟡 Partial | Fixed 300 DPI (2560×3300 px); no DPI range variation |
+| 8 | Document age | 🟡 Partial | Collected pre-2016 (2nd edition 2016, original ~1990s); aged documents, not historical |
+| 9 | Text scope | 🟡 Partial | Page-level (HSF full forms); also contains isolated character archives (by_class, by_field) |
+| 10 | Content flags | 🟡 Partial | has_handwriting 100%; no tables, figures, formulas, or code |
+| 11 | Binarization status | ✅ Well-covered | Binary (1-bit) — 100%; provides strong binarized document examples |
+| 12 | Artifact types | ❌ Not present | Flatbed scans; no shadows, warping, watermarks, or folds documented |
+| 13 | Color mode | 🟡 Partial | Monochrome (binary 1-bit) only; no grayscale or color variants |
+| 14 | Font variety | ❌ Not present | Handwritten only (3,600 writers); no printed fonts — writer-style variety instead |
+
+### 13.3 Corpus Role & Constraints
+
+NIST SD-19 is a **primary contributor for handwriting heads (SIG-G4)** and a **strong Latin script anchor (SIG-G2-1)**. Its 3,669 full-page HSF scanned forms with 100% handwriting presence make it an ideal DOMINANT-class anchor for `handwriting_presence_cls` and `presence_reg`. The 3,600 writer pool provides natural legibility variation suitable for `handwriting_legibility_cls` and `legibility_reg` with model-derived or human annotation scoring. For `handwriting_content_type_cls`, the isolated-character and block-letter content maps cleanly to the PRINTED class. The dataset is public domain with no license restrictions and no benchmark-reserved splits.
+
+The 810K+ character images (via by_class/by_field archives) are character-scope rather than page-scope and may supplement character-level handwriting tasks, but the primary training value for the multi-task pipeline lies in the 3,669 page-level HSF images. The binary 1-bit format limits IQA head utility (contrast, compression heads not applicable), and the fixed 300 DPI / flatbed capture means this dataset does not contribute diversity across resolution range, shadow, or warping dimensions. Orientation and skew labels must be synthetically derived via rotation augmentation and classical estimation respectively.

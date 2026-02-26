@@ -48,7 +48,7 @@ Raw Documents (PDF, image, any condition)
 │                                        │
 │  • Orientation / skew correction       │
 │  • Resolution normalization            │
-│  • Image quality assessment (16 heads) │
+│  • Image quality assessment (19 heads) │
 │  • Script & language detection         │
 │  • Handwriting analysis               │
 │  • Page attribute classification       │
@@ -81,11 +81,33 @@ every other analysis unreliable. Prepare-Doc therefore splits processing into tw
 
 ### Stage 1 — Pre-correction Gate
 
+> **Diagram**: [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml)
+> — detailed activity diagram covering Stage 0 document routing through corrections and output.
+
 **Model**: MobileNetV4-Conv-S | **Latency**: ~3ms GPU, ~12ms CPU
 **Implementation**: `src/image_preprocessing_detector/models/skew_estimator.py`
 **Config**: `config/skew_estimation.yaml`
 **Training script**: `modal/train_skew_estimator.py`
 **Trained checkpoint**: Best model val MAE = 0.837° (epoch 47, run `20260212_155402`)
+
+**Note on Stage 0**: Before Stage 1 runs, a fast Document Type Router classifies the incoming
+document (< 20ms CPU). Six tracks are possible: `native_text`, `born_digital`, `hybrid`,
+`scanned`, `scanned_image`, and `born_digital_degraded`. The last track is a common source of
+confusion:
+
+> **Naming note — `born_digital_degraded`**: This does **not** mean "a physically degraded
+> document". It means "a PDF that PASSES format detection as born-digital but FAILS text-layer
+> quality validation". The validation checks word recognition rate, character entropy, and
+> ToUnicode map integrity. "Degraded" refers to the text layer's OCR-processability, not the
+> document's physical condition. A pristine, freshly-printed PDF with a corrupt ToUnicode map
+> routes here. ~18% of born-digital submissions fall into this track and are redirected into the
+> image pipeline.
+
+`native_text` and validated `born_digital` documents skip Stage 1 entirely via the fast path.
+
+**Note on Step 1b**: After rasterization and before MobileNetV4 inference, pages are converted
+to lossless PNG format. This ensures the model receives a clean, artifact-free input regardless
+of the source compression format.
 
 Runs on the raw, uncorrected image. Three prediction heads:
 
@@ -110,12 +132,17 @@ Physical corrections applied based on Stage 1 predictions:
 
 ### Stage 2 — Full Multi-Task Analysis
 
+> **Diagram**: [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml)
+> — SigLIP 2 inference section, fallback rules, and confidence thresholds.
+> **Schema population**: [schema-field-population/schema-field-population-workflow.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml)
+> — maps each of the 19 heads to `DocumentMetadata` fields.
+
 **Model**: SigLIP 2 NAFlex (88M params) | **Latency**: ~50ms GPU
 **Implementation**: `src/image_preprocessing_detector/detection/siglip2_multitask.py`
 **Training script**: `modal/train_siglip2_multitask.py` (2,652 LOC)
 **Config**: `config/siglip2_multitask.yaml`
 
-Runs on the corrected image. A single forward pass drives all 16 prediction heads across
+Runs on the corrected image. A single forward pass drives all 19 prediction heads across
 5 task groups:
 
 | Group | Head | Type | Classes / Range | Feeds |
@@ -123,27 +150,62 @@ Runs on the corrected image. A single forward pass drives all 16 prediction head
 | **1: IQA** | Blur severity | Regression | 0–1 | DQS |
 | | Noise severity | Regression | 0–1 | DQS |
 | | Contrast severity | Regression | 0–1 | DQS |
-| | Skew severity | Regression | 0–1 | DQS |
+| | Skew severity | Regression | 0–1 (see note ①) | DQS |
 | | Compression artifacts | Regression | 0–1 | DQS |
 | | Overall quality | Regression | 0–1 | DQS, routing |
-| **2: Script** | Script class | Classification | 10 classes (Phase 1) | OCR engine selection |
-| **3: Orientation** | Coarse orientation | Classification | 4 classes | MobileNetV4 validation |
-| | Fine skew | Regression | ±10° | MobileNetV4 validation |
-| **4: Handwriting** | Presence | Classification | none / partial / dominant | Handwriting OCR routing |
-| | Legibility | Classification | unreadable / poor / fair / good / excellent | Escalation |
+| **2: Script** | Script class | Classification | 27 trainable scripts (30 total; Mong/Syrc/Geor OOD-reserved) Phase 1: 10 grouped ML classes | OCR engine selection |
+| **3: Orientation** | Coarse orientation | Classification | 4 classes | See note ② |
+| | Fine skew | Regression | ±10° (see note ①) | See note ② |
+| **4: Handwriting** | Presence | Classification | none / sparse / moderate / substantial / dominant | Handwriting OCR routing |
+| | Legibility | Classification | n/a / illegible / poor / fair / good / excellent | Escalation |
 | | Content type | Classification | printed / cursive / mixed / annotation / diagram_label | Engine selection |
-| | Density | Regression | 0–1 | — |
-| | Script family | Regression | Latin / CJK / Arabic / Devanagari / Cyrillic / etc. | — |
+| | Presence score | Regression | 0–1 (area ratio) | — |
+| | Legibility score | Regression | 0–1 (quality) | — |
 | **5: Page Attrs** | Capture method | Classification | 7 classes (see §4.4) | Artifact type prediction |
 | | Shadow severity | Regression | 0–1 | Correction escalation |
 | | Warping severity | Regression | 0–1 | Correction escalation |
 | | Code content ratio | Regression | 0–1 | Code-aware OCR routing |
-| | Effective resolution | Regression | 0–1 | Resolution validation |
+| | Resolution quality | Regression | 0–1 (see note ③) | Resolution validation |
 
-**Script ML classes** (Phase 1, 10 classes): Configured in `config/script_ml_classes.yaml`.
-Mapping from ISO 15924 codes to ML classes handled by
+> **① Skew head disambiguation** — Two heads measure skew but serve different purposes:
+>
+> - **Group 1 "Skew severity"** is a *quality degradation signal* (0–1, where 1 = severely skewed).
+>   It answers "how bad is the skew problem?" and feeds the DQS degradation score.
+> - **Group 3 "Fine skew"** predicts the *actual rotation angle in degrees* (±10°).
+>   It answers "how many degrees to rotate to fix it?" and feeds the correction step.
+>
+> Both are necessary: Group 1 tells the DQS that a problem exists; Group 3 tells the correction
+> pipeline how to solve it.
+>
+> **② Why SigLIP 2 has redundant orientation, skew, and resolution heads** — Group 3 duplicates
+> MobileNetV4's orientation and skew outputs, and Group 5 duplicates its resolution_quality output.
+> This is deliberate design with four distinct purposes:
+>
+> 1. **Teacher signal**: SigLIP 2 soft labels (Group 3 + Group 5) train MobileNetV4 during
+>    Step 3 of the virtuous training cycle (KL-divergence, T=3). These heads are required for that
+>    pipeline — without them, there is no teacher signal to distill into MobileNetV4.
+> 2. **Validation**: The system compares MobileNetV4 and SigLIP 2 predictions; large divergence
+>    (e.g., orientation mismatch > 1 class, skew divergence > 2°) flags the page for human review.
+> 3. **CPU-only fallback**: When MobileNetV4 is unavailable (CPU-constrained path), SigLIP 2
+>    handles orientation, skew, and resolution in a single pass — no pre-correction stage needed.
+>    This degrades GPU latency from ~53ms to ~50ms but eliminates the pre-correction stage entirely.
+> 4. **Self-consistency**: SigLIP 2 verifies that the correction was applied correctly before
+>    computing IQA and handwriting scores on the (now corrected) image.
+>
+> **③ Resolution quality (Group 5)** is explicitly redundant with MobileNetV4 Head 3 for the
+> same 4 reasons above. It uses the same 0–1 character-height-aware scale.
+
+**`has_non_latin` and `has_rtl` are rule-derived outputs**, not separate ML heads. They are
+computed from `script_class` using the ISO 15924 lookup table in
+`schema_utils/iso_language_script.py`. (`has_non_latin` = script ∉ {Latn, Cyrl}; `has_rtl` =
+script ∈ {Arab, Hebr, Thaa, …}.) They do not consume model capacity.
+
+**Script ML classes**: The full universe is **30 ISO 15924 script codes** — 28 from OpenLID's
+language coverage plus Mongolian (Mong) and Syriac (Syrc). Three are permanently OOD-reserved
+(Mong, Syrc, Geor), leaving **27 trainable scripts**. Phase 1 groups these into **10 ML class
+labels** for initial training. Configured in `config/script_ml_classes.yaml`. Mapping from
+ISO 15924 codes to ML classes handled by
 `src/image_preprocessing_detector/schema_utils/script_ml_mapping.py`.
-Reserved OOD scripts (never trained): Mongolian (Mong), Syriac (Syrc), Georgian (Geor).
 
 **Running in parallel** with Stage 2, eight classical IQA detectors in
 `src/image_preprocessing_detector/detection/iqa_classical.py` provide interpretable,
@@ -160,7 +222,19 @@ sub-25ms outputs as baseline anchors:
 | Bleed-through | Cross-channel correlation |
 | Skew | Hough line transform |
 
+**Classical handwriting fallback**: `iqa_classical.py` also contains a stroke-analysis-based
+handwriting detector (stroke width variance on connected components + run-length encoding on
+binarized image). This detector activates when **any** SigLIP 2 Group 4 head returns confidence
+below 0.5. It outputs `has_handwriting` (bool) and `handwriting_confidence` (0–1). Its output
+overrides the low-confidence Group 4 predictions for downstream routing decisions.
+
 ### Complete Pipeline Flow
+
+> **Diagrams**:
+>
+> - [production-runtime/prepare-doc-primary-workflow-high-level.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-high-level.puml) — condensed overview
+> - [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml) — full activity diagram with routing branches
+> - [level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml](architecture/diagrams/level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml) — workstream context
 
 ```text
 PDF/Image Input
@@ -174,7 +248,14 @@ PDF/Image Input
 [document_processor.py] — Standardize to 300 DPI images
         │
         ▼
-[pdf_type_classifier.py] — image_only / born_digital / hybrid
+[pdf_type_classifier.py] ── STAGE 0: Document Type Router
+    ├── native_text / born_digital ──▶ Fast path to Unify (skip preprocessing)
+    ├── born_digital_degraded ────────▶ Image pipeline (corrupt text layer)
+    ├── scanned / scanned_image ──────▶ Image pipeline
+    └── hybrid ───────────────────────▶ Image pipeline (per-page routing)
+        │
+        ▼ (image pipeline only)
+[Step 1b: lossless PNG conversion]
         │
         ▼
 [skew_estimator.py / MobileNetV4] ── STAGE 1
@@ -191,7 +272,7 @@ PDF/Image Input
 │                                                    │
 │  [siglip2_multitask.py]   [iqa_classical.py]      │
 │   ~50ms GPU                ~25ms CPU               │
-│   16 heads / 5 groups      8 detectors             │
+│   19 heads / 5 groups      8 detectors             │
 │                                                    │
 │  [doclayout_yolo.py]      [layout_lite/]           │
 │   Layout detection         Coarse page attrs       │
@@ -223,7 +304,7 @@ All modules live under `src/image_preprocessing_detector/`. Key canonical files:
 | `text_gate.py` | Fast text presence gate < 10ms (stroke density + CC + edge density) |
 | `iqa_classical.py` | 8 classical IQA detectors, all < 25ms combined |
 | `iqa_ml.py` | ResNet-50 teacher / ResNet-18 student IQA (Phase 3, stable) |
-| `siglip2_multitask.py` | SigLIP 2 multi-task inference (16 heads, 5 groups) |
+| `siglip2_multitask.py` | SigLIP 2 multi-task inference (19 heads, 5 groups) |
 | `orientation_detector.py` | 4-class orientation detection |
 | `script_detector.py` | ISO 15924 script classification heuristics |
 | `handwriting_detector.py` | Handwriting presence detection (stroke analysis) |
@@ -321,6 +402,11 @@ All modules live under `src/image_preprocessing_detector/`. Key canonical files:
 ### 4.1 Output Schema — `DocumentMetadata`
 
 **Canonical file**: `src/image_preprocessing_detector/schema.py`
+
+> **Diagram**: [schema-field-population/schema-field-population-workflow.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml)
+> — traces how each of the 16 SigLIP heads, 8 classical detectors, Stage 0 router, and
+> MobileNetV4 heads populate individual fields in `DocumentMetadata.json`.
+> Summary view: [schema-field-population/schema-field-population-summary.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-summary.puml)
 
 All output is serialized to `DocumentMetadata.json`. Key Pydantic v2 models:
 
@@ -442,6 +528,9 @@ singleton + `lru_cache` for performance.
 
 ### Image Quality Assessment
 
+> **Diagram**: [monitoring-drift/monitoring-drift-architecture.puml](architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.puml)
+> — per-head prediction distribution monitoring, PLCC-drop alerting, and active learning harvest.
+
 Six IQA regression heads produce 0–1 scores for blur, noise, contrast, skew severity,
 compression artifacts, and an overall quality composite. Combined with the eight classical
 detectors in `iqa_classical.py`, these feed the Document Quality Score (`metrics/dqs_calculator.py`):
@@ -456,13 +545,41 @@ DQS drives the four-strategy routing decision: `ocr_fast` (DQS > 0.8), `ocr_adva
 
 ### Script and Language Detection
 
-The 10-class script classifier (Phase 1) identifies the primary writing system. This
-determination drives OCR engine selection in Unify. The architecture expands to 108
-OpenLID-aligned classes in Phase 2 without backbone retraining.
+The Phase 1 script classifier uses 10 grouped ML classes to identify the primary writing system.
+This drives OCR engine selection in Unify. The full scope is **30 ISO 15924 script codes** (28
+from OpenLID's language coverage + Mongolian + Syriac), of which **27 are trainable** (Mongolian,
+Syriac, and Georgian are permanently OOD-reserved). Phase 2 expands from 10 grouped ML classes
+to all 27 trainable scripts without backbone retraining.
 
 Script taxonomy documentation: `docs/planning/SCRIPT_TAXONOMY.md`
 Script ML class config: `config/script_ml_classes.yaml`
 ISO 15924 reference: `schema_utils/iso_language_script.py`
+
+#### SigLIP 2 Script Outputs → Docling Parameters
+
+The following table maps SigLIP 2 outputs to downstream Docling OCR parameters. This is the
+mechanism by which Prepare-Doc metadata drives routing decisions in Unify.
+
+| SigLIP 2 Output | Docling Parameter Affected | Notes |
+| --------------- | -------------------------- | ----- |
+| `script_code = "Hans"` or `"Hant"` | `ocr_engine: "paddleocr"`, `ocr_lang: "ch"` | PaddleOCR excels at CJK |
+| `script_code = "Arab"` | `ocr_engine: "paddleocr"`, `ocr_lang: "ara"` | Arabic-optimized OCR |
+| `script_code = "Deva"` | `ocr_engine: "paddleocr"`, `ocr_lang: "hi"` | Hindi/Nepali |
+| `script_code = "Jpan"` | `ocr_engine: "paddleocr"`, `ocr_lang: "japan"` | Japanese OCR |
+| `script_code = "Tibt"` | `pipeline: "vlm"` | No production Tibetan OCR engine; VLM is the only viable path |
+| `has_non_latin = true` | `page_batch_size: reduced` | CJK/Arabic models require more GPU memory |
+| `has_rtl = true` | Layout engine RTL mode | Arabic/Hebrew reading-order correction |
+| `handwriting.presence >= MODERATE` | `ocr_routing: "ocr_advanced"` or `"vision_simple"` | Handwriting requires dedicated handling |
+| `handwriting.legibility <= FAIR` | `pipeline: "vlm"` | Poor legibility; VLM generalizes better than OCR engines |
+| `shadow_score > 0.3` | Trigger DocRes shadow removal pre-pass | Severe shadow degrades all OCR engines equally |
+| `warping_score > 0.3` | Trigger DocRes dewarping pre-pass | Geometric correction before OCR |
+| `code_confidence > 0.5` | `enrich_code: true` | Enable code syntax detection in Docling |
+| `orientation != 0` (Group 3) | Auto-rotate before OCR handoff | SigLIP self-consistency check; correction already applied in Stage 1 |
+| `capture_method = CAMERA_*` | Adjust correction thresholds | Expect perspective warp + shadow gradient artifacts |
+| `IQA overall_quality < 0.5` | `ocr_routing: "vision_structured"` | Low overall quality; structured vision model handles degradation better |
+
+Configuration for the script → engine mapping lives in `config/script_routing.yaml` and is
+applied by `routing/script_router.py`.
 
 ### Warping Detection
 
@@ -474,6 +591,14 @@ does not require a trained model; only severity does.
 ---
 
 ## 7. Training Infrastructure
+
+> **Diagrams**:
+>
+> - [model-training/prepare-doc-training-workflow-high-level.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml) — end-to-end training workflow (data → train → arena → deploy)
+> - [model-training/prepare-doc-distillation.puml](architecture/diagrams/level-2/model-training/prepare-doc-distillation.puml) — SigLIP 2 → MobileCLIP-2 distillation cascade
+> - [model-training/prepare-doc-training-infrastructure.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-infrastructure.puml) — Modal GPU infrastructure and cost controls
+> - [data-preparation/stream-4c-dataset-preparation.puml](architecture/diagrams/level-2/data-preparation/stream-4c-dataset-preparation.puml) — Stream 4C dataset assembly pipeline
+> - [level-3/model-training/model-training-swimlane.puml](architecture/diagrams/level-3/model-training/model-training-swimlane.puml) — module-level swimlane with LOC annotations
 
 ### Modal Training Scripts (`modal/`)
 
@@ -531,7 +656,7 @@ Phase 3 — Manifest assembly (not yet implemented):
 | Script | Purpose |
 | ------ | ------- |
 | `prepare_multitask_datasets.py` | 6 Click sub-commands: script / source / orientation / shadow / warping / merge |
-| `generate_multitask_labels.py` | Merge all 5 task manifests into unified training manifest |
+| `generate_multitask_labels.py` | **Phase A (SigLIP 2 training)**: merge all 5 task manifests into unified training manifest. **Phase B (student distillation)**: run trained SigLIP 2 inference to generate soft pseudo-labels for MobileCLIP-2 student training — see §9 Distillation |
 
 Schema and taxonomy scripts:
 
@@ -622,6 +747,11 @@ not DPI (a proxy that fails for miniaturized or large-print documents).
 
 ### Device Priority and Budget Control
 
+> **Diagrams**:
+>
+> - [production-runtime/prepare-doc-device-selection-flow.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-device-selection-flow.puml) — device priority decision tree and fallback chain
+> - [production-runtime/prepare-doc-worker-architecture.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-worker-architecture.puml) — Celery worker pool with GPU/batch/default queues
+
 **Config**: `config/agent_orchestration.yaml`
 **Implementation**: `utils/device_orchestration.py`, `utils/budget_enforcement.py`
 
@@ -631,6 +761,11 @@ is fully testable via a mock device interface.
 
 ### Monitoring and Drift Detection
 
+> **Diagram**: [monitoring-drift/monitoring-drift-architecture.puml](architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.puml)
+> — full monitoring architecture: per-head drift detection, PLCC alerting thresholds, active
+> learning harvest pipeline, and retraining trigger logic.
+> Level 3 detail: [level-3/monitoring-drift/monitoring-drift-swimlane.puml](architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.puml)
+
 **Implementation**: `drift/` subdirectory — `active_learning.py`, `alerting.py`, `retraining.py`
 **Metrics**: Prometheus per-head prediction distribution; Grafana dashboards
 
@@ -639,16 +774,21 @@ and high-entropy samples are harvested for active learning review.
 
 ### Teacher-Student Distillation Path
 
-SigLIP 2 (88M params, ~50ms GPU) is the teacher. The planned production distillation cascade:
+> **Diagram**: [model-training/prepare-doc-distillation.puml](architecture/diagrams/level-2/model-training/prepare-doc-distillation.puml)
+> — distillation cascade stages, dataset requirements, and graduation criteria.
+
+SigLIP 2 (88M params, ~50ms GPU) is the teacher. The planned production distillation cascade
+(**PLANNED — deferred; SigLIP 2 ships to production first before any distillation begins**):
 
 ```text
-SigLIP 2 NAFlex (88M, ~50ms GPU) — Teacher
+SigLIP 2 NAFlex (88M, ~50ms GPU) — Teacher  [ships first]
         │  soft labels
         ▼
-MobileCLIP-2 S4 (~12ms GPU) — Student tier 1
+MobileCLIP-2 S4 (~12ms GPU) — Student tier 1  [PLANNED, deferred]
         │  soft labels
         ▼
-MobileCLIP-2 S0 (~5ms GPU) — Student tier 2 (production edge target)
+MobileCLIP-2 S0 (~5ms GPU) — Student tier 2  [PLANNED, deferred]
+  (production edge target)
 ```
 
 Each student stage is trained on soft labels from the stage above, preserving multi-task
@@ -662,7 +802,7 @@ The architecture uses a 4-level hierarchy with automated link validation:
 
 | Level | Description | Location |
 | ----- | ----------- | -------- |
-| 0 | Multi-project RAG pipeline (Projects A–D context) | `docs/architecture/diagrams/level-0/` |
+| 0 | Multi-project RAG pipeline (six-service context) | `docs/architecture/diagrams/level-0/` |
 | 1 | Prepare-Doc architecture and 8-workstream overview | `docs/architecture/diagrams/level-1/` |
 | 2 | Workstream details ("Level 2.5" standard with code examples) | `docs/architecture/diagrams/level-2/` |
 | 3 | Module implementation swimlanes with LOC annotations | `docs/architecture/diagrams/level-3/` |
@@ -672,19 +812,112 @@ The architecture uses a 4-level hierarchy with automated link validation:
 **LOC extraction**: `scripts/extract_workstream_loc.sh`
 **Link validation**: `scripts/validate_architecture_links.sh`
 
-Key Level 2 diagrams by topic:
+### Level 0 — RAG Pipeline Context
 
-| Topic | File |
-| ----- | ---- |
-| Data preparation pipeline | `diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.puml` |
-| Training workflow | `diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml` |
-| Distillation cascade | `diagrams/level-2/model-training/prepare-doc-distillation.puml` |
-| Production runtime (detailed) | `diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml` |
-| Schema field population | `diagrams/level-2/schema-field-population/schema-field-population-workflow.puml` |
-| Resolution quality labeling | `diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.puml` |
-| Skew/orientation labeling | `diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.puml` |
-| Stream 4C dataset preparation | `diagrams/level-2/data-preparation/stream-4c-dataset-preparation.puml` |
-| L2 metadata enrichment | `diagrams/level-2/data-preparation/l2-metadata-enrichment.puml` |
+| Diagram | Description |
+| ------- | ----------- |
+| [rag-pipeline-overview.puml](architecture/diagrams/level-0/rag-pipeline-overview.puml) | Six-service pipeline: Ingest → Prepare-Doc → Prepare-Audio → Unify → Chunk → Embed |
+
+### Level 1 — Prepare-Doc System Overview
+
+| Diagram | Description |
+| ------- | ----------- |
+| [PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml](architecture/diagrams/level-1/PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml) | All 8 workstreams, primary production flow, supporting feedback loops |
+| [PREPARE_DOC_WORKFLOW_HIERARCHY.puml](architecture/diagrams/level-1/PREPARE_DOC_WORKFLOW_HIERARCHY.puml) | Workstream dependency hierarchy and execution order |
+
+### Level 2 — Workstream Detail (WS 1: Production Runtime)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [production-runtime/prepare-doc-primary-workflow-high-level.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-high-level.puml) | Condensed end-to-end pipeline overview |
+| [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml) | Full activity diagram: Stage 0 router, Stage 1, Stage 2, corrections, DQS, output |
+| [production-runtime/prepare-doc-device-selection-flow.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-device-selection-flow.puml) | Device priority decision tree: Local GPU → Modal → CPU fallback + budget gates |
+| [production-runtime/prepare-doc-worker-architecture.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-worker-architecture.puml) | Celery worker pool: default / gpu / batch queues with routing logic |
+| [production-runtime/prepare-doc-primary-workflow-test-coverage.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-test-coverage.puml) | Test coverage overlay on primary workflow |
+| [production-runtime/prepare-doc-primary-workflow-detailed-test-coverage.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed-test-coverage.puml) | Test coverage overlay on detailed workflow |
+
+### Level 2 — Workstream Detail (WS 2: Model Training)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [model-training/prepare-doc-training-workflow-high-level.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-high-level.puml) | End-to-end training: dataset assembly → Modal train → arena → registry → deploy |
+| [model-training/prepare-doc-training-infrastructure.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-infrastructure.puml) | Modal GPU infrastructure, GCS integration, cost controls |
+| [model-training/prepare-doc-distillation.puml](architecture/diagrams/level-2/model-training/prepare-doc-distillation.puml) | SigLIP 2 → MobileCLIP-2 S4 → S0 distillation cascade (PLANNED, deferred) |
+| [model-training/prepare-doc-training-workflow-v2.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-v2.puml) | Updated training workflow with multi-task head expansion |
+| [model-training/prepare-doc-training-workflow-test-coverage.puml](architecture/diagrams/level-2/model-training/prepare-doc-training-workflow-test-coverage.puml) | Test coverage overlay on training workflow |
+
+### Level 2 — Workstream Detail (WS 3: Data Preparation)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [data-preparation/prepare-doc-training-data-ingestion.puml](architecture/diagrams/level-2/data-preparation/prepare-doc-training-data-ingestion.puml) | Dataset ingestion and cataloging pipeline |
+| [data-preparation/stream-4c-dataset-preparation.puml](architecture/diagrams/level-2/data-preparation/stream-4c-dataset-preparation.puml) | Stream 4C: 5-task manifest assembly for SigLIP 2 training |
+| [data-preparation/resolution-quality-labeling-pipeline.puml](architecture/diagrams/level-2/data-preparation/resolution-quality-labeling-pipeline.puml) | PaddleOCR + KDE mode character-height labeling pipeline |
+| [data-preparation/skew-orientation-labeling-pipeline.puml](architecture/diagrams/level-2/data-preparation/skew-orientation-labeling-pipeline.puml) | Skew and orientation label generation from classical + synthetic |
+| [data-preparation/automated-data-labeling-pipeline.puml](architecture/diagrams/level-2/data-preparation/automated-data-labeling-pipeline.puml) | Automated labeling orchestration across all task heads |
+| [data-preparation/l2-metadata-enrichment.puml](architecture/diagrams/level-2/data-preparation/l2-metadata-enrichment.puml) | Layer 2 metadata enrichment: 45-dim degradation vector + diversity fields |
+| [data-preparation/metadata-schema-architecture.puml](architecture/diagrams/level-2/data-preparation/metadata-schema-architecture.puml) | Complete L2 metadata schema structure and field taxonomy |
+
+### Level 2 — Workstream Detail (WS 4: Pseudo-Labeling)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [pseudo-labeling/diqa-training-phases.puml](architecture/diagrams/level-2/pseudo-labeling/diqa-training-phases.puml) | DIQA model training phases for pseudo-label generation |
+| [pseudo-labeling/diqa-inference-pipeline.puml](architecture/diagrams/level-2/pseudo-labeling/diqa-inference-pipeline.puml) | DIQA inference pipeline for unlabeled dataset scoring |
+| [pseudo-labeling/diqa-checkpoint-selection.puml](architecture/diagrams/level-2/pseudo-labeling/diqa-checkpoint-selection.puml) | Checkpoint selection criteria and validation strategy |
+| [pseudo-labeling/diqa-pseudo-labeling-workflow.puml](architecture/diagrams/level-2/pseudo-labeling/diqa-pseudo-labeling-workflow.puml) | End-to-end pseudo-label workflow: inference → ensemble → threshold |
+| [pseudo-labeling/soft-label-pipeline-integration.puml](architecture/diagrams/level-2/pseudo-labeling/soft-label-pipeline-integration.puml) | Soft label integration into SigLIP 2 training manifests |
+
+### Level 2 — Workstream Detail (WS 5: Labeling & Benchmarking Models)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [labeling-benchmarking/domain-classification-pipeline.puml](architecture/diagrams/level-2/labeling-benchmarking/domain-classification-pipeline.puml) | Domain classification labeling pipeline (TAX / FIN / SCI / EDU etc.) |
+
+### Level 2 — Workstream Detail (WS 6: Model Arena)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [model-arena/model-arena-architecture.puml](architecture/diagrams/level-2/model-arena/model-arena-architecture.puml) | Three-phase arena: base eval → cross-validation → drift check; PLCC > 0.65 gate |
+
+### Level 2 — Workstream Detail (WS 7: Monitoring & Drift)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [monitoring-drift/monitoring-drift-architecture.puml](architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.puml) | Per-head distribution monitoring, PLCC alerting, active learning harvest, retraining triggers |
+
+### Level 2 — Workstream Detail (WS 8: Synthetic Generation)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [synthetic-generation/synthetic-generation-architecture.puml](architecture/diagrams/level-2/synthetic-generation/synthetic-generation-architecture.puml) | Synth-multiscript-v3 generator: 19 script classes, 7 DPI tiers, hybrid augmentation |
+
+### Level 2 — Schema Field Population
+
+| Diagram | Description |
+| ------- | ----------- |
+| [schema-field-population/schema-field-population-workflow.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml) | How each detector/head populates `DocumentMetadata` fields |
+| [schema-field-population/schema-field-population-summary.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-summary.puml) | Summary matrix: source → field mapping |
+
+### Level 2 — Downstream Context (Informational)
+
+| Diagram | Description |
+| ------- | ----------- |
+| [downstream-context/unify-ocr-layout-workflow.puml](architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify (OCR orchestration): how it consumes `DocumentMetadata.json` |
+| [downstream-context/chunk-fusion-chunking-workflow.puml](architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml) | Chunk service: multi-engine fusion and RAG chunking |
+| [downstream-context/embed-vectorstore-workflow.puml](architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml) | Embed service: vector indexing pipeline |
+| [downstream-context/prepare-audio-transcription-workflow.puml](architecture/diagrams/level-2/downstream-context/prepare-audio-transcription-workflow.puml) | Prepare-Audio: FFmpeg + Deepgram, diarization, TranscriptMetadata |
+
+### Level 3 — Module Implementation Swimlanes
+
+| Diagram | Description |
+| ------- | ----------- |
+| [level-3/production-runtime/production-runtime-swimlane.puml](architecture/diagrams/level-3/production-runtime/production-runtime-swimlane.puml) | WS1 module swimlane with LOC annotations |
+| [level-3/model-training/model-training-swimlane.puml](architecture/diagrams/level-3/model-training/model-training-swimlane.puml) | WS2 module swimlane with LOC annotations |
+| [level-3/data-preparation/data-preparation-swimlane.puml](architecture/diagrams/level-3/data-preparation/data-preparation-swimlane.puml) | WS3 module swimlane with LOC annotations |
+| [level-3/pseudo-labeling/pseudo-labeling-swimlane.puml](architecture/diagrams/level-3/pseudo-labeling/pseudo-labeling-swimlane.puml) | WS4 module swimlane with LOC annotations |
+| [level-3/synthetic-generation/synthetic-generation-swimlane.puml](architecture/diagrams/level-3/synthetic-generation/synthetic-generation-swimlane.puml) | WS8 module swimlane with LOC annotations |
+| [level-3/monitoring-drift/monitoring-drift-swimlane.puml](architecture/diagrams/level-3/monitoring-drift/monitoring-drift-swimlane.puml) | WS7 module swimlane with LOC annotations |
 
 PlantUML diagrams are generated with:
 
@@ -699,7 +932,7 @@ java -jar ~/.vscode-server/extensions/jebbs.plantuml-2.18.1/plantuml.jar -tsvg <
 | Component | Technology | File | Design Rationale |
 | --------- | ---------- | ---- | ---------------- |
 | Pre-correction gate | MobileNetV4-Conv-S | `models/skew_estimator.py` | ~3ms GPU; orientation/resolution before SigLIP |
-| Multi-task teacher | SigLIP 2 NAFlex (88M) | `detection/siglip2_multitask.py` | Vision-language pretraining; 16 heads one pass |
+| Multi-task teacher | SigLIP 2 NAFlex (88M) | `detection/siglip2_multitask.py` | Vision-language pretraining; 19 heads one pass |
 | IQA legacy models | ResNet-50/18 teacher-student | `detection/iqa_ml.py` | Stable Phase 3 models; superseded by SigLIP for new tasks |
 | Layout detection | docling-layout (egret-large / heron) | `detection/doclayout_yolo.py` (transitional) | Validated over YOLOv10-doc in Stream 3 |
 | Classical IQA | OpenCV (8 detectors) | `detection/iqa_classical.py` | Sub-25ms combined; interpretable; stream-3-validated baseline |

@@ -10,8 +10,9 @@ Each output record has::
     {
         "image_path": str,           # relative to --base-data-root
         "source_dataset": str,       # canonical dataset name
-        "handwriting_presence": bool, # True = page contains handwriting
-        "handwriting_score": float,   # 0.0–1.0 confidence / ratio
+        "handwriting_presence": bool, # True = page contains handwriting (classification heads G4-1..G4-3)
+        "presence_score": float,      # 0.0–1.0 area ratio (G4-4 presence_reg); -1.0 = N_A sentinel (masked loss)
+        "legibility_score": float,    # 0.0–1.0 quality score (G4-5 legibility_reg); -1.0 = N_A sentinel (masked loss)
         "split": str,                 # "train", "val", or "test"
         "label_method": str,          # how the label was derived
     }
@@ -20,18 +21,20 @@ Labeling strategies per dataset
 ---------------------------------
 ``all_handwritten``   (IAM, Muharaf, PUCIT-OHUL, Nepali):
     All images in the dataset contain handwriting.
-    ``handwriting_presence=True``, ``handwriting_score=1.0``.
+    ``handwriting_presence=True``, ``presence_score=1.0``, ``legibility_score=-1.0`` (N_A; VLM pipeline pending).
     Label method: ``"dataset_class"``.
 
 ``model_derived``     (HierText, COCO-Text, FUNSD, NIST-SD2/SD6):
     Use the ``has_handwriting`` flag from the L2 DocLayout-YOLO inference stored
     in ``enrichments.versions[-1].data.has_handwriting``.
-    Score set to 0.8 (True) or 0.0 (False) reflecting model uncertainty.
+    ``presence_score`` set to 0.8 (True) or -1.0 (False, N_A sentinel) reflecting model uncertainty.
+    ``legibility_score`` always -1.0 (N_A sentinel; VLM pipeline pending).
     Label method: ``"l2_model_doclayout"``.
 
 ``all_printed``       (DocLayNet, PubTabNet negatives):
     All images are born-digital with no handwriting.
-    ``handwriting_presence=False``, ``handwriting_score=0.0``.
+    ``handwriting_presence=False``, ``presence_score=-1.0`` (N_A sentinel), ``legibility_score=-1.0`` (N_A sentinel).
+    Both regression heads are masked (task_mask=0) for these samples.
     Label method: ``"dataset_class"``.
 
 Target distribution
@@ -283,7 +286,8 @@ def _build_all_handwritten_records(
                 "image_path": str(Path(config.base_subdir) / original_path),
                 "source_dataset": config.name,
                 "handwriting_presence": True,
-                "handwriting_score": 1.0,
+                "presence_score": 1.0,  # full page handwriting (area ratio proxy)
+                "legibility_score": -1.0,  # N_A sentinel — VLM labeling pipeline pending
                 "split": _normalize_split(raw_split),
                 "label_method": "dataset_class",
             }
@@ -331,15 +335,17 @@ def _build_model_derived_records(
 
         data = _get_latest_data(sample)
         has_hw = bool(data.get("has_handwriting", False))
-        # Model confidence: 0.8 for positive detections (avoid overconfidence on
-        # DocLayout-YOLO which has moderate precision for handwriting class)
-        score = 0.8 if has_hw else 0.0
+        # presence_score: 0.8 for positive detections (moderate DocLayout-YOLO precision);
+        # -1.0 (N_A sentinel) for negatives — regression head masked, classification head
+        # still trains on handwriting_presence=False.
+        presence_score = 0.8 if has_hw else -1.0
         records.append(
             {
                 "image_path": str(Path(config.base_subdir) / original_path),
                 "source_dataset": config.name,
                 "handwriting_presence": has_hw,
-                "handwriting_score": score,
+                "presence_score": presence_score,
+                "legibility_score": -1.0,  # N_A sentinel — VLM labeling pipeline pending
                 "split": _normalize_split(raw_split),
                 "label_method": "l2_model_doclayout",
             }
@@ -391,7 +397,8 @@ def _build_all_printed_records(
                 "image_path": str(Path(config.base_subdir) / original_path),
                 "source_dataset": config.name,
                 "handwriting_presence": False,
-                "handwriting_score": 0.0,
+                "presence_score": -1.0,  # N_A sentinel — no handwriting, regression head masked
+                "legibility_score": -1.0,  # N_A sentinel — no handwriting, regression head masked
                 "split": _normalize_split(raw_split),
                 "label_method": "dataset_class",
             }
@@ -464,7 +471,8 @@ def _build_iam_records_from_filesystem(
                 "image_path": str(rel_path),
                 "source_dataset": "iam",
                 "handwriting_presence": True,
-                "handwriting_score": 1.0,
+                "presence_score": 1.0,  # full page handwriting (area ratio proxy)
+                "legibility_score": -1.0,  # N_A sentinel — VLM labeling pipeline pending
                 "split": split,
                 "label_method": "dataset_class",
             }

@@ -1,5 +1,5 @@
-@startuml
-title Prepare-Doc – Primary Document Processing Workflow (Detailed with Test Coverage)
+@startuml prepare-doc-primary-workflow-detailed-test-coverage
+title Prepare-Doc - Primary Document Processing Workflow (Detailed with Test Coverage)
 
 skinparam dpi 120
 skinparam shadowing false
@@ -15,7 +15,7 @@ skinparam note {
 
 start
 
-== INPUT STAGE ==
+' === INPUT STAGE ===
 
 :Receive raw document\n(PDF / PNG / JPEG / TIFF);
 note right #LightGreen
@@ -23,7 +23,7 @@ note right #LightGreen
   **FR:** FR-1.1, FR-1.2
 end note
 
-== PRE-FLIGHT ANALYSIS ==
+' === PRE-FLIGHT ANALYSIS ===
 
 partition "DPI Detection" {
   :Extract embedded DPI\n(PyMuPDF for PDFs);
@@ -56,7 +56,7 @@ note right #LightGreen
   **FR:** FR-3.6, FR-6.5
 end note
 
-== INGESTION ==
+' === INGESTION ===
 
 partition "PDF Processing" {
   :Open PDF with PyMuPDF;
@@ -88,7 +88,7 @@ note right #LightGreen
   **FR:** FR-1.2
 end note
 
-== PDF TYPE CLASSIFICATION ==
+' === PDF TYPE CLASSIFICATION ===
 
 partition "PDF Classifier" {
   :Analyze text layer presence;
@@ -110,7 +110,7 @@ note right #LightGreen
   **FR:** FR-2.1
 end note
 
-== TEXT GATE ==
+' === TEXT GATE ===
 
 partition "Fast Text Detection" {
   :Compute stroke density;
@@ -134,7 +134,7 @@ note right #LightGreen
   **FR:** FR-2.4
 end note
 
-== IQA DETECTION ==
+' === IQA DETECTION ===
 
 fork
 
@@ -185,12 +185,21 @@ partition "ML IQA (Student Model)" {
     :Flag for Teacher inference;
   endif
 }
-note right #Orange
-  **Tests:**
-  • test_iqa_ml.py (15 tests)
-  • test_iqa_ml_integration.py
+note right #FFCCCC
+  **LEGACY (Phase 3): ResNet-18/50 architecture**
+  **superseded by MobileNetV4 + SigLIP 2**
+  **two-model pipeline.**
+  Current architecture:
+  - MobileNetV4-Conv-S (~3ms, pre-correction)
+  - SigLIP 2 NAFlex (~50ms, 19 heads)
+  These test references remain for historical
+  Phase 3 test coverage documentation only.
+
+  **Tests (Phase 3 legacy):**
+  - test_iqa_ml.py (15 tests)
+  - test_iqa_ml_integration.py
   **FR:** FR-2.3
-  **Status:** Partial - models not deployed
+  **Status:** Partial - models superseded
 end note
 
 end fork
@@ -202,15 +211,18 @@ partition "Teacher Inference (Selective)" {
     :Override Student predictions;
   endif
 }
-note right #Orange
-  **Tests:**
-  • test_resnet_teacher.py (SKIPPED)
-  • test_loss_functions.py (SKIPPED)
+note right #FFCCCC
+  **LEGACY (Phase 3): ResNet-50 Teacher**
+  **superseded by SigLIP 2 NAFlex (19 heads).**
+
+  **Tests (Phase 3 legacy):**
+  - test_resnet_teacher.py (SKIPPED)
+  - test_loss_functions.py (SKIPPED)
   **FR:** FR-2.3
   **Status:** SKIPPED - PyTorch required
 end note
 
-== LAYOUT-LITE DETECTION ==
+' === LAYOUT-LITE DETECTION ===
 
 partition "Coarse Layout Analysis" #LightBlue {
   :Detect tables presence;
@@ -227,7 +239,7 @@ note right #Red
   **Status:** NOT IMPLEMENTED (Phase 6)
 end note
 
-== CORRECTION ==
+' === CORRECTION ===
 
 partition "Image Corrections" {
   if (skew detected?) then (yes)
@@ -267,7 +279,7 @@ note right #LightGreen
   **FR:** FR-6.1-FR-6.5, FR-3.8
 end note
 
-== QUALITY SCORING ==
+' === QUALITY SCORING ===
 
 partition "DQS Calculation" {
   :Normalize classical IQA scores;
@@ -298,7 +310,7 @@ note right #LightGreen
   **FR:** FR-7.1
 end note
 
-== ROUTING RECOMMENDATION ==
+' === ROUTING RECOMMENDATION ===
 
 partition "OCR Strategy Selection" {
   if (dqs > 0.8 AND simple?) then (fast)
@@ -318,7 +330,7 @@ note right #LightGreen
   **FR:** FR-7.2
 end note
 
-== OUTPUT ==
+' === OUTPUT ===
 
 partition "JSON Generation" {
   :Create DocumentMetadata;
@@ -347,6 +359,33 @@ end note
 
 :Handoff to Unify;
 
+note right
+  **Source:**
+  - src/.../ingestion/pdf_loader.py
+  - src/.../ingestion/pdf_resolution.py
+  - src/.../ingestion/pdf_upscaler.py
+  - src/.../ingestion/pdf_analyzer.py
+  - src/.../ingestion/image_loader.py
+  - src/.../classification/pdf_type_classifier.py
+  - src/.../detection/text_gate.py
+  - src/.../detection/iqa_classical.py
+  - src/.../detection/iqa_ml.py
+  - src/.../detection/siglip2_multitask.py
+  - src/.../correction/corrections.py
+  - src/.../metrics/dqs_calculator.py
+  - src/.../routing/recommendation_engine.py
+  - src/.../output/json_generator.py
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/production-runtime/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0008-multi-stage-pipeline-architecture.md]]
+  [[docs/ADRs/0028-resnet-teacher-student-architecture.md]]
+  [[docs/ADRs/0036-device-priority-enforcement.md]]
+  [[docs/ADRs/0035-modal-gpu-integration.md]]
+end note
+
 stop
 
 legend right
@@ -355,6 +394,13 @@ legend right
   | <#Orange> | Partially tested |
   | <#Red> | Not implemented |
   | <#LightBlue> | Future phase |
+  | <#FFCCCC> | LEGACY - superseded content |
 end legend
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

@@ -299,7 +299,7 @@ def distillation_loss(student_logits, teacher_logits, ground_truth, alpha=0.7, t
 
 **Note**: Consumes trained models from Workstream 2:
 - MobileNetV4-Conv-S (~3ms): Pre-correction (orientation, skew, resolution quality)
-- SigLIP 2 NAFlex (~50ms): Full multi-task analysis (16 heads, 5 groups)
+- SigLIP 2 NAFlex (~50ms): Full multi-task analysis (19 heads, 5 groups)
 
 ### Downstream Consumers
 

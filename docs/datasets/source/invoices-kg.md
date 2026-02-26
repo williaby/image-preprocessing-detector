@@ -247,3 +247,57 @@ Each manifest contains an array of annotation objects:
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+---
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ✅ Primary | 1,414 | All upright (0°) assumed; born-digital invoices are uniformly oriented | Adds born-digital invoice examples to orientation corpus |
+| MNV4-H2 | skew_reg | ❌ Not applicable | 0 | Born-digital; zero physical skew | Digitally rendered invoices have no geometric distortion |
+| MNV4-H3 | resolution_quality_reg | 🟡 Secondary | 1,414 | Derivable via resolution quality pipeline | Born-digital at consistent resolution; contributes to high-quality end of scale |
+| SIG-G1-1 | blur_score | ➖ Negatives | 1,414 | Clean/unblurred; useful negative examples | Born-digital documents have no blur; reliable low-blur reference samples |
+| SIG-G1-2 | noise_score | ➖ Negatives | 1,414 | No noise; useful negative examples | Born-digital with no sensor or compression noise artifacts |
+| SIG-G1-3 | contrast_score | 🟡 Secondary | 1,414 | IQA derivable | High-contrast printed text; contributes to high-contrast end of scale |
+| SIG-G1-4 | skew_score | ❌ Not applicable | 0 | No skew in born-digital documents | Skew score is not meaningful for digitally rendered content |
+| SIG-G1-5 | compression_score | 🟡 Secondary | 1,414 | IQA derivable | JPEG save from born-digital source; minor compression artifacts possible |
+| SIG-G1-6 | overall_quality | 🟡 Secondary | 1,414 | IQA derivable (text_quality bottleneck = 0.000 confidence) | High-quality examples at top of scale; text_quality label absent limits utility |
+| SIG-G2-1 | script_cls | ✅ Primary | 1,414 | Latn (100% from L2 metadata) | All English invoices; clean Latin signal |
+| SIG-G3-1 | orientation_cls (post) | ✅ Primary | 1,414 | All 0° (born-digital, inherently upright) | Reliable post-correction orientation ground truth |
+| SIG-G3-2 | skew_reg (post) | ❌ Not applicable | 0 | No skew; born-digital | No meaningful skew residual after correction |
+| SIG-G4-1 | handwriting_presence_cls | ➖ Negatives | 1,414 | False (100%); born-digital invoices have no handwriting | Strong negative examples for handwriting detection |
+| SIG-G4-2 | handwriting_legibility_cls | ➖ Negatives | 1,414 | Negative examples (no handwriting present) | Useful for rejection classification |
+| SIG-G4-3 | handwriting_content_type_cls | ➖ Negatives | 1,414 | Negative examples only | No handwritten content to type-classify |
+| SIG-G4-4 | presence_reg | ➖ Negatives | 1,414 | 0.0 (no handwriting) | Clean zero-end examples for presence regression |
+| SIG-G4-5 | legibility_reg | ➖ Negatives | 1,414 | 0.0 (no handwriting) | Clean zero-end examples for legibility regression |
+| SIG-G5-1 | capture_method_cls | ✅ Primary | 1,414 | born_digital (100% from L2 metadata) | Clean born-digital signal; all 1,414 confirmed; strong class anchor |
+| SIG-G5-2 | shadow_reg | ➖ Negatives | 1,414 | 0.0 (no shadow in born-digital) | Reliable zero-shadow reference samples |
+| SIG-G5-3 | warping_reg | ➖ Negatives | 1,414 | 0.0 (no warping in born-digital) | Reliable zero-warping reference samples |
+| SIG-G5-4 | code_cls | ❌ Not applicable | 0 | No source code content | Financial invoices contain no programming code |
+| SIG-G5-5 | resolution_quality_reg | 🟡 Secondary | 1,414 | Derivable via resolution quality pipeline | Born-digital at consistent resolution; high-quality end of scale anchor |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | ❌ | Latin only (100%); no multi-script representation |
+| 2 | Capture method | ✅ | born_digital (100%); confirmed by L2 metadata; important negative for camera/scanner heads |
+| 3 | Document domain | ✅ | FIN invoices (100%); structured business documents, complementary to SROIE receipts |
+| 4 | Layout type | ✅ | Structured form/invoice layout; tabular line items, header/footer blocks; consistent single-page |
+| 5 | Text density | ✅ | Moderate-to-high density (invoice fields + line items + totals); all page-scope |
+| 6 | Degradation types | ❌ | No physical degradation; born-digital with clean rendering; no useful degradation labels |
+| 7 | Resolution/DPI range | 🟡 | Born-digital at fixed render resolution; no DPI metadata in L2; narrow range |
+| 8 | Document age | ✅ | Modern (2022 estimated release); contemporary invoice layouts and typography |
+| 9 | Text scope | ✅ | Page-level scope (100%) |
+| 10 | Content flags | ❌ | content_flags empty in L2 aggregates; no has_table/has_figure profiling done |
+| 11 | Binarization status | ✅ | Color/RGB born-digital; no binarized images |
+| 12 | Artifact types | ❌ | No artifacts; born-digital documents are clean renders |
+| 13 | Color mode | ✅ | RGB (inferred from born-digital source); consistent color mode |
+| 14 | Font variety | 🟡 | Business invoice fonts (varied templates from multiple companies); moderate variety |
+
+### 13.3 Corpus Role & Constraints
+
+invoices-kg contributes 1,414 born-digital invoice images that serve as clean-reference anchors for capture_method_cls (born_digital class) and as strong negative examples for physical-degradation heads (blur, noise, shadow, warping). Its small size (1,414 images) limits standalone training utility, but it pairs well with SROIE and financebench for financial-document diversity. ODbL-1.0 license permits commercial use with attribution and ShareAlike compliance required.

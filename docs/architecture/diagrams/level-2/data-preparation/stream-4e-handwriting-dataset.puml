@@ -1,0 +1,216 @@
+@startuml stream-4e-handwriting-dataset
+!theme plain
+title Stream 4E — Handwriting Dataset Preparation Pipeline
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+skinparam component {
+    BackgroundColor<<source>>   LightPink
+    BackgroundColor<<stage1>>  LightBlue
+    BackgroundColor<<stage2>>  LightGoldenRodYellow
+    BackgroundColor<<output>>  LightGray
+    BackgroundColor<<constraint>> MistyRose
+}
+
+' =====================================================================
+' INPUT SOURCES
+' =====================================================================
+
+package "External Dataset Sources\n(to acquire — all PENDING)" as sources_pkg <<source>> {
+    database "KHATT\n(Arabic cursive, ~2K pages)" as khatt
+    database "CASIA-HWDB\n(CJK Hanzi + Kanji, ~3.9M chars)" as casia
+    database "IIIT-INDIC\n(Devanagari, ~800 samples)" as iiit
+    database "HKR\n(Cyrillic, ~95K lines)" as hkr
+    database "FUNSD expansion\n(Latin printed + cursive, ~1.6K forms)" as funsd_exp
+    note right of sources_pkg
+        Status: NOT yet acquired.
+        Priority: P1 (unblocked after Script dataset done).
+        License check required before download.
+        Dependency: Tier 3 (SigLIP 2 G1+G2 trained
+        for pseudo-labeling assist, but acquisition
+        can begin in parallel).
+    end note
+}
+
+package "Existing Local Sources" as local_pkg <<source>> {
+    database "IAM Handwriting DB\n(English cursive, local)" as iam_local
+    database "NIST SD-19\n(digit + char samples, local)" as nist_local
+    note right of local_pkg
+        Available at:
+        /mnt/e/image_detection/01_base_data/handwriting/
+        Already in L2 metadata registry.
+        IAM: ~1,500 pages, cursive English.
+        NIST SD-19: ~800K digit/char images.
+    end note
+}
+
+' =====================================================================
+' STAGE 1 — TAXONOMY FINALIZATION (prerequisite)
+' =====================================================================
+
+package "Stage 0 — Taxonomy Finalization\n(prerequisite before acquisition)" as taxonomy_pkg {
+    component "Define 9-class handwriting_script taxonomy" as tax_9class {
+        [Latin-Print]
+        [Latin-Cursive]
+        [CJK-Hanzi]
+        [CJK-Kanji]
+        [Arabic-Naskh]
+        [Arabic-Ruqah]
+        [Devanagari]
+        [Cyrillic]
+        [Other-Indic]
+    }
+    component "Define handwriting_density (5 tiers)" as tax_density {
+        [None: 0% handwritten]
+        [Minimal: < 20% handwritten]
+        [Moderate: 20-60% handwritten]
+        [Substantial: 60-90% handwritten]
+        [Dominant: > 90% handwritten]
+    }
+    note right of taxonomy_pkg
+        Source: DIVERSITY_REMEDIATION_PLAN P0-4
+        Effort: 3-5 days
+        Must finalize BEFORE dataset acquisition
+        to ensure consistent labeling strategy.
+    end note
+}
+
+' =====================================================================
+' STAGE 1 — LABEL HARMONIZATION
+' =====================================================================
+
+package "Stage 1 — Label Harmonization" as stage1_pkg <<stage1>> {
+    component "harmonize_handwriting_labels.py\n(extend for 9-class taxonomy)" as hw_harmonize {
+        [Current: binary has_handwriting flag]
+        [Extension: map each source dataset]
+        [  to one of 9 fine-grained classes]
+        [Strategy: dataset-of-origin mapping]
+        [  KHATT -> Arabic-Naskh]
+        [  CASIA-HWDB -> CJK-Hanzi / CJK-Kanji]
+        [  IIIT-INDIC -> Devanagari]
+        [  HKR -> Cyrillic]
+        [  IAM / FUNSD -> Latin-Print / Latin-Cursive]
+    }
+
+    component "label_handwriting_quality.py\n(new — legibility scoring)" as hw_quality {
+        [Input: raw handwriting images]
+        [Method: classical stroke analysis]
+        [  (contrast, stroke width variance,]
+        [  connected component density)]
+        [Outputs:]
+        [  legibility_score: float 0-1]
+        [  handwriting_confidence: float 0-1]
+        [No model inference required]
+    }
+}
+
+' =====================================================================
+' STAGE 2 — DIVERSITY VALIDATION
+' =====================================================================
+
+package "Stage 2 — Diversity Validation" as stage2_pkg <<stage2>> {
+    component "evaluate_dataset_diversity.py\n(--task handwriting)" as ddr_hw {
+        [Validates 14 diversity dimensions]
+        [Focus for this task:]
+        [  script family balance (9 classes)]
+        [  real vs synthetic ratio (target >= 70% real)]
+        [  capture method mix (scanner / camera)]
+        [  document domain (form / manuscript / mixed)]
+        [Target: >= 60K total images]
+        [Cap: no single class > 40%]
+    }
+
+    component "audit_class_balance.py\n(new — per-class minimum check)" as class_audit {
+        [Ensures each of 9 classes]
+        [  meets minimum sample threshold]
+        [Flags under-represented classes]
+        [  for priority acquisition]
+        [Exits non-zero if class < 500 samples]
+    }
+}
+
+' =====================================================================
+' OUTPUT
+' =====================================================================
+
+package "Output Artifacts" as output_pkg <<output>> {
+    file "handwriting_manifest.json\n(flat JSON list)" as hw_manifest
+    note right of hw_manifest
+        Per-record fields:
+        image_path (relative to /data/)
+        handwriting_class: one of 9 classes
+        source: scanned / camera / born_digital
+        split_type: train / val / ood
+        legibility_score: float 0-1
+        handwriting_confidence: float 0-1
+        dataset_origin: khatt / casia / iiit / hkr / funsd / iam / nist
+    end note
+    database "GCS: gs://image_detection_b/\nhandwriting-dataset/" as gcs_hw
+}
+
+package "OOD Constraints" as ood_pkg <<constraint>> {
+    note as ood_hw_note
+        OOD Reserved Classes (never in train/val):
+          - Syriac handwriting (if acquired later)
+          - Mongolian script handwriting
+        Enforced by _check_ood_leakage()
+        in prepare_multitask_datasets.py
+        (handwriting sub-command, to be added)
+    end note
+}
+
+' =====================================================================
+' DATA FLOW ARROWS
+' =====================================================================
+
+taxonomy_pkg --> hw_harmonize : "9-class taxonomy\ndefinition"
+khatt --> hw_harmonize : "Arabic cursive images"
+casia --> hw_harmonize : "CJK images"
+iiit --> hw_harmonize : "Devanagari images"
+hkr --> hw_harmonize : "Cyrillic images"
+funsd_exp --> hw_harmonize : "Latin form images"
+iam_local --> hw_harmonize : "English cursive"
+nist_local --> hw_harmonize : "Digit / char images"
+
+hw_harmonize --> hw_quality : "harmonized images"
+hw_quality --> ddr_hw : "labeled images + scores"
+ddr_hw --> class_audit : "diversity report"
+class_audit --> hw_manifest : "validated manifest"
+hw_manifest --> gcs_hw : "upload"
+ood_hw_note -[dashed]-> hw_manifest : "enforced at merge"
+
+note right
+    **Target Size**: >= 60K images
+    **Composition**: >= 70% real, =< 30% synthetic
+    **Script Balance**: 9 fine-grained classes
+    **Feeds**: SigLIP 2 Group 4 (5 handwriting heads)
+
+    **Scripts (to create / extend):**
+    - scripts/harmonize_handwriting_labels.py (extend)
+    - scripts/label_handwriting_quality.py (new)
+    - scripts/audit_class_balance.py (new)
+    - scripts/prepare_multitask_datasets.py
+      (add handwriting sub-command)
+
+    **Existing scripts reused:**
+    - scripts/evaluate_dataset_diversity.py
+
+    **Documentation:**
+    - docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md §6
+    - docs/planning/DIVERSITY_REMEDIATION_PLAN.md P0-4/P0-5
+    - docs/architecture/diagrams/level-2/
+        data-preparation/index.md
+
+    **ADR:**
+    [[docs/ADRs/0022-synthetic-data-generation.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

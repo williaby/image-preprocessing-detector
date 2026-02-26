@@ -195,7 +195,7 @@ enrichment_version = "classical_cv_v1.2.0"  # or "ml_iqa_v2.3.0"
 
 2. **ML Analysis** (Two-model pipeline):
    - MobileNetV4-Conv-S (~3ms, pre-correction): orientation, skew, resolution quality (3 heads)
-   - SigLIP 2 NAFlex (~50ms, full analysis): 16 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
+   - SigLIP 2 NAFlex (~50ms, full analysis): 19 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
    - Multi-task predictions with per-head confidence scores
 
 3. **Layout Analysis** (Docling layout models):
@@ -211,7 +211,7 @@ enrichment_version = "classical_cv_v1.2.0"  # or "ml_iqa_v2.3.0"
    - Routing recommendations
 
 5. **Multi-Task Metadata** (stored at `metadata['data']['multi_task']`):
-   - Per-head predictions from SigLIP 2 (16 heads) and MobileNetV4-Conv-S (3 heads)
+   - Per-head predictions from SigLIP 2 (19 heads) and MobileNetV4-Conv-S (3 heads)
    - Orientation class, fine skew angle, resolution quality
    - Script family, handwriting detection, capture method
    - Each prediction tagged with provenance tier and confidence

@@ -22,12 +22,18 @@ Usage:
         uv run python3 scripts/integrate_iam_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "iam"
+__l4_workstream__ = "WS3"
+__l4_parser__ = "src/image_preprocessing_detector/annotation/parsers/handwriting/iam.py"
+
 
 import argparse
 import json
 import logging
-import re
 import sys
 import time
 from collections import Counter
@@ -37,6 +43,14 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    compute_text_statistics,
+    load_language_enrichment,
+    load_llm_enrichment,
+    load_metadata,
 )
 
 logging.basicConfig(
@@ -66,49 +80,6 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 KNOWN_CAPTURE_METHOD = "scanner_flatbed"
 
 
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON."""
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
-def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load LLM enrichment and index by image_id."""
-    if not path.exists():
-        log.warning("LLM enrichment not found: %s", path)
-        return {}
-    log.info("Loading LLM enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d LLM records", len(index))
-    return index
-
-
-def load_language_enrichment(path: Path) -> dict[str, dict[str, Any]]:
-    """Load language enrichment and index by image_id."""
-    if not path.exists():
-        log.warning("Language enrichment not found: %s", path)
-        return {}
-    log.info("Loading language enrichment from %s", path)
-    with open(path, encoding="utf-8") as f:
-        raw: dict[str, Any] = json.load(f)
-    index: dict[str, dict[str, Any]] = {}
-    for rec in raw.get("samples", []):
-        image_id = rec.get("image_id", "")
-        if image_id:
-            index[image_id] = rec
-    log.info("  Indexed %d language records", len(index))
-    return index
-
-
 def derive_color_mode(original_file: dict[str, Any]) -> str:
     """Derive color mode from image channel count."""
     channels = original_file.get("channels", 3)
@@ -117,72 +88,6 @@ def derive_color_mode(original_file: dict[str, Any]) -> str:
     if channels == 4:
         return "color_alpha"
     return "color"
-
-
-def compute_text_statistics(text: str) -> dict[str, Any]:
-    """Compute basic text statistics."""
-    if not text or text.strip() == "":
-        return {"char_count": 0, "word_count": 0, "line_count": 0, "has_content": False}
-    clean_text = text.strip()
-    lines = clean_text.split("\n")
-    non_empty_lines = [ln for ln in lines if ln.strip()]
-    words = clean_text.split()
-    latin_words = len(re.findall(r"[a-zA-Z]+", clean_text))
-    avg_line_len = 0.0
-    if non_empty_lines:
-        avg_line_len = round(
-            sum(len(ln.strip()) for ln in non_empty_lines) / len(non_empty_lines), 1
-        )
-    stats: dict[str, Any] = {
-        "char_count": len(clean_text),
-        "word_count": len(words),
-        "line_count": len(non_empty_lines),
-        "has_content": True,
-        "avg_line_length": avg_line_len,
-    }
-    if latin_words > 0:
-        stats["latin_word_count"] = latin_words
-    return stats
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary."""
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]:
-        confidence = data.get(conf_key, 0.0) or 0.0
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-    min_field = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def integrate_sample(

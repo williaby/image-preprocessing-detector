@@ -15,10 +15,12 @@ skinparam component {
 
 note as purpose_note
     **Purpose**: Three labeling scripts write new severity/presence
-    fields directly back into the L2 metadata registry, making it
-    a living annotation system rather than read-only.
+    fields directly back into the L2 metadata registry (v2.4.0),
+    making it a living annotation system rather than read-only.
     These fields are then consumed by prepare_multitask_datasets.py
-    (shadow/warping/merge sub-commands) in Stream 4C.
+    (shadow/warping/merge sub-commands) in Stream 4C and by the
+    Unified Training Corpus (UTC) as per-head label sources.
+    See: unified-training-corpus-architecture.puml
 end note
 
 ' =====================================================================
@@ -51,13 +53,29 @@ package "L2 Metadata Registry" as registry_pkg <<registry>> {
     note right of l2_files
         **Format**: Top-level dict with samples array
         **Structure**: samples[].enrichments.versions[-1].data
+        **Schema version**: v2.4.0 (see layer2_enrichment_v2.schema.json)
+
         **Key nested fields before enrichment:**
           capture_method (camera_smartphone/scanner/born_digital)
           orientation_class (0/90/180/270)
           split_type (train/val/test/ood)
-        **Fields added by labeling scripts:**
-          shadow_severity (float 0-1)
-          warping_severity (float 0-1)
+
+        **Fields added by labeling scripts (v2.3.0):**
+          shadow_severity (float 0-1, luminance-delta)
+          warping_severity (float 0-1, SSIM-delta)
+
+        **New fields added in v2.4.0:**
+          shadow_unmeasurable (bool) — true when image is
+            binarized; gradient destroyed, can't measure.
+            Distinct from shadow_severity=0.0 (no shadow).
+          warping_region ([x,y,w,h]) — COCO bbox of warp zone
+          resolution.coarse_bucket — character-height bucket:
+            needs_major_upscale / needs_light_upscale /
+            optimal / good / oversized
+          iqa.ink_degradation_score (float 0-1)
+          iqa.paper_degradation_score (float 0-1)
+          iqa.bleed_through_score (float 0-1)
+          iqa.geometric_distortion_score (float 0-1)
     end note
 }
 
@@ -204,5 +222,11 @@ note right of hw_writer
     L2 DocLayout inference acts as fallback
     for unlabeled datasets only.
 end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
 
 @enduml

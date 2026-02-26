@@ -30,7 +30,15 @@ Example:
     "markushgrapher"
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "parser"
+__l4_dataset__ = "markushgrapher"
+__l4_workstream__ = "WS3"
+__l4_task__ = "document"
+__l4_l2_file__ = "markushgrapher_metadata.json"
+
 
 import json
 import logging

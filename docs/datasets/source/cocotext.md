@@ -708,3 +708,65 @@ Official COCO-Text benchmark uses:
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
 | 1 | `text_quality` | 100.0% | 0.000 |
+
+## 13. Training Head Coverage
+
+### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+|---------|-----------|--------------|--------------|------------|-------|
+| MNV4-H1 | orientation_cls | ➖ | ~43,686 | tier_3_heuristic | Natural scene photos; most images are upright, providing 0° negatives; not a meaningful orientation training source |
+| MNV4-H2 | skew_reg | ❌ | 0 | N/A | Natural scene images; geometric skew from camera perspective is not document skew — conflates the two concepts |
+| MNV4-H3 | resolution_quality_reg | 🟡 | ~43,686 | tier_3_heuristic | 72 DPI web images (480-640px); char-height score derivable; natural variation in text size across scenes |
+| SIG-G1-1 | blur_score | 🟡 | ~43,686 | tier_3_heuristic | Natural photography includes motion blur and defocus; no ground truth labels, heuristic derivable |
+| SIG-G1-2 | noise_score | 🟡 | ~43,686 | tier_3_heuristic | Low-light scenes introduce sensor noise; heuristic derivable, no ground truth labels |
+| SIG-G1-3 | contrast_score | 🟡 | ~43,686 | tier_3_heuristic | Wide contrast range (indoor/outdoor, backlit text); heuristic derivable, no ground truth labels |
+| SIG-G1-4 | skew_score | ❌ | 0 | N/A | Perspective skew on scene text signs is not the same construct as document skew quality degradation |
+| SIG-G1-5 | compression_score | 🟡 | ~43,686 | tier_3_heuristic | Web-sourced JPEGs with variable quality; JPEG artifact level heuristically derivable |
+| SIG-G1-6 | overall_quality | ❌ | 0 | N/A | No MOS or quality score labels; 100% unreliable in L2 audit; scene images are not document-IQA relevant |
+| SIG-G2-1 | script_cls | 🟡 | ~43,686 | tier_1_annotation | Predominantly Latn (99.997%); word-level language label "english" maps to Latn; tiny Cyrl/Hang/Hebr fractions |
+| SIG-G3-1 | orientation_cls (post) | ➖ | ~43,686 | tier_3_heuristic | Same limitations as MNV4-H1; provides upright (0°) negative examples only |
+| SIG-G3-2 | skew_reg (post) | ❌ | 0 | N/A | Not applicable; scene text perspective is not post-correction document skew |
+| SIG-G4-1 | handwriting_presence_cls | ✅ | ~43,686 | tier_1_annotation | Word-level `class` field (machine_printed / handwritten) across 173K+ instances; binary handwriting presence directly labeled |
+| SIG-G4-2 | handwriting_legibility_cls | ✅ | ~43,686 | tier_1_annotation | Word-level `legibility` field (legible / illegible) directly provided; maps to legibility classification head |
+| SIG-G4-3 | handwriting_content_type_cls | ➖ | ~43,686 | derived | Majority is machine_printed (PRINTED class negatives); handwritten subset maps to CURSIVE/MIXED; useful for class balance |
+| SIG-G4-4 | presence_reg | 🟡 | ~43,686 | derived | Handwriting area ratio derivable from word-level bbox annotations and `class` labels; low but non-zero for most images |
+| SIG-G4-5 | legibility_reg | 🟡 | ~43,686 | derived | Binary legibility maps to 0.0/1.0 endpoints; per-image ratio of legible/illegible instances usable as continuous score |
+| SIG-G5-1 | capture_method_cls | ✅ | ~43,686 | tier_1_annotation | 100% CAMERA (natural scene photography); primary contributor for CAMERA class in capture_method training |
+| SIG-G5-2 | shadow_reg | ❌ | 0 | N/A | No shadow severity labels; incidental shadows in scene photos are not labeled |
+| SIG-G5-3 | warping_reg | ❌ | 0 | N/A | No warping severity labels; perspective distortion on scene text is not page warping |
+| SIG-G5-4 | code_cls | ➖ | ~43,686 | derived | Natural scene images contain virtually no programming code; strong negative-class contributor for code_cls |
+| SIG-G5-5 | resolution_quality_reg | 🟡 | ~43,686 | tier_3_heuristic | 72 DPI web-sourced images; char-height score derivable; natural size variation across scenes |
+
+### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+|---|-----------|----------|---------|
+| 1 | Script families | 🟡 | Latn dominant (99.997%); trace Cyrl (1), Hang (1), Hebr (1) per L2 aggregates; effectively Latin-only |
+| 2 | Capture method | ✅ | CAMERA 100% (camera_smartphone); strong anchor for CAMERA class in capture_method_cls |
+| 3 | Document domain | 🟡 | SCN (natural scene) 100%; diverse scene categories but no document domains (financial, legal, scientific, etc.) |
+| 4 | Layout type | ❌ | No structured document layout; word-level scene text annotations only, no page-level layout |
+| 5 | Text density | 🟡 | Sparse to moderate (~2.7 words/image average); wide range from 0 (no text) to dense signage |
+| 6 | Degradation types | 🟡 | Natural photography artifacts: motion blur, low-light noise, JPEG compression; no controlled degradation labels |
+| 7 | Resolution/DPI range | 🟡 | Approximately 72 DPI (web-sourced, 480-640px typical); low and narrow range — not representative of document DPI range |
+| 8 | Document age | 🟡 | Modern only (MS COCO 2014, Flickr-sourced); no aged or historical content |
+| 9 | Text scope | 🟡 | Word-level scope (173K+ word instances across 63,686 images); no character, line, or page scope |
+| 10 | Content flags | ✅ | has_text: true (scene text dataset); has_handwriting: true (word-level class labels); has_scene_text: true |
+| 11 | Binarization status | ❌ | RGB color only; no grayscale or binarized samples |
+| 12 | Artifact types | 🟡 | Natural lighting shadows and perspective; no controlled shadow/warping/fold artifacts with labels |
+| 13 | Color mode | 🟡 | Color (RGB) only; no grayscale or monochrome samples |
+| 14 | Font variety | ✅ | Very high font diversity: real-world signage, hand-lettering, graffiti, commercial fonts, display typefaces — 80+ COCO scene categories |
+
+### 13.3 Corpus Role & Constraints
+
+COCO-Text plays a focused dual role in training: **CAMERA-class anchor** for `capture_method_cls` (SIG-G5-1) and **handwriting/legibility binary labeling source** for the G4 group (SIG-G4-1 and SIG-G4-2). These are the two heads where it contributes tier_1_annotation labels derived directly from the official annotation file.
+
+For `capture_method_cls`, COCO-Text provides 43,686 training-eligible camera images — the largest single CAMERA-class source in the corpus. This is critical because the 100% real-image requirement for SIG-G5-1 (no synthetic) means camera diversity must come entirely from real-world datasets.
+
+For G4, the word-level `class: machine_printed|handwritten` and `legibility: legible|illegible` annotations across 173K+ instances enable binary handwriting presence and legibility classification. The `presence_reg` and `legibility_reg` regression heads benefit from per-image aggregate ratios derived from these word-level labels.
+
+**Important caveats**: COCO-Text is a scene text dataset, not a document dataset. It should not be used for document IQA training (blur_score, noise_score, contrast_score, overall_quality heads) because natural scene photographs have fundamentally different quality characteristics from scanned or camera-captured documents. The L2 audit confirms zero reliable quality labels.
+
+**Benchmark protection**: Val and test splits (10,000 images each, 20,000 total) are RESERVED for the COCO-Text scene text benchmark. Only the 43,686-image train split is available for training — this is a hard constraint enforced by the dataset's benchmark status.
+
+**License**: CC-BY-4.0 — commercial use permitted, attribution required. No synthetic cap constraints (0% synthetic). The 43,686 training images are freely usable without restrictions beyond attribution.

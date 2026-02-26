@@ -1,0 +1,143 @@
+@startuml corpus-split-lifecycle
+!theme plain
+title Corpus Split Lifecycle\nIngestion → Split Assignment → Reserved Pool → OOD Promotion
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+skinparam component {
+    BackgroundColor<<excluded>> LightCoral
+    BackgroundColor<<reserved>> #FFFACD
+    BackgroundColor<<train>> PaleGreen
+    BackgroundColor<<immutable>> LightBlue
+    BackgroundColor<<ood_clean>> #CCFFCC
+    BackgroundColor<<ood_dirty>> #FFD0D0
+}
+
+' =====================================================================
+' INGESTION ENTRY POINT
+' =====================================================================
+
+component "Image Ingestion\n(compute sha256 + pHash\nnear-dup check: Hamming ≤ 5)" as ingest
+
+' =====================================================================
+' SPLIT AUTHORITY — determines how split_type is assigned
+' =====================================================================
+
+package "Split Assignment Authority" as authority_pkg {
+    component "source_native\n(split_source = 'source_native')\nDataset provides its own splits:\nRVL-CDIP · DocLayNet · DocStructBench...\nINVIOLABLE — always takes precedence" as native_splits
+    component "corpus_assigned\n(split_source = 'corpus_assigned')\nDatasetSplitSpec per dataset:\n• strategy: stratified / random\n• ratios: active_train / active_val /\n  active_test / reserved\n• seed: preserved exactly for reproducibility\n• ood_predesignations: pre-planned OOD" as corpus_splits
+}
+
+' =====================================================================
+' CORPUS STATUS STATES
+' =====================================================================
+
+package "corpus_status = excluded" as excluded_pkg {
+    component "EXCLUDED\nexclusion_reason:\nnear_duplicate | corrupted_file\nlicense_restriction\nlabel_quality_failure | manual_disqualification\n\nnear_duplicate_of: sha256 of active record\nRetained for audit, never used" as excluded <<excluded>>
+}
+
+package "corpus_status = reserved\n(split_type = null)" as reserved_pkg {
+    component "RESERVED\n(not yet participating in training)\n\nreserved_at: timestamp\nFirst source for OOD expansion\nNever seen by any model until activated\nActivate subsets on demand" as reserved <<reserved>>
+
+    note right of reserved
+        **Why reserve pool exists:**
+        Large datasets (RVL-CDIP 400K, PubTabNet 519K)
+        provide more samples than needed for initial training.
+        DatasetSplitSpec.ingest_sample_size defines how much
+        to ingest — ingest MORE than needed to build a buffer.
+
+        With 57 source datasets + 3.3M total samples and
+        ~450K initial training targets, ~88% of ingested
+        images start as reserved at corpus construction.
+    end note
+}
+
+package "corpus_status = active" as active_pkg {
+
+    component "ACTIVE — TRAIN\nsplit_type = train\n\nParticipates in model training.\nCan be promoted to OOD (one-way).\nPrefer promoting from reserved first." as active_train <<train>>
+
+    component "ACTIVE — VAL  ★ IMMUTABLE\nsplit_type = val\nval_immutable_since = assigned_at\n\nNEVER changes, even if spec is revised.\nEnables cross-model metric comparison:\nsame val set for all model versions." as active_val <<immutable>>
+
+    component "ACTIVE — TEST  ★ IMMUTABLE\nsplit_type = test\ntest_immutable_since = assigned_at\n\nNEVER changes, even if spec is revised.\nEnables cross-dataset benchmark comparison:\nsame test set across all future models." as active_test <<immutable>>
+
+    package "OOD  (split_type = ood)" as ood_pkg {
+        component "PREDESIGNATED\n(clean OOD boundary)\nood_source = predesignated\nood_predesignated = true\n\nDesignated at corpus construction time\nvia DatasetSplitSpec.ood_predesignations.\nNo model has ever trained on this image.\nSelection: L2 field filter or manual." as ood_pre <<ood_clean>>
+
+        component "PROMOTED FROM RESERVED\n(clean OOD boundary)\nood_source = promoted_from_reserved\nood_predesignated = true\n\nReserved pool was never used in training.\nClean boundary — equivalent to predesignated.\nPreferred OOD expansion path after construction." as ood_res <<ood_clean>>
+
+        component "PROMOTED FROM TRAIN\n(contaminated boundary)\nood_source = promoted_from_train\nood_predesignated = false\n\npromoted_to_ood_at: timestamp recorded\nModels trained BEFORE this timestamp have\nseen this image — their OOD eval is informational,\nnot rigorous. Use promoted_to_ood_at to identify\naffected model versions. Last-resort only." as ood_train <<ood_dirty>>
+    }
+}
+
+' =====================================================================
+' TRANSITIONS
+' =====================================================================
+
+' Ingestion paths
+ingest --> excluded : Near-dup detected\nor disqualified
+ingest --> reserved : Within ingest_sample_size\nbut outside active ratios\n(corpus_assigned)
+ingest --> active_train : Active train ratio\n(or source_native train)
+ingest --> active_val : Val ratio\n(or source_native val)
+ingest --> active_test : Test ratio\n(or source_native test)
+ingest --> ood_pre : ood_predesignations entry\nin DatasetSplitSpec
+
+' Reserved lifecycle
+reserved --> active_train : Activate\n(activated_at = now\ncorpus_status: reserved → active)
+reserved --> ood_res : Promote directly to OOD\n(preferred expansion path)
+
+' Train to OOD (last resort)
+active_train --> ood_train : Promote to OOD\n(only when reserved pool\nexhausted for this category)
+
+' Authority connections
+native_splits --> active_val : Assign val split
+native_splits --> active_test : Assign test split
+native_splits --> active_train : Assign train split
+corpus_splits --> ingest : Governs ratios +\nOOD predesignations
+
+note right of ood_pkg
+    **OOD category naming convention:**
+    Format: {phase}_{descriptor}
+    Examples:
+      4a_compound_distortion
+      4c_book_gutter_shadow
+      4d_binarized_document
+      4e_scanner_lid_open
+
+    **Selection mechanisms:**
+    • selection_filter: L2 field filters
+      (e.g., shadow_type = "book_gutter")
+    • source_pool: reserved_first | reserved_only | train_only
+    • actual_count / designated_at: populated at construction
+end note
+
+note right of active_val
+    **Immutability rule:**
+    Val and test assignments cannot change once locked.
+
+    Source-native val/test (DocLayNet, RVL-CDIP, etc.)
+    take precedence over any corpus_assigned logic.
+
+    Immutability enforced by:
+    • val_immutable_since / test_immutable_since fields
+    • Schema: split_type 'val'/'test' → one-way lock
+    • DatasetSplitSpec spec_version: minor bump required
+      to change ratios (forces re-ingestion discussion)
+end note
+
+' ── Schema References ────────────────────────────────────────────────────────
+' docs/schema/corpus_manifest_v1.schema.json
+' docs/schema/dataset_split_spec_v1.schema.json
+' docs/schema/layer2_enrichment_v2.schema.json  (v2.4.0 — label fields)
+'
+' ── Related Diagrams ─────────────────────────────────────────────────────────
+' unified-training-corpus-architecture.puml  (UTC overview with per-head views)
+' l2-metadata-enrichment.puml                (labeling scripts → L2 registry)
+'
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml

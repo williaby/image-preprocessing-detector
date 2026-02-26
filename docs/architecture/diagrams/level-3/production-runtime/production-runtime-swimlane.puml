@@ -3,7 +3,7 @@
 skinparam backgroundColor #FEFEFE
 
 title Production Runtime Workstream - Complete Swimlane with LOC Traceability
-footer Workstream 1: Production Runtime | Total LOC: 16,910 | 44 Files | Last Updated: 2026-02-21
+footer Workstream 1: Production Runtime | Total LOC: 17,127 | 44 Files | Last Updated: 2026-02-22
 
 ' ============================================================================
 ' SWIMLANES BY PROCESSING STAGE
@@ -134,7 +134,7 @@ note right
 end note
 
 ' ============================================================================
-' QUALITY ANALYSIS (9,917 LOC - Split into subsections)
+' QUALITY ANALYSIS (10,134 LOC - Split into subsections)
 ' ============================================================================
 |Quality Analysis|
 
@@ -203,8 +203,8 @@ partition "MobileNetV4-Conv-S (Pre-Correction)" {
   :Run MobileNetV4-Conv-S (3 heads);
   note left
     **Source Files:**
-    - src/image_preprocessing_detector/detection/mobilenetv4_precorrection.py
-    - src/image_preprocessing_detector/detection/stage_gate.py (orchestrator)
+    - src/image_preprocessing_detector/detection/mobilenetv4_precorrection.py (planned)
+    - src/image_preprocessing_detector/detection/stage_gate.py (planned)
 
     **Model:**
     - MobileNetV4-Conv-S (~4M params)
@@ -223,17 +223,17 @@ partition "MobileNetV4-Conv-S (Pre-Correction)" {
 }
 
 partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
-  :Run SigLIP 2 NAFlex (22 heads, 5 groups);
+  :Run SigLIP 2 NAFlex (19 heads, 5 groups);
   note left
     **Source File:**
     - src/image_preprocessing_detector/detection/siglip2_multitask.py
 
     **Model:**
     - SigLIP 2 NAFlex (88M params)
-    - 22 heads across 5 groups:
+    - 19 heads across 5 groups:
       G1: IQA (6 heads: blur/noise/contrast/skew/compression + overall)
-      G2: Script (3 heads: script_code + has_non_latin + has_rtl)
-      G3: Orientation+Skew (3 heads: cls + reg + confidence)
+      G2: Script (1 head: script_class; has_non_latin+has_rtl rule-derived)
+      G3: Orientation+Skew (2 heads: cls + reg; confidence implicit)
       G4: Handwriting (5 heads: 3 cls + 2 reg)
       G5: Page Attrs (5 heads: capture_cls + shadow/warping/code/resolution_quality)
 
@@ -374,7 +374,7 @@ end note
 ' ============================================================================
 legend right
   **Workstream 1: Production Runtime**
-  **Total LOC:** 16,910 lines ✅
+  **Total LOC:** 17,127 lines (iqa_ml.py updated to 1,520 actual, 2026-02-22)
   **Total Files:** 44
 
   **Breakdown by Swimlane:**
@@ -396,7 +396,7 @@ legend right
   │  ├─ text_gate: 334
   │  └─ routing/document_type_router: TBD (planned — 4-way PDF + format routing)
   │
-  ├─ **Quality Analysis:** 9,917 lines (23 files)
+  ├─ **Quality Analysis:** 10,134 lines (23 files)
   │  ├─ detection/__init__: 190
   │  │
   │  ├─ Classical IQA (5,320 lines):
@@ -419,8 +419,8 @@ legend right
   │  │  ├─ layout_lite/constants: 46
   │  │  └─ layout_lite/layout_types: 107
   │  │
-  │  └─ ML IQA (1,988 lines):
-  │     ├─ iqa_ml: 1,303
+  │  └─ ML IQA (2,205 lines):
+  │     ├─ iqa_ml: 1,520 (actual, verified 2026-02-22)
   │     └─ hybrid_iqa: 351
   │     (Note: discrepancy.py counted in Classical IQA)
   │
@@ -442,7 +442,7 @@ legend right
 
   **Validation:**
   - All 44 files from FILE_INVENTORY accounted for ✅
-  - Sum: 2,235 + 806 + 9,917 + 2,517 + 1,435 = 16,910 ✅
+  - Sum: 2,235 + 806 + 10,134 + 2,517 + 1,435 = 17,127 (iqa_ml updated)
   - Matches LOC extraction script ✅
 
   **Cross-References:**
@@ -451,5 +451,10 @@ legend right
   - [[pipeline-state-machine.md]]
   - [[device-orchestrator.md]]
 endlegend
+
+
+' ── Level 2 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-2/production-runtime/index.md
+'   └─ prepare-doc-primary-workflow-detailed.puml  (WS1 primary)
 
 @enduml

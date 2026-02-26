@@ -22,7 +22,16 @@ Usage:
         uv run python3 scripts/integrate_im2latex_enrichments.py --dry-run
 """
 
+# --- Level 4 registry metadata ---
 from __future__ import annotations
+
+__l4_category__ = "integrate-script"
+__l4_dataset__ = "im2latex"
+__l4_workstream__ = "WS3"
+__l4_parser__ = (
+    "src/image_preprocessing_detector/annotation/parsers/formula/im2latex.py"
+)
+
 
 import argparse
 import json
@@ -36,6 +45,11 @@ from typing import Any
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
     get_script_family as _get_script_family,
+)
+
+from l2_integration_utils import (
+    compute_reliability_summary,
+    load_metadata,
 )
 
 logging.basicConfig(
@@ -64,15 +78,6 @@ TARGET_SCHEMA_VERSION = "2.3.0"
 KNOWN_CAPTURE_METHOD = "born_digital"
 
 
-def load_metadata(path: Path) -> dict[str, Any]:
-    """Load Layer 2 metadata JSON."""
-    log.info("Loading metadata from %s", path)
-    with open(path, encoding="utf-8") as f:
-        data: dict[str, Any] = json.load(f)
-    log.info("  Loaded %d samples", len(data.get("samples", [])))
-    return data
-
-
 def derive_color_mode(original_file: dict[str, Any]) -> str:
     """Derive color mode from image channel count."""
     channels = original_file.get("channels", 3)
@@ -81,46 +86,6 @@ def derive_color_mode(original_file: dict[str, Any]) -> str:
     if channels == 4:
         return "color_alpha"
     return "color"
-
-
-def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Compute sample_reliability_summary."""
-    fields: list[dict[str, Any]] = []
-    for field_name, conf_key in [
-        ("capture_method", "capture_confidence"),
-        ("domain", "domain_confidence"),
-        ("language", "language_confidence"),
-        ("layout_detections", "layout_confidence"),
-        ("content_flags", "content_flags_confidence"),
-    ]:
-        confidence = data.get(conf_key, 0.0) or 0.0
-        if confidence >= 0.9:
-            category = "hard_label"
-        elif confidence >= 0.7:
-            category = "soft_label"
-        elif confidence >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
-        fields.append(
-            {
-                "field": field_name,
-                "confidence": round(confidence, 4),
-                "category": category,
-                "is_soft_label": category == "soft_label",
-            }
-        )
-    min_field = min(fields, key=lambda f: f["confidence"])
-    return {
-        "min_confidence": min_field["confidence"],
-        "min_confidence_field": min_field["field"],
-        "min_confidence_category": min_field["category"],
-        "assessed_field_count": len(fields),
-        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
-        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
-        "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
-    }
 
 
 def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:

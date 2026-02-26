@@ -8,8 +8,8 @@ tags:
 title: Dataset Documentation Template
 ---
 
-> **Version**: 1.5.0
-> **Last Updated**: 2026-02-14
+> **Version**: 1.6.0
+> **Last Updated**: 2026-02-24
 > **Purpose**: Standardized template for comprehensive IQA dataset documentation
 > **Consensus**: Validated by Gemini 3 Pro (9/10) and Claude Sonnet 4.5 (8/10)
 
@@ -624,6 +624,77 @@ tablebank/
 > - `layout_detections` -> Re-run DocLayout-YOLO inference
 > - `capture_method`, `domain` -> Update dataset config / re-run annotation
 
+#### 13. Training Head Coverage
+
+> **Purpose**: Documents how this dataset contributes to the 22 training heads across
+> MobileNetV4-Conv-S (pre-correction) and SigLIP 2 NAFlex (multi-task) models. Populated by
+> the systematic batch subagent analysis process. See
+> [DATASET_HEAD_COVERAGE.md](DATASET_HEAD_COVERAGE.md) for the aggregated cross-reference grid.
+
+##### 13.1 Head Contribution Summary
+
+| Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
+| ------- | --------- | ------------ | ------------ | ---------- | ----- |
+| MNV4-H1 | orientation_cls | ❓ | - | - | |
+| MNV4-H2 | skew_reg | ❓ | - | - | |
+| MNV4-H3 | resolution_quality_reg | ❓ | - | - | |
+| SIG-G1-1 | blur_score | ❓ | - | - | |
+| SIG-G1-2 | noise_score | ❓ | - | - | |
+| SIG-G1-3 | contrast_score | ❓ | - | - | |
+| SIG-G1-4 | skew_score | ❓ | - | - | |
+| SIG-G1-5 | compression_score | ❓ | - | - | |
+| SIG-G1-6 | overall_quality | ❓ | - | - | |
+| SIG-G2-1 | script_cls | ❓ | - | - | |
+| SIG-G3-1 | orientation_cls (post) | ❓ | - | - | |
+| SIG-G3-2 | skew_reg (post) | ❓ | - | - | |
+| SIG-G4-1 | handwriting_presence_cls | ❓ | - | - | |
+| SIG-G4-2 | handwriting_legibility_cls | ❓ | - | - | |
+| SIG-G4-3 | handwriting_content_type_cls | ❓ | - | - | |
+| SIG-G4-4 | presence_reg | ❓ | - | - | |
+| SIG-G4-5 | legibility_reg | ❓ | - | - | |
+| SIG-G5-1 | capture_method_cls | ❓ | - | - | |
+| SIG-G5-2 | shadow_reg | ❓ | - | - | |
+| SIG-G5-3 | warping_reg | ❓ | - | - | |
+| SIG-G5-4 | code_cls | ❓ | - | - | |
+| SIG-G5-5 | resolution_quality_reg (SigLIP) | ❓ | - | - | |
+
+**Contribution legend**: ✅ Primary | 🟡 Secondary | ➖ Negatives only | ❌ Not applicable | ❓ Not yet analyzed
+
+> **Key disambiguation**:
+>
+> - `skew_reg` (MNV4-H2, SIG-G3-2) = geometric angle in degrees — requires angle labels
+> - `skew_score` (SIG-G1-4) = quality degradation severity 0-1 — distinct from angle
+> - `code_cls` (SIG-G5-4) = binary sigmoid+BCE, NOT regression; output threshold 0.5
+> - Handwriting N/A cases use label_value=-1.0 with masked_loss=true (NOT 0.0)
+
+##### 13.2 Diversity Dimension Coverage
+
+| # | Dimension | Coverage | Details |
+| - | --------- | -------- | ------- |
+| 1 | Script families | ❓ | ISO 15924 codes present |
+| 2 | Capture method | ❓ | BORN_DIGITAL / SCANNER / CAMERA / FAX / SYNTHETIC |
+| 3 | Document domain | ❓ | financial/scientific/legal/forms/receipts/handwritten/etc. |
+| 4 | Layout type | ❓ | single-column/multi-column/tables/mixed/forms |
+| 5 | Text density | ❓ | sparse/moderate/dense/very-dense |
+| 6 | Degradation types | ❓ | blur/noise/contrast/compression/blockiness/binarization/bleed |
+| 7 | Resolution/DPI range | ❓ | DPI range present in dataset |
+| 8 | Document age | ❓ | modern/aged/historical |
+| 9 | Text scope | ❓ | character/word/line/page/document level |
+| 10 | Content flags | ❓ | has_tables/has_figures/has_formulas/has_code/has_handwriting |
+| 11 | Binarization status | ❓ | color/grayscale/binarized |
+| 12 | Artifact types | ❓ | shadow/warping/watermarks/folds/creases |
+| 13 | Color mode | ❓ | monochrome/grayscale/color |
+| 14 | Font variety | ❓ | ≥5 families? serif/sans-serif/monospace mix? |
+
+**Coverage legend**: ✅ Well-covered | 🟡 Partial | ❌ Not present
+
+##### 13.3 Corpus Role & Constraints
+
+> **Status**: ❓ Not yet analyzed — populate via batch subagent process.
+>
+> [1-3 sentence summary of this dataset's primary role in the unified training corpus, plus any
+> license restrictions, synthetic caps, benchmark-protected splits, or OOD exclusions.]
+
 ---
 
 ## Documentation Status Markers
@@ -671,6 +742,7 @@ The profiling script computes:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6.0 | 2026-02-24 | Added Section 13 "Training Head Coverage" with §13.1 (22-head contribution table), §13.2 (14 diversity dimensions), and §13.3 (corpus role & constraints). Supports DATASET_HEAD_COVERAGE.md aggregated cross-reference grid |
 | 1.5.0 | 2026-02-14 | Added Section 2.7 "Ground Truth Provenance" for annotation methodology, IAA metrics, and QA documentation. See GROUND_TRUTH_SUMMARY.md for cross-dataset overview |
 | 1.4.0 | 2026-02-12 | Added Section 11 "Layer 2 Audit Summary" for post-audit quality scorecard, VLM inspection results, key defects, and cross-dataset findings. Renumbered "Reliability & Bottlenecks" to Section 12 |
 | 1.3.0 | 2026-02-09 | Added Section 11 "Reliability & Bottlenecks" (now Section 12) for auto-generated composite reliability summary with category distribution and top bottleneck fields per dataset |
