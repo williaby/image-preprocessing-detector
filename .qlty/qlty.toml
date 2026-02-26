@@ -365,6 +365,14 @@ match.rules = ["bandit:B112"]
 match.file_patterns = ["scripts/**"]
 set.ignored = true
 
+# Ignore B108 (temp file/dir) in scripts/ - CLI tools use /tmp as default output directories;
+# no sensitive data is written, only review contact sheets and CSVs
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B108"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
 # Ignore urlopen in scripts/ - download scripts use plain HTTP for open public datasets
 [[triage]]
 match.plugins = ["bandit"]
