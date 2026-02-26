@@ -100,7 +100,7 @@ class TestDatasetConfigsRegistry:
     """Tests for DATASET_CONFIGS registry."""
 
     def test_registry_completeness(self) -> None:
-        """Ensure all 38 datasets are present."""
+        """Ensure all expected datasets are present."""
         # Benchmark (4)
         assert "diqa-5000" in DATASET_CONFIGS
         assert "smartdoc-qa" in DATASET_CONFIGS
@@ -139,8 +139,9 @@ class TestDatasetConfigsRegistry:
         # Educational (1)
         assert "multimodal_textbook" in DATASET_CONFIGS
 
-        # Camera-captured (1)
+        # Camera-captured (1) + camera_captured folder / synthetic content (1)
         assert "realdae" in DATASET_CONFIGS
+        assert "doc3d" in DATASET_CONFIGS
 
         # OCR Quality (1)
         assert "ocr_quality" in DATASET_CONFIGS
@@ -184,8 +185,16 @@ class TestDatasetConfigsRegistry:
         # Quality datasets (1)
         assert "q-doc" in DATASET_CONFIGS
 
-        # Total count (58 datasets: 46 existing + 12 new)
-        assert len(DATASET_CONFIGS) == 58
+        # Japanese / NDL datasets (6)
+        assert "jssoda" in DATASET_CONFIGS
+        assert "vjroda" in DATASET_CONFIGS
+        assert "ndl-docl" in DATASET_CONFIGS
+        assert "pdmocr-part1" in DATASET_CONFIGS
+        assert "pdmocr-part2" in DATASET_CONFIGS
+        assert "ndl-minhon" in DATASET_CONFIGS
+
+        # Total count (66 datasets: 60 existing + 6 Japanese/NDL)
+        assert len(DATASET_CONFIGS) == 66
 
     def test_all_keys_match_names(self) -> None:
         """Ensure registry keys match config names."""
@@ -517,3 +526,66 @@ class TestArrowFormatDatasets:
                 assert config.is_benchmark is True, (
                     f"{name} has arrow_format but is not benchmark"
                 )
+
+
+class TestCameraCaptureFolderSyntheticGuard:
+    """Regression guard: datasets stored under camera_captured/ must have an
+    explicit capture_method so no pipeline can infer the method from the path.
+
+    Background: doc3d was downloaded into 01_base_data/camera_captured/ by
+    mistake. It is a fully synthetic 3D Blender render dataset. Without an
+    explicit capture_method guard, any future pipeline walking that folder
+    would mislabel all 102K samples as camera-captured.
+    """
+
+    def test_doc3d_capture_method_is_synthetic(self) -> None:
+        """doc3d must be SYNTHETIC — never CAMERA_SMARTPHONE or UNKNOWN.
+
+        doc3d lives under 01_base_data/camera_captured/ due to a historical
+        download path error. Every image is a Blender 3D mesh render, not a
+        camera capture. This test exists to prevent silent regression if
+        someone edits the entry without reading the warning comment.
+        """
+        config = DATASET_CONFIGS["doc3d"]
+        assert config.capture_method == CaptureMethod.SYNTHETIC, (
+            "doc3d capture_method regressed from SYNTHETIC. "
+            "doc3d is a 3D-rendered synthetic dataset (Blender) — it is stored "
+            "under camera_captured/ due to a historical naming error but no real "
+            "camera was ever involved. See docs/datasets/source/doc3d.md §10.5."
+        )
+
+    def test_realdae_is_camera_smartphone(self) -> None:
+        """realdae is genuinely camera-captured and must not regress to SYNTHETIC."""
+        config = DATASET_CONFIGS["realdae"]
+        assert config.capture_method == CaptureMethod.CAMERA_SMARTPHONE, (
+            "realdae is a real camera-captured dataset (600 smartphone images). "
+            "If this changed, verify the edit was intentional."
+        )
+
+    def test_all_camera_captured_folder_datasets_have_explicit_capture_method(
+        self,
+    ) -> None:
+        """Every dataset stored under camera_captured/ must have a non-UNKNOWN
+        capture_method so its metadata is correct regardless of folder path.
+
+        Allowed values: CAMERA_SMARTPHONE, CAMERA_PROFESSIONAL, SYNTHETIC.
+        UNKNOWN is rejected — it means 'we haven't decided yet', which is
+        exactly the footgun this guard exists to prevent.
+        """
+        camera_folder_datasets = {
+            name: config
+            for name, config in DATASET_CONFIGS.items()
+            if "camera_captured" in config.path_suffix
+        }
+        assert camera_folder_datasets, (
+            "No datasets found under camera_captured/ — update this test if "
+            "the folder was intentionally removed."
+        )
+        for name, config in camera_folder_datasets.items():
+            assert config.capture_method != CaptureMethod.UNKNOWN, (
+                f"{name} is stored under camera_captured/ but has "
+                f"capture_method=UNKNOWN. Set it explicitly: "
+                f"CAMERA_SMARTPHONE / CAMERA_PROFESSIONAL (real camera) or "
+                f"SYNTHETIC (rendered, like doc3d). "
+                f"See docs/datasets/source/doc3d.md §10.5 for context."
+            )

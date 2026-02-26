@@ -64,6 +64,14 @@ DEFAULT_STRATIFICATION_AXES: tuple[str, ...] = (
     "resolution_category",
 )
 
+# Datasets that contain no images (text corpora only).  The audit runner
+# should skip image-path validation for these and mark them as
+# "no-image-audit" rather than raising path-not-found errors.
+_TEXT_CORPUS_EXCLUSIONS: tuple[str, ...] = (
+    "openlid-v2",   # Language ID text corpus — no images
+    "wili-2018",    # Language ID text corpus — superseded by openlid-v2
+)
+
 
 # ---------------------------------------------------------------------------
 # DatasetAuditConfig
@@ -989,6 +997,127 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
         "stratification_axes": (
             "domain_level1",
             "capture_method",
+        ),
+    },
+    # Auto-registered by Layer 2 audit agent (2026-02-24) — midv2020 was not in
+    # _KNOWN_CONFIGS prior to this audit run. Defaults derived from metadata path
+    # convention and dataset characteristics (camera + scanner, GOV domain).
+    "midv2020": {
+        "image_base_path": (_BASE_DATA_DIR / "documents" / "midv2020"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "midv2020_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    # Auto-registered by Layer 2 audit agent (2026-02-24) — doc3d was not in
+    # _KNOWN_CONFIGS prior to this audit run. Defaults derived from metadata path
+    # convention. WARNING: metadata JSON does not yet exist — annotate_base_metadata.py
+    # must be run first. Primary use: warping_reg head (SIG-G5-3) training data.
+    "doc3d": {
+        "image_base_path": (
+            _BASE_DATA_DIR / "camera_captured" / "doc3d" / "data" / "doc3d" / "img"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "doc3d_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+        ),
+    },
+    # Auto-registered by Layer 2 audit agent (2026-02-24) — kuzushiji was not in
+    # _KNOWN_CONFIGS. Defaults derived from metadata path convention and dataset
+    # characteristics (scanner + handwriting + historical Japanese).
+    # WARNING: metadata JSON does not yet exist — raw data must be downloaded first,
+    # then materialize_kuzushiji.py must be run, then annotate_base_metadata.py.
+    # See scripts/audit/results/kuzushiji/blocker_report.md for resolution steps.
+    # 3 sub-datasets: K-MNIST (70K, 28px), K-49 (271K, 28px), K-Kanji (140K, 64px).
+    # Primary heads: script_cls (JPAN), handwriting_presence_cls.
+    "kuzushiji": {
+        "image_base_path": (
+            _BASE_DATA_DIR / "handwriting" / "kuzushiji"
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "kuzushiji_metadata.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    # -----------------------------------------------------------------
+    # Handwriting Datasets — new (2026 onboarding)
+    # -----------------------------------------------------------------
+    "iiit-hw-hindi": {
+        "image_base_path": (_BASE_DATA_DIR / "handwriting" / "iiit-hw-hindi"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "iiit-hw-hindi_metadata.json"),
+        "stratification_axes": (
+            "capture_method",
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    "khatt": {
+        "image_base_path": (_BASE_DATA_DIR / "handwriting" / "khatt"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "khatt_metadata.json"),
+        "stratification_axes": (
+            "script_family",
+            "has_handwriting",
+        ),
+    },
+    # CASIA-HWDB2: 5,091 full-page Chinese handwriting scans (DGRL binary format).
+    # Sub-datasets: HWDB2.0, HWDB2.1, HWDB2.2. image_base_path points to the HWDB/
+    # subdirectory which contains both *_images/ PNG dirs and *_index.jsonl sidecars.
+    # capture_method=scanner_flatbed, iso639=zh, iso15924=Hans, text_scope=page.
+    # Primary heads: handwriting_presence_cls, script_cls (Hans/CJK).
+    "casia-hwdb2": {
+        "image_base_path": (
+            _BASE_DATA_DIR / "handwriting" / "casia-hwdb2" / "HWDB"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "casia-hwdb2_metadata.json"),
+        "stratification_axes": (
+            "script_family",
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    # CASIA-HWDB2-line: 52,160 Chinese handwriting line images (Teklia HF edition).
+    # materialized from Parquet; images in images/{split}/, index in {split}_index.jsonl.
+    # capture_method=scanner_flatbed, iso639=zh, iso15924=Hans, text_scope=line.
+    # Primary heads: handwriting_presence_cls, script_cls (Hans/CJK).
+    "casia-hwdb2-line": {
+        "image_base_path": (
+            _BASE_DATA_DIR / "handwriting" / "casia-hwdb2-line" / "images"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "casia-hwdb2-line_metadata.json"),
+        "stratification_axes": (
+            "script_family",
+            "has_handwriting",
+            "resolution_category",
+        ),
+    },
+    # Auto-registered by Layer 2 audit agent (2026-02-24) — multilingual-scripts
+    # was not in _KNOWN_CONFIGS prior to this audit run. Defaults derived from
+    # metadata path convention. Dataset aggregates 4 subdatasets: jssoda (Jpan,
+    # 2000), nepal_devanagari (Deva, 717), arabic_ocr (Arab, 500), dzongkha_digits
+    # (Tibt, 62). Primary heads: script_cls (SIG-G2-1), handwriting_presence_cls.
+    # NOTE: capture_method=unknown and domain_level1=UNK for all 3279 samples.
+    # Stratification uses iso15924_script as effective axis via script_family.
+    "multilingual-scripts": {
+        "image_base_path": (
+            _BASE_DATA_DIR / "language" / "multilingual_scripts"
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "multilingual_scripts_metadata.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "multilingual_scripts_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "capture_method",
+            "resolution_category",
         ),
     },
 }

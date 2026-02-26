@@ -780,6 +780,161 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_human_mos": False,
         "original_labels_parser": "parse_sd7k_labels",
     },
+    # === Doc3D: synthetic document dewarping (102,064 images, BlenderProc) ===
+    # capture_method=SYNTHETIC: BlenderProc 3D rendering, NOT camera capture.
+    # The dataset resides in camera_captured/ for historical reasons only.
+    # Primary use: warping_reg head (SIG-G5-3) training.
+    "doc3d": {
+        "path": BASE_DATA / "camera_captured/doc3d/data/doc3d/img",
+        "pattern": "**/*.png",  # 22 numbered subdirs, each ~4,600 PNGs
+        "capture_method": CaptureMethod.SYNTHETIC,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "original_labels_parser": "parse_doc3d_labels",
+    },
+    # === CASIA-HWDB2: 5,091 full-page Chinese handwriting scans (DGRL format) ===
+    # Images extracted to *_images/ subdirectories alongside DGRL originals.
+    # capture_method=SCANNER_FLATBED; text_scope=page; script=Hans (CJK).
+    "casia-hwdb2": {
+        "path": BASE_DATA / "handwriting/casia-hwdb2/HWDB",
+        "pattern": "*_images/*.png",  # HWDB2.0Train_images/, HWDB2.0Test_images/, etc.
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "zh",
+        "iso15924_script": "Hans",
+        "text_scope": "page",
+    },
+    # === CASIA-HWDB2-line: 52,160 Chinese handwriting line images (Teklia HF) ===
+    # Materialized from Parquet; sidecar index: {split}_index.jsonl at dataset root.
+    # capture_method=SCANNER_FLATBED; text_scope=line; script=Hans (CJK).
+    "casia-hwdb2-line": {
+        "path": BASE_DATA / "handwriting/casia-hwdb2-line",
+        "pattern": "images/**/*.png",  # images/{train,validation,test}/*.png
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "zh",
+        "iso15924_script": "Hans",
+        "text_scope": "line",
+    },
+    # === IIIT-HW-Hindi: 95,430 Hindi word-level handwriting (Devanagari) ===
+    # Materialized from HuggingFace Parquet (c3rl/IIIT-INDIC-HW-WORDS-Hindi).
+    # capture_method=SCANNER_FLATBED; text_scope=word; script=Deva.
+    "iiit-hw-hindi": {
+        "path": BASE_DATA / "handwriting/iiit-hw-hindi",
+        "pattern": "**/*.jpg",  # Flat root dir; JPG format
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "hi",
+        "iso15924_script": "Deva",
+        "text_scope": "word",
+    },
+    # === KHATT: 1,633 Arabic paragraph-level handwriting scans (KFUPM) ===
+    # 1,000 writers; TIFF originals converted to JPEG.  Academic research only.
+    # capture_method=SCANNER_FLATBED; text_scope=paragraph; script=Arab.
+    "khatt": {
+        "path": BASE_DATA / "handwriting/khatt",
+        "pattern": "**/*.jpg",  # JPEG images (converted from TIFF originals)
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "ar",
+        "iso15924_script": "Arab",
+        "text_scope": "paragraph",
+    },
+    # === Vertical Japanese / NDL Datasets (2026-02 Onboarding) ===
+    # JSSODa: 2,000 Japanese synthetic document images (991 vertical + 1,009 horizontal)
+    # capture_method=BORN_DIGITAL (synthetically rendered); labeled with is_vertical,
+    # num_columns, reading order.  Hosted on HuggingFace llm-jp/JSSODa.
+    "jssoda": {
+        "path": BASE_DATA / "language/multilingual_scripts/jssoda",
+        "pattern": "**/*.png",
+        "capture_method": CaptureMethod.BORN_DIGITAL,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "iso639_language": "ja",
+        "iso15924_script": "Jpan",
+        "text_scope": "page",
+        "original_labels_parser": "parse_jssoda_labels",
+    },
+    # VJRODa: 100 vertical Japanese real-world scanned document page images.
+    # Subset of Japanese government/administrative documents; all pages vertical.
+    # capture_method=SCANNER_FLATBED; OOD evaluation only.
+    "vjroda": {
+        "path": BASE_DATA / "language/multilingual_scripts/vjroda/images",
+        "pattern": "*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "iso639_language": "ja",
+        "iso15924_script": "Jpan",
+        "text_scope": "page",
+        "original_labels_parser": "parse_vjroda_labels",
+    },
+    # NDL-DocL (NDL layout-dataset): 2,290 historical Japanese document page images
+    # with Pascal VOC layout annotations.  Two subsets: kotenseki (pre-1868, kuzushiji)
+    # and kindai (post-1868, modern kanji).
+    "ndl-docl": {
+        "path": BASE_DATA / "language/multilingual_scripts/ndl-docl/full_images",
+        "pattern": "**/*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "ja",
+        "iso15924_script": "Jpan",
+        "text_scope": "page",
+        "original_labels_parser": "parse_ndl_docl_labels",
+    },
+    # pdmocr-part1: 2,713 Japanese pre-modern printed book pages with character-level
+    # OCR ground truth.  NDL digital collection; meiji/taisho era documents.
+    # Images in images/{collection}/*.png (e.g. images/tosho/).
+    "pdmocr-part1": {
+        "path": BASE_DATA / "language/multilingual_scripts/pdmocr-part1/images",
+        "pattern": "**/*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "iso639_language": "ja",
+        "iso15924_script": "Jpan",
+        "text_scope": "page",
+        "original_labels_parser": "parse_pdmocr_labels",
+    },
+    # pdmocr-part2: 3,997 additional NDL digitized pages; includes text direction
+    # annotations (DIRECTION attribute: vertical/horizontal).
+    # Images in images/{collection}/*.png subdirectories.
+    "pdmocr-part2": {
+        "path": BASE_DATA / "language/multilingual_scripts/pdmocr-part2/images",
+        "pattern": "**/*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "iso639_language": "ja",
+        "iso15924_script": "Jpan",
+        "text_scope": "page",
+        "original_labels_parser": "parse_pdmocr_labels",
+    },
+    # NDL-Minhon: 32,822 kuzushiji (cursive classical Japanese) handwriting images
+    # sourced from NDL digital collection v2 metadata.  CC-BY-SA 4.0.
+    # Images in images/{collection}/{item_hash}/*.png (deep hierarchy).
+    "ndl-minhon": {
+        "path": BASE_DATA / "handwriting/ndl-minhon/images",
+        "pattern": "**/*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "ja",
+        "iso15924_script": "Hani",  # Classical Japanese uses Kanji-derived kuzushiji
+        "text_scope": "page",
+        "original_labels_parser": "parse_ndl_minhon_labels",
+    },
 }
 
 # NOTE: Removed non-existent datasets:
@@ -4128,6 +4283,49 @@ def parse_sd7k_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+def parse_doc3d_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse Doc3D synthetic dewarping labels from filename pattern.
+
+    Filename: ``{docID}_{viewID}-{warpType}_Page_{pageID}-{docCode}.ext``
+    Warp types: pp (plain photo), tc (color checker), pr (projected rainbow).
+
+    IMPORTANT: capture_method is always ``synthetic`` — BlenderProc rendering,
+    NOT camera capture despite the dataset path containing ``camera_captured/``.
+    """
+    import re as _re
+
+    labels = OriginalLabels()
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["source"] = "doc3d"
+    labels.raw_labels["capture_method"] = "synthetic"
+    labels.raw_labels["is_synthetic"] = True
+    labels.raw_labels["correction_task"] = "dewarping"
+
+    # Warp condition bucket (numbered subdirectory 1–22)
+    bucket = image_path.parent.name
+    if bucket.isdigit():
+        labels.raw_labels["warp_bucket"] = int(bucket)
+
+    # Parse structured filename
+    _fn_re = _re.compile(
+        r"^(?P<doc_id>\d+)_(?P<view_id>\d+)-(?P<warp_type>pp|tc|pr)"
+        r"_Page_(?P<page_id>\d+)-(?P<doc_code>[A-Za-z0-9]+)$"
+    )
+    match = _fn_re.match(image_path.stem)
+    if match:
+        labels.raw_labels["warp_type"] = match.group("warp_type")
+        labels.raw_labels["doc_id"] = int(match.group("doc_id"))
+        labels.raw_labels["view_id"] = int(match.group("view_id"))
+        labels.raw_labels["page_id"] = int(match.group("page_id"))
+        labels.raw_labels["doc_code"] = match.group("doc_code")
+    else:
+        labels.raw_labels["warp_type"] = "unknown"
+
+    return labels
+
+
 # ---------------------------------------------------------------------------
 # COCO-Text v2 cached parser
 # ---------------------------------------------------------------------------
@@ -4285,6 +4483,431 @@ def parse_cocotext_labels(dataset_path: Path, image_path: Path) -> OriginalLabel
     return labels
 
 
+# =============================================================================
+# Vertical Japanese / NDL Dataset Parsers (2026-02 Onboarding)
+# =============================================================================
+
+# Module-level cache for JSSODa manifest
+_jssoda_manifest_cache: dict[str, dict] = {}
+
+
+def _load_jssoda_manifest(dataset_path: Path) -> dict[str, dict]:
+    """Load and cache JSSODa manifest.json, keyed by filename."""
+    cache_key = str(dataset_path)
+    if cache_key in _jssoda_manifest_cache:
+        return _jssoda_manifest_cache[cache_key]
+
+    manifest_path = dataset_path / "manifest.json"
+    by_filename: dict[str, dict] = {}
+    if manifest_path.exists():
+        try:
+            with open(manifest_path) as f:
+                data = json.load(f)
+            for subset_key in ("vertical", "horizontal"):
+                for entry in data.get(subset_key, []):
+                    fname = entry.get("filename")
+                    if fname:
+                        by_filename[fname] = entry
+        except Exception as e:
+            logger.debug("Failed to load JSSODa manifest: %s", e)
+    _jssoda_manifest_cache[cache_key] = by_filename
+    return by_filename
+
+
+def parse_jssoda_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse JSSODa (Japanese Synthetic SOcial Document) labels from manifest.
+
+    Structure:
+        jssoda/
+            manifest.json        - {"vertical": [...], "horizontal": [...]}
+            vertical/            - Vertical-layout document images
+            horizontal/          - Horizontal-layout document images
+
+    Each manifest entry: {"filename", "path", "is_vertical", "num_columns",
+                          "source", "split", "index"}
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ja"
+    labels.script_name = "Japanese"
+    labels.iso15924_script_code = "Jpan"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Determine orientation from directory name
+    path_str = str(image_path)
+    if "/vertical/" in path_str:
+        labels.raw_labels["is_vertical"] = True
+        labels.raw_labels["text_orientation"] = "vertical"
+    elif "/horizontal/" in path_str:
+        labels.raw_labels["is_vertical"] = False
+        labels.raw_labels["text_orientation"] = "horizontal"
+
+    # Look up manifest for additional metadata
+    manifest = _load_jssoda_manifest(dataset_path)
+    entry = manifest.get(image_path.name)
+    if entry:
+        labels.raw_labels["num_columns"] = entry.get("num_columns")
+        labels.raw_labels["source"] = entry.get("source", "llm-jp/JSSODa")
+        labels.raw_labels["split"] = entry.get("split")
+        labels.raw_labels["index"] = entry.get("index")
+
+    labels.raw_labels["capture_method"] = "born_digital"
+    labels.raw_labels["dataset_source"] = "jssoda"
+    return labels
+
+
+# Module-level cache for VJRODa JSONL data
+_vjroda_cache: dict[str, dict] = {}
+
+
+def _load_vjroda_data(dataset_images_path: Path) -> dict[str, dict]:
+    """Load and cache VJRODa rw_data_texts.jsonl keyed by image stem."""
+    cache_key = str(dataset_images_path)
+    if cache_key in _vjroda_cache:
+        return _vjroda_cache[cache_key]
+
+    # rw_data_texts.jsonl is one level up from images/
+    jsonl_path = dataset_images_path.parent / "rw_data_texts.jsonl"
+    by_stem: dict[str, dict] = {}
+    if jsonl_path.exists():
+        try:
+            with open(jsonl_path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    record = json.loads(line)
+                    rec_id = record.get("id", "")
+                    if rec_id:
+                        by_stem[rec_id] = record
+        except Exception as e:
+            logger.debug("Failed to load VJRODa JSONL: %s", e)
+    _vjroda_cache[cache_key] = by_stem
+    return by_stem
+
+
+def parse_vjroda_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse VJRODa (Vertical Japanese Real-world OCR Dataset) labels.
+
+    Structure:
+        vjroda/
+            images/              - PNG images named {pid}_{frame:05d}.png
+            rw_data_texts.jsonl  - OCR ground-truth (id, question, text)
+            url_list.jsonl       - Source document URLs
+
+    All VJRODa images are vertical Japanese text from government documents.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ja"
+    labels.script_name = "Japanese"
+    labels.iso15924_script_code = "Jpan"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["is_vertical"] = True
+    labels.raw_labels["text_orientation"] = "vertical"
+    labels.raw_labels["capture_method"] = "scanner"
+    labels.raw_labels["document_domain"] = "administrative"
+
+    # Match by image stem (pid_frame) to JSONL record
+    data = _load_vjroda_data(dataset_path)
+    image_stem = image_path.stem  # e.g., "164000234_00000"
+    record = data.get(image_stem)
+    if record:
+        labels.raw_labels["has_ocr_text"] = True
+        text = record.get("text", "")
+        if text:
+            labels.transcription = text[:500]  # Truncate for metadata
+            labels.raw_labels["transcription_length"] = len(text)
+    else:
+        labels.raw_labels["has_ocr_text"] = False
+
+    return labels
+
+
+# Module-level cache for NDL-DocL VOC XML annotations
+_ndl_docl_cache: dict[str, dict] = {}
+
+
+def _load_ndl_docl_xml(xml_path: Path) -> dict:
+    """Parse a Pascal VOC XML annotation file and return as dict."""
+    try:
+        import xml.etree.ElementTree as ET
+
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+
+        objects = []
+        for obj in root.findall("object"):
+            name_el = obj.find("name")
+            bndbox = obj.find("bndbox")
+            if name_el is None or bndbox is None:
+                continue
+            label = name_el.text or ""
+            try:
+                xmin = int(bndbox.findtext("xmin", "0"))
+                ymin = int(bndbox.findtext("ymin", "0"))
+                xmax = int(bndbox.findtext("xmax", "0"))
+                ymax = int(bndbox.findtext("ymax", "0"))
+                objects.append(
+                    {"label": label, "bbox": [xmin, ymin, xmax - xmin, ymax - ymin]}
+                )
+            except (ValueError, TypeError):
+                pass
+
+        size_el = root.find("size")
+        width = int(size_el.findtext("width", "0")) if size_el is not None else 0
+        height = int(size_el.findtext("height", "0")) if size_el is not None else 0
+        return {"objects": objects, "width": width, "height": height}
+    except Exception as e:
+        logger.debug("Failed to parse NDL-DocL XML %s: %s", xml_path, e)
+        return {}
+
+
+def parse_ndl_docl_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse NDL-DocL (NDL layout-dataset) Pascal VOC layout annotations.
+
+    Structure:
+        ndl-docl/
+            full_images/
+                {subset}/        - subset is PID or XML-derived name
+                    {pid}_{frame}.png
+            tugidigi-annotation/
+                sample/data/{pid}/xml/{pid}_{frame:02d}.xml
+
+    Two document subsets detected from directory structure:
+      - "kotenseki": pre-1868 classical (kuzushiji handwriting)
+      - "kindai": post-1868 modern printed
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ja"
+    labels.script_name = "Japanese"
+    labels.iso15924_script_code = "Jpan"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Detect subset from path parts
+    path_parts = image_path.parts
+    subset = "unknown"
+    for part in path_parts:
+        if "kotenseki" in part.lower():
+            subset = "kotenseki"
+            break
+        if "kindai" in part.lower():
+            subset = "kindai"
+            break
+
+    labels.raw_labels["subset"] = subset
+    if subset == "kotenseki":
+        labels.raw_labels["has_kuzushiji"] = True
+        labels.raw_labels["is_handwriting"] = True
+        labels.raw_labels["document_era"] = "pre-1868"
+    elif subset == "kindai":
+        labels.raw_labels["has_kuzushiji"] = False
+        labels.raw_labels["document_era"] = "post-1868"
+
+    # Try to find the corresponding XML annotation
+    stem = image_path.stem  # e.g., "2544473_1"
+    parts = stem.split("_")
+    if len(parts) >= 2:
+        pid = parts[0]
+        frame_str = parts[-1]
+        # Look for VOC XML in tugidigi-annotation
+        annotation_root = dataset_path.parent / "tugidigi-annotation"
+        xml_candidates = [
+            annotation_root / "sample" / "data" / pid / "xml" / f"{pid}_{int(frame_str):02d}.xml",
+            annotation_root / "sample" / "data" / pid / "xml" / f"{stem}.xml",
+        ]
+        for xml_path in xml_candidates:
+            if xml_path.exists():
+                xml_data = _load_ndl_docl_xml(xml_path)
+                if xml_data:
+                    labels.raw_labels["annotation_objects"] = len(
+                        xml_data.get("objects", [])
+                    )
+                    labels.raw_labels["image_width"] = xml_data.get("width")
+                    labels.raw_labels["image_height"] = xml_data.get("height")
+                    labels.raw_labels["has_voc_annotations"] = True
+                    break
+        else:
+            labels.raw_labels["has_voc_annotations"] = False
+
+    return labels
+
+
+# Module-level cache for pdmocr info.csv data
+_pdmocr_cache: dict[str, dict] = {}
+
+
+def _load_pdmocr_info(images_path: Path) -> dict[str, dict]:
+    """Load and cache pdmocr info.csv keyed by PID."""
+    cache_key = str(images_path)
+    if cache_key in _pdmocr_cache:
+        return _pdmocr_cache[cache_key]
+
+    info_path = images_path.parent / "info.csv"
+    by_pid: dict[str, dict] = {}
+    if info_path.exists():
+        try:
+            import csv
+
+            with open(info_path, encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    pid = str(row.get("PID", "")).strip()
+                    if pid:
+                        by_pid[pid] = dict(row)
+        except Exception as e:
+            logger.debug("Failed to load pdmocr info.csv: %s", e)
+    _pdmocr_cache[cache_key] = by_pid
+    return by_pid
+
+
+def parse_pdmocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse pdmocr-part1 / pdmocr-part2 bibliographic metadata from info.csv.
+
+    Structure:
+        pdmocr-part1/
+            images/              - PNG pages named {pid}_{frame:07d}.png
+            info.csv             - Bibliographic metadata (DatasetID, PID, title, etc.)
+            output/              - Character-level OCR JSON per PID
+
+    DatasetID encodes collection and decade: e.g. "tosho_1870_bunkei".
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ja"
+    labels.script_name = "Japanese"
+    labels.iso15924_script_code = "Jpan"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Parse PID from filename: {pid}_{frame}.png
+    stem = image_path.stem
+    parts = stem.split("_")
+    pid = parts[0] if parts else ""
+    frame = parts[1] if len(parts) > 1 else "0"
+
+    labels.raw_labels["pid"] = pid
+    labels.raw_labels["frame"] = frame
+
+    # Look up bibliographic metadata
+    info = _load_pdmocr_info(dataset_path)
+    record = info.get(pid)
+    if record:
+        dataset_id = record.get("DatasetID", "")
+        labels.raw_labels["dataset_id"] = dataset_id
+        labels.raw_labels["title"] = record.get("タイトル", "")
+        labels.raw_labels["publication_year"] = record.get("出版年", "")
+        # Decode decade from DatasetID (e.g., "tosho_1870_bunkei" -> 1870s)
+        id_parts = dataset_id.split("_")
+        for part in id_parts:
+            if part.isdigit() and len(part) == 4:
+                labels.raw_labels["decade"] = int(part)
+                break
+        labels.raw_labels["ndc_classification"] = record.get("NDC分類", "")
+
+    # Check for character-level OCR ground truth
+    ocr_path = dataset_path.parent / "output" / pid / f"{stem}.json"
+    if ocr_path.exists():
+        labels.raw_labels["has_char_level_ocr"] = True
+    else:
+        labels.raw_labels["has_char_level_ocr"] = False
+
+    labels.raw_labels["capture_method"] = "scanner"
+    return labels
+
+
+# Module-level cache for ndl-minhon v2_metadata.csv
+_ndl_minhon_cache: dict[str, dict] = {}
+
+
+def _load_ndl_minhon_metadata(dataset_path: Path) -> dict[str, dict]:
+    """Load and cache ndl-minhon v2_metadata.csv keyed by relative image path.
+
+    The CSV uses tab-delimited columns:
+        Project ID, Book ID, Book Name, attribution,
+        File ID(Minna De Honkoku), Image URL, GitHub URL
+
+    Images live at: images/{project_id}/{book_id}/{file_id}.png
+    Key is: "{project_id}/{book_id}/{file_id}.png"
+    """
+    cache_key = str(dataset_path)
+    if cache_key in _ndl_minhon_cache:
+        return _ndl_minhon_cache[cache_key]
+
+    # v2_metadata.csv is one directory up from images/
+    csv_path = dataset_path.parent / "v2_metadata.csv"
+    by_rel_path: dict[str, dict] = {}
+    if csv_path.exists():
+        try:
+            import csv
+
+            with open(csv_path, encoding="utf-8-sig", newline="") as f:
+                reader = csv.DictReader(f, delimiter="\t")
+                for row in reader:
+                    project_id = str(row.get("Project ID", "")).strip()
+                    book_id = str(row.get("Book ID", "")).strip()
+                    # Column name has a space: "File ID(Minna De Honkoku)"
+                    file_id = str(
+                        row.get("File ID(Minna De Honkoku)", row.get("File ID", ""))
+                    ).strip()
+                    if project_id and book_id and file_id:
+                        rel_key = f"{project_id}/{book_id}/{file_id}.png"
+                        by_rel_path[rel_key] = dict(row)
+        except Exception as e:
+            logger.debug("Failed to load ndl-minhon v2_metadata.csv: %s", e)
+    _ndl_minhon_cache[cache_key] = by_rel_path
+    return by_rel_path
+
+
+def parse_ndl_minhon_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse NDL-Minhon (NDL kuzushiji handwriting) metadata from v2_metadata.csv.
+
+    Structure:
+        ndl-minhon/
+            images/{project_id}/{book_id}/{file_id}.png
+            v2_metadata.csv  - Tab-separated: Project ID, Book ID, Book Name,
+                               attribution, File ID, Image URL, GitHub URL
+
+    All images are kuzushiji (classical Japanese cursive) handwriting from
+    pre-Meiji historical documents. CC-BY-SA 4.0.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ja"
+    labels.script_name = "Japanese"
+    labels.iso15924_script_code = "Hani"  # Kuzushiji uses Kanji-derived characters
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["is_kuzushiji"] = True
+    labels.raw_labels["handwriting_script"] = "kuzushiji"
+    labels.raw_labels["is_vertical"] = True
+    labels.raw_labels["text_orientation"] = "vertical"
+    labels.raw_labels["capture_method"] = "scanner"
+
+    # Build relative path key: {project_id}/{book_id}/{file_id}.png
+    try:
+        rel_path = str(image_path.relative_to(dataset_path))
+    except ValueError:
+        rel_path = image_path.name
+
+    meta = _load_ndl_minhon_metadata(dataset_path)
+    record = meta.get(rel_path)
+    if record:
+        labels.raw_labels["project_id"] = record.get("Project ID", "")
+        labels.raw_labels["book_id"] = record.get("Book ID", "")
+        labels.raw_labels["book_name"] = record.get("Book Name", "")
+        labels.raw_labels["attribution"] = record.get("attribution", "")
+        labels.raw_labels["image_url"] = record.get("Image URL", "")
+
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -4331,6 +4954,13 @@ LABEL_PARSERS = {
     "parse_docreal_labels": parse_docreal_labels,
     "parse_sd7k_labels": parse_sd7k_labels,
     "parse_cocotext_labels": parse_cocotext_labels,
+    "parse_doc3d_labels": parse_doc3d_labels,
+    # Vertical Japanese / NDL parsers (2026-02)
+    "parse_jssoda_labels": parse_jssoda_labels,
+    "parse_vjroda_labels": parse_vjroda_labels,
+    "parse_ndl_docl_labels": parse_ndl_docl_labels,
+    "parse_pdmocr_labels": parse_pdmocr_labels,
+    "parse_ndl_minhon_labels": parse_ndl_minhon_labels,
 }
 
 

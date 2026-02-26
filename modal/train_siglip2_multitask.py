@@ -136,8 +136,8 @@ IQA_DIMENSIONS = ("overall", "sharpness", "color")
 
 # Task group definitions
 IQA_TASKS = IQA_DIMENSIONS
-CLASSIFICATION_TASKS = ("script", "source", "orientation")
-REGRESSION_TASKS = ("shadow", "warping")
+CLASSIFICATION_TASKS = ("script", "source", "orientation", "code_cls")
+REGRESSION_TASKS = ("shadow", "warping", "skew_reg", "presence_score", "legibility_score")
 ALL_TASKS = IQA_TASKS + CLASSIFICATION_TASKS + REGRESSION_TASKS
 
 # Head architecture configurations
@@ -193,6 +193,40 @@ HEAD_CONFIGS: dict[str, dict[str, Any]] = {
     "warping": {
         "hidden_dim": 64,
         "output_dim": 2,
+        "dropout": 0.0,
+        "type": "regression_uncertainty",
+    },
+    # --- Defect 2 fix: code_cls (SIG-G5-4) ---
+    # Binary code-presence classifier (2-class cross_entropy ≡ sigmoid+BCE).
+    # Formerly misnamed "code_reg" with MSE loss.  Metrics: AUC, F1.
+    "code_cls": {
+        "hidden_dim": 64,
+        "output_dim": 2,   # 0=no code, 1=has code
+        "dropout": 0.0,
+        "type": "classification",
+    },
+    # --- Defect 3 fix: skew_reg (SIG-G3-2) ---
+    # Post-correction residual skew, SIGNED degrees (positive=clockwise).
+    # Gaussian NLL (heteroscedastic) preferred over SmoothL1 — see SKEW-SIG-G04.
+    # Shares assembled 90K skew dataset with MNV4-H2 (identical label convention).
+    "skew_reg": {
+        "hidden_dim": 64,
+        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
+        "dropout": 0.0,
+        "type": "regression_uncertainty",
+    },
+    # --- Defect 1 fix: handwriting regression heads (SIG-G4-4, SIG-G4-5) ---
+    # N_A sentinel = -1.0 in manifests; samples with -1.0 are masked (task_mask=0).
+    # Masked loss already handled by MultiTaskLoss via task_masks dict.
+    "presence_score": {
+        "hidden_dim": 64,
+        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
+        "dropout": 0.0,
+        "type": "regression_uncertainty",
+    },
+    "legibility_score": {
+        "hidden_dim": 64,
+        "output_dim": 2,   # [mu, sigma_sq] for Gaussian NLL
         "dropout": 0.0,
         "type": "regression_uncertainty",
     },
@@ -271,6 +305,13 @@ class MultiTaskTrainingConfig:
             "orientation": 0.5,
             "shadow": 0.3,
             "warping": 0.3,
+            # Defect 2: code_cls (binary classification, weight=0.5)
+            "code_cls": 0.5,
+            # Defect 3: skew_reg (post-correction residual, weight=0.5)
+            "skew_reg": 0.5,
+            # Defect 1: handwriting regression heads (masked when N_A, weight=0.3)
+            "presence_score": 0.3,
+            "legibility_score": 0.3,
         }
     )
 
@@ -1156,6 +1197,27 @@ def _create_multitask_dataset(
                     if reg_task in entry:
                         sample["labels"][reg_task] = float(entry[reg_task])
                         sample["task_masks"][reg_task] = 1
+
+                # Defect 3 fix: skew_reg (SIG-G3-2) — signed degrees, no abs()
+                if "skew_angle" in entry:
+                    sample["labels"]["skew_reg"] = float(entry["skew_angle"])
+                    sample["task_masks"]["skew_reg"] = 1
+
+                # Defect 2 fix: code_cls (SIG-G5-4) — binary 0/1 from code_confidence
+                if "code_confidence" in entry:
+                    sample["labels"]["code_cls"] = int(float(entry["code_confidence"]))
+                    sample["task_masks"]["code_cls"] = 1
+
+                # Defect 1 fix: handwriting regression heads (SIG-G4-4, SIG-G4-5)
+                # N_A sentinel = -1.0 → mask=0 (MultiTaskLoss skips these samples).
+                # Valid labels are in [0.0, 1.0] and always include a mask=1 entry.
+                for hw_reg in ("presence_score", "legibility_score"):
+                    if hw_reg in entry:
+                        val = float(entry[hw_reg])
+                        if val >= 0.0:
+                            sample["labels"][hw_reg] = val
+                            sample["task_masks"][hw_reg] = 1
+                        # val == -1.0: N_A sentinel, no mask entry → loss skipped
 
                 # Only keep samples with at least one label
                 if sample["task_masks"]:
