@@ -15,7 +15,7 @@ tags:
 > **Supersedes**: [PROJECT_PLAN.md](PROJECT_PLAN.md) and
 > [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md)
 >
-> **Last Updated**: 2026-02-25
+> **Last Updated**: 2026-02-26
 >
 > **For system narrative** (what the system does and why its design is sound), see
 > [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md).
@@ -394,6 +394,14 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 
 **Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
 (2,985 → 12,000 images).
+
+**Acquisition sequencing**: The dataset gathering strategy
+([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
+dataset work is executed within each phase. It prioritizes real-world data acquisition by
+difficulty (4 tiers: S/A/B/C), then fills gaps with synthetic generation. The strategy accounts
+for cross-dataset sharing that reduces the unique image requirement from ~565K (naive per-head
+sum) to ~420–440K actual unique images — see
+[UNIFIED_TRAINING_CORPUS.md §1b](../datasets/UNIFIED_TRAINING_CORPUS.md#1b--unique-source-pool-analysis).
 
 ### Key Per-Group Findings
 
@@ -832,6 +840,11 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 
 ## 8. Dependency Map
 
+**Sequencing guide**: [DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md) provides
+the detailed acquisition ordering for all dataset work items below. It maps four gathering
+phases (real data → coverage assessment → synthetic fill → gap remediation) onto the tier
+structure shown here.
+
 ```text
 [Tier 0 — All must complete before label generation or training]
     ├──▶ Fix: 3 architectural defects (N_A sentinel, code_cls, skew derivation) — 3-5h total
@@ -861,6 +874,7 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
     ├──▶ Data: Compound distortion augmentation pipeline (3-5 days)
     ├──▶ Data: SIG-G3-2 narrow-range skew dataset build from scratch (2-3 weeks) [T5]
     ├──▶ Data: ADF scanner training data sourcing (2-3 weeks, long-running)
+    ├──▶ Data: Dataset gathering strategy execution (Phases 1-4, real-first acquisition)
     └──▶ Docs: P0 documentation corrections (Section 7, items 1-7)
               │
               ▼ (all Tier 1 streams complete)
@@ -940,6 +954,9 @@ P2 = monitor and improve.
 | Stage 0 router: format catalog + consensus | [../../tmp_cleanup/docling_format_routing_analysis.md](../../tmp_cleanup/docling_format_routing_analysis.md) |
 | Training readiness assessment (Go/No-Go, tier scoring, phased schedule) | [TRAINING_DATA_STRATEGIC_ANALYSIS.md](TRAINING_DATA_STRATEGIC_ANALYSIS.md) |
 | OOD corpus build plan (5 phases, hardware substitutes, sub-commands) | [../../tmp_cleanup/OOD_CORPUS_PLAN.md](../../tmp_cleanup/OOD_CORPUS_PLAN.md) |
+| Dataset gathering strategy (real-first acquisition sequencing) | [DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md) |
+| Unified training corpus (per-head sizes, sharing analysis, acceptance criteria) | [../datasets/UNIFIED_TRAINING_CORPUS.md](../datasets/UNIFIED_TRAINING_CORPUS.md) |
+| Corpus OOD review (acceptance scorecard, gap analysis) | [CORPUS_OOD_REVIEW_REPORT.md](CORPUS_OOD_REVIEW_REPORT.md) |
 | Architecture diagrams (all four levels) | [docs/architecture/](../architecture/) |
 | Historical plan (Phases 0–9, superseded) | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | Value-stream plan (Streams 1–8, superseded) | [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md) |
