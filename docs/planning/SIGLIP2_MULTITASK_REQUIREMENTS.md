@@ -119,6 +119,7 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 | **Page: shadow_score** | NONE (gap) | SigLIP 2 Head Group 5 | Regression (0-1) | P2 |
 | **Page: warping_score** | NONE (gap) | SigLIP 2 Head Group 5 | Regression (0-1) | P2 |
 | **Page: code_confidence** | NONE (gap) | SigLIP 2 Head Group 5 | Regression (0-1) | P2 |
+| **Page: resolution_quality** | MobileNetV4 Head 3 | SigLIP 2 Head Group 5 (redundant) | Regression (0-1, char-height-aware) | P2 — provides teacher signal back to MobileNetV4 + single-pass CPU fallback |
 | **Page: capture_method** | NONE (gap) | SigLIP 2 Head Group 5 | Classification (7 classes) | P2 |
 | **Layout: 11 DocLayNet elements + bboxes** | docling-layout-egret-xlarge / docling-layout-heron | **Keep docling-layout** | Object detection | N/A |
 | **Layout: layout_type** | Derived from docling-layout | **Keep derivation** | Rule-based | N/A |
@@ -134,7 +135,7 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 
 ### What SigLIP 2 NAFlex handles (single inference pass, ~50ms GPU)
 
-**16 task heads across 5 head groups:**
+**19 task heads across 5 head groups:**
 
 - **Group 1 (IQA)**: 5 regression heads (blur, noise, contrast, skew, compression) + overall_quality
 - **Group 2 (Script)**: 1 classification head (10 classes Phase 1, expanding to full OpenLID coverage; Mong/Syrc/Geor permanently excluded as OOD anchors)
@@ -195,7 +196,7 @@ Shared Feature Vector (768-dim)
           - capture_cls: Linear(768->128) -> Linear(128->7) [born_digital..fax]
           - shadow_reg: Linear(768->128) -> Linear(128->1)  [0-1 severity]
           - warping_reg: Linear(768->128) -> Linear(128->1) [0-1 severity]
-          - code_reg: Linear(768->128) -> Linear(128->1)    [0-1 confidence]
+          - code_cls: Linear(768->128) -> Linear(128->1)    [0-1 confidence; sigmoid+BCE]
           - resolution_quality_reg: Linear(768->128) -> Linear(128->1) [0-1, char-height-aware]
             (Redundant with MobileNetV4 head; provides teacher signal + validation)
 
@@ -249,7 +250,7 @@ Total CPU fallback: ~500-600ms (SigLIP handles everything in single-pass)
 
 ## 3. Training Datasets by Task Group
 
-### Group 1: IQA (5 regression heads)
+### Group 1: IQA (6 regression heads: 5 individual + 1 aggregate)
 
 **Status**: Training data ready. SigLIP 2 already trained on DIQA-5000 (VQualA 0.886).
 
@@ -389,8 +390,14 @@ The orientation head handles 90-degree increment rotations. The skew head detect
 
 **Label harmonization needed**: Map diverse labels to unified schema:
 
-- `presence`: Derive from text area ratio (NONE <1%, SPARSE <10%, MODERATE 10-30%, SUBSTANTIAL 30-60%, DOMINANT >60%)
-- `legibility`: Map HierText `legible` bool + COCO-Text `legibility` to 6-level scale
+- `presence`: Derive from text area ratio using schema-aligned thresholds:
+  - NONE <1%, **MARGINAL** <10%, **PARTIAL** 10–50%, SUBSTANTIAL 50–90%, DOMINANT >90%
+  - *(Previously used SPARSE/MODERATE — corrected to match `layer2_enrichment_v2.schema.json`)*
+- `legibility`: Map HierText `legible` bool + COCO-Text `legibility` to 6-level scale.
+  IAM, Muharaf, PUCIT-OHUL, and NIST-SD19 require multi-model VLM scoring
+  (`scripts/score_handwriting_legibility.py`).
+  **ILLEGIBLE class**: synthesize 200–500 examples via aggressive degradation augmentation
+  (smear, heavy blur, ink overwrite) applied to IAM/Muharaf images — KHATT remains OOD-reserved.
 - `content_type`: Derive from transcription patterns (digits-only = numeric, short = alphanumeric, long = prose)
 
 **Negative samples** (non-handwriting): DocLayNet (80K printed docs), TableBank (278K tables), RVL-CDIP (400K mixed) - sample ~50K for class balance.
@@ -470,7 +477,7 @@ The current routing logic (4 strategies: ocr_fast, ocr_advanced, vision_simple, 
 | **script_code = "Tibt"** | `pipeline: "vlm"` | Tibetan has no good OCR; use VLM |
 | **has_non_latin = true** | `page_batch_size: reduced` | CJK models use more memory |
 | **has_rtl = true** | Layout engine RTL mode | Arabic/Hebrew reading order |
-| **handwriting.presence >= MODERATE** | `ocr_routing: "ocr_advanced"` or `"vision_simple"` | Handwriting needs special handling |
+| **handwriting.presence >= PARTIAL** | `ocr_routing: "ocr_advanced"` or `"vision_simple"` | Handwriting needs special handling |
 | **handwriting.legibility <= FAIR** | `pipeline: "vlm"` | Poor handwriting needs VLM |
 | **shadow_score > 0.3** | Trigger DocRes shadow removal | Pre-correction before OCR |
 | **warping_score > 0.3** | Trigger DocRes dewarping | Pre-correction before OCR |
@@ -485,7 +492,7 @@ The current routing logic (4 strategies: ocr_fast, ocr_advanced, vision_simple, 
 pre_ocr_risk = 0.30 * degradation_score        # from IQA
              + 0.20 * complexity_score          # from layout
              + 0.15 * (1 if image_only else 0)  # pdf type
-             + 0.10 * handwriting_penalty        # 0 if NONE, 0.3 if MODERATE, 0.6 if SUBSTANTIAL, 1.0 if DOMINANT
+             + 0.10 * handwriting_penalty        # 0 if NONE, 0.3 if PARTIAL, 0.6 if SUBSTANTIAL, 1.0 if DOMINANT
              + 0.10 * script_difficulty          # 0 for Latin, 0.3 for CJK, 0.5 for Arabic, 0.8 for Tibetan
              + 0.10 * degradation_artifact       # shadow + warping combined
              + 0.05 * (1 - legibility_score)     # handwriting quality

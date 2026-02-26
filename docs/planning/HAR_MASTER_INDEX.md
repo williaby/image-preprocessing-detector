@@ -62,7 +62,7 @@ insufficient regardless of image count.
 | SIG-G5-1 | capture_cls | `capture_method.method` (7-class enum) | CaptureMethodInfo |
 | SIG-G5-2 | shadow_reg | `physical_degradation.shadow_severity` (0-1) | PhysicalDegradationInfo |
 | SIG-G5-3 | warping_reg | `physical_degradation.warping_severity` (0-1) | PhysicalDegradationInfo |
-| SIG-G5-4 | code_reg | `content_flags.has_code` + `structure.code_language` | ContentFlags / StructureInfo |
+| SIG-G5-4 | code_cls | `content_flags.has_code` + `structure.code_language` | ContentFlags / StructureInfo |
 | SIG-G5-5 | resolution_quality_reg | `resolution.resolution_quality_score` (shared with MNV4-H3) | ResolutionInfo |
 
 ---
@@ -98,7 +98,7 @@ insufficient regardless of image count.
 | SIG-G5-1 | capture_cls | [sig-g5-capture-cls.md](har/sig-g5-capture-cls.md) | `capture_method.method` | ⚠️ 3/7 classes viable; CAMERA_PROF/ADF/FAX: 0 | ⚠️ Partial; schema reduction needed | 4 | ⚠️ 59/100 | ✅ Done |
 | SIG-G5-2 | shadow_reg | [sig-g5-shadow-reg.md](har/sig-g5-shadow-reg.md) | `physical_degradation.shadow_severity` | ❌ 0/15K — L2 field unpopulated; label_shadow_severity.py missing | ❌ 0/15K blocked | 3 | ❌ 28/100 | ✅ Done |
 | SIG-G5-3 | warping_reg | [sig-g5-warping-reg.md](har/sig-g5-warping-reg.md) | `physical_degradation.warping_severity` | ❌ 0/20K — derivation formula undefined; label_warping_severity.py missing | ❌ 0/20K blocked | 4 | ❌ 17/100 | ✅ Done |
-| SIG-G5-4 | code_reg | [sig-g5-code-reg.md](har/sig-g5-code-reg.md) | `content_flags.has_code` | ⚠️ 8.6K/10K from dry-run; negative contamination unvalidated | ⚠️ 0/10K (full run pending) | 5 | ⚠️ 55/100 | ✅ Done |
+| SIG-G5-4 | code_cls | [sig-g5-code-cls.md](har/sig-g5-code-cls.md) | `content_flags.has_code` | ⚠️ 8.6K/10K from dry-run; negative contamination unvalidated | ⚠️ 0/10K (full run pending) | 5 | ⚠️ 55/100 | ✅ Done |
 
 ---
 

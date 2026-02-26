@@ -15,7 +15,7 @@ tags:
 > **Supersedes**: [PROJECT_PLAN.md](PROJECT_PLAN.md) and
 > [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md)
 >
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-02-25
 >
 > **For system narrative** (what the system does and why its design is sound), see
 > [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md).
@@ -85,7 +85,7 @@ Prepare-Doc's image pipeline serves two distinct, sequential functions:
 
 **Function 2 — Analysis Signals** (Stage 2, on the corrected image):
 
-- SigLIP 2 (16 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
+- SigLIP 2 (19 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
   `DocumentMetadata.json`
 - These signals are consumed by Unify to configure docling processing
 - **Architectural boundary**: Prepare-Doc is an **analysis oracle** — it delivers signals but
@@ -149,7 +149,7 @@ independently:
 Key architectural decisions made during this restructuring:
 
 - **SigLIP 2 NAFlex** replaces the ResNet teacher-student pair for IQA, expanding coverage
-  to 16 heads across 5 task groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
+  to 19 heads across 5 task groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
 - **MobileNetV4-Conv-S** is added as a fast pre-correction gate before SigLIP 2
 - **docling-layout** (egret-large / heron) replaces YOLOv10-doc for layout detection
 - **YOLOv10-doc** remains stable and deployed; it will be replaced in Stream 5
@@ -281,10 +281,18 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
   validated. The actual multi-task **training run has not been executed** — no trained SigLIP 2
   model exists yet. Awaiting dataset assembly (Stream 4B completion).
 - **OOD holdout design**: The design documents and DDRs 1–8 are complete.
-  `metadata_registry/ood_registry.jsonl` exists but has **0 entries** — the actual OOD image
-  collection has not been executed. DDRs 9 (shadow) and 10 (warping) are **blocked** pending
-  Tier 0 severity labeling. Also: synth-multiscript-v3 generator bug is fixed, but the
-  completion run to reach 350K images has not been executed (current count: 190,485).
+  `metadata_registry/ood_registry.jsonl` has **2,985 entries** (24.9% of the 12,000-image
+  minimum target). The minimum viable P0 gate is passed — directional evaluation is feasible,
+  but statistically rigorous evaluation requires ~12,000 images. The phased OOD build plan
+  (5 phases: infrastructure → P0 MVS → programmatic generation → public downloads → validation)
+  is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. DDRs 9 (shadow) and 10 (warping) are
+  **blocked** pending Tier 0 severity labeling. **Two OOD evaluation metric errors** are also
+  present and must be corrected before any trained model is evaluated against OOD data (see
+  Section 6 Tier 1). Also: synth-multiscript-v3 generator bug is fixed, but the completion run
+  to reach 350K images has not been executed (current count: 190,485).
+- **doc3d license confirmed MIT**: doc3d (102,000 images with 3D mesh warping ground truth) was
+  previously assumed NC-SA-blocked; confirmed MIT-licensed as of 2026-02-24. Now available in
+  all commercial scenarios and is a primary source for SIG-G5-3 (warping_reg).
 - **MobileNetV4 training**: Training is complete (best checkpoint: epoch 47,
   `modal/train_skew_estimator.py`, run ID `20260212_155402`). **Production pipeline integration
   has not been done** — MobileNetV4 does not yet run in the live pipeline. That is Stream 4D.
@@ -343,9 +351,110 @@ These architectural choices are settled. Changes require explicit consensus and 
 
 ---
 
+## 5a. Training Readiness Assessment (2026-02-24)
+
+> **Full analysis**: [TRAINING_DATA_STRATEGIC_ANALYSIS.md](TRAINING_DATA_STRATEGIC_ANALYSIS.md)
+> — 4-model consensus (Gemini 2.5 Pro, Gemini 3 Pro Preview, DeepSeek R1 0528, Grok 4),
+> mean confidence 8.5/10. All tier trade-offs, head-by-head scoring matrix, and performance
+> delta estimates are documented there. This section captures the actionable verdict.
+
+### Verdict: CONDITIONAL GO — T4+T6 strategy, 16 heads, Release 1
+
+Proceed with T4 (Enriched Current) + T6 (Computational Enhancements) data tier, descoped to
+**16 heads** for Release 1. Defer 6 heads (G4 handwriting group of 5 + SIG-G3-2 narrow-range
+skew) to Release 2, pending T5 targeted data acquisition.
+
+**Current state**: mean D1–D6 readiness score 27/100; 8 heads blocked; no heads ready.
+**T4+T6 target state**: 6 heads ready (≥75), 7 near-ready (60–74), 9 needs-work (30–59), 0
+blocked; all 22 heads unblocked for training.
+
+**T2 and T3 are inert tiers** — license-only tiers produce zero improvement for blocked heads.
+The blocked heads are blocked on missing labeling scripts, not missing data volume.
+
+### Three Architectural Defects (Critical Path — 3–5 hours total)
+
+These are code defects that must be fixed **before any training labels are generated**.
+Labels generated with these defects are permanently corrupted and cannot be salvaged.
+
+| # | Defect | Severity | Heads Affected | Fix |
+| --- | --- | --- | --- | --- |
+| D1 | **N_A Sentinel Value**: `0.0` for "no handwriting" is identical to "absent/illegible" | CRITICAL | G4-1 through G4-5 (all 5 HW heads) | Change to `-1.0`; apply masked loss |
+| D2 | **code_reg misclassified as regression**: binary task using MSE loss | HIGH | SIG-G5-4 | Rename `code_cls`; switch to BCE loss + AUC/F1 metrics |
+| D3 | **SIG-G3-2 skew derivation conflict**: unsigned vs. signed target ambiguity | MEDIUM | SIG-G3-2 | Document signed/unsigned semantics; align implementation |
+
+### Phased Training Schedule
+
+| Phase | Weeks | Scope | Gate |
+| --- | --- | --- | --- |
+| 0 | 1–2 | Fix 3 architectural defects + deployment model decision + initiate license reviews | All 3 defects fixed; deployment model decided |
+| 1 | 2–4 | Train MNV4-Conv-S: orientation (50K), skew (90K), resolution quality (15K) | T4 data assembled for 3 heads |
+| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; SRCC gate for VLM IQA |
+| 3 | 8–12 | Integrate G3 geometry heads; execute E03 (warping) + E05 (RQ V2); expand to 16 active heads | 14+ heads at quality gate |
+| 4 | 12+ (Release 2) | T5 handwriting data (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
+
+**Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
+(2,985 → 12,000 images).
+
+### Key Per-Group Findings
+
+- **MNV4-H1 + MNV4-H2**: Only two immediately trainable heads (documented limitations:
+  non-Latin coverage <1%; MNV4-H2 at 79.1% synthetic vs. ≤37.5% ideal cap).
+- **G5-2 (shadow_reg)**: Highest single-action leverage — blocked at 13/100 now, reaches
+  75/100 (ready) with one missing script: `label_shadow_severity.py` on sd7k + wsrd.
+- **G5-3 (warping_reg)**: Warping severity formula must be defined before any labeling.
+  doc3d (102K images, MIT-confirmed) is the primary source. Formula:
+  `severity = clip(k * std(Z_grid_normalized), 0.0, 1.0)`.
+- **G4 Handwriting**: Highest-risk group. No tier achieves "ready" in 12 weeks. ILLEGIBLE
+  class at 0 examples; MIXED_TYPED_HW at 0 examples. G4-2 and G4-5 performance targets
+  exceed inter-annotator agreement ceilings — targets must be revised downward before
+  training. Deferred to Release 2.
+- **SIG-G3-2**: The +/-2° narrow-range skew dataset does not exist and must be built from
+  scratch (~20K images). No existing script creates it. T5 minimum viable tier for this head.
+- **G1-6 (overall_quality)**: VLM prompt v2.0 must achieve SRCC > 0.60 on 30–50 validation
+  images before scaling. Current SRCC = 0.53 is insufficient for regression training.
+- **SIG-G5-4 (code_cls)**: Fastest path to improvement of any currently blocked head — dry-run
+  produced 8,613 records; D6 fixed by code_reg→code_cls rename (Defect 2 above).
+
+---
+
 ## 6. Remaining Work
 
 ### Tier 0 — Prerequisites (in flight, blocks everything)
+
+#### Fix three architectural defects (~3–5h total, blocks all label generation)
+
+Must be fixed before any training labels are generated. Labels created with these defects are
+permanently corrupted. Full context in Section 5a.
+
+| Defect | Location | Fix | Effort |
+| --- | --- | --- | --- |
+| N_A sentinel `0.0` in handwriting heads | All parsers that emit HW labels | Change to `-1.0`; add masked loss | 1–2h |
+| `code_reg` configured with MSE loss | Head registry, training script, inference | Rename `code_cls`; switch BCE + AUC/F1 | 1–2h |
+| SIG-G3-2 skew signed/unsigned ambiguity | Skew derivation logic | Document semantics; align implementation | 1.5h |
+
+#### Decide deployment model (SaaS vs. distributed)
+
+- **What**: Determines whether CC-BY-SA-4.0 datasets (e.g., kuzushiji, hiertext) can be used.
+  CC-BY-SA-4.0 is potentially incompatible with distributed model distribution but not with
+  SaaS/API. Legal review required.
+- **Effort**: 1 day (decision) + 2 weeks (legal review if distributed model chosen)
+- **Unblocks**: License strategy for T3 datasets; all 55+ dataset scope decisions
+
+#### Initiate sd7k/wsrd license resolution
+
+- **What**: sd7k (7,239 images) and wsrd (4,500 images) have unconfirmed licenses. Email dataset
+  authors to request formal permission. Treat as all-rights-reserved for model card disclosure
+  until confirmation received. Fallback if authors unresponsive: replace with synthetic shadow
+  from v3 (8K images) + doc3d (MIT, for warping).
+- **Effort**: 1 day (email drafting + send); resolution timeline: 2–4 weeks
+
+#### Define warping severity formula for doc3d
+
+- **What**: `label_warping_severity.py` cannot be implemented without a defined formula for
+  converting doc3d's 3D mesh displacement to a scalar severity score. Decision needed:
+  `severity = clip(k * std(Z_grid_normalized), 0.0, 1.0)` (consensus recommendation).
+  Once defined, doc3d (102K images, MIT-confirmed) unlocks SIG-G5-3 at T4+T6 score 68 (near-ready).
+- **Effort**: 0.5 days (domain decision) + 3–4 days (implementation and labeling on GPU VM)
 
 #### Shadow severity labeling (~3h GPU remaining)
 
@@ -403,15 +512,61 @@ discovered. The remaining ~159,515 images (to reach the 350K target) must be gen
 - **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
 - **Prerequisite**: Verify the per-script dict fix is active before running
 
-#### Stream 4C: Populate OOD registry
+#### Stream 4C: OOD corpus build (2,985 → 12,000 images)
 
-`metadata_registry/ood_registry.jsonl` exists but has **0 entries**. The OOD leakage
-enforcement checks pass (vacuously) but provide no actual holdout protection.
+`metadata_registry/ood_registry.jsonl` has 2,985 entries (24.9% of target). The phased build
+plan is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. All hardware-capture sub-sources have
+confirmed public-dataset substitutes — **no physical equipment collection is required**.
 
-- **Target**: ≥600 entries with `split_type: "ood"` (minimum: Mongolian-script images)
-- **Source**: Route Mongolian-script images from synth-multiscript-v3 to OOD; do not include
-  in any training manifest
-- **Also needed**: Syriac and Georgian samples from external sources (see OOD_DATASET_DESIGN.md)
+**Key infrastructure** (Phase 0, Day 1):
+
+- `scripts/ood_utils.py` — SHA256, pHash dedup, registry writer (dependencies: `imagehash`,
+  `albumentations`, `arxiv`, `playwright` — add under `[project.optional-dependencies] ood`)
+- `scripts/build_ood_dataset.py` — Click CLI with one sub-command per OOD category/phase
+- `/mnt/e/image_detection/ood/{category}/` directory structure (9 subdirs)
+
+**Phase 1 — P0 Zero-Cost MVS (~300 images, Day 2)**:
+
+- `derive-cascade-failures`: 100 symmetric DocLayNet test pages (OOD-Geometry 9a-1);
+  100 MIDV-500 and MIDV-2020 extreme-perspective frames (2b)
+- `arxiv-smoke-test`: 100 arXiv PDF pages rendered at 300 DPI (OOD-Domain smoke test)
+
+**Phase 2 — Programmatic Generation (~2,500 images, Days 3–7)**:
+
+- `generate-synthetic-degradation`: 500 compound-distortion images (4a, Albumentations — NOT
+  Augraphy to avoid training correlation), 100 watermarked (4b), 100 binarized (4d), 200
+  4th-gen photocopies (3c: L3iDocCopies real and Augraphy simulation)
+- `render-vector-pdfs`: 300 DocLayNet test pages at 72/150/300 DPI (6a, resolution OOD)
+- `generate-upscaled-rasters`: 200 OHR-Bench pages at 2× and 4× bicubic (6b)
+- `render-font-variations`: 75 Google Fonts ornamental/calligraphic pages (1h, script OOD)
+- `render-code-screenshots`: 100 Pygments/browser code screenshots (8a), 60 arXiv code pages
+  (8b), 40 terminal output renders (8c) using Playwright headless browser
+- `generate-ood-mixed`: ~230 derived compound images (9b-1 book gutter, 9b-3 aged+fax,
+  9c-2 Arabic binarized+JPEG, 9d-3 form+skew)
+
+**Phase 3 — Public Dataset Downloads (~2,600 images, Week 2)**:
+
+- Script OOD: synth-v3 Mongolian in-place (50, GCS), SANA Syriac (120), Georgian Wikimedia
+  (100), Historical Fraktur (50), KhmerST from L3i (60), AMADI_LontarSet from L3i (40),
+  NDL Digital vertical Japanese (100)
+- Geometry: WarpDoc Perspective subset (50), docalign12k perspective subset (50)
+- Capture: DLC-2021 display conditions (100, academic-only ⚠️), MIDV-500 specular (80),
+  MIDV-2020 flat (70), WarpDoc fold/curved/rotating (120), docalign12k fold (80)
+- Degradation: Internet Archive CC0 book scans with gutter shadow (book 4c)
+- Handwriting: Muharaf (interim for 5a), SCUT-HCCDoc Chinese HW (5b), IIIT-INDIC (5c)
+- Domain: EUR-Lex gov forms (7a), CORD receipts (7c, CC-BY-4.0, 11K Indonesian receipts)
+
+**Phase 4 — Metadata Annotation & Validation (Week 3)**:
+All acquired images need ground-truth annotation across all 22 head fields where feasible.
+`label_tier` field distinguishes: `ground_truth`, `heuristic`, `inference` (model-derived).
+
+**Dedup protocol**: SHA256 exact match OR pHash Hamming ≤ 5 against all training manifests.
+OHR-Bench: assign `split_type="ood"` NOW — all 8,561 pages are `split='unknown'`; must be
+assigned before any training manifest uses them.
+
+**License constraint note**: DLC-2021 (screen recaptures) is academic-only. All DLC-2021
+registry entries must carry `license_restriction=academic`. For commercial production,
+replace with Albumentations `MoirePattern` synthetic generation.
 
 #### Stream 0: Document Type Router (new — architectural gap)
 
@@ -488,6 +643,28 @@ but is not in the current master plan.
 - **What to build**: Augmentation pipeline on OHR-Bench / DIQA-5000 base images that applies
   2–5 distortions per image, generating compound examples
 - **Effort**: 3–5 days
+
+#### SIG-G3-2: Build +/-2° narrow-range skew dataset from scratch
+
+The post-correction narrow-range skew dataset (~20,000 images at ±0.5–2° increments) does not
+exist. No existing script creates it. T4 (which only runs existing scripts) does not address
+this. **T5 is the minimum viable tier for SIG-G3-2.**
+
+- **What to build**: Synthetically rotate clean DocLayNet, SROIE, and Arabic documents at
+  0.1–2° increments; generate ~20,000 images; label with exact rotation angle as ground truth
+- **Effort**: 2–3 weeks (generation script + GPU run)
+- **Score impact**: Moves SIG-G3-2 from 20/100 (blocked) to 55/100 (needs-work) at T5
+
+#### OOD evaluation metric corrections (fix before any model is evaluated on OOD data)
+
+Two metric errors in the current OOD evaluation design must be corrected before any trained
+model is evaluated against the OOD corpus. Evaluating with the current metrics will produce
+misleading results even for heads that are training-ready.
+
+| Error | Location | Fix |
+| --- | --- | --- |
+| ILLEGIBLE OOD floor uses classification accuracy (invalid — model has 0 training examples for that class) | OOD evaluation pipeline | Replace with OSR Energy Score rejection rate; gate: ≥70% |
+| MNV4-H1 uses raw softmax confidence for abstention | MNV4 inference / evaluation | Replace with Energy Score (required for overconfident transformer architectures) |
 
 #### ADF scanner training data sourcing
 
@@ -637,7 +814,7 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 | --- | --- | --- | --- |
 | 1 | [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) | Full service-name update (7 occurrences of "Prepare-Doc"); add audio track + Stage 0 context | P0 |
 | 2 | [docs/PROJECT_OVERVIEW_DETAILED.md](../PROJECT_OVERVIEW_DETAILED.md) | Full service-name update (7 occurrences); fix `docling_parameters` → `docling_params` (line ~362) | P0 |
-| 3 | [docs/planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md) | Full v2 rewrite — v1 (Jan 2026) predates SigLIP 2 architecture, architectural boundary decision, 16 heads, `DoclingRoutingParams`, handwriting assessment | P0 |
+| 3 | [docs/planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md) | Full v2 rewrite — v1 (Jan 2026) predates SigLIP 2 architecture, architectural boundary decision, 19 heads, `DoclingRoutingParams`, handwriting assessment | P0 |
 | 4 | `src/image_preprocessing_detector/schema.py:766` | Replace `paddleocr` with `rapidocr` in `ocr_engine` field description | P0 |
 | 5 | `src/image_preprocessing_detector/routing/script_router.py:173` | Replace `paddleocr` with `rapidocr` in `get_engine()` docstring | P0 |
 | 6 | `config/script_routing.yaml` (12 entries) | Replace all `engine: "paddleocr"` with `engine: "rapidocr"` | P0 |
@@ -656,26 +833,33 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 ## 8. Dependency Map
 
 ```text
-[Tier 0] Severity Labeling — sd7k/wsrd shadow (~3h GPU, Vultr A100)
-    │
-    └──▶ shadow_severity + warping_severity in L2 metadata
+[Tier 0 — All must complete before label generation or training]
+    ├──▶ Fix: 3 architectural defects (N_A sentinel, code_cls, skew derivation) — 3-5h total
+    ├──▶ Decision: Deployment model (SaaS vs. distributed) — 1 day; unlocks license strategy
+    ├──▶ Action: Initiate sd7k/wsrd license resolution (email authors) — 1 day send; 2-4w wait
+    ├──▶ Decision: Warping severity formula for doc3d — 0.5d decision + 3-4d implementation
+    └──▶ GPU: Shadow severity labeling — sd7k/wsrd on Vultr A100 (~3h GPU)
               │
-              ├──▶ Shadow view generation (generate_v3_shadow_view.py)
-              ├──▶ Warping view generation (generate_v3_warping_view.py)
-              ├──▶ Shadow DDR #9
-              └──▶ Warping DDR #10
+              └──▶ shadow_severity + warping_severity in L2 metadata
+                        │
+                        ├──▶ Shadow view generation (generate_v3_shadow_view.py)
+                        ├──▶ Warping view generation (generate_v3_warping_view.py)
+                        ├──▶ Shadow DDR #9
+                        └──▶ Warping DDR #10
 
 [Tier 1 — Parallel group, start concurrently]
     ├──▶ Stream 4B: Run 4 synthetic view scripts (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: prepare_multitask_datasets.py (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: synth-multiscript-v3 completion run (190K → 350K)
-    ├──▶ Stream 4C: OOD registry population (≥600 Mongolian-script samples)
+    ├──▶ Stream 4C: OOD corpus build — Phase 0 infra → Phase 1 P0 MVS → Phase 2-3 programmatic
     ├──▶ Stream 0: Document Type Router (2-3 weeks)
     ├──▶ Stream 4D: MobileNetV4 pipeline integration (1-2 weeks)
     ├──▶ Fix: 3 Docling P0 bugs (< 1 week total)
+    ├──▶ Fix: OOD evaluation metric corrections (Energy Score for ILLEGIBLE + MNV4-H1)
     ├──▶ Fix: JPEG quality detection classical IQA head (1-2 days)
     ├──▶ Fix: Symmetric orientation dataset curation (0.5 days)
     ├──▶ Data: Compound distortion augmentation pipeline (3-5 days)
+    ├──▶ Data: SIG-G3-2 narrow-range skew dataset build from scratch (2-3 weeks) [T5]
     ├──▶ Data: ADF scanner training data sourcing (2-3 weeks, long-running)
     └──▶ Docs: P0 documentation corrections (Section 7, items 1-7)
               │
@@ -739,7 +923,7 @@ P2 = monitor and improve.
 | Topic | Document |
 | --- | --- |
 | System narrative (what it does, why it's sound) | [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) |
-| SigLIP 2 architecture detail (16 heads, training data) | [SIGLIP2_MULTITASK_REQUIREMENTS.md](SIGLIP2_MULTITASK_REQUIREMENTS.md) |
+| SigLIP 2 architecture detail (19 heads, training data) | [SIGLIP2_MULTITASK_REQUIREMENTS.md](SIGLIP2_MULTITASK_REQUIREMENTS.md) |
 | Training optimization (ILP, Kendall, PCGrad) | [TRAINING_OPTIMIZATION_PLAN.md](TRAINING_OPTIMIZATION_PLAN.md) |
 | Dataset diversity specs (14 dimensions, DDR framework) | [DATASET_DIVERSITY_REQUIREMENTS.md](DATASET_DIVERSITY_REQUIREMENTS.md) |
 | OOD holdout design (reserved scripts, 7 categories) | [OOD_DATASET_DESIGN.md](OOD_DATASET_DESIGN.md) |
@@ -754,6 +938,8 @@ P2 = monitor and improve.
 | Training dataset catalog | [docs/datasets/TRAINING_DATASET_QUICK_REFERENCE.md](../datasets/TRAINING_DATASET_QUICK_REFERENCE.md) |
 | Implementation status by planning document | [IMPLEMENTATION_STATUS_MATRIX.md](IMPLEMENTATION_STATUS_MATRIX.md) |
 | Stage 0 router: format catalog + consensus | [../../tmp_cleanup/docling_format_routing_analysis.md](../../tmp_cleanup/docling_format_routing_analysis.md) |
+| Training readiness assessment (Go/No-Go, tier scoring, phased schedule) | [TRAINING_DATA_STRATEGIC_ANALYSIS.md](TRAINING_DATA_STRATEGIC_ANALYSIS.md) |
+| OOD corpus build plan (5 phases, hardware substitutes, sub-commands) | [../../tmp_cleanup/OOD_CORPUS_PLAN.md](../../tmp_cleanup/OOD_CORPUS_PLAN.md) |
 | Architecture diagrams (all four levels) | [docs/architecture/](../architecture/) |
 | Historical plan (Phases 0–9, superseded) | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | Value-stream plan (Streams 1–8, superseded) | [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md) |

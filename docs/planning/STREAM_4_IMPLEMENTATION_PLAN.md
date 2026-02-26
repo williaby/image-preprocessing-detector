@@ -930,7 +930,7 @@ The restructured plan (Stream 4) takes a **narrower scope** than the full SIGLIP
 
 | Aspect | SIGLIP2_MULTITASK_REQUIREMENTS | Stream 4 (This Plan) | Rationale |
 |---|---|---|---|
-| Head groups | 5 groups, 16 heads | IQA (3) + 5 detection heads (8 total) | Skip handwriting heads (Group 4) — defer to later stream |
+| Head groups | 5 groups, 19 heads | IQA (3) + 5 detection heads (8 total) | Skip handwriting heads (Group 4) — defer to later stream |
 | Script classes | 10-20+ expandable | 12 fixed | Start with 12, expand via config after baseline |
 | MobileNetV4 pre-correction | Full 3-head model | OUT OF SCOPE | Separate workstream; Stream 4 = teacher only |
 | Handwriting assessment | 5 heads (3 cls + 2 reg) | DEFERRED | Requires label harmonization (3+ days); add in follow-up |

@@ -78,7 +78,7 @@ before any analysis occurs. Corrections are applied to the image before Stage 2 
 
 ### 1.2 DocumentMetadata.json (Function 2: Analysis Signals)
 
-Stage 2 (SigLIP 2, 16 heads) generates all analysis signals. The full schema is defined in
+Stage 2 (SigLIP 2, 19 heads) generates all analysis signals. The full schema is defined in
 [src/image_preprocessing_detector/schema.py](../../src/image_preprocessing_detector/schema.py).
 
 ---
@@ -268,7 +268,7 @@ Physical corrections applied immediately after Stage 1.
 
 ### Stage 2 — SigLIP 2 NAFlex, 88M params (~50ms GPU)
 
-Runs on corrected image. 16 heads across 5 task groups:
+Runs on corrected image. 19 heads across 5 task groups:
 
 | Group | Heads | Count |
 |---|---|---|

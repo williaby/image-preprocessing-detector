@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Cross-reference grid mapping all 69 source datasets to the 22 training heads across
+purpose: Cross-reference grid mapping all 74 source datasets to the 22 training heads across
   MobileNetV4-Conv-S and SigLIP 2 NAFlex models. Derived by aggregating Section 13 from each
   dataset source file.
 schema_type: common
@@ -13,7 +13,7 @@ title: Dataset ↔ Training Head Coverage Reference
 ---
 
 > **Version**: 1.0.0
-> **Last Updated**: 2026-02-24
+> **Last Updated**: 2026-02-26
 > **Source of Truth**: Individual dataset Section 13 entries in `docs/datasets/source/*.md`
 > **Do not edit manually** — update by running the aggregation agent after batch analysis is complete.
 
@@ -144,6 +144,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | muharaf | ❌ | ❌ | 🟡 |
 | multimodal-textbook | 🟡 | ➖ | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | 🟡 |
+| ndl-docl | 🟡 | 🟡 | 🟡 |
+| ndl-minhon | ❌ | ❌ | ➖ |
 | nepali-handwritten | 🟡 | 🟡 | ❌ |
 | nist-sd19 | 🟡 | 🟡 | 🟡 |
 | nist-sd2 | ➖ | ➖ | 🟡 |
@@ -152,6 +154,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | ohr-bench | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ |
+| pdmocr-part1 | 🟡 | 🟡 | 🟡 |
+| pdmocr-part2 | 🟡 | 🟡 | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | 🟡 | ❌ |
 | q-doc | ❌ | ❌ | 🟡 |
@@ -166,6 +170,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | tablebank | ➖ | ➖ | 🟡 |
 | tibhcr | 🟡 | ❌ | ❌ |
 | tobacco800 | ➖ | ➖ | 🟡 |
+| vjroda | 🟡 | ➖ | 🟡 |
 | warpdoc | 🟡 | ❌ | ❌ |
 | wili-2018 | ❌ | ❌ | ❌ |
 | wsrd | 🟡 | ❌ | ❌ |
@@ -218,6 +223,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | muharaf | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | multimodal-textbook | 🟡 | 🟡 | 🟡 | ➖ | ✅ | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| ndl-docl | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| ndl-minhon | 🟡 | 🟡 | 🟡 | ❌ | ➖ | ❌ |
 | nepali-handwritten | 🟡 | 🟡 | 🟡 | 🟡 | ➖ | ❌ |
 | nist-sd19 | 🟡 | 🟡 | ➖ | 🟡 | ❌ | 🟡 |
 | nist-sd2 | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
@@ -226,6 +233,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| pdmocr-part1 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| pdmocr-part2 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | ➖ | ➖ | ➖ | ➖ | ➖ | ❌ |
 | q-doc | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ✅ |
@@ -240,6 +249,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | tablebank | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | tibhcr | ➖ | ➖ | ➖ | ❌ | ➖ | ❌ |
 | tobacco800 | 🟡 | 🟡 | 🟡 | ➖ | ❌ | 🟡 |
+| vjroda | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
 | warpdoc | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | wili-2018 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | wsrd | ➖ | 🟡 | ✅ | ❌ | ❌ | 🟡 |
@@ -292,6 +302,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | muharaf | ✅ |
 | multimodal-textbook | ✅ |
 | multilingual-scripts | ✅ |
+| ndl-docl | ✅ |
+| ndl-minhon | ✅ |
 | nepali-handwritten | ✅ |
 | nist-sd19 | ✅ |
 | nist-sd2 | 🟡 |
@@ -300,6 +312,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | ohr-bench | ❌ |
 | omnidocbench | 🟡 |
 | openlid-v2 | ❌ |
+| pdmocr-part1 | ✅ |
+| pdmocr-part2 | ✅ |
 | pubtabnet | 🟡 |
 | pucit-ohul | ✅ |
 | q-doc | ❌ |
@@ -314,6 +328,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | tablebank | 🟡 |
 | tibhcr | ✅ |
 | tobacco800 | ➖ |
+| vjroda | ✅ |
 | warpdoc | ➖ |
 | wili-2018 | ❌ |
 | wsrd | ➖ |
@@ -366,6 +381,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | muharaf | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | multimodal-textbook | 🟡 | ➖ | ✅ | ✅ | ✅ | 🟡 | ➖ | ✅ | ➖ | ➖ | 🟡 | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ➖ | ➖ | ➖ | ❌ | 🟡 |
+| ndl-docl | 🟡 | 🟡 | ✅ | 🟡 | 🟡 | ✅ | 🟡 | ✅ | 🟡 | ❌ | ❌ | 🟡 |
+| ndl-minhon | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
 | nepali-handwritten | 🟡 | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | 🟡 | ❌ | ❌ |
 | nist-sd19 | 🟡 | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | nist-sd2 | ➖ | ➖ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ➖ | ➖ | ➖ | 🟡 |
@@ -374,6 +391,8 @@ title: Dataset ↔ Training Head Coverage Reference
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ➖ | ❌ | ❌ | 🟡 | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| pdmocr-part1 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
+| pdmocr-part2 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | q-doc | ❌ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | 🟡 | 🟡 | 🟡 | ➖ | ✅ |
@@ -388,6 +407,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | tablebank | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | 🟡 | 🟡 |
 | tibhcr | 🟡 | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | tobacco800 | ➖ | ➖ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| vjroda | 🟡 | ➖ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | warpdoc | 🟡 | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ |
 | wili-2018 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | wsrd | 🟡 | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |

@@ -1,4 +1,4 @@
-# Head Adequacy Review: code_reg (SIG-G5-4)
+# Head Adequacy Review: code_cls (SIG-G5-4)
 
 > **Status**: ✅ Complete
 > **Version**: 2.0
@@ -17,8 +17,8 @@
 | Head ID | SIG-G5-4 |
 | Model | SigLIP 2 NAFlex |
 | Group | G5 — Page Attributes |
-| Head Name | code_reg (also written as code_confidence) |
-| Task Type | Binary Classification — sigmoid output, BCE loss (see architectural note below) |
+| Head Name | code_cls (formerly misnamed code_reg — Defect 2 fix, 2026-02-24) |
+| Task Type | Binary Classification — 2-class cross_entropy (≡ sigmoid+BCE for balanced binary) |
 | Output Format | Sigmoid output [0-1] interpreted as P(document contains code) |
 | Priority | P2 |
 | Performance Target | AUC ≥ 0.90, F1 ≥ 0.85 on held-out code-heavy documents (proposed; see CODE-G03) |
@@ -26,20 +26,17 @@
 | Shared-Data Heads | None (dedicated code-detection dataset) |
 | Training Phase | Phase 5 — Page Attributes |
 
-### Architectural Note: Regression vs. Binary Classification
+### Architectural Note: Defect 2 Resolution (2026-02-24)
 
-This head is named `code_reg` and described as "Regression 0-1" in
-[SIGLIP2_MULTITASK_REQUIREMENTS.md](../SIGLIP2_MULTITASK_REQUIREMENTS.md). This framing is
-a misnomer. The training signal is `content_flags.has_code`, a boolean field with no ground-truth
-continuous intermediate values available at dataset assembly time. The loss function is therefore
-Binary Cross-Entropy (BCE) with sigmoid activation — the standard formulation for binary
-classification, not regression.
+This head was previously named `code_reg` and described as "Regression 0-1."  That framing was a
+misnomer (Defect 2 in TRAINING_DATA_STRATEGIC_ANALYSIS.md). The training signal is
+`content_flags.has_code`, a boolean field with no ground-truth continuous intermediate values at
+dataset assembly time. The head has been formally reclassified:
 
-**Recommendation (unanimous from 4-model consensus)**: Formally reclassify this head as binary
-classification in all planning documents and in `config/siglip2_multitask.yaml`. The 0-1 output
-is best described as "probability of code presence" — not a regression scalar. This changes no
-implementation (sigmoid+BCE is already correct) but eliminates metric confusion (MAE is
-meaningless here; AUC and F1 are the correct metrics).
+- **Renamed**: `code_reg` → `code_cls` (in HEAD_CONFIGS, YAML, HAR index, all references)
+- **Loss**: `cross_entropy` (2-class, equivalent to sigmoid+BCE for balanced binary)
+- **Metrics**: AUC ≥ 0.90, F1 ≥ 0.85 (replacing MAE which was meaningless for binary targets)
+- **Data loader field**: `code_confidence` (0.0 or 1.0) → `int(val)` label index 0 or 1
 
 **Future path to true regression**: If intermediate labels are later derived (e.g., "code pixel
 area fraction" from layout detection), the head can be converted to regression with SmoothL1 loss.
@@ -303,7 +300,7 @@ SHA256+pHash dedup required for arXiv subset only.
 Dedicated generation pipeline for positives with independent synthesis. Negative examples from
 DocLayNet/multimodal_textbook may overlap with other training datasets — global split registry
 must confirm negatives used here are not in other datasets' test splits. Risk is LOW because
-code_reg uses these images only for `has_code=False` labels (a different semantic use than other
+code_cls uses these images only for `has_code=False` labels (a different semantic use than other
 datasets' primary labels), but leakage into OOD or test sets of other heads must still be
 prevented.
 
@@ -362,12 +359,12 @@ more appropriate in production.
 **Models**: google/gemini-2.5-pro (neutral), google/gemini-3-pro-preview (neutral),
 deepseek/deepseek-r1-0528 (neutral), x-ai/grok-4 (neutral)
 
-**Analyst Pre-Consensus Summary**: The code_reg head is in a materially better state than the
+**Analyst Pre-Consensus Summary**: The code_cls head (formerly code_reg — Defect 2 fix) is in a materially better state than the
 shadow_reg and warping_reg heads: a working generator exists, a dry-run has been completed at
 86% of target volume, and the data acquisition path is clear. The head is not blocked. However,
 four P0 gaps prevent the full run from being trusted: negative contamination is unvalidated,
-the generator style ratio is unenforced, performance targets are undefined, and the head is
-architecturally misframed as regression. The most serious production risk is the absence of
+the generator style ratio is unenforced, performance targets are undefined, and the head was
+architecturally misframed as regression (now corrected). The most serious production risk is the absence of
 hard negatives (pseudocode, monospace-heavy non-code content) and the false positive exposure
 they create.
 
