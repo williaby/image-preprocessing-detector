@@ -158,7 +158,7 @@ def _insert_import(source: str, import_block: str) -> str:
                 last_import_end = i
             continue
 
-        if stripped.startswith("import ") or stripped.startswith("from "):
+        if stripped.startswith(("import ", "from ")):
             # Skip items we don't want to place our import after
             if "from __future__" in stripped or "l2_integration_utils" in stripped:
                 continue
