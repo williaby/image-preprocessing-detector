@@ -117,7 +117,7 @@ Where specific dataset audit defect codes (D-codes) or Known Issues (KI-codes) d
 
 Which P0 gaps block which heads, with dependency ordering.
 
-```
+```text
 label_shadow_severity.py (SHADOW-G01)
   └─ depends on: [none — implement directly]
   └─ unblocks: SIG-G5-2 (shadow_reg)

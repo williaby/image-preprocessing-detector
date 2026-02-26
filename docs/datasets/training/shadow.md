@@ -15,7 +15,7 @@ l4_status: blocked
 # shadow
 
 > ❌ **P0 BLOCKED — label_shadow_severity.py script not yet created** | HAR Score: 28/100 (Blocked) | Status: 0/15,000 assembled. All L2 shadow_severity fields are null. Training BLOCKED until labeling script is built and run.
-
+>
 > **Quick Stats**: 15,000 images (target) | Shadow severity regression 0–1 | float label per image
 >
 > **Status**: ❌ Blocked | **HAR Score**: 28/100 | **P0 Gaps**: 3
@@ -215,7 +215,7 @@ the v3 synthetic mild component via lower Augraphy severity parameters.
 
 **For sd7k and wsrd (paired GT with per-pixel shadow mask)**:
 
-```
+```python
 severity = mean(abs(shadow_img - clean_img)[shadow_mask]) / 255.0
 ```
 

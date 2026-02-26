@@ -180,7 +180,7 @@ OOD design quality, and the most significant wild condition gaps._
 
 **Consensus Prompt**:
 
-```
+```text
 Evaluate the training dataset design and OOD coverage for the SigLIP2/MobileNetV4 `{head_name}` head.
 This head is a {task_type} predicting {description}.
 Primary L2 field: `{l2_field}`.

@@ -99,6 +99,40 @@ def aggregate_sheet_scores(
     return results
 
 
+def _accumulate_model_votes(
+    entry: dict[str, Any],
+    weight: float,
+    presence_votes: list[str],
+    presence_values: list[tuple[float, float]],
+    legibility_votes: list[str],
+    legibility_values: list[tuple[float, float]],
+) -> None:
+    """Accumulate presence and legibility votes from a single model entry.
+
+    Mutates the caller's vote lists in-place, appending only valid class labels
+    and (score, weight) pairs where the score is non-null.
+
+    Args:
+        entry: Per-image score dict from one model.
+        weight: This model's contribution weight.
+        presence_votes: Accumulated presence class labels (mutated).
+        presence_values: Accumulated (presence_score, weight) pairs (mutated).
+        legibility_votes: Accumulated legibility class labels (mutated).
+        legibility_values: Accumulated (legibility_score, weight) pairs (mutated).
+    """
+    presence = entry.get("presence")
+    if presence and presence in VALID_PRESENCE_CLASSES:
+        presence_votes.append(presence)
+        if (ps := entry.get("presence_score")) is not None:
+            presence_values.append((float(ps), weight))
+
+    legibility = entry.get("legibility")
+    if legibility and legibility in VALID_LEGIBILITY_CLASSES:
+        legibility_votes.append(legibility)
+        if (ls := entry.get("legibility_score")) is not None:
+            legibility_values.append((float(ls), weight))
+
+
 def _aggregate_single_image(
     idx: int,
     model_scores: dict[str, dict[int, dict[str, Any]]],
@@ -129,22 +163,15 @@ def _aggregate_single_image(
         if entry is None or entry.get("needs_review"):
             continue
 
-        w = weights.get(model_id, 1.0)
         valid_model_ids.append(model_id)
-
-        presence = entry.get("presence")
-        if presence and presence in VALID_PRESENCE_CLASSES:
-            presence_votes.append(presence)
-            ps = entry.get("presence_score")
-            if ps is not None:
-                presence_values.append((float(ps), w))
-
-        legibility = entry.get("legibility")
-        if legibility and legibility in VALID_LEGIBILITY_CLASSES:
-            legibility_votes.append(legibility)
-            ls = entry.get("legibility_score")
-            if ls is not None:
-                legibility_values.append((float(ls), w))
+        _accumulate_model_votes(
+            entry,
+            weights.get(model_id, 1.0),
+            presence_votes,
+            presence_values,
+            legibility_votes,
+            legibility_values,
+        )
 
     n_valid = len(valid_model_ids)
     needs_review = n_valid < min_model_responses

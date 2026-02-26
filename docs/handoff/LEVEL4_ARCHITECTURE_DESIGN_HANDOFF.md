@@ -59,7 +59,7 @@ coverage).
 
 ### 2.2 Annotation Parser Structure
 
-```
+```text
 src/image_preprocessing_detector/annotation/
 ├── parsers/
 │   ├── base.py                    ← Framework (in Level 2/3)
@@ -198,7 +198,7 @@ l4_image_count: 90412
 
 ## 5. Proposed Level 4 Document Taxonomy
 
-```
+```text
 docs/architecture/diagrams/level-4/
 ├── index.md                                     MANUAL  — overview, taxonomy, maintenance guide
 ├── data-preparation/

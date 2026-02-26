@@ -22,7 +22,7 @@ excluded from Level 2 PUML diagrams by design; this Level 4 tier is their author
 
 ## Adapter Directory Structure
 
-```
+```text
 src/image_preprocessing_detector/annotation/
 ├── parsers/
 │   ├── correction/     (8 adapters)   — geometric correction datasets

@@ -348,7 +348,7 @@ Phase 2 derives images from `synth-multiscript-v3` (190,485 images on GCS at
 | `blur_score` | ~0.70 (real docs mostly acceptable) | Uniform across [0.0, 1.0] | none/mild/moderate/severe |
 | `noise_score` | ~0.80 (DIQA clean-document dominant) | Uniform across [0.0, 1.0] | clean/mild/moderate/severe |
 | `contrast_score` | ~0.70 | Uniform across [0.0, 1.0] | optimal/adequate/low/minimal |
-| `skew_score` | ~0.85 (most real docs are near-straight) | ≥20% near-zero (|angle| < 0.5°) | straight/mild/moderate/severe |
+| `skew_score` | ~0.85 (most real docs are near-straight) | ≥20% near-zero (abs(angle) < 0.5°) | straight/mild/moderate/severe |
 | `compression_score` | ~0.70 (document workflows default QF 75–85) | 5 tiers at QF 10/20/40/60/80 | pristine/minimal/mild/moderate/heavy/severe |
 | `overall_quality` | ~0.72 (DIQA MOS distribution) | Derived from weighted degradation params | low/medium/high/excellent |
 
@@ -393,7 +393,7 @@ compound-degradation stratum is targeted (P1 gap in current design — see Secti
 | `blur_score` | ≥4 levels (none/mild/moderate/severe) | ~6,250 each | ≥30% motion blur; Gaussian + motion types |
 | `noise_score` | ≥4 levels (clean/mild/moderate/severe) | ~6,250 each | Gaussian + salt-and-pepper types |
 | `contrast_score` | ≥4 levels | ~6,250 each | CLAHE + spatial gradient augmentation required |
-| `skew_score` | ≥4 levels + ≥20% near-zero (|angle| < 0.5°) | ~5K near-zero + ~5K per severity | Validated transfer function required |
+| `skew_score` | ≥4 levels + ≥20% near-zero (abs(angle) < 0.5°) | ~5K near-zero + ~5K per severity | Validated transfer function required |
 | `compression_score` | 5 explicit QF tiers (10/20/40/60/80) | 20,000 each | Re-save strategy (not Augraphy) |
 
 ### Split Strategy
@@ -687,7 +687,7 @@ uv run python scripts/prepare_multitask_datasets.py iqa --phase 1
 | IQA-CONTRAST-G10 | G1-3 | Colorful background documents underrepresented | Ensure Phase 2 colorful-background overlay augmentation generates ≥10% of Phase 2 |
 | IQA-COMP-G09 | G1-5 | Mixed codec coverage (JPEG 2000 ringing vs JPEG blocking) | Document out-of-scope; extend in future phase |
 | IQA-COMP-G10 | G1-5 | Near-lossless boundary testing (QF 95–100) absent from OOD | Add 25–50 near-lossless images to OOD-4a sampling |
-| IQA-SKEW-G07 | G1-4 | Near-zero skew hairline coverage not validated | Stratify Phase 2 with ≥20% images at |angle| < 0.5°; apply label smoothing |
+| IQA-SKEW-G07 | G1-4 | Near-zero skew hairline coverage not validated | Stratify Phase 2 with ≥20% images at abs(angle) < 0.5°; apply label smoothing |
 | IQA-SKEW-G08 | G1-4 | 90K bootstrap utilization strategy undefined | Document: 90K images as weak supervision (loss weight 0.1–0.2 for backbone warm-up only; zero weight on regression head) |
 | IQA-OVERALL-G08 | G1-6 | VLM inter-rater reliability not measured | Run labeling on 100 images with two VLM configurations; compute agreement |
 | IQA-OVERALL-G10 | G1-6 | Screen recapture wild condition permanently absent from training | Document as known OOD gap; monitor via OOD-Capture 3a (200 images) |
@@ -717,7 +717,7 @@ Before any G1 head can progress to model training, the following must be met:
 | Gate | Applies To | Requirement |
 |------|-----------|-------------|
 | Phase 2 pipeline built | G1-1, G1-2, G1-3, G1-4, G1-5 | 100K synthetic images assembled with tier_0_exact labels |
-| Label independence verified | All pairs | Pearson |r| < 0.4 between blur_score and compression_score labels; < 0.5 between blur_score and noise_score labels at image level |
+| Label independence verified | All pairs | Pearson r < 0.4 between blur_score and compression_score labels; r < 0.5 between blur_score and noise_score labels at image level |
 | Binarized conventions enforced | All G1 heads | Per-head policy documented and asserted in assembly script |
 | Skew transfer function validated | G1-4 | SRCC ≥ 0.65 on 300–500 human MOS calibration set before full pipeline run |
 | VLM SRCC gate | G1-2, G1-6 (OHR-Bench path) | SRCC > 0.65 (G1-6) or SRCC > 0.55 (G1-2) on 200-image noise pilot before bulk labeling |

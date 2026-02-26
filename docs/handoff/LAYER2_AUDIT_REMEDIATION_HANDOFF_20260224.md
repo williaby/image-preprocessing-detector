@@ -50,7 +50,7 @@ All audit artifacts are at: `scripts/audit/results/{dataset}/`
 
 ## Key Paths Reference
 
-```
+```text
 PROJECT_ROOT      /home/byron/dev/image_detection
 METADATA_ROOT     /mnt/e/image_detection/metadata_registry/json/
 IMAGE_ROOT        /mnt/e/image_detection/01_base_data/
@@ -301,7 +301,7 @@ Key docsynth-specific notes:
 
 #### Step 5: Re-run Full Audit
 
-```
+```text
 Run Layer 2 audit on docsynth (source_doc: docs/datasets/source/docsynth.md, audit_scope: full)
 ```
 
@@ -371,7 +371,7 @@ Create `scripts/materialize_kuzushiji.py`. This script must:
 
 Expected output structure:
 
-```
+```text
 kuzushiji/kmnist/images/train/00000001.png  (60,000 files, 28×28 px)
 kuzushiji/kmnist/images/test/00060001.png   (10,000 files, 28×28 px)
 kuzushiji/kmnist/train_index.jsonl
@@ -419,7 +419,7 @@ If missing (the auto-registration was in-session only and may not have persisted
 
 #### Step 5: Re-run Full Audit
 
-```
+```text
 Run Layer 2 audit on kuzushiji (source_doc: docs/datasets/source/kuzushiji.md, audit_scope: full)
 ```
 
@@ -498,7 +498,7 @@ Key casia-hwdb2-specific values:
 
 **Step 5: Re-run full audit**
 
-```
+```text
 Run Layer 2 audit on casia-hwdb2 (source_doc: docs/datasets/source/casia-hwdb2.md, audit_scope: full)
 ```
 
@@ -595,7 +595,7 @@ Parser-emitted fields to carry through:
 
 #### Fix 5: Re-run full audit
 
-```
+```text
 Run Layer 2 audit on iiit-hw-hindi (source_doc: docs/datasets/source/iiit-hw-hindi.md, audit_scope: full)
 ```
 

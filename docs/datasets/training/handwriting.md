@@ -19,7 +19,7 @@ l4_status: blocked
 > ❌ **P0 BLOCKED — 17 open gaps across 5 heads**
 > Status: 38,967 records dry-run (2026-02-21). Actual dataset: 0 assembled.
 > Training BLOCKED until N_A sentinel defect resolved (see below).
-
+>
 > **Quick Stats**: 60,000 images (target) | 5 heads across 3 classification + 2 regression tasks | Multi-label
 >
 > **Status**: ❌ Blocked | **HAR Scores**: G4-1: 32/100, G4-2: 21/100, G4-3: 25/100, G4-4: 26/100, G4-5: 14/100 | **P0 Gaps**: 17 total across all 5 heads

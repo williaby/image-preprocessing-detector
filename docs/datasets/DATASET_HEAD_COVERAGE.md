@@ -69,7 +69,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | Head ID | Head Name | Task | Min Samples | Synthetic Cap | Label Tier | Key Constraint |
 | ------- | --------- | ---- | ----------- | ------------- | ---------- | -------------- |
 | SIG-G3-1 | orientation_cls (post) | 4-class softmax (post-correction) | 50,000 | ≤40% | tier_0_exact | ≥98% accuracy; same images as MNV4-H1 |
-| SIG-G3-2 | skew_reg (post) | Regression ±2° residual | ~20,000 | — | tier_0_exact | MAE < 0.3°; filtered from main 90K skew set (|angle|≤2°, conf≥0.8) |
+| SIG-G3-2 | skew_reg (post) | Regression ±2° residual | ~20,000 | — | tier_0_exact | MAE < 0.3°; filtered from main 90K skew set (abs(angle)≤2°, conf≥0.8) |
 
 ### SigLIP 2 Group 4 — Handwriting Assessment (5 heads, 60K shared)
 
