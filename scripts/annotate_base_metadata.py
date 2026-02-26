@@ -872,6 +872,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
+        "has_handwriting": False,
         "iso639_language": "ja",
         "iso15924_script": "Jpan",
         "text_scope": "page",
@@ -901,6 +902,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
+        "has_handwriting": False,
         "iso639_language": "ja",
         "iso15924_script": "Jpan",
         "text_scope": "page",
@@ -915,6 +917,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
+        "has_handwriting": False,
         "iso639_language": "ja",
         "iso15924_script": "Jpan",
         "text_scope": "page",
@@ -4608,7 +4611,6 @@ def parse_vjroda_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
 
     labels.raw_labels["is_vertical"] = True
     labels.raw_labels["text_orientation"] = "vertical"
-    labels.raw_labels["capture_method"] = "scanner"
     labels.raw_labels["document_domain"] = "administrative"
 
     # Match by image stem (pid_frame) to JSONL record
@@ -4817,7 +4819,6 @@ def parse_pdmocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     else:
         labels.raw_labels["has_char_level_ocr"] = False
 
-    labels.raw_labels["capture_method"] = "scanner"
     return labels
 
 
@@ -4888,7 +4889,6 @@ def parse_ndl_minhon_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     labels.raw_labels["handwriting_script"] = "kuzushiji"
     labels.raw_labels["is_vertical"] = True
     labels.raw_labels["text_orientation"] = "vertical"
-    labels.raw_labels["capture_method"] = "scanner"
 
     # Build relative path key: {project_id}/{book_id}/{file_id}.png
     try:
