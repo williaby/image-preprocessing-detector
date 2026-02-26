@@ -205,51 +205,85 @@ class HwLegibilityScorer:
                     max_tokens=model_cfg.max_tokens,
                     temperature=0.0,
                 )
-
-                if not response.choices:
-                    error_info = getattr(response, "error", None)
-                    error_msg = (
-                        error_info.get("message", "Unknown")
-                        if isinstance(error_info, dict)
-                        else str(error_info or "No choices returned")
-                    )
-                    msg = f"Provider error: {error_msg}"
-                    raise RuntimeError(msg)  # noqa: TRY301
-
-                if response.usage:
-                    self._total_tokens += response.usage.total_tokens
-                self._total_calls += 1
-
-                content = response.choices[0].message.content or ""
-                if not content.strip():
-                    msg = "Model returned empty content"
-                    raise RuntimeError(msg)  # noqa: TRY301
-
-                parsed = extract_json_from_response(content)
-                logger.debug(
-                    "hw_scorer_call_success",
-                    model=model_cfg.model_id,
-                    attempt=attempt + 1,
-                    tokens=response.usage.total_tokens if response.usage else 0,
-                )
-                return parsed  # noqa: TRY300
-
+                return self._process_api_response(response, model_cfg, attempt)
             except Exception as exc:
                 last_error = exc
-                delay = self._config.retry_base_delay * (2**attempt)
-                logger.warning(
-                    "hw_scorer_call_failed",
-                    model=model_cfg.model_id,
-                    attempt=attempt + 1,
-                    max_retries=self._config.max_retries,
-                    delay=delay,
-                    error=str(exc),
-                )
-                if attempt < self._config.max_retries - 1:
-                    time.sleep(delay)
+                self._handle_retry_delay(model_cfg, attempt, exc)
 
         msg = f"All {self._config.max_retries} retries failed for {model_cfg.model_id}"
         raise RuntimeError(msg) from last_error
+
+    def _process_api_response(
+        self,
+        response: Any,
+        model_cfg: HwVisionModelConfig,
+        attempt: int,
+    ) -> dict[str, Any]:
+        """Validate and parse a raw API response into a score dict.
+
+        Args:
+            response: Raw response object from the OpenAI client.
+            model_cfg: Model configuration used for logging.
+            attempt: 0-based attempt index for log context.
+
+        Returns:
+            Parsed JSON dict from the model response content.
+
+        Raises:
+            RuntimeError: If the response has no choices or empty content.
+        """
+        if not response.choices:
+            error_info = getattr(response, "error", None)
+            error_msg = (
+                error_info.get("message", "Unknown")
+                if isinstance(error_info, dict)
+                else str(error_info or "No choices returned")
+            )
+            msg = f"Provider error: {error_msg}"
+            raise RuntimeError(msg)
+
+        if response.usage:
+            self._total_tokens += response.usage.total_tokens
+        self._total_calls += 1
+
+        content = response.choices[0].message.content or ""
+        if not content.strip():
+            msg = "Model returned empty content"
+            raise RuntimeError(msg)
+
+        parsed = extract_json_from_response(content)
+        logger.debug(
+            "hw_scorer_call_success",
+            model=model_cfg.model_id,
+            attempt=attempt + 1,
+            tokens=response.usage.total_tokens if response.usage else 0,
+        )
+        return parsed
+
+    def _handle_retry_delay(
+        self,
+        model_cfg: HwVisionModelConfig,
+        attempt: int,
+        exc: Exception,
+    ) -> None:
+        """Log a failed attempt and sleep before the next retry.
+
+        Args:
+            model_cfg: Model configuration used for logging.
+            attempt: 0-based attempt index (sleep skipped on the last attempt).
+            exc: Exception that caused this attempt to fail.
+        """
+        delay = self._config.retry_base_delay * (2**attempt)
+        logger.warning(
+            "hw_scorer_call_failed",
+            model=model_cfg.model_id,
+            attempt=attempt + 1,
+            max_retries=self._config.max_retries,
+            delay=delay,
+            error=str(exc),
+        )
+        if attempt < self._config.max_retries - 1:
+            time.sleep(delay)
 
     def _ensure_client(self) -> Any:
         """Lazily initialise the OpenAI SDK client for OpenRouter.

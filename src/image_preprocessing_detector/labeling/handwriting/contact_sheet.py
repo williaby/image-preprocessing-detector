@@ -33,6 +33,14 @@ _DEFAULT_CELL_WIDTH = 512
 _DEFAULT_JPEG_QUALITY = 85
 _DEFAULT_FONT_SIZE = 20
 
+# OS-specific font search paths tried in order before falling back to PIL default
+_FONT_CANDIDATE_PATHS: tuple[str, ...] = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Debian/Ubuntu
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # RHEL/Fedora
+    "/System/Library/Fonts/Helvetica.ttc",  # macOS
+    "C:/Windows/Fonts/arialbd.ttf",  # Windows
+)
+
 
 def create_hw_contact_sheet(
     image_paths: list[Path],
@@ -184,13 +192,7 @@ def _load_font(font_size: int) -> Any:
     """
     from PIL import ImageFont
 
-    _candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-        "/System/Library/Fonts/Helvetica.ttc",
-        "C:/Windows/Fonts/arialbd.ttf",
-    ]
-    for path in _candidates:
+    for path in _FONT_CANDIDATE_PATHS:
         try:
             return ImageFont.truetype(path, font_size)
         except OSError:

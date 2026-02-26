@@ -105,7 +105,17 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Status**: Not yet audited. Pending Layer 2 enrichment.
+> **Status**: Audited 2026-02-25. PASS WITH WARNINGS. 5 samples (stub — full dataset not yet downloaded).
+
+| Field | Audit Result |
+|-------|-------------|
+| `capture_method` | OK: `"scanner_flatbed"` |
+| `has_handwriting` | OK: `true` (all 5 sampled are kotenseki subset; kindai subset will need `false`) |
+| `domain_level1` | Warning: `"UNK"` — recommend `"HIS"` for kotenseki, `"LIT"` for kindai based on subset field |
+| `resolution_category` | Warning: `"standard_300"` but pixel dims 7690×6074 suggest ~400–600 DPI. Recommend `"high_>300"` |
+| `text_scope_content_type` | Note: `"handwritten"` is correct for kotenseki; kindai subset is `"printed"` — mixed after full ingest |
+
+**Critical gap**: Only 5 of 2,290 images ingested. Full download and re-ingest required.
 
 ---
 

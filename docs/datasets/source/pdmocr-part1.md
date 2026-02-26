@@ -83,7 +83,15 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Status**: Not yet audited. Pending Layer 2 enrichment.
+> **Status**: Audited 2026-02-25. 63 samples. 3 defects resolved.
+
+| Field | Audit Result |
+|-------|-------------|
+| `capture_method` | Fixed: was `"scanner"` (invalid enum); corrected to `"scanner_flatbed"` via config |
+| `has_handwriting` | Fixed: was `null`; corrected to `false` (100% historical printed typography) |
+| `domain_level1` | Warning: `"UNK"` — NDC classification in `info.csv` could map to `"HIS"` or `"LIT"`; deferred |
+| `resolution_category` | Warning: `"standard_300"` but pixel dims ~3961×2860 suggest ~480 DPI. Recommend `"high_>300"` |
+| Enrichment opportunity | pdmocr-part1 `info.csv` contains NDC classification — could populate `domain_level1` without manual review |
 
 ---
 

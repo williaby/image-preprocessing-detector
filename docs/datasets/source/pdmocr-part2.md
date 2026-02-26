@@ -83,7 +83,15 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Status**: Not yet audited. Pending Layer 2 enrichment.
+> **Status**: Audited 2026-02-25. 50 samples. 3 defects resolved.
+
+| Field | Audit Result |
+|-------|-------------|
+| `capture_method` | Fixed: was `"scanner"` (invalid enum); corrected to `"scanner_flatbed"` via config |
+| `has_handwriting` | Fixed: was `null`; corrected to `false` (historical typography with direction annotations, no handwriting) |
+| `domain_level1` | Warning: `"UNK"` — can be resolved from NDC classification in metadata |
+| `resolution_category` | Warning: `"standard_300"` but pixel dims ~3292×2704 suggest ~400 DPI. Recommend `"high_>300"` |
+| Enrichment opportunity | DIRECTION attribute (vertical/horizontal) in NDLOCR XML is not yet extracted into L2 metadata — high-value field for orientation training |
 
 ---
 

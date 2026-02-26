@@ -26,7 +26,7 @@
 | **Content** | Kuzushiji (pre-Edo) + classical Chinese texts (pre-Qing) |
 | **Image Source** | IIIF endpoints (various Japanese archives) |
 | **Language** | Japanese (ja) |
-| **Script** | Jpan (ISO 15924) |
+| **Script** | Hani (ISO 15924) — kuzushiji manuscripts use Kanji-derived Han script; `Jpan` would apply to modern mixed scripts |
 
 ##### IQA Profile
 
@@ -87,7 +87,16 @@
 
 ##### 11. Layer 2 Audit Summary
 
-> **Status**: Not yet audited. Pending Layer 2 enrichment.
+> **Status**: Audited 2026-02-25. 500 samples. 2 defects resolved. Cleanest audit in group.
+
+| Field | Audit Result |
+|-------|-------------|
+| `capture_method` | Fixed: was `"scanner"` (invalid enum); corrected to `"scanner_flatbed"` via config |
+| `has_handwriting` | OK: `true` on 100% of 500 samples — best-validated field in the group |
+| `iso15924_script` | Deliberate: `"Hani"` (not `"Jpan"`) — kuzushiji manuscripts are Kanji-dominant with no hiragana/katakana; dataset card updated to explain |
+| `domain_level1` | Warning: `"UNK"` — unambiguously `"HIS"` (pre-Edo manuscripts); deferred to domain pass |
+| `resolution_category` | Warning: `"standard_300"` but pixel dims ~3142×2480 suggest ~380 DPI. Recommend `"high_>300"` |
+| License | Note: CC-BY-SA 4.0 copyleft — any derivative works must use same license |
 
 ---
 
@@ -112,7 +121,7 @@
 | SIG-G1-4 | skew_score | 🟡 | ~32,822 | Pseudo-label | Scanned manuscripts; variable alignment |
 | SIG-G1-5 | compression_score | ➖ | 0 | Not applicable | IIIF delivery format varies; typically JPEG |
 | SIG-G1-6 | overall_quality | ✅ | ~32,822 | Pseudo-label | Wide quality range; centuries of aging provide natural quality distribution |
-| SIG-G2-1 | script_cls | ✅ | ~32,822 | GT-derived | 100% Jpan; kuzushiji (historical cursive) + some classical Chinese characters |
+| SIG-G2-1 | script_cls | ✅ | ~32,822 | GT-derived | 100% Hani; kuzushiji (historical cursive) + classical Chinese characters; annotated as Han script due to Kanji dominance |
 | SIG-G3-1 | orientation_cls (post) | ✅ | ~32,822 | GT-derived | isVertical flag; predominantly vertical (classical Japanese/Chinese texts) |
 | SIG-G3-2 | skew_reg (post) | 🟡 | ~32,822 | Pseudo-label | Post-correction residual skew |
 | SIG-G4-1 | handwriting_presence_cls | ✅ | ~32,822 | GT-exact | **DOMINANT class**: virtually all images contain handwritten kuzushiji; largest handwriting presence source |
@@ -130,7 +139,7 @@
 
 | # | Dimension | Coverage | Details |
 |---|-----------|----------|---------|
-| 1 | Script families | ✅ | 100% CJK (Jpan); kuzushiji (historical cursive) + classical Chinese characters; unique script variant |
+| 1 | Script families | ✅ | 100% CJK (Hani); kuzushiji (historical cursive) + classical Chinese characters; annotated as Hani (not Jpan) because pre-Edo manuscripts are predominantly Kanji-based with no hiragana/katakana mixing |
 | 2 | Capture method | ✅ | 100% scanner_flatbed (library/archive digitization via IIIF) |
 | 3 | Document domain | ✅ | EDU/HIS (classical literature, historical records); specialized classical collection |
 | 4 | Layout type | ✅ | Predominantly vertical (classical Japanese/Chinese text); isVertical flag in annotations |
