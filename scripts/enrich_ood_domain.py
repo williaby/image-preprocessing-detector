@@ -43,7 +43,18 @@ from pathlib import Path
 # Domain taxonomy
 # ──────────────────────────────────────────────
 
-DOMAINS: tuple[str, ...] = ("SCI", "FIN", "GOV", "EDU", "TEC", "LGL", "MED", "REL", "SCN", "UNK")
+DOMAINS: tuple[str, ...] = (
+    "SCI",
+    "FIN",
+    "GOV",
+    "EDU",
+    "TEC",
+    "LGL",
+    "MED",
+    "REL",
+    "SCN",
+    "UNK",
+)
 
 # DocLayNet doc_category → domain
 DOCLAYNET_DOMAIN_MAP: dict[str, str] = {
@@ -58,7 +69,7 @@ DOCLAYNET_DOMAIN_MAP: dict[str, str] = {
 
 # RVL-CDIP class → domain (16 classes)
 RVL_CDIP_DOMAIN_MAP: dict[str, str] = {
-    "advertisement": "FIN",   # Visual review: tobacco-industry corporate records (invoices, memos)
+    "advertisement": "FIN",  # Visual review: tobacco-industry corporate records (invoices, memos)
     "budget": "FIN",
     "email": "UNK",
     "file_folder": "UNK",
@@ -79,14 +90,14 @@ RVL_CDIP_DOMAIN_MAP: dict[str, str] = {
 # source_dataset → domain (for local_dataset_* methods)
 SOURCE_DATASET_DOMAIN_MAP: dict[str, str] = {
     # Geometry distortion sources
-    "warpdoc": "SCI",       # Academic paper warp/distortion dataset
-    "docalign12k": "SCI",   # Document alignment academic papers
+    "warpdoc": "SCI",  # Academic paper warp/distortion dataset
+    "docalign12k": "SCI",  # Document alignment academic papers
     # Shadow / capture sources
-    "sd7k": "UNK",          # Real-world shadow on documents (mixed types)
-    "wsrd": "UNK",          # Watermark/shadow removal (mixed)
-    "realdae": "UNK",       # Real-world degradation (mixed)
+    "sd7k": "UNK",  # Real-world shadow on documents (mixed types)
+    "wsrd": "UNK",  # Watermark/shadow removal (mixed)
+    "realdae": "UNK",  # Real-world degradation (mixed)
     # Handwriting
-    "hiertext": "SCN",      # Natural scene text (street level)
+    "hiertext": "SCN",  # Natural scene text (street level)
     "casia-hwdb2-line": "EDU",
     "iiit-indic": "EDU",
     "khatt": "EDU",
@@ -110,7 +121,7 @@ REASON_PREFIX_DOMAIN_MAP: dict[str, str] = {
     "5a KHATT": "EDU",
     "5a Muharaf": "EDU",
     "5b CASIA-HWDB2": "EDU",
-    "3d RVL-CDIP": "GOV",   # test split scanner (business docs)
+    "3d RVL-CDIP": "GOV",  # test split scanner (business docs)
     "3b docalign12k": "SCI",
     "2b WarpDoc": "SCI",
     "2b docalign12k": "SCI",
@@ -132,11 +143,11 @@ FIXED_DOMAIN_BY_METHOD: dict[str, str] = {
     "playwright_code_go": "TEC",
     "playwright_code_sql": "TEC",
     "terminal_pil_render": "TEC",
-    "synthetic_pillow_render": "EDU",    # Font variation renders for script study
-    "midv_frame_midv500": "GOV",         # ID documents
-    "tobacco800_direct": "GOV",          # Historical business/tobacco docs
-    "synthetic_albumentations": "GOV",   # Blank form template
-    "opencv_sauvola_jpeg": "EDU",        # Arabic handwriting (Muharaf source)
+    "synthetic_pillow_render": "EDU",  # Font variation renders for script study
+    "midv_frame_midv500": "GOV",  # ID documents
+    "tobacco800_direct": "GOV",  # Historical business/tobacco docs
+    "synthetic_albumentations": "GOV",  # Blank form template
+    "opencv_sauvola_jpeg": "EDU",  # Arabic handwriting (Muharaf source)
     # DocSynth300K sourced — no category metadata available
     "augraphy_photocopy_4x": "UNK",
     # Note: augraphy_pipeline handled in step 10 via RVL class lookup (not fixed)
@@ -400,7 +411,9 @@ def _generate_review_csv(records: list[dict], output_path: Path) -> None:
     """Write a CSV of UNK records for manual domain annotation."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w") as fh:
-        fh.write("sha256,source_path,acquisition_method,reason,current_domain,domain_source,confidence,annotated_domain\n")
+        fh.write(
+            "sha256,source_path,acquisition_method,reason,current_domain,domain_source,confidence,annotated_domain\n"
+        )
         for rec in records:
             enr = rec.get("enrichment", {})
             sha = rec.get("sha256", "")[:16]
@@ -415,14 +428,18 @@ def _generate_review_csv(records: list[dict], output_path: Path) -> None:
 
 def main() -> int:
     """Entry point."""
-    parser = argparse.ArgumentParser(description="Enrich OOD registry with domain labels.")
+    parser = argparse.ArgumentParser(
+        description="Enrich OOD registry with domain labels."
+    )
     parser.add_argument(
         "--registry",
         type=Path,
         default=Path("metadata_registry/ood_registry.jsonl"),
         help="Path to OOD registry JSONL",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print stats only, do not write")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print stats only, do not write"
+    )
     parser.add_argument(
         "--contact-sheets",
         action="store_true",
@@ -488,8 +505,10 @@ def main() -> int:
     for src, cnt in source_counter.most_common(15):
         print(f"  {cnt:6d}  {src}")
 
-    unk_records = [r for r in updated_records if r["enrichment"]["domain_level1"] == "UNK"]
-    print(f"\nTotal UNK: {len(unk_records)} ({len(unk_records)/total*100:.1f}%)")
+    unk_records = [
+        r for r in updated_records if r["enrichment"]["domain_level1"] == "UNK"
+    ]
+    print(f"\nTotal UNK: {len(unk_records)} ({len(unk_records) / total * 100:.1f}%)")
 
     # ── UNK breakdown by method ──────────────────────────────────────────
     unk_by_method: Counter[str] = Counter(
@@ -516,7 +535,9 @@ def main() -> int:
     if args.contact_sheets:
         print(f"\nGenerating contact sheets for {len(unk_records)} UNK records...")
         print(f"  Output dir: {args.output_dir}")
-        sheet_paths = _generate_contact_sheets(unk_records, args.output_dir, seed=args.seed)
+        sheet_paths = _generate_contact_sheets(
+            unk_records, args.output_dir, seed=args.seed
+        )
         print(f"  Generated {len(sheet_paths)} contact sheets")
 
         # Write review CSV for all UNK records

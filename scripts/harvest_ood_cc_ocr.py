@@ -70,9 +70,9 @@ _LANG_TO_SCRIPT: dict[str, str] = {
 
 # How many images to register per language (focus on underrepresented scripts)
 _LANG_TARGETS: dict[str, int] = {
-    "Korean": 150,   # Hang: 0 existing → fill completely
+    "Korean": 150,  # Hang: 0 existing → fill completely
     "Russian": 150,  # Cyrl: 0 existing → fill completely
-    "Arabic": 100,   # Arab: 6 existing → bring to ~106
+    "Arabic": 100,  # Arab: 6 existing → bring to ~106
     "Japanese": 50,  # Jpan: 15 existing → bring to ~65
     # Latn languages skipped — well covered by other sources
 }
@@ -121,13 +121,16 @@ def _register_batch(
                 shutil.copy2(img_path, out_path)
             else:
                 from PIL import Image
+
                 with Image.open(img_path) as im:
                     im.convert("RGB").save(out_path, format="JPEG", quality=90)
             # Recompute SHA of the written file
             sha256 = compute_sha256(out_path)
             phash_hex = compute_phash(out_path)
 
-        entry = make_entry_fn(img_path, out_path if not dry_run else img_path, sha256, phash_hex)
+        entry = make_entry_fn(
+            img_path, out_path if not dry_run else img_path, sha256, phash_hex
+        )
 
         if not dry_run:
             append_registry_entry(entry, registry_path)
@@ -180,7 +183,8 @@ def main(registry: Path, dry_run: bool, seed: int) -> None:
             continue
 
         candidates = sorted(
-            f for f in lang_dir.rglob("*")
+            f
+            for f in lang_dir.rglob("*")
             if f.is_file() and f.suffix.lower() in (".jpg", ".jpeg", ".png")
         )
         rng.shuffle(candidates)
@@ -190,8 +194,14 @@ def main(registry: Path, dry_run: bool, seed: int) -> None:
 
         output_dir = _OOD_BASE / "ood_script"
 
-        def _make_script_entry(img_path: Path, out_path: Path, sha256: str, phash: str,
-                                _lang: str = lang, _script: str = script) -> dict:
+        def _make_script_entry(
+            img_path: Path,
+            out_path: Path,
+            sha256: str,
+            phash: str,
+            _lang: str = lang,
+            _script: str = script,
+        ) -> dict:
             gt = build_ground_truth_template()
             gt["script"] = _script
             gt["open_set"] = False
@@ -230,9 +240,15 @@ def main(registry: Path, dry_run: bool, seed: int) -> None:
 
         before = counters["registered"]
         _register_batch(
-            candidates, output_dir, target,
-            sha_set, phash_list, dry_run, registry,
-            _make_script_entry, counters,
+            candidates,
+            output_dir,
+            target,
+            sha_set,
+            phash_list,
+            dry_run,
+            registry,
+            _make_script_entry,
+            counters,
         )
         after = counters["registered"]
         click.echo(f"  {lang:10s} ({script}): registered {after - before}")
@@ -242,13 +258,16 @@ def main(registry: Path, dry_run: bool, seed: int) -> None:
     if doc_dir.exists():
         counters["prefix"] = "doc"
         candidates = sorted(
-            f for f in doc_dir.rglob("*")
+            f
+            for f in doc_dir.rglob("*")
             if f.is_file() and f.suffix.lower() in (".jpg", ".jpeg", ".png")
         )
         rng.shuffle(candidates)
         output_dir = _OOD_BASE / "ood_domain"
 
-        def _make_domain_entry(img_path: Path, out_path: Path, sha256: str, phash: str) -> dict:
+        def _make_domain_entry(
+            img_path: Path, out_path: Path, sha256: str, phash: str
+        ) -> dict:
             gt = build_ground_truth_template()
             gt["capture_method"] = "camera_smartphone"
             gt["handwriting_presence"] = False
@@ -285,9 +304,15 @@ def main(registry: Path, dry_run: bool, seed: int) -> None:
 
         before = counters["registered"]
         _register_batch(
-            candidates, output_dir, 100,
-            sha_set, phash_list, dry_run, registry,
-            _make_domain_entry, counters,
+            candidates,
+            output_dir,
+            100,
+            sha_set,
+            phash_list,
+            dry_run,
+            registry,
+            _make_domain_entry,
+            counters,
         )
         after = counters["registered"]
         click.echo(f"  document_text (ood_domain): registered {after - before}")
