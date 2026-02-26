@@ -7,12 +7,10 @@ purpose: "Phased acquisition plan prioritizing hardest-to-get real-world data fi
   then filling gaps with synthetic generation."
 tags:
 - datasets
-- acquisition
 - planning
 - training
+- data_preparation
 ---
-
-# Dataset Gathering Strategy
 
 > **Status**: Active | Planning Document
 > **Version**: 1.0.0
@@ -74,10 +72,10 @@ The strategy follows four phases:
    rejections, wild condition coverage).
 
 **Corpus context**: The unified training corpus requires **~420-440K unique images**
-across 10 training dataset views serving 22 model heads (see
+across 11 training dataset views serving 22 model heads (see
 [UNIFIED_TRAINING_CORPUS.md §1b](../datasets/UNIFIED_TRAINING_CORPUS.md#1b--unique-source-pool-analysis)).
-The per-head sizes sum to ~565K naively, but cross-dataset image sharing reduces the
-actual unique image footprint by ~22%. As of 2026-02-23, the corpus has **6 of 11
+The per-head sizes sum to ~585K naively, but cross-dataset image sharing reduces the
+actual unique image footprint by ~25%. As of 2026-02-23, the corpus has **6 of 15
 acceptance criteria failing** and **2 at risk**
 ([CORPUS_OOD_REVIEW_REPORT.md](CORPUS_OOD_REVIEW_REPORT.md)).
 
@@ -316,7 +314,7 @@ the gap between real data placed and ideal corpus targets.
 ### Step 1: Run Diversity Audit
 
 ```bash
-# Run full diversity evaluation across all 10 training datasets
+# Run full diversity evaluation across all 11 training dataset views
 uv run python scripts/evaluate_dataset_diversity.py --all-datasets
 
 # Generate cross-tabulation report
@@ -325,7 +323,7 @@ uv run python scripts/verify_dataset_diversity.py --cross-tab
 
 ### Step 2: Calculate Per-Head Gap
 
-For each of the 10 training datasets, measure real data placed vs. ideal target:
+For each of the 11 training dataset views, measure real data placed vs. ideal target:
 
 | Dataset | Ideal Size | Real Acquired (Phase 1) | Gap (synthetic fill target) | Synthetic Cap | Max Synthetic |
 |---|---|---|---|---|---|
@@ -397,9 +395,10 @@ Generation must proceed in this order due to dependencies:
 
 ### Synthetic Cap Verification
 
-After fill, verify no dataset exceeds its synthetic mixing cap:
+After Phase 3 fill completes, verify no dataset exceeds its synthetic mixing cap.
+The table below shows **projected post-fill composition** (not current state):
 
-| Dataset | Synthetic Cap | Expected Real | Expected Synthetic | Expected % Synthetic | Pass? |
+| Dataset | Synthetic Cap | Projected Real | Projected Synthetic | Projected % Synthetic | Pass? |
 |---|---|---|---|---|---|
 | Orientation | ≤40% | ~32K (DocLayNet + RVL-CDIP) | ~20K (v3 non-Latin) | ~38% | ✅ |
 | Skew | ≤37.5% | ~50K natural | ~40K synthetic rotation | ~44% | ⚠️ Over cap |
@@ -408,11 +407,12 @@ After fill, verify no dataset exceeds its synthetic mixing cap:
 | Script Detection | ≤60% | ~48K (MDIW13 real + rebalanced real subset) | ~60K (v3 stratified) | ~56% | ✅ |
 | Code Detection | ~50% | ~5K (curated negatives) | ~5K (PIL+Pygments generated) | ~50% | ✅ |
 
-**Skew cap violation note**: The existing skew dataset is 79.1% synthetic vs. the ≤37.5%
-ideal cap. This is documented as an AT RISK item in the corpus review. Increasing the
-natural scan component requires acquiring more real-scan datasets with reliable skew
-labels — this should be addressed in Phase 4 if the training run confirms the synthetic
-gap causes performance degradation.
+**Skew cap violation note**: The current skew dataset is 79.1% synthetic vs. the ≤37.5%
+ideal cap. Even after Phase 3, projections show ~44% synthetic — still over cap. This is
+documented as an AT RISK item in the corpus review. Increasing the natural scan component
+requires acquiring more real-scan datasets with reliable skew labels — this should be
+addressed in Phase 4 if the training run confirms the synthetic gap causes performance
+degradation.
 
 ---
 

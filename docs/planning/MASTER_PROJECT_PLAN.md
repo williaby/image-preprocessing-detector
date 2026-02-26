@@ -399,8 +399,8 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 ([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
 dataset work is executed within each phase. It prioritizes real-world data acquisition by
 difficulty (4 tiers: S/A/B/C), then fills gaps with synthetic generation. The strategy accounts
-for cross-dataset sharing that reduces the unique image requirement from ~565K (naive per-head
-sum) to ~420–440K actual unique images — see
+for cross-dataset sharing that reduces the unique image requirement from ~585K (naive per-head
+sum across 11 dataset views) to ~420–440K actual unique images — see
 [UNIFIED_TRAINING_CORPUS.md §1b](../datasets/UNIFIED_TRAINING_CORPUS.md#1b--unique-source-pool-analysis).
 
 ### Key Per-Group Findings
