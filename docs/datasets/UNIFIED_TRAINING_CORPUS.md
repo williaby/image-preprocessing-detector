@@ -13,6 +13,7 @@
 ## Table of Contents
 
 1. [Corpus Identity](#1--corpus-identity)
+1b. [Unique Source Pool Analysis](#1b--unique-source-pool-analysis)
 2. [Head Coverage Requirements](#2--head-coverage-requirements)
 3. [Ideal Corpus Composition](#3--ideal-corpus-composition)
 4. [14-Dimension Diversity Coverage Requirements](#4--14-dimension-diversity-coverage-requirements)
@@ -48,6 +49,121 @@ Key properties the ideal corpus must exhibit:
 The corpus serves 10 distinct training dataset views (orientation, skew, resolution quality, IQA, script detection, handwriting, capture method, shadow, warping, code detection). These views share source images where appropriate — the same DocLayNet page may contribute to orientation, skew, resolution quality, handwriting, and capture method views. The global split registry ensures these shared contributions land in the same split everywhere.
 
 Source references: `docs/schema/corpus_manifest_v1.schema.json`, `docs/architecture/diagrams/level-2/data-preparation/index.md §UTC`.
+
+---
+
+## §1b — Unique Source Pool Analysis
+
+> **Source**: 4-model consensus analysis (Gemini 2.5 Pro, Gemini 3 Pro Preview, DeepSeek R1
+> 0528, Grok 4; 2026-02-26) examining the relationship between per-head ideal sizes and
+> actual unique images required. This section documents the corrected total unique image
+> requirement and the cross-dataset sharing that reduces it.
+
+### Naive vs. Actual Unique Image Requirement
+
+The 10 training datasets sum to approximately 565K images when counted per-head:
+
+| Dataset | Ideal Size |
+|---|---|
+| Orientation | 50,000 |
+| Skew | 90,000 |
+| Post-Correction Skew (SIG-G3-2) | 20,000 |
+| Resolution Quality | 30,000 |
+| IQA (hard + pseudo) | ~125,000 |
+| Script Detection | 108,000 |
+| Handwriting | 60,000 |
+| Capture Method | 50,000 |
+| Shadow | ~18,000 |
+| Warping | ~24,000 |
+| Code Detection | 10,000 |
+| **Naive per-head total** | **~565,000** |
+
+However, the global corpus design (§1) means many source images serve multiple heads
+simultaneously through different task-specific views. The actual unique image requirement
+is **~420-440K**, a ~22% reduction from the naive sum. The per-head counts remain valid —
+each head still needs the specified sample counts to learn its task adequately — but the
+total unique images that must be acquired, stored, and managed is significantly lower.
+
+### Cross-Dataset Sharing: Three Major Source Pools
+
+Three source pools account for the majority of cross-head sharing. Each pool contains
+unique images that are reused across multiple heads through derived views (§7).
+
+**Pool 1 — Synth-Multiscript v3 (190,485 unique images → ~140K view-entries)**
+
+| Head View | Images Used | Selection Criteria |
+|---|---|---|
+| Script Detection | ~60K | All 27 scripts, weighted resampling for class balance |
+| Orientation (synthetic component) | ~20K | Non-Latin scripts only (19 scripts) |
+| Skew (synthetic component) | ~10K | Stratified by script and DPI tier |
+| Resolution Quality | ~5K | Stratified across all 7 DPI tiers |
+| IQA Phase 2 pseudo-labels | up to 20K | Diverse subset across quality tiers |
+| Shadow synthetic | ~8K | Augraphy shadow overlay (4 types) |
+| Warping synthetic | ~5K | Perspective/page_curl/fold transforms |
+| Capture Method | ~7.5K | Labeled as `capture_method=synthetic` |
+| Handwriting negatives | ~5K | Printed-only subset (NONE class) |
+| **Total view-entries** | **~140K** | from 190K unique base images |
+
+Most v3 images serve 2-4 views. A single v3 image used for script detection, orientation
+rotation, and shadow overlay counts as 1 unique image but 3 view-entries. The effective
+multiplier is ~0.74x (140K views / 190K unique).
+
+**Pool 2 — DocLayNet (~50K used of 81K available → ~80K view-entries)**
+
+| Head View | Images Used | Usage |
+|---|---|---|
+| Orientation (real component) | ~32K | Born-digital PDFs rotated to 4 classes |
+| Resolution Quality | ~5K | Multi-DPI renders (72/150/300 DPI) |
+| IQA Phase 2 pseudo-labels | ~10K+ | VLM pseudo-labeled subset |
+| Handwriting negatives | ~15K | Printed-only subset |
+| Capture Method (BORN_DIGITAL) | ~15K | Native PDF category |
+| Code Detection negatives | ~3K | Non-code printed documents |
+
+DocLayNet is the highest-leverage real dataset: each acquired page serves 5-6 heads.
+The effective multiplier is ~1.6x (80K views / 50K unique).
+
+**Pool 3 — RVL-CDIP (~50K used of 400K available → ~35K view-entries)**
+
+| Head View | Images Used | Usage |
+|---|---|---|
+| Orientation (real component) | ~12K | Scanned documents rotated to 4 classes |
+| Capture Method (SCANNER_FLATBED, SCANNER_ADF, FAX) | ~12.5K | Multiple scanner categories |
+| IQA Phase 2 pseudo-labels | ~10K+ | VLM pseudo-labeled subset |
+
+The remaining ~350K RVL-CDIP images start as `corpus_status: reserved`, providing a clean
+pool for future OOD expansion or training augmentation.
+
+### Unique Source Pool Summary
+
+| Source Pool | Unique Images | Head Views Served | Sharing Pattern |
+|---|---|---|---|
+| Synth-multiscript v3 | ~190K | 7-9 heads via derived views | High: same base image, different transforms |
+| DocLayNet | ~50K (of 81K available) | 5-6 heads | High: same page, different labels extracted |
+| RVL-CDIP | ~50K (of 400K; 88% reserved) | 3-4 heads | Moderate: orientation + capture + IQA |
+| Specialized real datasets | ~100K combined | 1-2 heads each | Low: sd7k, wsrd, KHATT, CASIA-HWDB, IIIT-INDIC, HKR, IAM, HierText, anyphotodoc6300, warpdoc, docalign12k, MIDV500, SmartDoc-QA, etc. |
+| Specialized synthetic | ~30K combined | 1-2 heads each | Low: code detection generation, narrow-range skew, IQA compound distortion |
+| **Total unique images** | **~420-440K** | | |
+
+### Implications for Corpus Assembly
+
+1. **Acquisition efficiency**: Multi-head source pools (DocLayNet, v3, RVL-CDIP) deliver
+   more value per acquired image than single-head sources. A single DocLayNet page serves
+   5-6 heads; a single sd7k image serves only 1 (shadow).
+
+2. **Real data as the bottleneck**: Specialized real datasets (handwriting scripts,
+   shadow/warping paired GT, modern CIS flatbeds) have a ~1.0x sharing multiplier — they
+   serve few heads but are irreplaceable for those heads. This makes them the primary
+   bottleneck for corpus completion and justifies prioritizing their acquisition first.
+   See [DATASET_GATHERING_STRATEGY.md](../planning/DATASET_GATHERING_STRATEGY.md) for
+   the acquisition sequencing plan.
+
+3. **Split registry scale**: The global split registry (SHA256-keyed) must accommodate
+   ~420-440K unique entries, not 565K. This affects manifest generation performance,
+   dedup verification scope, and storage planning.
+
+4. **v3 completion economics**: Completing v3 from 190K to 350K would proportionally
+   increase multi-head coverage, but the marginal benefit per image decreases as
+   cross-head overlap is already high for existing images.
 
 ---
 
@@ -953,6 +1069,10 @@ An assembled corpus is acceptable for training when ALL of the following checkbo
 ---
 
 ## §12 — Current State vs Ideal (Gap Summary)
+
+> **Note**: The naive per-head sum (~565K) overstates the actual unique image requirement.
+> Cross-dataset sharing reduces the true unique image footprint to **~420-440K**. See §1b
+> for the detailed sharing analysis and source pool breakdown.
 
 The table below shows the delta between the ideal corpus specification and the current assembly state as of 2026-02-23. Priority P0 gaps block training; P1 gaps allow training to begin on completed heads while the gap is resolved.
 
