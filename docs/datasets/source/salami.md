@@ -221,13 +221,18 @@ documentation_status: complete
 | Latin | Latn | 65 | Latin script, Latin language |
 | Greek | Grek | 60 | Greek manuscript pages |
 | Ottoman | Arab | 10 | Arabic script, Ottoman Turkish |
-| Armenian | Armn | 5 | Armenian manuscript pages |
-| Gothic | Goth | 5 | Gothic script manuscripts |
-| Georgian | Geor | 5 | Georgian manuscript pages |
+| Armenian | Armn | 5 | **OOD-reserved** — excluded from training |
+| Gothic | Goth | 5 | **OOD-reserved** — excluded from training |
+| Georgian | Geor | 5 | **OOD-reserved** — excluded from training |
 | German | Latn | 5 | Latin script, German language |
 
 **Script Families Present**: Armenian, Georgian, Latin, Gothic, Greek, Arabic, Cyrillic (7 families)
 
+> **OOD Reservation**: 15 images (Armn/Goth/Geor, 5 each) are permanently excluded from all
+> training manifests and reserved for OOD evaluation. Only the remaining 235 images
+> (Cyrl/Latn/Grek/Arab) are eligible for training. See
+> [OOD_DATASET_DESIGN.md](../../planning/OOD_DATASET_DESIGN.md#script-reservation-policy).
+>
 > **Note**: Exact per-language counts available from `images.json` but not yet profiled.
 
 #### 6. IQA Profile
@@ -344,7 +349,7 @@ Mean score maps and std maps are pre-computed from all 20 expert assessments:
 | SIG-G1-4 | skew_score | ❌ | -- | N/A | No skew quality labels |
 | SIG-G1-5 | compression_score | ❌ | -- | N/A | PNG (lossless) |
 | SIG-G1-6 | overall_quality | 🟡 | ~250 | tier_2_model | Legibility maps provide quality proxy |
-| SIG-G2-1 | script_cls | ✅ | ~250 | tier_1_annotation | 7 script families from images.json (Armn, Geor, Latn, Goth, Grek, Arab, Cyrl) |
+| SIG-G2-1 | script_cls | ✅ | ~235 | tier_1_annotation | 4 trainable scripts (Cyrl, Latn, Grek, Arab); 3 OOD-reserved (Armn, Goth, Geor — 15 images excluded) |
 | SIG-G3-1 | orientation_cls (post) | ❌ | -- | N/A | No orientation labels |
 | SIG-G3-2 | skew_reg (post) | ❌ | -- | N/A | No skew labels |
 | SIG-G4-1 | handwriting_presence_cls | ✅ | ~250 | tier_1_annotation | 100% handwritten manuscripts |
