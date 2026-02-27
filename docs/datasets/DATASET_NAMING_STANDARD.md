@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (64 total)
+### All Datasets (65 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
@@ -76,6 +76,7 @@ title: Dataset Naming Standard
 | `indicdlp` | IndicDLP | indic-dlp, indic_dlp, indicdlp | ✅ | Indic Document Layout Parser (119K images, 42 classes, 12 languages) |
 | `invoices-kg` | invoices_kaggle | invoices_kaggle, kaggle-invoices | ✅ | Kaggle invoices dataset |
 | `jssoda` | jssoda | JSSODa (HuggingFace capitalization) | ✅ | Japanese Simple Synthetic OCR Dataset (2,000 images, synthetic, orientation + script training) |
+| `kleister-charity` | kleister_charity | kleister-charity-documents, kleister_charity | ✅ | Kleister Charity — ~20,000 pages from 3,414 UK charity PDFs (gov.uk, mixed HW/typed, MIT) |
 | `mathverse` | mathverse | math-verse | ✅ | Multi-modal math problems |
 | `markushgrapher` | MarkushGrapher | markush_grapher, markush-grapher | ✅ | Chemical structure recognition (235K, DS4SD) |
 | `mdiw13` | mdiw13 | mdiw-13, mdiw_13 | ✅ | Multi-lingual document image words (13 scripts) |
@@ -89,6 +90,7 @@ title: Dataset Naming Standard
 | `multimodal-textbook` | multimodal_textbook | multimodal_textbook | ✅ | STEM textbook pages |
 | `openlid-v2` | openlid_v2 | openlid-v2, openlid2 | 📚 | OpenLID v2 text corpus (201 languages, 116M+ samples) |
 | `muharaf` | muharaf | muharaf_arabic_manuscripts | 🔄 | Arabic historical manuscripts |
+| `nara-1950-census` | nara_1950_census | nara_1950_census | ✅ | NARA 1950 Census enumeration schedules (695 images, Public Domain) |
 | `ndl-docl` | ndl_docl | ndl-layout-dataset, layout-dataset | 🔄 | NDL Document Layout Dataset — 2,290 Japanese library scans with VOC layout annotations (kuzushiji + modern) |
 | `ndl-minhon` | ndl_minhon | minhon, ndl-minhon-ocr | 🔄 | NDL Classical Books OCR Dataset (Minna de Honkoku) — 32,822 kuzushiji pages, 523K line annotations, CC-BY-SA 4.0 |
 | `nepali-handwritten` | nepali_handwritten | nepali_handwritten | ✅ | Nepali handwriting |

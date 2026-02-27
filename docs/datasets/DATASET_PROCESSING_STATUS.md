@@ -27,13 +27,13 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 54/73 datasets training-ready (74.0%), 2 benchmark-ready
+**Current Status**: 55/74 datasets training-ready (74.3%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 54 | 74.0% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 55 | 74.3% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 11 | 15.1% | Format conversion, label extraction, or generating |
+| 🔄 **In Progress** | 11 | 14.9% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
 | ❌ **Blocked** | 5 | 6.8% | Fundamental issue preventing use |
 
@@ -68,11 +68,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
+| kleister-charity | ~20,000 | ✅ PNG | ✅ KIE fields + HW/signature | 🔄 Parser ready | UK charity annual reports (MIT); mixed HW/typed, scanner+born-digital |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
+| nara-1950-census | 695 | ✅ JPG | ✅ Census metadata | 🔄 Pending | US census HW forms (Public Domain); parser ready, Layer 2 pending |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |

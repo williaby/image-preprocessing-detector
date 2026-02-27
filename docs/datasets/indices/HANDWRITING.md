@@ -18,9 +18,11 @@
 | iam-handwriting | 13,353 | Line/word text | ✅ Unrestricted | English | [iam-handwriting.md](../source/iam-handwriting.md) |
 | gnhk | 687 | Word-level polygons + legibility tags (%SC%/%NA%) | ✅ CC-BY-4.0 | English | [gnhk.md](../source/gnhk.md) |
 | signverod | 2,765 | Signature/initials/redaction/date bboxes | ✅ CC0-1.0 | English | [signverod.md](../source/signverod.md) |
+| kleister-charity | ~20,000 | Mixed HW/typed + signatures (UK charity reports) | ✅ MIT | English | [kleister-charity.md](../source/kleister-charity.md) |
 | popp-line | 4,794 | Line transcriptions (French census) | ✅ CC-BY-4.0 | French | [popp-line.md](../source/popp-line.md) |
+| nara-1950-census | 695 | Census enumeration schedules (100% HW on pre-printed forms) | ✅ Public Domain | English | [nara-1950-census.md](../source/nara-1950-census.md) |
 
-**Total Available for Training**: ~295K images
+**Total Available for Training**: ~296K images
 
 ---
 
@@ -70,6 +72,24 @@
 - Word-level polygon annotations with line grouping
 - **Use Case**: Seed data for ILLEGIBLE class in legibility classification (SIG-G4-2)
 - **Source**: [gnhk.md](../source/gnhk.md)
+
+**Kleister Charity** (MIXED HW/TYPED + SIGNATURES):
+
+- ~20,000 page images from 3,414 UK charity annual report PDFs (gov.uk)
+- Mixed content: typed forms with handwritten annotations and signatures
+- Scanner flatbed + born-digital mix; financial domain (FIN)
+- MIT license permits commercial use
+- **Use Case**: Handwriting presence detection (SIG-G4-1), handwriting content type (SIG-G4-3), signature presence, capture method classification (SIG-G5-1)
+- **Source**: [kleister-charity.md](../source/kleister-charity.md)
+
+**NARA 1950 Census** (MIXED TYPED+HW FORMS):
+
+- 695 scanned census enumeration schedules (partial Alabama sample; target ~25K)
+- 100% handwritten content on pre-printed government tabular forms
+- Scanner flatbed capture; Administrative/Government domain
+- Public Domain license — unrestricted commercial use
+- **Use Case**: Mixed typed+HW content type (SIG-G4-3), handwriting in structured docs (SIG-G4-1), scanner capture method (SIG-G5-1)
+- **Source**: [nara-1950-census.md](../source/nara-1950-census.md)
 
 ---
 
@@ -164,6 +184,8 @@
 - Muharaf: Historical Arabic manuscripts
 - Egyptian Handwriting: Arabic cursive (89 writers, CC-BY-4.0)
 - NIST SD-2/6/19: Tax forms and digits (US government)
+- Kleister Charity: UK charity annual reports (mixed HW/typed + signatures, MIT)
+- NARA 1950 Census: US census enumeration schedules (mixed typed+HW forms, Public Domain)
 - SALAMI: Multi-script legibility calibration (250 images, 20 experts)
 
 **Symbol Handwriting**:
