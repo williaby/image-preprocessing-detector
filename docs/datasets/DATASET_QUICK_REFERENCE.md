@@ -127,6 +127,7 @@ title: Dataset Quick Reference
 | midv2020 | ~4,000 | -- | JPG | GT (quads+text) | None | Parser (country) | Parser (country) |
 | signatr6k | 12,514 | **B** 82 | PNG | Extracted | Extracted (Docling 4-cat) | None | None |
 | docalign12k | ~12,000 | D 76 | JPG | None | None | None | None |
+| egyptian-handwriting | 11,216 | -- | Parquet | GT (word labels) | None | GT (dataset) | GT (dataset) |
 | hiertext | 11,641 | **B** 82 | JPG | GT + Converted | GT (COCO) + Converted | OpenLID | OpenLID |
 | cvsi | 10,715 | **B** 85 | JPG | Extracted | Extracted (DocLayout-YOLO) | GT | GT |
 | arabic-docs | 10,045 | D 86 | JPG/PNG | GT (titles) + Extracted | Extracted (Docling 14-cat) | GT | GT |
@@ -168,6 +169,7 @@ title: Dataset Quick Reference
 | bhutan-afs | 135 | **B** 83 | PNG | Extracted | Extracted (DocLayout-YOLO) | None | None |
 | dzongkha-digits | 62 | **A** 93 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
 | drccbi | 325 | -- | JPG | Extracted | None | None | None |
+| salami | 250 | -- | PNG | GT (legibility ratings) | None | GT (dataset) | GT (dataset) |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
@@ -288,8 +290,10 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | pucit-ohul | 7,401 | Urdu HW | Line text | All | Academic |
 | ndl-minhon | 32,822 | Classical Japanese kuzushiji HW | Text GT (honkoku transcriptions) | All | CC-BY-SA-4.0 |
 | ndl-docl | 2,290 | Japanese historical layout (kotenseki/kindai) | VOC layout boxes | All | CC-BY-4.0 |
+| egyptian-handwriting | 11,216 | Arabic cursive (89 writers, ages 6-73) | Word transcriptions | All | CC-BY-4.0 |
+| salami | 250 | Multi-script manuscripts (8 scripts) | 20-expert legibility ratings (5-level) | All | CC-BY-4.0 |
 
-**Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans) and COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`)
+**Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans), COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`), and SALAMI (20-expert pixel-level legibility calibration anchor)
 **Strategy**: Multi-task SigLIP 2 with 3 heads: has_handwriting (binary), handwriting_ratio (regression), handwriting_confidence (regression)
 
 ---
@@ -398,7 +402,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 **Research Only** (no commercial use): fintabnet, rvl-cdip, financebench (CC-BY-NC-4.0), ohr-bench, diqa-5000, realdae, smartdoc-qa, sroie, tablebank (research clause)
 
-**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), midv2020 (CC BY-SA 2.5 — ShareAlike, attribution + Generated Photos credit required), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT)
+**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), midv2020 (CC BY-SA 2.5 — ShareAlike, attribution + Generated Photos credit required), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT), egyptian-handwriting (CC-BY-4.0), salami (CC-BY-4.0)
 
 **Unknown/Needs Review**: arabic-docs, nepali-handwritten, ocr-quality, pucit-ohul, yarmouk, q-doc, drccbi
 

@@ -55,6 +55,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | diqa-5000 | 5,500 | ✅ JPG | ✅ MOS scores | ✅ Complete | IQA benchmark |
 | doclaynet | 80,863 | ✅ PNG | ✅ COCO boxes | ✅ Complete | 11 DocLayNet classes |
 | dzongkha-digits | 1,000 | ✅ PNG | ✅ Class labels | ✅ Complete | Dzongkha digit recognition |
+| egyptian-handwriting | 11,216 | ✅ Parquet | ✅ Word labels | 🔄 Parser ready | Arabic cursive HW (89 writers, CC-BY-4.0) |
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |
@@ -86,6 +87,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | pubtabnet | 519,030 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Research papers |
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
 | rvl_cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
+| salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0) |
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
 | siw13 | 16,291 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | smartdoc-qa | 4,280 | ✅ JPG | ✅ Quality + mobile | ✅ Complete | Mobile capture QA |

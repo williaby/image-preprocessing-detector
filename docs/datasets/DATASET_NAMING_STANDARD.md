@@ -63,6 +63,7 @@ title: Dataset Naming Standard
 | `docsynth` | docsynth300k | docsynth_300k, docsynth-300k | 🔄 | Synthetic documents (300K) |
 | `docreal` | docreal | doc_real, doc-real | ✅ | Real-world dewarping (200 images), audit Grade D* |
 | `dzongkha-digits` | dzongkha_digits | dzongkha-digits, dzongkha_digits | ✅ | Dzongkha handwritten digits (Tibetan script) |
+| `egyptian-handwriting` | egyptian_handwriting | egyptian-hw, egyptian_hw | ✅ | Egyptian Arabic cursive handwriting (11,216 words, 89 writers, CC-BY-4.0) |
 | `financebench` | financebench | finance-bench | 🔄 | Financial RAG QA |
 | `fintabnet` | fintabnet | fin-tab-net | ✅ | Financial tables |
 | `funsd` | funsd | - | ✅ | Form understanding (noisy scans) |
@@ -104,6 +105,7 @@ title: Dataset Naming Standard
 | `q-doc` | Q-Doc | qdoc, q_doc | ✅ | Document quality assessment benchmark (4,260 images) |
 | `realdae` | realdae | real-dae | ✅ | Real document auto-enhancement |
 | `rvl-cdip` | rvl_cdip | rvl_cdip, rvlcdip | ✅ | RVL-CDIP document classification |
+| `salami` | salami | salami-legibility | ✅ | SALAMI legibility assessment (250 images, 20 experts, 8 scripts, CC-BY-4.0) |
 | `sd7k` | sd7k | sd_7k, docshadow_sd7k | ✅ | Document shadow removal (7,239 images), audit Grade D* |
 | `signatr6k` | signatr6k | signatr-6k, signature-6k | ✅ | Text segmentation (signatures) |
 | `siw13` | siw13 | siw-13, siw_13 | ✅ | Script identification words (13 scripts) |

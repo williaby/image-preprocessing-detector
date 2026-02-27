@@ -13,10 +13,11 @@
 | hiertext | 11,639 | `handwritten` + `legible` (word-level) | ⚠️ Train OK (8,281), test reserved | Mixed | [hiertext.md](../source/hiertext.md) |
 | cocotext | 63,686 | `class` + `legibility` (word-level) | ⚠️ Train OK (43,686), test reserved | Latin | [cocotext.md](../source/cocotext.md) |
 | muharaf | 24,952 | Line transcriptions (variable quality) | ✅ Unrestricted | Arabic cursive | [muharaf.md](../source/muharaf.md) |
+| egyptian-handwriting | 11,216 | Word transcriptions (89 writers, ages 6-73) | ✅ CC-BY-4.0 | Arabic cursive | [egyptian-handwriting.md](../source/egyptian-handwriting.md) |
 | hasyv2 | 168,233 | Math symbols (handwritten) | ⚠️ Train OK (151,410), test reserved | Symbols | [hasyv2.md](../source/hasyv2.md) |
 | iam-handwriting | 13,353 | Line/word text | ✅ Unrestricted | English | [iam-handwriting.md](../source/iam-handwriting.md) |
 
-**Total Available for Training**: ~275K images
+**Total Available for Training**: ~286K images
 
 ---
 
@@ -39,6 +40,24 @@
 - Historical Arabic manuscripts (clean to degraded)
 - Line-level transcriptions (quality varies)
 - **Use Case**: Train legibility regression on continuous quality spectrum
+
+**SALAMI** (CALIBRATION ANCHOR):
+
+- 250 manuscript images with 20-expert pixel-level legibility assessments
+- 5-level rating scale: 0-20%, 20-40%, 40-60%, 60-80%, 80-100% readable
+- 4,811 region-level annotations with expert agreement quantification
+- Pre-computed mean score maps and uncertainty (std) maps
+- 8 scripts: Armenian, Georgian, German, Gothic, Greek, Latin, Ottoman, Slavonic
+- **Use Case**: Gold-standard calibration anchor for legibility regression (SIG-G4-2, SIG-G4-5)
+- **Source**: [salami.md](../source/salami.md)
+
+**Egyptian Handwriting** (Arabic Cursive):
+
+- 11,216 word-level Arabic cursive images from 89 writers (ages 6-73)
+- Variable quality from child to adult handwriting
+- Only commercially-viable Arabic handwriting source (CC-BY-4.0)
+- **Use Case**: Arabic cursive handwriting presence, script detection, legibility diversity
+- **Source**: [egyptian-handwriting.md](../source/egyptian-handwriting.md)
 
 ---
 
@@ -105,13 +124,14 @@
 **Phase 2: Legibility Assessment**
 
 - Primary: HierText (word-level legibility labels)
+- Calibration: SALAMI (20-expert pixel-level legibility, gold standard)
 - Secondary: COCO-Text (binary legibility)
 - Continuous spectrum: Muharaf (variable quality manuscripts)
 
 **Phase 3: Script Classification**
 
 - Character-level datasets for fine-grained script features
-- NIST (Latin), Nepali/PUCIT (Indic), TIBHCR (Tibetan), Muharaf (Arabic)
+- NIST (Latin), Nepali/PUCIT (Indic), TIBHCR (Tibetan), Muharaf (Arabic), Egyptian HW (Arabic cursive)
 
 ---
 
@@ -129,7 +149,9 @@
 
 - IAM-Handwriting: English cursive (forms, sentences, words)
 - Muharaf: Historical Arabic manuscripts
+- Egyptian Handwriting: Arabic cursive (89 writers, CC-BY-4.0)
 - NIST SD-2/6/19: Tax forms and digits (US government)
+- SALAMI: Multi-script legibility calibration (250 images, 20 experts)
 
 **Symbol Handwriting**:
 
@@ -142,6 +164,8 @@
 - PUCIT-OHUL: Urdu script
 - TIBHCR: Tibetan characters
 - KHATT: Arabic cursive (1,000 writers, OOD evaluation)
+- Egyptian Handwriting: Arabic cursive (CC-BY-4.0, commercial-viable)
+- SALAMI: Multi-script legibility (calibration anchor)
 
 ---
 
