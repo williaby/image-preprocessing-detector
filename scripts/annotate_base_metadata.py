@@ -936,6 +936,54 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "text_scope": "page",
         "original_labels_parser": "parse_ndl_minhon_labels",
     },
+    # === Gap-Closing Datasets (2026-02 Integration) ===
+    # Egyptian Handwriting: 11,216 Arabic cursive word images from 89 writers (ages 6-73).
+    # Only commercially-viable Arabic HW source (CC-BY-4.0).  Parquet format —
+    # images stored as binary blobs, requires materialization before scanning.
+    "egyptian-handwriting": {
+        "path": BASE_DATA / "handwriting/egyptian-handwriting",
+        "pattern": "extracted_images/*.png",  # After materialization from parquet
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "ar",
+        "iso15924_script": "Arab",
+        "text_scope": "word",
+        "original_labels_parser": "parse_egyptian_hw_labels",
+    },
+    # SALAMI: 250 manuscript images with 20-expert pixel-level legibility assessments.
+    # Gold-standard calibration anchor for legibility regression (SIG-G4-2/G4-5).
+    # 8 scripts: Armenian, Georgian, German, Gothic, Greek, Latin, Ottoman, Slavonic.
+    # NOTE: 15 rare-script images (Armn/Goth/Geor) routed to OOD; 235 for training.
+    "salami": {
+        "path": BASE_DATA / "handwriting/salami/salami_1.0/images/input",
+        "pattern": "*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,  # Multi-language historical manuscripts
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "is_multilingual": True,
+        "text_scope": "page",
+        "original_labels_parser": "parse_salami_labels",
+    },
+    # NOTE: khmer-ocr-benchmark excluded — repo contains only framework code and logos,
+    # not actual document images. Only 6 PNGs present (all logos/screenshots).
+    # OpenPecha OCR-Drutsa: 32,364 Tibetan script line images (ODC-BY).
+    # Closes TIBT script gap for SIG-G2-1.  Parquet format —
+    # images stored as binary blobs, requires materialization before scanning.
+    "openpecha-ocr-drutsa": {
+        "path": BASE_DATA / "language/openpecha-ocr-drutsa",
+        "pattern": "extracted_images/*.png",  # After materialization from parquet
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "bo",
+        "iso15924_script": "Tibt",
+        "text_scope": "line",
+        "original_labels_parser": "parse_ocr_drutsa_labels",
+    },
 }
 
 # NOTE: Removed non-existent datasets:
@@ -4911,6 +4959,190 @@ def parse_ndl_minhon_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     return labels
 
 
+# ---------------------------------------------------------------------------
+# Gap-Closing Dataset Parsers (2026-02)
+# ---------------------------------------------------------------------------
+
+# Egyptian Handwriting — lazy-loaded parquet label cache
+_egyptian_hw_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_egyptian_hw_labels(dataset_path: Path) -> dict[str, str]:
+    """Load label column from Egyptian HW parquet, keyed by row index."""
+    cache_key = str(dataset_path)
+    if cache_key in _egyptian_hw_cache:
+        return _egyptian_hw_cache[cache_key]
+
+    labels_map: dict[str, str] = {}
+    try:
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+
+        parquet_dir = dataset_path / "data"
+        for pf in sorted(parquet_dir.glob("*.parquet")):
+            table = pq.read_table(pf, columns=["label"])
+            for i in range(len(table)):
+                labels_map[str(i)] = str(table.column("label")[i].as_py())
+    except Exception as e:
+        logger.debug("Failed to load Egyptian HW parquet labels: %s", e)
+    _egyptian_hw_cache[cache_key] = labels_map
+    return labels_map
+
+
+def parse_egyptian_hw_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse Egyptian Handwriting Dataset labels.
+
+    Images materialized from parquet as {row_index}.png.
+    Labels are Arabic word transcriptions.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ar"
+    labels.script_name = "Arabic"
+    labels.iso15924_script_code = "Arab"
+
+    # Extract row index from filename (e.g., "00042.png" -> "42")
+    stem = image_path.stem.lstrip("0") or "0"
+    label_map = _load_egyptian_hw_labels(dataset_path)
+    text = label_map.get(stem, "")
+    if text:
+        labels.transcription = text
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "egyptian-handwriting"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "word"
+    return labels
+
+
+# SALAMI — lazy-loaded assessment + image metadata caches
+_salami_images_cache: dict[str, dict[str, Any]] = {}
+_salami_assessments_cache: dict[str, dict[str, list[dict[str, Any]]]] = {}
+
+_SALAMI_LANG_TO_SCRIPT: dict[str, str] = {
+    "Armenian": "Armn",
+    "Georgian": "Geor",
+    "German": "Latn",
+    "Gothic": "Goth",
+    "Greek": "Grek",
+    "Latin": "Latn",
+    "Ottoman": "Arab",
+    "Slavonic": "Cyrl",
+}
+
+_SALAMI_RATING_TO_SCORE: dict[str, float] = {
+    "0-20% readable": 0.1,
+    "20-40% readable": 0.3,
+    "40-60% readable": 0.5,
+    "60-80% readable": 0.7,
+    "80-100% readable": 0.9,
+}
+
+
+def _load_salami_metadata(
+    dataset_path: Path,
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    """Load SALAMI images.json and assessments.json."""
+    cache_key = str(dataset_path)
+    if cache_key in _salami_images_cache:
+        return _salami_images_cache[cache_key], _salami_assessments_cache.get(
+            cache_key, {}
+        )
+
+    images_map: dict[str, dict[str, Any]] = {}
+    assessments_map: dict[str, list[dict[str, Any]]] = {}
+
+    # Navigate to src/ directory (sibling of images/)
+    src_dir = dataset_path.parent / "src"
+
+    try:
+        with open(src_dir / "images.json") as f:
+            for img in json.load(f):
+                images_map[img["id"]] = img
+    except Exception as e:
+        logger.debug("Failed to load SALAMI images.json: %s", e)
+
+    try:
+        with open(src_dir / "assessments.json") as f:
+            for assessment in json.load(f):
+                img_id = assessment.get("image_id", "")
+                if img_id not in assessments_map:
+                    assessments_map[img_id] = []
+                assessments_map[img_id].append(assessment)
+    except Exception as e:
+        logger.debug("Failed to load SALAMI assessments.json: %s", e)
+
+    _salami_images_cache[cache_key] = images_map
+    _salami_assessments_cache[cache_key] = assessments_map
+    return images_map, assessments_map
+
+
+def parse_salami_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse SALAMI legibility assessment metadata.
+
+    Each image has language metadata and 20-expert legibility assessments.
+    """
+    labels = OriginalLabels()
+    img_id = image_path.stem  # e.g., "00_00"
+
+    images_map, assessments_map = _load_salami_metadata(dataset_path)
+    img_meta = images_map.get(img_id, {})
+
+    lang = img_meta.get("lang", "")
+    script = _SALAMI_LANG_TO_SCRIPT.get(lang, "")
+    if lang:
+        labels.language_code = lang.lower()
+        labels.script_name = lang
+    if script:
+        labels.iso15924_script_code = script
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "salami"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["batch"] = img_meta.get("batch")
+    labels.raw_labels["language"] = lang
+
+    # Compute mean legibility score from expert assessments
+    assessments = assessments_map.get(img_id, [])
+    if assessments:
+        scores = []
+        for a in assessments:
+            rating = a.get("rating", "")
+            if rating in _SALAMI_RATING_TO_SCORE:
+                scores.append(_SALAMI_RATING_TO_SCORE[rating])
+        if scores:
+            mean_score = sum(scores) / len(scores)
+            labels.raw_labels["legibility_score"] = round(mean_score, 3)
+            labels.raw_labels["legibility_assessments_count"] = len(scores)
+
+    return labels
+
+
+def parse_ocr_drutsa_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse OpenPecha OCR-Drutsa labels.
+
+    Images materialized from parquet as {row_index}.png.
+    Labels are Tibetan text transcriptions.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "bo"
+    labels.script_name = "Tibetan"
+    labels.iso15924_script_code = "Tibt"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "openpecha-ocr-drutsa"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "line"
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -4964,6 +5196,10 @@ LABEL_PARSERS = {
     "parse_ndl_docl_labels": parse_ndl_docl_labels,
     "parse_pdmocr_labels": parse_pdmocr_labels,
     "parse_ndl_minhon_labels": parse_ndl_minhon_labels,
+    # Gap-closing parsers (2026-02)
+    "parse_egyptian_hw_labels": parse_egyptian_hw_labels,
+    "parse_salami_labels": parse_salami_labels,
+    "parse_ocr_drutsa_labels": parse_ocr_drutsa_labels,
 }
 
 
