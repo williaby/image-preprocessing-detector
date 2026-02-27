@@ -14,6 +14,8 @@ This package contains parsers for handwriting/signature datasets:
 - KHATT: Arabic paragraph-level handwriting (1,633 images from 1,000 writers)
 - CASIA-HWDB2: Chinese full-page handwriting (5,091 pages, DGRL binary format)
 - CASIA-HWDB2-line: Chinese line-level handwriting (52,160 lines, Teklia HF edition)
+- Egyptian Handwriting: Arabic cursive word-level (11,216 images, 89 writers)
+- SALAMI: Legibility assessment with 20-expert consensus (250 manuscript images)
 
 Datasets covered:
     - signatr6k
@@ -29,6 +31,8 @@ Datasets covered:
     - khatt
     - casia-hwdb2
     - casia-hwdb2-line
+    - egyptian-handwriting
+    - salami
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ from typing import TYPE_CHECKING
 
 from .casia_hwdb2 import CasiaHwdb2Parser
 from .casia_hwdb2_line import CasiaHwdb2LineParser
+from .egyptian_handwriting import EgyptianHandwritingParser
 from .hasyv2 import HASYv2Parser
 from .iam import IAMParser
 from .iiit_hw_hindi import IIITHWHindiParser
@@ -48,6 +53,7 @@ from .nist_db2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
 from .pucit_ohul import PucitOhulParser
+from .salami import SalamiParser
 from .signatr import SignaTRParser
 
 if TYPE_CHECKING:
@@ -73,12 +79,15 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(KHATTParser())
     registry.register(CasiaHwdb2Parser())
     registry.register(CasiaHwdb2LineParser())
+    registry.register(EgyptianHandwritingParser())
     registry.register(NdlMinhonParser())
+    registry.register(SalamiParser())
 
 
 __all__ = [
     "CasiaHwdb2LineParser",
     "CasiaHwdb2Parser",
+    "EgyptianHandwritingParser",
     "HASYv2Parser",
     "IAMParser",
     "IIITHWHindiParser",
@@ -90,6 +99,7 @@ __all__ = [
     "NistSd6Parser",
     "NistSd19Parser",
     "PucitOhulParser",
+    "SalamiParser",
     "SignaTRParser",
     "register_handwriting_parsers",
 ]

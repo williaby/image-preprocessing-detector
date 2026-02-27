@@ -5,7 +5,7 @@ replacing hardcoded paths in the monolithic annotate_base_metadata.py.
 
 Key Components:
     - DatasetConfig: Frozen dataclass for dataset configuration
-    - DATASET_CONFIGS: Registry of all 44 datasets
+    - DATASET_CONFIGS: Registry of all 46 datasets
     - Helper functions: Path resolution and validation
 
 Configuration Categories:
@@ -14,7 +14,8 @@ Configuration Categories:
     - Base Training - Documents (2): rvl_cdip, doclaynet
     - Base Training - Forms (5): nist-sd2, nist_sd6, funsd, funsd_plus, sroie
     - Base Training - Tables (3): tablebank, pubtabnet, fintabnet
-    - Base Training - Handwriting (3): nist_sd19, signatr6k, maths_handwriting
+    - Base Training - Handwriting (5): nist_sd19, signatr6k, maths_handwriting,
+      egyptian-handwriting, salami
     - Base Training - Formulas (2): im2latex, mathverse
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
@@ -503,6 +504,42 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_handwriting=True,
         has_signature=False,
         parser_name="hasyv2",
+    ),
+    "egyptian-handwriting": DatasetConfig(
+        name="egyptian-handwriting",
+        path_suffix="01_base_data/handwriting/egyptian-handwriting",
+        pattern="**/*.parquet",  # Parquet format: image+label columns
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.PERSONAL,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% Arabic cursive handwriting by definition
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="egyptian_handwriting",
+        arrow_format=True,  # Parquet/Arrow format
+        iso639_language="ar",
+        iso15924_script="Arab",
+        text_scope="word",  # Word-level images (11,216 words, 89 writers)
+    ),
+    "salami": DatasetConfig(
+        name="salami",
+        path_suffix="01_base_data/handwriting/salami",
+        pattern="salami_1.0/images/input/*.png",  # 250 manuscript images
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,  # Multi-language historical manuscripts
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% handwritten manuscripts by definition
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="salami",
+        # Multi-language: Armenian, Georgian, German, Gothic, Greek, Latin,
+        # Ottoman, Slavonic — per-image language in images.json
     ),
     # =========================================================================
     # Base Training - Formulas (2)
