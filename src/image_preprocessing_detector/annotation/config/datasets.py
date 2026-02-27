@@ -14,8 +14,8 @@ Configuration Categories:
     - Base Training - Documents (2): rvl_cdip, doclaynet
     - Base Training - Forms (5): nist-sd2, nist_sd6, funsd, funsd_plus, sroie
     - Base Training - Tables (3): tablebank, pubtabnet, fintabnet
-    - Base Training - Handwriting (7): nist_sd19, signatr6k, maths_handwriting,
-      egyptian-handwriting, salami, gnhk, openpecha-ocr-drutsa
+    - Base Training - Handwriting (9): nist_sd19, signatr6k, maths_handwriting,
+      egyptian-handwriting, salami, gnhk, signverod, popp-line, openpecha-ocr-drutsa
     - Base Training - Formulas (2): im2latex, mathverse
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
@@ -558,6 +558,42 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         iso639_language="en",
         iso15924_script="Latn",
         text_scope="page",  # Full-page images with word-level annotations
+    ),
+    "signverod": DatasetConfig(
+        name="signverod",
+        path_suffix="01_base_data/handwriting/signverod",
+        pattern="images/*",  # 2,765 scanned docs (2,694 PNG + 71 JPEG)
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.ADMINISTRATIVE,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 1: Signature/initials annotations → handwriting presence
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=True,
+        parser_name="signverod",
+        iso639_language="en",
+        iso15924_script="Latn",
+        text_scope="page",  # Full-page documents with bounding box annotations
+    ),
+    "popp-line": DatasetConfig(
+        name="popp-line",
+        path_suffix="01_base_data/forms/popp-datasets",
+        pattern="extracted_images/*/*.png",  # 4,794 line images (3 splits)
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.ADMINISTRATIVE,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% handwritten French census lines
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="popp_line",
+        iso639_language="fr",
+        iso15924_script="Latn",
+        text_scope="line",  # Line-level handwritten census records
     ),
     "openpecha-ocr-drutsa": DatasetConfig(
         name="openpecha-ocr-drutsa",

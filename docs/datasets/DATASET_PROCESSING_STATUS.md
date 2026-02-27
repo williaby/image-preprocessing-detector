@@ -89,6 +89,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
 | rvl_cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
 | salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0) |
+| signverod | 2,765 | ✅ PNG/JPEG | ✅ Sig/init/redact/date bboxes | 🔄 Parser ready | Signature detection (CC0-1.0) |
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
 | siw13 | 16,291 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | smartdoc-qa | 4,280 | ✅ JPG | ✅ Quality + mobile | ✅ Complete | Mobile capture QA |
@@ -96,6 +97,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | synthetic_iqa | 9 | ✅ PNG | ✅ Quality scores | ✅ Complete | Prototype samples |
 | tablebank | 278,582 | ✅ JPG | ✅ COCO boxes | ✅ Complete | Table regions |
 | openpecha-ocr-drutsa | 32,364 | ✅ Parquet→PNG | ✅ OCR text | 🔄 Parser ready | Tibetan line-level OCR (CC-BY-4.0) |
+| popp-line | 4,794 | ✅ Arrow→PNG | ✅ Text transcriptions | 🔄 Parser ready | French census handwriting (CC-BY-4.0) |
 | tibhcr | 141,698 | ✅ JPG | ✅ Character labels | ✅ Complete | 47 Tibetan classes, 235 writers |
 | tobacco800 | 1,290 | ✅ PNG | ✅ Degradation labels | ✅ Complete | Archival scans |
 | yarmouk_ocr | 15,062 | ✅ PNG | ✅ OCR text | ✅ Complete | Arabic documents |

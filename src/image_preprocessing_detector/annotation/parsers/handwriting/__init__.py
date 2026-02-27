@@ -17,6 +17,8 @@ This package contains parsers for handwriting/signature datasets:
 - Egyptian Handwriting: Arabic cursive word-level (11,216 images, 89 writers)
 - SALAMI: Legibility assessment with 20-expert consensus (250 manuscript images)
 - GNHK: English handwriting with word-level polygons (687 pages, legibility tags)
+- SignverOD: Signature/initials detection on scanned documents (2,765 images, CC0)
+- POPP-line: French census handwriting lines (4,794 images, CC-BY-4.0)
 
 Datasets covered:
     - signatr6k
@@ -35,6 +37,8 @@ Datasets covered:
     - egyptian-handwriting
     - salami
     - gnhk
+    - signverod
+    - popp-line
 """
 
 from __future__ import annotations
@@ -55,9 +59,11 @@ from .ndl_minhon import NdlMinhonParser
 from .nist_db2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
+from .popp_line import PoppLineParser
 from .pucit_ohul import PucitOhulParser
 from .salami import SalamiParser
 from .signatr import SignaTRParser
+from .signverod import SignverODParser
 
 if TYPE_CHECKING:
     from ..registry import ParserRegistry
@@ -86,6 +92,8 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(GNHKParser())
     registry.register(NdlMinhonParser())
     registry.register(SalamiParser())
+    registry.register(SignverODParser())
+    registry.register(PoppLineParser())
 
 
 __all__ = [
@@ -103,8 +111,10 @@ __all__ = [
     "NistDb2Parser",
     "NistSd6Parser",
     "NistSd19Parser",
+    "PoppLineParser",
     "PucitOhulParser",
     "SalamiParser",
     "SignaTRParser",
+    "SignverODParser",
     "register_handwriting_parsers",
 ]

@@ -118,6 +118,8 @@ title: Dataset Naming Standard
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
 | `gnhk` | GNHK | gnhk-dataset, goodnotes-handwriting | ✅ | English handwriting with legibility tags (687 images) |
 | `openpecha-ocr-drutsa` | OCR-Drutsa | openpecha_ocr_drutsa, ocr-drutsa | ✅ | Tibetan line-level OCR (32K images) |
+| `popp-line` | POPP-line | popp_line, popp-datasets, teklia-popp | ✅ | French census handwriting lines (4,794 images) |
+| `signverod` | SignverOD | signver-od, signature-verification-od | ✅ | Signature detection on scanned docs (2,765 images) |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
 | `vjroda` | vjroda | vj-roda, vjroda-dataset | 🔄 | Vertical Japanese Real-world OCR Dataset — 100 government PDF pages, born-digital, OOD evaluation |

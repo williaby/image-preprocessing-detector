@@ -36,6 +36,7 @@ Updated 2025-12-20: Added reproducibility fields, tiered enrichment, DocLayout-Y
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import io
 import json
@@ -982,6 +983,37 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "iso15924_script": "Latn",
         "text_scope": "page",
         "original_labels_parser": "parse_gnhk_labels",
+    },
+    # SignverOD: 2,765 scanned documents with signature/initials/redaction/date
+    # bounding boxes.  CC0 license.  NIST + GSA government document sources.
+    # Closes signature presence gap for SIG-G4-1/G4-3.
+    "signverod": {
+        "path": BASE_DATA / "handwriting/signverod",
+        "pattern": "images/*",  # 2,694 PNG + 71 JPEG
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "has_signature": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_signverod_labels",
+    },
+    # POPP-line (Teklia): 4,794 French census handwriting lines with transcriptions.
+    # HuggingFace source: Teklia/POPP-line.  Images materialized from Arrow to PNG.
+    # Closes mixed typed+HW gap for French historical documents.
+    "popp-line": {
+        "path": BASE_DATA / "forms/popp-datasets",
+        "pattern": "extracted_images/*/*.png",  # train/validation/test subdirs
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "fr",
+        "iso15924_script": "Latn",
+        "text_scope": "line",
+        "original_labels_parser": "parse_popp_line_labels",
     },
     # NOTE: khmer-ocr-benchmark excluded — repo contains only framework code and logos,
     # not actual document images. Only 6 PNGs present (all logos/screenshots).
@@ -5189,6 +5221,120 @@ def parse_gnhk_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     return labels
 
 
+_signverod_annotations_cache: dict[str, dict[str, list[dict[str, Any]]]] = {}
+_signverod_image_ids_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_signverod_annotations(
+    dataset_path: Path,
+) -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, Any]]]]:
+    """Load SignverOD image_ids and merged annotations (cached)."""
+    cache_key = str(dataset_path)
+    if cache_key in _signverod_image_ids_cache:
+        return _signverod_image_ids_cache[cache_key], _signverod_annotations_cache[
+            cache_key
+        ]
+
+    # Load image IDs
+    id_map: dict[str, str] = {}
+    id_csv = dataset_path / "image_ids.csv"
+    if id_csv.exists():
+        with open(id_csv, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                id_map[row["file_name"]] = row["id"]
+
+    # Load annotations
+    ann_map: dict[str, list[dict[str, Any]]] = {}
+    for csv_name in ("train.csv", "test.csv"):
+        csv_path = dataset_path / csv_name
+        if not csv_path.exists():
+            continue
+        with open(csv_path, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                img_id = row["image_id"]
+                if img_id not in ann_map:
+                    ann_map[img_id] = []
+                ann_map[img_id].append(dict(row))
+
+    _signverod_image_ids_cache[cache_key] = id_map
+    _signverod_annotations_cache[cache_key] = ann_map
+    return id_map, ann_map
+
+
+def parse_signverod_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse SignverOD signature detection annotations.
+
+    Each image may have bounding boxes for signatures (1), initials (2),
+    redactions (3), and dates (4).
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "signverod"
+    labels.raw_labels["has_handwriting"] = False  # default, updated below
+
+    # Source type from filename
+    stem = image_path.stem
+    if stem.startswith("nist_"):
+        labels.raw_labels["source_type"] = "nist"
+    elif stem.startswith("gsa_"):
+        labels.raw_labels["source_type"] = "gsa"
+    else:
+        labels.raw_labels["source_type"] = "other"
+
+    id_map, ann_map = _load_signverod_annotations(dataset_path)
+    image_id = id_map.get(image_path.name)
+    if image_id is None:
+        return labels
+
+    annotations = ann_map.get(image_id, [])
+    cat_counts: dict[str, int] = {}
+    cat_names = {1: "signature", 2: "initials", 3: "redaction", 4: "date"}
+    for ann in annotations:
+        cat_name = cat_names.get(int(ann.get("category_id", 0)), "unknown")
+        cat_counts[cat_name] = cat_counts.get(cat_name, 0) + 1
+
+    labels.raw_labels["annotation_count"] = len(annotations)
+    labels.raw_labels["has_signature"] = cat_counts.get("signature", 0) > 0
+    labels.raw_labels["has_initials"] = cat_counts.get("initials", 0) > 0
+    labels.raw_labels["has_redaction"] = cat_counts.get("redaction", 0) > 0
+    labels.raw_labels["has_handwriting"] = (
+        cat_counts.get("signature", 0) > 0 or cat_counts.get("initials", 0) > 0
+    )
+    labels.raw_labels["category_counts"] = cat_counts
+
+    return labels
+
+
+def parse_popp_line_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse POPP-line French census handwriting labels.
+
+    Images materialized from Arrow as {split}/{index:05d}.png.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "fr"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "popp-line"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "line"
+
+    # Determine split from path
+    for split in ("train", "validation", "test"):
+        if split in image_path.parts:
+            labels.raw_labels["split"] = split
+            break
+
+    return labels
+
+
 def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse OpenPecha OCR-Drutsa labels.
 
@@ -5266,6 +5412,8 @@ LABEL_PARSERS = {
     "parse_salami_labels": parse_salami_labels,
     "parse_ocr_drutsa_labels": parse_ocr_drutsa_labels,
     "parse_gnhk_labels": parse_gnhk_labels,
+    "parse_signverod_labels": parse_signverod_labels,
+    "parse_popp_line_labels": parse_popp_line_labels,
 }
 
 
