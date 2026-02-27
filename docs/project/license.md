@@ -1,7 +1,7 @@
 ---
 schema_type: common
 title: "License Information"
-description: "MIT License and third-party license information"
+description: "CC-BY-SA-4.0 License and third-party license information"
 tags: [license, legal, documentation]
 status: published
 owner: "docs-team"
@@ -10,49 +10,46 @@ authors:
 purpose: "Document the project license and third-party dependency licenses for legal compliance."
 ---
 
-The Image Preprocessing Detector is released under the MIT License, a permissive open-source license that allows commercial and private use with minimal restrictions.
+The Image Preprocessing Detector is released under the **Creative Commons Attribution-ShareAlike 4.0 International License** (CC-BY-SA-4.0), a copyleft license that allows commercial and private use while requiring attribution and share-alike terms for derivative works.
 
-## MIT License
+## CC-BY-SA-4.0
 
 **Copyright (c) 2025 Byron Williams**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+International License. To view a copy of this license, visit
+<https://creativecommons.org/licenses/by-sa/4.0/> or see the full text in the
+[LICENSE](../../LICENSE) file.
 
 ## What This Means
 
 ### You CAN
 
-- ✅ **Use commercially**: Build products and services using this software
-- ✅ **Modify**: Adapt the code for your needs
-- ✅ **Distribute**: Share the software with others
-- ✅ **Sublicense**: Include in proprietary software
-- ✅ **Private use**: Use for internal projects without sharing changes
+- **Use commercially**: Build products and services using this software
+- **Share**: Copy and redistribute the material in any medium or format
+- **Adapt**: Remix, transform, and build upon the material for any purpose
 
 ### You MUST
 
-- 📋 **Include license**: Include the MIT License text in distributions
-- 📋 **Include copyright**: Preserve copyright notices
+- **Attribution**: Give appropriate credit, provide a link to the license, and indicate if changes were made
+- **ShareAlike**: If you remix, transform, or build upon the material, you must distribute your contributions under the same license (CC-BY-SA-4.0 or a [compatible license](https://creativecommons.org/compatiblelicenses))
+- **No additional restrictions**: You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits
 
 ### You CANNOT
 
-- ❌ **Hold liable**: Authors are not liable for damages or issues
-- ❌ **Use trademarks**: The name and logo are not licensed
+- **Hold liable**: The licensor is not liable for damages or issues
+- **Use trademarks**: Patent and trademark rights are not licensed
+
+## Why CC-BY-SA-4.0?
+
+This license was chosen because:
+
+1. **Dataset compatibility**: Resolves the ShareAlike gray zone for key training datasets (kuzushiji, hiertext, midv2020) that use CC-BY-SA-4.0, adding ~496K clean training images
+2. **Commercial viability**: Unlike CC-BY-NC licenses, commercial use is permitted
+3. **Open ecosystem**: The ShareAlike requirement ensures derivatives remain open, benefiting the research community
+4. **ML model standard**: CC-BY-SA-4.0 is widely used for ML model weights and datasets
+
+See [LICENSE_IMPACT_REPORT.md](../planning/LICENSE_IMPACT_REPORT.md) for the full dataset license compatibility analysis (Scenario 2a).
 
 ## Third-Party Licenses
 
@@ -93,9 +90,8 @@ This project depends on several open-source libraries. Their licenses are listed
 | Package | License | Use Case |
 |---------|---------|----------|
 | **pytest** | MIT | Testing framework |
-| **Black** | MIT | Code formatting |
-| **Ruff** | MIT | Linting |
-| **MyPy** | MIT | Type checking |
+| **Ruff** | MIT | Code formatting and linting |
+| **BasedPyright** | MIT | Type checking |
 | **pre-commit** | MIT | Git hooks |
 | **Bandit** | Apache-2.0 | Security scanning |
 
@@ -109,24 +105,11 @@ This project depends on several open-source libraries. Their licenses are listed
 
 ### Compliance Strategy
 
-**Option 1: Keep MIT License (Recommended)**
+**Current Approach**: Service separation
 
 - Use PyMuPDF and Ultralytics as separate services
 - Communicate via JSON API (no code linking)
-- No AGPL contamination of MIT codebase
-
-**Option 2: Dual Licensing**
-
-- Core library: MIT License
-- ML components: AGPL-3.0 License
-- Clearly document separation
-
-**Option 3: Replace AGPL Dependencies**
-
-- PyMuPDF → pdfplumber (MIT) or PyPDF2 (BSD)
-- Ultralytics → Detectron2 (Apache-2.0) or MMDetection (Apache-2.0)
-
-**Current Approach**: Option 1 (service separation)
+- No AGPL contamination of CC-BY-SA-4.0 codebase
 
 ### AGPL Compliance Checklist
 
@@ -139,68 +122,68 @@ For users deploying with PyMuPDF or Ultralytics:
 
 ## License Compatibility
 
-### Compatible Licenses
+### Compatible Inbound Licenses
 
-The MIT License is compatible with:
+The following dependency licenses are compatible with CC-BY-SA-4.0:
 
-- ✅ Apache-2.0 (permissive)
-- ✅ BSD-3-Clause (permissive)
-- ✅ BSD-2-Clause (permissive)
-- ✅ ISC (permissive)
-- ✅ CC0 (public domain)
+- MIT (permissive)
+- Apache-2.0 (permissive)
+- BSD-3-Clause, BSD-2-Clause (permissive)
+- ISC (permissive)
+- CC0 (public domain)
+- CC-BY-4.0 (one-way compatible into CC-BY-SA-4.0)
 
 ### Incompatible Licenses
 
-The MIT License is NOT compatible with:
+- GPL-2.0, GPL-3.0 (incompatible copyleft -- GPL and CC-BY-SA-4.0 are separate copyleft families)
+- AGPL-3.0 (network copyleft -- requires service separation)
 
-- ❌ GPL-2.0 (copyleft, requires GPL)
-- ❌ GPL-3.0 (copyleft, requires GPL)
-- ⚠️ AGPL-3.0 (network copyleft, requires service separation)
+### Outbound Compatibility
+
+CC-BY-SA-4.0 derivatives must be shared under:
+
+- CC-BY-SA-4.0 (same license)
+- A [BY-SA Compatible License](https://creativecommons.org/compatiblelicenses) (currently includes GPL-3.0 for one-way compatibility)
 
 ## Commercial Use
 
 ### Using This Software Commercially
 
-This software is free for commercial use under the MIT License:
+This software is free for commercial use under CC-BY-SA-4.0:
 
 1. **SaaS Products**: Build cloud services using this software
 2. **On-Premise Installations**: Deploy in customer environments
-3. **Embedded Systems**: Include in hardware products
-4. **Consulting Services**: Use in client projects
+3. **Consulting Services**: Use in client projects
+4. **ML Model Deployment**: Deploy trained models commercially
 
-**Requirements**:
+**Requirements for commercial use**:
 
-- Include MIT License text in distributions
-- Preserve copyright notices
-- No warranty or liability claims
+- Provide attribution (credit, license link, indication of changes)
+- Share derivative works under CC-BY-SA-4.0 or compatible license
+- Do not apply additional restrictions
 
-### Selling Modified Versions
+### Sharing Modified Versions
 
 You may:
 
-- Sell proprietary software that uses this library
-- Keep your modifications closed-source
+- Sell products or services built with this software
 - Charge for support, training, or custom features
 
 You must:
 
-- Include the original MIT License text
-- Preserve copyright notices
+- Share modifications under CC-BY-SA-4.0 or a compatible license
+- Provide attribution to the original project
+- Indicate what changes were made
 
 ## Attribution
 
-When using this software, we appreciate (but don't require) attribution:
+When using this software, attribution is **required**:
 
 **Markdown**:
 
 ```markdown
-Built with [Image Preprocessing Detector](https://github.com/williaby/image-preprocessing-detector) by Byron Williams.
-```
-
-**HTML**:
-
-```html
-<p>Powered by <a href="https://github.com/williaby/image-preprocessing-detector">Image Preprocessing Detector</a></p>
+Built with [Image Preprocessing Detector](https://github.com/williaby/image-preprocessing-detector)
+by Byron Williams, licensed under [CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 ```
 
 **Code Comments**:
@@ -208,6 +191,7 @@ Built with [Image Preprocessing Detector](https://github.com/williaby/image-prep
 ```python
 # Image quality assessment using Image Preprocessing Detector
 # https://github.com/williaby/image-preprocessing-detector
+# Licensed under CC-BY-SA-4.0
 ```
 
 ## License Audit
@@ -216,46 +200,37 @@ To check licenses of all dependencies:
 
 ```bash
 # Install license checker
-poetry add --group dev pip-licenses
+uv add --group dev pip-licenses
 
 # Generate license report
-poetry run pip-licenses --format=markdown --with-urls > licenses.md
+uv run pip-licenses --format=markdown --with-urls > licenses.md
 
 # Check for GPL/AGPL
-poetry run pip-licenses | grep -E "GPL|AGPL"
+uv run pip-licenses | grep -E "GPL|AGPL"
 ```
-
-## Updating Licenses
-
-If you modify this project:
-
-1. **Keep MIT License**: Retain original MIT License text
-2. **Add Your Copyright**: Add your copyright alongside existing ones
-3. **Document Changes**: Note modifications in CHANGELOG.md
-4. **Update Dependencies**: Run license audit for new dependencies
 
 ## Legal Disclaimer
 
 This license information is provided for convenience and may not be legally comprehensive. For legal advice on licensing, consult a qualified attorney.
 
-**No Warranty**: This software is provided "as is" without warranty of any kind. See the full MIT License text above for details.
+**No Warranty**: This software is provided "as is" without warranty of any kind. See the full CC-BY-SA-4.0 license text in [LICENSE](../../LICENSE) for details.
 
 ## Questions
 
 For licensing questions:
 
-- **General Use**: Review the MIT License text above
+- **General Use**: Review the CC-BY-SA-4.0 terms at <https://creativecommons.org/licenses/by-sa/4.0/>
 - **Commercial Use**: Contact the maintainers
 - **Contributions**: See [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ## See Also
 
-- [License File](../../LICENSE) - Full MIT License text
+- [License File](../../LICENSE) - Full CC-BY-SA-4.0 legal text
+- [License Impact Report](../planning/LICENSE_IMPACT_REPORT.md) - Dataset compatibility analysis
 - [Contributing Guide](../../CONTRIBUTING.md) - Contribution guidelines
 - [Code of Conduct](../../CODE_OF_CONDUCT.md) - Community standards
-- [Third-Party Notices](../../THIRD_PARTY_NOTICES.md) - Complete dependency licenses
 
 ---
 
-**Last Updated**: 2025-11-08
-**License Version**: MIT (unchanged since project inception)
+**Last Updated**: 2026-02-26
+**License Version**: CC-BY-SA-4.0

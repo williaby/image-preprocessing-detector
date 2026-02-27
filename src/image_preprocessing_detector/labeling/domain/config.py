@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Configuration for domain classification and metadata enrichment pipeline.
 
 Defines model configurations, confidence thresholds, and pipeline settings

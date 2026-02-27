@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Celery tasks for document processing.
 
 This module defines Celery tasks for:

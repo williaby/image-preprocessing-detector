@@ -1,7 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-SPDX-License-Identifier: CC0-1.0
--->
 
 # Benchmarking Framework
 

@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Throughput benchmark tests for production readiness validation.
 
 These tests validate the performance targets from the QA/QC report:

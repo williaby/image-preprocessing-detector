@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for PUCIT-OHUL Urdu handwriting dataset.
 
 PUCIT-OHUL (Punjab University Center for IT - Offline Handwritten Urdu Lines)

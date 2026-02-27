@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Dataset configuration validators with clear error messages.
 
 This module provides comprehensive validation for dataset configurations,

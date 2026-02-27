@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 #
-# SPDX-License-Identifier: MIT
 """Unified Model Benchmark Runner for IQA Model Evaluation.
 
 This script runs a model through all benchmarks needed to populate the

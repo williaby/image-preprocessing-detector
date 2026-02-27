@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Enrichment layer schemas for the annotation system.
 
 This module contains dataclasses for the ENRICHMENT LAYER of the three-layer

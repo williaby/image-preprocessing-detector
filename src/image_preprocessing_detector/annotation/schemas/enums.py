@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Enumeration definitions for the annotation schema.
 
 This module contains all enumeration types used in the three-layer

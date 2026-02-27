@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Multi-model VLM scorer for handwriting legibility contact sheets.
 
 Sends a contact sheet image to each configured vision model and returns

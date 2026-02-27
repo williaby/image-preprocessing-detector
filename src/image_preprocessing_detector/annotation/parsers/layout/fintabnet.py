@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for FinTabNet financial table structure dataset.
 
 FinTabNet provides table structure annotations for financial documents

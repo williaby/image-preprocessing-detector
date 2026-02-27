@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Nepali Handwritten dataset.
 
 Nepali Handwritten contains handwritten Nepali text images

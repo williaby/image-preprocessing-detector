@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Collect VLM IQA labels and integrate into Layer 2 metadata.
 
 Reads VLM quality assessment results (JSON) from Opus 4.6 in-session

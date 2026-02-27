@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Batch-aware file scanner for annotation pipeline.
 
 Phase 5 Task 5.2: Implements batch accumulation, batch-level checkpointing,

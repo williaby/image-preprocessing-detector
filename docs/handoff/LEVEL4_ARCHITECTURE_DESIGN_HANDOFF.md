@@ -87,8 +87,6 @@ src/image_preprocessing_detector/annotation/
 Parser files already follow a consistent module docstring pattern:
 
 ```python
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DocLayNet layout annotation dataset.
 
 DocLayNet provides COCO-format annotations for document layout analysis

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Checkpoint management for resumable annotation processing.
 
 This module provides checkpointing capabilities for the annotation pipeline,

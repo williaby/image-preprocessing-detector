@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parallel synthetic dataset generation script.
 
 Generates 250K multi-script document samples using hybrid augmentation

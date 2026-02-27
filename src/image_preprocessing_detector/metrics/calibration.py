@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Calibration metrics for Phase 7 continuous label model validation.
 
 This module provides metrics to evaluate model calibration quality:

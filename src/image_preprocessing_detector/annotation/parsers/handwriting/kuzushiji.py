@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Kuzushiji datasets (K-MNIST / K-49 / K-Kanji).
 
 Kuzushiji is a set of three datasets containing pre-modern Japanese cursive

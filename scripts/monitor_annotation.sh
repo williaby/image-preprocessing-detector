@@ -1,6 +1,4 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 #
 # Monitor annotation progress for large datasets
 

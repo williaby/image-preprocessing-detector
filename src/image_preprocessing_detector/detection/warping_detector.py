@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Warping and curvature distortion detection for scanned documents.
 
 Detects page warping typical of book scans and mobile captures using:

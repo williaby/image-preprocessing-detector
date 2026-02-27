@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """CLI commands for layout taxonomy tools.
 
 Provides commands for inspecting and comparing layout label schemas

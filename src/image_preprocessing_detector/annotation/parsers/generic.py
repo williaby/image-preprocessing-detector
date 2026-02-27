@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Generic parser for datasets without specific label formats.
 
 This parser provides minimal metadata extraction for datasets that lack

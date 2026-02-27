@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for VJRODa (Vertical Japanese Receipt OCR Dataset) dataset.
 
 VJRODa contains vertical Japanese text images of receipts and administrative

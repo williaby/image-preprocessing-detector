@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams
-# SPDX-License-Identifier: MIT
-
 # Environment files with secrets (triggers sandbox mode in 2.0.47+)
 .env
 .env.local

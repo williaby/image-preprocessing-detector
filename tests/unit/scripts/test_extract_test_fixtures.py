@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/extract_test_fixtures.py - Test fixture extraction.
 
 These tests verify the test fixture extraction correctly:

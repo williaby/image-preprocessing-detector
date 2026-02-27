@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Tensor and page render caching for inference optimization.
 
 This module provides LRU caching for:

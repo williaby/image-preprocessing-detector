@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/generate_dqs_routing_matrix.py - DQS routing matrix generation.
 
 These tests verify the DQS routing matrix generation correctly:

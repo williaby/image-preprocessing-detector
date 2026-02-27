@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser registry for the annotation system.
 
 This module provides the ParserRegistry class for managing dataset parsers.

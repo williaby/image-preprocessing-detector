@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Process all datasets with the refactored annotation system.
 
 This script provides tiered processing of all 40 datasets using the modular

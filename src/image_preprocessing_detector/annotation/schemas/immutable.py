@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Immutable layer schemas for the annotation system.
 
 This module contains dataclasses for the IMMUTABLE LAYER of the three-layer

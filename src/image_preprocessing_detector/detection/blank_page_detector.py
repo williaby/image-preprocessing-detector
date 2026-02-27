@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Blank page detection using a 3-signal ensemble.
 
 Combines pixel variance, Canny edge density, and content ratio to determine

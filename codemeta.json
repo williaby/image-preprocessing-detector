@@ -6,7 +6,7 @@
   "codeRepository": "https://github.com/williaby/image-preprocessing-detector",
   "issueTracker": "https://github.com/williaby/image-preprocessing-detector/issues",
   "programmingLanguage": "Python",
-  "license": "https://spdx.org/licenses/MIT.html",
+  "license": "https://spdx.org/licenses/CC-BY-SA-4.0.html",
   "author": [
     {
       "@type": "Person",

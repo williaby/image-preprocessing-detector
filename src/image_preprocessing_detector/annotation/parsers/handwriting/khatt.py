@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for KHATT Arabic Handwritten Text dataset.
 
 KHATT (KFUPM Handwritten Arabic TexT) contains paragraph-level scans

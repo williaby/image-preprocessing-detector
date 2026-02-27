@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for mathematical handwriting datasets.
 
 This is a stub parser for mathematical handwriting datasets that may

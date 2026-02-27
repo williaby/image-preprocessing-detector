@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Schema adapter for converting synthetic generator output to Layer 2 format.
 
 This module provides conversion utilities to transform the internal synthetic

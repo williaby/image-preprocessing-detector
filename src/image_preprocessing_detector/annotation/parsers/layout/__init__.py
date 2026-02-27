@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Layout annotation parsers for the annotation system.
 
 This package contains parsers for datasets with layout/structure annotations:

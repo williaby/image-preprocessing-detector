@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/create_symlinks.py - Symlink management.
 
 These tests verify the symlink management utilities correctly:

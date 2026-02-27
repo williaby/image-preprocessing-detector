@@ -9,81 +9,58 @@ owner: core-maintainer
 purpose: Documentation for licenses/.
 ---
 
-<!--
-SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-SPDX-License-Identifier: CC0-1.0
--->
-
 **Purpose**: License text files for REUSE Specification compliance (FSFE REUSE).
 
 ## What Goes Here
 
-**✅ Belongs in LICENSES/**:
+**Belongs in LICENSES/**:
 
-- Full text of all licenses used in the project
-- Apache-2.0, MIT, CC-BY-4.0, CC0-1.0, ODbL-1.0
-- License texts for third-party dependencies
+- Full text of all licenses actively used in the project
+- CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, OFL-1.1
+- License texts for third-party dependencies (add as needed)
 - SPDX-compliant license files
 
-**❌ Does NOT belong here**:
+**Does NOT belong here**:
 
-- **Project LICENSE file** → `LICENSE` (root-level, project license)
-- **License headers** → Source code files (inline SPDX identifiers)
-- **Copyright notices** → `.reuse/dep5` file (bulk copyright declarations)
+- **Project LICENSE file** -> `LICENSE` (root-level, project license)
+- **License declarations** -> `REUSE.toml` (centralized via `precedence = "override"`)
 
 ## REUSE Specification
 
 This project follows the [REUSE Specification](https://reuse.software/) for license compliance:
 
 1. **License Files**: Full license texts in `LICENSES/`
-2. **File Headers**: SPDX identifiers in source files
-3. **Dep5 File**: Bulk declarations in `.reuse/dep5`
+2. **REUSE.toml**: Centralized copyright and license declarations with `precedence = "override"` (no inline SPDX headers needed)
 
 ## Current License Files
 
-### Project Code: Apache-2.0
+### Project Code and Documentation: CC-BY-SA-4.0
 
-**File**: `Apache-2.0.txt`
+**File**: `CC-BY-SA-4.0.txt`
 
-- Used for: Main project source code (`src/`, `tests/`, `scripts/`)
-- Full license text from Apache Software Foundation
+- Used for: Source code (`src/`, `tests/`, `scripts/`), documentation (`docs/`, `*.md`)
+- Creative Commons Attribution-ShareAlike 4.0 International
 
-### Documentation: CC-BY-4.0
-
-**File**: `CC-BY-4.0.txt`
-
-- Used for: Documentation files (`docs/`, `README.md`)
-- Creative Commons Attribution 4.0 International
-
-### Data/Configs: CC0-1.0
+### Configuration and Metadata: CC0-1.0
 
 **File**: `CC0-1.0.txt`
 
-- Used for: Configuration files, data files
+- Used for: Configuration files, build artifacts, generated files, metadata
 - Public domain dedication
 
-### Dataset Dependencies: ODbL-1.0
+### Data and Models: ODbL-1.0
 
 **File**: `ODbL-1.0.txt`
 
-- Used for: Datasets with Open Database License
-- Example: Some public datasets require attribution
+- Used for: Data files, datasets with Open Database License
+- Requires attribution for redistribution
 
-### Permissive Code: MIT
+### Fonts: OFL-1.1
 
-**File**: `MIT.txt`
+**File**: `OFL-1.1.txt`
 
-- Used for: Code snippets from MIT-licensed sources
-- Includes copyright notice requirement
-
-## SPDX License Identifiers
-
-Each file in the project includes an SPDX identifier:
-
-```python
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: Apache-2.0
-```
+- Used for: Font files included in the project
+- SIL Open Font License
 
 ## Verification
 
@@ -105,7 +82,7 @@ If adding a new dependency with a different license:
 
 1. **Download license text**: Get from SPDX or source
 2. **Add to LICENSES/**: Save as `{SPDX-ID}.txt`
-3. **Update .reuse/dep5**: Add copyright/license info
+3. **Update REUSE.toml**: Add an `[[annotations]]` block with the new license
 4. **Run reuse lint**: Verify compliance
 
 Example:
@@ -120,16 +97,22 @@ reuse lint
 
 ## License Compatibility
 
-**Outbound License**: Apache-2.0 (for distributed software)
+**Outbound License**: CC-BY-SA-4.0
 
 **Compatible Inbound Licenses**:
 
-- ✅ Apache-2.0 (same license)
-- ✅ MIT (permissive, compatible)
-- ✅ BSD-3-Clause (permissive, compatible)
-- ✅ CC0-1.0 (public domain, compatible)
-- ⚠️ GPL-3.0 (copyleft, requires review)
-- ❌ Proprietary (incompatible for open source)
+- CC-BY-4.0 (one-way compatible into CC-BY-SA-4.0)
+- MIT (permissive, compatible)
+- Apache-2.0 (permissive, compatible)
+- BSD-3-Clause (permissive, compatible)
+- CC0-1.0 (public domain, compatible)
+- GPL-3.0 (one-way compatible from CC-BY-SA-4.0 outbound)
+
+**Incompatible Inbound Licenses**:
+
+- GPL-2.0, GPL-3.0 (separate copyleft family)
+- AGPL-3.0 (network copyleft, requires service separation)
+- Proprietary (incompatible)
 
 ## CI/CD Integration
 
@@ -138,13 +121,13 @@ REUSE compliance checked in CI:
 ```yaml
 # .github/workflows/reuse.yml
 - name: REUSE Compliance Check
-  uses: fsfe/reuse-action@v1
+  uses: fsfe/reuse-action@v4
 ```
 
 ## Distinction from Root LICENSE
 
 - **LICENSES/**: All license texts used in project
-- **LICENSE** (root): Project's main license (Apache-2.0)
+- **LICENSE** (root): Project's main license (CC-BY-SA-4.0)
 
 The root `LICENSE` file declares the project license, while `LICENSES/` contains all licenses used by the project and its dependencies.
 
@@ -155,7 +138,7 @@ When using public datasets:
 1. **Check license**: DocLayNet (CDLA-Permissive-2.0), Genalog (MIT)
 2. **Add license text**: Download to `LICENSES/` if not already present
 3. **Document in CITATIONS.md**: Reference in `docs/references/CITATIONS.md`
-4. **Include in .reuse/dep5**: Add copyright/license info
+4. **Update REUSE.toml**: Add copyright/license annotation
 
 ## Resources
 

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Integration tests for the parser registry.
 
 Tests that the ParserRegistry properly loads and manages all dataset parsers,

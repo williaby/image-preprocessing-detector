@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Multi-script synthetic document generator for SigLIP training.
 
 This module provides the main generator class that orchestrates text corpus,

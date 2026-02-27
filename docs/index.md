@@ -78,4 +78,4 @@ See [Project Plan](planning/PROJECT_PLAN.md) for detailed roadmap.
 
 ## License
 
-This project is licensed under the MIT License. See the [License](project/license.md) page for details.
+This project is licensed under CC-BY-SA-4.0. See the [License](project/license.md) page for details.

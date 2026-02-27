@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for IIIT-HW-Hindi (IIIT Handwritten Hindi Words) dataset.
 
 IIIT-HW-Hindi provides 95,430 word-level images of Hindi handwriting

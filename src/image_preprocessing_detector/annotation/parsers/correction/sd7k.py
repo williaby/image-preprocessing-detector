@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for SD7K shadow removal dataset.
 
 SD7K provides paired shadow/shadow-free document images for shadow removal

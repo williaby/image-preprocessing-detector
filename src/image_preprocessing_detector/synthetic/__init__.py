@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Synthetic document generation module for multi-script training data.
 
 This module provides tools for generating synthetic document images

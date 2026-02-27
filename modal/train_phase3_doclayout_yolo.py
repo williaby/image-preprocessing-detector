@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Phase 3 DocLayout-YOLO Training on Modal.
 
 Layout Detection (tables, images, handwriting, formulas) using DocLayout-YOLO.

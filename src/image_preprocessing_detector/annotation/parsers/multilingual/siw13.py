@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for SIW-13 dataset.
 
 SIW-13 (Script Identification in the Wild) contains scene text

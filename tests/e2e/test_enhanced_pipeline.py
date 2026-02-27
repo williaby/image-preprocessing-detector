@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """E2E integration tests for enhanced document processing pipeline.
 
 Tests validate the integration of Stream 4-9 components:

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Configuration for handwriting legibility multi-model VLM scoring.
 
 Provides model roster and pipeline settings for contact-sheet-based

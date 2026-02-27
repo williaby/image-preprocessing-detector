@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Docling Layout Egret provider for document layout detection.
 
 This module provides a docling-layout-egret-xlarge enrichment provider

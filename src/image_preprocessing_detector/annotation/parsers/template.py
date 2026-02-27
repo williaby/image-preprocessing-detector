@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser template generator for new datasets.
 
 This module provides utilities for generating parser boilerplate when adding
@@ -165,7 +163,6 @@ class DatasetInfo:
 
 # Parser class template with all required boilerplate
 PARSER_TEMPLATE = Template('''# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for ${dataset_name} dataset.
 
 Dataset Information:

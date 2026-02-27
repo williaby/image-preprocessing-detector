@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DocAlign12K document alignment/dewarping dataset.
 
 DocAlign12K provides paired synthetically distorted and flat (rectified)

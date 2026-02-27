@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Workflow orchestration for the annotation system.
 
 This package provides the annotation pipeline and orchestration logic:

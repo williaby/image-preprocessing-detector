@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Assemble a per-field comparison of enrichment sources for any dataset.
 
 Generic version of ``assemble_diqa_comparison.py``.  Auto-discovers

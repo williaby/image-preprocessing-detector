@@ -71,8 +71,6 @@ src/image_preprocessing_detector/annotation/parsers/
 **Example: `parsers/quality/my_dataset.py`**
 
 ```python
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for My Dataset.
 
 Dataset Information:

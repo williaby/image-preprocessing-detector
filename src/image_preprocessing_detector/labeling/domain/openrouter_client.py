@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """OpenRouter API client for domain classification and metadata enrichment.
 
 Uses the OpenAI SDK with a custom base URL to communicate with OpenRouter's

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for SmartDoc-QA quality assessment dataset.
 
 SmartDoc-QA evaluates camera-captured document quality through filename encoding

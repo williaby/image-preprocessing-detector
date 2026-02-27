@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/validate_layout_lite.py - Layout-lite validation.
 
 These tests verify the layout-lite validation script correctly:

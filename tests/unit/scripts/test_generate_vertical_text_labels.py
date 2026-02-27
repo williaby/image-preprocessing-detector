@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/generate_vertical_text_labels.py - Vertical text generation.
 
 These tests verify the vertical text label generation correctly:

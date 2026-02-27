@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for CASIA-HWDB2-line Chinese handwriting line dataset (Teklia HF edition).
 
 CASIA-HWDB2-line is a line-level extraction from CASIA HWDB2 full-page handwriting

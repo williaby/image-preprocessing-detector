@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for annotation workflow scanner module.
 
 Phase 5 Task 5.2: Batch-aware scanner tests.

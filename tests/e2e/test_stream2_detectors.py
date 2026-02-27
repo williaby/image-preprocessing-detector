@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """End-to-end integration tests for Stream 2 heuristic detectors.
 
 Verifies that all Stream 2 detectors produce valid output types

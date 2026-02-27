@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/download_phase3_datasets.py - Phase 3 dataset downloader.
 
 These tests verify the Phase 3 dataset download script correctly:

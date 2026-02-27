@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for AnyPhotoDoc6300 dewarping benchmark dataset.
 
 AnyPhotoDoc6300 provides paired distorted/rectified document images for

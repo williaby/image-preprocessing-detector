@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Simulated enrichment provider for GPU-less CI testing.
 
 This module provides a SimulatedInferenceProvider that returns realistic

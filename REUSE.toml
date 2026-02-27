@@ -8,7 +8,7 @@ SPDX-PackageName = "image-preprocessing-detector"
 SPDX-PackageSupplier = "Byron Williams"
 SPDX-PackageDownloadLocation = "https://github.com/williaby/image-preprocessing-detector"
 
-# Source code (Python, tools, tests) - Apache-2.0
+# Source code (Python, tools, tests) - CC-BY-SA-4.0
 [[annotations]]
 path = [
     "src/**",
@@ -22,10 +22,11 @@ path = [
     "*.py",
     "noxfile.py",
 ]
-SPDX-License-Identifier = "Apache-2.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Documentation - CC-BY-4.0
+# Documentation - CC-BY-SA-4.0
 [[annotations]]
 path = [
     "docs/**",
@@ -33,9 +34,11 @@ path = [
     "tmp_cleanup/**/*.md",  # Temporary reference files
     "benchmarks/*.md",  # Benchmark documentation (not reports)
     "scripts/**/*.md",  # Script documentation (including omnidocbench_baseline)
+    "configs/**/*.md",  # Config directory documentation
     "!LICENSES/*.txt",  # Exclude actual license text files
 ]
-SPDX-License-Identifier = "CC-BY-4.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Configuration files - CC0-1.0 (public domain dedication)
@@ -47,6 +50,10 @@ path = [
     ".github/**",
     ".gitignore",
     ".gitattributes",
+    ".claudeignore",
+    ".env.example",
+    ".semgrepignore",
+    "CITATION.cff",
     ".pre-commit-config.yaml",
     ".readthedocs.yaml",
     "mkdocs.yml",
@@ -127,7 +134,7 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Claude Code ecosystem - Markdown documentation (CC-BY-4.0)
+# Claude Code ecosystem - Markdown documentation (CC-BY-SA-4.0)
 [[annotations]]
 path = [
     ".claude/*.md",
@@ -157,15 +164,17 @@ path = [
     ".claude/skills/testing/context/*.md",
     ".claude/skills/testing/workflows/*.md",
 ]
-SPDX-License-Identifier = "CC-BY-4.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Claude Code ecosystem - Python scripts (Apache-2.0)
+# Claude Code ecosystem - Python scripts (CC-BY-SA-4.0)
 [[annotations]]
 path = [
     ".claude/skills/project-planning/scripts/*.py",
 ]
-SPDX-License-Identifier = "Apache-2.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Claude Code ecosystem - JSON configuration (CC0-1.0)
@@ -177,12 +186,13 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Template feedback documentation - CC-BY-4.0
+# Template feedback documentation - CC-BY-SA-4.0
 [[annotations]]
 path = [
     "template_feedback/**/*.md",
 ]
-SPDX-License-Identifier = "CC-BY-4.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Benchmark results and generated metadata files - CC0-1.0
@@ -230,20 +240,22 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Windows batch scripts - Apache-2.0
+# Windows batch scripts - CC-BY-SA-4.0
 [[annotations]]
 path = [
     "scripts/**/*.bat",  # Windows batch scripts
 ]
-SPDX-License-Identifier = "Apache-2.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Deployment Python scripts - Apache-2.0 (source code)
+# Deployment Python scripts - CC-BY-SA-4.0
 [[annotations]]
 path = [
     "deployment/scripts/**/*.py",
 ]
-SPDX-License-Identifier = "Apache-2.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Deployment configuration, shell scripts, and docs - CC0-1.0
@@ -285,19 +297,19 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Claude Code skills (dataset-review) - CC-BY-4.0
+# Claude Code skills (dataset-review) - CC-BY-SA-4.0
 [[annotations]]
 path = [
     ".claude/skills/dataset-review/**",
 ]
-SPDX-License-Identifier = "CC-BY-4.0"
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Third-party model weights - MIT (YOLOv10 uses Apache-2.0)
-# Note: yolov10x.pt is from ultralytics/yolov10 (Apache-2.0 license)
-[[annotations]]
-path = [
-    "yolov10x.pt",  # Pre-trained YOLOv10 weights (Apache-2.0 from ultralytics)
-]
-SPDX-License-Identifier = "Apache-2.0"
-SPDX-FileCopyrightText = "2024 Ultralytics"
+# Third-party model weights (YOLOv10 - Apache-2.0 from Ultralytics)
+# NOTE: yolov10x.pt is a large model file not checked into git.
+# Re-add this annotation and LICENSES/Apache-2.0.txt when the file is present:
+# [[annotations]]
+# path = ["yolov10x.pt"]
+# SPDX-License-Identifier = "Apache-2.0"
+# SPDX-FileCopyrightText = "2024 Ultralytics"

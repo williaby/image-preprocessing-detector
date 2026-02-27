@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for FUNSD+ (Extended FUNSD) form understanding dataset.
 
 FUNSD+ is an extended version of FUNSD with additional samples, using

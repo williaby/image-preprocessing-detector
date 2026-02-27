@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Hindi OCR Synthetic dataset.
 
 Hindi OCR Synthetic is a synthetically generated dataset of Hindi text images

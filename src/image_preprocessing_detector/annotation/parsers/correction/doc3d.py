@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Doc3D synthetic document dewarping dataset.
 
 Doc3D provides 102,064 synthetically rendered document images produced via

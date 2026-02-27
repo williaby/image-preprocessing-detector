@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Error injection utilities for testing failure scenarios.
 
 These utilities allow controlled injection of errors into various parts

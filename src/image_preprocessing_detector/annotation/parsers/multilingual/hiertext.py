@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for HierText hierarchical text dataset.
 
 HierText is the gold standard for handwriting detection and legibility labels,

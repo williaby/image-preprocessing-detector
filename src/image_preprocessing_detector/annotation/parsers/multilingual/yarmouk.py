@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Yarmouk OCR dataset.
 
 Yarmouk OCR is an Arabic OCR dataset with training, testing,

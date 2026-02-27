@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Metrics utilities for Modal applications.
 
 Provides correlation metrics, bootstrapped confidence intervals,

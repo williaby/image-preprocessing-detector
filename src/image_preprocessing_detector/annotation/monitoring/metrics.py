@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Prometheus metrics for annotation system.
 
 Phase 5 Task 5.3.1: Annotation-specific Prometheus metrics for monitoring

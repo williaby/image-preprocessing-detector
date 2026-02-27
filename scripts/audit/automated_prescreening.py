@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Automated pre-screening validator for Layer 2 metadata samples.
 
 Validates ALL samples in a dataset's metadata against schema compliance

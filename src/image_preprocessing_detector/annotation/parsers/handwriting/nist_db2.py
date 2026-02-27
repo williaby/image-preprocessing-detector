@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for NIST Special Database 2 (Tax Form) dataset.
 
 NIST SD2 contains handwritten IRS 1040 tax forms with field annotations

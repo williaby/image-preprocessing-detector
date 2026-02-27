@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for annotation storage cache module.
 
 Phase 5 Task 5.1.1-5.1.2: Memory Management for P1-5 fix.

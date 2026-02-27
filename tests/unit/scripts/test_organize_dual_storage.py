@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/organize_dual_storage.py - Multi-tier storage management.
 
 These tests verify the storage organization script correctly:

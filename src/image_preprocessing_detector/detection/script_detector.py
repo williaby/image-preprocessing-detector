@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Heuristic script family detection using a 4-signal ensemble.
 
 Classifies document pages into broad script families (CJK, Latin, Arabic,

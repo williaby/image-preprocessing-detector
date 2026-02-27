@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for NDL-DocL (National Diet Library Document Layout) dataset.
 
 NDL-DocL contains scanned Japanese documents from the National Diet Library

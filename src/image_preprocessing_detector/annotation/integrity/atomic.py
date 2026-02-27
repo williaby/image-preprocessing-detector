@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Atomic file operations for data integrity.
 
 This module provides atomic file writing to prevent data corruption

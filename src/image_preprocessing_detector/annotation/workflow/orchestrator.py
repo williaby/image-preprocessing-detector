@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Multi-dataset annotation orchestrator.
 
 Replaces subprocess-based incremental wrapper with direct library calls.

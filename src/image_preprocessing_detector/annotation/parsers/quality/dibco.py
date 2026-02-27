@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DIBCO (Document Image Binarization Contest) dataset.
 
 DIBCO provides binary ground truth images for document binarization evaluation.

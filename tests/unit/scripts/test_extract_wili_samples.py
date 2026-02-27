@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/extract_wili_samples.py - WiLI language sample extraction.
 
 These tests verify the WiLI sample extraction correctly:

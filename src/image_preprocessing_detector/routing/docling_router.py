@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Docling Routing Engine — Generate Docling CLI parameters from analysis.
 
 Maps Project A document analysis results to Docling CLI parameters for

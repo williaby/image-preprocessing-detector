@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Level 4 Architecture Documentation Registry Generator.
 
 Harvests ``__l4_*`` module-level metadata variables from Python adapter files

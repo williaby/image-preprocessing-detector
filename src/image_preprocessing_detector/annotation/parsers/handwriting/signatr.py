@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for SignaTR6K signature dataset.
 
 SignaTR6K provides signature images with binary segmentation masks for

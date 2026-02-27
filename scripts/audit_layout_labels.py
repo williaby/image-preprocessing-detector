@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Audit layout labels across the metadata registry.
 
 Scans all dataset metadata and generates a comprehensive report covering:

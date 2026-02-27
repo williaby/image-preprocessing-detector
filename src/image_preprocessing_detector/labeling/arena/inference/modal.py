@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Modal inference backend for the Arena.
 
 This backend runs VLM inference on Modal's serverless GPU infrastructure,

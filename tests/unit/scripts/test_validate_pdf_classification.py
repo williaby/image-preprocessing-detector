@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/validate_pdf_classification.py - PDF classification validation.
 
 These tests verify the PDF classification validation script correctly:

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Hybrid augmentation pipeline combining Augraphy and Albumentations.
 
 This module provides a hybrid augmentation approach that leverages the

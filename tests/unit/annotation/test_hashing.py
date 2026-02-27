@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Unit tests for integrity hashing utilities.
 
 Tests the P0-1 fix (full-file SHA256) and P1-3 fix (deterministic sample IDs).

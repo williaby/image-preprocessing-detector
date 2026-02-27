@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Consensus aggregation of multi-model handwriting legibility scores.
 
 Takes raw per-model, per-image score dicts from HwLegibilityScorer and

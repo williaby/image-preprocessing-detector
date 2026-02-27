@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Pytest plugin to detect weak assertions in tests.
 
 This plugin analyzes test functions to identify patterns that may indicate

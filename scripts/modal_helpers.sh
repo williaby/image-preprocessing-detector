@@ -1,7 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 #
-# SPDX-License-Identifier: MIT
 
 # Modal helper functions for image-detection project
 # Simplifies common Modal operations

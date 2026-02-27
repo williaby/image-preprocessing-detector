@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Modular metadata annotation system for Project A.
 
 This package provides a refactored, modular implementation of the metadata

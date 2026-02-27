@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for IAM Handwriting Database.
 
 IAM Handwriting Database contains English handwritten text with multi-level

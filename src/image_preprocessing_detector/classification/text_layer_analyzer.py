@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """PyMuPDF-based analysis of PDF text layers.
 
 Evaluates four signals to determine text layer quality and whether OCR can be

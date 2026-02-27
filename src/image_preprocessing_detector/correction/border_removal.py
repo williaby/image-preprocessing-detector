@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Border Removal — Crop scanner/camera borders from document images.
 
 Uses Otsu thresholding + morphological closing to find the document region,

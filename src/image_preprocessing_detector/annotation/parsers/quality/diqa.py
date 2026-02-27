@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DIQA-5000 quality assessment dataset.
 
 DIQA-5000 provides 3-dimension quality scores (overall, sharpness, color_fidelity)

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/extract_vidore_labels.py - VidOre label extraction.
 
 These tests verify the label extraction utilities correctly:

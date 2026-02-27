@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """SigLIP-based quality score prediction provider.
 
 This module provides a SigLIP-based enrichment provider for document image

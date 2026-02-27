@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for PubTabNet table structure dataset.
 
 PubTabNet provides table structure annotations with HTML tokens and cell

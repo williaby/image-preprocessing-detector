@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Enrich OOD registry records with domain_level1 labels.
 
 Domain taxonomy (10 classes):

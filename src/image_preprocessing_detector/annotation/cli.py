@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 r"""Command-line interface for the annotation system.
 
 This module provides CLI commands for managing the annotation pipeline,

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/generate_dataset_status.py - Dataset status report generation.
 
 These tests verify the dataset status report generation correctly:

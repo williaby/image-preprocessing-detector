@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Shared constants for Modal applications.
 
 Centralizes GCS configuration, volume definitions, and secrets

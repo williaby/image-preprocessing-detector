@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Muharaf Arabic Historical Manuscripts dataset.
 
 Muharaf contains Arabic handwriting from Lebanese diaspora (19th-21st century)

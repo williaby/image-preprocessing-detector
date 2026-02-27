@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/validate_dqs_correlation.py - DQS correlation validation.
 
 These tests verify the DQS correlation validation script correctly:

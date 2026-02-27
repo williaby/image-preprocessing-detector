@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Dataset configuration registry for annotation metadata extraction.
 
 This module provides typed configuration for all supported datasets,

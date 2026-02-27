@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for RealDAE camera-captured document dataset.
 
 RealDAE (Real Document image Attribute Estimation) provides camera-captured

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 
 """
 Prepare Orientation Detection Training Dataset for Phase 10A.

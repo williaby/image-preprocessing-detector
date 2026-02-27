@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Multi-model VLM scoring for handwriting legibility and presence assessment.
 
 Uses OpenRouter vision models with a contact-sheet approach: grids of labeled

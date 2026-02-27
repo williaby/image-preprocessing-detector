@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Base protocols for enrichment providers.
 
 This module defines the protocols that all enrichment providers must implement.

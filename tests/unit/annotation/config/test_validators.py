@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for dataset configuration validators.
 
 Tests comprehensive validation of DatasetConfig objects with

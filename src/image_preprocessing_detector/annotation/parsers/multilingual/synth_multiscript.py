@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for synth-multiscript-250k dataset.
 
 Synthetically generated multi-script document images covering 27 scripts

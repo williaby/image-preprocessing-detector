@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DocSynth300K synthetic document layout dataset.
 
 DocSynth300K is a large-scale synthetic document layout analysis dataset

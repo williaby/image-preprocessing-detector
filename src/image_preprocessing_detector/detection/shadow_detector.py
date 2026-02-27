@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Shadow detection using local variance, gradient consistency, and area ratio.
 
 Detects shadow artifacts in document images by combining three signals:

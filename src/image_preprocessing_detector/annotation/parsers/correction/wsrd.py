@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for WSRD shadow removal dataset (NTIRE 2023/2024).
 
 WSRD (Wide-angle Shadow Removal Dataset) provides paired shadow/shadow-free

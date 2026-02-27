@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Structured exception classes for enrichment operations.
 
 This module provides a hierarchy of exception classes for handling enrichment

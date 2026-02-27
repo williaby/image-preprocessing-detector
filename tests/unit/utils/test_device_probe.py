@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Unit tests for device capability probing (Phase 4, Sprint 4.1.1)."""
 
 import os

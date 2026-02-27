@@ -1,7 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-SPDX-License-Identifier: MIT
--->
 
 # Third-Party Dataset Licenses
 
@@ -47,8 +43,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: `CDLA-Permissive-2.0`
-
 ---
 
 ### DocBank
@@ -74,8 +68,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2020}
 }
 ```
-
-**SPDX-License-Identifier**: `CC-BY-4.0`
 
 ---
 
@@ -103,8 +95,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: `CC-BY-4.0`
-
 ---
 
 ### FinTabNet
@@ -130,8 +120,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2021}
 }
 ```
-
-**SPDX-License-Identifier**: `CDLA-Permissive`
 
 ---
 
@@ -160,8 +148,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: `CC-BY-4.0`
-
 ---
 
 ### COCO-Text
@@ -187,8 +173,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: `CC-BY-4.0`
-
 ---
 
 ### WiLI-2018
@@ -213,8 +197,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2018}
 }
 ```
-
-**SPDX-License-Identifier**: `CC-BY-SA-4.0`
 
 ---
 
@@ -243,8 +225,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: Proprietary
-
 **⚠️ IMPORTANT**: This dataset cannot be redistributed. Use for evaluation only.
 
 ---
@@ -272,8 +252,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 }
 ```
 
-**SPDX-License-Identifier**: `CC-BY-NC-4.0`
-
 **⚠️ IMPORTANT**: Non-commercial use only. Cannot be used in production systems.
 
 ---
@@ -289,8 +267,6 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 **Description**: Synthetic test images with controlled quality degradations (blur, skew, noise, contrast).
 
 **Usage**: Unrestricted. Public domain.
-
-**SPDX-License-Identifier**: `CC0-1.0`
 
 ---
 
@@ -348,10 +324,8 @@ To verify license compliance:
 
 ```bash
 # Check SPDX headers in adapter files
-grep -r "SPDX-License-Identifier" benchmarks/adapters/
 
 # List all dataset licenses
-cat benchmarks/LICENSES.md | grep "SPDX-License-Identifier"
 ```
 
 ## Adding New Datasets
