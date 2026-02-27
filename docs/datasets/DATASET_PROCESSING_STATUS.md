@@ -94,6 +94,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | sroie | 973 | ✅ JPG | ✅ Quad + OCR + Entities | ✅ Complete | Malaysian receipts (ICDAR 2019) |
 | synthetic_iqa | 9 | ✅ PNG | ✅ Quality scores | ✅ Complete | Prototype samples |
 | tablebank | 278,582 | ✅ JPG | ✅ COCO boxes | ✅ Complete | Table regions |
+| openpecha-ocr-drutsa | 32,364 | ✅ Parquet→PNG | ✅ OCR text | 🔄 Parser ready | Tibetan line-level OCR (CC-BY-4.0) |
 | tibhcr | 141,698 | ✅ JPG | ✅ Character labels | ✅ Complete | 47 Tibetan classes, 235 writers |
 | tobacco800 | 1,290 | ✅ PNG | ✅ Degradation labels | ✅ Complete | Archival scans |
 | yarmouk_ocr | 15,062 | ✅ PNG | ✅ OCR text | ✅ Complete | Arabic documents |

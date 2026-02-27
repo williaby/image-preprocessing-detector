@@ -86,9 +86,10 @@
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
 | tibhcr | 141,698 | 47 character classes | [tibhcr.md](../source/tibhcr.md) |
+| openpecha-ocr-drutsa | 32,364 | Tibetan line-level OCR (CC-BY-4.0) | [openpecha-ocr-drutsa.md](../source/openpecha-ocr-drutsa.md) |
 | dzongkha-digits | 1,000 | 10 digit classes | [dzongkha-digits.md](../source/dzongkha-digits.md) |
 
-**Total**: ~143K images
+**Total**: ~175K images
 
 ---
 
@@ -202,7 +203,7 @@
 | **Arabic** | Arabic, Farsi, Urdu | 5 datasets | ~69K |
 | **Indic** | Devanagari, Bengali, Telugu, Kannada, Tamil, Malayalam | 3 datasets | ~83K |
 | **CJK** | Chinese (Hans), Japanese (Jpan), Korean | 13 datasets | ~587K |
-| **Tibetan** | Tibetan, Dzongkha | 2 datasets | ~143K |
+| **Tibetan** | Tibetan, Dzongkha | 3 datasets | ~175K |
 | **Cyrillic** | Russian, Bulgarian, etc. | MDIW13 subset | TBD |
 | **Hebrew** | Hebrew | MDIW13 subset | TBD |
 

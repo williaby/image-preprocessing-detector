@@ -71,6 +71,7 @@ from .mlt19 import Mlt19Parser
 from .multilingual_scripts import MultilingualScriptsParser
 from .ndl_docl import NdlDoclParser
 from .nepali_handwritten import NepaliHandwrittenParser
+from .openpecha_ocr_drutsa import OpenpechaOcrDrutsaParser
 from .pdmocr import PdmocrParser
 from .siw13 import Siw13Parser
 from .synth_multiscript import SynthMultiscriptParser
@@ -103,6 +104,7 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     registry.register(JssodaParser())
     registry.register(VjrodaParser())
     registry.register(NdlDoclParser())
+    registry.register(OpenpechaOcrDrutsaParser())
     registry.register(PdmocrParser())
 
 
@@ -120,6 +122,7 @@ __all__ = [
     "MultilingualScriptsParser",
     "NdlDoclParser",
     "NepaliHandwrittenParser",
+    "OpenpechaOcrDrutsaParser",
     "PdmocrParser",
     "Siw13Parser",
     "SynthMultiscriptParser",

@@ -116,6 +116,7 @@ title: Dataset Naming Standard
 | `synth-multiscript-v3` | synth_multiscript_v3 | synth-multiscript-v3, synthetic_v3 | ✅ | Synthetic multi-script v3 (350,012 images, 27 scripts, GCS-complete — ⚠️ imbalanced distribution) |
 | `synthetic-iqa` | synthetic_iqa | synthetic_iqa | ✅ | Synthetic IQA test samples |
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
+| `openpecha-ocr-drutsa` | OCR-Drutsa | openpecha_ocr_drutsa, ocr-drutsa | ✅ | Tibetan line-level OCR (32K images) |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
 | `vjroda` | vjroda | vj-roda, vjroda-dataset | 🔄 | Vertical Japanese Real-world OCR Dataset — 100 government PDF pages, born-digital, OOD evaluation |

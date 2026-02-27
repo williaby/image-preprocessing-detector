@@ -94,6 +94,7 @@
 | pucit-ohul | 7,401 | Line text | Urdu | [pucit-ohul.md](../source/pucit-ohul.md) |
 | khatt | ~1,633 | Paragraph Arabic HW (1,000 writers, OOD) | Arabic | [khatt.md](../source/khatt.md) |
 | tibhcr | 141,698 | 47 character classes | Tibetan | [tibhcr.md](../source/tibhcr.md) |
+| openpecha-ocr-drutsa | 32,364 | Tibetan line-level OCR | Tibetan | [openpecha-ocr-drutsa.md](../source/openpecha-ocr-drutsa.md) |
 | dzongkha-digits | 1,000 | 10 digit classes | Tibetan | [dzongkha-digits.md](../source/dzongkha-digits.md) |
 
 ---

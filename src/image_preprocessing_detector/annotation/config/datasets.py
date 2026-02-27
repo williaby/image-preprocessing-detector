@@ -14,8 +14,8 @@ Configuration Categories:
     - Base Training - Documents (2): rvl_cdip, doclaynet
     - Base Training - Forms (5): nist-sd2, nist_sd6, funsd, funsd_plus, sroie
     - Base Training - Tables (3): tablebank, pubtabnet, fintabnet
-    - Base Training - Handwriting (5): nist_sd19, signatr6k, maths_handwriting,
-      egyptian-handwriting, salami
+    - Base Training - Handwriting (6): nist_sd19, signatr6k, maths_handwriting,
+      egyptian-handwriting, salami, openpecha-ocr-drutsa
     - Base Training - Formulas (2): im2latex, mathverse
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
@@ -540,6 +540,24 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         parser_name="salami",
         # Multi-language: Armenian, Georgian, German, Gothic, Greek, Latin,
         # Ottoman, Slavonic — per-image language in images.json
+    ),
+    "openpecha-ocr-drutsa": DatasetConfig(
+        name="openpecha-ocr-drutsa",
+        path_suffix="01_base_data/language/openpecha-ocr-drutsa",
+        pattern="extracted_images/*.png",  # 32,364 line images from parquet
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.UNKNOWN,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% Tibetan text lines by definition
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="openpecha_ocr_drutsa",
+        iso639_language="bo",
+        iso15924_script="Tibt",
+        text_scope="line",  # Line-level OCR images
     ),
     # =========================================================================
     # Base Training - Formulas (2)
