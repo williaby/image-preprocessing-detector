@@ -3,7 +3,7 @@ canonical_name: nara-1950-census
 display_name: NARA 1950 Census (Enumeration Schedules)
 source_url: https://1950census.archives.gov/
 license: Public Domain
-total_images: 695 (partial sample, Alabama only; full dataset ~6.5M pages)
+total_images: 25000 (stratified sample across 55 states; full dataset ~6.5M pages)
 format: JPEG (scanned page images)
 status: training-ready
 documentation_status: complete
@@ -55,8 +55,8 @@ SPDX: `LicenseRef-PublicDomain-USGov`
 | Metric | Value |
 |--------|-------|
 | Total pages (full dataset) | ~6.5 million |
-| Current sample | 695 (Alabama only) |
-| Target sample | 25,000 (stratified across all states) |
+| Current sample | 25,000 (stratified, download in progress) |
+| States represented | 55 (of 57 with metadata) |
 | States/territories | 57 (50 states + DC + territories) |
 | Format | JPEG (scanned) |
 | Resolution | Variable (high-resolution scans) |
@@ -117,7 +117,7 @@ Labels extracted:
 | Parser | Done (`parsers/document/nara_1950_census.py`) |
 | DatasetConfig | Done (in `annotate_base_metadata.py`) |
 | `__init__.py` registration | Done |
-| Layer 1 scan | Pending (run after full sampling) |
+| Layer 1 scan | Pending (25K download in progress, ~3K of 25K downloaded) |
 | Cross-reference docs | Done |
 
 ## 9. IQA Sensitivity

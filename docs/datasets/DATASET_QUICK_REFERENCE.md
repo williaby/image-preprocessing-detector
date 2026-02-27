@@ -118,9 +118,9 @@ title: Dataset Quick Reference
 | financebench | 54,121 | **B** 85 | PNG | GT | None | GT (dataset) | GT (dataset) |
 | casia-hwdb2-line | 52,160 | -- | JPG | GT (line text) | None | GT (dataset) | GT (dataset) |
 | muharaf | 25,711 | D 81 | PNG | GT | Extracted (Docling) | GT | GT |
-| nara-1950-census | 695 | -- | JPG | None | None | GT (dataset) | GT (dataset) |
+| nara-1950-census | 25,000 | -- | JPG | None | None | GT (dataset) | GT (dataset) |
 | mlt19 | 19,993 | **A** 91 | JPG | GT + Converted | GT (COCO) + Converted | GT | GT |
-| kleister-charity | ~20,000 | -- | PNG | GT (KIE fields) | Extracted (Docling) | GT (dataset) | GT (dataset) |
+| kleister-charity | 62,029 | -- | PNG | GT (KIE fields) | Extracted (Docling) | GT (dataset) | GT (dataset) |
 | siw13 | 16,291 | D 81 | JPG | Extracted | Extracted (Docling 3-cat) | GT | GT |
 | ohr-bench | 16,091 | **B** 85 | JPG | GT + Extracted | Extracted (Docling 14-cat) | OpenLID | OpenLID |
 | rvl-cdip | 16,000 | **B** 87 | JPEG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
@@ -289,7 +289,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | hasy | 168,233 | Math symbols (HW) | Symbol class (369 classes) | 151,410 | CC0 |
 | casia-hwdb2-line | 52,160 | Chinese HW lines (HANS, line-level) | Text transcriptions, 1,020 writers | 33,400 | MIT |
 | muharaf | 25,711 | Arabic cursive (historical) | Line transcriptions, variable quality | All | CC-BY-NC-SA-4.0 |
-| nara-1950-census | 695 | US census HW forms (English) | Census enumeration schedules, 100% HW on pre-printed forms | All | Public Domain |
+| nara-1950-census | 25,000 | US census HW forms (English) | Census enumeration schedules, 100% HW on pre-printed forms | All | Public Domain |
 | casia-hwdb2 | 5,091 | Chinese HW pages (HANS, page-level) | Line bboxes + char labels (DGRL) | 4,076 | Academic |
 | nist-sd19 | 3,669 | Digits + letters | Character class | All | Public |
 | nist-sd6 | 5,595 | Tax forms + handprint | Form + handprint labels | All | Public |
@@ -301,7 +301,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | egyptian-handwriting | 11,216 | Arabic cursive (89 writers, ages 6-73) | Word transcriptions | All | CC-BY-4.0 |
 | gnhk | 687 | Mixed HW/printed (illegible HW seed) | Word-level H/P type + polygon + text | All | CC-BY-4.0 |
 | signverod | 2,765 | Scanned docs with signatures | Signature/initials/redaction/date bbox | 1,939 train / 354 test | CC0-1.0 |
-| kleister-charity | ~20,000 | UK charity reports (mixed HW/typed) | KIE fields + signatures + handwriting | All | MIT |
+| kleister-charity | 62,029 | UK charity reports (mixed HW/typed) | KIE fields + signatures + handwriting | All | MIT |
 | popp-line | 4,794 | French census HW lines | Line transcriptions (French) | 3,835 train / 480 val / 479 test | CC-BY-4.0 |
 | salami | 250 | Multi-script manuscripts (8 scripts) | 20-expert legibility ratings (5-level) | All | CC-BY-4.0 |
 
@@ -350,7 +350,7 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 | funsd-plus | 1,139 | COCO + OCR | Extended forms | All | CC-BY-4.0 |
 | sroie | 973 | Quad + OCR + entities | Receipts | 626 | Research |
 | indicdlp | 115,803 | COCO boxes | 42 classes, 12 Indic langs | All | MIT |
-| kleister-charity | ~20,000 | Extracted (Docling) | Forms + mixed content | All | MIT |
+| kleister-charity | 62,029 | Extracted (Docling) | Forms + mixed content | All | MIT |
 | hiertext | 11,641 | COCO boxes | Word/line/paragraph | 8,281 | CC-BY-SA-4.0 |
 
 **DocLayNet classes**: Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title
@@ -367,7 +367,7 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 | fintabnet | 97,475 | Financial table structure | Research |
 | bhutan-afs | 135 | Bhutan annual reports | Public |
 | invoices-kg | 1,414 | Invoice key-value extraction | ODbL-1.0 |
-| kleister-charity | ~20,000 | UK charity annual reports (gov.uk) | MIT |
+| kleister-charity | 62,029 | UK charity annual reports (gov.uk) | MIT |
 
 #### Forms & Structured Documents
 

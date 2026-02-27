@@ -3,7 +3,7 @@ canonical_name: kleister-charity
 display_name: Kleister Charity (British Charity Annual Reports)
 source_url: https://github.com/applicaai/kleister-charity
 license: MIT
-total_images: ~20000 (estimated page images from 3,414 PDFs)
+total_images: 62029 (rendered page images from 2,776 PDFs)
 format: PDF (git-annex) → rendered PNG page images
 status: training-ready
 documentation_status: complete
@@ -18,7 +18,8 @@ gov.uk, split into 1,729 train / 440 dev / 609 test documents. Reports contain m
 typed and handwritten content in a financial/administrative context. PDFs are rendered
 to individual page images (300 DPI PNG) for use in the IQA/preprocessing pipeline.
 
-Estimated ~20K total page images (average ~6 pages per document).
+62,029 rendered page images (average ~22 pages per document) from 2,776 resolved PDFs
+(2 of 3,414 PDFs unresolved via git-annex).
 
 ## 2. Source & Access
 
@@ -36,10 +37,13 @@ Estimated ~20K total page images (average ~6 pages per document).
 | Metric | Value |
 |--------|-------|
 | **Total Documents** | 3,414 PDFs |
-| **Train Documents** | 1,729 |
+| **Train Documents** | 1,727 (of 1,729; 2 PDFs unresolved) |
+| **Train Pages** | 36,755 |
 | **Dev-0 Documents** | 440 |
+| **Dev-0 Pages** | 10,639 |
 | **Test-A Documents** | 609 |
-| **Est. Page Images** | ~20,000 (rendered at 300 DPI) |
+| **Test-A Pages** | 14,635 |
+| **Total Page Images** | 62,029 (rendered at 300 DPI) |
 | **Image Type** | Full-page rendered document images |
 | **Resolution** | 300 DPI (rendered), varies by source page size |
 | **Color Mode** | RGB |
@@ -64,7 +68,7 @@ document's labels via JSON sidecar files.
 
 | Script | ISO 15924 | Count | Notes |
 |--------|-----------|-------|-------|
-| Latin | Latn | ~20,000 | English financial documents |
+| Latin | Latn | 62,029 | English financial documents |
 
 ## 6. IQA Profile
 
@@ -90,10 +94,10 @@ document's labels via JSON sidecar files.
 
 | SIG ID | Head | Applicable | Count | Tier | Notes |
 |--------|------|-----------|-------|------|-------|
-| SIG-G4-1 | handwriting_presence_cls | Yes | ~20,000 | tier_2_heuristic | Mixed typed+HW in financial docs |
-| SIG-G4-3 | handwriting_content_cls | Yes | ~20,000 | tier_2_heuristic | Signatures, annotations in reports |
-| SIG-G4-4 | capture_method | Yes | ~20,000 | tier_0_exact | Born-digital + scanner mix |
-| SIG-G2-1 | script_cls | Yes | ~20,000 | tier_0_exact | 100% Latin (English) |
+| SIG-G4-1 | handwriting_presence_cls | Yes | 62,029 | tier_2_heuristic | Mixed typed+HW in financial docs |
+| SIG-G4-3 | handwriting_content_cls | Yes | 62,029 | tier_2_heuristic | Signatures, annotations in reports |
+| SIG-G4-4 | capture_method | Yes | 62,029 | tier_0_exact | Born-digital + scanner mix |
+| SIG-G2-1 | script_cls | Yes | 62,029 | tier_0_exact | 100% Latin (English) |
 
 ## 9. Known Limitations
 

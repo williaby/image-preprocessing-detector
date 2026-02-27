@@ -15,7 +15,7 @@ tags:
 > **Supersedes**: [PROJECT_PLAN.md](PROJECT_PLAN.md) and
 > [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md)
 >
-> **Last Updated**: 2026-02-26
+> **Last Updated**: 2026-02-27
 >
 > **For system narrative** (what the system does and why its design is sound), see
 > [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md).
@@ -408,12 +408,13 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 | --- | --- | --- | --- |
 | 0 | 1–2 | Fix 3 architectural defects + deployment model decision + initiate license reviews | All 3 defects fixed; deployment model decided |
 | 1 | 2–4 | Train MNV4-Conv-S: orientation (50K), skew (90K), resolution quality (15K) | T4 data assembled for 3 heads |
-| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; SRCC gate for VLM IQA |
+| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); run corpus-wide IQA pseudo-labeling (MUSIQ + TOPIQ-NR on ~440K images); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; MUSIQ+TOPIQ ensemble SRCC ≥ 0.55 on DIQA-5000; ≥125K images with IQA labels |
+| 2b | 6–8 | Generate NIST contact sheets (~3,400); label presence_reg on mid-range candidate datasets (~13–19K) | Presence distribution covers 0.2–0.7 range |
 | 3 | 8–12 | Integrate G3 geometry heads; execute E03 (warping) + E05 (RQ V2); expand to 16 active heads | 14+ heads at quality gate |
-| 4 | 12+ (Release 2) | T5 handwriting data (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
+| 4 | 12+ (Release 2) | T5 handwriting data at reduced 25K scope (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
 
 **Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
-(9,155 → 12,000 images).
+(9,155 → 12,000 images) + NIST contact sheet generation (Weeks 6–8).
 
 **Acquisition sequencing**: The dataset gathering strategy
 ([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
@@ -432,14 +433,17 @@ sum across 11 dataset views) to ~420–440K actual unique images — see
 - **G5-3 (warping_reg)**: Warping severity formula must be defined before any labeling.
   doc3d (102K images, MIT-confirmed) is the primary source. Formula:
   `severity = clip(k * std(Z_grid_normalized), 0.0, 1.0)`.
-- **G4 Handwriting**: Highest-risk group. No tier achieves "ready" in 12 weeks. ILLEGIBLE
-  class at 0 examples; MIXED_TYPED_HW at 0 examples. G4-2 and G4-5 performance targets
-  exceed inter-annotator agreement ceilings — targets must be revised downward before
-  training. Deferred to Release 2.
+- **G4 Handwriting**: Highest-risk group, **target reduced from 60K to 25K** (peer review
+  panel recommendation — 25K still provides 3.5–5× robust fine-tuning threshold per class).
+  ILLEGIBLE class at 0 examples; MIXED_TYPED_HW at 0 examples. G4-2 and G4-5 performance
+  targets exceed inter-annotator agreement ceilings — targets must be revised downward before
+  training. SIG-G4-4 presence regression has a 0.2–0.7 distribution void addressed by NIST
+  contact sheets + mid-range real dataset labeling (new Phase 2b). Deferred to Release 2.
 - **SIG-G3-2**: The +/-2° narrow-range skew dataset does not exist and must be built from
   scratch (~20K images). No existing script creates it. T5 minimum viable tier for this head.
-- **G1-6 (overall_quality)**: VLM prompt v2.0 must achieve SRCC > 0.60 on 30–50 validation
-  images before scaling. Current SRCC = 0.53 is insufficient for regression training.
+- **G1-6 (overall_quality)**: Pivoted from VLM prompt (SRCC 0.53) to MUSIQ + TOPIQ-NR pretrained
+  ensemble. Validation gate: ensemble SRCC ≥ 0.55 on held-out DIQA-5000 (500 images). Q-Align
+  (7B MLLM) provides Tier 2 cross-validation on OOD + 5K stratified sample.
 - **SIG-G5-4 (code_cls)**: Fastest path to improvement of any currently blocked head — dry-run
   produced 8,613 records; D6 fixed by code_reg→code_cls rename (Defect 2 above).
 
@@ -630,6 +634,73 @@ without data refresh.
 
 Full details: [OOD_COVERAGE_GAP_REPORT.md](../datasets/OOD_COVERAGE_GAP_REPORT.md)
 
+#### Corpus-Wide IQA Labeling: MUSIQ + TOPIQ-NR Ensemble
+
+**Strategy change (2026-02-27)**: Rather than assembling a separate IQA-specific dataset, IQA
+labels are generated for the **entire training corpus** (~420–440K images). Every image that
+enters any training manifest automatically carries IQA pseudo-labels. This eliminates the VLM
+SRCC bottleneck, removes a separate dataset assembly step, and ensures IQA regression heads
+see the full diversity of document conditions present in other training tasks.
+
+**Minimum gate**: ≥125,000 images with IQA labels in the final merged training manifest.
+Given the corpus is ~420–440K, this is trivially met — the real constraint is validation
+quality, not volume.
+
+**Motivation**: The VLM IQA prompt approach (SRCC 0.53) is below the 0.65 threshold needed for
+regression training. The 9-model peer review panel (2026-02-26) endorsed pivoting to pretrained
+NR-IQA models — specifically MUSIQ and TOPIQ-NR — which can generate pseudo-labels at scale
+without new training. VQualA 2025 (ICCV Workshop) reported MUSIQ at 0.859 Pearson on DIQA-5000
+documents, far exceeding our local benchmark's raw SRCC of 0.116, likely due to evaluation
+protocol differences (normalization, metric type).
+
+**Two-tier labeling strategy**:
+
+| Tier | Models | Scope | GPU-hours | Cost |
+| --- | --- | --- | --- | --- |
+| **Tier 1** (primary) | MUSIQ + TOPIQ-NR ensemble | All ~440K images (OOD 9.2K + training corpus ~420K) | ~14.8 h (T4) | $5–15 |
+| **Tier 2** (validation) | Q-Align (7B MLLM) | OOD 9.2K + 5K stratified sample from training corpus | ~0.9 h (A100) | <$2 |
+
+**Model details**:
+
+| Model | PyIQA key | Params | Latency (T4) | KonIQ-10k SRCC | Notes |
+| --- | --- | --- | --- | --- | --- |
+| MUSIQ | `musiq` | 27M | 65 ms | 0.916 | Multi-scale transformer; native resolution |
+| TOPIQ-NR | `topiq_nr` | 27M | 59 ms | 0.930 | CFANet; semantic-guided cross-scale |
+| Q-Align | `qalign` | 7B | 220 ms (A100) | 0.941 | MLLM; requires A100 (15.4 GB VRAM) |
+
+**Validation gate**: Ensemble SRCC ≥ 0.55 on held-out DIQA-5000 subset (500 images). If the gate
+fails, fall back to LIQE (SRCC 0.403 on documents) as the primary model with MANIQA (SRCC 0.526,
+1845 ms) as validator on a stratified subsample.
+
+**Output schema** (per image, appended to L2 metadata):
+
+```json
+{
+  "iqa_pseudo_labels": {
+    "musiq_mos": 0.72,
+    "topiq_mos": 0.68,
+    "ensemble_mos": 0.70,
+    "qalign_mos": 0.71,
+    "model_agreement": 0.96,
+    "label_tier": "tier_3_heuristic"
+  }
+}
+```
+
+**Dependencies**: PyIQA ≥ 0.1.12, PyTorch ≥ 2.0, T4 GPU (Tier 1), A100 GPU (Tier 2 only).
+
+**Effort**: 2–3 days development + 1 day full corpus run (~14.8h T4 GPU). Unblocks all 6
+G1 IQA heads. The corpus-wide approach **eliminates the separate IQA dataset assembly step**
+from Phase 2, saving ~1 week of curation effort while producing ~26x more labeled images
+(~440K vs. ~16K).
+
+**Script location**: `scripts/label_iqa_pseudo.py` (to be created).
+
+**Calibration anchors**: The existing 16.3K hard-labeled subset (DIQA-5000, OHR-Bench, RealDAE)
+retains `label_tier=tier_1_annotation` at weight 1.0. Corpus-wide pseudo-labels are assigned
+`label_tier=tier_2_model` at weight 0.8. The tiered weighting ensures the model anchors to
+human-validated quality scores while benefiting from the scale of pseudo-labels.
+
 #### Stream 0: Document Type Router (new — architectural gap)
 
 Prepare-Doc currently assumes all inputs are PDFs or images. This stream adds the Stage 0
@@ -705,6 +776,157 @@ but is not in the current master plan.
 - **What to build**: Augmentation pipeline on OHR-Bench / DIQA-5000 base images that applies
   2–5 distortions per image, generating compound examples
 - **Effort**: 3–5 days
+
+#### Handwriting Presence Distribution Gap: NIST Contact Sheets + Mid-Range Candidate Evaluation
+
+SIG-G4-4 (handwriting presence regression) has a bimodal distribution — samples concentrated at
+0.0 (printed documents) and ~0.95 (pure handwriting corpora), with a void at 0.2–0.7. Without
+mid-range data, the regression head learns a step function instead of a continuous estimate.
+Source: 9-model peer review panel (2026-02-26), Appendix C.3.
+
+**Part 1 — NIST Contact Sheet Generation (~3,400 synthetic, `tier_0_exact` labels)**
+
+Generate synthetic documents with controllable handwriting presence by compositing NIST SD-19
+character images (810K+ characters from 3,600 writers) onto SD-2/SD-6 form backgrounds at
+varying fill densities.
+
+| Presence Target | Characters/Page | Background | Expected Samples |
+| --- | --- | --- | --- |
+| 0.10–0.20 | 5–15 scattered | Printed form template or blank | 500 |
+| 0.20–0.35 | 15–40 in 1–2 fields | NIST SD-2 tax form base | 800 |
+| 0.35–0.50 | 40–80 in 3–5 fields | NIST SD-6 census form base | 800 |
+| 0.50–0.65 | 80–150 in dense fields | NIST SD-2 fully-filled form | 800 |
+| 0.65–0.80 | 150–250 in most fields | NIST SD-19 HSF form (partial) | 500 |
+
+Design decisions:
+
+- Place SD-19 characters into form field regions at varying fill rates
+- Apply light Augraphy degradation after compositing to avoid synthetic appearance
+- Label `presence_reg = handwritten_pixel_area / total_page_area` (computed exactly)
+- Label tier: `tier_0_exact` (presence ratio is known by construction)
+- 3,600-writer diversity in SD-19 prevents overfitting to a single handwriting style
+- All source data is Public Domain — no license constraints
+
+Script to create: `scripts/generate_nist_contact_sheets.py`
+
+**Part 2 — Mid-Range Real Dataset Identification and `presence_reg` Labeling**
+
+Several existing datasets contain pages with natural mid-range handwriting presence (0.2–0.7)
+but have not been labeled with `presence_reg`. These need evaluation and labeling:
+
+| Dataset | Pages | Expected Presence Range | Why Mid-Range | Status |
+| --- | --- | --- | --- | --- |
+| Kleister Charity | ~20,000 | 0.05–0.40 | UK charity reports with handwritten signatures, annotations, margin notes on typed pages | Needs presence_reg labeling |
+| NARA 1950 Census | 695 (target 25K) | 0.30–0.60 | Pre-printed tabular forms with handwritten entries in designated cells | Needs presence_reg labeling |
+| NIST SD-6 (as-is) | 5,595 | 0.20–0.50 | Census forms with handprint overlay — partially filled forms naturally fall mid-range | Needs presence_reg computation from field fill rate |
+| NIST SD-2 (as-is) | 5,590 | 0.15–0.45 | Tax forms with synthesized handprint entries at variable fill rates | Needs presence_reg computation from field density |
+| SignVerOD | 2,765 | 0.02–0.15 | Documents with only signatures/initials/dates as handwriting (very sparse but real) | Needs presence_reg labeling |
+| GNHK | 687 | 0.40–0.90 | Mixed printed (3,534 words) + handwritten (39,027 words) — ratio varies by page | Word-level annotations enable exact presence_reg |
+| FUNSD | 199 | 0.10–0.40 | Forms with handwritten annotations on printed structure | Needs presence_reg labeling |
+| Popp-Line | 4,794 | 0.30–0.70 | French census pre-printed forms + handwritten entries | Needs presence_reg labeling |
+
+Estimated mid-range yield (0.2–0.7): ~3,400 synthetic (contact sheets) + ~13,000–19,000
+real/synthesized-form samples = **~16,500–22,300 total**, transforming the distribution from
+bimodal to approximately uniform.
+
+**Labeling approach for real datasets**: Compute `presence_reg` as handwritten pixel area /
+total page area. For datasets with word-level `handwritten` annotations (HierText, GNHK,
+COCO-Text): compute directly from annotated word bounding box areas. For form datasets (SD-2,
+SD-6, NARA): estimate from field fill rate × field area / page area. Script: binarization +
+connected component analysis to segment handwriting from printed text.
+
+Script to create: `scripts/label_handwriting_presence.py`
+
+- **Effort**: 1 week (contact sheet generation script + presence_reg labeling script + GPU run)
+- **Unblocks**: SIG-G4-4 (handwriting presence regression) — fills the 0.2–0.7 distribution void
+- **Source**: Peer review panel report Appendix C.3
+
+#### Resolution Quality Dataset Expansion (5.5K → 15–20K, MNV4-H3 / SIG-G5-5)
+
+Resolution quality is a shared head across both models (MNV4-H3 pre-correction gate,
+SIG-G5-5 post-correction validation). At 5,499 labeled images (~550 samples per 0.1 quality
+bin), it barely clears statistical minimums. The confound sub-dataset (pre-upscaled rasters,
+vector PDFs at low DPI) is entirely missing — without it, the model will systematically
+confuse "high pixel count from upscaling" with "genuinely high resolution." The 7-range
+piecewise mapping (char_height → quality_score) has different slopes in different ranges;
+at 5.5K the model cannot reliably learn transitions between ranges.
+
+**Sweet spot target**: 15–20K total. Beyond 20K, gains are marginal. The confound
+sub-dataset (~2K) is non-negotiable — it teaches a qualitatively different concept (artifact
+detection) that cannot be learned from more of the same distribution.
+
+**Labeling methodology**: Two-stage pipeline in
+[label_resolution_quality.py](../../scripts/label_resolution_quality.py) — PaddleOCR DBNet
+text detection (Stage 1) + connected component character height measurement within detected
+regions (Stage 2). Requires GPU (Vultr A100 VM, 12.1 img/s). V1 precision is adequate for
+this expansion: coarse bucket accuracy 97%, regression IQR 9px (acceptable for Latin-majority
+datasets; V2 deferred to Phase 3 training schedule). Core measurement library:
+[resolution_quality.py](../../src/image_preprocessing_detector/schema_utils/resolution_quality.py).
+
+**Phase A — Label existing datasets (~7.5K new, ~1 hour A100 GPU)**:
+
+Run `label_resolution_quality.py` on datasets already on E drive:
+
+| Dataset | Images | A100 Time | Capture Method | Bin Diversity |
+| --- | ---: | --- | --- | --- |
+| RealDAE | 1,200 | ~2 min | Camera | HIGH — variable camera distance |
+| RVL-CDIP (5K sample) | 5,000 | ~7 min | Scanner | HIGH — scanned at variable DPI |
+| Tobacco800 | 1,290 | ~2 min | Scanner | MEDIUM — aged scans, naturally low res |
+
+Subtotal Phase A: 5.5K existing + 7.5K new = **~13K**
+
+**Phase B — Multi-DPI DocLayNet renders (~7K new, ~2 hours total effort)**:
+
+Render 1,000 DocLayNet PDF pages at 7 DPI levels (72/100/150/200/300/400/600) to produce
+7,000 images with **tier_0_exact** labels spanning the full quality score range. This is the
+highest-quality labeling path: DPI is known by construction, char height is computable, and
+bin coverage is guaranteed uniform.
+
+| Step | Action | Output | Effort |
+| --- | --- | --- | --- |
+| 1 | Write multi-DPI render script (~50 LOC, PyMuPDF `page.get_pixmap(dpi=X)`) | `scripts/render_multi_dpi_doclaynet.py` | 0.5 days |
+| 2 | Render 1,000 PDFs × 7 DPI levels | 7,000 PNG images | ~30 min |
+| 3 | Run `label_resolution_quality.py` on rendered images | Resolution quality labels | ~10 min A100 |
+
+Subtotal Phase A + B: **~20K** — at the sweet spot target.
+
+**Phase C — Confound sub-dataset (~2K, mandatory before training)**:
+
+The confound sub-dataset is required by
+[DATASET_DIVERSITY_REQUIREMENTS.md §3.4](DATASET_DIVERSITY_REQUIREMENTS.md). 365 pre-upscaled
+rasters already exist in the OOD registry (OHR-Bench 2× bicubic, `ood_resolution` category).
+
+| Confound Type | Target | Exists | Action |
+| --- | ---: | ---: | --- |
+| Pre-upscaled rasters | ~1,000 | 365 | Generate 635 more: bicubic 2×–4× upscale of 72/100 DPI RVL-CDIP images |
+| Vector PDF at low effective DPI | ~500 | 0 | Render DocLayNet PDFs at 72 DPI (vector text looks sharp but OCR fails) |
+| Mixed confound (scanned + upscaled) | ~500 | 0 | Bicubic 2× upscale of Tobacco800 images |
+
+Each confound sample carries dual labels: `measured_char_height` (inflated),
+`actual_quality` (low), `artificially_upscaled=True`, `upscale_factor`, `true_dpi`.
+
+Implementation: ~80 LOC script using `cv2.resize()` with `INTER_CUBIC`, extending the
+existing OOD upscaling pattern (`acquisition_method: "ohr_bench_bicubic_2x"`).
+
+**Phase D — Script diversity (optional, after Phase B evaluation)**:
+
+Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth_multiscript_v3/`)
+across 19 non-Latin scripts. Labels derive from generation metadata (DPI known at render
+time), not from CC measurement — avoiding the V1 CJK precision limitation entirely.
+
+**V2 pipeline upgrade (deferred to Phase 3 training schedule)**:
+
+The V2 strategy ([RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md))
+addresses V1 regression precision (9px IQR → 2–3px target) via Sauvola binarization,
+morphological closing, projection profile ensemble, DBSCAN height clustering, and synthetic
+calibration. V2 matters when expanding to 30K with CJK-heavy natural datasets. For the
+15–20K expansion (Latin-majority datasets + tier_0_exact multi-DPI renders), V1 precision
+is sufficient. V2 is scheduled for Phase 3 (Week 8–12) after initial MNV4 training validates
+the resolution head architecture.
+
+- **Effort**: Phase A (0.5 days GPU) + Phase B (1 day) + Phase C (1 day) + Phase D (0.5 days) = ~3 days total
+- **Unblocks**: MNV4-H3 training (Phase 1, Week 2–4) and SIG-G5-5 training
+- **Reference**: [RESOLUTION_QUALITY_LABELING_STRATEGY.md](RESOLUTION_QUALITY_LABELING_STRATEGY.md), [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md)
 
 #### SIG-G3-2: Build +/-2° narrow-range skew dataset from scratch
 
@@ -787,8 +1009,11 @@ $80–140 budget approval).
 
 #### Stream 4E: Handwriting Dataset + Training Heads
 
-Handwriting training data is at 0% (target: 60K images). The 5 handwriting heads (Group 4 in
-SigLIP 2) are currently excluded from training. Non-Latin scripts are completely absent.
+Handwriting training data is at 0% (target: **25K images**, reduced from 60K based on 9-model
+peer review panel analysis — see Appendix C.4). At 25K, each class in the 5-class head gets
+~5,000 samples (5× the robust fine-tuning threshold for pre-trained ViT); the 7-class head
+gets ~3,571/class (3.5× threshold). The 5 handwriting heads (Group 4 in SigLIP 2) are
+currently excluded from training. Non-Latin scripts are completely absent.
 
 - **Taxonomy prerequisite** (must finalize before acquisition): Expand `handwriting_script` to
   9 fine-grained classes (Latin-Print, Latin-Cursive, CJK-Hanzi, CJK-Kanji, Arabic-Naskh,
@@ -800,7 +1025,19 @@ SigLIP 2) are currently excluded from training. Non-Latin scripts are completely
   - Devanagari: IIIT-INDIC
   - Cyrillic: HKR
   - Latin form fill-in: FUNSD expansion (currently only 199 images)
-- **Effort**: Taxonomy (3–5 days) + dataset acquisition (4–6 weeks)
+- **Adjusted class distribution (25K)**:
+
+| Class | Target % | Count | Primary Sources |
+| --- | --- | --- | --- |
+| NONE | 35% | 8,750 | DocLayNet (15K available), PubTabNet (5K), FinTabNet (2K) |
+| SPARSE | 15% | 3,750 | HierText sparse pages, Kleister Charity signatures |
+| MODERATE | 20% | 5,000 | NIST SD-2/SD-6 forms, NARA Census, contact sheets |
+| SUBSTANTIAL | 15% | 3,750 | IAM, Muharaf, PUCIT-OHUL, HKR |
+| DOMINANT | 15% | 3,750 | NIST SD-19 HSF, CASIA-HWDB, KHATT |
+
+- **Structural voids unchanged**: ILLEGIBLE class still needs ~1,000+ samples from scratch;
+  MIXED_TYPED_HW at 0 natural examples; N_A sentinel defect must be fixed first
+- **Effort**: Taxonomy (3–5 days) + dataset acquisition (3–4 weeks at reduced scope)
 
 #### Stream 8: Student Distillation
 
@@ -814,10 +1051,10 @@ Each student stage targets the same 16 prediction heads with progressive latency
 | Dataset | Done | Target | Next Action | Blocker |
 | --- | --- | --- | --- | --- |
 | synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 script ready |
-| Resolution quality | 5.5K | 30K | Run V2 labeling pipeline (Sauvola + projection profiles) | Compute time |
-| IQA curated | ~14K | 16K | Validate VLM prompt v2.0 on 30–50 images; scale if SRCC > 0.60 | Prompt validation |
-| IQA synthetic | 0 | 100K | Generate from synth-multiscript-v3 with Stream 7 pseudo-labels | Requires Stream 7 |
-| Handwriting | 0 | 60K | Finalize taxonomy; acquire KHATT, CASIA-HWDB, IIIT-INDIC, HKR | Stream 4E |
+| Resolution quality | 5.5K | 15–20K (sweet spot) | Phase A: label RealDAE+RVL-CDIP+Tobacco800 (7.5K); Phase B: multi-DPI DocLayNet renders (7K); Phase C: confound sub-dataset (2K mandatory); V2 deferred to Phase 3 | ~3 days total; Vultr A100 GPU |
+| IQA (corpus-wide) | ~14K hard | ≥125K (gate); ~440K actual | Validate MUSIQ+TOPIQ-NR SRCC ≥ 0.55 on DIQA-5000; then run on full ~440K corpus; 14K hard labels serve as tier_1 calibration anchors | IQA labeling script |
+| HW presence mid-range | 0 | ~16.5–22K | Part 1: Generate NIST contact sheets (~3,400); Part 2: Label presence_reg on Kleister Charity, NARA, SD-2, SD-6, GNHK, Popp-Line | Contact sheet + labeling scripts |
+| Handwriting (classification) | 0 | 25K (reduced from 60K) | Finalize taxonomy; acquire KHATT, CASIA-HWDB, IIIT-INDIC, HKR at reduced scope | Stream 4E |
 | Capture method | 0 | 50K | Assemble from L2-enriched datasets by capture_method field | Data acquisition |
 | Shadow | 0 | 15K | Run Phase 5 view generation after Tier 0 | Tier 0 severity labeling |
 | Warping | 0 | 20K | warpdoc complete; wsrd warping labels queued | wsrd warping labels |
@@ -927,6 +1164,15 @@ structure shown here.
     ├──▶ Fix: JPEG quality detection classical IQA head (1-2 days)
     ├──▶ Fix: Symmetric orientation dataset curation (0.5 days)
     ├──▶ Data: Compound distortion augmentation pipeline (3-5 days)
+    ├──▶ Data: Resolution quality expansion (5.5K→15-20K) — 4 phases, ~3 days, Vultr A100
+    │         Phase A: Label RealDAE+RVL-CDIP+Tobacco800 (7.5K, 1h GPU)
+    │         Phase B: Multi-DPI DocLayNet renders (7K, tier_0_exact labels)
+    │         Phase C: Confound sub-dataset (2K, mandatory before RQ head training)
+    │         Phase D: synth-multiscript-v3 script diversity sample (3-5K, optional)
+    ├──▶ Data: Corpus-wide IQA labeling (MUSIQ+TOPIQ-NR on ~440K images, ~15h T4 GPU)
+    │         Gate: SRCC ≥ 0.55 on DIQA-5000 validation; ≥125K images with IQA labels
+    ├──▶ Data: NIST contact sheets for HW presence mid-range (~3,400 synthetic, 1 week)
+    │         + presence_reg labeling on 8 candidate real datasets (~13-19K images)
     ├──▶ Data: SIG-G3-2 narrow-range skew dataset build from scratch (2-3 weeks) [T5]
     ├──▶ Data: ADF scanner training data sourcing (2-3 weeks, long-running)
     ├──▶ Data: Dataset gathering strategy execution (Phases 1-4, real-first acquisition)
@@ -942,7 +1188,8 @@ structure shown here.
     │
     ├──▶ Stream 4D: Evaluation vs heuristic baselines
     ├──▶ Stream 5: DoclingRouter integration (parallel to evaluation)
-    └──▶ Stream 4E: Handwriting taxonomy → acquisition (KHATT, CASIA-HWDB, IIIT-INDIC, HKR)
+    └──▶ Stream 4E: Handwriting taxonomy → acquisition at 25K target (KHATT, CASIA-HWDB,
+    │         IIIT-INDIC, HKR) — reduced from 60K per peer review analysis
               │
               ▼
 [Tier 4] Stream 7: Pseudo-Labeling (~2.5M images via DocIQ)
@@ -971,7 +1218,7 @@ P2 = monitor and improve.
 | **Capture Method (1 head)** | 0% | Modern CIS flatbed (2020+), ADF scanner, screen recapture | Tier 1-3 | P1-6/P1-7/P2-6 sourcing; screen recapture deferred Tier 3 |
 | **Shadow (1 head)** | 0% | Book gutter shadow (gradient + curvature) | Tier 2 | P1-1 real-world curation |
 | **Warping (1 head)** | 20% | Crumpled page + combined skew+warping | Tier 2-3 | P1-4 combined; P2-2 crumple |
-| **Resolution (1 head)** | 0% | Vector PDF at low effective DPI, upscaled raster (bicubic 2x-4x) | Tier 1 | Synthetic confound dataset (new task) |
+| **Resolution (1 head)** | 0% | Vector PDF at low effective DPI, upscaled raster (bicubic 2x-4x) | Tier 1 | Confound sub-dataset Phase C (2K: 1K upscaled rasters, 500 vector PDF, 500 mixed); 365 OOD entries exist |
 
 **Additional P0 gaps not yet in any plan**:
 
@@ -981,7 +1228,7 @@ P2 = monitor and improve.
    add projection profile second estimator; flag disagreement as layout complexity. Tier 2.
 3. **Vector PDF / upscaled raster resolution confounds** — Vector PDFs at low DPI give
    misleading char-height signals; bicubic 2x-4x upscaling inflates char height artificially.
-   Requires synthetic confound dataset. Tier 1 (can build now).
+   Addressed by Resolution Quality Expansion Phase C (confound sub-dataset, ~2K images). Tier 1.
 4. **ECE confidence calibration tracking** — Multi-head overconfidence; add Expected Calibration
    Error per head to `drift/alerting.py` with baseline config. Tier 2.
 
@@ -1012,6 +1259,10 @@ P2 = monitor and improve.
 | Dataset gathering strategy (real-first acquisition sequencing) | [DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md) |
 | Unified training corpus (per-head sizes, sharing analysis, acceptance criteria) | [../datasets/UNIFIED_TRAINING_CORPUS.md](../datasets/UNIFIED_TRAINING_CORPUS.md) |
 | Corpus OOD review (acceptance scorecard, gap analysis) | [CORPUS_OOD_REVIEW_REPORT.md](CORPUS_OOD_REVIEW_REPORT.md) |
+| Head adequacy synthesis (72 P0 gaps, 0 ready heads, median 39/100) | [HAR_SYNTHESIS.md](HAR_SYNTHESIS.md) |
+| 9-model peer review panel (CONDITIONAL GO, per-head sample analysis) | [../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md](../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md) |
+| Resolution quality labeling strategy (V1 two-stage pipeline) | [RESOLUTION_QUALITY_LABELING_STRATEGY.md](RESOLUTION_QUALITY_LABELING_STRATEGY.md) |
+| Resolution quality V2 strategy (Sauvola, projection profiles, calibration) | [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md) |
 | Architecture diagrams (all four levels) | [docs/architecture/](../architecture/) |
 | Historical plan (Phases 0–9, superseded) | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | Value-stream plan (Streams 1–8, superseded) | [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md) |

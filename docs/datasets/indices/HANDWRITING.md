@@ -18,11 +18,11 @@
 | iam-handwriting | 13,353 | Line/word text | ✅ Unrestricted | English | [iam-handwriting.md](../source/iam-handwriting.md) |
 | gnhk | 687 | Word-level polygons + legibility tags (%SC%/%NA%) | ✅ CC-BY-4.0 | English | [gnhk.md](../source/gnhk.md) |
 | signverod | 2,765 | Signature/initials/redaction/date bboxes | ✅ CC0-1.0 | English | [signverod.md](../source/signverod.md) |
-| kleister-charity | ~20,000 | Mixed HW/typed + signatures (UK charity reports) | ✅ MIT | English | [kleister-charity.md](../source/kleister-charity.md) |
+| kleister-charity | 62,029 | Mixed HW/typed + signatures (UK charity reports) | ✅ MIT | English | [kleister-charity.md](../source/kleister-charity.md) |
 | popp-line | 4,794 | Line transcriptions (French census) | ✅ CC-BY-4.0 | French | [popp-line.md](../source/popp-line.md) |
-| nara-1950-census | 695 | Census enumeration schedules (100% HW on pre-printed forms) | ✅ Public Domain | English | [nara-1950-census.md](../source/nara-1950-census.md) |
+| nara-1950-census | 25,000 | Census enumeration schedules (100% HW on pre-printed forms) | ✅ Public Domain | English | [nara-1950-census.md](../source/nara-1950-census.md) |
 
-**Total Available for Training**: ~296K images
+**Total Available for Training**: ~362K images
 
 ---
 

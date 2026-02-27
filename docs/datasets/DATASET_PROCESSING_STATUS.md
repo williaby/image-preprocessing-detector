@@ -68,13 +68,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
-| kleister-charity | ~20,000 | ✅ PNG | ✅ KIE fields + HW/signature | 🔄 Parser ready | UK charity annual reports (MIT); mixed HW/typed, scanner+born-digital |
+| kleister-charity | 62,029 | ✅ PNG | ✅ KIE fields + HW/signature | ✅ Complete | UK charity annual reports (MIT); 2,776 PDFs rendered to 62K pages; Layer 1 complete |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
-| nara-1950-census | 695 | ✅ JPG | ✅ Census metadata | 🔄 Pending | US census HW forms (Public Domain); parser ready, Layer 2 pending |
+| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | 🔄 Downloading | US census HW forms (Public Domain); 25K stratified sample, download in progress |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
