@@ -41,6 +41,7 @@ import hashlib
 import io
 import json
 import logging
+import re
 import subprocess
 import uuid
 from dataclasses import dataclass, field
@@ -1031,6 +1032,36 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "iso15924_script": "Tibt",
         "text_scope": "line",
         "original_labels_parser": "parse_ocr_drutsa_labels",
+    },
+    # Kleister Charity: 3,414 British charity annual report PDFs rendered to pages.
+    # MIT license.  Mixed typed + handwritten content in financial/admin docs.
+    # Closes SIG-G4-1/G4-3/G4-4 gaps (mixed HW in financial documents).
+    "kleister-charity": {
+        "path": BASE_DATA / "documents/kleister-charity",
+        "pattern": "rendered_images/*/*.png",  # train/dev-0/test-A subdirs
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.FINANCIAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_kleister_charity_labels",
+    },
+    # NARA 1950 Census: Scanned handwritten census enumeration schedules.
+    # Public Domain (U.S. Government work).  Largest single mixed typed+HW source.
+    # Closes SIG-G4-3 gap (mixed typed+handwriting in government documents).
+    "nara-1950-census": {
+        "path": BASE_DATA / "documents/nara-1950-census",
+        "pattern": "**/*.jpg",  # {State}/{census_id_dir}/*.jpg
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_nara_1950_census_labels",
     },
 }
 
@@ -5354,6 +5385,83 @@ def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     return labels
 
 
+_kleister_charity_re = re.compile(
+    r"^(?P<doc_id>[a-f0-9]{32})_p(?P<page>\d{3})\.png$",
+)
+
+
+def parse_kleister_charity_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse Kleister Charity rendered page image labels.
+
+    Filename pattern: {md5}_p{page:03d}.png
+    Split determined from parent directory (train/dev-0/test-A).
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "kleister-charity"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["document_type"] = "charity_annual_report"
+
+    # Parse filename
+    match = _kleister_charity_re.match(image_path.name)
+    if match:
+        labels.raw_labels["doc_id"] = match.group("doc_id")
+        labels.raw_labels["page_num"] = int(match.group("page"))
+
+    # Determine split from path
+    for split_name in ("train", "dev-0", "test-A"):
+        if split_name in image_path.parts:
+            labels.raw_labels["split"] = split_name
+            break
+
+    return labels
+
+
+# NARA 1950 Census filename regex
+_nara_census_re = re.compile(
+    r"^(?P<census_id>\d+)-(?P<state_name>[A-Za-z_]+)-"
+    r"(?P<serial>\d+)-(?P<page>\d{4})\.jpg$"
+)
+
+
+def parse_nara_1950_census_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse NARA 1950 Census enumeration schedule image labels.
+
+    Filename pattern: {census_id}-{StateName}-{serial}-{page:04d}.jpg
+    Nested in {StateName}/{census_id}-{StateName}-{serial}/ directories.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "nara-1950-census"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["document_type"] = "census_enumeration_schedule"
+    labels.raw_labels["content_type"] = "handwritten_form"
+
+    # Parse filename
+    match = _nara_census_re.match(image_path.name)
+    if match:
+        labels.raw_labels["census_id"] = match.group("census_id")
+        labels.raw_labels["state_name"] = match.group("state_name")
+        labels.raw_labels["serial_number"] = match.group("serial")
+        labels.raw_labels["page_num"] = int(match.group("page"))
+
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -5414,6 +5522,8 @@ LABEL_PARSERS = {
     "parse_gnhk_labels": parse_gnhk_labels,
     "parse_signverod_labels": parse_signverod_labels,
     "parse_popp_line_labels": parse_popp_line_labels,
+    "parse_kleister_charity_labels": parse_kleister_charity_labels,
+    "parse_nara_1950_census_labels": parse_nara_1950_census_labels,
 }
 
 

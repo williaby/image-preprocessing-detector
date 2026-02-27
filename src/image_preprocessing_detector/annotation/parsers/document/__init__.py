@@ -12,6 +12,8 @@ This package contains parsers for document classification datasets:
 - FinanceBench: SEC filings benchmark (10K, 10Q, 8K, Earnings)
 - Document Haystack: Document retrieval benchmark (Amazon Science)
 - MarkushGrapher: Chemical structure recognition (DS4SD)
+- Kleister Charity: British charity annual reports (MIT, mixed typed+HW)
+- NARA 1950 Census: Handwritten census enumeration schedules (Public Domain)
 
 Datasets covered:
     - rvl_cdip
@@ -25,6 +27,8 @@ Datasets covered:
     - financebench / finance-bench
     - document-haystack
     - markushgrapher
+    - kleister-charity / kleister_charity
+    - nara-1950-census / nara_1950_census
 """
 
 from __future__ import annotations
@@ -43,10 +47,12 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     """
     from .document_haystack import DocumentHaystackParser
     from .financebench import FinanceBenchParser
+    from .kleister_charity import KleisterCharityParser
     from .markushgrapher import MarkushgrapherParser
     from .midv500 import Midv500Parser
     from .midv2020 import Midv2020Parser
     from .multimodal_textbook import MultimodalTextbookParser
+    from .nara_1950_census import Nara1950CensusParser
     from .ohr_bench import OhrBenchParser
     from .omnidocbench import OmnidocbenchParser
     from .realdae import RealdaeParser
@@ -64,6 +70,8 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     registry.register(FinanceBenchParser())
     registry.register(DocumentHaystackParser())
     registry.register(MarkushgrapherParser())
+    registry.register(KleisterCharityParser())
+    registry.register(Nara1950CensusParser())
 
 
 __all__ = [
