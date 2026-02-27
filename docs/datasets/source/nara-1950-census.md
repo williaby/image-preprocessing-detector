@@ -83,7 +83,7 @@ This makes it ideal training data for:
 
 ## 6. Directory Structure
 
-```
+```text
 nara-1950-census/
     {StateName}/
         {census_id}-{StateName}-{serial}/

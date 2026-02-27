@@ -308,11 +308,11 @@ def download(workers: int) -> None:
     logger.info("Done: %d downloaded, %d skipped, %d failed", downloaded, skipped, failed)
 
 
-@cli.command()
+@cli.command(name="all")
 @click.option("--count", default=1000, help="Number of images to sample")
 @click.option("--seed", default=42, help="Random seed")
 @click.pass_context
-def all(ctx: click.Context, count: int, seed: int) -> None:
+def run_all(ctx: click.Context, count: int, seed: int) -> None:
     """Full pipeline: manifest → sample → download."""
     ctx.invoke(manifest)
     ctx.invoke(sample, count=count, seed=seed)
