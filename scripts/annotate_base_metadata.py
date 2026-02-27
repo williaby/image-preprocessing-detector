@@ -967,6 +967,22 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "text_scope": "page",
         "original_labels_parser": "parse_salami_labels",
     },
+    # GNHK (GoodNotes Handwriting Knowledge): 687 full-page handwritten document images
+    # with word-level polygon annotations (515 train + 172 test).  Valuable for
+    # legibility classification (%SC% scribble tags → ILLEGIBLE class seed).
+    # 42,561 word annotations: 39,027 handwritten (H), 3,534 printed (P).
+    "gnhk": {
+        "path": BASE_DATA / "handwriting/gnhk",
+        "pattern": "paper/*/*.jpg",  # train/ and test/ subdirs
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_gnhk_labels",
+    },
     # NOTE: khmer-ocr-benchmark excluded — repo contains only framework code and logos,
     # not actual document images. Only 6 PNGs present (all logos/screenshots).
     # OpenPecha OCR-Drutsa: 32,364 Tibetan script line images (ODC-BY).
@@ -4988,9 +5004,7 @@ def _load_egyptian_hw_labels(dataset_path: Path) -> dict[str, str]:
     return labels_map
 
 
-def parse_egyptian_hw_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_egyptian_hw_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse Egyptian Handwriting Dataset labels.
 
     Images materialized from parquet as {row_index}.png.
@@ -5078,9 +5092,7 @@ def _load_salami_metadata(
     return images_map, assessments_map
 
 
-def parse_salami_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+def parse_salami_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse SALAMI legibility assessment metadata.
 
     Each image has language metadata and 20-expert legibility assessments.
@@ -5122,9 +5134,62 @@ def parse_salami_labels(
     return labels
 
 
-def parse_ocr_drutsa_labels(
-    dataset_path: Path, image_path: Path
-) -> OriginalLabels:
+_gnhk_json_cache: dict[str, list[dict[str, Any]]] = {}
+
+
+def parse_gnhk_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse GNHK word-level annotation metadata.
+
+    Each image has a companion JSON with word-level polygon annotations
+    including type (H=handwritten, P=printed) and text transcriptions.
+    Special tokens: %SC% (scribble/illegible), %NA% (unreadable), %math%.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "gnhk"
+    labels.raw_labels["has_handwriting"] = True
+
+    # Determine split from path
+    if "train" in image_path.parts:
+        labels.raw_labels["split"] = "train"
+    elif "test" in image_path.parts:
+        labels.raw_labels["split"] = "test"
+
+    # Load companion JSON
+    json_path = image_path.with_suffix(".json")
+    if not json_path.exists():
+        return labels
+
+    cache_key = str(json_path)
+    if cache_key in _gnhk_json_cache:
+        words = _gnhk_json_cache[cache_key]
+    else:
+        try:
+            with open(json_path, encoding="utf-8") as f:
+                words = json.load(f)
+            _gnhk_json_cache[cache_key] = words
+        except (OSError, json.JSONDecodeError):
+            return labels
+
+    hw_count = sum(1 for w in words if w.get("type") == "H")
+    printed_count = sum(1 for w in words if w.get("type") == "P")
+    illegible_count = sum(1 for w in words if w.get("text", "") in {"%SC%", "%NA%"})
+    labels.raw_labels["word_count"] = len(words)
+    labels.raw_labels["handwritten_word_count"] = hw_count
+    labels.raw_labels["printed_word_count"] = printed_count
+    labels.raw_labels["illegible_word_count"] = illegible_count
+    if len(words) > 0:
+        labels.raw_labels["illegible_ratio"] = round(illegible_count / len(words), 4)
+
+    return labels
+
+
+def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse OpenPecha OCR-Drutsa labels.
 
     Images materialized from parquet as {row_index}.png.
@@ -5200,6 +5265,7 @@ LABEL_PARSERS = {
     "parse_egyptian_hw_labels": parse_egyptian_hw_labels,
     "parse_salami_labels": parse_salami_labels,
     "parse_ocr_drutsa_labels": parse_ocr_drutsa_labels,
+    "parse_gnhk_labels": parse_gnhk_labels,
 }
 
 

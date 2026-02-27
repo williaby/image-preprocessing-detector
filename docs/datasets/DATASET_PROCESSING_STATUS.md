@@ -56,6 +56,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | doclaynet | 80,863 | ✅ PNG | ✅ COCO boxes | ✅ Complete | 11 DocLayNet classes |
 | dzongkha-digits | 1,000 | ✅ PNG | ✅ Class labels | ✅ Complete | Dzongkha digit recognition |
 | egyptian-handwriting | 11,216 | ✅ Parquet | ✅ Word labels | 🔄 Parser ready | Arabic cursive HW (89 writers, CC-BY-4.0) |
+| gnhk | 687 | ✅ JPG | ✅ Word polygons | 🔄 Parser ready | English HW + legibility tags (CC-BY-4.0) |
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |

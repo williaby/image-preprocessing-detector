@@ -14,8 +14,8 @@ Configuration Categories:
     - Base Training - Documents (2): rvl_cdip, doclaynet
     - Base Training - Forms (5): nist-sd2, nist_sd6, funsd, funsd_plus, sroie
     - Base Training - Tables (3): tablebank, pubtabnet, fintabnet
-    - Base Training - Handwriting (6): nist_sd19, signatr6k, maths_handwriting,
-      egyptian-handwriting, salami, openpecha-ocr-drutsa
+    - Base Training - Handwriting (7): nist_sd19, signatr6k, maths_handwriting,
+      egyptian-handwriting, salami, gnhk, openpecha-ocr-drutsa
     - Base Training - Formulas (2): im2latex, mathverse
     - Base Training - Educational (1): multimodal_textbook
     - Camera-captured (1): realdae
@@ -540,6 +540,24 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         parser_name="salami",
         # Multi-language: Armenian, Georgian, German, Gothic, Greek, Latin,
         # Ottoman, Slavonic — per-image language in images.json
+    ),
+    "gnhk": DatasetConfig(
+        name="gnhk",
+        path_suffix="01_base_data/handwriting/gnhk",
+        pattern="paper/*/*.jpg",  # 687 full-page images (515 train + 172 test)
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,
+        domain=DomainLevel1.EDUCATIONAL,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 92% handwritten words, 8% printed; word-level polygon annotations
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="gnhk",
+        iso639_language="en",
+        iso15924_script="Latn",
+        text_scope="page",  # Full-page images with word-level annotations
     ),
     "openpecha-ocr-drutsa": DatasetConfig(
         name="openpecha-ocr-drutsa",

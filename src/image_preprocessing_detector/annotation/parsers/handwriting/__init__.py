@@ -16,6 +16,7 @@ This package contains parsers for handwriting/signature datasets:
 - CASIA-HWDB2-line: Chinese line-level handwriting (52,160 lines, Teklia HF edition)
 - Egyptian Handwriting: Arabic cursive word-level (11,216 images, 89 writers)
 - SALAMI: Legibility assessment with 20-expert consensus (250 manuscript images)
+- GNHK: English handwriting with word-level polygons (687 pages, legibility tags)
 
 Datasets covered:
     - signatr6k
@@ -33,6 +34,7 @@ Datasets covered:
     - casia-hwdb2-line
     - egyptian-handwriting
     - salami
+    - gnhk
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ from typing import TYPE_CHECKING
 from .casia_hwdb2 import CasiaHwdb2Parser
 from .casia_hwdb2_line import CasiaHwdb2LineParser
 from .egyptian_handwriting import EgyptianHandwritingParser
+from .gnhk import GNHKParser
 from .hasyv2 import HASYv2Parser
 from .iam import IAMParser
 from .iiit_hw_hindi import IIITHWHindiParser
@@ -80,6 +83,7 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(CasiaHwdb2Parser())
     registry.register(CasiaHwdb2LineParser())
     registry.register(EgyptianHandwritingParser())
+    registry.register(GNHKParser())
     registry.register(NdlMinhonParser())
     registry.register(SalamiParser())
 
@@ -88,6 +92,7 @@ __all__ = [
     "CasiaHwdb2LineParser",
     "CasiaHwdb2Parser",
     "EgyptianHandwritingParser",
+    "GNHKParser",
     "HASYv2Parser",
     "IAMParser",
     "IIITHWHindiParser",

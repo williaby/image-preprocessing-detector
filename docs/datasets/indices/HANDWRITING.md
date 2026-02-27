@@ -16,8 +16,9 @@
 | egyptian-handwriting | 11,216 | Word transcriptions (89 writers, ages 6-73) | ✅ CC-BY-4.0 | Arabic cursive | [egyptian-handwriting.md](../source/egyptian-handwriting.md) |
 | hasyv2 | 168,233 | Math symbols (handwritten) | ⚠️ Train OK (151,410), test reserved | Symbols | [hasyv2.md](../source/hasyv2.md) |
 | iam-handwriting | 13,353 | Line/word text | ✅ Unrestricted | English | [iam-handwriting.md](../source/iam-handwriting.md) |
+| gnhk | 687 | Word-level polygons + legibility tags (%SC%/%NA%) | ✅ CC-BY-4.0 | English | [gnhk.md](../source/gnhk.md) |
 
-**Total Available for Training**: ~286K images
+**Total Available for Training**: ~287K images
 
 ---
 
@@ -58,6 +59,15 @@
 - Only commercially-viable Arabic handwriting source (CC-BY-4.0)
 - **Use Case**: Arabic cursive handwriting presence, script detection, legibility diversity
 - **Source**: [egyptian-handwriting.md](../source/egyptian-handwriting.md)
+
+**GNHK** (ILLEGIBLE CLASS SEED):
+
+- 687 full-page handwritten documents (515 train + 172 test) with 42,561 word annotations
+- Legibility tags: 571 %SC% (scribble) + 466 %NA% (unreadable) = **1,037 illegible words**
+- Mixed content: 39,027 handwritten (H) + 3,534 printed (P) words
+- Word-level polygon annotations with line grouping
+- **Use Case**: Seed data for ILLEGIBLE class in legibility classification (SIG-G4-2)
+- **Source**: [gnhk.md](../source/gnhk.md)
 
 ---
 
