@@ -72,30 +72,37 @@ backwards compatibility for readers of older documents.
 **Naming rules**: Use service names in all documentation and code. Legacy IDs appear only in
 `docs/_archived/` with ~~strikethrough~~ notation.
 
-### Two Functional Roles
+### Two-Stage Pipeline
 
-Prepare-Doc's image pipeline serves two distinct, sequential functions:
+Prepare-Doc's image pipeline applies corrections in two stages:
 
-**Function 1 — Physical Corrections** (Stage 1, before SigLIP 2):
+**Stage 1 — Pre-Correction Gate** (MobileNetV4, before SigLIP 2):
 
 - MobileNetV4 detects orientation (4-class), skew (regression ±10°), and resolution quality
-- Corrections applied: rotation, deskew, CLAHE enhancement, border removal, perspective
-  correction, DPI upscaling
-- Corrections are applied to the image before further analysis; output is a corrected image
+- Corrections applied: rotation, deskew, DPI upscaling
+- **Why these must come first**: SigLIP 2's downstream heads (script, IQA, handwriting) are
+  unreliable on rotated, skewed, or sub-resolution images. MobileNetV4 corrects the conditions
+  that would impair SigLIP 2's ability to do its job.
 
-**Function 2 — Analysis Signals** (Stage 2, on the corrected image):
+**Stage 2 — Full Analysis + Remaining Corrections** (SigLIP 2 + Classical IQA, on corrected
+image):
 
 - SigLIP 2 (19 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
   `DocumentMetadata.json`
-- These signals are consumed by Unify to configure docling processing
-- **Architectural boundary**: Prepare-Doc is an **analysis oracle** — it delivers signals but
-  does not prescribe docling engine choices, CLI flags, or VLM model selection. Unify translates
-  signals into configuration. `DoclingRoutingEngine` in Prepare-Doc is advisory until migrated.
+- SigLIP 2 and classical IQA outputs **also trigger additional corrections** within Prepare-Doc:
+  IQA blur/noise/contrast scores drive CLAHE enhancement, sharpening, and denoising; Group 5
+  shadow/warping scores can trigger shadow removal and dewarping before the image moves
+  downstream
+- The final corrected images + metadata are delivered to Unify
+- **Architectural boundary for OCR routing**: Prepare-Doc delivers rich metadata signals and
+  Unify translates them into docling configuration (engine selection, CLI flags, VLM model
+  choice). `DoclingRoutingEngine` in Prepare-Doc is advisory until migrated.
 
 **Current architecture** (as of Feb 2026): MobileNetV4-Conv-S (~3ms GPU) as a fast
 pre-correction gate, followed by SigLIP 2 NAFlex (88M params, ~50ms GPU) as a multi-task
-teacher covering IQA, script, handwriting, and page attributes, sitting atop a classical
-heuristic layer providing interpretable baseline signals.
+teacher covering IQA, script, handwriting, and page attributes — both detecting quality
+issues and triggering corrections — sitting atop a classical heuristic layer providing
+interpretable baseline signals.
 
 ---
 
@@ -204,13 +211,12 @@ Raw Input (any format: PDF, DOCX, HTML, image, audio, ...)
     └── Resolution quality (char-height-aware 0-1)
         │
         ▼
-[Function 1: Physical Corrections]
+[Stage 1: Pre-Correction Gate]
     ├── Rotate (if orientation ≠ 0°, confidence > 0.9)
-    ├── Deskew (Hough transform, if |angle| > 0.3°)
-    ├── Upscale (if resolution_quality < 0.4)
-    └── CLAHE, border removal, denoising
+    ├── Deskew (if |angle| > 0.3°)
+    └── Upscale (if resolution_quality < 0.4)
         │
-        ▼ (corrected image — Function 2 operates here)
+        ▼ (corrected image — Stage 2 operates here)
 [SigLIP 2 NAFlex 88M] ~50ms GPU         — STATUS: Training script ready; training not yet run
     ├── Group 1: IQA (6 heads)
     ├── Group 2: Script (1 cls, 10 classes)
@@ -232,6 +238,14 @@ Raw Input (any format: PDF, DOCX, HTML, image, audio, ...)
     └── Coarse layout + table/figure flags
         │
         ▼
+[Remaining Corrections] (triggered by SigLIP 2 + Classical IQA analysis)
+    ├── CLAHE enhancement (if contrast issues detected)
+    ├── Sharpening (if blur detected)
+    ├── Denoising (if noise detected)
+    ├── Shadow removal (if shadow_score > threshold)
+    └── Dewarping (if warping_score > threshold)
+        │
+        ▼
 [DQS Calculation] Degradation + structural complexity → 0-1 score
         │
         ▼
@@ -245,7 +259,7 @@ DocumentMetadata.json + Corrected Images → Unify
 
 - Training script: `modal/train_siglip2_multitask.py` (2,652 LOC, ready to run)
 - Training config: `config/siglip2_multitask.yaml`
-- Dataset assembly: `scripts/prepare_multitask_datasets.py` (5 sub-commands)
+- Dataset assembly: `scripts/prepare_multitask_datasets.py` (6 sub-commands: script, orientation, source, shadow, warping, merge)
 - Heuristic detectors: `src/image_preprocessing_detector/detection/`
 - Classical IQA: `src/image_preprocessing_detector/detection/iqa_classical.py`
 - Schema utils: `src/image_preprocessing_detector/schema_utils/`
@@ -281,15 +295,17 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
   validated. The actual multi-task **training run has not been executed** — no trained SigLIP 2
   model exists yet. Awaiting dataset assembly (Stream 4B completion).
 - **OOD holdout design**: The design documents and DDRs 1–8 are complete.
-  `metadata_registry/ood_registry.jsonl` has **2,985 entries** (24.9% of the 12,000-image
-  minimum target). The minimum viable P0 gate is passed — directional evaluation is feasible,
-  but statistically rigorous evaluation requires ~12,000 images. The phased OOD build plan
-  (5 phases: infrastructure → P0 MVS → programmatic generation → public downloads → validation)
-  is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. DDRs 9 (shadow) and 10 (warping) are
-  **blocked** pending Tier 0 severity labeling. **Two OOD evaluation metric errors** are also
-  present and must be corrected before any trained model is evaluated against OOD data (see
-  Section 6 Tier 1). Also: synth-multiscript-v3 generator bug is fixed, but the completion run
-  to reach 350K images has not been executed (current count: 190,485).
+  `metadata_registry/ood_registry.jsonl` has **9,155 entries** (76.3% of the 12,000-image
+  target). Domain enrichment is complete for all 9,155 records. The registry is well past the
+  P0 gate (7,000) and approaching the statistically rigorous target (~12,000 images). Remaining
+  work: ~2,845 images from planned Phase 3 sources + labeling 5 at-risk heads (skew_score,
+  handwriting_legibility, handwriting_legibility_score, resolution_quality, code_confidence —
+  all at 0 labeled images). See `docs/datasets/OOD_COVERAGE_GAP_REPORT.md` for per-head status.
+  DDRs 9 (shadow) and 10 (warping) are **blocked** pending Tier 0 severity labeling. **Two OOD
+  evaluation metric errors** are also present and must be corrected before any trained model is
+  evaluated against OOD data (see Section 6 Tier 1). Also: synth-multiscript-v3 generator bug
+  is fixed, but the completion run to reach 350K images has not been executed (current count:
+  190,485).
 - **doc3d license confirmed MIT**: doc3d (102,000 images with 3D mesh warping ground truth) was
   previously assumed NC-SA-blocked; confirmed MIT-licensed as of 2026-02-24. Now available in
   all commercial scenarios and is a primary source for SIG-G5-3 (warping_reg).
@@ -311,9 +327,11 @@ These architectural choices are settled. Changes require explicit consensus and 
   configurable ML training classes; Tier 3 maps to OCR routing targets. Tiers are independently
   configurable; changing routing config does not require retraining.
 
-- **OOD reserved scripts**: Mongolian (Mong), Syriac (Syrc), and Georgian (Geor) are permanently
-  excluded from training. They serve as OOD evaluation anchors. A lifecycle protocol tracks
-  when a script can transition from OOD to training status.
+- **OOD reserved scripts**: Armenian (Armn), Georgian (Geor), Gothic (Goth), Mongolian (Mong),
+  and Syriac (Syrc) are permanently excluded from training. They serve as OOD evaluation anchors
+  spanning TTB (Mongolian), RTL (Syriac), and LTR with unique letterforms (Armenian, Georgian,
+  Gothic). Enforcement set: `{"Armn", "Geor", "Goth", "Mong", "Syrc"}`. A lifecycle protocol
+  tracks when a script can transition from OOD to training status.
 
 - **Manifest format (flat JSON list)**: The training script `train_siglip2_multitask.py`
   expects a flat JSON array, not `{"samples": [...]}`. All manifest writers must respect this.
@@ -338,11 +356,13 @@ These architectural choices are settled. Changes require explicit consensus and 
   `DocumentMetadata.json` record rather than being silently dropped. Audio is excluded from
   Prepare-Doc entirely and must be routed upstream before reaching this service.
 
-- **Prepare-Doc is an analysis oracle**: Prepare-Doc delivers rich `DocumentMetadata` signals —
-  DQS, script detection, orientation, quality scores, page attributes, handwriting assessment —
-  and Unify translates those signals into docling configuration. Prepare-Doc does not determine
-  which docling engine, model, or CLI flags to invoke. `DoclingRoutingEngine` in this codebase
-  is advisory; Unify may adopt, adapt, or override it. Migration to Unify is tracked as a
+- **Prepare-Doc applies corrections and delivers routing signals**: Prepare-Doc both corrects
+  images (orientation, skew, resolution in Stage 1; CLAHE, sharpening, denoising, shadow
+  removal, dewarping in Stage 2) and delivers rich `DocumentMetadata` signals — DQS, script
+  detection, quality scores, page attributes, handwriting assessment. For OCR routing decisions
+  (engine selection, CLI flags, VLM model choice), Prepare-Doc delivers signals and Unify
+  translates them into docling configuration. `DoclingRoutingEngine` in this codebase is
+  advisory; Unify may adopt, adapt, or override it. Migration to Unify is tracked as a
   Stream 5 pre-condition.
 
 - **Canonical service naming**: All new documentation uses service names (Prepare-Doc, Unify,
@@ -393,7 +413,7 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 | 4 | 12+ (Release 2) | T5 handwriting data (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
 
 **Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
-(2,985 → 12,000 images).
+(9,155 → 12,000 images).
 
 **Acquisition sequencing**: The dataset gathering strategy
 ([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
@@ -520,61 +540,56 @@ discovered. The remaining ~159,515 images (to reach the 350K target) must be gen
 - **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
 - **Prerequisite**: Verify the per-script dict fix is active before running
 
-#### Stream 4C: OOD corpus build (2,985 → 12,000 images)
+#### Stream 4C: OOD corpus build (9,155 → 12,000 images)
 
-`metadata_registry/ood_registry.jsonl` has 2,985 entries (24.9% of target). The phased build
-plan is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. All hardware-capture sub-sources have
-confirmed public-dataset substitutes — **no physical equipment collection is required**.
+`metadata_registry/ood_registry.jsonl` has **9,155 entries** (76.3% of target). Domain
+enrichment is complete for all records. Infrastructure (ood_utils.py, build_ood_dataset.py,
+directory structure) is operational. P0-P2 acquisition phases are substantially complete;
+remaining work focuses on gap closure and at-risk head labeling.
 
-**Key infrastructure** (Phase 0, Day 1):
+**Current per-category progress**:
 
-- `scripts/ood_utils.py` — SHA256, pHash dedup, registry writer (dependencies: `imagehash`,
-  `albumentations`, `arxiv`, `playwright` — add under `[project.optional-dependencies] ood`)
-- `scripts/build_ood_dataset.py` — Click CLI with one sub-command per OOD category/phase
-- `/mnt/e/image_detection/ood/{category}/` directory structure (9 subdirs)
+| Category | Acquired | Notes |
+| --- | --- | --- |
+| ood_degradation | 2,930 | |
+| ood_capture | 2,800 | +300 screen-recapture added |
+| ood_handwriting | 1,990 | |
+| ood_geometry | 1,740 | |
+| ood_script | 1,221 | +446 CC-OCR (Hang 147, Cyrl 149, Arab 100, Jpan 50) |
+| ood_domain | 959 | +100 CC-OCR document_text |
+| ood_code | 500 | +424 code screenshots |
+| ood_resolution | 365 | |
+| ood_mixed | 338 | |
 
-**Phase 1 — P0 Zero-Cost MVS (~300 images, Day 2)**:
+**Domain enrichment** (complete): EDU 29.8%, UNK 22.6%, GOV 13.8%, TEC 10.6%, SCI 8.2%,
+FIN 7.0%, SCN 5.5%, LGL 2.6%. Inference methods: DocLayNet COCO lookup, source dataset rules,
+reason prefix rules, code screenshot generator, OHR-Bench benchmark.
 
-- `derive-cascade-failures`: 100 symmetric DocLayNet test pages (OOD-Geometry 9a-1);
-  100 MIDV-500 and MIDV-2020 extreme-perspective frames (2b)
-- `arxiv-smoke-test`: 100 arXiv PDF pages rendered at 300 DPI (OOD-Domain smoke test)
+**At-risk heads** (0 labeled images — require intervention before model evaluation):
 
-**Phase 2 — Programmatic Generation (~2,500 images, Days 3–7)**:
+- `skew_score`: Run trained MobileNetV4 skew head over all 9,155 registered images
+- `resolution_quality`: Run `label_resolution_quality.py` on Vultr A100 VM (365 ood_resolution)
+- `handwriting_legibility` / `handwriting_legibility_score`: Human annotation needed for
+  IIIT-INDIC/KHATT/CASIA-HWDB2 (~950 images)
+- `code_confidence`: Model-internal confidence output — populated at inference time, no GT needed
 
-- `generate-synthetic-degradation`: 500 compound-distortion images (4a, Albumentations — NOT
-  Augraphy to avoid training correlation), 100 watermarked (4b), 100 binarized (4d), 200
-  4th-gen photocopies (3c: L3iDocCopies real and Augraphy simulation)
-- `render-vector-pdfs`: 300 DocLayNet test pages at 72/150/300 DPI (6a, resolution OOD)
-- `generate-upscaled-rasters`: 200 OHR-Bench pages at 2× and 4× bicubic (6b)
-- `render-font-variations`: 75 Google Fonts ornamental/calligraphic pages (1h, script OOD)
-- `render-code-screenshots`: 100 Pygments/browser code screenshots (8a), 60 arXiv code pages
-  (8b), 40 terminal output renders (8c) using Playwright headless browser
-- `generate-ood-mixed`: ~230 derived compound images (9b-1 book gutter, 9b-3 aged+fax,
-  9c-2 Arabic binarized+JPEG, 9d-3 form+skew)
+**Remaining acquisition** (~2,845 images to reach 12K target):
 
-**Phase 3 — Public Dataset Downloads (~2,600 images, Week 2)**:
+- NDL Digital Collection: ~100 Japanese vertical-text images (public domain)
+- DLC-2021 screen recaptures: ~100 (academic-only ⚠️)
+- SCUT-HCCDoc CJK handwriting: ~100 (open)
+- EUR-Lex government forms: ~240 (public domain)
+- CBETA religious texts: ~150 (CC0)
+- Internet Archive book gutter shadow: ~90 (CC0)
+- Script OOD (KhmerST, AMADI_LontarSet, SANA, Georgian): ~425 (academic)
+- CORD receipts: ~100 non-English camera receipts (CC-BY-4.0)
+- Remaining compound/mixed generation: ~210
 
-- Script OOD: synth-v3 Mongolian in-place (50, GCS), SANA Syriac (120), Georgian Wikimedia
-  (100), Historical Fraktur (50), KhmerST from L3i (60), AMADI_LontarSet from L3i (40),
-  NDL Digital vertical Japanese (100)
-- Geometry: WarpDoc Perspective subset (50), docalign12k perspective subset (50)
-- Capture: DLC-2021 display conditions (100, academic-only ⚠️), MIDV-500 specular (80),
-  MIDV-2020 flat (70), WarpDoc fold/curved/rotating (120), docalign12k fold (80)
-- Degradation: Internet Archive CC0 book scans with gutter shadow (book 4c)
-- Handwriting: Muharaf (interim for 5a), SCUT-HCCDoc Chinese HW (5b), IIIT-INDIC (5c)
-- Domain: EUR-Lex gov forms (7a), CORD receipts (7c, CC-BY-4.0, 11K Indonesian receipts)
+**License constraints**: ~2,200 entries are academic-only; ~6,955 are commercial-OK. Academic
+entries (WarpDoc, RVL-CDIP, docalign12k, RealDAE, DLC-2021) cannot be used in production
+without data refresh.
 
-**Phase 4 — Metadata Annotation & Validation (Week 3)**:
-All acquired images need ground-truth annotation across all 22 head fields where feasible.
-`label_tier` field distinguishes: `ground_truth`, `heuristic`, `inference` (model-derived).
-
-**Dedup protocol**: SHA256 exact match OR pHash Hamming ≤ 5 against all training manifests.
-OHR-Bench: assign `split_type="ood"` NOW — all 8,561 pages are `split='unknown'`; must be
-assigned before any training manifest uses them.
-
-**License constraint note**: DLC-2021 (screen recaptures) is academic-only. All DLC-2021
-registry entries must carry `license_restriction=academic`. For commercial production,
-replace with Albumentations `MoirePattern` synthetic generation.
+Full details: [OOD_COVERAGE_GAP_REPORT.md](../datasets/OOD_COVERAGE_GAP_REPORT.md)
 
 #### Stream 0: Document Type Router (new — architectural gap)
 
@@ -864,7 +879,7 @@ structure shown here.
     ├──▶ Stream 4B: Run 4 synthetic view scripts (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: prepare_multitask_datasets.py (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: synth-multiscript-v3 completion run (190K → 350K)
-    ├──▶ Stream 4C: OOD corpus build — Phase 0 infra → Phase 1 P0 MVS → Phase 2-3 programmatic
+    ├──▶ Stream 4C: OOD corpus gap closure (9,155 → 12,000) + at-risk head labeling
     ├──▶ Stream 0: Document Type Router (2-3 weeks)
     ├──▶ Stream 4D: MobileNetV4 pipeline integration (1-2 weeks)
     ├──▶ Fix: 3 Docling P0 bugs (< 1 week total)
