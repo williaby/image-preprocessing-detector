@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Cross-reference grid mapping all 74 source datasets to the 22 training heads across
+purpose: Cross-reference grid mapping all 79 source datasets to the 22 training heads across
   MobileNetV4-Conv-S and SigLIP 2 NAFlex models. Derived by aggregating Section 13 from each
   dataset source file.
 schema_type: common
@@ -123,6 +123,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ➖ | ➖ | 🟡 |
 | funsd | 🟡 | 🟡 | 🟡 |
 | funsd-plus | 🟡 | 🟡 | 🟡 |
+| gnhk | ➖ | ➖ | 🟡 |
 | hasy | ❌ | ❌ | ❌ |
 | hiertext | ➖ | ➖ | 🟡 |
 | hindi-synth | ➖ | ➖ | 🟡 |
@@ -151,11 +152,13 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | 🟡 |
 | nist-sd6 | 🟡 | 🟡 | 🟡 |
 | ocr-quality | ❌ | ❌ | 🟡 |
+| openpecha-ocr-drutsa | ➖ | ➖ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | 🟡 |
+| popp-line | ➖ | ➖ | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | 🟡 | ❌ |
 | q-doc | ❌ | ❌ | 🟡 |
@@ -163,6 +166,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | rvl-cdip | ✅ | 🟡 | 🟡 |
 | sd7k | 🟡 | ❌ | ❌ |
 | signatr6k | ➖ | ❌ | 🟡 |
+| signverod | ➖ | ➖ | 🟡 |
 | siw13 | ➖ | ➖ | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ |
 | sroie | ✅ | 🟡 | 🟡 |
@@ -202,6 +206,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ➖ | ➖ | 🟡 | ➖ | 🟡 | 🟡 |
 | funsd | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ |
 | funsd-plus | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ |
+| gnhk | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | hasy | ➖ | ➖ | ❌ | ❌ | ❌ | ❌ |
 | hiertext | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | hindi-synth | 🟡 | 🟡 | 🟡 | ➖ | ❌ | 🟡 |
@@ -230,11 +235,13 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | nist-sd6 | 🟡 | 🟡 | ➖ | 🟡 | ❌ | 🟡 |
 | ocr-quality | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| openpecha-ocr-drutsa | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| popp-line | 🟡 | 🟡 | 🟡 | ❌ | 🟡 | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | ➖ | ➖ | ➖ | ➖ | ➖ | ❌ |
 | q-doc | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ✅ |
@@ -242,6 +249,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | rvl-cdip | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | ✅ |
 | sd7k | ➖ | 🟡 | ✅ | ❌ | ❌ | 🟡 |
 | signatr6k | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ |
+| signverod | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | siw13 | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | sroie | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ |
@@ -281,6 +289,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ✅ |
 | funsd | ✅ |
 | funsd-plus | ✅ |
+| gnhk | ✅ |
 | hasy | ❌ |
 | hiertext | ✅ |
 | hindi-synth | ✅ |
@@ -311,9 +320,11 @@ title: Dataset ↔ Training Head Coverage Reference
 | ocr-quality | 🟡 |
 | ohr-bench | ❌ |
 | omnidocbench | 🟡 |
+| openpecha-ocr-drutsa | ✅ |
 | openlid-v2 | ❌ |
 | pdmocr-part1 | ✅ |
 | pdmocr-part2 | ✅ |
+| popp-line | ✅ |
 | pubtabnet | 🟡 |
 | pucit-ohul | ✅ |
 | q-doc | ❌ |
@@ -321,6 +332,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | rvl-cdip | 🟡 |
 | sd7k | ➖ |
 | signatr6k | ➖ |
+| signverod | ✅ |
 | siw13 | ✅ |
 | smartdoc-qa | ❌ |
 | sroie | ✅ |
@@ -360,6 +372,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | ➖ | 🟡 |
 | funsd | 🟡 | 🟡 | ✅ | 🟡 | 🟡 | ✅ | 🟡 | ✅ | 🟡 | ➖ | ➖ | 🟡 |
 | funsd-plus | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | 🟡 | ➖ | ➖ | 🟡 |
+| gnhk | ➖ | ➖ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | hasy | ❌ | ❌ | 🟡 | 🟡 | ✅ | ➖ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ |
 | hiertext | ➖ | ➖ | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | 🟡 | ➖ | 🟡 | 🟡 |
 | hindi-synth | ➖ | ➖ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
@@ -388,11 +401,13 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ➖ | ➖ | ➖ | 🟡 |
 | nist-sd6 | 🟡 | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | ocr-quality | ❌ | ❌ | ➖ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| openpecha-ocr-drutsa | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ➖ | ❌ | ❌ | 🟡 | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
+| popp-line | ➖ | ➖ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | q-doc | ❌ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | 🟡 | 🟡 | 🟡 | ➖ | ✅ |
@@ -400,6 +415,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | rvl-cdip | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | sd7k | 🟡 | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | signatr6k | ➖ | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| signverod | ➖ | ➖ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | siw13 | ➖ | ➖ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ➖ | ✅ | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | sroie | ✅ | 🟡 | 🟡 | ➖ | ➖ | 🟡 | ➖ | ✅ | 🟡 | 🟡 | ❌ | 🟡 |

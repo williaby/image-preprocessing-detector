@@ -531,14 +531,53 @@ Critical implementation contract (must match `train_siglip2_multitask.py`):
 - `split_type` must be one of: `train` / `val` / `test` / `ood`
 - OOD leakage check: `_validate_manifest_no_ood()` must pass before any manifest is written
 
-#### Stream 4B: Complete synth-multiscript-v3 generation run
+#### Dataset format remediation: JPEG → PNG lossless conversion
 
-The generator bug is fixed, but only 190,485 images were generated before the bug was
-discovered. The remaining ~159,515 images (to reach the 350K target) must be generated.
+A format audit (2026-02-26) identified two source datasets that were converted from lossless
+originals to JPEG during initial data preparation. JPEG compression introduces artifacts that
+interfere with IQA label accuracy and training signal quality. Both must be restored to lossless
+PNG before any training labels are generated from them.
 
-- **Script**: `scripts/generate_base_dataset_v3.py` (bug fixed at line 811)
-- **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
-- **Prerequisite**: Verify the per-script dict fix is active before running
+| Dataset | Current | Original | Images | Recovery Path |
+| --- | --- | --- | --- | --- |
+| **rvl-cdip** | JPEG (16K subset) | TIFF (grayscale) | 16,000 | Re-download TIFF from adamharley.com/rvl-cdip; convert to PNG |
+| **khatt** | JPEG q90 | TIFF | 1,633 | Re-extract from local ZIPs (`data/train.zip`, `data/validation.zip`); convert to PNG |
+
+**Steps** (both datasets):
+
+1. Extract or download original TIFF files
+2. Convert TIFF → PNG (lossless) using `PIL.Image.save(format="PNG")`
+3. Replace JPEG files in `01_base_data/` with PNG versions
+4. Delete old JPEG files after verifying PNG integrity (file count + spot-check)
+5. Update L2 metadata records if file extensions are referenced
+6. Update dataset source docs (`docs/datasets/source/rvl-cdip.md`, `khatt.md`) to reflect PNG
+
+- **Effort**: 0.5 days (scripted conversion + verification)
+- **Priority**: Must complete before any training manifests reference these datasets
+
+#### Stream 4B: Complete synth-multiscript-v3 generation run — SUPERSEDED by v4
+
+~~The generator bug is fixed, but only 190,485 images were generated before the bug was
+discovered. The remaining ~159,515 images (to reach the 350K target) must be generated.~~
+
+> **Decision (2026-02-26)**: synth-multiscript-v3 (JPEG q95, 190,485 images) is **superseded**.
+> A v4 dataset will be generated in **PNG format** (lossless) to eliminate JPEG compression
+> artifacts from the training pipeline. v3 was switched from PNG (v1/v2) to JPEG q95 for storage
+> efficiency, but the quality tradeoff is unacceptable for a dataset that feeds IQA, script, and
+> page attribute training heads. v4 will be a complete replacement — v3 images on GCS will be
+> deleted after v4 is validated.
+>
+> **v4 requirements**:
+>
+> - **Format**: PNG (lossless) — no JPEG compression
+> - **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
+> - **Script**: `scripts/generate_base_dataset_v3.py` (bug fixed at line 811; rename to v4 or
+>   parameterize output format)
+> - **Storage estimate**: ~800 GB (based on v2 PNG size at 250K images, extrapolated to 350K)
+> - **GCS path**: `gs://image_detection_b/synth-multiscript-v4/`
+> - **Cleanup**: Delete v3 from GCS (`gs://image_detection_b/synth-multiscript-v3/`) and local
+>   disk (`/mnt/e/image_detection/datasets/synth-multiscript-v3/`) after v4 validation
+> - **Prerequisite**: Verify the per-script dict fix is active before running
 
 #### Stream 4C: OOD corpus build (9,155 → 12,000 images)
 
@@ -774,7 +813,7 @@ Each student stage targets the same 16 prediction heads with progressive latency
 
 | Dataset | Done | Target | Next Action | Blocker |
 | --- | --- | --- | --- | --- |
-| synth-multiscript-v3 | 190,485 | 350,000 | Run completion generation | Generator bug fixed; run not executed |
+| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 script ready |
 | Resolution quality | 5.5K | 30K | Run V2 labeling pipeline (Sauvola + projection profiles) | Compute time |
 | IQA curated | ~14K | 16K | Validate VLM prompt v2.0 on 30–50 images; scale if SRCC > 0.60 | Prompt validation |
 | IQA synthetic | 0 | 100K | Generate from synth-multiscript-v3 with Stream 7 pseudo-labels | Requires Stream 7 |
@@ -878,7 +917,8 @@ structure shown here.
 [Tier 1 — Parallel group, start concurrently]
     ├──▶ Stream 4B: Run 4 synthetic view scripts (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: prepare_multitask_datasets.py (shadow*, warping* require Tier 0)
-    ├──▶ Stream 4B: synth-multiscript-v3 completion run (190K → 350K)
+    ├──▶ Stream 4B: synth-multiscript-v4 PNG generation (replaces v3, 350K target)
+    ├──▶ Data: JPEG→PNG lossless conversion (rvl-cdip 16K TIFF→PNG, khatt 1.6K TIFF→PNG)
     ├──▶ Stream 4C: OOD corpus gap closure (9,155 → 12,000) + at-risk head labeling
     ├──▶ Stream 0: Document Type Router (2-3 weeks)
     ├──▶ Stream 4D: MobileNetV4 pipeline integration (1-2 weeks)

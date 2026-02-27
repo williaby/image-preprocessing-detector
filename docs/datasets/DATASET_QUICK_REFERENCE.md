@@ -11,7 +11,7 @@ title: Dataset Quick Reference
 ---
 
 > **Version**: 2.0.0
-> **Last Updated**: 2026-02-14
+> **Last Updated**: 2026-02-26
 > **Purpose**: Concise dataset lookup for training planning and task selection
 > **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
@@ -23,8 +23,8 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 67 | 64 image + 2 text corpora + 1 generating |
-| **Training-Ready** | 53 | Format standardized + labels extracted |
+| **Total Datasets** | 72 | 69 image + 2 text corpora + 1 generating |
+| **Training-Ready** | 58 | Format standardized + labels extracted |
 | **In Progress** | 7 | Format conversion, label extraction, or generating |
 | **Non-Image Corpus** | 1 | openlid-v2 (text-only, feeds synth-multiscript generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
@@ -170,10 +170,14 @@ title: Dataset Quick Reference
 | dzongkha-digits | 62 | **A** 93 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
 | drccbi | 325 | -- | JPG | Extracted | None | None | None |
 | salami | 250 | -- | PNG | GT (legibility ratings) | None | GT (dataset) | GT (dataset) |
+| openpecha-ocr-drutsa | 32,400 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
+| popp-line | 4,794 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
+| signverod | 2,765 | -- | PNG/JPG | None | GT (COCO bbox) | GT (dataset) | GT (dataset) |
+| gnhk | 687 | -- | JPG | GT (word text) | None | GT (dataset) | GT (dataset) |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
-**Summary**: 62 datasets (59 image + 2 text corpora + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
+**Summary**: 67 datasets (64 image + 2 text corpora + 1 TBD) | 51 with text labels | 41 with layout labels | 43 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 
@@ -241,6 +245,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | khatt | ~1,633 | Arabic ARAB cursive HW (OOD eval) | OOD eval only | Academic |
 | dzongkha-digits | 62 | Tibetan digits (10 classes) | All | CC-BY-4.0 |
 | tibhcr | 141,698 | Tibetan (47 classes) | All | Academic |
+| openpecha-ocr-drutsa | 32,400 | Tibetan OCR (Drutsa woodblock) | All | ODC-BY |
 | multilingual_scripts | 3,279 | 27 scripts (prototype) | All | MIT |
 | jssoda | 2,000 | Japanese (vert + horiz) | All | CC-BY-4.0 |
 | vjroda | ~100 | Japanese vertical (govt docs, OOD eval) | OOD eval only | CC-BY-4.0 |
@@ -291,6 +296,9 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | ndl-minhon | 32,822 | Classical Japanese kuzushiji HW | Text GT (honkoku transcriptions) | All | CC-BY-SA-4.0 |
 | ndl-docl | 2,290 | Japanese historical layout (kotenseki/kindai) | VOC layout boxes | All | CC-BY-4.0 |
 | egyptian-handwriting | 11,216 | Arabic cursive (89 writers, ages 6-73) | Word transcriptions | All | CC-BY-4.0 |
+| gnhk | 687 | Mixed HW/printed (illegible HW seed) | Word-level H/P type + polygon + text | All | CC-BY-4.0 |
+| signverod | 2,765 | Scanned docs with signatures | Signature/initials/redaction/date bbox | 1,939 train / 354 test | CC0-1.0 |
+| popp-line | 4,794 | French census HW lines | Line transcriptions (French) | 3,835 train / 480 val / 479 test | CC-BY-4.0 |
 | salami | 250 | Multi-script manuscripts (8 scripts) | 20-expert legibility ratings (5-level) | All | CC-BY-4.0 |
 
 **Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans), COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`), and SALAMI (20-expert pixel-level legibility calibration anchor)
