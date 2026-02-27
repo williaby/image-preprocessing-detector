@@ -185,7 +185,7 @@ Schema:
 | **Nationality** | Egyptian |
 | **Writing Style** | Cursive Arabic |
 
-##### 5.3 Language & Script Coverage
+##### 5.2 Language & Script Coverage
 
 | Script/Language | ISO Code | Samples | Coverage | Notes |
 |-----------------|----------|---------|----------|-------|
@@ -239,7 +239,7 @@ Schema:
 - **Single Language**: Arabic only (Egyptian dialect)
 - **Parquet Format**: Images stored as binary blobs require special extraction
 
-#### 9. References
+#### 8. References
 
 ##### Primary Citation
 
@@ -250,7 +250,7 @@ Schema:
 - [Muharaf](muharaf.md) - Arabic historical handwriting (non-commercial)
 - [KHATT](khatt.md) - Arabic handwriting corpus (research-only)
 
-#### 10. Dataset-Specific Notes
+#### 9. Dataset-Specific Notes
 
 ##### 10.1 Parquet Extraction
 
@@ -276,7 +276,7 @@ This dataset closes the Arabic cursive handwriting gap (SIG-G4-*):
 
 ---
 
-#### 13. Training Head Coverage
+#### 10. Training Head Coverage
 
 ##### 13.1 Head Contribution Summary
 

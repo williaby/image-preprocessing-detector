@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (65 total)
+### All Datasets (81 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|

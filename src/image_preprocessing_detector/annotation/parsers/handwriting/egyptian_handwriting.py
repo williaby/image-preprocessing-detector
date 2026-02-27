@@ -208,6 +208,7 @@ class EgyptianHandwritingParser(BaseParser):
                 exc,
             )
 
+        # Cache even on failure to avoid repeated import/IO errors
         self._parquet_cache[cache_key] = result
         logger.debug("Loaded %d Egyptian HW labels from %s", len(result), parquet_path)
         return result

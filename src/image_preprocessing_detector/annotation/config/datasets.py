@@ -531,7 +531,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,  # Multi-language historical manuscripts
         is_benchmark=False,
-        has_human_mos=False,
+        has_human_mos=True,  # 20-expert legibility assessments per image
         # Tier 0: 100% handwritten manuscripts by definition
         has_table=False,
         has_formula=False,

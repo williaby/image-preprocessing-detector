@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import random
 import subprocess
 from dataclasses import dataclass
@@ -42,7 +43,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-DATA_DIR = Path("/mnt/e/image_detection/01_base_data/forms/nara-1950-census")
+DATA_DIR = Path(
+    os.environ.get(
+        "NARA_DATA_DIR",
+        "/mnt/e/image_detection/01_base_data/forms/nara-1950-census",
+    )
+)
 METADATA_DIR = DATA_DIR / "metadata"
 IMAGES_DIR = DATA_DIR / "images"
 MANIFEST_PATH = DATA_DIR / "manifest.json"
@@ -53,12 +59,63 @@ S3_BASE_URL = "https://nara-1950-census.s3.us-east-2.amazonaws.com"
 
 # All 50 states + DC + territories with metadata
 US_STATES = [
-    "ak", "al", "ar", "as", "az", "ca", "cn", "co", "ct", "dc", "de",
-    "fl", "ga", "gu", "hi", "ia", "id", "il", "in", "jn", "ks", "ky",
-    "la", "ma", "md", "me", "mi", "mn", "mo", "ms", "mt", "nc", "nd",
-    "ne", "nh", "nj", "nm", "nv", "ny", "oh", "ok", "or", "pa", "pr",
-    "ri", "sc", "sd", "tn", "tx", "ut", "va", "vi", "vt", "wa", "wi",
-    "wv", "wy",
+    "ak",
+    "al",
+    "ar",
+    "as",
+    "az",
+    "ca",
+    "cn",
+    "co",
+    "ct",
+    "dc",
+    "de",
+    "fl",
+    "ga",
+    "gu",
+    "hi",
+    "ia",
+    "id",
+    "il",
+    "in",
+    "jn",
+    "ks",
+    "ky",
+    "la",
+    "ma",
+    "md",
+    "me",
+    "mi",
+    "mn",
+    "mo",
+    "ms",
+    "mt",
+    "nc",
+    "nd",
+    "ne",
+    "nh",
+    "nj",
+    "nm",
+    "nv",
+    "ny",
+    "oh",
+    "ok",
+    "or",
+    "pa",
+    "pr",
+    "ri",
+    "sc",
+    "sd",
+    "tn",
+    "tx",
+    "ut",
+    "va",
+    "vi",
+    "vt",
+    "wa",
+    "wi",
+    "wv",
+    "wy",
 ]
 
 
@@ -110,7 +167,7 @@ def download_state_metadata(state: str) -> dict | None:
     local_path = METADATA_DIR / f"{state}.json"
     if local_path.exists():
         logger.debug("Using cached metadata for %s", state)
-        with open(local_path) as f:
+        with open(local_path, encoding="utf-8") as f:
             return json.load(f)
 
     s3_key = f"s3://{S3_BUCKET}/metadata/json/{state}.json"
@@ -124,7 +181,7 @@ def download_state_metadata(state: str) -> dict | None:
         logger.warning("Failed to download %s: %s", state, result.stderr.strip())
         return None
 
-    with open(local_path) as f:
+    with open(local_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -158,23 +215,40 @@ def stratified_sample(
     """Sample proportionally across states, ensuring at least 1 per state."""
     rng = random.Random(seed)
     total_images = sum(len(records) for records in manifest.values())
-    logger.info("Total images in manifest: %d across %d states", total_images, len(manifest))
+    logger.info(
+        "Total images in manifest: %d across %d states", total_images, len(manifest)
+    )
 
     if target_count >= total_images:
-        logger.warning("Requested %d >= total %d, returning all", target_count, total_images)
+        logger.warning(
+            "Requested %d >= total %d, returning all", target_count, total_images
+        )
         return [r for records in manifest.values() for r in records]
 
     # Allocate at least 1 per state, rest proportionally
     sampled: list[dict[str, str]] = []
     states = sorted(manifest.keys())
+    nonempty_states = [s for s in states if manifest[s]]
     remaining = target_count
+
+    # Guard: if target_count < number of non-empty states, sample states first
+    if target_count < len(nonempty_states):
+        selected_states = rng.sample(nonempty_states, target_count)
+        for state in selected_states:
+            chosen = rng.sample(manifest[state], 1)
+            sampled.extend(chosen)
+        logger.info(
+            "Sampled %d images across %d states (capped)",
+            len(sampled),
+            len(selected_states),
+        )
+        return sampled
 
     # First pass: ensure 1 per state (if state has images)
     state_allocations: dict[str, int] = {}
-    for state in states:
-        if manifest[state]:
-            state_allocations[state] = 1
-            remaining -= 1
+    for state in nonempty_states:
+        state_allocations[state] = 1
+        remaining -= 1
 
     # Second pass: distribute remaining proportionally
     if remaining > 0:
@@ -204,7 +278,9 @@ def stratified_sample(
         chosen = rng.sample(pool, n)
         sampled.extend(chosen)
 
-    logger.info("Sampled %d images across %d states", len(sampled), len(state_allocations))
+    logger.info(
+        "Sampled %d images across %d states", len(sampled), len(state_allocations)
+    )
     return sampled
 
 
@@ -229,12 +305,16 @@ def manifest() -> None:
         records = build_manifest_for_state(state, data)
         full_manifest[state] = [r.to_dict() for r in records]
         total += len(records)
-        logger.info("  %s: %d images (%s)", state.upper(), len(records), data.get("state", "?"))
+        logger.info(
+            "  %s: %d images (%s)", state.upper(), len(records), data.get("state", "?")
+        )
 
-    with open(MANIFEST_PATH, "w") as f:
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(full_manifest, f, indent=2)
 
-    logger.info("Manifest saved: %d total images across %d states", total, len(full_manifest))
+    logger.info(
+        "Manifest saved: %d total images across %d states", total, len(full_manifest)
+    )
 
 
 @cli.command()
@@ -246,12 +326,12 @@ def sample(count: int, seed: int) -> None:
         logger.error("No manifest found. Run 'manifest' first.")
         return
 
-    with open(MANIFEST_PATH) as f:
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
         full_manifest = json.load(f)
 
     sampled = stratified_sample(full_manifest, count, seed=seed)
 
-    with open(SAMPLE_PATH, "w") as f:
+    with open(SAMPLE_PATH, "w", encoding="utf-8") as f:
         json.dump(sampled, f, indent=2)
 
     # Print state distribution
@@ -266,14 +346,13 @@ def sample(count: int, seed: int) -> None:
 
 
 @cli.command()
-@click.option("--workers", default=4, help="Parallel download workers")
-def download(workers: int) -> None:
+def download() -> None:
     """Download sampled images from S3."""
     if not SAMPLE_PATH.exists():
         logger.error("No sample found. Run 'sample' first.")
         return
 
-    with open(SAMPLE_PATH) as f:
+    with open(SAMPLE_PATH, encoding="utf-8") as f:
         sampled = json.load(f)
 
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
@@ -303,9 +382,16 @@ def download(workers: int) -> None:
             logger.warning("Failed: %s", img.filename)
 
         if (downloaded + skipped) % 50 == 0:
-            logger.info("Progress: %d downloaded, %d skipped, %d failed", downloaded, skipped, failed)
+            logger.info(
+                "Progress: %d downloaded, %d skipped, %d failed",
+                downloaded,
+                skipped,
+                failed,
+            )
 
-    logger.info("Done: %d downloaded, %d skipped, %d failed", downloaded, skipped, failed)
+    logger.info(
+        "Done: %d downloaded, %d skipped, %d failed", downloaded, skipped, failed
+    )
 
 
 @cli.command(name="all")

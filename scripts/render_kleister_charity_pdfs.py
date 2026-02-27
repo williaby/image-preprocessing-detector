@@ -25,12 +25,18 @@ from __future__ import annotations
 import argparse
 import json
 import lzma
+import os
 import sys
 from pathlib import Path
 
 import fitz  # PyMuPDF
 
-DATASET_ROOT = Path("/mnt/e/image_detection/01_base_data/documents/kleister-charity")
+DATASET_ROOT = Path(
+    os.environ.get(
+        "KLEISTER_DATA_DIR",
+        "/mnt/e/image_detection/01_base_data/documents/kleister-charity",
+    )
+)
 DOCUMENTS_DIR = DATASET_ROOT / "documents"
 OUTPUT_DIR = DATASET_ROOT / "rendered_images"
 DEFAULT_DPI = 300
@@ -106,25 +112,27 @@ def render_pdf(
         print(f"  ERROR: Could not open {pdf_path.name}: {exc}")
         return rendered
 
-    page_count = min(doc.page_count, max_pages) if max_pages else doc.page_count
-    zoom = dpi / 72.0
-    matrix = fitz.Matrix(zoom, zoom)
+    try:
+        page_count = min(doc.page_count, max_pages) if max_pages else doc.page_count
+        zoom = dpi / 72.0
+        matrix = fitz.Matrix(zoom, zoom)
 
-    for page_idx in range(page_count):
-        output_path = output_dir / f"{doc_id}_p{page_idx + 1:03d}.png"
-        if output_path.exists():
-            rendered.append(output_path)
-            continue
+        for page_idx in range(page_count):
+            output_path = output_dir / f"{doc_id}_p{page_idx + 1:03d}.png"
+            if output_path.exists():
+                rendered.append(output_path)
+                continue
 
-        try:
-            page = doc[page_idx]
-            pix = page.get_pixmap(matrix=matrix)
-            pix.save(str(output_path))
-            rendered.append(output_path)
-        except Exception as exc:
-            print(f"  ERROR: Page {page_idx + 1} of {pdf_path.name}: {exc}")
+            try:
+                page = doc[page_idx]
+                pix = page.get_pixmap(matrix=matrix)
+                pix.save(str(output_path))
+                rendered.append(output_path)
+            except Exception as exc:
+                print(f"  ERROR: Page {page_idx + 1} of {pdf_path.name}: {exc}")
+    finally:
+        doc.close()
 
-    doc.close()
     return rendered
 
 
@@ -188,7 +196,7 @@ def main() -> None:
 
     total_rendered = 0
     total_skipped = 0
-    total_errors = 0
+    total_missing = 0
 
     for split in splits:
         docs = get_split_documents(split)
@@ -216,7 +224,9 @@ def main() -> None:
                 missing += 1
                 continue
 
-            pages = render_pdf(pdf_path, split_dir, dpi=args.dpi, max_pages=args.max_pages)
+            pages = render_pdf(
+                pdf_path, split_dir, dpi=args.dpi, max_pages=args.max_pages
+            )
             rendered_in_split += len(pages)
 
             # Save labels sidecar if requested
@@ -238,16 +248,16 @@ def main() -> None:
 
         total_rendered += rendered_in_split
         if missing:
-            total_errors += missing
+            total_missing += missing
             print(f"  WARNING: {missing} PDFs not available (git-annex not fetched?)")
         print(f"  Rendered {rendered_in_split} page images")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Total rendered: {total_rendered} page images")
     if total_skipped:
         print(f"Skipped: {total_skipped} (missing PDFs)")
-    if total_errors:
-        print(f"Errors: {total_errors}")
+    if total_missing:
+        print(f"Missing PDFs: {total_missing}")
 
 
 if __name__ == "__main__":

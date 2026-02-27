@@ -5,6 +5,8 @@ source_url: https://huggingface.co/datasets/OpenPecha/OCR-Drutsa
 license: CC-BY-4.0
 total_images: 32364
 format: parquet (images + labels)
+capture_method: scanner
+domain: UNK
 status: training-ready
 documentation_status: complete
 ---

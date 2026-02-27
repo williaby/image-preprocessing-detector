@@ -98,7 +98,7 @@ VALID_SOURCES: frozenset[str] = frozenset(
     ("scanned", "camera", "born_digital", "synthetic")
 )
 # ISO 15924 codes reserved exclusively for OOD evaluation across ALL data sources.
-# Must stay in sync with OOD_ONLY_SCRIPTS in scripts/generate_base_dataset_v3.py.
+# Superset of OOD_ONLY_SCRIPTS in scripts/generate_base_dataset_v3.py (adds Goth).
 # Armn/Goth: only 5 SALAMI samples each — too few for training, reserved for OOD.
 # Goth is not in v3 synthetic data but exists in SALAMI real data.
 OOD_RESERVED_SCRIPTS: frozenset[str] = frozenset(

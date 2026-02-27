@@ -5,6 +5,8 @@ source_url: https://huggingface.co/datasets/Teklia/POPP-line
 license: CC-BY-4.0
 total_images: 4794
 format: Arrow/Parquet (images + text labels)
+capture_method: scanner
+domain: GOV
 status: training-ready
 documentation_status: complete
 ---

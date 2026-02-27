@@ -191,8 +191,16 @@ class TestDatasetConfigsRegistry:
         assert "pdmocr-part2" in DATASET_CONFIGS
         assert "ndl-minhon" in DATASET_CONFIGS
 
-        # Total count (66 datasets: 60 existing + 6 Japanese/NDL)
-        assert len(DATASET_CONFIGS) == 66
+        # Gap-closing datasets (6)
+        assert "egyptian-handwriting" in DATASET_CONFIGS
+        assert "salami" in DATASET_CONFIGS
+        assert "gnhk" in DATASET_CONFIGS
+        assert "signverod" in DATASET_CONFIGS
+        assert "popp-line" in DATASET_CONFIGS
+        assert "openpecha-ocr-drutsa" in DATASET_CONFIGS
+
+        # Total count (72 datasets: 66 existing + 6 gap-closing)
+        assert len(DATASET_CONFIGS) == 72
 
     def test_all_keys_match_names(self) -> None:
         """Ensure registry keys match config names."""
@@ -518,9 +526,11 @@ class TestArrowFormatDatasets:
         assert DATASET_CONFIGS["ohr-bench"].arrow_format is True
 
     def test_arrow_datasets_are_benchmark(self) -> None:
-        """Arrow format datasets should be benchmarks."""
+        """Arrow format datasets should be benchmarks (except materialized training sets)."""
+        # Datasets stored in parquet for storage efficiency, not because they're benchmarks
+        arrow_training_datasets = {"egyptian-handwriting"}
         for name, config in DATASET_CONFIGS.items():
-            if config.arrow_format:
+            if config.arrow_format and name not in arrow_training_datasets:
                 assert config.is_benchmark is True, (
                     f"{name} has arrow_format but is not benchmark"
                 )

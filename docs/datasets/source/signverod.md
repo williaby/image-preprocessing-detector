@@ -5,6 +5,8 @@ source_url: https://www.kaggle.com/datasets/victordibia/signverod
 license: CC0-1.0
 total_images: 2765
 format: PNG + CSV annotations
+capture_method: scanner
+domain: GOV
 status: training-ready
 documentation_status: complete
 ---

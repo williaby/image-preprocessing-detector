@@ -172,14 +172,14 @@ title: Dataset Quick Reference
 | dzongkha-digits | 62 | **A** 93 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
 | drccbi | 325 | -- | JPG | Extracted | None | None | None |
 | salami | 250 | -- | PNG | GT (legibility ratings) | None | GT (dataset) | GT (dataset) |
-| openpecha-ocr-drutsa | 32,400 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
+| openpecha-ocr-drutsa | 32,364 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
 | popp-line | 4,794 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
 | signverod | 2,765 | -- | PNG/JPG | None | GT (COCO bbox) | GT (dataset) | GT (dataset) |
 | gnhk | 687 | -- | JPG | GT (word text) | None | GT (dataset) | GT (dataset) |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
-**Summary**: 68 datasets (65 image + 2 text corpora + 1 TBD) | 51 with text labels | 41 with layout labels | 44 with language/script labels | 52 audited
+**Summary**: 73 datasets (70 image + 2 text corpora + 1 generating) | 51 with text labels | 41 with layout labels | 44 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 

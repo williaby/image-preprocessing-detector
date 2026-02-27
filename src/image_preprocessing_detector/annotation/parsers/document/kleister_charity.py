@@ -71,8 +71,9 @@ class KleisterCharityParser(BaseParser):
         r"^(?P<doc_id>[a-f0-9]{32})_p(?P<page>\d{3})\.png$",
     )
 
-    # Cache for sidecar label files
-    _labels_cache: dict[str, dict[str, Any]] | None = None
+    def __init__(self) -> None:
+        super().__init__()
+        self._labels_cache: dict[str, dict[str, Any]] = {}
 
     @property
     def dataset_names(self) -> list[str]:
@@ -92,9 +93,6 @@ class KleisterCharityParser(BaseParser):
         Returns:
             Dict of label key->value, empty dict if sidecar not found
         """
-        if self._labels_cache is None:
-            self._labels_cache = {}
-
         cache_key = f"{split}/{doc_id}"
         if cache_key in self._labels_cache:
             return self._labels_cache[cache_key]
@@ -110,7 +108,7 @@ class KleisterCharityParser(BaseParser):
                 self._labels_cache[cache_key] = labels
                 return labels
             except (OSError, json.JSONDecodeError) as exc:
-                logger.warning(f"Could not load sidecar {sidecar_path}: {exc}")
+                logger.warning("Could not load sidecar %s: %s", sidecar_path, exc)
 
         self._labels_cache[cache_key] = {}
         return {}
@@ -149,7 +147,7 @@ class KleisterCharityParser(BaseParser):
             labels.raw_labels["page_num"] = page_num
         else:
             logger.warning(
-                f"Could not parse Kleister Charity filename: {image_path.name}"
+                "Could not parse Kleister Charity filename: %s", image_path.name
             )
             labels.raw_labels["parse_error"] = (
                 f"Invalid filename format: {image_path.name}"

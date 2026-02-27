@@ -60,6 +60,9 @@ class Nara1950CensusParser(BaseParser):
     the image filename. Directory structure provides state grouping.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+
     # Filename pattern: {census_id}-{StateName}-{serial}-{page:04d}.jpg
     # e.g., 43290879-Alabama-005563-0001.jpg
     FILENAME_PATTERN = re.compile(

@@ -47,14 +47,11 @@ __l4_l2_file__ = "popp-line_metadata.json"
 __l4_integrate__ = "scripts/integrate_popp_line_enrichments.py"
 
 
-import logging
 from pathlib import Path
 from typing import Any
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
-
-logger = logging.getLogger(__name__)
 
 
 class PoppLineParser(BaseParser):

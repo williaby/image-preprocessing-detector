@@ -81,6 +81,7 @@ class SignverODParser(BaseParser):
         # Lazy-loaded annotation index: {filename -> [{category_id, bbox, ...}]}
         self._annotation_cache: dict[str, dict[str, list[dict[str, Any]]]] = {}
         self._image_id_cache: dict[str, dict[str, str]] = {}
+        self._split_ids_cache: dict[str, set[str]] = {}
 
     @property
     def dataset_names(self) -> list[str]:
@@ -245,6 +246,10 @@ class SignverODParser(BaseParser):
         Returns:
             Set of image_id strings for the given split
         """
+        cache_key = f"{dataset_path}:{split}"
+        if cache_key in self._split_ids_cache:
+            return self._split_ids_cache[cache_key]
+
         csv_path = dataset_path / f"{split}.csv"
         if not csv_path.exists():
             return set()
@@ -253,6 +258,8 @@ class SignverODParser(BaseParser):
             reader = csv.DictReader(f)
             for row in reader:
                 ids.add(row["image_id"])
+
+        self._split_ids_cache[cache_key] = ids
         return ids
 
 

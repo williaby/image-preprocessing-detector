@@ -963,7 +963,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "pattern": "*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Multi-language historical manuscripts
-        "has_human_mos": False,
+        "has_human_mos": True,  # 20-expert legibility assessments per image
         "has_handwriting": True,
         "is_multilingual": True,
         "text_scope": "page",
@@ -1018,7 +1018,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     # NOTE: khmer-ocr-benchmark excluded — repo contains only framework code and logos,
     # not actual document images. Only 6 PNGs present (all logos/screenshots).
-    # OpenPecha OCR-Drutsa: 32,364 Tibetan script line images (ODC-BY).
+    # OpenPecha OCR-Drutsa: 32,364 Tibetan script line images (CC-BY-4.0).
     # Closes TIBT script gap for SIG-G2-1.  Parquet format —
     # images stored as binary blobs, requires materialization before scanning.
     "openpecha-ocr-drutsa": {
@@ -1039,7 +1039,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     "kleister-charity": {
         "path": BASE_DATA / "documents/kleister-charity",
         "pattern": "rendered_images/*/*.png",  # train/dev-0/test-A subdirs
-        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "capture_method": CaptureMethod.BORN_DIGITAL,  # PDFs rendered to PNG
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
         "has_handwriting": True,
@@ -5057,10 +5057,12 @@ def _load_egyptian_hw_labels(dataset_path: Path) -> dict[str, str]:
         import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
         parquet_dir = dataset_path / "data"
+        offset = 0
         for pf in sorted(parquet_dir.glob("*.parquet")):
             table = pq.read_table(pf, columns=["label"])
             for i in range(len(table)):
-                labels_map[str(i)] = str(table.column("label")[i].as_py())
+                labels_map[str(offset + i)] = str(table.column("label")[i].as_py())
+            offset += len(table)
     except Exception as e:
         logger.debug("Failed to load Egyptian HW parquet labels: %s", e)
     _egyptian_hw_cache[cache_key] = labels_map
@@ -5108,6 +5110,17 @@ _SALAMI_LANG_TO_SCRIPT: dict[str, str] = {
     "Slavonic": "Cyrl",
 }
 
+_SALAMI_LANG_TO_ISO: dict[str, str] = {
+    "Armenian": "hy",
+    "Georgian": "ka",
+    "German": "de",
+    "Gothic": "got",
+    "Greek": "el",
+    "Latin": "la",
+    "Ottoman": "ota",
+    "Slavonic": "cu",
+}
+
 _SALAMI_RATING_TO_SCORE: dict[str, float] = {
     "0-20% readable": 0.1,
     "20-40% readable": 0.3,
@@ -5130,8 +5143,9 @@ def _load_salami_metadata(
     images_map: dict[str, dict[str, Any]] = {}
     assessments_map: dict[str, list[dict[str, Any]]] = {}
 
-    # Navigate to src/ directory (sibling of images/)
-    src_dir = dataset_path.parent / "src"
+    # dataset_path points to .../salami_1.0/images/input
+    # src/ is sibling of images/, i.e., .../salami_1.0/src
+    src_dir = dataset_path.parent.parent / "src"
 
     try:
         with open(src_dir / "images.json") as f:
@@ -5168,10 +5182,11 @@ def parse_salami_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
 
     lang = img_meta.get("lang", "")
     script = _SALAMI_LANG_TO_SCRIPT.get(lang, "")
-    if lang:
-        labels.language_code = lang.lower()
-        labels.script_name = lang
+    iso_code = _SALAMI_LANG_TO_ISO.get(lang, "")
+    if iso_code:
+        labels.language_code = iso_code
     if script:
+        labels.script_name = script
         labels.iso15924_script_code = script
 
     if labels.raw_labels is None:
