@@ -96,9 +96,9 @@
 
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
-| salami | ~30 est. | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
 
-**Total**: ~30 images (SALAMI subset)
+**Total**: 5 images (SALAMI subset)
 **Note**: Small sample count; SALAMI's value is legibility calibration, not script volume
 
 ---
@@ -107,9 +107,9 @@
 
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
-| salami | ~30 est. | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
 
-**Total**: ~30 images (SALAMI subset)
+**Total**: 5 images (SALAMI subset)
 **Note**: Small sample count; SALAMI's value is legibility calibration, not script volume
 
 ---
@@ -118,9 +118,9 @@
 
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
-| salami | ~30 est. | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
 
-**Total**: ~30 images (SALAMI subset)
+**Total**: 5 images (SALAMI subset)
 **Note**: Only real-image source for Gothic script in corpus
 
 ---
@@ -129,7 +129,7 @@
 
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
-| salami | ~30 est. | Slavonic manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+| salami | 95 | Slavonic manuscripts (legibility labels) | [salami.md](../source/salami.md) |
 
 **Coverage**: Limited - available in MDIW13, MLT19 multi-script datasets + SALAMI Slavonic subset
 **Dedicated Dataset**: None currently
@@ -140,7 +140,7 @@
 
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
-| salami | ~30 est. | Greek manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+| salami | 60 | Greek manuscripts (legibility labels) | [salami.md](../source/salami.md) |
 
 **Coverage**: Limited - SALAMI Greek subset + MDIW13
 **Dedicated Dataset**: None currently

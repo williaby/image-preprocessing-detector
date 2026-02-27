@@ -217,14 +217,14 @@ documentation_status: complete
 
 | Script/Language | ISO 15924 | Samples | Notes |
 |-----------------|-----------|---------|-------|
-| Armenian | Armn | [NEEDS_PROFILING] | Armenian manuscript pages |
-| Georgian | Geor | [NEEDS_PROFILING] | Georgian manuscript pages |
-| German | Latn | [NEEDS_PROFILING] | Latin script, German language |
-| Gothic | Goth | [NEEDS_PROFILING] | Gothic script manuscripts |
-| Greek | Grek | [NEEDS_PROFILING] | Greek manuscript pages |
-| Latin | Latn | [NEEDS_PROFILING] | Latin script, Latin language |
-| Ottoman | Arab | [NEEDS_PROFILING] | Arabic script, Ottoman Turkish |
-| Slavonic | Cyrl | [NEEDS_PROFILING] | Cyrillic script, Church Slavonic |
+| Slavonic | Cyrl | 95 | Cyrillic script, Church Slavonic (largest subset) |
+| Latin | Latn | 65 | Latin script, Latin language |
+| Greek | Grek | 60 | Greek manuscript pages |
+| Ottoman | Arab | 10 | Arabic script, Ottoman Turkish |
+| Armenian | Armn | 5 | Armenian manuscript pages |
+| Gothic | Goth | 5 | Gothic script manuscripts |
+| Georgian | Geor | 5 | Georgian manuscript pages |
+| German | Latn | 5 | Latin script, German language |
 
 **Script Families Present**: Armenian, Georgian, Latin, Gothic, Greek, Arabic, Cyrillic (7 families)
 
