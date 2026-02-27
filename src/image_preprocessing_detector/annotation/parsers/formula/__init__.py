@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Formula and math expression parsers for the annotation system.
 
 This package contains parsers for mathematical formula datasets including:

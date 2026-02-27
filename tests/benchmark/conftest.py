@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Conftest for benchmark tests.
 
 Inherits fixtures from integration conftest for ML model availability.

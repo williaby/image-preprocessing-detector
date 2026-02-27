@@ -173,7 +173,7 @@ jobs:
           license-check: true
           comment-summary-in-pr: always
           deny-licenses: GPL-2.0, GPL-3.0
-          # Allow DVC dev dependencies (not distributed with MIT-licensed package)
+          # Allow DVC dev dependencies (not distributed with CC-BY-SA-4.0-licensed package)
           # - grandalf: GPL-3.0-or-later (DVC pipeline DAG visualization)
           # - text-unidecode: Dual-licensed Artistic-1.0-Perl OR GPL-1.0/2.0
           # - billiard: No license detected (multiprocessing, likely BSD/MIT)

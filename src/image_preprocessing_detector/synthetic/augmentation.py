@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Augraphy-based document augmentation for synthetic training data.
 
 This module provides controlled document degradation using Augraphy

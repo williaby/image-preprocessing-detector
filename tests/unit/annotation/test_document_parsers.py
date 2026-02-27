@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for document dataset parsers.
 
 Tests all document parsers in the annotation.parsers.document package:

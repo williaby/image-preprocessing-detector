@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tier definitions for enrichment provenance tracking.
 
 This module defines which datasets belong to each enrichment tier,

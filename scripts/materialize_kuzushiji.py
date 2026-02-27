@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Materialize Kuzushiji sub-datasets (K-MNIST / K-49 / K-Kanji) to individual PNG
 files with sidecar JSONL index files required by KuzushijiParser.
 

@@ -12,7 +12,7 @@ purpose: Documents approved license exceptions for development dependencies.
 
 ## Overview
 
-This project follows a strict **GPL-free license policy** for distributed dependencies. However, certain **development-only dependencies** are allowed to have GPL licenses because they are not distributed with the MIT-licensed package.
+This project follows a strict **GPL-free license policy** for distributed dependencies. However, certain **development-only dependencies** are allowed to have GPL licenses because they are not distributed with the CC-BY-SA-4.0-licensed package.
 
 **Policy**: `deny-licenses: GPL-2.0, GPL-3.0` (configured in [.github/workflows/security-analysis.yml](../../.github/workflows/security-analysis.yml))
 
@@ -29,7 +29,7 @@ The following packages have GPL or unknown licenses but are approved for use bec
 - **Justification**:
   - Development-only dependency (dataset versioning tool)
   - Not imported in production code
-  - Not distributed with MIT-licensed package
+  - Not distributed with CC-BY-SA-4.0-licensed package
   - Only used via CLI (`poetry run dvc`)
 - **Risk**: None (isolated to development environment)
 - **Approved By**: Security team
@@ -112,7 +112,7 @@ The following packages have GPL or unknown licenses but are approved for use bec
 
 ### Distributed Package (Production)
 
-**Package License**: MIT
+**Package License**: CC-BY-SA-4.0
 **Allowed Dependencies**: MIT, Apache-2.0, BSD-3-Clause, ISC, PSF-2.0
 **Denied Dependencies**: GPL-2.0, GPL-3.0, AGPL, proprietary licenses
 
@@ -124,7 +124,7 @@ The following packages have GPL or unknown licenses but are approved for use bec
 - Dual-licensed packages with acceptable alternatives
 - Packages with linking exceptions
 
-**Rationale**: Development tools are not distributed with the package and do not affect the license of the MIT-licensed code.
+**Rationale**: Development tools are not distributed with the package and do not affect the license of the CC-BY-SA-4.0-licensed code.
 
 ## Configuration
 
@@ -157,7 +157,7 @@ grep -E "grandalf|text-unidecode|billiard|dulwich|pygit2|zc-lockfile" requiremen
 If any of these packages appear in **production dependencies** (not just dev):
 
 1. ❌ **Immediate action required** - Remove or replace the dependency
-2. ⚠️  **License violation** - GPL dependencies cannot be included in MIT-licensed distribution
+2. ⚠️  **License violation** - GPL dependencies cannot be included in CC-BY-SA-4.0-licensed distribution
 3. 🔄 **Migration path** - Use alternatives documented in [.tmp-dataset-versioning-alternatives-analysis.md](../../tmp_cleanup/.tmp-dataset-versioning-alternatives-analysis.md)
 
 **Recommended Migration**: Hugging Face Hub (Apache 2.0) as documented in alternatives analysis.

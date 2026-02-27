@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 #
 # Test script for annotation module with proper coverage thresholds
 #

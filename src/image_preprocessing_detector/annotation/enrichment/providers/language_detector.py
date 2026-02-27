@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """OpenLID-v2 Language Detection Provider.
 
 This module provides language and script detection for document images using

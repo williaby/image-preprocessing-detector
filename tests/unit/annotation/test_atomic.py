@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Unit tests for atomic file operations (P2-2 fix).
 
 Tests atomic writes, failure scenarios, and convenience functions.

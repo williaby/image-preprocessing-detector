@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: Project license changed from MIT to CC-BY-SA-4.0.
+  Derivatives must be shared under CC-BY-SA-4.0 or compatible license.
+  Attribution required. Commercial use permitted.
+- Consolidated all license declarations into REUSE.toml with `precedence = "override"`
+  (removed ~386 inline SPDX headers from source files)
+- Documentation license changed from CC-BY-4.0 to CC-BY-SA-4.0 for consistency
+
 ### Added
 
 - New `annotation` package extracted from monolithic `annotate_base_metadata.py`

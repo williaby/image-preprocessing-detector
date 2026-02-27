@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for the weak assertion detector plugin.
 
 These tests verify the plugin correctly identifies:

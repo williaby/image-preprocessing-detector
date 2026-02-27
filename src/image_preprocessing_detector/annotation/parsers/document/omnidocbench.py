@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for OmniDocBench dataset.
 
 OmniDocBench is a comprehensive document understanding benchmark stored in

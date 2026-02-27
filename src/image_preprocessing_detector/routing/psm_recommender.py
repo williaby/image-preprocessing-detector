@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """PSM Recommender — Tesseract Page Segmentation Mode selection.
 
 Maps document layout characteristics to Tesseract PSM values (0-13) using a

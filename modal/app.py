@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Modal Application Definition for Image Detection Project.
 
 Provides GPU training functions for Phase 2 (IQA) and Phase 3 (Layout Detection).

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Document source/capture method classifier using a 5-signal ensemble.
 
 Classifies how a document was digitised (scanner vs. camera) by analysing

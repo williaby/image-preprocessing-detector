@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/validate_datasets.py - Dataset validation functionality.
 
 These tests verify the dataset validation script correctly:

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for schema migrations including property-based tests.
 
 Tests migration infrastructure, FileMigrator, and invariant properties

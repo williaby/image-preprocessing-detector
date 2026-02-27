@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Arabic Documents OCR dataset.
 
 Arabic Documents OCR contains scanned Arabic documents across

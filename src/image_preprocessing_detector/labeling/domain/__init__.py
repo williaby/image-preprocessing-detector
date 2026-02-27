@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Domain classification and metadata enrichment via OpenRouter LLMs.
 
 This package provides per-sample domain classification and multi-field

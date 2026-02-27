@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/generate_parasitic_content_labels.py - Parasitic content detection.
 
 These tests verify the parasitic content label generation correctly:

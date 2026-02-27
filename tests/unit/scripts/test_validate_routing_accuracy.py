@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/validate_routing_accuracy.py - Routing accuracy validation.
 
 These tests verify the routing accuracy validation script correctly:

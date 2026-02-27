@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """CLI for multi-model handwriting legibility scoring via VLM contact sheets.
 
 Five subcommands run in sequence to produce Layer 2 legibility metadata:

@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Device orchestration for ML inference routing.
 
 This module provides device-priority execution for routing ML inference to

@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Unit tests for Modal GPU client with circuit breaker.
 
 Tests circuit breaker behavior, retry logic, and fallback handling.

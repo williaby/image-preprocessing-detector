@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Prompt templates for domain classification and metadata enrichment.
 
 Provides structured prompts for both text-based and vision-based

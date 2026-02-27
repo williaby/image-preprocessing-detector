@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Pytest configuration for scripts tests.
 
 This conftest ensures proper cleanup of module mocks to prevent

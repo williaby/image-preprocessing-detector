@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Convert HuggingFace datasets in parquet format to image files.
 
 Handles datasets with images stored in parquet format, including:

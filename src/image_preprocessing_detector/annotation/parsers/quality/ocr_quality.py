@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for OCR-Quality dataset.
 
 OCR-Quality provides human quality scores (1-4 scale, where 1=best - inverted!)

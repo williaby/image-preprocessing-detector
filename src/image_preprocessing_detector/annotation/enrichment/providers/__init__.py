@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Enrichment providers for the annotation system.
 
 This module contains provider implementations for different enrichment methods,

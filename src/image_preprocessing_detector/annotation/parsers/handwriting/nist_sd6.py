@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for NIST Special Database 6 (Census Form) dataset.
 
 NIST SD6 contains synthesized 1988 Census forms with handwritten field entries.

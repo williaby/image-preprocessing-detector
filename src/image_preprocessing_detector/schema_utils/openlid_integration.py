@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """OpenLID-v2 Language Detection Integration.
 
 Integrates the OpenLID-v2 model (200 languages, ISO 639-3 + ISO 15924)

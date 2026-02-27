@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for model configuration utilities.
 
 This module tests the centralized model configuration loading from

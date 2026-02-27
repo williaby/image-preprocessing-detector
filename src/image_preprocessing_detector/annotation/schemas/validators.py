@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Pydantic validation for annotation schemas.
 
 Provides runtime validation for annotation schemas following the pattern

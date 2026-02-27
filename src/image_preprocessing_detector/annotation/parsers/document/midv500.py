@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for MIDV-500 ID document dataset.
 
 MIDV-500 (Mobile Identity Document Video) provides images of identity documents

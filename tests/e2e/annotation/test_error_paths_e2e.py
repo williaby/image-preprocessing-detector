@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """End-to-end tests for error path handling.
 
 These tests verify the system handles failures gracefully:

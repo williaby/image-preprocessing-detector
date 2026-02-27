@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """End-to-end tests for annotation pipeline.
 
 These tests exercise the full annotation workflow with REAL components:

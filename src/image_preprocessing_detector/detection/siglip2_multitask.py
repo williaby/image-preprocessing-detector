@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """SigLIP 2 Multi-Task Teacher inference wrapper for production use.
 
 Provides lazy-loaded, device-aware inference for the multi-task teacher model

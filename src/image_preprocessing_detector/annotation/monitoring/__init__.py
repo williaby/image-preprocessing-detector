@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Monitoring module for annotation system.
 
 Phase 5 Task 5.3: Production-ready monitoring with Prometheus metrics

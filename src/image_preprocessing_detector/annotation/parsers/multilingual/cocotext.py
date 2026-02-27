@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for COCO-Text v2 scene text detection dataset.
 
 COCO-Text provides word-level text annotations for images from MS COCO 2014.

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Generic schema compliance checker for Layer 2 enrichment metadata.
 
 Validates any metadata JSON file against ``layer2_enrichment_v2.schema.json``

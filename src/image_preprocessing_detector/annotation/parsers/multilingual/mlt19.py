@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for ICDAR 2019 MLT (Multi-Lingual Text) dataset.
 
 MLT19 is a multi-lingual scene text dataset covering 10 languages:

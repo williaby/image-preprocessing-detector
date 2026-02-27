@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Degradation severity classifier for document preprocessing routing.
 
 Classifies documents as "simple" (classical CV corrections sufficient) or

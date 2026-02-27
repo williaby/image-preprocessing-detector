@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Code/monospace text detection using a 3-signal ensemble.
 
 Combines character-width uniformity, indentation analysis, and line-height

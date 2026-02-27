@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Global split registry for preventing cross-dataset train/test leakage.
 
 This module provides a SHA256-keyed registry that assigns each source image

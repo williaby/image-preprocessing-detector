@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Handwriting detection using a 4-signal classical ensemble.
 
 Classical fallback for SigLIP 2 Group 4 handwriting head when confidence

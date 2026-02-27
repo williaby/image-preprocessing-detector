@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Pre-flight validation for annotation workflows.
 
 Phase 5 Task 5.5.1: Production hardening with pre-flight checks that validate

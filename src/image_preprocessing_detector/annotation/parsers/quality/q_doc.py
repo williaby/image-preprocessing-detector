@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Q-Doc quality assessment benchmark dataset.
 
 Q-Doc is a document quality assessment benchmark that uses multiple VLM

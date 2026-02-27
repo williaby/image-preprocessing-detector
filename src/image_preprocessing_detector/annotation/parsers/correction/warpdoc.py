@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for WarpDoc document dewarping dataset.
 
 WarpDoc contains 1,020 camera-captured document images with 6 distinct

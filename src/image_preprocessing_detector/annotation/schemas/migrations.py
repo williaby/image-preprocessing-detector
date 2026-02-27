@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Schema version migrations with rollback support.
 
 This module provides infrastructure for migrating metadata between

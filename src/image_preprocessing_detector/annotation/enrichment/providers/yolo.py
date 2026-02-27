@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """DocLayout-YOLO provider for layout detection.
 
 This module provides a YOLO-based enrichment provider for document layout

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """DocLayout-YOLO integration for layout-lite detection.
 
 This module bridges DocLayout-YOLO's ML-based detection with the heuristic-based

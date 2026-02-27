@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Phase 6 Layout-Lite Training on Modal - YOLOv8 Coarse Region Detection.
 
 Coarse page-level layout attributes (NOT full semantic layout):

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for MIDV-2020 ID document dataset.
 
 MIDV-2020 provides 1000 scanned images and 1000 photos of 1000 unique mock

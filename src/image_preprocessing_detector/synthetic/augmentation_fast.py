@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Fast augmentation pipeline using Albumentations.
 
 This module provides a high-performance augmentation pipeline using Albumentations

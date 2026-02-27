@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Render CASIA-HWDB2 DGRL page files to lossless PNG images.
 
 The DGRL binary format stores handwritten page data as per-line grayscale

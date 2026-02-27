@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for DRCCBI document dewarping/correction dataset.
 
 DRCCBI (Document Rectification and Character-level Correction Benchmark Images)

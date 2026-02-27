@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for TibHCR Tibetan handwriting dataset.
 
 TibHCR (Tibetan Handwritten Character Recognition) contains

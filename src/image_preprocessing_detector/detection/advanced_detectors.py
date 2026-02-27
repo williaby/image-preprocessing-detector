@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Advanced detection features for Phase D implementation.
 
 These are deferred features that extend detection capabilities:

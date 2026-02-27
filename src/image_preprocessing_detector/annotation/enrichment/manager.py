@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Enrichment manager for orchestrating multiple providers.
 
 This module provides the EnrichmentManager class that coordinates multiple

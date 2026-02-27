@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """LRU-bounded caches for annotation data.
 
 This module provides memory-efficient caching for large-scale annotation

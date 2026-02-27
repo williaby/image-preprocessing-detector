@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """DocLayout-YOLO detector for document layout analysis.
 
 This module provides document layout detection using pre-trained DocLayout-YOLO models.

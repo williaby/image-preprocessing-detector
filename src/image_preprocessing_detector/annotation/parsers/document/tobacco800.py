@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Tobacco800 degraded document dataset.
 
 Tobacco800 contains degraded scanned document images from the tobacco industry

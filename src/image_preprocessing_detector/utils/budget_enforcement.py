@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Budget enforcement for Modal GPU usage.
 
 Provides guardrails to prevent unexpected cloud GPU costs:

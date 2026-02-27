@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for IndicDLP layout annotation dataset.
 
 IndicDLP is a 12-language Indic document layout dataset with 42 layout classes

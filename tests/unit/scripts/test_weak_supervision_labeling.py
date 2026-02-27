@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/weak_supervision_labeling.py - Weak supervision label generation.
 
 These tests verify the weak supervision labeler correctly:

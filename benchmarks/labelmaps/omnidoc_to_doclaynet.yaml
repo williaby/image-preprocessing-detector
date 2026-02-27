@@ -1,6 +1,5 @@
 # OmniDocBench to DocLayNet Label Mapping
 # Maps OmniDocBench 19-category taxonomy to DocLayNet 11-category taxonomy
-# SPDX-License-Identifier: Apache-2.0
 
 version: "1.0"
 source: "OmniDocBench"

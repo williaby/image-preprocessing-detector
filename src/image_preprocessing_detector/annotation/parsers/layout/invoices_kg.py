@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Kaggle High-Quality Invoice Images dataset (invoices-kg).
 
 The invoices-kg dataset provides invoice images with structured JSON annotations

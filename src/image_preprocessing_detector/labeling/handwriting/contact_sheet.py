@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Contact sheet generation for handwriting legibility scoring.
 
 Creates labeled grid images from a list of handwriting image paths.

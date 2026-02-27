@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Sample aggregate schema for the annotation system.
 
 This module contains the SampleMetadata class which aggregates the

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 #!/usr/bin/env python3
 """
 Generate Document Classification Labels (FR-2.1) via Weak Supervision

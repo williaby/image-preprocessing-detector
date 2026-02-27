@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 #!/usr/bin/env python3
 """
 Generate synthetic vertical text samples for orientation detection (FR-4.7).

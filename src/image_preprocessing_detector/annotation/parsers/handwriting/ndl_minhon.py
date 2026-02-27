@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 r"""Parser for NDL-Minhon (National Diet Library Minhon) dataset.
 
 NDL-Minhon contains line-level images of historical Japanese handwriting

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/measure_dataset_sufficiency.py - Dataset sufficiency measurement.
 
 These tests verify the dataset sufficiency measurement script correctly:

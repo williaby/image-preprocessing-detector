@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Benchmark NR-IQA models on document datasets (DIQA-5000 + OHR-Bench).
 
 Phase 0 of the IQA Soft Label Generation Pipeline. Establishes actual SRCC/PLCC

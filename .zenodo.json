@@ -10,7 +10,7 @@
     }
   ],
   "access_right": "open",
-  "license": "MIT",
+  "license": "CC-BY-SA-4.0",
   "language": "eng",
   "keywords": ["RAG", "image quality assessment", "OCR preprocessing", "OpenCV", "Python"],
   "related_identifiers": [

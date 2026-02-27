@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Unit tests for Phase 7 pseudo-label generation.
 
 Tests the ContinuousQualityLabel class and JSON parsing logic

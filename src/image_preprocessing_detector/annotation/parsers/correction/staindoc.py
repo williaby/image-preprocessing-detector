@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for StainDoc document stain removal dataset.
 
 StainDoc provides paired stained and clean document images for evaluating

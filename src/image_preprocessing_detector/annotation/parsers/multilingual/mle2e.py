@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for MLE2E dataset.
 
 MLE2E (Multi-Language End-to-End) is a scene text dataset with

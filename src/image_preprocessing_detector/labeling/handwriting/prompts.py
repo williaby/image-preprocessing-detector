@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Prompt templates and response parsing for handwriting legibility scoring.
 
 Generates per-sheet prompts that instruct vision models to score each

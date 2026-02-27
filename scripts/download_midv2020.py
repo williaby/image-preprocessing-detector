@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Download MIDV-2020 dataset (photo + scans, no video) via SFTP.
 
 Credentials are read from environment variables — never hardcode them:

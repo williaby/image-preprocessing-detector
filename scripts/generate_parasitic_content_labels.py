@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 #!/usr/bin/env python3
 """
 Generate weak supervision labels for parasitic content detection (FR-4.4).

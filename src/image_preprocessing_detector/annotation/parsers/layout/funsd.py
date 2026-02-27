@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for FUNSD form understanding dataset.
 
 FUNSD (Form Understanding in Noisy Scanned Documents) provides form annotations

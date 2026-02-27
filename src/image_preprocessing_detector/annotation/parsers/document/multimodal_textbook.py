@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for Multimodal Textbook dataset.
 
 Multimodal Textbook provides textbook page images with diverse content including

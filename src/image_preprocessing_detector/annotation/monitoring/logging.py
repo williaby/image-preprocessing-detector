@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Structured logging utilities for annotation system.
 
 Phase 5 Task 5.3.2: Annotation-specific structured logging with

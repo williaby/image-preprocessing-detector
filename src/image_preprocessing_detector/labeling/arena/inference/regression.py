@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Regression inference backend for fine-tuned DIQA models.
 
 This backend handles models with regression heads that output direct

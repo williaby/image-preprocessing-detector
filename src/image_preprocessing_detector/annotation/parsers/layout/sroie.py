@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for SROIE receipt OCR and information extraction dataset.
 
 SROIE (Scanned Receipt OCR and Information Extraction) provides receipt

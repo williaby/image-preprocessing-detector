@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for PDM OCR (Pre-modern Digital Manuscripts OCR) dataset.
 
 PDM OCR contains scanned Japanese historical documents from the National

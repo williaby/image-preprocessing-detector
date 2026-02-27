@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Modal GPU client for remote teacher inference.
 
 This module implements a circuit breaker client for Modal serverless GPU:

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for TableBank table detection dataset.
 
 TableBank provides COCO-format bounding boxes for table detection in

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Select representative images from any dataset for metadata audit.
 
 Generic stratified sampling tool that works with any dataset registered

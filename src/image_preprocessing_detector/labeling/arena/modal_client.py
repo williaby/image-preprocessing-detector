@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Modal client for Arena VLM inference with circuit breaker.
 
 This module provides a resilient client for running VLM inference on Modal GPUs

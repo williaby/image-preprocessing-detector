@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Data integrity hashing utilities.
 
 This module provides full-file SHA256 hashing and deterministic sample ID

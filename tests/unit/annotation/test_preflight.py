@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Tests for annotation workflow pre-flight validation module.
 
 Phase 5 Task 5.5.4: Pre-flight validation tests.

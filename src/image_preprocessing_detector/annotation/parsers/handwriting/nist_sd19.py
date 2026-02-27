@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for NIST SD-19 handwriting dataset.
 
 NIST Special Database 19 contains handwritten characters and digits from

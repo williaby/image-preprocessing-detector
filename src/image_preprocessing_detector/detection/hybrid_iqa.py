@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-#
-# SPDX-License-Identifier: MIT
-
 """Hybrid IQA integration for per-element quality assessment.
 
 FR-3.14: Hybrid IQA performs quality assessment on individual document elements

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for FinanceBench dataset.
 
 FinanceBench is a financial Q&A benchmark containing SEC filings (10K, 10Q, 8K,

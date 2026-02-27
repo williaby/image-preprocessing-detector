@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Comprehensive dataset audit across 5 dimensions with gap reports.
 
 Audits all datasets from docs/datasets/source/ across:

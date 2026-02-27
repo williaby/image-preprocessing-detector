@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/colab_utils.py - Google Colab utilities.
 
 These tests verify the Colab utilities correctly:

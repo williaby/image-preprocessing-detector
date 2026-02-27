@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """CLI interface for synthetic multi-script document generation.
 
 Provides commands for generating synthetic training datasets for SigLIP

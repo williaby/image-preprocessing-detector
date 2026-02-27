@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for JSSODa (Japanese Scene Text Organization Dataset) dataset.
 
 JSSODa contains Japanese document images with vertical and horizontal text

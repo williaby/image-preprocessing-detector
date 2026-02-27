@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Progress tracking for annotation pipeline.
 
 This module provides progress tracking and reporting capabilities

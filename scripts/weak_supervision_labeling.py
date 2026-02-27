@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 #
-# SPDX-License-Identifier: MIT
 
 """Weak Supervision Labeling for IQA Training Data.
 

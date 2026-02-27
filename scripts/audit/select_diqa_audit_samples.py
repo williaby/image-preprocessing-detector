@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Select 36 representative images from DIQA-5000 for metadata audit.
 
 Loads four data sources (base metadata, LLM enrichment, language enrichment,

@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for CC-OCR benchmark dataset.
 
 CC-OCR (Comprehensive OCR Benchmark) is a large-scale OCR benchmark

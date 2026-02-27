@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Perspective Correction — Fix perspective distortion in camera captures.
 
 Uses Canny edge detection + contour approximation to find a quadrilateral

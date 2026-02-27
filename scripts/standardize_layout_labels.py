@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Standardize layout labels in metadata registry using the layout taxonomy.
 
 Reads existing Layer 1/2 metadata JSON files from the registry, converts

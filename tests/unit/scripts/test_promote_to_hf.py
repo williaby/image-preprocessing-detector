@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Tests for scripts/promote_to_hf.py - Model promotion to HuggingFace Hub.
 
 These tests verify the model promotion script correctly:

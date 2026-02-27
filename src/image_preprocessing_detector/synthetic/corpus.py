@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Text corpus management for synthetic document generation.
 
 This module provides text corpus loading, caching, and retrieval for

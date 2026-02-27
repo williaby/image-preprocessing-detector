@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Validate annotation output for completeness and correctness.
 
 This script validates the Parquet output from the annotation system by checking:

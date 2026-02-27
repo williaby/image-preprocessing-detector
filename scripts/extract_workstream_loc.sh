@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2025 Byron Williams
-# SPDX-License-Identifier: MIT
 
 set -euo pipefail
 

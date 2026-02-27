@@ -1,5 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
 """Parser for CASIA-HWDB2 page-level Chinese handwriting dataset (DGRL binary format).
 
 CASIA-HWDB2 contains 5,091 full-page handwritten Chinese document images
