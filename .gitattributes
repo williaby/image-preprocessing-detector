@@ -34,7 +34,17 @@ validation/report.json linguist-generated=true
 *.gif binary
 *.pdf binary
 *.tiff binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
 *.pt binary
 *.pth binary
 *.onnx binary
 *.h5 binary
+
+# Font files - linguist-generated to exclude from PR stats
+fonts/synthetic-gen/*.ttf linguist-generated=true
+
+# Lock files
+uv.lock linguist-generated=true
