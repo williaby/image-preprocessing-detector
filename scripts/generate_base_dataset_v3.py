@@ -117,8 +117,10 @@ ALL_SCRIPTS = [
 # Images generated for these scripts have split_type="ood" in their sidecar metadata.
 # Mongolian (Mong) and Syriac (Syrc) are listed here but NOT in ALL_SCRIPTS yet;
 # they will be added once Noto Sans fonts are installed (see docs/planning/... font setup).
+# Armn added: only 5 SALAMI samples — too few for training, reserved for OOD.
 OOD_ONLY_SCRIPTS: frozenset[str] = frozenset(
     {
+        "Armn",  # Armenian — 5 SALAMI samples only; OOD anchor
         "Geor",  # Georgian — Noto Sans Georgian (OFL); OOD anchor
         "Mong",  # Mongolian — Noto Sans Mongolian (OFL); TTB script; OOD anchor
         "Syrc",  # Syriac — Noto Sans Syriac (OFL); RTL script; OOD anchor

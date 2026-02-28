@@ -14,6 +14,11 @@ This package contains parsers for handwriting/signature datasets:
 - KHATT: Arabic paragraph-level handwriting (1,633 images from 1,000 writers)
 - CASIA-HWDB2: Chinese full-page handwriting (5,091 pages, DGRL binary format)
 - CASIA-HWDB2-line: Chinese line-level handwriting (52,160 lines, Teklia HF edition)
+- Egyptian Handwriting: Arabic cursive word-level (11,216 images, 89 writers)
+- SALAMI: Legibility assessment with 20-expert consensus (250 manuscript images)
+- GNHK: English handwriting with word-level polygons (687 pages, legibility tags)
+- SignverOD: Signature/initials detection on scanned documents (2,765 images, CC0)
+- POPP-line: French census handwriting lines (4,794 images, CC-BY-4.0)
 
 Datasets covered:
     - signatr6k
@@ -29,6 +34,11 @@ Datasets covered:
     - khatt
     - casia-hwdb2
     - casia-hwdb2-line
+    - egyptian-handwriting
+    - salami
+    - gnhk
+    - signverod
+    - popp-line
 """
 
 from __future__ import annotations
@@ -37,6 +47,8 @@ from typing import TYPE_CHECKING
 
 from .casia_hwdb2 import CasiaHwdb2Parser
 from .casia_hwdb2_line import CasiaHwdb2LineParser
+from .egyptian_handwriting import EgyptianHandwritingParser
+from .gnhk import GNHKParser
 from .hasyv2 import HASYv2Parser
 from .iam import IAMParser
 from .iiit_hw_hindi import IIITHWHindiParser
@@ -47,8 +59,11 @@ from .ndl_minhon import NdlMinhonParser
 from .nist_db2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
+from .popp_line import PoppLineParser
 from .pucit_ohul import PucitOhulParser
+from .salami import SalamiParser
 from .signatr import SignaTRParser
+from .signverod import SignverODParser
 
 if TYPE_CHECKING:
     from ..registry import ParserRegistry
@@ -73,12 +88,19 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(KHATTParser())
     registry.register(CasiaHwdb2Parser())
     registry.register(CasiaHwdb2LineParser())
+    registry.register(EgyptianHandwritingParser())
+    registry.register(GNHKParser())
     registry.register(NdlMinhonParser())
+    registry.register(SalamiParser())
+    registry.register(SignverODParser())
+    registry.register(PoppLineParser())
 
 
 __all__ = [
     "CasiaHwdb2LineParser",
     "CasiaHwdb2Parser",
+    "EgyptianHandwritingParser",
+    "GNHKParser",
     "HASYv2Parser",
     "IAMParser",
     "IIITHWHindiParser",
@@ -89,7 +111,10 @@ __all__ = [
     "NistDb2Parser",
     "NistSd6Parser",
     "NistSd19Parser",
+    "PoppLineParser",
     "PucitOhulParser",
+    "SalamiParser",
     "SignaTRParser",
+    "SignverODParser",
     "register_handwriting_parsers",
 ]

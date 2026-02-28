@@ -13,10 +13,16 @@
 | hiertext | 11,639 | `handwritten` + `legible` (word-level) | ⚠️ Train OK (8,281), test reserved | Mixed | [hiertext.md](../source/hiertext.md) |
 | cocotext | 63,686 | `class` + `legibility` (word-level) | ⚠️ Train OK (43,686), test reserved | Latin | [cocotext.md](../source/cocotext.md) |
 | muharaf | 24,952 | Line transcriptions (variable quality) | ✅ Unrestricted | Arabic cursive | [muharaf.md](../source/muharaf.md) |
+| egyptian-handwriting | 11,216 | Word transcriptions (89 writers, ages 6-73) | ✅ CC-BY-4.0 | Arabic cursive | [egyptian-handwriting.md](../source/egyptian-handwriting.md) |
 | hasyv2 | 168,233 | Math symbols (handwritten) | ⚠️ Train OK (151,410), test reserved | Symbols | [hasyv2.md](../source/hasyv2.md) |
 | iam-handwriting | 13,353 | Line/word text | ✅ Unrestricted | English | [iam-handwriting.md](../source/iam-handwriting.md) |
+| gnhk | 687 | Word-level polygons + legibility tags (%SC%/%NA%) | ✅ CC-BY-4.0 | English | [gnhk.md](../source/gnhk.md) |
+| signverod | 2,765 | Signature/initials/redaction/date bboxes | ✅ CC0-1.0 | English | [signverod.md](../source/signverod.md) |
+| kleister-charity | 62,029 | Mixed HW/typed + signatures (UK charity reports) | ✅ MIT | English | [kleister-charity.md](../source/kleister-charity.md) |
+| popp-line | 4,794 | Line transcriptions (French census) | ✅ CC-BY-4.0 | French | [popp-line.md](../source/popp-line.md) |
+| nara-1950-census | 25,000 | Census enumeration schedules (100% HW on pre-printed forms) | ✅ Public Domain | English | [nara-1950-census.md](../source/nara-1950-census.md) |
 
-**Total Available for Training**: ~275K images
+**Total Available for Training**: ~388K images
 
 ---
 
@@ -39,6 +45,51 @@
 - Historical Arabic manuscripts (clean to degraded)
 - Line-level transcriptions (quality varies)
 - **Use Case**: Train legibility regression on continuous quality spectrum
+
+**SALAMI** (CALIBRATION ANCHOR):
+
+- 250 manuscript images with 20-expert pixel-level legibility assessments
+- 5-level rating scale: 0-20%, 20-40%, 40-60%, 60-80%, 80-100% readable
+- 4,811 region-level annotations with expert agreement quantification
+- Pre-computed mean score maps and uncertainty (std) maps
+- 8 scripts: Armenian, Georgian, German, Gothic, Greek, Latin, Ottoman, Slavonic
+- **Use Case**: Gold-standard calibration anchor for legibility regression (SIG-G4-2, SIG-G4-5)
+- **Source**: [salami.md](../source/salami.md)
+
+**Egyptian Handwriting** (Arabic Cursive):
+
+- 11,216 word-level Arabic cursive images from 89 writers (ages 6-73)
+- Variable quality from child to adult handwriting
+- Only commercially-viable Arabic handwriting source (CC-BY-4.0)
+- **Use Case**: Arabic cursive handwriting presence, script detection, legibility diversity
+- **Source**: [egyptian-handwriting.md](../source/egyptian-handwriting.md)
+
+**GNHK** (ILLEGIBLE CLASS SEED):
+
+- 687 full-page handwritten documents (515 train + 172 test) with 42,561 word annotations
+- Legibility tags: 571 %SC% (scribble) + 466 %NA% (unreadable) = **1,037 illegible words**
+- Mixed content: 39,027 handwritten (H) + 3,534 printed (P) words
+- Word-level polygon annotations with line grouping
+- **Use Case**: Seed data for ILLEGIBLE class in legibility classification (SIG-G4-2)
+- **Source**: [gnhk.md](../source/gnhk.md)
+
+**Kleister Charity** (MIXED HW/TYPED + SIGNATURES):
+
+- ~62,029 page images from 2,776 UK charity annual report PDFs (gov.uk)
+- Mixed content: typed forms with handwritten annotations and signatures
+- Scanner flatbed + born-digital mix; financial domain (FIN)
+- MIT license permits commercial use
+- **Use Case**: Handwriting presence detection (SIG-G4-1), handwriting content type (SIG-G4-3), signature presence, capture method classification (SIG-G5-1)
+- **Source**: [kleister-charity.md](../source/kleister-charity.md)
+
+**NARA 1950 Census** (MIXED TYPED+HW FORMS):
+
+- 25,000 scanned census enumeration schedules (stratified sample; 695 initial Alabama sample)
+- 100% handwritten content on pre-printed government tabular forms
+- Scanner flatbed capture; Administrative/Government domain
+- Public Domain license — unrestricted commercial use
+- **Use Case**: Mixed typed+HW content type (SIG-G4-3), handwriting in structured docs (SIG-G4-1), scanner capture method (SIG-G5-1)
+- **Source**: [nara-1950-census.md](../source/nara-1950-census.md)
 
 ---
 
@@ -75,6 +126,7 @@
 | pucit-ohul | 7,401 | Line text | Urdu | [pucit-ohul.md](../source/pucit-ohul.md) |
 | khatt | ~1,633 | Paragraph Arabic HW (1,000 writers, OOD) | Arabic | [khatt.md](../source/khatt.md) |
 | tibhcr | 141,698 | 47 character classes | Tibetan | [tibhcr.md](../source/tibhcr.md) |
+| openpecha-ocr-drutsa | 32,364 | Tibetan line-level OCR | Tibetan | [openpecha-ocr-drutsa.md](../source/openpecha-ocr-drutsa.md) |
 | dzongkha-digits | 1,000 | 10 digit classes | Tibetan | [dzongkha-digits.md](../source/dzongkha-digits.md) |
 
 ---
@@ -105,13 +157,14 @@
 **Phase 2: Legibility Assessment**
 
 - Primary: HierText (word-level legibility labels)
+- Calibration: SALAMI (20-expert pixel-level legibility, gold standard)
 - Secondary: COCO-Text (binary legibility)
 - Continuous spectrum: Muharaf (variable quality manuscripts)
 
 **Phase 3: Script Classification**
 
 - Character-level datasets for fine-grained script features
-- NIST (Latin), Nepali/PUCIT (Indic), TIBHCR (Tibetan), Muharaf (Arabic)
+- NIST (Latin), Nepali/PUCIT (Indic), TIBHCR (Tibetan), Muharaf (Arabic), Egyptian HW (Arabic cursive)
 
 ---
 
@@ -129,7 +182,11 @@
 
 - IAM-Handwriting: English cursive (forms, sentences, words)
 - Muharaf: Historical Arabic manuscripts
+- Egyptian Handwriting: Arabic cursive (89 writers, CC-BY-4.0)
 - NIST SD-2/6/19: Tax forms and digits (US government)
+- Kleister Charity: UK charity annual reports (mixed HW/typed + signatures, MIT)
+- NARA 1950 Census: US census enumeration schedules (mixed typed+HW forms, Public Domain)
+- SALAMI: Multi-script legibility calibration (250 images, 20 experts)
 
 **Symbol Handwriting**:
 
@@ -142,6 +199,8 @@
 - PUCIT-OHUL: Urdu script
 - TIBHCR: Tibetan characters
 - KHATT: Arabic cursive (1,000 writers, OOD evaluation)
+- Egyptian Handwriting: Arabic cursive (CC-BY-4.0, commercial-viable)
+- SALAMI: Multi-script legibility (calibration anchor)
 
 ---
 

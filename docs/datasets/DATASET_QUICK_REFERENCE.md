@@ -11,7 +11,7 @@ title: Dataset Quick Reference
 ---
 
 > **Version**: 2.0.0
-> **Last Updated**: 2026-02-14
+> **Last Updated**: 2026-02-26
 > **Purpose**: Concise dataset lookup for training planning and task selection
 > **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
@@ -23,8 +23,8 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 67 | 64 image + 2 text corpora + 1 generating |
-| **Training-Ready** | 53 | Format standardized + labels extracted |
+| **Total Datasets** | 80 | 77 image + 2 text corpora + 1 generating |
+| **Training-Ready** | 59 | Format standardized + labels extracted |
 | **In Progress** | 7 | Format conversion, label extraction, or generating |
 | **Non-Image Corpus** | 1 | openlid-v2 (text-only, feeds synth-multiscript generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
@@ -91,7 +91,7 @@ title: Dataset Quick Reference
 
 ## Source Dataset Inventory
 
-64 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
+77 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
 
 **Legend**: GT = Ground Truth | Extracted = Docling OCR/DocLayout-YOLO | Converted = Schema transformation | Constructed = Built from cell-level GT | OpenLID = Detected via OpenLID-v2 | (dataset) = Dataset-level provenance | (coarse) = Binary only
 
@@ -118,7 +118,9 @@ title: Dataset Quick Reference
 | financebench | 54,121 | **B** 85 | PNG | GT | None | GT (dataset) | GT (dataset) |
 | casia-hwdb2-line | 52,160 | -- | JPG | GT (line text) | None | GT (dataset) | GT (dataset) |
 | muharaf | 25,711 | D 81 | PNG | GT | Extracted (Docling) | GT | GT |
+| nara-1950-census | 25,000 | -- | JPG | None | None | GT (dataset) | GT (dataset) |
 | mlt19 | 19,993 | **A** 91 | JPG | GT + Converted | GT (COCO) + Converted | GT | GT |
+| kleister-charity | 62,029 | -- | PNG | GT (KIE fields) | Extracted (Docling) | GT (dataset) | GT (dataset) |
 | siw13 | 16,291 | D 81 | JPG | Extracted | Extracted (Docling 3-cat) | GT | GT |
 | ohr-bench | 16,091 | **B** 85 | JPG | GT + Extracted | Extracted (Docling 14-cat) | OpenLID | OpenLID |
 | rvl-cdip | 16,000 | **B** 87 | JPEG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
@@ -127,6 +129,7 @@ title: Dataset Quick Reference
 | midv2020 | ~4,000 | -- | JPG | GT (quads+text) | None | Parser (country) | Parser (country) |
 | signatr6k | 12,514 | **B** 82 | PNG | Extracted | Extracted (Docling 4-cat) | None | None |
 | docalign12k | ~12,000 | D 76 | JPG | None | None | None | None |
+| egyptian-handwriting | 11,216 | -- | Parquet | GT (word labels) | None | GT (dataset) | GT (dataset) |
 | hiertext | 11,641 | **B** 82 | JPG | GT + Converted | GT (COCO) + Converted | OpenLID | OpenLID |
 | cvsi | 10,715 | **B** 85 | JPG | Extracted | Extracted (DocLayout-YOLO) | GT | GT |
 | arabic-docs | 10,045 | D 86 | JPG/PNG | GT (titles) + Extracted | Extracted (Docling 14-cat) | GT | GT |
@@ -168,10 +171,15 @@ title: Dataset Quick Reference
 | bhutan-afs | 135 | **B** 83 | PNG | Extracted | Extracted (DocLayout-YOLO) | None | None |
 | dzongkha-digits | 62 | **A** 93 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
 | drccbi | 325 | -- | JPG | Extracted | None | None | None |
+| salami | 250 | -- | PNG | GT (legibility ratings) | None | GT (dataset) | GT (dataset) |
+| openpecha-ocr-drutsa | 32,364 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
+| popp-line | 4,794 | -- | PNG | GT (line text) | None | GT (dataset) | GT (dataset) |
+| signverod | 2,765 | -- | PNG/JPG | None | GT (COCO bbox) | GT (dataset) | GT (dataset) |
+| gnhk | 687 | -- | JPG | GT (word text) | None | GT (dataset) | GT (dataset) |
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
-**Summary**: 62 datasets (59 image + 2 text corpora + 1 TBD) | 47 with text labels | 40 with layout labels | 39 with language/script labels | 52 audited
+**Summary**: 80 datasets (77 image + 2 text corpora + 1 generating) | 51 with text labels | 41 with layout labels | 44 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 
@@ -239,6 +247,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | khatt | ~1,633 | Arabic ARAB cursive HW (OOD eval) | OOD eval only | Academic |
 | dzongkha-digits | 62 | Tibetan digits (10 classes) | All | CC-BY-4.0 |
 | tibhcr | 141,698 | Tibetan (47 classes) | All | Academic |
+| openpecha-ocr-drutsa | 32,364 | Tibetan OCR (Drutsa woodblock) | All | CC-BY-4.0 |
 | multilingual_scripts | 3,279 | 27 scripts (prototype) | All | MIT |
 | jssoda | 2,000 | Japanese (vert + horiz) | All | CC-BY-4.0 |
 | vjroda | ~100 | Japanese vertical (govt docs, OOD eval) | OOD eval only | CC-BY-4.0 |
@@ -280,6 +289,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | hasy | 168,233 | Math symbols (HW) | Symbol class (369 classes) | 151,410 | CC0 |
 | casia-hwdb2-line | 52,160 | Chinese HW lines (HANS, line-level) | Text transcriptions, 1,020 writers | 33,400 | MIT |
 | muharaf | 25,711 | Arabic cursive (historical) | Line transcriptions, variable quality | All | CC-BY-NC-SA-4.0 |
+| nara-1950-census | 25,000 | US census HW forms (English) | Census enumeration schedules, 100% HW on pre-printed forms | All | Public Domain |
 | casia-hwdb2 | 5,091 | Chinese HW pages (HANS, page-level) | Line bboxes + char labels (DGRL) | 4,076 | Academic |
 | nist-sd19 | 3,669 | Digits + letters | Character class | All | Public |
 | nist-sd6 | 5,595 | Tax forms + handprint | Form + handprint labels | All | Public |
@@ -288,8 +298,14 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | pucit-ohul | 7,401 | Urdu HW | Line text | All | Academic |
 | ndl-minhon | 32,822 | Classical Japanese kuzushiji HW | Text GT (honkoku transcriptions) | All | CC-BY-SA-4.0 |
 | ndl-docl | 2,290 | Japanese historical layout (kotenseki/kindai) | VOC layout boxes | All | CC-BY-4.0 |
+| egyptian-handwriting | 11,216 | Arabic cursive (89 writers, ages 6-73) | Word transcriptions | All | CC-BY-4.0 |
+| gnhk | 687 | Mixed HW/printed (illegible HW seed) | Word-level H/P type + polygon + text | All | CC-BY-4.0 |
+| signverod | 2,765 | Scanned docs with signatures | Signature/initials/redaction/date bbox | 1,939 train / 354 test | CC0-1.0 |
+| kleister-charity | 62,029 | UK charity reports (mixed HW/typed) | KIE fields + signatures + handwriting | All | MIT |
+| popp-line | 4,794 | French census HW lines | Line transcriptions (French) | 3,835 train / 480 val / 479 test | CC-BY-4.0 |
+| salami | 250 | Multi-script manuscripts (8 scripts) | 20-expert legibility ratings (5-level) | All | CC-BY-4.0 |
 
-**Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans) and COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`)
+**Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans), COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`), and SALAMI (20-expert pixel-level legibility calibration anchor)
 **Strategy**: Multi-task SigLIP 2 with 3 heads: has_handwriting (binary), handwriting_ratio (regression), handwriting_confidence (regression)
 
 ---
@@ -334,6 +350,7 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 | funsd-plus | 1,139 | COCO + OCR | Extended forms | All | CC-BY-4.0 |
 | sroie | 973 | Quad + OCR + entities | Receipts | 626 | Research |
 | indicdlp | 115,803 | COCO boxes | 42 classes, 12 Indic langs | All | MIT |
+| kleister-charity | 62,029 | Extracted (Docling) | Forms + mixed content | All | MIT |
 | hiertext | 11,641 | COCO boxes | Word/line/paragraph | 8,281 | CC-BY-SA-4.0 |
 
 **DocLayNet classes**: Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title
@@ -350,10 +367,11 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 | fintabnet | 97,475 | Financial table structure | Research |
 | bhutan-afs | 135 | Bhutan annual reports | Public |
 | invoices-kg | 1,414 | Invoice key-value extraction | ODbL-1.0 |
+| kleister-charity | 62,029 | UK charity annual reports (gov.uk) | MIT |
 
 #### Forms & Structured Documents
 
-funsd (199), funsd-plus (1,139), sroie (973), sroie-voxel51 (712), nist-sd2 (5,590), nist-sd6 (5,595) -- see Layout section for details.
+funsd (199), funsd-plus (1,139), sroie (973), sroie-voxel51 (712), nist-sd2 (5,590), nist-sd6 (5,595), nara-1950-census (25,000 target; 695 initial sample) -- see Layout and Handwriting sections for details.
 
 #### Educational & Scientific
 
@@ -398,7 +416,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 **Research Only** (no commercial use): fintabnet, rvl-cdip, financebench (CC-BY-NC-4.0), ohr-bench, diqa-5000, realdae, smartdoc-qa, sroie, tablebank (research clause)
 
-**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), midv2020 (CC BY-SA 2.5 — ShareAlike, attribution + Generated Photos credit required), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT)
+**Commercial-Friendly**: pubtabnet (CDLA-Sharing), doclaynet (CDLA-Permissive), docsynth (Apache-2.0), funsd/funsd-plus (CC-BY-4.0), hasy (CC0), im2latex (CC0), mathverse (MIT), multimodal-textbook (Apache-2.0), mlt19 (MIT), cc-ocr (MIT), midv500 (MIT), midv2020 (CC BY-SA 2.5 — ShareAlike, attribution + Generated Photos credit required), indicdlp (MIT), markushgrapher (CC-BY-4.0), staindoc (MIT), docreal (MIT), egyptian-handwriting (CC-BY-4.0), salami (CC-BY-4.0), kleister-charity (MIT), nara-1950-census (Public Domain)
 
 **Unknown/Needs Review**: arabic-docs, nepali-handwritten, ocr-quality, pucit-ohul, yarmouk, q-doc, drccbi
 
@@ -422,7 +440,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 ### Dataset Documentation
 
-- **Individual Datasets**: [source/](source/) -- 64 per-dataset files (100-500 lines each)
+- **Individual Datasets**: [source/](source/) -- 83 per-dataset files (100-500 lines each)
 - **Task Indices**: [indices/](indices/) -- 7 task-based training recipes
 - **Ground Truth Summary**: [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md) -- annotation methods and provenance tiers
 - **Processing Status**: [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) -- format conversion tracking

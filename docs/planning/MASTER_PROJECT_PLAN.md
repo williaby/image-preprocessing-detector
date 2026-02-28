@@ -15,7 +15,7 @@ tags:
 > **Supersedes**: [PROJECT_PLAN.md](PROJECT_PLAN.md) and
 > [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md)
 >
-> **Last Updated**: 2026-02-26
+> **Last Updated**: 2026-02-27
 >
 > **For system narrative** (what the system does and why its design is sound), see
 > [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md).
@@ -72,30 +72,37 @@ backwards compatibility for readers of older documents.
 **Naming rules**: Use service names in all documentation and code. Legacy IDs appear only in
 `docs/_archived/` with ~~strikethrough~~ notation.
 
-### Two Functional Roles
+### Two-Stage Pipeline
 
-Prepare-Doc's image pipeline serves two distinct, sequential functions:
+Prepare-Doc's image pipeline applies corrections in two stages:
 
-**Function 1 — Physical Corrections** (Stage 1, before SigLIP 2):
+**Stage 1 — Pre-Correction Gate** (MobileNetV4, before SigLIP 2):
 
 - MobileNetV4 detects orientation (4-class), skew (regression ±10°), and resolution quality
-- Corrections applied: rotation, deskew, CLAHE enhancement, border removal, perspective
-  correction, DPI upscaling
-- Corrections are applied to the image before further analysis; output is a corrected image
+- Corrections applied: rotation, deskew, DPI upscaling
+- **Why these must come first**: SigLIP 2's downstream heads (script, IQA, handwriting) are
+  unreliable on rotated, skewed, or sub-resolution images. MobileNetV4 corrects the conditions
+  that would impair SigLIP 2's ability to do its job.
 
-**Function 2 — Analysis Signals** (Stage 2, on the corrected image):
+**Stage 2 — Full Analysis + Remaining Corrections** (SigLIP 2 + Classical IQA, on corrected
+image):
 
 - SigLIP 2 (19 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
   `DocumentMetadata.json`
-- These signals are consumed by Unify to configure docling processing
-- **Architectural boundary**: Prepare-Doc is an **analysis oracle** — it delivers signals but
-  does not prescribe docling engine choices, CLI flags, or VLM model selection. Unify translates
-  signals into configuration. `DoclingRoutingEngine` in Prepare-Doc is advisory until migrated.
+- SigLIP 2 and classical IQA outputs **also trigger additional corrections** within Prepare-Doc:
+  IQA blur/noise/contrast scores drive CLAHE enhancement, sharpening, and denoising; Group 5
+  shadow/warping scores can trigger shadow removal and dewarping before the image moves
+  downstream
+- The final corrected images + metadata are delivered to Unify
+- **Architectural boundary for OCR routing**: Prepare-Doc delivers rich metadata signals and
+  Unify translates them into docling configuration (engine selection, CLI flags, VLM model
+  choice). `DoclingRoutingEngine` in Prepare-Doc is advisory until migrated.
 
 **Current architecture** (as of Feb 2026): MobileNetV4-Conv-S (~3ms GPU) as a fast
 pre-correction gate, followed by SigLIP 2 NAFlex (88M params, ~50ms GPU) as a multi-task
-teacher covering IQA, script, handwriting, and page attributes, sitting atop a classical
-heuristic layer providing interpretable baseline signals.
+teacher covering IQA, script, handwriting, and page attributes — both detecting quality
+issues and triggering corrections — sitting atop a classical heuristic layer providing
+interpretable baseline signals.
 
 ---
 
@@ -204,13 +211,12 @@ Raw Input (any format: PDF, DOCX, HTML, image, audio, ...)
     └── Resolution quality (char-height-aware 0-1)
         │
         ▼
-[Function 1: Physical Corrections]
+[Stage 1: Pre-Correction Gate]
     ├── Rotate (if orientation ≠ 0°, confidence > 0.9)
-    ├── Deskew (Hough transform, if |angle| > 0.3°)
-    ├── Upscale (if resolution_quality < 0.4)
-    └── CLAHE, border removal, denoising
+    ├── Deskew (if |angle| > 0.3°)
+    └── Upscale (if resolution_quality < 0.4)
         │
-        ▼ (corrected image — Function 2 operates here)
+        ▼ (corrected image — Stage 2 operates here)
 [SigLIP 2 NAFlex 88M] ~50ms GPU         — STATUS: Training script ready; training not yet run
     ├── Group 1: IQA (6 heads)
     ├── Group 2: Script (1 cls, 10 classes)
@@ -232,6 +238,14 @@ Raw Input (any format: PDF, DOCX, HTML, image, audio, ...)
     └── Coarse layout + table/figure flags
         │
         ▼
+[Remaining Corrections] (triggered by SigLIP 2 + Classical IQA analysis)
+    ├── CLAHE enhancement (if contrast issues detected)
+    ├── Sharpening (if blur detected)
+    ├── Denoising (if noise detected)
+    ├── Shadow removal (if shadow_score > threshold)
+    └── Dewarping (if warping_score > threshold)
+        │
+        ▼
 [DQS Calculation] Degradation + structural complexity → 0-1 score
         │
         ▼
@@ -245,7 +259,7 @@ DocumentMetadata.json + Corrected Images → Unify
 
 - Training script: `modal/train_siglip2_multitask.py` (2,652 LOC, ready to run)
 - Training config: `config/siglip2_multitask.yaml`
-- Dataset assembly: `scripts/prepare_multitask_datasets.py` (5 sub-commands)
+- Dataset assembly: `scripts/prepare_multitask_datasets.py` (6 sub-commands: script, orientation, source, shadow, warping, merge)
 - Heuristic detectors: `src/image_preprocessing_detector/detection/`
 - Classical IQA: `src/image_preprocessing_detector/detection/iqa_classical.py`
 - Schema utils: `src/image_preprocessing_detector/schema_utils/`
@@ -281,15 +295,17 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
   validated. The actual multi-task **training run has not been executed** — no trained SigLIP 2
   model exists yet. Awaiting dataset assembly (Stream 4B completion).
 - **OOD holdout design**: The design documents and DDRs 1–8 are complete.
-  `metadata_registry/ood_registry.jsonl` has **2,985 entries** (24.9% of the 12,000-image
-  minimum target). The minimum viable P0 gate is passed — directional evaluation is feasible,
-  but statistically rigorous evaluation requires ~12,000 images. The phased OOD build plan
-  (5 phases: infrastructure → P0 MVS → programmatic generation → public downloads → validation)
-  is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. DDRs 9 (shadow) and 10 (warping) are
-  **blocked** pending Tier 0 severity labeling. **Two OOD evaluation metric errors** are also
-  present and must be corrected before any trained model is evaluated against OOD data (see
-  Section 6 Tier 1). Also: synth-multiscript-v3 generator bug is fixed, but the completion run
-  to reach 350K images has not been executed (current count: 190,485).
+  `metadata_registry/ood_registry.jsonl` has **9,170 entries** (76.4% of the 12,000-image
+  target). Domain enrichment is complete for all 9,170 records. The registry is well past the
+  P0 gate (7,000) and approaching the statistically rigorous target (~12,000 images). Remaining
+  work: ~2,845 images from planned Phase 3 sources + labeling 5 at-risk heads (skew_score,
+  handwriting_legibility, handwriting_legibility_score, resolution_quality, code_confidence —
+  all at 0 labeled images). See `docs/datasets/OOD_COVERAGE_GAP_REPORT.md` for per-head status.
+  DDRs 9 (shadow) and 10 (warping) are **blocked** pending Tier 0 severity labeling. **Two OOD
+  evaluation metric errors** are also present and must be corrected before any trained model is
+  evaluated against OOD data (see Section 6 Tier 1). Also: synth-multiscript-v3 generator bug
+  is fixed, but the completion run to reach 350K images has not been executed (current count:
+  190,485).
 - **doc3d license confirmed MIT**: doc3d (102,000 images with 3D mesh warping ground truth) was
   previously assumed NC-SA-blocked; confirmed MIT-licensed as of 2026-02-24. Now available in
   all commercial scenarios and is a primary source for SIG-G5-3 (warping_reg).
@@ -311,9 +327,11 @@ These architectural choices are settled. Changes require explicit consensus and 
   configurable ML training classes; Tier 3 maps to OCR routing targets. Tiers are independently
   configurable; changing routing config does not require retraining.
 
-- **OOD reserved scripts**: Mongolian (Mong), Syriac (Syrc), and Georgian (Geor) are permanently
-  excluded from training. They serve as OOD evaluation anchors. A lifecycle protocol tracks
-  when a script can transition from OOD to training status.
+- **OOD reserved scripts**: Armenian (Armn), Georgian (Geor), Gothic (Goth), Mongolian (Mong),
+  and Syriac (Syrc) are permanently excluded from training. They serve as OOD evaluation anchors
+  spanning TTB (Mongolian), RTL (Syriac), and LTR with unique letterforms (Armenian, Georgian,
+  Gothic). Enforcement set: `{"Armn", "Geor", "Goth", "Mong", "Syrc"}`. A lifecycle protocol
+  tracks when a script can transition from OOD to training status.
 
 - **Manifest format (flat JSON list)**: The training script `train_siglip2_multitask.py`
   expects a flat JSON array, not `{"samples": [...]}`. All manifest writers must respect this.
@@ -338,11 +356,13 @@ These architectural choices are settled. Changes require explicit consensus and 
   `DocumentMetadata.json` record rather than being silently dropped. Audio is excluded from
   Prepare-Doc entirely and must be routed upstream before reaching this service.
 
-- **Prepare-Doc is an analysis oracle**: Prepare-Doc delivers rich `DocumentMetadata` signals —
-  DQS, script detection, orientation, quality scores, page attributes, handwriting assessment —
-  and Unify translates those signals into docling configuration. Prepare-Doc does not determine
-  which docling engine, model, or CLI flags to invoke. `DoclingRoutingEngine` in this codebase
-  is advisory; Unify may adopt, adapt, or override it. Migration to Unify is tracked as a
+- **Prepare-Doc applies corrections and delivers routing signals**: Prepare-Doc both corrects
+  images (orientation, skew, resolution in Stage 1; CLAHE, sharpening, denoising, shadow
+  removal, dewarping in Stage 2) and delivers rich `DocumentMetadata` signals — DQS, script
+  detection, quality scores, page attributes, handwriting assessment. For OCR routing decisions
+  (engine selection, CLI flags, VLM model choice), Prepare-Doc delivers signals and Unify
+  translates them into docling configuration. `DoclingRoutingEngine` in this codebase is
+  advisory; Unify may adopt, adapt, or override it. Migration to Unify is tracked as a
   Stream 5 pre-condition.
 
 - **Canonical service naming**: All new documentation uses service names (Prepare-Doc, Unify,
@@ -388,12 +408,13 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 | --- | --- | --- | --- |
 | 0 | 1–2 | Fix 3 architectural defects + deployment model decision + initiate license reviews | All 3 defects fixed; deployment model decided |
 | 1 | 2–4 | Train MNV4-Conv-S: orientation (50K), skew (90K), resolution quality (15K) | T4 data assembled for 3 heads |
-| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; SRCC gate for VLM IQA |
+| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); run corpus-wide IQA pseudo-labeling (MUSIQ + TOPIQ-NR on ~440K images); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; MUSIQ+TOPIQ ensemble SRCC ≥ 0.55 on DIQA-5000; ≥125K images with IQA labels |
+| 2b | 6–8 | Generate NIST contact sheets (~3,400); label presence_reg on mid-range candidate datasets (~13–19K) | Presence distribution covers 0.2–0.7 range |
 | 3 | 8–12 | Integrate G3 geometry heads; execute E03 (warping) + E05 (RQ V2); expand to 16 active heads | 14+ heads at quality gate |
-| 4 | 12+ (Release 2) | T5 handwriting data (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
+| 4 | 12+ (Release 2) | T5 handwriting data at reduced 25K scope (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
 
 **Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
-(2,985 → 12,000 images).
+(9,170 → 12,000 images) + NIST contact sheet generation (Weeks 6–8).
 
 **Acquisition sequencing**: The dataset gathering strategy
 ([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
@@ -412,14 +433,17 @@ sum across 11 dataset views) to ~420–440K actual unique images — see
 - **G5-3 (warping_reg)**: Warping severity formula must be defined before any labeling.
   doc3d (102K images, MIT-confirmed) is the primary source. Formula:
   `severity = clip(k * std(Z_grid_normalized), 0.0, 1.0)`.
-- **G4 Handwriting**: Highest-risk group. No tier achieves "ready" in 12 weeks. ILLEGIBLE
-  class at 0 examples; MIXED_TYPED_HW at 0 examples. G4-2 and G4-5 performance targets
-  exceed inter-annotator agreement ceilings — targets must be revised downward before
-  training. Deferred to Release 2.
+- **G4 Handwriting**: Highest-risk group, **target reduced from 60K to 25K** (peer review
+  panel recommendation — 25K still provides 3.5–5× robust fine-tuning threshold per class).
+  ILLEGIBLE class at 0 examples; MIXED_TYPED_HW at 0 examples. G4-2 and G4-5 performance
+  targets exceed inter-annotator agreement ceilings — targets must be revised downward before
+  training. SIG-G4-4 presence regression has a 0.2–0.7 distribution void addressed by NIST
+  contact sheets + mid-range real dataset labeling (new Phase 2b). Deferred to Release 2.
 - **SIG-G3-2**: The +/-2° narrow-range skew dataset does not exist and must be built from
   scratch (~20K images). No existing script creates it. T5 minimum viable tier for this head.
-- **G1-6 (overall_quality)**: VLM prompt v2.0 must achieve SRCC > 0.60 on 30–50 validation
-  images before scaling. Current SRCC = 0.53 is insufficient for regression training.
+- **G1-6 (overall_quality)**: Pivoted from VLM prompt (SRCC 0.53) to MUSIQ + TOPIQ-NR pretrained
+  ensemble. Validation gate: ensemble SRCC ≥ 0.55 on held-out DIQA-5000 (500 images). Q-Align
+  (7B MLLM) provides Tier 2 cross-validation on OOD + 5K stratified sample.
 - **SIG-G5-4 (code_cls)**: Fastest path to improvement of any currently blocked head — dry-run
   produced 8,613 records; D6 fixed by code_reg→code_cls rename (Defect 2 above).
 
@@ -511,70 +535,173 @@ Critical implementation contract (must match `train_siglip2_multitask.py`):
 - `split_type` must be one of: `train` / `val` / `test` / `ood`
 - OOD leakage check: `_validate_manifest_no_ood()` must pass before any manifest is written
 
-#### Stream 4B: Complete synth-multiscript-v3 generation run
+#### Dataset format remediation: JPEG → PNG lossless conversion
 
-The generator bug is fixed, but only 190,485 images were generated before the bug was
-discovered. The remaining ~159,515 images (to reach the 350K target) must be generated.
+A format audit (2026-02-26) identified two source datasets that were converted from lossless
+originals to JPEG during initial data preparation. JPEG compression introduces artifacts that
+interfere with IQA label accuracy and training signal quality. Both must be restored to lossless
+PNG before any training labels are generated from them.
 
-- **Script**: `scripts/generate_base_dataset_v3.py` (bug fixed at line 811)
-- **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
-- **Prerequisite**: Verify the per-script dict fix is active before running
+| Dataset | Current | Original | Images | Recovery Path |
+| --- | --- | --- | --- | --- |
+| **rvl-cdip** | JPEG (16K subset) | TIFF (grayscale) | 16,000 | Re-download TIFF from adamharley.com/rvl-cdip; convert to PNG |
+| **khatt** | JPEG q90 | TIFF | 1,633 | Re-extract from local ZIPs (`data/train.zip`, `data/validation.zip`); convert to PNG |
 
-#### Stream 4C: OOD corpus build (2,985 → 12,000 images)
+**Steps** (both datasets):
 
-`metadata_registry/ood_registry.jsonl` has 2,985 entries (24.9% of target). The phased build
-plan is documented in `tmp_cleanup/OOD_CORPUS_PLAN.md`. All hardware-capture sub-sources have
-confirmed public-dataset substitutes — **no physical equipment collection is required**.
+1. Extract or download original TIFF files
+2. Convert TIFF → PNG (lossless) using `PIL.Image.save(format="PNG")`
+3. Replace JPEG files in `01_base_data/` with PNG versions
+4. Delete old JPEG files after verifying PNG integrity (file count + spot-check)
+5. Update L2 metadata records if file extensions are referenced
+6. Update dataset source docs (`docs/datasets/source/rvl-cdip.md`, `khatt.md`) to reflect PNG
 
-**Key infrastructure** (Phase 0, Day 1):
+- **Effort**: 0.5 days (scripted conversion + verification)
+- **Priority**: Must complete before any training manifests reference these datasets
 
-- `scripts/ood_utils.py` — SHA256, pHash dedup, registry writer (dependencies: `imagehash`,
-  `albumentations`, `arxiv`, `playwright` — add under `[project.optional-dependencies] ood`)
-- `scripts/build_ood_dataset.py` — Click CLI with one sub-command per OOD category/phase
-- `/mnt/e/image_detection/ood/{category}/` directory structure (9 subdirs)
+#### Stream 4B: Complete synth-multiscript-v3 generation run — SUPERSEDED by v4
 
-**Phase 1 — P0 Zero-Cost MVS (~300 images, Day 2)**:
+~~The generator bug is fixed, but only 190,485 images were generated before the bug was
+discovered. The remaining ~159,515 images (to reach the 350K target) must be generated.~~
 
-- `derive-cascade-failures`: 100 symmetric DocLayNet test pages (OOD-Geometry 9a-1);
-  100 MIDV-500 and MIDV-2020 extreme-perspective frames (2b)
-- `arxiv-smoke-test`: 100 arXiv PDF pages rendered at 300 DPI (OOD-Domain smoke test)
+> **Decision (2026-02-26)**: synth-multiscript-v3 (JPEG q95, 190,485 images) is **superseded**.
+> A v4 dataset will be generated in **PNG format** (lossless) to eliminate JPEG compression
+> artifacts from the training pipeline. v3 was switched from PNG (v1/v2) to JPEG q95 for storage
+> efficiency, but the quality tradeoff is unacceptable for a dataset that feeds IQA, script, and
+> page attribute training heads. v4 will be a complete replacement — v3 images on GCS will be
+> deleted after v4 is validated.
+>
+> **v4 requirements**:
+>
+> - **Format**: PNG (lossless) — no JPEG compression
+> - **Target**: 350,000 images across 27 scripts, balanced to 12,963 per script
+> - **Script**: `scripts/generate_base_dataset_v3.py` (bug fixed at line 811; rename to v4 or
+>   parameterize output format)
+> - **Storage estimate**: ~800 GB (based on v2 PNG size at 250K images, extrapolated to 350K)
+> - **GCS path**: `gs://image_detection_b/synth-multiscript-v4/`
+> - **Cleanup**: Delete v3 from GCS (`gs://image_detection_b/synth-multiscript-v3/`) and local
+>   disk (`/mnt/e/image_detection/datasets/synth-multiscript-v3/`) after v4 validation
+> - **Prerequisite**: Verify the per-script dict fix is active before running
+> - **Retention note**: v3 to be retained until Phase D sampling (resolution quality,
+>   §Stream 5) completes, as Phase D samples 3–5K from v3 on GCS for script diversity
 
-**Phase 2 — Programmatic Generation (~2,500 images, Days 3–7)**:
+#### Stream 4C: OOD corpus build (9,170 → 12,000 images)
 
-- `generate-synthetic-degradation`: 500 compound-distortion images (4a, Albumentations — NOT
-  Augraphy to avoid training correlation), 100 watermarked (4b), 100 binarized (4d), 200
-  4th-gen photocopies (3c: L3iDocCopies real and Augraphy simulation)
-- `render-vector-pdfs`: 300 DocLayNet test pages at 72/150/300 DPI (6a, resolution OOD)
-- `generate-upscaled-rasters`: 200 OHR-Bench pages at 2× and 4× bicubic (6b)
-- `render-font-variations`: 75 Google Fonts ornamental/calligraphic pages (1h, script OOD)
-- `render-code-screenshots`: 100 Pygments/browser code screenshots (8a), 60 arXiv code pages
-  (8b), 40 terminal output renders (8c) using Playwright headless browser
-- `generate-ood-mixed`: ~230 derived compound images (9b-1 book gutter, 9b-3 aged+fax,
-  9c-2 Arabic binarized+JPEG, 9d-3 form+skew)
+`metadata_registry/ood_registry.jsonl` has **9,170 entries** (76.4% of target). Domain
+enrichment is complete for all records. Infrastructure (ood_utils.py, build_ood_dataset.py,
+directory structure) is operational. P0-P2 acquisition phases are substantially complete;
+remaining work focuses on gap closure and at-risk head labeling.
 
-**Phase 3 — Public Dataset Downloads (~2,600 images, Week 2)**:
+**Current per-category progress**:
 
-- Script OOD: synth-v3 Mongolian in-place (50, GCS), SANA Syriac (120), Georgian Wikimedia
-  (100), Historical Fraktur (50), KhmerST from L3i (60), AMADI_LontarSet from L3i (40),
-  NDL Digital vertical Japanese (100)
-- Geometry: WarpDoc Perspective subset (50), docalign12k perspective subset (50)
-- Capture: DLC-2021 display conditions (100, academic-only ⚠️), MIDV-500 specular (80),
-  MIDV-2020 flat (70), WarpDoc fold/curved/rotating (120), docalign12k fold (80)
-- Degradation: Internet Archive CC0 book scans with gutter shadow (book 4c)
-- Handwriting: Muharaf (interim for 5a), SCUT-HCCDoc Chinese HW (5b), IIIT-INDIC (5c)
-- Domain: EUR-Lex gov forms (7a), CORD receipts (7c, CC-BY-4.0, 11K Indonesian receipts)
+| Category | Acquired | Notes |
+| --- | --- | --- |
+| ood_degradation | 2,930 | |
+| ood_capture | 2,800 | +300 screen-recapture added |
+| ood_handwriting | 1,990 | |
+| ood_geometry | 1,740 | |
+| ood_script | 1,221 | +446 CC-OCR (Hang 147, Cyrl 149, Arab 100, Jpan 50) |
+| ood_domain | 959 | +100 CC-OCR document_text |
+| ood_code | 500 | +424 code screenshots |
+| ood_resolution | 365 | |
+| ood_mixed | 338 | |
 
-**Phase 4 — Metadata Annotation & Validation (Week 3)**:
-All acquired images need ground-truth annotation across all 22 head fields where feasible.
-`label_tier` field distinguishes: `ground_truth`, `heuristic`, `inference` (model-derived).
+**Domain enrichment** (complete): EDU 29.8%, UNK 22.6%, GOV 13.8%, TEC 10.6%, SCI 8.2%,
+FIN 7.0%, SCN 5.5%, LGL 2.6%. Inference methods: DocLayNet COCO lookup, source dataset rules,
+reason prefix rules, code screenshot generator, OHR-Bench benchmark.
 
-**Dedup protocol**: SHA256 exact match OR pHash Hamming ≤ 5 against all training manifests.
-OHR-Bench: assign `split_type="ood"` NOW — all 8,561 pages are `split='unknown'`; must be
-assigned before any training manifest uses them.
+**At-risk heads** (0 labeled images — require intervention before model evaluation):
 
-**License constraint note**: DLC-2021 (screen recaptures) is academic-only. All DLC-2021
-registry entries must carry `license_restriction=academic`. For commercial production,
-replace with Albumentations `MoirePattern` synthetic generation.
+- `skew_score`: Run trained MobileNetV4 skew head over all 9,170 registered images
+- `resolution_quality`: Run `label_resolution_quality.py` on Vultr A100 VM (365 ood_resolution)
+- `handwriting_legibility` / `handwriting_legibility_score`: Human annotation needed for
+  IIIT-INDIC/KHATT/CASIA-HWDB2 (~950 images)
+- `code_confidence`: Model-internal confidence output — populated at inference time, no GT needed
+
+**Remaining acquisition** (~2,845 images to reach 12K target):
+
+- NDL Digital Collection: ~100 Japanese vertical-text images (public domain)
+- DLC-2021 screen recaptures: ~100 (academic-only ⚠️)
+- SCUT-HCCDoc CJK handwriting: ~100 (open)
+- EUR-Lex government forms: ~240 (public domain)
+- CBETA religious texts: ~150 (CC0)
+- Internet Archive book gutter shadow: ~90 (CC0)
+- Script OOD (KhmerST, AMADI_LontarSet, SANA, Georgian): ~425 (academic)
+- CORD receipts: ~100 non-English camera receipts (CC-BY-4.0)
+- Remaining compound/mixed generation: ~210
+
+**License constraints**: ~2,200 entries are academic-only; ~6,955 are commercial-OK. Academic
+entries (WarpDoc, RVL-CDIP, docalign12k, RealDAE, DLC-2021) cannot be used in production
+without data refresh.
+
+Full details: [OOD_COVERAGE_GAP_REPORT.md](../datasets/OOD_COVERAGE_GAP_REPORT.md)
+
+#### Corpus-Wide IQA Labeling: MUSIQ + TOPIQ-NR Ensemble
+
+**Strategy change (2026-02-27)**: Rather than assembling a separate IQA-specific dataset, IQA
+labels are generated for the **entire training corpus** (~420–440K images). Every image that
+enters any training manifest automatically carries IQA pseudo-labels. This eliminates the VLM
+SRCC bottleneck, removes a separate dataset assembly step, and ensures IQA regression heads
+see the full diversity of document conditions present in other training tasks.
+
+**Minimum gate**: ≥125,000 images with IQA labels in the final merged training manifest.
+Given the corpus is ~420–440K, this is trivially met — the real constraint is validation
+quality, not volume.
+
+**Motivation**: The VLM IQA prompt approach (SRCC 0.53) is below the 0.65 threshold needed for
+regression training. The 9-model peer review panel (2026-02-26) endorsed pivoting to pretrained
+NR-IQA models — specifically MUSIQ and TOPIQ-NR — which can generate pseudo-labels at scale
+without new training. VQualA 2025 (ICCV Workshop) reported MUSIQ at 0.859 Pearson on DIQA-5000
+documents, far exceeding our local benchmark's raw SRCC of 0.116, likely due to evaluation
+protocol differences (normalization, metric type).
+
+**Two-tier labeling strategy**:
+
+| Tier | Models | Scope | GPU-hours | Cost |
+| --- | --- | --- | --- | --- |
+| **Tier 1** (primary) | MUSIQ + TOPIQ-NR ensemble | All ~440K images (OOD 9.2K + training corpus ~420K) | ~14.8 h (T4) | $5–15 |
+| **Tier 2** (validation) | Q-Align (7B MLLM) | OOD 9.2K + 5K stratified sample from training corpus | ~0.9 h (A100) | <$2 |
+
+**Model details**:
+
+| Model | PyIQA key | Params | Latency (T4) | KonIQ-10k SRCC | Notes |
+| --- | --- | --- | --- | --- | --- |
+| MUSIQ | `musiq` | 27M | 65 ms | 0.916 | Multi-scale transformer; native resolution |
+| TOPIQ-NR | `topiq_nr` | 27M | 59 ms | 0.930 | CFANet; semantic-guided cross-scale |
+| Q-Align | `qalign` | 7B | 220 ms (A100) | 0.941 | MLLM; requires A100 (15.4 GB VRAM) |
+
+**Validation gate**: Ensemble SRCC ≥ 0.55 on held-out DIQA-5000 subset (500 images). If the gate
+fails, fall back to LIQE (SRCC 0.403 on documents) as the primary model with MANIQA (SRCC 0.526,
+1845 ms) as validator on a stratified subsample.
+
+**Output schema** (per image, appended to L2 metadata):
+
+```json
+{
+  "iqa_pseudo_labels": {
+    "musiq_mos": 0.72,
+    "topiq_mos": 0.68,
+    "ensemble_mos": 0.70,
+    "qalign_mos": 0.71,
+    "model_agreement": 0.96,
+    "label_tier": "tier_3_heuristic"
+  }
+}
+```
+
+**Dependencies**: PyIQA ≥ 0.1.12, PyTorch ≥ 2.0, T4 GPU (Tier 1), A100 GPU (Tier 2 only).
+
+**Effort**: 2–3 days development + 1 day full corpus run (~14.8h T4 GPU). Unblocks all 6
+G1 IQA heads. The corpus-wide approach **eliminates the separate IQA dataset assembly step**
+from Phase 2, saving ~1 week of curation effort while producing ~26x more labeled images
+(~440K vs. ~16K).
+
+**Script location**: `scripts/label_iqa_pseudo.py` (to be created).
+
+**Calibration anchors**: The existing 16.3K hard-labeled subset (DIQA-5000, OHR-Bench, RealDAE)
+retains `label_tier=tier_1_annotation` at weight 1.0. Corpus-wide pseudo-labels are assigned
+`label_tier=tier_2_model` at weight 0.8. The tiered weighting ensures the model anchors to
+human-validated quality scores while benefiting from the scale of pseudo-labels.
 
 #### Stream 0: Document Type Router (new — architectural gap)
 
@@ -651,6 +778,158 @@ but is not in the current master plan.
 - **What to build**: Augmentation pipeline on OHR-Bench / DIQA-5000 base images that applies
   2–5 distortions per image, generating compound examples
 - **Effort**: 3–5 days
+
+#### Handwriting Presence Distribution Gap: NIST Contact Sheets + Mid-Range Candidate Evaluation
+
+SIG-G4-4 (handwriting presence regression) has a bimodal distribution — samples concentrated at
+0.0 (printed documents) and ~0.95 (pure handwriting corpora), with a void at 0.2–0.7. Without
+mid-range data, the regression head learns a step function instead of a continuous estimate.
+Source: 9-model peer review panel (2026-02-26), Appendix C.3.
+
+**Part 1 — NIST Contact Sheet Generation (~3,400 synthetic, `tier_0_exact` labels)**
+
+Generate synthetic documents with controllable handwriting presence by compositing NIST SD-19
+character images (810K+ characters from 3,600 writers) onto SD-2/SD-6 form backgrounds at
+varying fill densities.
+
+| Presence Target | Characters/Page | Background | Expected Samples |
+| --- | --- | --- | --- |
+| 0.10–0.20 | 5–15 scattered | Printed form template or blank | 500 |
+| 0.20–0.35 | 15–40 in 1–2 fields | NIST SD-2 tax form base | 800 |
+| 0.35–0.50 | 40–80 in 3–5 fields | NIST SD-6 census form base | 800 |
+| 0.50–0.65 | 80–150 in dense fields | NIST SD-2 fully-filled form | 800 |
+| 0.65–0.80 | 150–250 in most fields | NIST SD-19 HSF form (partial) | 500 |
+
+Design decisions:
+
+- Place SD-19 characters into form field regions at varying fill rates
+- Apply light Augraphy degradation after compositing to avoid synthetic appearance
+- Label `presence_reg = handwritten_pixel_area / total_page_area` (computed exactly)
+- Label tier: `tier_0_exact` (presence ratio is known by construction)
+- 3,600-writer diversity in SD-19 prevents overfitting to a single handwriting style
+- All source data is Public Domain — no license constraints
+
+Script to create: `scripts/generate_nist_contact_sheets.py`
+
+**Part 2 — Mid-Range Real Dataset Identification and `presence_reg` Labeling**
+
+Several existing datasets contain pages with natural mid-range handwriting presence (0.2–0.7)
+but have not been labeled with `presence_reg`. These need evaluation and labeling:
+
+| Dataset | Pages | Expected Presence Range | Why Mid-Range | Status |
+| --- | --- | --- | --- | --- |
+| Kleister Charity | ~20,000 | 0.05–0.40 | UK charity reports with handwritten signatures, annotations, margin notes on typed pages | Needs presence_reg labeling |
+| NARA 1950 Census | 695 (target 25K) | 0.30–0.60 | Pre-printed tabular forms with handwritten entries in designated cells | Needs presence_reg labeling |
+| NIST SD-6 (as-is) | 5,595 | 0.20–0.50 | Census forms with handprint overlay — partially filled forms naturally fall mid-range | Needs presence_reg computation from field fill rate |
+| NIST SD-2 (as-is) | 5,590 | 0.15–0.45 | Tax forms with synthesized handprint entries at variable fill rates | Needs presence_reg computation from field density |
+| SignVerOD | 2,765 | 0.02–0.15 | Documents with only signatures/initials/dates as handwriting (very sparse but real) | Needs presence_reg labeling |
+| GNHK | 687 | 0.40–0.90 | Mixed printed (3,534 words) + handwritten (39,027 words) — ratio varies by page | Word-level annotations enable exact presence_reg |
+| FUNSD | 199 | 0.10–0.40 | Forms with handwritten annotations on printed structure | Needs presence_reg labeling |
+| Popp-Line | 4,794 | 0.30–0.70 | French census pre-printed forms + handwritten entries | Needs presence_reg labeling |
+
+Estimated mid-range yield (0.2–0.7): ~3,400 synthetic (contact sheets) + ~13,000–19,000
+real/synthesized-form samples = **~16,500–22,300 total**, transforming the distribution from
+bimodal to approximately uniform.
+
+**Labeling approach for real datasets**: Compute `presence_reg` as handwritten pixel area /
+total page area. For datasets with word-level `handwritten` annotations (HierText, GNHK,
+COCO-Text): compute directly from annotated word bounding box areas. For form datasets (SD-2,
+SD-6, NARA): estimate from field fill rate × field area / page area. Script: binarization +
+connected component analysis to segment handwriting from printed text.
+
+Script to create: `scripts/label_handwriting_presence.py`
+
+- **Effort**: 1 week (contact sheet generation script + presence_reg labeling script + GPU run)
+- **Unblocks**: SIG-G4-4 (handwriting presence regression) — fills the 0.2–0.7 distribution void
+- **Source**: Peer review panel report Appendix C.3
+
+#### Resolution Quality Dataset Expansion (5.5K → 15–20K, MNV4-H3 / SIG-G5-5)
+
+Resolution quality is a shared head across both models (MNV4-H3 pre-correction gate,
+SIG-G5-5 post-correction validation). At 5,499 labeled images (~550 samples per 0.1 quality
+bin), it barely clears statistical minimums. The confound sub-dataset (pre-upscaled rasters,
+vector PDFs at low DPI) is entirely missing — without it, the model will systematically
+confuse "high pixel count from upscaling" with "genuinely high resolution." The 7-range
+piecewise mapping (char_height → quality_score) has different slopes in different ranges;
+at 5.5K the model cannot reliably learn transitions between ranges.
+
+**Sweet spot target**: 15–20K total. Beyond 20K, gains are marginal. The confound
+sub-dataset (~2K) is non-negotiable — it teaches a qualitatively different concept (artifact
+detection) that cannot be learned from more of the same distribution.
+
+**Labeling methodology**: Two-stage pipeline in
+[label_resolution_quality.py](../../scripts/label_resolution_quality.py) — PaddleOCR DBNet
+text detection (Stage 1) + connected component character height measurement within detected
+regions (Stage 2). Requires GPU (Vultr A100 VM, 12.1 img/s). V1 precision is adequate for
+this expansion: coarse bucket accuracy 97%, regression IQR 9px (acceptable for Latin-majority
+datasets; V2 deferred to Phase 3 training schedule). Core measurement library:
+[resolution_quality.py](../../src/image_preprocessing_detector/schema_utils/resolution_quality.py).
+
+**Phase A — Label existing datasets (~7.5K new, ~1 hour A100 GPU)**:
+
+Run `label_resolution_quality.py` on datasets already on E drive:
+
+| Dataset | Images | A100 Time | Capture Method | Bin Diversity |
+| --- | ---: | --- | --- | --- |
+| RealDAE | 1,200 | ~2 min | Camera | HIGH — variable camera distance |
+| RVL-CDIP (5K sample) | 5,000 | ~7 min | Scanner | HIGH — scanned at variable DPI |
+| Tobacco800 | 1,290 | ~2 min | Scanner | MEDIUM — aged scans, naturally low res |
+
+Subtotal Phase A: 5.5K existing + 7.5K new = **~13K**
+
+**Phase B — Multi-DPI DocLayNet renders (~7K new, ~2 hours total effort)**:
+
+Render 1,000 DocLayNet PDF pages at 7 DPI levels (72/100/150/200/300/400/600) to produce
+7,000 images with **tier_0_exact** labels spanning the full quality score range. This is the
+highest-quality labeling path: DPI is known by construction, char height is computable, and
+bin coverage is guaranteed uniform.
+
+| Step | Action | Output | Effort |
+| --- | --- | --- | --- |
+| 1 | Write multi-DPI render script (~50 LOC, PyMuPDF `page.get_pixmap(dpi=X)`) | `scripts/render_multi_dpi_doclaynet.py` | 0.5 days |
+| 2 | Render 1,000 PDFs × 7 DPI levels | 7,000 PNG images | ~30 min |
+| 3 | Run `label_resolution_quality.py` on rendered images | Resolution quality labels | ~10 min A100 |
+
+Subtotal Phase A + B: **~20K** — at the sweet spot target.
+
+**Phase C — Confound sub-dataset (~2K, mandatory before training)**:
+
+The confound sub-dataset is required by
+[DATASET_DIVERSITY_REQUIREMENTS.md §3.4](DATASET_DIVERSITY_REQUIREMENTS.md). 365 pre-upscaled
+rasters already exist in the OOD registry (OHR-Bench 2× bicubic, `ood_resolution` category).
+
+| Confound Type | Target | Exists | Action |
+| --- | ---: | ---: | --- |
+| Pre-upscaled rasters | ~1,000 | 365 | Generate 635 more: bicubic 2×–4× upscale of 72/100 DPI RVL-CDIP images |
+| Vector PDF at low effective DPI | ~500 | 0 | Render DocLayNet PDFs at 72 DPI (vector text looks sharp but OCR fails) |
+| Mixed confound (scanned + upscaled) | ~500 | 0 | Bicubic 2× upscale of Tobacco800 images |
+
+Each confound sample carries dual labels: `measured_char_height` (inflated),
+`actual_quality` (low), `artificially_upscaled=True`, `upscale_factor`, `true_dpi`.
+
+Implementation: ~80 LOC script using `cv2.resize()` with `INTER_CUBIC`, extending the
+existing OOD upscaling pattern (`acquisition_method: "ohr_bench_bicubic_2x"`).
+
+**Phase D — Script diversity (optional, after Phase B evaluation)**:
+
+Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth_multiscript_v3/`)
+across 19 non-Latin scripts. Labels derive from generation metadata (DPI known at render
+time), not from CC measurement — avoiding the V1 CJK precision limitation entirely.
+**Note**: v3 to be retained until Phase D sampling completes (see Stream 4B retention note).
+
+**V2 pipeline upgrade (deferred to Phase 3 training schedule)**:
+
+The V2 strategy ([RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md))
+addresses V1 regression precision (9px IQR → 2–3px target) via Sauvola binarization,
+morphological closing, projection profile ensemble, DBSCAN height clustering, and synthetic
+calibration. V2 matters when expanding to 30K with CJK-heavy natural datasets. For the
+15–20K expansion (Latin-majority datasets + tier_0_exact multi-DPI renders), V1 precision
+is sufficient. V2 is scheduled for Phase 3 (Week 8–12) after initial MNV4 training validates
+the resolution head architecture.
+
+- **Effort**: Phase A (0.5 days GPU) + Phase B (1 day) + Phase C (1 day) + Phase D (0.5 days) = ~3 days total
+- **Unblocks**: MNV4-H3 training (Phase 1, Week 2–4) and SIG-G5-5 training
+- **Reference**: [RESOLUTION_QUALITY_LABELING_STRATEGY.md](RESOLUTION_QUALITY_LABELING_STRATEGY.md), [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md)
 
 #### SIG-G3-2: Build +/-2° narrow-range skew dataset from scratch
 
@@ -733,8 +1012,11 @@ $80–140 budget approval).
 
 #### Stream 4E: Handwriting Dataset + Training Heads
 
-Handwriting training data is at 0% (target: 60K images). The 5 handwriting heads (Group 4 in
-SigLIP 2) are currently excluded from training. Non-Latin scripts are completely absent.
+Handwriting training data is at 0% (target: **25K images**, reduced from 60K based on 9-model
+peer review panel analysis — see Appendix C.4). At 25K, each class in the 5-class head gets
+~5,000 samples (5× the robust fine-tuning threshold for pre-trained ViT); the 7-class head
+gets ~3,571/class (3.5× threshold). The 5 handwriting heads (Group 4 in SigLIP 2) are
+currently excluded from training. Non-Latin scripts are completely absent.
 
 - **Taxonomy prerequisite** (must finalize before acquisition): Expand `handwriting_script` to
   9 fine-grained classes (Latin-Print, Latin-Cursive, CJK-Hanzi, CJK-Kanji, Arabic-Naskh,
@@ -746,7 +1028,19 @@ SigLIP 2) are currently excluded from training. Non-Latin scripts are completely
   - Devanagari: IIIT-INDIC
   - Cyrillic: HKR
   - Latin form fill-in: FUNSD expansion (currently only 199 images)
-- **Effort**: Taxonomy (3–5 days) + dataset acquisition (4–6 weeks)
+- **Adjusted class distribution (25K)**:
+
+| Class | Target % | Count | Primary Sources |
+| --- | --- | --- | --- |
+| NONE | 35% | 8,750 | DocLayNet (15K available), PubTabNet (5K), FinTabNet (2K) |
+| SPARSE | 15% | 3,750 | HierText sparse pages, Kleister Charity signatures |
+| MODERATE | 20% | 5,000 | NIST SD-2/SD-6 forms, NARA Census, contact sheets |
+| SUBSTANTIAL | 15% | 3,750 | IAM, Muharaf, PUCIT-OHUL, HKR |
+| DOMINANT | 15% | 3,750 | NIST SD-19 HSF, CASIA-HWDB, KHATT |
+
+- **Structural voids unchanged**: ILLEGIBLE class still needs ~1,000+ samples from scratch;
+  MIXED_TYPED_HW at 0 natural examples; N_A sentinel defect must be fixed first
+- **Effort**: Taxonomy (3–5 days) + dataset acquisition (3–4 weeks at reduced scope)
 
 #### Stream 8: Student Distillation
 
@@ -759,11 +1053,11 @@ Each student stage targets the same 16 prediction heads with progressive latency
 
 | Dataset | Done | Target | Next Action | Blocker |
 | --- | --- | --- | --- | --- |
-| synth-multiscript-v3 | 190,485 | 350,000 | Run completion generation | Generator bug fixed; run not executed |
-| Resolution quality | 5.5K | 30K | Run V2 labeling pipeline (Sauvola + projection profiles) | Compute time |
-| IQA curated | ~14K | 16K | Validate VLM prompt v2.0 on 30–50 images; scale if SRCC > 0.60 | Prompt validation |
-| IQA synthetic | 0 | 100K | Generate from synth-multiscript-v3 with Stream 7 pseudo-labels | Requires Stream 7 |
-| Handwriting | 0 | 60K | Finalize taxonomy; acquire KHATT, CASIA-HWDB, IIIT-INDIC, HKR | Stream 4E |
+| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 script ready |
+| Resolution quality | 5.5K | 15–20K (sweet spot) | Phase A: label RealDAE+RVL-CDIP+Tobacco800 (7.5K); Phase B: multi-DPI DocLayNet renders (7K); Phase C: confound sub-dataset (2K mandatory); V2 deferred to Phase 3 | ~3 days total; Vultr A100 GPU |
+| IQA (corpus-wide) | ~14K hard | ≥125K (gate); ~440K actual | Validate MUSIQ+TOPIQ-NR SRCC ≥ 0.55 on DIQA-5000; then run on full ~440K corpus; 14K hard labels serve as tier_1 calibration anchors | IQA labeling script |
+| HW presence mid-range | 0 | ~16.5–22K | Part 1: Generate NIST contact sheets (~3,400); Part 2: Label presence_reg on Kleister Charity, NARA, SD-2, SD-6, GNHK, Popp-Line | Contact sheet + labeling scripts |
+| Handwriting (classification) | 0 | 25K (reduced from 60K) | Finalize taxonomy; acquire KHATT, CASIA-HWDB, IIIT-INDIC, HKR at reduced scope | Stream 4E |
 | Capture method | 0 | 50K | Assemble from L2-enriched datasets by capture_method field | Data acquisition |
 | Shadow | 0 | 15K | Run Phase 5 view generation after Tier 0 | Tier 0 severity labeling |
 | Warping | 0 | 20K | warpdoc complete; wsrd warping labels queued | wsrd warping labels |
@@ -863,8 +1157,9 @@ structure shown here.
 [Tier 1 — Parallel group, start concurrently]
     ├──▶ Stream 4B: Run 4 synthetic view scripts (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: prepare_multitask_datasets.py (shadow*, warping* require Tier 0)
-    ├──▶ Stream 4B: synth-multiscript-v3 completion run (190K → 350K)
-    ├──▶ Stream 4C: OOD corpus build — Phase 0 infra → Phase 1 P0 MVS → Phase 2-3 programmatic
+    ├──▶ Stream 4B: synth-multiscript-v4 PNG generation (replaces v3, 350K target)
+    ├──▶ Data: JPEG→PNG lossless conversion (rvl-cdip 16K TIFF→PNG, khatt 1.6K TIFF→PNG)
+    ├──▶ Stream 4C: OOD corpus gap closure (9,170 → 12,000) + at-risk head labeling
     ├──▶ Stream 0: Document Type Router (2-3 weeks)
     ├──▶ Stream 4D: MobileNetV4 pipeline integration (1-2 weeks)
     ├──▶ Fix: 3 Docling P0 bugs (< 1 week total)
@@ -872,6 +1167,15 @@ structure shown here.
     ├──▶ Fix: JPEG quality detection classical IQA head (1-2 days)
     ├──▶ Fix: Symmetric orientation dataset curation (0.5 days)
     ├──▶ Data: Compound distortion augmentation pipeline (3-5 days)
+    ├──▶ Data: Resolution quality expansion (5.5K→15-20K) — 4 phases, ~3 days, Vultr A100
+    │         Phase A: Label RealDAE+RVL-CDIP+Tobacco800 (7.5K, 1h GPU)
+    │         Phase B: Multi-DPI DocLayNet renders (7K, tier_0_exact labels)
+    │         Phase C: Confound sub-dataset (2K, mandatory before RQ head training)
+    │         Phase D: synth-multiscript-v3 script diversity sample (3-5K, optional)
+    ├──▶ Data: Corpus-wide IQA labeling (MUSIQ+TOPIQ-NR on ~440K images, ~15h T4 GPU)
+    │         Gate: SRCC ≥ 0.55 on DIQA-5000 validation; ≥125K images with IQA labels
+    ├──▶ Data: NIST contact sheets for HW presence mid-range (~3,400 synthetic, 1 week)
+    │         + presence_reg labeling on 8 candidate real datasets (~13-19K images)
     ├──▶ Data: SIG-G3-2 narrow-range skew dataset build from scratch (2-3 weeks) [T5]
     ├──▶ Data: ADF scanner training data sourcing (2-3 weeks, long-running)
     ├──▶ Data: Dataset gathering strategy execution (Phases 1-4, real-first acquisition)
@@ -887,7 +1191,8 @@ structure shown here.
     │
     ├──▶ Stream 4D: Evaluation vs heuristic baselines
     ├──▶ Stream 5: DoclingRouter integration (parallel to evaluation)
-    └──▶ Stream 4E: Handwriting taxonomy → acquisition (KHATT, CASIA-HWDB, IIIT-INDIC, HKR)
+    └──▶ Stream 4E: Handwriting taxonomy → acquisition at 25K target (KHATT, CASIA-HWDB,
+    │         IIIT-INDIC, HKR) — reduced from 60K per peer review analysis
               │
               ▼
 [Tier 4] Stream 7: Pseudo-Labeling (~2.5M images via DocIQ)
@@ -916,7 +1221,7 @@ P2 = monitor and improve.
 | **Capture Method (1 head)** | 0% | Modern CIS flatbed (2020+), ADF scanner, screen recapture | Tier 1-3 | P1-6/P1-7/P2-6 sourcing; screen recapture deferred Tier 3 |
 | **Shadow (1 head)** | 0% | Book gutter shadow (gradient + curvature) | Tier 2 | P1-1 real-world curation |
 | **Warping (1 head)** | 20% | Crumpled page + combined skew+warping | Tier 2-3 | P1-4 combined; P2-2 crumple |
-| **Resolution (1 head)** | 0% | Vector PDF at low effective DPI, upscaled raster (bicubic 2x-4x) | Tier 1 | Synthetic confound dataset (new task) |
+| **Resolution (1 head)** | 0% | Vector PDF at low effective DPI, upscaled raster (bicubic 2x-4x) | Tier 1 | Confound sub-dataset Phase C (2K: 1K upscaled rasters, 500 vector PDF, 500 mixed); 365 OOD entries exist |
 
 **Additional P0 gaps not yet in any plan**:
 
@@ -926,7 +1231,7 @@ P2 = monitor and improve.
    add projection profile second estimator; flag disagreement as layout complexity. Tier 2.
 3. **Vector PDF / upscaled raster resolution confounds** — Vector PDFs at low DPI give
    misleading char-height signals; bicubic 2x-4x upscaling inflates char height artificially.
-   Requires synthetic confound dataset. Tier 1 (can build now).
+   Addressed by Resolution Quality Expansion Phase C (confound sub-dataset, ~2K images). Tier 1.
 4. **ECE confidence calibration tracking** — Multi-head overconfidence; add Expected Calibration
    Error per head to `drift/alerting.py` with baseline config. Tier 2.
 
@@ -957,6 +1262,10 @@ P2 = monitor and improve.
 | Dataset gathering strategy (real-first acquisition sequencing) | [DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md) |
 | Unified training corpus (per-head sizes, sharing analysis, acceptance criteria) | [../datasets/UNIFIED_TRAINING_CORPUS.md](../datasets/UNIFIED_TRAINING_CORPUS.md) |
 | Corpus OOD review (acceptance scorecard, gap analysis) | [CORPUS_OOD_REVIEW_REPORT.md](CORPUS_OOD_REVIEW_REPORT.md) |
+| Head adequacy synthesis (72 P0 gaps, 0 ready heads, median 39/100) | [HAR_SYNTHESIS.md](HAR_SYNTHESIS.md) |
+| 9-model peer review panel (CONDITIONAL GO, per-head sample analysis) | [../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md](../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md) |
+| Resolution quality labeling strategy (V1 two-stage pipeline) | [RESOLUTION_QUALITY_LABELING_STRATEGY.md](RESOLUTION_QUALITY_LABELING_STRATEGY.md) |
+| Resolution quality V2 strategy (Sauvola, projection profiles, calibration) | [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md) |
 | Architecture diagrams (all four levels) | [docs/architecture/](../architecture/) |
 | Historical plan (Phases 0–9, superseded) | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | Value-stream plan (Streams 1–8, superseded) | [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md) |

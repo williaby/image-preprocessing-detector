@@ -36,10 +36,12 @@ Updated 2025-12-20: Added reproducibility fields, tiered enrichment, DocLayout-Y
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import io
 import json
 import logging
+import re
 import subprocess
 import uuid
 from dataclasses import dataclass, field
@@ -935,6 +937,132 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "iso15924_script": "Hani",  # Classical Japanese uses Kanji-derived kuzushiji
         "text_scope": "page",
         "original_labels_parser": "parse_ndl_minhon_labels",
+    },
+    # === Gap-Closing Datasets (2026-02 Integration) ===
+    # Egyptian Handwriting: 11,216 Arabic cursive word images from 89 writers (ages 6-73).
+    # Only commercially-viable Arabic HW source (CC-BY-4.0).  Parquet format —
+    # images stored as binary blobs, requires materialization before scanning.
+    "egyptian-handwriting": {
+        "path": BASE_DATA / "handwriting/egyptian-handwriting",
+        "pattern": "extracted_images/*.png",  # After materialization from parquet
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "ar",
+        "iso15924_script": "Arab",
+        "text_scope": "word",
+        "original_labels_parser": "parse_egyptian_hw_labels",
+    },
+    # SALAMI: 250 manuscript images with 20-expert pixel-level legibility assessments.
+    # Gold-standard calibration anchor for legibility regression (SIG-G4-2/G4-5).
+    # 8 scripts: Armenian, Georgian, German, Gothic, Greek, Latin, Ottoman, Slavonic.
+    # NOTE: 15 rare-script images (Armn/Goth/Geor) routed to OOD; 235 for training.
+    "salami": {
+        "path": BASE_DATA / "handwriting/salami/salami_1.0/images/input",
+        "pattern": "*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,  # Multi-language historical manuscripts
+        "has_human_mos": True,  # 20-expert legibility assessments per image
+        "has_handwriting": True,
+        "is_multilingual": True,
+        "text_scope": "page",
+        "original_labels_parser": "parse_salami_labels",
+    },
+    # GNHK (GoodNotes Handwriting Knowledge): 687 full-page handwritten document images
+    # with word-level polygon annotations (515 train + 172 test).  Valuable for
+    # legibility classification (%SC% scribble tags → ILLEGIBLE class seed).
+    # 42,561 word annotations: 39,027 handwritten (H), 3,534 printed (P).
+    "gnhk": {
+        "path": BASE_DATA / "handwriting/gnhk",
+        "pattern": "paper/*/*.jpg",  # train/ and test/ subdirs
+        "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_gnhk_labels",
+    },
+    # SignverOD: 2,765 scanned documents with signature/initials/redaction/date
+    # bounding boxes.  CC0 license.  NIST + GSA government document sources.
+    # Closes signature presence gap for SIG-G4-1/G4-3.
+    "signverod": {
+        "path": BASE_DATA / "handwriting/signverod",
+        "pattern": "images/*",  # 2,694 PNG + 71 JPEG
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "has_signature": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "text_scope_content_type": "mixed",  # typed text + handwritten signatures
+        "original_labels_parser": "parse_signverod_labels",
+    },
+    # POPP-line (Teklia): 4,794 French census handwriting lines with transcriptions.
+    # HuggingFace source: Teklia/POPP-line.  Images materialized from Arrow to PNG.
+    # Closes mixed typed+HW gap for French historical documents.
+    "popp-line": {
+        "path": BASE_DATA / "forms/popp-datasets",
+        "pattern": "extracted_images/*/*.png",  # train/validation/test subdirs
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "fr",
+        "iso15924_script": "Latn",
+        "text_scope": "line",
+        "original_labels_parser": "parse_popp_line_labels",
+    },
+    # NOTE: khmer-ocr-benchmark excluded — repo contains only framework code and logos,
+    # not actual document images. Only 6 PNGs present (all logos/screenshots).
+    # OpenPecha OCR-Drutsa: 32,364 Tibetan script line images (CC-BY-4.0).
+    # Closes TIBT script gap for SIG-G2-1.  Parquet format —
+    # images stored as binary blobs, requires materialization before scanning.
+    "openpecha-ocr-drutsa": {
+        "path": BASE_DATA / "language/openpecha-ocr-drutsa",
+        "pattern": "extracted_images/*.png",  # After materialization from parquet
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.UNKNOWN,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "bo",
+        "iso15924_script": "Tibt",
+        "text_scope": "line",
+        "original_labels_parser": "parse_ocr_drutsa_labels",
+    },
+    # Kleister Charity: 3,414 British charity annual report PDFs rendered to pages.
+    # MIT license.  Mixed typed + handwritten content in financial/admin docs.
+    # Closes SIG-G4-1/G4-3/G4-4 gaps (mixed HW in financial documents).
+    "kleister-charity": {
+        "path": BASE_DATA / "documents/kleister-charity",
+        "pattern": "rendered_images/*/*.png",  # train/dev-0/test-A subdirs
+        "capture_method": CaptureMethod.BORN_DIGITAL,  # PDFs rendered to PNG
+        "domain": DomainLevel1.FINANCIAL,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_kleister_charity_labels",
+    },
+    # NARA 1950 Census: Scanned handwritten census enumeration schedules.
+    # Public Domain (U.S. Government work).  Largest single mixed typed+HW source.
+    # Closes SIG-G4-3 gap (mixed typed+handwriting in government documents).
+    "nara-1950-census": {
+        "path": BASE_DATA / "documents/nara-1950-census",
+        "pattern": "**/*.jpg",  # {State}/{census_id_dir}/*.jpg
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.ADMINISTRATIVE,
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "iso639_language": "en",
+        "iso15924_script": "Latn",
+        "text_scope": "page",
+        "original_labels_parser": "parse_nara_1950_census_labels",
     },
 }
 
@@ -4911,6 +5039,484 @@ def parse_ndl_minhon_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     return labels
 
 
+# ---------------------------------------------------------------------------
+# Gap-Closing Dataset Parsers (2026-02)
+# ---------------------------------------------------------------------------
+
+# Egyptian Handwriting — lazy-loaded parquet label cache
+_egyptian_hw_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_egyptian_hw_labels(dataset_path: Path) -> dict[str, str]:
+    """Load label column from Egyptian HW parquet, keyed by row index."""
+    cache_key = str(dataset_path)
+    if cache_key in _egyptian_hw_cache:
+        return _egyptian_hw_cache[cache_key]
+
+    labels_map: dict[str, str] = {}
+    try:
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+
+        parquet_dir = dataset_path / "data"
+        offset = 0
+        for pf in sorted(parquet_dir.glob("*.parquet")):
+            table = pq.read_table(pf, columns=["label"])
+            for i in range(len(table)):
+                labels_map[str(offset + i)] = str(table.column("label")[i].as_py())
+            offset += len(table)
+    except Exception as e:
+        logger.debug("Failed to load Egyptian HW parquet labels: %s", e)
+    _egyptian_hw_cache[cache_key] = labels_map
+    return labels_map
+
+
+def parse_egyptian_hw_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse Egyptian Handwriting Dataset labels.
+
+    Images materialized from parquet as {row_index}.png.
+    Labels are Arabic word transcriptions.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "ar"
+    labels.script_name = "Arabic"
+    labels.iso15924_script_code = "Arab"
+
+    # Extract row index from filename (e.g., "00042.png" -> "42").
+    # Filenames are always zero-padded integers from parquet materialization;
+    # non-numeric stems (e.g., "row_42") are not produced by the extraction script.
+    stem = image_path.stem.lstrip("0") or "0"
+    label_map = _load_egyptian_hw_labels(dataset_path)
+    text = label_map.get(stem, "")
+    if text:
+        labels.transcription = text
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "egyptian-handwriting"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "word"
+    return labels
+
+
+# SALAMI — lazy-loaded assessment + image metadata caches
+_salami_images_cache: dict[str, dict[str, Any]] = {}
+_salami_assessments_cache: dict[str, dict[str, list[dict[str, Any]]]] = {}
+
+_SALAMI_LANG_TO_SCRIPT: dict[str, str] = {
+    "Armenian": "Armn",
+    "Georgian": "Geor",
+    "German": "Latn",
+    "Gothic": "Goth",
+    "Greek": "Grek",
+    "Latin": "Latn",
+    "Ottoman": "Arab",
+    "Slavonic": "Cyrl",
+}
+
+_SALAMI_LANG_TO_ISO: dict[str, str] = {
+    "Armenian": "hy",
+    "Georgian": "ka",
+    "German": "de",
+    "Gothic": "got",
+    "Greek": "el",
+    "Latin": "la",
+    "Ottoman": "ota",
+    "Slavonic": "cu",
+}
+
+_SALAMI_RATING_TO_SCORE: dict[str, float] = {
+    "0-20% readable": 0.1,
+    "20-40% readable": 0.3,
+    "40-60% readable": 0.5,
+    "60-80% readable": 0.7,
+    "80-100% readable": 0.9,
+}
+
+
+def _load_salami_metadata(
+    dataset_path: Path,
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    """Load SALAMI images.json and assessments.json."""
+    cache_key = str(dataset_path)
+    if cache_key in _salami_images_cache:
+        return _salami_images_cache[cache_key], _salami_assessments_cache.get(
+            cache_key, {}
+        )
+
+    images_map: dict[str, dict[str, Any]] = {}
+    assessments_map: dict[str, list[dict[str, Any]]] = {}
+
+    # dataset_path points to .../salami_1.0/images/input
+    # src/ is sibling of images/, i.e., .../salami_1.0/src
+    src_dir = dataset_path.parent.parent / "src"
+
+    try:
+        with open(src_dir / "images.json") as f:
+            for img in json.load(f):
+                images_map[img["id"]] = img
+    except Exception as e:
+        logger.debug("Failed to load SALAMI images.json: %s", e)
+
+    try:
+        with open(src_dir / "assessments.json") as f:
+            for assessment in json.load(f):
+                img_id = assessment.get("image_id", "")
+                if img_id not in assessments_map:
+                    assessments_map[img_id] = []
+                assessments_map[img_id].append(assessment)
+    except Exception as e:
+        logger.debug("Failed to load SALAMI assessments.json: %s", e)
+
+    _salami_images_cache[cache_key] = images_map
+    _salami_assessments_cache[cache_key] = assessments_map
+    return images_map, assessments_map
+
+
+def parse_salami_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse SALAMI legibility assessment metadata.
+
+    Each image has language metadata and 20-expert legibility assessments.
+    """
+    labels = OriginalLabels()
+    img_id = image_path.stem  # e.g., "00_00"
+
+    images_map, assessments_map = _load_salami_metadata(dataset_path)
+    img_meta = images_map.get(img_id, {})
+
+    lang = img_meta.get("lang", "")
+    script = _SALAMI_LANG_TO_SCRIPT.get(lang, "")
+    iso_code = _SALAMI_LANG_TO_ISO.get(lang, "")
+    if iso_code:
+        labels.language_code = iso_code
+    if script:
+        labels.script_name = script
+        labels.iso15924_script_code = script
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "salami"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["batch"] = img_meta.get("batch")
+    labels.raw_labels["language"] = lang
+
+    # Compute mean legibility score from expert assessments
+    assessments = assessments_map.get(img_id, [])
+    if assessments:
+        scores = []
+        for a in assessments:
+            rating = a.get("rating", "")
+            if rating in _SALAMI_RATING_TO_SCORE:
+                scores.append(_SALAMI_RATING_TO_SCORE[rating])
+        if scores:
+            mean_score = sum(scores) / len(scores)
+            labels.raw_labels["legibility_score"] = round(mean_score, 3)
+            labels.raw_labels["legibility_assessments_count"] = len(scores)
+
+    return labels
+
+
+_gnhk_json_cache: dict[str, list[dict[str, Any]]] = {}
+
+
+def parse_gnhk_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse GNHK word-level annotation metadata.
+
+    Each image has a companion JSON with word-level polygon annotations
+    including type (H=handwritten, P=printed) and text transcriptions.
+    Special tokens: %SC% (scribble/illegible), %NA% (unreadable), %math%.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "gnhk"
+    labels.raw_labels["has_handwriting"] = True
+
+    # Determine split from path
+    if "train" in image_path.parts:
+        labels.raw_labels["split"] = "train"
+    elif "test" in image_path.parts:
+        labels.raw_labels["split"] = "test"
+
+    # Load companion JSON
+    json_path = image_path.with_suffix(".json")
+    if not json_path.exists():
+        return labels
+
+    cache_key = str(json_path)
+    if cache_key in _gnhk_json_cache:
+        words = _gnhk_json_cache[cache_key]
+    else:
+        try:
+            with open(json_path, encoding="utf-8") as f:
+                words = json.load(f)
+            _gnhk_json_cache[cache_key] = words
+        except (OSError, json.JSONDecodeError):
+            return labels
+
+    hw_count = sum(1 for w in words if w.get("type") == "H")
+    printed_count = sum(1 for w in words if w.get("type") == "P")
+    illegible_count = sum(1 for w in words if w.get("text", "") in {"%SC%", "%NA%"})
+    labels.raw_labels["word_count"] = len(words)
+    labels.raw_labels["handwritten_word_count"] = hw_count
+    labels.raw_labels["printed_word_count"] = printed_count
+    labels.raw_labels["illegible_word_count"] = illegible_count
+    if len(words) > 0:
+        labels.raw_labels["illegible_ratio"] = round(illegible_count / len(words), 4)
+
+    return labels
+
+
+_signverod_annotations_cache: dict[str, dict[str, list[dict[str, Any]]]] = {}
+_signverod_image_ids_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_signverod_annotations(
+    dataset_path: Path,
+) -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, Any]]]]:
+    """Load SignverOD image_ids and merged annotations (cached)."""
+    cache_key = str(dataset_path)
+    if cache_key in _signverod_image_ids_cache:
+        return _signverod_image_ids_cache[cache_key], _signverod_annotations_cache[
+            cache_key
+        ]
+
+    # Load image IDs
+    id_map: dict[str, str] = {}
+    id_csv = dataset_path / "image_ids.csv"
+    if id_csv.exists():
+        with open(id_csv, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                id_map[row["file_name"]] = row["id"]
+
+    # Load annotations
+    ann_map: dict[str, list[dict[str, Any]]] = {}
+    for csv_name in ("train.csv", "test.csv"):
+        csv_path = dataset_path / csv_name
+        if not csv_path.exists():
+            continue
+        with open(csv_path, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                img_id = row["image_id"]
+                if img_id not in ann_map:
+                    ann_map[img_id] = []
+                ann_map[img_id].append(dict(row))
+
+    _signverod_image_ids_cache[cache_key] = id_map
+    _signverod_annotations_cache[cache_key] = ann_map
+    return id_map, ann_map
+
+
+def parse_signverod_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse SignverOD signature detection annotations.
+
+    Each image may have bounding boxes for signatures (1), initials (2),
+    redactions (3), and dates (4).
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "signverod"
+    labels.raw_labels["has_handwriting"] = False  # default, updated below
+
+    # Source type from filename
+    stem = image_path.stem
+    if stem.startswith("nist_"):
+        labels.raw_labels["source_type"] = "nist"
+    elif stem.startswith("gsa_"):
+        labels.raw_labels["source_type"] = "gsa"
+    else:
+        labels.raw_labels["source_type"] = "other"
+
+    id_map, ann_map = _load_signverod_annotations(dataset_path)
+    image_id = id_map.get(image_path.name)
+    if image_id is None:
+        return labels
+
+    annotations = ann_map.get(image_id, [])
+    cat_counts: dict[str, int] = {}
+    cat_names = {1: "signature", 2: "initials", 3: "redaction", 4: "date"}
+    for ann in annotations:
+        cat_name = cat_names.get(int(ann.get("category_id", 0)), "unknown")
+        cat_counts[cat_name] = cat_counts.get(cat_name, 0) + 1
+
+    labels.raw_labels["annotation_count"] = len(annotations)
+    labels.raw_labels["has_signature"] = cat_counts.get("signature", 0) > 0
+    labels.raw_labels["has_initials"] = cat_counts.get("initials", 0) > 0
+    labels.raw_labels["has_redaction"] = cat_counts.get("redaction", 0) > 0
+    labels.raw_labels["has_handwriting"] = (
+        cat_counts.get("signature", 0) > 0 or cat_counts.get("initials", 0) > 0
+    )
+    labels.raw_labels["category_counts"] = cat_counts
+
+    return labels
+
+
+def parse_popp_line_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse POPP-line French census handwriting labels.
+
+    Images materialized from Arrow as {split}/{index:05d}.png.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "fr"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "popp-line"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "line"
+
+    # Determine split from path
+    for split in ("train", "validation", "test"):
+        if split in image_path.parts:
+            labels.raw_labels["split"] = split
+            break
+
+    return labels
+
+
+_ocr_drutsa_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_ocr_drutsa_labels(dataset_path: Path) -> dict[str, str]:
+    """Load id→label mapping from OCR-Drutsa parquet files.
+
+    Parquet schema: id (str), image (binary), label (str).
+    Images are materialized as {id}.png so the stem maps to the id column.
+    """
+    cache_key = str(dataset_path)
+    if cache_key in _ocr_drutsa_cache:
+        return _ocr_drutsa_cache[cache_key]
+
+    labels_map: dict[str, str] = {}
+    try:
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+
+        parquet_dir = dataset_path / "data"
+        for pf in sorted(parquet_dir.glob("*.parquet")):
+            table = pq.read_table(pf, columns=["id", "label"])
+            ids = table.column("id")
+            texts = table.column("label")
+            for i in range(len(table)):
+                labels_map[str(ids[i].as_py())] = str(texts[i].as_py())
+    except Exception as e:
+        logger.debug("Failed to load OCR-Drutsa parquet labels: %s", e)
+    _ocr_drutsa_cache[cache_key] = labels_map
+    return labels_map
+
+
+def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse OpenPecha OCR-Drutsa labels.
+
+    Images materialized from parquet as {id}.png (e.g., KS_11-061_line_9874_4.png).
+    Labels are Tibetan text transcriptions loaded from parquet id→label mapping.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "bo"
+    labels.script_name = "Tibetan"
+    labels.iso15924_script_code = "Tibt"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "openpecha-ocr-drutsa"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["text_scope"] = "line"
+
+    # Look up transcription by image stem (== parquet id)
+    label_map = _load_ocr_drutsa_labels(dataset_path)
+    text = label_map.get(image_path.stem, "")
+    if text:
+        labels.transcription = text
+
+    return labels
+
+
+_kleister_charity_re = re.compile(
+    r"^(?P<doc_id>[a-f0-9]{32})_p(?P<page>\d{3})\.png$",
+)
+
+
+def parse_kleister_charity_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse Kleister Charity rendered page image labels.
+
+    Filename pattern: {md5}_p{page:03d}.png
+    Split determined from parent directory (train/dev-0/test-A).
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "kleister-charity"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["document_type"] = "charity_annual_report"
+
+    # Parse filename
+    match = _kleister_charity_re.match(image_path.name)
+    if match:
+        labels.raw_labels["doc_id"] = match.group("doc_id")
+        labels.raw_labels["page_num"] = int(match.group("page"))
+
+    # Determine split from path
+    for split_name in ("train", "dev-0", "test-A"):
+        if split_name in image_path.parts:
+            labels.raw_labels["split"] = split_name
+            break
+
+    return labels
+
+
+# NARA 1950 Census filename regex
+_nara_census_re = re.compile(
+    r"^(?P<census_id>\d+)-(?P<state_name>[A-Za-z_]+)-"
+    r"(?P<serial>\d+)-(?P<page>\d{4})\.jpg$"
+)
+
+
+def parse_nara_1950_census_labels(
+    dataset_path: Path, image_path: Path
+) -> OriginalLabels:
+    """Parse NARA 1950 Census enumeration schedule image labels.
+
+    Filename pattern: {census_id}-{StateName}-{serial}-{page:04d}.jpg
+    Nested in {StateName}/{census_id}-{StateName}-{serial}/ directories.
+    """
+    labels = OriginalLabels()
+    labels.language_code = "en"
+    labels.script_name = "Latin"
+    labels.iso15924_script_code = "Latn"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+    labels.raw_labels["dataset"] = "nara-1950-census"
+    labels.raw_labels["has_handwriting"] = True
+    labels.raw_labels["document_type"] = "census_enumeration_schedule"
+    labels.raw_labels["content_type"] = "handwritten_form"
+
+    # Parse filename
+    match = _nara_census_re.match(image_path.name)
+    if match:
+        labels.raw_labels["census_id"] = match.group("census_id")
+        labels.raw_labels["state_name"] = match.group("state_name")
+        labels.raw_labels["serial_number"] = match.group("serial")
+        labels.raw_labels["page_num"] = int(match.group("page"))
+
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -4964,6 +5570,15 @@ LABEL_PARSERS = {
     "parse_ndl_docl_labels": parse_ndl_docl_labels,
     "parse_pdmocr_labels": parse_pdmocr_labels,
     "parse_ndl_minhon_labels": parse_ndl_minhon_labels,
+    # Gap-closing parsers (2026-02)
+    "parse_egyptian_hw_labels": parse_egyptian_hw_labels,
+    "parse_salami_labels": parse_salami_labels,
+    "parse_ocr_drutsa_labels": parse_ocr_drutsa_labels,
+    "parse_gnhk_labels": parse_gnhk_labels,
+    "parse_signverod_labels": parse_signverod_labels,
+    "parse_popp_line_labels": parse_popp_line_labels,
+    "parse_kleister_charity_labels": parse_kleister_charity_labels,
+    "parse_nara_1950_census_labels": parse_nara_1950_census_labels,
 }
 
 

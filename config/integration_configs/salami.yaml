@@ -1,0 +1,34 @@
+# SALAMI dataset integration config
+# Source: Zenodo 4270352 (Statistical Analysis of Legibility Assessment Maps and Images)
+# License: CC-BY-4.0
+# Samples: 250 manuscript images with pixel-level legibility maps
+# Annotators: 20 experts, 4,811 region-level assessments
+# Languages: Armenian, Georgian, German, Gothic, Greek, Latin, Ottoman, Slavonic
+
+dataset_name: salami
+is_synthetic: false
+known_capture_method: scanner_flatbed
+
+# Multi-language: per-image language from images.json, do NOT set doc_language
+# Scripts vary: Armn, Geor, Latn, Goth, Grek, Arab, Cyrl
+
+# Versioning
+script_version: "1.1.0"
+enrichment_version_tag: integrated_v2
+enrichment_version_number: 2
+
+ki_config:
+  apply_ki_001_layout_casing: false  # Full manuscripts, no layout detection needed
+  layout_source: docling
+  apply_ki_002_table_override: false  # No tables in manuscripts
+  apply_ki_003_figure_override: false  # No figures
+  apply_ki_004_handwriting_override: false  # 100% handwriting by definition
+  apply_ki_005_capture_override: true
+  apply_ki_006_formula_override: false  # No formulas
+  apply_ki_008_script_family: true  # Multi-script, need per-image detection
+
+vlm_corrections:
+  table_true_positives: []
+  figure_true_positives: []
+  formula_true_positives: []
+  handwriting_true_positives: []

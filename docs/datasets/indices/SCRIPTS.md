@@ -29,10 +29,11 @@
 |---------|--------|---------|------|
 | arabic-docs-ocr | 10,045 | Arabic | [arabic-docs-ocr.md](../source/arabic-docs-ocr.md) |
 | muharaf | 24,952 | Arabic cursive (historical) | [muharaf.md](../source/muharaf.md) |
+| egyptian-handwriting | 11,216 | Arabic cursive (89 writers, CC-BY-4.0) | [egyptian-handwriting.md](../source/egyptian-handwriting.md) |
 | yarmouk-ocr | 15,062 | Arabic | [yarmouk-ocr.md](../source/yarmouk-ocr.md) |
 | pucit-ohul | 7,401 | Urdu | [pucit-ohul.md](../source/pucit-ohul.md) |
 
-**Total**: ~57K images
+**Total**: ~69K images
 **Scripts**: Arabic, Farsi, Urdu
 
 ---
@@ -85,15 +86,64 @@
 | Dataset | Images | Content | Link |
 |---------|--------|---------|------|
 | tibhcr | 141,698 | 47 character classes | [tibhcr.md](../source/tibhcr.md) |
+| openpecha-ocr-drutsa | 32,364 | Tibetan line-level OCR (CC-BY-4.0) | [openpecha-ocr-drutsa.md](../source/openpecha-ocr-drutsa.md) |
 | dzongkha-digits | 1,000 | 10 digit classes | [dzongkha-digits.md](../source/dzongkha-digits.md) |
 
-**Total**: ~143K images
+**Total**: ~175K images
+
+---
+
+### Armenian Script
+
+| Dataset | Images | Content | Link |
+|---------|--------|---------|------|
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+
+**Total**: 5 images (SALAMI subset)
+**Note**: Small sample count; SALAMI's value is legibility calibration, not script volume
+
+---
+
+### Georgian Script
+
+| Dataset | Images | Content | Link |
+|---------|--------|---------|------|
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+
+**Total**: 5 images (SALAMI subset)
+**Note**: Small sample count; SALAMI's value is legibility calibration, not script volume
+
+---
+
+### Gothic Script
+
+| Dataset | Images | Content | Link |
+|---------|--------|---------|------|
+| salami | 5 | Historical manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+
+**Total**: 5 images (SALAMI subset)
+**Note**: Only real-image source for Gothic script in corpus
 
 ---
 
 ### Cyrillic Script
 
-**Coverage**: Limited - available in MDIW13 and MLT19 multi-script datasets
+| Dataset | Images | Content | Link |
+|---------|--------|---------|------|
+| salami | 95 | Slavonic manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+
+**Coverage**: Limited - available in MDIW13, MLT19 multi-script datasets + SALAMI Slavonic subset
+**Dedicated Dataset**: None currently
+
+---
+
+### Greek Script
+
+| Dataset | Images | Content | Link |
+|---------|--------|---------|------|
+| salami | 60 | Greek manuscripts (legibility labels) | [salami.md](../source/salami.md) |
+
+**Coverage**: Limited - SALAMI Greek subset + MDIW13
 **Dedicated Dataset**: None currently
 
 ---
@@ -150,10 +200,10 @@
 | Script Family | Scripts | Datasets | Total Images |
 |---------------|---------|----------|--------------|
 | **Latin** | 15 languages | 6 datasets | ~738K |
-| **Arabic** | Arabic, Farsi, Urdu | 4 datasets | ~57K |
+| **Arabic** | Arabic, Farsi, Urdu | 5 datasets | ~69K |
 | **Indic** | Devanagari, Bengali, Telugu, Kannada, Tamil, Malayalam | 3 datasets | ~83K |
 | **CJK** | Chinese (Hans), Japanese (Jpan), Korean | 13 datasets | ~587K |
-| **Tibetan** | Tibetan, Dzongkha | 2 datasets | ~143K |
+| **Tibetan** | Tibetan, Dzongkha | 3 datasets | ~175K |
 | **Cyrillic** | Russian, Bulgarian, etc. | MDIW13 subset | TBD |
 | **Hebrew** | Hebrew | MDIW13 subset | TBD |
 

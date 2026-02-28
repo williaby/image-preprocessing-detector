@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Cross-reference grid mapping all 74 source datasets to the 22 training heads across
+purpose: Cross-reference grid mapping all 79 source datasets to the 22 training heads across
   MobileNetV4-Conv-S and SigLIP 2 NAFlex models. Derived by aggregating Section 13 from each
   dataset source file.
 schema_type: common
@@ -116,6 +116,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | doclaynet | ➖ | ➖ | 🟡 |
 | docreal | ❌ | ❌ | 🟡 |
 | docsynth | 🟡 | ➖ | 🟡 |
+| egyptian-handwriting | ❌ | ❌ | 🟡 |
 | document-haystack | ❌ | ❌ | ❌ |
 | drccbi | ❌ | ❌ | 🟡 |
 | dzongkha-digits | ❌ | ❌ | ❌ |
@@ -123,6 +124,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ➖ | ➖ | 🟡 |
 | funsd | 🟡 | 🟡 | 🟡 |
 | funsd-plus | 🟡 | 🟡 | 🟡 |
+| gnhk | ➖ | ➖ | 🟡 |
 | hasy | ❌ | ❌ | ❌ |
 | hiertext | ➖ | ➖ | 🟡 |
 | hindi-synth | ➖ | ➖ | 🟡 |
@@ -133,6 +135,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | invoices-kg | ✅ | ❌ | 🟡 |
 | jssoda | ✅ | ➖ | ➖ |
 | khatt | ❌ | ❌ | ❌ |
+| kleister-charity | ❌ | ❌ | ❌ |
 | kuzushiji | ❌ | ❌ | ➖ |
 | markushgrapher | ❌ | ❌ | 🟡 |
 | mathverse | ❌ | ❌ | ❌ |
@@ -142,6 +145,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | midv500 | ➖ | ❌ | ❌ |
 | mlt19 | 🟡 | ❌ | ➖ |
 | muharaf | ❌ | ❌ | 🟡 |
+| nara-1950-census | ❌ | 🟡 | ❌ |
 | multimodal-textbook | 🟡 | ➖ | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | 🟡 |
 | ndl-docl | 🟡 | 🟡 | 🟡 |
@@ -151,18 +155,22 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | 🟡 |
 | nist-sd6 | 🟡 | 🟡 | 🟡 |
 | ocr-quality | ❌ | ❌ | 🟡 |
+| openpecha-ocr-drutsa | ➖ | ➖ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | 🟡 |
+| popp-line | ➖ | ➖ | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | 🟡 | ❌ |
 | q-doc | ❌ | ❌ | 🟡 |
 | realdae | 🟡 | ❌ | 🟡 |
 | rvl-cdip | ✅ | 🟡 | 🟡 |
+| salami | ❌ | ❌ | 🟡 |
 | sd7k | 🟡 | ❌ | ❌ |
 | signatr6k | ➖ | ❌ | 🟡 |
+| signverod | ➖ | ➖ | 🟡 |
 | siw13 | ➖ | ➖ | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ |
 | sroie | ✅ | 🟡 | 🟡 |
@@ -195,6 +203,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | doclaynet | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | docreal | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | docsynth | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
+| egyptian-handwriting | 🟡 | ❌ | 🟡 | ❌ | ❌ | 🟡 |
 | document-haystack | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | drccbi | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | dzongkha-digits | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -202,6 +211,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | fintabnet | ➖ | ➖ | 🟡 | ➖ | 🟡 | 🟡 |
 | funsd | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ |
 | funsd-plus | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ |
+| gnhk | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | hasy | ➖ | ➖ | ❌ | ❌ | ❌ | ❌ |
 | hiertext | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | hindi-synth | 🟡 | 🟡 | 🟡 | ➖ | ❌ | 🟡 |
@@ -212,6 +222,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | invoices-kg | ➖ | ➖ | 🟡 | ❌ | 🟡 | 🟡 |
 | jssoda | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | khatt | 🟡 | 🟡 | 🟡 | ❌ | 🟡 | 🟡 |
+| kleister-charity | 🟡 | 🟡 | 🟡 | 🟡 | ❌ | ❌ |
 | kuzushiji | ➖ | ➖ | ➖ | ❌ | ➖ | ❌ |
 | markushgrapher | 🟡 | 🟡 | 🟡 | ❌ | 🟡 | 🟡 |
 | mathverse | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -221,6 +232,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | midv500 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | mlt19 | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | muharaf | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
+| nara-1950-census | 🟡 | ➖ | 🟡 | ❌ | ➖ | 🟡 |
 | multimodal-textbook | 🟡 | 🟡 | 🟡 | ➖ | ✅ | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
 | ndl-docl | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
@@ -230,18 +242,22 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | nist-sd6 | 🟡 | 🟡 | ➖ | 🟡 | ❌ | 🟡 |
 | ocr-quality | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| openpecha-ocr-drutsa | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| popp-line | 🟡 | 🟡 | 🟡 | ❌ | 🟡 | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | ➖ | ➖ | ➖ | ➖ | ➖ | ❌ |
 | q-doc | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ✅ |
 | realdae | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ |
 | rvl-cdip | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | ✅ |
+| salami | 🟡 | 🟡 | 🟡 | ❌ | ❌ | 🟡 |
 | sd7k | ➖ | 🟡 | ✅ | ❌ | ❌ | 🟡 |
 | signatr6k | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ |
+| signverod | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | siw13 | 🟡 | 🟡 | 🟡 | ➖ | 🟡 | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | sroie | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ |
@@ -275,12 +291,14 @@ title: Dataset ↔ Training Head Coverage Reference
 | docreal | 🟡 |
 | docsynth | 🟡 |
 | document-haystack | ❌ |
+| egyptian-handwriting | ✅ |
 | drccbi | ❌ |
 | dzongkha-digits | 🟡 |
 | financebench | ❌ |
 | fintabnet | ✅ |
 | funsd | ✅ |
 | funsd-plus | ✅ |
+| gnhk | ✅ |
 | hasy | ❌ |
 | hiertext | ✅ |
 | hindi-synth | ✅ |
@@ -291,6 +309,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | invoices-kg | ✅ |
 | jssoda | ✅ |
 | khatt | 🟡 |
+| kleister-charity | 🟡 |
 | kuzushiji | ✅ |
 | markushgrapher | ❌ |
 | mathverse | ❌ |
@@ -300,6 +319,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | midv500 | ✅ |
 | mlt19 | ✅ |
 | muharaf | ✅ |
+| nara-1950-census | ✅ |
 | multimodal-textbook | ✅ |
 | multilingual-scripts | ✅ |
 | ndl-docl | ✅ |
@@ -311,16 +331,20 @@ title: Dataset ↔ Training Head Coverage Reference
 | ocr-quality | 🟡 |
 | ohr-bench | ❌ |
 | omnidocbench | 🟡 |
+| openpecha-ocr-drutsa | ✅ |
 | openlid-v2 | ❌ |
 | pdmocr-part1 | ✅ |
 | pdmocr-part2 | ✅ |
+| popp-line | ✅ |
 | pubtabnet | 🟡 |
 | pucit-ohul | ✅ |
 | q-doc | ❌ |
 | realdae | 🟡 |
 | rvl-cdip | 🟡 |
+| salami | ✅ |
 | sd7k | ➖ |
 | signatr6k | ➖ |
+| signverod | ✅ |
 | siw13 | ✅ |
 | smartdoc-qa | ❌ |
 | sroie | ✅ |
@@ -354,12 +378,14 @@ title: Dataset ↔ Training Head Coverage Reference
 | docreal | ❌ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | 🟡 | ✅ | ➖ | 🟡 |
 | docsynth | 🟡 | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | 🟡 |
 | document-haystack | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| egyptian-handwriting | ❌ | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | drccbi | ❌ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | 🟡 | ✅ | ❌ | 🟡 |
 | dzongkha-digits | ❌ | ❌ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ |
 | financebench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | fintabnet | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | ➖ | 🟡 |
 | funsd | 🟡 | 🟡 | ✅ | 🟡 | 🟡 | ✅ | 🟡 | ✅ | 🟡 | ➖ | ➖ | 🟡 |
 | funsd-plus | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | 🟡 | ➖ | ➖ | 🟡 |
+| gnhk | ➖ | ➖ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | hasy | ❌ | ❌ | 🟡 | 🟡 | ✅ | ➖ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ |
 | hiertext | ➖ | ➖ | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | 🟡 | ➖ | 🟡 | 🟡 |
 | hindi-synth | ➖ | ➖ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
@@ -370,6 +396,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | invoices-kg | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ❌ | 🟡 |
 | jssoda | ✅ | ➖ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ |
 | khatt | ❌ | ❌ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ |
+| kleister-charity | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | kuzushiji | ❌ | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ➖ |
 | markushgrapher | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
 | mathverse | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -379,6 +406,7 @@ title: Dataset ↔ Training Head Coverage Reference
 | midv500 | ➖ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | 🟡 | ❌ | ❌ | ❌ |
 | mlt19 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ➖ | ➖ | ❌ | ➖ |
 | muharaf | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| nara-1950-census | ❌ | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | multimodal-textbook | 🟡 | ➖ | ✅ | ✅ | ✅ | 🟡 | ➖ | ✅ | ➖ | ➖ | 🟡 | 🟡 |
 | multilingual-scripts | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ➖ | ➖ | ➖ | ❌ | 🟡 |
 | ndl-docl | 🟡 | 🟡 | ✅ | 🟡 | 🟡 | ✅ | 🟡 | ✅ | 🟡 | ❌ | ❌ | 🟡 |
@@ -388,18 +416,22 @@ title: Dataset ↔ Training Head Coverage Reference
 | nist-sd2 | ➖ | ➖ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ➖ | ➖ | ➖ | 🟡 |
 | nist-sd6 | 🟡 | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | ocr-quality | ❌ | ❌ | ➖ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| openpecha-ocr-drutsa | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | ohr-bench | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | omnidocbench | ➖ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ➖ | ❌ | ❌ | 🟡 | ➖ |
 | openlid-v2 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | pdmocr-part1 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
 | pdmocr-part2 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ❌ | ❌ | 🟡 |
+| popp-line | ➖ | ➖ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | pubtabnet | ➖ | ➖ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | pucit-ohul | 🟡 | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | q-doc | ❌ | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | 🟡 | 🟡 | 🟡 | ➖ | ✅ |
 | realdae | 🟡 | ❌ | ➖ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | 🟡 | ➖ | 🟡 |
 | rvl-cdip | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| salami | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | sd7k | 🟡 | ❌ | ➖ | ❌ | ❌ | ➖ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | signatr6k | ➖ | ❌ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| signverod | ➖ | ➖ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | siw13 | ➖ | ➖ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | 🟡 | ➖ | ✅ | 🟡 |
 | smartdoc-qa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | sroie | ✅ | 🟡 | 🟡 | ➖ | ➖ | 🟡 | ➖ | ✅ | 🟡 | 🟡 | ❌ | 🟡 |
@@ -1158,6 +1190,23 @@ resolved via enrichment before using domain-stratified splits.
 **Ground Truth**: Expert human annotations via PAGE XML (W3C standard); 24,495 line-level transcriptions authored by Arabic manuscript specialists at Phoenix Center for Lebanese Studies (USEK), Tier 1 provenance. QA metadata embedded in PAGE XML (Creator + transcription_QA fields).
 
 **L2 Metadata**: Available — 25,711 total samples. Key fields: domain (top 3: UNK 50.3%, ADM 26.9%, PER 12.4%), script_codes (Arab: 100%), capture_methods (scanner: 100%), content_flags (has_handwriting: 100%, has_signature: 100%).
+
+### nara-1950-census
+
+NARA 1950 Census is a **primary contributor for handwriting presence detection (SIG-G4-1)** and **mixed typed+handwritten content type classification (SIG-G4-3)**, providing 695 scanned census enumeration schedules where 100% of data content is handwritten on pre-printed tabular government forms. It is also a **primary contributor for scanner capture method (SIG-G5-1)** and **Administrative/Government domain classification**. The dataset fills gap SIG-G4-3 (mixed typed+HW) and SIG-G4-1 (handwriting in structured documents). Public Domain license permits unrestricted commercial use with no attribution required. Current sample is 695 images from Alabama; target is ~25K stratified across all states.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 695 | Current partial Alabama sample |
+| Val   | — | No val split defined yet |
+| Test  | — | No test split defined yet |
+| OOD   | — | Not a benchmark-only dataset |
+
+**Ground Truth**: Filename-derived metadata (census_id, state, serial, page) extracted by parser; no human annotation of content labels. Handwriting presence is 100% by dataset nature (all pages are handwritten census forms). Provenance Tier 3 (Heuristic — dataset-level labels from known content).
+
+**L2 Metadata**: Not yet available.
 
 ### multimodal-textbook
 

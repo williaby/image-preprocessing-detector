@@ -27,13 +27,13 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 54/73 datasets training-ready (74.0%), 2 benchmark-ready
+**Current Status**: 56/74 datasets training-ready (75.7%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 54 | 74.0% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 56 | 75.7% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 11 | 15.1% | Format conversion, label extraction, or generating |
+| 🔄 **In Progress** | 11 | 14.9% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
 | ❌ **Blocked** | 5 | 6.8% | Fundamental issue preventing use |
 
@@ -41,7 +41,7 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (48 datasets)
+### ✅ Training-Ready (56 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -55,6 +55,8 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | diqa-5000 | 5,500 | ✅ JPG | ✅ MOS scores | ✅ Complete | IQA benchmark |
 | doclaynet | 80,863 | ✅ PNG | ✅ COCO boxes | ✅ Complete | 11 DocLayNet classes |
 | dzongkha-digits | 1,000 | ✅ PNG | ✅ Class labels | ✅ Complete | Dzongkha digit recognition |
+| egyptian-handwriting | 11,216 | ✅ Parquet | ✅ Word labels | 🔄 Parser ready | Arabic cursive HW (89 writers, CC-BY-4.0) |
+| gnhk | 687 | ✅ JPG | ✅ Word polygons | 🔄 Parser ready | English HW + legibility tags (CC-BY-4.0) |
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |
@@ -66,11 +68,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
+| kleister-charity | 62,029 | ✅ PNG | ✅ KIE fields + HW/signature | ✅ Complete | UK charity annual reports (MIT); 2,776 PDFs rendered to 62K pages; Layer 1 complete |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
+| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | 🔄 Downloading | US census HW forms (Public Domain); 25K stratified sample, download in progress |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
@@ -86,12 +90,16 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | pubtabnet | 519,030 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Research papers |
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
 | rvl_cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
+| salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0) |
+| signverod | 2,765 | ✅ PNG/JPEG | ✅ Sig/init/redact/date bboxes | 🔄 Parser ready | Signature detection (CC0-1.0) |
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
 | siw13 | 16,291 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | smartdoc-qa | 4,280 | ✅ JPG | ✅ Quality + mobile | ✅ Complete | Mobile capture QA |
 | sroie | 973 | ✅ JPG | ✅ Quad + OCR + Entities | ✅ Complete | Malaysian receipts (ICDAR 2019) |
 | synthetic_iqa | 9 | ✅ PNG | ✅ Quality scores | ✅ Complete | Prototype samples |
 | tablebank | 278,582 | ✅ JPG | ✅ COCO boxes | ✅ Complete | Table regions |
+| openpecha-ocr-drutsa | 32,364 | ✅ Parquet→PNG | ✅ OCR text | 🔄 Parser ready | Tibetan line-level OCR (CC-BY-4.0) |
+| popp-line | 4,794 | ✅ Arrow→PNG | ✅ Text transcriptions | 🔄 Parser ready | French census handwriting (CC-BY-4.0) |
 | tibhcr | 141,698 | ✅ JPG | ✅ Character labels | ✅ Complete | 47 Tibetan classes, 235 writers |
 | tobacco800 | 1,290 | ✅ PNG | ✅ Degradation labels | ✅ Complete | Archival scans |
 | yarmouk_ocr | 15,062 | ✅ PNG | ✅ OCR text | ✅ Complete | Arabic documents |
@@ -574,7 +582,7 @@ Before marking a dataset as ✅ Training-Ready, complete:
 ## Related Documentation
 
 - **Quick Reference**: [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) - Training-focused lookup
-- **Individual Datasets**: [source/](source/) - 68 individual dataset files
+- **Individual Datasets**: [source/](source/) - 83 individual dataset files
 - **Task Indices**: [indices/](indices/) - 7 task-based training recipes
 - **Naming Standard**: [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md) - Canonical names and aliases
 - **Label Mapping**: [../schema/LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) - Schema mappings

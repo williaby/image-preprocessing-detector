@@ -97,9 +97,13 @@ VALID_SCRIPTS: frozenset[str] = frozenset(SCRIPT_ML_CLASSES)
 VALID_SOURCES: frozenset[str] = frozenset(
     ("scanned", "camera", "born_digital", "synthetic")
 )
-# ISO 15924 folder names in synth-multiscript-v3 reserved for OOD evaluation.
-# Must stay in sync with OOD_ONLY_SCRIPTS in scripts/generate_base_dataset_v3.py.
-_V3_OOD_ISO_FOLDERS: frozenset[str] = frozenset({"Geor", "Mong", "Syrc"})
+# ISO 15924 codes reserved exclusively for OOD evaluation across ALL data sources.
+# Superset of OOD_ONLY_SCRIPTS in scripts/generate_base_dataset_v3.py (adds Goth).
+# Armn/Goth: only 5 SALAMI samples each — too few for training, reserved for OOD.
+# Goth is not in v3 synthetic data but exists in SALAMI real data.
+OOD_RESERVED_SCRIPTS: frozenset[str] = frozenset(
+    {"Armn", "Geor", "Goth", "Mong", "Syrc"}
+)
 VALID_ORIENTATIONS: frozenset[int] = frozenset((0, 90, 180, 270))
 
 # L2 capture_method → training source class (4-class: born_digital/scanned/camera/synthetic)
@@ -1143,7 +1147,7 @@ def script(
     synth_pool: dict[str, list[dict[str, Any]]] = {}
     if not dry_run:
         synth_pool = _load_v3_script_records(
-            v3_gcs_prefix, exclude_scripts=set(_V3_OOD_ISO_FOLDERS)
+            v3_gcs_prefix, exclude_scripts=set(OOD_RESERVED_SCRIPTS)
         )
     else:
         logger.info(

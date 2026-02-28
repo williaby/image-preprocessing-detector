@@ -40,23 +40,29 @@
 
 ## Script Reservation Policy
 
-Three scripts are permanently excluded from training data and reserved exclusively for OOD
-evaluation. These are chosen to cover all three major text direction axes:
+Five scripts are permanently excluded from training data and reserved exclusively for OOD
+evaluation. The original three direction anchors cover all major text direction axes; two
+additional scripts were added from SALAMI (5 samples each — too few for meaningful training
+contribution, ideal as OOD anchors for historical manuscript evaluation).
 
 | Reserved Script | ISO 15924 | Direction | Source Strategy |
 | --- | --- | --- | --- |
+| Armenian | Armn | LTR (unique alphabet) | SALAMI historical manuscripts (5 images) |
+| Georgian | Geor | Left-to-right (LTR, unique letterforms) | SALAMI (5 images) + National Parliamentary Library of Georgia archives |
+| Gothic | Goth | LTR (historical, extinct script) | SALAMI historical manuscripts (5 images) |
 | Mongolian Traditional | Mong | Top-to-bottom (TTB) | MTHv2 dataset + synth-v3 extract |
 | Syriac | Syrc | Right-to-left (RTL) | SANA / OpenITI Syriac manuscripts |
-| Georgian | Geor | Left-to-right (LTR, unique letterforms) | National Parliamentary Library of Georgia archives |
 
-**Enforcement**: Any training manifest containing images with `script` field in
-`{"Mong", "Syrc", "Geor"}` must be rejected at training time (see
-[Reserved Script Guard](#reserved-script-guard)).
+**Enforcement**: Any training manifest containing images with ISO 15924 script in
+`{"Armn", "Geor", "Goth", "Mong", "Syrc"}` must be rejected at training time (see
+[Reserved Script Guard](#reserved-script-guard)). Enforced by `OOD_RESERVED_SCRIPTS` in
+`scripts/prepare_multitask_datasets.py` and `OOD_ONLY_SCRIPTS` in
+`scripts/generate_base_dataset_v3.py`.
 
-**Important**: These 3 scripts are training-exclusion *anchors*. OOD may freely include
-additional scripts beyond these 3. Conversely, any script in the OpenLID-expanded training set
+**Important**: These 5 scripts are training-exclusion *anchors*. OOD may freely include
+additional scripts beyond these 5. Conversely, any script in the OpenLID-expanded training set
 (see [Training Scope](#training-scope-and-openlid-coverage)) is only truly OOD for the script
-head if it is one of these 3 reserved scripts or belongs to a font variation category.
+head if it is one of these 5 reserved scripts or belongs to a font variation category.
 
 ---
 
@@ -88,10 +94,12 @@ Tibt, Arab, Deva, Cyrl, Thai, Hebr).
 
 **Implications for OOD design:**
 
-1. Scripts added in Phase 2+ (e.g., Greek, Armenian, Ethiopic, Tamil, Burmese) become
+1. Scripts added in Phase 2+ (e.g., Greek, Ethiopic, Tamil, Burmese) become
    in-training scripts and are no longer truly OOD for the script head. They may still
    provide OOD coverage for other heads (handwriting, geometry, capture method).
-2. The 3 reserved scripts (Mong, Syrc, Geor) remain OOD **regardless** of OpenLID coverage.
+   Note: Armenian (Armn) is now permanently reserved for OOD (moved from Phase 2+ candidate
+   to reserved anchor due to insufficient training data — only 5 SALAMI samples).
+2. The 5 reserved scripts (Armn, Geor, Goth, Mong, Syrc) remain OOD **regardless** of OpenLID coverage.
 3. OOD-Script must include a Phase 2 preview sub-set (scripts that will enter training in
    Phase 2 but are not yet in Phase 1): these evaluate open-set rejection behavior.
 4. After each training phase expansion, OOD-Script should be re-evaluated: any script that

@@ -100,8 +100,11 @@ iso15924_to_ml_class:
   Mymr: SE_ASIAN_OTHER  # Myanmar
 
   # European scripts -> OTHER (limited data)
-  Armn: OTHER   # Armenian
-  Geor: OTHER   # Georgian
+  # NOTE: Armn, Geor, Goth are OOD-reserved — excluded from training manifests.
+  # They map to OTHER here for schema completeness but must never appear in training.
+  Armn: OTHER   # Armenian (OOD-reserved: 5 SALAMI samples only)
+  Geor: OTHER   # Georgian (OOD-reserved: direction anchor LTR)
+  Goth: OTHER   # Gothic (OOD-reserved: 5 SALAMI samples only)
 
   # African scripts -> OTHER
   Ethi: OTHER   # Ethiopic

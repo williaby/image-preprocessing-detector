@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (64 total)
+### All Datasets (81 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
@@ -63,6 +63,7 @@ title: Dataset Naming Standard
 | `docsynth` | docsynth300k | docsynth_300k, docsynth-300k | 🔄 | Synthetic documents (300K) |
 | `docreal` | docreal | doc_real, doc-real | ✅ | Real-world dewarping (200 images), audit Grade D* |
 | `dzongkha-digits` | dzongkha_digits | dzongkha-digits, dzongkha_digits | ✅ | Dzongkha handwritten digits (Tibetan script) |
+| `egyptian-handwriting` | egyptian_handwriting | egyptian-hw, egyptian_hw | ✅ | Egyptian Arabic cursive handwriting (11,216 words, 89 writers, CC-BY-4.0) |
 | `financebench` | financebench | finance-bench | 🔄 | Financial RAG QA |
 | `fintabnet` | fintabnet | fin-tab-net | ✅ | Financial tables |
 | `funsd` | funsd | - | ✅ | Form understanding (noisy scans) |
@@ -75,6 +76,7 @@ title: Dataset Naming Standard
 | `indicdlp` | IndicDLP | indic-dlp, indic_dlp, indicdlp | ✅ | Indic Document Layout Parser (119K images, 42 classes, 12 languages) |
 | `invoices-kg` | invoices_kaggle | invoices_kaggle, kaggle-invoices | ✅ | Kaggle invoices dataset |
 | `jssoda` | jssoda | JSSODa (HuggingFace capitalization) | ✅ | Japanese Simple Synthetic OCR Dataset (2,000 images, synthetic, orientation + script training) |
+| `kleister-charity` | kleister_charity | kleister-charity-documents, kleister_charity | ✅ | Kleister Charity — ~20,000 pages from 3,414 UK charity PDFs (gov.uk, mixed HW/typed, MIT) |
 | `mathverse` | mathverse | math-verse | ✅ | Multi-modal math problems |
 | `markushgrapher` | MarkushGrapher | markush_grapher, markush-grapher | ✅ | Chemical structure recognition (235K, DS4SD) |
 | `mdiw13` | mdiw13 | mdiw-13, mdiw_13 | ✅ | Multi-lingual document image words (13 scripts) |
@@ -88,6 +90,7 @@ title: Dataset Naming Standard
 | `multimodal-textbook` | multimodal_textbook | multimodal_textbook | ✅ | STEM textbook pages |
 | `openlid-v2` | openlid_v2 | openlid-v2, openlid2 | 📚 | OpenLID v2 text corpus (201 languages, 116M+ samples) |
 | `muharaf` | muharaf | muharaf_arabic_manuscripts | 🔄 | Arabic historical manuscripts |
+| `nara-1950-census` | nara_1950_census | nara_1950_census | ✅ | NARA 1950 Census enumeration schedules (695 images, Public Domain) |
 | `ndl-docl` | ndl_docl | ndl-layout-dataset, layout-dataset | 🔄 | NDL Document Layout Dataset — 2,290 Japanese library scans with VOC layout annotations (kuzushiji + modern) |
 | `ndl-minhon` | ndl_minhon | minhon, ndl-minhon-ocr | 🔄 | NDL Classical Books OCR Dataset (Minna de Honkoku) — 32,822 kuzushiji pages, 523K line annotations, CC-BY-SA 4.0 |
 | `nepali-handwritten` | nepali_handwritten | nepali_handwritten | ✅ | Nepali handwriting |
@@ -104,6 +107,7 @@ title: Dataset Naming Standard
 | `q-doc` | Q-Doc | qdoc, q_doc | ✅ | Document quality assessment benchmark (4,260 images) |
 | `realdae` | realdae | real-dae | ✅ | Real document auto-enhancement |
 | `rvl-cdip` | rvl_cdip | rvl_cdip, rvlcdip | ✅ | RVL-CDIP document classification |
+| `salami` | salami | salami-legibility | ✅ | SALAMI legibility assessment (250 images, 20 experts, 8 scripts, CC-BY-4.0) |
 | `sd7k` | sd7k | sd_7k, docshadow_sd7k | ✅ | Document shadow removal (7,239 images), audit Grade D* |
 | `signatr6k` | signatr6k | signatr-6k, signature-6k | ✅ | Text segmentation (signatures) |
 | `siw13` | siw13 | siw-13, siw_13 | ✅ | Script identification words (13 scripts) |
@@ -114,6 +118,10 @@ title: Dataset Naming Standard
 | `synth-multiscript-v3` | synth_multiscript_v3 | synth-multiscript-v3, synthetic_v3 | ✅ | Synthetic multi-script v3 (350,012 images, 27 scripts, GCS-complete — ⚠️ imbalanced distribution) |
 | `synthetic-iqa` | synthetic_iqa | synthetic_iqa | ✅ | Synthetic IQA test samples |
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |
+| `gnhk` | GNHK | gnhk-dataset, goodnotes-handwriting | ✅ | English handwriting with legibility tags (687 images) |
+| `openpecha-ocr-drutsa` | OCR-Drutsa | openpecha_ocr_drutsa, ocr-drutsa | ✅ | Tibetan line-level OCR (32K images) |
+| `popp-line` | POPP-line | popp_line, popp-datasets, teklia-popp | ✅ | French census handwriting lines (4,794 images) |
+| `signverod` | SignverOD | signver-od, signature-verification-od | ✅ | Signature detection on scanned docs (2,765 images) |
 | `tibhcr` | TibHCR | Tibetan Handwritten Character Recognition | ✅ | Tibetan handwriting |
 | `tobacco800` | tobacco800 | tobacco-800 | ✅ | Tobacco 800 degraded docs |
 | `vjroda` | vjroda | vj-roda, vjroda-dataset | 🔄 | Vertical Japanese Real-world OCR Dataset — 100 government PDF pages, born-digital, OOD evaluation |
