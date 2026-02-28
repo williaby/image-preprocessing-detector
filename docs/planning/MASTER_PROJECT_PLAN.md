@@ -584,6 +584,16 @@ discovered. The remaining ~159,515 images (to reach the 350K target) must be gen
 > - **Prerequisite**: Verify the per-script dict fix is active before running
 > - **Retention note**: v3 to be retained until Phase D sampling (resolution quality,
 >   §Stream 5) completes, as Phase D samples 3–5K from v3 on GCS for script diversity
+>
+> **v4 Font Infrastructure (COMPLETE, 2026-02-28)**:
+>
+> - 14 adversarial fonts downloaded (`scripts/download_adversarial_fonts.sh`)
+> - ADVERSARIAL tiers populated for 11 scripts in `config.py:FONT_RECOMMENDATIONS`
+> - `fonts.py:FONT_NAME_TO_SCRIPT` updated with all 14 fonts
+> - MANIFEST.json updated (241 -> 255 fonts)
+> - OOD `render-font-variations` expanded: 4 -> 11 scripts, +case variation, +mimicry, +9c-4 cross-script
+> - 23 new tests in `test_font_tiered_sampling.py` (all passing)
+> - Strategy doc: [V4_FONT_DIVERSITY_STRATEGY.md](V4_FONT_DIVERSITY_STRATEGY.md) (Phase A-B Complete)
 
 #### Stream 4C: OOD corpus build (9,170 → 12,000 images)
 
@@ -1053,7 +1063,7 @@ Each student stage targets the same 16 prediction heads with progressive latency
 
 | Dataset | Done | Target | Next Action | Blocker |
 | --- | --- | --- | --- | --- |
-| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 script ready |
+| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 font infrastructure COMPLETE (14 adversarial fonts, 11-script ADVERSARIAL tiers, OOD rendering expanded); generation script ready |
 | Resolution quality | 5.5K | 15–20K (sweet spot) | Phase A: label RealDAE+RVL-CDIP+Tobacco800 (7.5K); Phase B: multi-DPI DocLayNet renders (7K); Phase C: confound sub-dataset (2K mandatory); V2 deferred to Phase 3 | ~3 days total; Vultr A100 GPU |
 | IQA (corpus-wide) | ~14K hard | ≥125K (gate); ~440K actual | Validate MUSIQ+TOPIQ-NR SRCC ≥ 0.55 on DIQA-5000; then run on full ~440K corpus; 14K hard labels serve as tier_1 calibration anchors | IQA labeling script |
 | HW presence mid-range | 0 | ~16.5–22K | Part 1: Generate NIST contact sheets (~3,400); Part 2: Label presence_reg on Kleister Charity, NARA, SD-2, SD-6, GNHK, Popp-Line | Contact sheet + labeling scripts |
