@@ -5,7 +5,7 @@ source_url: https://1950census.archives.gov/
 license: Public Domain
 total_images: 25000 (stratified sample across 55 states; full dataset ~6.5M pages)
 format: JPEG (scanned page images)
-status: in-progress
+status: training-ready
 documentation_status: complete
 ---
 
@@ -55,7 +55,8 @@ SPDX: `LicenseRef-PublicDomain-USGov`
 | Metric | Value |
 |--------|-------|
 | Total pages (full dataset) | ~6.5 million |
-| Current sample | 25,000 (stratified, download in progress) |
+| Current sample | 25,000 (stratified, download complete) |
+| Sample size on disk | 133 GB |
 | States represented | 55 (of 57 with metadata) |
 | States/territories | 57 (50 states + DC + territories) |
 | Format | JPEG (scanned) |
@@ -117,7 +118,7 @@ Labels extracted:
 | Parser | Done (`parsers/document/nara_1950_census.py`) |
 | DatasetConfig | Done (in `annotate_base_metadata.py`) |
 | `__init__.py` registration | Done |
-| Layer 1 scan | Pending (25K download in progress, ~3K of 25K downloaded) |
+| Layer 1 scan | Done (25,000 samples, 68 MB metadata) |
 | Cross-reference docs | Done |
 
 ## 9. IQA Sensitivity

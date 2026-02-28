@@ -27,11 +27,11 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 56/74 datasets training-ready (75.7%), 2 benchmark-ready
+**Current Status**: 61/79 datasets training-ready (77.2%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 56 | 75.7% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 61 | 77.2% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
 | 🔄 **In Progress** | 11 | 14.9% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
@@ -41,7 +41,7 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (56 datasets)
+### ✅ Training-Ready (61 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -60,13 +60,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |
-| hasyv2 | 168,233 | ✅ PNG | ✅ Symbol labels | ✅ Complete | Math symbols |
+| hasy | 168,233 | ✅ PNG | ✅ Symbol labels | ✅ Complete | Math symbols |
 | hiertext | 11,639 | ✅ PNG | ✅ Word-level labels | ✅ Complete | Gold standard for graded handwriting |
-| hindi_ocr_synthetic | 80,009 | ✅ PNG | ✅ OCR text | ✅ Complete | Synthetic Hindi |
+| hindi-synth | 80,009 | ✅ PNG | ✅ OCR text | ✅ Complete | Synthetic Hindi |
 | indicdlp | 115,803 | ✅ PNG (extracted) | ✅ COCO boxes (42 layout classes) | ✅ Complete | 12 Indic languages, 126K extracted, 115,803 annotated. MIT license. |
 | im2latex | 10,000 | ✅ PNG | ✅ Formula labels | ✅ Complete | Math formulas |
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
-| invoices_kaggle | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
+| invoices-kg | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
 | kleister-charity | 62,029 | ✅ PNG | ✅ KIE fields + HW/signature | ✅ Complete | UK charity annual reports (MIT); 2,776 PDFs rendered to 62K pages; Layer 1 complete |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
@@ -74,13 +74,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
-| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | 🔄 Downloading | US census HW forms (Public Domain); 25K stratified sample, download in progress |
+| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | ✅ Complete | US census HW forms (Public Domain); 25K stratified across 55 states; Layer 1 complete |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
-| multilingual_scripts | 3,279 | ✅ PNG | ✅ Script labels | ✅ Complete | 27 scripts synthetic |
+| multilingual-scripts | 3,279 | ✅ PNG | ✅ Script labels | ✅ Complete | 27 scripts synthetic |
 | multimodal-textbook | 1,113 | ✅ PNG | ⚠️ Sample only | ⚠️ Partial | STEM content (sample, no Parquet) |
-| nepali_handwritten | 958 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Devanagari handwriting |
+| nepali-handwritten | 958 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Devanagari handwriting |
 | nist-sd2 | 5,590 | ✅ PNG | ✅ Form labels (.fmt) | ✅ Complete | Tax forms, splits created |
 | nist-sd6 | 5,595 | ✅ PNG | ✅ Form + handwriting | ✅ Complete | Forms with handprint |
 | nist-sd19 | 3,669 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Digits + letters |
@@ -89,7 +89,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | pucit-ohul | 7,401 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Urdu handwriting |
 | pubtabnet | 519,030 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Research papers |
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
-| rvl_cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
+| rvl-cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
 | salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0) |
 | signverod | 2,765 | ✅ PNG/JPEG | ✅ Sig/init/redact/date bboxes | 🔄 Parser ready | Signature detection (CC0-1.0) |
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
@@ -102,7 +102,12 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | popp-line | 4,794 | ✅ Arrow→PNG | ✅ Text transcriptions | 🔄 Parser ready | French census handwriting (CC-BY-4.0) |
 | tibhcr | 141,698 | ✅ JPG | ✅ Character labels | ✅ Complete | 47 Tibetan classes, 235 writers |
 | tobacco800 | 1,290 | ✅ PNG | ✅ Degradation labels | ✅ Complete | Archival scans |
-| yarmouk_ocr | 15,062 | ✅ PNG | ✅ OCR text | ✅ Complete | Arabic documents |
+| yarmouk | 15,062 | ✅ PNG | ✅ OCR text | ✅ Complete | Arabic documents |
+| casia-hwdb2 | 5,091 | ✅ DGRL | ✅ Char bboxes + GB2312 | ✅ Complete | Chinese page-level HW (1,019 writers), Academic license |
+| casia-hwdb2-line | 52,160 | ✅ Parquet→JPEG | ✅ Text transcriptions | ✅ Complete | Chinese HW line crops (Teklia HF edition), MIT |
+| iiit-hw-hindi | 95,430 | ✅ Parquet→JPEG | ✅ Devanagari text | ✅ Complete | Hindi word-level HW (CVIT IIIT), Research license |
+| khatt | ~1,633 | ✅ TIF/JPG | ✅ Arabic text + XLSX GT | ✅ Complete | Arabic paragraph-level HW (1,000 writers), Academic |
+| kuzushiji | 481,336 | ✅ NPZ arrays | ✅ Class labels (3,891 classes) | ✅ Complete | Pre-modern Japanese cursive (K-MNIST/K-49/K-Kanji), CC-BY-SA-4.0 |
 
 ---
 
@@ -200,7 +205,7 @@ Fundamental issues preventing use for image-based training.
 | Dataset | Status | Issue | Resolution |
 |---------|--------|-------|------------|
 | **iam** | ❌ No base metadata | Images ready (130K PNG, 6.4GB) but no metadata generated | Run `annotate_base_metadata.py` on IAM images (requires GPU for DocLayout-YOLO). Audit grade: F (36.4) |
-| **wili_2018** | ❌ Text-only | No visual component (text corpus only) | **Cannot use for image training**. Useful for language ID if needed, but not applicable to visual IQA/layout tasks. |
+| **wili-2018** | ❌ Text-only | No visual component (text corpus only) | **Cannot use for image training**. Useful for language ID if needed, but not applicable to visual IQA/layout tasks. |
 | **q-doc** | ❌ Images not available | GitHub repo is code-only (VLM eval scripts), no images hosted publicly | Contact authors for image access. Parser ready (`QDocParser`), needs images to generate L2 metadata. IQA benchmark, license TBD. |
 
 ---
@@ -392,7 +397,7 @@ All extracted text + layout stored at: `metadata_registry/extracted/{dataset_nam
 | pubtabnet | 500,777 | 9,115 | 9,138 | Official PubTabNet |
 | tablebank | 260,582 | 10,000 | 8,000 | Official TableBank |
 | funsd | 199 | - | 199 | Official FUNSD |
-| hasyv2 | 151,410 | - | 16,823 | Official HASYv2 |
+| hasy | 151,410 | - | 16,823 | Official HASYv2 |
 | mlt19 | 10,000 | 2,000 | 8,000 | Official MLT-19 |
 | cocotext | 43,686 | 10,000 | 10,000 | Official COCO-Text |
 | mdiw13 | 232,170 | - | 58,043 | Competition test |
