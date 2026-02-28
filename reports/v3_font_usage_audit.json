@@ -1,0 +1,611 @@
+{
+  "v3_dir": "/mnt/e/image_detection/datasets/synth-multiscript-v3",
+  "sample_size_per_script": 200,
+  "total_scripts_analyzed": 27,
+  "scripts_with_single_primary_font": 5,
+  "diagnosis": "CONFIRMED: Dead code bug \u2014 renderer always picked fonts[0]. 5/27 scripts used exactly one primary font across all sampled images.",
+  "per_script": [
+    {
+      "script": "Arab",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 8,
+      "unique_primary_fonts": 7,
+      "primary_font_distribution": {
+        "NotoSansDevanagari-Regular": 111,
+        "NotoKufiArabic-Regular": 76,
+        "NotoSansGujarati-Regular": 4,
+        "NotoRashiHebrew-Regular": 4,
+        "NotoSansCJK-Black": 3,
+        "NotoSansTelugu-Regular": 1,
+        "NotoSansMyanmar-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoKufiArabic-Regular": 200,
+        "NotoSansDevanagari-Regular": 163,
+        "NotoSansCJK-Black": 9,
+        "NotoRashiHebrew-Regular": 9,
+        "NotoSansGujarati-Regular": 8,
+        "NotoSansMyanmar-Regular": 8,
+        "NotoSansTelugu-Regular": 3,
+        "NotoSans-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansDevanagari-Regular",
+      "dominant_primary_pct": 55.5
+    },
+    {
+      "script": "Armn",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 7,
+      "unique_primary_fonts": 6,
+      "primary_font_distribution": {
+        "NotoSansArmenian-Regular": 133,
+        "NotoSansGurmukhi-Regular": 24,
+        "NotoSansOriya-Regular": 17,
+        "NotoLoopedThai-Regular": 16,
+        "NotoLoopedLao-Regular": 7,
+        "NotoSansCJK-Black": 3
+      },
+      "all_fonts_seen": {
+        "NotoSansArmenian-Regular": 200,
+        "NotoSansGurmukhi-Regular": 32,
+        "NotoLoopedLao-Regular": 32,
+        "NotoSansCJK-Black": 31,
+        "NotoLoopedThai-Regular": 28,
+        "NotoSansOriya-Regular": 26,
+        "NotoSansEthiopic-Regular": 24
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansArmenian-Regular",
+      "dominant_primary_pct": 66.5
+    },
+    {
+      "script": "Beng",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 9,
+      "unique_primary_fonts": 7,
+      "primary_font_distribution": {
+        "NotoSansBengali-Regular": 101,
+        "NotoSans-Regular": 64,
+        "NotoSerifTibetan-Regular": 11,
+        "NotoSansSinhala-Regular": 10,
+        "NotoSansGeorgian-Regular": 7,
+        "NotoSansCJK-Black": 6,
+        "NotoSansGujarati-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansBengali-Regular": 200,
+        "NotoSans-Regular": 131,
+        "NotoSansSinhala-Regular": 19,
+        "NotoSansCJK-Black": 17,
+        "NotoSansGeorgian-Regular": 15,
+        "NotoSerifTibetan-Regular": 14,
+        "NotoSansKhmer-Regular": 13,
+        "NotoSansMyanmar-Regular": 2,
+        "NotoSansGujarati-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansBengali-Regular",
+      "dominant_primary_pct": 50.5
+    },
+    {
+      "script": "Cyrl",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 7,
+      "unique_primary_fonts": 5,
+      "primary_font_distribution": {
+        "NotoSans-Regular": 140,
+        "NotoSansKannada-Regular": 27,
+        "NotoSansCJK-Black": 21,
+        "NotoSansMalayalam-Regular": 9,
+        "NotoSansTamil-Regular": 3
+      },
+      "all_fonts_seen": {
+        "NotoSans-Regular": 241,
+        "NotoSansKannada-Regular": 54,
+        "NotoSansMalayalam-Regular": 42,
+        "NotoSansCJK-Black": 40,
+        "NotoSansTamil-Regular": 39,
+        "NotoSansGurmukhi-Regular": 4,
+        "NotoSansOriya-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSans-Regular",
+      "dominant_primary_pct": 70.0
+    },
+    {
+      "script": "Deva",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 7,
+      "unique_primary_fonts": 7,
+      "primary_font_distribution": {
+        "NotoSansDevanagari-Regular": 169,
+        "NotoSansGujarati-Regular": 9,
+        "NotoSansCJK-Black": 7,
+        "NotoSansTelugu-Regular": 7,
+        "NotoRashiHebrew-Regular": 4,
+        "NotoSansMyanmar-Regular": 3,
+        "NotoSansSinhala-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansDevanagari-Regular": 200,
+        "NotoSansCJK-Black": 35,
+        "NotoSansTelugu-Regular": 32,
+        "NotoSansGujarati-Regular": 28,
+        "NotoSansMyanmar-Regular": 26,
+        "NotoRashiHebrew-Regular": 23,
+        "NotoSansSinhala-Regular": 3
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansDevanagari-Regular",
+      "dominant_primary_pct": 84.5
+    },
+    {
+      "script": "Ethi",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 7,
+      "unique_primary_fonts": 7,
+      "primary_font_distribution": {
+        "NotoSansEthiopic-Regular": 98,
+        "NotoSansOriya-Regular": 35,
+        "NotoSansGurmukhi-Regular": 26,
+        "NotoLoopedThai-Regular": 19,
+        "NotoSansCJK-Black": 12,
+        "NotoLoopedLao-Regular": 9,
+        "NotoSansTamil-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansEthiopic-Regular": 200,
+        "NotoSansOriya-Regular": 39,
+        "NotoLoopedLao-Regular": 32,
+        "NotoSansCJK-Black": 29,
+        "NotoLoopedThai-Regular": 29,
+        "NotoSansGurmukhi-Regular": 28,
+        "NotoSansTamil-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansEthiopic-Regular",
+      "dominant_primary_pct": 49.0
+    },
+    {
+      "script": "Geor",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 7,
+      "unique_primary_fonts": 6,
+      "primary_font_distribution": {
+        "NotoSansGeorgian-Regular": 163,
+        "NotoSerifTibetan-Regular": 14,
+        "NotoSansSinhala-Regular": 13,
+        "NotoSansKhmer-Regular": 4,
+        "NotoSansCJK-Black": 3,
+        "NotoSans-Regular": 3
+      },
+      "all_fonts_seen": {
+        "NotoSansGeorgian-Regular": 200,
+        "NotoSans-Regular": 36,
+        "NotoSansKhmer-Regular": 25,
+        "NotoSansSinhala-Regular": 23,
+        "NotoSerifTibetan-Regular": 18,
+        "NotoSansCJK-Black": 17,
+        "NotoSansTelugu-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansGeorgian-Regular",
+      "dominant_primary_pct": 81.5
+    },
+    {
+      "script": "Grek",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 5,
+      "unique_primary_fonts": 5,
+      "primary_font_distribution": {
+        "NotoSans-Regular": 133,
+        "NotoSansCJK-Black": 27,
+        "NotoSansTamil-Regular": 17,
+        "NotoSansKannada-Regular": 16,
+        "NotoSansMalayalam-Regular": 7
+      },
+      "all_fonts_seen": {
+        "NotoSans-Regular": 200,
+        "NotoSansTamil-Regular": 43,
+        "NotoSansCJK-Black": 42,
+        "NotoSansKannada-Regular": 36,
+        "NotoSansMalayalam-Regular": 35
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSans-Regular",
+      "dominant_primary_pct": 66.5
+    },
+    {
+      "script": "Gujr",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 6,
+      "unique_primary_fonts": 5,
+      "primary_font_distribution": {
+        "NotoSansGujarati-Regular": 177,
+        "NotoSansCJK-Black": 13,
+        "NotoSansMyanmar-Regular": 5,
+        "NotoRashiHebrew-Regular": 4,
+        "NotoSansTelugu-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansGujarati-Regular": 200,
+        "NotoSansTelugu-Regular": 25,
+        "NotoRashiHebrew-Regular": 24,
+        "NotoSansCJK-Black": 22,
+        "NotoSansMyanmar-Regular": 21,
+        "NotoSerifTibetan-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansGujarati-Regular",
+      "dominant_primary_pct": 88.5
+    },
+    {
+      "script": "Guru",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 6,
+      "unique_primary_fonts": 5,
+      "primary_font_distribution": {
+        "NotoSansGurmukhi-Regular": 168,
+        "NotoLoopedThai-Regular": 18,
+        "NotoLoopedLao-Regular": 9,
+        "NotoSansCJK-Black": 4,
+        "NotoSansKannada-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansGurmukhi-Regular": 200,
+        "NotoLoopedLao-Regular": 41,
+        "NotoSansOriya-Regular": 38,
+        "NotoLoopedThai-Regular": 38,
+        "NotoSansCJK-Black": 35,
+        "NotoSansKannada-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansGurmukhi-Regular",
+      "dominant_primary_pct": 84.0
+    },
+    {
+      "script": "Hans",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 5,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoSansCJK-Black": 170,
+        "NotoSans-Regular": 15,
+        "NotoSerifTibetan-Regular": 9,
+        "NotoSansSinhala-Regular": 6
+      },
+      "all_fonts_seen": {
+        "NotoSansCJK-Black": 203,
+        "NotoSans-Regular": 144,
+        "NotoSansSinhala-Regular": 12,
+        "NotoSerifTibetan-Regular": 9,
+        "NotoSansKhmer-Regular": 5
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansCJK-Black",
+      "dominant_primary_pct": 85.0
+    },
+    {
+      "script": "Hant",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 4,
+      "unique_primary_fonts": 3,
+      "primary_font_distribution": {
+        "NotoSansCJK-Black": 167,
+        "NotoSansKannada-Regular": 19,
+        "NotoSansTamil-Regular": 14
+      },
+      "all_fonts_seen": {
+        "NotoSansCJK-Black": 200,
+        "NotoSansTamil-Regular": 50,
+        "NotoSansKannada-Regular": 46,
+        "NotoSansMalayalam-Regular": 41
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansCJK-Black",
+      "dominant_primary_pct": 83.5
+    },
+    {
+      "script": "Hebr",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 5,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoRashiHebrew-Regular": 173,
+        "NotoSansTelugu-Regular": 11,
+        "NotoSansCJK-Black": 10,
+        "NotoSansMyanmar-Regular": 6
+      },
+      "all_fonts_seen": {
+        "NotoRashiHebrew-Regular": 200,
+        "NotoSansTelugu-Regular": 24,
+        "NotoSansMyanmar-Regular": 21,
+        "NotoSansCJK-Black": 16,
+        "NotoSans-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoRashiHebrew-Regular",
+      "dominant_primary_pct": 86.5
+    },
+    {
+      "script": "Jpan",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 5,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoSansCJK-Black": 138,
+        "NotoLoopedThai-Regular": 28,
+        "NotoSansOriya-Regular": 27,
+        "NotoLoopedLao-Regular": 7
+      },
+      "all_fonts_seen": {
+        "NotoSansCJK-Black": 200,
+        "NotoSansOriya-Regular": 37,
+        "NotoLoopedThai-Regular": 37,
+        "NotoLoopedLao-Regular": 36,
+        "NotoSansMalayalam-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansCJK-Black",
+      "dominant_primary_pct": 69.0
+    },
+    {
+      "script": "Khmr",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 5,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoSansKhmer-Regular": 173,
+        "NotoSerifTibetan-Regular": 14,
+        "NotoSansSinhala-Regular": 8,
+        "NotoSans-Regular": 5
+      },
+      "all_fonts_seen": {
+        "NotoSansKhmer-Regular": 200,
+        "NotoSans-Regular": 26,
+        "NotoSerifTibetan-Regular": 18,
+        "NotoSansSinhala-Regular": 17,
+        "NotoSansMyanmar-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansKhmer-Regular",
+      "dominant_primary_pct": 86.5
+    },
+    {
+      "script": "Knda",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 4,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoSansKannada-Regular": 142,
+        "NotoSansMalayalam-Regular": 34,
+        "NotoSansTamil-Regular": 23,
+        "NotoSansOriya-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSansKannada-Regular": 200,
+        "NotoSansTamil-Regular": 52,
+        "NotoSansMalayalam-Regular": 50,
+        "NotoSansOriya-Regular": 1
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansKannada-Regular",
+      "dominant_primary_pct": 71.0
+    },
+    {
+      "script": "Kore",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 3,
+      "unique_primary_fonts": 3,
+      "primary_font_distribution": {
+        "NotoSansCJK-Black": 193,
+        "NotoSansTelugu-Regular": 5,
+        "NotoSansMyanmar-Regular": 2
+      },
+      "all_fonts_seen": {
+        "NotoSansCJK-Black": 200,
+        "NotoSansMyanmar-Regular": 10,
+        "NotoSansTelugu-Regular": 10
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansCJK-Black",
+      "dominant_primary_pct": 96.5
+    },
+    {
+      "script": "Laoo",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 4,
+      "unique_primary_fonts": 4,
+      "primary_font_distribution": {
+        "NotoLoopedLao-Regular": 138,
+        "NotoLoopedThai-Regular": 32,
+        "NotoSansOriya-Regular": 28,
+        "NotoSansTamil-Regular": 2
+      },
+      "all_fonts_seen": {
+        "NotoLoopedLao-Regular": 200,
+        "NotoLoopedThai-Regular": 42,
+        "NotoSansOriya-Regular": 42,
+        "NotoSansTamil-Regular": 2
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoLoopedLao-Regular",
+      "dominant_primary_pct": 69.0
+    },
+    {
+      "script": "Latn",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 3,
+      "unique_primary_fonts": 3,
+      "primary_font_distribution": {
+        "NotoSerifTibetan-Regular": 120,
+        "NotoSans-Regular": 79,
+        "NotoSansSinhala-Regular": 1
+      },
+      "all_fonts_seen": {
+        "NotoSans-Regular": 200,
+        "NotoSerifTibetan-Regular": 135,
+        "NotoSansSinhala-Regular": 6
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSerifTibetan-Regular",
+      "dominant_primary_pct": 60.0
+    },
+    {
+      "script": "Mlym",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 3,
+      "unique_primary_fonts": 3,
+      "primary_font_distribution": {
+        "NotoSansMalayalam-Regular": 173,
+        "NotoSansTamil-Regular": 24,
+        "NotoLoopedThai-Regular": 3
+      },
+      "all_fonts_seen": {
+        "NotoSansMalayalam-Regular": 200,
+        "NotoSansTamil-Regular": 48,
+        "NotoLoopedThai-Regular": 3
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansMalayalam-Regular",
+      "dominant_primary_pct": 86.5
+    },
+    {
+      "script": "Mymr",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 2,
+      "unique_primary_fonts": 2,
+      "primary_font_distribution": {
+        "NotoSansMyanmar-Regular": 198,
+        "NotoSerifTibetan-Regular": 2
+      },
+      "all_fonts_seen": {
+        "NotoSansMyanmar-Regular": 200,
+        "NotoSerifTibetan-Regular": 2
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansMyanmar-Regular",
+      "dominant_primary_pct": 99.0
+    },
+    {
+      "script": "Orya",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 2,
+      "unique_primary_fonts": 2,
+      "primary_font_distribution": {
+        "NotoSansOriya-Regular": 167,
+        "NotoLoopedThai-Regular": 33
+      },
+      "all_fonts_seen": {
+        "NotoSansOriya-Regular": 200,
+        "NotoLoopedThai-Regular": 47
+      },
+      "single_primary_font": false,
+      "dominant_primary_font": "NotoSansOriya-Regular",
+      "dominant_primary_pct": 83.5
+    },
+    {
+      "script": "Sinh",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 1,
+      "unique_primary_fonts": 1,
+      "primary_font_distribution": {
+        "NotoSansSinhala-Regular": 200
+      },
+      "all_fonts_seen": {
+        "NotoSansSinhala-Regular": 200
+      },
+      "single_primary_font": true,
+      "dominant_primary_font": "NotoSansSinhala-Regular",
+      "dominant_primary_pct": 100.0
+    },
+    {
+      "script": "Taml",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 1,
+      "unique_primary_fonts": 1,
+      "primary_font_distribution": {
+        "NotoSansTamil-Regular": 200
+      },
+      "all_fonts_seen": {
+        "NotoSansTamil-Regular": 200
+      },
+      "single_primary_font": true,
+      "dominant_primary_font": "NotoSansTamil-Regular",
+      "dominant_primary_pct": 100.0
+    },
+    {
+      "script": "Telu",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 1,
+      "unique_primary_fonts": 1,
+      "primary_font_distribution": {
+        "NotoSansTelugu-Regular": 200
+      },
+      "all_fonts_seen": {
+        "NotoSansTelugu-Regular": 200
+      },
+      "single_primary_font": true,
+      "dominant_primary_font": "NotoSansTelugu-Regular",
+      "dominant_primary_pct": 100.0
+    },
+    {
+      "script": "Thai",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 1,
+      "unique_primary_fonts": 1,
+      "primary_font_distribution": {
+        "NotoLoopedThai-Regular": 200
+      },
+      "all_fonts_seen": {
+        "NotoLoopedThai-Regular": 200
+      },
+      "single_primary_font": true,
+      "dominant_primary_font": "NotoLoopedThai-Regular",
+      "dominant_primary_pct": 100.0
+    },
+    {
+      "script": "Tibt",
+      "total_parsed": 200,
+      "empty_font_info": 0,
+      "unique_fonts_all": 1,
+      "unique_primary_fonts": 1,
+      "primary_font_distribution": {
+        "NotoSerifTibetan-Regular": 200
+      },
+      "all_fonts_seen": {
+        "NotoSerifTibetan-Regular": 200
+      },
+      "single_primary_font": true,
+      "dominant_primary_font": "NotoSerifTibetan-Regular",
+      "dominant_primary_pct": 100.0
+    }
+  ]
+}

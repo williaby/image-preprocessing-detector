@@ -334,6 +334,22 @@ python scripts/validate_base_dataset_v3.py \
 
 All old dataset copies and metadata were removed to prevent confusion with v3.
 
+##### v4 Successor
+
+v3 is **superseded** by synth-multiscript-v4 (not yet generated). Key v4 improvements:
+
+- **Format**: PNG (lossless) instead of JPEG q95
+- **Font diversity**: Tiered sampling (SYSTEM 40%, REGIONAL 25%, STYLISTIC 15%, HANDWRITING 15%, ADVERSARIAL 5%)
+  instead of single-font-per-script bug in v3
+- **Adversarial fonts**: 14 fonts across 11 scripts for cross-script confusion and structural destruction testing
+- **Target**: 350,000 images, balanced to ~12,963 per script
+- **GCS path**: `gs://image_detection_b/synth-multiscript-v4/`
+- **Strategy document**: [V4_FONT_DIVERSITY_STRATEGY.md](../../planning/V4_FONT_DIVERSITY_STRATEGY.md)
+- **Font infrastructure**: COMPLETE (download script, MANIFEST, FONT_NAME_TO_SCRIPT, ADVERSARIAL tiers)
+- **OOD rendering**: READY (render-font-variations expanded to 11 scripts with case variation, mimicry, cross-script confusion)
+
+v3 will be retained on GCS until v4 is validated, then deleted.
+
 ##### Pre-Training Checklist
 
 Before using this dataset for any training run, verify ALL of the following:

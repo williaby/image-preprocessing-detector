@@ -827,15 +827,24 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["PTSans", "PTSerif", "FiraSans", "OpenSans"],  # Russian, European
         "STYLISTIC": ["Charis", "Gentium", "Andika", "Doulos"],  # SIL linguistic fonts
         "HANDWRITING": ["Caveat", "DancingScript", "PatrickHand"],  # Script fonts
-        "ADVERSARIAL": [],  # Latin IS the base script, no adversarial needed
+        "ADVERSARIAL": [
+            "UnifrakturMaguntia",
+            "CinzelDecorative",
+            "ComforterBrush",
+            "MonsieurLaDoulaise",
+        ],
     },
     # Arabic script - Naskh style (NOT Nastaliq)
     "Arab": {
-        "SYSTEM": ["NotoNaskhArabic", "NotoSansArabic"],  # Default Noto
-        "REGIONAL": ["Amiri", "Scheherazade"],  # Classical, linguistic
-        "STYLISTIC": ["AmiriQuran"],  # Quranic style
+        "SYSTEM": [
+            "NotoNaskhArabic",
+            "NotoSansArabic",
+            "NotoKufiArabic",
+        ],  # + Kufi geometric
+        "REGIONAL": ["Amiri", "Scheherazade", "Tajawal"],  # Classical + modern web
+        "STYLISTIC": ["AmiriQuran", "Mada", "ElMessiri"],  # Quranic + sans + display
         "HANDWRITING": ["ArefRuqaa", "PlaypenSansArabic"],  # Ruq'ah cascade style
-        "ADVERSARIAL": [],  # Adversarial for Arabic is in Latn_mimics_Arab
+        "ADVERSARIAL": ["ReemKufi", "Gulzar"],
     },
     # Urdu requires Nastaliq (cascading style) - CRITICAL distinction
     # Note: When language is urd_Arab or pnb_Arab, use Nastaliq fonts
@@ -857,10 +866,10 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
     # Devanagari (Hindi, Marathi, Nepali)
     "Deva": {
         "SYSTEM": ["Lohit-Devanagari", "NotoSansDevanagari"],  # Linux standard
-        "REGIONAL": ["NotoSerifDevanagari"],  # Variety
-        "STYLISTIC": ["NotoSansDevanagari"],  # Sans variant
+        "REGIONAL": ["NotoSerifDevanagari", "Hind", "Mukta"],  # Serif + modern sans
+        "STYLISTIC": ["TiroDevanagariHindi", "Baloo2"],  # Serif variety + display
         "HANDWRITING": ["Kalam"],  # Breaks shirorekha (headline)
-        "ADVERSARIAL": [],
+        "ADVERSARIAL": ["Jaini", "Modak"],  # Fragmented shirorekha + filled counters
     },
     # Bengali (Bangladesh and India)
     "Beng": {
@@ -873,80 +882,113 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
     # Tamil
     "Taml": {
         "SYSTEM": ["NotoSansTamil", "NotoSerifTamil"],
-        "REGIONAL": ["NotoSerifTamil"],
-        "STYLISTIC": ["NotoSansTamil"],
+        "REGIONAL": ["Catamaran", "HindMadurai", "MuktaMalar"],  # Modern sans families
+        "STYLISTIC": ["ArimaMadurai"],  # Serif variety
+        "HANDWRITING": ["Kavivanar"],  # Informal handwriting style
+        "ADVERSARIAL": [],
     },
     # Telugu
     "Telu": {
         "SYSTEM": ["NotoSansTelugu", "NotoSerifTelugu"],
-        "REGIONAL": ["NotoSerifTelugu"],
-        "STYLISTIC": ["NotoSansTelugu"],
+        "REGIONAL": ["HindGuntur", "Ramabhadra", "Mandali"],  # Modern sans families
+        "STYLISTIC": ["NTR"],  # Variety
+        "ADVERSARIAL": ["LakkiReddy"],  # Telugu display (structural destruction)
     },
     # Gujarati
     "Gujr": {
         "SYSTEM": ["NotoSansGujarati", "NotoSerifGujarati"],
-        "REGIONAL": ["NotoSerifGujarati"],
-        "STYLISTIC": ["NotoSansGujarati"],
+        "REGIONAL": ["HindVadodara", "MuktaVaani"],  # Modern sans families
+        "STYLISTIC": ["Rasa", "BalooBhai2"],  # Serif + display
+        "ADVERSARIAL": [],
     },
     # Kannada
     "Knda": {
         "SYSTEM": ["NotoSansKannada", "NotoSerifKannada"],
-        "REGIONAL": ["NotoSerifKannada"],
-        "STYLISTIC": ["NotoSansKannada"],
+        "REGIONAL": ["Timmana", "HindMysuru"],  # Modern sans families
+        "STYLISTIC": ["BalooTamma2", "Benne"],  # Display + serif
+        "ADVERSARIAL": [],
     },
     # Malayalam
     "Mlym": {
         "SYSTEM": ["NotoSansMalayalam", "NotoSerifMalayalam"],
-        "REGIONAL": ["NotoSerifMalayalam"],
-        "STYLISTIC": ["NotoSansMalayalam"],
+        "REGIONAL": ["Manjari"],  # Modern Malayalam (SMC project)
+        "STYLISTIC": ["NotoSerifMalayalam"],
+        "HANDWRITING": ["Chilanka"],  # SMC handwriting font
+        "ADVERSARIAL": [],
     },
-    # Odia
+    # Odia (most underserved — no NotoSerif exists)
     "Orya": {
         "SYSTEM": ["NotoSansOriya"],
-        "REGIONAL": ["NotoSansOriya"],
-        "STYLISTIC": ["NotoSansOriya"],
+        "REGIONAL": ["BalooBhaina2", "AnekOdia"],  # Display + variable sans
+        "STYLISTIC": ["Alkatra"],  # Handwritten-style display
+        "ADVERSARIAL": [],
     },
     # Sinhala
     "Sinh": {
         "SYSTEM": ["NotoSansSinhala", "NotoSerifSinhala"],
-        "REGIONAL": ["NotoSerifSinhala"],
-        "STYLISTIC": ["NotoSansSinhala"],
+        "REGIONAL": ["AbhayaLibre"],  # Sinhala serif (Google Fonts)
+        "STYLISTIC": ["Yaldevi"],  # Sinhala sans-serif (Google Fonts)
+        "ADVERSARIAL": ["StickNoBills"],  # Condensed stencil (structural destruction)
     },
     # Gurmukhi (Punjabi)
     "Guru": {
         "SYSTEM": ["NotoSansGurmukhi", "NotoSerifGurmukhi"],
-        "REGIONAL": ["NotoSerifGurmukhi"],
-        "STYLISTIC": ["NotoSansGurmukhi"],
+        "REGIONAL": ["MuktaMahee"],  # Modern sans (Ek Type foundry)
+        "STYLISTIC": ["BalooPaaji2"],  # Display style
+        "ADVERSARIAL": [],
     },
     # Thai - looped vs loopless distinction
     "Thai": {
-        "SYSTEM": ["NotoSansThai", "NotoSerifThai"],  # Modern loopless
-        "REGIONAL": ["NotoSerifThai"],  # Variety
-        "STYLISTIC": ["NotoSansThai"],
+        "SYSTEM": [
+            "NotoSansThai",
+            "NotoSerifThai",
+            "NotoLoopedThai",
+        ],  # Loopless + looped
+        "REGIONAL": ["Kanit", "Pridi"],  # Geometric sans + serif (Google Fonts)
+        "STYLISTIC": ["BaiJamjuree", "Mitr"],  # Square sans + rounded sans
+        "HANDWRITING": ["Itim"],  # Thai handwriting style
+        "ADVERSARIAL": ["Charmonman"],  # Latin-like Thai decorative
     },
     # Khmer
     "Khmr": {
         "SYSTEM": ["NotoSansKhmer", "NotoSerifKhmer"],
-        "REGIONAL": ["NotoSerifKhmer"],
-        "STYLISTIC": ["NotoSansKhmer"],
+        "REGIONAL": ["Battambang", "Content"],  # Traditional + modern (Google Fonts)
+        "STYLISTIC": ["Moul"],  # Decorative/header style
+        "ADVERSARIAL": ["Moul"],  # Moul: wavy ornamental contours (dual-listed)
     },
     # Myanmar - Padauk for minorities
     "Mymr": {
         "SYSTEM": ["NotoSansMyanmar", "NotoSerifMyanmar"],
         "REGIONAL": ["Padauk"],  # SIL - covers Shan, Karen minorities
-        "STYLISTIC": ["NotoSerifMyanmar"],
+        "STYLISTIC": ["NotoSerifMyanmar", "Khyay"],  # Serif + display/headline
+        "ADVERSARIAL": [],
     },
     # Lao
     "Laoo": {
-        "SYSTEM": ["NotoSansLao", "NotoSerifLao"],
-        "REGIONAL": ["NotoSerifLao"],
-        "STYLISTIC": ["NotoSansLao"],
+        "SYSTEM": [
+            "NotoSansLao",
+            "NotoSerifLao",
+            "NotoLoopedLao",
+        ],  # Traditional looped
+        "REGIONAL": [
+            "NotoLoopedLao",
+            "Phetsarath",
+        ],  # Looped variant + govt calligraphic
+        "STYLISTIC": ["NotoSerifLao"],
+        "ADVERSARIAL": [],
     },
     # Tibetan - larger font sizes needed
     "Tibt": {
         "SYSTEM": ["NotoSerifTibetan", "NotoSansTibetan"],
-        "REGIONAL": ["Jomolhari"],  # Open Pecha project font
-        "STYLISTIC": ["NotoSansTibetan"],
+        "REGIONAL": [
+            "Jomolhari",
+            "Uchen",
+            "DDCUchen",
+        ],  # Open Pecha + Google + fontlibrary
+        "STYLISTIC": [
+            "TibetanMachineUni",
+            "MonlamUni",
+        ],  # GPL fonts with distinct styles
     },
     # CJK - Simplified Chinese
     "Hans": {
@@ -954,7 +996,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["NotoSerifSC"],
         "STYLISTIC": ["NotoSansSC"],
         "HANDWRITING": ["ARKaiti", "MaShanZheng"],  # Brush/Kaiti styles
-        "ADVERSARIAL": [],
+        "ADVERSARIAL": ["LiuJianMaoCao"],  # Grass script (caoshu) — radical destruction
     },
     # CJK - Traditional Chinese
     "Hant": {
@@ -975,10 +1017,13 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
     # CJK - Korean
     "Kore": {
         "SYSTEM": ["NotoSansKR", "NotoSerifKR", "NotoSansCJKkr"],
-        "REGIONAL": ["NanumGothic"],  # Korean standard font
+        "REGIONAL": [
+            "NanumGothic",
+            "NanumMyeongjo",
+        ],  # Gothic (sans) + Myeongjo (serif)
         "STYLISTIC": ["NotoSerifKR"],
         "HANDWRITING": ["NanumPen", "NanumBrush"],  # Pen/brush scripts
-        "ADVERSARIAL": [],
+        "ADVERSARIAL": ["NanumBrushScript"],  # Extreme brush calligraphy
     },
     # Cyrillic - Bulgarian has distinct glyph forms
     "Cyrl": {
@@ -986,7 +1031,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["PTSans", "PTSerif"],  # Russian ParaType standard
         "STYLISTIC": ["FiraSans"],  # Bulgarian locl features
         "HANDWRITING": ["BadScript", "Caveat", "MarckScript"],  # Russian cursive
-        "ADVERSARIAL": [],
+        "ADVERSARIAL": ["Lobster", "Pacifico"],  # Cross-script unification with Latin
     },
     # Bulgarian Cyrillic - distinct glyph forms (looks like Latin g)
     "Cyrl_Bulgarian": {
@@ -1002,7 +1047,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["NotoSerif", "GFSNeohellenic"],  # Historical academic style
         "STYLISTIC": ["NotoSans"],
         "HANDWRITING": ["Atma", "AMSEuler"],  # Marker, blackboard math
-        "ADVERSARIAL": [],
+        "ADVERSARIAL": ["GFSBodoni", "EBGaramond"],  # High-contrast + 3-script unified
     },
     # Armenian
     "Armn": {
@@ -1019,8 +1064,23 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
     # Ethiopic
     "Ethi": {
         "SYSTEM": ["NotoSansEthiopic", "NotoSerifEthiopic"],
-        "REGIONAL": ["Abyssinica"],  # SIL Ethiopic font
-        "STYLISTIC": ["NotoSerifEthiopic"],
+        "REGIONAL": ["Abyssinica", "Brana"],  # SIL + raeytype
+        "STYLISTIC": ["GeezManuscriptZemen"],  # COLR manuscript style
+    },
+    # Cherokee — limited OFL ecosystem
+    "Cher": {
+        "SYSTEM": ["NotoSansCherokee"],
+        "REGIONAL": [
+            "AboriginalSans",
+            "AboriginalSerif",
+        ],  # Chris Harvey, covers Cher+Cans
+        "STYLISTIC": ["NotoSansCherokee"],
+    },
+    # Canadian Syllabics (Unified Canadian Aboriginal Syllabics)
+    "Cans": {
+        "SYSTEM": ["NotoSansCanadianAboriginal"],
+        "REGIONAL": ["BJCree", "AboriginalSans"],  # SIL Cree + Chris Harvey
+        "STYLISTIC": ["AboriginalSerif"],  # Serif variety
     },
 }
 

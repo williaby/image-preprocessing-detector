@@ -1,0 +1,342 @@
+{
+  "mode": "deep",
+  "fonts_dir": "fonts/synthetic-gen",
+  "min_families": 5,
+  "total_scripts": 27,
+  "passing": 24,
+  "below_threshold": [
+    "Tibt",
+    "Cher",
+    "Cans"
+  ],
+  "per_script": [
+    {
+      "script": "Latn",
+      "families_found": 169,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 191,
+        "sans": 841,
+        "display": 2,
+        "mono": 57,
+        "handwriting": 1,
+        "serif": 391
+      }
+    },
+    {
+      "script": "Arab",
+      "families_found": 24,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 40,
+        "sans": 89,
+        "mono": 2
+      }
+    },
+    {
+      "script": "Deva",
+      "families_found": 11,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 12,
+        "handwriting": 1,
+        "serif": 36,
+        "sans": 74
+      }
+    },
+    {
+      "script": "Hans",
+      "families_found": 7,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 5,
+        "sans": 7,
+        "serif": 7
+      }
+    },
+    {
+      "script": "Hant",
+      "families_found": 7,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 5,
+        "sans": 7,
+        "serif": 7
+      }
+    },
+    {
+      "script": "Cyrl",
+      "families_found": 49,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 64,
+        "sans": 202,
+        "mono": 57,
+        "serif": 163
+      }
+    },
+    {
+      "script": "Jpan",
+      "families_found": 8,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 6,
+        "sans": 7,
+        "serif": 7
+      }
+    },
+    {
+      "script": "Hang",
+      "families_found": 6,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 5,
+        "serif": 8,
+        "sans": 7
+      }
+    },
+    {
+      "script": "Thai",
+      "families_found": 11,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 85,
+        "sans": 72,
+        "serif": 36
+      }
+    },
+    {
+      "script": "Beng",
+      "families_found": 8,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 4,
+        "handwriting": 1,
+        "serif": 36,
+        "sans": 26
+      }
+    },
+    {
+      "script": "Gujr",
+      "families_found": 9,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 7,
+        "sans": 73,
+        "serif": 11
+      }
+    },
+    {
+      "script": "Guru",
+      "families_found": 6,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 4,
+        "sans": 73,
+        "serif": 9
+      }
+    },
+    {
+      "script": "Knda",
+      "families_found": 6,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 4,
+        "sans": 72,
+        "serif": 9
+      }
+    },
+    {
+      "script": "Mlym",
+      "families_found": 6,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 5,
+        "sans": 72,
+        "serif": 9
+      }
+    },
+    {
+      "script": "Orya",
+      "families_found": 5,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 2,
+        "handwriting": 1,
+        "sans": 24
+      }
+    },
+    {
+      "script": "Taml",
+      "families_found": 12,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 9,
+        "serif": 73,
+        "sans": 73
+      }
+    },
+    {
+      "script": "Telu",
+      "families_found": 8,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 7,
+        "sans": 72,
+        "serif": 9
+      }
+    },
+    {
+      "script": "Tibt",
+      "families_found": 3,
+      "min_required": 5,
+      "passes": false,
+      "status": "BELOW (need 5)",
+      "style_distribution": {
+        "display": 2,
+        "serif": 9
+      }
+    },
+    {
+      "script": "Mymr",
+      "families_found": 7,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 4,
+        "sans": 74,
+        "serif": 36
+      }
+    },
+    {
+      "script": "Khmr",
+      "families_found": 6,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 6,
+        "sans": 72,
+        "serif": 36
+      }
+    },
+    {
+      "script": "Sinh",
+      "families_found": 5,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 4,
+        "sans": 72,
+        "serif": 36
+      }
+    },
+    {
+      "script": "Laoo",
+      "families_found": 8,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "mono": 4,
+        "sans": 80,
+        "unknown": 72,
+        "serif": 36
+      }
+    },
+    {
+      "script": "Cher",
+      "families_found": 1,
+      "min_required": 5,
+      "passes": false,
+      "status": "BELOW (need 5)",
+      "style_distribution": {
+        "sans": 9
+      }
+    },
+    {
+      "script": "Cans",
+      "families_found": 4,
+      "min_required": 5,
+      "passes": false,
+      "status": "BELOW (need 5)",
+      "style_distribution": {
+        "unknown": 1,
+        "sans": 17
+      }
+    },
+    {
+      "script": "Ethi",
+      "families_found": 5,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 3,
+        "serif": 36,
+        "sans": 36
+      }
+    },
+    {
+      "script": "Geor",
+      "families_found": 7,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "mono": 4,
+        "sans": 45,
+        "serif": 44
+      }
+    },
+    {
+      "script": "Hebr",
+      "families_found": 13,
+      "min_required": 5,
+      "passes": true,
+      "status": "OK",
+      "style_distribution": {
+        "unknown": 13,
+        "mono": 5,
+        "sans": 48,
+        "serif": 40
+      }
+    }
+  ]
+}

@@ -831,12 +831,14 @@ class MultiScriptDocumentGenerator:
         # Capture degradation seed for reproducible replay
         degradation_seed = self._rng.randint(0, 2**31 - 1)
 
-        # Track font family used for this script
+        # Track font family and style used for this script
         font_cache = self.font_manager.get_font_info(script_code)
         font_families: list[str] = []
+        font_styles: list[str] = []
         if font_cache and font_cache.fonts:
             font_info = font_cache.default_font or font_cache.fonts[0]
             font_families.append(font_info.path.stem)
+            font_styles.append(font_info.font_style)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -944,6 +946,7 @@ class MultiScriptDocumentGenerator:
                 "degradation_seed": degradation_seed,
                 "base_image_sha256": base_image_sha256,
                 "font_families_used": font_families,
+                "font_styles_used": font_styles,
             },
             is_pristine=is_pristine,
             resolution_tier=resolution_tier,
@@ -1400,13 +1403,15 @@ class MultiScriptDocumentGenerator:
         # Capture degradation seed for reproducible replay
         degradation_seed = self._rng.randint(0, 2**31 - 1)
 
-        # Track font families used across all scripts
+        # Track font families and styles used across all scripts
         font_families: list[str] = []
+        font_styles: list[str] = []
         for sc in all_scripts:
             fc = self.font_manager.get_font_info(sc)
             if fc and fc.fonts:
                 fi = fc.default_font or fc.fonts[0]
                 font_families.append(fi.path.stem)
+                font_styles.append(fi.font_style)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -1513,6 +1518,7 @@ class MultiScriptDocumentGenerator:
                 "degradation_seed": degradation_seed,
                 "base_image_sha256": base_image_sha256,
                 "font_families_used": font_families,
+                "font_styles_used": font_styles,
             },
             is_pristine=is_pristine,
             resolution_tier=resolution_tier,
@@ -1597,15 +1603,24 @@ class MultiScriptDocumentGenerator:
 
         return text_blocks_data, all_scripts, all_languages, script_directions
 
-    def _collect_font_families(self, all_scripts: set[str]) -> list[str]:
-        """Track font families used across all scripts."""
+    def _collect_font_families(
+        self,
+        all_scripts: set[str],
+    ) -> tuple[list[str], list[str]]:
+        """Track font families and styles used across all scripts.
+
+        Returns:
+            Tuple of (font_families, font_styles).
+        """
         font_families: list[str] = []
+        font_styles: list[str] = []
         for sc in all_scripts:
             fc = self.font_manager.get_font_info(sc)
             if fc and fc.fonts:
                 fi = fc.default_font or fc.fonts[0]
                 font_families.append(fi.path.stem)
-        return font_families
+                font_styles.append(fi.font_style)
+        return font_families, font_styles
 
     def generate_multi_script_document(
         self,
@@ -1647,7 +1662,7 @@ class MultiScriptDocumentGenerator:
         char_height_rendered = self._measure_char_height_rendered(image)
         base_image_sha256 = self._compute_image_sha256(image)
         degradation_seed = self._rng.randint(0, 2**31 - 1)
-        font_families = self._collect_font_families(all_scripts)
+        font_families, font_styles = self._collect_font_families(all_scripts)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
@@ -1677,6 +1692,7 @@ class MultiScriptDocumentGenerator:
                 "degradation_seed": degradation_seed,
                 "base_image_sha256": base_image_sha256,
                 "font_families_used": font_families,
+                "font_styles_used": font_styles,
             },
             is_pristine=is_pristine,
         )
