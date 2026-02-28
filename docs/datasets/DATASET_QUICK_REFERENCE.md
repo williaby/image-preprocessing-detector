@@ -23,7 +23,7 @@ title: Dataset Quick Reference
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Total Datasets** | 73 | 70 image + 2 text corpora + 1 generating |
+| **Total Datasets** | 80 | 77 image + 2 text corpora + 1 generating |
 | **Training-Ready** | 59 | Format standardized + labels extracted |
 | **In Progress** | 7 | Format conversion, label extraction, or generating |
 | **Non-Image Corpus** | 1 | openlid-v2 (text-only, feeds synth-multiscript generation) |
@@ -91,7 +91,7 @@ title: Dataset Quick Reference
 
 ## Source Dataset Inventory
 
-64 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
+77 source datasets sorted by image count. Metadata from Layer 2 enrichment aggregates where available.
 
 **Legend**: GT = Ground Truth | Extracted = Docling OCR/DocLayout-YOLO | Converted = Schema transformation | Constructed = Built from cell-level GT | OpenLID = Detected via OpenLID-v2 | (dataset) = Dataset-level provenance | (coarse) = Binary only
 
@@ -179,7 +179,7 @@ title: Dataset Quick Reference
 | openlid-v2 | -- | -- | N/A (text) | GT | None | GT | GT |
 | wili-2018 | -- | -- | N/A (text) | GT | None | GT | GT |
 
-**Summary**: 73 datasets (70 image + 2 text corpora + 1 generating) | 51 with text labels | 41 with layout labels | 44 with language/script labels | 52 audited
+**Summary**: 80 datasets (77 image + 2 text corpora + 1 generating) | 51 with text labels | 41 with layout labels | 44 with language/script labels | 52 audited
 
 ### Layer 2 Metadata Highlights
 
@@ -371,7 +371,7 @@ Docling egret-xlarge and heron models are **pre-trained** and require **no addit
 
 #### Forms & Structured Documents
 
-funsd (199), funsd-plus (1,139), sroie (973), sroie-voxel51 (712), nist-sd2 (5,590), nist-sd6 (5,595), nara-1950-census (695) -- see Layout and Handwriting sections for details.
+funsd (199), funsd-plus (1,139), sroie (973), sroie-voxel51 (712), nist-sd2 (5,590), nist-sd6 (5,595), nara-1950-census (25,000 target; 695 initial sample) -- see Layout and Handwriting sections for details.
 
 #### Educational & Scientific
 
@@ -440,7 +440,7 @@ document-haystack (400, Research) -- document retrieval benchmark, 8,250 query p
 
 ### Dataset Documentation
 
-- **Individual Datasets**: [source/](source/) -- 64 per-dataset files (100-500 lines each)
+- **Individual Datasets**: [source/](source/) -- 83 per-dataset files (100-500 lines each)
 - **Task Indices**: [indices/](indices/) -- 7 task-based training recipes
 - **Ground Truth Summary**: [GROUND_TRUTH_SUMMARY.md](GROUND_TRUTH_SUMMARY.md) -- annotation methods and provenance tiers
 - **Processing Status**: [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) -- format conversion tracking

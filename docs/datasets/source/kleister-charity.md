@@ -19,7 +19,7 @@ typed and handwritten content in a financial/administrative context. PDFs are re
 to individual page images (300 DPI PNG) for use in the IQA/preprocessing pipeline.
 
 62,029 rendered page images (average ~22 pages per document) from 2,776 resolved PDFs
-(2 of 3,414 PDFs unresolved via git-annex).
+(2 of 1,729 train PDFs unresolved via git-annex; 2,778 total in splits).
 
 ## 2. Source & Access
 

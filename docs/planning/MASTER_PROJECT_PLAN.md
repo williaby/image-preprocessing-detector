@@ -295,8 +295,8 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
   validated. The actual multi-task **training run has not been executed** — no trained SigLIP 2
   model exists yet. Awaiting dataset assembly (Stream 4B completion).
 - **OOD holdout design**: The design documents and DDRs 1–8 are complete.
-  `metadata_registry/ood_registry.jsonl` has **9,155 entries** (76.3% of the 12,000-image
-  target). Domain enrichment is complete for all 9,155 records. The registry is well past the
+  `metadata_registry/ood_registry.jsonl` has **9,170 entries** (76.4% of the 12,000-image
+  target). Domain enrichment is complete for all 9,170 records. The registry is well past the
   P0 gate (7,000) and approaching the statistically rigorous target (~12,000 images). Remaining
   work: ~2,845 images from planned Phase 3 sources + labeling 5 at-risk heads (skew_score,
   handwriting_legibility, handwriting_legibility_score, resolution_quality, code_confidence —
@@ -414,7 +414,7 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 | 4 | 12+ (Release 2) | T5 handwriting data at reduced 25K scope (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
 
 **Parallel track (Weeks 1–12)**: T5 data acquisition + legal review + OOD corpus expansion
-(9,155 → 12,000 images) + NIST contact sheet generation (Weeks 6–8).
+(9,170 → 12,000 images) + NIST contact sheet generation (Weeks 6–8).
 
 **Acquisition sequencing**: The dataset gathering strategy
 ([DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md)) determines the order in which
@@ -582,10 +582,12 @@ discovered. The remaining ~159,515 images (to reach the 350K target) must be gen
 > - **Cleanup**: Delete v3 from GCS (`gs://image_detection_b/synth-multiscript-v3/`) and local
 >   disk (`/mnt/e/image_detection/datasets/synth-multiscript-v3/`) after v4 validation
 > - **Prerequisite**: Verify the per-script dict fix is active before running
+> - **Retention note**: v3 to be retained until Phase D sampling (resolution quality,
+>   §Stream 5) completes, as Phase D samples 3–5K from v3 on GCS for script diversity
 
-#### Stream 4C: OOD corpus build (9,155 → 12,000 images)
+#### Stream 4C: OOD corpus build (9,170 → 12,000 images)
 
-`metadata_registry/ood_registry.jsonl` has **9,155 entries** (76.3% of target). Domain
+`metadata_registry/ood_registry.jsonl` has **9,170 entries** (76.4% of target). Domain
 enrichment is complete for all records. Infrastructure (ood_utils.py, build_ood_dataset.py,
 directory structure) is operational. P0-P2 acquisition phases are substantially complete;
 remaining work focuses on gap closure and at-risk head labeling.
@@ -610,7 +612,7 @@ reason prefix rules, code screenshot generator, OHR-Bench benchmark.
 
 **At-risk heads** (0 labeled images — require intervention before model evaluation):
 
-- `skew_score`: Run trained MobileNetV4 skew head over all 9,155 registered images
+- `skew_score`: Run trained MobileNetV4 skew head over all 9,170 registered images
 - `resolution_quality`: Run `label_resolution_quality.py` on Vultr A100 VM (365 ood_resolution)
 - `handwriting_legibility` / `handwriting_legibility_score`: Human annotation needed for
   IIIT-INDIC/KHATT/CASIA-HWDB2 (~950 images)
@@ -913,6 +915,7 @@ existing OOD upscaling pattern (`acquisition_method: "ohr_bench_bicubic_2x"`).
 Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth_multiscript_v3/`)
 across 19 non-Latin scripts. Labels derive from generation metadata (DPI known at render
 time), not from CC measurement — avoiding the V1 CJK precision limitation entirely.
+**Note**: v3 to be retained until Phase D sampling completes (see Stream 4B retention note).
 
 **V2 pipeline upgrade (deferred to Phase 3 training schedule)**:
 
@@ -1156,7 +1159,7 @@ structure shown here.
     ├──▶ Stream 4B: prepare_multitask_datasets.py (shadow*, warping* require Tier 0)
     ├──▶ Stream 4B: synth-multiscript-v4 PNG generation (replaces v3, 350K target)
     ├──▶ Data: JPEG→PNG lossless conversion (rvl-cdip 16K TIFF→PNG, khatt 1.6K TIFF→PNG)
-    ├──▶ Stream 4C: OOD corpus gap closure (9,155 → 12,000) + at-risk head labeling
+    ├──▶ Stream 4C: OOD corpus gap closure (9,170 → 12,000) + at-risk head labeling
     ├──▶ Stream 0: Document Type Router (2-3 weeks)
     ├──▶ Stream 4D: MobileNetV4 pipeline integration (1-2 weeks)
     ├──▶ Fix: 3 Docling P0 bugs (< 1 week total)

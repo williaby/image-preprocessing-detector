@@ -18,6 +18,63 @@ logger = logging.getLogger(__name__)
 # Default model directory relative to project root
 _DEFAULT_MODEL_DIR = Path(__file__).parents[3] / "models" / "iqa" / "onnx"
 
+_VALID_DEVICES = {"cpu", "cuda"}
+
+
+def _load_model(
+    *,
+    model_filename: str,
+    label: str,
+    device: str,
+    model_dir: Path | None,
+) -> Any:
+    """Load an ONNX IQA model.
+
+    Args:
+        model_filename: ONNX model filename (e.g., ``resnet18_student.onnx``).
+        label: Human-readable label for log messages (e.g., ``"Student"``).
+        device: Target device (``"cpu"`` or ``"cuda"``).
+        model_dir: Directory containing ONNX model files.
+            Defaults to ``models/iqa/onnx/`` relative to the project root.
+
+    Returns:
+        An ONNX Runtime InferenceSession, or ``None`` if the model
+        file is not found or onnxruntime is unavailable.
+    """
+    device = device.lower()
+    if device not in _VALID_DEVICES:
+        logger.warning(
+            "Unknown device %r for %s model, falling back to cpu", device, label
+        )
+        device = "cpu"
+
+    model_dir = model_dir or _DEFAULT_MODEL_DIR
+    model_path = model_dir / model_filename
+
+    if not model_path.exists():
+        logger.warning("%s model not found at %s", label, model_path)
+        return None
+
+    try:
+        from image_preprocessing_detector.models.onnx_runtime import (
+            ONNXModelRunner,
+            ONNXSessionConfig,
+        )
+
+        provider = (
+            "CUDAExecutionProvider" if device == "cuda" else "CPUExecutionProvider"
+        )
+        config = ONNXSessionConfig(provider=provider)
+        runner = ONNXModelRunner(model_path=model_path, config=config)
+    except Exception:
+        logger.warning(
+            "Failed to load %s model from %s", label, model_path, exc_info=True
+        )
+        return None
+    else:
+        logger.info("%s model loaded from %s (device=%s)", label, model_path, device)
+        return runner
+
 
 def load_student_model(
     *,
@@ -35,32 +92,12 @@ def load_student_model(
         An ONNX Runtime InferenceSession, or ``None`` if the model
         file is not found or onnxruntime is unavailable.
     """
-    model_dir = model_dir or _DEFAULT_MODEL_DIR
-    model_path = model_dir / "resnet18_student.onnx"
-
-    if not model_path.exists():
-        logger.warning("Student model not found at %s", model_path)
-        return None
-
-    try:
-        from image_preprocessing_detector.models.onnx_runtime import (
-            ONNXModelRunner,
-            ONNXSessionConfig,
-        )
-
-        provider = (
-            "CUDAExecutionProvider" if device == "cuda" else "CPUExecutionProvider"
-        )
-        config = ONNXSessionConfig(provider=provider)
-        runner = ONNXModelRunner(model_path=model_path, config=config)
-    except Exception:
-        logger.warning(
-            "Failed to load student model from %s", model_path, exc_info=True
-        )
-        return None
-    else:
-        logger.info("Student model loaded from %s (device=%s)", model_path, device)
-        return runner
+    return _load_model(
+        model_filename="resnet18_student.onnx",
+        label="Student",
+        device=device,
+        model_dir=model_dir,
+    )
 
 
 def load_teacher_model(
@@ -79,32 +116,38 @@ def load_teacher_model(
         An ONNX Runtime InferenceSession, or ``None`` if the model
         file is not found or onnxruntime is unavailable.
     """
-    model_dir = model_dir or _DEFAULT_MODEL_DIR
-    model_path = model_dir / "resnet50_teacher_50epoch.onnx"
+    return _load_model(
+        model_filename="resnet50_teacher_50epoch.onnx",
+        label="Teacher",
+        device=device,
+        model_dir=model_dir,
+    )
 
-    if not model_path.exists():
-        logger.warning("Teacher model not found at %s", model_path)
-        return None
+
+def _warmup_single_model(
+    model: Any,
+    label: str,
+    dummy_input: Any,
+) -> float:
+    """Run dummy inference on a single model and return elapsed time in ms.
+
+    Returns:
+        Elapsed time in milliseconds, or -1.0 on failure.
+    """
+    import time
 
     try:
-        from image_preprocessing_detector.models.onnx_runtime import (
-            ONNXModelRunner,
-            ONNXSessionConfig,
-        )
-
-        provider = (
-            "CUDAExecutionProvider" if device == "cuda" else "CPUExecutionProvider"
-        )
-        config = ONNXSessionConfig(provider=provider)
-        runner = ONNXModelRunner(model_path=model_path, config=config)
+        if not hasattr(model, "run"):
+            logger.warning("%s model has no 'run' method, skipping warmup", label)
+            return -1.0
+        start = time.perf_counter()
+        model.run(dummy_input)
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info("%s warmup completed in %.1fms", label, elapsed)
+        return round(elapsed, 2)
     except Exception:
-        logger.warning(
-            "Failed to load teacher model from %s", model_path, exc_info=True
-        )
-        return None
-    else:
-        logger.info("Teacher model loaded from %s (device=%s)", model_path, device)
-        return runner
+        logger.warning("%s warmup failed", label, exc_info=True)
+        return -1.0
 
 
 def warmup_models(
@@ -120,36 +163,20 @@ def warmup_models(
     Returns:
         Dictionary with warmup timing statistics (milliseconds).
     """
-    import time
-
     import numpy as np
 
     stats: dict[str, float] = {}
     dummy_input = np.random.default_rng(0).random((1, 3, 224, 224), dtype=np.float32)
 
     if student_model is not None:
-        try:
-            start = time.perf_counter()
-            if hasattr(student_model, "run"):
-                student_model.run(dummy_input)
-            elapsed = (time.perf_counter() - start) * 1000
-            stats["student_warmup_ms"] = round(elapsed, 2)
-            logger.info("Student warmup completed in %.1fms", elapsed)
-        except Exception:
-            logger.warning("Student warmup failed", exc_info=True)
-            stats["student_warmup_ms"] = -1.0
+        stats["student_warmup_ms"] = _warmup_single_model(
+            student_model, "Student", dummy_input
+        )
 
     if teacher_model is not None:
-        try:
-            start = time.perf_counter()
-            if hasattr(teacher_model, "run"):
-                teacher_model.run(dummy_input)
-            elapsed = (time.perf_counter() - start) * 1000
-            stats["teacher_warmup_ms"] = round(elapsed, 2)
-            logger.info("Teacher warmup completed in %.1fms", elapsed)
-        except Exception:
-            logger.warning("Teacher warmup failed", exc_info=True)
-            stats["teacher_warmup_ms"] = -1.0
+        stats["teacher_warmup_ms"] = _warmup_single_model(
+            teacher_model, "Teacher", dummy_input
+        )
 
     return stats
 

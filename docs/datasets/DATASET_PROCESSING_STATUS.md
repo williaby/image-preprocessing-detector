@@ -27,11 +27,11 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 55/74 datasets training-ready (74.3%), 2 benchmark-ready
+**Current Status**: 56/74 datasets training-ready (75.7%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 55 | 74.3% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 56 | 75.7% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
 | 🔄 **In Progress** | 11 | 14.9% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
@@ -41,7 +41,7 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
 
 ## Processing Status by Dataset
 
-### ✅ Training-Ready (48 datasets)
+### ✅ Training-Ready (56 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 
@@ -582,7 +582,7 @@ Before marking a dataset as ✅ Training-Ready, complete:
 ## Related Documentation
 
 - **Quick Reference**: [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) - Training-focused lookup
-- **Individual Datasets**: [source/](source/) - 68 individual dataset files
+- **Individual Datasets**: [source/](source/) - 83 individual dataset files
 - **Task Indices**: [indices/](indices/) - 7 task-based training recipes
 - **Naming Standard**: [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md) - Canonical names and aliases
 - **Label Mapping**: [../schema/LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) - Schema mappings

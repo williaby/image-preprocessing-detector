@@ -3,6 +3,8 @@ dataset_id: egyptian-handwriting
 version: "1.0"
 license: CC-BY-4.0
 commercial_use: true
+capture_method: scanner
+domain: EDU
 iqa_profiles:
   - blur_sensitive
   - contrast_variable
@@ -221,7 +223,7 @@ Schema:
 | **Contrast** | MEDIUM | Variable ink/pencil darkness across writers |
 | **Compression** | LOW | Original quality preserved in parquet |
 
-##### 6.4 Training & Benchmark Value
+##### 6.3 Training & Benchmark Value
 
 | Aspect | Assessment |
 |--------|------------|
@@ -252,7 +254,7 @@ Schema:
 
 #### 9. Dataset-Specific Notes
 
-##### 10.1 Parquet Extraction
+##### 9.1 Parquet Extraction
 
 Images are stored as binary blobs in parquet format. The parser extracts labels
 from the parquet metadata without rendering images. For training, images can be
@@ -266,7 +268,7 @@ for i in range(len(table)):
     # Save or process image bytes
 ```
 
-##### 10.2 Gap Closure
+##### 9.2 Gap Closure
 
 This dataset closes the Arabic cursive handwriting gap (SIG-G4-*):
 
@@ -278,7 +280,7 @@ This dataset closes the Arabic cursive handwriting gap (SIG-G4-*):
 
 #### 10. Training Head Coverage
 
-##### 13.1 Head Contribution Summary
+##### 10.1 Head Contribution Summary
 
 | Head ID | Head Name | Contribution | Est. Samples | Label Type | Notes |
 |---------|-----------|--------------|--------------|------------|-------|
@@ -305,7 +307,7 @@ This dataset closes the Arabic cursive handwriting gap (SIG-G4-*):
 | SIG-G5-4 | code_cls | ❌ | -- | N/A | Handwriting only; no code content |
 | SIG-G5-5 | resolution_quality_reg | 🟡 | ~11,216 | tier_3_heuristic | Scanner quality; pending IQA pipeline |
 
-##### 13.2 Diversity Dimension Coverage
+##### 10.2 Diversity Dimension Coverage
 
 | # | Dimension | Coverage | Details |
 |---|-----------|----------|---------|
@@ -324,7 +326,7 @@ This dataset closes the Arabic cursive handwriting gap (SIG-G4-*):
 | 13 | Color mode | 🟡 | Color scans |
 | 14 | Font variety | ❌ | Handwriting only; 89-writer cursive style variation |
 
-##### 13.3 Corpus Role & Constraints
+##### 10.3 Corpus Role & Constraints
 
 Egyptian Handwriting is the only commercially-viable Arabic cursive handwriting source (CC-BY-4.0),
 providing 11,216 word-level images from 89 writers spanning ages 6-73. It serves as the primary

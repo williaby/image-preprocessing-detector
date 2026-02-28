@@ -22,7 +22,7 @@
 | popp-line | 4,794 | Line transcriptions (French census) | ✅ CC-BY-4.0 | French | [popp-line.md](../source/popp-line.md) |
 | nara-1950-census | 25,000 | Census enumeration schedules (100% HW on pre-printed forms) | ✅ Public Domain | English | [nara-1950-census.md](../source/nara-1950-census.md) |
 
-**Total Available for Training**: ~362K images
+**Total Available for Training**: ~388K images
 
 ---
 
@@ -75,7 +75,7 @@
 
 **Kleister Charity** (MIXED HW/TYPED + SIGNATURES):
 
-- ~20,000 page images from 3,414 UK charity annual report PDFs (gov.uk)
+- ~62,029 page images from 2,776 UK charity annual report PDFs (gov.uk)
 - Mixed content: typed forms with handwritten annotations and signatures
 - Scanner flatbed + born-digital mix; financial domain (FIN)
 - MIT license permits commercial use
@@ -84,7 +84,7 @@
 
 **NARA 1950 Census** (MIXED TYPED+HW FORMS):
 
-- 695 scanned census enumeration schedules (partial Alabama sample; target ~25K)
+- 25,000 scanned census enumeration schedules (stratified sample; 695 initial Alabama sample)
 - 100% handwritten content on pre-printed government tabular forms
 - Scanner flatbed capture; Administrative/Government domain
 - Public Domain license — unrestricted commercial use

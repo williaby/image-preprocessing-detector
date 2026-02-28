@@ -213,7 +213,9 @@ def stratified_sample(
     seed: int = 42,
 ) -> list[dict[str, str]]:
     """Sample proportionally across states, ensuring at least 1 per state."""
-    rng = random.Random(seed)
+    rng = random.Random(
+        seed
+    )  # NOSONAR: seeded PRNG for reproducible sampling, not security
     total_images = sum(len(records) for records in manifest.values())
     logger.info(
         "Total images in manifest: %d across %d states", total_images, len(manifest)

@@ -999,6 +999,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "iso639_language": "en",
         "iso15924_script": "Latn",
         "text_scope": "page",
+        "text_scope_content_type": "mixed",  # typed text + handwritten signatures
         "original_labels_parser": "parse_signverod_labels",
     },
     # POPP-line (Teklia): 4,794 French census handwriting lines with transcriptions.
@@ -5080,7 +5081,9 @@ def parse_egyptian_hw_labels(dataset_path: Path, image_path: Path) -> OriginalLa
     labels.script_name = "Arabic"
     labels.iso15924_script_code = "Arab"
 
-    # Extract row index from filename (e.g., "00042.png" -> "42")
+    # Extract row index from filename (e.g., "00042.png" -> "42").
+    # Filenames are always zero-padded integers from parquet materialization;
+    # non-numeric stems (e.g., "row_42") are not produced by the extraction script.
     stem = image_path.stem.lstrip("0") or "0"
     label_map = _load_egyptian_hw_labels(dataset_path)
     text = label_map.get(stem, "")
@@ -5381,11 +5384,41 @@ def parse_popp_line_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     return labels
 
 
+_ocr_drutsa_cache: dict[str, dict[str, str]] = {}
+
+
+def _load_ocr_drutsa_labels(dataset_path: Path) -> dict[str, str]:
+    """Load id→label mapping from OCR-Drutsa parquet files.
+
+    Parquet schema: id (str), image (binary), label (str).
+    Images are materialized as {id}.png so the stem maps to the id column.
+    """
+    cache_key = str(dataset_path)
+    if cache_key in _ocr_drutsa_cache:
+        return _ocr_drutsa_cache[cache_key]
+
+    labels_map: dict[str, str] = {}
+    try:
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+
+        parquet_dir = dataset_path / "data"
+        for pf in sorted(parquet_dir.glob("*.parquet")):
+            table = pq.read_table(pf, columns=["id", "label"])
+            ids = table.column("id")
+            texts = table.column("label")
+            for i in range(len(table)):
+                labels_map[str(ids[i].as_py())] = str(texts[i].as_py())
+    except Exception as e:
+        logger.debug("Failed to load OCR-Drutsa parquet labels: %s", e)
+    _ocr_drutsa_cache[cache_key] = labels_map
+    return labels_map
+
+
 def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse OpenPecha OCR-Drutsa labels.
 
-    Images materialized from parquet as {row_index}.png.
-    Labels are Tibetan text transcriptions.
+    Images materialized from parquet as {id}.png (e.g., KS_11-061_line_9874_4.png).
+    Labels are Tibetan text transcriptions loaded from parquet id→label mapping.
     """
     labels = OriginalLabels()
     labels.language_code = "bo"
@@ -5397,6 +5430,13 @@ def parse_ocr_drutsa_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     labels.raw_labels["dataset"] = "openpecha-ocr-drutsa"
     labels.raw_labels["has_handwriting"] = True
     labels.raw_labels["text_scope"] = "line"
+
+    # Look up transcription by image stem (== parquet id)
+    label_map = _load_ocr_drutsa_labels(dataset_path)
+    text = label_map.get(image_path.stem, "")
+    if text:
+        labels.transcription = text
+
     return labels
 
 
