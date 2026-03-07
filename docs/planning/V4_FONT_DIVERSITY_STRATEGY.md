@@ -22,7 +22,7 @@ font images to test whether the script head overfits to specific font shapes.
 
 ## 2. Current Font Inventory (Post-Audit)
 
-**241 bundled fonts** across all 27 scripts. All pass the 5-family minimum (deep cmap audit).
+**255 bundled fonts** across all 27 scripts. All pass the 5-family minimum (deep cmap audit).
 See `reports/font_availability_deep_audit_v4.json` for per-script family counts.
 
 ### Scripts by Diversity Level

@@ -5,8 +5,9 @@ source_url: https://github.com/GoodNotes/gnhk-dataset
 license: CC-BY-4.0
 total_images: 687
 format: JPG + JSON annotations
-capture_method: camera_tablet
+capture_method: camera_smartphone
 domain: EDU
+metadata_coverage: partial
 status: training-ready
 documentation_status: complete
 ---

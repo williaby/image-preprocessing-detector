@@ -628,7 +628,8 @@ reason prefix rules, code screenshot generator, OHR-Bench benchmark.
   IIIT-INDIC/KHATT/CASIA-HWDB2 (~950 images)
 - `code_confidence`: Model-internal confidence output — populated at inference time, no GT needed
 
-**Remaining acquisition** (~2,845 images to reach 12K target):
+**Remaining acquisition** (~1,515 itemized below; ~2,845 gap to 12K target — additional
+sources TBD to close the ~1,330 shortfall):
 
 - NDL Digital Collection: ~100 Japanese vertical-text images (public domain)
 - DLC-2021 screen recaptures: ~100 (academic-only ⚠️)
@@ -922,7 +923,7 @@ existing OOD upscaling pattern (`acquisition_method: "ohr_bench_bicubic_2x"`).
 
 **Phase D — Script diversity (optional, after Phase B evaluation)**:
 
-Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth_multiscript_v3/`)
+Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth-multiscript-v3/`)
 across 19 non-Latin scripts. Labels derive from generation metadata (DPI known at render
 time), not from CC measurement — avoiding the V1 CJK precision limitation entirely.
 **Note**: v3 to be retained until Phase D sampling completes (see Stream 4B retention note).

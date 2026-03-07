@@ -5,6 +5,8 @@ source_url: https://1950census.archives.gov/
 license: Public Domain
 total_images: 25000 (stratified sample across 55 states; full dataset ~6.5M pages)
 format: JPEG (scanned page images)
+capture_method: scanner
+domain: GOV
 status: training-ready
 documentation_status: complete
 ---

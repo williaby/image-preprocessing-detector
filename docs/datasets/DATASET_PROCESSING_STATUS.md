@@ -56,7 +56,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | doclaynet | 80,863 | ✅ PNG | ✅ COCO boxes | ✅ Complete | 11 DocLayNet classes |
 | dzongkha-digits | 1,000 | ✅ PNG | ✅ Class labels | ✅ Complete | Dzongkha digit recognition |
 | egyptian-handwriting | 11,216 | ✅ Parquet | ✅ Word labels | 🔄 Parser ready | Arabic cursive HW (89 writers, CC-BY-4.0) |
-| gnhk | 687 | ✅ JPG | ✅ Word polygons | 🔄 Parser ready | English HW + legibility tags (CC-BY-4.0) |
+| gnhk | 687 | ✅ JPG | ✅ Word polygons | 🔄 Parser ready | English HW + legibility tags (CC-BY-4.0); capture: camera/tablet |
 | fintabnet | 97,475 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Financial tables |
 | funsd | 199 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Noisy forms |
 | funsd_plus | 1,139 | ✅ PNG | ✅ COCO + OCR | ✅ Complete | Extended FUNSD |
@@ -68,13 +68,13 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | markushgrapher | 172,073 | ✅ PNG (extracted) | ✅ Chemical structure annotations | ✅ Complete | 2 subsets (m2s + synthetic-training), 179K extracted, 172,073 annotated at 3.5 img/s (Windows-native). CC-BY-4.0. |
 | invoices-kg | 1,414 | ✅ JPG | ✅ Extracted | ✅ Complete | Mixed formats |
 | jssoda | 2,000 | ✅ PNG | ✅ Manifest labels (is_vertical, num_columns) | ✅ Complete | Japanese Simple Synthetic OCR Dataset; orientation + script training |
-| kleister-charity | 62,029 | ✅ PNG | ✅ KIE fields + HW/signature | ✅ Complete | UK charity annual reports (MIT); 2,776 PDFs rendered to 62K pages; Layer 1 complete |
+| kleister-charity | 62,029 | ✅ PNG | ✅ KIE fields + HW/signature | ✅ Complete | UK charity annual reports (MIT); 2,776 PDFs rendered to 62K pages; Layer 1 complete; capture: born-digital + scanner mix |
 | mathverse | 6,940 | ✅ PNG | ✅ Math labels | ✅ Complete | Multi-modal math |
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
 | muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
-| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | ✅ Complete | US census HW forms (Public Domain); 25K stratified across 55 states; Layer 1 complete |
+| nara-1950-census | 25,000 | ✅ JPG | ✅ Census metadata | ✅ Complete | US census HW forms (Public Domain); 25K stratified across 55 states; Layer 1 complete; capture: scanner |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | midv2020 | 4,000 | ✅ JPG + TIF | ✅ Capture method + script | ✅ Complete | 10 doc types, 9 countries; camera + flatbed; CC BY-SA 2.5 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
@@ -90,8 +90,8 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | pubtabnet | 519,030 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Research papers |
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
 | rvl-cdip | 16,000 | ✅ PNG | ✅ Document class | ✅ Complete | 16 document types |
-| salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0) |
-| signverod | 2,765 | ✅ PNG/JPEG | ✅ Sig/init/redact/date bboxes | 🔄 Parser ready | Signature detection (CC0-1.0) |
+| salami | 250 | ✅ PNG | ✅ Legibility ratings | 🔄 Parser ready | 20-expert legibility calibration (8 scripts, CC-BY-4.0); capture: scanner (flatbed) |
+| signverod | 2,765 | ✅ PNG/JPEG | ✅ Sig/init/redact/date bboxes | 🔄 Parser ready | Signature detection (CC0-1.0); capture: scanner |
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
 | siw13 | 16,291 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | smartdoc-qa | 4,280 | ✅ JPG | ✅ Quality + mobile | ✅ Complete | Mobile capture QA |
