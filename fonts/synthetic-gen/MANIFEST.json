@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "description": "Supplemental fonts for synth-multiscript v4 generation",
-  "total_fonts": 255,
+  "total_fonts": 257,
   "fonts": {
     "AbhayaLibre-Bold.ttf": {
       "family": "AbhayaLibre",
@@ -1769,6 +1769,26 @@
       ],
       "source": "Google Fonts",
       "type": "serif"
+    },
+    "NotoSansArmenian[wdth,wght].ttf": {
+      "family": "NotoSansArmenian",
+      "size_kb": 216.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Armn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "NotoSansGeorgian[wdth,wght].ttf": {
+      "family": "NotoSansGeorgian",
+      "size_kb": 226.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Geor"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
     }
   }
 }

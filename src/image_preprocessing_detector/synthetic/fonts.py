@@ -638,6 +638,22 @@ class FontManager:
             if script not in script_fonts:
                 script_fonts[script] = latin_fonts
 
+        # Cyrillic: supplement with known multi-script fonts when Noto
+        # fallback is empty (e.g. CI runners with no system fonts)
+        if not script_fonts.get("Cyrl"):
+            cyrl_capable = [
+                f
+                for f in self.all_fonts
+                if f.family
+                in {"PTSans", "PTSerif", "FiraSans", "Lobster", "EB Garamond"}
+            ]
+            if cyrl_capable:
+                script_fonts["Cyrl"] = cyrl_capable
+
+        # Cherokee is covered by Aboriginal Sans/Serif (classified as Cans)
+        if "Cher" not in script_fonts and "Cans" in script_fonts:
+            script_fonts["Cher"] = list(script_fonts["Cans"])
+
         # Create FontCache objects
         for script_code, fonts in script_fonts.items():
             # Sort: prefer Noto, then Regular style
