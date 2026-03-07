@@ -76,6 +76,11 @@ class DQSWeightConfig:
     # ML IQA blending
     ml_blend_ratio: float = 0.30  # How much to weight ML vs classical (0-1)
 
+    # ML IQA sub-dimension weights (within the ML blend, must sum to 1.0)
+    ml_overall_weight: float = 0.60
+    ml_sharpness_weight: float = 0.25
+    ml_color_weight: float = 0.15
+
     # Structural complexity base scores by layout type
     structural_base_scores: dict[LayoutType, float] = field(
         default_factory=lambda: {
@@ -128,6 +133,22 @@ class DQSWeightConfig:
             raise ValueError(
                 f"ml_blend_ratio must be in [0, 1], got {self.ml_blend_ratio}"
             )
+
+        # Validate ML sub-dimension weights sum to 1.0
+        ml_sub_sum = (
+            self.ml_overall_weight + self.ml_sharpness_weight + self.ml_color_weight
+        )
+        if abs(ml_sub_sum - 1.0) > 1e-6:
+            raise ValueError(
+                f"ML sub-dimension weights must sum to 1.0, got {ml_sub_sum}"
+            )
+        for name, value in [
+            ("ml_overall_weight", self.ml_overall_weight),
+            ("ml_sharpness_weight", self.ml_sharpness_weight),
+            ("ml_color_weight", self.ml_color_weight),
+        ]:
+            if value < 0:
+                raise ValueError(f"{name} must be non-negative, got {value}")
 
         # Validate risk weights
         risk_weights = [
@@ -207,6 +228,11 @@ class DQSWeightConfig:
                 "artifacts": self.artifacts_weight,
             },
             "ml_blend_ratio": self.ml_blend_ratio,
+            "ml_sub_weights": {
+                "overall": self.ml_overall_weight,
+                "sharpness": self.ml_sharpness_weight,
+                "color": self.ml_color_weight,
+            },
             "structural_base_scores": {
                 k.value: v for k, v in self.structural_base_scores.items()
             },
@@ -244,6 +270,14 @@ class DQSWeightConfig:
 
         if "ml_blend_ratio" in data:
             config.ml_blend_ratio = data["ml_blend_ratio"]
+
+        if "ml_sub_weights" in data:
+            msw = data["ml_sub_weights"]
+            config.ml_overall_weight = msw.get("overall", config.ml_overall_weight)
+            config.ml_sharpness_weight = msw.get(
+                "sharpness", config.ml_sharpness_weight
+            )
+            config.ml_color_weight = msw.get("color", config.ml_color_weight)
 
         if "structural_base_scores" in data:
             for k, v in data["structural_base_scores"].items():
@@ -692,13 +726,34 @@ def calculate_degradation_score(
 
     # If ML IQA is available (Phase 2+), blend with classical
     if ml_iqa is not None and "overall_quality" in ml_iqa:
-        ml_quality = ml_iqa["overall_quality"]
-        if not 0.0 <= ml_quality <= 1.0:
+        ml_overall = ml_iqa["overall_quality"]
+        ml_sharpness = ml_iqa.get("sharpness")
+        ml_color = ml_iqa.get("color_fidelity")
+
+        # Compute weighted ML quality from available dimensions
+        if (
+            ml_sharpness is not None
+            and ml_color is not None
+            and 0.0 <= ml_overall <= 1.0
+            and 0.0 <= ml_sharpness <= 1.0
+            and 0.0 <= ml_color <= 1.0
+        ):
+            ml_quality = (
+                config.ml_overall_weight * ml_overall
+                + config.ml_sharpness_weight * ml_sharpness
+                + config.ml_color_weight * ml_color
+            )
+        elif 0.0 <= ml_overall <= 1.0:
+            # Fallback: only overall available (backward compatible)
+            ml_quality = ml_overall
+        else:
             logger.warning(
                 "ML IQA quality score out of range, ignoring",
-                ml_quality=ml_quality,
+                ml_quality=ml_overall,
             )
-        else:
+            ml_quality = None
+
+        if ml_quality is not None:
             # Blend using configurable ratio
             classical_ratio = 1.0 - config.ml_blend_ratio
             degradation_score = (
@@ -708,7 +763,10 @@ def calculate_degradation_score(
                 "Blended classical and ML IQA scores",
                 classical_ratio=classical_ratio,
                 ml_ratio=config.ml_blend_ratio,
-                ml_score=ml_quality,
+                ml_overall=ml_overall,
+                ml_sharpness=ml_sharpness,
+                ml_color=ml_color,
+                ml_quality=ml_quality,
                 final_score=degradation_score,
             )
 
