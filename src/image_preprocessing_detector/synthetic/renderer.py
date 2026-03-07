@@ -328,8 +328,28 @@ class DocumentRenderer:
         """
         if isinstance(font, ImageFont.FreeTypeFont) and hasattr(font, "path"):
             font_path = Path(str(font.path))
-            family = font_path.stem
-            style = font_path.parent.name
+            stem = font_path.stem
+            family = stem
+            # Parse style from filename: e.g. "NotoSans-BoldItalic" -> "BoldItalic"
+            style_keywords = {
+                "Regular",
+                "Bold",
+                "Italic",
+                "Light",
+                "Medium",
+                "Thin",
+                "Black",
+                "SemiBold",
+                "ExtraBold",
+                "ExtraLight",
+                "Condensed",
+            }
+            style = "Regular"
+            if "-" in stem:
+                candidate = stem.rsplit("-", maxsplit=1)[-1]
+                if any(kw in candidate for kw in style_keywords):
+                    style = candidate
+                    family = stem.rsplit("-", maxsplit=1)[0]
             self.last_rendered_fonts.append((family, style))
         else:
             self.last_rendered_fonts.append(("default", "regular"))
@@ -864,6 +884,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)
@@ -952,6 +975,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)

@@ -36,7 +36,8 @@ def _load_model(
         label: Human-readable label for log messages (e.g., ``"Student"``).
         device: Target device (``"cpu"`` or ``"cuda"``).
         model_dir: Directory containing ONNX model files.
-            Defaults to ``models/iqa/onnx/`` relative to the project root.
+            Defaults to ``<package>/onnx/`` relative to the module's
+            package directory.
 
     Returns:
         An ``ONNXModelRunner`` instance, or ``None`` if the model
@@ -85,7 +86,8 @@ def load_student_model(
     Args:
         device: Target device ("cpu" or "cuda").
         model_dir: Directory containing ONNX model files.
-            Defaults to ``models/iqa/onnx/`` relative to the project root.
+            Defaults to ``<package>/onnx/`` relative to the module's
+            package directory.
 
     Returns:
         An ``ONNXModelRunner`` instance, or ``None`` if the model
@@ -109,7 +111,8 @@ def load_teacher_model(
     Args:
         device: Target device ("cpu" or "cuda").
         model_dir: Directory containing ONNX model files.
-            Defaults to ``models/iqa/onnx/`` relative to the project root.
+            Defaults to ``<package>/onnx/`` relative to the module's
+            package directory.
 
     Returns:
         An ``ONNXModelRunner`` instance, or ``None`` if the model

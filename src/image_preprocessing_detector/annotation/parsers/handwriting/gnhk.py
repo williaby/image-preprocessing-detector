@@ -204,13 +204,11 @@ class GNHKParser(BaseParser):
         labels.raw_labels["printed_word_count"] = printed_count
         labels.raw_labels["illegible_word_count"] = illegible_count
         labels.raw_labels["math_word_count"] = math_count
-        # Use distinct line indices if available; fall back to word count
+        # Use distinct line indices if available; fall back to None
         has_line_indices = max_line > 0 or any(
             w.get("line_idx") is not None for w in words
         )
-        labels.raw_labels["line_count"] = (
-            max_line + 1 if has_line_indices else len(words)
-        )
+        labels.raw_labels["line_count"] = max_line + 1 if has_line_indices else None
 
         # Store legibility ratio (fraction of illegible words)
         if len(words) > 0:

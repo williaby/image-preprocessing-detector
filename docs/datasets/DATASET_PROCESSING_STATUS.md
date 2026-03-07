@@ -27,15 +27,16 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 61/79 datasets training-ready (77.2%), 2 benchmark-ready
+**Current Status**: 61/86 datasets training-ready (70.9%), 2 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 61 | 77.2% | Format standardized + labels extracted |
-| ✅ **Benchmark-Ready** | 2 | 2.7% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 11 | 14.9% | Format conversion, label extraction, or generating |
-| 📚 **Non-Image Corpus** | 1 | 1.4% | Text-only corpus (openlid-v2, used for generation) |
-| ❌ **Blocked** | 5 | 6.8% | Fundamental issue preventing use |
+| ✅ **Training-Ready** | 61 | 70.9% | Format standardized + labels extracted |
+| ✅ **Benchmark-Ready** | 2 | 2.3% | Evaluation-only (license restrictions) |
+| 🔄 **In Progress** | 11 | 12.8% | Format conversion, label extraction, or generating |
+| 🔄 **Correction / Shadow / Dewarping** | 8 | 9.3% | Paired GT datasets for dewarping and shadow removal |
+| 📚 **Non-Image Corpus** | 1 | 1.2% | Text-only corpus (openlid-v2, used for generation) |
+| ❌ **Blocked** | 3 | 3.5% | Fundamental issue preventing use |
 
 ---
 
@@ -44,6 +45,11 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
 ### ✅ Training-Ready (61 datasets)
 
 Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
+
+> **Note**: 6 datasets below show Layer 2 Status as "🔄 Parser ready" — these have formats
+> standardized and labels extracted (meeting Training-Ready criteria), but Layer 2 enrichment
+> metadata has not yet been generated. They are included here because they are usable for
+> training; Layer 2 enrichment is a metadata completeness step, not a format/label blocker.
 
 | Dataset | Images | Format | Labels | Layer 2 Status | Notes |
 |---------|--------|--------|--------|----------------|-------|
@@ -129,7 +135,7 @@ Datasets ready for benchmark evaluation but not for training (license restrictio
 
 ---
 
-### 🔄 In Progress (6 datasets)
+### 🔄 In Progress (11 datasets)
 
 Format conversion, label extraction, or generation currently underway.
 
@@ -198,7 +204,7 @@ Text-only corpora used for synthetic dataset generation.
 
 ---
 
-### ❌ Blocked (5 datasets)
+### ❌ Blocked (3 datasets)
 
 Fundamental issues preventing use for image-based training.
 

@@ -1,8 +1,14 @@
-"""Parser for OpenPecha OCR Drutsa Tibetan dataset.
+"""Metadata-only parser for OpenPecha OCR Drutsa Tibetan dataset.
 
 OpenPecha OCR Drutsa contains 32,364 line-level OCR images with
 Tibetan Unicode text transcriptions, sourced from woodblock prints
 and manuscripts.
+
+Note:
+    This is a **metadata-only parser** (script/language detection).
+    Although Tibetan text transcriptions are available in the source
+    parquet files, transcription extraction is not performed here and
+    is deferred to a future phase.
 
 Dataset Structure:
     openpecha-ocr-drutsa/

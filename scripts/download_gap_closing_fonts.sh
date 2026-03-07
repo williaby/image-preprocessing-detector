@@ -13,6 +13,8 @@ GHRAW="https://raw.githubusercontent.com/google/fonts/main/ofl"
 
 mkdir -p "$DEST"
 
+failed=0
+
 # Capture baseline font count before downloads to avoid hardcoding
 BASELINE_FONT_COUNT=$(find "$DEST" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l)
 
@@ -29,7 +31,11 @@ dl() {
         return
     fi
     echo "  [get]  $dest_name"
-    curl -sL "${GHRAW}/${family_dir}/${filename}" -o "$DEST/$dest_name" 2>/dev/null
+    if ! curl -fsSL "${GHRAW}/${family_dir}/${filename}" -o "$DEST/$dest_name" 2>/dev/null; then
+        echo "    WARNING: Failed to download $dest_name"
+        ((failed++)) || true
+        return
+    fi
     # Verify it's a real font (not a 404 HTML page)
     local magic
     magic=$(head -c4 "$DEST/$dest_name" 2>/dev/null | xxd -p 2>/dev/null || echo "")
@@ -170,3 +176,4 @@ echo "=== Download complete ==="
 TOTAL_FONTS=$(find "$DEST" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l)
 echo "Total bundled fonts: $TOTAL_FONTS"
 echo "New fonts added: $((TOTAL_FONTS - BASELINE_FONT_COUNT))"
+echo "Failed: $failed"

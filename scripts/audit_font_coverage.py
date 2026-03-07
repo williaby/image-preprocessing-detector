@@ -65,62 +65,191 @@ V3_SCRIPTS: list[str] = [
 # Allows heuristic assignment of font files to scripts based on filename substrings.
 SCRIPT_FONT_PATTERNS: dict[str, list[str]] = {
     "Latn": [
-        "latin", "roman", "serif", "sans", "mono", "noto-latin", "liberation",
-        "roboto", "fira", "dejavu", "gentium", "charis", "andika", "doulos",
+        "latin",
+        "roman",
+        "serif",
+        "sans",
+        "mono",
+        "noto-latin",
+        "liberation",
+        "roboto",
+        "fira",
+        "dejavu",
+        "gentium",
+        "charis",
+        "andika",
+        "doulos",
     ],
     "Arab": [
-        "arabic", "arab", "scheherazade", "amiri", "lateef", "reem",
-        "kufi", "nastaliq", "awami", "harmattan", "arefruqaa",
-        "tajawal", "mada", "elmessiri", "cairo",
+        "arabic",
+        "arab",
+        "scheherazade",
+        "amiri",
+        "lateef",
+        "reem",
+        "kufi",
+        "nastaliq",
+        "awami",
+        "harmattan",
+        "arefruqaa",
+        "tajawal",
+        "mada",
+        "elmessiri",
+        "cairo",
     ],
     "Deva": [
-        "devanagari", "deva", "noto-deva", "mangal", "sanskrit",
-        "kalam", "hind-", "mukta-", "baloo2", "tirodevanagari", "lohit-deva",
+        "devanagari",
+        "deva",
+        "noto-deva",
+        "mangal",
+        "sanskrit",
+        "kalam",
+        "hind-",
+        "mukta-",
+        "baloo2",
+        "tirodevanagari",
+        "lohit-deva",
     ],
-    "Hans": ["cjk", "simplified", "hans", "notosc", "notosanssc", "notoserif sc", "wqy",
-             "mashan", "liujian", "longcang", "zhimang", "zcool"],
+    "Hans": [
+        "cjk",
+        "simplified",
+        "hans",
+        "notosc",
+        "notosanssc",
+        "notoserif sc",
+        "wqy",
+        "mashan",
+        "liujian",
+        "longcang",
+        "zhimang",
+        "zcool",
+    ],
     "Hant": ["traditional", "hant", "nototc", "notosanstc", "notoserif tc"],
     "Cyrl": [
-        "cyrillic", "cyrl", "slavic", "russian",
-        "liberation", "dejavu", "roboto", "fira", "ptsans", "ptserif",
-        "badscript", "caveat", "marckscript", "russoone",
+        "cyrillic",
+        "cyrl",
+        "slavic",
+        "russian",
+        "liberation",
+        "dejavu",
+        "roboto",
+        "fira",
+        "ptsans",
+        "ptserif",
+        "badscript",
+        "caveat",
+        "marckscript",
+        "russoone",
     ],
     "Jpan": ["japanese", "jpan", "notojp", "notosansjp", "ipafont"],
     "Hang": ["korean", "hang", "notokr", "notosanskr", "nanum", "gothica1"],
     "Thai": [
-        "thai", "noto-thai", "thsarabun", "loopedthai",
-        "kanit", "pridi", "baijamjuree", "mitr", "prompt", "sarabun", "itim",
+        "thai",
+        "noto-thai",
+        "thsarabun",
+        "loopedthai",
+        "kanit",
+        "pridi",
+        "baijamjuree",
+        "mitr",
+        "prompt",
+        "sarabun",
+        "itim",
     ],
-    "Beng": ["bengali", "beng", "noto-beng", "vrinda",
-             "kalpurush", "solaimanlipi", "atma", "galada"],
-    "Gujr": ["gujarati", "gujr", "noto-gujr",
-             "hindvadodara", "muktavaani", "rasa", "baloobhai"],
-    "Guru": ["gurmukhi", "guru", "noto-guru",
-             "muktamahee", "baloopaaji"],
-    "Knda": ["kannada", "knda", "noto-knda",
-             "timmana", "balootamma", "hindmysuru", "benne"],
-    "Mlym": ["malayalam", "mlym", "noto-mlym",
-             "manjari", "rachana", "meera", "anjalioldlipi", "chilanka"],
-    "Orya": ["oriya", "odia", "orya", "noto-orya",
-             "baloobhaina", "anekodia", "alkatra"],
-    "Taml": ["tamil", "taml", "noto-taml", "latha",
-             "catamaran", "muktamalar", "hindmadurai", "arimamadurai", "kavivanar"],
-    "Telu": ["telugu", "telu", "noto-telu",
-             "hindguntur", "ramabhadra", "mandali", "ntr"],
-    "Tibt": ["tibetan", "tibt", "noto-tibt", "jomolhari", "uchen", "ddcuchen",
-             "monlam", "tibetanmachine"],
+    "Beng": [
+        "bengali",
+        "beng",
+        "noto-beng",
+        "vrinda",
+        "kalpurush",
+        "solaimanlipi",
+        "atma",
+        "galada",
+    ],
+    "Gujr": [
+        "gujarati",
+        "gujr",
+        "noto-gujr",
+        "hindvadodara",
+        "muktavaani",
+        "rasa",
+        "baloobhai",
+    ],
+    "Guru": ["gurmukhi", "guru", "noto-guru", "muktamahee", "baloopaaji"],
+    "Knda": [
+        "kannada",
+        "knda",
+        "noto-knda",
+        "timmana",
+        "balootamma",
+        "hindmysuru",
+        "benne",
+    ],
+    "Mlym": [
+        "malayalam",
+        "mlym",
+        "noto-mlym",
+        "manjari",
+        "rachana",
+        "meera",
+        "anjalioldlipi",
+        "chilanka",
+    ],
+    "Orya": [
+        "oriya",
+        "odia",
+        "orya",
+        "noto-orya",
+        "baloobhaina",
+        "anekodia",
+        "alkatra",
+    ],
+    "Taml": [
+        "tamil",
+        "taml",
+        "noto-taml",
+        "latha",
+        "catamaran",
+        "muktamalar",
+        "hindmadurai",
+        "arimamadurai",
+        "kavivanar",
+    ],
+    "Telu": [
+        "telugu",
+        "telu",
+        "noto-telu",
+        "hindguntur",
+        "ramabhadra",
+        "mandali",
+        "ntr",
+    ],
+    "Tibt": [
+        "tibetan",
+        "tibt",
+        "noto-tibt",
+        "jomolhari",
+        "uchen",
+        "ddcuchen",
+        "monlam",
+        "tibetanmachine",
+    ],
     "Mymr": ["myanmar", "mymr", "noto-mymr", "padauk", "khyay"],
-    "Khmr": ["khmer", "khmr", "noto-khmr", "busra",
-             "battambang", "content", "moul"],
-    "Sinh": ["sinhala", "sinh", "noto-sinh", "iskpota",
-             "abhayalibre", "yaldevi"],
+    "Khmr": ["khmer", "khmr", "noto-khmr", "busra", "battambang", "content", "moul"],
+    "Sinh": ["sinhala", "sinh", "noto-sinh", "iskpota", "abhayalibre", "yaldevi"],
     "Laoo": ["lao", "laoo", "noto-lao", "loopedlao", "phetsarath"],
     "Cher": ["cherokee", "cher", "noto-cher", "aboriginal"],
-    "Cans": ["canadianaboriginal", "cans", "syllabics", "noto-cans", "bjcree", "aboriginal"],
+    "Cans": [
+        "canadianaboriginal",
+        "cans",
+        "syllabics",
+        "noto-cans",
+        "bjcree",
+        "aboriginal",
+    ],
     "Ethi": ["ethiopic", "ethi", "noto-ethi", "abyssinica", "brana", "zemen"],
     "Geor": ["georgian", "geor", "noto-geor", "bpg"],
-    "Hebr": ["hebrew", "hebr", "noto-hebr", "david", "frank",
-             "heebo", "suezone"],
+    "Hebr": ["hebrew", "hebr", "noto-hebr", "david", "frank", "heebo", "suezone"],
 }
 
 # System font paths to also check alongside the project fonts directory
@@ -142,11 +271,11 @@ CMAP_MIN_CODEPOINTS: int = 10
 
 UNICODE_SCRIPT_RANGES: list[tuple[int, int, str]] = [
     # Latin
-    (0x0041, 0x024F, "Latn"),      # Basic Latin + Latin Extended-A/B
+    (0x0041, 0x024F, "Latn"),  # Basic Latin + Latin Extended-A/B
     # Arabic
-    (0x0600, 0x06FF, "Arab"),      # Arabic block
-    (0x0750, 0x077F, "Arab"),      # Arabic Supplement
-    (0xFB50, 0xFDFF, "Arab"),      # Arabic Presentation Forms-A
+    (0x0600, 0x06FF, "Arab"),  # Arabic block
+    (0x0750, 0x077F, "Arab"),  # Arabic Supplement
+    (0xFB50, 0xFDFF, "Arab"),  # Arabic Presentation Forms-A
     # Devanagari
     (0x0900, 0x097F, "Deva"),
     # Bengali
@@ -177,37 +306,37 @@ UNICODE_SCRIPT_RANGES: list[tuple[int, int, str]] = [
     (0x1000, 0x109F, "Mymr"),
     # Georgian
     (0x10A0, 0x10FF, "Geor"),
-    (0x2D00, 0x2D2F, "Geor"),      # Georgian Supplement
+    (0x2D00, 0x2D2F, "Geor"),  # Georgian Supplement
     # Ethiopic
     (0x1200, 0x137F, "Ethi"),
-    (0x1380, 0x139F, "Ethi"),      # Ethiopic Supplement
+    (0x1380, 0x139F, "Ethi"),  # Ethiopic Supplement
     # Cherokee
     (0x13A0, 0x13FF, "Cher"),
-    (0xAB70, 0xABBF, "Cher"),      # Cherokee Supplement
+    (0xAB70, 0xABBF, "Cher"),  # Cherokee Supplement
     # Canadian Aboriginal Syllabics
     (0x1400, 0x167F, "Cans"),
-    (0x18B0, 0x18FF, "Cans"),      # Unified Canadian Aboriginal Syllabics Extended
+    (0x18B0, 0x18FF, "Cans"),  # Unified Canadian Aboriginal Syllabics Extended
     # Khmer
     (0x1780, 0x17FF, "Khmr"),
-    (0x19E0, 0x19FF, "Khmr"),      # Khmer Symbols
+    (0x19E0, 0x19FF, "Khmr"),  # Khmer Symbols
     # CJK Unified Ideographs (shared by Hans, Hant, Jpan)
     (0x4E00, 0x9FFF, "Hans"),
     (0x4E00, 0x9FFF, "Hant"),
     (0x4E00, 0x9FFF, "Jpan"),
     # Hiragana + Katakana (Japanese-specific)
-    (0x3040, 0x309F, "Jpan"),      # Hiragana
-    (0x30A0, 0x30FF, "Jpan"),      # Katakana
+    (0x3040, 0x309F, "Jpan"),  # Hiragana
+    (0x30A0, 0x30FF, "Jpan"),  # Katakana
     # Hangul (Korean)
-    (0xAC00, 0xD7AF, "Hang"),      # Hangul Syllables
-    (0x1100, 0x11FF, "Hang"),      # Hangul Jamo
+    (0xAC00, 0xD7AF, "Hang"),  # Hangul Syllables
+    (0x1100, 0x11FF, "Hang"),  # Hangul Jamo
     # Cyrillic
     (0x0400, 0x04FF, "Cyrl"),
-    (0x0500, 0x052F, "Cyrl"),      # Cyrillic Supplement
+    (0x0500, 0x052F, "Cyrl"),  # Cyrillic Supplement
     # Greek
     (0x0370, 0x03FF, "Grek"),
     # Hebrew
     (0x0590, 0x05FF, "Hebr"),
-    (0xFB1D, 0xFB4F, "Hebr"),     # Hebrew Presentation Forms
+    (0xFB1D, 0xFB4F, "Hebr"),  # Hebrew Presentation Forms
     # Armenian
     (0x0530, 0x058F, "Armn"),
 ]
@@ -336,7 +465,8 @@ def _deep_scan_fonts(
     for idx, font_path in enumerate(all_font_paths):
         if idx % 500 == 0:
             click.echo(
-                f"  Deep scanning: {idx}/{total} fonts...", err=True,
+                f"  Deep scanning: {idx}/{total} fonts...",
+                err=True,
             )
 
         family = _extract_font_family(font_path)
@@ -347,10 +477,7 @@ def _deep_scan_fonts(
             script_families[script].add(family)
             style_dist[script][style] += 1
 
-    counts = {
-        script: len(families)
-        for script, families in script_families.items()
-    }
+    counts = {script: len(families) for script, families in script_families.items()}
     return counts, dict(style_dist)
 
 
@@ -500,14 +627,14 @@ def main(
     style_dist: dict[str, dict[str, int]] = {}
     if deep:
         click.echo(
-            f"Deep scanning fonts in: {fonts_dir} + system paths "
-            "(cmap inspection)...",
+            f"Deep scanning fonts in: {fonts_dir} + system paths (cmap inspection)...",
             err=True,
         )
         counts, style_dist = _deep_scan_fonts(fonts_dir)
     else:
         click.echo(
-            f"Scanning fonts in: {fonts_dir} + system paths...", err=True,
+            f"Scanning fonts in: {fonts_dir} + system paths...",
+            err=True,
         )
         counts = _scan_fonts(fonts_dir)
 

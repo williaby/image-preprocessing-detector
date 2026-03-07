@@ -52,8 +52,8 @@ v4 generation must exercise all five:
 
 ### 3.2 Fonts to Download for ADVERSARIAL Tier
 
-The following fonts from the research are NOT yet in `fonts/synthetic-gen/` and should be
-downloaded to populate ADVERSARIAL tiers. All are SIL OFL 1.1 unless noted.
+The following fonts from the research have been downloaded to `fonts/synthetic-gen/` to
+populate ADVERSARIAL tiers (Phase A complete — 14/14 downloaded). All are SIL OFL 1.1 unless noted.
 
 **Priority 1 — High-impact adversarial fonts (download before v4 generation)**
 
@@ -204,10 +204,10 @@ Option 1 is simpler and recommended.
 
 ## 5. Impact on OOD Dataset
 
-### 5.1 OOD-Script Category 1h — Font Variation (75 images)
+### 5.1 OOD-Script Category 1h — Font Variation (150 images)
 
-The OOD catalog specifies 75 images testing font variation in trained scripts. The research
-provides a precise mapping of which adversarial fonts to use:
+The OOD catalog originally specified 75 images; expanded to 150 (default `--n-images 150`)
+after consensus review. The research provides a precise mapping of which adversarial fonts to use:
 
 | Sub-target | Count | Fonts to Render | Script Labels |
 |------------|-------|-----------------|---------------|
@@ -284,7 +284,7 @@ Update MANIFEST.json, FONT_NAME_TO_SCRIPT, FONT_RECOMMENDATIONS ADVERSARIAL tier
 ### Phase C: OOD Font Variation Rendering (2–3 hours)
 
 1. Create `scripts/render_ood_font_variation.py`
-2. Render 75 images per §5.1 specification
+2. Render 150 images per §5.1 specification (default `--n-images 150`)
 3. Register in `metadata_registry/ood_registry.jsonl`
 
 ### Phase D: Validation (1–2 hours)
@@ -359,7 +359,7 @@ phased implementation is correct.
 | Topic | Consensus | Decision |
 |-------|-----------|----------|
 | Adversarial tier rate | Split: 5% (Gemini/Grok), 8-10% (DeepSeek/Minimax), 12-15% (Qwen/Kimi) | **Keep 5% in data generation**. Document loss re-weighting as training-time recommendation. |
-| OOD set sizing | 5/6 models say 175 is insufficient; range 500-1,000 recommended | **Expanded to ~375**: 150 font variations, 100 cross-script confusion, ~25 case variation, ~50 mimicry |
+| OOD set sizing | 5/6 models say 175 is insufficient; range 500-1,000 recommended | **Expanded to ~325**: 150 font variations, 100 cross-script confusion, ~25 case variation, ~50 mimicry |
 | Font selections | 6/6 endorse the 14 fonts | **Proceeded as-is**. Gaps (CJK simplified/traditional, Arabic connectivity) documented as future work. |
 | Missing vectors | Combination attacks (font+degradation), mixed-script documents | **Documented as future work** — out of scope for infrastructure phase. |
 | Case variation | ALL CAPS removes case-based discrimination cues, increasing cross-script confusability | **ALL CAPS rendering added** to OOD pipeline for cased scripts (Latn, Cyrl, Grek). Capped at 5% of total samples. |
@@ -400,7 +400,7 @@ Per Qwen 3.5 397B suggestion, consider at training time:
 - Default `--n-images` increased from 75 to 150
 - New flags: `--include-9c4` (100 cross-script confusion images), `--include-case-variation`
   (~25 ALL CAPS images, 5% cap), `--include-mimicry` (~50 simulation font images)
-- Total OOD target: ~375 images (was 175)
+- Total OOD target: ~325 images (was 175)
 
 ### Phase D: Validation — PENDING
 

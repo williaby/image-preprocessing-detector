@@ -64,7 +64,7 @@ download_from_zip() {
     local zipfile="$TEMP_DIR/download.zip"
     if curl -sL --fail -o "$zipfile" "$url" 2>/dev/null; then
         local found_file
-        found_file=$(unzip -l "$zipfile" 2>/dev/null | grep -i "$pattern" | head -1 | awk '{print $NF}')
+        found_file=$(unzip -l "$zipfile" 2>/dev/null | grep -i "$pattern" | head -1 | awk '{print $NF}') || true
         if [ -n "$found_file" ]; then
             unzip -o -j "$zipfile" "$found_file" -d "$TEMP_DIR" 2>/dev/null
             local basename
@@ -158,7 +158,7 @@ if [ -f "$FONTS_DIR/GFSBodoni-Regular.ttf" ]; then
 else
     echo "  Downloading ZIP for: GFSBodoni-Regular.ttf (Grek — Cross-script confusion)"
     if curl -sL --fail -o "$TEMP_DIR/GFS_Bodoni.zip" "https://greekfontsociety-gfs.gr/_assets/fonts/GFS_Bodoni.zip" 2>/dev/null; then
-        python3 -c "
+        if python3 -c "
 import zipfile, shutil, sys
 with zipfile.ZipFile('$TEMP_DIR/GFS_Bodoni.zip') as zf:
     for name in zf.namelist():
@@ -167,12 +167,19 @@ with zipfile.ZipFile('$TEMP_DIR/GFS_Bodoni.zip') as zf:
                 shutil.copyfileobj(src, dst)
             sys.exit(0)
     sys.exit(1)
-" 2>/dev/null
-        if [ -f "$FONTS_DIR/GFSBodoni-Regular.ttf" ]; then
-            echo "    OK: GFSBodoni-Regular.ttf ($(stat -c%s "$FONTS_DIR/GFSBodoni-Regular.ttf") bytes)"
-            ((downloaded++)) || true
+" 2>/dev/null; then
+            # Verify extracted font has valid magic bytes
+            magic=$(xxd -l 4 -p "$FONTS_DIR/GFSBodoni-Regular.ttf" 2>/dev/null || echo "")
+            if [[ "$magic" == "00010000" || "$magic" == "4f54544f" || "$magic" == "74727565" || "$magic" == "74746366" || "$magic" == "774f4632" || "$magic" == "774f4646" ]]; then
+                echo "    OK: GFSBodoni-Regular.ttf ($(stat -c%s "$FONTS_DIR/GFSBodoni-Regular.ttf") bytes)"
+                ((downloaded++)) || true
+            else
+                echo "    FAIL: GFSBodoni-Regular.ttf (not a valid font file, removing)"
+                rm -f "$FONTS_DIR/GFSBodoni-Regular.ttf"
+                ((failed++)) || true
+            fi
         else
-            echo "    FAIL: GFSBodoni-Regular.ttf (extraction failed)"
+            echo "    WARNING: python3 extraction failed for GFS Bodoni"
             ((failed++)) || true
         fi
         rm -f "$TEMP_DIR/GFS_Bodoni.zip"

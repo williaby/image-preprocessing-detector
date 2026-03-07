@@ -7,6 +7,7 @@ total_images: 25000 (stratified sample across 55 states; full dataset ~6.5M page
 format: JPEG (scanned page images)
 capture_method: scanner
 domain: GOV
+metadata_coverage: partial
 status: training-ready
 documentation_status: complete
 ---

@@ -745,7 +745,8 @@ def _run_validation(
     gt_arr = np.array(human_mos)
 
     srcc_result = stats.spearmanr(preds_arr, gt_arr)
-    srcc = float(getattr(srcc_result, "statistic", srcc_result.correlation))
+    _fallback = getattr(srcc_result, "correlation", float("nan"))
+    srcc = float(getattr(srcc_result, "statistic", _fallback))
     pvalue = float(srcc_result.pvalue)
 
     plcc_result = stats.pearsonr(preds_arr, gt_arr)

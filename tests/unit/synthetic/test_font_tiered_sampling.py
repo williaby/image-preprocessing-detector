@@ -12,6 +12,7 @@ from typing import ClassVar
 from unittest.mock import patch
 
 import pytest
+from PIL import ImageFont
 
 from image_preprocessing_detector.synthetic.config import (
     FONT_RECOMMENDATIONS,
@@ -96,14 +97,8 @@ class TestTieredFontSampling:
     ) -> None:
         """Urdu should select Nastaliq-style fonts when available."""
         font = font_manager.get_tiered_font("Arab", size=24, language_code="urd_Arab")
-        if font is not None:
-            # If a font was returned, verify it is a valid FreeType font
-            assert hasattr(font, "path"), (
-                "Returned font should be a FreeTypeFont with a path attribute"
-            )
-        else:
-            # Graceful None when no Nastaliq fonts are installed
-            assert font is None
+        # Font is either None (no Nastaliq fonts installed) or a valid FreeTypeFont
+        assert font is None or isinstance(font, ImageFont.FreeTypeFont)
 
     def test_bulgarian_cyrillic_variant(
         self,
@@ -111,14 +106,8 @@ class TestTieredFontSampling:
     ) -> None:
         """Bulgarian should use Cyrl_Bulgarian font recommendations."""
         font = font_manager.get_tiered_font("Cyrl", size=24, language_code="bul_Cyrl")
-        if font is not None:
-            # If a font was returned, verify it is a valid FreeType font
-            assert hasattr(font, "path"), (
-                "Returned font should be a FreeTypeFont with a path attribute"
-            )
-        else:
-            # Graceful None when no Bulgarian-specific fonts are installed
-            assert font is None
+        # Font is either None (no Bulgarian fonts installed) or a valid FreeTypeFont
+        assert font is None or isinstance(font, ImageFont.FreeTypeFont)
 
 
 class TestRendererIntegration:

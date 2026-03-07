@@ -9,6 +9,7 @@ trap 'rm -rf "$TEMP_DIR"' EXIT
 
 downloaded=0
 failed=0
+skipped=0
 
 download_font() {
     local url="$1"
@@ -17,6 +18,7 @@ download_font() {
 
     if [ -f "$FONTS_DIR/$filename" ]; then
         echo "  SKIP (exists): $filename"
+        ((skipped++)) || true
         return
     fi
 
@@ -47,6 +49,7 @@ download_from_zip() {
 
     if [ -f "$FONTS_DIR/$target_name" ]; then
         echo "  SKIP (exists): $target_name"
+        ((skipped++)) || true
         return
     fi
 
@@ -97,6 +100,7 @@ download_from_github_release() {
 
     if [ -f "$FONTS_DIR/$target_name" ]; then
         echo "  SKIP (exists): $target_name"
+        ((skipped++)) || true
         return
     fi
 
@@ -161,5 +165,6 @@ echo ""
 
 echo "=== Summary ==="
 echo "Downloaded: $downloaded new fonts"
+echo "Skipped (already exist): $skipped"
 echo "Failed: $failed"
 echo "Total bundled: $(find "$FONTS_DIR" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l) fonts"

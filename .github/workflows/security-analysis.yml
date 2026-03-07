@@ -173,6 +173,25 @@ jobs:
           license-check: true
           comment-summary-in-pr: always
           deny-licenses: GPL-2.0, GPL-3.0
+          # Allow transformers@4.37.2 ReDoS advisories — pinned by openai-clip
+          # (pyiqa dependency) in the isolated [iqa] extra. This extra is
+          # mutually exclusive with [labeling] via [tool.uv.conflicts] and is
+          # only used offline for pseudo-label generation, never in production.
+          # Upstream fix requires openai-clip to drop its transformers pin.
+          allow-ghsas: >-
+            GHSA-qxrp-vhvm-j765,
+            GHSA-hxxf-235m-72v3,
+            GHSA-wrfc-pvp9-mr9g,
+            GHSA-6rvg-6v2m-4j46,
+            GHSA-fpwr-67px-3qhx,
+            GHSA-qq3j-4f4f-9583,
+            GHSA-q2wp-rjmx-x6x9,
+            GHSA-jjph-296x-mrcr,
+            GHSA-37mw-44qp-f5jm,
+            GHSA-9356-575x-2w9m,
+            GHSA-59p9-h35m-wg4g,
+            GHSA-rcv9-qm8p-9p6j,
+            GHSA-4w7r-h757-3r74
           # Allow DVC dev dependencies (not distributed with CC-BY-SA-4.0-licensed package)
           # - grandalf: GPL-3.0-or-later (DVC pipeline DAG visualization)
           # - text-unidecode: Dual-licensed Artistic-1.0-Perl OR GPL-1.0/2.0

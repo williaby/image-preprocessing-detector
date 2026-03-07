@@ -3050,14 +3050,11 @@ def render_font_variations(
         total_reg += 1
 
     click.echo(f"  render-font-variations: {total_reg}/{n_images} images registered")
-    log_dry_run_summary(
-        candidates=total_cands,
-        duplicates_training=total_dups_train,
-        duplicates_intra=total_dups_intra,
-        unique=total_reg,
-        sub_command="render-font-variations",
-        dry_run=dry_run,
-    )
+
+    # Track optional renderer counts for aggregate summary
+    optional_caps_reg = 0
+    optional_mimicry_reg = 0
+    optional_confusion_reg = 0
 
     # ------------------------------------------------------------------
     # 5d: ALL CAPS case variation rendering (capped at 5% of total)
@@ -3072,7 +3069,7 @@ def render_font_variations(
             "Grek": "ΑΞΙΟΛΟΓΗΣΗ ΠΟΙΟΤΗΤΑΣ ΕΙΚΟΝΩΝ\nΕΓΓΡΑΦΩΝ ΣΕΛΙΔΑ ΕΝΑ\n\n"
             "ΣΥΣΤΗΜΑ ΕΠΕΞΕΡΓΑΣΙΑΣ ΕΓΓΡΑΦΩΝ",
         }
-        # Cap: 5% of total OOD images ≈ 25 images max
+        # Cap: ≈ 5% of n_images
         max_caps_images = max(1, int(n_images * 0.05))
         caps_reg = 0
         caps_fonts_per_script = 3
@@ -3081,9 +3078,10 @@ def render_font_variations(
             # Find fonts matching this script
             matching_fps = [
                 fp
-                for fp in all_font_paths
-                if _match_font_script(fp) is not None
-                and _match_font_script(fp)[0] == script_code
+                for fp, matched in (
+                    (fp, _match_font_script(fp)) for fp in all_font_paths
+                )
+                if matched is not None and matched[0] == script_code
             ]
             rng.shuffle(matching_fps)
             for fp in matching_fps[:caps_fonts_per_script]:
@@ -3168,6 +3166,7 @@ def render_font_variations(
                         known_sha256s.add(sha256)
                     caps_reg += 1
 
+        optional_caps_reg = caps_reg
         click.echo(
             f"  case-variation (ALL CAPS): {caps_reg}/{max_caps_images} images registered"
         )
@@ -3280,6 +3279,7 @@ def render_font_variations(
                             known_sha256s.add(sha256)
                         mimicry_reg += 1
 
+            optional_mimicry_reg = mimicry_reg
             click.echo(
                 f"  mimicry/simulation: {mimicry_reg}/{max_mimicry} images registered"
             )
@@ -3435,8 +3435,29 @@ def render_font_variations(
                         known_sha256s.add(sha256)
                     confusion_reg += 1
 
+        optional_confusion_reg = confusion_reg
         click.echo(
             f"  9c-4 cross-script confusion: {confusion_reg}/{max_9c4} images registered"
+        )
+
+    # ------------------------------------------------------------------
+    # Aggregate summary (includes optional renderers for --dry-run accuracy)
+    # ------------------------------------------------------------------
+    grand_total = (
+        total_reg + optional_caps_reg + optional_mimicry_reg + optional_confusion_reg
+    )
+    log_dry_run_summary(
+        candidates=total_cands,
+        duplicates_training=total_dups_train,
+        duplicates_intra=total_dups_intra,
+        unique=grand_total,
+        sub_command="render-font-variations",
+        dry_run=dry_run,
+    )
+    if optional_caps_reg or optional_mimicry_reg or optional_confusion_reg:
+        click.echo(
+            f"  (includes optional: caps={optional_caps_reg}, "
+            f"mimicry={optional_mimicry_reg}, confusion={optional_confusion_reg})"
         )
 
 

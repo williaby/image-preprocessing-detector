@@ -183,7 +183,7 @@ def download_state_metadata(state: str) -> dict | None:
             text=True,
             timeout=60,
         )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
+    except (subprocess.TimeoutExpired, OSError) as exc:
         logger.warning("Failed to fetch metadata for %s: %s", state, exc)
         return None
     if result.returncode != 0:
@@ -360,6 +360,27 @@ def sample(count: int, seed: int) -> None:
     logger.info("Sample saved: %d images to %s", len(sampled), SAMPLE_PATH)
 
 
+def _download_image(img: ImageRecord, local: Path) -> str:
+    """Download a single image. Returns 'ok' on success, 'fail' on error."""
+    try:
+        result = subprocess.run(
+            ["wget", "-q", "--timeout=30", "-O", str(local), img.url],
+            capture_output=True,
+            timeout=60,
+        )
+        if result.returncode == 0:
+            return "ok"
+        logger.warning("Failed: %s", img.filename)
+        if local.exists():
+            local.unlink()
+        return "fail"
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        logger.warning("Download error for %s: %s", img.filename, exc)
+        if local.exists():
+            local.unlink()
+        return "fail"
+
+
 @cli.command()
 def download() -> None:
     """Download sampled images from S3."""
@@ -383,27 +404,12 @@ def download() -> None:
 
         if local.exists():
             skipped += 1
-            continue
-
-        try:
-            result = subprocess.run(
-                ["wget", "-q", "--timeout=30", "-O", str(local), img.url],
-                capture_output=True,
-                timeout=60,
-            )
-            if result.returncode == 0:
+        else:
+            status = _download_image(img, local)
+            if status == "ok":
                 downloaded += 1
             else:
                 failed += 1
-                logger.warning("Failed: %s", img.filename)
-                # Clean up partial download
-                if local.exists():
-                    local.unlink()
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
-            failed += 1
-            logger.warning("Download error for %s: %s", img.filename, exc)
-            if local.exists():
-                local.unlink()
 
         if (downloaded + skipped) % 50 == 0:
             logger.info(
