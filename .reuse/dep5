@@ -1,8 +1,0 @@
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: image-preprocessing-detector
-Upstream-Contact: https://github.com/williaby/image-preprocessing-detector
-
-Files: reports/*
-Copyright: 2026 Byron Williams
-License: CC-BY-SA-4.0
-Comment: Generated analysis reports and font audit outputs.
