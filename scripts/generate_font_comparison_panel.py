@@ -53,8 +53,8 @@ SAMPLE_TEXT: dict[str, str] = {
     "Grek": "Γειά σου κόσμε! Αυτό είναι ένα τεστ. 0123456789",
     "Hebr": "שלום עולם! זוהי בדיקה. ₪0123456789",
     "Ethi": "ሰላም ዓለም! ይህ ፈተና ነው።",
-    "Armn": "Բարեdelays աdelays! Սա թdelays delays :",
-    "Geor": "გamარჯობა მsworld! ეs ტესტია.",
+    "Armn": "Բարև աշխարհ։ Սա թեստ է։",
+    "Geor": "გამარჯობა მსოფლიო! ეს ტესტია.",
     "Cher": "ᏣᎳᎩ ᎦᏬᏂᎯᏍᏗ",
     "Cans": "ᓀᐦᐃᔭᐍᐏᐣ",
 }
@@ -98,7 +98,9 @@ def _render_panel(
 
     # Header
     try:
-        header_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+        header_font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16
+        )
     except OSError:
         header_font = ImageFont.load_default()
 
@@ -161,7 +163,7 @@ def _render_panel(
     "all_scripts",
     is_flag=True,
     default=False,
-    help="Generate panels for all 27 scripts.",
+    help="Generate panels for all discovered scripts.",
 )
 @click.option(
     "--output-dir",
@@ -171,14 +173,34 @@ def _render_panel(
     help="Output directory for panel images.",
 )
 def main(script: str | None, all_scripts: bool, output_dir: Path) -> None:
-    """Generate visual font comparison panels."""
+    """Generate visual font comparison panels.
+
+    Scans system and bundled fonts, then renders a PNG grid showing every
+    available font for the requested script(s).
+
+    Args:
+        script: ISO 15924 script code (e.g. ``"Thai"``, ``"Deva"``).
+            Mutually exclusive with *all_scripts*.
+        all_scripts: When ``True``, generate panels for every discovered
+            script in the FontManager registry.
+        output_dir: Directory where ``font_panel_<CODE>.png`` files are
+            written.  Created automatically if it does not exist.
+    """
     fm = FontManager()
     fm.scan_fonts()
 
+    discovered_codes = sorted(fm.fonts_by_script.keys())
+
     scripts_to_render: list[str]
     if all_scripts:
-        scripts_to_render = sorted(fm.fonts_by_script.keys())
+        scripts_to_render = discovered_codes
     elif script:
+        if script not in fm.fonts_by_script:
+            raise click.BadParameter(
+                f"Unknown script code {script!r}. "
+                f"Discovered scripts: {', '.join(discovered_codes)}",
+                param_hint="'--script'",
+            )
         scripts_to_render = [script]
     else:
         click.echo("Please specify --script CODE or --all", err=True)

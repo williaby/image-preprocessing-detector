@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from PIL import Image, ImageDraw, ImageFont
@@ -209,6 +210,8 @@ class DocumentRenderer:
         self.dpi = dpi
         self.background_color = background_color
         self.text_color = text_color
+        # Track fonts actually used during the last render_document call
+        self.last_rendered_fonts: list[tuple[str, str]] = []  # (family, style)
 
     def _get_content_area(self) -> tuple[int, int, int, int]:
         """Get the content area after margins.
@@ -301,16 +304,35 @@ class DocumentRenderer:
         # Use tiered font sampling for diversity
         font = self.font_manager.get_tiered_font(script_code, size, language_code)
         if font is not None:
+            self._record_rendered_font(font)
             return font
 
         # Fallback: random font for this script
         font = self.font_manager.get_random_font(script_code, size)
         if font is not None:
+            self._record_rendered_font(font)
             return font
 
         # Last resort: default PIL font
         logger.warning("No fonts found for script %s, using default", script_code)
         return ImageFont.load_default()
+
+    def _record_rendered_font(
+        self,
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+    ) -> None:
+        """Record which font was actually rendered for metadata tracking.
+
+        Args:
+            font: The PIL font object that will be used for rendering.
+        """
+        if isinstance(font, ImageFont.FreeTypeFont) and hasattr(font, "path"):
+            font_path = Path(str(font.path))
+            family = font_path.stem
+            style = font_path.parent.name
+            self.last_rendered_fonts.append((family, style))
+        else:
+            self.last_rendered_fonts.append(("default", "regular"))
 
     def _wrap_text(
         self,
@@ -748,6 +770,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)

@@ -831,14 +831,10 @@ class MultiScriptDocumentGenerator:
         # Capture degradation seed for reproducible replay
         degradation_seed = self._rng.randint(0, 2**31 - 1)
 
-        # Track font family and style used for this script
-        font_cache = self.font_manager.get_font_info(script_code)
-        font_families: list[str] = []
-        font_styles: list[str] = []
-        if font_cache and font_cache.fonts:
-            font_info = font_cache.default_font or font_cache.fonts[0]
-            font_families.append(font_info.path.stem)
-            font_styles.append(font_info.font_style)
+        # Capture the fonts actually used by the renderer (sorted for deterministic metadata)
+        sorted_fonts = sorted(tier_renderer.last_rendered_fonts)
+        font_families: list[str] = [f for f, _ in sorted_fonts]
+        font_styles: list[str] = [s for _, s in sorted_fonts]
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -1403,15 +1399,10 @@ class MultiScriptDocumentGenerator:
         # Capture degradation seed for reproducible replay
         degradation_seed = self._rng.randint(0, 2**31 - 1)
 
-        # Track font families and styles used across all scripts
-        font_families: list[str] = []
-        font_styles: list[str] = []
-        for sc in all_scripts:
-            fc = self.font_manager.get_font_info(sc)
-            if fc and fc.fonts:
-                fi = fc.default_font or fc.fonts[0]
-                font_families.append(fi.path.stem)
-                font_styles.append(fi.font_style)
+        # Capture the fonts actually used by the renderer (sorted for deterministic metadata)
+        sorted_fonts = sorted(tier_renderer.last_rendered_fonts)
+        font_families: list[str] = [f for f, _ in sorted_fonts]
+        font_styles: list[str] = [s for _, s in sorted_fonts]
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -1605,22 +1596,33 @@ class MultiScriptDocumentGenerator:
 
     def _collect_font_families(
         self,
-        all_scripts: set[str],
+        all_scripts: set[str],  # noqa: ARG002
+        renderer: Any | None = None,
     ) -> tuple[list[str], list[str]]:
-        """Track font families and styles used across all scripts.
+        """Collect font families and styles actually used during rendering.
+
+        Reads the renderer's ``last_rendered_fonts`` list which is populated
+        by ``_load_font`` during each ``render_document`` call, ensuring
+        metadata reflects the fonts that were truly rendered.
+
+        Args:
+            all_scripts: Set of script codes (kept for API compat, unused).
+            renderer: The renderer instance whose tracked fonts to read.
+                Falls back to ``self.renderer`` if not provided.
 
         Returns:
             Tuple of (font_families, font_styles).
         """
-        font_families: list[str] = []
-        font_styles: list[str] = []
-        for sc in all_scripts:
-            fc = self.font_manager.get_font_info(sc)
-            if fc and fc.fonts:
-                fi = fc.default_font or fc.fonts[0]
-                font_families.append(fi.path.stem)
-                font_styles.append(fi.font_style)
-        return font_families, font_styles
+        target_renderer = renderer or self.renderer
+        if (
+            hasattr(target_renderer, "last_rendered_fonts")
+            and target_renderer.last_rendered_fonts
+        ):
+            return (
+                [f for f, _ in target_renderer.last_rendered_fonts],
+                [s for _, s in target_renderer.last_rendered_fonts],
+            )
+        return [], []
 
     def generate_multi_script_document(
         self,

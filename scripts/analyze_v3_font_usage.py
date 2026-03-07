@@ -101,7 +101,8 @@ def _analyze_script_fonts(
         ),
         "dominant_primary_pct": (
             round(
-                primary_fonts.most_common(1)[0][1] / total_parsed * 100, 1,
+                primary_fonts.most_common(1)[0][1] / total_parsed * 100,
+                1,
             )
             if primary_fonts and total_parsed > 0
             else 0
@@ -143,6 +144,10 @@ def main(
     output_json: bool,
 ) -> None:
     """Analyze font usage in synth-multiscript-v3 metadata sidecars."""
+    if sample_size <= 0:
+        click.echo("ERROR: --sample-size must be a positive integer.", err=True)
+        sys.exit(1)
+
     if v3_dir is None:
         v3_dir = _find_v3_dir()
         if v3_dir is None:
@@ -168,9 +173,7 @@ def main(
 
     # Summary
     total_scripts = len(results)
-    single_font_scripts = sum(
-        1 for r in results if r["single_primary_font"]
-    )
+    single_font_scripts = sum(1 for r in results if r["single_primary_font"])
 
     summary = {
         "v3_dir": str(v3_dir),

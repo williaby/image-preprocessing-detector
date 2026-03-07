@@ -7,6 +7,7 @@ and that the tier distribution approximately matches FONT_TIER_WEIGHTS.
 from __future__ import annotations
 
 from collections import Counter
+from pathlib import Path
 from typing import ClassVar
 from unittest.mock import patch
 
@@ -32,6 +33,11 @@ def font_manager() -> FontManager:
 class TestFontManagerDiscovery:
     """Test that FontManager discovers fonts for all configured scripts."""
 
+    @pytest.mark.skipif(
+        not Path("/usr/share/fonts").exists()
+        and not Path("/usr/local/share/fonts").exists(),
+        reason="System font directories not available",
+    )
     def test_scans_fonts_successfully(self, font_manager: FontManager) -> None:
         """FontManager should discover fonts from system and bundled dirs."""
         assert len(font_manager.fonts_by_script) > 0
@@ -88,10 +94,16 @@ class TestTieredFontSampling:
         self,
         font_manager: FontManager,
     ) -> None:
-        """Urdu should select Nastaliq-style fonts, not Naskh."""
+        """Urdu should select Nastaliq-style fonts when available."""
         font = font_manager.get_tiered_font("Arab", size=24, language_code="urd_Arab")
-        # Should not crash; font may be None if no Nastaliq fonts installed
-        assert font is None or font is not None
+        if font is not None:
+            # If a font was returned, verify it is a valid FreeType font
+            assert hasattr(font, "path"), (
+                "Returned font should be a FreeTypeFont with a path attribute"
+            )
+        else:
+            # Graceful None when no Nastaliq fonts are installed
+            assert font is None
 
     def test_bulgarian_cyrillic_variant(
         self,
@@ -99,8 +111,14 @@ class TestTieredFontSampling:
     ) -> None:
         """Bulgarian should use Cyrl_Bulgarian font recommendations."""
         font = font_manager.get_tiered_font("Cyrl", size=24, language_code="bul_Cyrl")
-        # Should not crash; font may be None if no Bulgarian fonts installed
-        assert font is None or font is not None
+        if font is not None:
+            # If a font was returned, verify it is a valid FreeType font
+            assert hasattr(font, "path"), (
+                "Returned font should be a FreeTypeFont with a path attribute"
+            )
+        else:
+            # Graceful None when no Bulgarian-specific fonts are installed
+            assert font is None
 
 
 class TestRendererIntegration:

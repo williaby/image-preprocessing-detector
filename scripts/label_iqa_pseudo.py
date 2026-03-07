@@ -341,9 +341,7 @@ def _infer_single(
         return None
 
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-    img_tensor = (
-        torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
-    )
+    img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
     img_tensor = img_tensor.to(device)
 
     scores: dict[str, float] = {}
@@ -353,7 +351,9 @@ def _infer_single(
                 raw = metric(img_tensor)
             scores[name] = _normalize_score(float(raw.cpu().item()), name)
         except Exception:
-            logger.warning("Inference failed for %s on %s", name, img_path)
+            logger.warning(
+                "Inference failed for %s on %s", name, img_path, exc_info=True
+            )
             return None
 
     return _compute_ensemble(scores)
@@ -566,9 +566,7 @@ def _label_dataset(
             modified = True
 
         if modified:
-            click.echo(
-                f"  Saving progress at sample {batch_start + len(batch):,} ..."
-            )
+            click.echo(f"  Saving progress at sample {batch_start + len(batch):,} ...")
             _save_l2(metadata, l2_path)
             modified = False
 
@@ -608,9 +606,7 @@ def _run_spot_check(
         n: Number of random samples to process.
         device: Torch device.
     """
-    eligible = [
-        s for s in samples if _resolve_image_path(s, dataset_base) is not None
-    ]
+    eligible = [s for s in samples if _resolve_image_path(s, dataset_base) is not None]
     if not eligible:
         click.echo(f"  [{dataset_name}] No eligible images found for spot-check.")
         return
@@ -640,16 +636,20 @@ def _run_spot_check(
         click.echo(f"  [{dataset_name}] All spot-check images failed inference.")
         return
 
-    click.echo(f"\n  [{dataset_name}] Spot-check results ({len(ensemble_scores)} images):")
     click.echo(
-        f"    ensemble_mos: "
-        f"min={min(ensemble_scores):.4f}, "
-        f"max={max(ensemble_scores):.4f}, "
-        f"mean={statistics.mean(ensemble_scores):.4f}, "
-        f"median={statistics.median(ensemble_scores):.4f}, "
-        f"stdev={statistics.stdev(ensemble_scores):.4f}" if len(ensemble_scores) > 1
-        else f"    ensemble_mos: value={ensemble_scores[0]:.4f} (single sample)"
+        f"\n  [{dataset_name}] Spot-check results ({len(ensemble_scores)} images):"
     )
+    if len(ensemble_scores) > 1:
+        click.echo(
+            f"    ensemble_mos: "
+            f"min={min(ensemble_scores):.4f}, "
+            f"max={max(ensemble_scores):.4f}, "
+            f"mean={statistics.mean(ensemble_scores):.4f}, "
+            f"median={statistics.median(ensemble_scores):.4f}, "
+            f"stdev={statistics.stdev(ensemble_scores):.4f}"
+        )
+    else:
+        click.echo(f"    ensemble_mos: value={ensemble_scores[0]:.4f} (single sample)")
     for name, values in per_model.items():
         if len(values) > 1:
             click.echo(
@@ -697,9 +697,7 @@ def _run_validation(
         click.echo(f"ERROR: DIQA-5000 metadata not found: {diqa_meta_path}", err=True)
         return False
     if not diqa_dataset_dir.exists():
-        click.echo(
-            f"ERROR: DIQA-5000 dataset not found: {diqa_dataset_dir}", err=True
-        )
+        click.echo(f"ERROR: DIQA-5000 dataset not found: {diqa_dataset_dir}", err=True)
         return False
 
     click.echo(f"Loading DIQA-5000 metadata from {diqa_meta_path} ...")
@@ -772,7 +770,9 @@ def _run_validation(
     click.echo(
         f"    ensemble: [{min(ensemble_scores):.4f}, {max(ensemble_scores):.4f}]"
     )
-    click.echo(f"    human_mos (normalized): [{min(human_mos):.4f}, {max(human_mos):.4f}]")
+    click.echo(
+        f"    human_mos (normalized): [{min(human_mos):.4f}, {max(human_mos):.4f}]"
+    )
 
     return passed
 
@@ -984,8 +984,12 @@ def main(
     if validate_only:
         click.echo("\n[VALIDATE] Running SRCC gate on DIQA-5000 ...")
         passed = _run_validation(
-            metrics, device, l2_metadata_dir, e_drive_root,
-            validation_limit, srcc_threshold,
+            metrics,
+            device,
+            l2_metadata_dir,
+            e_drive_root,
+            validation_limit,
+            srcc_threshold,
         )
         raise SystemExit(0 if passed else 1)
 
@@ -1027,7 +1031,12 @@ def main(
         else:
             # Full run: label and write back
             counts = _label_dataset(
-                name, meta_path, base, metrics, device, batch_size,
+                name,
+                meta_path,
+                base,
+                metrics,
+                device,
+                batch_size,
             )
             for key in grand_totals:
                 grand_totals[key] += counts[key]
@@ -1039,7 +1048,9 @@ def main(
     click.echo("GRAND SUMMARY")
     click.echo(f"  Processed:    {processed} dataset(s)")
     if skipped_datasets:
-        click.echo(f"  Skipped:      {len(skipped_datasets)} ({', '.join(skipped_datasets[:5])}{'...' if len(skipped_datasets) > 5 else ''})")
+        click.echo(
+            f"  Skipped:      {len(skipped_datasets)} ({', '.join(skipped_datasets[:5])}{'...' if len(skipped_datasets) > 5 else ''})"
+        )
 
     if spot_check == 0:
         click.echo(f"  Labelled:     {grand_totals['labelled']:,}")
