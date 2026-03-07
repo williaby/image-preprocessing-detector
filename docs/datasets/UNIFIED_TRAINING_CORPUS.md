@@ -190,7 +190,7 @@ The table below specifies the minimum requirements for each of the 22 model head
 > weights for remaining corpus. Individual degradation heads deferred to Phase F.
 > Classical IQA detectors (blur, noise, contrast, etc.) continue at runtime for per-issue detection
 > and corrections — they are separate from the ML training heads.
-> See [DEQA_DOC_PSEUDO_LABELING.md](../../planning/DEQA_DOC_PSEUDO_LABELING.md).
+> See [DEQA_DOC_PSEUDO_LABELING.md](../planning/DEQA_DOC_PSEUDO_LABELING.md).
 
 | Head | Task | Output | Performance Target | Min Training Samples | Key Distribution Requirements |
 |---|---|---|---|---|---|
@@ -778,7 +778,7 @@ Label quality is expressed as a continuous training weight, not a binary accept/
 - MNV4-H1 (orientation_cls): tier_0_exact (rotation by construction)
 - MNV4-H2 (skew_reg): tier_0_exact for synthetic; tier_2_model (Hough+projection agreement) for natural scans
 - MNV4-H3 (resolution_quality_reg): tier_0_exact for DPI renders; tier_3_heuristic for camera captures
-- SIG-G1-1 through SIG-G1-3 (IQA 3 DIQA-aligned heads): tier_0_exact for DIQA-5000 GT; tier_2_model for DeQA-Doc pseudo-labels (OOD-gated sample weights)
+- SIG-G1-1 through SIG-G1-3 (IQA 3 DIQA-aligned heads): tier_1_annotation for DIQA-5000 GT (human MOS); tier_2_model for DeQA-Doc pseudo-labels (OOD-gated sample weights)
 - SIG-G2-1 (script_cls): tier_0_exact for v3; tier_1_annotation for MDIW13/SIW13; tier_2_model for OpenLID-derived
 - SIG-G3-1 (orientation post-correction): tier_0_exact (same as MNV4-H1)
 - SIG-G3-2 (skew post-correction): tier_0_exact for synthetic; tier_2_model for natural scans

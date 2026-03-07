@@ -1098,7 +1098,11 @@ def _load_diqa_pseudo_labels(diqa_labels_path: Path) -> dict[str, dict[str, Any]
             line = line.strip()
             if not line:
                 continue
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                print(f"Warning: skipping malformed DIQA label line: {line[:100]}")
+                continue
             weight = record.get("sample_weight", 0.0)
             if weight <= 0.0:
                 continue  # HARD_REJECT — skip entirely

@@ -289,6 +289,8 @@ class OpenRouterVLMBackend(VLMBackend):
         last_error: Exception | None = None
         for attempt in range(self._retry_attempts):
             try:
+                if not self.API_URL.startswith("https://"):
+                    raise ValueError(f"Only HTTPS URLs allowed, got: {self.API_URL}")
                 req = urllib_request.Request(
                     self.API_URL, data=payload, headers=headers, method="POST"
                 )
@@ -708,7 +710,7 @@ def main() -> None:
     with open(args.meta_path) as f:
         metadata = json.load(f)
 
-    if args.limit:
+    if args.limit is not None:
         metadata = metadata[: args.limit]
 
     # Build image paths and ground truth

@@ -101,8 +101,14 @@ def extract_embeddings(
             embeddings.append(result.embedding)
             image_ids.append(img_id)
 
+    if not embeddings:
+        log.error("No embeddings extracted; all image reads or predictions failed")
+        sys.exit(1)
+
     embeddings_arr = np.stack(embeddings, axis=0)
-    log.info("Extracted %d embeddings, shape: %s", len(embeddings), embeddings_arr.shape)
+    log.info(
+        "Extracted %d embeddings, shape: %s", len(embeddings), embeddings_arr.shape
+    )
 
     # Save
     output_dir = Path(output_path).parent
@@ -138,6 +144,10 @@ def fit_ood_detector(
     embeddings = np.load(embeddings_path)
     log.info("Loaded embeddings: %s", embeddings.shape)
 
+    if embeddings.shape[0] == 0:
+        log.error("Embeddings array is empty; cannot fit OOD detector")
+        sys.exit(1)
+
     detector = EmbeddingOODDetector.from_embeddings(
         embeddings, threshold_percentile=threshold_percentile
     )
@@ -164,7 +174,9 @@ def fit_ood_detector(
 
 def main() -> None:
     """Extract embeddings and/or fit OOD detector."""
-    parser = argparse.ArgumentParser(description="Extract SigLIP2 embeddings for OOD detection")
+    parser = argparse.ArgumentParser(
+        description="Extract SigLIP2 embeddings for OOD detection"
+    )
 
     # Extraction args
     parser.add_argument("--checkpoint", type=str, help="SigLIP2 checkpoint path")
@@ -172,12 +184,20 @@ def main() -> None:
     parser.add_argument("--image-root", type=str, help="Image root directory")
     parser.add_argument("--output", type=str, help="Output .npy path for embeddings")
     parser.add_argument("--device", type=str, default="cuda:0", help="Inference device")
-    parser.add_argument("--limit", type=int, default=None, help="Image limit (for testing)")
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Image limit (for testing)"
+    )
 
     # OOD fitting args
-    parser.add_argument("--fit-ood", type=str, help="Path to embeddings .npy to fit OOD from")
-    parser.add_argument("--ood-output", type=str, help="Output .npz path for OOD params")
-    parser.add_argument("--threshold-pct", type=float, default=95.0, help="OOD threshold percentile")
+    parser.add_argument(
+        "--fit-ood", type=str, help="Path to embeddings .npy to fit OOD from"
+    )
+    parser.add_argument(
+        "--ood-output", type=str, help="Output .npz path for OOD params"
+    )
+    parser.add_argument(
+        "--threshold-pct", type=float, default=95.0, help="OOD threshold percentile"
+    )
 
     args = parser.parse_args()
 

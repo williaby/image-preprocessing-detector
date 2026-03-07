@@ -12,10 +12,11 @@
 > **Revision note (v3.4.0, 2026-03-06)**: Updated acquisition progress to match actual registry
 > state (9,170 entries, 76.3% of 12K target). Per-category counts, phase statuses, script
 > coverage, domain enrichment, and head coverage updated from `ood_registry.jsonl` and
-> `OOD_COVERAGE_GAP_REPORT.md`. GT schema note: the specification uses DIQA 3-dim fields
-> (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`) but the current registry still carries
-> the legacy 6-head fields (`blur_score`, `noise_score`, `contrast_score`, `compression_score`,
-> `skew_score`, `overall_quality`). Registry schema migration is pending.
+> `OOD_COVERAGE_GAP_REPORT.md`. GT schema note: ML training heads now use DIQA 3-dim fields
+> (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`). The OOD registry still carries
+> legacy per-degradation fields (`blur_score`, `noise_score`, etc.) for classical IQA detector
+> evaluation — these are separate from ML training heads and will be retained alongside the
+> DIQA fields.
 >
 > **Revision note (v3.3.0, 2026-03-06)**: IQA heads transitioned from 6 individual degradation
 > heads (blur, noise, contrast, skew, compression, overall_quality) to 3 DIQA-aligned dimensions
@@ -31,7 +32,9 @@
 ## Overview
 
 > **Status as of 2026-03-06**: 9,170 images acquired (76.4% of 12K target). Domain enrichment
-> complete. 5 heads remain at-risk (0 labeled). See `OOD_COVERAGE_GAP_REPORT.md` for details.
+> complete. 3 heads remain at-risk with 0 labels (`resolution_quality`, `handwriting_legibility`,
+> `handwriting_score`); 1 head (`skew_score`) has low coverage. See `OOD_COVERAGE_GAP_REPORT.md`
+> for details.
 
 | Category | Current Target | Revised Target | Acquired | Status |
 | --- | --- | --- | --- | --- |

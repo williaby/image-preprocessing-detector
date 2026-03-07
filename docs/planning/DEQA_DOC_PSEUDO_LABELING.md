@@ -72,11 +72,11 @@ image_detection process                 DeQA-Doc venv subprocess
 ### Step 1: Generate pseudo-labels
 
 ```bash
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+PYTHONPATH=$PROJECT_ROOT:$PYTHONPATH \
     uv run python scripts/generate_diqa_pseudo_labels.py \
         --manifest /path/to/training_manifest.jsonl \
-        --deqa-venv /home/byron/dev/DeQA-Doc/DeQA-Score/.venv \
-        --deqa-root /home/byron/dev/DeQA-Doc/DeQA-Score \
+        --deqa-venv /path/to/DeQA-Doc/DeQA-Score/.venv \
+        --deqa-root /path/to/DeQA-Doc/DeQA-Score \
         --model-dir /path/to/deqa_models \
         --output /path/to/diqa_pseudo_labels.jsonl \
         --device cuda:0
@@ -85,12 +85,12 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 ### Step 2: Gate with OOD detector
 
 ```bash
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+PYTHONPATH=$PROJECT_ROOT:$PYTHONPATH \
     uv run python scripts/gate_diqa_pseudo_labels.py \
         --pseudo-labels /path/to/diqa_pseudo_labels.jsonl \
         --embeddings /path/to/corpus_embeddings.npy \
         --embedding-ids /path/to/corpus_ids.json \
-        --ood-params /mnt/e/image_detection/embeddings/ood_params_4400.npz \
+        --ood-params /path/to/embeddings/ood_params_4400.npz \
         --output /path/to/gated_diqa_labels.jsonl \
         --diqa-gt /path/to/diqa5000_train.json
 ```

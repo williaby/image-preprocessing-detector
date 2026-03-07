@@ -96,7 +96,9 @@ def evaluate_tier1(
     if ood_params_path and Path(ood_params_path).exists():
         detector = EmbeddingOODDetector.load(ood_params_path)
     else:
-        log.info("Fitting OOD detector on %d in-dist embeddings", len(in_dist_embeddings))
+        log.info(
+            "Fitting OOD detector on %d in-dist embeddings", len(in_dist_embeddings)
+        )
         detector = EmbeddingOODDetector.from_embeddings(in_dist_embeddings)
 
     # Score both distributions
@@ -107,10 +109,12 @@ def evaluate_tier1(
     ood_scores = np.array([r.mahalanobis_distance for r in ood_results])
 
     # Labels: 0 = in-dist, 1 = OOD
-    labels = np.concatenate([
-        np.zeros(len(in_scores)),
-        np.ones(len(ood_scores)),
-    ])
+    labels = np.concatenate(
+        [
+            np.zeros(len(in_scores)),
+            np.ones(len(ood_scores)),
+        ]
+    )
     scores = np.concatenate([in_scores, ood_scores])
 
     auroc = float(roc_auc_score(labels, scores))
@@ -120,10 +124,19 @@ def evaluate_tier1(
     log.info("Tier 1 OOD Detection: %s", ood_name)
     log.info("  AUROC:        %.4f", auroc)
     log.info("  FPR@95TPR:    %.4f (%.1f%%)", fpr95, fpr95 * 100)
-    log.info("  In-dist:      n=%d, mean_dist=%.2f, std=%.2f",
-             len(in_scores), in_scores.mean(), in_scores.std())
-    log.info("  OOD (%s): n=%d, mean_dist=%.2f, std=%.2f",
-             ood_name, len(ood_scores), ood_scores.mean(), ood_scores.std())
+    log.info(
+        "  In-dist:      n=%d, mean_dist=%.2f, std=%.2f",
+        len(in_scores),
+        in_scores.mean(),
+        in_scores.std(),
+    )
+    log.info(
+        "  OOD (%s): n=%d, mean_dist=%.2f, std=%.2f",
+        ood_name,
+        len(ood_scores),
+        ood_scores.mean(),
+        ood_scores.std(),
+    )
 
     return {
         "auroc": auroc,
@@ -158,7 +171,15 @@ def evaluate_tier2(
         results = []
         with open(path) as f:
             for line in f:
-                results.append(json.loads(line))
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    results.append(json.loads(line))
+                except json.JSONDecodeError:
+                    log.warning(
+                        "Skipping malformed JSONL line in %s: %s", path, line[:100]
+                    )
         return results
 
     in_results = load_results(in_dist_results_path)
@@ -168,10 +189,12 @@ def evaluate_tier2(
     in_agreement = np.array([r["agreement_distance"] for r in in_results])
     ood_agreement = np.array([r["agreement_distance"] for r in ood_results])
 
-    labels = np.concatenate([
-        np.zeros(len(in_agreement)),
-        np.ones(len(ood_agreement)),
-    ])
+    labels = np.concatenate(
+        [
+            np.zeros(len(in_agreement)),
+            np.ones(len(ood_agreement)),
+        ]
+    )
     scores = np.concatenate([in_agreement, ood_agreement])
 
     auroc_agreement = float(roc_auc_score(labels, scores))
@@ -195,9 +218,19 @@ def evaluate_tier2(
 
     log.info("=" * 50)
     log.info("Full Pipeline OOD Detection: %s", ood_name)
-    log.info("  Tier 1 (embedding):   AUROC=%.4f  FPR@95=%.4f", auroc_tier1, fpr95_tier1)
-    log.info("  Tier 2 (agreement):   AUROC=%.4f  FPR@95=%.4f", auroc_agreement, fpr95_agreement)
-    log.info("  Combined (reliability): AUROC=%.4f  FPR@95=%.4f", auroc_reliability, fpr95_reliability)
+    log.info(
+        "  Tier 1 (embedding):   AUROC=%.4f  FPR@95=%.4f", auroc_tier1, fpr95_tier1
+    )
+    log.info(
+        "  Tier 2 (agreement):   AUROC=%.4f  FPR@95=%.4f",
+        auroc_agreement,
+        fpr95_agreement,
+    )
+    log.info(
+        "  Combined (reliability): AUROC=%.4f  FPR@95=%.4f",
+        auroc_reliability,
+        fpr95_reliability,
+    )
 
     return {
         "tier1_auroc": auroc_tier1,
@@ -215,13 +248,25 @@ def evaluate_tier2(
 def main() -> None:
     """Run OOD detection evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate OOD detection")
-    parser.add_argument("--ood-params", type=str, help="Path to OOD detector params (.npz)")
-    parser.add_argument("--in-dist-embeddings", type=str, help="In-dist embeddings (.npy)")
-    parser.add_argument("--ood-embeddings", type=str, nargs="+", help="OOD embeddings (.npy)")
+    parser.add_argument(
+        "--ood-params", type=str, help="Path to OOD detector params (.npz)"
+    )
+    parser.add_argument(
+        "--in-dist-embeddings", type=str, help="In-dist embeddings (.npy)"
+    )
+    parser.add_argument(
+        "--ood-embeddings", type=str, nargs="+", help="OOD embeddings (.npy)"
+    )
     parser.add_argument("--ood-name", type=str, nargs="+", help="OOD dataset names")
-    parser.add_argument("--in-dist-results", type=str, help="In-dist full results (.jsonl)")
-    parser.add_argument("--ood-results", type=str, nargs="+", help="OOD full results (.jsonl)")
-    parser.add_argument("--output", type=str, default="results/ood_evaluation", help="Output dir")
+    parser.add_argument(
+        "--in-dist-results", type=str, help="In-dist full results (.jsonl)"
+    )
+    parser.add_argument(
+        "--ood-results", type=str, nargs="+", help="OOD full results (.jsonl)"
+    )
+    parser.add_argument(
+        "--output", type=str, default="results/ood_evaluation", help="Output dir"
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -232,9 +277,11 @@ def main() -> None:
     # Tier 1 evaluation
     if args.in_dist_embeddings and args.ood_embeddings:
         in_emb = np.load(args.in_dist_embeddings)
-        ood_names = args.ood_name or [f"ood_{i}" for i in range(len(args.ood_embeddings))]
+        ood_names = args.ood_name or [
+            f"ood_{i}" for i in range(len(args.ood_embeddings))
+        ]
 
-        for ood_path, ood_name in zip(args.ood_embeddings, ood_names, strict=False):
+        for ood_path, ood_name in zip(args.ood_embeddings, ood_names, strict=True):
             ood_emb = np.load(ood_path)
             metrics = evaluate_tier1(in_emb, ood_emb, ood_name, args.ood_params)
             all_results[f"tier1_{ood_name}"] = metrics
@@ -243,7 +290,7 @@ def main() -> None:
     if args.in_dist_results and args.ood_results:
         ood_names = args.ood_name or [f"ood_{i}" for i in range(len(args.ood_results))]
 
-        for ood_path, ood_name in zip(args.ood_results, ood_names, strict=False):
+        for ood_path, ood_name in zip(args.ood_results, ood_names, strict=True):
             metrics = evaluate_tier2(args.in_dist_results, ood_path, ood_name)
             all_results[f"full_{ood_name}"] = metrics
 

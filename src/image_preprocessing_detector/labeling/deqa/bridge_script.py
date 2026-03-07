@@ -78,7 +78,10 @@ def _load_model(
     from src.mm_utils import get_model_name_from_path
     from src.model.builder import load_pretrained_model
 
-    # Suppress redundant torch init (these are methods, so lambda _self matches signature)
+    # Suppress redundant weight initialization: load_pretrained_model() triggers
+    # PyTorch's default reset_parameters() for Linear/LayerNorm, which wastes time
+    # reinitializing weights that will immediately be overwritten by the checkpoint.
+    # This is safe because the pretrained weights are loaded right after construction.
     torch.nn.Linear.reset_parameters = lambda _self: None  # type: ignore[assignment]
     torch.nn.LayerNorm.reset_parameters = lambda _self: None  # type: ignore[assignment]
 
@@ -113,11 +116,12 @@ def _build_input_ids(tokenizer: Any, dimension: str, device: str) -> torch.Tenso
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt() + " " + DIMENSION_PROMPTS[dimension]
 
-    return (
+    result: torch.Tensor = (
         tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
         .unsqueeze(0)
         .to(device)
     )
+    return result
 
 
 def _expand2square(

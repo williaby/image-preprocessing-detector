@@ -449,19 +449,13 @@ match.rules = ["semgrep:hardcoded-absolute-path"]
 match.file_patterns = ["**/labeling/deqa/**"]
 set.ignored = true
 
-# Ignore subprocess warnings in DeQA bridge - subprocess isolation is by design
+# Ignore subprocess warnings in DeQA subprocess runner - subprocess isolation is by design
 [[triage]]
 match.plugins = ["bandit"]
 match.rules = ["bandit:B404", "bandit:B603"]
-match.file_patterns = ["**/labeling/deqa/**"]
+match.file_patterns = ["**/labeling/deqa/subprocess_runner.py"]
 set.ignored = true
 
-# Ignore cognitive complexity in cross-model validator - tiered validation inherently complex
-[[triage]]
-match.plugins = ["radarlint-python"]
-match.rules = ["radarlint-python:python:S3776"]
-match.file_patterns = ["**/detection/cross_model_validator.py"]
-set.ignored = true
 
 [[plugin]]
 name = "hadolint"

@@ -193,7 +193,7 @@ def main() -> None:
     print(f"Loading OOD detector from {args.ood_params}...", file=sys.stderr)
     detector = EmbeddingOODDetector.load(args.ood_params)
     if args.ood_threshold is not None:
-        detector._threshold = args.ood_threshold
+        detector.threshold = args.ood_threshold
 
     # Load embeddings and ID mapping
     print(f"Loading embeddings from {args.embeddings}...", file=sys.stderr)

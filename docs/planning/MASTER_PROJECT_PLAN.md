@@ -691,6 +691,10 @@ communicating over stdin/stdout JSONL protocol. This avoids dependency conflicts
 
 **Output schema** (per image, gated JSONL):
 
+> **Join key**: `sha256` is the stable, portable join key for merging pseudo-labels into the
+> training manifest. `image_path` is included for debugging/provenance only and may contain
+> host-local absolute paths.
+
 ```json
 {
   "sha256": "abc123...",
@@ -1168,6 +1172,12 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 **Context**: Group 1 IQA changed from 6 individual degradation heads (blur, noise, contrast,
 skew, compression, overall_quality) to 3 DIQA-aligned dimensions (overall, sharpness,
 color_fidelity). This checklist tracks all propagation changes.
+
+**Field naming convention** (3 contexts):
+
+- **Pseudo-labels** (JSONL): `overall_label`, `sharpness_label`, `color_fidelity_label` — raw DeQA-Doc output
+- **Model heads** (runtime): `iqa_overall`, `iqa_sharpness`, `iqa_color` — SigLIP 2 prediction output
+- **Enrichment schema**: `deqa_overall`, `deqa_sharpness`, `deqa_color_fidelity` — metadata provenance fields
 
 ### Schema Changes
 

@@ -94,8 +94,11 @@ def _load_manifest(manifest_path: Path) -> list[dict[str, str]]:
             if "sha256" not in record:
                 img_path = Path(record["image_path"])
                 if img_path.exists():
-                    sha = hashlib.sha256(img_path.read_bytes()).hexdigest()
-                    record["sha256"] = sha
+                    h = hashlib.sha256()
+                    with open(img_path, "rb") as img_f:
+                        for chunk in iter(lambda: img_f.read(65536), b""):
+                            h.update(chunk)
+                    record["sha256"] = h.hexdigest()
                 else:
                     record["sha256"] = ""
 

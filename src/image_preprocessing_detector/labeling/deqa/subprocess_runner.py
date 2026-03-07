@@ -296,14 +296,16 @@ class DeQASubprocessRunner:
             ]
 
         # Write all image paths to stdin
-        assert proc.stdin is not None
+        if proc.stdin is None:
+            raise RuntimeError("subprocess stdin not available (PIPE not configured)")
         for path in image_paths:
             proc.stdin.write(json.dumps({"image_path": path}) + "\n")
         proc.stdin.close()
 
         # Read results from stdout
         results: list[dict[str, Any]] = []
-        assert proc.stdout is not None
+        if proc.stdout is None:
+            raise RuntimeError("subprocess stdout not available (PIPE not configured)")
         processed = 0
         for line in proc.stdout:
             line = line.strip()

@@ -321,10 +321,10 @@ def generate_synthetic_quality_labels(
         dpi_bonus = 0.3
     elif dpi >= 300:
         dpi_bonus = 0.1
-    elif dpi <= 100:
-        dpi_bonus = -0.5
     elif dpi <= 72:
         dpi_bonus = -1.0
+    elif dpi <= 100:
+        dpi_bonus = -0.5
 
     noise = rng.normal(0, 0.2, 3)
 
