@@ -5289,8 +5289,16 @@ def _load_signverod_annotations(
     id_csv = dataset_path / "image_ids.csv"
     if id_csv.exists():
         with open(id_csv, encoding="utf-8", newline="") as f:
-            for row in csv.DictReader(f):
-                id_map[row["file_name"]] = row["id"]
+            for row_num, row in enumerate(csv.DictReader(f), start=2):
+                try:
+                    id_map[row["file_name"]] = row["id"]
+                except KeyError as exc:
+                    logger.warning(
+                        "Malformed row %d in %s: missing key %s",
+                        row_num,
+                        id_csv,
+                        exc,
+                    )
 
     # Load annotations
     ann_map: dict[str, list[dict[str, Any]]] = {}
@@ -5299,8 +5307,17 @@ def _load_signverod_annotations(
         if not csv_path.exists():
             continue
         with open(csv_path, encoding="utf-8", newline="") as f:
-            for row in csv.DictReader(f):
-                img_id = row["image_id"]
+            for row_num, row in enumerate(csv.DictReader(f), start=2):
+                try:
+                    img_id = row["image_id"]
+                except KeyError as exc:
+                    logger.warning(
+                        "Malformed row %d in %s: missing key %s",
+                        row_num,
+                        csv_path,
+                        exc,
+                    )
+                    continue
                 if img_id not in ann_map:
                     ann_map[img_id] = []
                 ann_map[img_id].append(dict(row))

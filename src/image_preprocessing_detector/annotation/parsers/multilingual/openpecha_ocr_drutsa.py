@@ -19,7 +19,6 @@ Extracts:
     - script_name: Fixed "Tibetan"
     - language_code: Fixed "bo" (Tibetan)
     - iso15924_script_code: Fixed "Tibt"
-    - text_scope: "line"
     - raw_labels: source_id
 
 Example:
@@ -71,6 +70,11 @@ class OpenpechaOcrDrutsaParser(BaseParser):
         config: dict[str, Any],
     ) -> OriginalLabels:
         """Parse OCR Drutsa labels from filename.
+
+        Sets fixed Tibetan script/language metadata and extracts source_id
+        from the image filename stem. Transcription text is available in
+        the source parquet files but is not loaded here; use a dedicated
+        transcription extraction script to populate ``labels.transcription``.
 
         Args:
             dataset_path: Root path of the OCR Drutsa dataset

@@ -28,12 +28,13 @@ Example:
     >>> labels = parser.parse(
     ...     dataset_path=Path("/data/kleister-charity"),
     ...     image_path=Path(
-    ...         "/data/kleister-charity/rendered_images/train/abc123_p001.png"
+    ...         "/data/kleister-charity/rendered_images/train/"
+    ...         "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4_p001.png"
     ...     ),
     ...     config={},
     ... )
     >>> print(labels.raw_labels["doc_id"])
-    "abc123"
+    "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
 """
 
 # --- Level 4 registry metadata ---
@@ -161,18 +162,25 @@ class KleisterCharityParser(BaseParser):
                 break
 
         # Try loading sidecar labels
-        split = labels.raw_labels.get("split", "train")
+        split = labels.raw_labels.get("split")
+        if split is None:
+            logger.warning(
+                "Could not determine split for %s; skipping sidecar labels",
+                image_path.name,
+            )
+            labels.raw_labels["document_type"] = "charity_annual_report"
+            return labels
         sidecar = self._load_sidecar_labels(dataset_path, split, doc_id)
         if sidecar:
             labels.raw_labels["charity_name"] = sidecar.get("charity_name")
             labels.raw_labels["charity_number"] = sidecar.get("charity_number")
             labels.raw_labels["report_date"] = sidecar.get("report_date")
-            # Financial fields
+            # Financial fields (preserve valid zero values)
             income = sidecar.get("income_annually_in_british_pounds")
             spending = sidecar.get("spending_annually_in_british_pounds")
-            if income:
+            if income is not None:
                 labels.raw_labels["annual_income_gbp"] = income
-            if spending:
+            if spending is not None:
                 labels.raw_labels["annual_spending_gbp"] = spending
             # Address fields
             post_town = sidecar.get("address__post_town")

@@ -9,14 +9,15 @@ with a simplified interface suitable for application-level preloading.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from image_preprocessing_detector.utils.log_config import get_logger
 
-# Default model directory relative to project root
-_DEFAULT_MODEL_DIR = Path(__file__).parents[3] / "models" / "iqa" / "onnx"
+logger = get_logger(__name__)
+
+# Default model directory relative to this package's models/ directory
+_DEFAULT_MODEL_DIR = Path(__file__).parent / "onnx"
 
 _VALID_DEVICES = {"cpu", "cuda"}
 
@@ -38,7 +39,7 @@ def _load_model(
             Defaults to ``models/iqa/onnx/`` relative to the project root.
 
     Returns:
-        An ONNX Runtime InferenceSession, or ``None`` if the model
+        An ``ONNXModelRunner`` instance, or ``None`` if the model
         file is not found or onnxruntime is unavailable.
     """
     device = device.lower()
@@ -66,10 +67,8 @@ def _load_model(
         )
         config = ONNXSessionConfig(provider=provider)
         runner = ONNXModelRunner(model_path=model_path, config=config)
-    except Exception:
-        logger.warning(
-            "Failed to load %s model from %s", label, model_path, exc_info=True
-        )
+    except (FileNotFoundError, ValueError, OSError, ImportError, RuntimeError) as exc:
+        logger.warning("Failed to load %s model from %s: %s", label, model_path, exc)
         return None
     else:
         logger.info("%s model loaded from %s (device=%s)", label, model_path, device)
@@ -89,7 +88,7 @@ def load_student_model(
             Defaults to ``models/iqa/onnx/`` relative to the project root.
 
     Returns:
-        An ONNX Runtime InferenceSession, or ``None`` if the model
+        An ``ONNXModelRunner`` instance, or ``None`` if the model
         file is not found or onnxruntime is unavailable.
     """
     return _load_model(
@@ -113,7 +112,7 @@ def load_teacher_model(
             Defaults to ``models/iqa/onnx/`` relative to the project root.
 
     Returns:
-        An ONNX Runtime InferenceSession, or ``None`` if the model
+        An ``ONNXModelRunner`` instance, or ``None`` if the model
         file is not found or onnxruntime is unavailable.
     """
     return _load_model(

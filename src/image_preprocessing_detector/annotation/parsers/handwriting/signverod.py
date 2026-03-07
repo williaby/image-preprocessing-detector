@@ -56,14 +56,14 @@ __l4_integrate__ = "scripts/integrate_signverod_enrichments.py"
 
 
 import csv
-import logging
 from pathlib import Path
 from typing import Any
 
+from ....utils.log_config import get_logger
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Category mapping from categories.csv
 _CATEGORY_NAMES = {1: "signature", 2: "initials", 3: "redaction", 4: "date"}
@@ -132,6 +132,15 @@ class SignverODParser(BaseParser):
         image_id_map = self._load_image_ids(dataset_path)
         annotations = self._load_annotations(dataset_path)
 
+        # Set stable default schema for all parse paths
+        labels.raw_labels["annotation_count"] = 0
+        labels.raw_labels["has_signature"] = False
+        labels.raw_labels["has_initials"] = False
+        labels.raw_labels["has_redaction"] = False
+        labels.raw_labels["has_date"] = False
+        labels.raw_labels["has_handwriting"] = False
+        labels.raw_labels["category_counts"] = {}
+
         # Find image_id for this file
         filename = image_path.name
         image_id = image_id_map.get(filename)
@@ -142,9 +151,6 @@ class SignverODParser(BaseParser):
         # Get annotations for this image
         img_annotations = annotations.get(image_id, [])
         if not img_annotations:
-            labels.raw_labels["annotation_count"] = 0
-            labels.raw_labels["has_signature"] = False
-            labels.raw_labels["has_handwriting"] = False
             return labels
 
         # Count by category

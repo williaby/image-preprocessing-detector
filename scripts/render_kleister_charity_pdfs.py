@@ -147,6 +147,12 @@ def build_labels_index(split: str, docs: list[str]) -> dict[str, dict[str, str]]
         Dict mapping doc_id (MD5 stem) to dict of label key->value
     """
     labels_list = get_split_labels(split)
+    if labels_list and len(labels_list) != len(docs):
+        msg = (
+            f"Document/label count mismatch for split '{split}': "
+            f"{len(docs)} documents vs {len(labels_list)} labels"
+        )
+        raise ValueError(msg)
     index: dict[str, dict[str, str]] = {}
 
     for doc_name, label_str in zip(docs, labels_list, strict=False):
