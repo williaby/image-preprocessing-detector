@@ -35,7 +35,7 @@ DeQA-Doc requires `transformers==4.36.1` and `torch==2.0.1`. Our project uses `t
 
 **Solution**: The DeQA-Doc models run inside their own venv via subprocess. Communication uses a JSONL protocol over stdin/stdout:
 
-```
+```text
 image_detection process                 DeQA-Doc venv subprocess
     |                                        |
     |-- stdin: {"image_path": "/abs/..."}    |
@@ -226,7 +226,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 
 ## 9. File Inventory
 
-```
+```text
 src/image_preprocessing_detector/labeling/deqa/
     __init__.py              # Package docs
     bridge_script.py         # Runs in DeQA-Doc venv (standalone)
