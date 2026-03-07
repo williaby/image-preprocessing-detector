@@ -54,7 +54,16 @@ jobs:
           uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 
           # Export all dependencies (including optional groups)
-          uv pip compile pyproject.toml --all-extras -o requirements-complete.txt
+          # NOTE: Cannot use --all-extras because `iqa` and `labeling` extras
+          # declare conflicting `transformers` versions (==4.37.2 vs >=4.40.0)
+          # in [tool.uv.conflicts]. uv pip compile does not honour conflict
+          # declarations, so we enumerate extras explicitly, excluding `iqa`.
+          # The only package missed is `pyiqa` itself (research-only tool).
+          uv pip compile pyproject.toml \
+            --extra dev --extra ml --extra fuzz --extra api --extra colab \
+            --extra workers --extra labeling --extra language-detection \
+            --extra ocr-labeling --extra synthetic --extra ood \
+            -o requirements-complete.txt
 
       - name: Generate runtime SBOM (production dependencies)
         run: |
