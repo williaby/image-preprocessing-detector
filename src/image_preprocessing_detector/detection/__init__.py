@@ -7,6 +7,7 @@ Phase 4: Classical IQA detectors (blur, noise, skew, contrast, illumination,
 Phase 4.9: Discrepancy threshold tuning for ML-classical comparison
 Phase 6: Layout-lite detection (DocLayout-YOLO + heuristics)
 Phase 8: Orientation detection (0°, 90°, 180°, 270°)
+Phase 10: OOD detection and cross-model agreement
 
 DocLayout-YOLO is a YOLOv10-based model specifically optimized for document
 layout detection. Pre-trained models are available (no training required).
@@ -25,6 +26,19 @@ from image_preprocessing_detector.detection.code_detector import (
     CodeDetectionResult,
     CodeDetector,
     detect_code,
+)
+
+# OOD detection and cross-model agreement (Phase 10)
+from image_preprocessing_detector.detection.cross_model_calibration import (
+    CategoryDistribution,
+    CrossModelCalibrator,
+)
+from image_preprocessing_detector.detection.cross_model_validator import (
+    CrossModelValidator,
+    ReliabilityResult,
+    ValidatorConfig,
+    ValidatorScore,
+    reliability_result_to_dict,
 )
 from image_preprocessing_detector.detection.deskew_pipeline import (
     DeskewConfig,
@@ -96,6 +110,10 @@ from image_preprocessing_detector.detection.iqa_ml import (
     ml_iqa_scores_to_dict,
     teacher_iqa_to_dict,
     uncertainty_metrics_to_dict,
+)
+from image_preprocessing_detector.detection.ood_detector import (
+    EmbeddingOODDetector,
+    OODResult,
 )
 from image_preprocessing_detector.detection.orientation_detector import (
     OrientationConfig,
@@ -237,6 +255,16 @@ __all__ = [
     "detect_shadows",
     "TableComplexityAnalyzer",
     "analyze_table_complexity",
+    # OOD detection and cross-model agreement (Phase 10)
+    "CategoryDistribution",
+    "CrossModelCalibrator",
+    "CrossModelValidator",
+    "EmbeddingOODDetector",
+    "OODResult",
+    "ReliabilityResult",
+    "ValidatorConfig",
+    "ValidatorScore",
+    "reliability_result_to_dict",
 ]
 
 # Add DocLayout-YOLO exports if available
