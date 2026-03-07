@@ -298,7 +298,7 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
   `metadata_registry/ood_registry.jsonl` has **9,170 entries** (76.4% of the 12,000-image
   target). Domain enrichment is complete for all 9,170 records. The registry is well past the
   P0 gate (7,000) and approaching the statistically rigorous target (~12,000 images). Remaining
-  work: ~2,845 images from planned Phase 3 sources + labeling 5 at-risk heads (skew_score,
+  work: ~2,830 images from planned Phase 3 sources + labeling 5 at-risk heads (skew_score,
   handwriting_legibility, handwriting_legibility_score, resolution_quality, code_confidence —
   all at 0 labeled images). See `docs/datasets/OOD_COVERAGE_GAP_REPORT.md` for per-head status.
   DDRs 9 (shadow) and 10 (warping) are **blocked** pending Tier 0 severity labeling. **Two OOD
@@ -584,6 +584,16 @@ discovered. The remaining ~159,515 images (to reach the 350K target) must be gen
 > - **Prerequisite**: Verify the per-script dict fix is active before running
 > - **Retention note**: v3 to be retained until Phase D sampling (resolution quality,
 >   §Stream 5) completes, as Phase D samples 3–5K from v3 on GCS for script diversity
+>
+> **v4 Font Infrastructure (COMPLETE, 2026-02-28)**:
+>
+> - 14 adversarial fonts downloaded (`scripts/download_adversarial_fonts.sh`)
+> - ADVERSARIAL tiers populated for 11 scripts in `config.py:FONT_RECOMMENDATIONS`
+> - `fonts.py:FONT_NAME_TO_SCRIPT` updated with all 14 fonts
+> - MANIFEST.json updated (241 -> 255 fonts)
+> - OOD `render-font-variations` expanded: 4 -> 11 scripts, +case variation, +mimicry, +9c-4 cross-script
+> - 23 new tests in `test_font_tiered_sampling.py` (all passing)
+> - Strategy doc: [V4_FONT_DIVERSITY_STRATEGY.md](V4_FONT_DIVERSITY_STRATEGY.md) (Phase A-B Complete)
 
 #### Stream 4C: OOD corpus build (9,170 → 12,000 images)
 
@@ -618,7 +628,8 @@ reason prefix rules, code screenshot generator, OHR-Bench benchmark.
   IIIT-INDIC/KHATT/CASIA-HWDB2 (~950 images)
 - `code_confidence`: Model-internal confidence output — populated at inference time, no GT needed
 
-**Remaining acquisition** (~2,845 images to reach 12K target):
+**Remaining acquisition** (~1,515 itemized below; ~2,830 gap to 12K target — additional
+sources TBD to close the ~1,315 shortfall):
 
 - NDL Digital Collection: ~100 Japanese vertical-text images (public domain)
 - DLC-2021 screen recaptures: ~100 (academic-only ⚠️)
@@ -912,7 +923,7 @@ existing OOD upscaling pattern (`acquisition_method: "ohr_bench_bicubic_2x"`).
 
 **Phase D — Script diversity (optional, after Phase B evaluation)**:
 
-Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth_multiscript_v3/`)
+Sample 3–5K from synth-multiscript-v3 on GCS (`gs://image_detection_b/synth-multiscript-v3/`)
 across 19 non-Latin scripts. Labels derive from generation metadata (DPI known at render
 time), not from CC measurement — avoiding the V1 CJK precision limitation entirely.
 **Note**: v3 to be retained until Phase D sampling completes (see Stream 4B retention note).
@@ -1053,7 +1064,7 @@ Each student stage targets the same 16 prediction heads with progressive latency
 
 | Dataset | Done | Target | Next Action | Blocker |
 | --- | --- | --- | --- | --- |
-| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG | v3 JPEG format superseded; v4 script ready |
+| synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG after Resolution Quality Phase D sampling complete | v3 JPEG format superseded; v4 font infrastructure COMPLETE (14 adversarial fonts, 11-script ADVERSARIAL tiers, OOD rendering expanded); generation script ready; retain v3 until Phase D sampling finishes |
 | Resolution quality | 5.5K | 15–20K (sweet spot) | Phase A: label RealDAE+RVL-CDIP+Tobacco800 (7.5K); Phase B: multi-DPI DocLayNet renders (7K); Phase C: confound sub-dataset (2K mandatory); V2 deferred to Phase 3 | ~3 days total; Vultr A100 GPU |
 | IQA (corpus-wide) | ~14K hard | ≥125K (gate); ~440K actual | Validate MUSIQ+TOPIQ-NR SRCC ≥ 0.55 on DIQA-5000; then run on full ~440K corpus; 14K hard labels serve as tier_1 calibration anchors | IQA labeling script |
 | HW presence mid-range | 0 | ~16.5–22K | Part 1: Generate NIST contact sheets (~3,400); Part 2: Label presence_reg on Kleister Charity, NARA, SD-2, SD-6, GNHK, Popp-Line | Contact sheet + labeling scripts |

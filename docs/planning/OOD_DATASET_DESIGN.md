@@ -20,7 +20,7 @@
    distance ≤ 5) against all training datasets before registration.
 6. **Registered**: Every OOD image is registered in `metadata_registry/ood_registry.jsonl`
    before any training manifest is generated.
-7. **Reserved scripts enforced**: Three scripts are permanently excluded from training and
+7. **Reserved scripts enforced**: Five scripts are permanently excluded from training and
    reserved exclusively as OOD anchors (see [Script Reservation Policy](#script-reservation-policy)).
 8. **Sources segregated**: OOD-Geometry and OOD-Resolution sources must not overlap with
    training datasets. DocLayNet and DIQA-5000 are training sources and **must not be used
@@ -161,7 +161,7 @@ The following fields are added to every registry entry (see [Schema](#schema)):
 
 | Category | Target | Source Strategy | Dimensions Tested |
 | --- | --- | --- | --- |
-| **OOD-Script** | 600 images | Reserved scripts (Mong/Syrc/Geor) + historical variants + font variations + Phase 2 previews | Script detection head; orientation (TTB/RTL cases) |
+| **OOD-Script** | 600 images | Reserved scripts (Armn/Geor/Goth/Mong/Syrc) + historical variants + font variations + Phase 2 previews | Script detection head; orientation (TTB/RTL cases) |
 | **OOD-Capture** | 600 images | Screen recaptures, ADF scanner with curl, 4th-gen photocopies, high-speed production scanner | Capture method head (7-class), IQA heads |
 | **OOD-Degradation** | 800 images | Multiply-distorted (≥5 simultaneous types): gutter-shadow + warp + blur + noise + compression; watermarked; binarized docs | All IQA heads; shadow/warping sub-types |
 | **OOD-Handwriting** | ~1,000 images | Arabic cursive (KHATT), CJK handwritten (CASIA-HWDB), Devanagari (IIIT-INDIC); includes ILLEGIBLE and specialized content_type; grid-sampled across {script × legibility} pairs | Handwriting heads (5 sub-heads) |
@@ -184,8 +184,8 @@ script) and OOD-Geometry (extreme perspective). These images are registered once
 
 ### Reserved Script Anchors
 
-The three reserved scripts provide directional coverage that cannot be tested with in-training
-scripts:
+The five reserved scripts provide directional and script-diversity coverage that cannot be
+tested with in-training scripts:
 
 **Mongolian (Mong — Top-to-Bottom):**
 
@@ -327,7 +327,7 @@ images with `evaluation_pipeline_stage` containing `"siglip2"`.
 | code_confidence | Regression | SRCC vs human GT | ≥ 0.80 | ≥ 0.70 |
 | resolution_quality (val) | Regression | SRCC vs human GT | ≥ 0.75 | ≥ 0.65 |
 
-**Open-set rejection criterion**: For reserved scripts (Mong, Syrc, Geor) and Phase 2
+**Open-set rejection criterion**: For reserved scripts (Armn, Geor, Goth, Mong, Syrc) and Phase 2
 preview scripts, the model must not assign > 0.5 confidence to any single in-training
 class. **Normalized logit entropy** H_norm = H(x) / ln(N_current_classes) must be ≥ 0.70,
 where N is the number of in-training classes at evaluation time (Phase 1: N=10, Phase 2:
@@ -572,7 +572,7 @@ def _check_ood_leakage(
 Applied in `prepare_multitask_datasets.py` on every sub-command writing a training manifest:
 
 ```python
-RESERVED_OOD_SCRIPTS: frozenset[str] = frozenset({"Mong", "Syrc", "Geor"})
+RESERVED_OOD_SCRIPTS: frozenset[str] = frozenset({"Armn", "Geor", "Goth", "Mong", "Syrc"})
 
 def _validate_no_reserved_scripts(
     samples: list[dict],

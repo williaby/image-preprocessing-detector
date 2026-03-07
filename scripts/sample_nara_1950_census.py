@@ -137,7 +137,12 @@ class ImageRecord:
     @property
     def local_path(self) -> Path:
         """Local path for downloaded image."""
-        return IMAGES_DIR / self.state / self.filename
+        # Use folder as subdirectory to prevent filename collisions across EDs,
+        # and sanitize components to prevent path traversal.
+        safe_state = Path(self.state).name
+        safe_folder = Path(self.folder).name
+        safe_filename = Path(self.filename).name
+        return IMAGES_DIR / safe_state / safe_folder / safe_filename
 
     def to_dict(self) -> dict[str, str]:
         """Serialize to JSON-safe dict."""
@@ -171,12 +176,16 @@ def download_state_metadata(state: str) -> dict | None:
             return json.load(f)
 
     s3_key = f"s3://{S3_BUCKET}/metadata/json/{state}.json"
-    result = subprocess.run(
-        ["aws", "s3", "cp", s3_key, str(local_path), "--no-sign-request"],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    try:
+        result = subprocess.run(
+            ["aws", "s3", "cp", s3_key, str(local_path), "--no-sign-request"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        logger.warning("Failed to fetch metadata for %s: %s", state, exc)
+        return None
     if result.returncode != 0:
         logger.warning("Failed to download %s: %s", state, result.stderr.strip())
         return None
@@ -324,6 +333,10 @@ def manifest() -> None:
 @click.option("--seed", default=42, help="Random seed for reproducibility")
 def sample(count: int, seed: int) -> None:
     """Sample N images stratified across states."""
+    if count <= 0:
+        logger.error("--count must be a positive integer, got %d", count)
+        return
+
     if not MANIFEST_PATH.exists():
         logger.error("No manifest found. Run 'manifest' first.")
         return
@@ -345,6 +358,27 @@ def sample(count: int, seed: int) -> None:
         logger.info("  %s: %d", state.upper(), state_counts[state])
 
     logger.info("Sample saved: %d images to %s", len(sampled), SAMPLE_PATH)
+
+
+def _download_image(img: ImageRecord, local: Path) -> str:
+    """Download a single image. Returns 'ok' on success, 'fail' on error."""
+    try:
+        result = subprocess.run(
+            ["wget", "-q", "--timeout=30", "-O", str(local), img.url],
+            capture_output=True,
+            timeout=60,
+        )
+        if result.returncode == 0:
+            return "ok"
+        logger.warning("Failed: %s", img.filename)
+        if local.exists():
+            local.unlink()
+        return "fail"
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        logger.warning("Download error for %s: %s", img.filename, exc)
+        if local.exists():
+            local.unlink()
+        return "fail"
 
 
 @cli.command()
@@ -370,18 +404,12 @@ def download() -> None:
 
         if local.exists():
             skipped += 1
-            continue
-
-        result = subprocess.run(
-            ["wget", "-q", "--timeout=30", "-O", str(local), img.url],
-            capture_output=True,
-            timeout=60,
-        )
-        if result.returncode == 0:
-            downloaded += 1
         else:
-            failed += 1
-            logger.warning("Failed: %s", img.filename)
+            status = _download_image(img, local)
+            if status == "ok":
+                downloaded += 1
+            else:
+                failed += 1
 
         if (downloaded + skipped) % 50 == 0:
             logger.info(

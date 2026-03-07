@@ -13,7 +13,7 @@ title: Dataset Quick Reference
 > **Version**: 2.0.0
 > **Last Updated**: 2026-02-26
 > **Purpose**: Concise dataset lookup for training planning and task selection
-> **Token Optimized**: ~600 lines vs 57 individual dataset files (100-500 lines each)
+> **Token Optimized**: ~600 lines vs 83 individual dataset files (100-500 lines each)
 > **Audience**: LLM agents and ML engineers selecting datasets for model training
 > **Architecture**: MobileNetV4-Conv-S (3 heads) + SigLIP 2 NAFlex (19 heads) + Docling Layout (pre-trained)
 

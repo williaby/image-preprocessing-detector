@@ -23,6 +23,10 @@
 | **Total Size** | 48 GB |
 | **File Format** | JPG (video frames) |
 
+> **Note — midv500-data variant**: The extended dataset (`midv500_data`, 15,050 images) includes
+> all video frame extracts; the base `midv500` subset (3,612 images) contains curated still frames.
+> Both share the same GCS bucket. Use `midv500_data` for maximum training coverage.
+
 ##### Cyrillic Coverage
 
 | Country | Document Types | Script |

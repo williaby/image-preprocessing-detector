@@ -92,7 +92,7 @@ Categories in `categories.csv`:
 | SIG ID | Head | Applicable | Count | Tier | Notes |
 |--------|------|-----------|-------|------|-------|
 | SIG-G4-1 | handwriting_presence_cls | Yes | ~2,765 | tier_1_annotation | Signature/initials = handwriting presence |
-| SIG-G4-3 | handwriting_content_cls | Yes | ~2,765 | tier_1_annotation | Mixed typed + handwritten |
+| SIG-G4-3 | handwriting_content_type_cls | Yes | ~2,765 | tier_1_annotation | Mixed typed + handwritten |
 | SIG-G2-1 | script_cls | Yes | ~2,765 | tier_0_exact | 100% Latin (English) |
 
 ## 9. Known Limitations
@@ -110,3 +110,10 @@ Categories in `categories.csv`:
 | **Test annotations** | `/mnt/e/image_detection/01_base_data/handwriting/signverod/test.csv` |
 | **Image metadata** | `/mnt/e/image_detection/01_base_data/handwriting/signverod/image_ids.csv` |
 | **Categories** | `/mnt/e/image_detection/01_base_data/handwriting/signverod/categories.csv` |
+
+## 11. Metadata Coverage
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| **Layer 1** | Complete | Parser ready; bounding box annotations extracted |
+| **Layer 2** | Not started | Pending Layer 2 enrichment pipeline run |

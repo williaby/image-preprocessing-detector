@@ -5,7 +5,7 @@ replacing hardcoded paths in the monolithic annotate_base_metadata.py.
 
 Key Components:
     - DatasetConfig: Frozen dataclass for dataset configuration
-    - DATASET_CONFIGS: Registry of all 46 datasets
+    - DATASET_CONFIGS: Registry of all 72 datasets
     - Helper functions: Path resolution and validation
 
 Configuration Categories:

@@ -2649,16 +2649,32 @@ def _rcs_detect_code_pages_in_pdf(
 @click.option(
     "--n-images",
     type=int,
-    default=75,
+    default=150,
     show_default=True,
 )
 @click.option("--dry-run", is_flag=True)
+@click.option(
+    "--include-9c4", is_flag=True, help="Include 9c-4 cross-script confusion rendering."
+)
+@click.option(
+    "--include-case-variation",
+    is_flag=True,
+    help="Include ALL CAPS case variation rendering (capped at 5%).",
+)
+@click.option(
+    "--include-mimicry",
+    is_flag=True,
+    help="Include mimicry/simulation font OOD rendering.",
+)
 @click.pass_context
 def render_font_variations(
     ctx: click.Context,
     font_dir: Path,
     n_images: int,
     dry_run: bool,
+    include_9c4: bool,
+    include_case_variation: bool,
+    include_mimicry: bool,
 ) -> None:
     """Render ornamental/blackletter/CJK font variations (OOD-Script, 1h).
 
@@ -2693,6 +2709,59 @@ def render_font_variations(
     known_sha256s = training_sha256s | ood_sha256s
     known_phashes = list(ood_phashes)
     output_dir = ood_root / "ood_script"
+
+    # ------------------------------------------------------------------
+    # Adversarial type classifier for generation_metadata
+    # ------------------------------------------------------------------
+    _ADVERSARIAL_PATTERNS: dict[str, list[str]] = {
+        "historical_letterforms": [
+            "unifraktur",
+            "fraktur",
+            "medieval",
+            "uncial",
+            "chomsky",
+        ],
+        "cross_script_confusion": [
+            "cinzeldecorative",
+            "cinzel_decorative",
+            "monsieurladoulaise",
+            "monsieur_la_doulaise",
+            "charmonman",
+            "gfsbodoni",
+            "gfs_bodoni",
+            "ebgaramond",
+            "eb_garamond",
+            "lobster",
+            "pacifico",
+        ],
+        "structural_destruction": [
+            "jaini",
+            "modak",
+            "reemkufi",
+            "reem_kufi",
+            "sticknobills",
+            "stick_no_bills",
+            "lakkireddy",
+            "lakki_reddy",
+        ],
+        "calligraphic_transfer": [
+            "comforterbrush",
+            "comforter_brush",
+            "liujianmaocao",
+            "liu_jian_mao_cao",
+            "nanumbrush",
+            "nanum_brush",
+            "gulzar",
+        ],
+    }
+
+    def _classify_adversarial_type(font_stem: str) -> str:
+        """Classify a font into its adversarial attack vector category."""
+        stem_lower = font_stem.lower().replace("-", "_").replace(" ", "_")
+        for adv_type, patterns in _ADVERSARIAL_PATTERNS.items():
+            if any(p in stem_lower for p in patterns):
+                return adv_type
+        return "standard_variation"
 
     # ------------------------------------------------------------------
     # Font-to-script mapping: (substrings_in_filename, iso_script, text, dpi_list)
@@ -2762,6 +2831,56 @@ def render_font_variations(
             ],
             "Arab",
             "تقييم جودة صور المستندات\nالصفحة الأولى من عشر صفحات\n\nنظام معالجة الوثائق",
+            [150, 300],
+        ),
+        (
+            ["lobster", "pacifico", "pt_sans", "pt_serif"],
+            "Cyrl",
+            "Оценка качества изображений\nдокументов Страница один из десяти\n\n"
+            "Система обработки документов",
+            [150, 300],
+        ),
+        (
+            ["gfsbodoni", "gfs_bodoni", "gfsneohellenic", "ebgaramond", "eb_garamond"],
+            "Grek",
+            "Αξιολόγηση ποιότητας εικόνων\nεγγράφων Σελίδα ένα από δέκα\n\n"
+            "Σύστημα επεξεργασίας εγγράφων",
+            [150, 300],
+        ),
+        (
+            ["nanum_brush", "nanumbrush", "nanumpen", "nanum_pen"],
+            "Hang",
+            "문서 이미지 품질 평가\n1페이지 / 10페이지\n\n문서 처리 시스템",
+            [150, 300],
+        ),
+        (
+            [
+                "sticknobills",
+                "stick_no_bills",
+                "abhayalibre",
+                "abhaya_libre",
+                "yaldevi",
+            ],
+            "Sinh",
+            "ලේඛන රූපයේ ගුණත්වය\nපිටුව එක දහයෙන්\n\nලේඛන සැකසුම් පද්ධතිය",
+            [150, 300],
+        ),
+        (
+            ["lakkireddy", "lakki_reddy", "hindguntur", "hind_guntur", "ramabhadra"],
+            "Telu",
+            "పత్ర చిత్ర నాణ్యత అంచనా\nపేజీ ఒకటి పదిలో\n\nపత్ర ప్రాసెసింగ్ వ్యవస్థ",
+            [150, 300],
+        ),
+        (
+            ["moul", "battambang", "content"],
+            "Khmr",
+            "ការវាយតម្លៃគុណភាពរូបភាព\nឯកសារ ទំព័រមួយនៃដប់\n\nប្រព័ន្ធដំណើរការឯកសារ",
+            [150, 300],
+        ),
+        (
+            ["charmonman", "kanit", "pridi", "itim"],
+            "Thai",
+            "การประเมินคุณภาพภาพเอกสาร\nหน้าที่หนึ่งจากสิบหน้า\n\nระบบประมวลผลเอกสาร",
             [150, 300],
         ),
     ]
@@ -2919,6 +3038,7 @@ def render_font_variations(
                 "iso_script": iso_script,
                 "render_dpi": render_dpi,
                 "pt_size": pt_size,
+                "adversarial_type": _classify_adversarial_type(font_path.stem),
             },
         }
 
@@ -2930,14 +3050,415 @@ def render_font_variations(
         total_reg += 1
 
     click.echo(f"  render-font-variations: {total_reg}/{n_images} images registered")
+
+    # Track optional renderer counts for aggregate summary
+    optional_caps_reg = 0
+    optional_mimicry_reg = 0
+    optional_confusion_reg = 0
+
+    # ------------------------------------------------------------------
+    # 5d: ALL CAPS case variation rendering (capped at 5% of total)
+    # ------------------------------------------------------------------
+    if include_case_variation:
+        click.echo("  --- Case variation (ALL CAPS) rendering ---")
+        _CASED_SCRIPTS = {
+            "Latn": "THE QUICK BROWN FOX\nLEAPS OVER THE LAZY DOG.\n\n"
+            "PAGE 1 OF 10\nDOCUMENT QUALITY ASSESSMENT",
+            "Cyrl": "ОЦЕНКА КАЧЕСТВА ИЗОБРАЖЕНИЙ\nДОКУМЕНТОВ СТРАНИЦА ОДИН\n\n"
+            "СИСТЕМА ОБРАБОТКИ ДОКУМЕНТОВ",
+            "Grek": "ΑΞΙΟΛΟΓΗΣΗ ΠΟΙΟΤΗΤΑΣ ΕΙΚΟΝΩΝ\nΕΓΓΡΑΦΩΝ ΣΕΛΙΔΑ ΕΝΑ\n\n"
+            "ΣΥΣΤΗΜΑ ΕΠΕΞΕΡΓΑΣΙΑΣ ΕΓΓΡΑΦΩΝ",
+        }
+        # Cap: ≈ 5% of n_images
+        max_caps_images = max(1, int(n_images * 0.05))
+        caps_reg = 0
+        caps_fonts_per_script = 3
+
+        for script_code, upper_text in _CASED_SCRIPTS.items():
+            # Find fonts matching this script
+            matching_fps = [
+                fp
+                for fp, matched in (
+                    (fp, _match_font_script(fp)) for fp in all_font_paths
+                )
+                if matched is not None and matched[0] == script_code
+            ]
+            rng.shuffle(matching_fps)
+            for fp in matching_fps[:caps_fonts_per_script]:
+                for dpi_val in [150, 300]:
+                    if caps_reg >= max_caps_images:
+                        break
+
+                    img_w = int(8.5 * dpi_val)
+                    img_h = int(11.0 * dpi_val)
+                    img = Image.new("RGB", (img_w, img_h), color=(255, 255, 255))
+                    draw = ImageDraw.Draw(img)
+                    px_size = int(12 * dpi_val / 72.0)
+                    margin_px = int(1.0 * dpi_val)
+
+                    try:
+                        pil_font = ImageFont.truetype(str(fp), size=px_size)
+                    except Exception:
+                        pil_font = ImageFont.load_default()
+
+                    draw.multiline_text(
+                        (margin_px, margin_px),
+                        upper_text,
+                        font=pil_font,
+                        fill=(20, 20, 20),
+                        spacing=int(px_size * 0.4),
+                    )
+
+                    out_name = (
+                        f"rfv_caps_{script_code}_{fp.stem[:20]}"
+                        f"_{dpi_val}dpi_{caps_reg:03d}.jpg"
+                    )
+                    out_path = output_dir / out_name
+
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG", quality=92, optimize=True)
+                    raw = buf.getvalue()
+                    sha256 = hashlib.sha256(raw).hexdigest()
+
+                    if sha256 in known_sha256s:
+                        continue
+
+                    if not dry_run:
+                        out_path.write_bytes(raw)
+                        sha256, phash = compute_hashes(out_path)
+                    else:
+                        phash = "0000000000000000"
+
+                    gt = build_ground_truth_template()
+                    gt["capture_method"] = "born_digital"
+                    gt["color_mode"] = "color"
+
+                    caps_entry: dict[str, Any] = {
+                        "sha256": sha256,
+                        "phash": phash,
+                        "source_path": str(out_path)
+                        if not dry_run
+                        else f"(dry-run)/{out_name}",
+                        "ood_categories": ["ood_script"],
+                        "reason": (
+                            f"5d ALL CAPS case variation: {fp.stem} "
+                            f"({script_code}) at {dpi_val} DPI"
+                        ),
+                        "registered_date": date.today().isoformat(),
+                        "acquisition_method": "synthetic_pillow_render",
+                        "license": "generated",
+                        "dedup_verified": True,
+                        "evaluation_pipeline_stage": ["siglip2"],
+                        "ground_truth": gt,
+                        "generation_metadata": {
+                            "font_file": str(fp),
+                            "iso_script": script_code,
+                            "render_dpi": dpi_val,
+                            "pt_size": 12,
+                            "case_variant": "upper",
+                            "adversarial_type": "case_variation",
+                        },
+                    }
+
+                    if not dry_run:
+                        append_registry_entry(caps_entry, registry_path)
+                        ood_sha256s.add(sha256)
+                        known_sha256s.add(sha256)
+                    caps_reg += 1
+
+        optional_caps_reg = caps_reg
+        click.echo(
+            f"  case-variation (ALL CAPS): {caps_reg}/{max_caps_images} images registered"
+        )
+
+    # ------------------------------------------------------------------
+    # 5e: Mimicry/simulation font OOD rendering
+    # ------------------------------------------------------------------
+    if include_mimicry:
+        click.echo("  --- Mimicry/simulation font rendering ---")
+        try:
+            from image_preprocessing_detector.synthetic.config import MIMICRY_FONTS
+            from image_preprocessing_detector.synthetic.fonts import FontManager
+        except ImportError:
+            click.echo(
+                "  WARN: Cannot import MIMICRY_FONTS/FontManager, skipping mimicry"
+            )
+            MIMICRY_FONTS = {}
+
+        if MIMICRY_FONTS:
+            fm = FontManager(additional_paths=[font_dir])
+            fm.scan_fonts()
+            mimicry_reg = 0
+            max_mimicry = 50
+            mimicry_text = (
+                "The quick brown fox leaps over the lazy dog.\n\n"
+                "Page 1 of 10\nDocument Quality Assessment\n"
+                "Systems and Methods for Processing"
+            )
+
+            for target_script, font_families in MIMICRY_FONTS.items():
+                for dpi_val in [150, 300]:
+                    for font_size in [24, 36, 48]:
+                        if mimicry_reg >= max_mimicry:
+                            break
+                        pil_font, font_family = fm.get_mimicry_font(
+                            target_script, size=font_size
+                        )
+                        if pil_font is None:
+                            continue
+
+                        img_w = int(8.5 * dpi_val)
+                        img_h = int(11.0 * dpi_val)
+                        img = Image.new("RGB", (img_w, img_h), color=(255, 255, 255))
+                        draw = ImageDraw.Draw(img)
+                        margin_px = int(1.0 * dpi_val)
+
+                        draw.multiline_text(
+                            (margin_px, margin_px),
+                            mimicry_text,
+                            font=pil_font,
+                            fill=(20, 20, 20),
+                            spacing=int(font_size * 0.4),
+                        )
+
+                        out_name = (
+                            f"rfv_mimicry_{target_script}_{font_family[:15]}"
+                            f"_{dpi_val}dpi_{font_size}pt_{mimicry_reg:03d}.jpg"
+                        )
+                        out_path = output_dir / out_name
+
+                        buf = io.BytesIO()
+                        img.save(buf, format="JPEG", quality=92, optimize=True)
+                        raw = buf.getvalue()
+                        sha256 = hashlib.sha256(raw).hexdigest()
+
+                        if sha256 in known_sha256s:
+                            continue
+
+                        if not dry_run:
+                            out_path.write_bytes(raw)
+                            sha256, phash = compute_hashes(out_path)
+                        else:
+                            phash = "0000000000000000"
+
+                        gt = build_ground_truth_template()
+                        gt["capture_method"] = "born_digital"
+                        gt["color_mode"] = "color"
+
+                        mim_entry: dict[str, Any] = {
+                            "sha256": sha256,
+                            "phash": phash,
+                            "source_path": str(out_path)
+                            if not dry_run
+                            else f"(dry-run)/{out_name}",
+                            "ood_categories": ["ood_script"],
+                            "reason": (
+                                f"5e mimicry font: {font_family} "
+                                f"(Latn mimicking {target_script}) at {dpi_val} DPI"
+                            ),
+                            "registered_date": date.today().isoformat(),
+                            "acquisition_method": "synthetic_pillow_render",
+                            "license": "generated",
+                            "dedup_verified": True,
+                            "evaluation_pipeline_stage": ["siglip2"],
+                            "ground_truth": gt,
+                            "generation_metadata": {
+                                "font_file": font_family,
+                                "iso_script": "Latn",
+                                "render_dpi": dpi_val,
+                                "pt_size": font_size,
+                                "adversarial_type": "simulation_mimicry",
+                                "mimics_script": target_script,
+                                "true_script": "Latn",
+                            },
+                        }
+
+                        if not dry_run:
+                            append_registry_entry(mim_entry, registry_path)
+                            ood_sha256s.add(sha256)
+                            known_sha256s.add(sha256)
+                        mimicry_reg += 1
+
+            optional_mimicry_reg = mimicry_reg
+            click.echo(
+                f"  mimicry/simulation: {mimicry_reg}/{max_mimicry} images registered"
+            )
+
+    # ------------------------------------------------------------------
+    # 5c: 9c-4 cross-script confusion rendering
+    # ------------------------------------------------------------------
+    if include_9c4:
+        click.echo("  --- 9c-4 cross-script confusion rendering ---")
+        try:
+            from image_preprocessing_detector.synthetic.fonts import FontManager
+
+            _9c4_fm = FontManager(additional_paths=[font_dir])
+            _9c4_fm.scan_fonts()
+        except ImportError:
+            click.echo("  WARN: Cannot import FontManager, using default fonts")
+            _9c4_fm = None
+        _CONFUSION_PAIRS: list[tuple[str, str, str, str]] = [
+            (
+                "Cher",
+                "Latn",
+                "ᏣᎳᎩ ᎦᏬᏂᎯᏍᏗ\nᏍᏆᎵᏁ ᏓᏂᎳᏫ",
+                "Cherokee syllabary text\nDocument assessment page",
+            ),
+            (
+                "Cyrl",
+                "Latn",
+                "Оценка документов\nСтраница один",
+                "Document evaluation\nPage one of ten",
+            ),
+            (
+                "Deva",
+                "Gujr",
+                "दस्तावेज़ गुणवत्ता मूल्यांकन\nपृष्ठ एक",
+                "દસ્તાવેજ ગુણવત્તા મૂલ્યાંકન\nપૃષ્ઠ એક",
+            ),
+            (
+                "Telu",
+                "Knda",
+                "పత్ర నాణ్యత అంచనా\nపేజీ ఒకటి",
+                "ಡಾಕ್ಯುಮೆಂಟ್ ಗುಣಮಟ್ಟ ಮೌಲ್ಯಮಾಪನ\nಪುಟ ಒಂದು",
+            ),
+            (
+                "Hans",
+                "Hang",
+                "文档图像质量评估\n第一页共十页",
+                "문서 이미지 품질 평가\n1페이지 10페이지",
+            ),
+        ]
+        max_9c4 = 100
+        confusion_reg = 0
+        mixed_output_dir = ood_root / "ood_mixed"
+        if not dry_run:
+            mixed_output_dir.mkdir(parents=True, exist_ok=True)
+
+        for script_a, script_b, text_a, text_b in _CONFUSION_PAIRS:
+            for dpi_val in [150, 300]:
+                for variant_idx in range(10):
+                    if confusion_reg >= max_9c4:
+                        break
+
+                    # Render both scripts side-by-side on same page
+                    img_w = int(8.5 * dpi_val)
+                    img_h = int(11.0 * dpi_val)
+                    img = Image.new("RGB", (img_w, img_h), color=(255, 255, 255))
+                    draw = ImageDraw.Draw(img)
+                    px_size = int((12 + variant_idx) * dpi_val / 72.0)
+                    margin_px = int(1.0 * dpi_val)
+
+                    fallback_font = ImageFont.load_default()
+
+                    # Get script-specific fonts when FontManager is available
+                    font_a = fallback_font
+                    font_b = fallback_font
+                    if _9c4_fm is not None:
+                        loaded_a = _9c4_fm.get_font(script_a, size=px_size)
+                        if loaded_a is not None:
+                            font_a = loaded_a
+                        loaded_b = _9c4_fm.get_font(script_b, size=px_size)
+                        if loaded_b is not None:
+                            font_b = loaded_b
+
+                    # Top half: script A
+                    draw.multiline_text(
+                        (margin_px, margin_px),
+                        text_a,
+                        font=font_a,
+                        fill=(20, 20, 20),
+                        spacing=int(px_size * 0.4),
+                    )
+                    # Bottom half: script B
+                    draw.multiline_text(
+                        (margin_px, img_h // 2),
+                        text_b,
+                        font=font_b,
+                        fill=(20, 20, 20),
+                        spacing=int(px_size * 0.4),
+                    )
+
+                    out_name = (
+                        f"rfv_9c4_{script_a}_{script_b}"
+                        f"_{dpi_val}dpi_{variant_idx:03d}.jpg"
+                    )
+                    out_path = mixed_output_dir / out_name
+
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG", quality=92, optimize=True)
+                    raw = buf.getvalue()
+                    sha256 = hashlib.sha256(raw).hexdigest()
+
+                    if sha256 in known_sha256s:
+                        continue
+
+                    if not dry_run:
+                        out_path.write_bytes(raw)
+                        sha256, phash = compute_hashes(out_path)
+                    else:
+                        phash = "0000000000000000"
+
+                    gt = build_ground_truth_template()
+                    gt["capture_method"] = "born_digital"
+                    gt["color_mode"] = "color"
+
+                    conf_entry: dict[str, Any] = {
+                        "sha256": sha256,
+                        "phash": phash,
+                        "source_path": str(out_path)
+                        if not dry_run
+                        else f"(dry-run)/{out_name}",
+                        "ood_categories": ["ood_mixed"],
+                        "reason": (
+                            f"9c-4 cross-script confusion: {script_a}/{script_b} "
+                            f"at {dpi_val} DPI (variant {variant_idx})"
+                        ),
+                        "registered_date": date.today().isoformat(),
+                        "acquisition_method": "synthetic_pillow_render",
+                        "license": "generated",
+                        "dedup_verified": True,
+                        "evaluation_pipeline_stage": ["siglip2"],
+                        "ground_truth": gt,
+                        "generation_metadata": {
+                            "iso_script": f"{script_a}+{script_b}",
+                            "render_dpi": dpi_val,
+                            "pt_size": 12 + variant_idx,
+                            "adversarial_type": "cross_script_confusion",
+                            "confusable_scripts": [script_a, script_b],
+                        },
+                    }
+
+                    if not dry_run:
+                        append_registry_entry(conf_entry, registry_path)
+                        ood_sha256s.add(sha256)
+                        known_sha256s.add(sha256)
+                    confusion_reg += 1
+
+        optional_confusion_reg = confusion_reg
+        click.echo(
+            f"  9c-4 cross-script confusion: {confusion_reg}/{max_9c4} images registered"
+        )
+
+    # ------------------------------------------------------------------
+    # Aggregate summary (includes optional renderers for --dry-run accuracy)
+    # ------------------------------------------------------------------
+    grand_total = (
+        total_reg + optional_caps_reg + optional_mimicry_reg + optional_confusion_reg
+    )
     log_dry_run_summary(
         candidates=total_cands,
         duplicates_training=total_dups_train,
         duplicates_intra=total_dups_intra,
-        unique=total_reg,
+        unique=grand_total,
         sub_command="render-font-variations",
         dry_run=dry_run,
     )
+    if optional_caps_reg or optional_mimicry_reg or optional_confusion_reg:
+        click.echo(
+            f"  (includes optional: caps={optional_caps_reg}, "
+            f"mimicry={optional_mimicry_reg}, confusion={optional_confusion_reg})"
+        )
 
 
 @cli.command("render-code-screenshots")

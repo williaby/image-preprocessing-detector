@@ -9,7 +9,7 @@
     "casia-hwdb2",
     "casia-hwdb2-line",
     "cc-ocr",
-    "coco-text",
+    "cocotext",
     "cvsi",
     "dibco",
     "diqa-5000",
@@ -64,6 +64,7 @@
     "openlid-v2",
     "openpecha-ocr-drutsa",
     "pdmocr-part1",
+    "pdmocr-part2",
     "popp-line",
     "pubtabnet",
     "pucit-ohul",
@@ -85,6 +86,7 @@
     "tobacco800",
     "vjroda",
     "warpdoc",
+    "wili-2018",
     "wsrd",
     "yarmouk"
   ]

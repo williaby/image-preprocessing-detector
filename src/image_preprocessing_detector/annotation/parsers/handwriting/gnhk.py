@@ -182,7 +182,7 @@ class GNHKParser(BaseParser):
         for word in words:
             word_type = word.get("type", "")
             text = word.get("text", "")
-            line_idx = word.get("line_idx", 0)
+            line_idx = word.get("line_idx")
 
             if word_type == "H":
                 hw_count += 1
@@ -196,7 +196,7 @@ class GNHKParser(BaseParser):
             elif text and not text.startswith("%"):
                 transcriptions.append(text)
 
-            if line_idx > max_line:
+            if line_idx is not None and line_idx > max_line:
                 max_line = line_idx
 
         labels.raw_labels["word_count"] = len(words)
@@ -204,7 +204,11 @@ class GNHKParser(BaseParser):
         labels.raw_labels["printed_word_count"] = printed_count
         labels.raw_labels["illegible_word_count"] = illegible_count
         labels.raw_labels["math_word_count"] = math_count
-        labels.raw_labels["line_count"] = max_line + 1
+        # Use distinct line indices if available; fall back to None
+        has_line_indices = max_line > 0 or any(
+            w.get("line_idx") is not None for w in words
+        )
+        labels.raw_labels["line_count"] = max_line + 1 if has_line_indices else None
 
         # Store legibility ratio (fraction of illegible words)
         if len(words) > 0:

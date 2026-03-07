@@ -67,7 +67,7 @@ class PoppLineParser(BaseParser):
     @property
     def dataset_names(self) -> list[str]:
         """Return dataset names handled by this parser."""
-        return ["popp-line"]
+        return ["popp-line", "popp_line"]
 
     def parse(
         self,

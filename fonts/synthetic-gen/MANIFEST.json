@@ -1,0 +1,1794 @@
+{
+  "version": "2.0.0",
+  "description": "Supplemental fonts for synth-multiscript v4 generation",
+  "total_fonts": 257,
+  "fonts": {
+    "AbhayaLibre-Bold.ttf": {
+      "family": "AbhayaLibre",
+      "size_kb": 515.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Sinh",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "AbhayaLibre-Regular.ttf": {
+      "family": "AbhayaLibre",
+      "size_kb": 542.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Sinh",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "AbhayaLibre-SemiBold.ttf": {
+      "family": "AbhayaLibre",
+      "size_kb": 506.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Sinh",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "AbyssinicaSIL-Regular.ttf": {
+      "family": "AbyssinicaSIL",
+      "size_kb": 305.5
+    },
+    "Aladin-Regular.ttf": {
+      "family": "Aladin",
+      "size_kb": 41.2
+    },
+    "Allura-Regular.ttf": {
+      "family": "Allura",
+      "size_kb": 240.9
+    },
+    "AmaticSC.ttf": {
+      "family": "AmaticSC",
+      "size_kb": 148.1
+    },
+    "Amiri-Bold.ttf": {
+      "family": "Amiri",
+      "size_kb": 419.0
+    },
+    "Amiri-BoldItalic.ttf": {
+      "family": "Amiri",
+      "size_kb": 416.6
+    },
+    "Amiri-Italic.ttf": {
+      "family": "Amiri",
+      "size_kb": 441.1
+    },
+    "Amiri-Regular.ttf": {
+      "family": "Amiri",
+      "size_kb": 442.8
+    },
+    "AmiriQuran.ttf": {
+      "family": "AmiriQuran",
+      "size_kb": 137.6
+    },
+    "AmiriQuranColored.ttf": {
+      "family": "AmiriQuranColored",
+      "size_kb": 158.4
+    },
+    "Andika-Bold.ttf": {
+      "family": "Andika",
+      "size_kb": 731.2
+    },
+    "Andika-BoldItalic.ttf": {
+      "family": "Andika",
+      "size_kb": 767.2
+    },
+    "Andika-Italic.ttf": {
+      "family": "Andika",
+      "size_kb": 755.9
+    },
+    "Andika-Regular.ttf": {
+      "family": "Andika",
+      "size_kb": 721.5
+    },
+    "ArefRuqaa-Regular.ttf": {
+      "family": "ArefRuqaa",
+      "size_kb": 108.1
+    },
+    "ArefRuqaaInk-Bold.ttf": {
+      "family": "ArefRuqaaInk",
+      "size_kb": 616.2
+    },
+    "ArefRuqaaInk-Regular.ttf": {
+      "family": "ArefRuqaaInk",
+      "size_kb": 554.7
+    },
+    "Arima-Regular.ttf": {
+      "family": "Arima",
+      "size_kb": 340.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Arima[wght].ttf": {
+      "family": "Arima",
+      "size_kb": 340.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Atma-Bold.ttf": {
+      "family": "Atma",
+      "size_kb": 211.4
+    },
+    "Atma-Light.ttf": {
+      "family": "Atma",
+      "size_kb": 213.8
+    },
+    "Atma-Regular.ttf": {
+      "family": "Atma",
+      "size_kb": 215.2
+    },
+    "Audiowide-Regular.ttf": {
+      "family": "Audiowide",
+      "size_kb": 68.3
+    },
+    "AwamiNastaliq-Regular.ttf": {
+      "family": "AwamiNastaliq",
+      "size_kb": 290.5
+    },
+    "BadScript-Regular.ttf": {
+      "family": "BadScript",
+      "size_kb": 179.9
+    },
+    "BaiJamjuree-Bold.ttf": {
+      "family": "BaiJamjuree",
+      "size_kb": 79.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "BaiJamjuree-Regular.ttf": {
+      "family": "BaiJamjuree",
+      "size_kb": 80.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Baloo2[wght].ttf": {
+      "family": "Baloo2",
+      "size_kb": 667.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "display"
+    },
+    "BalooBhai2[wght].ttf": {
+      "family": "BalooBhai2",
+      "size_kb": 693.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "display"
+    },
+    "BalooBhaina2[wght].ttf": {
+      "family": "BalooBhaina2",
+      "size_kb": 462.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Orya",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "display"
+    },
+    "BalooPaaji2[wght].ttf": {
+      "family": "BalooPaaji2",
+      "size_kb": 237.5,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Guru",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "display"
+    },
+    "BalooTamma2[wght].ttf": {
+      "family": "BalooTamma2",
+      "size_kb": 464.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Knda",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "display"
+    },
+    "Battambang-Bold.ttf": {
+      "family": "Battambang",
+      "size_kb": 109.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Battambang-Light.ttf": {
+      "family": "Battambang",
+      "size_kb": 98.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Battambang-Regular.ttf": {
+      "family": "Battambang",
+      "size_kb": 113.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Bungee-Regular.ttf": {
+      "family": "Bungee",
+      "size_kb": 116.2
+    },
+    "CaesarDressing-Regular.ttf": {
+      "family": "CaesarDressing",
+      "size_kb": 87.5
+    },
+    "Catamaran[wght].ttf": {
+      "family": "Catamaran",
+      "size_kb": 180.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Caveat-Bold.ttf": {
+      "family": "Caveat",
+      "size_kb": 296.0
+    },
+    "Caveat-Regular.ttf": {
+      "family": "Caveat",
+      "size_kb": 290.9
+    },
+    "Caveat[wght].ttf": {
+      "family": "Caveat",
+      "size_kb": 394.2
+    },
+    "CharisSIL-Bold.ttf": {
+      "family": "CharisSIL",
+      "size_kb": 786.2
+    },
+    "CharisSIL-BoldItalic.ttf": {
+      "family": "CharisSIL",
+      "size_kb": 847.7
+    },
+    "CharisSIL-Italic.ttf": {
+      "family": "CharisSIL",
+      "size_kb": 822.4
+    },
+    "CharisSIL-Regular.ttf": {
+      "family": "CharisSIL",
+      "size_kb": 802.9
+    },
+    "Content-Bold.ttf": {
+      "family": "Content",
+      "size_kb": 299.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Content-Regular.ttf": {
+      "family": "Content",
+      "size_kb": 305.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "DancingScript-Regular.ttf": {
+      "family": "DancingScript",
+      "size_kb": 130.5
+    },
+    "DoulosSIL-Regular.ttf": {
+      "family": "DoulosSIL",
+      "size_kb": 831.0
+    },
+    "ElMessiri[wght].ttf": {
+      "family": "ElMessiri",
+      "size_kb": 135.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "FiraMono-Bold.ttf": {
+      "family": "FiraMono",
+      "size_kb": 201.7
+    },
+    "FiraMono-Medium.ttf": {
+      "family": "FiraMono",
+      "size_kb": 169.4
+    },
+    "FiraMono-Regular.ttf": {
+      "family": "FiraMono",
+      "size_kb": 170.5
+    },
+    "FiraSans-Bold.ttf": {
+      "family": "FiraSans",
+      "size_kb": 427.8
+    },
+    "FiraSans-BoldItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 437.0
+    },
+    "FiraSans-Book.ttf": {
+      "family": "FiraSans",
+      "size_kb": 394.9
+    },
+    "FiraSans-BookItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 402.7
+    },
+    "FiraSans-Eight.ttf": {
+      "family": "FiraSans",
+      "size_kb": 380.7
+    },
+    "FiraSans-EightItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 389.4
+    },
+    "FiraSans-ExtraBold.ttf": {
+      "family": "FiraSans",
+      "size_kb": 436.2
+    },
+    "FiraSans-ExtraBoldItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 446.1
+    },
+    "FiraSans-ExtraLight.ttf": {
+      "family": "FiraSans",
+      "size_kb": 385.3
+    },
+    "FiraSans-ExtraLightItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 393.2
+    },
+    "FiraSans-Four.ttf": {
+      "family": "FiraSans",
+      "size_kb": 375.5
+    },
+    "FiraSans-FourItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 389.8
+    },
+    "FiraSans-Hair.ttf": {
+      "family": "FiraSans",
+      "size_kb": 390.8
+    },
+    "FiraSans-HairItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 401.1
+    },
+    "FiraSans-Heavy.ttf": {
+      "family": "FiraSans",
+      "size_kb": 447.9
+    },
+    "FiraSans-HeavyItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 456.7
+    },
+    "FiraSans-Italic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 402.0
+    },
+    "FiraSans-Light.ttf": {
+      "family": "FiraSans",
+      "size_kb": 387.8
+    },
+    "FiraSans-LightItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 394.8
+    },
+    "FiraSans-Medium.ttf": {
+      "family": "FiraSans",
+      "size_kb": 395.2
+    },
+    "FiraSans-MediumItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 403.4
+    },
+    "FiraSans-Regular.ttf": {
+      "family": "FiraSans",
+      "size_kb": 394.5
+    },
+    "FiraSans-SemiBold.ttf": {
+      "family": "FiraSans",
+      "size_kb": 427.6
+    },
+    "FiraSans-SemiBoldItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 436.1
+    },
+    "FiraSans-Thin.ttf": {
+      "family": "FiraSans",
+      "size_kb": 386.7
+    },
+    "FiraSans-ThinItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 393.4
+    },
+    "FiraSans-Two.ttf": {
+      "family": "FiraSans",
+      "size_kb": 373.2
+    },
+    "FiraSans-TwoItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 383.0
+    },
+    "FiraSans-Ultra.ttf": {
+      "family": "FiraSans",
+      "size_kb": 474.0
+    },
+    "FiraSans-UltraItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 485.6
+    },
+    "FiraSans-UltraLight.ttf": {
+      "family": "FiraSans",
+      "size_kb": 384.7
+    },
+    "FiraSans-UltraLightItalic.ttf": {
+      "family": "FiraSans",
+      "size_kb": 392.9
+    },
+    "GFSDidot-Regular.ttf": {
+      "family": "GFSDidot",
+      "size_kb": 186.7
+    },
+    "Galada-Regular.ttf": {
+      "family": "Galada",
+      "size_kb": 183.4
+    },
+    "GentiumBookPlus-Bold.ttf": {
+      "family": "GentiumBookPlus",
+      "size_kb": 870.4
+    },
+    "GentiumBookPlus-BoldItalic.ttf": {
+      "family": "GentiumBookPlus",
+      "size_kb": 940.1
+    },
+    "GentiumBookPlus-Italic.ttf": {
+      "family": "GentiumBookPlus",
+      "size_kb": 929.0
+    },
+    "GentiumBookPlus-Regular.ttf": {
+      "family": "GentiumBookPlus",
+      "size_kb": 854.6
+    },
+    "GentiumPlus-Bold.ttf": {
+      "family": "GentiumPlus",
+      "size_kb": 864.4
+    },
+    "GentiumPlus-BoldItalic.ttf": {
+      "family": "GentiumPlus",
+      "size_kb": 935.4
+    },
+    "GentiumPlus-Italic.ttf": {
+      "family": "GentiumPlus",
+      "size_kb": 918.7
+    },
+    "GentiumPlus-Regular.ttf": {
+      "family": "GentiumPlus",
+      "size_kb": 860.0
+    },
+    "GothicA1-Regular.ttf": {
+      "family": "GothicA1",
+      "size_kb": 2241.6
+    },
+    "GreatVibes-Regular.ttf": {
+      "family": "GreatVibes",
+      "size_kb": 446.9
+    },
+    "Harmattan-Regular.ttf": {
+      "family": "Harmattan",
+      "size_kb": 560.1
+    },
+    "Heebo-Regular.ttf": {
+      "family": "Heebo",
+      "size_kb": 119.2
+    },
+    "Hind-Bold.ttf": {
+      "family": "Hind",
+      "size_kb": 279.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Hind-Light.ttf": {
+      "family": "Hind",
+      "size_kb": 280.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Hind-Regular.ttf": {
+      "family": "Hind",
+      "size_kb": 292.5,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindGuntur-Bold.ttf": {
+      "family": "HindGuntur",
+      "size_kb": 332.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindGuntur-Light.ttf": {
+      "family": "HindGuntur",
+      "size_kb": 300.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindGuntur-Regular.ttf": {
+      "family": "HindGuntur",
+      "size_kb": 315.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindMadurai-Bold.ttf": {
+      "family": "HindMadurai",
+      "size_kb": 139.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindMadurai-Light.ttf": {
+      "family": "HindMadurai",
+      "size_kb": 124.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindMadurai-Regular.ttf": {
+      "family": "HindMadurai",
+      "size_kb": 133.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindVadodara-Bold.ttf": {
+      "family": "HindVadodara",
+      "size_kb": 246.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindVadodara-Light.ttf": {
+      "family": "HindVadodara",
+      "size_kb": 230.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "HindVadodara-Regular.ttf": {
+      "family": "HindVadodara",
+      "size_kb": 237.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "IndieFlower.ttf": {
+      "family": "IndieFlower",
+      "size_kb": 105.7
+    },
+    "Jomolhari.ttf": {
+      "family": "Jomolhari",
+      "size_kb": 290.8
+    },
+    "Kalam-Bold.ttf": {
+      "family": "Kalam",
+      "size_kb": 450.1
+    },
+    "Kalam-Light.ttf": {
+      "family": "Kalam",
+      "size_kb": 427.3
+    },
+    "Kalam-Regular.ttf": {
+      "family": "Kalam",
+      "size_kb": 417.3
+    },
+    "Kalpurush.ttf": {
+      "family": "Kalpurush",
+      "size_kb": 290.3
+    },
+    "Kanit-Bold.ttf": {
+      "family": "Kanit",
+      "size_kb": 172.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Kanit-Italic.ttf": {
+      "family": "Kanit",
+      "size_kb": 171.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Kanit-Light.ttf": {
+      "family": "Kanit",
+      "size_kb": 167.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Kanit-Regular.ttf": {
+      "family": "Kanit",
+      "size_kb": 169.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Kavivanar-Regular.ttf": {
+      "family": "Kavivanar",
+      "size_kb": 64.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "handwriting"
+    },
+    "Lateef-Regular.ttf": {
+      "family": "Lateef",
+      "size_kb": 235.4
+    },
+    "LiuJianMaoCao-Regular.ttf": {
+      "family": "LiuJianMaoCao",
+      "size_kb": 4835.7
+    },
+    "Lohit-Devanagari.ttf": {
+      "family": "Lohit",
+      "size_kb": 290.5
+    },
+    "LongCang-Regular.ttf": {
+      "family": "LongCang",
+      "size_kb": 5041.5
+    },
+    "MaShanZheng-Regular.ttf": {
+      "family": "MaShanZheng",
+      "size_kb": 5720.8
+    },
+    "Mada[wght].ttf": {
+      "family": "Mada",
+      "size_kb": 177.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Mandali-Regular.ttf": {
+      "family": "Mandali",
+      "size_kb": 604.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Manjari-Bold.ttf": {
+      "family": "Manjari",
+      "size_kb": 148.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Mlym",
+        "Latn"
+      ],
+      "source": "Google Fonts (SMC)",
+      "type": "sans-serif"
+    },
+    "Manjari-Regular.ttf": {
+      "family": "Manjari",
+      "size_kb": 147.5,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Mlym",
+        "Latn"
+      ],
+      "source": "Google Fonts (SMC)",
+      "type": "sans-serif"
+    },
+    "Manjari-Thin.ttf": {
+      "family": "Manjari",
+      "size_kb": 148.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Mlym",
+        "Latn"
+      ],
+      "source": "Google Fonts (SMC)",
+      "type": "sans-serif"
+    },
+    "MarckScript-Regular.ttf": {
+      "family": "MarckScript",
+      "size_kb": 81.7
+    },
+    "Mitr-Bold.ttf": {
+      "family": "Mitr",
+      "size_kb": 219.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Mitr-Regular.ttf": {
+      "family": "Mitr",
+      "size_kb": 217.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "sans-serif"
+    },
+    "Moul-Regular.ttf": {
+      "family": "Moul",
+      "size_kb": 162.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Khmr"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "Mukta-Bold.ttf": {
+      "family": "Mukta",
+      "size_kb": 408.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "Mukta-Light.ttf": {
+      "family": "Mukta",
+      "size_kb": 395.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "Mukta-Regular.ttf": {
+      "family": "Mukta",
+      "size_kb": 422.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaMahee-Bold.ttf": {
+      "family": "MuktaMahee",
+      "size_kb": 208.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Guru",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaMahee-Light.ttf": {
+      "family": "MuktaMahee",
+      "size_kb": 204.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Guru",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaMahee-Regular.ttf": {
+      "family": "MuktaMahee",
+      "size_kb": 206.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Guru",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaMalar-Bold.ttf": {
+      "family": "MuktaMalar",
+      "size_kb": 247.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaMalar-Regular.ttf": {
+      "family": "MuktaMalar",
+      "size_kb": 237.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Taml",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaVaani-Bold.ttf": {
+      "family": "MuktaVaani",
+      "size_kb": 473.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "MuktaVaani-Regular.ttf": {
+      "family": "MuktaVaani",
+      "size_kb": 448.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts (Ek Type)",
+      "type": "sans-serif"
+    },
+    "NTR-Regular.ttf": {
+      "family": "NTR",
+      "size_kb": 366.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "NanumBrushScript-Regular.ttf": {
+      "family": "NanumBrushScript",
+      "size_kb": 3481.3
+    },
+    "NanumGothic.ttf": {
+      "family": "NanumGothic",
+      "size_kb": 290.4
+    },
+    "NanumMyeongjo-Bold.ttf": {
+      "family": "NanumMyeongjo",
+      "size_kb": 3002.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Hang"
+      ],
+      "source": "Google Fonts (Naver)",
+      "type": "serif"
+    },
+    "NanumMyeongjo-ExtraBold.ttf": {
+      "family": "NanumMyeongjo",
+      "size_kb": 3106.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Hang"
+      ],
+      "source": "Google Fonts (Naver)",
+      "type": "serif"
+    },
+    "NanumMyeongjo-Regular.ttf": {
+      "family": "NanumMyeongjo",
+      "size_kb": 2986.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Hang"
+      ],
+      "source": "Google Fonts (Naver)",
+      "type": "serif"
+    },
+    "NanumPenScript-Regular.ttf": {
+      "family": "NanumPenScript",
+      "size_kb": 3126.6
+    },
+    "Orbitron-Regular.ttf": {
+      "family": "Orbitron",
+      "size_kb": 37.7
+    },
+    "PTSans-Bold.ttf": {
+      "family": "PTSans",
+      "size_kb": 290.4
+    },
+    "PTSans-Regular.ttf": {
+      "family": "PTSans",
+      "size_kb": 290.5
+    },
+    "PTSerif-Regular.ttf": {
+      "family": "PTSerif",
+      "size_kb": 290.5
+    },
+    "Pacifico-Regular.ttf": {
+      "family": "Pacifico",
+      "size_kb": 321.7
+    },
+    "Padauk-Bold.ttf": {
+      "family": "Padauk",
+      "size_kb": 487.6
+    },
+    "Padauk-Regular.ttf": {
+      "family": "Padauk",
+      "size_kb": 487.2
+    },
+    "PadaukBook-Bold.ttf": {
+      "family": "PadaukBook",
+      "size_kb": 487.6
+    },
+    "PadaukBook-Regular.ttf": {
+      "family": "PadaukBook",
+      "size_kb": 488.3
+    },
+    "Pangolin-Regular.ttf": {
+      "family": "Pangolin",
+      "size_kb": 579.5
+    },
+    "PatrickHand-Regular.ttf": {
+      "family": "PatrickHand",
+      "size_kb": 209.7
+    },
+    "PressStart2P-Regular.ttf": {
+      "family": "PressStart2P",
+      "size_kb": 115.4
+    },
+    "Pridi-Bold.ttf": {
+      "family": "Pridi",
+      "size_kb": 208.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "serif"
+    },
+    "Pridi-Light.ttf": {
+      "family": "Pridi",
+      "size_kb": 206.8,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "serif"
+    },
+    "Pridi-Regular.ttf": {
+      "family": "Pridi",
+      "size_kb": 217.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (Cadson Demak)",
+      "type": "serif"
+    },
+    "Prompt-Regular.ttf": {
+      "family": "Prompt",
+      "size_kb": 165.0
+    },
+    "Quicksand-Regular.ttf": {
+      "family": "Quicksand",
+      "size_kb": 121.9
+    },
+    "Ramabhadra-Regular.ttf": {
+      "family": "Ramabhadra",
+      "size_kb": 716.1,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Rasa[wght].ttf": {
+      "family": "Rasa",
+      "size_kb": 463.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Gujr",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "Roboto-Black.ttf": {
+      "family": "Roboto",
+      "size_kb": 299.2
+    },
+    "Roboto-BlackItalic.ttf": {
+      "family": "Roboto",
+      "size_kb": 322.7
+    },
+    "Roboto-Bold.ttf": {
+      "family": "Roboto",
+      "size_kb": 299.7
+    },
+    "Roboto-BoldItalic.ttf": {
+      "family": "Roboto",
+      "size_kb": 324.4
+    },
+    "Roboto-Italic.ttf": {
+      "family": "Roboto",
+      "size_kb": 320.9
+    },
+    "Roboto-Light.ttf": {
+      "family": "Roboto",
+      "size_kb": 300.0
+    },
+    "Roboto-LightItalic.ttf": {
+      "family": "Roboto",
+      "size_kb": 324.4
+    },
+    "Roboto-Medium.ttf": {
+      "family": "Roboto",
+      "size_kb": 299.4
+    },
+    "Roboto-MediumItalic.ttf": {
+      "family": "Roboto",
+      "size_kb": 323.0
+    },
+    "Roboto-Regular.ttf": {
+      "family": "Roboto",
+      "size_kb": 298.4
+    },
+    "Roboto-Thin.ttf": {
+      "family": "Roboto",
+      "size_kb": 300.5
+    },
+    "Roboto-ThinItalic.ttf": {
+      "family": "Roboto",
+      "size_kb": 322.0
+    },
+    "RobotoCondensed-Bold.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 296.8
+    },
+    "RobotoCondensed-BoldItalic.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 322.8
+    },
+    "RobotoCondensed-Italic.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 321.7
+    },
+    "RobotoCondensed-Light.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 295.2
+    },
+    "RobotoCondensed-LightItalic.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 324.7
+    },
+    "RobotoCondensed-Medium.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 296.5
+    },
+    "RobotoCondensed-MediumItalic.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 322.6
+    },
+    "RobotoCondensed-Regular.ttf": {
+      "family": "RobotoCondensed",
+      "size_kb": 293.6
+    },
+    "Rubik-Regular.ttf": {
+      "family": "Rubik",
+      "size_kb": 351.4
+    },
+    "RubikMonoOne-Regular.ttf": {
+      "family": "RubikMonoOne",
+      "size_kb": 137.8
+    },
+    "RuslanDisplay-Regular.ttf": {
+      "family": "RuslanDisplay",
+      "size_kb": 53.8
+    },
+    "RussoOne-Regular.ttf": {
+      "family": "RussoOne",
+      "size_kb": 38.2
+    },
+    "Sacramento-Regular.ttf": {
+      "family": "Sacramento",
+      "size_kb": 77.8
+    },
+    "Sarabun-Regular.ttf": {
+      "family": "Sarabun",
+      "size_kb": 88.1
+    },
+    "ScheherazadeNew-Bold.ttf": {
+      "family": "ScheherazadeNew",
+      "size_kb": 575.9
+    },
+    "ScheherazadeNew-Medium.ttf": {
+      "family": "ScheherazadeNew",
+      "size_kb": 565.5
+    },
+    "ScheherazadeNew-Regular.ttf": {
+      "family": "ScheherazadeNew",
+      "size_kb": 309.1
+    },
+    "ScheherazadeNew-SemiBold.ttf": {
+      "family": "ScheherazadeNew",
+      "size_kb": 572.9
+    },
+    "SolaimanLipi.ttf": {
+      "family": "SolaimanLipi",
+      "size_kb": 290.4
+    },
+    "SuezOne.ttf": {
+      "family": "SuezOne",
+      "size_kb": 69.2
+    },
+    "Tajawal-Bold.ttf": {
+      "family": "Tajawal",
+      "size_kb": 58.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Tajawal-Light.ttf": {
+      "family": "Tajawal",
+      "size_kb": 60.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Tajawal-Regular.ttf": {
+      "family": "Tajawal",
+      "size_kb": 58.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "Timmana-Regular.ttf": {
+      "family": "Timmana",
+      "size_kb": 742.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Knda",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "TiroDevanagariHindi-Italic.ttf": {
+      "family": "TiroDevanagariHindi",
+      "size_kb": 415.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Tiro Typeworks)",
+      "type": "serif"
+    },
+    "TiroDevanagariHindi-Regular.ttf": {
+      "family": "TiroDevanagariHindi",
+      "size_kb": 413.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts (Tiro Typeworks)",
+      "type": "serif"
+    },
+    "Yaldevi[wght].ttf": {
+      "family": "Yaldevi",
+      "size_kb": 458.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Sinh",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "ZCOOLXiaoWei-Regular.ttf": {
+      "family": "ZCOOLXiaoWei",
+      "size_kb": 6165.8
+    },
+    "ZhiMangXing-Regular.ttf": {
+      "family": "ZhiMangXing",
+      "size_kb": 3968.3
+    },
+    "Alkatra-Variable.ttf": {
+      "family": "Alkatra",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Orya",
+        "Beng",
+        "Deva",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "display",
+      "size_kb": 927.2
+    },
+    "AnekOdia-Variable.ttf": {
+      "family": "AnekOdia",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Orya",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif",
+      "size_kb": 838.1
+    },
+    "BJCree-Regular.ttf": {
+      "family": "BJCree",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Cans"
+      ],
+      "source": "SIL International",
+      "type": "sans-serif",
+      "size_kb": 103.7
+    },
+    "Benne-Regular.ttf": {
+      "family": "Benne",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Knda",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "serif",
+      "size_kb": 225.5
+    },
+    "Brana-Regular.ttf": {
+      "family": "Brana",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Ethi"
+      ],
+      "source": "GitHub (raeytype/brana)",
+      "type": "sans-serif",
+      "size_kb": 307.6
+    },
+    "DDC_Uchen.ttf": {
+      "family": "DDCUchen",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Tibt"
+      ],
+      "source": "fontlibrary.org",
+      "type": "serif",
+      "size_kb": 841.7
+    },
+    "Geez-Manuscript-Zemen-COLR.ttf": {
+      "family": "GeezManuscriptZemen",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Ethi"
+      ],
+      "source": "GitHub (geezorg/emufi)",
+      "type": "display",
+      "size_kb": 1733.7
+    },
+    "HindMysuru-Bold.ttf": {
+      "family": "HindMysuru",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Knda",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif",
+      "size_kb": 126.2
+    },
+    "HindMysuru-Regular.ttf": {
+      "family": "HindMysuru",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Knda",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif",
+      "size_kb": 128.3
+    },
+    "Uchen-Regular.ttf": {
+      "family": "Uchen",
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Tibt"
+      ],
+      "source": "Google Fonts",
+      "type": "serif",
+      "size_kb": 839.0
+    },
+    "TibetanMachineUni.ttf": {
+      "family": "TibetanMachineUni",
+      "license": "GPL + font exception",
+      "scripts": [
+        "Tibt"
+      ],
+      "source": "Debian (fonts-tibetan-machine)",
+      "type": "serif",
+      "size_kb": 4405.4
+    },
+    "MonlamUniOuChan1.ttf": {
+      "family": "MonlamUni",
+      "license": "GPL + font exception",
+      "scripts": [
+        "Tibt"
+      ],
+      "source": "Debian (fonts-monlam)",
+      "type": "serif",
+      "size_kb": 1833.5
+    },
+    "MonlamUniSansSerif.ttf": {
+      "family": "MonlamUni",
+      "license": "GPL + font exception",
+      "scripts": [
+        "Tibt"
+      ],
+      "source": "Debian (fonts-monlam)",
+      "type": "sans-serif",
+      "size_kb": 1823.4
+    },
+    "AboriginalSansREGULAR9433.ttf": {
+      "family": "AboriginalSans",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "sans-serif",
+      "size_kb": 772.5
+    },
+    "AboriginalSansBOLD9433.ttf": {
+      "family": "AboriginalSans",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "sans-serif",
+      "size_kb": 728.5
+    },
+    "AboriginalSansITALIC9433.ttf": {
+      "family": "AboriginalSans",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "sans-serif",
+      "size_kb": 663.7
+    },
+    "AboriginalSansBOLDITALIC9433.ttf": {
+      "family": "AboriginalSans",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "sans-serif",
+      "size_kb": 542.3
+    },
+    "AboriginalSerifREGULAR943.ttf": {
+      "family": "AboriginalSerif",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "serif",
+      "size_kb": 1061.4
+    },
+    "AboriginalSerifBOLD943.ttf": {
+      "family": "AboriginalSerif",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "serif",
+      "size_kb": 978.8
+    },
+    "AboriginalSerifITALIC943.ttf": {
+      "family": "AboriginalSerif",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "serif",
+      "size_kb": 886.9
+    },
+    "AboriginalSerifBOLDITALIC943.ttf": {
+      "family": "AboriginalSerif",
+      "license": "Free (Chris Harvey)",
+      "scripts": [
+        "Cans",
+        "Cher",
+        "Latn"
+      ],
+      "source": "Debian (fonts-lg-aboriginal)",
+      "type": "serif",
+      "size_kb": 907.6
+    },
+    "Itim-Regular.ttf": {
+      "family": "Itim",
+      "size_kb": 362.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts (github.com/google/fonts)",
+      "type": "handwriting"
+    },
+    "Chilanka-Regular.ttf": {
+      "family": "Chilanka",
+      "size_kb": 344.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Mlym",
+        "Latn"
+      ],
+      "source": "SMC Fonts (gitlab.com/smc/fonts/chilanka)",
+      "type": "handwriting"
+    },
+    "Khyay-Regular.ttf": {
+      "family": "Khyay",
+      "size_kb": 61.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Mymr",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "Phetsarath-Regular.ttf": {
+      "family": "Phetsarath",
+      "size_kb": 39.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Laoo"
+      ],
+      "source": "Government of Laos (phetsarath.gov.la)",
+      "type": "serif"
+    },
+    "UnifrakturMaguntia-Book.ttf": {
+      "family": "UnifrakturMaguntia",
+      "size_kb": 86.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "Lobster-Regular.ttf": {
+      "family": "Lobster",
+      "size_kb": 396.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn",
+        "Cyrl"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "Jaini-Regular.ttf": {
+      "family": "Jaini",
+      "size_kb": 739.5,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "Modak-Regular.ttf": {
+      "family": "Modak",
+      "size_kb": 634.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Deva"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "ReemKufi[wght].ttf": {
+      "family": "Reem Kufi",
+      "size_kb": 124.2,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "StickNoBills[wght].ttf": {
+      "family": "Stick No Bills",
+      "size_kb": 272.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn",
+        "Sinh"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "ComforterBrush-Regular.ttf": {
+      "family": "Comforter Brush",
+      "size_kb": 788.3,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "handwriting"
+    },
+    "CinzelDecorative-Regular.ttf": {
+      "family": "Cinzel Decorative",
+      "size_kb": 59.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "MonsieurLaDoulaise-Regular.ttf": {
+      "family": "Monsieur La Doulaise",
+      "size_kb": 53.0,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "handwriting"
+    },
+    "Charmonman-Regular.ttf": {
+      "family": "Charmonman",
+      "size_kb": 114.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Thai",
+        "Latn"
+      ],
+      "source": "Google Fonts",
+      "type": "handwriting"
+    },
+    "GFSBodoni-Regular.ttf": {
+      "family": "GFS Bodoni",
+      "size_kb": 588.5,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Grek",
+        "Latn"
+      ],
+      "source": "Greek Font Society",
+      "type": "serif"
+    },
+    "Gulzar-Regular.ttf": {
+      "family": "Gulzar",
+      "size_kb": 940.9,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Arab"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "LakkiReddy-Regular.ttf": {
+      "family": "Lakki Reddy",
+      "size_kb": 569.4,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Telu"
+      ],
+      "source": "Google Fonts",
+      "type": "display"
+    },
+    "EBGaramond[wght].ttf": {
+      "family": "EB Garamond",
+      "size_kb": 945.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Latn",
+        "Cyrl",
+        "Grek"
+      ],
+      "source": "Google Fonts",
+      "type": "serif"
+    },
+    "NotoSansArmenian[wdth,wght].ttf": {
+      "family": "NotoSansArmenian",
+      "size_kb": 216.7,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Armn"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    },
+    "NotoSansGeorgian[wdth,wght].ttf": {
+      "family": "NotoSansGeorgian",
+      "size_kb": 226.6,
+      "license": "SIL OFL 1.1",
+      "scripts": [
+        "Geor"
+      ],
+      "source": "Google Fonts",
+      "type": "sans-serif"
+    }
+  }
+}

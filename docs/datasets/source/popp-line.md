@@ -103,6 +103,6 @@ of French census enumeration.
 
 | Item | Path |
 |------|------|
-| **Arrow cache** | `/mnt/e/image_detection/01_base_data/forms/popp-datasets/hf_cache/` |
-| **Extracted images** | `/mnt/e/image_detection/01_base_data/forms/popp-datasets/extracted_images/` |
-| **Layer 1 metadata** | `/mnt/e/image_detection/metadata_registry/json/popp-line_metadata.json` |
+| **Arrow cache** | `${DATA_ROOT}/01_base_data/forms/popp-datasets/hf_cache/` |
+| **Extracted images** | `${DATA_ROOT}/01_base_data/forms/popp-datasets/extracted_images/` |
+| **Layer 1 metadata** | `${DATA_ROOT}/metadata_registry/json/popp-line_metadata.json` |

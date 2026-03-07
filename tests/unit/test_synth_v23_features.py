@@ -787,6 +787,7 @@ class TestV23MetadataPipelineIntegration:
         # Mock renderer
         mock_renderer = MagicMock()
         mock_renderer.render_document.return_value = (test_image, test_blocks)
+        mock_renderer.last_rendered_fonts = [("NotoSansTest", "Regular")]
         gen._renderer = mock_renderer
         gen._renderers_by_tier = {}
 

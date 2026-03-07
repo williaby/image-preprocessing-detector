@@ -66,7 +66,7 @@ Example:
 from __future__ import annotations
 
 __l4_category__ = "parser"
-__l4_dataset__ = "coco-text"
+__l4_dataset__ = "cocotext"
 __l4_workstream__ = "WS3"
 __l4_task__ = "multilingual"
 __l4_l2_file__ = "cocotext_metadata.json"

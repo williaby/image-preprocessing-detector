@@ -71,6 +71,7 @@ class FontInfo:
         style: Font style (Regular, Bold, Italic, etc.)
         script_hint: Guessed script from font name (e.g., "Tibetan" from NotoSerifTibetan)
         is_noto: True if this is a Noto font
+        font_style: Typographic classification (serif, sans, mono, handwriting, display)
     """
 
     path: Path
@@ -78,6 +79,7 @@ class FontInfo:
     style: str
     script_hint: str | None = None
     is_noto: bool = False
+    font_style: str = "unknown"
 
 
 @dataclass
@@ -118,7 +120,7 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "KR": "Hang",
     "Korean": "Hang",
     "Hangul": "Hang",
-    "Nanum": "Hang",  # NanumGothic, NanumBrushScript, NanumPenScript
+    "Nanum": "Hang",  # NanumGothic, NanumBrushScript, NanumPenScript, NanumMyeongjo
     "Gothic": "Hang",  # GothicA1
     # Indic — Devanagari
     "Devanagari": "Deva",
@@ -130,30 +132,86 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Atma": "Beng",  # Atma (Bengali)
     "Kalpurush": "Beng",  # Kalpurush
     "SolaimanLipi": "Beng",  # SolaimanLipi
-    # Indic — other
+    # Indic — Devanagari (additional fonts)
+    "Hind-": "Deva",  # Hind (Devanagari sans-serif, distinct from HindMadurai etc.)
+    "Mukta-": "Deva",  # Mukta (Devanagari sans-serif)
+    "Baloo2": "Deva",  # Baloo 2 (Devanagari display)
+    "TiroDevanagari": "Deva",  # Tiro Devanagari Hindi (serif)
+    # Indic — Tamil
     "Tamil": "Taml",
+    "Catamaran": "Taml",  # Catamaran (Tamil sans-serif)
+    "MuktaMalar": "Taml",  # Mukta Malar (Tamil sans-serif)
+    "HindMadurai": "Taml",  # Hind Madurai (Tamil sans-serif)
+    "ArimaMadurai": "Taml",  # Arima Madurai (Tamil serif)
+    "Kavivanar": "Taml",  # Kavivanar (Tamil handwriting)
+    # Indic — Telugu
     "Telugu": "Telu",
+    "Ramabhadra": "Telu",  # Ramabhadra (Telugu sans-serif)
+    "Mandali": "Telu",  # Mandali (Telugu sans-serif)
+    "NTR": "Telu",  # NTR (Telugu sans-serif)
+    "HindGuntur": "Telu",  # Hind Guntur (Telugu sans-serif)
+    # Indic — Gujarati
     "Gujarati": "Gujr",
+    "HindVadodara": "Gujr",  # Hind Vadodara (Gujarati sans-serif)
+    "MuktaVaani": "Gujr",  # Mukta Vaani (Gujarati sans-serif)
+    "Rasa": "Gujr",  # Rasa (Gujarati serif)
+    "BalooBhai": "Gujr",  # Baloo Bhai (Gujarati display)
+    # Indic — Kannada
     "Kannada": "Knda",
+    "HindMysuru": "Knda",  # Hind Mysuru (Kannada sans-serif)
+    "Timmana": "Knda",  # Timmana (Kannada sans-serif)
+    "BalooTamma": "Knda",  # Baloo Tamma (Kannada display)
+    "Benne": "Knda",  # Benne (Kannada serif)
+    # Indic — Malayalam
     "Malayalam": "Mlym",
+    "Rachana": "Mlym",  # Rachana (Malayalam traditional)
+    "Meera": "Mlym",  # Meera (Malayalam sans-serif)
+    "AnjaliOldLipi": "Mlym",  # AnjaliOldLipi (Malayalam historical)
+    "Karumbi": "Mlym",  # Karumbi (Malayalam display)
+    "Chilanka": "Mlym",  # Chilanka (Malayalam handwriting)
+    # Indic — Odia
     "Oriya": "Orya",
+    "BalooBhaina": "Orya",  # Baloo Bhaina (Odia display)
+    "AnekOdia": "Orya",  # Anek Odia (variable, SIL OFL)
+    "Alkatra": "Orya",  # Alkatra (multi-script display, SIL OFL)
+    # Indic — Sinhala
     "Sinhala": "Sinh",
+    "AbhayaLibre": "Sinh",  # Abhaya Libre (Sinhala serif)
+    "Yaldevi": "Sinh",  # Yaldevi (Sinhala sans-serif)
+    # Indic — Gurmukhi
     "Gurmukhi": "Guru",
+    "MuktaMahee": "Guru",  # Mukta Mahee (Gurmukhi sans-serif)
+    "BalooPaaji": "Guru",  # Baloo Paaji (Gurmukhi display)
     # Southeast Asian
     "Thai": "Thai",
     "Sarabun": "Thai",  # Sarabun (Thai)
     "Prompt": "Thai",  # Prompt (Thai)
     "Charm": "Thai",  # Charm (Thai decorative)
     "Kodchasan": "Thai",  # Kodchasan (Thai)
+    "LoopedThai": "Thai",  # NotoLoopedThai (looped variant)
+    "Kanit": "Thai",  # Kanit (Thai geometric sans)
+    "Pridi": "Thai",  # Pridi (Thai serif)
+    "BaiJamjuree": "Thai",  # Bai Jamjuree (Thai square sans)
+    "Mitr": "Thai",  # Mitr (Thai rounded sans)
+    "Itim": "Thai",  # Itim (Thai handwriting)
     "Khmer": "Khmr",
+    "Battambang": "Khmr",  # Battambang (Khmer traditional)
+    "Moul": "Khmr",  # Moul (Khmer decorative/header)
     "Myanmar": "Mymr",
+    "Padauk": "Mymr",  # Padauk SIL (Myanmar/Shan/Karen)
+    "Khyay": "Mymr",  # Khyay (Myanmar display/headline)
     "Lao": "Laoo",
+    "LoopedLao": "Laoo",  # NotoLoopedLao (traditional looped variant)
+    "Phetsarath": "Laoo",  # Phetsarath (Lao government calligraphic serif)
     "Tibetan": "Tibt",
     "Jomolhari": "Tibt",  # Jomolhari (Tibetan)
+    "Uchen": "Tibt",  # Uchen (Dzongkha/Tibetan, SIL OFL)
+    "DDC_Uchen": "Tibt",  # DDC Uchen (Chris Fynn, SIL OFL)
     # Middle Eastern — Arabic
     "Arabic": "Arab",
     "NaskhArabic": "Arab",
     "NastaliqUrdu": "Arab",
+    "KufiArabic": "Arab",  # NotoKufiArabic (angular/geometric style)
     "Amiri": "Arab",  # Amiri (classical Arabic calligraphy)
     "Scheherazade": "Arab",  # ScheherazadeNew (Arabic serif)
     "ArefRuqaa": "Arab",  # ArefRuqaa (Arabic Ruqaa style)
@@ -161,6 +219,9 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Harmattan": "Arab",  # Harmattan (West African Arabic)
     "Awami": "Arab",  # AwamiNastaliq (Urdu)
     "Cairo": "Arab",  # Cairo (Arabic web font)
+    "Mada": "Arab",  # Mada (Arabic sans-serif)
+    "Tajawal": "Arab",  # Tajawal (Arabic web font)
+    "ElMessiri": "Arab",  # El Messiri (Arabic display)
     # Middle Eastern — Hebrew
     "Hebrew": "Hebr",
     "Heebo": "Hebr",  # Heebo (Hebrew sans-serif)
@@ -177,6 +238,17 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     # European — Ethiopic
     "Ethiopic": "Ethi",
     "Abyssinica": "Ethi",  # AbyssinicaSIL
+    "Brana": "Ethi",  # Brana (historical Ethiopic, raeytype, SIL OFL)
+    "Zemen": "Ethi",  # Geez Manuscript Zemen (geezorg/emufi, SIL OFL)
+    # Indigenous Americas
+    "Cherokee": "Cher",  # NotoSansCherokee
+    "CanadianAboriginal": "Cans",  # NotoSansCanadianAboriginal
+    # Tibetan supplementary
+    "TibetanMachine": "Tibt",  # TibetanMachineUni (GPL + font exception)
+    "Monlam": "Tibt",  # Monlam Tibetan fonts (GPL + font exception)
+    "BJCree": "Cans",  # BJCree (SIL International, Cree syllabics, SIL OFL)
+    "AboriginalSans": "Cans",  # Aboriginal Sans (Chris Harvey, covers Cans+Cher)
+    "AboriginalSerif": "Cans",  # Aboriginal Serif (Chris Harvey, covers Cans+Cher)
     # European — Greek
     "Greek": "Grek",
     "GFSDidot": "Grek",  # GFS Didot (Greek academic font)
@@ -189,6 +261,23 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Playfair": "Latn",  # Playfair Display (serif)
     "Merriweather": "Latn",  # Merriweather (serif)
     "Tiro": "Deva",  # Tiro Devanagari (also covers Latin, prefer Deva)
+    # Adversarial / cross-script confusion fonts (v4 font diversity)
+    # These fonts confuse script classifiers via structural destruction,
+    # historical letterforms, calligraphic transfer, or cross-script unification.
+    "UnifrakturMaguntia": "Latn",  # Blackletter/Fraktur (historical)
+    "Lobster": "Latn",  # Also covers Cyrl; primary script is Latn
+    "Jaini": "Deva",  # Fragmented shirorekha (structural destruction)
+    "Modak": "Deva",  # Filled counter spaces (structural destruction)
+    "ReemKufi": "Arab",  # Geometric Kufic (structural destruction)
+    "StickNoBills": "Sinh",  # Condensed stencil (structural destruction)
+    "ComforterBrush": "Latn",  # Calligraphic brush (cross-script transfer)
+    "CinzelDecorative": "Latn",  # All-caps, Deva-like shirorekha flourishes
+    "MonsieurLaDoulaise": "Latn",  # Arabic-like cursive flow
+    "GFSBodoni": "Grek",  # High-contrast Greek (Latn/Grek confusion)
+    "Charmonman": "Thai",  # Latin-like Thai decorative
+    "Gulzar": "Arab",  # Nastaliq influence (calligraphic transfer)
+    "LakkiReddy": "Telu",  # Telugu display (structural destruction)
+    "EBGaramond": "Latn",  # 3-script harmonized: Latn+Grek+Cyrl
 }
 
 
@@ -253,6 +342,126 @@ def _extract_family_from_font_name(name: str) -> str:
     for suffix in ["-Regular", "-Bold", "-Italic", "-Light", "-Medium", "-SemiBold"]:
         base = base.replace(suffix, "")
     return base
+
+
+# Font name patterns for typographic style classification.
+# Order matters: more specific patterns are checked first.
+_HANDWRITING_PATTERNS: list[str] = [
+    "handwrit",
+    "script",
+    "cursive",
+    "brush",
+    "pen",
+    "callig",
+    "kalam",
+    "caveat",
+    "dancing",
+    "patrick",
+    "greatvibes",
+    "arefruqaa",
+    "badscript",
+    "marckscript",
+    "kavivanar",
+    "playpen",
+    "galada",
+    "atma",
+    "liujianmaocao",
+    "mashanzheng",
+    "nanum brush",
+    "nanum pen",
+    "longcang",
+    "zhimang",
+]
+_MONO_PATTERNS: list[str] = [
+    "mono",
+    "courier",
+    "firacode",
+    "consolas",
+    "inconsolata",
+]
+_SERIF_PATTERNS: list[str] = [
+    "serif",
+    "times",
+    "georgia",
+    "garamond",
+    "palatino",
+    "notoserif",
+    "rashi",
+    "amiri",
+    "scheherazade",
+    "tiro",
+    "gentium",
+    "charis",
+    "doulos",
+    "abhayalibre",
+    "rasa",
+    "arimamadurai",
+    "liberation serif",
+]
+_DISPLAY_PATTERNS: list[str] = [
+    "display",
+    "bungee",
+    "caesar",
+    "aladin",
+    "moul",
+    "baloo",
+    "zcool",
+]
+_SANS_PATTERNS: list[str] = [
+    "sans",
+    "arial",
+    "helvetica",
+    "roboto",
+    "fira",
+    "notosans",
+    "liberation",
+    "catamaran",
+    "hind",
+    "mukta",
+    "kanit",
+    "pridi",
+    "mandali",
+    "ramabhadra",
+    "timmana",
+    "manjari",
+    "battambang",
+    "yaldevi",
+    "content",
+    "tajawal",
+    "mada",
+    "elmessiri",
+]
+
+
+def _classify_font_style_from_name(name: str) -> str:
+    """Classify font typographic style from its filename.
+
+    Checks name patterns in priority order:
+    handwriting > mono > serif > display > sans > unknown.
+
+    Args:
+        name: Font filename or family name.
+
+    Returns:
+        One of: handwriting, mono, serif, display, sans, unknown.
+    """
+    lower = name.lower()
+    for pat in _HANDWRITING_PATTERNS:
+        if pat in lower:
+            return "handwriting"
+    for pat in _MONO_PATTERNS:
+        if pat in lower:
+            return "mono"
+    for pat in _SERIF_PATTERNS:
+        if pat in lower:
+            return "serif"
+    for pat in _DISPLAY_PATTERNS:
+        if pat in lower:
+            return "display"
+    for pat in _SANS_PATTERNS:
+        if pat in lower:
+            return "sans"
+    return "unknown"
 
 
 class FontManager:
@@ -361,6 +570,7 @@ class FontManager:
             style=style,
             script_hint=script_hint,
             is_noto=is_noto,
+            font_style=_classify_font_style_from_name(name),
         )
 
     def _parse_cjk_collection(self, path: Path) -> list[FontInfo]:
@@ -398,6 +608,7 @@ class FontManager:
                     style=style,
                     script_hint=script,
                     is_noto=is_noto,
+                    font_style="sans" if "Sans" in name else "serif",
                 )
             )
         return fonts
@@ -426,6 +637,22 @@ class FontManager:
         for script in ["Cyrl", "Grek"]:
             if script not in script_fonts:
                 script_fonts[script] = latin_fonts
+
+        # Cyrillic: supplement with known multi-script fonts when Noto
+        # fallback is empty (e.g. CI runners with no system fonts)
+        if not script_fonts.get("Cyrl"):
+            cyrl_capable = [
+                f
+                for f in self.all_fonts
+                if f.family
+                in {"PTSans", "PTSerif", "FiraSans", "Lobster", "EB Garamond"}
+            ]
+            if cyrl_capable:
+                script_fonts["Cyrl"] = cyrl_capable
+
+        # Cherokee is covered by Aboriginal Sans/Serif (classified as Cans)
+        if "Cher" not in script_fonts and "Cans" in script_fonts:
+            script_fonts["Cher"] = list(script_fonts["Cans"])
 
         # Create FontCache objects
         for script_code, fonts in script_fonts.items():

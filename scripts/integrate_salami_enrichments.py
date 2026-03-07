@@ -51,6 +51,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from enrichment_utils import (
+    ensure_enrichment_scaffold,
+    get_current_version_data,
+    upsert_version,
+)
+
 from l2_integration_utils import (
     compute_reliability_summary,
     load_metadata,
@@ -159,9 +165,7 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
         and schema fields.
     """
     # Preserve any fields already written (resolution, orientation, etc.)
-    v1_data: dict[str, Any] = {}
-    if sample.get("enrichments", {}).get("versions"):
-        v1_data = sample["enrichments"]["versions"][-1].get("data", {})
+    v1_data = get_current_version_data(sample)
 
     data: dict[str, Any] = {}
 
@@ -325,16 +329,8 @@ def run_integration(
                 "script_version": SCRIPT_VERSION,
                 "data": integrated_data,
             }
-            versions = sample["enrichments"]["versions"]
-            replaced = False
-            for i, ver in enumerate(versions):
-                if ver.get("version") == ENRICHMENT_VERSION_NUMBER:
-                    versions[i] = new_version
-                    replaced = True
-                    break
-            if not replaced:
-                versions.append(new_version)
-            sample["enrichments"]["current_version"] = ENRICHMENT_VERSION_NUMBER
+            ensure_enrichment_scaffold(sample)
+            upsert_version(sample, new_version, ENRICHMENT_VERSION_NUMBER)
 
     return stats
 

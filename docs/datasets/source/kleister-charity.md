@@ -5,6 +5,9 @@ source_url: https://github.com/applicaai/kleister-charity
 license: MIT
 total_images: 62029 (rendered page images from 2,776 PDFs)
 format: PDF (git-annex) → rendered PNG page images
+capture_method: born_digital
+domain: FIN
+metadata_coverage: minimal
 status: training-ready
 documentation_status: complete
 ---
@@ -13,13 +16,13 @@ documentation_status: complete
 
 ## 1. Overview
 
-Kleister Charity contains 3,414 PDF documents of British charity annual reports from
+Kleister Charity contains 2,778 PDF documents of British charity annual reports from
 gov.uk, split into 1,729 train / 440 dev / 609 test documents. Reports contain mixed
 typed and handwritten content in a financial/administrative context. PDFs are rendered
 to individual page images (300 DPI PNG) for use in the IQA/preprocessing pipeline.
 
 62,029 rendered page images (average ~22 pages per document) from 2,776 resolved PDFs
-(2 of 1,729 train PDFs unresolved via git-annex; 2,778 total in splits).
+(2 of 1,729 train PDFs unresolved via git-annex; 2,778 total across splits).
 
 ## 2. Source & Access
 
@@ -36,7 +39,7 @@ to individual page images (300 DPI PNG) for use in the IQA/preprocessing pipelin
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 3,414 PDFs |
+| **Total Documents** | 2,778 PDFs (across train/dev/test splits) |
 | **Train Documents** | 1,727 (of 1,729; 2 PDFs unresolved) |
 | **Train Pages** | 36,755 |
 | **Dev-0 Documents** | 440 |

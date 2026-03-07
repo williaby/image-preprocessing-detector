@@ -232,10 +232,11 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Generated images and binary artifacts - CC0-1.0
+# Generated images, reports, and binary artifacts - CC0-1.0
 [[annotations]]
 path = [
     "rag_architecture.png",  # Generated architecture diagram
+    "reports/**",  # Generated font audit and analysis reports
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"

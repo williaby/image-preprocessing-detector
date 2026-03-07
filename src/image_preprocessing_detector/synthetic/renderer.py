@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from PIL import Image, ImageDraw, ImageFont
@@ -209,6 +210,8 @@ class DocumentRenderer:
         self.dpi = dpi
         self.background_color = background_color
         self.text_color = text_color
+        # Track fonts actually used during the last render_document call
+        self.last_rendered_fonts: list[tuple[str, str]] = []  # (family, style)
 
     def _get_content_area(self) -> tuple[int, int, int, int]:
         """Get the content area after margins.
@@ -280,32 +283,76 @@ class DocumentRenderer:
         script_code: str,
         size: int,
         role: str = "body",  # noqa: ARG002
+        language_code: str | None = None,
     ) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-        """Load appropriate font for script and size.
+        """Load appropriate font for script and size using tiered sampling.
+
+        Uses FontManager.get_tiered_font() to sample from SYSTEM (40%),
+        REGIONAL (25%), STYLISTIC (15%), HANDWRITING (15%), and
+        ADVERSARIAL (5%) tiers for font diversity in training data.
 
         Args:
             script_code: ISO 15924 script code
             size: Font size in points
             role: Text role (title, header, body, etc.)
+            language_code: Optional language code (e.g., "urd_Arab") for
+                          Nastaliq/Bulgarian variant selection
 
         Returns:
             PIL ImageFont object
         """
-        # Get fonts for this script using FontManager API
-        font_cache = self.font_manager.get_font_info(script_code)
+        # Use tiered font sampling for diversity
+        font = self.font_manager.get_tiered_font(script_code, size, language_code)
+        if font is not None:
+            self._record_rendered_font(font)
+            return font
 
-        if not font_cache or not font_cache.fonts:
-            logger.warning("No fonts found for script %s, using default", script_code)
-            return ImageFont.load_default()
+        # Fallback: random font for this script
+        font = self.font_manager.get_random_font(script_code, size)
+        if font is not None:
+            self._record_rendered_font(font)
+            return font
 
-        # Select the default font or first available
-        font_info = font_cache.default_font or font_cache.fonts[0]
+        # Last resort: default PIL font
+        logger.warning("No fonts found for script %s, using default", script_code)
+        return ImageFont.load_default()
 
-        try:
-            return ImageFont.truetype(str(font_info.path), size)
-        except OSError as e:
-            logger.warning("Failed to load font %s: %s", font_info.path, e)
-            return ImageFont.load_default()
+    def _record_rendered_font(
+        self,
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+    ) -> None:
+        """Record which font was actually rendered for metadata tracking.
+
+        Args:
+            font: The PIL font object that will be used for rendering.
+        """
+        if isinstance(font, ImageFont.FreeTypeFont) and hasattr(font, "path"):
+            font_path = Path(str(font.path))
+            stem = font_path.stem
+            family = stem
+            # Parse style from filename: e.g. "NotoSans-BoldItalic" -> "BoldItalic"
+            style_keywords = {
+                "Regular",
+                "Bold",
+                "Italic",
+                "Light",
+                "Medium",
+                "Thin",
+                "Black",
+                "SemiBold",
+                "ExtraBold",
+                "ExtraLight",
+                "Condensed",
+            }
+            style = "Regular"
+            if "-" in stem:
+                candidate = stem.rsplit("-", maxsplit=1)[-1]
+                if any(kw in candidate for kw in style_keywords):
+                    style = candidate
+                    family = stem.rsplit("-", maxsplit=1)[0]
+            self.last_rendered_fonts.append((family, style))
+        else:
+            self.last_rendered_fonts.append(("default", "regular"))
 
     def _wrap_text(
         self,
@@ -743,6 +790,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)
@@ -759,10 +809,10 @@ class DocumentRenderer:
 
         # Load fonts
         body_size = random.randint(*FONT_SIZES["body"])  # nosec B311  # nosemgrep: gitlab.bandit.B311
-        body_font = self._load_font(script_code, body_size, "body")
+        body_font = self._load_font(script_code, body_size, "body", language_code)
 
         header_size = random.randint(*FONT_SIZES["header"])  # nosec B311  # nosemgrep: gitlab.bandit.B311
-        header_font = self._load_font(script_code, header_size, "header")
+        header_font = self._load_font(script_code, header_size, "header", language_code)
 
         # Render header if requested
         if include_header and regions:
@@ -834,6 +884,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)
@@ -848,7 +901,7 @@ class DocumentRenderer:
 
         # Render header (larger font, at top)
         header_size = random.randint(*FONT_SIZES["header"])  # nosec B311  # nosemgrep: gitlab.bandit.B311
-        header_font = self._load_font(header_script, header_size, "header")
+        header_font = self._load_font(header_script, header_size, "header", header_lang)
 
         header_region = RenderRegion(
             x=x,
@@ -884,7 +937,7 @@ class DocumentRenderer:
             body_rtl = body_config.is_rtl if body_config else False
 
             body_size = random.randint(*FONT_SIZES["body"])  # nosec B311  # nosemgrep: gitlab.bandit.B311
-            body_font = self._load_font(body_script, body_size, "body")
+            body_font = self._load_font(body_script, body_size, "body", body_lang)
 
             body_region = RenderRegion(
                 x=x,
@@ -922,6 +975,9 @@ class DocumentRenderer:
         Returns:
             Tuple of (PIL Image, list of TextBlock objects)
         """
+        # Reset font tracking for this render call
+        self.last_rendered_fonts = []
+
         # Create image
         image = Image.new("RGB", self.page_size, self.background_color)
         draw = ImageDraw.Draw(image)
@@ -945,7 +1001,7 @@ class DocumentRenderer:
 
             # Load font for this script
             body_size = random.randint(*FONT_SIZES["body"])  # nosec B311  # nosemgrep: gitlab.bandit.B311
-            font = self._load_font(script_code, body_size, "body")
+            font = self._load_font(script_code, body_size, "body", language_code)
 
             # Render text
             height_used = self._render_text_block(

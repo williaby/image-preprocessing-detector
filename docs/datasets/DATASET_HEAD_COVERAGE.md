@@ -765,6 +765,23 @@ Dzongkha-digits is a **supplementary Tibetan (Tibt) script source** with negligi
 
 **L2 Metadata**: Available — 62 total samples (local subset only). Key fields: domain (EDU: 100%), script_codes (Tibt: 100%), capture_methods (camera_smartphone: 100%), content_flags (has_handwriting: 62 samples populated).
 
+### egyptian-handwriting
+
+Egyptian Handwriting is the only commercially-viable Arabic cursive handwriting source in the corpus (CC-BY-4.0), providing 11,216 word-level images from 89 writers spanning ages 6–73. It serves as the primary Arab-script contributor to SIG-G2-1 (script_cls) and all five SIG-G4 handwriting heads (presence, legibility, content type, presence regression, legibility regression). Word-level crops limit its use for page-level IQA heads but the wide writer age range provides natural legibility variation.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 11,216 | Single parquet file; no official splits defined |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human expert annotation (89 writers, ages 6–73, Egyptian Arabic native speakers); Tier 1 provenance. Labels: Arabic word transcriptions in parquet `label` column with 100% coverage.
+
+**L2 Metadata**: Not yet available.
+
 ### financebench
 
 FinanceBench is a **benchmark-only evaluation corpus** — it MUST NOT contribute to any training pipeline under any circumstances. The CC-BY-NC-4.0 license prohibits commercial and training use, and training on this dataset would compromise benchmark integrity for RAG pipeline evaluation (Phase 10). All 54,120 images are stored under `02_benchmark_only/` and must remain exclusively in the OOD evaluation path.
@@ -832,6 +849,23 @@ FUNSD+ is a **5.7× scale-up of FUNSD** providing the same scanner ADF and form-
 **Ground Truth**: Word-level BIO NER tags (9 classes: B/I-QUESTION, B/I-ANSWER, B/I-HEADER, B/I-OTHER, O) plus ground truth word transcriptions; extended from original FUNSD via mixed annotation (Tier 1); annotator details need verification. Known defect: has_handwriting=false for all samples despite ~47% containing handwritten entries.
 
 **L2 Metadata**: Available — 1,139 total samples. Key fields: domain (ADM: 100%), script_codes (Latn: 100%), capture_methods (scanner_adf: 100%), content_flags (has_table: 37.8%, has_figure: 54.3%, has_formula: 1.8%).
+
+### gnhk
+
+GNHK (GoodNotes Handwriting Knowledge) provides 687 full-page handwritten document images with word-level polygon annotations and text transcriptions. All images are English handwriting captured on tablets, making it a small but high-quality calibration resource for SIG-G4-1 (handwriting_presence_cls) and SIG-G4-2 (handwriting_legibility_cls) via scribble-tagged illegible regions. CC-BY-4.0 permits commercial use.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 515 | JPG images with per-image JSON annotations |
+| Val   | — | No val split defined |
+| Test  | 172 | JPG images with per-image JSON annotations |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (ICDAR 2021); Tier 1 provenance. Word-level 4-point polygon annotations with text transcription, line index, and type flag. 100% coverage.
+
+**L2 Metadata**: Not yet available.
 
 ### hasy
 
@@ -1022,6 +1056,23 @@ JSSODa is the **primary contributor for Japanese script (Jpan) in G2-1 script_cl
 | OOD   | ~1,633 | All splits used for OOD evaluation only |
 
 **Ground Truth**: Paragraph-level Arabic Unicode transcriptions produced by 1,000 writers (self-transcribed samples), validated as ICFHR 2012 benchmark with 100% companion .txt coverage per image. Provenance Tier 1 (Human Expert Annotation).
+
+**L2 Metadata**: Not yet available.
+
+### kleister-charity
+
+Kleister Charity contains 62,029 rendered page images (300 DPI PNG) from 2,776 British charity annual report PDFs, spanning train/dev/test splits. Reports contain mixed born-digital and scanned content with typed text, financial tables, and sparse handwritten annotations (signatures, margin notes). It is a primary contributor to SIG-G4-1 (handwriting_presence_cls) for mixed typed+handwritten content detection and provides strong layout diversity (tables, headers, figures). MIT license (code/labels); data under Open Government Licence.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 36,755 | From 1,727 PDFs |
+| Val   | 10,639 | Dev-0 split; 440 documents |
+| Test  | 14,635 | Test-A split; 609 documents |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (Applica.ai / ACL 2021); Tier 1 provenance. Document-level key-value labels (charity_name, charity_number, address, income, spending, report_date). 100% coverage.
 
 **L2 Metadata**: Not yet available.
 
@@ -1245,6 +1296,40 @@ Multilingual-scripts is the **primary multi-script diversity contributor for SIG
 
 **L2 Metadata**: Available — 3,279 total samples. Key fields: domain (UNK: 100%), script_codes (Jpan 61%, Deva 22%, Arab 15%, Tibt 2%), capture_methods (unknown: 100%), content_flags (empty — none populated).
 
+### ndl-docl
+
+NDL-DocL provides 2,290 historical Japanese document images from the National Diet Library, split into rare books (1,219 images, pre-1868) and modern publications (1,071 images, post-1868). The rare books subset contains kuzushiji (historical Japanese cursive) handwriting regions annotated in Pascal VOC XML, making it a primary contributor to SIG-G4-1 (handwriting_presence) for Japanese script and filling the HISTORICAL document age dimension. Public Domain Mark (PDM 1.0) imposes zero restrictions.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~2,290 | No official splits; all images in single collection |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (NDL Lab annotators); Tier 1 provenance. Pascal VOC XML bounding boxes with layout classes (kuzushiji, typography, illustration, seals/stamps for rare books; headline, caption, text lines, tables for modern). 100% coverage.
+
+**L2 Metadata**: Audited 2026-02-25 (5 samples only — stub). Key findings: capture_method=scanner_flatbed, has_handwriting=true (kotenseki subset), domain_level1=UNK (recommend HIS/LIT).
+
+### ndl-minhon
+
+NDL-Minhon is the largest kuzushiji dataset in the corpus (32,822 images, 523,283 line annotations) and serves as the dominant contributor for SIG-G4-1 (handwriting_presence) where virtually all images contain handwritten content. It uniquely fills the handwriting_content_type=specialized class (kuzushiji historical cursive) and provides the deepest HISTORICAL document age coverage. The crowdsourced annotations include isVertical flags enabling orientation training. **License caution**: CC-BY-SA 4.0 copyleft requires derivative works to maintain the same license.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~32,822 | v1 (4,688) + v2 (28,134); no official splits |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Crowdsourced (Minna de Honkoku platform volunteers); Tier 2 provenance. Line-level bounding boxes + text transcriptions + isVertical flag. 523,283 annotations. 100% coverage.
+
+**L2 Metadata**: Audited 2026-02-25 (500 samples). Key findings: capture_method=scanner_flatbed, has_handwriting=true (100%), iso15924_script=Hani (kuzushiji manuscripts), domain_level1=UNK (recommend HIS).
+
 ### nepali-handwritten
 
 nepali-handwritten is the sole real-camera handwriting contributor for the Devanagari (Deva) script class in SIG-G2-1, providing 958 word-level images with GT script labels and confirmed camera_smartphone capture for SIG-G5-1. At only 958 images it is a supporting contributor rather than a primary training source; it fills a unique niche as real handwritten Devanagari distinct from synthetic printed data (hindi_ocr_synthetic) and must be combined with larger Indic datasets to approach the 60K handwriting pool target. The CC-BY-4.0 license permits commercial use with attribution (pending final verification per Section 9.5).
@@ -1397,6 +1482,74 @@ OpenLID-v2 is a **text-only corpus** (116M+ samples, 201 language-script pairs, 
 
 **L2 Metadata**: Not yet available.
 
+### openpecha-ocr-drutsa
+
+OpenPecha OCR Drutsa provides 32,364 line-level images of Tibetan script text from woodblock prints, manuscript pages, and modern Tibetan typography. It is the primary Tibetan (Tibt) script contributor to SIG-G2-1 (script_cls), filling a unique abugida writing system gap. The dataset contains a mix of handwritten manuscripts and printed woodblock material, giving partial signal for SIG-G4-1 (handwriting_presence). Line-level crops limit page-level IQA contributions. CC-BY-4.0 permits commercial use.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 32,364 | Single training split; no explicit train/test/val |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: OCR ground truth text (Unicode Tibetan transcriptions); Tier 1 provenance. Each record has unique ID, binary image, and Tibetan text label. 100% coverage.
+
+**L2 Metadata**: Not yet available (Layer 1 metadata generated).
+
+### pdmocr-part1
+
+PDM-OCR Part 1 provides ~2,713 images of historical Japanese documents spanning 1870s–1940s with character-level bounding box annotations (JSON + Pascal VOC XML). Its preservation of archaic kanji forms without normalization makes it uniquely valuable for SIG-G2-1 (script_cls) where the model must handle historical Japanese variants. The decade-organized structure enables stratified sampling for document age diversity. All content is printed typography (no handwriting). Public Domain Mark (PDM 1.0) imposes zero restrictions.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~2,713 | Organized by decade (1870–1940s) and category |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (NDL Lab + LINE Corporation annotators); Tier 1 provenance. Character-level bounding boxes + text transcriptions in dual formats (JSON + Pascal VOC XML). 100% coverage.
+
+**L2 Metadata**: Audited 2026-02-25 (63 samples). Key findings: capture_method=scanner_flatbed, has_handwriting=false (100% historical printed typography), domain_level1=UNK (enrichment opportunity via NDC classification).
+
+### pdmocr-part2
+
+PDM-OCR Part 2 is the only dataset in the corpus with explicit text direction ground truth (vertical/horizontal/RTL) at the line and block level via the NDLOCR XML DIRECTION attribute, making it uniquely valuable for SIG-G3-1 (orientation_cls) validation on Japanese text. At ~3,997 images spanning 1870s–1960s (extending 20 years beyond Part 1) with a 3-level annotation hierarchy (PAGE/LINE/CHAR), it serves as the primary Japanese historical text resource for orientation and script detection. All content is printed typography. Public Domain Mark (PDM 1.0) imposes zero restrictions.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~3,997 | Organized by decade (1870s–1960s); NDLOCR XML |
+| Val   | — | No val split defined |
+| Test  | — | No test split defined |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (NDL Lab + Morpho AI Solutions annotators); Tier 1 provenance. NDLOCR XML with 3-level hierarchy (PAGE/LINE/CHAR) plus explicit DIRECTION attribute (vertical/horizontal/RTL). 100% coverage.
+
+**L2 Metadata**: Audited 2026-02-25 (50 samples). Key findings: capture_method=scanner_flatbed, has_handwriting=false (historical typography). Enrichment opportunity: DIRECTION attribute not yet extracted into L2 metadata.
+
+### popp-line
+
+POPP-line provides 4,794 line-level handwritten text images from French census records (19th–20th century), each with a French text transcription. It is a primary contributor to SIG-G4-1 (handwriting_presence_cls) for 100% handwritten content and provides unique French-language handwriting diversity in a government/administrative domain. Line-level crops limit page-level IQA signal. CC-BY-4.0 permits commercial use.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 3,835 | Line-level crops from census forms |
+| Val   | 480 | Line-level crops from census forms |
+| Test  | 479 | Line-level crops from census forms |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (POPP project / Constum et al., 2022); Tier 1 provenance. French text transcriptions of handwritten census lines. 100% coverage.
+
+**L2 Metadata**: Not yet available (Layer 1 metadata generated).
+
 ### pubtabnet
 
 PubTabNet's primary training value is as a **large-scale BORN_DIGITAL negative pool** for SIG-G5-1 capture_method_cls (~519K labels) and as a **large handwriting-absence pool** for SIG-G4-1/G4-4. Its contribution to IQA heads (G1 group) and resolution quality (MNV4-H3, SIG-G5-5) is limited by the small table-crop image size and single-domain scientific bias. License is CDLA-Sharing-1.0 (share-alike commercial use permitted). No OOD script exclusions apply — the trace non-Latin samples (<0.04%) are negligible.
@@ -1482,6 +1635,23 @@ RVL-CDIP is the **primary large-scale scanner training source and orientation_cl
 
 **L2 Metadata**: Available — 16,000 total samples (local 4% subset). Key fields: domain (COM 31.2%, GOV 31.2%, FIN 12.5%), script_codes (Latn 95.5%, Hant 3.1%, Hans 0.8%), capture_methods (scanner 100%), content_flags (has_formula 78.7%, has_figure 8.4%, has_handwriting 6.2%).
 
+### salami
+
+SALAMI is the gold-standard calibration anchor for handwriting legibility assessment heads (SIG-G4-2, SIG-G4-5), providing the only multi-expert pixel-level legibility ground truth in the corpus. With 20 expert assessors providing 4,811 region-level ratings across 250 manuscripts in 7 script families (Cyrl, Latn, Grek, Arab, Armn, Goth, Geor), it enables reliable calibration of legibility regression and classification models. Despite its small size (250 images), its 20-expert consensus maps serve an outsized role as the confidence anchor for all other legibility scores. 15 images (Armn/Goth/Geor, 5 each) are permanently reserved for OOD evaluation. CC-BY-4.0 permits commercial training.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~235 | 250 total minus 15 OOD-reserved |
+| Val   | — | No val split defined |
+| Test  | — | Used as calibration anchor |
+| OOD   | 15 | 5 Armn + 5 Goth + 5 Geor permanently reserved |
+
+**Ground Truth**: Human expert annotation (20 trained assessors); Tier 0 (Exact) provenance via multi-expert consensus. 5-level legibility scale (0–20% through 80–100% readable), 4,811 region-level assessments with bounding boxes, pre-computed pixel-level mean and std maps. 100% coverage.
+
+**L2 Metadata**: Not yet available.
+
 ### sd7k
 
 SD7K is the primary and largest contributor to the `shadow_reg` head (SIG-G5-2) and a key contributor to `capture_method_cls` (SIG-G5-1), providing 7,239 camera-captured document pairs across 30+ occluder types and 350+ base documents — the most shadow-diverse document dataset available. Shadow severity labels must be derived from the paired GT using pixel-difference metrics (PSNR/SSIM) since no direct 0-1 severity field exists in the source; this derivation is reliable given the high-quality paired structure and should be completed via `label_shadow_severity.py` before final `shadow_reg` training data assembly. The training count mismatch (6,479 input vs 6,478 target) requires handling of one unpaired sample. License is unspecified; verify with University of Macau (CXH-Research) before non-research deployment.
@@ -1523,6 +1693,23 @@ The dataset is useful for `capture_method_cls` (SIG-G5-1) as a verified SCANNER 
 **Ground Truth**: Human expert annotation; folder-structure-based split labels (train/val/test) and per-image signer ID. No bounding boxes or segmentation masks — classification-only. Provenance Tier 1 (Annotation); annotator details need verification.
 
 **L2 Metadata**: Available — 12,514 total samples. Key fields: domain (PER: 100%), script_codes (Latn: 100%), capture_methods (scanner_flatbed: 100%), content_flags (has_handwriting: 100%, has_signature: 100%).
+
+### signverod
+
+SignverOD provides 2,765 scanned government/contract document images with COCO-style bounding box annotations for 4 categories: signatures (5,044), initials (1,163), redactions (2,308), and dates (700). It is a primary contributor to SIG-G4-1 (handwriting_presence_cls) for signature/initial presence detection in mixed typed+handwritten documents. The bounding box annotations enable spatial handwriting localization training. CC0-1.0 (Public Domain) license imposes zero restrictions.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | 1,939 | 7,549 annotation entries |
+| Val   | — | No val split defined |
+| Test  | 354 | 1,666 annotation entries |
+| OOD   | — | Not designated as OOD |
+
+**Ground Truth**: Human annotation (Victor Dibia); Tier 1 provenance. Normalized COCO-style bounding boxes in CSV with 4 categories (signature, initials, redaction, date). 9,215 total annotations. 100% coverage.
+
+**L2 Metadata**: Not yet available.
 
 ### siw13
 
@@ -1592,6 +1779,23 @@ StainDoc's primary contribution to the unified training corpus is as a `capture_
 
 **L2 Metadata**: Not yet available.
 
+### synth-multiscript-v3
+
+synth-multiscript-v3 is the primary synthetic training dataset, providing 190,485 GCS-confirmed images across 27 ISO 15924 scripts and 198 languages with comprehensive Layer 2 v2.3 metadata. It serves as the dominant contributor to SIG-G2-1 (script_cls) and the single base from which all synthetic task-specific views are derived (orientation, skew, resolution quality, IQA, shadow, warping). Images are stored pristine (no degradation baked in) with full generation provenance and reproducible degradation parameters in JSON sidecars. **P0 blocker**: Arab script is at 3.8x its target budget (49K vs 13K cap) and 17 scripts are below their minimum floor — rebalancing required before training. MIT license permits commercial use.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | ~152,388 | 80% estimate; SHA256-keyed splits.jsonl at GCS root |
+| Val   | ~19,049 | 10% estimate |
+| Test  | ~19,049 | 10% estimate |
+| OOD   | — | OOD scripts handled separately via SALAMI |
+
+**Ground Truth**: Synthetic exact (Tier 0) provenance. Per-image JSON sidecars contain: orientation_class (0/90/180/270), skew_angle_degrees, 8 IQA dimension scores, resolution_quality_score, text_direction (ltr/rtl/ttb), script codes, language codes, layout type, quality tier, color mode, font families, and degradation seed for reproducible replay. 100% coverage.
+
+**L2 Metadata**: Fully available (v2.3.0 schema, 100% coverage). Key aggregate stats: quality tiers (PRISTINE 10%, HIGH 25%, MEDIUM 35%, LOW 20%, DEGRADED 10%); resolution tiers across 7 DPI levels (72–600); layout types (single_column 64.3%, multi_column 24.9%, form_based 8.2%, complex 2.6%).
+
 ### tablebank
 
 TableBank's primary role is as a **BORN_DIGITAL negative pool** for SIG-G5-1 capture_method_cls (~260K labels), a **large handwriting-absence pool** for SIG-G4-1/G4-4, and a **secondary contributor for SIG-G1 IQA heads** as high-quality clean-document reference examples — particularly valuable for compression score (SIG-G1-5) because its JPEG format exposes real grid-line compression artifacts. It is also a **secondary contributor for SIG-G5-4 code_cls** via its LaTeX arXiv subset. License is Apache-2.0 with research-use intent (commercial use requires review). No OOD script exclusions apply — 100% Latin with no non-Latin content.
@@ -1642,6 +1846,23 @@ Tobacco800 contributes primarily as a **capture_method/scanner training source a
 **Ground Truth**: Human expert annotations by University of Maryland researchers (Zhu & Doermann, CVPR 2007 / ICDAR 2007), covering bounding boxes for signatures and logos; Tier 1 provenance. Annotations are distributed separately via TC-11 and are not included in the standard dataset distribution.
 
 **L2 Metadata**: Available — 1,290 total samples. Key fields: domain (ADM 47%, LEG 18%, SCI 17%), script_codes (Latn 99.8%, Zyyy 0.2%), capture_methods (scanner_adf 100%), content_flags (has_handwriting 65%, has_figure 77%, has_signature 64%, has_table 24%).
+
+### vjroda
+
+VJRODa serves exclusively as an OOD evaluation set for Japanese vertical text (tategaki), providing ~100 real-world government PDF pages rendered at 150 DPI. At only 100 images it is too small for training but provides critical real-world validation samples for SIG-G2-1 (script_cls) and SIG-G3-1 (orientation_cls) that complement JSSODa's synthetic vertical text. Its born-digital origin means it contributes no IQA training signal. CC-BY-4.0 permits unrestricted use.
+
+**Data Profile**:
+
+| Split | Count | Notes |
+|-------|-------|-------|
+| Train | — | Not used for training (too small) |
+| Val   | — | No val split defined |
+| Test  | ~100 | Full dataset used as OOD evaluation |
+| OOD   | ~100 | Entire dataset designated for Jpan vertical text OOD eval |
+
+**Ground Truth**: Human annotation (text transcriptions with structural tags — header/footer/caption); Tier 1 provenance from LLM-JP / National Institute of Informatics. Text direction is 100% vertical (tategaki). 100% coverage.
+
+**L2 Metadata**: Audited 2026-02-25 (18 samples). Key findings: capture_method should be born_digital (not scanner), has_handwriting=false, domain_level1=ADM. Only 18 of ~100 images downloaded.
 
 ### warpdoc
 
