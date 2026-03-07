@@ -15,7 +15,7 @@ Uses [DeQA-Doc](https://github.com/Junjie-Gao19/DeQA-Doc) (VQualA 2025 DIQA Chal
 
 ## Architecture
 
-```
+```text
 Unified Training Corpus
     |
     v
@@ -58,7 +58,7 @@ Unified Training Corpus
 
 DeQA-Doc requires `transformers==4.36.1` and `torch==2.0.1`, incompatible with this project's `transformers>=4.40.0`. The bridge script runs inside the DeQA-Doc venv via subprocess:
 
-```
+```text
 image_detection process                 DeQA-Doc venv subprocess
     |                                        |
     |-- stdin: JSONL image paths ---------> |

@@ -144,7 +144,6 @@ OOD_CATEGORIES = [
             "layouts": ["header_body"],
         },
     ),
-
     # Degradation OOD: extreme quality levels
     OODCategory(
         name="ood_pristine",
@@ -172,7 +171,6 @@ OOD_CATEGORIES = [
             "layouts": ["header_body"],
         },
     ),
-
     # Resolution OOD: extreme DPI
     OODCategory(
         name="ood_very_low_dpi",
@@ -200,7 +198,6 @@ OOD_CATEGORIES = [
             "layouts": ["header_body"],
         },
     ),
-
     # Layout OOD: unusual document structures
     OODCategory(
         name="ood_form_layout",
@@ -215,7 +212,6 @@ OOD_CATEGORIES = [
             "layouts": ["form"],
         },
     ),
-
     # Color OOD: unusual color modes
     OODCategory(
         name="ood_binarized",
@@ -230,7 +226,6 @@ OOD_CATEGORIES = [
             "layouts": ["header_body"],
         },
     ),
-
     # Multi-script OOD
     OODCategory(
         name="ood_multiscript",
@@ -246,7 +241,6 @@ OOD_CATEGORIES = [
             "multi_script": True,
         },
     ),
-
     # CJK vertical text OOD
     OODCategory(
         name="ood_cjk_vertical",
@@ -262,7 +256,6 @@ OOD_CATEGORIES = [
             "force_vertical": True,
         },
     ),
-
     # Adversarial font OOD: fonts designed to break script classifiers
     OODCategory(
         name="ood_adversarial_fraktur",
@@ -589,7 +582,7 @@ def _load_script_font(
                 font = ImageFont.truetype(font_path, size)
                 family = Path(font_path).stem
                 return font, family
-            except (OSError, IOError):
+            except OSError:
                 continue
         log.warning(
             "Adversarial font '%s' not found, falling back to standard fonts",
@@ -600,14 +593,16 @@ def _load_script_font(
     # Shuffle to add font diversity (v4 pattern)
     if len(candidates) > 1:
         idx = int(rng.integers(0, len(candidates)))
-        candidates = [candidates[idx]] + [c for j, c in enumerate(candidates) if j != idx]
+        candidates = [candidates[idx]] + [
+            c for j, c in enumerate(candidates) if j != idx
+        ]
 
     for font_path in candidates:
         try:
             font = ImageFont.truetype(font_path, size)
             family = Path(font_path).stem
             return font, family
-        except (OSError, IOError):
+        except OSError:
             continue
 
     # Fallback: DejaVuSans (Latin only, but better than nothing)
@@ -616,7 +611,7 @@ def _load_script_font(
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size
         )
         return font, "DejaVuSans"
-    except (OSError, IOError):
+    except OSError:
         return ImageFont.load_default(), "default"
 
 
@@ -825,7 +820,13 @@ def _generate_simple_document(
         img = Image.fromarray(arr).convert("RGB")
 
     # Save with appropriate quality
-    jpeg_q = 95 if quality_tier in ("PRISTINE", "HIGH") else 75 if quality_tier == "MEDIUM" else 50
+    jpeg_q = (
+        95
+        if quality_tier in ("PRISTINE", "HIGH")
+        else 75
+        if quality_tier == "MEDIUM"
+        else 50
+    )
     img.save(output_path, "JPEG", quality=jpeg_q)
 
     return {
@@ -858,10 +859,12 @@ def main() -> None:
 
     log.info("Generating OOD PoC dataset with %d categories", len(all_categories))
     total_images = sum(c.n_images for c in all_categories)
-    log.info("Total images: %d (ID: %d, OOD: %d)",
-             total_images,
-             sum(c.n_images for c in ID_CATEGORIES),
-             sum(c.n_images for c in OOD_CATEGORIES))
+    log.info(
+        "Total images: %d (ID: %d, OOD: %d)",
+        total_images,
+        sum(c.n_images for c in ID_CATEGORIES),
+        sum(c.n_images for c in OOD_CATEGORIES),
+    )
 
     for category in all_categories:
         records = try_generate_images(category, output_dir, rng)
@@ -890,8 +893,7 @@ def main() -> None:
 
     # Save per-image metadata as JSONL
     with open(output_dir / "metadata.jsonl", "w") as f:
-        for record in all_records:
-            f.write(json.dumps(record) + "\n")
+        f.writelines(json.dumps(record) + "\n" for record in all_records)
 
     # Save ID and OOD image lists separately (for evaluate_ood_detection.py)
     id_images = [r for r in all_records if not r["is_ood"]]
@@ -916,7 +918,11 @@ def main() -> None:
     log.info("Dataset generated: %s", output_dir)
     log.info("  Total: %d images", len(all_records))
     log.info("  In-distribution: %d images", len(id_images))
-    log.info("  Out-of-distribution: %d images (%d categories)", len(ood_images), len(ood_by_cat))
+    log.info(
+        "  Out-of-distribution: %d images (%d categories)",
+        len(ood_images),
+        len(ood_by_cat),
+    )
     log.info("")
     log.info("Next steps:")
     log.info("  1. Extract embeddings: scripts/extract_siglip2_embeddings.py")

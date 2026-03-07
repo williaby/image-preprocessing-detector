@@ -352,7 +352,7 @@ def parse_three_dim_response(response: str) -> dict[str, str | None]:
     Returns:
         Dict mapping dimension to category (or None if unparseable).
     """
-    result: dict[str, str | None] = {d: None for d in DIMENSIONS}
+    result: dict[str, str | None] = dict.fromkeys(DIMENSIONS)
     for line in response.lower().split("\n"):
         line = line.strip()
         for dim in DIMENSIONS:
@@ -414,9 +414,7 @@ def run_strategy(
             resp = backend.generate(path, PROMPT_SINGLE_3DIM)
             raw_responses["all"] = resp
             parsed = parse_three_dim_response(resp)
-            for dim, cat in parsed.items():
-                if cat:
-                    ratings[dim] = cat
+            ratings.update({dim: cat for dim, cat in parsed.items() if cat})
 
         elif strategy == "separate_prompts":
             for dim in DIMENSIONS:
@@ -623,7 +621,9 @@ def _create_contact_sheet(
         draw.text((x + 2, y + thumb_size + 2), label, fill="black", font=font)
 
     sheet.save(output_path)
-    log.info("Contact sheet saved: %s (%d images, %dx%d grid)", output_path, n, cols, rows)
+    log.info(
+        "Contact sheet saved: %s (%d images, %dx%d grid)", output_path, n, cols, rows
+    )
     return output_path
 
 
@@ -656,7 +656,7 @@ def main() -> None:
         "--strategy",
         type=str,
         default="all",
-        choices=ALL_STRATEGIES + ["all"],
+        choices=[*ALL_STRATEGIES, "all"],
         help="Prompting strategy (default: run all)",
     )
     parser.add_argument(
@@ -726,7 +726,9 @@ def main() -> None:
         elif "gt_score" in item:
             ground_truth[img_id] = item["gt_score"]
 
-    log.info("Loaded %d images, %d with ground truth", len(image_ids), len(ground_truth))
+    log.info(
+        "Loaded %d images, %d with ground truth", len(image_ids), len(ground_truth)
+    )
 
     # Initialize VLM backend
     model_entry = MODEL_REGISTRY[args.model]
@@ -738,7 +740,9 @@ def main() -> None:
         log.info("Using OpenRouter backend: %s", model_id)
     else:
         if "local" not in model_entry:
-            parser.error(f"Model {args.model} has no local backend (use --backend openrouter)")
+            parser.error(
+                f"Model {args.model} has no local backend (use --backend openrouter)"
+            )
         model_id = model_entry["local"]
         backend = TransformersVLMBackend(model_id=model_id, device=args.device)
         log.info("Using local transformers backend: %s", model_id)
@@ -756,21 +760,21 @@ def main() -> None:
         # Save raw results
         results_path = output_dir / f"{args.model}_{strategy}_results.jsonl"
         with open(results_path, "w") as f:
-            for r in results:
-                f.write(
-                    json.dumps(
-                        {
-                            "image_id": r.image_id,
-                            "model": r.model,
-                            "strategy": r.strategy,
-                            "ratings": r.ratings,
-                            "scores": r.scores,
-                            "raw_responses": r.raw_responses,
-                            "latency_ms": r.latency_ms,
-                        }
-                    )
-                    + "\n"
+            f.writelines(
+                json.dumps(
+                    {
+                        "image_id": r.image_id,
+                        "model": r.model,
+                        "strategy": r.strategy,
+                        "ratings": r.ratings,
+                        "scores": r.scores,
+                        "raw_responses": r.raw_responses,
+                        "latency_ms": r.latency_ms,
+                    }
                 )
+                + "\n"
+                for r in results
+            )
         log.info("Results saved to %s", results_path)
 
         # Compute metrics per dimension

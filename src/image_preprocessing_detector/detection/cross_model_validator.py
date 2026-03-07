@@ -217,76 +217,20 @@ class CrossModelValidator:
             )
 
         # Tier 2: Cross-model agreement
-        validator_scores: list[ValidatorScore] = []
-        z_values: list[float] = []
-
         siglip_scores = {
             "overall": prediction.iqa_overall.mu,
             "sharpness": prediction.iqa_sharpness.mu,
             "color": prediction.iqa_color.mu,
         }
 
-        # VLM categorical z-scores
-        if vlm_ratings:
-            for dim in DIMENSIONS:
-                if dim not in vlm_ratings:
-                    continue
-                cat = vlm_ratings[dim]
-                vname = f"vlm_{dim}"
-                z = self._calibrator.z_score_categorical(vname, cat, siglip_scores[dim])
-                validator_scores.append(
-                    ValidatorScore(
-                        validator="vlm",
-                        dimension=dim,
-                        raw_output=cat,
-                        z_score=z,
-                    )
-                )
-                if z is not None:
-                    z_values.append(z)
+        validator_scores, z_values = self._collect_tier2_scores(
+            siglip_scores, vlm_ratings, clip_scores
+        )
 
-        # CLIP-IQA continuous z-scores
-        if clip_scores:
-            for dim, score in clip_scores.items():
-                if dim not in DIMENSIONS:
-                    continue
-                vname = f"clip_{dim}"
-                z = self._calibrator.z_score_continuous(
-                    vname, score, siglip_scores[dim]
-                )
-                validator_scores.append(
-                    ValidatorScore(
-                        validator="clip",
-                        dimension=dim,
-                        raw_output=score,
-                        z_score=z,
-                    )
-                )
-                if z is not None:
-                    z_values.append(z)
-
-        # Agreement distance
-        agreement_distance = 0.0
-        if z_values:
-            z_vec = np.array(z_values)
-            if (
-                self._z_precision is not None
-                and len(z_vec) == self._z_precision.shape[0]
-            ):
-                diff = z_vec - self._z_mean[: len(z_vec)]
-                agreement_distance = float(np.sqrt(diff @ self._z_precision @ diff))
-            else:
-                # Fallback: Euclidean norm of z-scores
-                agreement_distance = float(np.linalg.norm(z_vec))
-
-        # Combined reliability score
-        # Weight Tier 1 and Tier 2 signals
+        agreement_distance = self._compute_agreement_distance(z_values)
         reliability_score = agreement_distance
         needs_review = agreement_distance > self._agreement_threshold or any(
-            abs(z) > 3.0
-            for vs in validator_scores
-            if vs.z_score is not None
-            for z in [vs.z_score]
+            vs.z_score is not None and abs(vs.z_score) > 3.0 for vs in validator_scores
         )
 
         return ReliabilityResult(
@@ -298,6 +242,75 @@ class CrossModelValidator:
             needs_review=needs_review,
             z_vector=z_values,
         )
+
+    def _collect_tier2_scores(
+        self,
+        siglip_scores: dict[str, float],
+        vlm_ratings: dict[str, str] | None,
+        clip_scores: dict[str, float] | None,
+    ) -> tuple[list[ValidatorScore], list[float]]:
+        """Collect z-scores from VLM and CLIP validators.
+
+        Args:
+            siglip_scores: SigLIP2 IQA scores per dimension.
+            vlm_ratings: VLM categorical ratings per dimension.
+            clip_scores: CLIP-IQA continuous scores per dimension.
+
+        Returns:
+            Tuple of (validator_scores, z_values).
+        """
+        validator_scores: list[ValidatorScore] = []
+        z_values: list[float] = []
+
+        if vlm_ratings:
+            for dim in DIMENSIONS:
+                if dim not in vlm_ratings:
+                    continue
+                cat = vlm_ratings[dim]
+                z = self._calibrator.z_score_categorical(
+                    f"vlm_{dim}", cat, siglip_scores[dim]
+                )
+                validator_scores.append(
+                    ValidatorScore(
+                        validator="vlm", dimension=dim, raw_output=cat, z_score=z
+                    )
+                )
+                if z is not None:
+                    z_values.append(z)
+
+        if clip_scores:
+            for dim, score in clip_scores.items():
+                if dim not in DIMENSIONS:
+                    continue
+                z = self._calibrator.z_score_continuous(
+                    f"clip_{dim}", score, siglip_scores[dim]
+                )
+                validator_scores.append(
+                    ValidatorScore(
+                        validator="clip", dimension=dim, raw_output=score, z_score=z
+                    )
+                )
+                if z is not None:
+                    z_values.append(z)
+
+        return validator_scores, z_values
+
+    def _compute_agreement_distance(self, z_values: list[float]) -> float:
+        """Compute Mahalanobis or Euclidean agreement distance from z-scores.
+
+        Args:
+            z_values: List of z-score values from validators.
+
+        Returns:
+            Agreement distance (0.0 if no z-values).
+        """
+        if not z_values:
+            return 0.0
+        z_vec = np.array(z_values)
+        if self._z_precision is not None and len(z_vec) == self._z_precision.shape[0]:
+            diff = z_vec - self._z_mean[: len(z_vec)]
+            return float(np.sqrt(diff @ self._z_precision @ diff))
+        return float(np.linalg.norm(z_vec))
 
     @staticmethod
     def fit_z_covariance(

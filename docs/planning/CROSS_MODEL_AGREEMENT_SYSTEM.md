@@ -30,7 +30,7 @@ A novel document type can produce a low-uncertainty but incorrect score.
 
 ## Architecture Overview
 
-```
+```text
 Input Image
     |
     v
