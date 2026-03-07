@@ -3187,7 +3187,7 @@ def render_font_variations(
             MIMICRY_FONTS = {}
 
         if MIMICRY_FONTS:
-            fm = FontManager(font_dirs=[font_dir])
+            fm = FontManager(additional_paths=[font_dir])
             fm.scan_fonts()
             mimicry_reg = 0
             max_mimicry = 50
@@ -3289,6 +3289,14 @@ def render_font_variations(
     # ------------------------------------------------------------------
     if include_9c4:
         click.echo("  --- 9c-4 cross-script confusion rendering ---")
+        try:
+            from image_preprocessing_detector.synthetic.fonts import FontManager
+
+            _9c4_fm = FontManager(additional_paths=[font_dir])
+            _9c4_fm.scan_fonts()
+        except ImportError:
+            click.echo("  WARN: Cannot import FontManager, using default fonts")
+            _9c4_fm = None
         _CONFUSION_PAIRS: list[tuple[str, str, str, str]] = [
             (
                 "Cher",
@@ -3341,13 +3349,24 @@ def render_font_variations(
                     px_size = int((12 + variant_idx) * dpi_val / 72.0)
                     margin_px = int(1.0 * dpi_val)
 
-                    pil_font = ImageFont.load_default()
+                    fallback_font = ImageFont.load_default()
+
+                    # Get script-specific fonts when FontManager is available
+                    font_a = fallback_font
+                    font_b = fallback_font
+                    if _9c4_fm is not None:
+                        loaded_a = _9c4_fm.get_font(script_a, size=px_size)
+                        if loaded_a is not None:
+                            font_a = loaded_a
+                        loaded_b = _9c4_fm.get_font(script_b, size=px_size)
+                        if loaded_b is not None:
+                            font_b = loaded_b
 
                     # Top half: script A
                     draw.multiline_text(
                         (margin_px, margin_px),
                         text_a,
-                        font=pil_font,
+                        font=font_a,
                         fill=(20, 20, 20),
                         spacing=int(px_size * 0.4),
                     )
@@ -3355,7 +3374,7 @@ def render_font_variations(
                     draw.multiline_text(
                         (margin_px, img_h // 2),
                         text_b,
-                        font=pil_font,
+                        font=font_b,
                         fill=(20, 20, 20),
                         spacing=int(px_size * 0.4),
                     )
