@@ -13,7 +13,11 @@ GHRAW="https://raw.githubusercontent.com/google/fonts/main/ofl"
 
 mkdir -p "$DEST"
 
+# Capture baseline font count before downloads to avoid hardcoding
+BASELINE_FONT_COUNT=$(find "$DEST" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l)
+
 echo "=== Downloading gap-closing fonts to $DEST ==="
+echo "Baseline font count: $BASELINE_FONT_COUNT"
 
 # Helper: download a single .ttf from Google Fonts GitHub
 dl() {
@@ -29,7 +33,7 @@ dl() {
     # Verify it's a real font (not a 404 HTML page)
     local magic
     magic=$(head -c4 "$DEST/$dest_name" 2>/dev/null | xxd -p 2>/dev/null || echo "")
-    if [[ "$magic" != "00010000" && "$magic" != "4f54544f" && "$magic" != "74727565" ]]; then
+    if [[ "$magic" != "00010000" && "$magic" != "4f54544f" && "$magic" != "74727565" && "$magic" != "74746366" && "$magic" != "774f4632" && "$magic" != "774f4646" ]]; then
         echo "    WARNING: $dest_name may not be a valid font (magic: $magic)"
         rm -f "$DEST/$dest_name"
     fi
@@ -165,4 +169,4 @@ echo ""
 echo "=== Download complete ==="
 TOTAL_FONTS=$(find "$DEST" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l)
 echo "Total bundled fonts: $TOTAL_FONTS"
-echo "New fonts added: $((TOTAL_FONTS - 147))"
+echo "New fonts added: $((TOTAL_FONTS - BASELINE_FONT_COUNT))"

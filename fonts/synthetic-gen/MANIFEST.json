@@ -1369,7 +1369,7 @@
         "Latn"
       ],
       "source": "Google Fonts",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 838.1
     },
     "BJCree-Regular.ttf": {
@@ -1379,7 +1379,7 @@
         "Cans"
       ],
       "source": "SIL International",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 103.7
     },
     "Benne-Regular.ttf": {
@@ -1400,7 +1400,7 @@
         "Ethi"
       ],
       "source": "GitHub (raeytype/brana)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 307.6
     },
     "DDC_Uchen.ttf": {
@@ -1431,7 +1431,7 @@
         "Latn"
       ],
       "source": "Google Fonts",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 126.2
     },
     "HindMysuru-Regular.ttf": {
@@ -1442,7 +1442,7 @@
         "Latn"
       ],
       "source": "Google Fonts",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 128.3
     },
     "Uchen-Regular.ttf": {
@@ -1482,7 +1482,7 @@
         "Tibt"
       ],
       "source": "Debian (fonts-monlam)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 1823.4
     },
     "AboriginalSansREGULAR9433.ttf": {
@@ -1494,7 +1494,7 @@
         "Latn"
       ],
       "source": "Debian (fonts-lg-aboriginal)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 772.5
     },
     "AboriginalSansBOLD9433.ttf": {
@@ -1506,7 +1506,7 @@
         "Latn"
       ],
       "source": "Debian (fonts-lg-aboriginal)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 728.5
     },
     "AboriginalSansITALIC9433.ttf": {
@@ -1518,7 +1518,7 @@
         "Latn"
       ],
       "source": "Debian (fonts-lg-aboriginal)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 663.7
     },
     "AboriginalSansBOLDITALIC9433.ttf": {
@@ -1530,7 +1530,7 @@
         "Latn"
       ],
       "source": "Debian (fonts-lg-aboriginal)",
-      "type": "sans",
+      "type": "sans-serif",
       "size_kb": 542.3
     },
     "AboriginalSerifREGULAR943.ttf": {

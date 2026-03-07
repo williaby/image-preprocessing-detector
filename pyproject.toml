@@ -132,6 +132,8 @@ dev = [
     "cbor2>=5.8.0",
     "filelock>=3.20.1",
     "marshmallow>=4.1.2",
+    # Parquet reading for dataset parsers (egyptian-handwriting, openpecha-ocr-drutsa)
+    "pyarrow>=14.0.0",
 ]
 
 ml = [

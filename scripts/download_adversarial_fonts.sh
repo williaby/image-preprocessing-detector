@@ -71,8 +71,17 @@ download_from_zip() {
             basename=$(basename "$found_file")
             if [ -f "$TEMP_DIR/$basename" ]; then
                 cp "$TEMP_DIR/$basename" "$FONTS_DIR/$target_name"
-                echo "    OK: $target_name ($(stat -c%s "$FONTS_DIR/$target_name") bytes)"
-                ((downloaded++)) || true
+                # Verify extracted font has valid magic bytes
+                local magic
+                magic=$(xxd -l 4 -p "$FONTS_DIR/$target_name" 2>/dev/null || echo "")
+                if [[ "$magic" == "00010000" || "$magic" == "4f54544f" || "$magic" == "74727565" || "$magic" == "74746366" || "$magic" == "774f4632" || "$magic" == "774f4646" ]]; then
+                    echo "    OK: $target_name ($(stat -c%s "$FONTS_DIR/$target_name") bytes)"
+                    ((downloaded++)) || true
+                else
+                    echo "    FAIL: $target_name (not a valid font file, removing)"
+                    rm -f "$FONTS_DIR/$target_name"
+                    ((failed++)) || true
+                fi
             else
                 echo "    FAIL: Could not extract $pattern from ZIP"
                 ((failed++)) || true
