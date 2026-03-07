@@ -1,11 +1,11 @@
 # Unified Training Corpus — Ideal-State Specification
 
 > **Status**: Active | Specification Document
-> **Version**: 1.0.0
+> **Version**: 1.1.0
 > **Created**: 2026-02-23
-> **Updated**: 2026-02-23
+> **Updated**: 2026-03-06
 > **Purpose**: Authoritative specification defining what the unified training corpus must look like
-> to support reliable training of all 22 model heads. This is an ideal-state specification —
+> to support reliable training of all 19 model heads (was 22; 6 IQA heads replaced by 3 DIQA-aligned). This is an ideal-state specification —
 > it defines *what* the corpus must satisfy, not *how* to build it.
 
 ---
@@ -31,7 +31,7 @@
 
 ## §1 — Corpus Identity
 
-The ideal corpus is **one global corpus**, not ten separate per-head datasets. It maintains a single shared backbone split registry keyed on SHA256 image hashes, and serves all 22 model heads simultaneously through per-head filtered views derived from that shared registry. This design is not incidental — it is a direct consequence of the SigLIP 2 NAFlex architecture.
+The ideal corpus is **one global corpus**, not ten separate per-head datasets. It maintains a single shared backbone split registry keyed on SHA256 image hashes, and serves all 19 model heads (was 22; 6 IQA heads replaced by 3 DIQA-aligned) simultaneously through per-head filtered views derived from that shared registry. This design is not incidental — it is a direct consequence of the SigLIP 2 NAFlex architecture.
 
 SigLIP 2 has a shared backbone (86M params, 768-dim feature vector) from which all 19 task heads draw. Any image seen during training for any head means the backbone has been exposed to that image's visual content. If the same image appears as a training sample for one head but a test sample for another, the backbone weights reflect that image, and the test evaluation is contaminated. The global split registry eliminates this failure mode: an image's `split_type` applies to every head simultaneously.
 
@@ -182,16 +182,21 @@ The table below specifies the minimum requirements for each of the 22 model head
 | MNV4-H2 | skew_reg | Regression ±10° | MAE < 0.5° (val); SRCC > 0.93 | 90,000 | ≥62.5% natural scan; 7-bin angle distribution per §3; ≥20% multi-column layouts; Hough+projection agreement within 0.5° required for multi-column labels (conf≥0.7 filter) |
 | MNV4-H3 | resolution_quality_reg | 0–1 continuous | MAE < 0.1 within-bucket | 30,000 | All 7 DPI tiers present (72/100/150/200/300/400/600); confound sub-dataset (~2K) mandatory; raw physical metrics (`pixel_height`, `stroke_width`, `contrast_ratio`) output alongside score |
 
-**SigLIP 2 Group 1 — IQA (6 heads)**
+**SigLIP 2 Group 1 — IQA (3 DIQA-aligned heads)**
+
+> **Transition (2026-03-06)**: Group 1 changed from 6 individual degradation heads (blur, noise,
+> contrast, skew, compression, overall_quality) to 3 DIQA-aligned dimensions. Labels: DIQA-5000
+> human MOS ground truth (3.5K train, weight=1.0) + DeQA-Doc pseudo-labels with OOD-gated sample
+> weights for remaining corpus. Individual degradation heads deferred to Phase F.
+> Classical IQA detectors (blur, noise, contrast, etc.) continue at runtime for per-issue detection
+> and corrections — they are separate from the ML training heads.
+> See [DEQA_DOC_PSEUDO_LABELING.md](../../planning/DEQA_DOC_PSEUDO_LABELING.md).
 
 | Head | Task | Output | Performance Target | Min Training Samples | Key Distribution Requirements |
 |---|---|---|---|---|---|
-| SIG-G1-1 | blur_score | Regression 0–1 | VQualA ≥ 0.92 | ~25K hard + 100K pseudo | Compound distortion sub-split (3–5K) mandatory as separate held-out eval; no single distortion type >60% |
-| SIG-G1-2 | noise_score | Regression 0–1 | VQualA ≥ 0.92 | Same IQA dataset | Compound sub-split mandatory; camera ≥30% of Phase 1 hard labels |
-| SIG-G1-3 | contrast_score | Regression 0–1 | VQualA ≥ 0.92 | Same IQA dataset | ≥5 distortion types at severity >0.3; script×degradation cross-tab ≥100 per cell |
-| SIG-G1-4 | skew_score | Regression 0–1 | VQualA ≥ 0.92 | Same IQA dataset | Note: IQA skew severity (quality signal) is distinct from MNV4-H2 skew angle (correction angle) |
-| SIG-G1-5 | compression_score | Regression 0–1 | VQualA ≥ 0.92 | Same IQA dataset | JPEG quality <50 samples required; JPEG blockiness explicitly covered |
-| SIG-G1-6 | overall_quality | Regression 0–1 | VQualA ≥ 0.92; human MOS SRCC ≥ 0.65 after non-rotated correction | Same IQA dataset | Human annotation tier_1 required for primary training labels; VLM pilot SRCC ≥ 0.60 before scaling pseudo-labels |
+| SIG-G1-1 | iqa_overall | Regression 0–1 (MOS-aligned) | VQualA ≥ 0.92; DIQA-5000 test SRCC ≥ 0.65 | DIQA-5000 GT (3.5K) + DeQA-Doc pseudo-labeled corpus (~50K+) | DIQA-5000 GT always weight=1.0; pseudo-labels OOD-gated (AUTO_ACCEPT=1.0, LOW_WEIGHT=0.5, TIER2=0.3, HARD_REJECT=0.0) |
+| SIG-G1-2 | iqa_sharpness | Regression 0–1 (MOS-aligned) | VQualA ≥ 0.88 | Same IQA dataset | Per-dimension DeQA-Doc model; soft probability distributions [excellent,good,fair,poor,bad] |
+| SIG-G1-3 | iqa_color_fidelity | Regression 0–1 (MOS-aligned) | VQualA ≥ 0.85 | Same IQA dataset | Per-dimension DeQA-Doc model; monochrome/grayscale documents expected to cluster near neutral |
 
 **SigLIP 2 Group 2 — Script (1 head)**
 
@@ -228,14 +233,14 @@ The table below specifies the minimum requirements for each of the 22 model head
 
 > **⚠️ Cross-Head Label Disambiguation — Mandatory Reading Before Label Assignment**
 >
-> **`skew_reg` vs `skew_score`**: These are different labels measured on different scales.
+> **`skew_reg` (geometric) vs IQA skew (deprecated)**: The old `skew_score` IQA head (SIG-G1-4)
+> has been removed in the DIQA transition. Skew detection is now geometric only:
 >
 > - `skew_reg` (MNV4-H2, SIG-G3-2) = **geometric angle** of the physical document in degrees.
 >   Range ±45° for MNV4-H2, ±2° for SIG-G3-2. Source: Hough transform or rotation metadata.
 >   Do NOT use quality-proxy labels for this field.
-> - `skew_score` (SIG-G1-4) = **quality degradation** caused by skew as perceived by OCR and
->   human readers. Score 0–1 (0 = no quality impact, 1 = maximum quality impact). NOT an angle.
->   Source: IQA labeling pipeline (VLM or OCR degradation estimate). Do NOT populate from Hough output.
+> - ~~`skew_score` (SIG-G1-4)~~ = **REMOVED** in DIQA transition (2026-03-06). IQA quality
+>   degradation from skew is captured implicitly by `iqa_overall` and `iqa_sharpness`.
 >
 > **`code_cls` (formerly `code_reg`)**: Binary classification (has_code 0/1), sigmoid + BCE loss,
 > output range [0,1]. Decision threshold 0.5 for routing. Values 0.3–0.7 are "uncertain" — trigger
@@ -409,45 +414,38 @@ This sub-split is HELD OUT from Phase 1 training and used only for compound-dist
 - noise + contrast + JPEG (triple compound): 800 images
 - shadow + blur (Augraphy shadow + motion blur): 800 images
 - blur + skew + noise (geometric + quality compound): 800 images
-- Source: Apply distortion stacks to Phase 1A images. Re-label all 6 IQA scores via VLM after distortion.
+- Source: Apply distortion stacks to Phase 1A images. Re-label via DeQA-Doc per-dimension pseudo-labeling after distortion.
 
-**Phase 1C — Supplementary Hard-Labeled (target ~8,000 additional images):**
+**~~Phase 1C — Supplementary Hard-Labeled~~ SUPERSEDED by DeQA-Doc Pipeline (2026-03-06):**
 
-- MIDV500: ~2,000 images (camera, ID documents — diverse capture conditions)
-- OCR-Quality: ~2,000 images (scanned documents with OCR ground truth as quality proxy)
-- Tobacco800: ~2,000 images (scanned, varied quality — dedup against training split required)
-- SmartDoc-QA remaining: ~2,000 images (not already in Phase 1A)
-- Combined Phase 1A + 1C target: ~25K hard-labeled images
+The VLM-based labeling path (Phases 1C, 2, and the VLM SRCC Decision Gate below) has been
+superseded by the DeQA-Doc pseudo-labeling pipeline. See
+[DEQA_DOC_PSEUDO_LABELING.md](../../planning/DEQA_DOC_PSEUDO_LABELING.md).
 
-**Phase 2 — VLM Pseudo-Labels (gate-controlled, target 100K):**
-Proceed only after Gate 2 passes. Sources: DocLayNet + RVL-CDIP + Tobacco800 + SmartDoc-QA (not in training). Weight = 0.5 × VLM confidence.
+**IQA Label Sources (current approach):**
 
-**Note on IQA skew:** The IQA `skew_score` head (SIG-G1-4) measures skew as a quality degradation signal (severity 0–1). This is distinct from MNV4-H2 and SIG-G3-2, which predict the actual correction angle. Both coexist and serve different pipeline functions.
+- **DIQA-5000 GT** (3.5K train): Human MOS labels across 3 dimensions (overall, sharpness,
+  color_fidelity). Always weight=1.0 in training.
+- **DeQA-Doc pseudo-labels** (~50K+ corpus): Per-dimension mPLUG-Owl2-7B models (VQualA 2025
+  champion) generate soft probability distributions [excellent, good, fair, poor, bad] for each
+  dimension. OOD gating via Mahalanobis distance (AUROC 0.9963) assigns sample weights:
+  AUTO_ACCEPT=1.0, LOW_WEIGHT=0.5, TIER2_TRIGGER=0.3, HARD_REJECT=0.0.
 
-**VLM SRCC Decision Gate (mandatory — do not proceed to Phase 2 without passing):**
+**DQS Integration:**
 
 ```text
-Gate 1 — VLM Prompt v2.0 Validation (30–50 images):
-  SRCC ≥ 0.60 → Proceed to Gate 2
-  SRCC < 0.60 → Revise prompt; retry once. After 2 consecutive failures → FALLBACK PATH
-
-Gate 2 — VLM Scale Validation (2,000–5,000 images):
-  SRCC ≥ 0.65 → Proceed to Phase 2 pseudo-label generation (100K target, 0.5× loss weight)
-  SRCC 0.60–0.65 → Use Phase 2 but cap at 50,000 images (reduced confidence)
-  SRCC < 0.60 → FALLBACK PATH
-
-FALLBACK PATH (if VLM overall_quality gate is never met after 2+ prompt iterations):
-  1. Drop overall_quality (SIG-G1-6) from Phase 1 training entirely
-  2. Substitute: derive overall_quality as weighted mean of 5 per-dimension scores:
-     overall_quality = blur×0.30 + noise×0.20 + contrast×0.20 + compression×0.15 + skew_score×0.15
-  3. Document in corpus manifest as label_source="derived_ensemble", label_tier="tier_3_heuristic"
-  4. Hold SIG-G1-6 head training for Phase 2 re-run when VLM data becomes available
-  5. Impact: SIG-G1-6 performance is directional only; downstream routing rules using
-     overall_quality must be validated against the derived signal before production use
-  6. Gate: Resume VLM scaling attempt when prompt SRCC > 0.60 on fresh 30-image batch
+ml_quality = 0.60 * iqa_overall + 0.25 * iqa_sharpness + 0.15 * iqa_color_fidelity
+degradation_score = (1 - blend_ratio) * classical + blend_ratio * ml_quality
 ```
 
-**Current gate status (2026-02-23):** SRCC = 0.53 (non-rotated) — GATE NOT MET. VLM scaling halted.
+Classical IQA detectors (blur, noise, contrast, compression, etc.) continue at runtime for
+per-issue detection and corrections. They are separate from the ML training heads.
+
+**~~VLM SRCC Decision Gate~~ SUPERSEDED (2026-03-06):**
+
+~~Previous gate status: SRCC = 0.53 (non-rotated) — GATE NOT MET.~~
+This gate is no longer applicable. DeQA-Doc pseudo-labeling replaces VLM-based IQA labeling.
+The VLM approach may be revisited for Phase F individual degradation heads.
 
 ---
 
@@ -734,7 +732,7 @@ An ideal corpus achieves the following distribution targets across all 14 divers
 
 ### Split Mechanics
 
-The ideal corpus enforces a global split assignment that applies to all 22 heads simultaneously. This is the central architectural invariant, and it follows directly from the SigLIP 2 shared backbone: the backbone cannot have "seen" an image for one head and "not seen" it for another.
+The ideal corpus enforces a global split assignment that applies to all 19 heads simultaneously. This is the central architectural invariant, and it follows directly from the SigLIP 2 shared backbone: the backbone cannot have "seen" an image for one head and "not seen" it for another.
 
 The split structure must satisfy these properties:
 
@@ -775,12 +773,12 @@ Label quality is expressed as a continuous training weight, not a binary accept/
 | `tier_2_model` | 0.8 | IQA pseudo-labels (VLM), script labels from OpenLID on COCO-Text, shadow/warping severity from L2 model inference | ≥0.7 | VLM pilot SRCC ≥0.60 before scaling to full corpus; cross-validation with classical detector |
 | `tier_3_heuristic` | 0.5 | Skew natural scan (Hough ensemble, conf≥0.7), capture method (ADF/FAX heuristic), handwriting content type (OCR-derived), resolution quality (CC analysis) | ≥0.5 | Cross-validator agreement documented; disagreement >threshold → reject, not uncertainty-label |
 
-**Per-head minimum label tier (22 heads):**
+**Per-head minimum label tier (19 heads):**
 
 - MNV4-H1 (orientation_cls): tier_0_exact (rotation by construction)
 - MNV4-H2 (skew_reg): tier_0_exact for synthetic; tier_2_model (Hough+projection agreement) for natural scans
 - MNV4-H3 (resolution_quality_reg): tier_0_exact for DPI renders; tier_3_heuristic for camera captures
-- SIG-G1-1 through SIG-G1-6 (IQA 6 heads): tier_1_annotation for Phase 1 hard labels; tier_2_model for Phase 2 pseudo
+- SIG-G1-1 through SIG-G1-3 (IQA 3 DIQA-aligned heads): tier_0_exact for DIQA-5000 GT; tier_2_model for DeQA-Doc pseudo-labels (OOD-gated sample weights)
 - SIG-G2-1 (script_cls): tier_0_exact for v3; tier_1_annotation for MDIW13/SIW13; tier_2_model for OpenLID-derived
 - SIG-G3-1 (orientation post-correction): tier_0_exact (same as MNV4-H1)
 - SIG-G3-2 (skew post-correction): tier_0_exact for synthetic; tier_2_model for natural scans
@@ -829,7 +827,7 @@ Synth-multiscript-v3 is the single synthetic backbone from which multiple traini
 - CJK vertical text (tategaki): Jpan 30.0%, Hans 10.0%, Hant 10.2% (validated)
 - Geometric labels in sidecar: `orientation_class` (0/90/180/270), `skew_angle_degrees` (±22°)
 - Resolution quality labels (v2.3): `character_height_px`, `coarse_bucket`, `resolution_quality_score`, `measurement_method: sauvola_cc_v2`
-- IQA labels (8 dimensions): blur, noise, compression, ink_degradation, paper_degradation, geometric_distortion, bleed_through, overall_quality
+- IQA labels (3 DIQA-aligned dimensions): iqa_overall, iqa_sharpness, iqa_color_fidelity (DeQA-Doc pseudo-labeled; DIQA-5000 GT where available)
 - Split registry: `splits.jsonl` at GCS prefix root (SHA256-keyed, 345,638 entries)
 
 **Known distribution issue:** Arab script has 49,169 images (3.8× the per-script target of 12,963); 17 scripts are below target. This is a confirmed generator bug. Weighted resampling is required before training use. Regeneration from scratch is not required — the base images are correct, only the sampling ratios need adjustment. Script composition also differs from the original design: Armn (Armenian) and Grek (Greek) replaced Cher (Cherokee) and Cans (Canadian Aboriginal Syllabics); Kore is used for Korean instead of Hang.
@@ -842,7 +840,7 @@ Synth-multiscript-v3 is the single synthetic backbone from which multiple traini
 | Orientation (synthetic component) | ~20K (non-Latin only) | 19 non-Latin scripts; Latin excluded | 0/90/180/270 rotation applied at derivation time | `orientation_class` from sidecar (tier_0_exact) |
 | Skew (synthetic component) | ~10K | Stratified by script and DPI | Exact angle applied within ±10° range | `skew_angle_degrees` from sidecar (tier_0_exact) |
 | Resolution Quality | ~5K | Stratified across all 7 DPI tiers | Char height measurement at pristine base | DPI + CC analysis (tier_0_exact) |
-| IQA Phase 2 pseudo-labels | Up to 20K | Diverse subset across scripts and quality tiers | Degradation parameter replay from sidecar seed | Existing IQA labels in sidecar (tier_2_model at 0.8× weight) |
+| IQA DIQA pseudo-labels | Up to 20K | Diverse subset across scripts and quality tiers | None (pristine base used directly) | DeQA-Doc per-dimension pseudo-labels (tier_2_model, OOD-gated sample weights) |
 | Shadow synthetic | ~8K | Diverse subset; all 27 scripts | Augraphy shadow overlay (4 types: edge/cast/spotlight/scanner_lid) | Augraphy severity parameter (tier_0_exact, confidence 1.0) |
 | Warping synthetic | ~5K | Diverse subset; all 27 scripts | Perspective/page_curl/fold transforms | Normalized warp parameter (tier_0_exact, confidence 1.0) |
 | Capture Method | ~7.5K | Any subset | None | `capture_method = "synthetic"` (tier_0_exact) |
@@ -1007,14 +1005,14 @@ Training must halt immediately upon detection of any of the following conditions
 | Gap ID | Priority | Dataset / Head | One-Line Description | Acceptance Criterion |
 |--------|----------|---------------|----------------------|----------------------|
 | P0-1 | P0 | SIG-G3-2 | Separate ±2° narrow-range dataset (~20K images) required for post-correction skew | Narrow-range dataset assembled and split registry updated |
-| P0-2 | P0 | SIG-G1-4 / MNV4-H2 | Label conflict: IQA skew_score and geometric skew_reg share the same label source but are different constructs | Derivation method for skew_score defined (Option A/B/C from review report §A5); no shared labels in multi-task training spec |
-| P0-3 | P0 | IQA / SIG-G1-6 | VLM SRCC decision tree missing — no halt/fallback conditions defined before scaling pseudo-labels to 2–5K | Decision tree documented; prompt v2.0 validated on 30–50 images; SRCC result recorded in provenance |
+| ~~P0-2~~ | ~~P0~~ | ~~SIG-G1-4 / MNV4-H2~~ | ~~Label conflict: IQA skew_score and geometric skew_reg~~ **RESOLVED** (2026-03-06): `skew_score` head removed in DIQA transition; skew detection is geometric only (MNV4-H2, SIG-G3-2) | N/A — head removed |
+| ~~P0-3~~ | ~~P0~~ | ~~IQA / SIG-G1-6~~ | ~~VLM SRCC decision tree~~ **SUPERSEDED** (2026-03-06): DeQA-Doc pseudo-labeling pipeline replaces VLM-based IQA labeling. See DEQA_DOC_PSEUDO_LABELING.md | N/A — approach replaced |
 | P0-4 | P0 | SIG-G4-2 / SIG-G4-5 | ILLEGIBLE class void — 0 ILLEGIBLE handwriting samples across all datasets | ≥5,000 ILLEGIBLE samples acquired and confirmed in handwriting manifest |
 | P0-5 | P0 | SIG-G5-2 / SIG-G5-3 | L2 severity labels required for shadow and warping — `label_shadow_severity.py` and `label_warping_severity.py` must run on GPU VM | Both scripts executed; L2 JSON updated; real records > 0 confirmed in `prepare_multitask_datasets.py shadow` and `warping` dry-runs |
 | P0-6 | P0 | SIG-G2-1 | Arab script 3.8× imbalance violates §2 max 3× constraint — 49K images vs. ~13K budget | Arab capped at ≤13K (or ≤3× minimum class); `prepare_multitask_datasets.py script` dry-run confirms no class >3× min |
-| P0-7 | P0 | SIG-G1-1 to SIG-G1-5 | IQA Phase 1A undersized — 16.3K vs. 50–100K industry standard for 101M-parameter model with 6 concurrent heads | Scaling path defined (decision doc or GitHub issue); either more OHR-Bench labels or VLM expansion plan recorded |
+| ~~P0-7~~ | ~~P0~~ | ~~SIG-G1-1 to SIG-G1-5~~ | ~~IQA Phase 1A undersized~~ **RESOLVED** (2026-03-06): DeQA-Doc pseudo-labeling scales IQA labels to ~50K+ corpus with OOD-gated sample weights. DIQA-5000 GT (3.5K) anchors training. | N/A — scaling resolved via DeQA-Doc |
 | P0-8 | P0 | OOD-Mixed | OOD-Mixed 9a-1 (orientation cascade, 100 images) and 9a-2 (skew cascade, 100 images) re-prioritized to P0 | Both sub-sources derived from existing labeled data and added to OOD catalog with sample counts |
-| P0-9 | P0 | OOD-Domain | OOD-Domain smoke test (100 ArXiv PDFs) re-prioritized to P0 | 100 ArXiv PDFs acquired, labeled for all 22 heads, and added to OOD-Domain sub-source |
+| P0-9 | P0 | OOD-Domain | OOD-Domain smoke test (100 ArXiv PDFs) re-prioritized to P0 | 100 ArXiv PDFs acquired, labeled for all 19 heads, and added to OOD-Domain sub-source |
 | P0-10 | P0 | OOD (all) | Open-set rejection must use temperature scaling + Energy Score — entropy ≥0.7 threshold is uncalibrated and insufficient for SigLIP 2 | Temperature scaling calibrated on held-out val; Energy Score (LogSumExp) replaces raw softmax entropy in OOD evaluation pipeline |
 
 ### P1 — Required before final model release
@@ -1085,7 +1083,7 @@ The table below shows the delta between the ideal corpus specification and the c
 | orientation | 50,000 | 50K (old config, predominantly Latin) | Rebuilding as hybrid (Stream 4C scripts complete, execution pending); non-Latin <1%; `orientation_ambiguous` class not yet labeled | P0 (Stream 4C) |
 | skew | 90,000 | 90,412 (train 70,763 / val 9,025 / test 10,624) ✅ | conf≥0.7 filter excludes hardest multi-column samples; Gap 7 multi-column label quality gate present but not verified at scale | Complete |
 | resolution-quality | 30,000 | ~5,499 labeled from DIQA-5000 only | V2 Sauvola+projection algorithm needed for precision <5px; OHR-Bench (8.5K) and RealDAE (1.2K) pending; confound sub-dataset (~2K) not yet assembled | P0 |
-| iqa | ~25K hard + 100K pseudo | ~25K hard (Phase 1 complete) | Phase 1B compound sub-split (3–5K) not yet assembled; VLM bottleneck for overall_quality labels (SRCC 0.53, target 0.65); Phase 2 pseudo not yet assembled | P0 |
+| iqa (3 DIQA dims) | DIQA-5000 GT (3.5K) + DeQA-Doc pseudo (~50K+) | DIQA-5000 GT ready; DeQA-Doc pipeline built | ~~VLM bottleneck resolved~~ by DeQA-Doc pseudo-labeling (2026-03-06). Phase 1B compound sub-split (3–5K) not yet assembled. DeQA-Doc pseudo-labeling pending execution on full corpus. | ⚠️ Partially resolved |
 | script-detection | 108K balanced | 190,485 GCS-confirmed (generator stopped at 190K due to bug; 350K was target only); severely imbalanced: Arab 3.8× at 49K images vs. ~13K budget, 17 scripts below target | Weighted resampling required before any training use; v3 also needs Latin exclusion rule applied for orientation/shadow/warping views. **⚠️ CONSTRAINT VIOLATION: Arab script at 3.8× target (49K images vs. ~13K budget). Cap Arab at ≤13K images and redistribute budget to the 17 scripts below their floor before training.** | P0 |
 | handwriting | 60,000 | 38,967 records (dry-run 2026-02-21; dry-run ≠ assembled — actual dataset not yet generated); only Latin/Arabic/Devanagari covered | KHATT, CASIA-HWDB, IIIT-INDIC, HKR not yet acquired (P0 prerequisites); ILLEGIBLE class void (0 samples — hard blocker). **⚠️ P0 SENTINEL DEFECT: N_A values must be encoded as -1.0 (with masked loss during training), NOT 0.0 (which maps to 'illegible' and corrupts regression heads G4-2 and G4-5). This must be resolved in label schema before assembling the handwriting dataset.** | P0 |
 | capture-method | 50,000 | 39,893 records in source sub-command output; note 3 classes near-zero: CAMERA_PROFESSIONAL, FAX, and SCANNER_ADF each well below minimum targets | ADF heuristic labeling pending (manual verification of 100 samples required); FAX heuristic labeling pending; modern CIS flatbed ≥1,500 gap (Gap 8) unresolved | P1 |

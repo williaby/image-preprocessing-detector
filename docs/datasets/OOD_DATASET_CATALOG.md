@@ -1,36 +1,50 @@
 # OOD Dataset Catalog
 
 > **Status**: ✅ Active | Ideal-State Specification
-> **Version**: 3.2.0
+> **Version**: 3.4.0
 > **Created**: 2026-02-21
-> **Updated**: 2026-02-25
+> **Updated**: 2026-03-06
 > **Purpose**: Ideal-state specification document for the OOD holdout evaluation corpus.
 > Defines what each OOD image MUST look like, which heads it evaluates, what performance
 > targets apply, and what disqualifies an image from inclusion. Acquisition progress is tracked
 > separately in `metadata_registry/ood_registry.jsonl`.
 >
-> **Revision note (2026-02-23)**: Updated per 5-model multi-consensus review
+> **Revision note (v3.4.0, 2026-03-06)**: Updated acquisition progress to match actual registry
+> state (9,170 entries, 76.3% of 12K target). Per-category counts, phase statuses, script
+> coverage, domain enrichment, and head coverage updated from `ood_registry.jsonl` and
+> `OOD_COVERAGE_GAP_REPORT.md`. GT schema note: the specification uses DIQA 3-dim fields
+> (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`) but the current registry still carries
+> the legacy 6-head fields (`blur_score`, `noise_score`, `contrast_score`, `compression_score`,
+> `skew_score`, `overall_quality`). Registry schema migration is pending.
+>
+> **Revision note (v3.3.0, 2026-03-06)**: IQA heads transitioned from 6 individual degradation
+> heads (blur, noise, contrast, skew, compression, overall_quality) to 3 DIQA-aligned dimensions
+> (iqa_overall, iqa_sharpness, iqa_color_fidelity). All IQA head references, OOD labels, GT
+> schema, and performance targets updated. Classical IQA detectors remain at runtime; only ML
+> training heads changed. See `DEQA_DOC_PSEUDO_LABELING.md`.
+>
+> **Revision note (v3.0.0, 2026-02-23)**: Updated per 5-model multi-consensus review
 > (`CORPUS_OOD_REVIEW_REPORT.md`). Key changes: total target scaled to 12,000–15,000 (from
 > 4,900); entropy-based open-set rejection replaced by Energy Score + temperature scaling;
 > OOD-Mixed 9a-1/9a-2 re-prioritized to P0; ILLEGIBLE legibility floor revised to 40%.
 
 ## Overview
 
-> **Status as of audit date 2026-02-21**: 0 images acquired across all 9 categories. All
-> acquisitions pending.
+> **Status as of 2026-03-06**: 9,170 images acquired (76.4% of 12K target). Domain enrichment
+> complete. 5 heads remain at-risk (0 labeled). See `OOD_COVERAGE_GAP_REPORT.md` for details.
 
 | Category | Current Target | Revised Target | Acquired | Status |
 | --- | --- | --- | --- | --- |
-| OOD-Script | 600 | 1,520+ | 0 | ⏳ Pending acquisition |
-| OOD-Capture | 600 | 1,200+ | 0 | ⏳ Pending acquisition |
-| OOD-Degradation | 800 | 1,600+ | 0 | ⏳ Pending acquisition |
-| OOD-Handwriting | 500 | 1,000+ | 0 | ⏳ Pending acquisition |
-| OOD-Geometry | 500 | 1,600+ | 0 | ⏳ Pending acquisition |
-| OOD-Resolution | 500 | 800+ | 0 | ⏳ Pending acquisition |
-| OOD-Domain | 500 | 2,200+ | 0 | ⏳ Pending acquisition |
-| OOD-Code | 200 | 400+ | 0 | ⏳ Pending acquisition |
-| OOD-Mixed | 700 | 1,000 (adequate) | 0 | ⏳ Pending acquisition |
-| **Total** | **4,900** | **12,000–15,000** | **0** | ⏳ Pending acquisition |
+| OOD-Script | 600 | 1,520+ | 1,236 | ✅ 81% of revised target |
+| OOD-Capture | 600 | 1,200+ | 2,800 | ✅ Exceeds revised target |
+| OOD-Degradation | 800 | 1,600+ | 2,930 | ✅ Exceeds revised target |
+| OOD-Handwriting | 500 | 1,000+ | 1,990 | ✅ Exceeds revised target |
+| OOD-Geometry | 500 | 1,600+ | 1,740 | ✅ Exceeds current target |
+| OOD-Resolution | 500 | 800+ | 365 | ⚠️ 46% — labels pending |
+| OOD-Domain | 500 | 2,200+ | 959 | ⚠️ 44% of revised target |
+| OOD-Code | 200 | 400+ | 500 | ✅ Exceeds revised target |
+| OOD-Mixed | 700 | 1,000 (adequate) | 338 | ⚠️ 34% — run last |
+| **Total** | **4,900** | **12,000–15,000** | **9,170** | ⚠️ 76.4% of 12K target |
 
 ### Per-Head Minimum OOD Coverage
 
@@ -43,12 +57,9 @@ flags heads at risk of under-coverage.
 | MNV4-H1 | orientation_cls | OOD-Geometry (2a symmetric) | OOD-Mixed (9a-1) | 200 | 2a: 300 + 9a-1: 100 | ✅ |
 | MNV4-H2 | skew_reg | OOD-Geometry (2b extreme perspective) | OOD-Mixed (9a-2) | 100 | 2b: 100 + 9a-2: 100 | ✅ |
 | MNV4-H3 | resolution_quality_reg | OOD-Resolution | OOD-Mixed (9e-1 vector PDF) | 100 | 6a/6b: 500 | ✅ |
-| SIG-G1-1 | blur_score | OOD-Degradation (4a compound) | OOD-Mixed (9b-1) | 100 | 4a: 500 + 9b-1: 80 | ✅ |
-| SIG-G1-2 | noise_score | OOD-Degradation (4a compound) | OOD-Mixed (9b-3) | 100 | 4a: 500 | ✅ |
-| SIG-G1-3 | contrast_score | OOD-Degradation (4a, 4d) | OOD-Mixed (9b-1) | 100 | 4a: 500 + 4d: 100 | ✅ |
-| SIG-G1-4 | skew_score | OOD-Degradation (4a compound) | OOD-Mixed (9b-1) | 100 | 4a: 500 (compound includes skew dimension) | ✅ |
-| SIG-G1-5 | compression_score | OOD-Degradation (4a, 4d binarized) | OOD-Mixed (9c-2 JPEG) | 100 | 4a: 500 + 9c-2: 50 | ✅ |
-| SIG-G1-6 | overall_quality | OOD-Degradation | OOD-Mixed (9b-1, 9b-3) | 200 | 4a: 500 + 9b compounds | ✅ |
+| SIG-G1-1 | iqa_overall | OOD-Degradation (4a compound) | OOD-Mixed (9b-1, 9b-3) | 200 | 4a: 500 + 9b compounds | ✅ |
+| SIG-G1-2 | iqa_sharpness | OOD-Degradation (4a compound) | OOD-Mixed (9b-1) | 100 | 4a: 500 + 9b-1: 80 | ✅ |
+| SIG-G1-3 | iqa_color_fidelity | OOD-Degradation (4a, 4d) | OOD-Mixed (9b-1) | 100 | 4a: 500 + 4d: 100 | ✅ |
 | SIG-G2-1 | script_cls (open-set) | OOD-Script (1a–1h reserved) | OOD-Mixed (9c-1, 9c-3) | 200 | 1a–1h: 600 | ✅ |
 | SIG-G3-1 | orientation_cls (post-correction) | OOD-Geometry (2a symmetric) | OOD-Mixed (9a-1) | 200 | 2a: 300 + 9a-1: 100 | ✅ |
 | SIG-G3-2 | skew_reg (post-correction) | OOD-Geometry (2b extreme) | OOD-Mixed (9a-2) | 100 | 2b: 100 + 9a-2: 100 | ✅ |
@@ -65,9 +76,17 @@ flags heads at risk of under-coverage.
 
 **Heads requiring remediation:**
 
-- **SIG-G4-2 ILLEGIBLE sub-class**: The 40% performance floor ([^illegible-floor]) means the ILLEGIBLE sub-class needs at minimum 20 ILLEGIBLE-labeled OOD images (5a KHATT). Currently specified as "≥20 pages" in 5a — verify label quality.
-- **SIG-G4-3 content_type (specialized)**: 5d provides 50 specialized images and 9d-2 provides 50 CJK content. Ensure all have `handwriting_content_type` labels. If below 100, add 50 images from hand-notation (formula notebooks, engineering drawings) to 5d.
-- **SIG-G4-5 legibility_reg**: Depends on KHATT images carrying `handwriting_legibility_score` float labels (not just categorical). Verify during KHATT acquisition.
+- **SIG-G4-2 ILLEGIBLE sub-class**: The 40% performance floor ([^illegible-floor]) means the ILLEGIBLE sub-class needs at minimum 20 ILLEGIBLE-labeled OOD images (5a KHATT). Currently specified as "≥20 pages" in 5a — verify label quality. **Current**: only 15 `handwriting_legibility` labels in registry; human annotation still needed.
+- **SIG-G4-3 content_type (specialized)**: 5d provides 50 specialized images and 9d-2 provides 50 CJK content. Ensure all have `handwriting_content_type` labels. If below 100, add 50 images from hand-notation (formula notebooks, engineering drawings) to 5d. **Current**: 550 `handwriting_content_type` labels — OK at category level, verify specialized sub-class count.
+- **SIG-G4-5 legibility_reg**: Depends on KHATT images carrying `handwriting_legibility_score` float labels (not just categorical). Verify during KHATT acquisition. **Current**: 0 `handwriting_legibility_score` labels — AT RISK.
+
+**At-risk heads (0 or near-0 labeled images as of 2026-03-06):**
+
+- **skew_score**: 0 labeled — requires trained MobileNetV4 skew head inference
+- **handwriting_legibility**: 15 labeled — needs human annotators for IIIT-INDIC/KHATT/CASIA-HWDB2
+- **handwriting_legibility_score**: 0 labeled — same as above, continuous score variant
+- **resolution_quality**: 0 labeled — run `label_resolution_quality.py` on 365 ood_resolution images
+- **code_confidence**: 500 labeled in registry — no longer at risk (was incorrectly listed as at-risk in gap report; `code_confidence` is populated for OOD-Code entries)
 
 ---
 
@@ -168,12 +187,9 @@ category, and the failure threshold that signals a distribution gap requiring re
 | MNV4-H1 | orientation_cls | ≥95% accuracy | OOD-Geometry | ≥80% overall; abstention rate ≥85% on `orientation_ambiguous` | <70% overall = distribution gap |
 | MNV4-H2 | skew_reg | MAE < 0.5° | OOD-Geometry | MAE < 1.0° on multi-column; abstain if tilt >30° | MAE > 2.0° = failure |
 | MNV4-H3 | resolution_quality_reg | MAE < 0.1 | OOD-Resolution | MAE < 0.15 on paradox cases | MAE > 0.25 = model conflating DPI with quality |
-| SIG-G1-1 | blur_score | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.80 on compound ≥5 distortions | VQualA < 0.65 = critical IQA gap |
-| SIG-G1-2 | noise_score | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.80 | VQualA < 0.65 |
-| SIG-G1-3 | contrast_score | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.80 | VQualA < 0.65 |
-| SIG-G1-4 | skew_score | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.80 | VQualA < 0.65 |
-| SIG-G1-5 | compression_score | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.80 | VQualA < 0.65 |
-| SIG-G1-6 | overall_quality | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.75 on 5+ simultaneous distortions | VQualA < 0.60 = critical IQA gap |
+| SIG-G1-1 | iqa_overall | VQualA ≥ 0.92 | OOD-Degradation | VQualA ≥ 0.75 on 5+ simultaneous distortions | VQualA < 0.60 = critical IQA gap |
+| SIG-G1-2 | iqa_sharpness | VQualA ≥ 0.88 | OOD-Degradation | VQualA ≥ 0.75 on compound distortions | VQualA < 0.60 = critical IQA gap |
+| SIG-G1-3 | iqa_color_fidelity | VQualA ≥ 0.85 | OOD-Degradation | VQualA ≥ 0.70 | VQualA < 0.55 = critical IQA gap |
 | SIG-G2-1 | script_cls | ≥90% overall, Tibetan ≥80% | OOD-Script | ≥85% on in-dist scripts; open_set trigger for Mong/Syrc/Geor | <75% on in-dist = distribution gap |
 | SIG-G3-1 | orientation_cls (post-corr) | ≥98% accuracy | OOD-Geometry | ≥90% (post-correction images expected cleaner) | <80% = post-correction pipeline failure |
 | SIG-G3-2 | skew_reg (post-corr) | MAE < 0.3° | OOD-Geometry | MAE < 0.6° | MAE > 1.5° = post-correction skew failure |
@@ -261,7 +277,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 ### Phase 1: Script OOD (OOD-Script) — P0
 
-**Target: 600 images total across 8 sub-sources**
+**Target: 600 images total across 8 sub-sources** | **Acquired: 1,236** ✅ exceeds current target
 
 > **Specification:** The ideal OOD-Script set contains images that exercise script classes that
 > are *either permanently reserved from training* (Mongolian/Mong, Syriac/Syrc, Georgian/Geor)
@@ -283,7 +299,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   `capture_method=scanner_flatbed`, `document_age=modern`
 - Cross-category: OOD-Geometry (TTB vertical orientation stress)
 - Dedup required: Against all training datasets (SHA256 + pHash, Hamming ≤ 5)
-- Status: ⏳ Pending
+- Status: ⏳ Pending — no Mong script entries in registry yet
 
 #### 1b. Mongolian synth-v3 extract — target: 50 images
 
@@ -353,13 +369,13 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 - Labels required: `script=Latn/Hans/Jpan/Deva` (as appropriate), `open_set=false`,
   `capture_method=born_digital`
 - Acquisition: Render via Python (Pillow + curated font files) at standard DPIs
-- Status: ⏳ Pending
+- Status: ✅ 75 images registered via `synthetic_pillow_render`
 
 ---
 
 ### Phase 2: Geometry OOD (OOD-Geometry) — P0
 
-**Target: 500 images total**
+**Target: 500 images total** | **Acquired: 1,740** ✅ exceeds revised target
 
 > **Specification:** The ideal OOD-Geometry set contains images where *orientation or skew
 > estimation is either inherently ambiguous or involves non-Latin orientation conventions*.
@@ -386,7 +402,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 - **Synthetic coverage**: `scripts/generate_ood_symmetric.py` (Recipe 1) — 500 images derived
   from DocLayNet train pages via center-crop (y: 20–80%, x: 10–90%) + 0°/90°/180°/270° rotation.
   Provides synthetic interim coverage at 4× the manual target while external screenshots are pending.
-- Status: ⏳ Pending manual acquisition | ✅ Synthetic script ready
+- Status: ✅ 700 synthetic images registered | ⏳ Manual acquisition pending
 
 #### 2b. Extreme perspective — target: 100 images
 
@@ -397,7 +413,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 - **Synthetic coverage**: `scripts/generate_ood_extreme_perspective.py` (Recipe 2, P0) — 500
   images with ≥15% corner displacement applied to DocLayNet pages, simulating extreme tilt.
   Synthetic extreme-perspective is a reliable analog until physical photography is available.
-- Status: ⏳ Pending manual acquisition | ✅ Synthetic script ready (P0)
+- Status: ✅ 900 images registered (local_dataset_full_pool) | ⏳ Manual photography pending
 
 #### 2c. Japanese vertical text — target: 100 images
 
@@ -432,7 +448,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 ### Phase 3: Capture OOD (OOD-Capture) — P0
 
-**Target: 600 images total**
+**Target: 600 images total** | **Acquired: 2,800** ✅ exceeds revised target
 
 > **Specification:** The ideal OOD-Capture set contains images captured by *methods that generate
 > artifacts absent from the training capture distribution*: screen recapture moiré/RGB aliasing
@@ -456,7 +472,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   Pipeline: downsample to 40–55% → sinusoidal RGB moiré overlay (freq 0.08–0.18 c/px, angle 5–15°) →
   perspective tilt 15–25° → bicubic upsample. `capture_method=screen_recapture`.
   Synthetic moiré is structurally equivalent to physical screen recapture artifacts.
-- Status: ⏳ Pending physical collection | ✅ Synthetic script ready (P1)
+- Status: ✅ 300 synthetic + 1,000 local_dataset_train_split + 900 full_pool + 300 local_copy + 200 augraphy registered | ⏳ Physical collection pending
 
 #### 3b. ADF scanner with curl artifacts — target: 150 images
 
@@ -485,7 +501,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 ### Phase 4: Degradation OOD (OOD-Degradation) — P0
 
-**Target: 800 images total**
+**Target: 800 images total** | **Acquired: 2,930** ✅ exceeds revised target
 
 > **Specification:** The ideal OOD-Degradation set contains images with *degradation combinations
 > that exceed what single-distortion IQA training covers* — specifically, compound distortions
@@ -502,20 +518,21 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 - Source: Augraphy with ≥5 simultaneous distortion types applied to training-excluded documents
 - Distortion stack: gutter-shadow + page_curl + defocus blur + noise + JPEG compression
-- Labels required: All IQA head labels (`blur_score`, `noise_score`, `contrast_score`,
-  `shadow_severity`, `warping_severity`, `compression_score`, `overall_quality`),
-  `shadow_type`, `warping_type`
-- IQA labels require human annotation (classical detectors insufficient for compound distortion)
+- Labels required: 3-dim DIQA labels (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`),
+  `shadow_severity`, `warping_severity`, `shadow_type`, `warping_type`
+- IQA labels: DIQA-5000 GT where available (weight=1.0); DeQA-Doc pseudo-labels with OOD-gated
+  sample weights for remaining images. Classical IQA detectors provide supplementary per-issue
+  signals at runtime but are not used as training labels.
 - **Synthetic coverage**: `scripts/generate_ood_compound_distortion.py` (Recipe 5, P0) — 500
   images. Uses OpenCV-native distortion stacking (NOT the same Augraphy pipeline as IQA training),
   satisfying the mandatory different-augmentation-engine requirement above.
-- Status: ⏳ Pending human IQA annotation | ✅ Synthetic script ready (P0)
+- Status: ✅ 500 albumentations_compound + 1,000 synthetic_generation registered | ⏳ Human IQA annotation pending
 
 #### 4b. Watermarked documents — target: 100 images
 
 - Source: Public government forms with official watermarks + synthetic watermark overlay
 - Labels required: `watermark_severity` (0.0–1.0, human-labeled)
-- Status: ⏳ Pending
+- Status: ✅ 100 images registered via `pil_watermark` (100 `watermark_severity` labels)
 
 #### 4c. Book gutter shadow (hard shadow gradient) — target: 100 images
 
@@ -524,7 +541,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   distinct gradient curve not present in training data
 - Labels required: `shadow_severity`, `shadow_type=hard`, `warping_type=page_curl`
 - Cross-category: OOD-Mixed
-- Status: ⏳ Pending
+- Status: ✅ 80 `synthetic_composite_shadow` registered (580 total shadow_severity labels in registry)
 
 #### 4d. Binarized (1-bit) documents — target: 100 images
 
@@ -546,7 +563,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   5. Contrast reduction (factor 0.55–0.75) → moderate mid-gray flatten
   6. Convert back to 3-channel grayscale
 - Labels generated: `capture_method=fax`, `color_mode=binarized`,
-  `noise_score` (0.60–0.70), `compression_score` (0.65–0.75), `contrast_score`
+  `iqa_overall` (DeQA-Doc pseudo-label), `iqa_sharpness`, `iqa_color_fidelity`
 - Wild condition: `fax_artifacts` — ~0% training coverage; distinct halftone texture not
   present in any IQA training dataset
 - Cross-category: Overlap with 4d (binarized) — both set `color_mode=binarized`
@@ -559,7 +576,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 ### Phase 5: Handwriting OOD (OOD-Handwriting) — P0
 
-**Target: 500 images total**
+**Target: 500 images total** | **Acquired: 1,990** ✅ exceeds revised target
 
 > **Specification:** The ideal OOD-Handwriting set contains images with *handwriting from script
 > families absent or severely underrepresented in training* (Arabic cursive, CJK full-page,
@@ -584,7 +601,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 - **ILLEGIBLE coverage**: Select 20+ pages with `handwriting_legibility=ILLEGIBLE` to cover
   this class that is absent from training data
 - Dedup required: Against any Arabic handwriting training data
-- Status: ⏳ Pending
+- Status: ✅ ~400 KHATT images registered via `local_dataset_copy` | ⚠️ `handwriting_legibility` labels still needed (only 15 in registry)
 
 #### 5b. CASIA-HWDB CJK handwritten — target: 150 images
 
@@ -593,14 +610,14 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 - Acquisition: Download + sample 150 pages not in training split
 - Labels required: `handwriting_presence=SUBSTANTIAL`, `handwriting_presence_score`,
   `handwriting_legibility`, `handwriting_content_type`
-- Status: ⏳ Pending — access request may require 2–4 weeks
+- Status: ✅ ~50 CASIA-HWDB2 images registered via `local_dataset_copy` | ⏳ Remaining 100 pending
 
 #### 5c. IIIT-INDIC Devanagari handwritten — target: 100 images
 
 - Source: IIIT-INDIC dataset (public access)
 - Acquisition: Download + sample 100 pages
 - Labels required: `handwriting_presence=SUBSTANTIAL`, `script=Deva`, `text_direction=ltr`
-- Status: ⏳ Pending
+- Status: ✅ ~500 IIIT-INDIC images registered via `local_dataset_copy`
 
 #### 5d. Specialized content handwriting — target: 50 images
 
@@ -614,7 +631,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 
 ### Phase 6: Resolution OOD (OOD-Resolution) — P0
 
-**Target: 500 images total**
+**Target: 500 images total** | **Acquired: 365** ⚠️ 73% of current target, labels pending
 
 > **Specification:** The ideal OOD-Resolution set contains images that expose the *resolution
 > paradox*: cases where the character height measurement signal is artificially inflated or where
@@ -640,7 +657,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   Selects 100 DocLayNet train pages and downsamples each to 72 DPI (`very_low`), 100 DPI
   (`very_low`), and 150 DPI (`low`) via `cv2.INTER_AREA` resize (scale = target_dpi / 300).
   Dedup run against registry before registration. Source pages not in training split only.
-- Status: ⏳ Pending manual PyMuPDF render pipeline | ✅ Synthetic script ready (P2)
+- Status: ✅ 12 images registered (4 each at 72/150/300 DPI via `doclaynet_local_pdf_*`) | ⏳ Remaining 288 pending full PyMuPDF pipeline
 
 #### 6b. Upscaled rasters — target: 200 images
 
@@ -657,13 +674,13 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
   `resolution_quality=upscaled_artifact`. Source images are DocLayNet-derived (not OHR-Bench as
   originally specified); dedup handles any training overlap. Supplement with OHR-Bench once
   available for the non-synthetic upscale artifact coverage this section originally intended.
-- Status: ⏳ Pending OHR-Bench pipeline | ✅ Synthetic DocLayNet-based script ready (P2)
+- Status: ✅ 353 images registered (199 `ohr_bench_bicubic_2x` + 154 `ohr_bench_bicubic_4x`) | ⚠️ `resolution_quality` GT labels still pending (run `label_resolution_quality.py`)
 
 ---
 
 ### Phase 7: Domain OOD (OOD-Domain) — P1 (smoke test is P0)
 
-**Target: 500 images total** (revised target: 2,200+ for statistical validity)
+**Target: 500 images total** (revised target: 2,200+ for statistical validity) | **Acquired: 959** ⚠️ 44% of revised target
 
 > **Specification:** The ideal OOD-Domain set contains images from *document domains that are
 > absent or severely underrepresented in the training domain distribution*: non-English government
@@ -682,7 +699,7 @@ Before full OOD-Domain acquisition, run a domain smoke test:
 - Run all 22 heads at inference
 - Establish baseline coverage and failure modes
 - Required gate before declaring OOD-Domain acquisition viable
-- Status: ❌ Not yet run
+- Status: ✅ 99 ArXiv PDF pages registered via `arxiv_pdf_render` — smoke test coverage available
 
 This is re-prioritized to P0 (from P1) per corpus review 2026-02-21: 100 ArXiv PDFs are
 trivially acquirable and test all 22 heads simultaneously on a novel born-digital domain.
@@ -716,7 +733,7 @@ This unblocks domain coverage analysis before committing to the full 500-image a
 
 ### Phase 8: Code OOD (OOD-Code) — P0
 
-**Target: 200 images total**
+**Target: 200 images total** | **Acquired: 500** ✅ exceeds revised target
 
 > **Specification:** The ideal OOD-Code set contains code images from *rendering environments
 > outside the synthetic PIL+Pygments pipeline used in training*: IDE/GitHub screenshots with UI
@@ -742,7 +759,7 @@ design. This category provides dedicated code document evaluation.
   Variations: light/dark theme, font sizes 10/12/14 pt, with/without line numbers.
   Source is the project's own codebase (not IDE screenshots as originally specified); provides
   clean synthetic coverage at 3× the manual target while external IDE screenshots are pending.
-- Status: ⏳ Pending external IDE screenshot pipeline | ✅ Synthetic script ready (P1)
+- Status: ✅ 424 synthetic images registered (`synthetic_generation`) + 4 Playwright screenshots | ⏳ External IDE screenshots pending
 
 #### 8b. Mixed prose + code documents — target: 60 images
 
@@ -754,7 +771,7 @@ design. This category provides dedicated code document evaluation.
   detecting fenced code blocks (` ``` `) and rendering them with a shaded background.
   `code_confidence` is set by code-block area ratio: 0.0–0.3 (prose-dominant), 0.3–0.5
   (mixed), 0.5–1.0 (code-dominant). Good boundary-case coverage for the 0.3–0.7 confidence range.
-- Status: ⏳ Pending arXiv/Jupyter pipeline | ✅ Synthetic script ready (P1)
+- Status: ✅ 46 `arxiv_pdf_code_page` images registered | ⏳ Jupyter pipeline pending
 
 #### 8c. Terminal/console output — target: 40 images
 
@@ -762,7 +779,7 @@ design. This category provides dedicated code document evaluation.
 - Acquisition: Automated screenshot pipeline (monospace-only, no prose context)
 - Labels required: `code_confidence=1.0`, `capture_method=camera_smartphone` or
   `born_digital`, `color_mode=color`
-- Status: ⏳ Pending
+- Status: ✅ 20 `terminal_pil_render` images registered | ⏳ Additional terminal screenshots pending
 
 ---
 
@@ -887,15 +904,15 @@ page attribute heads, with some specifically testing cross-model cascade behavio
 
 - **OOD dimension**: Compound degradation stack (blur + noise + contrast + skew + compression)
   combined with asymmetric book gutter shadow gradient (sd7k is flat-only, so gutter = OOD)
-- **Heads stressed**: ALL SIG-G1 IQA heads (G1-1 to G1-6), SIG-G5-2 (shadow_reg), SIG-G5-3 (warping_reg)
+- **Heads stressed**: ALL SIG-G1 IQA heads (G1-1 iqa_overall, G1-2 iqa_sharpness, G1-3 iqa_color_fidelity), SIG-G5-2 (shadow_reg), SIG-G5-3 (warping_reg)
 - **Critical requirement**: Must use a *different* augmentation engine from training Augraphy
   pipeline. This is mandatory — images assembled from the same Augraphy pipeline used in IQA
   training will not measure OOD generalization.
 - **Performance targets**:
-  - SIG-G1-6 (overall_quality): VQualA ≥ 0.60 (floor) on these compound cases
+  - SIG-G1-1 (iqa_overall): VQualA ≥ 0.60 (floor) on these compound cases
   - SIG-G5-2 (shadow_reg): MAE < 0.25 (harder than flat-shadow IQA training data)
-- **Label requirements**: All 6 IQA scores, `shadow_severity`, `shadow_type=book_gutter`,
-  `warping_type` (combination), `color_mode`, `document_age`
+- **Label requirements**: 3-dim DIQA scores (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`),
+  `shadow_severity`, `shadow_type=book_gutter`, `warping_type` (combination), `color_mode`, `document_age`
 - **`ood_categories`**: `["ood_degradation", "ood_mixed"]`
 - **`evaluation_pipeline_stage`**: `["siglip2"]`
 
@@ -919,12 +936,12 @@ page attribute heads, with some specifically testing cross-model cascade behavio
 - **OOD dimension**: Historical document degradation (yellowing + foxing) combined with fax
   halftone screening and visible reverse-side bleed-through — compound degradation not
   represented in IQA training data
-- **Heads stressed**: ALL SIG-G1 IQA heads, particularly G1-6 (overall_quality)
+- **Heads stressed**: ALL SIG-G1 IQA heads, particularly G1-1 (iqa_overall)
 - **Performance targets**:
-  - SIG-G1-6: VQualA ≥ 0.60 (floor); correctly assign POOR or ILLEGIBLE quality rating
-  - SIG-G1-1 (blur_score): must not over-penalize halftone screening as motion blur
-- **Label requirements**: All 6 IQA scores, `document_age=historical`, `color_mode`,
-  `capture_method` (likely fax or scanner_flatbed)
+  - SIG-G1-1 (iqa_overall): VQualA ≥ 0.60 (floor); correctly assign POOR or ILLEGIBLE quality rating
+  - SIG-G1-2 (iqa_sharpness): must not over-penalize halftone screening as motion blur
+- **Label requirements**: 3-dim DIQA scores (`iqa_overall`, `iqa_sharpness`, `iqa_color_fidelity`),
+  `document_age=historical`, `color_mode`, `capture_method` (likely fax or scanner_flatbed)
 - **`ood_categories`**: `["ood_degradation", "ood_domain", "ood_mixed"]`
 - **`evaluation_pipeline_stage`**: `["siglip2"]`
 
@@ -958,13 +975,13 @@ signal is calibrated per-script.
 - **OOD dimension**: Arabic RTL script (in training but uncommon) with binarized color mode
   (eliminates shadow measurement) and extreme JPEG compression (quality < 40)
 - **Heads stressed**: SIG-G2-1 (must still identify Arabic despite binarization + JPEG),
-  SIG-G1-5 (compression_score), SIG-G5-2 (`shadow_unmeasurable` flag expected)
+  SIG-G1-1 (iqa_overall), SIG-G1-2 (iqa_sharpness), SIG-G5-2 (`shadow_unmeasurable` flag expected)
 - **Performance targets**:
   - SIG-G2-1: ≥ 75% accuracy on Arabic despite binarization + JPEG
   - SIG-G5-2: must flag `shadow_unmeasurable=True` (not produce invalid severity estimate)
-  - SIG-G1-5: correctly assign high compression_score despite binarization artifact
+  - SIG-G1-1: iqa_overall should reflect severe degradation from binarization + JPEG
 - **Label requirements**: `script=Arab`, `text_direction=rtl`, `color_mode=binarized`,
-  `compression_score` (human-labeled), `shadow_unmeasurable=True`
+  3-dim DIQA scores (DeQA-Doc pseudo-labeled), `shadow_unmeasurable=True`
 - **`ood_categories`**: `["ood_script", "ood_degradation", "ood_mixed"]`
 - **`evaluation_pipeline_stage`**: `["siglip2"]`
 
@@ -1131,12 +1148,10 @@ Minimal required fields for every entry:
   "dedup_date": "2026-02-21",
   "evaluation_pipeline_stage": ["mobilenetv4", "siglip2"],
   "ground_truth": {
-    "blur_score": null,
-    "noise_score": null,
-    "contrast_score": null,
-    "compression_score": null,
-    "skew_score": null,
-    "overall_quality": null,
+    "iqa_overall": null,
+    "iqa_sharpness": null,
+    "iqa_color_fidelity": null,
+    "iqa_sample_weight": null,
     "script": "Mong",
     "open_set": true,
     "orientation": 0,
@@ -1169,6 +1184,51 @@ Minimal required fields for every entry:
 
 ---
 
+## OOD Detection Infrastructure
+
+The following OOD detection and evaluation infrastructure has been implemented on branch
+`feat/ood-cross-model-agreement`:
+
+- **OOD Detector**: `src/image_preprocessing_detector/detection/ood_detector.py` — Mahalanobis
+  distance-based OOD detection in SigLIP 2 embedding space (AUROC 0.9963 on DIQA-5000 test vs
+  synthetic OOD). See [CROSS_MODEL_AGREEMENT_SYSTEM.md](../planning/CROSS_MODEL_AGREEMENT_SYSTEM.md).
+- **Cross-Model Validator**: `src/image_preprocessing_detector/detection/cross_model_validator.py`
+  — Two-tier reliability detection (embedding distance + cross-model agreement scoring)
+- **Cross-Model Calibration**: `src/image_preprocessing_detector/detection/cross_model_calibration.py`
+  — Temperature scaling and calibration for cross-model agreement
+- **OOD Evaluation Script**: `scripts/evaluate_ood_detection.py` — Evaluate OOD detection
+  performance on the registered OOD corpus
+- **OOD POC Dataset**: `scripts/generate_ood_poc_dataset.py` — Generate proof-of-concept OOD
+  evaluation datasets
+- **SigLIP 2 Embedding Extraction**: `scripts/extract_siglip2_embeddings.py` — Extract embeddings
+  for Mahalanobis distance computation
+- **DeQA-Doc Pseudo-Labeling**: `scripts/generate_diqa_pseudo_labels.py` + `scripts/gate_diqa_pseudo_labels.py`
+  — OOD-gated pseudo-label pipeline. See [DEQA_DOC_PSEUDO_LABELING.md](../planning/DEQA_DOC_PSEUDO_LABELING.md).
+
+### Registry Utilities
+
+- **ood_utils.py** (`scripts/ood_utils.py`): `load_ood_registry(path)` → `(sha_set, phash_list)`;
+  `append_registry_entry(entry, registry_path)`; `is_duplicate(sha256, phash, sha_set, phash_list)`
+- **Domain enrichment**: `scripts/enrich_ood_domain.py` — all 9,170 records enriched with
+  `enrichment.domain_level1`
+- **CC-OCR harvest**: `scripts/harvest_ood_cc_ocr.py` — Hang(147), Cyrl(149), Arab(100), Jpan(50)
+  ood_script + 100 ood_domain
+- **Dataset builder**: `scripts/build_ood_dataset.py` — Assemble OOD evaluation sets from registry
+
+### GT Schema Migration Note
+
+The entry template in this catalog uses the target DIQA 3-dim schema (`iqa_overall`,
+`iqa_sharpness`, `iqa_color_fidelity`, `iqa_sample_weight`). The current registry
+(`ood_registry.jsonl`) still uses the legacy 6-head schema (`blur_score`, `noise_score`,
+`contrast_score`, `compression_score`, `skew_score`, `overall_quality`). A schema migration
+script is needed to:
+
+1. Map legacy fields to DIQA dimensions via DeQA-Doc pseudo-labeling
+2. Add `iqa_sample_weight` from OOD gating (Mahalanobis distance threshold)
+3. Retain legacy fields as supplementary metadata during transition
+
+---
+
 ## Notes
 
 - All OOD images must be stored on E: drive under `/mnt/e/image_detection/ood/`
@@ -1180,3 +1240,51 @@ Minimal required fields for every entry:
 - Acquisition progress updated monthly or after each acquisition phase
 - After any new training dataset is added, re-run dedup protocol
   (see [Dedup Re-run Protocol](../planning/OOD_DATASET_DESIGN.md#dedup-re-run-protocol))
+
+## Domain Enrichment Summary
+
+All 9,170 registry entries have been enriched with `enrichment.domain_level1` labels.
+See `OOD_COVERAGE_GAP_REPORT.md` for full breakdown.
+
+| Domain | Count | % | Description |
+|--------|-------|---|-------------|
+| EDU | 2,724 | 29.7% | Educational / linguistic corpora, handwriting, scripts |
+| UNK | 2,070 | 22.6% | DocSynth300K-derived (no category metadata), SD7K manga |
+| GOV | 1,264 | 13.8% | Government forms, ID documents, tenders |
+| TEC | 975 | 10.6% | Code screenshots, terminals, patents, manuals |
+| SCI | 747 | 8.2% | arXiv papers, academic documents |
+| FIN | 640 | 7.0% | Financial reports, corporate documents |
+| SCN | 500 | 5.5% | Natural scene text (HierText street photos) |
+| LGL | 235 | 2.6% | Laws, regulations (DocLayNet) |
+| HIST | 15 | 0.2% | Historical documents |
+| MED | 0 | 0.0% | Not yet acquired |
+| REL | 0 | 0.0% | Not yet acquired |
+
+## Script Coverage
+
+| Script | ISO | Count | Notes |
+|--------|-----|-------|-------|
+| Hans (Simplified Chinese) | Hans | 300 | |
+| Latin | Latn | 207 | Includes Fraktur subset |
+| Cyrillic | Cyrl | 149 | Added via CC-OCR harvest |
+| Hangul (Korean) | Hang | 147 | Added via CC-OCR harvest |
+| Arabic | Arab | 106 | Includes Ottoman Arabic |
+| Japanese | Jpan | 65 | |
+| Malayalam | Mlym | 24 | |
+| Gurmukhi (Punjabi) | Guru | 21 | |
+| Kannada | Knda | 18 | |
+| Thai | Thai | 12 | |
+| Bengali | Beng | 11 | |
+| Telugu | Telu | 9 | |
+| Devanagari | Deva | 8 | |
+| Oriya | Orya | 8 | |
+| Tamil | Taml | 6 | |
+| Armenian | Armn | 5 | Phase 2 preview script |
+| Gothic | Goth | 5 | Historical script |
+| Georgian | Geor | 5 | **Reserved script** — must remain OOD-only |
+| Gujarati | Gujr | 4 | |
+
+**Note on reserved scripts**: Georgian (Geor) now has 5 images in registry. Per the
+[Script Reservation Policy](../planning/OOD_DATASET_DESIGN.md#script-reservation-policy),
+Mongolian (Mong), Syriac (Syrc), and Georgian (Geor) must NEVER appear in training manifests.
+Mongolian and Syriac have 0 entries — acquisition still pending.

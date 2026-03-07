@@ -106,8 +106,9 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 
 | Schema Field | Current Model | Proposed Model | Task Type | Priority |
 |---|---|---|---|---|
-| **IQA: blur/noise/contrast/skew/compression** | ResNet-18 student | SigLIP 2 Head Group 1 | 5x regression (0-1) | P0 |
-| **IQA: overall_quality** | ResNet-18 student | SigLIP 2 Head Group 1 | 1x regression (0-1) | P0 |
+| **IQA: overall quality** | ResNet-18 student | SigLIP 2 Head Group 1 | 1x regression (0-1, DIQA-aligned) | P0 |
+| **IQA: sharpness** | NONE (gap) | SigLIP 2 Head Group 1 | 1x regression (0-1, DIQA-aligned) | P0 |
+| **IQA: color fidelity** | NONE (gap) | SigLIP 2 Head Group 1 | 1x regression (0-1, DIQA-aligned) | P0 |
 | **Script: script_code (ISO 15924)** | NONE (gap) | SigLIP 2 Head Group 2 | Classification (10 classes Phase 1, full OpenLID Phase 2+; Mong/Syrc/Geor OOD-reserved) | P0 |
 | **Script: script_family, has_non_latin, has_rtl** | NONE (gap) | Derived from script_code | Rule-based derivation | P0 |
 | **Orientation: detected_angle (0/90/180/270)** | Classical CV ensemble | SigLIP 2 Head Group 3 | Classification (4 classes) | P1 |
@@ -135,9 +136,9 @@ Total: ~55-65ms GPU (3ms MobileNet + 50ms SigLIP + overhead)
 
 ### What SigLIP 2 NAFlex handles (single inference pass, ~50ms GPU)
 
-**19 task heads across 5 head groups:**
+**16 task heads across 5 head groups:**
 
-- **Group 1 (IQA)**: 5 regression heads (blur, noise, contrast, skew, compression) + overall_quality
+- **Group 1 (IQA)**: 3 DIQA-aligned regression heads (overall, sharpness, color_fidelity). Labels: DIQA-5000 GT + DeQA-Doc pseudo-labels with OOD-gated sample weights. Individual degradation heads (blur, noise, contrast, skew, compression) deferred to Phase F.
 - **Group 2 (Script)**: 1 classification head (10 classes Phase 1, expanding to full OpenLID coverage; Mong/Syrc/Geor permanently excluded as OOD anchors)
 - **Group 3 (Orientation + Skew)**: 1 classification head (4 classes: 0/90/180/270) + 1 regression head (fine skew in degrees)
 - **Group 4 (Handwriting)**: 3 classification heads (presence, legibility, content_type) + 2 regression (presence_score, legibility_score)
@@ -169,9 +170,10 @@ SigLIP 2 ViT-B/16 Backbone (86M params, 784 max patches)
     |
 Shared Feature Vector (768-dim)
     |
-    +---> Group 1: IQA Heads (5 regression + 1 aggregate)
-    |     - blur_score, noise_score, contrast_score, skew_score, compression_score
+    +---> Group 1: IQA Heads (3 DIQA-aligned regression)
+    |     - iqa_overall, iqa_sharpness, iqa_color_fidelity
     |     - Each: Linear(768->256) -> ReLU -> Dropout(0.3) -> Linear(256->2) [mu, sigma_sq]
+    |     - Labels: DIQA-5000 GT (weight=1.0) + DeQA-Doc pseudo-labels (OOD-gated weights)
     |
     +---> Group 2: Script Detection Head (1 classification)
     |     - Linear(768->256) -> ReLU -> Dropout(0.3) -> Linear(256->N_scripts)
@@ -200,7 +202,7 @@ Shared Feature Vector (768-dim)
           - resolution_quality_reg: Linear(768->128) -> Linear(128->1) [0-1, char-height-aware]
             (Redundant with MobileNetV4 head; provides teacher signal + validation)
 
-Total: ~101M params (86M backbone + ~15M heads)
+Total: ~100M params (86M backbone + ~14M heads)
 Inference: ~50ms on A10 GPU, ~300-500ms CPU (single-pass; see Section 0.1 for two-pass option)
 ```
 
@@ -225,7 +227,7 @@ CORRECTIONS (gated by confidence):
     |
     v  (corrected image)
 [SigLIP 2 Multi-Task] (50ms GPU) ---- FULL ANALYSIS ----
-    |  Group 1: IQA (6 regression)
+    |  Group 1: IQA (3 DIQA-aligned regression: overall, sharpness, color_fidelity)
     |  Group 2: Script (1 classification)
     |  Group 3: Orientation + Skew (1 cls + 1 reg) -- validates MobileNetV4
     |  Group 4: Handwriting (3 cls + 2 reg)
@@ -250,24 +252,24 @@ Total CPU fallback: ~500-600ms (SigLIP handles everything in single-pass)
 
 ## 3. Training Datasets by Task Group
 
-### Group 1: IQA (6 regression heads: 5 individual + 1 aggregate)
+### Group 1: IQA (3 regression heads: overall, sharpness, color_fidelity)
 
-**Status**: Training data ready. SigLIP 2 already trained on DIQA-5000 (VQualA 0.886).
+**Status**: DIQA-aligned 3-dim scheme adopted. DeQA-Doc pseudo-labeling pipeline built.
+
+**Decision (2026-03-06)**: The aspirational 6-head IQA scheme (blur, noise, contrast, skew, compression, overall_quality) is **deferred to Phase F** due to the lack of viable human-labeled training data for individual degradation types. The 3-dimension DIQA scheme (overall, sharpness, color_fidelity) is adopted as the current IQA architecture, aligned with DIQA-5000 ground truth and the VQualA 2025 champion DeQA-Doc models.
 
 | Dataset | Images | Labels | Status | Notes |
 |---|---|---|---|---|
-| **DIQA-5000** | 5,500 | Human MOS 1-5, 3 dimensions (overall, sharpness, color) | Ready | Only dataset with 3-dim document MOS |
-| **OHR-Bench** | 8,561 | Quality scores 0-100, 7 domains | Ready | Page-level scores, PDF extraction needed |
-| **RealDAE** | 1,200 | Before/after pairs, degradation types | Ready | Good for degradation-specific scoring |
-| **OCR-Quality** | 1,000 | Human quality 1-4, Chinese/multilingual | Ready | Cross-validation for DeQA-Doc |
-| **DIBCO** | 131 | Binarization ground truth | Ready | Extreme degradation edge cases |
-| **Total ready** | **~16,300** | | | |
+| **DIQA-5000** | 5,500 | Human MOS 1-5, 3 dimensions (overall, sharpness, color) | Ready | Ground truth, weight=1.0 |
+| **Unified corpus (pseudo-labeled)** | ~50K+ | DeQA-Doc per-dimension mPLUG-Owl2-7B soft labels | Pipeline ready | OOD-gated sample weights (0.0-1.0) |
+| **OHR-Bench** | 8,561 | Quality scores 0-100, 7 domains | Ready | Pseudo-labeled via DeQA-Doc |
+| **RealDAE** | 1,200 | Before/after pairs, degradation types | Ready | Pseudo-labeled via DeQA-Doc |
 
-**Gap**: Current IQA heads predict overall/sharpness/color (DIQA-5000 scheme). Need to map to blur/noise/contrast/skew/compression (ResNet scheme) OR adopt the 3-dim scheme for DQS. The unified labeling strategy (UNIFIED_LABELING_STRATEGY.md) provides the pipeline for pseudo-labeling 2.5M images via DocIQ-Replica distillation.
+**Pseudo-labeling pipeline**: DeQA-Doc (VQualA 2025 champion) per-dimension models generate soft probability distributions [excellent, good, fair, poor, bad] for each image. OOD gating via Mahalanobis distance (AUROC 0.9963) assigns sample weights: AUTO_ACCEPT (1.0), LOW_WEIGHT (0.5), TIER2_TRIGGER (0.3), HARD_REJECT (0.0). DIQA-5000 GT always overrides pseudo-labels. See `docs/planning/DEQA_DOC_PSEUDO_LABELING.md`.
 
-**Data sufficiency**: ~16K images is sufficient for the 3-dimension IQA task (SigLIP already achieves VQualA 0.886 on DIQA-5000 alone). If expanding to 5-dimension IQA (blur/noise/contrast/skew/compression), additional pseudo-labeled data (~50-100K) will be needed via the DocIQ-Replica pipeline. The previously planned "IQA Phase 7 165K" dataset has been determined to be flawed and is excluded.
+**DQS integration**: The DQS calculator blends all 3 SigLIP 2 IQA dimensions with classical IQA detectors: `ml_quality = 0.60 * overall + 0.25 * sharpness + 0.15 * color_fidelity`. Classical detectors (blur, noise, contrast, etc.) continue to provide granular per-issue signals for corrections.
 
-**Recommendation**: Train with DIQA-5000 3-dim scheme (overall, sharpness, color) as primary quality scores. Classical IQA (8 detectors) continues to provide specific issue detection (blur, noise, skew etc.) and triggers corrections. SigLIP 2 IQA replaces ResNet for the aggregate quality signal that feeds DQS.
+**Phase F (future)**: Individual degradation heads (blur, noise, contrast, compression) will be added when paired-degradation training datasets with calibrated severity labels are available. See `docs/planning/DEQA_DOC_PSEUDO_LABELING.md` for the future phase definition.
 
 ### Group 2: Script Detection (10+ classes, expanding to full OpenLID)
 
@@ -438,7 +440,7 @@ The orientation head handles 90-degree increment rotations. The skew head detect
 
 | Phase | Head Groups | Datasets | Duration | Prerequisite |
 |---|---|---|---|---|
-| **Phase 1: IQA** | Group 1 only | DIQA-5000 + OHR-Bench (~16K) | 2 weeks | None (already done, VQualA 0.886) |
+| **Phase 1: IQA** | Group 1 only (3 DIQA dims) | DIQA-5000 GT (3.5K) + DeQA-Doc pseudo-labeled corpus (~50K+, OOD-gated) | 2 weeks | DeQA-Doc pseudo-labeling pipeline |
 | **Phase 2: + Script** | Groups 1+2 | Add MDIW13 + SIW13 + CVSI (~260K) | 3 weeks | Script class config |
 | **Phase 3: + Handwriting** | Groups 1+2+4 | Add HierText + COCO-Text + IAM (~100K) | 2 weeks | Label harmonization |
 | **Phase 4: + Orientation + Skew** | Groups 1+2+3+4 | Add orientation (50K) + skew (40K) datasets | 2 weeks | Dataset generation (10 days) |
@@ -455,7 +457,7 @@ The orientation head handles 90-degree increment rotations. The skew head detect
 
 ### Key training decisions
 
-- **Loss functions**: NormInNormLoss + GaussianNLL for IQA regression, CrossEntropy (class-weighted) for classifications, SmoothL1 for continuous regressions
+- **Loss functions**: NormInNormLoss + GaussianNLL for IQA regression (weighted by OOD-gated sample weights for pseudo-labeled data), CrossEntropy (class-weighted) for classifications, SmoothL1 for continuous regressions
 - **Class imbalance**: Balanced batch sampler for script (Latin 40% vs Hebrew 1%) and handwriting (NONE ~60% vs DOMINANT ~2%)
 - **Multi-task conflicts**: PCGrad with gradient accumulation; per-task early stopping; LLRD (layer-wise learning rate decay)
 - **Validation**: Separate val metrics per task group. Tibetan validated only on real samples (5-fold CV on 200 samples)
@@ -484,7 +486,7 @@ The current routing logic (4 strategies: ocr_fast, ocr_advanced, vision_simple, 
 | **code_confidence > 0.5** | `enrich_code: true` | Enable code syntax detection |
 | **orientation != 0** | Auto-rotate before OCR | Correct page orientation |
 | **capture_method = CAMERA_*** | Expect perspective/shadow artifacts | Adjust correction thresholds |
-| **IQA overall < 0.5** | `ocr_routing: "vision_structured"` | Low quality needs vision model |
+| **IQA overall (DIQA) < 0.5** | `ocr_routing: "vision_structured"` | Low quality needs vision model |
 
 ### Enhanced pre_ocr_risk formula (updated with script/handwriting)
 
@@ -562,7 +564,7 @@ pre_ocr_risk = 0.30 * degradation_score        # from IQA
 
 | Phase | Key Metric | Target | Validation Set |
 |---|---|---|---|
-| Phase 1 (IQA) | VQualA | >= 0.92 | DIQA-5000 test (1,000) |
+| Phase 1 (IQA, 3-dim DIQA) | VQualA (per-dim) | >= 0.92 overall, >= 0.88 sharpness, >= 0.85 color | DIQA-5000 test (1,000) |
 | Phase 2 (Script) | Overall accuracy | >= 90% | MLT19 test + held-out MDIW13 |
 | Phase 2 (Script) | Tibetan accuracy (real only) | >= 80% | 5-fold CV on 200 real samples |
 | Phase 3 (Handwriting) | Presence accuracy | >= 88% | HierText val + COCO-Text val |
