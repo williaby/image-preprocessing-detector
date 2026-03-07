@@ -67,7 +67,7 @@ def _load_model(
         )
         config = ONNXSessionConfig(provider=provider)
         runner = ONNXModelRunner(model_path=model_path, config=config)
-    except (FileNotFoundError, ValueError, OSError, ImportError, RuntimeError) as exc:
+    except (FileNotFoundError, ValueError, OSError, ImportError) as exc:
         logger.warning("Failed to load %s model from %s: %s", label, model_path, exc)
         return None
     else:

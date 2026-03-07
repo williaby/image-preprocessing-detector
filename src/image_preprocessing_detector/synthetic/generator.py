@@ -1596,7 +1596,7 @@ class MultiScriptDocumentGenerator:
 
     def _collect_font_families(
         self,
-        all_scripts: set[str],  # noqa: ARG002
+        _all_scripts: set[str],
         renderer: Any | None = None,
     ) -> tuple[list[str], list[str]]:
         """Collect font families and styles actually used during rendering.
