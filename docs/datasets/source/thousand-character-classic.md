@@ -1,6 +1,6 @@
 ### Thousand Character Classic (千字文)
 
-> **Quick Stats**: 357 images | Historical CJK calligraphy | 6 script styles, 3 writing traditions
+> **Quick Stats**: 415 images | Historical CJK calligraphy | 6 script styles, 3 writing traditions
 >
 > **License**: Mixed per-image (CC0, CC BY 4.0, Public Domain, KOGL) | **Commercial Use**: Mostly yes (per-image tracking)
 
@@ -38,11 +38,11 @@
 
 | Source | Expected Images | License | Acquisition Method |
 |--------|---------------:|---------|-------------------|
-| **Wikimedia Commons** | 142 | Public Domain / CC BY | MediaWiki API |
+| **Wikimedia Commons** | 144 | Public Domain / CC BY | MediaWiki API |
 | **Met Museum** | 22 | CC0 | Met Open Access API |
 | **NPM Taipei** | 0 | CC0 / CC BY 4.0 | NPM Digital Archive (not harvested) |
 | **Kyoto University** | 0 | CC BY | IIIF endpoints moved (404) |
-| **NDL Japan** | 193 | NDL Open | IIIF Manifests |
+| **NDL Japan** | 249 | NDL Open | IIIF Manifests |
 | **Korean institutions** | 0 | KOGL Type 1 | Not harvested |
 | **Internet Archive** | 0 | Public Domain | Not harvested |
 
@@ -189,9 +189,9 @@
 | **Ground Truth Text** | ✅ Complete | 1,000 chars + 250-line translation in `config/thousand_character_classic_text.yaml` |
 | **Harvest Script** | ✅ Complete | `scripts/harvest_thousand_character_classic.py` (6 sub-commands) |
 | **Enrichment Script** | ✅ Complete | `scripts/enrich_thousand_character_classic.py` (L2 + sidecar) |
-| **Image Download** | ✅ Complete | 357 images from 3 sources (NDL 193, Wikimedia 142, Met 22) |
-| **L2 Enrichment** | ✅ Complete | 357/357 records, 100% field coverage |
-| **Validation** | ✅ Complete | 357/357 pass schema validation (0 errors) |
+| **Image Download** | ✅ Complete | 415 images from 3 sources (NDL 249, Wikimedia 144, Met 22) |
+| **L2 Enrichment** | ✅ Complete | 415/415 records, 100% field coverage |
+| **Validation** | ✅ Complete | 415/415 pass schema validation (0 errors) |
 
 #### 11. References
 
