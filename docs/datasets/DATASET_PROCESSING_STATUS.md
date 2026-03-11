@@ -152,6 +152,7 @@ Format conversion, label extraction, or generation currently underway.
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
 | **yarmouk_source** | Unknown | 🔄 PDF→PNG | ⚠️ Needs extraction | Original PDFs | 1. Convert source PDFs<br>2. Note: yarmouk_ocr already complete | Deprioritized |
+| **thousand-character-classic** | 357 | ✅ Training-Ready | ✅ L2 complete (357/357) | Harvested from NDL (193), Wikimedia (142), Met (22) | ✅ Complete | Done |
 
 **Priority Order**:
 

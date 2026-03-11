@@ -97,6 +97,7 @@
 
 | Dataset | Images | Content | Scripts | License | Link |
 |---------|--------|---------|---------|---------|------|
+| thousand-character-classic | 357 | Historical CJK calligraphy (6 script styles, 6th-19th century) | Hant, Hani, Kore, Jpan | Mixed (CC0/CC BY/PD) | [thousand-character-classic.md](../source/thousand-character-classic.md) |
 | casia-hwdb2-line | 52,160 | Chinese handwriting line crops (height=128px) | Hans (HANS) | MIT | [casia-hwdb2-line.md](../source/casia-hwdb2-line.md) |
 | casia-hwdb2 | 5,091 pages | Full-page Chinese handwriting (300 DPI, DGRL format) | Hans (HANS) | Academic only | [casia-hwdb2.md](../source/casia-hwdb2.md) |
 | ndl-minhon | ~32,822 | Kuzushiji manuscripts — 523K line annotations with isVertical flag | Jpan (JPAN) | CC BY-SA 4.0 | [ndl-minhon.md](../source/ndl-minhon.md) |
