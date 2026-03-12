@@ -249,7 +249,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | tibhcr | 141,698 | Tibetan (47 classes) | All | Academic |
 | openpecha-ocr-drutsa | 32,364 | Tibetan OCR (Drutsa woodblock) | All | CC-BY-4.0 |
 | multilingual_scripts | 3,279 | 27 scripts (prototype) | All | MIT |
-| thousand-character-classic | 415 | CJK calligraphy (Hant/Hani/Kore/Jpan), 6 script styles | All | Mixed (CC0/CC BY/PD) |
+| thousand-character-classic | 391 | CJK calligraphy (Hant/Hani/Kore/Jpan), 6 script styles | All | Mixed (CC0/CC BY/PD) |
 | jssoda | 2,000 | Japanese (vert + horiz) | All | CC-BY-4.0 |
 | vjroda | ~100 | Japanese vertical (govt docs, OOD eval) | OOD eval only | CC-BY-4.0 |
 | ndl-docl | 2,290 | Japanese historical (kotenseki + kindai) | All | CC-BY-4.0 |
@@ -304,7 +304,7 @@ Key datasets with enriched capture/domain/content metadata from aggregate stats:
 | signverod | 2,765 | Scanned docs with signatures | Signature/initials/redaction/date bbox | 1,939 train / 354 test | CC0-1.0 |
 | kleister-charity | 62,029 | UK charity reports (mixed HW/typed) | KIE fields + signatures + handwriting | All | MIT |
 | popp-line | 4,794 | French census HW lines | Line transcriptions (French) | 3,835 train / 480 val / 479 test | CC-BY-4.0 |
-| thousand-character-classic | 415 | CJK calligraphy (6 script styles, 3 traditions) | Script-style-to-legibility mapping, 100% HW | All | Mixed (CC0/CC BY/PD) |
+| thousand-character-classic | 391 | CJK calligraphy (6 script styles, 3 traditions) | Script-style-to-legibility mapping, 100% HW | All | Mixed (CC0/CC BY/PD) |
 | salami | 250 | Multi-script manuscripts (8 scripts) | 20-expert legibility ratings (5-level) | All | CC-BY-4.0 |
 
 **Graded assessment sources**: HierText (word-level `handwritten` + `legible` booleans), COCO-Text (word-level `class: machine_printed|handwritten` + `legibility: legible|illegible`), and SALAMI (20-expert pixel-level legibility calibration anchor)
