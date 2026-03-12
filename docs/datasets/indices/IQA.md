@@ -51,6 +51,7 @@ These datasets don't have explicit quality scores but contain degradation/qualit
 | dibco (all variants) | 343 | Binarization ground truth | [dibco.md](../source/dibco.md) |
 | smartdoc-qa | 4,280 | Mobile capture quality | [smartdoc-qa.md](../source/smartdoc-qa.md) |
 | doc3d | 100,000 | Dewarping quality | [doc3d.md](../source/doc3d.md) |
+| john11-manuscripts | 210-520 | Historical manuscript degradation (foxing, ink fading, bleed-through, parchment aging) | [john11-manuscripts.md](../source/john11-manuscripts.md) |
 
 **Usage**: Can be used for binary classification (degraded vs clean) or pseudo-labeled via teacher model
 

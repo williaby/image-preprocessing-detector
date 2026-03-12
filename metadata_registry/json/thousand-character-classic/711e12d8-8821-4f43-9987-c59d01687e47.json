@@ -56,12 +56,35 @@
       ]
     },
     "quality": {
-      "overall_score": null,
-      "degradations": [],
-      "confidence": null,
-      "provenance_tier": "tier_3_heuristic",
+      "overall_score": 0.7266,
+      "degradations": [
+        {
+          "type": "illumination_uneven",
+          "severity": "severe",
+          "severity_numeric": 0.675,
+          "confidence": 0.95,
+          "provenance_tier": "tier_2_model",
+          "is_soft_label": true,
+          "detection_method": "regional_brightness_analysis",
+          "location": "global",
+          "region": null
+        },
+        {
+          "type": "bleed_through",
+          "severity": "severe",
+          "severity_numeric": 0.552,
+          "confidence": 0.95,
+          "provenance_tier": "tier_2_model",
+          "is_soft_label": true,
+          "detection_method": "morphological_background",
+          "location": "localized",
+          "region": null
+        }
+      ],
+      "confidence": 0.5,
+      "provenance_tier": "tier_2_model",
       "is_soft_label": true,
-      "detection_method": "pending_classical_iqa"
+      "detection_method": "classical_ensemble_8detector"
     },
     "language": {
       "language_code": "ja",
@@ -144,9 +167,9 @@
       "orientation_confidence": 0.8,
       "orientation_corrected": false,
       "orientation_detection_method": "format_type_heuristic",
-      "skew_angle_degrees": null,
-      "skew_confidence": null,
-      "skew_detection_method": null,
+      "skew_angle_degrees": 0.286,
+      "skew_confidence": 1.0,
+      "skew_detection_method": "hough_projection_ensemble",
       "confidence": 0.8,
       "provenance_tier": "tier_3_heuristic",
       "is_soft_label": true,
@@ -159,6 +182,17 @@
       "provenance_tier": "tier_0_exact",
       "is_soft_label": false,
       "detection_method": "catalog_metadata_and_pillow"
+    },
+    "sample_reliability_summary": {
+      "min_confidence": 0.5,
+      "min_confidence_field": "resolution",
+      "min_confidence_category": "active_learning",
+      "min_provenance_tier": "tier_3_heuristic",
+      "assessed_field_count": 10,
+      "unassessed_field_count": 3,
+      "unpopulated_field_count": 9,
+      "hard_field_count": 5,
+      "soft_field_count": 3
     }
   }
 }

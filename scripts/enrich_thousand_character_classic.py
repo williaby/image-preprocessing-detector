@@ -50,6 +50,7 @@ _SIDECAR_PATH = (
 _DEFAULT_IMAGE_DIR = Path(
     "/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic"
 )
+_LOCAL_IMAGE_DIR = _PROJECT_ROOT / "data" / "thousand-character-classic"
 
 logger = logging.getLogger(__name__)
 
@@ -511,6 +512,453 @@ def enrich(image_dir: Path, dry_run: bool) -> None:
     click.echo(f"\nEnrichment complete: {l2_count} L2 records, {sidecar_count} sidecar entries.")
     click.echo(f"  L2 output: {_L2_OUTPUT_DIR}")
     click.echo(f"  Sidecar: {_SIDECAR_PATH}")
+
+
+# ---------------------------------------------------------------------------
+# Classical IQA enrichment helpers
+# ---------------------------------------------------------------------------
+
+_SEVERITY_TO_NUMERIC: dict[str, float] = {
+    "low": 0.25,
+    "medium": 0.50,
+    "high": 0.75,
+    "critical": 1.0,
+}
+
+_SEVERITY_TO_CATEGORICAL: dict[str, str] = {
+    "low": "mild",
+    "medium": "moderate",
+    "high": "severe",
+    "critical": "severe",
+}
+
+_PROVENANCE_TIER_ORDER = {
+    "tier_3_heuristic": 0,
+    "tier_2_model": 1,
+    "tier_1_annotation": 2,
+    "tier_0_exact": 3,
+}
+
+
+def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
+    """Run all 8 classical IQA detectors on a single image.
+
+    Returns dict with keys: degradations, overall_score, skew_angle, skew_confidence,
+    quality_confidence.
+    """
+    import cv2
+
+    from image_preprocessing_detector.detection.iqa_classical import (
+        BinarizationQualityDetector,
+        BleedThroughDetector,
+        BlurDetector,
+        ContrastDetector,
+        IlluminationDetector,
+        JPEGBlockinessDetector,
+        NoiseDetector,
+        SkewDetector,
+    )
+
+    img = cv2.imread(str(image_path))
+    if img is None:
+        logger.warning("OpenCV failed to read: %s", image_path)
+        return {"degradations": [], "overall_score": None, "skew_angle": None,
+                "skew_confidence": None, "quality_confidence": None}
+
+    degradations: list[dict[str, Any]] = []
+    quality_scores: list[float] = []  # 0=bad, 1=good
+    confidences: list[float] = []
+    skew_angle: float | None = None
+    skew_confidence: float | None = None
+
+    # --- 1. Skew ---
+    try:
+        skew_det = SkewDetector()
+        skew_r = skew_det.detect(img)
+        skew_angle = round(skew_r.angle, 3)
+        skew_confidence = round(skew_r.confidence, 3)
+        sev_val = skew_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        # Quality = 1 - severity (no skew = high quality)
+        quality_scores.append(1.0 - sev_num)
+        confidences.append(skew_r.confidence)
+        if skew_r.is_skewed:
+            degradations.append({
+                "type": "skew",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(sev_num, 3),
+                "confidence": round(skew_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": f"hough_projection_{skew_r.method}",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Skew detection failed for %s: %s", image_path.name, exc)
+
+    # --- 2. Blur ---
+    try:
+        blur_det = BlurDetector()
+        blur_r = blur_det.detect(img)
+        sev_val = blur_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(blur_r.blur_score)
+        confidences.append(blur_r.confidence)
+        if blur_r.is_blurred:
+            degradations.append({
+                "type": "blur",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(1.0 - blur_r.blur_score, 3),
+                "confidence": round(blur_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "laplacian_variance",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Blur detection failed for %s: %s", image_path.name, exc)
+
+    # --- 3. Noise ---
+    try:
+        noise_det = NoiseDetector()
+        noise_r = noise_det.detect(img)
+        sev_val = noise_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(noise_r.noise_score)
+        confidences.append(noise_r.confidence)
+        if noise_r.is_noisy:
+            degradations.append({
+                "type": "noise",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(1.0 - noise_r.noise_score, 3),
+                "confidence": round(noise_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "wavelet_mad",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Noise detection failed for %s: %s", image_path.name, exc)
+
+    # --- 4. Contrast ---
+    try:
+        contrast_det = ContrastDetector()
+        contrast_r = contrast_det.detect(img)
+        sev_val = contrast_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(contrast_r.score)
+        confidences.append(contrast_r.confidence)
+        if contrast_r.is_low_contrast:
+            degradations.append({
+                "type": "low_contrast",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(1.0 - contrast_r.score, 3),
+                "confidence": round(contrast_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "histogram_analysis",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Contrast detection failed for %s: %s", image_path.name, exc)
+
+    # --- 5. Illumination ---
+    try:
+        illum_det = IlluminationDetector()
+        illum_r = illum_det.detect(img)
+        sev_val = illum_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(illum_r.score)
+        confidences.append(illum_r.confidence)
+        if illum_r.has_issues:
+            degradations.append({
+                "type": "illumination_uneven",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(1.0 - illum_r.score, 3),
+                "confidence": round(illum_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "regional_brightness_analysis",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Illumination detection failed for %s: %s", image_path.name, exc)
+
+    # --- 6. JPEG Blockiness ---
+    try:
+        jpeg_det = JPEGBlockinessDetector()
+        jpeg_r = jpeg_det.detect(img)
+        sev_val = jpeg_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(jpeg_r.compression_score)
+        confidences.append(jpeg_r.confidence)
+        if jpeg_r.has_artifacts:
+            degradations.append({
+                "type": "compression_artifact",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(jpeg_r.blockiness_score, 3),
+                "confidence": round(jpeg_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "dct_block_boundary",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("JPEG detection failed for %s: %s", image_path.name, exc)
+
+    # --- 7. Binarization Quality ---
+    try:
+        binar_det = BinarizationQualityDetector()
+        binar_r = binar_det.detect(img)
+        sev_val = binar_r.severity.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(binar_r.binarization_score)
+        confidences.append(binar_r.confidence)
+        if sev_val in ("medium", "high", "critical"):
+            degradations.append({
+                "type": "poor_binarization",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(1.0 - binar_r.binarization_score, 3),
+                "confidence": round(binar_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "bimodality_otsu",
+                "location": "global",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Binarization detection failed for %s: %s", image_path.name, exc)
+
+    # --- 8. Bleed-Through ---
+    try:
+        bleed_det = BleedThroughDetector()
+        bleed_r = bleed_det.detect(img)
+        sev_val = bleed_r.severity_level.value
+        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
+        quality_scores.append(1.0 - bleed_r.severity)
+        confidences.append(bleed_r.confidence)
+        if bleed_r.bleed_through_detected:
+            degradations.append({
+                "type": "bleed_through",
+                "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+                "severity_numeric": round(bleed_r.severity, 3),
+                "confidence": round(bleed_r.confidence, 3),
+                "provenance_tier": "tier_2_model",
+                "is_soft_label": True,
+                "detection_method": "morphological_background",
+                "location": "global" if bleed_r.affected_ratio > 0.3 else "localized",
+                "region": None,
+            })
+    except Exception as exc:
+        logger.warning("Bleed-through detection failed for %s: %s", image_path.name, exc)
+
+    # Compute overall quality score (mean of individual quality scores)
+    overall_score: float | None = None
+    quality_confidence: float | None = None
+    if quality_scores:
+        overall_score = round(sum(quality_scores) / len(quality_scores), 4)
+        quality_confidence = round(min(confidences) if confidences else 0.0, 3)
+
+    return {
+        "degradations": degradations,
+        "overall_score": overall_score,
+        "skew_angle": skew_angle,
+        "skew_confidence": skew_confidence,
+        "quality_confidence": quality_confidence,
+    }
+
+
+def _compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
+    """Compute sample_reliability_summary from all L2 data fields."""
+    all_fields = [
+        "capture_method", "resolution", "domain", "structure", "quality",
+        "language", "text_scope", "content_flags", "text_content",
+        "text_statistics", "handwriting_assessment", "geometric", "image_properties",
+    ]
+    total_schema_fields = 22  # Full L2 schema field count
+
+    min_conf = 1.0
+    min_conf_field: str | None = None
+    min_prov = "tier_0_exact"
+    assessed = 0
+    unassessed = 0
+    hard = 0
+    soft = 0
+
+    for field_name in all_fields:
+        field_data = data.get(field_name)
+        if not isinstance(field_data, dict):
+            continue
+
+        conf = field_data.get("confidence")
+        prov = field_data.get("provenance_tier")
+
+        if conf is not None:
+            assessed += 1
+            if conf >= 0.9:
+                hard += 1
+            elif conf >= 0.7:
+                soft += 1
+            if conf < min_conf:
+                min_conf = conf
+                min_conf_field = field_name
+        else:
+            unassessed += 1
+
+        if prov and _PROVENANCE_TIER_ORDER.get(prov, 0) < _PROVENANCE_TIER_ORDER.get(min_prov, 3):
+            min_prov = prov
+
+    unpopulated = total_schema_fields - len([f for f in all_fields if isinstance(data.get(f), dict)])
+
+    # Determine category
+    if assessed == 0:
+        category = "unassessed"
+        min_conf_val = None
+    else:
+        min_conf_val = round(min_conf, 3)
+        if min_conf >= 0.9:
+            category = "hard_label"
+        elif min_conf >= 0.7:
+            category = "soft_label"
+        elif min_conf >= 0.5:
+            category = "active_learning"
+        else:
+            category = "unreliable"
+
+    return {
+        "min_confidence": min_conf_val,
+        "min_confidence_field": min_conf_field,
+        "min_confidence_category": category,
+        "min_provenance_tier": min_prov,
+        "assessed_field_count": assessed,
+        "unassessed_field_count": unassessed,
+        "unpopulated_field_count": unpopulated,
+        "hard_field_count": hard,
+        "soft_field_count": soft,
+    }
+
+
+@cli.command("enrich-iqa")
+@click.option(
+    "--image-dir",
+    type=click.Path(path_type=Path, exists=False),
+    default=None,
+    help="Base directory containing images. Auto-detects local data/ or E: drive.",
+)
+@click.option("--dry-run", is_flag=True, help="Preview without writing files.")
+def enrich_iqa(image_dir: Path | None, dry_run: bool) -> None:
+    """Run classical IQA detectors on all images and update L2 records.
+
+    Populates: quality.overall_score, quality.degradations[],
+    geometric.skew_angle_degrees, sample_reliability_summary.
+    """
+    # Auto-detect image directory
+    if image_dir is None:
+        if _LOCAL_IMAGE_DIR.exists():
+            image_dir = _LOCAL_IMAGE_DIR
+        elif _DEFAULT_IMAGE_DIR.exists():
+            image_dir = _DEFAULT_IMAGE_DIR
+        else:
+            click.echo("No image directory found. Use --image-dir to specify.")
+            return
+
+    click.echo(f"Image directory: {image_dir}")
+
+    entries = _load_registry()
+    if not entries:
+        click.echo("Registry is empty.")
+        return
+
+    l2_files = list(_L2_OUTPUT_DIR.glob("*.json"))
+    if not l2_files:
+        click.echo("No L2 records found. Run 'enrich' first.")
+        return
+
+    # Build sample_id → L2 file path map
+    l2_map: dict[str, Path] = {p.stem: p for p in l2_files}
+
+    updated = 0
+    skipped = 0
+    errors = 0
+
+    click.echo(f"Running 8 classical IQA detectors on {len(entries)} images...")
+
+    for idx, entry in enumerate(entries, 1):
+        sample_id = entry["sample_id"]
+        source_path = entry.get("source_path", "")
+        img_path = image_dir / source_path
+
+        if not img_path.exists():
+            logger.warning("Image not found: %s", img_path)
+            skipped += 1
+            continue
+
+        l2_path = l2_map.get(sample_id)
+        if not l2_path:
+            logger.warning("No L2 record for %s", sample_id)
+            skipped += 1
+            continue
+
+        # Run IQA
+        try:
+            iqa_results = _run_iqa_detectors(img_path)
+        except Exception as exc:
+            logger.warning("IQA failed for %s: %s", img_path.name, exc)
+            errors += 1
+            continue
+
+        if dry_run:
+            deg_count = len(iqa_results["degradations"])
+            score = iqa_results["overall_score"]
+            click.echo(f"  [{idx}/{len(entries)}] {img_path.name}: "
+                        f"score={score}, {deg_count} degradations")
+            continue
+
+        # Load existing L2, update, write back
+        with l2_path.open("r") as fh:
+            record = json.load(fh)
+
+        data = record.get("data", {})
+
+        # Update quality
+        data["quality"] = {
+            "overall_score": iqa_results["overall_score"],
+            "degradations": iqa_results["degradations"],
+            "confidence": iqa_results["quality_confidence"],
+            "provenance_tier": "tier_2_model",
+            "is_soft_label": True,
+            "detection_method": "classical_ensemble_8detector",
+        }
+
+        # Update geometric skew
+        if iqa_results["skew_angle"] is not None:
+            geo = data.get("geometric", {})
+            geo["skew_angle_degrees"] = iqa_results["skew_angle"]
+            geo["skew_confidence"] = iqa_results["skew_confidence"]
+            geo["skew_detection_method"] = "hough_projection_ensemble"
+            data["geometric"] = geo
+
+        # Compute and add sample_reliability_summary
+        data["sample_reliability_summary"] = _compute_reliability_summary(data)
+
+        record["data"] = data
+
+        with l2_path.open("w") as fh:
+            json.dump(record, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+
+        updated += 1
+
+        if idx % 50 == 0:
+            click.echo(f"  Progress: {idx}/{len(entries)} ({updated} updated)")
+
+    click.echo(f"\nIQA enrichment complete: {updated} updated, {skipped} skipped, {errors} errors")
 
 
 @cli.command("validate")
