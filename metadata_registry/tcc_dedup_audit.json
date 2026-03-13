@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-03-13T16:36:35.662006+00:00",
+  "total_entries": 1257,
+  "images_checked": 0,
+  "phash_threshold": 10,
+  "sha256_exact_duplicates": [],
+  "phash_near_duplicates": [],
+  "summary": {
+    "sha256_duplicate_groups": 0,
+    "phash_duplicate_pairs": 0,
+    "exact_phash_pairs": 0
+  }
+}

@@ -30,7 +30,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import sys
 import time
 import uuid
 from datetime import date
@@ -51,7 +50,14 @@ _CATALOG_PATH = _PROJECT_ROOT / "config" / "thousand_character_classic_catalog.y
 _REGISTRY_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "thousand_character_classic_registry.jsonl"
 )
-_DEFAULT_OUTPUT_DIR = Path("/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic")
+_LOCAL_DATA_DIR = Path("data/calligraphy/thousand-character-classic")
+_EXTERNAL_DATA_DIR = Path(
+    "/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic"
+)
+# Use local storage by default; move to external drive when mounted
+_DEFAULT_OUTPUT_DIR = (
+    _EXTERNAL_DATA_DIR if _EXTERNAL_DATA_DIR.exists() else _LOCAL_DATA_DIR
+)
 
 # MediaWiki API
 _WIKIMEDIA_API = "https://commons.wikimedia.org/w/api.php"
@@ -70,7 +76,19 @@ _MET_OBJECT_IDS = [78125, 671036]
 
 # NPM Taipei collection IDs (from catalog #13-25)
 _NPM_DETAIL_IDS = [
-    1932, 593, 13915, 1524, 17583, 17585, 17635, 19189, 2583, 2582, 2520, 779, 22100,
+    1932,
+    593,
+    13915,
+    1524,
+    17583,
+    17585,
+    17635,
+    19189,
+    2583,
+    2582,
+    2520,
+    779,
+    22100,
 ]
 
 # NDL IIIF PIDs (from catalog #47-52)
@@ -224,7 +242,7 @@ def _download_image(
 
 
 def _load_catalog() -> dict[int, dict[str, Any]]:
-    """Load the 74-item catalog YAML."""
+    """Load the catalog YAML (74+ items)."""
     with _CATALOG_PATH.open("r") as fh:
         return yaml.safe_load(fh)
 
@@ -349,7 +367,9 @@ def harvest_wikimedia(
     for cat in _WIKIMEDIA_CATEGORIES:
         _enumerate_category(cat)
 
-    click.echo(f"\nFound {len(all_files)} files across {len(visited_categories)} categories.")
+    click.echo(
+        f"\nFound {len(all_files)} files across {len(visited_categories)} categories."
+    )
 
     if dry_run:
         for f in all_files[:20]:
@@ -409,9 +429,7 @@ def harvest_wikimedia(
 
             # Sanitize filename
             safe_name = (
-                title.replace("File:", "")
-                .replace(" ", "_")
-                .replace("/", "_")[:200]
+                title.replace("File:", "").replace(" ", "_").replace("/", "_")[:200]
             )
             if not safe_name.lower().endswith(ext):
                 safe_name += ext
@@ -435,7 +453,9 @@ def harvest_wikimedia(
             else:
                 skipped += 1
 
-    click.echo(f"\nWikimedia harvest complete: {downloaded} downloaded, {skipped} skipped.")
+    click.echo(
+        f"\nWikimedia harvest complete: {downloaded} downloaded, {skipped} skipped."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -553,11 +573,17 @@ def harvest_iiif(
     downloaded = 0
 
     ndl_catalog_map = {
-        853547: 47, 910125: 48, 1181692: 49,
-        853440: 50, 781828: 51, 853669: 52,
+        853547: 47,
+        910125: 48,
+        1181692: 49,
+        853440: 50,
+        781828: 51,
+        853669: 52,
     }
     kyoto_catalog_map = {
-        "rb00011078": 53, "rb00009713": 54, "rb00012112": 55,
+        "rb00011078": 53,
+        "rb00009713": 54,
+        "rb00012112": 55,
     }
 
     def _harvest_iiif_manifest(
@@ -655,8 +681,11 @@ def harvest_iiif(
     # Kyoto U
     if source in ("kyoto", "all"):
         for item_id in _KYOTO_ITEMS:
+            # Kyoto U uses uppercase IDs and metadata_manifest path
+            upper_id = item_id.upper()
             manifest_url = (
-                f"https://rmda.kulib.kyoto-u.ac.jp/iiif/{item_id}/manifest.json"
+                f"https://rmda.kulib.kyoto-u.ac.jp/iiif/"
+                f"metadata_manifest/{upper_id}/manifest.json"
             )
             n = _harvest_iiif_manifest(
                 manifest_url,
@@ -674,27 +703,29 @@ def harvest_iiif(
 def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
     """Extract the best image URL from an IIIF canvas (v2 or v3).
 
-    Attempts full resolution first, falls back to /full/full/ IIIF Image API.
+    Prefers IIIF Image API service endpoint at full resolution over
+    direct image URLs which may be thumbnails.
     """
     # IIIF v2: canvas.images[].resource.@id or canvas.images[].resource.service.@id
     images = canvas.get("images", [])
     for img in images:
         resource = img.get("resource", {})
-        # Try direct URL first
-        url = resource.get("@id", "")
-        if url:
-            # If URL is an IIIF Image API info.json, convert to full image
-            if url.endswith("/info.json"):
-                url = url.replace("/info.json", "/full/full/0/default.jpg")
-            return url
 
-        # Try service endpoint
+        # Prefer service endpoint (full resolution via IIIF Image API)
         service = resource.get("service", {})
         if isinstance(service, list):
             service = service[0] if service else {}
         service_id = service.get("@id", "")
         if service_id:
             return f"{service_id}/full/full/0/default.jpg"
+
+        # Fall back to direct URL
+        url = resource.get("@id", "")
+        if url:
+            # If URL is an IIIF Image API info.json, convert to full image
+            if url.endswith("/info.json"):
+                url = url.replace("/info.json", "/full/full/0/default.jpg")
+            return url
 
     # IIIF v3: canvas.items[].items[].body.id
     items = canvas.get("items", [])
@@ -720,12 +751,15 @@ def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
 
 @cli.command("harvest-npm-taipei")
 @click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.option("--max-pages", type=int, default=0, help="Max pages per item (0 = all).")
 @click.pass_context
-def harvest_npm_taipei(ctx: click.Context, dry_run: bool) -> None:
-    """Harvest from National Palace Museum Taipei (CC0/CC BY 4.0, ~13-30 images).
+def harvest_npm_taipei(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
+    """Harvest from National Palace Museum Taipei via IIIF manifests.
 
-    NPM provides IIIF-compatible digital archive. Attempts to resolve
-    collection detail pages to downloadable image URLs.
+    NPM provides IIIF v2 manifests at iiifod.npm.gov.tw with full-resolution
+    images. Manifest URL pattern: /Integrate/GetJson?cid={detail_id}&dept=P
+
+    Images are available at ~3000x2300 (7MP) under CC BY 4.0.
     """
     output_dir: Path = ctx.obj["output_dir"]
     registry_path: Path = ctx.obj["registry"]
@@ -735,47 +769,101 @@ def harvest_npm_taipei(ctx: click.Context, dry_run: bool) -> None:
 
     catalog = _load_catalog()
     downloaded = 0
+    errors = 0
 
     # NPM Taipei detail IDs map to catalog numbers 13-25
     npm_catalog_map = dict(zip(_NPM_DETAIL_IDS, range(13, 26)))
 
     for detail_id in _NPM_DETAIL_IDS:
-        cat_num = npm_catalog_map.get(detail_id)
+        cat_num = npm_catalog_map[detail_id]
         cat_entry = catalog.get(cat_num, {})
         calligrapher = cat_entry.get("calligrapher", "unknown")
 
-        click.echo(f"\nNPM Detail/{detail_id}: {calligrapher}")
+        click.echo(f"\nNPM cid={detail_id} (catalog #{cat_num}): {calligrapher}")
 
-        # Try IIIF manifest first
-        manifest_url = f"https://digitalarchive.npm.gov.tw/Painting/set498/{detail_id}/manifest.json"
+        # IIIF v2 manifest from NPM digital archive
+        manifest_url = (
+            f"https://digitalarchive.npm.gov.tw/Integrate/GetJson"
+            f"?cid={detail_id}&dept=P"
+        )
 
         if dry_run:
-            click.echo(f"  [DRY RUN] Would try: {manifest_url}")
-            click.echo(f"  [DRY RUN] Fallback: direct image API")
+            click.echo(f"  [DRY RUN] Manifest: {manifest_url}")
+            # Fetch manifest to count canvases
+            try:
+                resp = requests.get(
+                    manifest_url,
+                    headers={"User-Agent": _USER_AGENT},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                manifest = resp.json()
+                canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
+                click.echo(f"  [DRY RUN] {len(canvases)} canvases available")
+                downloaded += len(canvases)
+            except requests.RequestException as exc:
+                click.echo(f"  [ERROR] {exc}", err=True)
+                errors += 1
+            time.sleep(0.5)
             continue
 
-        # Attempt direct image download (NPM image API pattern)
-        # NPM provides mid-res (~6MP) at CC BY 4.0
-        img_url = f"https://digitalarchive.npm.gov.tw/Image/GetImage?imageId={detail_id}"
-        filename = f"npm_{detail_id}_{calligrapher.replace(' ', '_')}.jpg"
-        out_path = subdir / filename
+        # Fetch IIIF manifest
+        try:
+            resp = requests.get(
+                manifest_url,
+                headers={"User-Agent": _USER_AGENT},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            manifest = resp.json()
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] Manifest fetch failed: {exc}", err=True)
+            errors += 1
+            continue
 
-        ok = _download_image(
-            img_url,
-            out_path,
-            sha_set=sha_set,
-            registry_path=registry_path,
-            source_institution="npm_taipei",
-            catalog_number=cat_num,
-            license_str="CC0",
-            acquisition_method="npm_image_api",
-            output_dir=output_dir,
-            rate_limit=1.5,
-        )
-        if ok:
-            downloaded += 1
+        canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
+        click.echo(f"  Found {len(canvases)} canvases")
 
-    click.echo(f"\nNPM Taipei harvest complete: {downloaded} downloaded.")
+        for i, canvas in enumerate(canvases):
+            if 0 < max_pages <= i:
+                break
+
+            img_url = _extract_image_url_from_canvas(canvas)
+            if not img_url:
+                click.echo(f"  [SKIP] No image URL in canvas {i}")
+                continue
+
+            safe_name = calligrapher.replace(" ", "_").replace("(", "").replace(")", "")
+            filename = f"npm_{detail_id}_{safe_name}_{i:04d}.jpg"
+            out_path = subdir / filename
+
+            # Try full/full first; fall back to full/max if 403
+            urls_to_try = [img_url]
+            if "/full/full/" in img_url:
+                urls_to_try.append(img_url.replace("/full/full/", "/full/max/"))
+
+            ok = False
+            for try_url in urls_to_try:
+                ok = _download_image(
+                    try_url,
+                    out_path,
+                    sha_set=sha_set,
+                    registry_path=registry_path,
+                    source_institution="npm_taipei",
+                    catalog_number=cat_num,
+                    license_str="CC_BY_4.0",
+                    acquisition_method="npm_iiif_manifest",
+                    output_dir=output_dir,
+                    rate_limit=1.0,
+                )
+                if ok:
+                    break
+            if ok:
+                downloaded += 1
+
+        time.sleep(1)  # Rate limit between items
+
+    click.echo(f"\nNPM Taipei harvest complete: {downloaded} images, {errors} errors.")
 
 
 # ---------------------------------------------------------------------------
@@ -812,7 +900,8 @@ def harvest_internet_archive(ctx: click.Context, dry_run: bool) -> None:
     files = metadata.get("files", [])
     # Filter to image files (JP2 or JPEG page scans)
     image_files = [
-        f for f in files
+        f
+        for f in files
         if f.get("name", "").lower().endswith((".jp2", ".jpg", ".jpeg", ".png", ".tif"))
         and f.get("source", "") != "metadata"
     ]
@@ -851,8 +940,869 @@ def harvest_internet_archive(ctx: click.Context, dry_run: bool) -> None:
 
 
 # ---------------------------------------------------------------------------
+# match-wikimedia
+# ---------------------------------------------------------------------------
+
+# Filename substring -> catalog number (or "REMOVE" for misclassified content)
+_WIKIMEDIA_EXACT_MATCHES: dict[str, int | str] = {
+    "ZhiYong1000charcter": 1,
+    "明_王宠_千字文_局部": 3,
+    "徐霖篆书千字文卷": 7,
+    "Han_Ho-Cheonjamun": 64,
+    "한석봉_천자문": 64,
+    "An_Authentic_Thousand_Character_Classic": 79,
+    "隷書千字文_(Calligraphy_by_Rosanjin)": 77,
+    "王澍千字文拓本": 78,
+    "Pakapoo_ticket": "REMOVE",
+}
+
+# Prefix -> catalog number
+_WIKIMEDIA_PREFIX_MATCHES: list[tuple[str, int | str]] = [
+    ("MET_DP", 34),
+    ("MET_TR", 34),
+    ("Classique_mille_carac", 75),
+    ("Thiên_tự_văn", 76),
+    ("Thien_tu_van", 76),
+]
+
+
+def _match_wikimedia_filename(filename: str) -> int | str | None:
+    """Match a Wikimedia filename to a catalog number.
+
+    Returns:
+        int: catalog number if matched
+        str "REMOVE": if content is misclassified
+        None: if no match found
+    """
+    # Check exact substring matches first
+    for pattern, cat_num in _WIKIMEDIA_EXACT_MATCHES.items():
+        if pattern in filename:
+            return cat_num
+
+    # Check prefix matches
+    for prefix, cat_num in _WIKIMEDIA_PREFIX_MATCHES:
+        if filename.startswith(prefix):
+            return cat_num
+
+    return None
+
+
+@cli.command("match-wikimedia")
+@click.option(
+    "--dry-run", is_flag=True, help="Preview matches without modifying registry."
+)
+@click.option(
+    "--remove-misclassified",
+    is_flag=True,
+    help="Remove misclassified images (e.g., Pakapoo ticket) from registry and disk.",
+)
+@click.option(
+    "--investigate-only",
+    is_flag=True,
+    help="Only query Wikimedia API for unmatched image metadata.",
+)
+@click.pass_context
+def match_wikimedia(
+    ctx: click.Context,
+    dry_run: bool,
+    remove_misclassified: bool,
+    investigate_only: bool,
+) -> None:
+    """Match unmatched Wikimedia images to catalog entries.
+
+    Maps 130 Wikimedia images (catalog_number=null) to catalog entries using
+    filename-based matching rules. Creates new catalog entries as needed.
+    """
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+    _, entries = _load_registry(registry_path)
+
+    # Find unmatched Wikimedia entries
+    unmatched = [
+        e
+        for e in entries
+        if e.get("source_institution") == "wikimedia"
+        and e.get("catalog_number") is None
+    ]
+    click.echo(f"Found {len(unmatched)} unmatched Wikimedia images")
+
+    if investigate_only:
+        click.echo("\n--- Investigating via Wikimedia API ---")
+        for e in unmatched[:5]:
+            fname = e.get("source_path", "").split("/")[-1]
+            click.echo(f"\n  {fname}")
+            try:
+                params = {
+                    "action": "query",
+                    "titles": f"File:{fname}",
+                    "prop": "imageinfo",
+                    "iiprop": "extmetadata",
+                    "format": "json",
+                }
+                resp = requests.get(
+                    _WIKIMEDIA_API,
+                    params=params,
+                    headers={"User-Agent": _USER_AGENT},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                pages = data.get("query", {}).get("pages", {})
+                for page in pages.values():
+                    ii = page.get("imageinfo", [{}])[0]
+                    ext = ii.get("extmetadata", {})
+                    desc = ext.get("ImageDescription", {}).get("value", "N/A")[:200]
+                    artist = ext.get("Artist", {}).get("value", "N/A")[:100]
+                    click.echo(f"    Description: {desc}")
+                    click.echo(f"    Artist: {artist}")
+            except requests.RequestException as exc:
+                click.echo(f"    [ERROR] {exc}", err=True)
+            time.sleep(1)
+        if len(unmatched) > 5:
+            click.echo(f"\n  ... and {len(unmatched) - 5} more (showing first 5)")
+        return
+
+    # Apply matching rules
+    matched_count = 0
+    removed_count = 0
+    still_unmatched = 0
+    matched_entries: list[tuple[dict[str, Any], int]] = []
+    removed_entries: list[dict[str, Any]] = []
+
+    for e in unmatched:
+        source_path = e.get("source_path", "")
+        fname = source_path.split("/")[-1] if "/" in source_path else source_path
+
+        result = _match_wikimedia_filename(fname)
+
+        if result == "REMOVE":
+            click.echo(f"  [REMOVE] {fname} (misclassified content)")
+            removed_entries.append(e)
+            removed_count += 1
+        elif isinstance(result, int):
+            click.echo(f"  [MATCH] {fname} -> catalog #{result}")
+            matched_entries.append((e, result))
+            matched_count += 1
+        else:
+            click.echo(f"  [UNMATCHED] {fname}")
+            still_unmatched += 1
+
+    click.echo(
+        f"\nSummary: {matched_count} matched, {removed_count} to remove, "
+        f"{still_unmatched} still unmatched"
+    )
+
+    if dry_run:
+        click.echo("\n[DRY RUN] No changes made.")
+        return
+
+    # Build updated registry
+    removed_ids = {e["sample_id"] for e in removed_entries}
+    matched_map = {e["sample_id"]: cat_num for e, cat_num in matched_entries}
+
+    updated_entries: list[dict[str, Any]] = []
+    for e in entries:
+        sid = e["sample_id"]
+        if sid in removed_ids:
+            if remove_misclassified:
+                # Remove image file from disk
+                img_path = output_dir / e.get("source_path", "")
+                if img_path.exists():
+                    img_path.unlink()
+                    click.echo(f"  Deleted: {img_path}")
+                continue  # Skip this entry
+            click.echo(
+                f"  [SKIP] Would remove {e.get('source_path', '')} "
+                f"(use --remove-misclassified)"
+            )
+            updated_entries.append(e)
+            continue
+
+        if sid in matched_map:
+            e["catalog_number"] = matched_map[sid]
+
+        updated_entries.append(e)
+
+    # Write atomically
+    tmp_path = registry_path.with_suffix(".jsonl.tmp")
+    with tmp_path.open("w") as fh:
+        for e in updated_entries:
+            fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+    tmp_path.rename(registry_path)
+
+    final_removed = len(entries) - len(updated_entries)
+    click.echo(
+        f"\nRegistry updated: {matched_count} catalog numbers set, "
+        f"{final_removed} entries removed."
+    )
+
+
+# ---------------------------------------------------------------------------
+# harvest-waseda
+# ---------------------------------------------------------------------------
+
+# Waseda archive paths -> catalog numbers (#38-46).
+# Format: (archive_path, catalog_number).
+# archive_path is the path under https://archive.wul.waseda.ac.jp/kosho/
+# Most items: {collection}/{item}  -> images at {item}/{item}_p{page}.jpg
+# Nested items: {collection}/{parent}/{sub_item} -> images at {sub_item}/{sub_item}_p{page}.jpg
+_WASEDA_ITEMS: list[tuple[str, int]] = [
+    ("chi06/chi06_00856", 38),
+    ("chi06/chi06_04748", 39),
+    ("bunko31/bunko31_e1746", 40),
+    ("chi06/chi06_00499", 41),
+    ("bunko31/bunko31_e1734", 42),
+    ("to02/to02_04575/to02_04575_b0057", 43),
+    ("i17/i17_02128", 44),
+    ("chi06/chi06_02237", 45),
+    ("ho03/ho03_01755", 46),
+]
+
+
+def _count_waseda_pages(item_id: str) -> int:
+    """Probe Waseda archive to count available pages for an item.
+
+    Sends HEAD requests for sequential page numbers until a 404 is returned.
+    Returns the number of pages found (0 if page 1 doesn't exist).
+    """
+    base = f"https://archive.wul.waseda.ac.jp/kosho/{item_id}/{item_id.split('/')[-1]}"
+    page = 1
+    max_probe = 500  # safety limit
+    while page <= max_probe:
+        url = f"{base}_p{page:04d}.jpg"
+        try:
+            resp = requests.head(
+                url,
+                headers={"User-Agent": _USER_AGENT},
+                timeout=15,
+                allow_redirects=True,
+            )
+            if resp.status_code == 404:
+                break
+            resp.raise_for_status()
+        except requests.RequestException:
+            break
+        page += 1
+        time.sleep(0.3)
+    return page - 1
+
+
+@cli.command("harvest-waseda")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.option(
+    "--max-pages",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Max pages per volume (0 = all).",
+)
+@click.pass_context
+def harvest_waseda(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
+    """Harvest from Waseda University Library (catalog #38-46, 9 items).
+
+    Waseda serves full-size page images at direct archive URLs:
+    https://archive.wul.waseda.ac.jp/kosho/{collection}/{item}/{item}_p{page}.jpg
+
+    Pages are enumerated sequentially (p0001, p0002, ...) until a 404 is hit.
+    Expected yield: ~90-270 images across kaishu, zhangcao, and mixed styles.
+    """
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+    sha_set, _ = _load_registry(registry_path)
+    downloaded = 0
+
+    catalog = _load_catalog()
+
+    for waseda_path, cat_num in _WASEDA_ITEMS:
+        cat_entry = catalog.get(cat_num, {})
+        calligrapher = cat_entry.get("calligrapher", "unknown")
+        script_style = cat_entry.get("script_style", "unknown")
+        item_id = waseda_path.split("/")[-1]
+
+        click.echo(f"\nWaseda {waseda_path}: {calligrapher} ({script_style})")
+
+        # Probe page count
+        total_pages = _count_waseda_pages(waseda_path)
+        click.echo(f"  Found {total_pages} pages")
+
+        if total_pages == 0:
+            click.echo("  [SKIP] No pages found at archive URL")
+            continue
+
+        limit = total_pages if max_pages == 0 else min(max_pages, total_pages)
+
+        subdir = output_dir / "waseda"
+        subdir.mkdir(parents=True, exist_ok=True)
+
+        for page in range(1, limit + 1):
+            img_url = (
+                f"https://archive.wul.waseda.ac.jp/kosho/"
+                f"{waseda_path}/{item_id}_p{page:04d}.jpg"
+            )
+            safe_id = waseda_path.replace("/", "_")
+            filename = f"waseda_{safe_id}_{page:04d}.jpg"
+            out_path = subdir / filename
+
+            if dry_run:
+                click.echo(f"  [DRY RUN] Would download: {img_url}")
+                downloaded += 1
+                continue
+
+            ok = _download_image(
+                img_url,
+                out_path,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="waseda",
+                catalog_number=cat_num,
+                license_str="open_access",
+                acquisition_method="direct_download",
+                output_dir=output_dir,
+                rate_limit=1.5,
+            )
+            if ok:
+                downloaded += 1
+
+    click.echo(f"\nWaseda harvest complete: {downloaded} downloaded.")
+
+
+# ---------------------------------------------------------------------------
+# harvest-met-extended
+# ---------------------------------------------------------------------------
+
+
+@cli.command("harvest-met-extended")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.pass_context
+def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
+    """Harvest ALL Thousand Character Classic objects from Met Museum.
+
+    Searches the Met API for all TCC-related objects (93 results) and downloads
+    public domain images. Extends beyond the 2 hard-coded objects in harvest-met.
+    """
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+    sha_set, _ = _load_registry(registry_path)
+    subdir = output_dir / "met"
+    subdir.mkdir(parents=True, exist_ok=True)
+
+    # Search Met API for all TCC objects in Asian Art (department 6)
+    search_url = (
+        "https://collectionapi.metmuseum.org/public/collection/v1/search"
+        "?q=thousand+character+classic&departmentId=6"
+    )
+    click.echo("Searching Met API for Thousand Character Classic objects...")
+
+    try:
+        resp = requests.get(
+            search_url,
+            headers={"User-Agent": _USER_AGENT},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        search_data = resp.json()
+    except requests.RequestException as exc:
+        click.echo(f"[ERROR] Search failed: {exc}", err=True)
+        return
+
+    object_ids = search_data.get("objectIDs", [])
+    total = search_data.get("total", 0)
+    click.echo(f"Found {total} objects ({len(object_ids)} IDs)")
+
+    # Skip already-harvested objects
+    already_harvested = set(_MET_OBJECT_IDS)
+    downloaded = 0
+    skipped = 0
+    catalog = _load_catalog()
+
+    # Next available catalog number for new items
+    max_cat = max(catalog.keys())
+    next_cat = max_cat + 1
+
+    for obj_id in object_ids:
+        if obj_id in already_harvested:
+            continue
+
+        click.echo(f"\nFetching Met object {obj_id}...")
+        try:
+            resp = requests.get(
+                f"{_MET_API}/{obj_id}",
+                headers={"User-Agent": _USER_AGENT},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            obj = resp.json()
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] {exc}", err=True)
+            time.sleep(0.5)
+            continue
+
+        title = obj.get("title", f"object_{obj_id}")
+        is_pd = obj.get("isPublicDomain", False)
+        dynasty = obj.get("dynasty", "")
+        artist = obj.get("artistDisplayName", "")
+        medium_str = obj.get("medium", "")
+
+        click.echo(f"  Title: {title}")
+        click.echo(f"  Artist: {artist} | Dynasty: {dynasty} | Public Domain: {is_pd}")
+
+        if not is_pd:
+            click.echo("  [SKIP] Not public domain")
+            skipped += 1
+            time.sleep(0.3)
+            continue
+
+        # Collect all image URLs
+        image_urls: list[str] = []
+        primary = obj.get("primaryImage", "")
+        if primary:
+            image_urls.append(primary)
+        additional = obj.get("additionalImages", [])
+        image_urls.extend(additional)
+
+        if not image_urls:
+            click.echo("  [SKIP] No images available")
+            skipped += 1
+            time.sleep(0.3)
+            continue
+
+        click.echo(f"  Found {len(image_urls)} images")
+
+        if dry_run:
+            for url in image_urls[:3]:
+                click.echo(f"    [DRY RUN] {url[:100]}")
+            if len(image_urls) > 3:
+                click.echo(f"    ... and {len(image_urls) - 3} more")
+            downloaded += len(image_urls)
+            time.sleep(0.3)
+            continue
+
+        # Use next_cat for this new object, increment for next
+        cat_num = next_cat
+        next_cat += 1
+
+        for i, url in enumerate(image_urls):
+            safe_title = title.replace(" ", "_").replace("/", "_")[:80]
+            filename = f"met_{obj_id}_{safe_title}_{i:03d}.jpg"
+            out_path = subdir / filename
+
+            ok = _download_image(
+                url,
+                out_path,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="met_museum",
+                catalog_number=cat_num,
+                license_str="CC0",
+                acquisition_method="met_open_access_api",
+                output_dir=output_dir,
+                rate_limit=0.5,
+            )
+            if ok:
+                downloaded += 1
+
+    click.echo(
+        f"\nMet extended harvest complete: {downloaded} downloaded, "
+        f"{skipped} skipped (not public domain or no images)."
+    )
+
+
+# ---------------------------------------------------------------------------
+# harvest-korean
+# ---------------------------------------------------------------------------
+
+
+@cli.command("harvest-korean")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.pass_context
+def harvest_korean(ctx: click.Context, dry_run: bool) -> None:
+    """Harvest from National Museum of Korea (KOGL license, 2 confirmed items).
+
+    Downloads directly available images for Korean calligraphy items.
+    """
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+    sha_set, _ = _load_registry(registry_path)
+    subdir = output_dir / "korean"
+    subdir.mkdir(parents=True, exist_ok=True)
+
+    # NMK direct image paths (extracted from relic detail pages)
+    _NMK_KNOWN_IMAGES: dict[int, list[str]] = {
+        8003: [
+            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-00.jpg",
+            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-01.jpg",
+            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-02.jpg",
+        ],
+    }
+
+    # National Museum of Korea items with direct image URLs
+    # These are confirmed available from the collection database
+    korean_items: list[dict[str, str | int | None]] = [
+        {
+            "relic_id": 8003,
+            "catalog_number": 64,
+            "name": "Han Ho Cheonjamun (haeseo)",
+            "url": "https://www.museum.go.kr/site/eng/relic/search/view?relicId=8003",
+            "license": "KOGL",
+        },
+        {
+            "relic_id": 7031,
+            "catalog_number": None,  # New entry — ancient seal script
+            "name": "Gojeon Cheonjamun (seal script)",
+            "url": "https://www.museum.go.kr/site/eng/relic/search/view?relicId=7031",
+            "license": "KOGL",
+        },
+    ]
+
+    downloaded = 0
+
+    for item in korean_items:
+        click.echo(f"\nKorean item: {item['name']}")
+        click.echo(f"  URL: {item['url']}")
+
+        if dry_run:
+            click.echo(
+                "  [DRY RUN] Would attempt to download images from collection page"
+            )
+            click.echo("  Note: Korean museum sites may require manual download")
+            continue
+
+        # Try known direct image paths first, fall back to page scraping
+        cat_num_val = item["catalog_number"]
+        license_val = str(item["license"])
+        relic_id = item["relic_id"]
+
+        known_paths = _NMK_KNOWN_IMAGES.get(int(str(relic_id)), [])
+        if known_paths:
+            click.echo(f"  Using {len(known_paths)} known image paths")
+            found_urls = [f"https://www.museum.go.kr{p}" for p in known_paths]
+        else:
+            # Fall back to scraping the relic page
+            page_url = str(item["url"])
+            try:
+                resp = requests.get(
+                    page_url,
+                    headers={"User-Agent": _USER_AGENT},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                html = resp.text
+
+                import re
+
+                img_patterns = [
+                    r'(https?://[^"\']+\.(?:jpg|jpeg|png|tif))',
+                    r'src="(/[^"]+\.(?:jpg|jpeg|png|tif))"',
+                ]
+                found_urls = []
+                for pattern in img_patterns:
+                    matches = re.findall(pattern, html, re.IGNORECASE)
+                    for m in matches:
+                        if "relic" in m.lower() or "image" in m.lower():
+                            if m.startswith("/"):
+                                m = f"https://www.museum.go.kr{m}"
+                            found_urls.append(m)
+            except requests.RequestException as exc:
+                click.echo(f"  [ERROR] {exc}", err=True)
+                continue
+
+        if not found_urls:
+            click.echo("  [SKIP] No downloadable image URLs found")
+            click.echo("  Manual download may be required")
+            continue
+
+        click.echo(f"  Found {len(found_urls)} image URLs")
+
+        try:
+            for i, img_url in enumerate(found_urls[:10]):
+                filename = f"korean_{relic_id}_{i:03d}.jpg"
+                out_path = subdir / filename
+
+                ok = _download_image(
+                    img_url,
+                    out_path,
+                    sha_set=sha_set,
+                    registry_path=registry_path,
+                    source_institution="national_museum_korea",
+                    catalog_number=int(cat_num_val)
+                    if cat_num_val is not None
+                    else None,
+                    license_str=license_val,
+                    acquisition_method="nmk_direct_download",
+                    output_dir=output_dir,
+                    rate_limit=1.5,
+                )
+                if ok:
+                    downloaded += 1
+
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] {exc}", err=True)
+
+    click.echo(f"\nKorean harvest complete: {downloaded} downloaded.")
+    if downloaded == 0:
+        click.echo("Note: Korean museum sites often require manual download.")
+        click.echo("Visit the URLs above to download images manually.")
+
+
+# ---------------------------------------------------------------------------
 # stats
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# harvest-ndl-pdfs
+# ---------------------------------------------------------------------------
+
+# NDL PDF files on Wikimedia Commons → catalog number mapping
+# Each tuple: (Wikimedia filename (without "File:" prefix), catalog_number)
+_NDL_PDF_ITEMS: list[tuple[str, int]] = [
+    # Yoshida Shigematsu (1890-1940) — Showa — caoshu
+    ("NDL1107939 草書千字文 上.pdf", 82),
+    # Yoshida Shigematsu (1890-1940) — Showa — xingshu
+    ("NDL1107940 行書千字文 中.pdf", 83),
+    # Tamaki Aiseki (1853-1928) — Taisho — lishu
+    ("NDL853841 隷書千字文.pdf", 84),
+    # Nishikawa Shundo (1847-1915) — Meiji — zhuanshu
+    ("NDL853397 漢篆千字文.pdf", 85),
+    # Iwatani Ichiroku (1834-1905) — Meiji — four-style
+    ("NDL853545 四体千字文.pdf", 86),
+    # Uehara Chinkyu — Meiji — lishu
+    ("NDL853684 正隷千字文.pdf", 87),
+    # Onuma Rensai (1839-1898) — Meiji — kaishu
+    ("NDL853622 真書千字文.pdf", 88),
+]
+
+# Met Museum modern TCC objects (20th century)
+_MET_MODERN_IDS: list[tuple[int, int]] = [
+    (64060, 80),  # Preface to TCC, 20th c rubbing
+    (64049, 81),  # TCC cursive script, 20th c rubbing
+    (64061, 91),  # TCC seal script (zhuanshu), 20th c
+]
+
+
+def _get_wikimedia_file_url(filename: str) -> str | None:
+    """Resolve a Wikimedia Commons filename to its direct download URL."""
+    import urllib.parse
+
+    encoded = urllib.parse.quote(f"File:{filename}")
+    url = (
+        f"{_WIKIMEDIA_API}?action=query&titles={encoded}"
+        "&prop=imageinfo&iiprop=url&format=json"
+    )
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": _USER_AGENT},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        pages = data.get("query", {}).get("pages", {})
+        for page in pages.values():
+            ii = page.get("imageinfo", [{}])
+            if ii:
+                return str(ii[0].get("url", ""))
+    except requests.RequestException as exc:
+        click.echo(f"  [ERROR] Resolving {filename}: {exc}", err=True)
+    return None
+
+
+def _render_pdf_to_images(
+    pdf_path: Path,
+    output_dir: Path,
+    *,
+    prefix: str,
+    dpi: int = 200,
+) -> list[Path]:
+    """Render PDF pages to JPEG images using PyMuPDF.
+
+    Returns list of output image paths.
+    """
+    import fitz  # PyMuPDF
+
+    image_paths: list[Path] = []
+    doc = fitz.open(str(pdf_path))
+    zoom = dpi / 72.0
+    mat = fitz.Matrix(zoom, zoom)
+
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        pix = page.get_pixmap(matrix=mat)
+
+        out_path = output_dir / f"{prefix}_p{page_num:04d}.jpg"
+        # Convert to JPEG via PIL for consistent quality
+        from PIL import Image
+
+        img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+        img.save(out_path, "JPEG", quality=90)
+        image_paths.append(out_path)
+
+    doc.close()
+    return image_paths
+
+
+@cli.command("harvest-ndl-pdfs")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.option(
+    "--rate-limit",
+    type=float,
+    default=1.0,
+    help="Seconds between downloads.",
+)
+@click.pass_context
+def harvest_ndl_pdfs(ctx: click.Context, dry_run: bool, rate_limit: float) -> None:
+    """Harvest NDL calligraphy PDFs from Wikimedia, render pages to images.
+
+    Downloads PDF files of modern-era (Meiji/Taisho/Showa) TCC calligraphy
+    from Wikimedia Commons (original NDL scans), renders each page to a JPEG,
+    and registers in the dataset.
+    """
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+    sha_set, _ = _load_registry(registry_path)
+    subdir = output_dir / "ndl"
+    subdir.mkdir(parents=True, exist_ok=True)
+
+    import tempfile
+
+    downloaded = 0
+    errors = 0
+
+    click.echo(f"Harvesting {len(_NDL_PDF_ITEMS)} NDL PDFs from Wikimedia Commons...")
+
+    for filename, cat_num in _NDL_PDF_ITEMS:
+        click.echo(f"\n--- {filename} (catalog #{cat_num}) ---")
+
+        # Resolve Wikimedia file URL
+        file_url = _get_wikimedia_file_url(filename)
+        if not file_url:
+            click.echo(f"  [ERROR] Could not resolve URL for {filename}")
+            errors += 1
+            continue
+
+        click.echo(f"  URL: {file_url[:80]}...")
+
+        if dry_run:
+            click.echo(f"  [DRY RUN] Would download and render: {filename}")
+            downloaded += 1
+            continue
+
+        # Download PDF to temp file
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+
+        try:
+            resp = requests.get(
+                file_url,
+                headers={"User-Agent": _USER_AGENT},
+                timeout=300,
+                stream=True,
+            )
+            resp.raise_for_status()
+
+            with tmp_path.open("wb") as fh:
+                for chunk in resp.iter_content(chunk_size=65_536):
+                    fh.write(chunk)
+
+            click.echo(f"  Downloaded {tmp_path.stat().st_size / 1024 / 1024:.1f} MB")
+
+            # Build prefix from filename
+            safe_name = filename.replace(" ", "_").replace(".pdf", "")
+            prefix = f"ndl_{safe_name}"
+
+            # Render PDF pages to images
+            image_paths = _render_pdf_to_images(
+                tmp_path,
+                subdir,
+                prefix=prefix,
+                dpi=200,
+            )
+            click.echo(f"  Rendered {len(image_paths)} pages")
+
+            # Register each page image
+            page_ok = 0
+            for img_path in image_paths:
+                sha256 = _compute_sha256(img_path)
+                if sha256 in sha_set:
+                    click.echo(f"  [SKIP] Duplicate: {img_path.name}")
+                    img_path.unlink()
+                    continue
+
+                entry = _build_entry(
+                    img_path,
+                    file_url,
+                    "ndl",
+                    cat_num,
+                    "public_domain",
+                    "wikimedia_pdf_render",
+                    output_dir,
+                )
+                _append_entry(entry, registry_path)
+                sha_set.add(sha256)
+                page_ok += 1
+
+            downloaded += page_ok
+            click.echo(f"  Registered {page_ok} new page images")
+
+        except Exception as exc:
+            click.echo(f"  [ERROR] {filename}: {exc}", err=True)
+            errors += 1
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
+
+        time.sleep(rate_limit)
+
+    # Also harvest Met modern objects
+    click.echo(f"\n--- Met Museum modern TCC ({len(_MET_MODERN_IDS)} objects) ---")
+    for obj_id, cat_num in _MET_MODERN_IDS:
+        click.echo(f"\nFetching Met object {obj_id} (catalog #{cat_num})...")
+        try:
+            resp = requests.get(
+                f"{_MET_API}/{obj_id}",
+                headers={"User-Agent": _USER_AGENT},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            obj = resp.json()
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] {exc}", err=True)
+            errors += 1
+            continue
+
+        title = obj.get("title", f"object_{obj_id}")
+        image_urls: list[str] = []
+        primary = obj.get("primaryImage", "")
+        if primary:
+            image_urls.append(primary)
+        image_urls.extend(obj.get("additionalImages", []))
+
+        if not image_urls:
+            click.echo(f"  [SKIP] No images for {title}")
+            continue
+
+        for i, url in enumerate(image_urls):
+            safe_title = title.replace(" ", "_").replace("/", "_")[:60]
+            filename_out = f"met_{obj_id}_{safe_title}_{i:03d}.jpg"
+            out_path = (output_dir / "met") / filename_out
+
+            ok = _download_image(
+                url,
+                out_path,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="met_museum",
+                catalog_number=cat_num,
+                license_str="CC0",
+                acquisition_method="met_open_access_api",
+                output_dir=output_dir,
+                dry_run=dry_run,
+                rate_limit=0.5,
+            )
+            if ok:
+                downloaded += 1
+
+    click.echo(f"\nModern TCC harvest complete: {downloaded} images, {errors} errors.")
 
 
 @cli.command("stats")
@@ -888,6 +1838,366 @@ def stats(ctx: click.Context) -> None:
     # Catalog coverage
     mapped = sum(1 for e in entries if e.get("catalog_number") is not None)
     click.echo(f"\nCatalog-mapped: {mapped}/{len(entries)}")
+
+    # Script style distribution (from catalog)
+    catalog = _load_catalog()
+    by_style: dict[str, int] = {}
+    for e in entries:
+        cat_num = e.get("catalog_number")
+        if cat_num is not None:
+            cat_entry = catalog.get(cat_num, {})
+            style = cat_entry.get("script_style", "unknown")
+        else:
+            style = "(unmapped)"
+        by_style[style] = by_style.get(style, 0) + 1
+
+    click.echo("\nBy script style (via catalog):")
+    for style, count in sorted(by_style.items(), key=lambda x: -x[1]):
+        click.echo(f"  {style}: {count}")
+
+
+# ---------------------------------------------------------------------------
+# harvest-dunhuang — IDP (British Library) + BnF Gallica
+# ---------------------------------------------------------------------------
+
+# BnF Gallica IIIF manifests for Dunhuang TCC manuscripts
+# Pelliot chinois collection — known TCC manuscript fragments
+_DUNHUANG_BNF_ITEMS: list[tuple[str, str, int | None]] = [
+    # (ark_id, description, catalog_number)
+    # Pelliot chinois 2578 — TCC fragment, Tang dynasty student copy
+    ("btv1b8302295d", "Pelliot chinois 2578 — TCC fragment", None),
+    # Pelliot chinois 3561 — TCC practice copy
+    ("btv1b83022954", "Pelliot chinois 3561 — TCC practice copy", None),
+]
+
+# IDP (British Library) IIIF manifests
+_DUNHUANG_IDP_ITEMS: list[tuple[str, str, int | None]] = [
+    # (manifest_id, description, catalog_number)
+    # Or.8210/S.5765 — TCC student copy, Tang dynasty
+    # IDP IIIF: https://iiif.bl.uk/manifest/ark:/81055/vdc_[id]
+]
+
+
+def _harvest_iiif_source(
+    manifest_url: str,
+    *,
+    output_dir: Path,
+    sha_set: set[str],
+    registry_path: Path,
+    source_institution: str,
+    catalog_number: int | None,
+    license_str: str,
+    acquisition_method: str,
+    item_id: str,
+    dry_run: bool = False,
+    max_pages: int = 0,
+    rate_limit: float = 1.0,
+    extra_headers: dict[str, str] | None = None,
+    registry_base_dir: Path | None = None,
+) -> int:
+    """Parse a IIIF manifest and download all canvas images (standalone version).
+
+    Args:
+        registry_base_dir: Base directory for computing relative source_path in
+            registry entries. Defaults to output_dir.parent if not provided.
+    """
+    count = 0
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    headers = {"User-Agent": _USER_AGENT}
+    if extra_headers:
+        headers.update(extra_headers)
+
+    click.echo(f"\nFetching IIIF manifest: {manifest_url}")
+    manifest: dict[str, Any] | None = None
+    for attempt in range(4):
+        try:
+            resp = requests.get(
+                manifest_url,
+                headers=headers,
+                timeout=30,
+            )
+            if resp.status_code == 429:
+                wait = 5.0 * (2**attempt)
+                click.echo(f"  [429] Rate limited, retrying in {wait:.0f}s...")
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            manifest = resp.json()
+            break
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] {exc}", err=True)
+            if attempt < 3:
+                time.sleep(5.0 * (2**attempt))
+                continue
+            return 0
+    if manifest is None:
+        click.echo("  [ERROR] Exhausted retries", err=True)
+        return 0
+
+    # Extract canvases (IIIF v2 or v3)
+    canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
+    if not canvases:
+        canvases = manifest.get("items", [])
+
+    click.echo(f"  Found {len(canvases)} canvases")
+
+    for i, canvas in enumerate(canvases):
+        if 0 < max_pages <= i:
+            break
+
+        img_url = _extract_image_url_from_canvas(canvas)
+        if not img_url:
+            click.echo(f"  [SKIP] No image URL in canvas {i}")
+            continue
+
+        if dry_run:
+            click.echo(f"  [DRY RUN] Canvas {i}: {img_url[:100]}...")
+            count += 1
+            continue
+
+        filename = f"{source_institution}_{item_id}_{i:04d}.jpg"
+        out_path = output_dir / filename
+
+        urls_to_try = [img_url]
+        if "/full/full/" in img_url:
+            urls_to_try.append(img_url.replace("/full/full/", "/full/,2048/"))
+
+        ok = False
+        for try_url in urls_to_try:
+            ok = _download_image(
+                try_url,
+                out_path,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution=source_institution,
+                catalog_number=catalog_number,
+                license_str=license_str,
+                acquisition_method=acquisition_method,
+                output_dir=registry_base_dir or output_dir.parent,
+                rate_limit=rate_limit,
+            )
+            if ok:
+                break
+        if ok:
+            count += 1
+
+    return count
+
+
+@cli.command("harvest-dunhuang")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.option("--max-pages", type=int, default=0, help="Max pages per item (0 = all).")
+@click.option(
+    "--source",
+    type=click.Choice(["bnf", "idp", "all"]),
+    default="all",
+    help="Which Dunhuang source to harvest.",
+)
+@click.pass_context
+def harvest_dunhuang(
+    ctx: click.Context, dry_run: bool, max_pages: int, source: str
+) -> None:
+    """Harvest Dunhuang TCC manuscripts from BnF Gallica and IDP."""
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+
+    sha_set, _ = _load_registry(registry_path)
+    dunhuang_dir = output_dir / "dunhuang"
+
+    total = 0
+
+    if source in ("bnf", "all"):
+        click.echo("\n=== BnF Gallica (Pelliot chinois collection) ===")
+        for ark_id, desc, cat_num in _DUNHUANG_BNF_ITEMS:
+            click.echo(f"\n--- {desc} ---")
+            manifest_url = (
+                f"https://gallica.bnf.fr/iiif/ark:/12148/{ark_id}/manifest.json"
+            )
+            total += _harvest_iiif_source(
+                manifest_url,
+                output_dir=dunhuang_dir / "bnf",
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="bnf_gallica",
+                catalog_number=cat_num,
+                license_str="public_domain",
+                acquisition_method="bnf_iiif_manifest",
+                item_id=ark_id,
+                dry_run=dry_run,
+                max_pages=max_pages,
+            )
+
+    if source in ("idp", "all"):
+        click.echo("\n=== IDP (British Library) ===")
+        for manifest_id, desc, cat_num in _DUNHUANG_IDP_ITEMS:
+            click.echo(f"\n--- {desc} ---")
+            manifest_url = f"https://iiif.bl.uk/manifest/{manifest_id}"
+            total += _harvest_iiif_source(
+                manifest_url,
+                output_dir=dunhuang_dir / "idp",
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="idp_bl",
+                catalog_number=cat_num,
+                license_str="CC-BY-NC-SA-4.0",
+                acquisition_method="idp_iiif_manifest",
+                item_id=manifest_id,
+                dry_run=dry_run,
+                max_pages=max_pages,
+            )
+
+    click.echo(f"\nDunhuang harvest complete: {total} images downloaded.")
+
+
+# ---------------------------------------------------------------------------
+# Library of Congress items
+# ---------------------------------------------------------------------------
+
+# LOC World Digital Library items — free to use and reuse (public domain)
+_LOC_WDL_ITEMS: list[tuple[str, str, str, str, int | None]] = [
+    # (lccn, description, script_style, period, catalog_number)
+    # Korean TCC woodblock print — 68 pages, actual TCC text
+    (
+        "2016500252",
+        "Ch'onjamun — Korean TCC woodblock print (1896)",
+        "kaishu",
+        "19th",
+        92,
+    ),
+    # Jiang tie — earliest private calligraphy anthology, Wang Xizhi works
+    (
+        "2021667447",
+        "Jiang tie — Song calligraphy rubbings anthology",
+        "mixed",
+        "11th",
+        93,
+    ),
+    # Yi que Fo kan bei — Chu Suiliang, Tang regular script, 106 pages
+    (
+        "2021667449",
+        "Yi que Fo kan bei — Chu Suiliang kaishu (Tang, 641)",
+        "kaishu",
+        "7th",
+        94,
+    ),
+    # Shen ce jun bei — Liu Gongquan, Tang regular script, 60 pages
+    (
+        "2021667418",
+        "Shen ce jun bei — Liu Gongquan kaishu (Tang, 843)",
+        "kaishu",
+        "9th",
+        95,
+    ),
+    # Zheng zuo wei tie — Yan Zhenqing, Tang running script, 11 pages
+    (
+        "2021666489",
+        "Zheng zuo wei tie — Yan Zhenqing xingshu (Tang)",
+        "xingshu",
+        "8th",
+        96,
+    ),
+    # Yi he ming — Southern Dynasties proto-standard script, 14 pages
+    (
+        "2021666522",
+        "Yi he ming — Southern Dynasties (514 CE)",
+        "kaishu",
+        "6th",
+        97,
+    ),
+]
+
+# LOC Chinese Rare Book items — educational/research use only
+_LOC_CRB_ITEMS: list[tuple[str, str, str, str, int | None]] = [
+    # (lccn, description, script_style, period, catalog_number)
+    (
+        "2012402760",
+        "Shu fa jin liang — calligraphy compilation (4 juan)",
+        "mixed",
+        "17th-19th",
+        None,
+    ),
+]
+
+
+@cli.command("harvest-loc")
+@click.option("--dry-run", is_flag=True, help="Preview without downloading.")
+@click.option("--max-pages", type=int, default=0, help="Max pages per item (0 = all).")
+@click.option(
+    "--source",
+    type=click.Choice(["wdl", "crb", "all"]),
+    default="all",
+    help="Which LOC collection to harvest (wdl=World Digital Library, crb=Chinese Rare Books).",
+)
+@click.pass_context
+def harvest_loc(ctx: click.Context, dry_run: bool, max_pages: int, source: str) -> None:
+    """Harvest Chinese calligraphy from Library of Congress IIIF collections."""
+    output_dir: Path = ctx.obj["output_dir"]
+    registry_path: Path = ctx.obj["registry"]
+
+    sha_set, _ = _load_registry(registry_path)
+    loc_dir = output_dir / "loc"
+
+    # LOC requires browser-like headers for IIIF manifest access
+    loc_headers = {
+        "Accept": "application/ld+json, application/json",
+        "Referer": "https://www.loc.gov/",
+    }
+
+    total = 0
+
+    # LOC rate-limits aggressively; pause between manifest fetches
+    loc_rate = 3.0  # seconds between items
+
+    if source in ("wdl", "all"):
+        click.echo("\n=== LOC World Digital Library (free reuse) ===")
+        for idx, (lccn, desc, _style, _period, cat_num) in enumerate(_LOC_WDL_ITEMS):
+            if idx > 0:
+                time.sleep(loc_rate)
+            click.echo(f"\n--- {desc} ---")
+            manifest_url = f"https://www.loc.gov/item/{lccn}/manifest.json"
+            total += _harvest_iiif_source(
+                manifest_url,
+                output_dir=loc_dir / "wdl",
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="loc_wdl",
+                catalog_number=cat_num,
+                license_str="public_domain",
+                acquisition_method="loc_iiif_manifest",
+                item_id=lccn,
+                dry_run=dry_run,
+                max_pages=max_pages,
+                rate_limit=2.0,
+                extra_headers=loc_headers,
+                registry_base_dir=output_dir,
+            )
+
+    if source in ("crb", "all"):
+        click.echo("\n=== LOC Chinese Rare Book Collection (research use) ===")
+        for idx, (lccn, desc, _style, _period, cat_num) in enumerate(_LOC_CRB_ITEMS):
+            if idx > 0 or total > 0:
+                time.sleep(loc_rate)
+            click.echo(f"\n--- {desc} ---")
+            manifest_url = f"https://www.loc.gov/item/{lccn}/manifest.json"
+            total += _harvest_iiif_source(
+                manifest_url,
+                output_dir=loc_dir / "crb",
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution="loc_crb",
+                catalog_number=cat_num,
+                license_str="educational_research_only",
+                acquisition_method="loc_iiif_manifest",
+                item_id=lccn,
+                dry_run=dry_run,
+                max_pages=max_pages,
+                rate_limit=2.0,
+                extra_headers=loc_headers,
+                registry_base_dir=output_dir,
+            )
+
+    click.echo(f"\nLOC harvest complete: {total} images downloaded.")
 
 
 # ---------------------------------------------------------------------------
