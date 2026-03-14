@@ -32,8 +32,9 @@
 ## Overview
 
 > **Status as of 2026-03-06**: 9,170 images acquired (76.4% of 12K target). Domain enrichment
-> complete. 3 heads remain at-risk with 0 labels (`resolution_quality`, `handwriting_legibility`,
-> `handwriting_score`); 1 head (`skew_score`) has low coverage. See `OOD_COVERAGE_GAP_REPORT.md`
+> complete. 3 heads remain at-risk with 0 labels (`resolution_quality`, `skew_score`,
+> `handwriting_legibility_score`); 1 head has low coverage (`handwriting_legibility` at 15 labels);
+> 1 head no longer at risk (`code_confidence` at 500 labels). See `OOD_COVERAGE_GAP_REPORT.md`
 > for details.
 
 | Category | Current Target | Revised Target | Acquired | Status |
@@ -237,12 +238,12 @@ Each OOD category evaluates robustness in conditions not represented in its corr
 | **OOD-Script** | script-detection | 5 | SIG-G2-1 | Reserved scripts (Mong/Syrc/Geor) never seen; open-set rejection; Phase 2 preview scripts (Grek/Armn/Ethi) |
 | **OOD-Geometry** | orientation, skew | 1, 2 | MNV4-H1, MNV4-H2, SIG-G3-1, SIG-G3-2 | 0°/180° disambiguation on symmetric docs; extreme perspective; Japanese TTB convention (labeled 0°, not 270°) |
 | **OOD-Capture** | capture-method, warping | 7, 9 | SIG-G5-1, SIG-G5-3 | Screen recapture moiré/aliasing (no training analog); ADF curl artifacts; 4th-gen photocopy degradation |
-| **OOD-Degradation** | iqa, shadow | 4, 8 | SIG-G1-1, SIG-G1-2, SIG-G1-3, SIG-G1-4, SIG-G1-5, SIG-G1-6, SIG-G5-2 | ≥5 simultaneous distortion types; book gutter shadow gradient not in sd7k; binarized `color_mode` absent |
+| **OOD-Degradation** | iqa, shadow | 4, 8 | SIG-G1-1, SIG-G1-2, SIG-G1-3 (DIQA 3-dim), SIG-G5-2 | ≥5 simultaneous distortion types; book gutter shadow gradient not in sd7k; binarized `color_mode` absent |
 | **OOD-Handwriting** | handwriting | 6 | SIG-G4-1, SIG-G4-2, SIG-G4-3, SIG-G4-4, SIG-G4-5 | ILLEGIBLE class absent from training; non-Latin handwriting (Arab/CJK/Deva); `specialized` content type |
 | **OOD-Resolution** | resolution-quality | 3 | MNV4-H3, SIG-G5-5 | Born-digital low-DPI paradox (large font → high char-height at 72 DPI); 2×/4× upscale artifact detection |
 | **OOD-Domain** | script-detection (secondary) | 5 | All 22 heads (robustness) | Novel domain combos: government forms, religious texts, thermal receipts — cross-domain generalization |
 | **OOD-Code** | code-detection | 10 | SIG-G5-4 | IDE screenshots, mixed prose+code (arXiv/Jupyter), terminal output — outside generation-script distribution |
-| **OOD-Mixed** | orientation, skew, iqa, shadow, warping | 1, 2, 4, 8, 9 | MNV4-H1, MNV4-H2, SIG-G1-1, SIG-G1-2, SIG-G1-3, SIG-G1-4, SIG-G1-5, SIG-G1-6, SIG-G3-1, SIG-G3-2, SIG-G5-2, SIG-G5-3 | Cascade failures: Mongolian TTB + aged + perspective; CJK HW + gutter shadow; binarized + extreme compression |
+| **OOD-Mixed** | orientation, skew, iqa, shadow, warping | 1, 2, 4, 8, 9 | MNV4-H1, MNV4-H2, SIG-G1-1, SIG-G1-2, SIG-G1-3 (DIQA 3-dim), SIG-G3-1, SIG-G3-2, SIG-G5-2, SIG-G5-3 | Cascade failures: Mongolian TTB + aged + perspective; CJK HW + gutter shadow; binarized + extreme compression |
 
 > **Note**: OOD-Domain tests all 22 heads for general robustness. Its secondary link to #5 (script-detection) reflects the Fraktur/Ottoman Arabic sub-sources in Phase 1 of acquisition.
 
@@ -510,7 +511,8 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 > that exceed what single-distortion IQA training covers* — specifically, compound distortions
 > (≥ 5 simultaneous types), book gutter shadow gradients (absent from sd7k flat-document training
 > data), binarized 1-bit documents where shadow_severity is unmeasurable, and bleed-through with
-> bimodal backgrounds. These test all 6 IQA heads (SIG-G1-1 to G1-6) and the shadow head
+> bimodal backgrounds. These test all 3 DIQA-aligned IQA heads (SIG-G1-1 to G1-3: iqa_overall,
+> iqa_sharpness, iqa_color) and the shadow head
 > (SIG-G5-2). Performance targets: VQualA ≥ 0.80 on compound 5+ distortions; shadow MAE < 0.15
 > on book gutter. Exclusion criteria: compound images assembled from the same Augraphy pipeline
 > used in IQA training (must use a *different* augmentation engine to avoid correlation);
@@ -964,7 +966,7 @@ signal is calibrated per-script.
   temperature scaling (calibrated post-training), with no in-training class assigned > 50%
   confidence, despite degradation making the script harder to read. If the model wrongly
   identifies it as another script with high confidence, that is a double failure.
-- **Heads stressed**: SIG-G2-1 (open-set), MNV4-H2, SIG-G5-3, SIG-G1-6
+- **Heads stressed**: SIG-G2-1 (open-set), MNV4-H2, SIG-G5-3, SIG-G1-1 (iqa_overall)
 - **Performance targets**:
   - SIG-G2-1: Energy Score rejection on ≥ 80% of Mongolian images; no single class > 50% confidence
   - Failure: model assigns > 50% confidence to any in-training script class
@@ -994,12 +996,12 @@ signal is calibrated per-script.
   on the same page — script detection must handle MIXED class accurately; the visual style of
   historical manuscripts is outside the synth-v3 training distribution
 - **Heads stressed**: SIG-G2-1 (MIXED class), SIG-G4-1 (handwriting presence — likely DOMINANT),
-  SIG-G1-6 (quality — historical paper degradation)
+  SIG-G1-1 (iqa_overall — historical paper degradation)
 - **Performance targets**:
   - SIG-G2-1: correctly identify as MIXED on ≥ 60% of bilingual pages
   - SIG-G4-1: correctly classify handwriting presence (likely SUBSTANTIAL or DOMINANT)
 - **Label requirements**: `script=MIXED`, `text_direction` (if determinable), `document_age=historical`,
-  `handwriting_presence` (for manuscripts with clear script writing), all IQA scores
+  `handwriting_presence` (for manuscripts with clear script writing), all 3 DIQA IQA scores (`iqa_overall`, `iqa_sharpness`, `iqa_color`)
 - **`ood_categories`**: `["ood_script", "ood_domain", "ood_mixed"]`
 - **`evaluation_pipeline_stage`**: `["siglip2"]`
 - **Sources**: Public domain Ottoman archives, medieval manuscripts from Wikimedia Commons,
@@ -1020,13 +1022,13 @@ assessment interact — the model must jointly reason about all three.
   handwriting presence AND script AND report ILLEGIBLE legibility — or does degradation mask
   the handwriting signal entirely?
 - **Heads stressed**: SIG-G4-1 (presence — should be SUBSTANTIAL), SIG-G4-2 (legibility —
-  should be ILLEGIBLE), SIG-G2-1 (script — should be Arab), SIG-G1-6 (quality — should be POOR)
+  should be ILLEGIBLE), SIG-G2-1 (script — should be Arab), SIG-G1-1 (iqa_overall — should be POOR)
 - **Performance targets**:
   - SIG-G4-1: SUBSTANTIAL or DOMINANT on ≥ 75% of these images
   - SIG-G4-2: ILLEGIBLE or POOR on ≥ 60% of these images
   - SIG-G2-1: Arab on ≥ 70% of these images despite degradation
   - Failure: model reports NONE handwriting presence because blur obscures handwriting signal
-- **Label requirements**: All 5 G4 fields, `script=Arab`, all 6 IQA scores,
+- **Label requirements**: All 5 G4 fields, `script=Arab`, all 3 DIQA IQA scores (`iqa_overall`, `iqa_sharpness`, `iqa_color`),
   `capture_method=scanner_flatbed` or `camera_smartphone`
 - **`ood_categories`**: `["ood_handwriting", "ood_script", "ood_degradation", "ood_mixed"]`
 - **`evaluation_pipeline_stage`**: `["siglip2"]`

@@ -1257,8 +1257,10 @@ def _create_multitask_dataset(
                 for iqa_dim in IQA_DIMENSIONS:
                     if iqa_dim in entry:
                         raw_val = float(entry[iqa_dim])
-                        # If value > 1.0, treat as MOS (1-5 scale) to normalize
-                        if raw_val > 1.0:
+                        # If value > 1.05, treat as MOS (1-5 scale) to normalize.
+                        # Threshold is 1.05 rather than 1.0 to tolerate minor
+                        # floating-point overshoot in pre-normalized scores.
+                        if raw_val > 1.05:
                             sample["labels"][iqa_dim] = self._normalize_mos(raw_val)
                         else:
                             sample["labels"][iqa_dim] = raw_val

@@ -44,6 +44,7 @@ import hashlib
 import json
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -203,7 +204,7 @@ def main() -> None:
         image_paths = [r["image_path"] for r in chunk]
         sha_map = {r["image_path"]: r["sha256"] for r in chunk}
 
-        def _make_progress(base_processed: int) -> callable:
+        def _make_progress(base_processed: int) -> Callable[[str, int, int], None]:
             def _progress(dimension: str, processed: int, total: int) -> None:
                 elapsed = time.monotonic() - start_time
                 overall_done = base_processed + processed

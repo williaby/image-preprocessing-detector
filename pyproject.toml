@@ -419,9 +419,7 @@ known-local-folder = ["validation", "benchmarks"]
 "src/image_preprocessing_detector/ingestion/__init__.py" = ["RUF022"]
 # DeQA bridge script - standalone subprocess running in external venv:
 #   T201: print() required for stdin/stdout JSONL protocol
-#   F811: local imports from DeQA-Doc venv shadow across functions (can't be top-level)
-#   BLE001: broad except in batch image processing loop (graceful per-image error handling)
-"src/image_preprocessing_detector/labeling/deqa/bridge_script.py" = ["T201", "F811", "BLE001"]
+"src/image_preprocessing_detector/labeling/deqa/bridge_script.py" = ["T201"]
 # Files with __main__ blocks - T201 (print) used for CLI examples
 "src/image_preprocessing_detector/classification/pdf_image_detector.py" = ["T201"]
 "src/image_preprocessing_detector/classification/pdf_text_extractor.py" = ["T201"]

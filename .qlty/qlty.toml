@@ -444,7 +444,7 @@ set.ignored = true
 [[triage]]
 match.plugins = ["semgrep"]
 match.rules = ["semgrep:hardcoded-absolute-path"]
-match.file_patterns = ["**/labeling/deqa/**"]
+match.file_patterns = ["**/labeling/deqa/subprocess_runner.py"]
 set.ignored = true
 
 

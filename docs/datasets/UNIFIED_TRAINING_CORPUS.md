@@ -420,7 +420,7 @@ This sub-split is HELD OUT from Phase 1 training and used only for compound-dist
 
 The VLM-based labeling path (Phases 1C, 2, and the VLM SRCC Decision Gate below) has been
 superseded by the DeQA-Doc pseudo-labeling pipeline. See
-[DEQA_DOC_PSEUDO_LABELING.md](../../planning/DEQA_DOC_PSEUDO_LABELING.md).
+[DEQA_DOC_PSEUDO_LABELING.md](../planning/DEQA_DOC_PSEUDO_LABELING.md).
 
 **IQA Label Sources (current approach):**
 

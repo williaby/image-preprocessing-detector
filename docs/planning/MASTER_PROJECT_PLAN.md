@@ -698,7 +698,8 @@ communicating over stdin/stdout JSONL protocol. This avoids dependency conflicts
 ```json
 {
   "sha256": "abc123...",
-  "image_path": "/abs/path/to/image.jpg",
+  "corpus_id": "diqa-5000",
+  "image_path": "iqa/phase1/images/sample_042.jpg",
   "overall_label": 0.605,
   "sharpness_label": 0.72,
   "color_fidelity_label": 0.81,
@@ -1173,11 +1174,11 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 skew, compression, overall_quality) to 3 DIQA-aligned dimensions (overall, sharpness,
 color_fidelity). This checklist tracks all propagation changes.
 
-**Field naming convention** (3 contexts):
+**Field naming convention** (3 contexts, canonical external fields: `iqa_overall`, `iqa_sharpness`, `iqa_color`):
 
 - **Pseudo-labels** (JSONL): `overall_label`, `sharpness_label`, `color_fidelity_label` — raw DeQA-Doc output
-- **Model heads** (runtime): `iqa_overall`, `iqa_sharpness`, `iqa_color` — SigLIP 2 prediction output
-- **Enrichment schema**: `deqa_overall`, `deqa_sharpness`, `deqa_color_fidelity` — metadata provenance fields
+- **Model heads / canonical external** (runtime): `iqa_overall`, `iqa_sharpness`, `iqa_color` — SigLIP 2 prediction output; use these in all new code and documentation
+- **Enrichment schema**: `deqa_overall`, `deqa_sharpness`, `deqa_color_fidelity` — metadata provenance fields (prefix distinguishes label source from model output)
 
 ### Schema Changes
 
@@ -1192,7 +1193,7 @@ color_fidelity). This checklist tracks all propagation changes.
 | # | File | Change | Priority |
 | --- | --- | --- | --- |
 | C1 | `scripts/build_ood_dataset.py` | Update `_ALL_HEADS` tuple: replace `blur_score`, `noise_score`, `contrast_score`, `compression_score`, `overall_quality` with `iqa_overall`, `iqa_sharpness`, `iqa_color` | HIGH |
-| C2 | `metrics/dqs_calculator.py` | Add 3-dim ML blend: `ml_quality = 0.60*overall + 0.25*sharpness + 0.15*color_fidelity`; add `ml_overall_weight`, `ml_sharpness_weight`, `ml_color_weight` to config | HIGH |
+| C2 | `metrics/dqs_calculator.py` | Add 3-dim ML blend: `ml_quality = 0.60*iqa_overall + 0.25*iqa_sharpness + 0.15*iqa_color`; add `ml_overall_weight`, `ml_sharpness_weight`, `ml_color_weight` to config | HIGH |
 | C3 | `modal/train_siglip2_multitask.py` | Add `--diqa-labels` CLI arg; load gated pseudo-labels; multiply IQA loss by `sample_weight`; DIQA-5000 GT at 2x sampling weight | HIGH |
 | C4 | `scripts/aggregate_head_coverage.py` | Update head name references from 6-head to 3-dim scheme | MEDIUM |
 
@@ -1202,7 +1203,7 @@ color_fidelity). This checklist tracks all propagation changes.
 | --- | --- | --- |
 | D1 | `docs/datasets/HAR_MASTER_INDEX.md` | Update Group 1 section from 6 HARs to 3 DIQA-aligned HARs |
 | D2 | `docs/datasets/HAR_SYNTHESIS.md` | Rewrite §5 (IQA-specific rules) for DIQA 3-dim approach |
-| D3 | `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md` | Update Group 1 from "5 regression + 1 aggregate" to "3 regression (overall, sharpness, color_fidelity)"; document DIQA-5000 alignment rationale |
+| D3 | `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md` | Update Group 1 from "5 regression + 1 aggregate" to "3 regression (`iqa_overall`, `iqa_sharpness`, `iqa_color`)"; document DIQA-5000 alignment rationale |
 
 ### Documentation Changes (MEDIUM Priority)
 
