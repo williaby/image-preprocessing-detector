@@ -24,7 +24,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime, timezone
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +53,8 @@ _DEFAULT_IMAGE_DIR = Path(
     "/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic"
 )
 _LOCAL_IMAGE_DIR = _PROJECT_ROOT / "data" / "thousand-character-classic"
+
+_JSON_GLOB = "*.json"
 
 logger = logging.getLogger(__name__)
 
@@ -584,6 +588,60 @@ _PROVENANCE_TIER_ORDER = {
 }
 
 
+def _run_single_detector(
+    detector_class: type,
+    img: Any,
+    detector_name: str,
+    image_name: str,
+    quality_score_attr: str,
+    is_degraded_attr: str,
+    degradation_type: str,
+    detection_method: str,
+    *,
+    severity_attr: str = "severity",
+    severity_numeric_fn: Any = None,
+    location_fn: Any = None,
+    is_degraded_fn: Any = None,
+) -> tuple[dict[str, Any] | None, float, float]:
+    """Run one IQA detector and build a degradation record if triggered.
+
+    Returns (degradation_dict_or_None, quality_score, confidence).
+    Raises on detector failure (caller handles).
+    """
+    det = detector_class()
+    result = det.detect(img)
+    sev_val = getattr(result, severity_attr).value
+    quality_score: float = getattr(result, quality_score_attr)
+    confidence: float = result.confidence
+
+    is_degraded = (
+        is_degraded_fn(result, sev_val)
+        if is_degraded_fn
+        else getattr(result, is_degraded_attr)
+    )
+    if not is_degraded:
+        return None, quality_score, confidence
+
+    sev_numeric = (
+        severity_numeric_fn(result)
+        if severity_numeric_fn
+        else round(1.0 - quality_score, 3)
+    )
+    location = location_fn(result) if location_fn else "global"
+    degradation = {
+        "type": degradation_type,
+        "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
+        "severity_numeric": sev_numeric,
+        "confidence": round(confidence, 3),
+        "provenance_tier": "tier_2_model",
+        "is_soft_label": True,
+        "detection_method": detection_method,
+        "location": location,
+        "region": None,
+    }
+    return degradation, quality_score, confidence
+
+
 def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
     """Run all 8 classical IQA detectors on a single image.
 
@@ -615,12 +673,12 @@ def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
         }
 
     degradations: list[dict[str, Any]] = []
-    quality_scores: list[float] = []  # 0=bad, 1=good
+    quality_scores: list[float] = []
     confidences: list[float] = []
     skew_angle: float | None = None
     skew_confidence: float | None = None
 
-    # --- 1. Skew ---
+    # --- 1. Skew (special: extracts angle and uses severity-derived quality) ---
     try:
         skew_det = SkewDetector()
         skew_r = skew_det.detect(img)
@@ -628,7 +686,6 @@ def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
         skew_confidence = round(skew_r.confidence, 3)
         sev_val = skew_r.severity.value
         sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        # Quality = 1 - severity (no skew = high quality)
         quality_scores.append(1.0 - sev_num)
         confidences.append(skew_r.confidence)
         if skew_r.is_skewed:
@@ -648,184 +705,107 @@ def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
     except Exception as exc:
         logger.warning("Skew detection failed for %s: %s", image_path.name, exc)
 
-    # --- 2. Blur ---
-    try:
-        blur_det = BlurDetector()
-        blur_r = blur_det.detect(img)
-        sev_val = blur_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(blur_r.blur_score)
-        confidences.append(blur_r.confidence)
-        if blur_r.is_blurred:
-            degradations.append(
-                {
-                    "type": "blur",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(1.0 - blur_r.blur_score, 3),
-                    "confidence": round(blur_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "laplacian_variance",
-                    "location": "global",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning("Blur detection failed for %s: %s", image_path.name, exc)
+    # --- 2-8. Standard detectors (data-driven loop) ---
+    detector_specs: list[dict[str, Any]] = [
+        {
+            "class": BlurDetector,
+            "name": "Blur",
+            "quality_score_attr": "blur_score",
+            "is_degraded_attr": "is_blurred",
+            "degradation_type": "blur",
+            "detection_method": "laplacian_variance",
+        },
+        {
+            "class": NoiseDetector,
+            "name": "Noise",
+            "quality_score_attr": "noise_score",
+            "is_degraded_attr": "is_noisy",
+            "degradation_type": "noise",
+            "detection_method": "wavelet_mad",
+        },
+        {
+            "class": ContrastDetector,
+            "name": "Contrast",
+            "quality_score_attr": "score",
+            "is_degraded_attr": "is_low_contrast",
+            "degradation_type": "low_contrast",
+            "detection_method": "histogram_analysis",
+        },
+        {
+            "class": IlluminationDetector,
+            "name": "Illumination",
+            "quality_score_attr": "score",
+            "is_degraded_attr": "has_issues",
+            "degradation_type": "illumination_uneven",
+            "detection_method": "regional_brightness_analysis",
+        },
+        {
+            "class": JPEGBlockinessDetector,
+            "name": "JPEG",
+            "quality_score_attr": "compression_score",
+            "is_degraded_attr": "has_artifacts",
+            "degradation_type": "compression_artifact",
+            "detection_method": "dct_block_boundary",
+            "severity_numeric_fn": lambda r: round(r.blockiness_score, 3),
+        },
+        {
+            "class": BinarizationQualityDetector,
+            "name": "Binarization",
+            "quality_score_attr": "binarization_score",
+            "is_degraded_attr": "",
+            "degradation_type": "poor_binarization",
+            "detection_method": "bimodality_otsu",
+            "is_degraded_fn": lambda _r, sv: sv in ("medium", "high", "critical"),
+        },
+        {
+            "class": BleedThroughDetector,
+            "name": "Bleed-through",
+            "quality_score_attr": "severity",
+            "is_degraded_attr": "bleed_through_detected",
+            "degradation_type": "bleed_through",
+            "detection_method": "morphological_background",
+            "severity_attr": "severity_level",
+            "severity_numeric_fn": lambda r: round(r.severity, 3),
+            "location_fn": (
+                lambda r: "global" if r.affected_ratio > 0.3 else "localized"
+            ),
+            "quality_invert": True,
+        },
+    ]
 
-    # --- 3. Noise ---
-    try:
-        noise_det = NoiseDetector()
-        noise_r = noise_det.detect(img)
-        sev_val = noise_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(noise_r.noise_score)
-        confidences.append(noise_r.confidence)
-        if noise_r.is_noisy:
-            degradations.append(
-                {
-                    "type": "noise",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(1.0 - noise_r.noise_score, 3),
-                    "confidence": round(noise_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "wavelet_mad",
-                    "location": "global",
-                    "region": None,
-                }
+    for spec in detector_specs:
+        try:
+            deg, qscore, conf = _run_single_detector(
+                spec["class"],
+                img,
+                spec["name"],
+                image_path.name,
+                spec["quality_score_attr"],
+                spec.get("is_degraded_attr", ""),
+                spec["degradation_type"],
+                spec["detection_method"],
+                severity_attr=spec.get("severity_attr", "severity"),
+                severity_numeric_fn=spec.get("severity_numeric_fn"),
+                location_fn=spec.get("location_fn"),
+                is_degraded_fn=spec.get("is_degraded_fn"),
             )
-    except Exception as exc:
-        logger.warning("Noise detection failed for %s: %s", image_path.name, exc)
+        except Exception as exc:
+            logger.warning(
+                "%s detection failed for %s: %s",
+                spec["name"],
+                image_path.name,
+                exc,
+            )
+            continue
 
-    # --- 4. Contrast ---
-    try:
-        contrast_det = ContrastDetector()
-        contrast_r = contrast_det.detect(img)
-        sev_val = contrast_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(contrast_r.score)
-        confidences.append(contrast_r.confidence)
-        if contrast_r.is_low_contrast:
-            degradations.append(
-                {
-                    "type": "low_contrast",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(1.0 - contrast_r.score, 3),
-                    "confidence": round(contrast_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "histogram_analysis",
-                    "location": "global",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning("Contrast detection failed for %s: %s", image_path.name, exc)
-
-    # --- 5. Illumination ---
-    try:
-        illum_det = IlluminationDetector()
-        illum_r = illum_det.detect(img)
-        sev_val = illum_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(illum_r.score)
-        confidences.append(illum_r.confidence)
-        if illum_r.has_issues:
-            degradations.append(
-                {
-                    "type": "illumination_uneven",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(1.0 - illum_r.score, 3),
-                    "confidence": round(illum_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "regional_brightness_analysis",
-                    "location": "global",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning("Illumination detection failed for %s: %s", image_path.name, exc)
-
-    # --- 6. JPEG Blockiness ---
-    try:
-        jpeg_det = JPEGBlockinessDetector()
-        jpeg_r = jpeg_det.detect(img)
-        sev_val = jpeg_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(jpeg_r.compression_score)
-        confidences.append(jpeg_r.confidence)
-        if jpeg_r.has_artifacts:
-            degradations.append(
-                {
-                    "type": "compression_artifact",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(jpeg_r.blockiness_score, 3),
-                    "confidence": round(jpeg_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "dct_block_boundary",
-                    "location": "global",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning("JPEG detection failed for %s: %s", image_path.name, exc)
-
-    # --- 7. Binarization Quality ---
-    try:
-        binar_det = BinarizationQualityDetector()
-        binar_r = binar_det.detect(img)
-        sev_val = binar_r.severity.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(binar_r.binarization_score)
-        confidences.append(binar_r.confidence)
-        if sev_val in ("medium", "high", "critical"):
-            degradations.append(
-                {
-                    "type": "poor_binarization",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(1.0 - binar_r.binarization_score, 3),
-                    "confidence": round(binar_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "bimodality_otsu",
-                    "location": "global",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning("Binarization detection failed for %s: %s", image_path.name, exc)
-
-    # --- 8. Bleed-Through ---
-    try:
-        bleed_det = BleedThroughDetector()
-        bleed_r = bleed_det.detect(img)
-        sev_val = bleed_r.severity_level.value
-        sev_num = _SEVERITY_TO_NUMERIC.get(sev_val, 0.25)
-        quality_scores.append(1.0 - bleed_r.severity)
-        confidences.append(bleed_r.confidence)
-        if bleed_r.bleed_through_detected:
-            degradations.append(
-                {
-                    "type": "bleed_through",
-                    "severity": _SEVERITY_TO_CATEGORICAL.get(sev_val, "mild"),
-                    "severity_numeric": round(bleed_r.severity, 3),
-                    "confidence": round(bleed_r.confidence, 3),
-                    "provenance_tier": "tier_2_model",
-                    "is_soft_label": True,
-                    "detection_method": "morphological_background",
-                    "location": "global"
-                    if bleed_r.affected_ratio > 0.3
-                    else "localized",
-                    "region": None,
-                }
-            )
-    except Exception as exc:
-        logger.warning(
-            "Bleed-through detection failed for %s: %s", image_path.name, exc
-        )
+        # BleedThrough quality = 1 - severity
+        if spec.get("quality_invert"):
+            quality_scores.append(1.0 - qscore)
+        else:
+            quality_scores.append(qscore)
+        confidences.append(conf)
+        if deg is not None:
+            degradations.append(deg)
 
     # Compute overall quality score (mean of individual quality scores)
     overall_score: float | None = None
@@ -843,25 +823,41 @@ def _run_iqa_detectors(image_path: Path) -> dict[str, Any]:
     }
 
 
+def _classify_confidence(confidence: float) -> str:
+    """Map a confidence score to a reliability category.
+
+    Categories (highest to lowest): hard_label, soft_label, active_learning, unreliable.
+    """
+    if confidence >= 0.9:
+        return "hard_label"
+    if confidence >= 0.7:
+        return "soft_label"
+    if confidence >= 0.5:
+        return "active_learning"
+    return "unreliable"
+
+
+_RELIABILITY_FIELDS = [
+    "capture_method",
+    "resolution",
+    "domain",
+    "structure",
+    "quality",
+    "language",
+    "text_scope",
+    "content_flags",
+    "text_content",
+    "text_statistics",
+    "handwriting_assessment",
+    "geometric",
+    "image_properties",
+]
+
+_TOTAL_SCHEMA_FIELDS = 22  # Full L2 schema field count
+
+
 def _compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
     """Compute sample_reliability_summary from all L2 data fields."""
-    all_fields = [
-        "capture_method",
-        "resolution",
-        "domain",
-        "structure",
-        "quality",
-        "language",
-        "text_scope",
-        "content_flags",
-        "text_content",
-        "text_statistics",
-        "handwriting_assessment",
-        "geometric",
-        "image_properties",
-    ]
-    total_schema_fields = 22  # Full L2 schema field count
-
     min_conf = 1.0
     min_conf_field: str | None = None
     min_prov = "tier_0_exact"
@@ -869,62 +865,84 @@ def _compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
     unassessed = 0
     hard = 0
     soft = 0
+    populated = 0
 
-    for field_name in all_fields:
+    for field_name in _RELIABILITY_FIELDS:
         field_data = data.get(field_name)
         if not isinstance(field_data, dict):
             continue
 
+        populated += 1
         conf = field_data.get("confidence")
         prov = field_data.get("provenance_tier")
 
-        if conf is not None:
+        if conf is None:
+            unassessed += 1
+        else:
             assessed += 1
-            if conf >= 0.9:
+            category = _classify_confidence(conf)
+            if category == "hard_label":
                 hard += 1
-            elif conf >= 0.7:
+            elif category == "soft_label":
                 soft += 1
             if conf < min_conf:
                 min_conf = conf
                 min_conf_field = field_name
-        else:
-            unassessed += 1
 
         if prov and _PROVENANCE_TIER_ORDER.get(prov, 0) < _PROVENANCE_TIER_ORDER.get(
             min_prov, 3
         ):
             min_prov = prov
 
-    unpopulated = total_schema_fields - len(
-        [f for f in all_fields if isinstance(data.get(f), dict)]
-    )
-
-    # Determine category
     if assessed == 0:
-        category = "unassessed"
+        overall_category = "unassessed"
         min_conf_val = None
     else:
         min_conf_val = round(min_conf, 3)
-        if min_conf >= 0.9:
-            category = "hard_label"
-        elif min_conf >= 0.7:
-            category = "soft_label"
-        elif min_conf >= 0.5:
-            category = "active_learning"
-        else:
-            category = "unreliable"
+        overall_category = _classify_confidence(min_conf)
 
     return {
         "min_confidence": min_conf_val,
         "min_confidence_field": min_conf_field,
-        "min_confidence_category": category,
+        "min_confidence_category": overall_category,
         "min_provenance_tier": min_prov,
         "assessed_field_count": assessed,
         "unassessed_field_count": unassessed,
-        "unpopulated_field_count": unpopulated,
+        "unpopulated_field_count": _TOTAL_SCHEMA_FIELDS - populated,
         "hard_field_count": hard,
         "soft_field_count": soft,
     }
+
+
+def _update_l2_with_iqa(l2_path: Path, iqa_results: dict[str, Any]) -> None:
+    """Write IQA results, geometric skew, and reliability summary into an L2 record."""
+    with l2_path.open("r") as fh:
+        record = json.load(fh)
+
+    data = record.get("data", {})
+
+    data["quality"] = {
+        "overall_score": iqa_results["overall_score"],
+        "degradations": iqa_results["degradations"],
+        "confidence": iqa_results["quality_confidence"],
+        "provenance_tier": "tier_2_model",
+        "is_soft_label": True,
+        "detection_method": "classical_ensemble_8detector",
+    }
+
+    if iqa_results["skew_angle"] is not None:
+        geo = data.get("geometric", {})
+        geo["skew_angle_degrees"] = iqa_results["skew_angle"]
+        geo["skew_confidence"] = iqa_results["skew_confidence"]
+        geo["skew_detection_method"] = "hough_projection_ensemble"
+        data["geometric"] = geo
+
+    data["sample_reliability_summary"] = _compute_reliability_summary(data)
+    record["data"] = data
+
+    with l2_path.open("w") as fh:
+        json.dump(record, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
 
 
 @cli.command("enrich-iqa")
@@ -958,7 +976,7 @@ def enrich_iqa(image_dir: Path | None, dry_run: bool) -> None:
         click.echo("Registry is empty.")
         return
 
-    l2_files = list(_L2_OUTPUT_DIR.glob("*.json"))
+    l2_files = list(_L2_OUTPUT_DIR.glob(_JSON_GLOB))
     if not l2_files:
         click.echo("No L2 records found. Run 'enrich' first.")
         return
@@ -1005,38 +1023,7 @@ def enrich_iqa(image_dir: Path | None, dry_run: bool) -> None:
             )
             continue
 
-        # Load existing L2, update, write back
-        with l2_path.open("r") as fh:
-            record = json.load(fh)
-
-        data = record.get("data", {})
-
-        # Update quality
-        data["quality"] = {
-            "overall_score": iqa_results["overall_score"],
-            "degradations": iqa_results["degradations"],
-            "confidence": iqa_results["quality_confidence"],
-            "provenance_tier": "tier_2_model",
-            "is_soft_label": True,
-            "detection_method": "classical_ensemble_8detector",
-        }
-
-        # Update geometric skew
-        if iqa_results["skew_angle"] is not None:
-            geo = data.get("geometric", {})
-            geo["skew_angle_degrees"] = iqa_results["skew_angle"]
-            geo["skew_confidence"] = iqa_results["skew_confidence"]
-            geo["skew_detection_method"] = "hough_projection_ensemble"
-            data["geometric"] = geo
-
-        # Compute and add sample_reliability_summary
-        data["sample_reliability_summary"] = _compute_reliability_summary(data)
-
-        record["data"] = data
-
-        with l2_path.open("w") as fh:
-            json.dump(record, fh, ensure_ascii=False, indent=2)
-            fh.write("\n")
+        _update_l2_with_iqa(l2_path, iqa_results)
 
         updated += 1
 
@@ -1065,7 +1052,7 @@ def validate() -> None:
     with schema_path.open("r") as fh:
         schema = json.load(fh)
 
-    l2_files = list(_L2_OUTPUT_DIR.glob("*.json"))
+    l2_files = list(_L2_OUTPUT_DIR.glob(_JSON_GLOB))
     if not l2_files:
         click.echo("No L2 records found. Run 'enrich' first.")
         return
@@ -1086,7 +1073,7 @@ def validate() -> None:
 @cli.command("stats")
 def stats() -> None:
     """Show enrichment statistics."""
-    l2_files = list(_L2_OUTPUT_DIR.glob("*.json"))
+    l2_files = list(_L2_OUTPUT_DIR.glob(_JSON_GLOB))
     click.echo(f"L2 records: {len(l2_files)}")
 
     if _SIDECAR_PATH.exists():
@@ -1111,6 +1098,78 @@ def stats() -> None:
     for field, count in sorted(fields_populated.items()):
         pct = count / len(l2_files) * 100
         click.echo(f"  {field}: {count}/{len(l2_files)} ({pct:.0f}%)")
+
+
+def _find_sha256_duplicates(
+    registry: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Find exact SHA256 duplicates across all registry entries."""
+    sha_map: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for entry in registry:
+        sha = entry.get("sha256", "")
+        if sha:
+            sha_map[sha].append(entry)
+
+    return [
+        {
+            "sha256": sha,
+            "count": len(entries),
+            "sample_ids": [e["sample_id"] for e in entries],
+            "institutions": list({e.get("source_institution", "") for e in entries}),
+        }
+        for sha, entries in sha_map.items()
+        if len(entries) > 1
+    ]
+
+
+def _compare_phash_pair(
+    pair: tuple[tuple[dict[str, Any], Any], tuple[dict[str, Any], Any]],
+    cat_num: int,
+    threshold: int,
+) -> dict[str, Any] | None:
+    """Compare two pHash entries and return a duplicate record if within threshold."""
+    (e1, h1), (e2, h2) = pair
+    distance = h1 - h2
+    if distance > threshold:
+        return None
+    return {
+        "catalog_number": cat_num,
+        "sample_id_a": e1["sample_id"],
+        "sample_id_b": e2["sample_id"],
+        "institution_a": e1.get("source_institution", ""),
+        "institution_b": e2.get("source_institution", ""),
+        "hamming_distance": distance,
+        "is_exact": distance == 0,
+    }
+
+
+def _compute_group_phashes(
+    entries: list[dict[str, Any]],
+    image_dir: Path,
+    imagehash: Any,
+    pil_image: Any,
+) -> tuple[list[tuple[dict[str, Any], Any]], int]:
+    """Compute pHash for each image in a catalog group.
+
+    Returns (hash_list, images_checked_count).
+    """
+    hashes: list[tuple[dict[str, Any], Any]] = []
+    checked = 0
+    for entry in entries:
+        file_path = entry.get("file_path", "")
+        if not file_path:
+            continue
+        img_path = image_dir / file_path
+        if not img_path.exists():
+            continue
+        try:
+            with pil_image.open(img_path) as img:
+                phash = imagehash.phash(img)
+            hashes.append((entry, phash))
+            checked += 1
+        except Exception as exc:
+            logger.warning("Cannot hash %s: %s", img_path, exc)
+    return hashes, checked
 
 
 @cli.command("audit-dedup")
@@ -1151,75 +1210,30 @@ def audit_dedup(image_dir: Path, threshold: int, output: Path) -> None:
     click.echo(f"Loaded {len(registry)} registry entries")
 
     # Group by catalog_number
-    groups: dict[int, list[dict[str, Any]]] = {}
+    groups: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for entry in registry:
         cat_num = entry.get("catalog_number")
         if cat_num is not None:
-            groups.setdefault(cat_num, []).append(entry)
+            groups[cat_num].append(entry)
+
+    sha_dupes = _find_sha256_duplicates(registry)
 
     duplicates: list[dict[str, Any]] = []
-    sha_dupes: list[dict[str, Any]] = []
     checked = 0
 
-    # Check SHA256 exact duplicates across ALL entries
-    sha_map: dict[str, list[dict[str, Any]]] = {}
-    for entry in registry:
-        sha = entry.get("sha256", "")
-        if sha:
-            sha_map.setdefault(sha, []).append(entry)
-    for sha, entries in sha_map.items():
-        if len(entries) > 1:
-            sha_dupes.append(
-                {
-                    "sha256": sha,
-                    "count": len(entries),
-                    "sample_ids": [e["sample_id"] for e in entries],
-                    "institutions": list(
-                        {e.get("source_institution", "") for e in entries}
-                    ),
-                }
-            )
-
-    # pHash near-duplicate detection within catalog groups
     for cat_num, entries in sorted(groups.items()):
         if len(entries) < 2:
             continue
 
-        # Compute pHash for each image
-        hashes: list[tuple[dict[str, Any], Any]] = []
-        for entry in entries:
-            file_path = entry.get("file_path", "")
-            if not file_path:
-                continue
-            img_path = image_dir / file_path
-            if not img_path.exists():
-                continue
-            try:
-                with Image.open(img_path) as img:
-                    phash = imagehash.phash(img)
-                hashes.append((entry, phash))
-                checked += 1
-            except Exception as exc:
-                logger.warning("Cannot hash %s: %s", img_path, exc)
+        hashes, group_checked = _compute_group_phashes(
+            entries, image_dir, imagehash, Image
+        )
+        checked += group_checked
 
-        # Compare all pairs
-        for i in range(len(hashes)):
-            for j in range(i + 1, len(hashes)):
-                e1, h1 = hashes[i]
-                e2, h2 = hashes[j]
-                distance = h1 - h2
-                if distance <= threshold:
-                    duplicates.append(
-                        {
-                            "catalog_number": cat_num,
-                            "sample_id_a": e1["sample_id"],
-                            "sample_id_b": e2["sample_id"],
-                            "institution_a": e1.get("source_institution", ""),
-                            "institution_b": e2.get("source_institution", ""),
-                            "hamming_distance": distance,
-                            "is_exact": distance == 0,
-                        }
-                    )
+        for pair in combinations(hashes, 2):
+            match = _compare_phash_pair(pair, cat_num, threshold)
+            if match is not None:
+                duplicates.append(match)
 
     report = {
         "timestamp": _now_iso(),
@@ -1244,6 +1258,48 @@ def audit_dedup(image_dir: Path, threshold: int, output: Path) -> None:
     click.echo(f"  Report: {output}")
 
 
+def _build_strata(
+    registry: list[dict[str, Any]],
+    catalog: dict[int, dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Group registry entries into institution|script strata for sampling."""
+    strata: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for entry in registry:
+        cat_num = entry.get("catalog_number")
+        cat = catalog.get(cat_num) if cat_num else None
+        institution = (cat or {}).get(
+            "source_institution", entry.get("source_institution", "unknown")
+        )
+        script = (cat or {}).get("script_style", "unknown")
+        strata[f"{institution}|{script}"].append(entry)
+    return dict(strata)
+
+
+def _build_audit_record(
+    entry: dict[str, Any],
+    catalog: dict[int, dict[str, Any]],
+    institution: str,
+    script: str,
+) -> dict[str, Any]:
+    """Build one audit-sample record from a registry entry."""
+    cat_num = entry.get("catalog_number")
+    cat = catalog.get(cat_num) if cat_num else None
+    return {
+        "sample_id": entry["sample_id"],
+        "file_path": entry.get("file_path", ""),
+        "source_institution": institution,
+        "catalog_number": cat_num,
+        "script_style": script,
+        "dynasty": (cat or {}).get("dynasty", ""),
+        "period_century": (cat or {}).get("period_century", ""),
+        "calligrapher": (cat or {}).get("calligrapher", ""),
+        "script_components": (cat or {}).get("script_components", []),
+        "script_style_correct": None,
+        "dynasty_correct": None,
+        "notes_reviewer": "",
+    }
+
+
 @cli.command("audit-labels")
 @click.option(
     "--sample-pct",
@@ -1264,50 +1320,22 @@ def audit_labels(sample_pct: float, output: Path, seed: int) -> None:
     """Generate stratified sample for label validation audit."""
     import random
 
+    # Non-cryptographic use: random sampling for dataset audit, not security-sensitive
     random.seed(seed)
 
     registry = _load_registry()
     catalog = _load_catalog()
     click.echo(f"Loaded {len(registry)} registry entries")
 
-    # Build extended entries for stratification
-    strata: dict[str, list[dict[str, Any]]] = {}
-    for entry in registry:
-        cat_num = entry.get("catalog_number")
-        cat = catalog.get(cat_num) if cat_num else None
-        institution = (cat or {}).get(
-            "source_institution", entry.get("source_institution", "unknown")
-        )
-        script = (cat or {}).get("script_style", "unknown")
-        key = f"{institution}|{script}"
-        strata.setdefault(key, []).append(entry)
+    strata = _build_strata(registry, catalog)
 
-    # Stratified sampling
     sampled: list[dict[str, Any]] = []
     for stratum_key, entries in sorted(strata.items()):
         n_sample = max(1, int(len(entries) * sample_pct))
         chosen = random.sample(entries, min(n_sample, len(entries)))
         institution, script = stratum_key.split("|", 1)
         for entry in chosen:
-            cat_num = entry.get("catalog_number")
-            cat = catalog.get(cat_num) if cat_num else None
-            sampled.append(
-                {
-                    "sample_id": entry["sample_id"],
-                    "file_path": entry.get("file_path", ""),
-                    "source_institution": institution,
-                    "catalog_number": cat_num,
-                    "script_style": script,
-                    "dynasty": (cat or {}).get("dynasty", ""),
-                    "period_century": (cat or {}).get("period_century", ""),
-                    "calligrapher": (cat or {}).get("calligrapher", ""),
-                    "script_components": (cat or {}).get("script_components", []),
-                    # Validation fields (to be filled by reviewer)
-                    "script_style_correct": None,
-                    "dynasty_correct": None,
-                    "notes_reviewer": "",
-                }
-            )
+            sampled.append(_build_audit_record(entry, catalog, institution, script))
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w") as fh:

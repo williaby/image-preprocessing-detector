@@ -228,7 +228,8 @@ def _get_manuscript_pages(loc_id: str) -> list[dict[str, Any]]:
 
     Returns list of page dicts, each with 'page_num' and 'iiif_url' keys.
     """
-    # loc_id may use http: — ensure we use https to avoid redirect overhead
+    # LOC catalog IDs sometimes contain http:// URIs as identifiers.
+    # Upgrade to https:// for secure transport (LOC API supports HTTPS).
     clean_id = loc_id.replace("http://", "https://")
     item_url = clean_id.rstrip("/") + "/?fo=json"
     data = _fetch_loc_api(item_url)
@@ -365,6 +366,8 @@ def _extract_folio_count_from_title(title: str) -> int | None:
     """Extract folio count from Jerusalem-style titles like '289 f. Pg. 26 ft.'."""
     import re
 
+    # Safe from ReDoS: pattern (\d+)\s*f\. is linear-time (no nested
+    # quantifiers or overlapping alternation) and input is a short title string.
     match = re.search(r"(\d+)\s*f\.", title)
     if match:
         return int(match.group(1))

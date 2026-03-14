@@ -369,6 +369,11 @@ def enrich(l2_dir: Path, registry: Path, *, dry_run: bool) -> None:
     parses them into structured metadata, and writes data.material_and_dating
     into each L2 JSON file.  Already-enriched records are skipped.
     """
+    # Validate l2_dir is a real directory (not a symlink escape)
+    resolved_l2 = l2_dir.resolve()
+    if not resolved_l2.is_dir():
+        raise click.ClickException(f"L2 directory does not exist: {l2_dir}")
+
     if dry_run:
         click.echo("DRY RUN — no files will be modified.")
 
@@ -376,8 +381,13 @@ def enrich(l2_dir: Path, registry: Path, *, dry_run: bool) -> None:
     reg = load_extended_registry(registry)
     click.echo(f"  Loaded {len(reg):,} registry entries.")
 
-    json_files = sorted(l2_dir.glob("*.json"))
-    click.echo(f"Found {len(json_files):,} L2 JSON files in {l2_dir}")
+    json_files: list[Path] = []
+    for json_path in sorted(resolved_l2.glob("*.json")):
+        if not json_path.resolve().is_relative_to(resolved_l2):
+            click.echo(f"[WARN] Skipping symlink escape: {json_path}")
+            continue
+        json_files.append(json_path)
+    click.echo(f"Found {len(json_files):,} L2 JSON files in {resolved_l2}")
 
     updated = skipped_already = missing_in_registry = 0
     errors: list[str] = []

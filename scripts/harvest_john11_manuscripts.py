@@ -383,14 +383,13 @@ def _load_licenses() -> dict[str, dict[str, Any]]:
         return yaml.safe_load(fh)
 
 
-def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
-    """Extract the best image URL from an IIIF canvas (v2 or v3).
+def _extract_url_v2_canvas(canvas: dict[str, Any]) -> str | None:
+    """Extract image URL from an IIIF v2 canvas.
 
-    Attempts full resolution first, falls back to /full/full/ IIIF Image API.
+    Looks for ``canvas.images[].resource.@id`` first, then falls back to
+    ``canvas.images[].resource.service.@id`` with a full-resolution suffix.
     """
-    # IIIF v2: canvas.images[].resource.@id or canvas.images[].resource.service.@id
-    images = canvas.get("images", [])
-    for img in images:
+    for img in canvas.get("images", []):
         resource = img.get("resource", {})
         url = resource.get("@id", "")
         if url:
@@ -405,9 +404,15 @@ def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
         if service_id:
             return f"{service_id}/full/full/0/default.jpg"
 
-    # IIIF v3: canvas.items[].items[].body.id
-    items = canvas.get("items", [])
-    for anno_page in items:
+    return None
+
+
+def _extract_url_v3_canvas(canvas: dict[str, Any]) -> str | None:
+    """Extract image URL from an IIIF v3 canvas.
+
+    Traverses ``canvas.items[].items[].body`` for ``id`` or ``service[].id``.
+    """
+    for anno_page in canvas.get("items", []):
         for anno in anno_page.get("items", []):
             body = anno.get("body", {})
             url = body.get("id", "")
@@ -420,6 +425,14 @@ def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
                     return f"{s_id}/full/max/0/default.jpg"
 
     return None
+
+
+def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
+    """Extract the best image URL from an IIIF canvas (v2 or v3).
+
+    Attempts IIIF v2 format first, then falls back to IIIF v3.
+    """
+    return _extract_url_v2_canvas(canvas) or _extract_url_v3_canvas(canvas)
 
 
 # ---------------------------------------------------------------------------

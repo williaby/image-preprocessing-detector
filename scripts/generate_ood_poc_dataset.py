@@ -41,6 +41,7 @@ import argparse
 import json
 import logging
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -475,16 +476,18 @@ SCRIPT_TEXT: dict[str, list[str]] = {
     ],
 }
 
+_DEJAVU_SANS_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
 # Font paths per script — use Noto fonts when available for authentic rendering.
 # Falls back to DejaVuSans (Latin-only) if script-specific font is missing.
 SCRIPT_FONTS: dict[str, list[str]] = {
     "Latn": [
         "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        _DEJAVU_SANS_PATH,
     ],
     "Cyrl": [
         "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        _DEJAVU_SANS_PATH,
     ],
     "Arab": [
         "/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf",
@@ -508,16 +511,17 @@ SCRIPT_FONTS: dict[str, list[str]] = {
 # Extracted from git commit e74165f (fonts/synthetic-gen/).
 # These are checked at runtime; if missing, the category falls back gracefully.
 _ADVERSARIAL_FONT_DIR = Path(__file__).parent.parent / "fonts" / "synthetic-gen"
+_ADVERSARIAL_FONT_FALLBACK = Path(tempfile.gettempdir()) / "adversarial_fonts"
 ADVERSARIAL_FONTS: dict[str, list[str]] = {
     # Fraktur: Blackletter destroys standard Latin glyph features
     "fraktur": [
         str(_ADVERSARIAL_FONT_DIR / "UnifrakturMaguntia-Book.ttf"),
-        "/tmp/adversarial_fonts/UnifrakturMaguntia-Book.ttf",
+        str(_ADVERSARIAL_FONT_FALLBACK / "UnifrakturMaguntia-Book.ttf"),
     ],
     # Nastaliq: cascading calligraphic Arabic, very different from Naskh
     "nastaliq": [
         str(_ADVERSARIAL_FONT_DIR / "Gulzar-Regular.ttf"),
-        "/tmp/adversarial_fonts/Gulzar-Regular.ttf",
+        str(_ADVERSARIAL_FONT_FALLBACK / "Gulzar-Regular.ttf"),
     ],
 }
 
@@ -591,9 +595,7 @@ def _load_script_font(
 
     # Fallback: DejaVuSans (Latin only, but better than nothing)
     try:
-        font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size
-        )
+        font = ImageFont.truetype(_DEJAVU_SANS_PATH, size)
         return font, "DejaVuSans"
     except OSError:
         return ImageFont.load_default(), "default"
@@ -669,6 +671,143 @@ def _classify_font_style(font_family: str) -> str:
     return "unknown"
 
 
+def _create_background(
+    color_mode: str,
+    rng: np.random.Generator,
+) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    """Generate background and foreground colors for the given color mode.
+
+    Args:
+        color_mode: One of ``"binarized"``, ``"grayscale"``, or ``"color"``.
+        rng: Random number generator.
+
+    Returns:
+        ``(bg, fg)`` RGB tuples.
+    """
+    if color_mode == "binarized":
+        return (255, 255, 255), (0, 0, 0)
+
+    if color_mode == "grayscale":
+        bg_val = int(rng.uniform(220, 250))
+        fg_val = int(rng.uniform(10, 60))
+        return (bg_val, bg_val, bg_val), (fg_val, fg_val, fg_val)
+
+    # color
+    bg = (
+        int(rng.uniform(230, 255)),
+        int(rng.uniform(230, 255)),
+        int(rng.uniform(230, 255)),
+    )
+    fg = (
+        int(rng.uniform(0, 50)),
+        int(rng.uniform(0, 50)),
+        int(rng.uniform(0, 50)),
+    )
+    return bg, fg
+
+
+def _render_horizontal_text(
+    draw: Any,
+    text_lines: list[str],
+    font: Any,
+    font_size: int,
+    fg: tuple[int, int, int],
+    width: int,
+    height: int,
+    scale: float,
+    is_rtl: bool,
+    rng: np.random.Generator,
+) -> None:
+    """Render text lines horizontally (LTR or RTL).
+
+    Args:
+        draw: PIL ImageDraw object.
+        text_lines: Text lines to render.
+        font: PIL font object.
+        font_size: Font size in points.
+        fg: Foreground color tuple.
+        width: Image width.
+        height: Image height.
+        scale: DPI scale factor.
+        is_rtl: Whether the script reads right-to-left.
+        rng: Random number generator.
+    """
+    margin = int(40 * scale)
+    line_spacing = int(20 * scale)
+    y = margin
+    line_idx = 0
+
+    while y < height - margin:
+        text_line = text_lines[line_idx % len(text_lines)]
+        line_idx += 1
+
+        char_count = int(rng.uniform(0.5, 1.0) * len(text_line))
+        snippet = text_line[:char_count]
+
+        if is_rtl:
+            try:
+                bbox = draw.textbbox((0, 0), snippet, font=font)
+                text_w = bbox[2] - bbox[0]
+            except (AttributeError, TypeError):
+                text_w = len(snippet) * font_size // 2
+            x_pos = max(margin, width - margin - text_w)
+        else:
+            x_pos = margin
+
+        draw.text((x_pos, y), snippet, fill=fg, font=font)
+        y += line_spacing
+
+
+def _apply_degradation(
+    img: Any,
+    quality_tier: str,
+    rng: np.random.Generator,
+) -> Any:
+    """Apply noise-based degradation to an image based on quality tier.
+
+    Args:
+        img: PIL Image object.
+        quality_tier: One of ``"DEGRADED"``, ``"LOW"``, or other (no-op).
+        rng: Random number generator.
+
+    Returns:
+        Degraded PIL Image (or original if tier needs no degradation).
+    """
+    from PIL import Image
+
+    noise_std = {"DEGRADED": 25, "LOW": 10}.get(quality_tier)
+    if noise_std is None:
+        return img
+
+    arr = np.array(img)
+    noise = rng.normal(0, noise_std, arr.shape).astype(np.int16)
+    arr = np.clip(arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    return Image.fromarray(arr)
+
+
+def _convert_color_mode(img: Any, color_mode: str) -> Any:
+    """Convert image to the target color mode.
+
+    Args:
+        img: PIL Image object (RGB).
+        color_mode: One of ``"grayscale"``, ``"binarized"``, or other (no-op).
+
+    Returns:
+        Converted PIL Image in RGB mode.
+    """
+    from PIL import Image
+
+    if color_mode == "grayscale":
+        return img.convert("L").convert("RGB")
+
+    if color_mode == "binarized":
+        arr = np.array(img.convert("L"))
+        arr = ((arr > 128) * 255).astype(np.uint8)
+        return Image.fromarray(arr).convert("RGB")
+
+    return img
+
+
 def _generate_simple_document(
     output_path: str,
     script: str,
@@ -705,35 +844,14 @@ def _generate_simple_document(
     width = int(800 * scale)
     height = int(1100 * scale)
 
-    # Background color based on quality/color mode
-    if color_mode == "binarized":
-        bg = (255, 255, 255)
-        fg = (0, 0, 0)
-    elif color_mode == "grayscale":
-        bg_val = int(rng.uniform(220, 250))
-        bg = (bg_val, bg_val, bg_val)
-        fg_val = int(rng.uniform(10, 60))
-        fg = (fg_val, fg_val, fg_val)
-    else:
-        bg = (
-            int(rng.uniform(230, 255)),
-            int(rng.uniform(230, 255)),
-            int(rng.uniform(230, 255)),
-        )
-        fg = (
-            int(rng.uniform(0, 50)),
-            int(rng.uniform(0, 50)),
-            int(rng.uniform(0, 50)),
-        )
-
+    # Create background and foreground colors
+    bg, fg = _create_background(color_mode, rng)
     img = Image.new("RGB", (width, height), bg)
     draw = ImageDraw.Draw(img)
 
     # Load script-appropriate font (v4 fix: per-script fonts, not single font)
     font_size = max(8, int(12 * scale))
     font, font_family = _load_script_font(script, font_size, rng, adversarial_font)
-
-    # Classify font style (mirrors v4 font_style tracking)
     font_style = _classify_font_style(font_family)
 
     # Determine writing direction
@@ -745,63 +863,20 @@ def _generate_simple_document(
     else:
         writing_direction = "ltr"
 
-    # Get real Unicode text for this script
+    # Render text
     text_lines = SCRIPT_TEXT.get(script, [f"Placeholder text for {script} script."])
-
     if force_vertical:
-        # Vertical CJK tategaki rendering (right-to-left columns)
         _render_vertical_text(
             draw, text_lines, font, font_size, fg, width, height, scale, rng
         )
     else:
-        # Horizontal rendering (LTR or RTL)
-        y = int(40 * scale)
-        line_spacing = int(20 * scale)
-        margin = int(40 * scale)
+        _render_horizontal_text(
+            draw, text_lines, font, font_size, fg, width, height, scale, is_rtl, rng
+        )
 
-        line_idx = 0
-        while y < height - int(40 * scale):
-            text_line = text_lines[line_idx % len(text_lines)]
-            line_idx += 1
-
-            # Vary line length
-            char_count = int(rng.uniform(0.5, 1.0) * len(text_line))
-            snippet = text_line[:char_count]
-
-            if is_rtl:
-                # Right-align RTL text
-                try:
-                    bbox = draw.textbbox((0, 0), snippet, font=font)
-                    text_w = bbox[2] - bbox[0]
-                except (AttributeError, TypeError):
-                    text_w = len(snippet) * font_size // 2
-                x_pos = max(margin, width - margin - text_w)
-            else:
-                x_pos = margin
-
-            draw.text((x_pos, y), snippet, fill=fg, font=font)
-            y += line_spacing
-
-    # Apply degradation based on quality tier
-    if quality_tier == "DEGRADED":
-        arr = np.array(img)
-        noise = rng.normal(0, 25, arr.shape).astype(np.int16)
-        arr = np.clip(arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-        img = Image.fromarray(arr)
-    elif quality_tier == "LOW":
-        arr = np.array(img)
-        noise = rng.normal(0, 10, arr.shape).astype(np.int16)
-        arr = np.clip(arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-        img = Image.fromarray(arr)
-
-    # Convert color mode
-    if color_mode == "grayscale":
-        img = img.convert("L").convert("RGB")
-    elif color_mode == "binarized":
-        img = img.convert("L")
-        arr = np.array(img)
-        arr = ((arr > 128) * 255).astype(np.uint8)
-        img = Image.fromarray(arr).convert("RGB")
+    # Post-process: degradation and color conversion
+    img = _apply_degradation(img, quality_tier, rng)
+    img = _convert_color_mode(img, color_mode)
 
     # Save with appropriate quality
     jpeg_q = (

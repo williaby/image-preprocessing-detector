@@ -49,6 +49,7 @@ import json
 import sys
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -99,6 +100,38 @@ def _classify_tier(percentile: float) -> AcceptanceTier:
     return AcceptanceTier.HARD_REJECT
 
 
+def _extract_gt_scores(record: dict[str, Any]) -> dict[str, float]:
+    """Extract per-dimension scores from a single ground truth record."""
+    return {dim: record.get(dim, record.get(f"{dim}_score", 0.0)) for dim in DIMENSIONS}
+
+
+def _detect_gt_format(content: str) -> list[dict[str, Any]] | None:
+    """Detect whether content is a JSON array and return parsed records if so.
+
+    Returns the parsed list on success, or None if content is not a JSON array.
+    """
+    try:
+        data = json.loads(content)
+        if isinstance(data, list):
+            return data
+    except json.JSONDecodeError:
+        pass
+    return None
+
+
+def _parse_jsonl_records(content: str) -> list[dict[str, Any]]:
+    """Parse JSONL content into a list of dicts, skipping malformed lines."""
+    records: list[dict[str, Any]] = []
+    for line in content.strip().split("\n"):
+        if not line.strip():
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return records
+
+
 def _load_diqa_gt(gt_path: Path | None) -> dict[str, dict[str, float]]:
     """Load DIQA-5000 ground truth labels.
 
@@ -108,44 +141,21 @@ def _load_diqa_gt(gt_path: Path | None) -> dict[str, dict[str, float]]:
     if gt_path is None or not gt_path.exists():
         return {}
 
-    gt_records: dict[str, dict[str, float]] = {}
     content = gt_path.read_text()
+    records = _detect_gt_format(content)
+    if records is None:
+        records = _parse_jsonl_records(content)
 
-    # Try JSON array first
-    try:
-        data = json.loads(content)
-        if isinstance(data, list):
-            for record in data:
-                sha = record.get("sha256", "")
-                if sha:
-                    gt_records[sha] = {
-                        dim: record.get(dim, record.get(f"{dim}_score", 0.0))
-                        for dim in DIMENSIONS
-                    }
-            return gt_records
-    except json.JSONDecodeError:
-        pass
-
-    # Fall back to JSONL
-    for line in content.strip().split("\n"):
-        if not line.strip():
-            continue
-        try:
-            record = json.loads(line)
-            sha = record.get("sha256", "")
-            if sha:
-                gt_records[sha] = {
-                    dim: record.get(dim, record.get(f"{dim}_score", 0.0))
-                    for dim in DIMENSIONS
-                }
-        except json.JSONDecodeError:
-            continue
-
-    return gt_records
+    gt_map: dict[str, dict[str, float]] = {}
+    for record in records:
+        sha = record.get("sha256", "")
+        if sha:
+            gt_map[sha] = _extract_gt_scores(record)
+    return gt_map
 
 
-def main() -> None:
-    """Run OOD-gated label acceptance pipeline."""
+def _parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for OOD-gated label acceptance."""
     parser = argparse.ArgumentParser(
         description="Gate DIQA pseudo-labels using OOD detection"
     )
@@ -185,25 +195,32 @@ def main() -> None:
         default=None,
         help="Override OOD threshold (default: from params)",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def _load_and_validate_inputs(
+    args: argparse.Namespace,
+) -> tuple[Any, Any, dict[str, int], dict[str, dict[str, float]], list[dict[str, Any]]]:
+    """Load OOD detector, embeddings, ground truth, and pseudo-labels.
+
+    Returns (detector, embeddings, sha_to_idx, diqa_gt, pseudo_labels).
+    """
     from image_preprocessing_detector.detection.ood_detector import EmbeddingOODDetector
 
-    # Load OOD detector
     print(f"Loading OOD detector from {args.ood_params}...", file=sys.stderr)
     detector = EmbeddingOODDetector.load(args.ood_params)
     if args.ood_threshold is not None:
         detector.threshold = args.ood_threshold
 
-    # Load embeddings and ID mapping
     print(f"Loading embeddings from {args.embeddings}...", file=sys.stderr)
     embeddings = np.load(args.embeddings)
-    with open(args.embedding_ids) as f:
-        embedding_ids: list[str] = json.load(f)
+    with open(args.embedding_ids) as fh:
+        embedding_ids: list[str] = json.load(fh)
 
     if embeddings.shape[0] != len(embedding_ids):
         print(
-            f"ERROR: Embedding count ({embeddings.shape[0]}) != ID count ({len(embedding_ids)})",
+            f"ERROR: Embedding count ({embeddings.shape[0]}) "
+            f"!= ID count ({len(embedding_ids)})",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -214,27 +231,90 @@ def main() -> None:
         file=sys.stderr,
     )
 
-    # Load DIQA-5000 ground truth
     diqa_gt = _load_diqa_gt(Path(args.diqa_gt) if args.diqa_gt else None)
     if diqa_gt:
         print(f"Loaded {len(diqa_gt)} DIQA-5000 ground truth records", file=sys.stderr)
 
-    # Load pseudo-labels
-    pseudo_labels: list[dict] = []
-    with open(args.pseudo_labels) as f:
-        for line in f:
-            line = line.strip()
-            if line:
+    pseudo_labels: list[dict[str, Any]] = []
+    with open(args.pseudo_labels) as fh:
+        for line in fh:
+            stripped = line.strip()
+            if stripped:
                 try:
-                    pseudo_labels.append(json.loads(line))
+                    pseudo_labels.append(json.loads(stripped))
                 except json.JSONDecodeError:
                     continue
     print(f"Loaded {len(pseudo_labels)} pseudo-label records", file=sys.stderr)
 
-    # Process and gate
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    return detector, embeddings, sha_to_idx, diqa_gt, pseudo_labels
 
+
+def _build_gt_record(
+    sha: str,
+    image_path: str,
+    gt: dict[str, float],
+    record: dict[str, Any],
+) -> dict[str, Any]:
+    """Build an output record for a ground truth image."""
+    output: dict[str, Any] = {
+        "sha256": sha,
+        "image_path": image_path,
+        "overall_label": gt.get("overall", 0.0),
+        "sharpness_label": gt.get("sharpness", 0.0),
+        "color_fidelity_label": gt.get("color_fidelity", 0.0),
+        "sample_weight": TIER_WEIGHTS[AcceptanceTier.GROUND_TRUTH],
+        "acceptance_tier": AcceptanceTier.GROUND_TRUTH.value,
+        "mahalanobis_distance": 0.0,
+        "mahalanobis_percentile": 0.0,
+        "label_source": "diqa_ground_truth",
+    }
+    for dim in DIMENSIONS:
+        dim_data = record.get(dim)
+        if dim_data and isinstance(dim_data, dict):
+            output[f"{dim}_level_probs"] = dim_data.get("level_probs", [])
+    return output
+
+
+def _build_pseudo_record(
+    sha: str,
+    image_path: str,
+    record: dict[str, Any],
+    ood_result: Any,
+    tier: AcceptanceTier,
+) -> dict[str, Any]:
+    """Build an output record for a pseudo-labeled image with OOD gating."""
+    output: dict[str, Any] = {
+        "sha256": sha,
+        "image_path": image_path,
+        "sample_weight": TIER_WEIGHTS[tier],
+        "acceptance_tier": tier.value,
+        "mahalanobis_distance": round(ood_result.mahalanobis_distance, 2),
+        "mahalanobis_percentile": round(ood_result.percentile, 1),
+        "label_source": "deqa_pseudo",
+    }
+    for dim in DIMENSIONS:
+        dim_data = record.get(dim)
+        if dim_data and isinstance(dim_data, dict):
+            output[f"{dim}_label"] = dim_data.get("score", 0.0)
+            output[f"{dim}_level_probs"] = dim_data.get("level_probs", [])
+        else:
+            output[f"{dim}_label"] = 0.0
+            output[f"{dim}_level_probs"] = []
+    return output
+
+
+def _process_labels(
+    pseudo_labels: list[dict[str, Any]],
+    detector: Any,
+    embeddings: Any,
+    sha_to_idx: dict[str, int],
+    diqa_gt: dict[str, dict[str, float]],
+    output_path: Path,
+) -> tuple[dict[str, int], int]:
+    """Gate pseudo-labels and write output JSONL.
+
+    Returns (tier_counts, missing_embeddings).
+    """
     tier_counts: dict[str, int] = {t.value: 0 for t in AcceptanceTier}
     missing_embeddings = 0
 
@@ -243,67 +323,33 @@ def main() -> None:
             sha = record.get("sha256", "")
             image_path = record.get("image_path", "")
 
-            # Check if this is a DIQA-5000 ground truth image
             if sha in diqa_gt:
-                gt = diqa_gt[sha]
-                output = {
-                    "sha256": sha,
-                    "image_path": image_path,
-                    "overall_label": gt.get("overall", 0.0),
-                    "sharpness_label": gt.get("sharpness", 0.0),
-                    "color_fidelity_label": gt.get("color_fidelity", 0.0),
-                    "sample_weight": TIER_WEIGHTS[AcceptanceTier.GROUND_TRUTH],
-                    "acceptance_tier": AcceptanceTier.GROUND_TRUTH.value,
-                    "mahalanobis_distance": 0.0,
-                    "mahalanobis_percentile": 0.0,
-                    "label_source": "diqa_ground_truth",
-                }
-                # Include level_probs from pseudo-labels as supplementary
-                for dim in DIMENSIONS:
-                    dim_data = record.get(dim)
-                    if dim_data and isinstance(dim_data, dict):
-                        output[f"{dim}_level_probs"] = dim_data.get("level_probs", [])
-
+                output = _build_gt_record(sha, image_path, diqa_gt[sha], record)
                 out_f.write(json.dumps(output) + "\n")
                 tier_counts[AcceptanceTier.GROUND_TRUTH.value] += 1
                 continue
 
-            # Score with OOD detector
             if sha not in sha_to_idx:
                 missing_embeddings += 1
                 continue
 
-            idx = sha_to_idx[sha]
-            embedding = embeddings[idx]
+            embedding = embeddings[sha_to_idx[sha]]
             ood_result = detector.score(embedding)
-
             tier = _classify_tier(ood_result.percentile)
-            weight = TIER_WEIGHTS[tier]
 
-            # Build output record
-            output = {
-                "sha256": sha,
-                "image_path": image_path,
-                "sample_weight": weight,
-                "acceptance_tier": tier.value,
-                "mahalanobis_distance": round(ood_result.mahalanobis_distance, 2),
-                "mahalanobis_percentile": round(ood_result.percentile, 1),
-                "label_source": "deqa_pseudo",
-            }
-
-            for dim in DIMENSIONS:
-                dim_data = record.get(dim)
-                if dim_data and isinstance(dim_data, dict):
-                    output[f"{dim}_label"] = dim_data.get("score", 0.0)
-                    output[f"{dim}_level_probs"] = dim_data.get("level_probs", [])
-                else:
-                    output[f"{dim}_label"] = 0.0
-                    output[f"{dim}_level_probs"] = []
-
+            output = _build_pseudo_record(sha, image_path, record, ood_result, tier)
             out_f.write(json.dumps(output) + "\n")
             tier_counts[tier.value] += 1
 
-    # Summary
+    return tier_counts, missing_embeddings
+
+
+def _print_summary(
+    tier_counts: dict[str, int],
+    missing_embeddings: int,
+    output_path: Path,
+) -> None:
+    """Print gating summary statistics to stderr."""
     total = sum(tier_counts.values())
     print(f"\n{'=' * 50}", file=sys.stderr)
     print(f"Gating Summary ({total} images processed):", file=sys.stderr)
@@ -321,6 +367,24 @@ def main() -> None:
         )
     print(f"{'=' * 50}", file=sys.stderr)
     print(f"Output: {output_path}", file=sys.stderr)
+
+
+def main() -> None:
+    """Run OOD-gated label acceptance pipeline."""
+    args = _parse_args()
+
+    detector, embeddings, sha_to_idx, diqa_gt, pseudo_labels = (
+        _load_and_validate_inputs(args)
+    )
+
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    tier_counts, missing_embeddings = _process_labels(
+        pseudo_labels, detector, embeddings, sha_to_idx, diqa_gt, output_path
+    )
+
+    _print_summary(tier_counts, missing_embeddings, output_path)
 
 
 if __name__ == "__main__":

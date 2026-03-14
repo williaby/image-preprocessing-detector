@@ -28,14 +28,16 @@ QUARANTINE_MANIFEST = REPO_ROOT / "metadata_registry/john11_ccbysa_manifest.json
 QUARANTINE_DATE = "2026-03-12"
 QUARANTINE_REASON = "4-model consensus review identified CC-BY-SA viral licensing risk"
 
+CC_BY_SA_4_0 = "CC-BY-SA-4.0"
+
 # SPDX normalization map: primary-registry license value → SPDX identifier
 _SPDX_MAP: dict[str, str] = {
     "public_domain": "PD",
     "CC0": "CC0-1.0",
     "CC-BY-4.0": "CC-BY-4.0",
     "CC-BY-2.0": "CC-BY-2.0",
-    "CC-BY-SA": "CC-BY-SA-4.0",
-    "CC-BY-SA-4.0": "CC-BY-SA-4.0",
+    "CC-BY-SA": CC_BY_SA_4_0,
+    CC_BY_SA_4_0: CC_BY_SA_4_0,
     "CC-BY-SA-3.0": "CC-BY-SA-3.0",
     "CC-BY-SA-2.0": "CC-BY-SA-2.0",
 }

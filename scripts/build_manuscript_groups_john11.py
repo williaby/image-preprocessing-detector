@@ -178,6 +178,8 @@ def _wikimedia_group_key(script: str, filename: str) -> str:
                 return group_key
 
     # Generic fallback: strip trailing digits and punctuation
+    # Safe from ReDoS: pattern [\d]+$ is linear-time (single character class,
+    # no nested quantifiers) and input is bounded filename/identifier text.
     stem = re.sub(r"[\d]+$", "", base).rstrip("_-. ,")
     if not stem:
         stem = base

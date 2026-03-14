@@ -105,6 +105,16 @@ logger = logging.getLogger(__name__)
 # Han_Ho-Cheonjamun.jpg) are above it.
 MIN_IMAGE_DIMENSION = 150  # pixels
 
+# ---------------------------------------------------------------------------
+# IIIF URL constants
+# ---------------------------------------------------------------------------
+
+_IIIF_FULL_RESOLUTION = "/full/full/"
+_IIIF_FULL_IMAGE_SUFFIX = "/full/full/0/default.jpg"
+_IIIF_MAX_IMAGE_SUFFIX = "/full/max/0/default.jpg"
+_IIIF_FALLBACK_2048 = "/full/,2048/"
+_IIIF_FALLBACK_MAX = "/full/max/"
+
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -303,6 +313,167 @@ def cli(ctx: click.Context, output_dir: Path, registry: Path, verbose: bool) -> 
 # ---------------------------------------------------------------------------
 
 
+def _enumerate_wikimedia_category(
+    cat_title: str,
+    session: requests.Session,
+    all_files: list[dict[str, Any]],
+    visited_categories: set[str],
+    depth: int = 0,
+) -> None:
+    """Recursively enumerate files and subcategories from Wikimedia Commons."""
+    if cat_title in visited_categories or depth > 3:
+        return
+    visited_categories.add(cat_title)
+
+    click.echo(f"Enumerating {cat_title} (depth={depth})...")
+    cmcontinue = None
+
+    while True:
+        params: dict[str, Any] = {
+            "action": "query",
+            "list": "categorymembers",
+            "cmtitle": cat_title,
+            "cmlimit": 500,
+            "format": "json",
+        }
+        if cmcontinue:
+            params["cmcontinue"] = cmcontinue
+
+        resp = session.get(_WIKIMEDIA_API, params=params, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+
+        for member in data.get("query", {}).get("categorymembers", []):
+            ns = member.get("ns", 0)
+            title = member.get("title", "")
+            if ns == 6:  # File namespace
+                all_files.append(member)
+            elif ns == 14:  # Category namespace
+                _enumerate_wikimedia_category(
+                    title, session, all_files, visited_categories, depth + 1
+                )
+
+        cont = data.get("continue", {})
+        cmcontinue = cont.get("cmcontinue")
+        if not cmcontinue:
+            break
+
+        time.sleep(0.5)
+
+
+_MIME_TO_EXT: dict[str, str] = {
+    "png": ".png",
+    "tiff": ".tif",
+    "gif": ".gif",
+}
+
+
+def _resolve_wikimedia_image_info(
+    session: requests.Session, title: str
+) -> tuple[str, str] | None:
+    """Query Wikimedia imageinfo API for a file's URL and MIME type.
+
+    Returns (url, mime) or None on error.
+    """
+    params = {
+        "action": "query",
+        "titles": title,
+        "prop": "imageinfo",
+        "iiprop": "url|size|mime|extmetadata",
+        "format": "json",
+    }
+    try:
+        resp = session.get(_WIKIMEDIA_API, params=params, timeout=30)
+        resp.raise_for_status()
+        pages = resp.json().get("query", {}).get("pages", {})
+    except requests.RequestException as exc:
+        click.echo(f"  [ERROR] imageinfo for {title}: {exc}", err=True)
+        return None
+
+    for page in pages.values():
+        ii_list = page.get("imageinfo", [])
+        if not ii_list:
+            continue
+        info = ii_list[0]
+        url = info.get("url", "")
+        mime = info.get("mime", "")
+        if url and mime:
+            return url, mime
+    return None
+
+
+def _mime_to_ext(mime: str) -> str:
+    """Map a MIME type to file extension."""
+    for keyword, ext in _MIME_TO_EXT.items():
+        if keyword in mime:
+            return ext
+    return ".jpg"
+
+
+def _sanitize_wikimedia_filename(title: str, ext: str) -> str:
+    """Build a safe local filename from a Wikimedia file title."""
+    safe_name = title.replace("File:", "").replace(" ", "_").replace("/", "_")[:200]
+    if not safe_name.lower().endswith(ext):
+        safe_name += ext
+    return safe_name
+
+
+def _download_wikimedia_files(
+    all_files: list[dict[str, Any]],
+    *,
+    session: requests.Session,
+    sha_set: set[str],
+    registry_path: Path,
+    output_dir: Path,
+    subdir: Path,
+    rate_limit: float,
+    max_images: int,
+) -> tuple[int, int]:
+    """Download Wikimedia image files. Returns (downloaded, skipped) counts."""
+    downloaded = 0
+    skipped = 0
+
+    for file_info in all_files:
+        if 0 < max_images <= downloaded:
+            click.echo(f"Reached max_images={max_images}, stopping.")
+            break
+
+        title = file_info.get("title", "")
+        result = _resolve_wikimedia_image_info(session, title)
+        if result is None:
+            time.sleep(rate_limit)
+            continue
+
+        img_url, mime = result
+        if not mime.startswith("image/"):
+            click.echo(f"  [SKIP] Non-image: {title} ({mime})")
+            skipped += 1
+            continue
+
+        ext = _mime_to_ext(mime)
+        safe_name = _sanitize_wikimedia_filename(title, ext)
+        out_path = subdir / safe_name
+
+        ok = _download_image(
+            img_url,
+            out_path,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            source_institution="wikimedia",
+            catalog_number=None,
+            license_str="public_domain",
+            acquisition_method="mediawiki_api",
+            output_dir=output_dir,
+            rate_limit=rate_limit,
+        )
+        if ok:
+            downloaded += 1
+        else:
+            skipped += 1
+
+    return downloaded, skipped
+
+
 @cli.command("harvest-wikimedia")
 @click.option("--dry-run", is_flag=True, help="Preview without downloading.")
 @click.option(
@@ -336,54 +507,11 @@ def harvest_wikimedia(
     session = requests.Session()
     session.headers["User-Agent"] = _USER_AGENT
 
-    downloaded = 0
-    skipped = 0
-
-    # Collect all file titles from categories (with subcategory recursion)
     all_files: list[dict[str, Any]] = []
     visited_categories: set[str] = set()
 
-    def _enumerate_category(cat_title: str, depth: int = 0) -> None:
-        """Recursively enumerate files and subcategories."""
-        if cat_title in visited_categories or depth > 3:
-            return
-        visited_categories.add(cat_title)
-
-        click.echo(f"Enumerating {cat_title} (depth={depth})...")
-        cmcontinue = None
-
-        while True:
-            params: dict[str, Any] = {
-                "action": "query",
-                "list": "categorymembers",
-                "cmtitle": cat_title,
-                "cmlimit": 500,
-                "format": "json",
-            }
-            if cmcontinue:
-                params["cmcontinue"] = cmcontinue
-
-            resp = session.get(_WIKIMEDIA_API, params=params, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-
-            for member in data.get("query", {}).get("categorymembers", []):
-                ns = member.get("ns", 0)
-                title = member.get("title", "")
-                if ns == 6:  # File namespace
-                    all_files.append(member)
-                elif ns == 14:  # Category namespace
-                    _enumerate_category(title, depth + 1)
-
-            cont = data.get("continue", {})
-            cmcontinue = cont.get("cmcontinue")
-            if not cmcontinue:
-                break
-
-            time.sleep(0.5)
-
     for cat in _WIKIMEDIA_CATEGORIES:
-        _enumerate_category(cat)
+        _enumerate_wikimedia_category(cat, session, all_files, visited_categories)
 
     click.echo(
         f"\nFound {len(all_files)} files across {len(visited_categories)} categories."
@@ -397,79 +525,16 @@ def harvest_wikimedia(
         click.echo(f"\n[DRY RUN] Would download up to {len(all_files)} files.")
         return
 
-    # Get image info and download each file
-    for file_info in all_files:
-        if 0 < max_images <= downloaded:
-            click.echo(f"Reached max_images={max_images}, stopping.")
-            break
-
-        title = file_info.get("title", "")
-
-        # Get image URL via imageinfo query
-        params = {
-            "action": "query",
-            "titles": title,
-            "prop": "imageinfo",
-            "iiprop": "url|size|mime|extmetadata",
-            "format": "json",
-        }
-        try:
-            resp = session.get(_WIKIMEDIA_API, params=params, timeout=30)
-            resp.raise_for_status()
-            pages = resp.json().get("query", {}).get("pages", {})
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] imageinfo for {title}: {exc}", err=True)
-            time.sleep(rate_limit)
-            continue
-
-        for page in pages.values():
-            ii_list = page.get("imageinfo", [])
-            if not ii_list:
-                continue
-            ii = ii_list[0]
-            img_url = ii.get("url", "")
-            mime = ii.get("mime", "")
-
-            # Skip non-image files (PDFs, SVGs, etc.)
-            if not mime.startswith("image/"):
-                click.echo(f"  [SKIP] Non-image: {title} ({mime})")
-                skipped += 1
-                continue
-
-            # Determine file extension
-            ext = ".jpg"
-            if "png" in mime:
-                ext = ".png"
-            elif "tiff" in mime:
-                ext = ".tif"
-            elif "gif" in mime:
-                ext = ".gif"
-
-            # Sanitize filename
-            safe_name = (
-                title.replace("File:", "").replace(" ", "_").replace("/", "_")[:200]
-            )
-            if not safe_name.lower().endswith(ext):
-                safe_name += ext
-
-            out_path = subdir / safe_name
-
-            ok = _download_image(
-                img_url,
-                out_path,
-                sha_set=sha_set,
-                registry_path=registry_path,
-                source_institution="wikimedia",
-                catalog_number=None,  # Will be mapped post-hoc
-                license_str="public_domain",
-                acquisition_method="mediawiki_api",
-                output_dir=output_dir,
-                rate_limit=rate_limit,
-            )
-            if ok:
-                downloaded += 1
-            else:
-                skipped += 1
+    downloaded, skipped = _download_wikimedia_files(
+        all_files,
+        session=session,
+        sha_set=sha_set,
+        registry_path=registry_path,
+        output_dir=output_dir,
+        subdir=subdir,
+        rate_limit=rate_limit,
+        max_images=max_images,
+    )
 
     click.echo(
         f"\nWikimedia harvest complete: {downloaded} downloaded, {skipped} skipped."
@@ -562,6 +627,50 @@ def harvest_met(ctx: click.Context, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _harvest_single_iiif_manifest(
+    manifest_url: str,
+    *,
+    output_dir: Path,
+    inst_name: str,
+    inst_subdir: str,
+    catalog_num: int | None,
+    license_str: str,
+    item_id: str,
+    sha_set: set[str],
+    registry_path: Path,
+    registry_base_dir: Path,
+    dry_run: bool = False,
+    max_pages: int = 0,
+) -> int:
+    """Fetch a single IIIF manifest and download its canvas images."""
+    subdir = output_dir / inst_subdir
+    subdir.mkdir(parents=True, exist_ok=True)
+
+    click.echo(f"\nFetching IIIF manifest: {manifest_url}")
+    manifest = _fetch_iiif_manifest(manifest_url, max_retries=1)
+    if manifest is None:
+        return 0
+
+    canvases = _get_iiif_canvases(manifest)
+    click.echo(f"  Found {len(canvases)} canvases")
+
+    return _download_iiif_canvases(
+        canvases,
+        output_dir=subdir,
+        sha_set=sha_set,
+        registry_path=registry_path,
+        source_institution=inst_name,
+        catalog_number=catalog_num,
+        license_str=license_str,
+        acquisition_method="iiif_manifest",
+        registry_base_dir=registry_base_dir,
+        item_id=item_id,
+        filename_prefix=f"{inst_subdir}_{item_id}",
+        dry_run=dry_run,
+        max_pages=max_pages,
+    )
+
+
 @cli.command("harvest-iiif")
 @click.option("--dry-run", is_flag=True, help="Preview without downloading.")
 @click.option(
@@ -604,150 +713,76 @@ def harvest_iiif(
         "rb00012112": 55,
     }
 
-    def _harvest_iiif_manifest(
-        manifest_url: str,
-        inst_name: str,
-        inst_subdir: str,
-        catalog_num: int | None,
-        license_str: str,
-        item_id: str,
-    ) -> int:
-        """Parse an IIIF manifest and download all canvas images."""
-        count = 0
-        subdir = output_dir / inst_subdir
-        subdir.mkdir(parents=True, exist_ok=True)
-
-        click.echo(f"\nFetching IIIF manifest: {manifest_url}")
-        try:
-            resp = requests.get(
-                manifest_url,
-                headers={"User-Agent": _USER_AGENT},
-                timeout=30,
-            )
-            resp.raise_for_status()
-            manifest = resp.json()
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] {exc}", err=True)
-            return 0
-
-        # Extract canvases (IIIF v2 or v3)
-        canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
-        if not canvases:
-            # Try IIIF v3 format
-            canvases = manifest.get("items", [])
-
-        click.echo(f"  Found {len(canvases)} canvases")
-
-        for i, canvas in enumerate(canvases):
-            if 0 < max_pages <= i:
-                break
-
-            # Extract image URL from canvas
-            img_url = _extract_image_url_from_canvas(canvas)
-            if not img_url:
-                click.echo(f"  [SKIP] No image URL in canvas {i}")
-                continue
-
-            if dry_run:
-                click.echo(f"  [DRY RUN] Canvas {i}: {img_url[:100]}...")
-                count += 1
-                continue
-
-            filename = f"{inst_subdir}_{item_id}_{i:04d}.jpg"
-            out_path = subdir / filename
-
-            # Try full resolution first; fall back to max 2048px if 403
-            urls_to_try = [img_url]
-            if "/full/full/" in img_url:
-                urls_to_try.append(img_url.replace("/full/full/", "/full/,2048/"))
-
-            ok = False
-            for try_url in urls_to_try:
-                ok = _download_image(
-                    try_url,
-                    out_path,
-                    sha_set=sha_set,
-                    registry_path=registry_path,
-                    source_institution=inst_name,
-                    catalog_number=catalog_num,
-                    license_str=license_str,
-                    acquisition_method="iiif_manifest",
-                    output_dir=output_dir,
-                    rate_limit=1.0,
-                )
-                if ok:
-                    break
-            if ok:
-                count += 1
-
-        return count
-
-    # NDL
     if source in ("ndl", "all"):
         for pid in _NDL_PIDS:
             manifest_url = f"https://www.dl.ndl.go.jp/api/iiif/{pid}/manifest.json"
-            n = _harvest_iiif_manifest(
+            downloaded += _harvest_single_iiif_manifest(
                 manifest_url,
+                output_dir=output_dir,
                 inst_name="ndl",
                 inst_subdir="ndl",
                 catalog_num=ndl_catalog_map.get(pid),
                 license_str="public_domain",
                 item_id=str(pid),
+                sha_set=sha_set,
+                registry_path=registry_path,
+                registry_base_dir=output_dir,
+                dry_run=dry_run,
+                max_pages=max_pages,
             )
-            downloaded += n
 
-    # Kyoto U
     if source in ("kyoto", "all"):
         for item_id in _KYOTO_ITEMS:
-            # Kyoto U uses uppercase IDs and metadata_manifest path
             upper_id = item_id.upper()
             manifest_url = (
                 f"https://rmda.kulib.kyoto-u.ac.jp/iiif/"
                 f"metadata_manifest/{upper_id}/manifest.json"
             )
-            n = _harvest_iiif_manifest(
+            downloaded += _harvest_single_iiif_manifest(
                 manifest_url,
+                output_dir=output_dir,
                 inst_name="kyoto_u",
                 inst_subdir="kyoto_u",
                 catalog_num=kyoto_catalog_map.get(item_id),
                 license_str="open_access",
                 item_id=item_id,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                registry_base_dir=output_dir,
+                dry_run=dry_run,
+                max_pages=max_pages,
             )
-            downloaded += n
 
     click.echo(f"\nIIIF harvest complete: {downloaded} downloaded.")
 
 
-def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
-    """Extract the best image URL from an IIIF canvas (v2 or v3).
+def _extract_image_url_v2(canvas: dict[str, Any]) -> str | None:
+    """Extract image URL from an IIIF v2 canvas.
 
-    Prefers IIIF Image API service endpoint at full resolution over
-    direct image URLs which may be thumbnails.
+    Checks canvas.images[].resource for service endpoints or direct URLs.
     """
-    # IIIF v2: canvas.images[].resource.@id or canvas.images[].resource.service.@id
-    images = canvas.get("images", [])
-    for img in images:
+    for img in canvas.get("images", []):
         resource = img.get("resource", {})
-
-        # Prefer service endpoint (full resolution via IIIF Image API)
         service = resource.get("service", {})
         if isinstance(service, list):
             service = service[0] if service else {}
         service_id = service.get("@id", "")
         if service_id:
-            return f"{service_id}/full/full/0/default.jpg"
-
-        # Fall back to direct URL
+            return f"{service_id}{_IIIF_FULL_IMAGE_SUFFIX}"
         url = resource.get("@id", "")
         if url:
-            # If URL is an IIIF Image API info.json, convert to full image
             if url.endswith("/info.json"):
-                url = url.replace("/info.json", "/full/full/0/default.jpg")
+                return url.replace("/info.json", _IIIF_FULL_IMAGE_SUFFIX)
             return url
+    return None
 
-    # IIIF v3: canvas.items[].items[].body.id
-    items = canvas.get("items", [])
-    for anno_page in items:
+
+def _extract_image_url_v3(canvas: dict[str, Any]) -> str | None:
+    """Extract image URL from an IIIF v3 canvas.
+
+    Checks canvas.items[].items[].body for direct URLs or service endpoints.
+    """
+    for anno_page in canvas.get("items", []):
         for anno in anno_page.get("items", []):
             body = anno.get("body", {})
             url = body.get("id", "")
@@ -757,9 +792,137 @@ def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
             if isinstance(service, list) and service:
                 s_id = service[0].get("id", "")
                 if s_id:
-                    return f"{s_id}/full/max/0/default.jpg"
-
+                    return f"{s_id}{_IIIF_MAX_IMAGE_SUFFIX}"
     return None
+
+
+def _extract_image_url_from_canvas(canvas: dict[str, Any]) -> str | None:
+    """Extract the best image URL from an IIIF canvas (v2 or v3).
+
+    Prefers IIIF Image API service endpoint at full resolution over
+    direct image URLs which may be thumbnails.
+    """
+    return _extract_image_url_v2(canvas) or _extract_image_url_v3(canvas)
+
+
+def _build_iiif_fallback_urls(
+    img_url: str,
+    fallback_path: str = _IIIF_FALLBACK_2048,
+) -> list[str]:
+    """Build a list of IIIF URLs to try, starting with full resolution.
+
+    If the URL contains the full-resolution path, appends a fallback with
+    a lower resolution.
+    """
+    urls = [img_url]
+    if _IIIF_FULL_RESOLUTION in img_url:
+        urls.append(img_url.replace(_IIIF_FULL_RESOLUTION, fallback_path))
+    return urls
+
+
+def _download_iiif_canvases(
+    canvases: list[dict[str, Any]],
+    *,
+    output_dir: Path,
+    sha_set: set[str],
+    registry_path: Path,
+    source_institution: str,
+    catalog_number: int | None,
+    license_str: str,
+    acquisition_method: str,
+    registry_base_dir: Path,
+    item_id: str,
+    dry_run: bool = False,
+    max_pages: int = 0,
+    rate_limit: float = 1.0,
+    fallback_path: str = _IIIF_FALLBACK_2048,
+    filename_prefix: str | None = None,
+) -> int:
+    """Download images from a list of IIIF canvases.
+
+    Handles canvas URL extraction, fallback resolution, and dedup.
+    Returns the number of images successfully downloaded.
+    """
+    count = 0
+    prefix = filename_prefix or f"{source_institution}_{item_id}"
+
+    for i, canvas in enumerate(canvases):
+        if 0 < max_pages <= i:
+            break
+
+        img_url = _extract_image_url_from_canvas(canvas)
+        if not img_url:
+            click.echo(f"  [SKIP] No image URL in canvas {i}")
+            continue
+
+        if dry_run:
+            click.echo(f"  [DRY RUN] Canvas {i}: {img_url[:100]}...")
+            count += 1
+            continue
+
+        filename = f"{prefix}_{i:04d}.jpg"
+        out_path = output_dir / filename
+        urls_to_try = _build_iiif_fallback_urls(img_url, fallback_path)
+
+        for try_url in urls_to_try:
+            ok = _download_image(
+                try_url,
+                out_path,
+                sha_set=sha_set,
+                registry_path=registry_path,
+                source_institution=source_institution,
+                catalog_number=catalog_number,
+                license_str=license_str,
+                acquisition_method=acquisition_method,
+                output_dir=registry_base_dir,
+                rate_limit=rate_limit,
+            )
+            if ok:
+                count += 1
+                break
+
+    return count
+
+
+def _fetch_iiif_manifest(
+    manifest_url: str,
+    *,
+    extra_headers: dict[str, str] | None = None,
+    max_retries: int = 4,
+) -> dict[str, Any] | None:
+    """Fetch and parse an IIIF manifest with retry and rate-limit handling.
+
+    Returns the parsed manifest dict, or None on failure.
+    """
+    headers = {"User-Agent": _USER_AGENT}
+    if extra_headers:
+        headers.update(extra_headers)
+
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(manifest_url, headers=headers, timeout=30)
+            if resp.status_code == 429:
+                wait = 5.0 * (2**attempt)
+                click.echo(f"  [429] Rate limited, retrying in {wait:.0f}s...")
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp.json()
+        except requests.RequestException as exc:
+            click.echo(f"  [ERROR] {exc}", err=True)
+            if attempt < max_retries - 1:
+                time.sleep(5.0 * (2**attempt))
+                continue
+            return None
+    return None
+
+
+def _get_iiif_canvases(manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract canvases from an IIIF manifest (v2 or v3 format)."""
+    canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
+    if not canvases:
+        canvases = manifest.get("items", [])
+    return canvases
 
 
 # ---------------------------------------------------------------------------
@@ -789,97 +952,54 @@ def harvest_npm_taipei(ctx: click.Context, dry_run: bool, max_pages: int) -> Non
     downloaded = 0
     errors = 0
 
-    # NPM Taipei detail IDs map to catalog numbers 13-25
     npm_catalog_map = dict(zip(_NPM_DETAIL_IDS, range(13, 26)))
 
     for detail_id in _NPM_DETAIL_IDS:
         cat_num = npm_catalog_map[detail_id]
         cat_entry = catalog.get(cat_num, {})
         calligrapher = cat_entry.get("calligrapher", "unknown")
+        safe_name = calligrapher.replace(" ", "_").replace("(", "").replace(")", "")
 
         click.echo(f"\nNPM cid={detail_id} (catalog #{cat_num}): {calligrapher}")
 
-        # IIIF v2 manifest from NPM digital archive
         manifest_url = (
             f"https://digitalarchive.npm.gov.tw/Integrate/GetJson"
             f"?cid={detail_id}&dept=P"
         )
 
-        if dry_run:
-            click.echo(f"  [DRY RUN] Manifest: {manifest_url}")
-            # Fetch manifest to count canvases
-            try:
-                resp = requests.get(
-                    manifest_url,
-                    headers={"User-Agent": _USER_AGENT},
-                    timeout=30,
-                )
-                resp.raise_for_status()
-                manifest = resp.json()
-                canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
-                click.echo(f"  [DRY RUN] {len(canvases)} canvases available")
-                downloaded += len(canvases)
-            except requests.RequestException as exc:
-                click.echo(f"  [ERROR] {exc}", err=True)
-                errors += 1
+        manifest = _fetch_iiif_manifest(manifest_url, max_retries=1)
+        if manifest is None:
+            errors += 1
             time.sleep(0.5)
             continue
 
-        # Fetch IIIF manifest
-        try:
-            resp = requests.get(
-                manifest_url,
-                headers={"User-Agent": _USER_AGENT},
-                timeout=30,
-            )
-            resp.raise_for_status()
-            manifest = resp.json()
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] Manifest fetch failed: {exc}", err=True)
-            errors += 1
-            continue
-
-        canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
+        canvases = _get_iiif_canvases(manifest)
         click.echo(f"  Found {len(canvases)} canvases")
 
-        for i, canvas in enumerate(canvases):
-            if 0 < max_pages <= i:
-                break
+        if dry_run:
+            click.echo(f"  [DRY RUN] {len(canvases)} canvases available")
+            downloaded += len(canvases)
+            time.sleep(0.5)
+            continue
 
-            img_url = _extract_image_url_from_canvas(canvas)
-            if not img_url:
-                click.echo(f"  [SKIP] No image URL in canvas {i}")
-                continue
-
-            safe_name = calligrapher.replace(" ", "_").replace("(", "").replace(")", "")
-            filename = f"npm_{detail_id}_{safe_name}_{i:04d}.jpg"
-            out_path = subdir / filename
-
-            # Try full/full first; fall back to full/max if 403
-            urls_to_try = [img_url]
-            if "/full/full/" in img_url:
-                urls_to_try.append(img_url.replace("/full/full/", "/full/max/"))
-
-            ok = False
-            for try_url in urls_to_try:
-                ok = _download_image(
-                    try_url,
-                    out_path,
-                    sha_set=sha_set,
-                    registry_path=registry_path,
-                    source_institution="npm_taipei",
-                    catalog_number=cat_num,
-                    license_str="CC_BY_4.0",
-                    acquisition_method="npm_iiif_manifest",
-                    output_dir=output_dir,
-                    rate_limit=1.0,
-                )
-                if ok:
-                    break
-            if ok:
-                downloaded += 1
-
-        time.sleep(1)  # Rate limit between items
+        count = _download_iiif_canvases(
+            canvases,
+            output_dir=subdir,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            source_institution="npm_taipei",
+            catalog_number=cat_num,
+            license_str="CC_BY_4.0",
+            acquisition_method="npm_iiif_manifest",
+            registry_base_dir=output_dir,
+            item_id=str(detail_id),
+            dry_run=False,
+            max_pages=max_pages,
+            fallback_path=_IIIF_FALLBACK_MAX,
+            filename_prefix=f"npm_{detail_id}_{safe_name}",
+        )
+        downloaded += count
+        time.sleep(1)
 
     click.echo(f"\nNPM Taipei harvest complete: {downloaded} images, {errors} errors.")
 
@@ -1005,6 +1125,123 @@ def _match_wikimedia_filename(filename: str) -> int | str | None:
     return None
 
 
+def _investigate_wikimedia_metadata(unmatched: list[dict[str, Any]]) -> None:
+    """Query Wikimedia API for metadata of unmatched images (first 5)."""
+    click.echo("\n--- Investigating via Wikimedia API ---")
+    for entry in unmatched[:5]:
+        fname = entry.get("source_path", "").split("/")[-1]
+        click.echo(f"\n  {fname}")
+        try:
+            params = {
+                "action": "query",
+                "titles": f"File:{fname}",
+                "prop": "imageinfo",
+                "iiprop": "extmetadata",
+                "format": "json",
+            }
+            resp = requests.get(
+                _WIKIMEDIA_API,
+                params=params,
+                headers={"User-Agent": _USER_AGENT},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            pages = data.get("query", {}).get("pages", {})
+            for page in pages.values():
+                info = page.get("imageinfo", [{}])[0]
+                ext = info.get("extmetadata", {})
+                desc = ext.get("ImageDescription", {}).get("value", "N/A")[:200]
+                artist = ext.get("Artist", {}).get("value", "N/A")[:100]
+                click.echo(f"    Description: {desc}")
+                click.echo(f"    Artist: {artist}")
+        except requests.RequestException as exc:
+            click.echo(f"    [ERROR] {exc}", err=True)
+        time.sleep(1)
+    if len(unmatched) > 5:
+        click.echo(f"\n  ... and {len(unmatched) - 5} more (showing first 5)")
+
+
+def _classify_unmatched_entries(
+    unmatched: list[dict[str, Any]],
+) -> tuple[list[tuple[dict[str, Any], int]], list[dict[str, Any]], int]:
+    """Classify unmatched entries into matched, removed, and still-unmatched.
+
+    Returns (matched_entries, removed_entries, still_unmatched_count).
+    """
+    matched_entries: list[tuple[dict[str, Any], int]] = []
+    removed_entries: list[dict[str, Any]] = []
+    still_unmatched = 0
+
+    for entry in unmatched:
+        source_path = entry.get("source_path", "")
+        fname = source_path.split("/")[-1] if "/" in source_path else source_path
+        result = _match_wikimedia_filename(fname)
+
+        if result == "REMOVE":
+            click.echo(f"  [REMOVE] {fname} (misclassified content)")
+            removed_entries.append(entry)
+        elif isinstance(result, int):
+            click.echo(f"  [MATCH] {fname} -> catalog #{result}")
+            matched_entries.append((entry, result))
+        else:
+            click.echo(f"  [UNMATCHED] {fname}")
+            still_unmatched += 1
+
+    return matched_entries, removed_entries, still_unmatched
+
+
+def _apply_registry_updates(
+    entries: list[dict[str, Any]],
+    matched_entries: list[tuple[dict[str, Any], int]],
+    removed_entries: list[dict[str, Any]],
+    *,
+    remove_misclassified: bool,
+    output_dir: Path,
+    registry_path: Path,
+) -> int:
+    """Apply match/remove updates to registry and write atomically.
+
+    Returns the number of matched catalog numbers set.
+    """
+    removed_ids = {e["sample_id"] for e in removed_entries}
+    matched_map = {e["sample_id"]: cat_num for e, cat_num in matched_entries}
+
+    updated_entries: list[dict[str, Any]] = []
+    for entry in entries:
+        sid = entry["sample_id"]
+        if sid in removed_ids:
+            if remove_misclassified:
+                img_path = output_dir / entry.get("source_path", "")
+                if img_path.exists():
+                    img_path.unlink()
+                    click.echo(f"  Deleted: {img_path}")
+                continue
+            click.echo(
+                f"  [SKIP] Would remove {entry.get('source_path', '')} "
+                f"(use --remove-misclassified)"
+            )
+            updated_entries.append(entry)
+            continue
+
+        if sid in matched_map:
+            entry["catalog_number"] = matched_map[sid]
+        updated_entries.append(entry)
+
+    tmp_path = registry_path.with_suffix(".jsonl.tmp")
+    with tmp_path.open("w") as fh:
+        for entry in updated_entries:
+            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    tmp_path.rename(registry_path)
+
+    final_removed = len(entries) - len(updated_entries)
+    click.echo(
+        f"\nRegistry updated: {len(matched_map)} catalog numbers set, "
+        f"{final_removed} entries removed."
+    )
+    return len(matched_map)
+
+
 @cli.command("match-wikimedia")
 @click.option(
     "--dry-run", is_flag=True, help="Preview matches without modifying registry."
@@ -1035,7 +1272,6 @@ def match_wikimedia(
     registry_path: Path = ctx.obj["registry"]
     _, entries = _load_registry(registry_path)
 
-    # Find unmatched Wikimedia entries
     unmatched = [
         e
         for e in entries
@@ -1045,68 +1281,15 @@ def match_wikimedia(
     click.echo(f"Found {len(unmatched)} unmatched Wikimedia images")
 
     if investigate_only:
-        click.echo("\n--- Investigating via Wikimedia API ---")
-        for e in unmatched[:5]:
-            fname = e.get("source_path", "").split("/")[-1]
-            click.echo(f"\n  {fname}")
-            try:
-                params = {
-                    "action": "query",
-                    "titles": f"File:{fname}",
-                    "prop": "imageinfo",
-                    "iiprop": "extmetadata",
-                    "format": "json",
-                }
-                resp = requests.get(
-                    _WIKIMEDIA_API,
-                    params=params,
-                    headers={"User-Agent": _USER_AGENT},
-                    timeout=30,
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                pages = data.get("query", {}).get("pages", {})
-                for page in pages.values():
-                    ii = page.get("imageinfo", [{}])[0]
-                    ext = ii.get("extmetadata", {})
-                    desc = ext.get("ImageDescription", {}).get("value", "N/A")[:200]
-                    artist = ext.get("Artist", {}).get("value", "N/A")[:100]
-                    click.echo(f"    Description: {desc}")
-                    click.echo(f"    Artist: {artist}")
-            except requests.RequestException as exc:
-                click.echo(f"    [ERROR] {exc}", err=True)
-            time.sleep(1)
-        if len(unmatched) > 5:
-            click.echo(f"\n  ... and {len(unmatched) - 5} more (showing first 5)")
+        _investigate_wikimedia_metadata(unmatched)
         return
 
-    # Apply matching rules
-    matched_count = 0
-    removed_count = 0
-    still_unmatched = 0
-    matched_entries: list[tuple[dict[str, Any], int]] = []
-    removed_entries: list[dict[str, Any]] = []
-
-    for e in unmatched:
-        source_path = e.get("source_path", "")
-        fname = source_path.split("/")[-1] if "/" in source_path else source_path
-
-        result = _match_wikimedia_filename(fname)
-
-        if result == "REMOVE":
-            click.echo(f"  [REMOVE] {fname} (misclassified content)")
-            removed_entries.append(e)
-            removed_count += 1
-        elif isinstance(result, int):
-            click.echo(f"  [MATCH] {fname} -> catalog #{result}")
-            matched_entries.append((e, result))
-            matched_count += 1
-        else:
-            click.echo(f"  [UNMATCHED] {fname}")
-            still_unmatched += 1
+    matched_entries, removed_entries, still_unmatched = _classify_unmatched_entries(
+        unmatched
+    )
 
     click.echo(
-        f"\nSummary: {matched_count} matched, {removed_count} to remove, "
+        f"\nSummary: {len(matched_entries)} matched, {len(removed_entries)} to remove, "
         f"{still_unmatched} still unmatched"
     )
 
@@ -1114,44 +1297,13 @@ def match_wikimedia(
         click.echo("\n[DRY RUN] No changes made.")
         return
 
-    # Build updated registry
-    removed_ids = {e["sample_id"] for e in removed_entries}
-    matched_map = {e["sample_id"]: cat_num for e, cat_num in matched_entries}
-
-    updated_entries: list[dict[str, Any]] = []
-    for e in entries:
-        sid = e["sample_id"]
-        if sid in removed_ids:
-            if remove_misclassified:
-                # Remove image file from disk
-                img_path = output_dir / e.get("source_path", "")
-                if img_path.exists():
-                    img_path.unlink()
-                    click.echo(f"  Deleted: {img_path}")
-                continue  # Skip this entry
-            click.echo(
-                f"  [SKIP] Would remove {e.get('source_path', '')} "
-                f"(use --remove-misclassified)"
-            )
-            updated_entries.append(e)
-            continue
-
-        if sid in matched_map:
-            e["catalog_number"] = matched_map[sid]
-
-        updated_entries.append(e)
-
-    # Write atomically
-    tmp_path = registry_path.with_suffix(".jsonl.tmp")
-    with tmp_path.open("w") as fh:
-        for e in updated_entries:
-            fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-    tmp_path.rename(registry_path)
-
-    final_removed = len(entries) - len(updated_entries)
-    click.echo(
-        f"\nRegistry updated: {matched_count} catalog numbers set, "
-        f"{final_removed} entries removed."
+    _apply_registry_updates(
+        entries,
+        matched_entries,
+        removed_entries,
+        remove_misclassified=remove_misclassified,
+        output_dir=output_dir,
+        registry_path=registry_path,
     )
 
 
@@ -1289,6 +1441,65 @@ def harvest_waseda(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _fetch_met_object(obj_id: int) -> dict[str, Any] | None:
+    """Fetch a single Met Museum object by ID. Returns None on error."""
+    try:
+        resp = requests.get(
+            f"{_MET_API}/{obj_id}",
+            headers={"User-Agent": _USER_AGENT},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException as exc:
+        click.echo(f"  [ERROR] {exc}", err=True)
+        return None
+
+
+def _collect_met_image_urls(obj: dict[str, Any]) -> list[str]:
+    """Extract primary + additional image URLs from a Met object."""
+    urls: list[str] = []
+    primary = obj.get("primaryImage", "")
+    if primary:
+        urls.append(primary)
+    urls.extend(obj.get("additionalImages", []))
+    return urls
+
+
+def _download_met_images(
+    image_urls: list[str],
+    *,
+    obj_id: int,
+    title: str,
+    cat_num: int,
+    subdir: Path,
+    sha_set: set[str],
+    registry_path: Path,
+    output_dir: Path,
+) -> int:
+    """Download a list of Met image URLs for one object. Returns download count."""
+    count = 0
+    safe_title = title.replace(" ", "_").replace("/", "_")[:80]
+    for idx, url in enumerate(image_urls):
+        filename = f"met_{obj_id}_{safe_title}_{idx:03d}.jpg"
+        out_path = subdir / filename
+        ok = _download_image(
+            url,
+            out_path,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            source_institution="met_museum",
+            catalog_number=cat_num,
+            license_str="CC0",
+            acquisition_method="met_open_access_api",
+            output_dir=output_dir,
+            rate_limit=0.5,
+        )
+        if ok:
+            count += 1
+    return count
+
+
 @cli.command("harvest-met-extended")
 @click.option("--dry-run", is_flag=True, help="Preview without downloading.")
 @click.pass_context
@@ -1304,7 +1515,6 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
     subdir = output_dir / "met"
     subdir.mkdir(parents=True, exist_ok=True)
 
-    # Search Met API for all TCC objects in Asian Art (department 6)
     search_url = (
         "https://collectionapi.metmuseum.org/public/collection/v1/search"
         "?q=thousand+character+classic&departmentId=6"
@@ -1312,11 +1522,7 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
     click.echo("Searching Met API for Thousand Character Classic objects...")
 
     try:
-        resp = requests.get(
-            search_url,
-            headers={"User-Agent": _USER_AGENT},
-            timeout=30,
-        )
+        resp = requests.get(search_url, headers={"User-Agent": _USER_AGENT}, timeout=30)
         resp.raise_for_status()
         search_data = resp.json()
     except requests.RequestException as exc:
@@ -1324,17 +1530,12 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
         return
 
     object_ids = search_data.get("objectIDs", [])
-    total = search_data.get("total", 0)
-    click.echo(f"Found {total} objects ({len(object_ids)} IDs)")
+    click.echo(f"Found {search_data.get('total', 0)} objects ({len(object_ids)} IDs)")
 
-    # Skip already-harvested objects
     already_harvested = set(_MET_OBJECT_IDS)
     downloaded = 0
     skipped = 0
-    catalog = _load_catalog()
-
-    # Next available catalog number for new items
-    max_cat = max(catalog.keys())
+    max_cat = max(_load_catalog().keys())
     next_cat = max_cat + 1
 
     for obj_id in object_ids:
@@ -1342,27 +1543,18 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
             continue
 
         click.echo(f"\nFetching Met object {obj_id}...")
-        try:
-            resp = requests.get(
-                f"{_MET_API}/{obj_id}",
-                headers={"User-Agent": _USER_AGENT},
-                timeout=30,
-            )
-            resp.raise_for_status()
-            obj = resp.json()
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] {exc}", err=True)
+        obj = _fetch_met_object(obj_id)
+        if obj is None:
             time.sleep(0.5)
             continue
 
         title = obj.get("title", f"object_{obj_id}")
         is_pd = obj.get("isPublicDomain", False)
-        dynasty = obj.get("dynasty", "")
-        artist = obj.get("artistDisplayName", "")
-        medium_str = obj.get("medium", "")
-
         click.echo(f"  Title: {title}")
-        click.echo(f"  Artist: {artist} | Dynasty: {dynasty} | Public Domain: {is_pd}")
+        click.echo(
+            f"  Artist: {obj.get('artistDisplayName', '')} | "
+            f"Dynasty: {obj.get('dynasty', '')} | Public Domain: {is_pd}"
+        )
 
         if not is_pd:
             click.echo("  [SKIP] Not public domain")
@@ -1370,14 +1562,7 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
             time.sleep(0.3)
             continue
 
-        # Collect all image URLs
-        image_urls: list[str] = []
-        primary = obj.get("primaryImage", "")
-        if primary:
-            image_urls.append(primary)
-        additional = obj.get("additionalImages", [])
-        image_urls.extend(additional)
-
+        image_urls = _collect_met_image_urls(obj)
         if not image_urls:
             click.echo("  [SKIP] No images available")
             skipped += 1
@@ -1395,29 +1580,18 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
             time.sleep(0.3)
             continue
 
-        # Use next_cat for this new object, increment for next
         cat_num = next_cat
         next_cat += 1
-
-        for i, url in enumerate(image_urls):
-            safe_title = title.replace(" ", "_").replace("/", "_")[:80]
-            filename = f"met_{obj_id}_{safe_title}_{i:03d}.jpg"
-            out_path = subdir / filename
-
-            ok = _download_image(
-                url,
-                out_path,
-                sha_set=sha_set,
-                registry_path=registry_path,
-                source_institution="met_museum",
-                catalog_number=cat_num,
-                license_str="CC0",
-                acquisition_method="met_open_access_api",
-                output_dir=output_dir,
-                rate_limit=0.5,
-            )
-            if ok:
-                downloaded += 1
+        downloaded += _download_met_images(
+            image_urls,
+            obj_id=obj_id,
+            title=title,
+            cat_num=cat_num,
+            subdir=subdir,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
 
     click.echo(
         f"\nMet extended harvest complete: {downloaded} downloaded, "
@@ -1428,6 +1602,70 @@ def harvest_met_extended(ctx: click.Context, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 # harvest-korean
 # ---------------------------------------------------------------------------
+
+
+_NMK_BASE_URL = "https://www.museum.go.kr"
+
+_NMK_KNOWN_IMAGES: dict[int, list[str]] = {
+    8003: [
+        "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-00.jpg",
+        "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-01.jpg",
+        "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-02.jpg",
+    ],
+}
+
+_KOREAN_ITEMS: list[dict[str, str | int | None]] = [
+    {
+        "relic_id": 8003,
+        "catalog_number": 64,
+        "name": "Han Ho Cheonjamun (haeseo)",
+        "url": f"{_NMK_BASE_URL}/site/eng/relic/search/view?relicId=8003",
+        "license": "KOGL",
+    },
+    {
+        "relic_id": 7031,
+        "catalog_number": None,
+        "name": "Gojeon Cheonjamun (seal script)",
+        "url": f"{_NMK_BASE_URL}/site/eng/relic/search/view?relicId=7031",
+        "license": "KOGL",
+    },
+]
+
+
+def _scrape_nmk_image_urls(page_url: str) -> list[str]:
+    """Scrape image URLs from a National Museum of Korea relic page."""
+    import re
+
+    try:
+        resp = requests.get(page_url, headers={"User-Agent": _USER_AGENT}, timeout=30)
+        resp.raise_for_status()
+        html = resp.text
+    except requests.RequestException as exc:
+        click.echo(f"  [ERROR] {exc}", err=True)
+        return []
+
+    img_patterns = [
+        r'(https?://[^"\']+\.(?:jpg|jpeg|png|tif))',
+        r'src="(/[^"]+\.(?:jpg|jpeg|png|tif))"',
+    ]
+    found_urls: list[str] = []
+    for pattern in img_patterns:
+        matches = re.findall(pattern, html, re.IGNORECASE)
+        for match in matches:
+            if "relic" not in match.lower() and "image" not in match.lower():
+                continue
+            url = f"{_NMK_BASE_URL}{match}" if match.startswith("/") else match
+            found_urls.append(url)
+    return found_urls
+
+
+def _resolve_korean_image_urls(relic_id: int, page_url: str) -> list[str]:
+    """Resolve image URLs for a Korean museum item via known paths or scraping."""
+    known_paths = _NMK_KNOWN_IMAGES.get(relic_id, [])
+    if known_paths:
+        click.echo(f"  Using {len(known_paths)} known image paths")
+        return [f"{_NMK_BASE_URL}{p}" for p in known_paths]
+    return _scrape_nmk_image_urls(page_url)
 
 
 @cli.command("harvest-korean")
@@ -1444,37 +1682,9 @@ def harvest_korean(ctx: click.Context, dry_run: bool) -> None:
     subdir = output_dir / "korean"
     subdir.mkdir(parents=True, exist_ok=True)
 
-    # NMK direct image paths (extracted from relic detail pages)
-    _NMK_KNOWN_IMAGES: dict[int, list[str]] = {
-        8003: [
-            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-00.jpg",
-            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-01.jpg",
-            "/relic_image/PS01001001/koo005/2016/1114125941596/koo005570-00-02.jpg",
-        ],
-    }
-
-    # National Museum of Korea items with direct image URLs
-    # These are confirmed available from the collection database
-    korean_items: list[dict[str, str | int | None]] = [
-        {
-            "relic_id": 8003,
-            "catalog_number": 64,
-            "name": "Han Ho Cheonjamun (haeseo)",
-            "url": "https://www.museum.go.kr/site/eng/relic/search/view?relicId=8003",
-            "license": "KOGL",
-        },
-        {
-            "relic_id": 7031,
-            "catalog_number": None,  # New entry — ancient seal script
-            "name": "Gojeon Cheonjamun (seal script)",
-            "url": "https://www.museum.go.kr/site/eng/relic/search/view?relicId=7031",
-            "license": "KOGL",
-        },
-    ]
-
     downloaded = 0
 
-    for item in korean_items:
+    for item in _KOREAN_ITEMS:
         click.echo(f"\nKorean item: {item['name']}")
         click.echo(f"  URL: {item['url']}")
 
@@ -1485,44 +1695,8 @@ def harvest_korean(ctx: click.Context, dry_run: bool) -> None:
             click.echo("  Note: Korean museum sites may require manual download")
             continue
 
-        # Try known direct image paths first, fall back to page scraping
-        cat_num_val = item["catalog_number"]
-        license_val = str(item["license"])
-        relic_id = item["relic_id"]
-
-        known_paths = _NMK_KNOWN_IMAGES.get(int(str(relic_id)), [])
-        if known_paths:
-            click.echo(f"  Using {len(known_paths)} known image paths")
-            found_urls = [f"https://www.museum.go.kr{p}" for p in known_paths]
-        else:
-            # Fall back to scraping the relic page
-            page_url = str(item["url"])
-            try:
-                resp = requests.get(
-                    page_url,
-                    headers={"User-Agent": _USER_AGENT},
-                    timeout=30,
-                )
-                resp.raise_for_status()
-                html = resp.text
-
-                import re
-
-                img_patterns = [
-                    r'(https?://[^"\']+\.(?:jpg|jpeg|png|tif))',
-                    r'src="(/[^"]+\.(?:jpg|jpeg|png|tif))"',
-                ]
-                found_urls = []
-                for pattern in img_patterns:
-                    matches = re.findall(pattern, html, re.IGNORECASE)
-                    for m in matches:
-                        if "relic" in m.lower() or "image" in m.lower():
-                            if m.startswith("/"):
-                                m = f"https://www.museum.go.kr{m}"
-                            found_urls.append(m)
-            except requests.RequestException as exc:
-                click.echo(f"  [ERROR] {exc}", err=True)
-                continue
+        relic_id = int(str(item["relic_id"]))
+        found_urls = _resolve_korean_image_urls(relic_id, str(item["url"]))
 
         if not found_urls:
             click.echo("  [SKIP] No downloadable image URLs found")
@@ -1530,12 +1704,12 @@ def harvest_korean(ctx: click.Context, dry_run: bool) -> None:
             continue
 
         click.echo(f"  Found {len(found_urls)} image URLs")
+        cat_num_val = item["catalog_number"]
 
         try:
-            for i, img_url in enumerate(found_urls[:10]):
-                filename = f"korean_{relic_id}_{i:03d}.jpg"
+            for idx, img_url in enumerate(found_urls[:10]):
+                filename = f"korean_{relic_id}_{idx:03d}.jpg"
                 out_path = subdir / filename
-
                 ok = _download_image(
                     img_url,
                     out_path,
@@ -1545,14 +1719,13 @@ def harvest_korean(ctx: click.Context, dry_run: bool) -> None:
                     catalog_number=int(cat_num_val)
                     if cat_num_val is not None
                     else None,
-                    license_str=license_val,
+                    license_str=str(item["license"]),
                     acquisition_method="nmk_direct_download",
                     output_dir=output_dir,
                     rate_limit=1.5,
                 )
                 if ok:
                     downloaded += 1
-
         except requests.RequestException as exc:
             click.echo(f"  [ERROR] {exc}", err=True)
 
@@ -1659,6 +1832,138 @@ def _render_pdf_to_images(
     return image_paths
 
 
+def _download_and_render_pdf(
+    file_url: str,
+    *,
+    filename: str,
+    cat_num: int,
+    subdir: Path,
+    sha_set: set[str],
+    registry_path: Path,
+    output_dir: Path,
+) -> int:
+    """Download a PDF from URL, render pages to JPEG, and register them.
+
+    Returns the number of page images successfully registered.
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+
+    try:
+        resp = requests.get(
+            file_url,
+            headers={"User-Agent": _USER_AGENT},
+            timeout=300,
+            stream=True,
+        )
+        resp.raise_for_status()
+
+        with tmp_path.open("wb") as fh:
+            for chunk in resp.iter_content(chunk_size=65_536):
+                fh.write(chunk)
+
+        click.echo(f"  Downloaded {tmp_path.stat().st_size / 1024 / 1024:.1f} MB")
+
+        safe_name = filename.replace(" ", "_").replace(".pdf", "")
+        prefix = f"ndl_{safe_name}"
+        image_paths = _render_pdf_to_images(tmp_path, subdir, prefix=prefix, dpi=200)
+        click.echo(f"  Rendered {len(image_paths)} pages")
+
+        return _register_rendered_pages(
+            image_paths,
+            file_url=file_url,
+            cat_num=cat_num,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
+    except Exception as exc:
+        click.echo(f"  [ERROR] {filename}: {exc}", err=True)
+        return -1  # signal error
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
+
+
+def _register_rendered_pages(
+    image_paths: list[Path],
+    *,
+    file_url: str,
+    cat_num: int,
+    sha_set: set[str],
+    registry_path: Path,
+    output_dir: Path,
+) -> int:
+    """Register rendered page images, deduplicating by SHA256. Returns count."""
+    page_ok = 0
+    for img_path in image_paths:
+        sha256 = _compute_sha256(img_path)
+        if sha256 in sha_set:
+            click.echo(f"  [SKIP] Duplicate: {img_path.name}")
+            img_path.unlink()
+            continue
+        entry = _build_entry(
+            img_path,
+            file_url,
+            "ndl",
+            cat_num,
+            "public_domain",
+            "wikimedia_pdf_render",
+            output_dir,
+        )
+        _append_entry(entry, registry_path)
+        sha_set.add(sha256)
+        page_ok += 1
+    click.echo(f"  Registered {page_ok} new page images")
+    return page_ok
+
+
+def _harvest_met_modern_objects(
+    *,
+    sha_set: set[str],
+    registry_path: Path,
+    output_dir: Path,
+    dry_run: bool,
+) -> tuple[int, int]:
+    """Harvest Met Museum modern TCC objects. Returns (downloaded, errors)."""
+    downloaded = 0
+    errors = 0
+    met_dir = output_dir / "met"
+    met_dir.mkdir(parents=True, exist_ok=True)
+
+    for obj_id, cat_num in _MET_MODERN_IDS:
+        click.echo(f"\nFetching Met object {obj_id} (catalog #{cat_num})...")
+        obj = _fetch_met_object(obj_id)
+        if obj is None:
+            errors += 1
+            continue
+
+        title = obj.get("title", f"object_{obj_id}")
+        image_urls = _collect_met_image_urls(obj)
+        if not image_urls:
+            click.echo(f"  [SKIP] No images for {title}")
+            continue
+
+        if dry_run:
+            downloaded += len(image_urls)
+            continue
+
+        downloaded += _download_met_images(
+            image_urls,
+            obj_id=obj_id,
+            title=title,
+            cat_num=cat_num,
+            subdir=met_dir,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
+
+    return downloaded, errors
+
+
 @cli.command("harvest-ndl-pdfs")
 @click.option("--dry-run", is_flag=True, help="Preview without downloading.")
 @click.option(
@@ -1681,8 +1986,6 @@ def harvest_ndl_pdfs(ctx: click.Context, dry_run: bool, rate_limit: float) -> No
     subdir = output_dir / "ndl"
     subdir.mkdir(parents=True, exist_ok=True)
 
-    import tempfile
-
     downloaded = 0
     errors = 0
 
@@ -1691,7 +1994,6 @@ def harvest_ndl_pdfs(ctx: click.Context, dry_run: bool, rate_limit: float) -> No
     for filename, cat_num in _NDL_PDF_ITEMS:
         click.echo(f"\n--- {filename} (catalog #{cat_num}) ---")
 
-        # Resolve Wikimedia file URL
         file_url = _get_wikimedia_file_url(filename)
         if not file_url:
             click.echo(f"  [ERROR] Could not resolve URL for {filename}")
@@ -1705,120 +2007,31 @@ def harvest_ndl_pdfs(ctx: click.Context, dry_run: bool, rate_limit: float) -> No
             downloaded += 1
             continue
 
-        # Download PDF to temp file
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-
-        try:
-            resp = requests.get(
-                file_url,
-                headers={"User-Agent": _USER_AGENT},
-                timeout=300,
-                stream=True,
-            )
-            resp.raise_for_status()
-
-            with tmp_path.open("wb") as fh:
-                for chunk in resp.iter_content(chunk_size=65_536):
-                    fh.write(chunk)
-
-            click.echo(f"  Downloaded {tmp_path.stat().st_size / 1024 / 1024:.1f} MB")
-
-            # Build prefix from filename
-            safe_name = filename.replace(" ", "_").replace(".pdf", "")
-            prefix = f"ndl_{safe_name}"
-
-            # Render PDF pages to images
-            image_paths = _render_pdf_to_images(
-                tmp_path,
-                subdir,
-                prefix=prefix,
-                dpi=200,
-            )
-            click.echo(f"  Rendered {len(image_paths)} pages")
-
-            # Register each page image
-            page_ok = 0
-            for img_path in image_paths:
-                sha256 = _compute_sha256(img_path)
-                if sha256 in sha_set:
-                    click.echo(f"  [SKIP] Duplicate: {img_path.name}")
-                    img_path.unlink()
-                    continue
-
-                entry = _build_entry(
-                    img_path,
-                    file_url,
-                    "ndl",
-                    cat_num,
-                    "public_domain",
-                    "wikimedia_pdf_render",
-                    output_dir,
-                )
-                _append_entry(entry, registry_path)
-                sha_set.add(sha256)
-                page_ok += 1
-
-            downloaded += page_ok
-            click.echo(f"  Registered {page_ok} new page images")
-
-        except Exception as exc:
-            click.echo(f"  [ERROR] {filename}: {exc}", err=True)
+        result = _download_and_render_pdf(
+            file_url,
+            filename=filename,
+            cat_num=cat_num,
+            subdir=subdir,
+            sha_set=sha_set,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
+        if result < 0:
             errors += 1
-        finally:
-            if tmp_path.exists():
-                tmp_path.unlink()
+        else:
+            downloaded += result
 
         time.sleep(rate_limit)
 
-    # Also harvest Met modern objects
     click.echo(f"\n--- Met Museum modern TCC ({len(_MET_MODERN_IDS)} objects) ---")
-    for obj_id, cat_num in _MET_MODERN_IDS:
-        click.echo(f"\nFetching Met object {obj_id} (catalog #{cat_num})...")
-        try:
-            resp = requests.get(
-                f"{_MET_API}/{obj_id}",
-                headers={"User-Agent": _USER_AGENT},
-                timeout=30,
-            )
-            resp.raise_for_status()
-            obj = resp.json()
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] {exc}", err=True)
-            errors += 1
-            continue
-
-        title = obj.get("title", f"object_{obj_id}")
-        image_urls: list[str] = []
-        primary = obj.get("primaryImage", "")
-        if primary:
-            image_urls.append(primary)
-        image_urls.extend(obj.get("additionalImages", []))
-
-        if not image_urls:
-            click.echo(f"  [SKIP] No images for {title}")
-            continue
-
-        for i, url in enumerate(image_urls):
-            safe_title = title.replace(" ", "_").replace("/", "_")[:60]
-            filename_out = f"met_{obj_id}_{safe_title}_{i:03d}.jpg"
-            out_path = (output_dir / "met") / filename_out
-
-            ok = _download_image(
-                url,
-                out_path,
-                sha_set=sha_set,
-                registry_path=registry_path,
-                source_institution="met_museum",
-                catalog_number=cat_num,
-                license_str="CC0",
-                acquisition_method="met_open_access_api",
-                output_dir=output_dir,
-                dry_run=dry_run,
-                rate_limit=0.5,
-            )
-            if ok:
-                downloaded += 1
+    met_dl, met_err = _harvest_met_modern_objects(
+        sha_set=sha_set,
+        registry_path=registry_path,
+        output_dir=output_dir,
+        dry_run=dry_run,
+    )
+    downloaded += met_dl
+    errors += met_err
 
     click.echo(f"\nModern TCC harvest complete: {downloaded} images, {errors} errors.")
 
@@ -1919,88 +2132,31 @@ def _harvest_iiif_source(
         registry_base_dir: Base directory for computing relative source_path in
             registry entries. Defaults to output_dir.parent if not provided.
     """
-    count = 0
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    headers = {"User-Agent": _USER_AGENT}
-    if extra_headers:
-        headers.update(extra_headers)
-
     click.echo(f"\nFetching IIIF manifest: {manifest_url}")
-    manifest: dict[str, Any] | None = None
-    for attempt in range(4):
-        try:
-            resp = requests.get(
-                manifest_url,
-                headers=headers,
-                timeout=30,
-            )
-            if resp.status_code == 429:
-                wait = 5.0 * (2**attempt)
-                click.echo(f"  [429] Rate limited, retrying in {wait:.0f}s...")
-                time.sleep(wait)
-                continue
-            resp.raise_for_status()
-            manifest = resp.json()
-            break
-        except requests.RequestException as exc:
-            click.echo(f"  [ERROR] {exc}", err=True)
-            if attempt < 3:
-                time.sleep(5.0 * (2**attempt))
-                continue
-            return 0
+    manifest = _fetch_iiif_manifest(manifest_url, extra_headers=extra_headers)
     if manifest is None:
-        click.echo("  [ERROR] Exhausted retries", err=True)
         return 0
 
-    # Extract canvases (IIIF v2 or v3)
-    canvases = manifest.get("sequences", [{}])[0].get("canvases", [])
-    if not canvases:
-        canvases = manifest.get("items", [])
-
+    canvases = _get_iiif_canvases(manifest)
     click.echo(f"  Found {len(canvases)} canvases")
 
-    for i, canvas in enumerate(canvases):
-        if 0 < max_pages <= i:
-            break
-
-        img_url = _extract_image_url_from_canvas(canvas)
-        if not img_url:
-            click.echo(f"  [SKIP] No image URL in canvas {i}")
-            continue
-
-        if dry_run:
-            click.echo(f"  [DRY RUN] Canvas {i}: {img_url[:100]}...")
-            count += 1
-            continue
-
-        filename = f"{source_institution}_{item_id}_{i:04d}.jpg"
-        out_path = output_dir / filename
-
-        urls_to_try = [img_url]
-        if "/full/full/" in img_url:
-            urls_to_try.append(img_url.replace("/full/full/", "/full/,2048/"))
-
-        ok = False
-        for try_url in urls_to_try:
-            ok = _download_image(
-                try_url,
-                out_path,
-                sha_set=sha_set,
-                registry_path=registry_path,
-                source_institution=source_institution,
-                catalog_number=catalog_number,
-                license_str=license_str,
-                acquisition_method=acquisition_method,
-                output_dir=registry_base_dir or output_dir.parent,
-                rate_limit=rate_limit,
-            )
-            if ok:
-                break
-        if ok:
-            count += 1
-
-    return count
+    return _download_iiif_canvases(
+        canvases,
+        output_dir=output_dir,
+        sha_set=sha_set,
+        registry_path=registry_path,
+        source_institution=source_institution,
+        catalog_number=catalog_number,
+        license_str=license_str,
+        acquisition_method=acquisition_method,
+        registry_base_dir=registry_base_dir or output_dir.parent,
+        item_id=item_id,
+        dry_run=dry_run,
+        max_pages=max_pages,
+        rate_limit=rate_limit,
+    )
 
 
 @cli.command("harvest-dunhuang")
