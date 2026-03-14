@@ -1,0 +1,833 @@
+---
+# John 1:1 Multi-Script Manuscript Catalog
+# Structured from tmp_cleanup/john_11.md
+#
+# Only manuscripts from license-verified institutions (see john11_source_licenses.yaml)
+# are included in Phase 1. Unverified sources are listed with harvest_phase: 2+.
+#
+# Script codes: ISO 15924
+# ML class mapping: see config/script_ml_classes.yaml
+# OOD-reserved scripts: Armn, Geor, Goth (excluded from training, used for OOD eval)
+#
+# Fields:
+#   manuscript_name: Common scholarly name
+#   ga_number: Gregory-Aland number (Greek MSS only, null otherwise)
+#   date_range: Approximate date or century
+#   institution: Holding institution
+#   script_iso15924: ISO 15924 code
+#   ml_class: ML training class (from script_ml_classes.yaml)
+#   ood_reserved: Whether this script is OOD-reserved
+#   script_style: Paleographic style (uncial, minuscule, insular, etc.)
+#   source_url: URL for the digital collection page
+#   iiif_manifest_url: IIIF manifest URL if known (null otherwise)
+#   license: License string
+#   license_verified: Whether redistribution license is verified
+#   harvest_phase: 1 (verified-open), 2 (needs verification), null (blocked)
+#   harvest_source: Which sub-command harvests this item
+#   content_type: handwritten (always for manuscripts)
+#   text_direction: ltr, rtl, ttb
+#   notes: Scholarly context
+
+# =============================================================================
+# GREEK — Ἐν ἀρχῇ ἦν ὁ λόγος
+# =============================================================================
+
+# --- Wikimedia Commons (Phase 1) ---
+
+1:
+  manuscript_name: "Codex Sinaiticus (folio — Wikimedia reproduction)"
+  ga_number: "01"
+  date_range: "4th c."
+  institution: "wikimedia"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Sinaiticus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "4th-century Greek uncial, 4-column layout. Wikimedia hosts reproductions."
+
+2:
+  manuscript_name: "Codex Vaticanus (folio — Wikimedia reproduction)"
+  ga_number: "03"
+  date_range: "4th c."
+  institution: "wikimedia"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Vaticanus_Graecus_1209"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "4th-century Greek uncial, 3-column layout."
+
+3:
+  manuscript_name: "Codex Alexandrinus (folio — Wikimedia reproduction)"
+  ga_number: "02"
+  date_range: "5th c."
+  institution: "wikimedia"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Alexandrinus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "5th-century Greek uncial. British Library."
+
+4:
+  manuscript_name: "Codex Bezae (folio — Wikimedia reproduction)"
+  ga_number: "05"
+  date_range: "5th c."
+  institution: "wikimedia"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Bezae"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "5th-century Greek-Latin bilingual uncial. Cambridge UL."
+
+5:
+  manuscript_name: "Codex Washingtonianus (folio — Wikimedia reproduction)"
+  ga_number: "032"
+  date_range: "5th c."
+  institution: "wikimedia"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Washingtonianus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "5th-century Greek uncial. Smithsonian Freer Gallery / CSNTM."
+
+# --- BnF/Gallica Greek MSS (Phase 1) ---
+
+6:
+  manuscript_name: "Codex Ephraemi Rescriptus"
+  ga_number: "04"
+  date_range: "5th c."
+  institution: "bnf_gallica"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://gallica.bnf.fr/ark:/12148/btv1b8470433r"
+  iiif_manifest_url: "https://gallica.bnf.fr/iiif/ark:/12148/btv1b8470433r/manifest.json"
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "5th-century palimpsest. BnF Paris grec 9. Navigate to John 1:1 folio."
+
+7:
+  manuscript_name: "Codex Regius"
+  ga_number: "019"
+  date_range: "8th c."
+  institution: "bnf_gallica"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://gallica.bnf.fr/ark:/12148/btv1b10507230d"
+  iiif_manifest_url: "https://gallica.bnf.fr/iiif/ark:/12148/btv1b10507230d/manifest.json"
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "8th-century Greek uncial. BnF Paris grec 62."
+
+# --- CSNTM Greek MSS (Phase 2, needs license verification) ---
+
+8:
+  manuscript_name: "GA 87 (catena on John)"
+  ga_number: "87"
+  date_range: "10th c."
+  institution: "csntm"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "minuscule"
+  source_url: "https://www.csntm.org/manuscript/View/GA_87"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-csntm"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "John 1:1 written 11 times (catena format). Bernkastel-Kues."
+
+9:
+  manuscript_name: "GA 86"
+  ga_number: "86"
+  date_range: "11th c."
+  institution: "csntm"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "minuscule"
+  source_url: "https://www.csntm.org/manuscript/View/GA_86"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-csntm"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Full Gospels. Bratislava."
+
+10:
+  manuscript_name: "GA 76"
+  ga_number: "76"
+  date_range: "14th c."
+  institution: "csntm"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "minuscule"
+  source_url: "https://www.csntm.org/manuscript/View/GA_76"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-csntm"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Full Gospels. Austrian National Library."
+
+11:
+  manuscript_name: "GA 662"
+  ga_number: "662"
+  date_range: "12th c."
+  institution: "csntm"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  script_style: "minuscule"
+  source_url: "https://www.csntm.org/manuscript/View/GA_662"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-csntm"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Full Gospels. National Gallery of Victoria."
+
+# =============================================================================
+# LATIN — In principio erat Verbum
+# =============================================================================
+
+# --- BnF/Gallica Latin MSS (Phase 1) ---
+
+20:
+  manuscript_name: "Godescalc Evangelistary"
+  ga_number: null
+  date_range: "781-783"
+  institution: "bnf_gallica"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "carolingian"
+  source_url: "https://gallica.bnf.fr/ark:/12148/btv1b6000718s"
+  iiif_manifest_url: "https://gallica.bnf.fr/iiif/ark:/12148/btv1b6000718s/manifest.json"
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Carolingian court commission (781-783). Gold/silver on purple vellum."
+
+21:
+  manuscript_name: "Echternach Gospels"
+  ga_number: null
+  date_range: "c. 690"
+  institution: "bnf_gallica"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular"
+  source_url: "https://gallica.bnf.fr/ark:/12148/btv1b52505852n"
+  iiif_manifest_url: "https://gallica.bnf.fr/iiif/ark:/12148/btv1b52505852n/manifest.json"
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "BnF lat. 9389. Insular script from Echternach. c. 690."
+
+22:
+  manuscript_name: "Ada Gospels"
+  ga_number: null
+  date_range: "c. 800"
+  institution: "bnf_gallica"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "carolingian"
+  source_url: null
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Trier Stadtbibliothek. Carolingian court school. Check Wikimedia for reproductions."
+
+# --- Wikimedia Latin MSS (Phase 1) ---
+
+23:
+  manuscript_name: "Book of Kells (folio — Wikimedia reproduction)"
+  ga_number: null
+  date_range: "c. 800"
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular_majuscule"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Book_of_Kells"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "TCD MS 58. Insular majuscule c. 800. Wikimedia has PD reproductions of individual folios."
+
+24:
+  manuscript_name: "Lindisfarne Gospels (folio — Wikimedia reproduction)"
+  ga_number: null
+  date_range: "c. 700"
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular_half_uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Lindisfarne_Gospels"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Cotton Nero D.iv. Insular half-uncial c. 700."
+
+25:
+  manuscript_name: "Book of Durrow (folio — Wikimedia reproduction)"
+  ga_number: null
+  date_range: "c. 650-700"
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular_majuscule"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Book_of_Durrow"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "TCD MS 57. Insular majuscule c. 650-700."
+
+26:
+  manuscript_name: "Codex Amiatinus (folio — Wikimedia reproduction)"
+  ga_number: null
+  date_range: "early 8th c."
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Amiatinus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Laur. Amiat. 1. Uncial. Biblioteca Medicea Laurenziana, Florence."
+
+27:
+  manuscript_name: "Harley Golden Gospels (folio — Wikimedia reproduction)"
+  ga_number: null
+  date_range: "c. 800"
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "carolingian"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Harley_Golden_Gospels"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Harley 2788. Carolingian gold on purple. BL."
+
+28:
+  manuscript_name: "Lichfield Gospels (folio — Wikimedia/OU reproduction)"
+  ga_number: null
+  date_range: "8th c."
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Lichfield_Gospels"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "St. Chad Gospels. Lichfield Cathedral. Also at lichfield.ou.edu."
+
+# --- Internet Archive Latin MSS (Phase 1) ---
+
+29:
+  manuscript_name: "Latin Vulgate Gospel facsimiles (Internet Archive)"
+  ga_number: null
+  date_range: "various"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "various"
+  source_url: "https://archive.org"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Search for PD Latin Gospel facsimiles. Multiple codex facsimiles available."
+
+# =============================================================================
+# ARMENIAN — Ի սdelays էր Բանն (OOD-reserved)
+# =============================================================================
+
+40:
+  manuscript_name: "Sargis, Title Page of Gospel of John (1386)"
+  ga_number: null
+  date_range: "1386"
+  institution: "met_museum"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "erkat'agir"
+  source_url: "https://www.metmuseum.org/art/collection/search/449536"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-met"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Accession 57.185.3. CC0 Open Access. Metropolitan Museum of Art."
+
+41:
+  manuscript_name: "Walters W.543 — Armenian Gospel (1455)"
+  ga_number: null
+  date_range: "1455"
+  institution: "walters_art_museum"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "bolorgir"
+  source_url: "https://art.thewalters.org/detail/36863"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-walters"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "CC0. Multiple pages with Gospel of John content."
+
+42:
+  manuscript_name: "Walters W.538 — Gospels of Mkhitar (1262)"
+  ga_number: null
+  date_range: "1262"
+  institution: "walters_art_museum"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "bolorgir"
+  source_url: "https://art.thewalters.org/detail/5813"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-walters"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "CC0. Gospels of Mkhitar of Khizan. 1262."
+
+43:
+  manuscript_name: "Walters W.540 — Armenian Gospel (14th c.)"
+  ga_number: null
+  date_range: "14th c."
+  institution: "walters_art_museum"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "bolorgir"
+  source_url: "https://art.thewalters.org/detail/12465"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-walters"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "CC0. 14th-century Armenian Gospel."
+
+# =============================================================================
+# ETHIOPIC (GE'EZ) — በቀዲሙ ቃል ውእቱ ነበረ
+# =============================================================================
+
+50:
+  manuscript_name: "Cambridge Or. 1802 — Ethiopic Gospels"
+  ga_number: null
+  date_range: "various"
+  institution: "cambridge_dl"
+  script_iso15924: "Ethi"
+  ml_class: "OTHER"
+  ood_reserved: false
+  script_style: "fidel"
+  source_url: "https://cudl.lib.cam.ac.uk/view/MS-OR-01802"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-iiif"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Cambridge DL. License needs verification per IIIF manifest."
+
+51:
+  manuscript_name: "Cambridge Or. 2269 — Ethiopic Gospel of John"
+  ga_number: null
+  date_range: "various"
+  institution: "cambridge_dl"
+  script_iso15924: "Ethi"
+  ml_class: "OTHER"
+  ood_reserved: false
+  script_style: "fidel"
+  source_url: "https://cudl.lib.cam.ac.uk/view/MS-OR-02269"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-iiif"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Cambridge DL. Specific to Gospel of John. License needs verification."
+
+52:
+  manuscript_name: "Ethiopic Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "various"
+  institution: "wikimedia"
+  script_iso15924: "Ethi"
+  ml_class: "OTHER"
+  ood_reserved: false
+  script_style: "fidel"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Ethiopian_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Search Wikimedia for Ethiopian Gospel manuscript folios. Filter to CC0/CC-BY/PD."
+
+# =============================================================================
+# SYRIAC — ܒܪܫܝܬ ܐܝܬܘܗܝ ܗܘܐ ܡܠܬܐ (OOD-reserved via Syrc)
+# =============================================================================
+
+60:
+  manuscript_name: "Walters Syriac manuscripts"
+  ga_number: null
+  date_range: "various"
+  institution: "walters_art_museum"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "estrangela"
+  source_url: "https://art.thewalters.org"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-walters"
+  content_type: "handwritten"
+  text_direction: "rtl"
+  notes: "CC0. Search Walters API for Syriac Gospel manuscripts."
+
+61:
+  manuscript_name: "Syriac Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "various"
+  institution: "wikimedia"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "various"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Syriac_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "rtl"
+  notes: "Search Wikimedia for Syriac Gospel folios. Filter to open licenses."
+
+# =============================================================================
+# ARABIC (Christian) — في البدء كان الكلمة
+# =============================================================================
+
+70:
+  manuscript_name: "Walters Arabic Christian manuscripts"
+  ga_number: null
+  date_range: "various"
+  institution: "walters_art_museum"
+  script_iso15924: "Arab"
+  ml_class: "ARAB"
+  ood_reserved: false
+  script_style: "naskh"
+  source_url: "https://art.thewalters.org"
+  iiif_manifest_url: null
+  license: "CC0"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-walters"
+  content_type: "handwritten"
+  text_direction: "rtl"
+  notes: "CC0. Search Walters for Arabic Bible/Gospel manuscripts."
+
+71:
+  manuscript_name: "BnF Arabic Bible MSS"
+  ga_number: null
+  date_range: "various"
+  institution: "bnf_gallica"
+  script_iso15924: "Arab"
+  ml_class: "ARAB"
+  ood_reserved: false
+  script_style: "naskh"
+  source_url: "https://gallica.bnf.fr"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "rtl"
+  notes: "PD pre-1850. Search Gallica for Arabic Christian Gospel manuscripts."
+
+# =============================================================================
+# OLD CHURCH SLAVONIC — Въ начал ѣ б ѣ Слово
+# =============================================================================
+
+80:
+  manuscript_name: "OCS Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "10th-11th c."
+  institution: "wikimedia"
+  script_iso15924: "Cyrs"
+  ml_class: "CYRL"
+  ood_reserved: false
+  script_style: "glagolitic_and_cyrillic"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Old_Church_Slavonic_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: >-
+    Codex Marianus, Codex Zographensis, Ostromir Gospels reproductions
+    available on Wikimedia. Filter to CC0/CC-BY/PD.
+
+# =============================================================================
+# COPTIC — Ⲛ̀ⲧⲉ ⲡⲓⲗⲟⲅⲟⲥ
+# =============================================================================
+
+90:
+  manuscript_name: "BnF Coptic MSS"
+  ga_number: null
+  date_range: "various"
+  institution: "bnf_gallica"
+  script_iso15924: "Copt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  script_style: "sahidic_bohairic"
+  source_url: "https://gallica.bnf.fr"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-gallica"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "PD pre-1850. BnF Coptic manuscript collection. Sahidic and Bohairic dialects."
+
+91:
+  manuscript_name: "Coptic Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "various"
+  institution: "wikimedia"
+  script_iso15924: "Copt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  script_style: "various"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Coptic_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Filter to open licenses. Lycopolitan Gospel of John if available."
+
+# =============================================================================
+# GOTHIC — 𐌸𐌰𐍄𐌰 𐍆𐍂𐌿𐌼𐌹𐍃𐍄𐌾𐌰 𐍅𐌰𐍃 𐍅𐌰𐌿𐍂𐌳 (OOD-reserved)
+# =============================================================================
+
+100:
+  manuscript_name: "Codex Argenteus (Wikimedia reproduction)"
+  ga_number: null
+  date_range: "6th c."
+  institution: "wikimedia"
+  script_iso15924: "Goth"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "gothic_uncial"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Codex_Argenteus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: >-
+    Purple vellum, silver/gold ink. Ulfilas' 4th-c. translation.
+    Uppsala University Library. Wikimedia has PD reproductions.
+    Essentially the sole surviving substantial Gothic manuscript.
+
+# --- Uppsala direct (Phase 2, needs verification) ---
+
+101:
+  manuscript_name: "Codex Argenteus (Uppsala digital)"
+  ga_number: null
+  date_range: "6th c."
+  institution: "uppsala_university"
+  script_iso15924: "Goth"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "gothic_uncial"
+  source_url: "https://www.ub.uu.se/en/collections/codex-argenteus/"
+  iiif_manifest_url: null
+  license: "unverified"
+  license_verified: false
+  harvest_phase: 2
+  harvest_source: "harvest-iiif"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Fully digitized. 5-10 pages containing John 1:1. License needs verification."
+
+# =============================================================================
+# GEORGIAN — თავდაპირველად იყო სიტყვა (OOD-reserved)
+# =============================================================================
+
+110:
+  manuscript_name: "Georgian Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "various"
+  institution: "wikimedia"
+  script_iso15924: "Geor"
+  ml_class: "OTHER"
+  ood_reserved: true
+  script_style: "mkhedruli_asomtavruli"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Georgian_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Search for Georgian Gospel folios. OOD-reserved script. Every image valuable."
+
+# =============================================================================
+# OLD ENGLISH
+# =============================================================================
+
+120:
+  manuscript_name: "Old English Gospel manuscripts (Wikimedia)"
+  ga_number: null
+  date_range: "10th-11th c."
+  institution: "wikimedia"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  script_style: "insular"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Anglo-Saxon_manuscripts"
+  iiif_manifest_url: null
+  license: "per-image"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "handwritten"
+  text_direction: "ltr"
+  notes: "Anglo-Saxon Gospel MSS. Bath and Bodleian Old English Gospels."

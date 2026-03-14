@@ -1,0 +1,181 @@
+---
+# John 1:1 Printed Editions Source License Verification Registry
+# Tracks redistribution/training license status per institution.
+#
+# license_verified: true  -> confirmed open license, safe to harvest
+# license_verified: false -> "free access" claimed but redistribution terms unverified
+# license_verified: null  -> blocked or no stated open license
+#
+# Only institutions with license_verified: true are harvested in Phase 1.
+# Others require manual verification before harvest.
+
+# =============================================================================
+# Tier 1: Already verified open licenses (harvest immediately)
+# =============================================================================
+
+internet_archive:
+  display_name: "Internet Archive"
+  license: "per-item (Public Domain items only)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts:
+    - Grek
+    - Latn
+    - Cyrl
+    - Copt
+    - Goth
+    - Geor
+    - Armn
+    - Syrc
+    - Arab
+    - Hani
+    - Jpan
+    - Hang
+    - Deva
+    - Beng
+    - Taml
+    - Thai
+    - Mymr
+    - Guru
+    - Sinh
+    - Tibt
+  notes: >-
+    Primary source for printed PD Bibles. All items pre-1929 US publication or
+    explicitly marked CC Public Domain Mark 1.0. Only items with confirmed PD
+    status are harvested. Digital Bible Society uploads are treated as PD when
+    DBS states "unaware of any copyright restrictions." Items with CC-BY-NC-ND
+    or CC-BY-NC restrictions are EXCLUDED from harvest.
+  url: "https://archive.org"
+  api_type: "ia_download_api"
+  estimated_yield: "200-350 images across all scripts"
+
+wikimedia_commons:
+  display_name: "Wikimedia Commons"
+  license: "per-image (CC0 / CC BY / CC BY-SA / PD)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Grek, Latn, Cyrl, Goth, Arab]
+  notes: >-
+    Per-image license metadata available via MediaWiki API extmetadata field.
+    Filter to CC0/CC-BY/PD only; skip CC-BY-NC or CC-BY-SA items unless
+    project license (CC-BY-SA-4.0) is compatible. Key categories:
+    Category:Gutenberg_Bible, Category:Printed_Bibles, Category:Incunabula,
+    Category:Ostrog_Bible.
+  url: "https://commons.wikimedia.org"
+  api_type: "mediawiki_api"
+  estimated_yield: "20-50 images (Latin, Greek, Cyrillic)"
+
+bnf_gallica:
+  display_name: "BnF / Gallica"
+  license: "Public Domain (pre-1850 works under French law)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Latn, Grek, Arab]
+  notes: >-
+    Pre-1850 printed editions are PD under French law. Gallica exposes IIIF
+    manifests at gallica.bnf.fr/iiif/ark:/{ark_id}/manifest.json. Key items:
+    early Latin Vulgate printings, Greek NT editions, Arabic Bible editions.
+  url: "https://gallica.bnf.fr"
+  api_type: "iiif_manifest"
+  estimated_yield: "10-20 images (Latin, Greek)"
+
+library_of_congress:
+  display_name: "Library of Congress"
+  license: "Public Domain (no known restrictions)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Latn, Armn]
+  notes: >-
+    All LOC digital items without stated restrictions are PD. The LOC holds
+    the Giant Bible of Mainz, early American Bible printings, and the first
+    Armenian Bible (Oskan 1666, catalog 2003550072). Access via loc.gov API.
+  url: "https://www.loc.gov"
+  api_type: "loc_api"
+  estimated_yield: "5-15 images"
+
+# =============================================================================
+# Tier 2: Needs manual license verification
+# =============================================================================
+
+hathitrust:
+  display_name: "HathiTrust Digital Library"
+  license: "per-item (PD determination required)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Cyrl, Geor]
+  notes: >-
+    Only items with US PD determination (pdus) are freely downloadable as
+    full images. Must check rights field in HathiTrust API response. Pre-1929
+    items generally qualify. Access via babel.hathitrust.org/cgi/htd/ API.
+  url: "https://www.hathitrust.org"
+  api_type: "hathitrust_api"
+  estimated_yield: "20-40 images"
+
+bsb_munich:
+  display_name: "Bayerische Staatsbibliothek (BSB Munich)"
+  license: "mixed (CC-BY-NC-SA for some, PD for others)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek]
+  notes: >-
+    Gutenberg Bible (BSB copy) digitized at high resolution via MDZ. License
+    varies per item. CC-BY-NC-SA items are NOT suitable for ML training.
+    Must verify per-item before harvest.
+  url: "https://www.digitale-sammlungen.de"
+  api_type: "iiif_manifest"
+  estimated_yield: "5-10 images"
+
+e_rara:
+  display_name: "e-rara (Swiss Digital Library)"
+  license: "mixed (per-item)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Arab, Grek, Latn]
+  notes: >-
+    Hosts the Erpenius Arabic NT 1616 (editio princeps of printed Arabic NT)
+    from Basel University Library. License terms need verification per item.
+    DOI: 10.3931/e-rara-39799.
+  url: "https://www.e-rara.ch"
+  api_type: "iiif_manifest"
+  estimated_yield: "3-5 images"
+
+# =============================================================================
+# Tier 3: Low priority / restricted
+# =============================================================================
+
+british_library:
+  display_name: "British Library"
+  license: "mixed (often restrictive)"
+  license_verified: null
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Ethi, Syrc]
+  notes: >-
+    Gutenberg Bible (King's Library copy) and many early Bible editions
+    digitized. License often restrictive for redistribution. Low priority
+    due to licensing uncertainty.
+  url: "https://www.bl.uk"
+  api_type: "unknown"
+  estimated_yield: "10-20 images (if license clears)"
+
+google_books:
+  display_name: "Google Books"
+  license: "per-item (PD full view items only)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Copt, Arab]
+  notes: >-
+    Some IA items were originally digitized by Google Books. Direct Google
+    Books API access for PD items is possible but quality may be lower than
+    IA. Filter to accessViewStatus == FULL_PUBLIC_DOMAIN.
+  url: "https://books.google.com"
+  api_type: "google_books_api"
+  estimated_yield: "10-30 images (overlaps with IA)"

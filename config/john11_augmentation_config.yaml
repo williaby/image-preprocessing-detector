@@ -1,0 +1,94 @@
+# Augmentation configuration for john11-manuscripts dataset
+# Addresses consensus finding: 100% upright (class 0), no orientation diversity
+#
+# Design principles:
+#   - Use Albumentations for geometric transforms (project pattern)
+#   - Apply geometry BEFORE color transforms (per synth-multiscript-v3 fix)
+#   - Track augmented images with parent_sample_id link
+#   - Flag augmented vs native for DIQA interpretability
+#
+# Created: 2026-03-12
+# Source: 4-model consensus evaluation (Gemini 3.1 Pro, GPT-5.2, Qwen 3.5+, Grok 4.1)
+
+metadata:
+  dataset: "john11-manuscripts"
+  total_source_images: 577
+  current_orientation_diversity: "100% class 0 (upright)"
+  target_orientation_diversity: "25% per class (0, 90, 180, 270)"
+
+orientation:
+  enabled: true
+  # Deterministic rotation angles (exact multiples of 90)
+  angles: [90, 180, 270]
+  # Per-image probability of applying each rotation
+  # At 0.25 per angle: ~75% of images get at least one rotated variant
+  probability_per_angle: 0.25
+  # Maximum rotated variants per source image
+  max_variants_per_image: 1
+  # Interpolation for 90-degree rotations (lossless for JPEG)
+  interpolation: "nearest"
+
+skew:
+  enabled: true
+  # Random skew angle range in degrees
+  min_angle_degrees: -15.0
+  max_angle_degrees: 15.0
+  # Per-image probability
+  probability: 0.2
+  # Max variants per source image
+  max_variants_per_image: 1
+  # Border handling
+  border_mode: "reflect"
+  interpolation: "bilinear"
+
+perspective_warp:
+  enabled: false
+  # Reserved for future use
+  max_distortion: 0.1
+  probability: 0.1
+
+# Naming convention for augmented images
+naming:
+  # Pattern: {parent_sample_id}_aug_{transform}_{param}
+  # e.g., abc123_aug_rot90, abc123_aug_skew_7.5
+  separator: "_aug_"
+  rotation_prefix: "rot"
+  skew_prefix: "skew"
+
+# L2 schema extension for augmented images
+l2_schema:
+  # New field: data.augmentation
+  augmentation:
+    is_augmented: true
+    parent_sample_id: "<original-uuid>"
+    transforms_applied:
+      - type: "orientation"
+        angle_degrees: 90
+        method: "albumentations_rotate"
+      # or
+      - type: "skew"
+        angle_degrees: 7.5
+        method: "albumentations_affine"
+    augmentation_config_hash: "<sha256 of this config file>"
+    provenance_tier: "tier_0_exact"
+    is_soft_label: false
+    detection_method: "deterministic_augmentation"
+
+  # Updated geometric field for augmented images
+  geometric:
+    orientation_class: 90  # Known exactly from augmentation
+    orientation_confidence: 1.0
+    skew_angle_degrees: 7.5  # Known exactly from augmentation
+    skew_confidence: 1.0
+    detection_method: "augmentation_ground_truth"
+
+# Training pipeline integration
+training:
+  # Filter flag in dataloader
+  include_augmented: true
+  # Separate native vs augmented in evaluation
+  eval_native_only: true
+  # Maximum augmented:native ratio in training batch
+  max_augmented_ratio: 0.5
+  # Exclude CC-BY-SA quarantined images from augmentation
+  exclude_license_tier: "restricted_sharealike"

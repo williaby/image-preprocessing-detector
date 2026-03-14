@@ -1,0 +1,61 @@
+[
+  {
+    "loc_id": "http://www.loc.gov/item/00279388197-ms/",
+    "title": "Syriac Manuscripts 259. Gospels (Luke and John)",
+    "script": "Syrc",
+    "collection": "sinai",
+    "total_pages": 161,
+    "estimated_john_page": 1,
+    "candidate_window_start": 1,
+    "candidate_window_end": 10,
+    "candidate_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "status": "estimated",
+    "confirmed_page": null
+  },
+  {
+    "loc_id": "http://www.loc.gov/item/00279388367-ms/",
+    "title": "Syriac Manuscripts 272. Four Gospels",
+    "script": "Syrc",
+    "collection": "sinai",
+    "total_pages": 202,
+    "estimated_john_page": 151,
+    "candidate_window_start": 141,
+    "candidate_window_end": 161,
+    "candidate_pages": [
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160,
+      161
+    ],
+    "status": "estimated",
+    "confirmed_page": null
+  }
+]

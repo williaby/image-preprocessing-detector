@@ -1,0 +1,1686 @@
+---
+# John 1:1 Printed Editions Catalog
+# Parallel dataset to john11_manuscript_catalog.yaml (handwritten)
+#
+# Numbering: 1000-series Greek, 2000-series Latin, 3000-series Ethiopic,
+#   4000-series Armenian, 5000-series Syriac, 6000-series Arabic,
+#   7000-series Cyrillic, 8000-series Coptic, 9000-series Gothic,
+#   10000-series Georgian, 11000-series Old English, 12000-series CJK,
+#   13000-series South Asian, 14000-series SE Asian, 15000-series Tibetan
+#
+# Fields:
+#   edition_name: Common scholarly name
+#   date_range: Publication date or range
+#   institution: Source institution key (matches licenses YAML)
+#   script_iso15924: ISO 15924 code
+#   ml_class: ML training class
+#   ood_reserved: Whether this script is OOD-reserved
+#   print_technology: movable_type_letterpress, lithography, offset, digital, typewriter
+#   typography: blackletter, roman_serif, italic, sans_serif, native_script, mixed
+#   font_family: Specific font if known (null otherwise)
+#   source_url: URL for the digital collection / IA item page
+#   iiif_manifest_url: IIIF manifest URL if known (null otherwise)
+#   license: License string
+#   license_verified: Whether redistribution license is verified
+#   harvest_phase: 1 (verified-open), 2 (needs verification)
+#   harvest_source: Which sub-command harvests this item
+#   content_type: "printed" (always for this catalog)
+#   text_direction: ltr, rtl, ttb
+#   language_name: Human-readable language name
+#   ia_item_id: Internet Archive item identifier (null for non-IA sources)
+#   notes: Scholarly context
+
+# =============================================================================
+# GREEK (Grek) — Ἐν ἀρχῇ ἦν ὁ λόγος
+# =============================================================================
+
+1001:
+  edition_name: "Erasmus Novum Instrumentum (1516)"
+  date_range: "1516"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/novum-instrumentum-omne-diligenter-ab-erasmo-roterodamo-greek-latin-1516"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "novum-instrumentum-omne-diligenter-ab-erasmo-roterodamo-greek-latin-1516"
+  notes: "First published Greek NT. Basel: Froben, 1516. Greek-Latin parallel columns."
+
+1002:
+  edition_name: "Erasmus Novum Testamentum (1519)"
+  date_range: "1519"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/nouuminstrument00eras"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "nouuminstrument00eras"
+  notes: "Second edition. Basis for Luther's German translation."
+
+1003:
+  edition_name: "Erasmus Novum Testamentum (1522)"
+  date_range: "1522"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/roterodamvs-erasmus-novum-testamentum-1522"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "roterodamvs-erasmus-novum-testamentum-1522"
+  notes: "Third edition with revised text."
+
+1004:
+  edition_name: "Stephanus Editio Regia (1550)"
+  date_range: "1550"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/1550-stephanus-textus-receptus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "1550-stephanus-textus-receptus"
+  notes: "Robert Estienne's royal edition. Marginal critical apparatus. Basis for Textus Receptus."
+
+1005:
+  edition_name: "Beza Greek-Latin NT (1565)"
+  date_range: "1565"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/1565-beza-greek-latin-nt"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "1565-beza-greek-latin-nt"
+  notes: "Beza's Greek-Latin parallel. Influenced KJV translation."
+
+1006:
+  edition_name: "Beza Greek-Latin NT (1598)"
+  date_range: "1598"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/1598-beza-greek-latin-nt"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "1598-beza-greek-latin-nt"
+  notes: "Later Beza edition, direct source text for KJV 1611."
+
+1007:
+  edition_name: "Elzevir Textus Receptus (1633)"
+  date_range: "1633"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/textus_receptus"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "textus_receptus"
+  notes: "Coined the term 'Textus Receptus'. Leiden: Elzevir Press."
+
+1008:
+  edition_name: "Tischendorf Novum Testamentum Graece, 8th ed. (1869-72)"
+  date_range: "1869-1872"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/Tischendorf.I.GreekNewTestament.NovumTestamentumGraece.various"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "Tischendorf.I.GreekNewTestament.NovumTestamentumGraece.various"
+  notes: "Critical major edition. Two volumes with extensive apparatus."
+
+1009:
+  edition_name: "Westcott-Hort NT in the Original Greek (1881)"
+  date_range: "1881"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/newtestamentinor01west"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "newtestamentinor01west"
+  notes: "Landmark critical edition. Basis for modern critical texts."
+
+1010:
+  edition_name: "Nestle Novum Testamentum Graece, 1st ed. (1898)"
+  date_range: "1898"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/novumtestamentu00nestgoog"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "novumtestamentu00nestgoog"
+  notes: "First Nestle edition. Compact portable format. Forerunner of Nestle-Aland."
+
+1011:
+  edition_name: "Nestle BFBS Greek NT (1904)"
+  date_range: "1904"
+  institution: "internet_archive"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/nestles-greek-new-testament-bfbs-and-us-editions-1904-with-translation-1905"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: "nestles-greek-new-testament-bfbs-and-us-editions-1904-with-translation-1905"
+  notes: "BFBS edition with English translation."
+
+# =============================================================================
+# LATIN (Latn) — In principio erat Verbum
+# =============================================================================
+
+2001:
+  edition_name: "Gutenberg Bible (42-line Bible, c. 1455)"
+  date_range: "c. 1455"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "blackletter"
+  font_family: "DK textura"
+  source_url: "https://archive.org/details/thegutembergbible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin"
+  ia_item_id: "thegutembergbible"
+  notes: "First major printed book. Two columns, 42 lines. Gothic textura type."
+
+2002:
+  edition_name: "Gutenberg/Fust Bible (c. 1462 facsimile)"
+  date_range: "c. 1462"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "blackletter"
+  font_family: null
+  source_url: "https://archive.org/details/1462TheGutenbergBibleLatinVulgate"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin"
+  ia_item_id: "1462TheGutenbergBibleLatinVulgate"
+  notes: "48-line Bible facsimile."
+
+2003:
+  edition_name: "Vulgata Sixtina (1590)"
+  date_range: "1590"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/vulgatasixtina"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin"
+  ia_item_id: "vulgatasixtina"
+  notes: "Sixtine Vulgate. Rome: Typographia Apostolica Vaticana. BSB digitization."
+
+2004:
+  edition_name: "Douay-Rheims Bible (1610/1582, printed 1635)"
+  date_range: "1635"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/1610A.d.DouayOldTestament1582A.d.RheimsNewTestament_176"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin/English"
+  ia_item_id: "1610A.d.DouayOldTestament1582A.d.RheimsNewTestament_176"
+  notes: "English Catholic translation from Vulgate. OT Douay 1610, NT Rheims 1582."
+
+2005:
+  edition_name: "Walton London Polyglot, vol. 5 (1657)"
+  date_range: "1657"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/BibliaSacraPolyglotta5"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Multi-language (Greek, Latin, Syriac, Arabic, Ethiopic)"
+  ia_item_id: "BibliaSacraPolyglotta5"
+  notes: "London Polyglot vol. 5. NT in parallel columns: Greek, Latin, Syriac, Arabic, Ethiopic."
+
+2006:
+  edition_name: "Wordsworth-White Nouum Testamentum Latine (1889-98)"
+  date_range: "1889-1898"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/nouumtestamentu00goog"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin"
+  ia_item_id: "nouumtestamentu00goog"
+  notes: "Critical edition of the Vulgate. Oxford: Clarendon Press."
+
+2007:
+  edition_name: "Gutenberg Bible (Wikimedia reproductions)"
+  date_range: "c. 1455"
+  institution: "wikimedia_commons"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "blackletter"
+  font_family: "DK textura"
+  source_url: "https://commons.wikimedia.org/wiki/Category:Gutenberg_Bible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Latin"
+  ia_item_id: null
+  notes: "High-resolution Wikimedia reproductions from multiple institutional copies."
+
+# =============================================================================
+# ETHIOPIC (Ethi) — በቀዲሙ ቃል
+# =============================================================================
+
+3001:
+  edition_name: "Amharic Bible (1962)"
+  date_range: "1962"
+  institution: "internet_archive"
+  script_iso15924: "Ethi"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "offset"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/AMHEVG_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Amharic"
+  ia_item_id: "AMHEVG_DBS_HS"
+  notes: "DBS upload. Complete Bible in Ethiopic script."
+
+3002:
+  edition_name: "Amharic Holy Bible 1.5"
+  date_range: "pre-1954"
+  institution: "internet_archive"
+  script_iso15924: "Ethi"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "offset"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/AmharicHolyBible1.5"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Amharic"
+  ia_item_id: "AmharicHolyBible1.5"
+  notes: "CC Public Domain Mark 1.0. Traditional Amharic text base."
+
+# =============================================================================
+# ARMENIAN (Armn) — Ի սdelays delays Բանdelays
+# OOD-reserved
+# =============================================================================
+
+4001:
+  edition_name: "Zohrab Armenian NT (1805)"
+  date_range: "1805"
+  institution: "internet_archive"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Bolorgir"
+  source_url: "https://archive.org/details/armenian_zohrab_nt"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Classical Armenian"
+  ia_item_id: "armenian_zohrab_nt"
+  notes: "Hovhannes Zohrab. Venice: Mechitarist Press. 600 PPI scan. Bolorgir (round) type."
+
+4002:
+  edition_name: "Zohrab Armenian NT (alternate scan)"
+  date_range: "1805"
+  institution: "internet_archive"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Bolorgir"
+  source_url: "https://archive.org/details/NewTestamentInClassicalArmenian"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Classical Armenian"
+  ia_item_id: "NewTestamentInClassicalArmenian"
+  notes: "Alternate upload of Zohrab 1805."
+
+# =============================================================================
+# SYRIAC (Syrc) — ܒܪܝܫܝܬ ܐܝܬܘܗܝ ܗܘܐ ܡܠܬܐ
+# OOD-reserved
+# =============================================================================
+
+5001:
+  edition_name: "Lee Peshitta Bible (1823)"
+  date_range: "1823"
+  institution: "internet_archive"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/vetusetnovumtest00lees"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Syriac"
+  ia_item_id: "vetusetnovumtest00lees"
+  notes: "Samuel Lee. London: BFBS. Estrangela/Serto type. Complete OT+NT."
+
+5002:
+  edition_name: "BFBS Peshitta NT (1905)"
+  date_range: "1905"
+  institution: "internet_archive"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/newtestamentinsy00unse"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Syriac"
+  ia_item_id: "newtestamentinsy00unse"
+  notes: "Based on Gwilliam/Pusey critical text. Serto type."
+
+5003:
+  edition_name: "Leusden-Schaaf Syriac NT (1709)"
+  date_range: "1709"
+  institution: "internet_archive"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/NovumDominiNostriJesuChristiTestame1709"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Syriac/Latin"
+  ia_item_id: "NovumDominiNostriJesuChristiTestame1709"
+  notes: "Leiden. Syriac-Latin parallel. Leusden & Schaaf."
+
+5004:
+  edition_name: "Naironus Karshuni Gospels (1703)"
+  date_range: "1703"
+  institution: "internet_archive"
+  script_iso15924: "Syrc"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/SacrosanctaJesuChristiEvangeliaJussu"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Karshuni (Arabic in Syriac script)"
+  ia_item_id: "SacrosanctaJesuChristiEvangeliaJussu"
+  notes: "Faustus Naironus. Rome: Propaganda Fide. Karshuni + Syriac. Maronite use."
+
+# =============================================================================
+# ARABIC (Arab) — في البدء كان الكلمة
+# =============================================================================
+
+6001:
+  edition_name: "Smith-Van Dyck Arabic NT, Complete (1867)"
+  date_range: "1867"
+  institution: "internet_archive"
+  script_iso15924: "Arab"
+  ml_class: "ARAB"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Naskh"
+  source_url: "https://archive.org/details/ArabicNewTestament1867VanDyckOriginal-CompleteEdition"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Arabic"
+  ia_item_id: "ArabicNewTestament1867VanDyckOriginal-CompleteEdition"
+  notes: "Smith-Van Dyck. Beirut: American Press. Standard Arabic Protestant Bible."
+
+6002:
+  edition_name: "Propaganda Fide Arabic Bible (1671)"
+  date_range: "1671"
+  institution: "internet_archive"
+  script_iso15924: "Arab"
+  ml_class: "ARAB"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/bub_gb_4WQ64cHhqP0C"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Arabic"
+  ia_item_id: "bub_gb_4WQ64cHhqP0C"
+  notes: "Rome: Sacra Congregatio de Propaganda Fide. Arabic-Latin Bible. Google Books scan."
+
+# =============================================================================
+# CYRILLIC (Cyrl) — Въ началѣ бѣ Слово
+# =============================================================================
+
+7001:
+  edition_name: "Ostrog Bible (1581)"
+  date_range: "1581"
+  institution: "internet_archive"
+  script_iso15924: "Cyrl"
+  ml_class: "CYRL"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/OstrogBiblija1581"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Church Slavonic"
+  ia_item_id: "OstrogBiblija1581"
+  notes: "Ivan Fyodorov. First complete printed Slavonic Bible. Semi-uncial (poluustav) Cyrillic."
+
+7002:
+  edition_name: "Russian Synodal Bible (1876)"
+  date_range: "1876"
+  institution: "internet_archive"
+  script_iso15924: "Cyrl"
+  ml_class: "CYRL"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/1876TheRussianSynodalBible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Russian"
+  ia_item_id: "1876TheRussianSynodalBible"
+  notes: "Standard Russian translation. Modern Cyrillic roman type."
+
+7003:
+  edition_name: "Ostrog Bible (alternate scan)"
+  date_range: "1581"
+  institution: "wikimedia_commons"
+  script_iso15924: "Cyrl"
+  ml_class: "CYRL"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://commons.wikimedia.org/wiki/Category:Ostrog_Bible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-wikimedia"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Church Slavonic"
+  ia_item_id: null
+  notes: "Wikimedia page-scan images of Ostrog Bible."
+
+# =============================================================================
+# COPTIC (Copt)
+# =============================================================================
+
+8001:
+  edition_name: "Wilkins Coptic NT (1716)"
+  date_range: "1716"
+  institution: "internet_archive"
+  script_iso15924: "Copt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/hocestnovumtest00wilk"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Coptic (Bohairic)"
+  ia_item_id: "hocestnovumtest00wilk"
+  notes: "David Wilkins. Oxford: Sheldon Theatre Press. First printed Coptic NT. Coptic-Latin parallel."
+
+8002:
+  edition_name: "Horner Bohairic NT, vol. 1 (1898)"
+  date_range: "1898"
+  institution: "internet_archive"
+  script_iso15924: "Copt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/copticversionofn01hornuoft"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Coptic (Bohairic)"
+  ia_item_id: "copticversionofn01hornuoft"
+  notes: "G.W. Horner. Oxford: Clarendon Press. Coptic type + English."
+
+8003:
+  edition_name: "Horner Sahidic NT, vol. 1-2 (1898-1905)"
+  date_range: "1898-1905"
+  institution: "internet_archive"
+  script_iso15924: "Copt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/copticversionofn02hornuoft"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Coptic (Sahidic)"
+  ia_item_id: "copticversionofn02hornuoft"
+  notes: "Southern dialect. Oxford: Clarendon Press."
+
+# =============================================================================
+# GOTHIC (Goth) — 𐌹𐌽 𐌰𐌽𐌰𐍃𐍄𐍉𐌳𐌴𐌹𐌽𐌰𐌹 𐍅𐌰𐍃 𐍅𐌰𐌿𐍂𐌳
+# OOD-reserved
+# =============================================================================
+
+9001:
+  edition_name: "Uppstrom Codex Argenteus edition (1857)"
+  date_range: "1857"
+  institution: "internet_archive"
+  script_iso15924: "Goth"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/codexargenteuss00wulfgoog"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Gothic"
+  ia_item_id: "codexargenteuss00wulfgoog"
+  notes: "Anders Uppstrom. Uppsala. Diplomatic edition with Gothic uncial type."
+
+9002:
+  edition_name: "Streitberg Die gotische Bibel (1908)"
+  date_range: "1908"
+  institution: "internet_archive"
+  script_iso15924: "Goth"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/diegotischebibe00stregoog"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Gothic"
+  ia_item_id: "diegotischebibe00stregoog"
+  notes: "Wilhelm Streitberg. Heidelberg: Winter. Standard scholarly edition."
+
+# =============================================================================
+# GEORGIAN (Geor) — თავდაპირველად იყო სიტყვა
+# OOD-reserved
+# =============================================================================
+
+10001:
+  edition_name: "Georgian Bible New Testament"
+  date_range: "pre-1929"
+  institution: "internet_archive"
+  script_iso15924: "Geor"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Mkhedruli"
+  source_url: "https://archive.org/details/GeorgianBibleNewTestament"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Georgian"
+  ia_item_id: "GeorgianBibleNewTestament"
+  notes: "PD Mark 1.0. Edition uncertain; possibly 1816/1818 BFBS or later."
+
+10002:
+  edition_name: "Georgian Bible — Gospels, Acts, James"
+  date_range: "pre-1929"
+  institution: "internet_archive"
+  script_iso15924: "Geor"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Mkhedruli"
+  source_url: "https://archive.org/details/TheHolyBibleInGeorgianGospelsActsJames"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Georgian"
+  ia_item_id: "TheHolyBibleInGeorgianGospelsActsJames"
+  notes: "Contains Gospels including John."
+
+# =============================================================================
+# OLD ENGLISH (Latn) — On frymðe wæs Word
+# =============================================================================
+
+11001:
+  edition_name: "Thorpe Anglo-Saxon Gospels (1842)"
+  date_range: "1842"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/dahalgangodspelo00thor"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Old English (Anglo-Saxon)"
+  ia_item_id: "dahalgangodspelo00thor"
+  notes: "Benjamin Thorpe. London: Rivington. OE type with eth/thorn characters."
+
+11002:
+  edition_name: "Skeat Gospel of John in Anglo-Saxon (1878)"
+  date_range: "1878"
+  institution: "internet_archive"
+  script_iso15924: "Latn"
+  ml_class: "LATN"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "roman_serif"
+  font_family: null
+  source_url: "https://archive.org/details/gospelaccordingt0000unse_y3l8"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Old English (Anglo-Saxon)"
+  ia_item_id: "gospelaccordingt0000unse_y3l8"
+  notes: "Walter Skeat. Cambridge UP. Anglo-Saxon and Northumbrian synoptic arrangement."
+
+# =============================================================================
+# CHINESE (Hani) — 太初有道
+# =============================================================================
+
+12001:
+  edition_name: "Morrison Chinese NT (1823)"
+  date_range: "1823"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/CMNMMV_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese (Mandarin)"
+  ia_item_id: "CMNMMV_DBS_HS"
+  notes: "Robert Morrison. First Protestant Chinese NT. DBS upload."
+
+12002:
+  edition_name: "Anglo-Chinese College NT (1840)"
+  date_range: "1840"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/CMNLMV_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese (Mandarin)"
+  ia_item_id: "CMNLMV_DBS_HS"
+  notes: "Malacca. 4 volumes."
+
+12003:
+  edition_name: "Chinese NT (1875)"
+  date_range: "1875"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/CMNNMNT_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese (Mandarin)"
+  ia_item_id: "CMNNMNT_DBS_HS"
+  notes: "DBS upload."
+
+12004:
+  edition_name: "Chinese-English Mandarin KJV Diglot (1885)"
+  date_range: "1885"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/CMNEMN_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese/English"
+  ia_item_id: "CMNEMN_DBS_HS"
+  notes: "American Presbyterian Mission Press, Shanghai. Chinese-English parallel."
+
+12005:
+  edition_name: "Chinese-English NT (1902, ABS)"
+  date_range: "1902"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/CMNCOT_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese (Mandarin)"
+  ia_item_id: "CMNCOT_DBS_HS"
+  notes: "American Bible Society."
+
+12006:
+  edition_name: "Sydenstricker Chinese NT (1929)"
+  date_range: "1929"
+  institution: "internet_archive"
+  script_iso15924: "Hani"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/sydenstrickers-chinese-new-testament"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Chinese (Mandarin)"
+  ia_item_id: "sydenstrickers-chinese-new-testament"
+  notes: "CC Public Domain Mark 1.0. Vernacular Mandarin."
+
+# =============================================================================
+# JAPANESE (Jpan) — 初めに言があった
+# =============================================================================
+
+12101:
+  edition_name: "Shin'yaku Seisho NT vol. 1 (1877)"
+  date_range: "1877"
+  institution: "internet_archive"
+  script_iso15924: "Jpan"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/shinyakuseishoth01unse"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Japanese"
+  ia_item_id: "shinyakuseishoth01unse"
+  notes: "ABS Yokohama press. Katakana/Kanji mix. Princeton Theological Seminary Library."
+
+12102:
+  edition_name: "Meiji-genyaku Bible, Part 5: Matt-Rev (1887)"
+  date_range: "1887"
+  institution: "internet_archive"
+  script_iso15924: "Jpan"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/meijigenyaku-pt5-matt-rev"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Japanese"
+  ia_item_id: "meijigenyaku-pt5-matt-rev"
+  notes: "First complete Japanese Bible. Hepburn/Brown/Verbeck committee. NBSS Yokohama."
+
+12103:
+  edition_name: "Raguet Catholic Japanese NT (1910)"
+  date_range: "1910"
+  institution: "internet_archive"
+  script_iso15924: "Jpan"
+  ml_class: "CJK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/825725-0001"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Japanese"
+  ia_item_id: "825725-0001"
+  notes: "CC Public Domain Mark 1.0. Fr. Emile Raguet."
+
+# =============================================================================
+# KOREAN (Hang) — 태초에 말씀이 계시니라
+# =============================================================================
+
+12201:
+  edition_name: "Korean Bible (1911)"
+  date_range: "1911"
+  institution: "internet_archive"
+  script_iso15924: "Hang"
+  ml_class: "HANG"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/KORSYS_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Korean"
+  ia_item_id: "KORSYS_DBS_HS"
+  notes: "DBS upload. Complete Bible. Historic 'Revised Version'."
+
+# =============================================================================
+# DEVANAGARI (Deva) — आदि में वचन था
+# =============================================================================
+
+13001:
+  edition_name: "Hindustani NT (1819)"
+  date_range: "1819"
+  institution: "internet_archive"
+  script_iso15924: "Deva"
+  ml_class: "DEVA"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/new-testament-in-hingdoostane-1819"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Hindi (Hindustani)"
+  ia_item_id: "new-testament-in-hingdoostane-1819"
+  notes: "London: BFBS. 1819."
+
+13002:
+  edition_name: "BFBS Hindi Bible (1919)"
+  date_range: "1919"
+  institution: "internet_archive"
+  script_iso15924: "Deva"
+  ml_class: "DEVA"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/thenewtestamentinhindi"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Hindi"
+  ia_item_id: "thenewtestamentinhindi"
+  notes: "CC Public Domain Mark 1.0. BFBS North India Auxiliary."
+
+# =============================================================================
+# BENGALI (Beng) — আদিতে বাক্য ছিলেন
+# =============================================================================
+
+13101:
+  edition_name: "Carey Bengali NT (1801)"
+  date_range: "1801"
+  institution: "internet_archive"
+  script_iso15924: "Beng"
+  ml_class: "INDIC_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/newtestamentinbe00care"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Bengali"
+  ia_item_id: "newtestamentinbe00care"
+  notes: "William Carey. Serampore Mission Press. FIRST Indian-language NT. 816 pages."
+
+13102:
+  edition_name: "Natun Niyam Bengali NT (1885)"
+  date_range: "1885"
+  institution: "internet_archive"
+  script_iso15924: "Beng"
+  ml_class: "INDIC_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/in.ernet.dli.2015.291580"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Bengali"
+  ia_item_id: "in.ernet.dli.2015.291580"
+  notes: "Digital Library of India. 752 pages."
+
+# =============================================================================
+# TAMIL (Taml) — ஆதியில் வார்த்தை இருந்தது
+# =============================================================================
+
+13201:
+  edition_name: "Ziegenbalg Tamil NT (1714)"
+  date_range: "1714"
+  institution: "internet_archive"
+  script_iso15924: "Taml"
+  ml_class: "TAML"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/1714-tamil-bible-ziegenbalg-version-anju-poshthagam"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tamil"
+  ia_item_id: "1714-tamil-bible-ziegenbalg-version-anju-poshthagam"
+  notes: "CC PD Mark 1.0. FIRST printed Indian-language Bible. Danish-Halle Mission, Tranquebar."
+
+13202:
+  edition_name: "Fabricius Tamil NT (1812)"
+  date_range: "1812"
+  institution: "internet_archive"
+  script_iso15924: "Taml"
+  ml_class: "TAML"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/1812-tamil-bible-fabricius-new-testament-older-words"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tamil"
+  ia_item_id: "1812-tamil-bible-fabricius-new-testament-older-words"
+  notes: "CC PD Mark 1.0. Older word forms."
+
+13203:
+  edition_name: "Rhenius Tamil NT (1836)"
+  date_range: "1836"
+  institution: "internet_archive"
+  script_iso15924: "Taml"
+  ml_class: "TAML"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/1836-tamil-bible-rhenius-new-testament"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tamil"
+  ia_item_id: "1836-tamil-bible-rhenius-new-testament"
+  notes: "CC PD Mark 1.0."
+
+13204:
+  edition_name: "Rhenius Tamil Gospel of John — Tamil-English parallel (1836)"
+  date_range: "1836"
+  institution: "internet_archive"
+  script_iso15924: "Taml"
+  ml_class: "TAML"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://archive.org/details/1836-tamil-bible-parallel-with-english-iraneus-iyer-book-of-john"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tamil/English"
+  ia_item_id: "1836-tamil-bible-parallel-with-english-iraneus-iyer-book-of-john"
+  notes: "CC PD Mark 1.0. Specifically Gospel of John. Tamil-English parallel."
+
+# =============================================================================
+# GURMUKHI (Guru) — ਆਦ ਵਿੱਚ ਸ਼ਬਦ ਸੀ
+# =============================================================================
+
+13301:
+  edition_name: "Carey Punjabi NT (1815)"
+  date_range: "1815"
+  institution: "internet_archive"
+  script_iso15924: "Guru"
+  ml_class: "INDIC_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/PunjabiBible_NewTestament"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Punjabi"
+  ia_item_id: "PunjabiBible_NewTestament"
+  notes: "CC PD Mark 1.0. William Carey. Serampore Mission Press. 346 pages."
+
+# =============================================================================
+# THAI (Thai) — ในเริ่มแรกนั้นพระวาทะทรงเป็นอยู่แล้ว
+# =============================================================================
+
+14001:
+  edition_name: "Jones Thai NT (1850)"
+  date_range: "1850"
+  institution: "internet_archive"
+  script_iso15924: "Thai"
+  ml_class: "THAI"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/newtestament00jonegoog"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Thai"
+  ia_item_id: "newtestament00jonegoog"
+  notes: "J.T. Jones. Bangkok: Union Press. 591 pages. Earliest Thai-script Bible on IA."
+
+# =============================================================================
+# MYANMAR (Mymr) — အစအဦးပထမ၌ ႏႈတ္ကပတ္ေတာ္ရွိ၏
+# =============================================================================
+
+14101:
+  edition_name: "Judson Burmese NT (1832)"
+  date_range: "1832"
+  institution: "internet_archive"
+  script_iso15924: "Mymr"
+  ml_class: "SE_ASIAN_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/MYABJB_DBS_HS"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Burmese"
+  ia_item_id: "MYABJB_DBS_HS"
+  notes: "Adoniram Judson. DBS upload."
+
+14102:
+  edition_name: "Judson Burmese Bible (1840)"
+  date_range: "1840"
+  institution: "internet_archive"
+  script_iso15924: "Mymr"
+  ml_class: "SE_ASIAN_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/burmese-1840-judson-bible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Burmese"
+  ia_item_id: "burmese-1840-judson-bible"
+  notes: "CC PD Mark 1.0. First complete Burmese Bible. Maulmein."
+
+14103:
+  edition_name: "Judson Burmese Bible (1891 revised)"
+  date_range: "1891"
+  institution: "internet_archive"
+  script_iso15924: "Mymr"
+  ml_class: "SE_ASIAN_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/burmese-1891-judson-bible"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Burmese"
+  ia_item_id: "burmese-1891-judson-bible"
+  notes: "CC PD Mark 1.0. Revised edition."
+
+# =============================================================================
+# SINHALA (Sinh) — මුල දී වචනය තිබුණේය
+# =============================================================================
+
+14201:
+  edition_name: "Tolfrey Sinhala NT (1817)"
+  date_range: "1817"
+  institution: "internet_archive"
+  script_iso15924: "Sinh"
+  ml_class: "INDIC_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/singhalesetransl00brow"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Sinhala"
+  ia_item_id: "singhalesetransl00brow"
+  notes: "Tolfrey & Armour. Colombo: Wesleyan Mission Press. Boston U. scan."
+
+14202:
+  edition_name: "Sinhala Gospel of John (1868)"
+  date_range: "1868"
+  institution: "internet_archive"
+  script_iso15924: "Sinh"
+  ml_class: "INDIC_OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/sinhala-1868-john"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Sinhala"
+  ia_item_id: "sinhala-1868-john"
+  notes: "CC PD Mark 1.0. Colombo Auxiliary Bible Society. Specifically Gospel of John."
+
+# =============================================================================
+# TIBETAN (Tibt)
+# =============================================================================
+
+15001:
+  edition_name: "Tibetan Gospel of John (1914)"
+  date_range: "1914"
+  institution: "internet_archive"
+  script_iso15924: "Tibt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/tibetan-bible-gospel-of-john-1914"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tibetan"
+  ia_item_id: "tibetan-bible-gospel-of-john-1914"
+  notes: "CC PD Mark 1.0. Central Tibetan. Missionary press. Specifically Gospel of John."
+
+15002:
+  edition_name: "Tibetan Gospel of John (1914, alternate scan)"
+  date_range: "1914"
+  institution: "internet_archive"
+  script_iso15924: "Tibt"
+  ml_class: "OTHER"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://archive.org/details/tibetan-bible-central-new-testament"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-internet-archive"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Tibetan"
+  ia_item_id: "tibetan-bible-central-new-testament"
+  notes: "CC PD Mark 1.0. Alternate scan of same edition."
+
+# =============================================================================
+# LIBRARY OF CONGRESS ADDITIONS (LOC) — Tier 1 PD
+# =============================================================================
+
+# Armenian (LOC Armenian Rarities)
+4003:
+  edition_name: "Oskan Bible — First Armenian Printed Bible (1666, Amsterdam)"
+  date_range: "1666"
+  institution: "library_of_congress"
+  script_iso15924: "Armn"
+  ml_class: "OTHER"
+  ood_reserved: true
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: null
+  source_url: "https://www.loc.gov/item/2003550072"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-loc"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Armenian"
+  ia_item_id: null
+  loc_item_id: "2003550072"
+  loc_resource_id: "amedscd.2003550072"
+  notes: >-
+    First complete Armenian Bible printed by Bishop Oskan Erewantsi in
+    Amsterdam 1666. 1,392 pages. LOC Armenian Rarities Collection. Gospel
+    of John in NT section (~pp. 800-850). Public domain.
+
+# Arabic (LOC World Digital Library)
+6003:
+  edition_name: "Medici Press Arabic Gospels (1590-91, Rome)"
+  date_range: "1590"
+  institution: "library_of_congress"
+  script_iso15924: "Arab"
+  ml_class: "ARAB"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "native_script"
+  font_family: "Granjon Arabic"
+  source_url: "https://www.loc.gov/item/2021666214"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-loc"
+  content_type: "printed"
+  text_direction: "rtl"
+  language_name: "Arabic"
+  ia_item_id: null
+  loc_item_id: "2021666214"
+  loc_resource_id: "gdcwdl.wdl_09917"
+  notes: >-
+    First Arabic Gospels ever printed. Typographia Medicea, Rome.
+    Typeface designed by Robert Granjon — exceptional naskh Arabic type.
+    Contains all four Gospels including John. LOC WDL. Public domain.
+
+# Greek+Latin Polyglot (LOC World Digital Library)
+1012:
+  edition_name: "Complutensian Polyglot Bible, Vol. 5 NT (1514-17)"
+  date_range: "1514"
+  institution: "library_of_congress"
+  script_iso15924: "Grek"
+  ml_class: "GREK"
+  ood_reserved: false
+  print_technology: "movable_type_letterpress"
+  typography: "mixed"
+  font_family: null
+  source_url: "https://www.loc.gov/item/2021666855"
+  iiif_manifest_url: null
+  license: "public_domain"
+  license_verified: true
+  harvest_phase: 1
+  harvest_source: "harvest-loc"
+  content_type: "printed"
+  text_direction: "ltr"
+  language_name: "Greek"
+  ia_item_id: null
+  loc_item_id: "2021666855"
+  loc_resource_id: "gdcwdl.wdl_10636_005"
+  notes: >-
+    First printed polyglot Bible (Alcalá de Henares, 1514-17). Vol. 5
+    contains NT in parallel Greek and Latin columns. Pre-dates Erasmus
+    1516 (though published later). Exceptional early Greek typography.
+    LOC WDL. Public domain.
