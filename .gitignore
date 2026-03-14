@@ -221,3 +221,4 @@ rag_architecture.png
 
 # Binary planning documents (use .md equivalents instead)
 *.docx
+siglip2_diqa5000_outputs/
