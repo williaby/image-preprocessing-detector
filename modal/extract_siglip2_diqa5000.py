@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import base64
 import time
+from datetime import UTC
 from pathlib import Path
 
 import modal
@@ -364,8 +365,7 @@ def extract_all_splits(
         # Save JSONL
         jsonl_path = output_dir / f"siglip2_diqa5000_{split}.jsonl"
         with open(jsonl_path, "w") as f:
-            for r in records:
-                f.write(json.dumps(r) + "\n")
+            f.writelines(json.dumps(r) + "\n" for r in records)
         print(f"Saved {jsonl_path}")
 
         # Save embeddings NPZ
@@ -455,7 +455,7 @@ def fit_ood_detector() -> dict:
     """
     import json
     import sys
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     import numpy as np
 
@@ -504,7 +504,7 @@ def fit_ood_detector() -> dict:
     test_distances = np.array([r.mahalanobis_distance for r in test_results])
 
     ood_stats = {
-        "fit_n": int(len(fit_emb)),
+        "fit_n": len(fit_emb),
         "fit_splits": ["train", "val"],
         "train_val_median_distance": float(np.median(fit_distances)),
         "train_val_p95": float(np.percentile(fit_distances, 95)),
@@ -516,7 +516,7 @@ def fit_ood_detector() -> dict:
         "threshold": float(detector.threshold),
     }
 
-    print(f"\nOOD Detector Statistics:")
+    print("\nOOD Detector Statistics:")
     print(f"  Fit on: {ood_stats['fit_n']} samples")
     print(f"  Train+Val: median={ood_stats['train_val_median_distance']:.2f}, "
           f"p95={ood_stats['train_val_p95']:.2f}, p99={ood_stats['train_val_p99']:.2f}")
@@ -533,7 +533,7 @@ def fit_ood_detector() -> dict:
     summary: dict = {
         "checkpoint": CHECKPOINT_SUBPATH,
         "model_id": "google/siglip2-base-patch16-naflex",
-        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
         "ood_detector": ood_stats,
     }
 

@@ -32,7 +32,7 @@ import logging
 import sys
 import time
 import uuid
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -501,7 +501,7 @@ def estimate_folios(
     click.echo(f"\nFolio estimates: {len(estimates)} manuscripts")
     for s in sorted(by_script):
         click.echo(f"  {s}: {by_script[s]}")
-    click.echo(f"\nPage count sources:")
+    click.echo("\nPage count sources:")
     for src in sorted(by_source):
         click.echo(f"  {src}: {by_source[src]}")
     if errors:
@@ -832,7 +832,7 @@ def stats() -> None:
         with open(_FOLIO_ESTIMATES_PATH) as f:
             estimates = json.load(f)
         confirmed = sum(1 for e in estimates if e.get("confirmed_page") is not None)
-        click.echo(f"\n=== Folio Estimates ===")
+        click.echo("\n=== Folio Estimates ===")
         click.echo(f"  Estimated: {len(estimates)}")
         click.echo(f"  Confirmed: {confirmed}")
 
@@ -841,7 +841,7 @@ def stats() -> None:
     loc_dir = output_dir / "loc"
     if loc_dir.exists():
         harvested = list(loc_dir.glob("*.jpg"))
-        click.echo(f"\n=== Harvested Images ===")
+        click.echo("\n=== Harvested Images ===")
         by_script_h: dict[str, int] = {}
         for p in harvested:
             parts = p.stem.split("_")

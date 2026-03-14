@@ -393,7 +393,7 @@ def enrich(l2_dir: Path, registry: Path, *, dry_run: bool) -> None:
                 reg[sample_id],
                 dry_run=dry_run,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             errors.append(f"  ERROR {json_path.name}: {exc}")
             continue
 

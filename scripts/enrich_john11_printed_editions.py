@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -125,7 +125,7 @@ _PRINT_TECH_ERA: dict[str, str] = {
     "movable_type_letterpress": "historical",
     "woodblock": "historical",
     "lithography": "historical",
-    "offset": "modern" if False else "historical",  # varies by date
+    "offset": "historical",  # varies by date; default to historical for this corpus
     "digital": "modern",
     "typewriter": "historical",
 }
@@ -156,7 +156,7 @@ def _load_registry() -> list[dict[str, Any]]:
 
 def _now_iso() -> str:
     """Return current UTC time in ISO format."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _get_image_props(image_path: Path) -> dict[str, Any]:

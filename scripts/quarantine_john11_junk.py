@@ -15,7 +15,7 @@ import argparse
 import json
 import shutil
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -260,7 +260,7 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
     # --- Step 5: Write quarantine manifest ---
     print("\n=== Step 5: Write quarantine manifest ===")
     manifest = {
-        "quarantine_date": datetime.now(timezone.utc).isoformat(),
+        "quarantine_date": datetime.now(UTC).isoformat(),
         "reason": "john11-manuscripts dataset cleanup — unsuitable images",
         "dry_run": dry_run,
         "junk_files": JUNK_FILES,

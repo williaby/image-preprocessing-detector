@@ -31,7 +31,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import sys
 import time
 import uuid
 from datetime import date
@@ -532,9 +531,9 @@ def harvest_wikimedia(
 
         def _enumerate_category(cat_title: str, depth: int = 0) -> None:
             """Recursively enumerate files and subcategories."""
-            if cat_title in visited_categories or depth > 2:
+            if cat_title in visited_categories or depth > 2:  # noqa: B023
                 return
-            visited_categories.add(cat_title)
+            visited_categories.add(cat_title)  # noqa: B023
 
             click.echo(f"  Enumerating {cat_title} (depth={depth})...")
             cmcontinue = None
@@ -561,9 +560,9 @@ def harvest_wikimedia(
                 for member in data.get("query", {}).get("categorymembers", []):
                     ns = member.get("ns", 0)
                     title = member.get("title", "")
-                    if ns == 6 and title not in seen_titles:  # File namespace
-                        all_files.append(member)
-                        seen_titles.add(title)
+                    if ns == 6 and title not in seen_titles:  # noqa: B023
+                        all_files.append(member)  # noqa: B023
+                        seen_titles.add(title)  # noqa: B023
                     elif ns == 14:  # Category namespace
                         _enumerate_category(title, depth + 1)
 
@@ -938,7 +937,7 @@ def harvest_walters(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
                     if page_count < 3:
                         click.echo(f"    [DRY RUN] {url}")
                     elif page_count == 3:
-                        click.echo(f"    ... and more pages")
+                        click.echo("    ... and more pages")
                     page_count += 1
                     continue
 

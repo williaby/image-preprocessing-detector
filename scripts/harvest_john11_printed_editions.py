@@ -29,7 +29,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import sys
 import time
 import uuid
 from datetime import date
@@ -919,7 +918,7 @@ def harvest_loc(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
         item_url = f"https://www.loc.gov/item/{loc_id}/?fo=json"
         item_data = _fetch_json_with_retry(item_url, initial_delay=15.0)
         if item_data is None:
-            click.echo(f"  [SKIP] Could not fetch item metadata")
+            click.echo("  [SKIP] Could not fetch item metadata")
             continue
 
         # Find resource URL and page count

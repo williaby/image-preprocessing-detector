@@ -89,7 +89,7 @@ uv run modal run modal/app.py::hello_gpu
 
 Expected output:
 
-```
+```text
 Hello from Modal GPU: Tesla T4
 CUDA Version: 12.4
 PyTorch Version: 2.5.1+cu124

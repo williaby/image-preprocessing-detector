@@ -29,7 +29,7 @@ from scipy import stats
 
 # Project imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.image_preprocessing_detector.schema_utils.ocr_quality_proxy import (  # noqa: E402
+from src.image_preprocessing_detector.schema_utils.ocr_quality_proxy import (
     compute_all_proxies,
 )
 

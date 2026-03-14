@@ -16,8 +16,7 @@ import argparse
 import hashlib
 import json
 import shutil
-import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 from PIL import Image
@@ -136,7 +135,7 @@ def sync_registry(dry_run: bool) -> dict[str, int]:
                     "source_institution": "loc_wdl",
                     "catalog_number": None,
                     "license": "Public Domain",
-                    "registered_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                    "registered_date": datetime.now(UTC).strftime("%Y-%m-%d"),
                     "original_dimensions": dims,
                     "acquisition_method": "loc_wdl_iiif",
                 }

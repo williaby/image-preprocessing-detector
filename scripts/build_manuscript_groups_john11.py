@@ -190,7 +190,7 @@ def _wikimedia_group_key(script: str, filename: str) -> str:
     if not safe:
         # Last resort: hash the filename
         import hashlib
-        safe = hashlib.md5(filename.encode()).hexdigest()[:8]  # noqa: S324
+        safe = hashlib.md5(filename.encode(), usedforsecurity=False).hexdigest()[:8]
     return f"wikimedia_{script_lower}_{safe}"
 
 
@@ -314,7 +314,7 @@ def build_groups(
         # Derive pattern from actual paths when possible
         path_dirs = {"/".join(sp.split("/")[:2]) for sp in source_paths}
         if len(path_dirs) == 1:
-            pattern = list(path_dirs)[0] + "/*"
+            pattern = next(iter(path_dirs)) + "/*"
         else:
             pattern = meta[group_key].get("source_path_pattern", "")
 
