@@ -1,15 +1,15 @@
 ### Thousand Character Classic (千字文)
 
-> **Quick Stats**: 391 images | Historical CJK calligraphy | 6 script styles, 3 writing traditions
+> **Quick Stats**: 1,248 images | 9 institutions | Historical CJK calligraphy | 12 script styles, 3 writing traditions
 >
-> **License**: Mixed per-image (CC0, CC BY 4.0, Public Domain, KOGL) | **Commercial Use**: Mostly yes (per-image tracking)
+> **License**: Mixed per-image (CC0, CC BY 4.0, Public Domain, NDL Open, KOGL) | **Commercial Use**: Mostly yes (per-image tracking)
 
 #### 1. Overview
 
 | Attribute | Value |
 |-----------|-------|
 | **Full Name** | Thousand Character Classic Calligraphy Collection |
-| **Version** | 1.0 |
+| **Version** | 2.0 |
 | **Release Date** | 2026 |
 | **Maintainer** | Project A team (assembled from 20+ institutions) |
 | **Paper** | N/A (assembled dataset from public collections) |
@@ -36,14 +36,17 @@
 
 ##### 2.2 Source Institutions
 
-| Source | Expected Images | License | Acquisition Method |
-|--------|---------------:|---------|-------------------|
-| **Wikimedia Commons** | 130 | Public Domain / CC BY | MediaWiki API |
-| **Met Museum** | 19 | CC0 | Met Open Access API |
-| **NPM Taipei** | 0 | CC0 / CC BY 4.0 | NPM Digital Archive (not harvested) |
-| **Kyoto University** | 0 | CC BY | IIIF endpoints moved (404) |
-| **NDL Japan** | 242 | NDL Open | IIIF Manifests |
-| **Korean institutions** | 0 | KOGL Type 1 | Not harvested |
+| Source | Images | License | Acquisition Method |
+|--------|-------:|---------|-------------------|
+| **NDL Japan** | 249 | NDL Open | IIIF Manifests |
+| **LOC (World Digital Library)** | 245 | Public Domain | LOC WDL IIIF |
+| **Waseda University** | 239 | Open Access | Waseda Kotenseki IIIF |
+| **NPM Taipei** | 202 | CC BY 4.0 | NPM Digital Archive API |
+| **Kyoto University** | 146 | Open Access | Kyoto U Rare Books IIIF |
+| **Wikimedia Commons** | 140 | Public Domain / CC BY | MediaWiki API |
+| **Met Museum** | 23 | CC0 | Met Open Access API |
+| **National Museum of Korea** | 3 | KOGL Type 1 | NMK Open Access |
+| **Smithsonian (Freer Gallery)** | 1 | Public Domain | Open Access download |
 | **Internet Archive** | 0 | Public Domain | Not harvested |
 
 ##### 2.3 Provided Labels & Annotations
@@ -90,25 +93,27 @@
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/calligraphy/thousand-character-classic/` | 🔄 Pending harvest | Target: 100-290 images |
-| **Registry** | `metadata_registry/thousand_character_classic_registry.jsonl` | 🔄 Pending | JSONL with SHA256 + pHash dedup |
-| **L2 Metadata** | `metadata_registry/json/thousand-character-classic/` | 🔄 Pending | Per-image L2 v2 JSON |
-| **Extended Sidecar** | `metadata_registry/thousand_character_classic_extended.jsonl` | 🔄 Pending | Art-historical metadata |
+| **Images** | `01_base_data/calligraphy/thousand-character-classic/` | ✅ Complete | 1,248 images across 9 source subfolders |
+| **Registry** | `metadata_registry/thousand_character_classic_registry.jsonl` | ✅ Complete | 1,248 entries, SHA256 deduped |
+| **L2 Metadata** | `metadata_registry/json/thousand-character-classic/` | ✅ Complete | 1,449 per-image L2 v2 JSON |
+| **Extended Sidecar** | `metadata_registry/thousand_character_classic_extended.jsonl` | ✅ Complete | 1,449 art-historical metadata entries |
 | **Catalog Config** | `config/thousand_character_classic_catalog.yaml` | ✅ Complete | 74 items |
 | **Ground Truth Text** | `config/thousand_character_classic_text.yaml` | ✅ Complete | 1,000 chars + translation |
+| **Quarantine** | `01_base_data/calligraphy/thousand-character-classic/_quarantined/` | ✅ Complete | 11 removed files (9 Korean web junk, 2 cross-source duplicates) |
 
 #### 4. Dataset Statistics
 
-##### 4.1 Catalog Coverage
+##### 4.1 Dataset Coverage
 
 | Dimension | Count | Details |
 |-----------|------:|---------|
+| **Total Images** | 1,248 | Across 9 source institutions |
 | **Catalog Items** | 74 | Spanning 6th-19th century |
 | **Calligraphers** | ~40 | Named artists + anonymous works |
 | **Script Styles** | 12 | kaishu, caoshu, xingshu, zhuanshu, lishu, zhangcao, kuangcao, xingcao, xiaokai, xingkai, haeseo, choseo |
 | **Dynasties** | 8+ | Sui, Tang, Song, Yuan, Ming, Qing, Joseon, Edo |
-| **Writing Traditions** | 3 | Chinese (54), Korean (9), Japanese (11) |
-| **Institutions** | 20+ | Museums, libraries, archives worldwide |
+| **Writing Traditions** | 3 | Chinese, Korean, Japanese |
+| **Source Institutions** | 9 | NDL, LOC WDL, Waseda, NPM Taipei, Kyoto U, Wikimedia, Met, NMK, Smithsonian |
 
 ##### 4.2 Script Style Distribution
 
@@ -162,11 +167,13 @@
 |--------|---------|---------------|-------------|
 | **Wikimedia Commons** | Public Domain / CC BY | Yes | CC BY items require attribution |
 | **Met Museum** | CC0 | Yes | No attribution required |
-| **NPM Taipei** | CC0 / CC BY 4.0 | Yes | CC BY items require attribution |
-| **Kyoto University** | CC BY | Yes | Attribution required |
+| **NPM Taipei** | CC BY 4.0 | Yes | Attribution required |
+| **Kyoto University** | Open Access | Yes | Attribution required |
 | **NDL Japan** | NDL Open | Yes | Attribution to NDL |
-| **Korean institutions** | KOGL Type 1 | Yes | Attribution required |
-| **Internet Archive** | Public Domain | Yes | No attribution required |
+| **LOC (World Digital Library)** | Public Domain | Yes | No attribution required |
+| **Waseda University** | Open Access | Yes | Attribution required |
+| **National Museum of Korea** | KOGL Type 1 | Yes | Attribution required |
+| **Smithsonian (Freer Gallery)** | Public Domain | Yes | No attribution required |
 
 **Per-image license tracking**: Each image's license is recorded in the registry JSONL (`license` field).
 
@@ -174,12 +181,14 @@
 
 - **Historical bias**: All images are pre-modern (6th-19th century) — no contemporary calligraphy
 - **No born-digital content**: 100% historical scans/photographs
-- **Handscroll aspect ratios**: Some source images have extreme aspect ratios (e.g., 13000×700 px)
+- **Handscroll aspect ratios**: Some source images have extreme aspect ratios (e.g., 60826×2160 px handscroll panoramics)
 - **Variable scan quality**: Museum high-resolution scans mixed with web-quality photographs
 - **Incomplete works**: Some images depict only portions of the full 1,000-character text
 - **Script style subjectivity**: Calligraphic style classification (e.g., distinguishing xingshu from xingcao) involves expert judgment
-- **Korean/Japanese minority**: ~73% Chinese, ~15% Japanese, ~12% Korean tradition items
+- **Korean underrepresentation**: Only 3 images from Korean sources (NMK); Korean tradition better represented via Wikimedia
 - **Duplicate characters**: The canonical text contains 998 unique characters (2 historical duplicates in standard transmitted recension)
+- **GIF format**: 1 Wikimedia image (`An_Authentic_Thousand_Character_Classic.gif`) uses GIF format
+- **Quarantined junk**: 9 Korean NMK website scraping artifacts (logos, icons, badges at 8-208px) and 2 cross-source Met/Wikimedia duplicates moved to `_quarantined/` (2026-03-13)
 
 #### 10. Processing Status
 
@@ -187,11 +196,13 @@
 |-------|--------|-------|
 | **Catalog** | ✅ Complete | 74 items in `config/thousand_character_classic_catalog.yaml` |
 | **Ground Truth Text** | ✅ Complete | 1,000 chars + 250-line translation in `config/thousand_character_classic_text.yaml` |
-| **Harvest Script** | ✅ Complete | `scripts/harvest_thousand_character_classic.py` (6 sub-commands) |
+| **Harvest Script** | ✅ Complete | `scripts/harvest_thousand_character_classic.py` (6 sub-commands, min dimension filter) |
 | **Enrichment Script** | ✅ Complete | `scripts/enrich_thousand_character_classic.py` (L2 + sidecar) |
-| **Image Download** | ✅ Complete | 391 images from 3 sources (NDL 242, Wikimedia 130, Met 19) |
-| **L2 Enrichment** | ✅ Complete | 391/391 records, 100% field coverage |
-| **Validation** | ✅ Complete | 391/391 pass schema validation (0 errors) |
+| **Image Download** | ✅ Complete | 1,248 images from 9 institutions (NDL 249, LOC 245, Waseda 239, NPM 202, Kyoto 146, Wiki 140, Met 23, NMK 3, Smithsonian 1) |
+| **Data Curation** | ✅ Complete | Quarantined 11 unsuitable files (9 web junk + 2 cross-source dupes); removed 356 ghost registry entries; fixed LOC path prefix; deduped 242 duplicate entries |
+| **L2 Enrichment** | ✅ Complete | 1,449 records with L2 metadata |
+| **Registry Sync** | ✅ Complete | 1,248/1,248 registry entries match files on disk (0 orphans) |
+| **Validation** | ✅ Complete | All entries pass schema validation |
 
 #### 11. References
 

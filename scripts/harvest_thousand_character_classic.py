@@ -99,6 +99,12 @@ _KYOTO_ITEMS = ["rb00011078", "rb00009713", "rb00012112"]
 
 logger = logging.getLogger(__name__)
 
+# Minimum image dimension filter — reject images smaller than this in either
+# dimension.  Website UI scraping artifacts (logos, icons, badges) are typically
+# well below this threshold.  Legitimate small calligraphy images (e.g. 198x400
+# Han_Ho-Cheonjamun.jpg) are above it.
+MIN_IMAGE_DIMENSION = 150  # pixels
+
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -211,6 +217,18 @@ def _download_image(
             click.echo(f"  [SKIP] Duplicate SHA256: {output_path.name}")
             output_path.unlink()
             return False
+
+        # Reject images below minimum dimension (website UI artifacts, icons)
+        from PIL import Image
+
+        with Image.open(output_path) as img:
+            if min(img.width, img.height) < MIN_IMAGE_DIMENSION:
+                click.echo(
+                    f"  [SKIP] Below min dimension ({img.width}x{img.height} "
+                    f"< {MIN_IMAGE_DIMENSION}px): {output_path.name}"
+                )
+                output_path.unlink()
+                return False
 
         entry = _build_entry(
             output_path,
