@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import base64
 import time
-from datetime import UTC
+from datetime import timezone
 from pathlib import Path
 
 import modal
@@ -42,7 +42,9 @@ app = modal.App("siglip2-diqa5000-extraction")
 # Persistent volumes
 # Checkpoint is on siglip2-iqa-results at siglip2/siglip2_iqa_best.pt
 # (dociq-checkpoints volume exists but is empty)
-checkpoint_volume = modal.Volume.from_name("siglip2-iqa-results", create_if_missing=True)
+checkpoint_volume = modal.Volume.from_name(
+    "siglip2-iqa-results", create_if_missing=True
+)
 output_volume = modal.Volume.from_name(
     "siglip2-diqa5000-outputs", create_if_missing=True
 )
@@ -263,9 +265,9 @@ def extract_all_splits(
     embeddings_dir.mkdir(parents=True, exist_ok=True)
 
     for split in target_splits:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Processing {split} split")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Load ground truth
         csv_path = data_dir / split / f"{split}.csv"
@@ -360,7 +362,9 @@ def extract_all_splits(
             if (idx + 1) % 100 == 0:
                 print(f"  [{idx + 1}/{n_images}] Processed {img_name}")
 
-        print(f"Completed {split}: {len(records)} records, {len(embeddings)} embeddings")
+        print(
+            f"Completed {split}: {len(records)} records, {len(embeddings)} embeddings"
+        )
 
         # Save JSONL
         jsonl_path = output_dir / f"siglip2_diqa5000_{split}.jsonl"
@@ -491,9 +495,7 @@ def fit_ood_detector() -> dict:
     fit_emb = np.concatenate([train_emb, val_emb])
     print(f"Fitting OOD detector on {fit_emb.shape[0]} embeddings...")
 
-    detector = EmbeddingOODDetector.from_embeddings(
-        fit_emb, threshold_percentile=95.0
-    )
+    detector = EmbeddingOODDetector.from_embeddings(fit_emb, threshold_percentile=95.0)
 
     # Calibrate on train+val (for self-consistency check)
     fit_results = detector.score_batch(fit_emb)
@@ -518,10 +520,14 @@ def fit_ood_detector() -> dict:
 
     print("\nOOD Detector Statistics:")
     print(f"  Fit on: {ood_stats['fit_n']} samples")
-    print(f"  Train+Val: median={ood_stats['train_val_median_distance']:.2f}, "
-          f"p95={ood_stats['train_val_p95']:.2f}, p99={ood_stats['train_val_p99']:.2f}")
-    print(f"  Test: median={ood_stats['test_median_distance']:.2f}, "
-          f"p95={ood_stats['test_p95']:.2f}, p99={ood_stats['test_p99']:.2f}")
+    print(
+        f"  Train+Val: median={ood_stats['train_val_median_distance']:.2f}, "
+        f"p95={ood_stats['train_val_p95']:.2f}, p99={ood_stats['train_val_p99']:.2f}"
+    )
+    print(
+        f"  Test: median={ood_stats['test_median_distance']:.2f}, "
+        f"p95={ood_stats['test_p95']:.2f}, p99={ood_stats['test_p99']:.2f}"
+    )
     print(f"  Test OOD flagged: {ood_stats['test_n_ood']}/{len(test_results)}")
 
     # Save OOD detector
@@ -533,7 +539,7 @@ def fit_ood_detector() -> dict:
     summary: dict = {
         "checkpoint": CHECKPOINT_SUBPATH,
         "model_id": "google/siglip2-base-patch16-naflex",
-        "timestamp": datetime.now(tz=UTC).isoformat(),
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         "ood_detector": ood_stats,
     }
 
@@ -604,4 +610,6 @@ def main(
     print("EXTRACTION COMPLETE")
     print("=" * 70)
     print("\nDownload outputs with:")
-    print("  uv run modal volume get siglip2-diqa5000-outputs / ./siglip2_diqa5000_outputs/")
+    print(
+        "  uv run modal volume get siglip2-diqa5000-outputs / ./siglip2_diqa5000_outputs/"
+    )

@@ -120,11 +120,15 @@ def _fetch_json_with_retry(
             )
             if resp.status_code == 429 or resp.status_code >= 500:
                 if attempt < max_retries:
-                    click.echo(f"    [RETRY] {resp.status_code}, waiting {delay:.0f}s...")
+                    click.echo(
+                        f"    [RETRY] {resp.status_code}, waiting {delay:.0f}s..."
+                    )
                     time.sleep(delay)
                     delay *= 2
                     continue
-                click.echo(f"    [ERROR] {resp.status_code} after {max_retries} retries")
+                click.echo(
+                    f"    [ERROR] {resp.status_code} after {max_retries} retries"
+                )
                 return None
             resp.raise_for_status()
             return resp.json()
@@ -628,9 +632,7 @@ def harvest_wikimedia(
 
             while True:
                 try:
-                    resp = session.get(
-                        _WIKIMEDIA_API, params=params, timeout=30
-                    )
+                    resp = session.get(_WIKIMEDIA_API, params=params, timeout=30)
                     resp.raise_for_status()
                     data = resp.json()
                 except requests.RequestException as exc:
@@ -769,9 +771,7 @@ def harvest_wikimedia(
     help="Max canvases to download per manifest.",
 )
 @click.pass_context
-def harvest_gallica(
-    ctx: click.Context, dry_run: bool, max_pages: int
-) -> None:
+def harvest_gallica(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
     """Harvest from BnF/Gallica IIIF manifests (~10-20 images, PD pre-1850).
 
     Downloads high-resolution page images from Gallica IIIF endpoints.
@@ -791,7 +791,9 @@ def harvest_gallica(
     ]
 
     if not gallica_items:
-        click.echo("No Gallica items in catalog (Phase 1). Add items with iiif_manifest_url.")
+        click.echo(
+            "No Gallica items in catalog (Phase 1). Add items with iiif_manifest_url."
+        )
         return
 
     total_downloaded = 0
@@ -1117,8 +1119,7 @@ def verify_licenses(ctx: click.Context) -> None:
     click.echo("VERIFIED (safe to harvest):")
     for name, info in verified:
         click.echo(
-            f"  {name}: {info.get('license', '?')} "
-            f"| Scripts: {info.get('scripts', [])}"
+            f"  {name}: {info.get('license', '?')} | Scripts: {info.get('scripts', [])}"
         )
 
     click.echo(f"\nNEEDS VERIFICATION ({len(unverified)} institutions):")

@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,15 +39,11 @@ _CATALOG_PATH = _PROJECT_ROOT / "config" / "john11_manuscript_catalog.yaml"
 _REGISTRY_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "john11_manuscripts_registry.jsonl"
 )
-_L2_OUTPUT_DIR = (
-    _PROJECT_ROOT / "metadata_registry" / "json" / "john11-manuscripts"
-)
+_L2_OUTPUT_DIR = _PROJECT_ROOT / "metadata_registry" / "json" / "john11-manuscripts"
 _SIDECAR_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "john11_manuscripts_extended.jsonl"
 )
-_DEFAULT_IMAGE_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/manuscripts/john11"
-)
+_DEFAULT_IMAGE_DIR = Path("/mnt/e/image_detection/01_base_data/manuscripts/john11")
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +123,7 @@ def _load_registry() -> list[dict[str, Any]]:
 
 
 def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _get_image_props(image_path: Path) -> dict[str, Any]:

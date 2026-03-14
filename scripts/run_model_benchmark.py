@@ -44,7 +44,7 @@ import json
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -1332,7 +1332,7 @@ def run_benchmark(config: BenchmarkConfig) -> BenchmarkResults:
         model_name=config.model_name,
         model_type=config.model_type,
         source=config.source,
-        timestamp=datetime.now(UTC).isoformat(),
+        timestamp=datetime.now(timezone.utc).isoformat(),
         device=config.device,
     )
 

@@ -186,10 +186,13 @@ def _wikimedia_group_key(script: str, filename: str) -> str:
     # treat each such image as its own singleton group keyed by the full basename.
     if not safe:
         # Use the raw filename (unicode) as a unique discriminator
-        safe = re.sub(r"[^a-z0-9]+", "_", base.encode("ascii", "ignore").decode().lower()).strip("_")
+        safe = re.sub(
+            r"[^a-z0-9]+", "_", base.encode("ascii", "ignore").decode().lower()
+        ).strip("_")
     if not safe:
         # Last resort: hash the filename
         import hashlib
+
         safe = hashlib.md5(filename.encode(), usedforsecurity=False).hexdigest()[:8]
     return f"wikimedia_{script_lower}_{safe}"
 
@@ -395,7 +398,9 @@ def _print_summary(groups: dict[str, dict[str, object]]) -> None:
     total_images = sum(int(g["image_count"]) for g in groups.values())
     total_groups = len(groups)
 
-    print(f"\nManuscript groups summary — {total_images} images in {total_groups} groups")
+    print(
+        f"\nManuscript groups summary — {total_images} images in {total_groups} groups"
+    )
     print("=" * 70)
 
     for script in sorted(by_script):
@@ -408,9 +413,7 @@ def _print_summary(groups: dict[str, dict[str, object]]) -> None:
             print(f"    {label}  {count:3d} imgs  [{key}]")
 
     print("\n" + "=" * 70)
-    singleton_count = sum(
-        1 for g in groups.values() if int(g["image_count"]) == 1
-    )
+    singleton_count = sum(1 for g in groups.values() if int(g["image_count"]) == 1)
     print(f"  Singletons (1 image): {singleton_count}")
     print(f"  Multi-image groups:   {total_groups - singleton_count}")
     print(f"  Output: {OUTPUT_PATH}")

@@ -144,7 +144,7 @@ class TestParquetOutputE2E:
         tmp_path: Path,
     ) -> None:
         """Test ParquetWriter produces valid parquet schema."""
-        from datetime import UTC, datetime
+        from datetime import datetime, timezone
 
         from image_preprocessing_detector.annotation.schemas.immutable import (
             OriginalFileMetadata,
@@ -163,7 +163,7 @@ class TestParquetOutputE2E:
             dataset_version="1.0",
             original_path="train/image_001.png",
             original_filename="image_001.png",
-            download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+            download_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             original_labels=OriginalLabels(
                 raw_labels={
                     "category": "document",

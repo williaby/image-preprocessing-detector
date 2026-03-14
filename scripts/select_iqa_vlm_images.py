@@ -33,7 +33,7 @@ import json
 import logging
 import sys
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -326,7 +326,7 @@ def main() -> int:
     all_selected = diqa_selected + ohrbench_selected
 
     manifest = {
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "config": {
             "target_count": args.target_count,
             "diqa_ratio": args.diqa_ratio,

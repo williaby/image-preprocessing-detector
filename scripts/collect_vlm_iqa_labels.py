@@ -48,7 +48,7 @@ import glob
 import json
 import logging
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -401,7 +401,7 @@ def integrate_labels(
         # Create new version
         new_version = {
             "version": current_version + 1,
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "created_by": f"collect_vlm_iqa_labels.py_v{SCRIPT_VERSION}",
             "method": "tier_1_annotation",
             "description": "VLM 6-dim IQA quality assessment (Opus 4.6 in-session)",
@@ -448,7 +448,7 @@ def merge_label_batches(
     merged = list(by_id.values())
 
     output = {
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "source_files": [str(p) for p in label_paths],
         "total_labels": len(merged),
         "deduplicated_from": len(all_labels),

@@ -31,7 +31,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1178,7 +1178,7 @@ def run_prescreening(
     result: dict[str, Any] = {
         "dataset": dataset_name,
         "metadata_path": str(metadata_path),
-        "audited_at": datetime.now(UTC).isoformat(),
+        "audited_at": datetime.now(timezone.utc).isoformat(),
         "total_samples": total_samples,
         "passed_all": passed_all_count,
         "failed_any": total_samples - passed_all_count,
@@ -1452,7 +1452,7 @@ def _run_all_datasets(args: argparse.Namespace) -> int:
         )
         summary_path.parent.mkdir(parents=True, exist_ok=True)
         summary = {
-            "audited_at": datetime.now(UTC).isoformat(),
+            "audited_at": datetime.now(timezone.utc).isoformat(),
             "datasets_scanned": len(metadata_files),
             "results": cross_dataset_results,
         }

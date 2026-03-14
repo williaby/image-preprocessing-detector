@@ -34,7 +34,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -568,7 +568,7 @@ def migrate_dataset(
     # Update dataset metadata
     dataset_metadata["samples"] = migrated_samples
     dataset_metadata["migration"] = {
-        "migrated_at": datetime.now(UTC).isoformat(),
+        "migrated_at": datetime.now(timezone.utc).isoformat(),
         "migration_script": f"migrate_layer2_schema_to_full.py_v{SCRIPT_VERSION}",
         "format_version": MIGRATION_FORMAT_VERSION,
         "samples_processed": len(migrated_samples),
@@ -679,7 +679,7 @@ def _build_migration_report(
     dry_run: bool,
 ) -> dict[str, Any]:
     """Aggregate per-dataset results into a migration report."""
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     return {
         "migration_date": now.strftime("%Y-%m-%d"),
         "migration_timestamp": now.isoformat(),
@@ -789,7 +789,7 @@ def main() -> int:
 
     report = _build_migration_report(results, args.dry_run)
 
-    report_date = datetime.now(UTC).strftime("%Y%m%d")
+    report_date = datetime.now(timezone.utc).strftime("%Y%m%d")
     report_file = Path("metadata_registry") / f"migration_report_{report_date}.json"
     report_file.parent.mkdir(parents=True, exist_ok=True)
 

@@ -45,14 +45,37 @@ OUTPUT_PATH = Path("results/diqa_ocr_correlation_report.json")
 
 # Text-class layout labels (egret-xlarge uses lowercase with underscores)
 # Matching both canonical (UPPER) and raw (lowercase) forms
-TEXT_CLASSES = frozenset({
-    "text", "title", "section_header", "caption", "footnote",
-    "list_item", "formula", "page_header", "page_footer",
-    "Text", "Title", "Section-Header", "Caption", "Footnote",
-    "List-Item", "Formula", "Page-Header", "Page-Footer",
-    "TEXT", "TITLE", "SECTION_HEADER", "CAPTION", "FOOTNOTE",
-    "LIST_ITEM", "FORMULA", "PAGE_HEADER", "PAGE_FOOTER",
-})
+TEXT_CLASSES = frozenset(
+    {
+        "text",
+        "title",
+        "section_header",
+        "caption",
+        "footnote",
+        "list_item",
+        "formula",
+        "page_header",
+        "page_footer",
+        "Text",
+        "Title",
+        "Section-Header",
+        "Caption",
+        "Footnote",
+        "List-Item",
+        "Formula",
+        "Page-Header",
+        "Page-Footer",
+        "TEXT",
+        "TITLE",
+        "SECTION_HEADER",
+        "CAPTION",
+        "FOOTNOTE",
+        "LIST_ITEM",
+        "FORMULA",
+        "PAGE_HEADER",
+        "PAGE_FOOTER",
+    }
+)
 
 
 @dataclass
@@ -118,7 +141,8 @@ def load_l2_metadata() -> list[dict]:
         # Layout text regions
         layout_dets = d.get("layout_detections", [])
         text_regions = [
-            det for det in layout_dets
+            det
+            for det in layout_dets
             if det.get("class_name", "") in TEXT_CLASSES
             or det.get("canonical_class", "") in TEXT_CLASSES
         ]
@@ -137,25 +161,27 @@ def load_l2_metadata() -> list[dict]:
         # Extract text stats
         text_stats = d.get("text_statistics", {})
 
-        records.append({
-            "image": source["original_filename"],
-            "path": path,
-            "split": source.get("split", d.get("split", "")),
-            "is_ori": "/ori/" in path,
-            "is_res": "/res/" in path,
-            "width": width,
-            "height": height,
-            "mos_overall": d.get("quality_overall_mos"),
-            "mos_sharpness": d.get("quality_sharpness_mos"),
-            "mos_color": d.get("quality_color_fidelity_mos"),
-            "text_region_count": text_region_count,
-            "text_area_px": text_area_px,
-            "text_area_ratio": text_area_ratio,
-            "char_count": text_stats.get("char_count", 0),
-            "classical_iqa_blur_score": d.get("classical_iqa_blur_score"),
-            "classical_iqa_noise_level": d.get("classical_iqa_noise_level"),
-            "classical_iqa_contrast_score": d.get("classical_iqa_contrast_score"),
-        })
+        records.append(
+            {
+                "image": source["original_filename"],
+                "path": path,
+                "split": source.get("split", d.get("split", "")),
+                "is_ori": "/ori/" in path,
+                "is_res": "/res/" in path,
+                "width": width,
+                "height": height,
+                "mos_overall": d.get("quality_overall_mos"),
+                "mos_sharpness": d.get("quality_sharpness_mos"),
+                "mos_color": d.get("quality_color_fidelity_mos"),
+                "text_region_count": text_region_count,
+                "text_area_px": text_area_px,
+                "text_area_ratio": text_area_ratio,
+                "char_count": text_stats.get("char_count", 0),
+                "classical_iqa_blur_score": d.get("classical_iqa_blur_score"),
+                "classical_iqa_noise_level": d.get("classical_iqa_noise_level"),
+                "classical_iqa_contrast_score": d.get("classical_iqa_contrast_score"),
+            }
+        )
 
     return records
 
@@ -268,8 +294,12 @@ def compute_all_metrics(
 # -----------------------------------------------------------------------
 
 PROXY_NAMES = [
-    "text_yield", "word_density", "ocr_completeness",
-    "cjk_latin_consistency", "line_regularity", "valid_char_rate",
+    "text_yield",
+    "word_density",
+    "ocr_completeness",
+    "cjk_latin_consistency",
+    "line_regularity",
+    "valid_char_rate",
     "layout_text_agreement",
 ]
 MOS_DIMS = ["mos_overall", "mos_sharpness", "mos_color"]
@@ -279,8 +309,7 @@ def run_correlations(records: list[dict]) -> list[CorrelationResult]:
     """Spearman + Pearson correlations for each proxy vs each MOS dimension."""
     # Filter to res/ images with MOS scores
     res_records = [
-        r for r in records
-        if r["is_res"] and r.get("mos_overall") is not None
+        r for r in records if r["is_res"] and r.get("mos_overall") is not None
     ]
     print(f"\nCorrelation analysis on {len(res_records)} res/ images with MOS...")
 
@@ -307,14 +336,16 @@ def run_correlations(records: list[dict]) -> list[CorrelationResult]:
             if np.isnan(sp_r) or np.isnan(pe_r):
                 continue
 
-            results.append(CorrelationResult(
-                proxy_name=proxy,
-                mos_dimension=mos_dim.replace("mos_", ""),
-                spearman_r=float(sp_r),
-                spearman_p=float(sp_p),
-                pearson_r=float(pe_r),
-                pearson_p=float(pe_p),
-            ))
+            results.append(
+                CorrelationResult(
+                    proxy_name=proxy,
+                    mos_dimension=mos_dim.replace("mos_", ""),
+                    spearman_r=float(sp_r),
+                    spearman_p=float(sp_p),
+                    pearson_r=float(pe_r),
+                    pearson_p=float(pe_p),
+                )
+            )
 
     # Benjamini-Hochberg FDR correction
     p_values = [r.spearman_p for r in results]
@@ -352,20 +383,26 @@ def run_ori_res_comparison(records: list[dict]) -> list[EffectSizeResult]:
 
         # Cohen's d
         pooled_std = np.sqrt(
-            (np.var(ori_vals) * (len(ori_vals) - 1)
-             + np.var(res_vals) * (len(res_vals) - 1))
+            (
+                np.var(ori_vals) * (len(ori_vals) - 1)
+                + np.var(res_vals) * (len(res_vals) - 1)
+            )
             / (len(ori_vals) + len(res_vals) - 2)
         )
-        d = (float(np.mean(res_vals)) - float(np.mean(ori_vals))) / max(pooled_std, 1e-10)
+        d = (float(np.mean(res_vals)) - float(np.mean(ori_vals))) / max(
+            pooled_std, 1e-10
+        )
 
-        results.append(EffectSizeResult(
-            proxy_name=proxy,
-            cohens_d=float(d),
-            ori_mean=float(np.mean(ori_vals)),
-            res_mean=float(np.mean(res_vals)),
-            ori_n=len(ori_vals),
-            res_n=len(res_vals),
-        ))
+        results.append(
+            EffectSizeResult(
+                proxy_name=proxy,
+                cohens_d=float(d),
+                ori_mean=float(np.mean(ori_vals)),
+                res_mean=float(np.mean(res_vals)),
+                ori_n=len(ori_vals),
+                res_n=len(res_vals),
+            )
+        )
 
     return results
 
@@ -373,16 +410,13 @@ def run_ori_res_comparison(records: list[dict]) -> list[EffectSizeResult]:
 def run_quartile_analysis(records: list[dict]) -> list[GroupComparisonResult]:
     """Kruskal-Wallis H-test across MOS quartiles for each proxy."""
     res_records = [
-        r for r in records
-        if r["is_res"] and r.get("mos_overall") is not None
+        r for r in records if r["is_res"] and r.get("mos_overall") is not None
     ]
 
     results = []
     for proxy in PROXY_NAMES:
         for mos_dim in MOS_DIMS:
-            mos_vals = np.array(
-                [r[mos_dim] for r in res_records], dtype=np.float64
-            )
+            mos_vals = np.array([r[mos_dim] for r in res_records], dtype=np.float64)
             proxy_vals = np.array(
                 [r["metrics"][proxy] for r in res_records], dtype=np.float64
             )
@@ -404,7 +438,9 @@ def run_quartile_analysis(records: list[dict]) -> list[GroupComparisonResult]:
                 elif i == 3:
                     group_mask = mos_vals > quartiles[2]
                 else:
-                    group_mask = (mos_vals > quartiles[i - 1]) & (mos_vals <= quartiles[i])
+                    group_mask = (mos_vals > quartiles[i - 1]) & (
+                        mos_vals <= quartiles[i]
+                    )
 
                 group = proxy_vals[group_mask]
                 if len(group) > 0:
@@ -426,13 +462,15 @@ def run_quartile_analysis(records: list[dict]) -> list[GroupComparisonResult]:
             if np.isnan(h_stat):
                 continue
 
-            results.append(GroupComparisonResult(
-                proxy_name=proxy,
-                mos_dimension=mos_dim.replace("mos_", ""),
-                h_statistic=float(h_stat),
-                p_value=float(p_val),
-                quartile_medians=q_medians,
-            ))
+            results.append(
+                GroupComparisonResult(
+                    proxy_name=proxy,
+                    mos_dimension=mos_dim.replace("mos_", ""),
+                    h_statistic=float(h_stat),
+                    p_value=float(p_val),
+                    quartile_medians=q_medians,
+                )
+            )
 
     return results
 
@@ -440,7 +478,8 @@ def run_quartile_analysis(records: list[dict]) -> list[GroupComparisonResult]:
 def run_siglip2_analysis(records: list[dict]) -> dict:
     """Analyze SigLIP2-OCR agreement metric if available."""
     res_with_siglip = [
-        r for r in records
+        r
+        for r in records
         if r["is_res"]
         and r.get("mos_overall") is not None
         and r["metrics"].get("siglip2_ocr_agreement") is not None
@@ -453,9 +492,7 @@ def run_siglip2_analysis(records: list[dict]) -> dict:
         [r["metrics"]["siglip2_ocr_agreement"] for r in res_with_siglip],
         dtype=np.float64,
     )
-    mos_vals = np.array(
-        [r["mos_overall"] for r in res_with_siglip], dtype=np.float64
-    )
+    mos_vals = np.array([r["mos_overall"] for r in res_with_siglip], dtype=np.float64)
 
     sp_r, sp_p = stats.spearmanr(agreement_vals, mos_vals)
 
@@ -487,14 +524,19 @@ def print_summary(
 
     # Correlation table
     print("\n--- Spearman Correlations (proxy vs MOS) ---")
-    print(f"{'Proxy':<25} {'MOS Dim':<12} {'r':>7} {'p':>10} {'FDR sig':>8} {'Strength':>12}")
+    print(
+        f"{'Proxy':<25} {'MOS Dim':<12} {'r':>7} {'p':>10} {'FDR sig':>8} {'Strength':>12}"
+    )
     print("-" * 80)
 
     for c in sorted(correlations, key=lambda x: abs(x.spearman_r), reverse=True):
         strength = (
-            "STRONG" if abs(c.spearman_r) > 0.7
-            else "moderate" if abs(c.spearman_r) > 0.5
-            else "weak" if abs(c.spearman_r) > 0.3
+            "STRONG"
+            if abs(c.spearman_r) > 0.7
+            else "moderate"
+            if abs(c.spearman_r) > 0.5
+            else "weak"
+            if abs(c.spearman_r) > 0.3
             else "negligible"
         )
         sig = "YES" if c.significant_after_fdr else "no"
@@ -511,9 +553,12 @@ def print_summary(
 
     for e in sorted(effect_sizes, key=lambda x: abs(x.cohens_d), reverse=True):
         effect = (
-            "large" if abs(e.cohens_d) > 0.8
-            else "medium" if abs(e.cohens_d) > 0.5
-            else "small" if abs(e.cohens_d) > 0.2
+            "large"
+            if abs(e.cohens_d) > 0.8
+            else "medium"
+            if abs(e.cohens_d) > 0.5
+            else "small"
+            if abs(e.cohens_d) > 0.2
             else "negligible"
         )
         print(
@@ -538,7 +583,9 @@ def print_summary(
     if siglip2_analysis.get("available"):
         print(f"  N samples: {siglip2_analysis['n_samples']}")
         print(f"  Agreement mean: {siglip2_analysis['agreement_mean']:.4f}")
-        print(f"  Spearman r vs MOS overall: {siglip2_analysis['spearman_r_vs_mos_overall']:.4f}")
+        print(
+            f"  Spearman r vs MOS overall: {siglip2_analysis['spearman_r_vs_mos_overall']:.4f}"
+        )
         print(f"  p-value: {siglip2_analysis['spearman_p']:.2e}")
     else:
         print(f"  {siglip2_analysis.get('reason', 'N/A')}")
@@ -618,15 +665,18 @@ def main() -> None:
 
     # Count for report
     res_with_mos = sum(
-        1 for r in enriched
-        if r["is_res"] and r.get("mos_overall") is not None
+        1 for r in enriched if r["is_res"] and r.get("mos_overall") is not None
     )
 
     # Output
     print_summary(correlations, effect_sizes, quartile_results, siglip2_analysis)
     save_report(
-        correlations, effect_sizes, quartile_results,
-        siglip2_analysis, len(enriched), res_with_mos,
+        correlations,
+        effect_sizes,
+        quartile_results,
+        siglip2_analysis,
+        len(enriched),
+        res_with_mos,
     )
 
 

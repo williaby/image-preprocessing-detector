@@ -29,7 +29,7 @@ import logging
 import statistics
 import sys
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -287,7 +287,7 @@ def build_portfolio_analytics(*, results_dir: Path | None = None) -> PortfolioAn
     gaps = identify_systemic_gaps(field_stats)
 
     return PortfolioAnalytics(
-        generated_at=datetime.now(UTC).isoformat(),
+        generated_at=datetime.now(timezone.utc).isoformat(),
         total_datasets=len(datasets),
         datasets=datasets,
         field_stats=field_stats,

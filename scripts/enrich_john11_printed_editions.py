@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -45,9 +45,7 @@ _L2_OUTPUT_DIR = (
 _SIDECAR_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "john11_printed_editions_extended.jsonl"
 )
-_DEFAULT_IMAGE_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/printed_editions/john11"
-)
+_DEFAULT_IMAGE_DIR = Path("/mnt/e/image_detection/01_base_data/printed_editions/john11")
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +153,8 @@ def _load_registry() -> list[dict[str, Any]]:
 
 
 def _now_iso() -> str:
-    """Return current UTC time in ISO format."""
-    return datetime.now(UTC).isoformat()
+    """Return current timezone.utc time in ISO format."""
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _get_image_props(image_path: Path) -> dict[str, Any]:

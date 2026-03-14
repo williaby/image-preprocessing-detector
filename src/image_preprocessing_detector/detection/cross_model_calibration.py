@@ -257,7 +257,7 @@ class CrossModelCalibrator:
                 for cat, d in dists.items()
             }
 
-        with open(str(path), "w") as f:
+        with open(str(path), "w") as f:  # nosemgrep: cli-path-traversal-open
             json.dump(data, f, indent=2)
         logger.info("calibration_saved", path=str(path))
 
@@ -271,7 +271,7 @@ class CrossModelCalibrator:
         Returns:
             Loaded CrossModelCalibrator instance.
         """
-        with open(str(path)) as f:
+        with open(str(path)) as f:  # nosemgrep: cli-path-traversal-open
             data = json.load(f)
 
         cal = cls()

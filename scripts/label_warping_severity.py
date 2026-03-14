@@ -61,7 +61,7 @@ import logging
 import random
 import shutil
 import tempfile
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -333,7 +333,7 @@ def _get_latest_data(sample: dict[str, Any]) -> dict[str, Any]:
 
     stub: dict[str, Any] = {
         "version": len(versions) + 1,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": "label_warping_severity.py",
         "method": "ssim_paired",
         "data": {},

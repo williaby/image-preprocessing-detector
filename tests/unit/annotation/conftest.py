@@ -10,7 +10,7 @@ This module provides:
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
@@ -403,7 +403,7 @@ def sample_metadata(
         dataset_version="1.0",
         original_path="train/image_001.png",
         original_filename="image_001.png",
-        download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+        download_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         original_labels=sample_original_labels,
         original_file=sample_original_file_metadata,
     )

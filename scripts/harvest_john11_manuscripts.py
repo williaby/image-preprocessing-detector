@@ -52,11 +52,11 @@ _LICENSE_PATH = _PROJECT_ROOT / "config" / "john11_source_licenses.yaml"
 _REGISTRY_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "john11_manuscripts_registry.jsonl"
 )
-_DEFAULT_OUTPUT_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/manuscripts/john11"
-)
+_DEFAULT_OUTPUT_DIR = Path("/mnt/e/image_detection/01_base_data/manuscripts/john11")
 # Local fallback when E: drive is unavailable
-_LOCAL_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "john11-manuscripts"
+_LOCAL_OUTPUT_DIR = (
+    Path(__file__).resolve().parent.parent / "data" / "john11-manuscripts"
+)
 
 # Minimum image dimension filter — reject images smaller than this in either
 # dimension.  Website UI scraping artifacts (logos, icons, badges) are typically
@@ -517,9 +517,9 @@ def harvest_wikimedia(
             click.echo(f"\n[WARN] No Wikimedia categories for script {script_code}")
             continue
 
-        click.echo(f"\n{'='*60}")
+        click.echo(f"\n{'=' * 60}")
         click.echo(f"Script: {script_code} ({len(categories)} categories)")
-        click.echo(f"{'='*60}")
+        click.echo(f"{'=' * 60}")
 
         subdir = output_dir / "wikimedia" / script_code.lower()
         subdir.mkdir(parents=True, exist_ok=True)
@@ -667,9 +667,7 @@ def harvest_wikimedia(
                     ext = ".tif"
 
                 safe_name = (
-                    title.replace("File:", "")
-                    .replace(" ", "_")
-                    .replace("/", "_")[:200]
+                    title.replace("File:", "").replace(" ", "_").replace("/", "_")[:200]
                 )
                 if not safe_name.lower().endswith(ext):
                     safe_name += ext
@@ -913,9 +911,9 @@ def harvest_walters(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
     errors = 0
 
     for script_code, manuscripts in _WALTERS_MANUSCRIPTS.items():
-        click.echo(f"\n{'='*60}")
+        click.echo(f"\n{'=' * 60}")
         click.echo(f"Script: {script_code} ({len(manuscripts)} manuscripts)")
-        click.echo(f"{'='*60}")
+        click.echo(f"{'=' * 60}")
 
         for ms in manuscripts:
             w_num = ms["w_num"]
@@ -1091,9 +1089,7 @@ def harvest_gallica(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
     help="Max page scans to download per item (0 = all).",
 )
 @click.pass_context
-def harvest_internet_archive(
-    ctx: click.Context, dry_run: bool, max_pages: int
-) -> None:
+def harvest_internet_archive(ctx: click.Context, dry_run: bool, max_pages: int) -> None:
     """Harvest from Internet Archive (~10-20 images, PD).
 
     Searches for Public Domain Latin/Greek Gospel facsimiles.
@@ -1140,9 +1136,9 @@ def harvest_internet_archive(
         image_files = [
             f
             for f in files
-            if f.get("name", "").lower().endswith(
-                (".jp2", ".jpg", ".jpeg", ".png", ".tif")
-            )
+            if f.get("name", "")
+            .lower()
+            .endswith((".jp2", ".jpg", ".jpeg", ".png", ".tif"))
             and f.get("source", "") != "metadata"
         ]
 
@@ -1273,16 +1269,13 @@ def verify_licenses(ctx: click.Context) -> None:
     click.echo("VERIFIED (safe to harvest):")
     for name, info in verified:
         click.echo(
-            f"  {name}: {info.get('license', '?')} "
-            f"| Scripts: {info.get('scripts', [])}"
+            f"  {name}: {info.get('license', '?')} | Scripts: {info.get('scripts', [])}"
         )
 
     click.echo(f"\nNEEDS VERIFICATION ({len(unverified)} institutions):")
     for name, info in unverified:
         priority = info.get("verification_priority", "?")
-        click.echo(
-            f"  [{priority}] {name}: {info.get('verification_method', '?')}"
-        )
+        click.echo(f"  [{priority}] {name}: {info.get('verification_method', '?')}")
 
     click.echo(f"\nBLOCKED ({len(blocked)} institutions):")
     for name, info in blocked:

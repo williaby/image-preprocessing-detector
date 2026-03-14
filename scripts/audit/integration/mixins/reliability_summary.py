@@ -7,7 +7,7 @@ content_flags.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from scripts.audit.integration.constants import (
@@ -95,5 +95,5 @@ class ReliabilitySummaryMixin:
             "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
             "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
             "field_summary": fields,
-            "computed_at": datetime.now(UTC).isoformat(),
+            "computed_at": datetime.now(timezone.utc).isoformat(),
         }

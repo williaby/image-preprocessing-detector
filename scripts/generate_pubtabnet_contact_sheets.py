@@ -36,7 +36,7 @@ import math
 import os
 import random
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -445,7 +445,7 @@ def main() -> int:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now(tz=UTC).isoformat()
+    timestamp = datetime.now(tz=timezone.utc).isoformat()
 
     # Track A samples
     track_a_path = RESULTS_DIR / "phase6_track_a_samples.json"

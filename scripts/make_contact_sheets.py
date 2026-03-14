@@ -106,7 +106,9 @@ def _generate_by_source() -> None:
 
         imgs = sorted(src_dir.glob("*.*"))
         imgs = [
-            p for p in imgs if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".gif"}
+            p
+            for p in imgs
+            if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".gif"}
         ]
 
         if not imgs:
@@ -174,12 +176,16 @@ def _generate_by_label() -> None:
         # Flatten in catalog-number order, keeping images from same source together
         ordered_paths: list[Path] = []
         cat_labels: list[str] = []
-        for cat_num in sorted(by_cat.keys(), key=lambda x: x if x is not None else 9999):
+        for cat_num in sorted(
+            by_cat.keys(), key=lambda x: x if x is not None else 9999
+        ):
             paths_for_cat = by_cat[cat_num]
             calligrapher = paths_for_cat[0][1]
             for img_path, _ in sorted(paths_for_cat, key=lambda x: x[0].name):
                 ordered_paths.append(img_path)
-                cat_labels.append(f"#{cat_num}: {calligrapher}" if cat_num else "unmatched")
+                cat_labels.append(
+                    f"#{cat_num}: {calligrapher}" if cat_num else "unmatched"
+                )
 
         num_sheets = math.ceil(len(ordered_paths) / images_per_sheet)
         for sheet_idx in range(num_sheets):

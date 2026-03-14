@@ -16,7 +16,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -592,7 +592,7 @@ def generate_report(results_dir: Path, output_path: Path) -> None:
         print(f"No benchmark results found in {results_dir}", file=sys.stderr)
         sys.exit(1)
 
-    timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M timezone.utc")
 
     lines: list[str] = [
         "# Stream 3: Go/No-Go Decision Report",

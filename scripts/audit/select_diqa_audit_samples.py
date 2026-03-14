@@ -20,7 +20,7 @@ import json
 import logging
 import random
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -717,7 +717,7 @@ def build_output(
     return {
         "dataset": DATASET_NAME,
         "sample_count": len(selected),
-        "created_at": datetime.now(tz=UTC).isoformat(),
+        "created_at": datetime.now(tz=timezone.utc).isoformat(),
         "random_seed": seed,
         "selection_criteria": {
             "target_count": TARGET_SAMPLE_COUNT,

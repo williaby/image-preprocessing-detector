@@ -45,7 +45,7 @@ import sys
 import time
 import uuid
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -398,7 +398,7 @@ def run_integration(
     limit: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Build all sample records with enrichment data."""
-    now_iso = datetime.now(UTC).isoformat()
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     stats: dict[str, Any] = {
         "total": 0,
@@ -511,7 +511,7 @@ def main() -> int:
             "sample_count": len(samples),
             "splits_included": sorted(split_counts.keys()),
             "split_counts": split_counts,
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "schema_version": TARGET_SCHEMA_VERSION,
             "script_version": SCRIPT_VERSION,
             "git_sha": None,

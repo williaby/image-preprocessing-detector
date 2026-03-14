@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -102,7 +102,7 @@ def _load_registry() -> list[dict[str, Any]]:
 
 
 def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _get_image_props(image_path: Path) -> dict[str, Any]:

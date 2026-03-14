@@ -29,7 +29,7 @@ import json
 import logging
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1145,7 +1145,7 @@ def score_dataset(
         return {
             "dataset": dataset_name,
             "status": "no_audit_data",
-            "computed_at": datetime.now(UTC).isoformat(),
+            "computed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     log.info("Scoring dataset: %s", dataset_name)
@@ -1213,7 +1213,7 @@ def score_dataset(
 
     scorecard = {
         "dataset": dataset_name,
-        "computed_at": datetime.now(UTC).isoformat(),
+        "computed_at": datetime.now(timezone.utc).isoformat(),
         "scorecard_config_version": config.get("version", "unknown"),
         "artifacts_found": artifacts_found,
         "dimension_scores": dict(dimension_scores.items()),

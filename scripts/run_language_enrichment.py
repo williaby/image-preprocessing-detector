@@ -22,7 +22,7 @@ import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 logging.basicConfig(
@@ -142,7 +142,7 @@ def update_metadata(
             sample["enrichments"]["versions"].append(
                 {
                     "version": new_ver,
-                    "created_at": datetime.now(UTC).isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "enrichment_type": "language_detection",
                     "data": {
                         "primary_language": enrichment["primary_language"],

@@ -26,7 +26,7 @@ import json
 import math
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Project root for resolving paths
@@ -172,7 +172,9 @@ def _build_scorecard_section(
     # Extract audit date from computed_at
     computed_at = sc.get("computed_at", "")
     audit_date = (
-        computed_at[:10] if computed_at else datetime.now(tz=UTC).strftime("%Y-%m-%d")
+        computed_at[:10]
+        if computed_at
+        else datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
     )
 
     grade = sc.get("grade", "?")

@@ -47,7 +47,7 @@ import logging
 import shutil
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -759,7 +759,7 @@ class FileMigrator:
 
         # Add timestamp if backup already exists (preserve version marker)
         if backup_path.exists():
-            timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
             # Append timestamp while preserving version: .bak_v1.0 -> .bak_v1.0.20250126123456
             backup_path = backup_path.parent / f"{backup_path.name}.{timestamp}"
 

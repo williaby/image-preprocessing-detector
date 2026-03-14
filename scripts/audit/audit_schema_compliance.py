@@ -34,7 +34,7 @@ import logging
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -1090,7 +1090,7 @@ def run_compliance_audit(
         schema_version=schema_version,
         total_samples=len(samples),
         valid_samples=valid_count,
-        audited_at=datetime.now(UTC).isoformat(),
+        audited_at=datetime.now(timezone.utc).isoformat(),
         field_reports=field_reports,
         sample_results=sample_results,
         consistency_defects=consistency_defects,

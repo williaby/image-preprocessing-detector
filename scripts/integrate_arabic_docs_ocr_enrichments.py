@@ -28,7 +28,7 @@ import json
 import logging
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -253,7 +253,7 @@ def run_integration(
         "ocr_matched": 0,
         "has_text_content_count": 0,
     }
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     for sample in md["samples"]:
         stats["total"] += 1
         full = Path(sample["source"]["original_filename"]).name

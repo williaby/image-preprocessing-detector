@@ -377,6 +377,7 @@ ignore = [
     "FBT001", # Boolean positional arg (OK for CLI tools like Click)
     "FBT002", # Boolean default arg (OK for config)
     "TRY003", # Long exception messages (OK for detailed errors)
+    "UP017",  # datetime.UTC requires Python 3.11+
 ]
 
 # Pydocstyle configuration

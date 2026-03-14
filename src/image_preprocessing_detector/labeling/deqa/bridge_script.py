@@ -134,9 +134,9 @@ def _expand2square(
     side = max(width, height)
     result = Image.new(pil_img.mode, (side, side), background_color)
     if width > height:
-        result.paste(pil_img, (0, (width - height) // 2))
+        result.paste(pil_img, (0, (side - height) // 2))
     else:
-        result.paste(pil_img, ((height - width) // 2, 0))
+        result.paste(pil_img, ((side - width) // 2, 0))
     return result
 
 

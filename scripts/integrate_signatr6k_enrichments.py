@@ -40,7 +40,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -292,7 +292,7 @@ def run_integration(
         "has_handwriting_count": 0,
         "has_signature_count": 0,
     }
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     for sample in metadata["samples"]:
         stats["total"] += 1

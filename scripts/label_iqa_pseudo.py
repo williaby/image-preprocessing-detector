@@ -72,7 +72,7 @@ import random
 import shutil
 import statistics
 import tempfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -450,7 +450,7 @@ def _get_latest_data(sample: dict[str, Any]) -> dict[str, Any]:
 
     stub: dict[str, Any] = {
         "version": len(versions) + 1,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": "label_iqa_pseudo.py",
         "method": "musiq_topiq_ensemble",
         "data": {},

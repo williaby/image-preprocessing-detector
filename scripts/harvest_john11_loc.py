@@ -53,9 +53,7 @@ _REGISTRY_PATH = (
 _EXTENDED_REGISTRY_PATH = (
     _PROJECT_ROOT / "metadata_registry" / "john11_manuscripts_extended.jsonl"
 )
-_DEFAULT_OUTPUT_DIR = Path(
-    "/mnt/e/image_detection/01_base_data/manuscripts/john11"
-)
+_DEFAULT_OUTPUT_DIR = Path("/mnt/e/image_detection/01_base_data/manuscripts/john11")
 _LOCAL_OUTPUT_DIR = _PROJECT_ROOT / "data" / "john11-manuscripts"
 _CANDIDATES_DIR = _LOCAL_OUTPUT_DIR / "loc_candidates"
 
@@ -154,7 +152,9 @@ def _sha256_file(path: Path) -> str:
 def _load_catalog() -> list[dict[str, Any]]:
     """Load LOC manuscript catalog."""
     if not _LOC_CATALOG_PATH.exists():
-        log.error("Catalog not found at %s — run `catalog` command first", _LOC_CATALOG_PATH)
+        log.error(
+            "Catalog not found at %s — run `catalog` command first", _LOC_CATALOG_PATH
+        )
         sys.exit(1)
     with open(_LOC_CATALOG_PATH) as f:
         return json.load(f)
@@ -203,11 +203,18 @@ def _fetch_loc_api(url: str) -> dict[str, Any]:
     for attempt in range(_MAX_RETRIES):
         time.sleep(_REQUEST_DELAY)
         resp = requests.get(
-            url, headers={"User-Agent": "john11-harvest/1.0 (research)"}, timeout=30,
+            url,
+            headers={"User-Agent": "john11-harvest/1.0 (research)"},
+            timeout=30,
         )
         if resp.status_code == 429:
             backoff = _RETRY_BACKOFF * (attempt + 1)
-            log.warning("Rate limited (429), backing off %.1fs (attempt %d/%d)", backoff, attempt + 1, _MAX_RETRIES)
+            log.warning(
+                "Rate limited (429), backing off %.1fs (attempt %d/%d)",
+                backoff,
+                attempt + 1,
+                _MAX_RETRIES,
+            )
             time.sleep(backoff)
             continue
         resp.raise_for_status()
@@ -243,13 +250,15 @@ def _get_manuscript_pages(loc_id: str) -> list[dict[str, Any]]:
                 best_pixels = pixels
 
         if best:
-            pages.append({
-                "page_num": i + 1,
-                "page_idx": i,
-                "url": best.get("url", ""),
-                "height": best.get("height", 0),
-                "width": best.get("width", 0),
-            })
+            pages.append(
+                {
+                    "page_num": i + 1,
+                    "page_idx": i,
+                    "url": best.get("url", ""),
+                    "height": best.get("height", 0),
+                    "width": best.get("width", 0),
+                }
+            )
 
     return pages
 
@@ -307,20 +316,22 @@ def catalog() -> None:
                         iiif_id = img_url.split("service:")[1].split("/")[0]
                         break
 
-                all_mss.append({
-                    "collection": collection_key,
-                    "title": title.strip().rstrip("."),
-                    "script_iso15924": script,
-                    "language": lang,
-                    "date": item.get("date", "Unknown"),
-                    "gospel_type": gospel_type,
-                    "john_status": _john_status(title),
-                    "loc_url": item_url,
-                    "loc_id": item.get("id", item_url),
-                    "iiif_service_id": iiif_id,
-                    "license": "PD",
-                    "credit": info["credit"],
-                })
+                all_mss.append(
+                    {
+                        "collection": collection_key,
+                        "title": title.strip().rstrip("."),
+                        "script_iso15924": script,
+                        "language": lang,
+                        "date": item.get("date", "Unknown"),
+                        "gospel_type": gospel_type,
+                        "john_status": _john_status(title),
+                        "loc_url": item_url,
+                        "loc_id": item.get("id", item_url),
+                        "iiif_service_id": iiif_id,
+                        "license": "PD",
+                        "credit": info["credit"],
+                    }
+                )
 
     # Deduplicate by loc_id
     seen: set[str] = set()
@@ -343,7 +354,9 @@ def catalog() -> None:
         if ms["john_status"] == "definite":
             definite += 1
 
-    click.echo(f"\nTotal: {len(unique)} Gospel manuscripts ({definite} definite John 1:1)")
+    click.echo(
+        f"\nTotal: {len(unique)} Gospel manuscripts ({definite} definite John 1:1)"
+    )
     for s in sorted(by_script):
         click.echo(f"  {s}: {by_script[s]}")
 
@@ -351,6 +364,7 @@ def catalog() -> None:
 def _extract_folio_count_from_title(title: str) -> int | None:
     """Extract folio count from Jerusalem-style titles like '289 f. Pg. 26 ft.'."""
     import re
+
     match = re.search(r"(\d+)\s*f\.", title)
     if match:
         return int(match.group(1))
@@ -358,18 +372,26 @@ def _extract_folio_count_from_title(title: str) -> int | None:
 
 
 @cli.command("estimate-folios")
-@click.option("--script", "-s", default=None, help="Filter by ISO 15924 script code (e.g. Syrc)")
-@click.option("--limit", "-n", default=0, type=int, help="Max manuscripts to process (0=all)")
 @click.option(
-    "--from-titles", is_flag=True,
+    "--script", "-s", default=None, help="Filter by ISO 15924 script code (e.g. Syrc)"
+)
+@click.option(
+    "--limit", "-n", default=0, type=int, help="Max manuscripts to process (0=all)"
+)
+@click.option(
+    "--from-titles",
+    is_flag=True,
     help="Use folio counts from titles (no API calls). Works for Jerusalem collection.",
 )
 @click.option(
-    "--from-api", is_flag=True,
+    "--from-api",
+    is_flag=True,
     help="Fetch page counts from LOC API (slow, rate-limited). Works for all.",
 )
 @click.option(
-    "--default-pages", type=int, default=300,
+    "--default-pages",
+    type=int,
+    default=300,
     help="Default page count for manuscripts without title-based counts.",
 )
 def estimate_folios(
@@ -414,7 +436,11 @@ def estimate_folios(
 
     # Skip manuscripts already estimated
     definite = [m for m in definite if m["loc_id"] not in existing_ids]
-    log.info("Skipping %d already-estimated, processing %d new", len(existing_ids), len(definite))
+    log.info(
+        "Skipping %d already-estimated, processing %d new",
+        len(existing_ids),
+        len(definite),
+    )
 
     for i, ms in enumerate(definite):
         if i > 0 and i % 50 == 0:
@@ -458,7 +484,11 @@ def estimate_folios(
             window_start = max(1, int(total * 0.65))
             window_end = min(total, int(total * 0.85))
 
-        source = "title_folios" if from_titles and _extract_folio_count_from_title(ms["title"]) else "default"
+        source = (
+            "title_folios"
+            if from_titles and _extract_folio_count_from_title(ms["title"])
+            else "default"
+        )
         if from_api:
             source = "api"
 
@@ -486,7 +516,10 @@ def estimate_folios(
 
     log.info(
         "Saved %d folio estimates (%d new, %d errors) to %s",
-        len(estimates), new_count, errors, _FOLIO_ESTIMATES_PATH,
+        len(estimates),
+        new_count,
+        errors,
+        _FOLIO_ESTIMATES_PATH,
     )
 
     # Summary
@@ -510,11 +543,18 @@ def estimate_folios(
 
 @cli.command("download-candidates")
 @click.option("--script", "-s", default=None, help="Filter by ISO 15924 script code")
-@click.option("--collection", "-c", default=None, help="Filter by collection (sinai/jerusalem)")
-@click.option("--limit", "-n", default=0, type=int, help="Max manuscripts to process (0=all)")
+@click.option(
+    "--collection", "-c", default=None, help="Filter by collection (sinai/jerusalem)"
+)
+@click.option(
+    "--limit", "-n", default=0, type=int, help="Max manuscripts to process (0=all)"
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be downloaded")
 def download_candidates(
-    script: str | None, collection: str | None, limit: int, dry_run: bool,
+    script: str | None,
+    collection: str | None,
+    limit: int,
+    dry_run: bool,
 ) -> None:
     """Download candidate page windows for John 1:1 identification.
 
@@ -541,7 +581,9 @@ def download_candidates(
 
     if dry_run:
         total_pages = sum(len(e["candidate_pages"]) for e in estimates)
-        click.echo(f"Would download {total_pages} candidate pages from {len(estimates)} manuscripts")
+        click.echo(
+            f"Would download {total_pages} candidate pages from {len(estimates)} manuscripts"
+        )
         for e in estimates:
             click.echo(
                 f"  {e['script']} | {e['title'][:60]} | "
@@ -596,7 +638,9 @@ def download_candidates(
 
         log.info(
             "Processed %s (%s) — %d candidate pages",
-            e["title"][:50], e["script"], len(e["candidate_pages"]),
+            e["title"][:50],
+            e["script"],
+            len(e["candidate_pages"]),
         )
 
     click.echo(f"\nDownloaded {downloaded} pages ({errors} errors)")
@@ -604,8 +648,12 @@ def download_candidates(
 
 @cli.command()
 @click.option("--script", "-s", default=None, help="Filter by ISO 15924 script code")
-@click.option("--confirmed-only", is_flag=True, help="Only harvest confirmed John 1:1 pages")
-@click.option("--use-estimate", is_flag=True, help="Use estimated page (skip VLM confirmation)")
+@click.option(
+    "--confirmed-only", is_flag=True, help="Only harvest confirmed John 1:1 pages"
+)
+@click.option(
+    "--use-estimate", is_flag=True, help="Use estimated page (skip VLM confirmation)"
+)
 @click.option("--limit", "-n", default=0, type=int, help="Max manuscripts to harvest")
 @click.option("--dry-run", is_flag=True, help="Show what would be harvested")
 def harvest(
@@ -644,8 +692,14 @@ def harvest(
 
     if dry_run:
         for e in estimates:
-            page = e.get("confirmed_page") or (e["estimated_john_page"] if use_estimate else None)
-            status = "confirmed" if e.get("confirmed_page") else ("estimate" if use_estimate else "SKIP")
+            page = e.get("confirmed_page") or (
+                e["estimated_john_page"] if use_estimate else None
+            )
+            status = (
+                "confirmed"
+                if e.get("confirmed_page")
+                else ("estimate" if use_estimate else "SKIP")
+            )
             click.echo(f"  {e['script']} | {e['title'][:60]} | page={page} ({status})")
         return
 
@@ -664,7 +718,9 @@ def harvest(
 
         ms_slug = e["loc_id"].strip("/").split("/")[-1]
         script_code = e["script"]
-        filename = f"loc_{e['collection']}_{script_code}_{ms_slug}_p{target_page:04d}.jpg"
+        filename = (
+            f"loc_{e['collection']}_{script_code}_{ms_slug}_p{target_page:04d}.jpg"
+        )
         out_path = loc_dir / filename
 
         if out_path.exists():
@@ -675,7 +731,12 @@ def harvest(
         try:
             pages = _get_manuscript_pages(e["loc_id"])
             if target_page > len(pages):
-                log.warning("Page %d exceeds total %d for %s", target_page, len(pages), e["title"])
+                log.warning(
+                    "Page %d exceeds total %d for %s",
+                    target_page,
+                    len(pages),
+                    e["title"],
+                )
                 errors += 1
                 continue
 
@@ -717,7 +778,10 @@ def harvest(
             harvested += 1
             log.info(
                 "Harvested %s page %d → %s (%d bytes)",
-                e["title"][:40], target_page, filename, len(resp.content),
+                e["title"][:40],
+                target_page,
+                filename,
+                len(resp.content),
             )
         except Exception:
             log.exception("Failed to harvest %s", e["title"])

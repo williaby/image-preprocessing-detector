@@ -62,7 +62,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -520,7 +520,7 @@ def _write_manifest(
         "dataset_name": "synth_multiscript_v3",
         "dataset_version": SCRIPT_VERSION,
         "schema_version": SCHEMA_VERSION,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "seed": seed,
         "augmenter": augmenter,
         "image_format": f"JPEG q{JPEG_QUALITY}",

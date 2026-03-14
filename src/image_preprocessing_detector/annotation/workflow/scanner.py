@@ -30,7 +30,7 @@ import logging
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -560,7 +560,7 @@ class BatchScanner:
             last_batch_completed=batch.batch_num,
             total_batches=total_batches,
             files_processed=self._files_processed,
-            timestamp=datetime.now(UTC).isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             scan_hash=self._compute_scan_hash(
                 Path(batch.paths[0]).parent.parent if batch.paths else Path(),
                 batch.dataset_name,

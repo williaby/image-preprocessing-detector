@@ -27,7 +27,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -262,7 +262,7 @@ def run_integration(
         "has_table_count": 0,
         "has_handwriting_count": 0,
     }
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     report_interval = 20000
     for sample in md["samples"]:
         stats["total"] += 1

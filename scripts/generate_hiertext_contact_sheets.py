@@ -22,7 +22,7 @@ import logging
 import math
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -341,7 +341,7 @@ def main() -> int:
 
     # Save manifest
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(tz=UTC).isoformat()
+    timestamp = datetime.now(tz=timezone.utc).isoformat()
 
     manifest_output = {
         "dataset": "hiertext",

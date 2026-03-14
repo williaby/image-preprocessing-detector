@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -377,7 +377,7 @@ def generate(  # nosonar  # Click CLI params are framework-driven
     # Write manifest
     manifest_path = output_path / "manifest.json"
     manifest = {
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "generator_version": "1.0.0",
         "total_samples": stats.total_samples,
         "scripts": script_list,

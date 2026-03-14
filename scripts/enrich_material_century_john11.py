@@ -34,15 +34,14 @@ EXTENDED_REGISTRY = REPO_ROOT / "metadata_registry/john11_manuscripts_extended.j
 # Ordinal suffixes accepted after a digit (1st, 2nd, 3rd, 4th … 20th …)
 _CENTURY_SUFFIX = r"(?:st|nd|rd|th)"
 
+
 # Map century number → (year_min, year_max) base range
 def _century_year_bounds(century: int) -> tuple[int, int]:
     """Return (year_min, year_max) for a whole century number (1-based AD)."""
     return (century - 1) * 100 + 1, century * 100
 
 
-def _apply_qualifier(
-    qualifier: str, year_min: int, year_max: int
-) -> tuple[int, int]:
+def _apply_qualifier(qualifier: str, year_min: int, year_max: int) -> tuple[int, int]:
     """Narrow year_min/year_max for 'early', 'mid', or 'late' qualifiers."""
     span = year_max - year_min  # typically 99
     third = span // 3
@@ -226,6 +225,7 @@ def infer_material(
 # Registry loading
 # ---------------------------------------------------------------------------
 
+
 def load_extended_registry(
     path: Path,
 ) -> dict[str, dict[str, str]]:
@@ -262,6 +262,7 @@ def load_extended_registry(
 # ---------------------------------------------------------------------------
 # Core enrichment logic
 # ---------------------------------------------------------------------------
+
 
 def build_material_dating_block(
     date_range: str,
@@ -333,6 +334,7 @@ def enrich_one_file(
 # ---------------------------------------------------------------------------
 # CLI commands
 # ---------------------------------------------------------------------------
+
 
 @click.group()
 def cli() -> None:
@@ -448,9 +450,7 @@ def validate(l2_dir: Path) -> None:
 
     for json_path in json_files:
         record = json.loads(json_path.read_text(encoding="utf-8"))
-        block: dict[str, Any] | None = record.get("data", {}).get(
-            "material_and_dating"
-        )
+        block: dict[str, Any] | None = record.get("data", {}).get("material_and_dating")
 
         if block is None:
             missing_block.append(json_path.stem)
@@ -469,8 +469,12 @@ def validate(l2_dir: Path) -> None:
 
     # Report
     click.echo(f"Total records          : {total:>5}")
-    click.echo(f"material_and_dating    : {has_block:>5} ({has_block / total * 100:.1f}%)")
-    click.echo(f"Non-null century       : {has_century:>5} ({has_century / total * 100:.1f}%)")
+    click.echo(
+        f"material_and_dating    : {has_block:>5} ({has_block / total * 100:.1f}%)"
+    )
+    click.echo(
+        f"Non-null century       : {has_century:>5} ({has_century / total * 100:.1f}%)"
+    )
 
     click.echo("\nMaterial composition distribution:")
     for mat, count in sorted(material_counts.items(), key=lambda kv: -kv[1]):

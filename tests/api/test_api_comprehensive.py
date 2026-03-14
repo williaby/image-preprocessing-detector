@@ -22,7 +22,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="FastAPI required for API tests")
 httpx = pytest.importorskip("httpx", reason="httpx required for API tests")
 
-from datetime import UTC
+from datetime import timezone
 
 from fastapi.testclient import TestClient
 
@@ -319,7 +319,7 @@ class TestProcessingModels:
             ProcessingStatus,
         )
 
-        now = datetime.now(tz=UTC)
+        now = datetime.now(tz=timezone.utc)
         status = BatchJobStatus(
             job_id="job-123",
             status=ProcessingStatus.PROCESSING,

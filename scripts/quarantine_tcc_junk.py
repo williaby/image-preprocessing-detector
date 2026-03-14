@@ -14,18 +14,22 @@ import argparse
 import json
 import shutil
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-BASE_DATA = Path("/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic")
+BASE_DATA = Path(
+    "/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic"
+)
 REGISTRY_PATH = Path(
     "/mnt/e/image_detection/metadata_registry/thousand_character_classic_registry.jsonl"
 )
-L2_DIR = Path("/mnt/e/image_detection/metadata_registry/json/thousand-character-classic")
+L2_DIR = Path(
+    "/mnt/e/image_detection/metadata_registry/json/thousand-character-classic"
+)
 QUARANTINE_DIR = BASE_DATA / "_quarantined"
 
 # Files to remove from disk + registry + L2 metadata
@@ -151,7 +155,7 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
     # --- Step 5: Write quarantine manifest ---
     print("\n=== Step 5: Write quarantine manifest ===")
     manifest = {
-        "quarantine_date": datetime.now(UTC).isoformat(),
+        "quarantine_date": datetime.now(timezone.utc).isoformat(),
         "reason": "TCC dataset cleanup — unsuitable images",
         "dry_run": dry_run,
         "junk_files": JUNK_FILES,
@@ -159,9 +163,7 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
         "stats": stats,
         "categories": {
             "website_ui_artifacts": [p for p in JUNK_FILES if "7031" in p],
-            "cross_source_duplicates": [
-                p for p in JUNK_FILES if "MET_DP70161" in p
-            ],
+            "cross_source_duplicates": [p for p in JUNK_FILES if "MET_DP70161" in p],
             "ghost_registry_entries": GHOST_ENTRIES,
         },
     }

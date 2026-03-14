@@ -91,6 +91,7 @@ OLD_CAPTURE_CONFIDENCE = 0.7
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _build_idx_to_sample_id(index_data: dict) -> dict[str, dict[int, str]]:
     """Return {script: {idx: sample_id}} mapping from annotation_index.json."""
     result: dict[str, dict[int, str]] = {}
@@ -165,6 +166,7 @@ def _patch_default_record(data_section: dict) -> int:
 # ---------------------------------------------------------------------------
 # Core backfill logic
 # ---------------------------------------------------------------------------
+
 
 def _compute_default_sample_ids(
     idx_to_sample_id: dict[str, dict[int, str]],
@@ -252,6 +254,7 @@ def run_backfill(dry_run: bool) -> dict[str, int]:
 # Validation logic
 # ---------------------------------------------------------------------------
 
+
 def run_validate() -> dict[str, int | list[str]]:
     """Verify all 577 records have annotation_source and counts match."""
     l2_files = sorted(L2_DIR.glob("*.json"))
@@ -297,6 +300,7 @@ def run_validate() -> dict[str, int | list[str]]:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 @click.group()
 def cli() -> None:
@@ -344,7 +348,9 @@ def backfill(dry_run: bool) -> None:
     expected = 577 - stats["already_set"]
     if total_processed == expected and stats["errors"] == 0:
         action = "Would write" if dry_run else "Wrote"
-        click.echo(f"\n{action} {total_processed} records (495 VLM + 82 defaults expected).")
+        click.echo(
+            f"\n{action} {total_processed} records (495 VLM + 82 defaults expected)."
+        )
         if stats["vlm"] != 495 or stats["default"] != 82:
             click.echo(
                 f"  WARNING: expected 495 VLM + 82 defaults, "

@@ -15,7 +15,7 @@ import json
 import logging
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -546,7 +546,7 @@ class BaseIntegrationScript(
             Stats dict with counts and distribution Counters.
         """
         stats = self._init_stats()
-        now = datetime.now(UTC).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         for sample in self.metadata["samples"]:
             stats["total"] += 1

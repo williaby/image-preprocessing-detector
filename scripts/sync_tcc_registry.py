@@ -16,7 +16,7 @@ import argparse
 import hashlib
 import json
 import shutil
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image
@@ -25,7 +25,9 @@ from PIL import Image
 # Configuration
 # ---------------------------------------------------------------------------
 
-BASE_DATA = Path("/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic")
+BASE_DATA = Path(
+    "/mnt/e/image_detection/01_base_data/calligraphy/thousand-character-classic"
+)
 REGISTRY_PATH = Path(
     "/mnt/e/image_detection/metadata_registry/thousand_character_classic_registry.jsonl"
 )
@@ -135,7 +137,7 @@ def sync_registry(dry_run: bool) -> dict[str, int]:
                     "source_institution": "loc_wdl",
                     "catalog_number": None,
                     "license": "Public Domain",
-                    "registered_date": datetime.now(UTC).strftime("%Y-%m-%d"),
+                    "registered_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                     "original_dimensions": dims,
                     "acquisition_method": "loc_wdl_iiif",
                 }
@@ -143,7 +145,9 @@ def sync_registry(dry_run: bool) -> dict[str, int]:
                 stats["new_entries_added"] += 1
 
             if dry_run:
-                print(f"  [DRY RUN] Would register {stats['new_entries_added']} new files")
+                print(
+                    f"  [DRY RUN] Would register {stats['new_entries_added']} new files"
+                )
             else:
                 print(f"  Registered {stats['new_entries_added']} new files")
 

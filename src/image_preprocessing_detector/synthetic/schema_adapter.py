@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 from image_preprocessing_detector.annotation.schemas.enums import (
@@ -674,7 +674,7 @@ class Layer2SchemaAdapter:
             "sample_id": sample_uuid,
             "enrichment_version": 1,
             "schema_version": "2.3.0",
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "created_by": f"synthetic_generator_v{self.generator_version}",
             "method": EnrichmentTier.TIER_0_EXACT.value,
             "description": "Synthetically generated multi-script document",

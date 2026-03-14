@@ -29,13 +29,9 @@ import click
 # Paths
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path("/home/byron/dev/image_detection")
-ANNOTATION_DIR = (
-    REPO_ROOT / "data/john11-printed-editions/annotation_sheets"
-)
+ANNOTATION_DIR = REPO_ROOT / "data/john11-printed-editions/annotation_sheets"
 L2_DIR = REPO_ROOT / "metadata_registry/json/john11-printed-editions"
-REGISTRY_PATH = (
-    REPO_ROOT / "metadata_registry/john11_printed_editions_registry.jsonl"
-)
+REGISTRY_PATH = REPO_ROOT / "metadata_registry/john11_printed_editions_registry.jsonl"
 
 # ---------------------------------------------------------------------------
 # Canonical value sets (print-specific)
@@ -80,9 +76,7 @@ VALID_CAPTURE_METHODS = frozenset(
     ["digital_photography", "flatbed_scan", "microfilm_scan", "screen_capture"]
 )
 
-VALID_LEGIBILITY = frozenset(
-    ["EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"]
-)
+VALID_LEGIBILITY = frozenset(["EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"])
 
 LEGIBILITY_SCORE: dict[str, float] = {
     "EXCELLENT": 0.95,
@@ -188,11 +182,15 @@ def _compute_defaults(annotations: list[dict]) -> dict:
     deg_counts = Counter(all_degs)
     # Keep degradations that appear in >25% of images
     threshold = len(annotations) * 0.25
-    common_degs = [d for d, c in deg_counts.most_common() if c >= threshold and d != "none"]
+    common_degs = [
+        d for d, c in deg_counts.most_common() if c >= threshold and d != "none"
+    ]
     if not common_degs:
         common_degs = ["none"]
 
-    capture_counts = Counter(a.get("capture_method", "flatbed_scan") for a in annotations)
+    capture_counts = Counter(
+        a.get("capture_method", "flatbed_scan") for a in annotations
+    )
     leg_counts = Counter(a.get("legibility", "GOOD") for a in annotations)
 
     return {
@@ -334,9 +332,7 @@ def show_stats() -> None:
 
     click.echo(f"Registry entries: {len(entries)}")
     click.echo(f"VLM annotation scripts: {sorted(annotations.keys())}")
-    click.echo(
-        f"Total VLM annotations: {sum(len(v) for v in annotations.values())}"
-    )
+    click.echo(f"Total VLM annotations: {sum(len(v) for v in annotations.values())}")
 
     by_script = _build_script_index(entries)
     click.echo("\nPer-script coverage:")
@@ -406,9 +402,7 @@ def validate_annotations() -> None:
             # Validate capture method
             cap = item.get("capture_method")
             if cap and cap not in VALID_CAPTURE_METHODS:
-                click.echo(
-                    f"    [ERROR] idx={idx}: invalid capture_method='{cap}'"
-                )
+                click.echo(f"    [ERROR] idx={idx}: invalid capture_method='{cap}'")
                 errors += 1
 
     click.echo(f"\nValidation: {errors} errors, {warnings} warnings")

@@ -178,7 +178,11 @@ def quarantine_cmd(dry_run: bool) -> None:
     click.echo(
         f"L2 JSONs: {updated_l2} updated"
         + (f", {skipped_no_id} skipped (no sample_id)" if skipped_no_id else "")
-        + (f", {skipped_no_license} skipped (no registry entry)" if skipped_no_license else "")
+        + (
+            f", {skipped_no_license} skipped (no registry entry)"
+            if skipped_no_license
+            else ""
+        )
         + (" [DRY RUN — no files written]" if dry_run else "")
         + "."
     )

@@ -42,7 +42,7 @@ import logging
 import sys
 from collections import Counter
 from dataclasses import asdict
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -802,7 +802,7 @@ def save_enrichment(
         "dataset": dataset_name,
         "enrichment_type": "llm_metadata_enrichment",
         "pipeline_version": "1.0.0",
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "total_samples": len(results),
         "classified_count": sum(1 for _, r in results if r.domain_level1 != "UNK"),
         "skipped_count": 0,

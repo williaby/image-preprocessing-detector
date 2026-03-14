@@ -15,7 +15,7 @@ import argparse
 import json
 import shutil
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -226,9 +226,7 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
                             f"{rec.get('source_path', sample_id)}"
                         )
                     else:
-                        print(
-                            f"  Removed: {rec.get('source_path', sample_id)}"
-                        )
+                        print(f"  Removed: {rec.get('source_path', sample_id)}")
                 else:
                     sidecar_kept.append(line)
 
@@ -260,7 +258,7 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
     # --- Step 5: Write quarantine manifest ---
     print("\n=== Step 5: Write quarantine manifest ===")
     manifest = {
-        "quarantine_date": datetime.now(UTC).isoformat(),
+        "quarantine_date": datetime.now(timezone.utc).isoformat(),
         "reason": "john11-manuscripts dataset cleanup — unsuitable images",
         "dry_run": dry_run,
         "junk_files": JUNK_FILES,
@@ -364,13 +362,9 @@ def quarantine_files(dry_run: bool) -> dict[str, int]:
                 )
             ],
             "wrong_biblical_books": [
-                p
-                for p in JUNK_FILES
-                if any(kw in p for kw in ["1_Tim", "Timoteo"])
+                p for p in JUNK_FILES if any(kw in p for kw in ["1_Tim", "Timoteo"])
             ],
-            "hildebrandslied": [
-                p for p in JUNK_FILES if "Hildebrandslied" in p
-            ],
+            "hildebrandslied": [p for p in JUNK_FILES if "Hildebrandslied" in p],
             "met_duplicate_registry": DUPLICATE_REGISTRY_ENTRIES,
         },
     }
@@ -419,10 +413,7 @@ def main() -> None:
     print(f"  Errors:                     {stats['errors']}")
 
     if args.dry_run:
-        print(
-            "\n  ** DRY RUN — no changes made. "
-            "Run without --dry-run to execute. **"
-        )
+        print("\n  ** DRY RUN — no changes made. Run without --dry-run to execute. **")
 
     sys.exit(1 if stats["errors"] > 0 else 0)
 

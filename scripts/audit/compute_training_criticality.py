@@ -23,7 +23,7 @@ import logging
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -308,7 +308,7 @@ def write_criticality_report(
     path.parent.mkdir(parents=True, exist_ok=True)
 
     report: dict[str, Any] = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_datasets": len(results),
         "criticality_distribution": {},
         "datasets": {},

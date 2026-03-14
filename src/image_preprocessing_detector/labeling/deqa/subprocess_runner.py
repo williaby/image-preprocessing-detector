@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 — subprocess isolation is by design for DeQA venv bridge
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -274,7 +274,7 @@ class DeQASubprocessRunner:
         )  # +120s for model load
 
         try:
-            proc = subprocess.Popen(  # noqa: S603
+            proc = subprocess.Popen(  # noqa: S603  # nosec B603 — trusted cmd from DeQA config
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -339,7 +339,8 @@ class DeQASubprocessRunner:
             logger.warning("Bridge subprocess timed out", dimension=dimension)
 
         # Log any stderr
-        assert proc.stderr is not None
+        if proc.stderr is None:
+            raise RuntimeError("subprocess stderr not available (PIPE not configured)")
         stderr_output = proc.stderr.read()
         if stderr_output:
             for stderr_line in stderr_output.strip().split("\n")[-5:]:

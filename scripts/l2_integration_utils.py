@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -389,5 +389,5 @@ def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
         "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
         "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
         "field_summary": fields,
-        "computed_at": datetime.now(UTC).isoformat(),
+        "computed_at": datetime.now(timezone.utc).isoformat(),
     }

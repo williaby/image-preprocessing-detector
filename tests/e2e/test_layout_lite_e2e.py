@@ -8,7 +8,7 @@ Tests Layout-Lite integration with:
 Sprint 5.1.x: E2E tests for Layout-Lite (Phase 6) workflow integration.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import cv2
 import numpy as np
@@ -352,7 +352,7 @@ class TestLayoutLiteFullPipeline:
             page_layout_summary=[layout_summary],
             processing_version=ProcessingVersion(
                 pipeline_version="0.1.0-e2e-test",
-                timestamp=datetime.now(tz=UTC),
+                timestamp=datetime.now(tz=timezone.utc),
             ),
             pages=[page],
         )
@@ -446,7 +446,7 @@ class TestLayoutLiteFullPipeline:
             page_layout_summary=page_layouts,
             processing_version=ProcessingVersion(
                 pipeline_version="0.1.0-e2e-test",
-                timestamp=datetime.now(tz=UTC),
+                timestamp=datetime.now(tz=timezone.utc),
             ),
             pages=pages,
         )

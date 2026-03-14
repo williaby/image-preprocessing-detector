@@ -26,7 +26,7 @@ import re
 import sys
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -441,7 +441,7 @@ def compute_sample_summary(
         "hard_field_count": hard_count,
         "soft_field_count": soft_count,
         "field_summary": field_summary,
-        "computed_at": datetime.now(UTC).isoformat(),
+        "computed_at": datetime.now(timezone.utc).isoformat(),
     }
 
     return summary, assessments
@@ -526,7 +526,7 @@ def _write_reliability_metadata(
     metadata["backfill_history"].append(
         {
             "operation": "reliability_summary_materialization",
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "stats": {
                 "materialized": stats["materialized"],
                 "already_had_summary": stats["already_has_summary"],
@@ -663,7 +663,7 @@ def update_dataset_doc(
         "",
         "##### Reliability & Bottlenecks",
         "",
-        f"> **Computed**: {datetime.now(UTC).strftime('%Y-%m-%d')} "
+        f"> **Computed**: {datetime.now(timezone.utc).strftime('%Y-%m-%d')} "
         f"| **Samples**: {total:,} | **Avg Min Confidence**: {avg_min:.3f}",
         "",
     ]
