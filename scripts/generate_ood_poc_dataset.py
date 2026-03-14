@@ -85,7 +85,6 @@ ID_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color", "grayscale"],
-            "layouts": ["header_body", "columns"],
         },
     ),
     OODCategory(
@@ -98,7 +97,6 @@ ID_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
 ]
@@ -115,7 +113,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     OODCategory(
@@ -128,7 +125,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     OODCategory(
@@ -141,7 +137,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     # Degradation OOD: extreme quality levels
@@ -155,7 +150,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [400, 600],
             "quality_tiers": ["PRISTINE"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     OODCategory(
@@ -168,7 +162,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [100, 150],
             "quality_tiers": ["DEGRADED"],
             "color_modes": ["grayscale"],
-            "layouts": ["header_body"],
         },
     ),
     # Resolution OOD: extreme DPI
@@ -182,7 +175,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [72],
             "quality_tiers": ["LOW"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     OODCategory(
@@ -195,7 +187,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [600],
             "quality_tiers": ["HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
         },
     ),
     # Layout OOD: unusual document structures
@@ -209,7 +200,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM"],
             "color_modes": ["color"],
-            "layouts": ["form"],
         },
     ),
     # Color OOD: unusual color modes
@@ -223,7 +213,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM"],
             "color_modes": ["binarized"],
-            "layouts": ["header_body"],
         },
     ),
     # Multi-script OOD
@@ -237,8 +226,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["columns"],
-            "multi_script": True,
         },
     ),
     # CJK vertical text OOD
@@ -252,7 +239,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
             "force_vertical": True,
         },
     ),
@@ -267,7 +253,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
             "adversarial_font": "fraktur",
         },
     ),
@@ -281,7 +266,6 @@ OOD_CATEGORIES = [
             "dpi_tiers": [200, 300],
             "quality_tiers": ["MEDIUM", "HIGH"],
             "color_modes": ["color"],
-            "layouts": ["header_body"],
             "adversarial_font": "nastaliq",
         },
     ),

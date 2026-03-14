@@ -109,6 +109,54 @@ class DQSWeightConfig:
     risk_pdf_type_penalty_hybrid: float = 0.10
     risk_handwriting_penalty: float = 0.10
 
+    def _validate_ml_weights(self) -> None:
+        """Validate ML blend ratio and sub-dimension weights.
+
+        Raises:
+            ValueError: If blend ratio is out of [0, 1] or sub-weights are
+                negative or do not sum to 1.0.
+        """
+        if not 0.0 <= self.ml_blend_ratio <= 1.0:
+            raise ValueError(
+                f"ml_blend_ratio must be in [0, 1], got {self.ml_blend_ratio}"
+            )
+
+        ml_sub_sum = (
+            self.ml_overall_weight + self.ml_sharpness_weight + self.ml_color_weight
+        )
+        if abs(ml_sub_sum - 1.0) > 1e-6:
+            raise ValueError(
+                f"ML sub-dimension weights must sum to 1.0, got {ml_sub_sum}"
+            )
+        for name, value in [
+            ("ml_overall_weight", self.ml_overall_weight),
+            ("ml_sharpness_weight", self.ml_sharpness_weight),
+            ("ml_color_weight", self.ml_color_weight),
+        ]:
+            if value < 0:
+                raise ValueError(f"{name} must be non-negative, got {value}")
+
+    def _validate_structural_weights(self) -> None:
+        """Validate structural base scores and feature weights.
+
+        Raises:
+            ValueError: If base scores are out of [0, 1] or feature weights
+                are negative.
+        """
+        for layout_type, score in self.structural_base_scores.items():
+            if not 0.0 <= score <= 1.0:
+                raise ValueError(
+                    f"structural_base_scores[{layout_type}] must be in [0, 1], "
+                    f"got {score}"
+                )
+
+        for feature, weight in self.structural_feature_weights.items():
+            if weight < 0:
+                raise ValueError(
+                    f"structural_feature_weights[{feature}] must be non-negative, "
+                    f"got {weight}"
+                )
+
     def validate(self) -> None:
         """Validate weight configuration.
 
@@ -128,27 +176,7 @@ class DQSWeightConfig:
             if value < 0:
                 raise ValueError(f"{name} must be non-negative, got {value}")
 
-        # Validate ML blend ratio
-        if not 0.0 <= self.ml_blend_ratio <= 1.0:
-            raise ValueError(
-                f"ml_blend_ratio must be in [0, 1], got {self.ml_blend_ratio}"
-            )
-
-        # Validate ML sub-dimension weights sum to 1.0
-        ml_sub_sum = (
-            self.ml_overall_weight + self.ml_sharpness_weight + self.ml_color_weight
-        )
-        if abs(ml_sub_sum - 1.0) > 1e-6:
-            raise ValueError(
-                f"ML sub-dimension weights must sum to 1.0, got {ml_sub_sum}"
-            )
-        for name, value in [
-            ("ml_overall_weight", self.ml_overall_weight),
-            ("ml_sharpness_weight", self.ml_sharpness_weight),
-            ("ml_color_weight", self.ml_color_weight),
-        ]:
-            if value < 0:
-                raise ValueError(f"{name} must be non-negative, got {value}")
+        self._validate_ml_weights()
 
         # Validate risk weights
         risk_weights = [
@@ -163,21 +191,7 @@ class DQSWeightConfig:
             if value < 0:
                 raise ValueError(f"{name} must be non-negative, got {value}")
 
-        # Validate structural base scores
-        for layout_type, score in self.structural_base_scores.items():
-            if not 0.0 <= score <= 1.0:
-                raise ValueError(
-                    f"structural_base_scores[{layout_type}] must be in [0, 1], "
-                    f"got {score}"
-                )
-
-        # Validate structural feature weights
-        for feature, weight in self.structural_feature_weights.items():
-            if weight < 0:
-                raise ValueError(
-                    f"structural_feature_weights[{feature}] must be non-negative, "
-                    f"got {weight}"
-                )
+        self._validate_structural_weights()
 
         logger.debug("DQSWeightConfig validated successfully")
 
@@ -645,6 +659,104 @@ LAYOUT_COMPLEXITY_BASE = _default_config.structural_base_scores
 STRUCTURAL_FEATURE_WEIGHTS = _default_config.structural_feature_weights
 
 
+_REQUIRED_CLASSICAL_METRICS = (
+    "blur_score",
+    "noise_score",
+    "contrast_score",
+    "illumination_score",
+    "artifacts_score",
+)
+
+
+def _validate_classical_metrics(classical_iqa: dict[str, Any]) -> None:
+    """Validate that all required classical IQA metrics are present and in range.
+
+    Args:
+        classical_iqa: Classical IQA metrics dict.
+
+    Raises:
+        ValueError: If a required metric is missing or out of [0.0, 1.0].
+        TypeError: If a metric value is not numeric.
+    """
+    for metric in _REQUIRED_CLASSICAL_METRICS:
+        if metric not in classical_iqa:
+            raise ValueError(f"Missing required metric: {metric}")
+
+        value = classical_iqa[metric]
+        if not isinstance(value, int | float):
+            raise TypeError(f"Metric {metric} must be numeric, got {type(value)}")
+
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(
+                f"Metric {metric} must be in range [0.0, 1.0], got {value}"
+            )
+
+
+def _blend_ml_iqa(
+    degradation_score: float,
+    ml_iqa: dict[str, Any],
+    config: DQSWeightConfig,
+) -> float:
+    """Blend ML IQA quality into the classical degradation score.
+
+    Computes a weighted ML quality from available sub-dimensions (overall,
+    sharpness, color_fidelity) and blends it with the classical score using
+    the configured blend ratio.
+
+    Args:
+        degradation_score: Classical-only degradation score (0-1).
+        ml_iqa: ML IQA metrics dict (must contain 'overall_quality').
+        config: Weight configuration with blend ratio and sub-weights.
+
+    Returns:
+        Blended degradation score, or the original if ML data is invalid.
+    """
+    ml_overall = ml_iqa["overall_quality"]
+    ml_sharpness = ml_iqa.get("sharpness")
+    ml_color = ml_iqa.get("color_fidelity")
+
+    # Compute weighted ML quality from available dimensions
+    if (
+        ml_sharpness is not None
+        and ml_color is not None
+        and 0.0 <= ml_overall <= 1.0
+        and 0.0 <= ml_sharpness <= 1.0
+        and 0.0 <= ml_color <= 1.0
+    ):
+        ml_quality: float | None = (
+            config.ml_overall_weight * ml_overall
+            + config.ml_sharpness_weight * ml_sharpness
+            + config.ml_color_weight * ml_color
+        )
+    elif 0.0 <= ml_overall <= 1.0:
+        # Fallback: only overall available (backward compatible)
+        ml_quality = ml_overall
+    else:
+        logger.warning(
+            "ML IQA quality score out of range, ignoring",
+            ml_quality=ml_overall,
+        )
+        ml_quality = None
+
+    if ml_quality is not None:
+        classical_ratio = 1.0 - config.ml_blend_ratio
+        degradation_score = (
+            classical_ratio * degradation_score + config.ml_blend_ratio * ml_quality
+        )
+        logger.debug(
+            "Blended classical and ML IQA scores",
+            classical_ratio=classical_ratio,
+            ml_ratio=config.ml_blend_ratio,
+            ml_overall=ml_overall,
+            ml_sharpness=ml_sharpness,
+            ml_color=ml_color,
+            ml_quality=ml_quality,
+            final_score=degradation_score,
+        )
+
+    return degradation_score
+
+
 def calculate_degradation_score(
     classical_iqa: dict[str, Any],
     ml_iqa: dict[str, Any] | None = None,
@@ -687,30 +799,9 @@ def calculate_degradation_score(
         >>> config = DQSWeightConfig(blur_weight=0.4, noise_weight=0.3)
         >>> score = calculate_degradation_score(classical_iqa, config=config)
     """
-    # Use default config if not provided
     config = config or _default_config
 
-    # Validate required metrics are present
-    required_metrics = [
-        "blur_score",
-        "noise_score",
-        "contrast_score",
-        "illumination_score",
-        "artifacts_score",
-    ]
-
-    for metric in required_metrics:
-        if metric not in classical_iqa:
-            raise ValueError(f"Missing required metric: {metric}")
-
-        value = classical_iqa[metric]
-        if not isinstance(value, int | float):
-            raise TypeError(f"Metric {metric} must be numeric, got {type(value)}")
-
-        if not 0.0 <= value <= 1.0:
-            raise ValueError(
-                f"Metric {metric} must be in range [0.0, 1.0], got {value}"
-            )
+    _validate_classical_metrics(classical_iqa)
 
     # Get normalized weights from config
     weights = config.get_normalized_degradation_weights()
@@ -726,49 +817,7 @@ def calculate_degradation_score(
 
     # If ML IQA is available (Phase 2+), blend with classical
     if ml_iqa is not None and "overall_quality" in ml_iqa:
-        ml_overall = ml_iqa["overall_quality"]
-        ml_sharpness = ml_iqa.get("sharpness")
-        ml_color = ml_iqa.get("color_fidelity")
-
-        # Compute weighted ML quality from available dimensions
-        if (
-            ml_sharpness is not None
-            and ml_color is not None
-            and 0.0 <= ml_overall <= 1.0
-            and 0.0 <= ml_sharpness <= 1.0
-            and 0.0 <= ml_color <= 1.0
-        ):
-            ml_quality = (
-                config.ml_overall_weight * ml_overall
-                + config.ml_sharpness_weight * ml_sharpness
-                + config.ml_color_weight * ml_color
-            )
-        elif 0.0 <= ml_overall <= 1.0:
-            # Fallback: only overall available (backward compatible)
-            ml_quality = ml_overall
-        else:
-            logger.warning(
-                "ML IQA quality score out of range, ignoring",
-                ml_quality=ml_overall,
-            )
-            ml_quality = None
-
-        if ml_quality is not None:
-            # Blend using configurable ratio
-            classical_ratio = 1.0 - config.ml_blend_ratio
-            degradation_score = (
-                classical_ratio * degradation_score + config.ml_blend_ratio * ml_quality
-            )
-            logger.debug(
-                "Blended classical and ML IQA scores",
-                classical_ratio=classical_ratio,
-                ml_ratio=config.ml_blend_ratio,
-                ml_overall=ml_overall,
-                ml_sharpness=ml_sharpness,
-                ml_color=ml_color,
-                ml_quality=ml_quality,
-                final_score=degradation_score,
-            )
+        degradation_score = _blend_ml_iqa(degradation_score, ml_iqa, config)
 
     # Ensure result is in valid range
     degradation_score = max(0.0, min(1.0, degradation_score))
@@ -1109,6 +1158,45 @@ def calculate_dqs(
     )
 
 
+def _compute_pdf_type_penalty(
+    pdf_type: PDFType | None,
+    config: DQSWeightConfig,
+) -> float:
+    """Return the risk penalty for the given PDF type.
+
+    Args:
+        pdf_type: PDF classification (image_only/born_digital/hybrid), or None.
+        config: Weight configuration with per-type penalty values.
+
+    Returns:
+        Penalty value (0.0 for born_digital or unknown types).
+    """
+    if pdf_type == PDFType.IMAGE_ONLY:
+        return config.risk_pdf_type_penalty_image_only
+    if pdf_type == PDFType.HYBRID:
+        return config.risk_pdf_type_penalty_hybrid
+    return 0.0
+
+
+def _compute_layout_penalties(
+    page_layout_summary: list[PageLayoutSummary],
+    config: DQSWeightConfig,
+) -> float:
+    """Return the aggregate layout-feature penalty.
+
+    Currently checks for handwriting presence across all pages.
+
+    Args:
+        page_layout_summary: Per-page layout analysis results.
+        config: Weight configuration with feature penalty values.
+
+    Returns:
+        Layout penalty value (0.0 if no penalizable features found).
+    """
+    has_handwriting = any(page.has_handwriting for page in page_layout_summary)
+    return config.risk_handwriting_penalty if has_handwriting else 0.0
+
+
 def calculate_pre_ocr_risk(
     dqs: DQSMetadata,
     pdf_type: PDFType | None,
@@ -1140,7 +1228,6 @@ def calculate_pre_ocr_risk(
         >>> risk = calculate_pre_ocr_risk(dqs, PDFType.HYBRID, [])
         >>> assert 0.0 <= risk <= 1.0
     """
-    # Use default config if not provided
     config = config or _default_config
 
     # Base risk from degradation (inverse: low quality = high risk)
@@ -1149,16 +1236,9 @@ def calculate_pre_ocr_risk(
     # Complexity contribution
     complexity_risk = dqs.structural_complexity_score * config.risk_complexity_weight
 
-    # PDF type penalty
-    pdf_type_penalty = 0.0
-    if pdf_type == PDFType.IMAGE_ONLY:
-        pdf_type_penalty = config.risk_pdf_type_penalty_image_only
-    elif pdf_type == PDFType.HYBRID:
-        pdf_type_penalty = config.risk_pdf_type_penalty_hybrid
-
-    # Layout feature penalties
-    has_handwriting = any(page.has_handwriting for page in page_layout_summary)
-    handwriting_penalty = config.risk_handwriting_penalty if has_handwriting else 0.0
+    # Penalties from document type and layout features
+    pdf_type_penalty = _compute_pdf_type_penalty(pdf_type, config)
+    handwriting_penalty = _compute_layout_penalties(page_layout_summary, config)
 
     # Aggregate risk
     total_risk = (

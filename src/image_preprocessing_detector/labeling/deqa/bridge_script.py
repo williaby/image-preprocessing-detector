@@ -211,8 +211,128 @@ def _score_batch(
     return results
 
 
+def _flush_batch(
+    batch_paths: list[str],
+    model: Any,
+    image_processor: Any,
+    input_ids: torch.Tensor,
+    level_ids: list[int],
+    device: str,
+    dimension: str,
+) -> tuple[int, int]:
+    """Score a batch and emit results to stdout via JSONL protocol.
+
+    Args:
+        batch_paths: Image paths to score in this batch.
+        model: Loaded mPLUG-Owl2 model.
+        image_processor: Image preprocessor.
+        input_ids: Tokenized input IDs for the dimension prompt.
+        level_ids: Token IDs for quality level names.
+        device: CUDA device string.
+        dimension: Quality dimension name.
+
+    Returns:
+        Tuple of (processed_count, error_count) for this batch.
+    """
+    processed = 0
+    errors = 0
+    results = _score_batch(
+        batch_paths, model, image_processor, input_ids, level_ids, device, dimension
+    )
+    for r in results:
+        print(json.dumps(r), flush=True)
+        if r["status"] == "error":
+            errors += 1
+        else:
+            processed += 1
+    return processed, errors
+
+
+def _process_stdin_loop(
+    model: Any,
+    image_processor: Any,
+    input_ids: torch.Tensor,
+    level_ids: list[int],
+    device: str,
+    dimension: str,
+    batch_size: int,
+) -> None:
+    """Read image paths from stdin, batch-score, and write JSONL to stdout.
+
+    Reads one JSON object per line from stdin, accumulates paths into
+    batches, scores each batch, and writes results to stdout. Emits a
+    sentinel object when stdin is exhausted.
+
+    Args:
+        model: Loaded mPLUG-Owl2 model.
+        image_processor: Image preprocessor.
+        input_ids: Tokenized input IDs for the dimension prompt.
+        level_ids: Token IDs for quality level names.
+        device: CUDA device string.
+        dimension: Quality dimension name.
+        batch_size: Number of images per inference batch.
+    """
+    processed = 0
+    errors = 0
+    batch_paths: list[str] = []
+
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+
+        try:
+            record = json.loads(line)
+            image_path = record["image_path"]
+        except (json.JSONDecodeError, KeyError) as exc:
+            print(
+                json.dumps(
+                    {"status": "error", "error": f"Invalid input: {exc}", "raw": line}
+                ),
+                flush=True,
+            )
+            errors += 1
+            continue
+
+        batch_paths.append(image_path)
+
+        if len(batch_paths) >= batch_size:
+            batch_ok, batch_err = _flush_batch(
+                batch_paths,
+                model,
+                image_processor,
+                input_ids,
+                level_ids,
+                device,
+                dimension,
+            )
+            processed += batch_ok
+            errors += batch_err
+            batch_paths = []
+
+    # Flush remaining batch
+    if batch_paths:
+        batch_ok, batch_err = _flush_batch(
+            batch_paths,
+            model,
+            image_processor,
+            input_ids,
+            level_ids,
+            device,
+            dimension,
+        )
+        processed += batch_ok
+        errors += batch_err
+
+    # Sentinel
+    print(
+        json.dumps({"status": "done", "processed": processed, "errors": errors}),
+        flush=True,
+    )
+
+
 def main() -> None:
-    """Main loop: read image paths from stdin, write predictions to stdout."""
+    """Entry point: parse args, load model, and delegate to stdin loop."""
     parser = argparse.ArgumentParser(
         description="DeQA-Doc bridge for subprocess inference"
     )
@@ -251,70 +371,14 @@ def main() -> None:
         flush=True,
     )
 
-    processed = 0
-    errors = 0
-    batch_paths: list[str] = []
-
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-
-        try:
-            record = json.loads(line)
-            image_path = record["image_path"]
-        except (json.JSONDecodeError, KeyError) as exc:
-            print(
-                json.dumps(
-                    {"status": "error", "error": f"Invalid input: {exc}", "raw": line}
-                ),
-                flush=True,
-            )
-            errors += 1
-            continue
-
-        batch_paths.append(image_path)
-
-        if len(batch_paths) >= args.batch_size:
-            results = _score_batch(
-                batch_paths,
-                model,
-                image_processor,
-                input_ids,
-                level_ids,
-                args.device,
-                args.dimension,
-            )
-            for r in results:
-                print(json.dumps(r), flush=True)
-                if r["status"] == "error":
-                    errors += 1
-                else:
-                    processed += 1
-            batch_paths = []
-
-    # Flush remaining batch
-    if batch_paths:
-        results = _score_batch(
-            batch_paths,
-            model,
-            image_processor,
-            input_ids,
-            level_ids,
-            args.device,
-            args.dimension,
-        )
-        for r in results:
-            print(json.dumps(r), flush=True)
-            if r["status"] == "error":
-                errors += 1
-            else:
-                processed += 1
-
-    # Sentinel
-    print(
-        json.dumps({"status": "done", "processed": processed, "errors": errors}),
-        flush=True,
+    _process_stdin_loop(
+        model,
+        image_processor,
+        input_ids,
+        level_ids,
+        args.device,
+        args.dimension,
+        args.batch_size,
     )
 
 

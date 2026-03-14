@@ -15,6 +15,7 @@ Example:
 
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 # Default configuration
-DEFAULT_HOST = "192.168.1.209"
+DEFAULT_HOST = os.environ.get("DOCLING_HOST", "192.168.1.209")
 DEFAULT_PORT = 5001
 DEFAULT_TIMEOUT = 300.0  # 5 minutes for large documents
 
@@ -133,6 +134,7 @@ class DoclingClient:
     @property
     def base_url(self) -> str:
         """Base URL for the Docling server."""
+        # Local LAN service — TLS not available on Docling server
         return f"http://{self.host}:{self.port}"
 
     def _get_client(self) -> httpx.Client:

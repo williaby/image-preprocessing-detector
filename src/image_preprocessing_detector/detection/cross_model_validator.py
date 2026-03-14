@@ -217,11 +217,13 @@ class CrossModelValidator:
             )
 
         # Tier 2: Cross-model agreement
-        siglip_scores = {
-            "overall": prediction.iqa_overall.mu,
-            "sharpness": prediction.iqa_sharpness.mu,
-            "color": prediction.iqa_color.mu,
-        }
+        siglip_scores = {}
+        for dim in DIMENSIONS:
+            head = getattr(prediction, f"iqa_{dim}", None)
+            if head is None:
+                logger.warning("Missing SigLIP2 dimension", dimension=dim)
+                continue
+            siglip_scores[dim] = head.mu
 
         validator_scores, z_values = self._collect_tier2_scores(
             siglip_scores, vlm_ratings, clip_scores

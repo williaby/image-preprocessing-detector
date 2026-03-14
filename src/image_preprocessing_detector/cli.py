@@ -3,6 +3,7 @@
 Provides commands for processing single files and batches of documents.
 """
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -983,7 +984,7 @@ def deskew_cmd(
 @click.option(
     "--docling-host",
     type=str,
-    default="192.168.1.209",
+    default=os.environ.get("DOCLING_HOST", "192.168.1.209"),
     help="Docling server hostname",
 )
 @click.option(

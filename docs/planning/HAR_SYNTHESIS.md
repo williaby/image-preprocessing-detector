@@ -252,7 +252,7 @@ This affects: SIG-G1-1 through G1-5 (Phase 2 synthetic), SIG-G5-2, SIG-G5-3, MNV
 
 ### Pattern 3 — ~~VLM Labeling Bottleneck~~ RESOLVED via DeQA-Doc (2026-03-06)
 
-~~The IQA curated Phase 1 path (16K images) depends entirely on VLM scoring.~~ This bottleneck is **resolved** by the DeQA-Doc pseudo-labeling pipeline.
+~~The IQA-curated Phase-1 path (16K images) depends entirely on VLM scoring.~~ This bottleneck is **resolved** by the DeQA-Doc pseudo-labeling pipeline.
 
 **Previous state** (pre-2026-03-06): VLM scoring was at 200/5,500 images (3.6%), SRCC 0.53 (non-rotated) — below 0.65 target. This blocked all 6 G1 heads.
 

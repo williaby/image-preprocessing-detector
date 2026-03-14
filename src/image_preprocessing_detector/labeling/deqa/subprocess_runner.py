@@ -209,21 +209,17 @@ class DeQASubprocessRunner:
 
         return list(predictions.values())
 
-    def _run_dimension(
+    def _build_subprocess_command(
         self,
-        image_paths: list[str],
         dimension: str,
-        progress_callback: Any | None,
-    ) -> list[dict[str, Any]]:
-        """Run inference for a single dimension via subprocess.
+    ) -> list[str]:
+        """Build the bridge subprocess command line.
 
         Args:
-            image_paths: Images to score.
-            dimension: One of "overall", "sharpness", "color_fidelity".
-            progress_callback: Optional progress reporter.
+            dimension: Quality dimension to score.
 
         Returns:
-            List of result dicts from bridge script.
+            Command list suitable for subprocess.Popen.
         """
         python_bin = str(Path(self._config.deqa_venv) / "bin" / "python")
         model_path = self._config.model_paths[dimension]
@@ -246,7 +242,14 @@ class DeQASubprocessRunner:
             cmd.append("--load-8bit")
         if self._config.load_4bit:
             cmd.append("--load-4bit")
+        return cmd
 
+    def _build_subprocess_env(self) -> dict[str, str]:
+        """Build environment variables for the bridge subprocess.
+
+        Returns:
+            Environment dict with PYTHONPATH, CUDA vars, and minimal PATH.
+        """
         env = {
             "PYTHONPATH": self._config.deqa_root,
             "PATH": str(Path(self._config.deqa_venv) / "bin")
@@ -261,6 +264,79 @@ class DeQASubprocessRunner:
             val = os.environ.get(key)
             if val:
                 env[key] = val
+
+        return env
+
+    def _read_subprocess_output(
+        self,
+        proc: subprocess.Popen[str],
+        dimension: str,
+        num_images: int,
+        progress_callback: Any | None,
+    ) -> list[dict[str, Any]]:
+        """Read JSONL results from subprocess stdout.
+
+        Reads prediction records until a sentinel {"status": "done"} is
+        received or stdout is exhausted. Reports progress via callback.
+
+        Args:
+            proc: Running subprocess with stdout PIPE.
+            dimension: Dimension name for logging and progress.
+            num_images: Total images for progress denominator.
+            progress_callback: Optional callable(dimension, processed, total).
+
+        Returns:
+            List of result dicts (excludes the sentinel record).
+        """
+        results: list[dict[str, Any]] = []
+        if proc.stdout is None:
+            raise RuntimeError("subprocess stdout not available (PIPE not configured)")
+        processed = 0
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                logger.warning("Non-JSON output from bridge", line=line)
+                continue
+
+            if record.get("status") == "done":
+                logger.info(
+                    "Bridge completed",
+                    dimension=dimension,
+                    processed=record.get("processed"),
+                    errors=record.get("errors"),
+                )
+                break
+
+            results.append(record)
+            processed += 1
+            if progress_callback:
+                progress_callback(dimension, processed, num_images)
+
+        return results
+
+    def _run_dimension(
+        self,
+        image_paths: list[str],
+        dimension: str,
+        progress_callback: Any | None,
+    ) -> list[dict[str, Any]]:
+        """Run inference for a single dimension via subprocess.
+
+        Args:
+            image_paths: Images to score.
+            dimension: One of "overall", "sharpness", "color_fidelity".
+            progress_callback: Optional progress reporter.
+
+        Returns:
+            List of result dicts from bridge script.
+        """
+        cmd = self._build_subprocess_command(dimension)
+        env = self._build_subprocess_env()
+        model_path = self._config.model_paths[dimension]
 
         logger.info(
             "Starting bridge subprocess",
@@ -303,33 +379,12 @@ class DeQASubprocessRunner:
         proc.stdin.close()
 
         # Read results from stdout
-        results: list[dict[str, Any]] = []
-        if proc.stdout is None:
-            raise RuntimeError("subprocess stdout not available (PIPE not configured)")
-        processed = 0
-        for line in proc.stdout:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError:
-                logger.warning("Non-JSON output from bridge", line=line)
-                continue
-
-            if record.get("status") == "done":
-                logger.info(
-                    "Bridge completed",
-                    dimension=dimension,
-                    processed=record.get("processed"),
-                    errors=record.get("errors"),
-                )
-                break
-
-            results.append(record)
-            processed += 1
-            if progress_callback:
-                progress_callback(dimension, processed, len(image_paths))
+        results = self._read_subprocess_output(
+            proc,
+            dimension,
+            len(image_paths),
+            progress_callback,
+        )
 
         # Wait for process to finish
         try:

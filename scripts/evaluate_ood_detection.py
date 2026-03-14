@@ -65,10 +65,10 @@ def compute_fpr_at_tpr(
     """
     fpr, tpr, _ = roc_curve(labels, scores)
     # Find the threshold where TPR >= target_tpr
-    idx = np.searchsorted(tpr, target_tpr)
-    if idx >= len(fpr):
+    indices = np.nonzero(tpr >= target_tpr)[0]
+    if len(indices) == 0:
         return float(fpr[-1])
-    return float(fpr[idx])
+    return float(fpr[indices[0]])
 
 
 def evaluate_tier1(
