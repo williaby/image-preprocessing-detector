@@ -1,3 +1,16 @@
+---
+dataset_id: mathverse
+version: "1.0"
+license: MIT
+commercial_use: true
+iqa_profiles:
+  - born_digital
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### MathVerse
 
 > **Quick Stats**: 3,940 problems | Geometric diagrams | Multi-modal math | MIT license
@@ -125,7 +138,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

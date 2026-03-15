@@ -1,3 +1,16 @@
+---
+dataset_id: fintabnet
+version: "1.0"
+license: Research Only
+commercial_use: false
+iqa_profiles:
+  - born_digital
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### FinTabNet
 
 > **Quick Stats**: 97,475 images | Born-digital | Financial tables | Decimal-sensitive
@@ -140,7 +153,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

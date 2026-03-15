@@ -1,3 +1,16 @@
+---
+dataset_id: hasy
+version: "1.0"
+license: CC0
+commercial_use: true
+iqa_profiles:
+  - synthetic
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### hasy (HASYv2 - Math Symbols Handwriting)
 
 > **Quick Stats**: 168,233 symbols | 369 classes | Mathematical symbols | Crowdsourced
@@ -455,7 +468,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

@@ -1,3 +1,16 @@
+---
+dataset_id: siw13
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - general
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### SIW-13 (Script Identification in the Wild)
 
 > **Quick Stats**: 16,291 images | 13 scripts | Scene text | Tibetan + Hebrew coverage

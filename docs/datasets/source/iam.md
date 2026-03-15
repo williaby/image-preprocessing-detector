@@ -1,3 +1,16 @@
+---
+dataset_id: iam
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### IAM Handwriting Database
 
 > **Quick Stats**: 130,212 images | 657 writers | Forms, lines, words | Ground truth text + XML bboxes

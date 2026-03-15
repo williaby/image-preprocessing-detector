@@ -1,3 +1,16 @@
+---
+dataset_id: financebench
+version: "1.0"
+license: Research Only
+commercial_use: false
+iqa_profiles:
+  - general
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 ### FinanceBench
 
 > **Quick Stats**: 368 PDFs | 150 Q&A pairs (open-source) | Financial RAG benchmark | CC-BY-NC-4.0
@@ -335,7 +348,7 @@ Generated augmented datasets with labels, ready for model training.
 
 ### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ### 11.4 Cross-Dataset Findings
 

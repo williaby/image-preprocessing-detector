@@ -1,3 +1,16 @@
+---
+dataset_id: midv500
+version: "1.0"
+license: MIT
+commercial_use: true
+iqa_profiles:
+  - camera_smartphone
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### MIDV-500 (Cyrillic + Latin ID Documents)
 
 > **Quick Stats**: 50 countries | 500 video clips | Identity documents | Cyrillic coverage
@@ -130,7 +143,7 @@ MIDV500 includes per-document-type JSON template files with text field values:
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

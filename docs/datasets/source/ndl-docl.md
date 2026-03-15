@@ -1,3 +1,17 @@
+---
+dataset_id: ndl-docl
+version: "1.0"
+license: Public Domain
+commercial_use: true
+iqa_profiles:
+  - scanner
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### NDL-DocL (NDL Document Layout Dataset)
 
 > **Quick Stats**: 2,290 images | Rare books (pre-1868) + modern (post-1868) | Japanese layout + kuzushiji | Historical

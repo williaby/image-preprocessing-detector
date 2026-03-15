@@ -1,3 +1,17 @@
+---
+dataset_id: docsynth
+version: "1.0"
+license: Apache-2.0
+commercial_use: true
+iqa_profiles:
+  - born_digital
+  - synthetic
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### docsynth300k
 
 > **Quick Stats**: 300,000 synthetic document pages | 74 layout classes | YOLO polygon annotations | Layout pre-training

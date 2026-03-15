@@ -1,3 +1,16 @@
+---
+dataset_id: pdmocr-part1
+version: "1.0"
+license: Public Domain
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### pdmocr-part1 (PDM OCR Dataset Part 1)
 
 > **Quick Stats**: ~2,713 images | 1870s-1940s Japanese documents | Character-level bounding boxes | Historical

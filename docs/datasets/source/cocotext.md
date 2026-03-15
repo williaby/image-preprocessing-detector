@@ -1,3 +1,16 @@
+---
+dataset_id: cocotext
+version: "1.0"
+license: CC-BY-4.0
+commercial_use: true
+iqa_profiles:
+  - scene_text
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### COCO-Text
 
 > **Quick Stats**: 63,686 images | Scene text (camera) | Word-level annotations | 173K+ text instances
@@ -618,13 +631,12 @@ Official COCO-Text benchmark uses:
 
 ##### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ##### 11.4 Cross-Dataset Findings
 
-- **KI-007**: ACCEPTED --
-- **KI-009**: ACCEPTED --
-- **KI-009**: ACCEPTED --
+- **KI-007**: ACCEPTED -- LLM domain classification produces high UNK rate on generic content. Expected for scene text; accept UNK as valid classification.
+- **KI-009**: ACCEPTED -- Dataset documentation language/script claims unreliable. Prioritize LLM enrichment for iso639_language and iso15924_script over documentation claims.
 
 **Audit Artifacts**: [scripts/audit/results/cocotext/](../../scripts/audit/results/cocotext/)
 

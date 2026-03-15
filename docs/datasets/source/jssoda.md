@@ -1,3 +1,16 @@
+---
+dataset_id: jssoda
+version: "1.0"
+license: Apache-2.0
+commercial_use: true
+iqa_profiles:
+  - synthetic
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### JSSODa (Japanese Simple Synthetic OCR Dataset)
 
 > **Quick Stats**: 2,000+ images | Vertical & horizontal text | Synthetic Japanese | Orientation training

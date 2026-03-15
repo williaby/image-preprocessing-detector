@@ -1,3 +1,17 @@
+---
+dataset_id: john11-manuscripts-expansion
+version: "1.0"
+license: Mixed (CC0, PD, CC-BY-4.0, CC-BY-SA)
+commercial_use: true
+iqa_profiles:
+  - handwriting
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: inferred
+---
+
 ### John 1:1 Dataset Expansion Investigation
 
 > **Status**: Research Complete | Updated 2026-03-13

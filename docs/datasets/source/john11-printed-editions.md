@@ -1,3 +1,16 @@
+---
+dataset_id: john11-printed-editions
+version: "1.0"
+license: Public Domain
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: partial
+---
+
 ### John 1:1 Printed Editions
 
 > **Quick Stats**: **181 images** (target: 400-500) | 21 scripts | 1 of 4+ institutions harvested | 575-year span | REL domain | 100% printed

@@ -1,3 +1,16 @@
+---
+dataset_id: pdmocr-part2
+version: "1.0"
+license: Public Domain
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### pdmocr-part2 (PDM OCR Dataset Part 2)
 
 > **Quick Stats**: ~3,997 images | 1870s-1960s Japanese documents | Explicit text direction GT | Historical

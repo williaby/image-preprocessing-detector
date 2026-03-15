@@ -1,3 +1,16 @@
+---
+dataset_id: muharaf
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Muharaf (Arabic Historical Manuscripts)
 
 > **Quick Stats**: 24,952 images (public) | 457 pages + 24,495 lines | Arabic cursive handwriting | Expert transcriptions

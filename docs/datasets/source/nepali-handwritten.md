@@ -1,3 +1,16 @@
+---
+dataset_id: nepali-handwritten
+version: "1.0"
+license: Unknown
+commercial_use: unknown
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Nepali Handwritten Dataset
 
 > **Quick Stats**: 958 images | Handwritten Devanagari | Text detection annotations
@@ -424,7 +437,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 96.2%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

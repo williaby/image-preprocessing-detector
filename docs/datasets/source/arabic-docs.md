@@ -1,3 +1,16 @@
+---
+dataset_id: arabic-docs
+version: "1.0"
+license: Unknown
+commercial_use: unknown
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Arabic Documents OCR Dataset
 
 > **Quick Stats**: 10,045 images | 12 categories | Arabic documents | Script detection

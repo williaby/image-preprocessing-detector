@@ -1,3 +1,17 @@
+---
+dataset_id: john11-manuscripts
+version: "1.0"
+license: Mixed (CC0, PD, CC-BY-4.0, CC-BY-SA)
+commercial_use: true
+iqa_profiles:
+  - handwriting
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: partial
+---
+
 ### John 1:1 Multi-Script Manuscripts
 
 > **Quick Stats**: **514 images** (post-curation) | 10 scripts | 4 institutions | 1,700-year span | REL domain | 100% handwritten

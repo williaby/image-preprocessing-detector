@@ -1,3 +1,16 @@
+---
+dataset_id: rvl-cdip
+version: "1.0"
+license: Research Only
+commercial_use: false
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### RVL-CDIP
 
 > **Quick Stats**: 400,000 images | Real scans | 16 document classes | Authentic degradation
@@ -349,7 +362,7 @@ path/to/image/rvl_form_0002.tif 1
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

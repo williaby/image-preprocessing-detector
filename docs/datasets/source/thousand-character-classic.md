@@ -1,3 +1,17 @@
+---
+dataset_id: thousand-character-classic
+version: "1.0"
+license: Mixed (CC0, CC-BY-4.0, PD, KOGL)
+commercial_use: true
+iqa_profiles:
+  - scanner
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: partial
+---
+
 ### Thousand Character Classic (千字文)
 
 > **Quick Stats**: 1,248 images | 9 institutions | Historical CJK calligraphy | 12 script styles, 3 writing traditions
@@ -107,7 +121,7 @@
 
 | Dimension | Count | Details |
 |-----------|------:|---------|
-| **Total Images** | 1,248 | Across 9 source institutions |
+| **Total Images** | 1,248 | Across 9 source institutions (expanded from initial 391 harvest of NDL+Wikimedia+Met) |
 | **Catalog Items** | 74 | Spanning 6th-19th century |
 | **Calligraphers** | ~40 | Named artists + anonymous works |
 | **Script Styles** | 12 | kaishu, caoshu, xingshu, zhuanshu, lishu, zhangcao, kuangcao, xingcao, xiaokai, xingkai, haeseo, choseo |

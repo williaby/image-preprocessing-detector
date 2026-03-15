@@ -1,3 +1,16 @@
+---
+dataset_id: multimodal-textbook
+version: "1.0"
+license: Apache-2.0
+commercial_use: true
+iqa_profiles:
+  - born_digital
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Multimodal Textbook
 
 > **Quick Stats**: 6.58M images in annotations | YouTube keyframes | STEM content
@@ -119,7 +132,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

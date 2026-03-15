@@ -1,3 +1,16 @@
+---
+dataset_id: ocr-quality
+version: "1.0"
+license: Unknown
+commercial_use: unknown
+iqa_profiles:
+  - quality_benchmark
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### OCR-Quality
 
 > **Quick Stats**: 1,000 images | Human quality scores (1-4) | Multilingual | OCR evaluation
@@ -496,7 +509,7 @@ normalized_score = (5 - human_score) / 4
 
 ### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 85.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ### 11.4 Cross-Dataset Findings
 

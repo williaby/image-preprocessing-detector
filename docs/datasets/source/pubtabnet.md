@@ -381,11 +381,11 @@ At 519K images, PubTabNet is the largest dataset in the audit pipeline. Processi
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 
-- **KI-008**: OPEN --
+- **KI-008**: OPEN -- script_family contains directionality value 'ltr' instead of family name 'latin'. Integration script needs to re-derive via `get_script_family(iso15924_script)`.
 
 **Audit Artifacts**: [scripts/audit/results/pubtabnet/](../../scripts/audit/results/pubtabnet/)
 

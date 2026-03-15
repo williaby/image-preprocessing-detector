@@ -1,3 +1,17 @@
+---
+dataset_id: ndl-minhon
+version: "1.0"
+license: CC-BY-SA-4.0
+commercial_use: true
+iqa_profiles:
+  - scanner
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### ndl-minhon (NDL Classical Books OCR Dataset -- Minna de Honkoku)
 
 > **Quick Stats**: 32,822 images | 523,283 line annotations | Kuzushiji + classical Chinese | Crowdsourced GT

@@ -1,3 +1,16 @@
+---
+dataset_id: dzongkha-digits
+version: "1.0"
+license: CC-BY-4.0
+commercial_use: true
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Dzongkha Digits (Tibetan Script)
 
 > **Quick Stats**: 1,000 images | Handwritten digits | Tibetan-derived script
@@ -401,7 +414,7 @@ All 4 v2.3.0 fields are populated in the integration script (v2 enrichment versi
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 100.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 
