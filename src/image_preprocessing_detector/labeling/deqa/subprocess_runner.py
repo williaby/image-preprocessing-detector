@@ -67,7 +67,7 @@ class DeQARunnerConfig:
     load_4bit: bool = False
 
     def __post_init__(self) -> None:
-        """Validate configuration."""
+        """Validate configuration paths and required dimensions."""
         for dim in DIMENSIONS:
             if dim not in self.model_paths:
                 msg = (
@@ -75,10 +75,27 @@ class DeQARunnerConfig:
                 )
                 raise ValueError(msg)
 
-        venv_python = Path(self.deqa_venv) / "bin" / "python"
+        # Resolve and validate paths to prevent traversal attacks
+        deqa_root = Path(self.deqa_root).resolve()
+        deqa_venv = Path(self.deqa_venv).resolve()
+
+        if not deqa_root.is_dir():
+            msg = f"DeQA root directory not found: {deqa_root}"
+            raise FileNotFoundError(msg)
+
+        venv_python = deqa_venv / "bin" / "python"
         if not venv_python.exists():
             msg = f"DeQA venv python not found: {venv_python}"
             raise FileNotFoundError(msg)
+
+        for dim, model_path in self.model_paths.items():
+            resolved = Path(model_path).resolve()
+            if not resolved.exists():
+                logger.warning(
+                    "Model path does not exist yet (may be downloaded later)",
+                    dimension=dim,
+                    path=str(resolved),
+                )
 
 
 @dataclass
@@ -221,8 +238,8 @@ class DeQASubprocessRunner:
         Returns:
             Command list suitable for subprocess.Popen.
         """
-        python_bin = str(Path(self._config.deqa_venv) / "bin" / "python")
-        model_path = self._config.model_paths[dimension]
+        python_bin = str(Path(self._config.deqa_venv).resolve() / "bin" / "python")
+        model_path = str(Path(self._config.model_paths[dimension]).resolve())
 
         cmd = [
             python_bin,
@@ -247,20 +264,30 @@ class DeQASubprocessRunner:
     def _build_subprocess_env(self) -> dict[str, str]:
         """Build environment variables for the bridge subprocess.
 
+        Uses resolved paths and a minimal, explicit environment to avoid
+        injection of malicious library paths from the parent process.
+
         Returns:
             Environment dict with PYTHONPATH, CUDA vars, and minimal PATH.
         """
+        resolved_root = str(Path(self._config.deqa_root).resolve())
+        resolved_venv_bin = str(Path(self._config.deqa_venv).resolve() / "bin")
+
         env = {
-            "PYTHONPATH": self._config.deqa_root,
-            "PATH": str(Path(self._config.deqa_venv) / "bin")
-            + ":"
-            + (os.environ.get("PATH", "")),
+            "PYTHONPATH": resolved_root,
+            "PATH": resolved_venv_bin + ":" + (os.environ.get("PATH", "")),
             "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
             "HOME": os.environ.get("HOME", ""),
         }
 
-        # Propagate CUDA-related env vars
-        for key in ("LD_LIBRARY_PATH", "CUDA_HOME", "TORCH_HOME", "HF_HOME"):
+        # Propagate CUDA-related env vars (required for GPU inference)
+        _allowed_propagation_keys = (
+            "LD_LIBRARY_PATH",
+            "CUDA_HOME",
+            "TORCH_HOME",
+            "HF_HOME",
+        )
+        for key in _allowed_propagation_keys:
             val = os.environ.get(key)
             if val:
                 env[key] = val
@@ -350,6 +377,7 @@ class DeQASubprocessRunner:
         )  # +120s for model load
 
         try:
+            resolved_cwd = str(Path(self._config.deqa_root).resolve())
             proc = subprocess.Popen(  # noqa: S603  # nosec B603 — trusted cmd from DeQA config
                 cmd,
                 stdin=subprocess.PIPE,
@@ -357,7 +385,7 @@ class DeQASubprocessRunner:
                 stderr=subprocess.PIPE,
                 env=env,
                 text=True,
-                cwd=self._config.deqa_root,
+                cwd=resolved_cwd,
             )
         except OSError as exc:
             logger.exception("Failed to start bridge subprocess", error=str(exc))

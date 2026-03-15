@@ -129,18 +129,15 @@ class EmbeddingOODDetector:
             calibration_distances=cal_distances_sorted,
         )
 
-    def score(self, embedding: np.ndarray) -> OODResult:
-        """Compute OOD score for a single embedding.
+    def _build_result(self, distance: float) -> OODResult:
+        """Build an OODResult from a Mahalanobis distance.
 
         Args:
-            embedding: Single embedding vector (768-dim).
+            distance: Mahalanobis distance value.
 
         Returns:
             OODResult with distance, flag, and percentile.
         """
-        diff = embedding - self._mean
-        distance = float(np.sqrt(diff @ self._precision @ diff))
-
         percentile = 0.0
         if self._calibration_distances is not None:
             idx = np.searchsorted(self._calibration_distances, distance)
@@ -153,6 +150,19 @@ class EmbeddingOODDetector:
             threshold=self._threshold,
         )
 
+    def score(self, embedding: np.ndarray) -> OODResult:
+        """Compute OOD score for a single embedding.
+
+        Args:
+            embedding: Single embedding vector (768-dim).
+
+        Returns:
+            OODResult with distance, flag, and percentile.
+        """
+        diff = embedding - self._mean
+        distance = float(np.sqrt(diff @ self._precision @ diff))
+        return self._build_result(distance)
+
     def score_batch(self, embeddings: np.ndarray) -> list[OODResult]:
         """Compute OOD scores for a batch of embeddings.
 
@@ -164,23 +174,7 @@ class EmbeddingOODDetector:
         """
         diffs = embeddings - self._mean
         distances = np.sqrt(np.sum(diffs @ self._precision * diffs, axis=1))
-
-        results = []
-        for dist in distances:
-            dist_f = float(dist)
-            percentile = 0.0
-            if self._calibration_distances is not None:
-                idx = np.searchsorted(self._calibration_distances, dist_f)
-                percentile = 100.0 * idx / len(self._calibration_distances)
-            results.append(
-                OODResult(
-                    mahalanobis_distance=dist_f,
-                    is_ood=dist_f > self._threshold,
-                    percentile=percentile,
-                    threshold=self._threshold,
-                )
-            )
-        return results
+        return [self._build_result(float(dist)) for dist in distances]
 
     def save(self, path: str | Path) -> None:
         """Save detector parameters to disk.

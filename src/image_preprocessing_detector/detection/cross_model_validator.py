@@ -21,6 +21,7 @@ Usage:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -273,57 +274,46 @@ class CrossModelValidator:
         z_values: list[float] = []
 
         if vlm_ratings:
-            self._collect_vlm_scores(
-                vlm_ratings, siglip_scores, validator_scores, z_values
+            self._collect_validator_scores(
+                "vlm", vlm_ratings, siglip_scores, validator_scores, z_values
             )
 
         if clip_scores:
-            self._collect_clip_scores(
-                clip_scores, siglip_scores, validator_scores, z_values
+            self._collect_validator_scores(
+                "clip", clip_scores, siglip_scores, validator_scores, z_values
             )
 
         return validator_scores, z_values
 
-    def _collect_vlm_scores(
+    def _collect_validator_scores(
         self,
-        vlm_ratings: dict[str, str],
+        validator: str,
+        dim_scores: Mapping[str, str | float],
         siglip_scores: dict[str, float],
         out_scores: list[ValidatorScore],
         out_z: list[float],
     ) -> None:
-        """Collect VLM categorical z-scores for each dimension."""
-        for dim in DIMENSIONS:
-            if dim not in vlm_ratings:
-                continue
-            cat = vlm_ratings[dim]
-            z = self._calibrator.z_score_categorical(
-                f"vlm_{dim}", cat, siglip_scores[dim]
-            )
-            out_scores.append(
-                ValidatorScore(
-                    validator="vlm", dimension=dim, raw_output=cat, z_score=z
-                )
-            )
-            if z is not None:
-                out_z.append(z)
+        """Collect z-scores for a validator across dimensions.
 
-    def _collect_clip_scores(
-        self,
-        clip_scores: dict[str, float],
-        siglip_scores: dict[str, float],
-        out_scores: list[ValidatorScore],
-        out_z: list[float],
-    ) -> None:
-        """Collect CLIP-IQA continuous z-scores for each dimension."""
-        for dim, score in clip_scores.items():
-            if dim not in DIMENSIONS:
+        Args:
+            validator: Validator name ("vlm" or "clip").
+            dim_scores: Per-dimension ratings or scores from the validator.
+            siglip_scores: SigLIP reference scores per dimension.
+            out_scores: Accumulator for ValidatorScore results.
+            out_z: Accumulator for non-None z-score values.
+        """
+        for dim in DIMENSIONS:
+            if dim not in dim_scores:
                 continue
-            z = self._calibrator.z_score_continuous(
-                f"clip_{dim}", score, siglip_scores[dim]
-            )
+            raw = dim_scores[dim]
+            key = f"{validator}_{dim}"
+            if isinstance(raw, str):
+                z = self._calibrator.z_score_categorical(key, raw, siglip_scores[dim])
+            else:
+                z = self._calibrator.z_score_continuous(key, raw, siglip_scores[dim])
             out_scores.append(
                 ValidatorScore(
-                    validator="clip", dimension=dim, raw_output=score, z_score=z
+                    validator=validator, dimension=dim, raw_output=raw, z_score=z
                 )
             )
             if z is not None:
