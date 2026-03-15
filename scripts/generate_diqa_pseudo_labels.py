@@ -205,7 +205,12 @@ def main() -> None:
         sha_map = {r["image_path"]: r["sha256"] for r in chunk}
 
         def _make_progress(base_processed: int) -> Callable[[str, int, int], None]:
-            def _progress(dimension: str, processed: int, total: int) -> None:
+            def _progress(
+                dimension: str,
+                processed: int,
+                total: int,
+                start_time: float = start_time,
+            ) -> None:
                 elapsed = time.monotonic() - start_time
                 overall_done = base_processed + processed
                 rate = overall_done / max(elapsed, 0.001)

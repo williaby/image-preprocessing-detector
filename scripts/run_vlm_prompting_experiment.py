@@ -295,8 +295,10 @@ class OpenRouterVLMBackend(VLMBackend):
                     self.API_URL, data=payload, headers=headers, method="POST"
                 )
                 with (
-                    urllib_request.urlopen(req, timeout=120) as resp
-                ):  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+                    urllib_request.urlopen(
+                        req, timeout=120
+                    ) as resp  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  -- CLI-only script; URL is validated as HTTPS above (line 292)
+                ):
                     body = json.loads(resp.read().decode("utf-8"))
                 content = body["choices"][0]["message"].get("content")
                 if content is None:

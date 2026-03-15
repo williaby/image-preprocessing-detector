@@ -25,13 +25,17 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 from typing import Any
 
 import click
 import yaml
+
+from enrich_utils import dpi_to_category as _dpi_category
+from enrich_utils import get_image_properties as _get_image_props
+from enrich_utils import load_jsonl_registry
+from enrich_utils import now_iso as _now_iso
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -95,52 +99,10 @@ def _load_text() -> dict[str, Any]:
 
 
 def _load_registry() -> list[dict[str, Any]]:
-    entries: list[dict[str, Any]] = []
-    if _REGISTRY_PATH.exists():
-        with _REGISTRY_PATH.open("r") as fh:
-            for line in fh:
-                line = line.strip()
-                if line:
-                    entries.append(json.loads(line))
-    return entries
+    return load_jsonl_registry(_REGISTRY_PATH)
 
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _get_image_props(image_path: Path) -> dict[str, Any]:
-    """Extract image properties via Pillow."""
-    from PIL import Image
-
-    props: dict[str, Any] = {}
-    try:
-        with Image.open(image_path) as img:
-            props["width"] = img.width
-            props["height"] = img.height
-            props["color_mode"] = img.mode  # RGB, L, RGBA, etc.
-
-            # Try to get DPI from EXIF or image info
-            dpi_info = img.info.get("dpi")
-            if dpi_info and isinstance(dpi_info, tuple) and dpi_info[0] > 0:
-                props["dpi"] = int(dpi_info[0])
-            else:
-                props["dpi"] = None
-    except Exception as exc:
-        logger.warning("Failed to read image %s: %s", image_path, exc)
-    return props
-
-
-def _dpi_category(dpi: int | None) -> str:
-    if dpi is None:
-        return "medium_150-299"  # Conservative default for web downloads
-    if dpi < 150:
-        return "low_<150"
-    if dpi < 300:
-        return "medium_150-299"
-    if dpi == 300:
-        return "standard_300"
-    return "high_>300"
+# _now_iso, _get_image_props, _dpi_category imported from enrich_utils
 
 
 def _resolution_tier(width: int, height: int) -> str:
@@ -1332,7 +1294,9 @@ def audit_labels(sample_pct: float, output: Path, seed: int) -> None:
     sampled: list[dict[str, Any]] = []
     for stratum_key, entries in sorted(strata.items()):
         n_sample = max(1, int(len(entries) * sample_pct))
-        chosen = random.sample(entries, min(n_sample, len(entries)))
+        chosen = random.sample(
+            entries, min(n_sample, len(entries))
+        )  # NOSONAR S2245 — used for stratified sampling, not cryptography
         institution, script = stratum_key.split("|", 1)
         for entry in chosen:
             sampled.append(_build_audit_record(entry, catalog, institution, script))

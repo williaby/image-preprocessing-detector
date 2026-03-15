@@ -23,12 +23,17 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import click
 import yaml
+
+from enrich_utils import dpi_to_category as _dpi_category
+from enrich_utils import get_image_properties as _get_image_props
+from enrich_utils import load_jsonl_registry
+from enrich_utils import normalize_license as _normalize_license
+from enrich_utils import now_iso as _now_iso
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -142,65 +147,10 @@ def _load_catalog() -> dict[int, dict[str, Any]]:
 
 def _load_registry() -> list[dict[str, Any]]:
     """Load registry JSONL entries."""
-    entries: list[dict[str, Any]] = []
-    if _REGISTRY_PATH.exists():
-        with _REGISTRY_PATH.open("r") as fh:
-            for line in fh:
-                line = line.strip()
-                if line:
-                    entries.append(json.loads(line))
-    return entries
+    return load_jsonl_registry(_REGISTRY_PATH)
 
 
-def _now_iso() -> str:
-    """Return current timezone.utc time in ISO format."""
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _get_image_props(image_path: Path) -> dict[str, Any]:
-    """Extract image properties via Pillow."""
-    from PIL import Image
-
-    props: dict[str, Any] = {}
-    try:
-        with Image.open(image_path) as img:
-            props["width"] = img.width
-            props["height"] = img.height
-            props["color_mode"] = img.mode
-
-            dpi_info = img.info.get("dpi")
-            if dpi_info and isinstance(dpi_info, tuple) and dpi_info[0] > 0:
-                props["dpi"] = int(dpi_info[0])
-            else:
-                props["dpi"] = None
-    except Exception as exc:
-        logger.warning("Failed to read image %s: %s", image_path, exc)
-    return props
-
-
-def _dpi_category(dpi: int | None) -> str:
-    """Categorize DPI into resolution bands."""
-    if dpi is None:
-        return "medium_150-299"
-    if dpi < 150:
-        return "low_<150"
-    if dpi < 300:
-        return "medium_150-299"
-    if dpi == 300:
-        return "standard_300"
-    return "high_>300"
-
-
-def _normalize_license(raw: str) -> str:
-    """Normalize license strings to SPDX-like identifiers."""
-    mapping = {
-        "CC0": "CC0-1.0",
-        "CC-BY-4.0": "CC-BY-4.0",
-        "CC-BY-SA": "CC-BY-SA-4.0",
-        "public_domain": "PD",
-        "per-image": "mixed-open",
-    }
-    return mapping.get(raw, raw)
+# _now_iso, _get_image_props, _dpi_category, _normalize_license imported from enrich_utils
 
 
 def _document_age_from_date(date_range: str) -> str:
@@ -240,7 +190,7 @@ def _build_l2_record(
         typography, ("GOOD", 0.70)
     )
 
-    print_technology = cat.get("print_technology", "movable_type_letterpress")
+    # print_technology retrieved from catalog but used in _build_extended_entry instead
     date_range = cat.get("date_range", "unknown")
 
     gt_text = _JOHN_1_1_TEXT.get(script_code, "")

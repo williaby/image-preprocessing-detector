@@ -30,8 +30,13 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-# Default configuration
-DEFAULT_HOST = os.environ.get("DOCLING_HOST", "192.168.1.209")
+# Default configuration — host is read from DOCLING_HOST env var at import time.
+# The fallback IP is a LAN-local Docling server; override via DOCLING_HOST for
+# production or non-local deployments.
+_FALLBACK_HOST = (
+    "192.168.1.209"  # NOSONAR (S1313) — LAN-local default, overridden by env
+)
+DEFAULT_HOST = os.environ.get("DOCLING_HOST", _FALLBACK_HOST)
 DEFAULT_PORT = 5001
 DEFAULT_TIMEOUT = 300.0  # 5 minutes for large documents
 
@@ -133,9 +138,13 @@ class DoclingClient:
 
     @property
     def base_url(self) -> str:
-        """Base URL for the Docling server."""
-        # Local LAN service — TLS not available on Docling server
-        return f"http://{self.host}:{self.port}"
+        """Base URL for the Docling server.
+
+        Uses HTTP intentionally: the Docling server runs on a private LAN
+        segment without TLS termination.  For deployments that expose the
+        service over a public network, place it behind an HTTPS reverse proxy.
+        """
+        return f"http://{self.host}:{self.port}"  # NOSONAR (S5332) — private LAN service; see docstring
 
     def _get_client(self) -> httpx.Client:
         """Get or create the httpx client."""

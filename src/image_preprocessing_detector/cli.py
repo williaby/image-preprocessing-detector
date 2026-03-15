@@ -984,8 +984,9 @@ def deskew_cmd(
 @click.option(
     "--docling-host",
     type=str,
+    # NOSONAR (S1313) — LAN-local Docling server default; override via DOCLING_HOST env var
     default=os.environ.get("DOCLING_HOST", "192.168.1.209"),
-    help="Docling server hostname",
+    help="Docling server hostname (default: DOCLING_HOST env or 192.168.1.209)",
 )
 @click.option(
     "--docling-port",

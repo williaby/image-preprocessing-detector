@@ -134,6 +134,8 @@ def _expand2square(
     side = max(width, height)
     result = Image.new(pil_img.mode, (side, side), background_color)
     if width > height:
+        # Vertically center: side == width in this branch, so
+        # (side - height) // 2 is the correct y-offset.
         result.paste(pil_img, (0, (side - height) // 2))
     else:
         result.paste(pil_img, ((side - width) // 2, 0))

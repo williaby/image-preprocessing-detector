@@ -530,15 +530,15 @@ def print_summary(
     print("-" * 80)
 
     for c in sorted(correlations, key=lambda x: abs(x.spearman_r), reverse=True):
-        strength = (
-            "STRONG"
-            if abs(c.spearman_r) > 0.7
-            else "moderate"
-            if abs(c.spearman_r) > 0.5
-            else "weak"
-            if abs(c.spearman_r) > 0.3
-            else "negligible"
-        )
+        abs_r = abs(c.spearman_r)
+        if abs_r > 0.7:
+            strength = "STRONG"
+        elif abs_r > 0.5:
+            strength = "moderate"
+        elif abs_r > 0.3:
+            strength = "weak"
+        else:
+            strength = "negligible"
         sig = "YES" if c.significant_after_fdr else "no"
         print(
             f"{c.proxy_name:<25} {c.mos_dimension:<12} "
@@ -552,15 +552,15 @@ def print_summary(
     print("-" * 65)
 
     for e in sorted(effect_sizes, key=lambda x: abs(x.cohens_d), reverse=True):
-        effect = (
-            "large"
-            if abs(e.cohens_d) > 0.8
-            else "medium"
-            if abs(e.cohens_d) > 0.5
-            else "small"
-            if abs(e.cohens_d) > 0.2
-            else "negligible"
-        )
+        abs_d = abs(e.cohens_d)
+        if abs_d > 0.8:
+            effect = "large"
+        elif abs_d > 0.5:
+            effect = "medium"
+        elif abs_d > 0.2:
+            effect = "small"
+        else:
+            effect = "negligible"
         print(
             f"{e.proxy_name:<25} {e.cohens_d:>8.3f} "
             f"{e.ori_mean:>10.4f} {e.res_mean:>10.4f} {effect:>10}"

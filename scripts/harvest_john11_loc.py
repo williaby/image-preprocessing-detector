@@ -116,10 +116,21 @@ _RETRY_BACKOFF = 10.0  # seconds base backoff for 429 retries
 
 log = logging.getLogger("harvest_john11_loc")
 
+# Duplicated literal — extract constant (S1192)
+_USER_AGENT = "john11-harvest/1.0 (research)"
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _sanitize_log(value: str, max_len: int = 200) -> str:
+    """Sanitize a value for safe logging (strip control chars, truncate)."""
+    cleaned = "".join(c for c in str(value) if c >= " " and (c < "\x7f" or c > "\x9f"))
+    if len(cleaned) > max_len:
+        return cleaned[:max_len] + "..."
+    return cleaned
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -200,11 +211,16 @@ def _john_status(title: str) -> str:
 
 def _fetch_loc_api(url: str) -> dict[str, Any]:
     """Fetch JSON from LOC API with rate limiting and retry on 429."""
+    # Validate URL targets the expected LOC domain (S5144 — prevent SSRF)
+    if not url.startswith("https://www.loc.gov/"):
+        raise ValueError(
+            f"URL must target https://www.loc.gov/, got: {_sanitize_log(url, 100)}"
+        )
     for attempt in range(_MAX_RETRIES):
         time.sleep(_REQUEST_DELAY)
         resp = requests.get(
             url,
-            headers={"User-Agent": "john11-harvest/1.0 (research)"},
+            headers={"User-Agent": _USER_AGENT},
             timeout=30,
         )
         if resp.status_code == 429:
@@ -230,7 +246,8 @@ def _get_manuscript_pages(loc_id: str) -> list[dict[str, Any]]:
     """
     # LOC catalog IDs sometimes contain http:// URIs as identifiers.
     # Upgrade to https:// for secure transport (LOC API supports HTTPS).
-    clean_id = loc_id.replace("http://", "https://")
+    _HTTP_PREFIX = "http://"  # nosemgrep: python.lang.security.audit.insecure-transport.requests.request-session-with-http  -- string literal used only for replacement to https, never as a request URL
+    clean_id = loc_id.replace(_HTTP_PREFIX, "https://")
     item_url = clean_id.rstrip("/") + "/?fo=json"
     data = _fetch_loc_api(item_url)
 
@@ -368,7 +385,9 @@ def _extract_folio_count_from_title(title: str) -> int | None:
 
     # Safe from ReDoS: pattern (\d+)\s*f\. is linear-time (no nested
     # quantifiers or overlapping alternation) and input is a short title string.
-    match = re.search(r"(\d+)\s*f\.", title)
+    match = re.search(
+        r"(\d+)\s*f\.", title
+    )  # NOSONAR S5852 — linear-time pattern on bounded title string
     if match:
         return int(match.group(1))
     return None
@@ -608,7 +627,7 @@ def download_candidates(
         try:
             pages = _get_manuscript_pages(e["loc_id"])
         except Exception:
-            log.exception("Failed to get pages for %s", e["title"])
+            log.exception("Failed to get pages for %s", _sanitize_log(e["title"]))
             errors += 1
             continue
 
@@ -628,7 +647,7 @@ def download_candidates(
                 time.sleep(_DOWNLOAD_DELAY)
                 resp = requests.get(
                     page["url"],
-                    headers={"User-Agent": "john11-harvest/1.0 (research)"},
+                    headers={"User-Agent": _USER_AGENT},
                     timeout=60,
                 )
                 resp.raise_for_status()
@@ -636,13 +655,17 @@ def download_candidates(
                 downloaded += 1
                 log.debug("Downloaded %s (%d bytes)", out_path.name, len(resp.content))
             except Exception:
-                log.exception("Failed to download page %d of %s", page_num, e["title"])
+                log.exception(
+                    "Failed to download page %d of %s",
+                    page_num,
+                    _sanitize_log(e["title"]),
+                )
                 errors += 1
 
         log.info(
             "Processed %s (%s) — %d candidate pages",
-            e["title"][:50],
-            e["script"],
+            _sanitize_log(e["title"], 50),
+            _sanitize_log(e["script"]),
             len(e["candidate_pages"]),
         )
 
@@ -708,8 +731,7 @@ def harvest(
 
     harvested = 0
     errors = 0
-    catalog = _load_catalog()
-    catalog_by_id = {m["loc_id"]: m for m in catalog}
+    _load_catalog()  # validate catalog loads successfully
 
     for e in estimates:
         target_page = e.get("confirmed_page")
@@ -738,7 +760,7 @@ def harvest(
                     "Page %d exceeds total %d for %s",
                     target_page,
                     len(pages),
-                    e["title"],
+                    _sanitize_log(e["title"]),
                 )
                 errors += 1
                 continue
@@ -747,7 +769,7 @@ def harvest(
             time.sleep(_DOWNLOAD_DELAY)
             resp = requests.get(
                 page_info["url"],
-                headers={"User-Agent": "john11-harvest/1.0 (research)"},
+                headers={"User-Agent": _USER_AGENT},
                 timeout=60,
             )
             resp.raise_for_status()
@@ -781,13 +803,13 @@ def harvest(
             harvested += 1
             log.info(
                 "Harvested %s page %d → %s (%d bytes)",
-                e["title"][:40],
+                _sanitize_log(e["title"], 40),
                 target_page,
                 filename,
                 len(resp.content),
             )
         except Exception:
-            log.exception("Failed to harvest %s", e["title"])
+            log.exception("Failed to harvest %s", _sanitize_log(e["title"]))
             errors += 1
 
     click.echo(f"\nHarvested {harvested} images ({errors} errors) to {loc_dir}")
@@ -808,8 +830,7 @@ def register(script: str | None) -> None:
         log.error("No LOC harvest directory at %s", loc_dir)
         sys.exit(1)
 
-    catalog = _load_catalog()
-    catalog_by_id = {m["loc_id"]: m for m in catalog}
+    _load_catalog()  # validate catalog loads; index not needed here
 
     images = sorted(loc_dir.glob("*.jpg"))
     if script:
@@ -840,7 +861,7 @@ def register(script: str | None) -> None:
 
         collection = parts[1]
         script_code = parts[2]
-        rest = parts[3]  # {ms_slug}_p{page}
+        # parts[3] is {ms_slug}_p{page} — not needed for registration
 
         sample_id = f"john11_{script_code.lower()}_loc_{uuid.uuid4().hex[:8]}"
         source_institution = f"loc_{collection}"

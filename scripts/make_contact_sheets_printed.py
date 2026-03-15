@@ -185,7 +185,7 @@ def _generate_sheets(
             make_contact_sheet(batch, out_path, title=title)
 
 
-def _generate_by_source(entries: list[dict], catalog: dict, image_dir: Path) -> None:
+def _generate_by_source(entries: list[dict], _catalog: dict, image_dir: Path) -> None:
     """Generate contact sheets grouped by source institution."""
     groups: dict[str, list[Path]] = defaultdict(list)
     for entry in entries:
@@ -197,7 +197,7 @@ def _generate_by_source(entries: list[dict], catalog: dict, image_dir: Path) -> 
     _generate_sheets(groups, _OUT_DIR / "by_source", "printed_src", "Source")
 
 
-def _generate_by_script(entries: list[dict], catalog: dict, image_dir: Path) -> None:
+def _generate_by_script(entries: list[dict], _catalog: dict, image_dir: Path) -> None:
     """Generate contact sheets grouped by script_iso15924."""
     groups: dict[str, list[Path]] = defaultdict(list)
     for entry in entries:

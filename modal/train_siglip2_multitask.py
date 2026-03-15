@@ -1257,13 +1257,20 @@ def _create_multitask_dataset(
                 for iqa_dim in IQA_DIMENSIONS:
                     if iqa_dim in entry:
                         raw_val = float(entry[iqa_dim])
-                        # If value > 1.05, treat as MOS (1-5 scale) to normalize.
-                        # Threshold is 1.05 rather than 1.0 to tolerate minor
-                        # floating-point overshoot in pre-normalized scores.
-                        if raw_val > 1.05:
+                        # Distinguish MOS-scale (1-5) from pre-normalized (0-1).
+                        # Values > 1.0 must be on the MOS 1-5 scale; normalize
+                        # to [0, 1].  Values <= 1.0 are pre-normalized and
+                        # clamped to handle minor floating-point overshoot.
+                        # Edge case: MOS=1.0 (worst quality, maps to 0.0 after
+                        # normalization) is indistinguishable from a perfect
+                        # pre-normalized score of 1.0.  We keep it as 1.0
+                        # because exact MOS=1.0 is vanishingly rare in real
+                        # data, whereas pre-normalized=1.0 is common for
+                        # high-quality born-digital documents.
+                        if raw_val > 1.0:
                             sample["labels"][iqa_dim] = self._normalize_mos(raw_val)
                         else:
-                            sample["labels"][iqa_dim] = raw_val
+                            sample["labels"][iqa_dim] = max(0.0, min(raw_val, 1.0))
                         # Support fractional sample weights for pseudo-labels
                         iqa_weight = float(entry.get("iqa_sample_weight", 1.0))
                         sample["task_masks"][iqa_dim] = iqa_weight

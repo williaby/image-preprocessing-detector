@@ -84,13 +84,16 @@ flags heads at risk of under-coverage.
 - **SIG-G4-3 content_type (specialized)**: 5d provides 50 specialized images and 9d-2 provides 50 CJK content. Ensure all have `handwriting_content_type` labels. If below 100, add 50 images from hand-notation (formula notebooks, engineering drawings) to 5d. **Current**: 550 `handwriting_content_type` labels — OK at category level, verify specialized sub-class count.
 - **SIG-G4-5 legibility_reg**: Depends on KHATT images carrying `handwriting_legibility_score` float labels (not just categorical). Verify during KHATT acquisition. **Current**: 0 `handwriting_legibility_score` labels — AT RISK.
 
-**At-risk heads (0 or near-0 labeled images as of 2026-03-06):**
+**At-risk heads (3 zero-label, 1 low-label as of 2026-03-06):**
 
 - **skew_score**: 0 labeled — requires trained MobileNetV4 skew head inference
-- **handwriting_legibility**: 15 labeled — needs human annotators for IIIT-INDIC/KHATT/CASIA-HWDB2
-- **handwriting_legibility_score**: 0 labeled — same as above, continuous score variant
+- **handwriting_legibility_score**: 0 labeled — needs human annotators for IIIT-INDIC/KHATT/CASIA-HWDB2 (continuous score variant)
 - **resolution_quality**: 0 labeled — run `label_resolution_quality.py` on 365 ood_resolution images
-- **code_confidence**: 500 labeled in registry — no longer at risk (was incorrectly listed as at-risk in gap report; `code_confidence` is populated for OOD-Code entries)
+- **handwriting_legibility**: 15 labeled — needs human annotators for IIIT-INDIC/KHATT/CASIA-HWDB2
+
+**No longer at risk:**
+
+- **code_confidence**: 500 labeled in registry (was incorrectly listed as at-risk in gap report; `code_confidence` is populated for OOD-Code entries)
 
 ---
 
@@ -101,7 +104,7 @@ consensus review (2026-02-23) determined:
 
 - 4,900 images provides only ±14% confidence interval (CI) at 95% confidence per head
 - Minimum 500 images per head for ±7% CI
-- 22 heads × 550 images = 12,100 theoretical minimum
+- 19 heads × 550 images = 10,450 theoretical minimum (rounded up to 12K for cross-category overlap)
 - **Target: 12,000–15,000 total images**
 
 If scaling to 15,000 is not feasible before Phase 2 training, all OOD results must be formally
@@ -129,7 +132,7 @@ An image is ideal for the OOD evaluation corpus when it satisfies ALL of the fol
    clearly defined, documented dimension. For OOD-Mixed, each compound dimension is individually
    labeled so per-dimension performance can be measured.
 
-2. **Fully labeled**: Carries complete ground-truth labels for all 22 heads applicable to its
+2. **Fully labeled**: Carries complete ground-truth labels for all 19 heads applicable to its
    category. Partial-label images cannot be used for per-head performance measurement.
 
 3. **Dedup-verified**: Passes SHA256 + pHash dedup (Hamming ≤ 5) against ALL training datasets,
@@ -241,11 +244,11 @@ Each OOD category evaluates robustness in conditions not represented in its corr
 | **OOD-Degradation** | iqa, shadow | 4, 8 | SIG-G1-1, SIG-G1-2, SIG-G1-3 (DIQA 3-dim), SIG-G5-2 | ≥5 simultaneous distortion types; book gutter shadow gradient not in sd7k; binarized `color_mode` absent |
 | **OOD-Handwriting** | handwriting | 6 | SIG-G4-1, SIG-G4-2, SIG-G4-3, SIG-G4-4, SIG-G4-5 | ILLEGIBLE class absent from training; non-Latin handwriting (Arab/CJK/Deva); `specialized` content type |
 | **OOD-Resolution** | resolution-quality | 3 | MNV4-H3, SIG-G5-5 | Born-digital low-DPI paradox (large font → high char-height at 72 DPI); 2×/4× upscale artifact detection |
-| **OOD-Domain** | script-detection (secondary) | 5 | All 22 heads (robustness) | Novel domain combos: government forms, religious texts, thermal receipts — cross-domain generalization |
+| **OOD-Domain** | script-detection (secondary) | 5 | All 19 heads (robustness) | Novel domain combos: government forms, religious texts, thermal receipts — cross-domain generalization |
 | **OOD-Code** | code-detection | 10 | SIG-G5-4 | IDE screenshots, mixed prose+code (arXiv/Jupyter), terminal output — outside generation-script distribution |
 | **OOD-Mixed** | orientation, skew, iqa, shadow, warping | 1, 2, 4, 8, 9 | MNV4-H1, MNV4-H2, SIG-G1-1, SIG-G1-2, SIG-G1-3 (DIQA 3-dim), SIG-G3-1, SIG-G3-2, SIG-G5-2, SIG-G5-3 | Cascade failures: Mongolian TTB + aged + perspective; CJK HW + gutter shadow; binarized + extreme compression |
 
-> **Note**: OOD-Domain tests all 22 heads for general robustness. Its secondary link to #5 (script-detection) reflects the Fraktur/Ottoman Arabic sub-sources in Phase 1 of acquisition.
+> **Note**: OOD-Domain tests all 19 heads for general robustness. Its secondary link to #5 (script-detection) reflects the Fraktur/Ottoman Arabic sub-sources in Phase 1 of acquisition.
 
 ---
 
@@ -691,7 +694,7 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 > absent or severely underrepresented in the training domain distribution*: non-English government
 > administrative forms, religious/liturgical texts (Hebrew RTL, Arabic Quran, Sanskrit Devanagari),
 > and technical manuals with dense mixed content. These test general backbone robustness for all
-> 22 heads, with script (SIG-G2-1), IQA Group 1, and orientation heads (MNV4-H1, SIG-G3-1) as
+> 19 heads, with script (SIG-G2-1), IQA Group 1, and orientation heads (MNV4-H1, SIG-G3-1) as
 > primary evaluations. Performance target: no head should degrade more than 10% relative to
 > in-distribution performance. Exclusion criteria: government forms containing PII — use only
 > blank/template forms or explicitly de-identified images.
@@ -701,13 +704,13 @@ All scripts accept `--output-dir` and `--registry` to override defaults if neede
 Before full OOD-Domain acquisition, run a domain smoke test:
 
 - 100 ArXiv PDF pages (freely available via arXiv API)
-- Run all 22 heads at inference
+- Run all 19 heads at inference
 - Establish baseline coverage and failure modes
 - Required gate before declaring OOD-Domain acquisition viable
 - Status: ✅ 99 ArXiv PDF pages registered via `arxiv_pdf_render` — smoke test coverage available
 
 This is re-prioritized to P0 (from P1) per corpus review 2026-02-21: 100 ArXiv PDFs are
-trivially acquirable and test all 22 heads simultaneously on a novel born-digital domain.
+trivially acquirable and test all 19 heads simultaneously on a novel born-digital domain.
 This unblocks domain coverage analysis before committing to the full 500-image acquisition.
 
 #### 7a. Non-English government forms — target: 250 images
@@ -840,7 +843,7 @@ fully covered by 9a-1 through 9d-3 and require dedicated test image acquisition.
 - **Expected behavior**: Quality heads should output near-1.0 (high quality); classification
   heads (script, capture) should produce correct predictions; orientation/skew heads should
   NOT apply correction to correctly-oriented clean documents
-- **Heads stressed**: All 22 heads (false positive rate measurement)
+- **Heads stressed**: All 19 heads (false positive rate measurement)
 - **Status**: ❌ Not yet acquired — add as OOD-Mixed sub-source 9e-2 (P1)
 
 ---
@@ -927,7 +930,7 @@ page attribute heads, with some specifically testing cross-model cascade behavio
   near 45° (diagonal) making both capture classification and orientation detection ambiguous
 - **Cascade tested**: MNV4-H1 cannot determine if diagonal content is 45° skew or 45°-rotated
   document; screen recapture artifacts degrade all IQA signals
-- **Heads stressed**: MNV4-H1, MNV4-H2, SIG-G1-1 through G1-6, SIG-G5-1 (capture_cls)
+- **Heads stressed**: MNV4-H1, MNV4-H2, SIG-G1-1 through G1-3 (all IQA), SIG-G5-1 (capture_cls)
 - **Performance targets**:
   - MNV4-H1: confidence < 0.9 on ≥ 60% of diagonal images (abstention expected)
   - SIG-G5-1: correctly classify as `camera_smartphone` or related capture class ≥ 70%
@@ -1099,11 +1102,11 @@ assessment interact — the model must jointly reason about all three.
 - **Expected behavior**: Quality score near 1.0; correct class predictions; no spurious corrections
 - **Sources**: 200 images drawn from OOD-Domain Phase 7 (gov forms, religious texts, receipts),
   which may partially overlap with 7a–7c sub-sources (use as cross-category)
-- **Labels**: All 22 heads labeled; expected values: high quality (>0.8), correct script, no
+- **Labels**: All 19 heads labeled; expected values: high quality (>0.8), correct script, no
   shadow/warping, no spurious correction triggers
 - **Target**: False positive rate < 10% on any head (spurious correction trigger or quality flag
   below 0.5 on a pristine document)
-- **Heads**: All 22 (false positive rate evaluation)
+- **Heads**: All 19 (false positive rate evaluation)
 - `ood_categories`: `["ood_domain", "ood_mixed"]`
 - `evaluation_pipeline_stage`: `["mobilenetv4", "siglip2"]`
 
@@ -1116,16 +1119,16 @@ assessment interact — the model must jointly reason about all three.
 | 9a-1. Symmetric document ambiguity | 100 | MNV4-H1, SIG-G3-1 | Yes |
 | 9a-2. Camera perspective >30° | 100 | MNV4-H2, SIG-G5-3 | Yes |
 | 9b-1. 5+ distortions + book gutter | 80 | All G1 + G5-2 + G5-3 | No |
-| 9b-2. Screen recapture + orientation | 60 | MNV4-H1, MNV4-H2, All G1, G5-1 | Yes |
-| 9b-3. Aged + fax + bleed-through | 60 | All G1 (especially G1-6) | No |
+| 9b-2. Screen recapture + orientation | 60 | MNV4-H1, MNV4-H2, All G1 (3 IQA), G5-1 | Yes |
+| 9b-3. Aged + fax + bleed-through | 60 | All G1 (especially G1-1 iqa_overall) | No |
 | 9c-1. Mongolian + aged + perspective | 60 | G2-1 (open-set), MNV4-H2, G5-3 | Yes |
-| 9c-2. Arabic binarized + JPEG | 50 | G2-1, G1-5, G5-2 | No |
-| 9c-3. Historical multi-script | 40 | G2-1, G4-1, G1-6 | No |
-| 9d-1. ILLEGIBLE Arabic + low-quality | 60 | G4-1, G4-2, G2-1, G1-6 | No |
+| 9c-2. Arabic binarized + JPEG | 50 | G2-1, G1-1, G1-2, G5-2 | No |
+| 9c-3. Historical multi-script | 40 | G2-1, G4-1, G1-1 | No |
+| 9d-1. ILLEGIBLE Arabic + low-quality | 60 | G4-1, G4-2, G2-1, G1-1 | No |
 | 9d-2. CJK handwriting + gutter shadow | 50 | G4-1, G4-3, G5-2, G2-1 | No |
 | 9d-3. Form fill-in + skew | 40 | MNV4-H2, G4-1, G4-4, G5-1 | Yes |
 | 9e-1. Vector PDF resolution cascade | 100 | MNV4-H3, SIG-G5-5 | Yes |
-| 9e-2. Clean-but-novel false positive | 200 | All 22 | No |
+| 9e-2. Clean-but-novel false positive | 200 | All 19 | No |
 | **Total** | **1,000** | | |
 
 ---

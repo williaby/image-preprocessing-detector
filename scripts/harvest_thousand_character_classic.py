@@ -27,7 +27,6 @@ Requires:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import time
@@ -39,6 +38,10 @@ from typing import Any
 import click
 import requests
 import yaml
+
+from harvest_utils import append_entry as _append_entry
+from harvest_utils import compute_sha256 as _compute_sha256
+from harvest_utils import load_registry as _load_registry
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -121,36 +124,7 @@ _IIIF_FALLBACK_MAX = "/full/max/"
 # ---------------------------------------------------------------------------
 
 
-def _compute_sha256(filepath: Path) -> str:
-    """Compute SHA256 hex digest of a file."""
-    hasher = hashlib.sha256()
-    with filepath.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(65_536), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
-def _load_registry(registry_path: Path) -> tuple[set[str], list[dict[str, Any]]]:
-    """Load existing registry entries, returning (sha256_set, entries_list)."""
-    sha_set: set[str] = set()
-    entries: list[dict[str, Any]] = []
-    if registry_path.exists():
-        with registry_path.open("r") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                entry = json.loads(line)
-                sha_set.add(entry["sha256"])
-                entries.append(entry)
-    return sha_set, entries
-
-
-def _append_entry(entry: dict[str, Any], registry_path: Path) -> None:
-    """Append a single JSONL entry to the registry."""
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
-    with registry_path.open("a") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+# _compute_sha256, _load_registry, _append_entry imported from harvest_utils
 
 
 def _build_entry(

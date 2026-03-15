@@ -59,6 +59,9 @@ EXPECTED_COUNTS = {"train": 3500, "val": 500, "test": 1000}
 # Checkpoint path within volume (saved by train_siglip2_iqa_v2.py)
 CHECKPOINT_SUBPATH = "siglip2/siglip2_iqa_best.pt"
 
+# Path to source code inside the Modal container
+APP_SRC_PATH = "/app/src"
+
 # Container image with all dependencies + source code
 extraction_image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -81,7 +84,7 @@ extraction_image = (
         "click>=8.1.0",
         "tqdm",
     )
-    .add_local_dir("src", "/app/src")
+    .add_local_dir("src", APP_SRC_PATH)
 )
 
 # GCS credentials secret
@@ -224,7 +227,7 @@ def extract_all_splits(
     import numpy as np
 
     # Add source package to path (/app/src/image_preprocessing_detector/)
-    sys.path.insert(0, "/app/src")
+    sys.path.insert(0, APP_SRC_PATH)
 
     # Save original np.array before import (openlid_integration monkey-patches it)
     _original_np_array = np.array
@@ -463,7 +466,7 @@ def fit_ood_detector() -> dict:
 
     import numpy as np
 
-    sys.path.insert(0, "/app/src")
+    sys.path.insert(0, APP_SRC_PATH)
 
     # Save original np.array before import (openlid_integration monkey-patches it)
     _original_np_array = np.array

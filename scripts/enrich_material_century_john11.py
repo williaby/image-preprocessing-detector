@@ -311,7 +311,17 @@ def enrich_one_file(
     Returns:
         True if the file was (or would be) updated, False if already enriched.
     """
-    record = json.loads(json_path.read_text(encoding="utf-8"))
+    # Path traversal guard: ensure json_path resolves within the expected L2
+    # directory and is not a symlink escape.  The caller already filters via
+    # is_relative_to, but we validate again at write time for defense-in-depth.
+    resolved = json_path.resolve()
+    expected_parent = L2_DIR.resolve()
+    if not resolved.is_relative_to(expected_parent):
+        raise ValueError(
+            f"Path traversal blocked: {json_path} resolves outside {expected_parent}"
+        )
+
+    record = json.loads(resolved.read_text(encoding="utf-8"))
 
     if "material_and_dating" in record.get("data", {}):
         return False
@@ -323,7 +333,7 @@ def enrich_one_file(
 
     if not dry_run:
         record["data"]["material_and_dating"] = block
-        json_path.write_text(
+        resolved.write_text(
             json.dumps(record, ensure_ascii=False, indent=4),
             encoding="utf-8",
         )

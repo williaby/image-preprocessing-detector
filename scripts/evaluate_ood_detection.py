@@ -64,7 +64,10 @@ def compute_fpr_at_tpr(
         False positive rate at the target TPR.
     """
     fpr, tpr, _ = roc_curve(labels, scores)
-    # Find the threshold where TPR >= target_tpr
+    # Note: TPR from sklearn.metrics.roc_curve is monotonically non-decreasing
+    # by construction (thresholds are sorted descending, TPR can only stay or rise).
+    # np.nonzero(tpr >= target_tpr)[0] therefore always returns the first optimal
+    # operating point — no need for additional sorting or clipping.
     indices = np.nonzero(tpr >= target_tpr)[0]
     if len(indices) == 0:
         return float(fpr[-1])

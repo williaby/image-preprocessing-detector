@@ -203,9 +203,11 @@ class CrossModelValidator:
         # Tier 1: Embedding OOD
         ood_result = self.validate_tier1(prediction)
 
-        # Decide whether to invoke Tier 2
+        # Decide whether to invoke Tier 2.
+        # Skip Tier 2 entirely when the image is in-distribution and the caller
+        # did not explicitly request it — even when external scores were supplied.
         run_tier2 = ood_result.is_ood or force_tier2
-        if not run_tier2 and vlm_ratings is None and clip_scores is None:
+        if not run_tier2:
             return ReliabilityResult(
                 ood_result=ood_result,
                 tier2_invoked=False,
@@ -252,6 +254,12 @@ class CrossModelValidator:
         clip_scores: dict[str, float] | None,
     ) -> tuple[list[ValidatorScore], list[float]]:
         """Collect z-scores from VLM and CLIP validators.
+
+        Only dimensions listed in the module-level ``DIMENSIONS`` constant are
+        scored.  VLM ratings use DIMENSIONS as the iteration source (ignoring
+        extra keys in *vlm_ratings*), while CLIP scores iterate over the
+        caller-supplied dict and filter against DIMENSIONS — both approaches
+        silently skip unknown dimension keys.
 
         Args:
             siglip_scores: SigLIP2 IQA scores per dimension.

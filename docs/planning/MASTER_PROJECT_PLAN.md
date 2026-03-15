@@ -692,8 +692,9 @@ communicating over stdin/stdout JSONL protocol. This avoids dependency conflicts
 **Output schema** (per image, gated JSONL):
 
 > **Join key**: `sha256` is the stable, portable join key for merging pseudo-labels into the
-> training manifest. `image_path` is included for debugging/provenance only and may contain
-> host-local absolute paths.
+> training manifest. `image_path` is included for debugging/provenance only and should use
+> dataset-relative paths (e.g., `iqa/phase1/images/sample_042.jpg`) rather than host-local
+> absolute paths.
 
 ```json
 {
@@ -1178,13 +1179,13 @@ color_fidelity). This checklist tracks all propagation changes.
 
 - **Pseudo-labels** (JSONL): `overall_label`, `sharpness_label`, `color_fidelity_label` — raw DeQA-Doc output
 - **Model heads / canonical external** (runtime): `iqa_overall`, `iqa_sharpness`, `iqa_color` — SigLIP 2 prediction output; use these in all new code and documentation
-- **Enrichment schema**: `deqa_overall`, `deqa_sharpness`, `deqa_color_fidelity` — metadata provenance fields (prefix distinguishes label source from model output)
+- **Enrichment schema**: `diqa_overall`, `diqa_sharpness`, `diqa_color_fidelity` — metadata provenance fields in annotation schemas (prefix distinguishes label source from model output)
 
 ### Schema Changes
 
 | # | File | Change | Priority |
 | --- | --- | --- | --- |
-| S1 | `annotation/schemas/enrichment.py` | Add `deqa_overall`, `deqa_sharpness`, `deqa_color_fidelity` (float 0-1), `deqa_*_level_probs` (list[float]), `deqa_model_name`, `deqa_model_version` fields to `EnrichmentData` | HIGH |
+| S1 | `annotation/schemas/enrichment.py` | Add `diqa_overall`, `diqa_sharpness`, `diqa_color_fidelity` (float 0-1), `diqa_*_level_probs` (list[float]), `diqa_model_name`, `diqa_model_version` fields to `EnrichmentData` | HIGH |
 | S2 | `annotation/schemas/enrichment.py` | Add `ood_mahalanobis_distance`, `ood_percentile`, `ood_acceptance_tier`, `ood_sample_weight`, `ood_label_source` fields to `EnrichmentData` | HIGH |
 | S3 | `annotation/schemas/enrichment.py` | Deprecate old `ml_iqa_blur/noise/contrast/compression/skew` fields (keep for backward compat, add deprecation comment) | MEDIUM |
 
