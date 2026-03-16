@@ -29,7 +29,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -334,7 +334,7 @@ def update_vlm_corrections(
     # Add/update content_flag_analysis
     vlm_data["content_flag_analysis"] = content_flag_analysis
     vlm_data["content_flag_analysis_metadata"] = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "generated_by": "enrich_content_flag_analysis.py",
         "method": "provenance_tier_assessment",
     }

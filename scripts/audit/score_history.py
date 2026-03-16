@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -95,7 +95,7 @@ def append_to_history(
     path = _history_path(dataset, results_dir=results_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    ts = timestamp or datetime.now(UTC).isoformat()
+    ts = timestamp or datetime.now(timezone.utc).isoformat()
     dimension_scores = scorecard.get("dimension_scores", {})
 
     snapshot = ScoreSnapshot(

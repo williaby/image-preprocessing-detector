@@ -71,7 +71,7 @@ import logging
 import threading
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +99,9 @@ class CheckpointInfo:
     processed_count: int
     last_path: str
     last_hash: str
-    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     version: int = 1
 
     def to_dict(self) -> dict[str, Any]:
@@ -125,7 +127,7 @@ class CheckpointInfo:
             processed_count=data["processed_count"],
             last_path=data["last_path"],
             last_hash=data["last_hash"],
-            timestamp=data.get("timestamp", datetime.now(UTC).isoformat()),
+            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
             version=data.get("version", 1),
         )
 
@@ -486,7 +488,7 @@ class BatchCheckpointInfo(CheckpointInfo):
             processed_count=data["processed_count"],
             last_path=data["last_path"],
             last_hash=data["last_hash"],
-            timestamp=data.get("timestamp", datetime.now(UTC).isoformat()),
+            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
             version=data.get("version", 2),  # Version 2 for batch checkpoints
             batch_idx=data.get("batch_idx", 0),
             batch_size=data.get("batch_size", 32),

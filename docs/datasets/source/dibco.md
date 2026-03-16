@@ -1,3 +1,16 @@
+---
+dataset_id: dibco
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - general
+baseline_quality: null
+training_suitable: false
+benchmark_suitable: true
+documentation_status: complete
+---
+
 ### dibco (Document Image Binarization Competition)
 
 > **Quick Stats**: 343 images (212 train + 131 competition test) | 2009-2019 competitions | Extreme degradation test
@@ -246,7 +259,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

@@ -185,7 +185,7 @@ Coverage and distribution statistics for the MLT-19 dataset across train/test sp
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 19,657 |
+| **Total Images** | 19,657 (local; paper cites ~20,000; 336 source images unavailable) |
 | **Training Split** | 10,000 (50.9%) |
 | **Test Split** | 9,657 (49.1%) |
 | **Image Dimensions** | Variable (scene photos) |
@@ -473,23 +473,23 @@ Scene text captured via camera/smartphone with variable real-world lighting, per
 | VR-002 | iso639_language | medium | ACCEPTED |  |
 | VR-003 | iso639_language | low | ACCEPTED |  |
 | VR-004 | iso639_language | low | ACCEPTED |  |
-| D01 | split | ? | RESOLVED |  |
-| D02 | domain_level1 | ? | PARTIALLY_RESOLVED |  |
-| D03 | script_family | ? | RESOLVED |  |
-| D04 | orientation_class | ? | RESOLVED |  |
-| D05 | image_properties_color_mode | ? | RESOLVED |  |
-| D06 | handwriting_present | ? | RESOLVED |  |
-| D07 | iso639_language | ? | RESOLVED |  |
-| D08 | text_has_content (text_statistics) | ? | DEFERRED |  |
-| D09 | layout_detections[*].class_name | ? | RESOLVED |  |
-| D10 | has_figure | ? | RESOLVED |  |
-| D11 | iso15924_script | ? | RESOLVED |  |
-| D12 | quality_overall | ? | DEFERRED |  |
-| D13 | layout_detections (empty) | ? | DEFERRED |  |
+| D01 | split | medium | RESOLVED | Split derived from source.split field. |
+| D02 | domain_level1 | medium | PARTIALLY_RESOLVED | SCN blanket override + LLM enrichment. 80.7% remain UNK (expected for scene text per KI-007). |
+| D03 | script_family | medium | RESOLVED | Derived from iso15924_script via get_script_family(). |
+| D04 | orientation_class | low | RESOLVED | Default 0 (upright) with confidence 0.5 for scene text. |
+| D05 | image_properties_color_mode | low | RESOLVED | All color (camera-captured natural images). |
+| D06 | handwriting_present | medium | RESOLVED | Populated from has_handwriting with VLM corrections (3 true positives). |
+| D07 | iso639_language | medium | RESOLVED | Multi-script per-image language detection integrated. |
+| D08 | text_has_content (text_statistics) | medium | DEFERRED | Text extraction not yet run for scene text images. |
+| D09 | layout_detections[*].class_name | medium | RESOLVED | Layout labels standardized to DocLayNet taxonomy via standardize_layout_labels.py. |
+| D10 | has_figure | medium | RESOLVED | Verified via VLM inspection; false positives corrected. |
+| D11 | iso15924_script | medium | RESOLVED | Derived from multi-script detection. |
+| D12 | quality_overall | low | DEFERRED | Quality scoring not yet implemented for scene text. |
+| D13 | layout_detections (empty) | medium | DEFERRED | 2,492 samples (12.7%) with empty layout detections. |
 
 ##### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ##### 11.4 Cross-Dataset Findings
 

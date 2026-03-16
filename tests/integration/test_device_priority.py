@@ -88,6 +88,7 @@ class TestDeviceDetection:
 
     def test_get_recommended_device_with_no_gpu(self) -> None:
         """Test device recommendation when GPU is unavailable."""
+        import image_preprocessing_detector.utils.device_probe as _dp_module
         from image_preprocessing_detector.utils.device_probe import (
             clear_device_cache,
             get_recommended_device,
@@ -95,8 +96,8 @@ class TestDeviceDetection:
 
         # Mock no GPU scenario
         with (
-            patch("image_preprocessing_detector.utils.device_probe.torch", None),
-            patch("image_preprocessing_detector.utils.device_probe.ort", None),
+            patch.object(_dp_module, "torch", None),
+            patch.object(_dp_module, "ort", None),
         ):
             clear_device_cache()
             device = get_recommended_device(prefer_gpu=True, allow_cpu_fallback=True)
@@ -104,6 +105,7 @@ class TestDeviceDetection:
 
     def test_get_recommended_device_raises_when_no_fallback(self) -> None:
         """Test that error is raised when no compute resources and fallback disabled."""
+        import image_preprocessing_detector.utils.device_probe as _dp_module
         from image_preprocessing_detector.utils.device_probe import (
             clear_device_cache,
             get_recommended_device,
@@ -111,10 +113,11 @@ class TestDeviceDetection:
 
         # Mock no resources scenario (this should be rare in practice)
         with (
-            patch("image_preprocessing_detector.utils.device_probe.torch", None),
-            patch("image_preprocessing_detector.utils.device_probe.ort", None),
-            patch(
-                "image_preprocessing_detector.utils.device_probe.multiprocessing.cpu_count",
+            patch.object(_dp_module, "torch", None),
+            patch.object(_dp_module, "ort", None),
+            patch.object(
+                _dp_module.multiprocessing,
+                "cpu_count",
                 return_value=0,
             ),
         ):

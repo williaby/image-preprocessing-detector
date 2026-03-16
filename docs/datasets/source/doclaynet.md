@@ -437,19 +437,19 @@ At 81K images, DocLayNet processing requires:
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | split | ? | RESOLVED | Split not derived from COCO GT membership. All samples had split=unknown. |
-| D02 | domain_level1 | ? | RESOLVED | Domain classification was 100% UNK. GT JSON doc_category provides ground truth d |
-| D03 | script_family | ? | RESOLVED | KI-008: script_family contained 'ltr' (directionality) instead of proper ISO 159 |
-| D04 | iso639_language | ? | RESOLVED | KI-009: Blanket 'en' from language enrichment stub misclassified non-English pag |
-| D05 | layout_detections | ? | PARTIAL | 12,368 samples missing layout detections. Docling layout preserved for 69,103 sa |
-| D06 | text_has_content | ? | RESOLVED | text_has_content was FALSE/null for all samples despite GT JSON containing word- |
-| D07 | orientation_class | ? | RESOLVED | Orientation class not populated. Born-digital dataset has no rotation. |
-| D08 | image_properties_color_mode | ? | RESOLVED | Color mode not populated. |
-| D09 | handwriting_present | ? | RESOLVED | Handwriting flag not populated. Born-digital professional documents have no hand |
-| D10 | text_direction | ? | RESOLVED | v2.3.0 text_direction field not populated. |
-| D11 | text_directions_present | ? | RESOLVED | v2.3.0 text_directions_present field not populated. |
-| D12 | schema_version | ? | RESOLVED | Schema version was v2.1, needed upgrade to v2.3.0. |
-| D13 | content_flags | ? | RESOLVED | Content flags were from Docling only (soft labels). COCO GT provides ground trut |
+| D01 | split | high | RESOLVED | Split not derived from COCO GT membership. All samples had split=unknown. Fixed: 69,374 train / 6,489 val / 4,999 test. |
+| D02 | domain_level1 | high | RESOLVED | Domain was 100% UNK. Fixed: mapped GT JSON doc_category (FIN 32.2%, TEC 29.4%, SCI 17.4%, LEG 15.6%, ADM 5.4%). |
+| D03 | script_family | high | RESOLVED | KI-008: script_family contained 'ltr' (directionality). Fixed: re-derived via get_script_family() (latin 98.5%). |
+| D04 | iso639_language | medium | RESOLVED | KI-009: Blanket 'en' misclassified non-English pages. Fixed: langdetect on GT text (en 93.6%, de 2.3%). |
+| D05 | layout_detections | high | PARTIAL | 12,368 samples (15.18%) missing layout detections. Docling layout preserved for 69,103 samples. |
+| D06 | text_has_content | medium | RESOLVED | text_has_content was FALSE/null for all samples. Fixed: populated from GT JSON cells text. |
+| D07 | orientation_class | medium | RESOLVED | Orientation class not populated. Fixed: set to 0 (born-digital, no rotation). |
+| D08 | image_properties_color_mode | low | RESOLVED | Color mode not populated. Fixed: derived from base metadata (all RGB). |
+| D09 | handwriting_present | low | RESOLVED | Handwriting flag not populated. Fixed: set to False (born-digital, professional typesetting). |
+| D10 | text_direction | medium | RESOLVED | v2.3.0 text_direction field not populated. Fixed: derived from script and Unicode analysis. |
+| D11 | text_directions_present | medium | RESOLVED | v2.3.0 text_directions_present field not populated. Fixed: derived from per-page Unicode analysis. |
+| D12 | schema_version | low | RESOLVED | Schema version was v2.1. Fixed: upgraded to v2.3.0. |
+| D13 | content_flags | medium | RESOLVED | Content flags were Docling-only (soft labels). Fixed: overrode with COCO GT category presence (confidence 1.0). |
 
 ###### 11.3 VLM Inspection Summary
 
@@ -473,7 +473,7 @@ At 81K images, DocLayNet processing requires:
 | has_handwriting | 0 | 0.0% |
 | has_code | 0 | 0.0% |
 
-**VLM Grade Cap**: Removed (accuracy 0.0% >= 90% threshold)
+**VLM Grade Cap**: Removed (VLM accuracy 97.9% >= 90% threshold)
 
 ###### 11.4 Cross-Dataset Findings
 

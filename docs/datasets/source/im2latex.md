@@ -1,3 +1,16 @@
+---
+dataset_id: im2latex
+version: "1.0"
+license: CC0
+commercial_use: true
+iqa_profiles:
+  - born_digital
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### im2latex-100k
 
 > **Quick Stats**: 103,556 formulas | LaTeX rendered | Transparent background | ArXiv source
@@ -272,7 +285,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

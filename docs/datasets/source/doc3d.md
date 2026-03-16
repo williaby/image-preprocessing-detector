@@ -1,3 +1,16 @@
+---
+dataset_id: doc3d
+version: "1.0"
+license: MIT
+commercial_use: true
+iqa_profiles:
+  - synthetic
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Doc3D (Document 3D Shape Recovery)
 
 > **Quick Stats**: 100,000 images | 3D geometry GT | Warped documents | Synthetic + rendered

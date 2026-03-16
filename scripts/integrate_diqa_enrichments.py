@@ -43,7 +43,7 @@ import logging
 import math
 import time
 from collections import Counter
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1397,7 +1397,7 @@ def _apply_sample_enrichment(
     # Create new enrichment version
     new_version = {
         "version": sample["enrichments"]["current_version"] + 1,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": f"integrate_diqa_enrichments.py_v{SCRIPT_VERSION}",
         "method": "multi_source_integration",
         "description": (

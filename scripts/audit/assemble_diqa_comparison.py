@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -652,7 +652,7 @@ def assemble_comparison() -> dict[str, Any]:
         "report_metadata": {
             "dataset": "diqa-5000",
             "audit_sample_count": len(audit_ids),
-            "created_at": datetime.now(tz=UTC).isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).isoformat(),
             "sources": {
                 k: {"name": v, "path": str(p)}
                 for k, v, p in [

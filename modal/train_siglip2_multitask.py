@@ -1086,12 +1086,45 @@ def _validate_manifest_no_ood(samples: list[dict[str, Any]]) -> None:
         )
 
 
+def _load_diqa_pseudo_labels(diqa_labels_path: Path) -> dict[str, dict[str, Any]]:
+    """Load gated DIQA pseudo-labels from JSONL, keyed by image_path.
+
+    Returns mapping of image_path -> {overall, sharpness, color,
+    iqa_sample_weight} for merging into the training manifest.
+    """
+    labels: dict[str, dict[str, Any]] = {}
+    with open(diqa_labels_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                print(f"Warning: skipping malformed DIQA label line: {line[:100]}")
+                continue
+            weight = record.get("sample_weight", 0.0)
+            if weight <= 0.0:
+                continue  # HARD_REJECT — skip entirely
+            image_path = record.get("image_path", "")
+            if not image_path:
+                continue
+            labels[image_path] = {
+                "overall": record.get("overall_label", 0.0),
+                "sharpness": record.get("sharpness_label", 0.0),
+                "color": record.get("color_fidelity_label", 0.0),
+                "iqa_sample_weight": weight,
+            }
+    return labels
+
+
 def _create_multitask_dataset(
     manifest_path: Path,
     data_root: Path,
     processor: Any,
     max_num_patches: int = 784,
     use_augmentation: bool = False,
+    diqa_labels_path: Path | None = None,
 ) -> Any:
     """Create unified multi-task dataset from merged manifest.
 
@@ -1115,12 +1148,17 @@ def _create_multitask_dataset(
             }
         ]
 
+    If diqa_labels_path is provided, gated DeQA-Doc pseudo-labels are
+    overlaid onto the manifest. Images already having IQA labels in the
+    manifest (e.g., DIQA-5000 GT) take priority over pseudo-labels.
+
     Args:
         manifest_path: Path to unified manifest JSON.
         data_root: Root directory for resolving image paths.
         processor: SigLIP2 image processor.
         max_num_patches: Maximum NaFlex patches.
         use_augmentation: Enable training augmentations.
+        diqa_labels_path: Optional path to gated DIQA pseudo-labels JSONL.
 
     Returns:
         PyTorch Dataset instance.
@@ -1144,12 +1182,14 @@ def _create_multitask_dataset(
             proc: Any,
             max_patches: int,
             augment: bool,
+            diqa_pseudo_labels: dict[str, dict[str, Any]] | None = None,
         ) -> None:
             self.root = root
             self.processor = proc
             self.max_num_patches = max_patches
             self.use_augmentation = augment
             self.samples: list[dict[str, Any]] = []
+            self._diqa_labels = diqa_pseudo_labels or {}
 
             if not manifest.exists():
                 raise FileNotFoundError(f"Manifest not found: {manifest}")
@@ -1158,6 +1198,28 @@ def _create_multitask_dataset(
                 raw_samples = json.load(f)
 
             _validate_manifest_no_ood(raw_samples)
+
+            # Merge pseudo-labels into entries that lack IQA labels
+            diqa_applied = 0
+            for entry in raw_samples:
+                has_iqa = any(dim in entry for dim in IQA_DIMENSIONS)
+                if not has_iqa:
+                    abs_path = str(root / entry["image_path"])
+                    pseudo = self._diqa_labels.get(abs_path)
+                    if pseudo:
+                        for dim in IQA_DIMENSIONS:
+                            if dim in pseudo:
+                                entry[dim] = pseudo[dim]
+                        entry["iqa_sample_weight"] = pseudo.get(
+                            "iqa_sample_weight", 1.0
+                        )
+                        diqa_applied += 1
+
+            if self._diqa_labels:
+                print(
+                    f"  DIQA pseudo-labels: {len(self._diqa_labels)} available, "
+                    f"{diqa_applied} applied to manifest entries"
+                )
 
             for entry in raw_samples:
                 image_path = root / entry["image_path"]
@@ -1191,12 +1253,27 @@ def _create_multitask_dataset(
                         sample["task_masks"]["orientation"] = 1
 
                 # Parse IQA regression labels (MOS scores, normalized to 0-1)
+                # Supports both raw MOS and pre-normalized scores with sample weights
                 for iqa_dim in IQA_DIMENSIONS:
                     if iqa_dim in entry:
-                        sample["labels"][iqa_dim] = self._normalize_mos(
-                            float(entry[iqa_dim])
-                        )
-                        sample["task_masks"][iqa_dim] = 1
+                        raw_val = float(entry[iqa_dim])
+                        # Distinguish MOS-scale (1-5) from pre-normalized (0-1).
+                        # Values > 1.0 must be on the MOS 1-5 scale; normalize
+                        # to [0, 1].  Values <= 1.0 are pre-normalized and
+                        # clamped to handle minor floating-point overshoot.
+                        # Edge case: MOS=1.0 (worst quality, maps to 0.0 after
+                        # normalization) is indistinguishable from a perfect
+                        # pre-normalized score of 1.0.  We keep it as 1.0
+                        # because exact MOS=1.0 is vanishingly rare in real
+                        # data, whereas pre-normalized=1.0 is common for
+                        # high-quality born-digital documents.
+                        if raw_val > 1.0:
+                            sample["labels"][iqa_dim] = self._normalize_mos(raw_val)
+                        else:
+                            sample["labels"][iqa_dim] = max(0.0, min(raw_val, 1.0))
+                        # Support fractional sample weights for pseudo-labels
+                        iqa_weight = float(entry.get("iqa_sample_weight", 1.0))
+                        sample["task_masks"][iqa_dim] = iqa_weight
 
                 # Parse severity regression labels (already 0-1)
                 for reg_task in ("shadow", "warping"):
@@ -1272,12 +1349,18 @@ def _create_multitask_dataset(
                 "image_id": sample["image_id"],
             }
 
+    diqa_pseudo = None
+    if diqa_labels_path is not None and diqa_labels_path.exists():
+        diqa_pseudo = _load_diqa_pseudo_labels(diqa_labels_path)
+        print(f"  Loaded {len(diqa_pseudo)} DIQA pseudo-labels from {diqa_labels_path}")
+
     return MultiTaskDataset(
         manifest=manifest_path,
         root=data_root,
         proc=processor,
         max_patches=max_num_patches,
         augment=use_augmentation,
+        diqa_pseudo_labels=diqa_pseudo,
     )
 
 
@@ -1312,7 +1395,8 @@ def _multitask_collate_fn(batch: list[dict[str, Any]]) -> dict[str, Any]:
         for item in batch:
             if task in item["labels"]:
                 values.append(item["labels"][task])
-                masks.append(1.0)
+                # Use fractional weight from task_masks (supports pseudo-label weighting)
+                masks.append(float(item["task_masks"].get(task, 1.0)))
             else:
                 values.append(0 if task in CLASSIFICATION_TASKS else 0.0)
                 masks.append(0.0)
@@ -2425,12 +2509,17 @@ def _setup_data_loaders(
     manifest_path = data_dir / "multitask_manifest.json"
     max_num_patches = config.max_num_patches
 
+    # Optional: gated DIQA pseudo-labels for IQA heads
+    diqa_labels = data_dir / "gated_diqa_labels.jsonl"
+    diqa_path = diqa_labels if diqa_labels.exists() else None
+
     train_ds = _create_multitask_dataset(
         manifest_path=data_dir / "train_manifest.json",
         data_root=data_dir,
         processor=processor,
         max_num_patches=max_num_patches,
         augment=True,
+        diqa_labels_path=diqa_path,
     )
     val_ds = _create_multitask_dataset(
         manifest_path=data_dir / "val_manifest.json",
@@ -2438,6 +2527,7 @@ def _setup_data_loaders(
         processor=processor,
         max_num_patches=max_num_patches,
         augment=False,
+        # No pseudo-labels for validation — use only GT labels
     )
 
     if test_mode:

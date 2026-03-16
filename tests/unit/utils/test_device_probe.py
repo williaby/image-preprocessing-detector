@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import image_preprocessing_detector.utils.device_probe as _dp_module
 from image_preprocessing_detector.utils.device_probe import (
     DeviceCapabilities,
     clear_device_cache,
@@ -63,9 +64,9 @@ class TestProbeDeviceCapabilities:
         """Clear device cache after each test."""
         clear_device_cache()
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.ort")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "ort")
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_with_pytorch_gpu(
         self, mock_mp: MagicMock, mock_ort: MagicMock, mock_torch: MagicMock
     ) -> None:
@@ -90,9 +91,9 @@ class TestProbeDeviceCapabilities:
         assert caps.cpu_count == 16
         assert caps.modal_available is False
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort")
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_with_onnxruntime_gpu(
         self, mock_mp: MagicMock, mock_ort: MagicMock
     ) -> None:
@@ -115,9 +116,9 @@ class TestProbeDeviceCapabilities:
         assert caps.gpu_memory_mb is None  # ONNX Runtime doesn't expose memory
         assert caps.cpu_count == 8
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_cpu_only(self, mock_mp: MagicMock) -> None:
         """Test device probing on CPU-only system."""
         # Mock CPU
@@ -133,9 +134,9 @@ class TestProbeDeviceCapabilities:
         assert caps.cpu_count == 4
         assert caps.modal_available is False
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_with_modal_configured(self, mock_mp: MagicMock) -> None:
         """Test device probing detects Modal when configured."""
         # Mock CPU
@@ -153,9 +154,9 @@ class TestProbeDeviceCapabilities:
         assert caps.modal_available is True
         assert caps.modal_workspace == "production"
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_modal_default_workspace(self, mock_mp: MagicMock) -> None:
         """Test Modal uses default 'main' workspace if not specified."""
         # Mock CPU
@@ -170,10 +171,10 @@ class TestProbeDeviceCapabilities:
         assert caps.modal_available is True
         assert caps.modal_workspace == "main"  # Default
 
-    @patch("image_preprocessing_detector.utils.device_probe.logger")
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "logger")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_pytorch_cuda_exception(
         self, mock_mp: MagicMock, mock_torch: MagicMock, mock_logger: MagicMock
     ) -> None:
@@ -194,9 +195,9 @@ class TestProbeDeviceCapabilities:
         # Verify warning was logged
         assert mock_logger.warning.called
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.ort")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "ort")
+    @patch.object(_dp_module, "multiprocessing")
     def test_probe_caching(
         self, mock_mp: MagicMock, mock_ort: MagicMock, mock_torch: MagicMock
     ) -> None:
@@ -236,8 +237,8 @@ class TestGetRecommendedDevice:
         """Clear device cache after each test."""
         clear_device_cache()
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "multiprocessing")
     def test_recommend_gpu_when_available(
         self, mock_mp: MagicMock, mock_torch: MagicMock
     ) -> None:
@@ -255,9 +256,9 @@ class TestGetRecommendedDevice:
 
         assert device == "cuda"
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_recommend_cpu_when_no_gpu(self, mock_mp: MagicMock) -> None:
         """Test recommends CPU when no GPU available."""
         mock_mp.cpu_count.return_value = 4
@@ -267,8 +268,8 @@ class TestGetRecommendedDevice:
 
         assert device == "cpu"
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "multiprocessing")
     def test_recommend_cpu_when_gpu_not_preferred(
         self, mock_mp: MagicMock, mock_torch: MagicMock
     ) -> None:
@@ -286,9 +287,9 @@ class TestGetRecommendedDevice:
 
         assert device == "cpu"
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch", None)
-    @patch("image_preprocessing_detector.utils.device_probe.ort", None)
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch", None)
+    @patch.object(_dp_module, "ort", None)
+    @patch.object(_dp_module, "multiprocessing")
     def test_raise_error_when_cpu_fallback_disabled(self, mock_mp: MagicMock) -> None:
         """Test raises error when no GPU and CPU fallback disabled."""
         mock_mp.cpu_count.return_value = 4
@@ -311,8 +312,8 @@ class TestClearDeviceCache:
         """Clear device cache after each test."""
         clear_device_cache()
 
-    @patch("image_preprocessing_detector.utils.device_probe.torch")
-    @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")
+    @patch.object(_dp_module, "torch")
+    @patch.object(_dp_module, "multiprocessing")
     def test_clear_cache_forces_reprobe(
         self, mock_mp: MagicMock, mock_torch: MagicMock
     ) -> None:

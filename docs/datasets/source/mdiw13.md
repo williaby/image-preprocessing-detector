@@ -1,3 +1,16 @@
+---
+dataset_id: mdiw13
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### MDIW-13 (Foundational Script Identification Dataset)
 
 > **Quick Stats**: 290,213 images (1,135 docs, 13,979 lines, 86,655 words) | 13 scripts | Printed + Handwritten

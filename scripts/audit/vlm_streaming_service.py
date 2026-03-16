@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -84,7 +84,7 @@ class LabelingTask:
 
     def __post_init__(self) -> None:
         if not self.created_at:
-            self.created_at = datetime.now(UTC).isoformat()
+            self.created_at = datetime.now(timezone.utc).isoformat()
         if not self.updated_at:
             self.updated_at = self.created_at
 
@@ -165,7 +165,7 @@ def create_task(
     Returns:
         The created LabelingTask.
     """
-    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     task_id = f"{dataset}_{target_field}_{ts}"
 
     task = LabelingTask(
@@ -192,7 +192,7 @@ def _save_task(
     qdir.mkdir(parents=True, exist_ok=True)
     path = qdir / f"{task.task_id}.json"
 
-    task.updated_at = datetime.now(UTC).isoformat()
+    task.updated_at = datetime.now(timezone.utc).isoformat()
     with path.open("w", encoding="utf-8") as f:
         json.dump(task.to_dict(), f, indent=2, ensure_ascii=False)
 
@@ -377,7 +377,7 @@ def generate_queue_status(
         completed_images += task.completed_images
 
     return {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_tasks": len(tasks),
         "status_counts": status_counts,
         "total_images": total_images,

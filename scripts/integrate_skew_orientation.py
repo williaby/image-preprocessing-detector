@@ -38,7 +38,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -132,7 +132,7 @@ def _apply_skew_to_sample(
     ver_num = next_version_number(enrichments)
     new_version = {
         "version": f"v{ver_num}",
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "method": "skew_orientation_integration",
         "description": (
             "Added skew/orientation labels from MobileNetV4-Conv-S "

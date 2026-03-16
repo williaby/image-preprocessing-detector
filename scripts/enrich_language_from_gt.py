@@ -33,7 +33,7 @@ import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1368,7 +1368,7 @@ def update_registry_known_language(
         "sample_count": count,
         "confidence": 1.0,
         "method": "dataset_known_language",
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1413,7 +1413,7 @@ def save_folder_based_results(
         ),
         "confidence": 1.0,
         "method": "folder_name_label",
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1455,7 +1455,7 @@ def save_multilingual_scripts_results(
         ),
         "confidence": 1.0,
         "method": "manifest_label",
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1517,7 +1517,7 @@ def save_language_results(
         "avg_confidence": round(confidence_sum / max(1, detected_count), 3),
         "language_distribution": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
         "script_distribution": dict(sorted(script_counts.items(), key=lambda x: -x[1])),
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "method": method,
         "samples": sample_results[:1000],  # First 1000 for reference
     }

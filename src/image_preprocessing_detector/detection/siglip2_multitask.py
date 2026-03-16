@@ -114,6 +114,7 @@ class MultiTaskPrediction:
         orientation: Orientation detection.
         shadow: Shadow severity (0=none, 1=severe).
         warping: Warping severity (0=none, 1=severe).
+        embedding: Penultimate-layer embedding (768-dim) for OOD detection.
         inference_time_ms: Inference time in milliseconds.
         device: Device used for inference.
     """
@@ -126,6 +127,7 @@ class MultiTaskPrediction:
     orientation: ClassificationResult
     shadow: RegressionResult
     warping: RegressionResult
+    embedding: np.ndarray | None = None
     inference_time_ms: float = 0.0
     device: str = "cpu"
 
@@ -374,7 +376,7 @@ class SigLIP2MultiTaskDetector:
                     spatial_shapes=spatial_shapes,
                 )
                 active = list(self.heads.keys()) if tasks is None else tasks
-                results: dict[str, Any] = {}
+                results: dict[str, Any] = {"_embedding": features}
                 for task_name in active:
                     if task_name not in self.heads:
                         continue
@@ -433,11 +435,13 @@ class SigLIP2MultiTaskDetector:
     def _postprocess(
         self,
         outputs: dict[str, Any],
+        return_embedding: bool = False,
     ) -> MultiTaskPrediction:
         """Convert raw model outputs to structured prediction.
 
         Args:
             outputs: Raw model forward pass outputs.
+            return_embedding: If True, include penultimate embedding in result.
 
         Returns:
             MultiTaskPrediction with all task results.
@@ -470,6 +474,10 @@ class SigLIP2MultiTaskDetector:
                 sigma_sq=task_out["sigma_sq"][0].item(),
             )
 
+        embedding = None
+        if return_embedding and "_embedding" in outputs:
+            embedding = outputs["_embedding"][0].cpu().numpy()
+
         return MultiTaskPrediction(
             iqa_overall=_iqa_result(outputs["overall"]),
             iqa_sharpness=_iqa_result(outputs["sharpness"]),
@@ -482,17 +490,24 @@ class SigLIP2MultiTaskDetector:
             ),
             shadow=_reg_result(outputs["shadow"]),
             warping=_reg_result(outputs["warping"]),
+            embedding=embedding,
             device=str(self._device),
         )
 
-    def predict(self, image: np.ndarray) -> MultiTaskPrediction:
+    def predict(
+        self,
+        image: np.ndarray,
+        return_embedding: bool = False,
+    ) -> MultiTaskPrediction:
         """Run multi-task inference on a single image.
 
         Args:
             image: Input image (BGR uint8 or grayscale numpy array).
+            return_embedding: If True, include 768-dim penultimate embedding
+                for OOD detection via Mahalanobis distance.
 
         Returns:
-            MultiTaskPrediction with all 8 task predictions.
+            MultiTaskPrediction with all 8 task predictions (and optional embedding).
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -522,7 +537,7 @@ class SigLIP2MultiTaskDetector:
             outputs = self._model(**inputs)
 
         elapsed_ms = (time.perf_counter() - start) * 1000
-        result = self._postprocess(outputs)
+        result = self._postprocess(outputs, return_embedding=return_embedding)
 
         # Replace with timing info
         result = MultiTaskPrediction(
@@ -534,6 +549,7 @@ class SigLIP2MultiTaskDetector:
             orientation=result.orientation,
             shadow=result.shadow,
             warping=result.warping,
+            embedding=result.embedding,
             inference_time_ms=elapsed_ms,
             device=str(self._device),
         )
@@ -551,6 +567,7 @@ class SigLIP2MultiTaskDetector:
     def predict_batch(
         self,
         images: list[np.ndarray],
+        return_embedding: bool = False,
     ) -> list[MultiTaskPrediction]:
         """Run inference on a batch of images.
 
@@ -559,11 +576,12 @@ class SigLIP2MultiTaskDetector:
 
         Args:
             images: List of input images (BGR uint8).
+            return_embedding: If True, include embeddings for OOD detection.
 
         Returns:
             List of MultiTaskPrediction results.
         """
-        return [self.predict(img) for img in images]
+        return [self.predict(img, return_embedding=return_embedding) for img in images]
 
 
 # ============================================================================
@@ -660,6 +678,7 @@ def prediction_to_dict(prediction: MultiTaskPrediction) -> dict[str, Any]:
         },
         "inference_time_ms": prediction.inference_time_ms,
         "device": prediction.device,
+        "has_embedding": prediction.embedding is not None,
     }
 
 

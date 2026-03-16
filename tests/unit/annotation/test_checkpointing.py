@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -484,7 +484,7 @@ class TestBatchCheckpointManager:
             "processed_count": 160,
             "last_path": "img160.jpg",
             "last_hash": "hash160",
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "version": 1,
         }
         checkpoint_file = checkpoint_dir / "test.checkpoint.json"

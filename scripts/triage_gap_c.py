@@ -26,7 +26,7 @@ import subprocess
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
@@ -134,10 +134,10 @@ def _parse_git_date(date_str: str) -> datetime | None:
         return None
     # git outputs: "2025-08-20 14:22:00 +0000"
     try:
-        # Remove timezone offset for simple parsing, treat as UTC
+        # Remove timezone offset for simple parsing, treat as timezone.utc
         parts = date_str.rsplit(" ", 1)
         dt = datetime.strptime(parts[0], "%Y-%m-%d %H:%M:%S")
-        return dt.replace(tzinfo=UTC)
+        return dt.replace(tzinfo=timezone.utc)
     except ValueError:
         return None
 
@@ -197,7 +197,7 @@ def _months_since(dt: datetime | None) -> float:
     """Return months elapsed since dt, or 999 if dt is None (never committed)."""
     if dt is None:
         return 999.0
-    now = datetime.now(tz=UTC)
+    now = datetime.now(tz=timezone.utc)
     delta = now - dt
     return delta.days / 30.44
 

@@ -198,7 +198,8 @@ staindoc/
 |--------|-------|
 | **Total Stained Images** | ~5,000 |
 | **Total Clean GT Images** | ~5,000 |
-| **Total Images on Disk** | ~10,000 (stained + clean) |
+| **Total Images on Disk** | ~10,000 (stained + clean pairs) |
+| **Layer 2 Annotated** | 15,180 (includes additional sub-datasets and individual crops) |
 | **Training Split** | ~4,000 (80%) |
 | **Test Split** | ~1,000 (20%) |
 | **Image Dimensions** | Variable (camera-captured documents) |

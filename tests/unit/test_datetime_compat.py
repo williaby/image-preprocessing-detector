@@ -36,7 +36,7 @@ class TestUTCConstant:
 
     def test_utc_is_timezone_utc(self) -> None:
         """UTC constant should be equivalent to timezone.utc."""
-        assert timezone.utc == UTC  # noqa: UP017 - testing Python 3.10 compat
+        assert timezone.utc == UTC
 
     def test_utc_offset_is_zero(self) -> None:
         """UTC should have zero offset."""
@@ -214,7 +214,7 @@ class TestEnsureAware:
     def test_custom_timezone(self) -> None:
         """Should use provided timezone."""
         naive = datetime(2023, 1, 15, 10, 30, 0)
-        custom_tz = timezone(offset=timezone.utc.utcoffset(None))  # noqa: UP017 - Py3.10 compat
+        custom_tz = timezone(offset=timezone.utc.utcoffset(None))
         aware = ensure_aware(naive, custom_tz)
         assert is_aware(aware)
 

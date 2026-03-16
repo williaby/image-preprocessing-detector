@@ -1,3 +1,16 @@
+---
+dataset_id: cc-ocr
+version: "1.0"
+license: MIT
+commercial_use: true
+iqa_profiles:
+  - scene_text
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### CC-OCR (CJK Mixed Benchmark)
 
 > **Quick Stats**: 7,058 images | 39 subsets | 4 tracks | MIT license

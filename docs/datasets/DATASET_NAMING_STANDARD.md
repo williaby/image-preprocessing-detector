@@ -43,7 +43,7 @@ title: Dataset Naming Standard
 
 ## Canonical Name Registry
 
-### All Datasets (81 total)
+### All Datasets (82 total)
 
 | Canonical Name | Source Name | Common Aliases | Status | Notes |
 |----------------|-------------|----------------|--------|-------|
@@ -128,6 +128,7 @@ title: Dataset Naming Standard
 | `warpdoc` | warpdoc | warp_doc, warp-doc | ✅ | Document dewarping (1,020 images), audit Grade D* |
 | `wili-2018` | wili_2018 | wili2018, wili | ❌ | Wikipedia language ID (text-only) |
 | `wsrd` | wsrd | wsrd-dnsr, ntire_shadow | ✅ | Document shadow removal (4,500 images), audit Grade D* |
+| `thousand-character-classic` | thousand_character_classic | qianziwen, senjimon, cheonjamun, 千字文, tcc | 🔄 | CJK calligraphy (74 catalog items, 100-290 target images) |
 | `yarmouk` | yarmouk_ocr_images | yarmouk_ocr, yarmouk-ocr | ✅ | Yarmouk Arabic OCR |
 
 **Status Legend**:

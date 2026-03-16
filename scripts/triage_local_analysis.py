@@ -24,7 +24,7 @@ import logging
 import time
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 logging.basicConfig(
@@ -447,7 +447,7 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
 
     report_lines = [
         f"# Language Triage Analysis Report: {dataset}",
-        f"Generated: {datetime.now(UTC).isoformat()}",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
         f"Total samples analyzed: {total}",
         "",
         "## Executive Summary",

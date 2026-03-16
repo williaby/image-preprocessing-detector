@@ -15,7 +15,7 @@ documentation_status: partial
 
 #### IndicDLP (Indic Document Layout Parser)
 
-> **Quick Stats**: ~119,000 images | Mixed born-digital + scanned | 42 layout classes | 12 Indian languages
+> **Quick Stats**: 115,803 images | Mixed born-digital + scanned | 42 layout classes | 12 Indian languages
 >
 > **License**: MIT | **Commercial Use**: Yes
 
@@ -212,10 +212,10 @@ documentation_status: partial
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | ~119,000 |
-| **Training Split** | ~95,000 (80%) |
-| **Validation Split** | ~12,000 (10%) |
-| **Test Split** | ~12,000 (10%) |
+| **Total Images** | 115,803 (verified count) |
+| **Training Split** | ~92,642 (80%) |
+| **Validation Split** | ~11,580 (10%) |
+| **Test Split** | ~11,581 (10%) |
 | **Image Dimensions** | Variable (document scans + born-digital) |
 | **Resolution (DPI)** | Variable |
 | **File Format(s)** | JPG, PNG |

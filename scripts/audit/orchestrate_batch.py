@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -321,7 +321,7 @@ def generate_batch_status(
         grade_dist[t.current_grade] = grade_dist.get(t.current_grade, 0) + 1
 
     return {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_datasets": total,
         "audit_complete": audit_complete,
         "handoff_ready": handoff_ready,

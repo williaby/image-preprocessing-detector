@@ -33,7 +33,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -485,7 +485,7 @@ def queue_for_review(
     queue_file = queue_dir / "pending_review.jsonl"
 
     entry = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "image_path": str(image_path),
         "reason": reason,
         "local_detection": {
@@ -571,11 +571,11 @@ class EscalationManager:
     def __init__(self, config: EscalationConfig | None = None):
         self.config = config or EscalationConfig()
         self._daily_spend = 0.0
-        self._last_reset = datetime.now(UTC).date()
+        self._last_reset = datetime.now(timezone.utc).date()
 
     def _check_budget(self, estimated_cost: float) -> bool:
         """Check if we're within daily budget."""
-        today = datetime.now(UTC).date()
+        today = datetime.now(timezone.utc).date()
         if today != self._last_reset:
             self._daily_spend = 0.0
             self._last_reset = today

@@ -14,7 +14,7 @@ documentation_status: partial
 
 #### MarkushGrapher Datasets
 
-> **Quick Stats**: ~235,000 samples | Chemical/Markush structures | Born-digital | Scientific domain
+> **Quick Stats**: 172,073 samples | Chemical/Markush structures | Born-digital | Scientific domain
 >
 > **License**: CC-BY-4.0 | **Commercial Use**: Yes
 
@@ -202,10 +202,10 @@ documentation_status: partial
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | ~235,000 |
-| **Training Split** | ~188,000 (80%) |
-| **Validation Split** | ~23,500 (10%) |
-| **Test Split** | ~23,500 (10%) |
+| **Total Images** | 172,073 (verified download; documentation estimates ~235,000) |
+| **Training Split** | ~137,658 (80%) |
+| **Validation Split** | ~17,208 (10%) |
+| **Test Split** | ~17,207 (10%) |
 | **Image Dimensions** | Variable (chemical structure diagrams) |
 | **Resolution (DPI)** | Born-digital (vector graphics) |
 | **File Format(s)** | PNG, SVG |

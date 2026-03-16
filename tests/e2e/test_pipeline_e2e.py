@@ -7,7 +7,7 @@ ensuring the handoff format is correct for Project B consumption.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import numpy as np
 
@@ -276,7 +276,7 @@ class DocumentProcessor:
             page_layout_summary=page_layouts,
             processing_version=ProcessingVersion(
                 pipeline_version="0.1.0-e2e-test",
-                timestamp=datetime.now(tz=UTC),
+                timestamp=datetime.now(tz=timezone.utc),
             ),
             pages=pages,
         )

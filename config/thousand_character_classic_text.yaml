@@ -1,0 +1,424 @@
+---
+# Thousand Character Classic (千字文) — Complete Ground Truth Text
+# Author: Zhou Xingsi (周興嗣), compiled ca. 520 CE, Liang dynasty
+# 250 lines of 4 characters each = 1,000 unique characters
+# Used for L2 text_content.full_text (tier_0_exact, confidence 1.0)
+#
+# Format: Each line has zh (4 Classical Chinese chars), pinyin, en (translation)
+# Lines are grouped into rhyming couplets (2 lines each = 125 couplets)
+#
+# Sources: Standard Zhiyong recension cross-referenced with multiple editions.
+# Translation: Composite from Ong (2016), Gu (2014), and Zhang (2004).
+
+full_text_zh: >-
+  天地玄黃宇宙洪荒日月盈昃辰宿列張寒來暑往秋收冬藏閏餘成歲律呂調陽
+  雲騰致雨露結為霜金生麗水玉出崑岡劍號巨闕珠稱夜光果珍李柰菜重芥薑
+  海鹹河淡鱗潛羽翔龍師火帝鳥官人皇始制文字乃服衣裳推位讓國有虞陶唐
+  弔民伐罪周發殷湯坐朝問道垂拱平章愛育黎首臣伏戎羌遐邇壹體率賓歸王
+  鳴鳳在竹白駒食場化被草木賴及萬方蓋此身髮四大五常恭惟鞠養豈敢毀傷
+  女慕貞潔男效才良知過必改得能莫忘罔談彼短靡恃己長信使可覆器欲難量
+  墨悲絲染詩讚羔羊景行維賢克念作聖德建名立形端表正空谷傳聲虛堂習聽
+  禍因惡積福緣善慶尺璧非寶寸陰是競資父事君曰嚴與敬孝當竭力忠則盡命
+  臨深履薄夙興溫凊似蘭斯馨如松之盛川流不息淵澄取映容止若思言辭安定
+  篤初誠美慎終宜令榮業所基藉甚無竟學優登仕攝職從政存以甘棠去而益詠
+  樂殊貴賤禮別尊卑上和下睦夫唱婦隨外受傅訓入奉母儀諸姑伯叔猶子比兒
+  孔懷兄弟同氣連枝交友投分切磨箴規仁慈隱惻造次弗離節義廉退顛沛匪虧
+  性靜情逸心動神疲守真志滿逐物意移堅持雅操好爵自縻都邑華夏東西二京
+  背邙面洛浮渭據涇宮殿盤鬱樓觀飛驚圖寫禽獸畫彩仙靈丙舍傍啟甲帳對楹
+  肆筵設席鼓瑟吹笙升階納陛弁轉疑星右通廣內左達承明既集墳典亦聚群英
+  杜稿鍾隸漆書壁經府羅將相路俠槐卿戶封八縣家給千兵高冠陪輦驅轂振纓
+  世祿侈富車駕肥輕策功茂實勒碑刻銘磻溪伊尹佐時阿衡奄宅曲阜微旦孰營
+  桓公匡合濟弱扶傾綺迴漢惠說感武丁俊乂密勿多士寔寧晉楚更霸趙魏困橫
+  假途滅虢踐土會盟何遵約法韓弊煩刑起翦頗牧用軍最精宣威沙漠馳譽丹青
+  九州禹跡百郡秦并嶽宗泰岱禪主云亭雁門紫塞雞田赤城昆池碣石鉅野洞庭
+  曠遠綿邈巖岫杳冥治本於農務茲稼穡俶載南畝我藝黍稷稅熟貢新勸賞黜陟
+  孟軻敦素史魚秉直庶幾中庸勞謙謹敕聆音察理鑒貌辨色貽厥嘉猷勉其祗植
+  省躬譏誡寵增抗極殆辱近恥林皋幸即兩疏見機解組誰逼索居閒處沉默寂寥
+  求古尋論散慮逍遙欣奏累遣戚謝歡招渠荷的歷園莽抽條枇杷晚翠梧桐早凋
+  陳根委翳落葉飄搖游鯤獨運凌摩絳霄耽讀玩市寓目囊箱易輶攸畏屬耳垣牆
+  具膳餐飯適口充腸飽飫烹宰飢厭糟糠親戚故舊老少異糧妾御績紡侍巾帷房
+  紈扇圓潔銀燭煒煌晝眠夕寐藍筍象床弦歌酒宴接杯舉觴矯手頓足悅豫且康
+  嫡後嗣續祭祀烝嘗稽顙再拜悚懼恐惶箋牒簡要顧答審詳骸垢想浴執熱願涼
+  驢騾犢特駭躍超驤誅斬賊盜捕獲叛亡布射僚丸嵇琴阮嘯恬筆倫紙鈞巧任釣
+  釋紛利俗並皆佳妙毛施淑姿工顰妍笑年矢每催曦暉朗曜璇璣懸斡晦魄環照
+  指薪修祜永綏吉劭矩步引領俯仰廊廟束帶矜莊徘徊瞻眺孤陋寡聞愚蒙等誚
+  謂語助者焉哉乎也
+
+full_text_en: >-
+  Heaven and earth, dark and yellow; the cosmos, vast and desolate.
+  Sun and moon, waxing and waning; stars and constellations, spread and arrayed.
+  Cold comes, heat goes; autumn harvests, winter stores.
+  Intercalary months complete the year; musical pitches harmonize with yang.
+  Clouds rise to bring rain; dew condenses into frost.
+  Gold is born in beautiful waters; jade comes from Kungang.
+  The sword called Juque; the pearl known as Night-Shining.
+  Precious fruits: plums and crabapples; important vegetables: mustard and ginger.
+  The sea is salty, rivers are fresh; fish dive, birds soar.
+  Dragon Master, Fire Emperor; Bird Official, Human Sovereign.
+  They began creating writing; then came clothing and garments.
+  Yielding the throne, ceding the state: Yu and Tang of the line of Tao.
+  Comforting the people, punishing the guilty: King Fa of Zhou, King Tang of Yin.
+  Sitting in court, inquiring of the Way; ruling effortlessly, bringing order.
+  Lovingly nurturing the common people; subjects submitting, even the Rong and Qiang.
+  Far and near, one body; all guests return to the king.
+  Phoenixes sing in the bamboo; white colts graze in the meadow.
+  Transformation covers the grasses and trees; its blessings reach all directions.
+  This body and its hair come from the four elements and five constants.
+  Respectfully cherish your upbringing; dare not damage or injure.
+  Women admire chastity and purity; men emulate talent and virtue.
+  Know your faults and always correct them; gain ability and never forget it.
+  Do not speak of others' shortcomings; do not rely on your own strengths.
+  Trustworthiness should be verifiable; one's capacity is hard to measure.
+  Mo Zi grieved over dyed silk; the Odes praised the lambskin.
+  Emulate virtuous conduct; strive to be a sage in thought.
+  Build virtue, establish a name; keep form upright, appearance correct.
+  An empty valley carries sound; a vacant hall echoes.
+  Disaster comes from accumulated evil; fortune follows from doing good.
+  A foot of jade is not the treasure; an inch of time is what to compete for.
+  Serve your father, serve your lord, with strictness and respect.
+  In filial piety, exhaust your strength; in loyalty, devote your life.
+  Treading on thin ice over deep water; rising early, keeping parents warm and cool.
+  Like orchids in fragrance; like pines in flourishing.
+  Rivers flow without ceasing; deep pools reflect clearly.
+  In demeanor, appear thoughtful; in speech, be calm and steady.
+  Be sincere and fine at the start; be careful and proper at the end.
+  The foundation of glory and enterprise; its basis is vast beyond measure.
+  When learning excels, enter government service; hold office and join in governance.
+  Preserve like the sweet pear tree; depart and be praised even more.
+  Joy differs between noble and humble; rites distinguish high and low.
+  Above harmonious, below respectful; husband leads, wife follows.
+  Outside, receive the tutor's instruction; inside, follow the mother's example.
+  All the aunts, uncles, and elders; treat nephews and nieces as your own children.
+  Brothers share deep bonds; of one breath, connected branches.
+  In friendship, share commitments; polish and admonish each other.
+  Benevolence, compassion, and sympathy; never depart from these, even in haste.
+  Integrity, righteousness, modesty, and deference; never diminish these, even in hardship.
+  When nature is calm, emotions are at ease; when the heart stirs, the spirit tires.
+  Hold to truth and your will is full; chase things and your purpose shifts.
+  Firmly maintain refined conduct; good rank will come of itself.
+  The great cities of China; the two capitals, East and West.
+  Backed by Mang, facing Luo; floating on the Wei, set upon the Jing.
+  Palaces rise in lush splendor; towers and pavilions soar startlingly.
+  Paintings depict birds and beasts; colors portray immortals and spirits.
+  Side chambers open beside; curtained halls face the pillars.
+  Banquets are spread with mats; drums, zithers, and reed organs play.
+  Ascending the steps to the throne; caps turn like revolving stars.
+  Right passage to the inner quarters; left leads to the Hall of Light.
+  Classics and canons are gathered; talented scholars are assembled.
+  Du Cao's drafts, Zhong's clerical script; lacquered writings, wall sutras.
+  Officials arrayed: generals and ministers; flanking the lanes, ministers by the scholar trees.
+  Households enfeoffed in eight counties; families supplied with a thousand soldiers.
+  Tall caps accompany the imperial chariot; carriages surge, tassels flutter.
+  Hereditary wealth and luxury; carriages sleek, horses light.
+  Meritorious deeds richly recorded; inscribed on steles and carved in stone.
+  Pan Xi and Yi Yin; aiding their times, the Grand Steward.
+  Dwelling at Qufu; who but Dan could have built it?
+  Duke Huan united and corrected; aiding the weak, supporting the faltering.
+  Qi turned back the Han and the Hui; Yue's persuasion moved King Wu Ding.
+  Outstanding talents served diligently; many scholars brought genuine peace.
+  Jin and Chu competed for supremacy; Zhao and Wei were hemmed in.
+  Borrowing a road to destroy Guo; treading the soil at the covenant assembly.
+  He Zun upheld the law; Han's legacy burdened by harsh punishment.
+  Qi Jian, Po, and Mu; their military use was the most brilliant.
+  Proclaiming might across the desert; fame racing through painted history.
+  The nine provinces bear Yu's traces; a hundred commanderies under Qin's union.
+  The sacred peak Mount Tai; the altar of Zen at Cloud Pavilion.
+  Wild Goose Gate, the Purple Pass; Cock Field, the Red Walls.
+  Kunming Pool, Jieshi Rock; the Great Wilds, Dongting Lake.
+  Vast and far, stretching endlessly; cliffs and peaks, dark and deep.
+  Governance is rooted in agriculture; attend to planting and harvesting.
+  Begin plowing the southern fields; I plant millet and grain.
+  When taxes are ripe, offer the new harvest; encourage with rewards, demote and promote.
+  Mencius valued simplicity; Shi Yu held to uprightness.
+  Strive for the Mean; be diligent, humble, and careful.
+  Listen to sounds, examine principles; observe appearance, discern character.
+  Bequeath excellent plans; encourage earnest cultivation.
+  Examine yourself with admonition; favor and excess lead to extremes.
+  Disgrace and humiliation draw near shame; the forest and marsh are fortunate retreats.
+  The two Shu perceived the moment; who compelled them to resign?
+  Dwell in solitude, abide in leisure; in silence and stillness.
+  Seek the ancients, explore their words; scatter worries, wander carefree.
+  Joyful melodies dispel sorrow; sorrows depart, happiness beckons.
+  Lotus channels, water lilies; gardens overgrown, tendrils reaching.
+  Loquats green in late season; parasol trees wither early.
+  Old roots hidden in shadow; fallen leaves drift and sway.
+  The great fish swims alone; soaring, brushing the crimson sky.
+  Lost in reading at the market; eyes fixed on the book satchel.
+  Easy and light are what we fear; walls have ears.
+  Prepare meals and serve food; suit the palate, fill the belly.
+  When sated, cook and slaughter; when hungry, even dregs and husks suffice.
+  Relatives and old friends; old and young get different fare.
+  Concubines spin and weave; attendants serve in chambers.
+  Round fans of fine silk; silver candles gleaming bright.
+  Daytime sleep, evening slumber; blue bamboo mats, ivory beds.
+  String songs and wine banquets; raising cups and lifting goblets.
+  Clapping hands and stamping feet; in joy and ease and health.
+  Legitimate heirs carry on the line; sacrificial rites of winter and autumn.
+  Kowtow and bow again; with awe, fear, and trepidation.
+  Letters and documents should be concise; replies should be thorough.
+  When the body is dirty, think of bathing; when hot, wish for coolness.
+  Donkeys, mules, calves, and bulls; startled, they leap and prance.
+  Execute and behead thieves and bandits; capture and seize rebels and fugitives.
+  Bu Yi's archery, Liao Wan's ball play; Ji Kang's zither, Ruan Ji's whistling.
+  Tian's brush, Lun's paper; Jun's ingenuity, Ren's fishing.
+  Release disputes for common benefit; all are fine and wonderful.
+  Mao Qiang and Xi Shi's beauty; artful frowns, lovely smiles.
+  Years fly like arrows, always pressing; the sun's glow shines brightly.
+  The celestial armillary sphere revolves; the dark moon's phases cycle in light.
+  Point to the firewood to prolong blessings; forever peaceful, auspicious, and good.
+  Measured steps, leading the way; looking up and down in the corridors of state.
+  Bound sashes, dignified and solemn; lingering, gazing afar.
+  Lonely and ignorant, few in learning; foolish and benighted, subject to ridicule.
+  These are the grammatical particles: yan, zai, hu, ye.
+
+lines:
+  - {zh: "天地玄黃", pinyin: "tiān dì xuán huáng", en: "Heaven and earth, dark and yellow"}
+  - {zh: "宇宙洪荒", pinyin: "yǔ zhòu hóng huāng", en: "The cosmos, vast and desolate"}
+  - {zh: "日月盈昃", pinyin: "rì yuè yíng zè", en: "Sun and moon, waxing and waning"}
+  - {zh: "辰宿列張", pinyin: "chén xiù liè zhāng", en: "Stars and constellations, spread and arrayed"}
+  - {zh: "寒來暑往", pinyin: "hán lái shǔ wǎng", en: "Cold comes, heat goes"}
+  - {zh: "秋收冬藏", pinyin: "qiū shōu dōng cáng", en: "Autumn harvests, winter stores"}
+  - {zh: "閏餘成歲", pinyin: "rùn yú chéng suì", en: "Intercalary months complete the year"}
+  - {zh: "律呂調陽", pinyin: "lǜ lǚ tiáo yáng", en: "Musical pitches harmonize with yang"}
+  - {zh: "雲騰致雨", pinyin: "yún téng zhì yǔ", en: "Clouds rise to bring rain"}
+  - {zh: "露結為霜", pinyin: "lù jié wéi shuāng", en: "Dew condenses into frost"}
+  - {zh: "金生麗水", pinyin: "jīn shēng lì shuǐ", en: "Gold is born in beautiful waters"}
+  - {zh: "玉出崑岡", pinyin: "yù chū kūn gāng", en: "Jade comes from Kungang"}
+  - {zh: "劍號巨闕", pinyin: "jiàn hào jù què", en: "The sword called Juque"}
+  - {zh: "珠稱夜光", pinyin: "zhū chēng yè guāng", en: "The pearl known as Night-Shining"}
+  - {zh: "果珍李柰", pinyin: "guǒ zhēn lǐ nài", en: "Precious fruits: plums and crabapples"}
+  - {zh: "菜重芥薑", pinyin: "cài zhòng jiè jiāng", en: "Important vegetables: mustard and ginger"}
+  - {zh: "海鹹河淡", pinyin: "hǎi xián hé dàn", en: "The sea is salty, rivers are fresh"}
+  - {zh: "鱗潛羽翔", pinyin: "lín qián yǔ xiáng", en: "Fish dive, birds soar"}
+  - {zh: "龍師火帝", pinyin: "lóng shī huǒ dì", en: "Dragon Master, Fire Emperor"}
+  - {zh: "鳥官人皇", pinyin: "niǎo guān rén huáng", en: "Bird Official, Human Sovereign"}
+  - {zh: "始制文字", pinyin: "shǐ zhì wén zì", en: "They began creating writing"}
+  - {zh: "乃服衣裳", pinyin: "nǎi fú yī cháng", en: "Then came clothing and garments"}
+  - {zh: "推位讓國", pinyin: "tuī wèi ràng guó", en: "Yielding the throne, ceding the state"}
+  - {zh: "有虞陶唐", pinyin: "yǒu yú táo táng", en: "Yu and Tang of the line of Tao"}
+  - {zh: "弔民伐罪", pinyin: "diào mín fá zuì", en: "Comforting the people, punishing the guilty"}
+  - {zh: "周發殷湯", pinyin: "zhōu fā yīn tāng", en: "King Fa of Zhou, King Tang of Yin"}
+  - {zh: "坐朝問道", pinyin: "zuò cháo wèn dào", en: "Sitting in court, inquiring of the Way"}
+  - {zh: "垂拱平章", pinyin: "chuí gǒng píng zhāng", en: "Ruling effortlessly, bringing order"}
+  - {zh: "愛育黎首", pinyin: "ài yù lí shǒu", en: "Lovingly nurturing the common people"}
+  - {zh: "臣伏戎羌", pinyin: "chén fú róng qiāng", en: "Subjects submitting, even the Rong and Qiang"}
+  - {zh: "遐邇壹體", pinyin: "xiá ěr yī tǐ", en: "Far and near, one body"}
+  - {zh: "率賓歸王", pinyin: "shuài bīn guī wáng", en: "All guests return to the king"}
+  - {zh: "鳴鳳在竹", pinyin: "míng fèng zài zhú", en: "Phoenixes sing in the bamboo"}
+  - {zh: "白駒食場", pinyin: "bái jū shí chǎng", en: "White colts graze in the meadow"}
+  - {zh: "化被草木", pinyin: "huà bèi cǎo mù", en: "Transformation covers the grasses and trees"}
+  - {zh: "賴及萬方", pinyin: "lài jí wàn fāng", en: "Its blessings reach all directions"}
+  - {zh: "蓋此身髮", pinyin: "gài cǐ shēn fà", en: "This body and its hair"}
+  - {zh: "四大五常", pinyin: "sì dà wǔ cháng", en: "Come from the four elements and five constants"}
+  - {zh: "恭惟鞠養", pinyin: "gōng wéi jū yǎng", en: "Respectfully cherish your upbringing"}
+  - {zh: "豈敢毀傷", pinyin: "qǐ gǎn huǐ shāng", en: "Dare not damage or injure"}
+  - {zh: "女慕貞潔", pinyin: "nǚ mù zhēn jié", en: "Women admire chastity and purity"}
+  - {zh: "男效才良", pinyin: "nán xiào cái liáng", en: "Men emulate talent and virtue"}
+  - {zh: "知過必改", pinyin: "zhī guò bì gǎi", en: "Know your faults and always correct them"}
+  - {zh: "得能莫忘", pinyin: "dé néng mò wàng", en: "Gain ability and never forget it"}
+  - {zh: "罔談彼短", pinyin: "wǎng tán bǐ duǎn", en: "Do not speak of others' shortcomings"}
+  - {zh: "靡恃己長", pinyin: "mǐ shì jǐ cháng", en: "Do not rely on your own strengths"}
+  - {zh: "信使可覆", pinyin: "xìn shǐ kě fù", en: "Trustworthiness should be verifiable"}
+  - {zh: "器欲難量", pinyin: "qì yù nán liáng", en: "One's capacity is hard to measure"}
+  - {zh: "墨悲絲染", pinyin: "mò bēi sī rǎn", en: "Mo Zi grieved over dyed silk"}
+  - {zh: "詩讚羔羊", pinyin: "shī zàn gāo yáng", en: "The Odes praised the lambskin"}
+  - {zh: "景行維賢", pinyin: "jǐng xíng wéi xián", en: "Emulate virtuous conduct"}
+  - {zh: "克念作聖", pinyin: "kè niàn zuò shèng", en: "Strive to be a sage in thought"}
+  - {zh: "德建名立", pinyin: "dé jiàn míng lì", en: "Build virtue, establish a name"}
+  - {zh: "形端表正", pinyin: "xíng duān biǎo zhèng", en: "Keep form upright, appearance correct"}
+  - {zh: "空谷傳聲", pinyin: "kōng gǔ chuán shēng", en: "An empty valley carries sound"}
+  - {zh: "虛堂習聽", pinyin: "xū táng xí tīng", en: "A vacant hall echoes"}
+  - {zh: "禍因惡積", pinyin: "huò yīn è jī", en: "Disaster comes from accumulated evil"}
+  - {zh: "福緣善慶", pinyin: "fú yuán shàn qìng", en: "Fortune follows from doing good"}
+  - {zh: "尺璧非寶", pinyin: "chǐ bì fēi bǎo", en: "A foot of jade is not the treasure"}
+  - {zh: "寸陰是競", pinyin: "cùn yīn shì jìng", en: "An inch of time is what to compete for"}
+  - {zh: "資父事君", pinyin: "zī fù shì jūn", en: "Serve your father, serve your lord"}
+  - {zh: "曰嚴與敬", pinyin: "yuē yán yǔ jìng", en: "With strictness and respect"}
+  - {zh: "孝當竭力", pinyin: "xiào dāng jié lì", en: "In filial piety, exhaust your strength"}
+  - {zh: "忠則盡命", pinyin: "zhōng zé jìn mìng", en: "In loyalty, devote your life"}
+  - {zh: "臨深履薄", pinyin: "lín shēn lǚ bó", en: "Treading on thin ice over deep water"}
+  - {zh: "夙興溫凊", pinyin: "sù xīng wēn qìng", en: "Rising early, keeping parents warm and cool"}
+  - {zh: "似蘭斯馨", pinyin: "sì lán sī xīn", en: "Like orchids in fragrance"}
+  - {zh: "如松之盛", pinyin: "rú sōng zhī shèng", en: "Like pines in flourishing"}
+  - {zh: "川流不息", pinyin: "chuān liú bù xī", en: "Rivers flow without ceasing"}
+  - {zh: "淵澄取映", pinyin: "yuān chéng qǔ yìng", en: "Deep pools reflect clearly"}
+  - {zh: "容止若思", pinyin: "róng zhǐ ruò sī", en: "In demeanor, appear thoughtful"}
+  - {zh: "言辭安定", pinyin: "yán cí ān dìng", en: "In speech, be calm and steady"}
+  - {zh: "篤初誠美", pinyin: "dǔ chū chéng měi", en: "Be sincere and fine at the start"}
+  - {zh: "慎終宜令", pinyin: "shèn zhōng yí lìng", en: "Be careful and proper at the end"}
+  - {zh: "榮業所基", pinyin: "róng yè suǒ jī", en: "The foundation of glory and enterprise"}
+  - {zh: "藉甚無竟", pinyin: "jí shèn wú jìng", en: "Its basis is vast beyond measure"}
+  - {zh: "學優登仕", pinyin: "xué yōu dēng shì", en: "When learning excels, enter government service"}
+  - {zh: "攝職從政", pinyin: "shè zhí cóng zhèng", en: "Hold office and join in governance"}
+  - {zh: "存以甘棠", pinyin: "cún yǐ gān táng", en: "Preserve like the sweet pear tree"}
+  - {zh: "去而益詠", pinyin: "qù ér yì yǒng", en: "Depart and be praised even more"}
+  - {zh: "樂殊貴賤", pinyin: "yuè shū guì jiàn", en: "Joy differs between noble and humble"}
+  - {zh: "禮別尊卑", pinyin: "lǐ bié zūn bēi", en: "Rites distinguish high and low"}
+  - {zh: "上和下睦", pinyin: "shàng hé xià mù", en: "Above harmonious, below respectful"}
+  - {zh: "夫唱婦隨", pinyin: "fū chàng fù suí", en: "Husband leads, wife follows"}
+  - {zh: "外受傅訓", pinyin: "wài shòu fù xùn", en: "Outside, receive the tutor's instruction"}
+  - {zh: "入奉母儀", pinyin: "rù fèng mǔ yí", en: "Inside, follow the mother's example"}
+  - {zh: "諸姑伯叔", pinyin: "zhū gū bó shū", en: "All the aunts, uncles, and elders"}
+  - {zh: "猶子比兒", pinyin: "yóu zǐ bǐ ér", en: "Treat nephews and nieces as your own children"}
+  - {zh: "孔懷兄弟", pinyin: "kǒng huái xiōng dì", en: "Brothers share deep bonds"}
+  - {zh: "同氣連枝", pinyin: "tóng qì lián zhī", en: "Of one breath, connected branches"}
+  - {zh: "交友投分", pinyin: "jiāo yǒu tóu fēn", en: "In friendship, share commitments"}
+  - {zh: "切磨箴規", pinyin: "qiē mó zhēn guī", en: "Polish and admonish each other"}
+  - {zh: "仁慈隱惻", pinyin: "rén cí yǐn cè", en: "Benevolence, compassion, and sympathy"}
+  - {zh: "造次弗離", pinyin: "zào cì fú lí", en: "Never depart from these, even in haste"}
+  - {zh: "節義廉退", pinyin: "jié yì lián tuì", en: "Integrity, righteousness, modesty, and deference"}
+  - {zh: "顛沛匪虧", pinyin: "diān pèi fěi kuī", en: "Never diminish these, even in hardship"}
+  - {zh: "性靜情逸", pinyin: "xìng jìng qíng yì", en: "When nature is calm, emotions are at ease"}
+  - {zh: "心動神疲", pinyin: "xīn dòng shén pí", en: "When the heart stirs, the spirit tires"}
+  - {zh: "守真志滿", pinyin: "shǒu zhēn zhì mǎn", en: "Hold to truth and your will is full"}
+  - {zh: "逐物意移", pinyin: "zhú wù yì yí", en: "Chase things and your purpose shifts"}
+  - {zh: "堅持雅操", pinyin: "jiān chí yǎ cāo", en: "Firmly maintain refined conduct"}
+  - {zh: "好爵自縻", pinyin: "hǎo jué zì mí", en: "Good rank will come of itself"}
+  - {zh: "都邑華夏", pinyin: "dū yì huá xià", en: "The great cities of China"}
+  - {zh: "東西二京", pinyin: "dōng xī èr jīng", en: "The two capitals, East and West"}
+  - {zh: "背邙面洛", pinyin: "bèi máng miàn luò", en: "Backed by Mang, facing Luo"}
+  - {zh: "浮渭據涇", pinyin: "fú wèi jù jīng", en: "Floating on the Wei, set upon the Jing"}
+  - {zh: "宮殿盤鬱", pinyin: "gōng diàn pán yù", en: "Palaces rise in lush splendor"}
+  - {zh: "樓觀飛驚", pinyin: "lóu guān fēi jīng", en: "Towers and pavilions soar startlingly"}
+  - {zh: "圖寫禽獸", pinyin: "tú xiě qín shòu", en: "Paintings depict birds and beasts"}
+  - {zh: "畫彩仙靈", pinyin: "huà cǎi xiān líng", en: "Colors portray immortals and spirits"}
+  - {zh: "丙舍傍啟", pinyin: "bǐng shè bàng qǐ", en: "Side chambers open beside"}
+  - {zh: "甲帳對楹", pinyin: "jiǎ zhàng duì yíng", en: "Curtained halls face the pillars"}
+  - {zh: "肆筵設席", pinyin: "sì yán shè xí", en: "Banquets are spread with mats"}
+  - {zh: "鼓瑟吹笙", pinyin: "gǔ sè chuī shēng", en: "Drums, zithers, and reed organs play"}
+  - {zh: "升階納陛", pinyin: "shēng jiē nà bì", en: "Ascending the steps to the throne"}
+  - {zh: "弁轉疑星", pinyin: "biàn zhuǎn yí xīng", en: "Caps turn like revolving stars"}
+  - {zh: "右通廣內", pinyin: "yòu tōng guǎng nèi", en: "Right passage to the inner quarters"}
+  - {zh: "左達承明", pinyin: "zuǒ dá chéng míng", en: "Left leads to the Hall of Light"}
+  - {zh: "既集墳典", pinyin: "jì jí fén diǎn", en: "Classics and canons are gathered"}
+  - {zh: "亦聚群英", pinyin: "yì jù qún yīng", en: "Talented scholars are assembled"}
+  - {zh: "杜稿鍾隸", pinyin: "dù gǎo zhōng lì", en: "Du Cao's drafts, Zhong's clerical script"}
+  - {zh: "漆書壁經", pinyin: "qī shū bì jīng", en: "Lacquered writings, wall sutras"}
+  - {zh: "府羅將相", pinyin: "fǔ luó jiāng xiàng", en: "Officials arrayed: generals and ministers"}
+  - {zh: "路俠槐卿", pinyin: "lù xiá huái qīng", en: "Flanking the lanes, ministers by the scholar trees"}
+  - {zh: "戶封八縣", pinyin: "hù fēng bā xiàn", en: "Households enfeoffed in eight counties"}
+  - {zh: "家給千兵", pinyin: "jiā jǐ qiān bīng", en: "Families supplied with a thousand soldiers"}
+  - {zh: "高冠陪輦", pinyin: "gāo guān péi niǎn", en: "Tall caps accompany the imperial chariot"}
+  - {zh: "驅轂振纓", pinyin: "qū gǔ zhèn yīng", en: "Carriages surge, tassels flutter"}
+  - {zh: "世祿侈富", pinyin: "shì lù chǐ fù", en: "Hereditary wealth and luxury"}
+  - {zh: "車駕肥輕", pinyin: "chē jià féi qīng", en: "Carriages sleek, horses light"}
+  - {zh: "策功茂實", pinyin: "cè gōng mào shí", en: "Meritorious deeds richly recorded"}
+  - {zh: "勒碑刻銘", pinyin: "lè bēi kè míng", en: "Inscribed on steles and carved in stone"}
+  - {zh: "磻溪伊尹", pinyin: "pán xī yī yǐn", en: "Pan Xi and Yi Yin"}
+  - {zh: "佐時阿衡", pinyin: "zuǒ shí ā héng", en: "Aiding their times, the Grand Steward"}
+  - {zh: "奄宅曲阜", pinyin: "yǎn zhái qū fù", en: "Dwelling at Qufu"}
+  - {zh: "微旦孰營", pinyin: "wēi dàn shú yíng", en: "Who but Dan could have built it"}
+  - {zh: "桓公匡合", pinyin: "huán gōng kuāng hé", en: "Duke Huan united and corrected"}
+  - {zh: "濟弱扶傾", pinyin: "jì ruò fú qīng", en: "Aiding the weak, supporting the faltering"}
+  - {zh: "綺迴漢惠", pinyin: "qǐ huí hàn huì", en: "Qi turned back the Han and the Hui"}
+  - {zh: "說感武丁", pinyin: "yuè gǎn wǔ dīng", en: "Yue's persuasion moved King Wu Ding"}
+  - {zh: "俊乂密勿", pinyin: "jùn yì mì wù", en: "Outstanding talents served diligently"}
+  - {zh: "多士寔寧", pinyin: "duō shì shí níng", en: "Many scholars brought genuine peace"}
+  - {zh: "晉楚更霸", pinyin: "jìn chǔ gēng bà", en: "Jin and Chu competed for supremacy"}
+  - {zh: "趙魏困橫", pinyin: "zhào wèi kùn héng", en: "Zhao and Wei were hemmed in"}
+  - {zh: "假途滅虢", pinyin: "jiǎ tú miè guó", en: "Borrowing a road to destroy Guo"}
+  - {zh: "踐土會盟", pinyin: "jiàn tǔ huì méng", en: "Treading the soil at the covenant assembly"}
+  - {zh: "何遵約法", pinyin: "hé zūn yuē fǎ", en: "He Zun upheld the law"}
+  - {zh: "韓弊煩刑", pinyin: "hán bì fán xíng", en: "Han's legacy burdened by harsh punishment"}
+  - {zh: "起翦頗牧", pinyin: "qǐ jiǎn pō mù", en: "Qi Jian, Po, and Mu"}
+  - {zh: "用軍最精", pinyin: "yòng jūn zuì jīng", en: "Their military use was the most brilliant"}
+  - {zh: "宣威沙漠", pinyin: "xuān wēi shā mò", en: "Proclaiming might across the desert"}
+  - {zh: "馳譽丹青", pinyin: "chí yù dān qīng", en: "Fame racing through painted history"}
+  - {zh: "九州禹跡", pinyin: "jiǔ zhōu yǔ jì", en: "The nine provinces bear Yu's traces"}
+  - {zh: "百郡秦并", pinyin: "bǎi jùn qín bìng", en: "A hundred commanderies under Qin's union"}
+  - {zh: "嶽宗泰岱", pinyin: "yuè zōng tài dài", en: "The sacred peak Mount Tai"}
+  - {zh: "禪主云亭", pinyin: "shàn zhǔ yún tíng", en: "The altar of Zen at Cloud Pavilion"}
+  - {zh: "雁門紫塞", pinyin: "yàn mén zǐ sài", en: "Wild Goose Gate, the Purple Pass"}
+  - {zh: "雞田赤城", pinyin: "jī tián chì chéng", en: "Cock Field, the Red Walls"}
+  - {zh: "昆池碣石", pinyin: "kūn chí jié shí", en: "Kunming Pool, Jieshi Rock"}
+  - {zh: "鉅野洞庭", pinyin: "jù yě dòng tíng", en: "The Great Wilds, Dongting Lake"}
+  - {zh: "曠遠綿邈", pinyin: "kuàng yuǎn mián miǎo", en: "Vast and far, stretching endlessly"}
+  - {zh: "巖岫杳冥", pinyin: "yán xiù yǎo míng", en: "Cliffs and peaks, dark and deep"}
+  - {zh: "治本於農", pinyin: "zhì běn yú nóng", en: "Governance is rooted in agriculture"}
+  - {zh: "務茲稼穡", pinyin: "wù zī jià sè", en: "Attend to planting and harvesting"}
+  - {zh: "俶載南畝", pinyin: "chù zǎi nán mǔ", en: "Begin plowing the southern fields"}
+  - {zh: "我藝黍稷", pinyin: "wǒ yì shǔ jì", en: "I plant millet and grain"}
+  - {zh: "稅熟貢新", pinyin: "shuì shú gòng xīn", en: "When taxes are ripe, offer the new harvest"}
+  - {zh: "勸賞黜陟", pinyin: "quàn shǎng chù zhì", en: "Encourage with rewards, demote and promote"}
+  - {zh: "孟軻敦素", pinyin: "mèng kē dūn sù", en: "Mencius valued simplicity"}
+  - {zh: "史魚秉直", pinyin: "shǐ yú bǐng zhí", en: "Shi Yu held to uprightness"}
+  - {zh: "庶幾中庸", pinyin: "shù jī zhōng yōng", en: "Strive for the Mean"}
+  - {zh: "勞謙謹敕", pinyin: "láo qiān jǐn chì", en: "Be diligent, humble, and careful"}
+  - {zh: "聆音察理", pinyin: "líng yīn chá lǐ", en: "Listen to sounds, examine principles"}
+  - {zh: "鑒貌辨色", pinyin: "jiàn mào biàn sè", en: "Observe appearance, discern character"}
+  - {zh: "貽厥嘉猷", pinyin: "yí jué jiā yóu", en: "Bequeath excellent plans"}
+  - {zh: "勉其祗植", pinyin: "miǎn qí zhī zhí", en: "Encourage earnest cultivation"}
+  - {zh: "省躬譏誡", pinyin: "xǐng gōng jī jiè", en: "Examine yourself with admonition"}
+  - {zh: "寵增抗極", pinyin: "chǒng zēng kàng jí", en: "Favor and excess lead to extremes"}
+  - {zh: "殆辱近恥", pinyin: "dài rǔ jìn chǐ", en: "Disgrace and humiliation draw near shame"}
+  - {zh: "林皋幸即", pinyin: "lín gāo xìng jí", en: "The forest and marsh are fortunate retreats"}
+  - {zh: "兩疏見機", pinyin: "liǎng shū jiàn jī", en: "The two Shu perceived the moment"}
+  - {zh: "解組誰逼", pinyin: "jiě zǔ shuí bī", en: "Who compelled them to resign"}
+  - {zh: "索居閒處", pinyin: "suǒ jū xián chǔ", en: "Dwell in solitude, abide in leisure"}
+  - {zh: "沉默寂寥", pinyin: "chén mò jì liáo", en: "In silence and stillness"}
+  - {zh: "求古尋論", pinyin: "qiú gǔ xún lùn", en: "Seek the ancients, explore their words"}
+  - {zh: "散慮逍遙", pinyin: "sàn lǜ xiāo yáo", en: "Scatter worries, wander carefree"}
+  - {zh: "欣奏累遣", pinyin: "xīn zòu lěi qiǎn", en: "Joyful melodies dispel sorrow"}
+  - {zh: "戚謝歡招", pinyin: "qī xiè huān zhāo", en: "Sorrows depart, happiness beckons"}
+  - {zh: "渠荷的歷", pinyin: "qú hé dì lì", en: "Lotus channels, water lilies"}
+  - {zh: "園莽抽條", pinyin: "yuán mǎng chōu tiáo", en: "Gardens overgrown, tendrils reaching"}
+  - {zh: "枇杷晚翠", pinyin: "pí pá wǎn cuì", en: "Loquats green in late season"}
+  - {zh: "梧桐早凋", pinyin: "wú tóng zǎo diāo", en: "Parasol trees wither early"}
+  - {zh: "陳根委翳", pinyin: "chén gēn wěi yì", en: "Old roots hidden in shadow"}
+  - {zh: "落葉飄搖", pinyin: "luò yè piāo yáo", en: "Fallen leaves drift and sway"}
+  - {zh: "游鯤獨運", pinyin: "yóu kūn dú yùn", en: "The great fish swims alone"}
+  - {zh: "凌摩絳霄", pinyin: "líng mó jiàng xiāo", en: "Soaring, brushing the crimson sky"}
+  - {zh: "耽讀玩市", pinyin: "dān dú wán shì", en: "Lost in reading at the market"}
+  - {zh: "寓目囊箱", pinyin: "yù mù náng xiāng", en: "Eyes fixed on the book satchel"}
+  - {zh: "易輶攸畏", pinyin: "yì yóu yōu wèi", en: "Easy and light are what we fear"}
+  - {zh: "屬耳垣牆", pinyin: "zhǔ ěr yuán qiáng", en: "Walls have ears"}
+  - {zh: "具膳餐飯", pinyin: "jù shàn cān fàn", en: "Prepare meals and serve food"}
+  - {zh: "適口充腸", pinyin: "shì kǒu chōng cháng", en: "Suit the palate, fill the belly"}
+  - {zh: "飽飫烹宰", pinyin: "bǎo yù pēng zǎi", en: "When sated, cook and slaughter"}
+  - {zh: "飢厭糟糠", pinyin: "jī yàn zāo kāng", en: "When hungry, even dregs and husks suffice"}
+  - {zh: "親戚故舊", pinyin: "qīn qī gù jiù", en: "Relatives and old friends"}
+  - {zh: "老少異糧", pinyin: "lǎo shào yì liáng", en: "Old and young get different fare"}
+  - {zh: "妾御績紡", pinyin: "qiè yù jì fǎng", en: "Concubines spin and weave"}
+  - {zh: "侍巾帷房", pinyin: "shì jīn wéi fáng", en: "Attendants serve in chambers"}
+  - {zh: "紈扇圓潔", pinyin: "wán shàn yuán jié", en: "Round fans of fine silk"}
+  - {zh: "銀燭煒煌", pinyin: "yín zhú wěi huáng", en: "Silver candles gleaming bright"}
+  - {zh: "晝眠夕寐", pinyin: "zhòu mián xī mèi", en: "Daytime sleep, evening slumber"}
+  - {zh: "藍筍象床", pinyin: "lán sǔn xiàng chuáng", en: "Blue bamboo mats, ivory beds"}
+  - {zh: "弦歌酒宴", pinyin: "xián gē jiǔ yàn", en: "String songs and wine banquets"}
+  - {zh: "接杯舉觴", pinyin: "jiē bēi jǔ shāng", en: "Raising cups and lifting goblets"}
+  - {zh: "矯手頓足", pinyin: "jiǎo shǒu dùn zú", en: "Clapping hands and stamping feet"}
+  - {zh: "悅豫且康", pinyin: "yuè yù qiě kāng", en: "In joy and ease and health"}
+  - {zh: "嫡後嗣續", pinyin: "dí hòu sì xù", en: "Legitimate heirs carry on the line"}
+  - {zh: "祭祀烝嘗", pinyin: "jì sì zhēng cháng", en: "Sacrificial rites of winter and autumn"}
+  - {zh: "稽顙再拜", pinyin: "qǐ sǎng zài bài", en: "Kowtow and bow again"}
+  - {zh: "悚懼恐惶", pinyin: "sǒng jù kǒng huáng", en: "With awe, fear, and trepidation"}
+  - {zh: "箋牒簡要", pinyin: "jiān dié jiǎn yào", en: "Letters and documents should be concise"}
+  - {zh: "顧答審詳", pinyin: "gù dá shěn xiáng", en: "Replies should be thorough"}
+  - {zh: "骸垢想浴", pinyin: "hái gòu xiǎng yù", en: "When the body is dirty, think of bathing"}
+  - {zh: "執熱願涼", pinyin: "zhí rè yuàn liáng", en: "When hot, wish for coolness"}
+  - {zh: "驢騾犢特", pinyin: "lǘ luó dú tè", en: "Donkeys, mules, calves, and bulls"}
+  - {zh: "駭躍超驤", pinyin: "hài yuè chāo xiāng", en: "Startled, they leap and prance"}
+  - {zh: "誅斬賊盜", pinyin: "zhū zhǎn zéi dào", en: "Execute and behead thieves and bandits"}
+  - {zh: "捕獲叛亡", pinyin: "bǔ huò pàn wáng", en: "Capture and seize rebels and fugitives"}
+  - {zh: "布射僚丸", pinyin: "bù shè liáo wán", en: "Bu Yi's archery, Liao Wan's ball play"}
+  - {zh: "嵇琴阮嘯", pinyin: "jī qín ruǎn xiào", en: "Ji Kang's zither, Ruan Ji's whistling"}
+  - {zh: "恬筆倫紙", pinyin: "tián bǐ lún zhǐ", en: "Tian's brush, Lun's paper"}
+  - {zh: "鈞巧任釣", pinyin: "jūn qiǎo rèn diào", en: "Jun's ingenuity, Ren's fishing"}
+  - {zh: "釋紛利俗", pinyin: "shì fēn lì sú", en: "Release disputes for common benefit"}
+  - {zh: "並皆佳妙", pinyin: "bìng jiē jiā miào", en: "All are fine and wonderful"}
+  - {zh: "毛施淑姿", pinyin: "máo shī shū zī", en: "Mao Qiang and Xi Shi's beauty"}
+  - {zh: "工顰妍笑", pinyin: "gōng pín yán xiào", en: "Artful frowns, lovely smiles"}
+  - {zh: "年矢每催", pinyin: "nián shǐ měi cuī", en: "Years fly like arrows, always pressing"}
+  - {zh: "曦暉朗曜", pinyin: "xī huī lǎng yào", en: "The sun's glow shines brightly"}
+  - {zh: "璇璣懸斡", pinyin: "xuán jī xuán wò", en: "The celestial armillary sphere revolves"}
+  - {zh: "晦魄環照", pinyin: "huì pò huán zhào", en: "The dark moon's phases cycle in light"}
+  - {zh: "指薪修祜", pinyin: "zhǐ xīn xiū hù", en: "Point to the firewood to prolong blessings"}
+  - {zh: "永綏吉劭", pinyin: "yǒng suí jí shào", en: "Forever peaceful, auspicious, and good"}
+  - {zh: "矩步引領", pinyin: "jǔ bù yǐn lǐng", en: "Measured steps, leading the way"}
+  - {zh: "俯仰廊廟", pinyin: "fǔ yǎng láng miào", en: "Looking up and down in the corridors of state"}
+  - {zh: "束帶矜莊", pinyin: "shù dài jīn zhuāng", en: "Bound sashes, dignified and solemn"}
+  - {zh: "徘徊瞻眺", pinyin: "pái huái zhān tiào", en: "Lingering, gazing afar"}
+  - {zh: "孤陋寡聞", pinyin: "gū lòu guǎ wén", en: "Lonely and ignorant, few in learning"}
+  - {zh: "愚蒙等誚", pinyin: "yú méng děng qiào", en: "Foolish and benighted, subject to ridicule"}
+  - {zh: "謂語助者", pinyin: "wèi yǔ zhù zhě", en: "These are the grammatical particles"}
+  - {zh: "焉哉乎也", pinyin: "yān zāi hū yě", en: "Yan, zai, hu, ye"}

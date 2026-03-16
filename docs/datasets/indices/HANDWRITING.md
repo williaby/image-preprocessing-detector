@@ -97,6 +97,8 @@
 
 | Dataset | Images | Content | Scripts | License | Link |
 |---------|--------|---------|---------|---------|------|
+| thousand-character-classic | 391 | Historical CJK calligraphy (6 script styles, 6th-19th century) | Hant, Hani, Kore, Jpan | Mixed (CC0/CC BY/PD) | [thousand-character-classic.md](../source/thousand-character-classic.md) |
+| john11-manuscripts | 210-520 | Multi-script biblical manuscripts (11 scripts, 2nd-19th century) | Grek, Latn, Ethi, Armn, Syrc, Arab, Cyrs, Copt, Goth, Geor | Mixed (CC0/PD/CC-BY) | [john11-manuscripts.md](../source/john11-manuscripts.md) |
 | casia-hwdb2-line | 52,160 | Chinese handwriting line crops (height=128px) | Hans (HANS) | MIT | [casia-hwdb2-line.md](../source/casia-hwdb2-line.md) |
 | casia-hwdb2 | 5,091 pages | Full-page Chinese handwriting (300 DPI, DGRL format) | Hans (HANS) | Academic only | [casia-hwdb2.md](../source/casia-hwdb2.md) |
 | ndl-minhon | ~32,822 | Kuzushiji manuscripts — 523K line annotations with isVertical flag | Jpan (JPAN) | CC BY-SA 4.0 | [ndl-minhon.md](../source/ndl-minhon.md) |

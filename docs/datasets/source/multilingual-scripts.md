@@ -1,3 +1,16 @@
+---
+dataset_id: multilingual-scripts
+version: "1.0"
+license: CC-BY-4.0
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Multilingual Scripts Collection
 
 > **Quick Stats**: 3,279 images | 4 subdatasets | 4 scripts | Script detection training

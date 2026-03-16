@@ -1,3 +1,16 @@
+---
+dataset_id: nist-sd2
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### NIST Special Database 2 (SD-2)
 
 > **Quick Stats**: 5,590 pages | Synthesized tax forms | Binary B&W | Form field annotations
@@ -400,7 +413,7 @@ N/A - No dataset-specific quality tiers or scoring systems
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

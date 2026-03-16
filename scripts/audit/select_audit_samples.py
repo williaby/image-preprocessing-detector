@@ -42,7 +42,7 @@ import random
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -429,7 +429,7 @@ def build_output(
     return {
         "dataset": config.dataset_name,
         "sample_count": len(selected),
-        "created_at": datetime.now(tz=UTC).isoformat(),
+        "created_at": datetime.now(tz=timezone.utc).isoformat(),
         "random_seed": seed,
         "selection_criteria": {
             "total_population": total_population,
@@ -1016,7 +1016,7 @@ def run_phase6_selection(
     track_c = _select_track_c(records, failing_ids, c_count, rng)
 
     # 8. Attach common metadata to each track
-    now_iso = datetime.now(tz=UTC).isoformat()
+    now_iso = datetime.now(tz=timezone.utc).isoformat()
     common: dict[str, Any] = {
         "dataset": dataset_name,
         "tier": tier,

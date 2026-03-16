@@ -1,3 +1,16 @@
+---
+dataset_id: nist-sd6
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### NIST Special Database 6 (SD-6)
 
 > **Quick Stats**: 5,595 pages | Synthesized census forms | Binary B&W | Handprint samples
@@ -347,7 +360,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 90.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

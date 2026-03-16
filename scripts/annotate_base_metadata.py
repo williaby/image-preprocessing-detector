@@ -45,7 +45,7 @@ import re
 import subprocess
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -1347,7 +1347,9 @@ class SampleMetadata:
     enrichment_versions: list[EnrichmentVersion] = field(default_factory=list)
 
     # Record metadata
-    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     schema_version: str = SCHEMA_VERSION
 
     def add_enrichment(
@@ -1364,7 +1366,7 @@ class SampleMetadata:
         new_version = len(self.enrichment_versions) + 1
         enrichment = EnrichmentVersion(
             version=new_version,
-            created_at=datetime.now(UTC).isoformat(),
+            created_at=datetime.now(timezone.utc).isoformat(),
             created_by=created_by,
             method=method,
             description=description,
@@ -6044,7 +6046,7 @@ def _process_single_image(
         dataset_version="1.0",
         original_path=str(image_path.relative_to(dataset_path)),
         original_filename=image_path.name,
-        download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+        download_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         original_labels=original_labels,
         original_file=file_metadata,
     )
@@ -6329,7 +6331,7 @@ def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
             "image_count_on_disk": image_count_on_disk,
             "splits_included": list(split_counts.keys()),
             "split_counts": split_counts,
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "schema_version": SCHEMA_VERSION,
             "script_version": SCRIPT_VERSION,
             "git_sha": get_git_sha(),

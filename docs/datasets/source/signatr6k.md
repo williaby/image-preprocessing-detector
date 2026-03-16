@@ -1,3 +1,16 @@
+---
+dataset_id: signatr6k
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### SignaTR6K (Signature Dataset)
 
 > **Quick Stats**: 12,514 signatures | 6,000 unique | Train/Val/Test splits | Signature verification
@@ -159,7 +172,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

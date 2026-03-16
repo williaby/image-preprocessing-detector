@@ -30,7 +30,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -347,7 +347,7 @@ def process_ground_truth_dataset(
         metadata["backfill_history"].append(
             {
                 "operation": "text_quality_confidence_backfill",
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "source": f"ground_truth_{gt_source}",
                 "stats": stats,
             }
@@ -538,7 +538,7 @@ def process_docling_dataset(
         metadata["backfill_history"].append(
             {
                 "operation": "text_quality_confidence_backfill",
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "source": "docling_ocr_heuristic",
                 "dataset_quality_cap": cap,
                 "stats": stats,

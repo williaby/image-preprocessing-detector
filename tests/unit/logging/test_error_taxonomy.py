@@ -5,7 +5,7 @@ in both disabled and enabled modes.
 """
 
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -211,12 +211,12 @@ class TestStructuredError:
 
     def test_timestamp_generated(self) -> None:
         """Test timestamp is generated."""
-        before = datetime.now(UTC)
+        before = datetime.now(timezone.utc)
         error = StructuredError(
             code=ErrorCode.INTERNAL_ERROR,
             message="Internal error",
         )
-        after = datetime.now(UTC)
+        after = datetime.now(timezone.utc)
 
         assert before <= error.timestamp <= after
 

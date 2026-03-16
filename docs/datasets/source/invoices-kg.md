@@ -1,3 +1,16 @@
+---
+dataset_id: invoices-kg
+version: "1.0"
+license: ODbL-1.0
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 ### invoices-kg
 
 > **Quick Stats**: 1,414 images (989 train, 425 val) | Scanned invoices | Financial domain | Key-value extraction
@@ -221,7 +234,7 @@ Each manifest contains an array of annotation objects:
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 80.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

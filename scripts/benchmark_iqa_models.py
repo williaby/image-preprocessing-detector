@@ -41,7 +41,7 @@ import logging
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -585,7 +585,7 @@ def _run_and_save_classical(
     intercorr_matrix = compute_detector_intercorrelation(intercorr_images)
 
     classical_output = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "num_images": len(images),
         "results": [asdict(r) for r in classical_results],
         "intercorrelation_matrix": intercorr_matrix,
@@ -675,7 +675,7 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     all_results: dict[str, Any] = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "config": {
             "models": args.models,
             "device": args.device,
@@ -725,7 +725,7 @@ def main() -> int:
     )
 
     diqa_output = {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": "diqa-5000",
         "splits": args.splits,
         "num_images": len(diqa_images),
@@ -844,7 +844,7 @@ def _run_ohrbench_benchmarks(
     )
 
     return {
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": "ohr-bench",
         "num_images": len(ohrbench_images),
         "results": ohrbench_results,

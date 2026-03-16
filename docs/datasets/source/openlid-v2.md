@@ -1,3 +1,16 @@
+---
+dataset_id: openlid-v2
+version: "1.0"
+license: Unknown
+commercial_use: unknown
+iqa_profiles:
+  - text_corpus
+baseline_quality: null
+training_suitable: false
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### OpenLID-v2 (Text Corpus for Synthetic Generation)
 
 > **Quick Stats**: 116M+ text samples | 201 language varieties | 27 scripts | Multi-language corpus

@@ -1,3 +1,16 @@
+---
+dataset_id: tibhcr
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### TibHCR (Tibetan Handwritten Character Recognition)
 
 > **Quick Stats**: 141,698 samples | 235 writers | 47 character classes | Handwritten
@@ -153,7 +166,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

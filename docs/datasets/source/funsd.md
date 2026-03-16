@@ -1,3 +1,16 @@
+---
+dataset_id: funsd
+version: "1.0"
+license: CC-BY-4.0
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### FUNSD
 
 > **Quick Stats**: 199 forms | Real noisy scans | NER annotations | Form understanding
@@ -327,21 +340,21 @@ dataset = load_dataset("nielsr/funsd")
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | split | ? | OPEN | Split field not populated in Layer 2 metadata. Source directory structure (train |
-| D02 | script_family | ? | OPEN | script_family contains directionality string 'ltr' instead of script family name |
-| D03 | text_has_content | ? | OPEN | text_statistics object missing entirely. FUNSD has GT text transcriptions that s |
-| D04 | orientation_class | ? | OPEN | orientation_class not populated. Scanner-produced forms are expected to be uprig |
-| D05 | image_properties_color_mode | ? | OPEN | image_properties.color_mode not populated. |
-| D06 | handwriting_present | ? | OPEN | handwriting_present boolean not populated. Forms may contain handwritten entries |
-| D07 | layout_detections[*].class_name | ? | OPEN | 9,743 layout detection class names not in DocLayNet 11-class taxonomy. Values li |
-| D08 | text_direction | ? | OPEN | v2.3.0 text_direction field not populated. English text is LTR. |
-| D09 | text_directions_present | ? | OPEN | v2.3.0 text_directions_present field not populated. |
-| D10 | schema_version | ? | OPEN | schema_version is '2.1', needs bump to '2.3.0' to reflect new fields. |
-| D11 | content_flags | ? | OPEN | Content flags show 100% has_table=True and 100% has_handwriting=True across all  |
+| D01 | split | high | OPEN | Split field not populated in Layer 2 metadata. Source directory structure (training_data/testing_data) provides ground truth. |
+| D02 | script_family | high | OPEN | KI-008: script_family contains directionality string 'ltr' instead of script family name 'latin'. |
+| D03 | text_has_content | high | OPEN | text_statistics object missing entirely. FUNSD has GT text transcriptions that should populate this. |
+| D04 | orientation_class | medium | OPEN | orientation_class not populated. Scanner-produced forms expected to be upright (0). |
+| D05 | image_properties_color_mode | medium | OPEN | image_properties.color_mode not populated. |
+| D06 | handwriting_present | medium | OPEN | handwriting_present boolean not populated. Forms may contain handwritten entries. |
+| D07 | layout_detections[*].class_name | critical | OPEN | 9,743 layout detection class names not in DocLayNet 11-class taxonomy. FUNSD-native labels (KI-001). |
+| D08 | text_direction | medium | OPEN | v2.3.0 text_direction field not populated. English text is LTR. |
+| D09 | text_directions_present | medium | OPEN | v2.3.0 text_directions_present field not populated. |
+| D10 | schema_version | low | OPEN | schema_version is '2.1', needs bump to '2.3.0' to reflect new fields. |
+| D11 | content_flags | high | OPEN | Content flags show 100% has_table=True and 100% has_handwriting=True (KI-002: LLM false positives on forms). |
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

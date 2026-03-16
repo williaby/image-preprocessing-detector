@@ -238,7 +238,7 @@ Phase 2 derives images from `synth-multiscript-v3` (190,485 images on GCS at
 | **Current usable** | 5,499 | 0 | 5,499 |
 | **Gap** | 10,501 | 100,000 | 110,501 |
 | **Real vs. synthetic ratio** | 100% real | 100% synthetic | ~14% real / ~86% synthetic |
-| **Label quality ceiling** | tier_0_exact (MOS) / tier_1_classical | tier_0_exact (augmentation param) | — |
+| **Label quality ceiling** | tier_1_annotation (human MOS) / tier_1_classical | tier_0_exact (augmentation param) | — |
 
 ---
 
@@ -251,7 +251,7 @@ Phase 2 derives images from `synth-multiscript-v3` (190,485 images on GCS at
 **Primary L2 Fields**: Per-head fields in `ml_image_quality.*`
 **Type**: float
 **Range**: 0.0–1.0 (1.0 = perfect quality, 0.0 = severe degradation)
-**Provenance Tier**: tier_0_exact (human MOS, DIQA-5000) or tier_1_annotation (VLM, classical)
+**Provenance Tier**: tier_1_annotation (human MOS, DIQA-5000) or tier_2_model (DeQA-Doc pseudo-labels)
 
 ```json
 {
@@ -259,7 +259,7 @@ Phase 2 derives images from `synth-multiscript-v3` (190,485 images on GCS at
   "source_dataset": "diqa-5000",
   "split": "train",
   "split_type": "train",
-  "label_provenance": "tier_0_exact",
+  "label_provenance": "tier_1_annotation",
   "label_confidence": 1.0,
   "overall_quality": 0.78,
   "blur_score": 0.85,

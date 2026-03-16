@@ -32,7 +32,7 @@ import json
 import re
 import statistics
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -568,7 +568,7 @@ def process_dataset(
             "source_format": text_data.get("source_format"),
             "source_file": text_data.get("source_file"),
             "extraction_method": "calculate_text_statistics.py_v1.0.0",
-            "extraction_timestamp": datetime.now(UTC).isoformat(),
+            "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
             "confidence": text_data.get("confidence"),
             "encoding": "utf-8",
             "is_complete": True,

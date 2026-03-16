@@ -25,7 +25,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -407,7 +407,7 @@ def process_dataset(
         metadata["backfill_history"].append(
             {
                 "operation": "language_confidence_backfill",
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "enrichment_type": enrichment_type,
                 "stats": stats,
             }

@@ -30,7 +30,7 @@ import json
 import logging
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -522,7 +522,7 @@ def update_enrichment(
     # Create new version
     new_version = {
         "version": current_version + 1,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": "enrich_mlt19_language.py",
         "method": "tier_2_ml_inference",
         "description": "Layer 2 multi-factor consensus language detection",

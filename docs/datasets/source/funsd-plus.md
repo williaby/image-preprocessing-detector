@@ -1,3 +1,16 @@
+---
+dataset_id: funsd-plus
+version: "1.0"
+license: CC-BY-4.0
+commercial_use: true
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### FUNSD+ (Extended FUNSD)
 
 > **Quick Stats**: 1,139 forms | Extended annotations | Pre-split | HuggingFace-ready
@@ -285,17 +298,17 @@
 
 | ID | Field | Severity | Status | Description |
 |----|-------|----------|--------|-------------|
-| D01 | ? | CRITICAL | OPEN | COCO batch ID collision across 6 layout batches (all use IDs 0-199, 939 overlapp |
-| D02 | ? | CRITICAL | OPEN | Metadata filenames (funsd_plus_test_0000.jpg) do not match layout/OCR batch file |
-| D03 | ? | HIGH | OPEN | has_handwriting=false for all samples but ~47% contain handwritten entries/signa |
-| D04 | ? | HIGH | OPEN | Schema v2.1 missing v2.3.0 fields: text_direction, text_directions_present, orie |
-| D05 | ? | MEDIUM | OPEN | 2/36 VLM samples contain German text but labeled as English (iso639_language=en) |
-| D06 | ? | MEDIUM | OPEN | LLM enrichment not available (OPENROUTER_API_KEY not set) |
-| D07 | ? | LOW | OPEN | script_family was 'ltr' in v1 enrichment (text direction, not script family) |
+| D01 | layout_batch_ids | CRITICAL | OPEN | COCO batch ID collision across 6 layout batches (all use IDs 0-199, 939 overlapping IDs). Fixed: per-batch independent processing. |
+| D02 | filename_mapping | CRITICAL | OPEN | Metadata filenames (funsd_plus_test_0000.jpg) do not match layout/OCR batch filenames (578118.png). Fixed: HF Arrow mapping. |
+| D03 | handwriting_present | HIGH | OPEN | has_handwriting=false for all samples but ~47% contain handwritten entries/signatures. Requires detection model or manual review. |
+| D04 | schema_version | HIGH | OPEN | Schema v2.1 missing v2.3.0 fields: text_direction, text_directions_present, orientation, handwriting_present, image_properties_color_mode. |
+| D05 | iso639_language | MEDIUM | OPEN | 2/36 VLM samples contain German text but labeled as English (iso639_language=en). |
+| D06 | llm_enrichment | MEDIUM | OPEN | LLM enrichment not available (OPENROUTER_API_KEY not set). |
+| D07 | script_family | LOW | OPEN | KI-008: script_family was 'ltr' in v1 enrichment (text direction, not script family). Fixed: re-derived via get_script_family(). |
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 52.8%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

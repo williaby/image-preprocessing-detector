@@ -1,3 +1,16 @@
+---
+dataset_id: realdae
+version: "1.0"
+license: Research Only
+commercial_use: false
+iqa_profiles:
+  - camera_smartphone
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### RealDAE (Real-world Document Appearance Enhancement)
 
 > **Quick Stats**: 600 image pairs | Pixel-aligned GT | 3 degradation types | Camera-captured
@@ -423,7 +436,7 @@ realdae/
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 75.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

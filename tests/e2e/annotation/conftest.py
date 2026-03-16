@@ -16,7 +16,7 @@ Key Design Principles:
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -295,7 +295,7 @@ def mock_dataset_structure(
 
     labels = {
         "version": "1.0",
-        "created": datetime.now(UTC).isoformat(),
+        "created": datetime.now(timezone.utc).isoformat(),
         "images": [
             {
                 "id": i,

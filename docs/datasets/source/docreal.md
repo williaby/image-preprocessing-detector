@@ -14,7 +14,9 @@ documentation_status: partial
 
 #### DocReal (Document Dewarping Benchmark)
 
-> **Quick Stats**: 251 images | 201 distorted + 50 scanned GT | Camera-captured + scanner | MIT license
+> **Quick Stats**: 251 images (201 distorted + 50 scanned GT) | Camera-captured + scanner | MIT license
+>
+> **Note**: Quick Reference lists 200 (paired distorted images only); full dataset includes 50 additional scanned GT references and 1 extra distorted image.
 >
 > **License**: MIT | **Commercial Use**: Yes
 
@@ -363,7 +365,7 @@ Base metadata extraction complete via `annotate_base_metadata_lite.py`. Layer 2 
 
 ##### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 58.3%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ##### 11.4 Cross-Dataset Findings
 

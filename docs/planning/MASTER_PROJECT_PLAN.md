@@ -87,10 +87,11 @@ Prepare-Doc's image pipeline applies corrections in two stages:
 **Stage 2 — Full Analysis + Remaining Corrections** (SigLIP 2 + Classical IQA, on corrected
 image):
 
-- SigLIP 2 (19 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
+- SigLIP 2 (16 heads) + classical IQA (8 detectors) + layout-lite produce all fields in
   `DocumentMetadata.json`
 - SigLIP 2 and classical IQA outputs **also trigger additional corrections** within Prepare-Doc:
-  IQA blur/noise/contrast scores drive CLAHE enhancement, sharpening, and denoising; Group 5
+  IQA overall/sharpness/color scores + classical blur/noise/contrast drive CLAHE enhancement,
+  sharpening, and denoising; Group 5
   shadow/warping scores can trigger shadow removal and dewarping before the image moves
   downstream
 - The final corrected images + metadata are delivered to Unify
@@ -218,7 +219,7 @@ Raw Input (any format: PDF, DOCX, HTML, image, audio, ...)
         │
         ▼ (corrected image — Stage 2 operates here)
 [SigLIP 2 NAFlex 88M] ~50ms GPU         — STATUS: Training script ready; training not yet run
-    ├── Group 1: IQA (6 heads)
+    ├── Group 1: IQA (3 DIQA-aligned regression heads: overall, sharpness, color_fidelity)
     ├── Group 2: Script (1 cls, 10 classes)
     ├── Group 3: Orientation (1 cls + 1 reg)
     ├── Group 4: Handwriting (3 cls + 2 reg)       ◄── Stream 4E needed
@@ -408,7 +409,7 @@ Labels generated with these defects are permanently corrupted and cannot be salv
 | --- | --- | --- | --- |
 | 0 | 1–2 | Fix 3 architectural defects + deployment model decision + initiate license reviews | All 3 defects fixed; deployment model decided |
 | 1 | 2–4 | Train MNV4-Conv-S: orientation (50K), skew (90K), resolution quality (15K) | T4 data assembled for 3 heads |
-| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); run corpus-wide IQA pseudo-labeling (MUSIQ + TOPIQ-NR on ~440K images); train SigLIP core 11 heads (G1 IQA + G2 Script + G5 Page Attrs) | E11 + E01 complete; MUSIQ+TOPIQ ensemble SRCC ≥ 0.55 on DIQA-5000; ≥125K images with IQA labels |
+| 2 | 4–8 | Execute E11 (v3 completion) + E01 (shadow labeling); run corpus-wide IQA pseudo-labeling (DeQA-Doc per-dimension mPLUG-Owl2 on ~440K images, OOD-gated); train SigLIP core 8 heads (G1 IQA 3-dim + G2 Script + G5 Page Attrs) | E11 + E01 complete; DeQA-Doc pseudo-labels generated + OOD gated; ≥125K images with IQA labels |
 | 2b | 6–8 | Generate NIST contact sheets (~3,400); label presence_reg on mid-range candidate datasets (~13–19K) | Presence distribution covers 0.2–0.7 range |
 | 3 | 8–12 | Integrate G3 geometry heads; execute E03 (warping) + E05 (RQ V2); expand to 16 active heads | 14+ heads at quality gate |
 | 4 | 12+ (Release 2) | T5 handwriting data at reduced 25K scope (KHATT, CASIA-HWDB2, IIIT-HW-Hindi); build ILLEGIBLE class; train G4 heads | T5 acquisitions complete |
@@ -647,72 +648,97 @@ without data refresh.
 
 Full details: [OOD_COVERAGE_GAP_REPORT.md](../datasets/OOD_COVERAGE_GAP_REPORT.md)
 
-#### Corpus-Wide IQA Labeling: MUSIQ + TOPIQ-NR Ensemble
+#### Corpus-Wide IQA Labeling: DeQA-Doc Per-Dimension Pseudo-Labels (DIQA-Aligned)
 
-**Strategy change (2026-02-27)**: Rather than assembling a separate IQA-specific dataset, IQA
-labels are generated for the **entire training corpus** (~420–440K images). Every image that
-enters any training manifest automatically carries IQA pseudo-labels. This eliminates the VLM
-SRCC bottleneck, removes a separate dataset assembly step, and ensures IQA regression heads
-see the full diversity of document conditions present in other training tasks.
+**Strategy change (2026-03-06)**: IQA pseudo-labeling now uses **DeQA-Doc** (VQualA 2025
+champion) per-dimension mPLUG-Owl2-7B models, replacing the previously planned MUSIQ + TOPIQ-NR
+ensemble. Labels are generated for the **entire training corpus** (~420–440K images) across
+**3 DIQA-aligned dimensions** (overall, sharpness, color_fidelity), matching both the DIQA-5000
+ground truth schema and SigLIP 2's existing `IQA_TASKS = ("overall", "sharpness", "color")`.
+
+**Why DeQA-Doc over MUSIQ + TOPIQ-NR**:
+
+- DeQA-Doc was trained on DIQA-5000 (the same distribution as our ground truth anchors)
+- Produces per-dimension scores matching our 3-dim IQA scheme directly — no mapping needed
+- Includes 5-level soft probability distributions (excellent/good/fair/poor/bad) for each
+  dimension, enabling soft-label training and uncertainty estimation
+- VQualA 2025 champion on document IQA benchmarks
+
+**IQA head alignment**: SigLIP 2's Group 1 is now **3 regression heads** (overall, sharpness,
+color_fidelity), not the previously planned 6 individual degradation heads (blur, noise,
+contrast, skew, compression, overall_quality). The 6-head scheme lacked viable label sources;
+DIQA-5000's 3-dim scheme provides both human ground truth (3.5K train) and scalable
+pseudo-labels via DeQA-Doc. Classical IQA detectors (blur, noise, contrast, etc.) continue
+to operate at runtime for interpretable per-issue detection and corrections — they are separate
+from the ML training heads.
 
 **Minimum gate**: ≥125,000 images with IQA labels in the final merged training manifest.
-Given the corpus is ~420–440K, this is trivially met — the real constraint is validation
-quality, not volume.
 
-**Motivation**: The VLM IQA prompt approach (SRCC 0.53) is below the 0.65 threshold needed for
-regression training. The 9-model peer review panel (2026-02-26) endorsed pivoting to pretrained
-NR-IQA models — specifically MUSIQ and TOPIQ-NR — which can generate pseudo-labels at scale
-without new training. VQualA 2025 (ICCV Workshop) reported MUSIQ at 0.859 Pearson on DIQA-5000
-documents, far exceeding our local benchmark's raw SRCC of 0.116, likely due to evaluation
-protocol differences (normalization, metric type).
+**OOD-gated acceptance**: Pseudo-labels are weighted by Mahalanobis distance from the DIQA-5000
+training distribution (using pre-fitted OOD detector on SigLIP 2 embeddings):
 
-**Two-tier labeling strategy**:
+| Tier | Mahalanobis Percentile | Sample Weight | Action |
+| --- | --- | --- | --- |
+| AUTO_ACCEPT | < p75 | 1.0 | Trust DeQA-Doc directly |
+| LOW_WEIGHT | p75–p90 | 0.5 | Accept with reduced weight |
+| TIER2_TRIGGER | p90–p97.5 | 0.3 | Accept with low weight (VLM cross-validation optional) |
+| HARD_REJECT | > p97.5 | 0.0 | Exclude from training |
+| GROUND_TRUTH | N/A | 1.0 | DIQA-5000 GT always accepted |
 
-| Tier | Models | Scope | GPU-hours | Cost |
-| --- | --- | --- | --- | --- |
-| **Tier 1** (primary) | MUSIQ + TOPIQ-NR ensemble | All ~440K images (OOD 9.2K + training corpus ~420K) | ~14.8 h (T4) | $5–15 |
-| **Tier 2** (validation) | Q-Align (7B MLLM) | OOD 9.2K + 5K stratified sample from training corpus | ~0.9 h (A100) | <$2 |
+**Subprocess isolation**: DeQA-Doc requires transformers==4.36.1 (project uses ≥4.40). Inference
+runs via subprocess bridge script (`labeling/deqa/bridge_script.py`) inside the DeQA-Doc venv,
+communicating over stdin/stdout JSONL protocol. This avoids dependency conflicts.
 
-**Model details**:
+**Output schema** (per image, gated JSONL):
 
-| Model | PyIQA key | Params | Latency (T4) | KonIQ-10k SRCC | Notes |
-| --- | --- | --- | --- | --- | --- |
-| MUSIQ | `musiq` | 27M | 65 ms | 0.916 | Multi-scale transformer; native resolution |
-| TOPIQ-NR | `topiq_nr` | 27M | 59 ms | 0.930 | CFANet; semantic-guided cross-scale |
-| Q-Align | `qalign` | 7B | 220 ms (A100) | 0.941 | MLLM; requires A100 (15.4 GB VRAM) |
-
-**Validation gate**: Ensemble SRCC ≥ 0.55 on held-out DIQA-5000 subset (500 images). If the gate
-fails, fall back to LIQE (SRCC 0.403 on documents) as the primary model with MANIQA (SRCC 0.526,
-1845 ms) as validator on a stratified subsample.
-
-**Output schema** (per image, appended to L2 metadata):
+> **Join key**: `sha256` is the stable, portable join key for merging pseudo-labels into the
+> training manifest. `image_path` is included for debugging/provenance only and should use
+> dataset-relative paths (e.g., `iqa/phase1/images/sample_042.jpg`) rather than host-local
+> absolute paths.
 
 ```json
 {
-  "iqa_pseudo_labels": {
-    "musiq_mos": 0.72,
-    "topiq_mos": 0.68,
-    "ensemble_mos": 0.70,
-    "qalign_mos": 0.71,
-    "model_agreement": 0.96,
-    "label_tier": "tier_3_heuristic"
-  }
+  "sha256": "abc123...",
+  "corpus_id": "diqa-5000",
+  "image_path": "iqa/phase1/images/sample_042.jpg",
+  "overall_label": 0.605,
+  "sharpness_label": 0.72,
+  "color_fidelity_label": 0.81,
+  "overall_level_probs": [0.02, 0.08, 0.30, 0.45, 0.15],
+  "sharpness_level_probs": [0.05, 0.15, 0.40, 0.25, 0.15],
+  "color_fidelity_level_probs": [0.03, 0.12, 0.35, 0.30, 0.20],
+  "sample_weight": 1.0,
+  "acceptance_tier": "AUTO_ACCEPT",
+  "mahalanobis_distance": 22.3,
+  "label_source": "deqa_pseudo"
 }
 ```
 
-**Dependencies**: PyIQA ≥ 0.1.12, PyTorch ≥ 2.0, T4 GPU (Tier 1), A100 GPU (Tier 2 only).
+**Implementation** (✅ complete):
 
-**Effort**: 2–3 days development + 1 day full corpus run (~14.8h T4 GPU). Unblocks all 6
-G1 IQA heads. The corpus-wide approach **eliminates the separate IQA dataset assembly step**
-from Phase 2, saving ~1 week of curation effort while producing ~26x more labeled images
-(~440K vs. ~16K).
+- `src/image_preprocessing_detector/labeling/deqa/bridge_script.py` — standalone DeQA-Doc venv script
+- `src/image_preprocessing_detector/labeling/deqa/subprocess_runner.py` — subprocess orchestrator
+- `scripts/generate_diqa_pseudo_labels.py` — corpus-wide pseudo-labeling with checkpointing
+- `scripts/gate_diqa_pseudo_labels.py` — OOD-gated acceptance pipeline
 
-**Script location**: `scripts/label_iqa_pseudo.py` (to be created).
+**Dependencies**: DeQA-Doc venv with transformers==4.36.1, mPLUG-Owl2 per-dimension checkpoints,
+SigLIP 2 embeddings (pre-extracted), OOD detector params (`ood_params_4400.npz`).
 
-**Calibration anchors**: The existing 16.3K hard-labeled subset (DIQA-5000, OHR-Bench, RealDAE)
-retains `label_tier=tier_1_annotation` at weight 1.0. Corpus-wide pseudo-labels are assigned
-`label_tier=tier_2_model` at weight 0.8. The tiered weighting ensures the model anchors to
-human-validated quality scores while benefiting from the scale of pseudo-labels.
+**Effort**: Implementation complete. Remaining: 1 day full corpus run (~15h T4 GPU for 3
+dimensions × ~440K images). Unblocks all 3 G1 IQA heads.
+
+**Calibration anchors**: DIQA-5000 ground truth (3.5K train) retains `label_source=diqa_ground_truth`
+at weight 1.0, overriding pseudo-labels for those images. OHR-Bench and RealDAE IQA labels
+retain their existing tier_1 weights. The OOD gating ensures pseudo-labels for out-of-distribution
+images (unusual document types, non-document content) are down-weighted or excluded.
+
+**DQS integration**: The DQS calculator (`metrics/dqs_calculator.py`) will blend all 3 dimensions:
+`ml_quality = 0.60*overall + 0.25*sharpness + 0.15*color_fidelity` (with fallback to overall-only
+when sharpness/color are unavailable).
+
+**Future phase (deferred)**: Individual degradation heads (blur, noise, contrast, compression)
+require paired synthetic degradation datasets with known severity levels. These are deferred
+until proper label sources exist — the 3-dim DIQA scheme captures the routing-relevant signal.
 
 #### Stream 0: Document Type Router (new — architectural gap)
 
@@ -1066,7 +1092,7 @@ Each student stage targets the same 16 prediction heads with progressive latency
 | --- | --- | --- | --- | --- |
 | synth-multiscript-v4 (replaces v3) | 0 | 350,000 | Generate full dataset in PNG (lossless); delete v3 JPEG after Resolution Quality Phase D sampling complete | v3 JPEG format superseded; v4 font infrastructure COMPLETE (14 adversarial fonts, 11-script ADVERSARIAL tiers, OOD rendering expanded); generation script ready; retain v3 until Phase D sampling finishes |
 | Resolution quality | 5.5K | 15–20K (sweet spot) | Phase A: label RealDAE+RVL-CDIP+Tobacco800 (7.5K); Phase B: multi-DPI DocLayNet renders (7K); Phase C: confound sub-dataset (2K mandatory); V2 deferred to Phase 3 | ~3 days total; Vultr A100 GPU |
-| IQA (corpus-wide) | ~14K hard | ≥125K (gate); ~440K actual | Validate MUSIQ+TOPIQ-NR SRCC ≥ 0.55 on DIQA-5000; then run on full ~440K corpus; 14K hard labels serve as tier_1 calibration anchors | IQA labeling script |
+| IQA (corpus-wide, DIQA 3-dim) | ~3.5K GT (DIQA-5000) | ≥125K (gate); ~440K actual | Run DeQA-Doc pseudo-labeling on full ~440K corpus (3 dims × mPLUG-Owl2); apply OOD gating; 3.5K DIQA-5000 GT at weight=1.0 | Scripts complete; GPU run pending |
 | HW presence mid-range | 0 | ~16.5–22K | Part 1: Generate NIST contact sheets (~3,400); Part 2: Label presence_reg on Kleister Charity, NARA, SD-2, SD-6, GNHK, Popp-Line | Contact sheet + labeling scripts |
 | Handwriting (classification) | 0 | 25K (reduced from 60K) | Finalize taxonomy; acquire KHATT, CASIA-HWDB, IIIT-INDIC, HKR at reduced scope | Stream 4E |
 | Capture method | 0 | 50K | Assemble from L2-enriched datasets by capture_method field | Data acquisition |
@@ -1143,6 +1169,81 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 
 ---
 
+## 7b. DIQA Transition Checklist (IQA 6-Head → 3-Dim DIQA-Aligned)
+
+**Context**: Group 1 IQA changed from 6 individual degradation heads (blur, noise, contrast,
+skew, compression, overall_quality) to 3 DIQA-aligned dimensions (overall, sharpness,
+color_fidelity). This checklist tracks all propagation changes.
+
+**Field naming convention** (3 contexts, canonical external fields: `iqa_overall`, `iqa_sharpness`, `iqa_color`):
+
+- **Pseudo-labels** (JSONL): `overall_label`, `sharpness_label`, `color_fidelity_label` — raw DeQA-Doc output
+- **Model heads / canonical external** (runtime): `iqa_overall`, `iqa_sharpness`, `iqa_color` — SigLIP 2 prediction output; use these in all new code and documentation
+- **Enrichment schema**: `diqa_overall`, `diqa_sharpness`, `diqa_color_fidelity` — metadata provenance fields in annotation schemas (prefix distinguishes label source from model output)
+
+### Schema Changes
+
+| # | File | Change | Priority |
+| --- | --- | --- | --- |
+| S1 | `annotation/schemas/enrichment.py` | Add `diqa_overall`, `diqa_sharpness`, `diqa_color_fidelity` (float 0-1), `diqa_*_level_probs` (list[float]), `diqa_model_name`, `diqa_model_version` fields to `EnrichmentData` | HIGH |
+| S2 | `annotation/schemas/enrichment.py` | Add `ood_mahalanobis_distance`, `ood_percentile`, `ood_acceptance_tier`, `ood_sample_weight`, `ood_label_source` fields to `EnrichmentData` | HIGH |
+| S3 | `annotation/schemas/enrichment.py` | Deprecate old `ml_iqa_blur/noise/contrast/compression/skew` fields (keep for backward compat, add deprecation comment) | MEDIUM |
+
+### Source Code Changes
+
+| # | File | Change | Priority |
+| --- | --- | --- | --- |
+| C1 | `scripts/build_ood_dataset.py` | Update `_ALL_HEADS` tuple: replace `blur_score`, `noise_score`, `contrast_score`, `compression_score`, `overall_quality` with `iqa_overall`, `iqa_sharpness`, `iqa_color` | HIGH |
+| C2 | `metrics/dqs_calculator.py` | Add 3-dim ML blend: `ml_quality = 0.60*iqa_overall + 0.25*iqa_sharpness + 0.15*iqa_color`; add `ml_overall_weight`, `ml_sharpness_weight`, `ml_color_weight` to config | HIGH |
+| C3 | `modal/train_siglip2_multitask.py` | Add `--diqa-labels` CLI arg; load gated pseudo-labels; multiply IQA loss by `sample_weight`; DIQA-5000 GT at 2x sampling weight | HIGH |
+| C4 | `scripts/aggregate_head_coverage.py` | Update head name references from 6-head to 3-dim scheme | MEDIUM |
+
+### Documentation Changes (HIGH Priority)
+
+| # | File | Change |
+| --- | --- | --- |
+| D1 | `docs/datasets/HAR_MASTER_INDEX.md` | Update Group 1 section from 6 HARs to 3 DIQA-aligned HARs |
+| D2 | `docs/datasets/HAR_SYNTHESIS.md` | Rewrite §5 (IQA-specific rules) for DIQA 3-dim approach |
+| D3 | `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md` | Update Group 1 from "5 regression + 1 aggregate" to "3 regression (`iqa_overall`, `iqa_sharpness`, `iqa_color`)"; document DIQA-5000 alignment rationale |
+
+### Documentation Changes (MEDIUM Priority)
+
+| # | File | Change |
+| --- | --- | --- |
+| D4 | `docs/datasets/DATASET_HEAD_COVERAGE.md` | Replace 6 IQA column headers with 3 DIQA dimensions |
+| D5 | `docs/planning/TRAINING_DATA_STRATEGIC_ANALYSIS.md` | Update G1 coverage analysis for 3-dim scheme |
+| D6 | `docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md` | §6 IQA dimension update |
+| D7 | `CLAUDE.md` (project-level) | Update "19 heads" references to "16 heads"; update IQA description |
+
+### Documentation Changes (LOW Priority — Deprecation Banners)
+
+| # | File | Change |
+| --- | --- | --- |
+| D8 | `docs/datasets/hars/sig-g1-blur.md` | Add deprecation banner: "Superseded by DIQA 3-dim scheme" |
+| D9 | `docs/datasets/hars/sig-g1-noise.md` | Add deprecation banner |
+| D10 | `docs/datasets/hars/sig-g1-contrast.md` | Add deprecation banner |
+| D11 | `docs/datasets/hars/sig-g1-compression.md` | Add deprecation banner |
+| D12 | `docs/datasets/hars/sig-g1-overall-quality.md` | Add deprecation banner |
+
+### New Documentation
+
+| # | File | Purpose |
+| --- | --- | --- |
+| D13 | `docs/planning/DEQA_DOC_PSEUDO_LABELING.md` | End-to-end pipeline documentation: OOD gating thresholds, DeQA-Doc model provenance, relationship to DIQA-5000 GT |
+
+### Completed Items ✅
+
+- ✅ `labeling/deqa/bridge_script.py` — DeQA-Doc subprocess bridge
+- ✅ `labeling/deqa/subprocess_runner.py` — Subprocess orchestrator
+- ✅ `scripts/generate_diqa_pseudo_labels.py` — Corpus-wide pseudo-labeling
+- ✅ `scripts/gate_diqa_pseudo_labels.py` — OOD-gated acceptance
+- ✅ `detection/ood_detector.py` — Mahalanobis OOD scorer (reused as-is)
+- ✅ `siglip2_multitask.py` — Already uses `IQA_TASKS = ("overall", "sharpness", "color")`
+- ✅ `annotation/schemas/immutable.py` — Already has `diqa_overall/sharpness/color_fidelity`
+- ✅ `annotation/schemas/validators.py` — Already validates DIQA fields
+
+---
+
 ## 8. Dependency Map
 
 **Sequencing guide**: [DATASET_GATHERING_STRATEGY.md](DATASET_GATHERING_STRATEGY.md) provides
@@ -1183,8 +1284,9 @@ structure shown here.
     │         Phase B: Multi-DPI DocLayNet renders (7K, tier_0_exact labels)
     │         Phase C: Confound sub-dataset (2K, mandatory before RQ head training)
     │         Phase D: synth-multiscript-v3 script diversity sample (3-5K, optional)
-    ├──▶ Data: Corpus-wide IQA labeling (MUSIQ+TOPIQ-NR on ~440K images, ~15h T4 GPU)
-    │         Gate: SRCC ≥ 0.55 on DIQA-5000 validation; ≥125K images with IQA labels
+    ├──▶ Data: Corpus-wide IQA labeling (DeQA-Doc 3-dim on ~440K images, ~15h T4 GPU)
+    │         OOD gating via Mahalanobis distance; ≥125K images with IQA labels
+    │         Scripts: generate_diqa_pseudo_labels.py → gate_diqa_pseudo_labels.py
     ├──▶ Data: NIST contact sheets for HW presence mid-range (~3,400 synthetic, 1 week)
     │         + presence_reg labeling on 8 candidate real datasets (~13-19K images)
     ├──▶ Data: SIG-G3-2 narrow-range skew dataset build from scratch (2-3 weeks) [T5]

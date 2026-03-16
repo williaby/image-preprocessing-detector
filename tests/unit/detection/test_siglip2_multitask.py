@@ -656,6 +656,7 @@ class TestPredictionToDict:
             "warping",
             "inference_time_ms",
             "device",
+            "has_embedding",
         }
         assert set(result.keys()) == expected_keys
 

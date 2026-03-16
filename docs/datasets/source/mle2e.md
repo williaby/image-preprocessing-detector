@@ -1,3 +1,16 @@
+---
+dataset_id: mle2e
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - scene_text
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### mle2e (Multi-Language End-to-End)
 
 > **Quick Stats**: 1,817 images (1,816 verified) | 4 scripts | Scene text | Korean focus
@@ -479,7 +492,7 @@ No defect catalog available for this dataset.
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

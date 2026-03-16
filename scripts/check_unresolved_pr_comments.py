@@ -34,7 +34,7 @@ import re
 import subprocess  # nosec B404
 import sys
 from collections import Counter
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 # GitHub owner/repo names: letters, digits, hyphens, dots (no slashes, no spaces)
@@ -372,7 +372,7 @@ def _generate_tracking_md(items: list[dict], *, repo: str) -> str:
     lines = [
         "# Unresolved PR Review Comments - Tracking",
         "",
-        f"> **Generated**: {datetime.now(tz=UTC).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"> **Generated**: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M timezone.utc')}",
         f"> **Repository**: {repo}",
         "> **Scope**: All merged PRs, current (non-outdated) unresolved threads",
         "",

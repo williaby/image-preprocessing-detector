@@ -31,7 +31,7 @@ import json
 import logging
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -201,7 +201,7 @@ def save_baseline(
     path.parent.mkdir(parents=True, exist_ok=True)
     baseline = {
         **screening,
-        "baseline_created_at": datetime.now(UTC).isoformat(),
+        "baseline_created_at": datetime.now(timezone.utc).isoformat(),
     }
     with path.open("w", encoding="utf-8") as f:
         json.dump(baseline, f, indent=2, ensure_ascii=False)
@@ -471,7 +471,7 @@ def write_summary_report(
     output_path = base / "regression_summary.json"
 
     summary: dict[str, Any] = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_datasets": len(reports),
         "datasets_with_baseline": sum(1 for r in reports if r.has_baseline),
         "datasets_with_regressions": sum(1 for r in reports if r.regressions_found > 0),

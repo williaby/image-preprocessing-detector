@@ -3,6 +3,7 @@
 Provides commands for processing single files and batches of documents.
 """
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -967,6 +968,174 @@ def deskew_cmd(
 
     except Exception as e:
         logger.error("Deskew failed", error=str(e), exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("input_path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Output directory for results",
+)
+@click.option(
+    "--docling-host",
+    type=str,
+    # NOSONAR (S1313) — LAN-local Docling server default; override via DOCLING_HOST env var
+    default=os.environ.get("DOCLING_HOST", "192.168.1.209"),
+    help="Docling server hostname (default: DOCLING_HOST env or 192.168.1.209)",
+)
+@click.option(
+    "--docling-port",
+    type=int,
+    default=5001,
+    help="Docling server port",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Detection only (skip corrections)",
+)
+@click.option(
+    "--blur-threshold",
+    type=float,
+    default=0.8,
+    help="Blur detection threshold (0.0-1.0)",
+)
+@click.option(
+    "--skew-threshold",
+    type=float,
+    default=0.7,
+    help="Skew detection threshold (0.0-1.0)",
+)
+@click.option(
+    "--contrast-threshold",
+    type=float,
+    default=0.7,
+    help="Contrast detection threshold (0.0-1.0)",
+)
+def extract(
+    input_path: Path,
+    output: Path,
+    docling_host: str,
+    docling_port: int,
+    dry_run: bool,
+    blur_threshold: float,
+    skew_threshold: float,
+    contrast_threshold: float,
+) -> None:
+    """End-to-end pipeline: IQA + corrections + Docling text extraction.
+
+    Runs the full Prepare-Doc pipeline on the input document, generates
+    routing parameters, then sends the document to the Docling server
+    for text extraction.
+
+    Outputs both DocumentMetadata.json and docling_output.json.
+
+    Examples:
+        imgprep extract input.pdf --output results/
+        imgprep extract scan.jpg -o results/ --docling-host localhost
+    """
+    import json
+
+    from image_preprocessing_detector.routing.docling_router import route_document
+    from image_preprocessing_detector.text_extraction import (
+        DoclingClient,
+        DoclingServerError,
+    )
+
+    try:
+        # Create output directory
+        output.mkdir(parents=True, exist_ok=True)
+        metadata_path = output / "DocumentMetadata.json"
+
+        # Step 1: Run IQA pipeline
+        click.echo(f"[1/3] Running IQA pipeline on {input_path.name}...")
+        process_single_file(
+            input_path=input_path,
+            output=metadata_path,
+            dry_run=dry_run,
+            blur_threshold=blur_threshold,
+            skew_threshold=skew_threshold,
+            contrast_threshold=contrast_threshold,
+        )
+
+        # Step 2: Generate routing params
+        click.echo("[2/3] Generating Docling routing parameters...")
+        with open(metadata_path) as f:  # nosemgrep: cli-path-traversal-open
+            meta_json = json.load(f)
+
+        from image_preprocessing_detector.schema import DocumentMetadata
+
+        doc_metadata = DocumentMetadata.model_validate(meta_json)
+        decision = route_document(doc_metadata)
+
+        # Save routing decision
+        routing_path = output / "routing_decision.json"
+        routing_data = {
+            "params": decision.params.model_dump(),
+            "cli_args": decision.params.to_cli_args(),
+            "vlm_reasons": decision.vlm_reasons,
+            "rule_trace": decision.rule_trace,
+        }
+        with open(routing_path, "w") as f:  # nosemgrep: cli-path-traversal-open
+            json.dump(routing_data, f, indent=2)
+
+        click.echo(
+            f"  Pipeline: {decision.params.pipeline}, "
+            f"Rules fired: {len(decision.rule_trace)}"
+        )
+
+        # Step 3: Send to Docling server
+        click.echo(
+            f"[3/3] Sending to Docling server at {docling_host}:{docling_port}..."
+        )
+        with DoclingClient(host=docling_host, port=docling_port) as client:
+            result = client.convert_file(
+                input_path,
+                routing_params=decision.params,
+            )
+
+        # Save Docling output
+        docling_path = output / "docling_output.json"
+        docling_data = {
+            "text": result.text,
+            "markdown": result.markdown,
+            "page_count": result.page_count,
+            "tables_found": result.tables_found,
+            "processing_time_ms": result.processing_time_ms,
+            "success": result.success,
+            "source_path": result.source_path,
+        }
+        if result.json_content:
+            docling_data["json_content"] = result.json_content
+
+        with open(docling_path, "w") as f:  # nosemgrep: cli-path-traversal-open
+            json.dump(docling_data, f, indent=2, default=str)
+
+        click.echo(f"\nResults saved to {output}/:")
+        click.echo("  DocumentMetadata.json  (IQA + corrections)")
+        click.echo("  routing_decision.json  (Docling routing params)")
+        click.echo("  docling_output.json    (extracted text + layout)")
+        click.echo(
+            f"\nDocling: {result.page_count} pages, "
+            f"{result.tables_found} tables, "
+            f"{result.processing_time_ms:.0f}ms"
+        )
+
+    except DoclingServerError as e:
+        logger.exception("Docling server error", error=str(e))
+        click.echo(f"Docling server error: {e}", err=True)
+        click.echo(
+            "IQA results saved. Docling extraction failed - check server availability.",
+            err=True,
+        )
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Extract failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 

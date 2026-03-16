@@ -1,3 +1,16 @@
+---
+dataset_id: vjroda
+version: "1.0"
+license: Unknown
+commercial_use: unknown
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### VJRODa (Vertical Japanese Real-world OCR Dataset)
 
 > **Quick Stats**: 100 images | Vertical Japanese government PDFs | Real-world | OOD evaluation

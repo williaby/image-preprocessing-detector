@@ -111,8 +111,13 @@ def parse_iso(iso_string: str, assume_utc: bool = True) -> datetime:
         ValueError: If string cannot be parsed
     """
     try:
+        # Normalize Z suffix to +00:00 for Python 3.10 compatibility
+        # (datetime.fromisoformat only supports Z suffix from Python 3.11+)
+        if iso_string.endswith("Z"):
+            iso_string = iso_string[:-1] + "+00:00"
+
         # Handle timezone-aware ISO strings
-        if "+" in iso_string or iso_string.count("-") > 2 or iso_string.endswith("Z"):
+        if "+" in iso_string or iso_string.count("-") > 2:
             # Has timezone offset
             dt = datetime.fromisoformat(iso_string)
         else:

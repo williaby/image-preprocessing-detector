@@ -1,3 +1,16 @@
+---
+dataset_id: tobacco800
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Tobacco-800
 
 > **Quick Stats**: 1,290 documents | Real archival | Authentic degradation patterns
@@ -338,11 +351,11 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 89.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 
-- **KI-008**: OPEN --
+- **KI-008**: OPEN -- script_family contains directionality value 'ltr' instead of family name 'latin'. Integration script needs to re-derive via `get_script_family(iso15924_script)`.
 
 **Audit Artifacts**: [scripts/audit/results/tobacco800/](../../scripts/audit/results/tobacco800/)
 

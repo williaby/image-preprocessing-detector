@@ -28,7 +28,7 @@ import logging
 import shlex
 import subprocess
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +71,7 @@ class ProgressTracker:
 
     def save_state(self) -> None:
         """Save current state to file."""
-        self.state["last_updated"] = datetime.now(UTC).isoformat()
+        self.state["last_updated"] = datetime.now(timezone.utc).isoformat()
         with open(self.state_file, "w") as f:
             json.dump(self.state, f, indent=2)
         logger.info(f"Progress saved to {self.state_file}")
@@ -88,7 +88,7 @@ class ProgressTracker:
         """Mark a dataset as failed."""
         self.state["failed_datasets"][dataset_name] = {
             "error": error,
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         self.save_state()
 

@@ -61,6 +61,8 @@
 | pdmocr-part1 | ~2,713 | Japanese (Jpan) — 1870s-1940s historical | PDM 1.0 | [pdmocr-part1.md](../source/pdmocr-part1.md) |
 | pdmocr-part2 | ~3,997 | Japanese (Jpan) — 1870s-1960s, direction GT | PDM 1.0 | [pdmocr-part2.md](../source/pdmocr-part2.md) |
 | ndl-minhon | ~32,822 | Japanese (Jpan) — kuzushiji manuscripts | CC-BY-SA 4.0 | [ndl-minhon.md](../source/ndl-minhon.md) |
+| thousand-character-classic | 391 | CJK calligraphy (Hant/Hani/Kore/Jpan, 6 script styles) | Mixed (CC0/CC BY/PD) | [thousand-character-classic.md](../source/thousand-character-classic.md) |
+| john11-manuscripts | 210-520 | Multi-script manuscripts (Grek/Latn/Ethi/Armn/Syrc/Arab/Cyrs/Copt/Goth/Geor, 11 scripts) | Mixed (CC0/PD/CC-BY) | [john11-manuscripts.md](../source/john11-manuscripts.md) |
 | mle2e | 1,816 | Chinese, Korean, Latin, Kannada | Research | [mle2e.md](../source/mle2e.md) |
 | cc-ocr | 7,058 | CJK mixed | Research | [cc-ocr.md](../source/cc-ocr.md) |
 | casia-hwdb2-line | 52,160 | Chinese Simplified (Hans) — handwritten lines | MIT | [casia-hwdb2-line.md](../source/casia-hwdb2-line.md) |

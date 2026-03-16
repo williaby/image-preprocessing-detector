@@ -34,7 +34,7 @@ import json
 import logging
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -470,7 +470,7 @@ def write_remediation_report(
     output_path = base / "remediation_report.json"
 
     report: dict[str, Any] = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_datasets": len(plans),
         "requires_gpu_count": sum(1 for p in plans if p.requires_gpu),
         "plans": [p.to_dict() for p in plans],

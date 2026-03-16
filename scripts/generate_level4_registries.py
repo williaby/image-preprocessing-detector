@@ -41,7 +41,7 @@ import re
 import subprocess
 import sys
 import textwrap
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -530,7 +530,7 @@ def _generate_parser_registry(
         "l4_category: parser",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -611,7 +611,7 @@ def _generate_provider_registry(
         "l4_category: provider",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -664,7 +664,7 @@ def _generate_integrate_registry(
         "l4_category: integrate-script",
         "l4_generated: auto",
         "l4_generator: scripts/generate_level4_registries.py",
-        f"l4_last_generated: {datetime.now(UTC).strftime('%Y-%m-%d')}",
+        f"l4_last_generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
         "tags:",
         "- architecture",
         "- level-4",
@@ -741,7 +741,7 @@ def _generate_training_dataset_registry(
     auto_block_lines.append("")
 
     # Read existing file if present (preserve manual sections outside fence)
-    generated_date = datetime.now(UTC).strftime("%Y-%m-%d")
+    generated_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     fence_start = "<!-- AUTO-GENERATED-START -->"
     fence_end = "<!-- AUTO-GENERATED-END -->"
 

@@ -1,0 +1,366 @@
+---
+# John 1:1 Manuscript Source License Verification Registry
+# Tracks redistribution/training license status per institution.
+#
+# license_verified: true  → confirmed open license, safe to harvest
+# license_verified: false → "free access" claimed but redistribution terms unverified
+# license_verified: null  → blocked or no stated open license
+#
+# Only institutions with license_verified: true are harvested in Phase 1.
+# Others require manual verification before harvest.
+
+# =============================================================================
+# Tier 1: Already verified open licenses (harvest immediately)
+# =============================================================================
+
+wikimedia_commons:
+  display_name: "Wikimedia Commons"
+  license: "per-image (CC0 / CC BY / CC BY-SA / PD)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Grek, Latn, Ethi, Armn, Syrc, Arab, Cyrs, Copt, Geor, Goth]
+  notes: >-
+    Per-image license metadata available via MediaWiki API extmetadata field.
+    Filter to CC0/CC-BY/PD only; skip CC-BY-NC or CC-BY-SA items unless
+    project license (CC-BY-SA-4.0) is compatible.
+  url: "https://commons.wikimedia.org"
+  api_type: "mediawiki_api"
+  estimated_yield: "30-80 images across all scripts"
+
+met_museum:
+  display_name: "Metropolitan Museum of Art Open Access"
+  license: "CC0"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Armn]
+  notes: >-
+    All objects flagged isPublicDomain=true are CC0.
+    Armenian Gospel manuscripts: accession 57.185.3 (Sargis, 1386).
+  url: "https://www.metmuseum.org/art/collection"
+  api_type: "met_open_access_api"
+  estimated_yield: "3-5 images (Armenian)"
+
+walters_art_museum:
+  display_name: "Walters Art Museum"
+  license: "CC0"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Armn, Syrc, Arab]
+  notes: >-
+    All Walters digital images are CC0 per institutional policy.
+    Armenian Gospels: W.543 (1455), W.538 (1262), W.540 (14th c.).
+    Also holds Syriac and Arabic Christian manuscripts.
+  url: "https://art.thewalters.org"
+  api_type: "walters_api"
+  estimated_yield: "15-30 images (Armenian, Syriac, Arabic)"
+
+bnf_gallica:
+  display_name: "BnF / Gallica"
+  license: "Public Domain (pre-1850 manuscripts under French law)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Latn, Grek, Copt, Arab]
+  notes: >-
+    Pre-1850 manuscripts are PD under French law. Gallica exposes IIIF manifests
+    at gallica.bnf.fr/iiif/ark:/{ark_id}/manifest.json. Key items:
+    Codex Ephraemi Rescriptus (C, 04), Codex Regius (L, 019),
+    Godescalc Evangelistary, Echternach Gospels, Coptic MSS, Arabic Bible MSS.
+    Must verify per-item that digitization is marked as PD (not just the text).
+  url: "https://gallica.bnf.fr"
+  api_type: "iiif_manifest"
+  estimated_yield: "20-40 images (Latin, Greek, Coptic, Arabic)"
+
+internet_archive:
+  display_name: "Internet Archive"
+  license: "per-item (Public Domain items only)"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Latn, Grek]
+  notes: >-
+    Only harvest items explicitly marked as PD or CC0 in IA metadata.
+    Printed Bibles and facsimile editions of manuscript codices available.
+  url: "https://archive.org"
+  api_type: "ia_download_api"
+  estimated_yield: "10-20 images (Latin, Greek printed/facsimile)"
+
+loc_sinai:
+  display_name: "Library of Congress — St. Catherine's Monastery, Mt. Sinai"
+  license: "Public Domain"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Grek, Arab, Syrc, Geor, Cyrs]
+  notes: >-
+    1,691 manuscripts microfilmed in 1949 by Kenneth W. Clark for LOC.
+    Digitized and accessible via IIIF. B&W microfilm scans.
+    154 Gospel manuscripts identified (68 Greek, 44 Arabic, 27 Syriac,
+    10 Georgian, 3 Slavonic). Public domain per LOC rights statement.
+  credit: "Library of Congress Collection of Manuscripts in St. Catherine's Monastery, Mt. Sinai"
+  url: "https://www.loc.gov/collections/manuscripts-in-st-catherines-monastery-mount-sinai/"
+  api_type: "loc_iiif"
+  estimated_yield: "~131 Gospel images across 5 scripts"
+  verification_date: "2026-03-12"
+
+loc_jerusalem:
+  display_name: "Library of Congress — Greek & Armenian Patriarchates, Jerusalem"
+  license: "Public Domain"
+  license_verified: true
+  redistribution_ok: true
+  ml_training_ok: true
+  scripts: [Grek, Armn, Arab, Geor, Cyrs]
+  notes: >-
+    998 manuscripts from Greek Patriarchate + 32 from Armenian Patriarchate.
+    Microfilmed by LOC, digitized and accessible via IIIF. B&W microfilm scans.
+    85 Gospel manuscripts identified (43 Greek, 21 Armenian, 9 Arabic,
+    7 Georgian, 5 Slavonic). Public domain per LOC rights statement.
+  credit: "Library of Congress Collection of Manuscripts in the Greek/Armenian Patriarchate of Jerusalem"
+  url: "https://www.loc.gov/collections/greek-and-armenian-patriarchates-of-jerusalem/"
+  api_type: "loc_iiif"
+  estimated_yield: "~85 Gospel images across 5 scripts"
+  verification_date: "2026-03-12"
+
+# =============================================================================
+# Tier 2: Needs manual license verification before harvest
+# =============================================================================
+
+csntm:
+  display_name: "Center for the Study of New Testament Manuscripts"
+  license: "Free access (redistribution terms unverified)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Grek]
+  verification_priority: "HIGH"
+  verification_method: "Check csntm.org/terms-of-use for redistribution rights"
+  notes: >-
+    CSNTM has digitized thousands of Greek NT manuscripts with free online
+    viewing. Hundreds contain John 1:1. If redistribution is permitted,
+    this is the single highest-yield source for Greek manuscripts.
+    Contact: info@csntm.org
+  url: "https://www.csntm.org"
+  api_type: "unknown"
+  estimated_yield: "50-200 images (Greek) if licensed"
+
+codex_sinaiticus_project:
+  display_name: "Codex Sinaiticus Project"
+  license: "Free access (redistribution terms unverified)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Grek]
+  verification_priority: "HIGH"
+  verification_method: "Check codexsinaiticus.org/en/project/terms.aspx"
+  notes: >-
+    Landmark 4th-century Greek uncial. Fully digitized at high resolution.
+    Multi-institutional project (BL, Leipzig, NLR, St. Catherine's).
+  url: "https://codexsinaiticus.org"
+  api_type: "unknown"
+  estimated_yield: "2-5 pages (John 1:1 section)"
+
+cambridge_dl:
+  display_name: "Cambridge University Digital Library (CUDL)"
+  license: "Per-item (check IIIF manifest license field)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Grek, Ethi, Syrc]
+  verification_priority: "HIGH"
+  verification_method: >-
+    Check IIIF manifest metadata for license field per item.
+    Key Ethiopic MSS: Add. 1570, Or. 1802, Or. 2269.
+    Codex Bezae (D, 05) for Greek.
+  notes: >-
+    CUDL provides IIIF manifests. License varies per item. Ethiopian Gospel
+    manuscripts are the highest-priority targets here.
+  url: "https://cudl.lib.cam.ac.uk"
+  api_type: "iiif_manifest"
+  estimated_yield: "10-20 images (Ethiopic, Greek)"
+
+e_codices:
+  display_name: "e-codices (Virtual Manuscript Library of Switzerland)"
+  license: "Per-item (CC-BY or CC-BY-NC, varies)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek]
+  verification_priority: "MEDIUM"
+  verification_method: >-
+    Check per-manifest license. Filter to CC-BY only items.
+    Key item: Codex Sangallensis (Delta, 037) — Greek-Latin interlinear.
+  notes: >-
+    Many items are CC-BY (acceptable) but some are CC-BY-NC (blocked).
+    Must verify each item individually.
+  url: "https://e-codices.unifr.ch"
+  api_type: "iiif_manifest"
+  estimated_yield: "5-15 images (Latin, Greek) if CC-BY items identified"
+
+uppsala_university:
+  display_name: "Uppsala University Library"
+  license: "Free access (redistribution terms unverified)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Goth]
+  verification_priority: "MEDIUM"
+  verification_method: "Check ub.uu.se/en/collections/codex-argenteus/ usage terms"
+  notes: >-
+    Codex Argenteus is the sole surviving substantial Gothic manuscript.
+    Fully digitized. Even 1-10 pages would be irreplaceable OOD anchors.
+  url: "https://www.ub.uu.se"
+  api_type: "unknown"
+  estimated_yield: "5-10 pages (Gothic)"
+
+princeton_dl:
+  display_name: "Princeton University Digital Library"
+  license: "Per-item (check item metadata)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Ethi]
+  verification_priority: "MEDIUM"
+  verification_method: "Check dpul.princeton.edu item rights metadata for Ethiopic MSS"
+  notes: >-
+    180+ Ethiopic codices, multiple Gospel manuscripts.
+  url: "https://dpul.princeton.edu"
+  api_type: "iiif_manifest"
+  estimated_yield: "5-15 images (Ethiopic)"
+
+bodleian_digital:
+  display_name: "Bodleian Digital Library (Oxford)"
+  license: "Per-item (check IIIF manifest or item page)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Syrc, Geor]
+  verification_priority: "MEDIUM"
+  verification_method: >-
+    Check digital.bodleian.ox.ac.uk item license metadata.
+    Key items: Macregol Gospels (Auct. D.2.19), Georgian MSS,
+    Old English Gospels.
+  notes: >-
+    Large collection spanning multiple scripts. License varies per item.
+  url: "https://digital.bodleian.ox.ac.uk"
+  api_type: "iiif_manifest"
+  estimated_yield: "5-15 images across scripts"
+
+# =============================================================================
+# Tier 3: Low priority or likely restricted
+# =============================================================================
+
+trinity_college_dublin:
+  display_name: "Trinity College Dublin"
+  license: "Academic use (likely restrictive for redistribution)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn]
+  verification_priority: "LOW"
+  verification_method: "Check digitalcollections.tcd.ie usage terms"
+  notes: >-
+    Book of Kells (TCD MS 58) and Book of Durrow (TCD MS 57).
+    Landmark insular manuscripts but likely restricted for redistribution.
+  url: "https://digitalcollections.tcd.ie"
+  api_type: "unknown"
+  estimated_yield: "2-5 images if licensed"
+
+british_library:
+  display_name: "British Library Digitised Manuscripts"
+  license: "Per-item (often restrictive)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Syrc, Ethi]
+  verification_priority: "LOW"
+  verification_method: >-
+    Check bl.uk/manuscripts usage terms. BL often restricts redistribution
+    even for digitized public domain texts.
+  notes: >-
+    Key MSS: Codex Alexandrinus, Lindisfarne Gospels, Harley Golden Gospels,
+    St. Cuthbert Gospel, Syriac MSS, EAP Ethiopic MSS.
+    BL Endangered Archives Programme (EAP) items may have different terms.
+  url: "https://www.bl.uk/manuscripts"
+  api_type: "unknown"
+  estimated_yield: "10-20 images if licensed"
+
+hmml_vhmml:
+  display_name: "Hill Museum & Manuscript Library (vHMML)"
+  license: "Registration required; terms likely restrict redistribution"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Armn, Ethi, Syrc, Arab, Geor]
+  verification_priority: "LOW"
+  verification_method: >-
+    Register at vhmml.org and check terms of use for downloaded images.
+    HMML digitizes manuscripts held by partner institutions, so rights
+    may be complex (multiple stakeholders).
+  notes: >-
+    Massive collection across all scripts. Would be highest-yield single
+    source for Ethiopic, Syriac, and Armenian if licensing allows.
+  url: "https://www.vhmml.org"
+  api_type: "unknown"
+  estimated_yield: "50+ images across scripts if licensed"
+
+vatican_digivatlib:
+  display_name: "Vatican Library (DigiVatLib)"
+  license: "Free scholarly use (redistribution terms unverified)"
+  license_verified: false
+  redistribution_ok: null
+  ml_training_ok: null
+  scripts: [Latn, Grek, Syrc]
+  verification_priority: "LOW"
+  verification_method: "Check digi.vatlib.it terms of use"
+  notes: >-
+    Key MSS: Codex Vaticanus (B, 03), P75 (P.Bodmer XIV-XV),
+    Vatican Syriac MSS, Lorsch Gospels (partial).
+  url: "https://digi.vatlib.it"
+  api_type: "iiif_manifest"
+  estimated_yield: "5-10 images if licensed"
+
+# =============================================================================
+# Tier 4: Blocked (no stated open license)
+# =============================================================================
+
+matenadaran:
+  display_name: "Matenadaran (Yerevan Institute of Ancient Manuscripts)"
+  license: "No stated open license"
+  license_verified: null
+  redistribution_ok: false
+  ml_training_ok: false
+  scripts: [Armn]
+  verification_priority: "BLOCKED"
+  notes: >-
+    Echmiadzin Gospel (989), Mugni Gospels (1060), and other landmark
+    Armenian manuscripts. No public API. No stated redistribution license.
+  url: "https://www.matenadaran.am"
+
+russian_nl:
+  display_name: "Russian National Library"
+  license: "No stated open license for redistribution"
+  license_verified: null
+  redistribution_ok: false
+  ml_training_ok: false
+  scripts: [Cyrs]
+  verification_priority: "BLOCKED"
+  notes: >-
+    Ostromir Gospels (1056-57), Savvina Kniga (11th c.), Codex Marianus
+    (partial). Key OCS manuscripts but no clear Western redistribution rights.
+  url: "https://nlr.ru"
+
+tbilisi_nmc:
+  display_name: "National Centre of Manuscripts, Tbilisi"
+  license: "No stated open license"
+  license_verified: null
+  redistribution_ok: false
+  ml_training_ok: false
+  scripts: [Geor]
+  verification_priority: "BLOCKED"
+  notes: >-
+    Primary repository for Georgian manuscripts. Partially digitized
+    but no public API or stated redistribution license.
+  url: "https://manuscript.ge"

@@ -1,3 +1,16 @@
+---
+dataset_id: pucit-ohul
+version: "1.0"
+license: Academic
+commercial_use: false
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### pucit-ohul
 
 > **Quick Stats**: 7,401 line images | Handwritten Urdu | Line-level transcription
@@ -273,14 +286,14 @@ PUCIT-OHUL includes Urdu text transcriptions in Excel spreadsheets:
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 95.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 
-- **Prescreening/compliance enum mismatch (systemic)**: RESOLVED --
-- **KI-008**: RESOLVED --
-- **KI-001 (casing) mitigated via DOCLING_TO_DOCLAYNET mapping**: MITIGATED --
-- **KI-003 (Picture detection dense text FP)**: RESOLVED --
+- **Prescreening/compliance enum mismatch (systemic)**: RESOLVED -- Prescreening script used different enum values than compliance validator. Fixed by aligning enum definitions.
+- **KI-008**: RESOLVED -- script_family contained directionality value 'rtl' instead of family name 'arabic'. Re-derived via `get_script_family('Arab')` -> 'arabic'.
+- **KI-001 (casing) mitigated via DOCLING_TO_DOCLAYNET mapping**: MITIGATED -- Layout detection class names converted to PascalCase via `standardize_layout_labels.py`.
+- **KI-003 (Picture detection dense text FP)**: RESOLVED -- Docling Picture detection produced false positives on dense text. Verified and corrected via VLM inspection.
 
 **Audit Artifacts**: [scripts/audit/results/pucit-ohul/](../../scripts/audit/results/pucit-ohul/)
 

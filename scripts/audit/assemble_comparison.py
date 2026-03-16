@@ -31,7 +31,7 @@ import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1071,7 +1071,7 @@ def assemble_comparison(
         "report_metadata": {
             "dataset": config.dataset_name,
             "audit_sample_count": len(audit_ids),
-            "created_at": datetime.now(tz=UTC).isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).isoformat(),
             "sources_discovered": source_names,
             "source_paths": _build_source_paths(config),
             "fields_compared": fields,

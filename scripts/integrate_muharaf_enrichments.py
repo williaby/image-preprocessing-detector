@@ -29,7 +29,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -254,7 +254,7 @@ def run_integration(
         "has_text_content_count": 0,
         "domain_dist": Counter(),
     }
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     for sample in md["samples"]:
         stats["total"] += 1
         fn = sample["source"]["original_filename"]

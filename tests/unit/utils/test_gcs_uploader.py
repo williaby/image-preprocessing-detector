@@ -19,6 +19,7 @@ pytest.importorskip(
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import image_preprocessing_detector.utils.gcs_uploader as _gcs_module
 from image_preprocessing_detector.utils.gcs_uploader import (
     GCSRunConfig,
     download_run_from_gcs,
@@ -83,8 +84,9 @@ class TestUploadDirToGcs:
         self, sample_directory: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test uploads all files in directory."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             stats = upload_dir_to_gcs(
@@ -109,8 +111,9 @@ class TestUploadDirToGcs:
 
         mock_storage_client.bucket.return_value.blob.side_effect = capture_blob_name
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             upload_dir_to_gcs(
@@ -137,8 +140,9 @@ class TestUploadDirToGcs:
         self, sample_directory: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test returns correct upload statistics."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             stats = upload_dir_to_gcs(
@@ -166,8 +170,9 @@ class TestUploadDirToGcs:
         mock_blob.upload_from_filename.side_effect = track_upload
         mock_storage_client.bucket.return_value.blob.return_value = mock_blob
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             stats = upload_dir_to_gcs(
@@ -194,8 +199,9 @@ class TestUploadFileToGcs:
         self, sample_file: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test uploads a single file to GCS."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             result = upload_file_to_gcs(
@@ -223,8 +229,9 @@ class TestUploadFileToGcs:
         self, sample_file: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test returns full GCS path with gs:// prefix."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             result = upload_file_to_gcs(
@@ -252,8 +259,9 @@ class TestUploadRunToGcs:
         self, sample_directory: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test constructs canonical GCS path structure."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -278,8 +286,9 @@ class TestUploadRunToGcs:
         self, sample_directory: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test uploads all training artifacts."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -302,8 +311,9 @@ class TestUploadRunToGcs:
         self, sample_directory: Path, mock_storage_client: MagicMock
     ) -> None:
         """Test returns the full GCS path."""
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -345,8 +355,9 @@ class TestListRuns:
         ]
         mock_storage_client.bucket.return_value.list_blobs.return_value = mock_blobs
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -370,8 +381,9 @@ class TestListRuns:
         ]
         mock_storage_client.bucket.return_value.list_blobs.return_value = mock_blobs
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -393,8 +405,9 @@ class TestListRuns:
         ]
         mock_storage_client.bucket.return_value.list_blobs.return_value = mock_blobs
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -412,8 +425,9 @@ class TestListRuns:
         mock_blobs.prefixes = []
         mock_storage_client.bucket.return_value.list_blobs.return_value = mock_blobs
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -453,8 +467,9 @@ class TestDownloadRunFromGcs:
             mock_blob2,
         ]
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -479,8 +494,9 @@ class TestDownloadRunFromGcs:
         """Test creates local directory structure."""
         mock_storage_client.bucket.return_value.list_blobs.return_value = []
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -519,8 +535,9 @@ class TestDownloadRunFromGcs:
 
         mock_blob.download_to_filename.side_effect = capture_download
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -544,8 +561,9 @@ class TestDownloadRunFromGcs:
         """Test returns local path to downloaded run."""
         mock_storage_client.bucket.return_value.list_blobs.return_value = []
 
-        with patch(
-            "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+        with patch.object(
+            _gcs_module.storage,
+            "Client",
             return_value=mock_storage_client,
         ):
             config = GCSRunConfig(
@@ -589,8 +607,9 @@ def test_canonical_path_construction(
     run_id: str,
 ) -> None:
     """Test canonical path is correctly constructed for various inputs."""
-    with patch(
-        "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+    with patch.object(
+        _gcs_module.storage,
+        "Client",
         return_value=mock_storage_client,
     ):
         config = GCSRunConfig(
@@ -627,8 +646,9 @@ def test_gcs_path_format(
     expected_prefix: str,
 ) -> None:
     """Test GCS path starts with correct gs:// prefix."""
-    with patch(
-        "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
+    with patch.object(
+        _gcs_module.storage,
+        "Client",
         return_value=mock_storage_client,
     ):
         result = upload_file_to_gcs(

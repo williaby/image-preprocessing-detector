@@ -1,3 +1,16 @@
+---
+dataset_id: bhutan-afs
+version: "1.0"
+license: Public Domain
+commercial_use: true
+iqa_profiles:
+  - handwriting
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### Bhutan Financial Statements
 
 > **Quick Stats**: 125 pages | Government financial + tax documents | Real-world complex tables | Public domain
@@ -165,7 +178,7 @@
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 89.6%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

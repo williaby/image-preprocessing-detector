@@ -25,7 +25,7 @@ import os
 import struct
 import sys
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -390,7 +390,7 @@ def extract_sample_metadata(
             "text_scope": None,
             "layout_detections": None,
         },
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     return sample
 
@@ -450,7 +450,7 @@ def process_dataset(
         "image_count_on_disk": all_images,
         "splits_included": list(split_counts.keys()),
         "split_counts": split_counts,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "schema_version": "2.1.0",
         "script_version": "lite-1.0.0",
         "git_sha": "lite-standalone",
@@ -553,7 +553,7 @@ def main() -> None:
 
     print("=" * 60)
     print("LIGHTWEIGHT BASE METADATA ANNOTATION")
-    print(f"Time: {datetime.now(UTC).isoformat()}")
+    print(f"Time: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
 
     if args.extract_wsrd:

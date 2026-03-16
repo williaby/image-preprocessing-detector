@@ -46,7 +46,7 @@ import json
 import logging
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -382,7 +382,7 @@ def run_integration(
         Stats dict with counts and distributions.
     """
     stats = _init_stats()
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     total_samples = len(metadata["samples"])
     start = time.monotonic()
 

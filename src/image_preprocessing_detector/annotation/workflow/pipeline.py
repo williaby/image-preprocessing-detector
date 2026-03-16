@@ -44,7 +44,7 @@ import time
 from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import timezone
 from pathlib import Path
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any
@@ -676,7 +676,7 @@ class AnnotationPipeline:
             dataset_version="1.0",  # Default version
             original_path=sample.parsed.relative_path,
             original_filename=sample.parsed.image_path.name,
-            download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+            download_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             original_labels=sample.parsed.original_labels,
             original_file=original_file,
         )

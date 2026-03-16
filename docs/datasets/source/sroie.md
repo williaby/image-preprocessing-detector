@@ -1,3 +1,16 @@
+---
+dataset_id: sroie
+version: "1.0"
+license: Research Only
+commercial_use: false
+iqa_profiles:
+  - scanner
+baseline_quality: null
+training_suitable: true
+benchmark_suitable: false
+documentation_status: complete
+---
+
 #### SROIE (ICDAR 2019)
 
 > **Quick Stats**: 973 images (626 train + 347 test) | Malaysian receipts | Text detection + OCR + Entity extraction
@@ -456,7 +469,7 @@ receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation 
 
 ###### 11.3 VLM Inspection Summary
 
-> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: 93.0%
+> **Samples Inspected**: 0 | **Corrections**: 0 | **Passing Accuracy**: N/A
 
 ###### 11.4 Cross-Dataset Findings
 

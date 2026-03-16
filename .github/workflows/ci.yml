@@ -8,7 +8,7 @@
 #
 # MULTI-VERSION TESTING (This Workflow):
 #   - Python 3.10, 3.11, 3.12, 3.13 support via nox (required to pass)
-#   - Python 3.14 experimental (allowed to fail - pyarrow upstream compatibility)
+#   - Python 3.14 experimental (allowed to fail - onnxruntime/pyarrow lack 3.14 wheels)
 #   - uv backend for 10-100x faster package installation
 #   - Isolated test environments per Python version
 #
@@ -166,6 +166,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: setup-optimized
+    # Python 3.14 allowed to fail — onnxruntime (and pyarrow) lack 3.14 wheels
+    continue-on-error: ${{ matrix.python-version == '3.14' }}
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -222,7 +224,7 @@ jobs:
         continue-on-error: true
 
       # Run comprehensive test suite using UV for faster execution
-      # Python 3.14 is experimental - pyarrow doesn't support it yet (upstream issue)
+      # Python 3.14 is experimental - onnxruntime/pyarrow don't support it yet (upstream)
       - name: Create reports directory
         run: mkdir -p reports
 
@@ -244,7 +246,7 @@ jobs:
             --maxfail=10
         env:
           CI_ENVIRONMENT: true
-        # Python 3.14 is allowed to fail due to upstream dependency compatibility (pyarrow)
+        # Belt-and-suspenders: also allow pytest step to fail on 3.14 (onnxruntime/pyarrow)
         continue-on-error: ${{ matrix.python-version == '3.14' }}
 
       # Note: Coverage upload moved to dedicated codecov.yml and qlty.yml workflows
