@@ -1,0 +1,143 @@
+# FIPS Compatibility Check
+# Checks code and dependencies for FIPS 140-2/140-3 compliance issues.
+# Requires scripts/check_fips_compatibility.py at repo root.
+#
+# FIPS mode restricts cryptographic algorithms to NIST-approved ones, required for:
+#   - US Government systems, Healthcare (HIPAA), Financial services
+#   - Ubuntu LTS with fips-updates package
+#
+# Security note: workflow_dispatch inputs are passed via env vars (not direct
+# expression interpolation) to prevent command injection.
+name: FIPS Compatibility
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**/*.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/fips-compatibility.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'src/**/*.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+  schedule:
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict_mode:
+        description: 'Treat warnings as errors'
+        required: false
+        default: 'false'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  fips-check:
+    name: FIPS Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run FIPS compatibility check
+        id: fips-check
+        env:
+          STRICT_MODE: ${{ github.event.inputs.strict_mode }}
+        run: |
+          STRICT_FLAG=""
+          if [ "$STRICT_MODE" = "true" ]; then
+            STRICT_FLAG="--strict"
+          fi
+
+          set +e
+          uv run python scripts/check_fips_compatibility.py \
+            --fix-hints \
+            --include-tests \
+            $STRICT_FLAG \
+            2>&1 | tee fips-report.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+
+          uv run python scripts/check_fips_compatibility.py \
+            --json \
+            --include-tests \
+            > fips-report.json 2>/dev/null || true
+
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+
+          if [ -f fips-report.json ]; then
+            ERRORS=$(jq -r '.summary.errors' fips-report.json)
+            WARNINGS=$(jq -r '.summary.warnings' fips-report.json)
+            INFO=$(jq -r '.summary.info' fips-report.json)
+            echo "errors=$ERRORS" >> "$GITHUB_OUTPUT"
+            echo "warnings=$WARNINGS" >> "$GITHUB_OUTPUT"
+            echo "info=$INFO" >> "$GITHUB_OUTPUT"
+          fi
+
+          exit $EXIT_CODE
+
+      - name: Upload FIPS report
+        if: always()
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        with:
+          name: fips-compatibility-report
+          path: |
+            fips-report.txt
+            fips-report.json
+          retention-days: 30
+
+      - name: Comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const errors = parseInt('${{ steps.fips-check.outputs.errors }}') || 0;
+            const warnings = parseInt('${{ steps.fips-check.outputs.warnings }}') || 0;
+            const info = parseInt('${{ steps.fips-check.outputs.info }}') || 0;
+
+            let status = 'PASSED';
+            let emoji = 'PASS';
+            if (errors > 0) {
+              status = 'FAILED';
+              emoji = 'FAIL';
+            } else if (warnings > 0) {
+              status = 'NEEDS REVIEW';
+              emoji = 'WARN';
+            }
+
+            const body = `## FIPS Compatibility Check: ${status}\n\n` +
+              `| Metric | Count |\n|--------|-------|\n` +
+              `| Errors | ${errors} |\n` +
+              `| Warnings | ${warnings} |\n` +
+              `| Info | ${info} |\n\n` +
+              (errors > 0 ? 'This PR introduces FIPS-incompatible code or dependencies. ' +
+                `Review the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\n` : '') +
+              (warnings > 0 && errors === 0 ? 'Some packages may need verification for FIPS compliance. See workflow artifacts for details.\n\n' : '');
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
