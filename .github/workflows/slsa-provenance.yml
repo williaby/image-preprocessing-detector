@@ -1,0 +1,110 @@
+# SLSA Provenance Generation
+# Generates SLSA Level 3 provenance attestations for published packages.
+#
+# This workflow builds the package, generates hashes, and calls the org-level
+# SLSA provenance workflow to create cryptographic attestations.
+#
+# Reference: https://slsa.dev/
+name: SLSA Provenance
+
+on:
+  # Trigger after successful release
+  workflow_run:
+    workflows: ["Semantic Release"]
+    types: [completed]
+    branches: [main, master]
+  # Manual trigger for re-generating provenance
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to generate provenance for (e.g., 0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  actions: read
+  attestations: write
+
+jobs:
+  # ==========================================================================
+  # Build and Generate Hashes
+  # ==========================================================================
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      hashes: ${{ steps.hashes.outputs.hashes }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        with:
+          enable-cache: true
+
+      - name: Determine version
+        id: version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build package
+        run: uv build
+
+      - name: Generate SHA256 hashes
+        id: hashes
+        run: |
+          cd dist
+          HASHES=$(sha256sum * | base64 -w0)
+          echo "hashes=$HASHES" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        with:
+          name: dist-${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 90
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@def455f501ff622b3e6c35f7b7d1c8712b81d7e1 # v1.5.2
+        with:
+          subject-path: 'dist/*'
+
+  # ==========================================================================
+  # SLSA Level 3 Provenance (Org-Level Reusable Workflow)
+  # ==========================================================================
+  slsa:
+    name: SLSA Level 3
+    needs: [build]
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-slsa.yml@main
+    with:
+      base64-subjects: ${{ needs.build.outputs.hashes }}
+      upload-assets: true
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
