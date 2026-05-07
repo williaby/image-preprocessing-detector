@@ -1,0 +1,48 @@
+# Python Compatibility Matrix Testing for Claude Code Configuration
+# Tests the project across multiple Python versions and operating systems.
+#
+# This is a thin caller to the org-level reusable workflow.
+name: Python Compatibility
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'src/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  schedule:
+    # Weekly compatibility check on Sundays at 6 AM UTC
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+# Cancel in-progress runs for same PR/branch
+concurrency:
+  group: python-compat-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: Python Compatibility Matrix
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@c22009ccaab0d3234819d30d9d7a03d53c531cb9  # main
+    with:
+      python-versions: '["3.10", "3.11", "3.12", "3.13"]'
+      operating-systems: '["ubuntu-latest"]'
+      include-macos: true
+      include-windows: true
+      source-directory: 'src'
+      test-command: 'pytest tests/ -v --tb=short -x --ignore=tests/integration --ignore=tests/load -m "not slow and not integration"'
+      coverage-report: false
+      fail-fast: false
+      timeout-minutes: 30
