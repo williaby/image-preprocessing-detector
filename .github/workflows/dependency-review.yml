@@ -1,0 +1,31 @@
+# Dependency Review - Analyzes dependency changes in PRs
+# Checks for vulnerabilities and license compliance
+#
+# Features:
+#   - Vulnerability detection in dependency changes
+#   - License compliance checking
+#   - Blocks PRs with high severity vulnerabilities
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: high
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, LGPL-2.1, LGPL-3.0, Python-2.0, Unlicense, CC0-1.0, GPL-3.0-or-later
+          comment-summary-in-pr: on-failure
