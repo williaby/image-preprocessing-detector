@@ -1,0 +1,53 @@
+# Container Security Scanning for Image Preprocessing Detector
+# Scans Docker images for vulnerabilities using Trivy and lints Dockerfile with Hadolint.
+#
+# This is a thin caller to the org-level reusable workflow.
+name: Container Security
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose*.yml'
+      - '.dockerignore'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose*.yml'
+      - '.dockerignore'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  schedule:
+    - cron: '0 7 * * 3'
+  workflow_dispatch:
+
+concurrency:
+  group: container-security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  container-security:
+    name: Container Security Scan
+    uses: williaby/.github/.github/workflows/python-container-security.yml@main
+    with:
+      dockerfile-path: 'Dockerfile'
+      build-context: '.'
+      image-tag: 'image_preprocessing_detector:scan'
+      build-image: true
+      severity-threshold: 'CRITICAL,HIGH'
+      fail-on-vulnerabilities: true
+      run-hadolint: true
+      hadolint-failure-threshold: 'warning'
+      generate-sbom: true
+      upload-sarif: true
+      artifact-retention-days: 90
+    secrets: inherit
