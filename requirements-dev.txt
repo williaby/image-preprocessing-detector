@@ -1208,7 +1208,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.36.1
+virtualenv==21.3.0
     # via
     #   nox
     #   pre-commit
