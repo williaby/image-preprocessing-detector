@@ -39,7 +39,7 @@ charset-normalizer==3.4.4
     # via
     #   kaggle
     #   requests
-click==8.3.1
+click==8.3.3
     # via
     #   black
     #   image-preprocessing-detector
@@ -85,7 +85,7 @@ ghp-import==2.1.0
     # via mkdocs
 gitdb==4.0.12
     # via gitpython
-gitpython==3.1.46
+gitpython==3.1.49
     # via image-preprocessing-detector
 google-auth==2.47.0
     # via google-genai
@@ -195,7 +195,7 @@ pathspec==0.12.1
     #   mypy
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.1.1
+pillow==12.2.0
     # via image-preprocessing-detector
 platformdirs==4.5.1
     # via
@@ -246,7 +246,7 @@ python-dotenv==1.2.1
     #   image-preprocessing-detector
     #   pydantic-settings
     #   uvicorn
-python-multipart==0.0.22
+python-multipart==0.0.27
     # via image-preprocessing-detector
 python-slugify==8.0.4
     # via kaggle
