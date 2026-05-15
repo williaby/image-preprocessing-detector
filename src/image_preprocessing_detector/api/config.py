@@ -130,9 +130,13 @@ class APISettings(BaseSettings):
         description=(
             "Maximum number of PDF pages the /process and /batch routes "
             "will render per request. Pages beyond this limit are "
-            "silently truncated by the API (the underlying PDFLoader "
-            "would otherwise raise PDFTooManyPagesError). Lower this "
-            "for stricter tenants; raise it for trusted callers."
+            "silently truncated by the API but the response surfaces "
+            "the count via ProcessingResult.pages_truncated so callers "
+            "can detect partial results. Note the underlying PDFLoader "
+            "raises PDFTooManyPagesError by default for non-API callers "
+            "(CLI / Celery / Modal); only the HTTP routes opt into "
+            "allow_truncation=True. Lower this for stricter tenants; "
+            "raise it for trusted callers."
         ),
     )
 

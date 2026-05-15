@@ -124,7 +124,16 @@ def make_content_validator(ext: str) -> Callable[[bytes], None]:
     capture `ext` correctly inside a loop. Callers just pass
     `make_content_validator(ext)` to `read_with_size_limit`'s
     `early_validate` parameter.
+
+    `ext` must be a supported extension (validated upstream by
+    `validate_file()`). Defensive guard here so a future caller that
+    skips that step gets a clear error rather than the cryptic
+    "Unsupported file extension: ." that `validate_file_content`
+    would emit on an empty string.
     """
+    if not ext or ext == ".":
+        msg = "make_content_validator requires a non-empty file extension"
+        raise ValueError(msg)
 
     def _validate(first_chunk: bytes) -> None:
         validate_file_content(first_chunk, ext)
@@ -224,6 +233,7 @@ async def process_document(  # nosonar  # async required: callers use await
     dqs: DQSSummary | None = None
     pdf_type: str | None = None
     ocr_recommendation: str | None = None
+    pages_truncated = 0
 
     try:
         # Import processing modules
@@ -272,6 +282,25 @@ async def process_document(  # nosonar  # async required: callers use await
             # Classify PDF type
             pdf_type_result = classify_pdf_type(file_path)
             pdf_type = pdf_type_result.value if pdf_type_result else None
+
+            # Peek at the PDF's actual page count so we can report
+            # truncation in the response (the loader-internal warning
+            # log isn't visible to API clients).
+            try:
+                import fitz  # PyMuPDF
+
+                with fitz.open(str(file_path)) as _doc:
+                    total_pdf_pages = len(_doc)
+                if total_pdf_pages > api_pdf_page_cap:
+                    pages_truncated = total_pdf_pages - api_pdf_page_cap
+                    logger.warning(
+                        "api_pdf_truncation",
+                        total_pages=total_pdf_pages,
+                        rendered_pages=api_pdf_page_cap,
+                        pages_truncated=pages_truncated,
+                    )
+            except Exception as exc:
+                logger.debug("pdf_page_count_peek_failed", error=str(exc))
 
             # Load pages - PDFLoader.load() returns PageImage objects
             for page_obj in pdf_loader.load(file_path):
@@ -363,6 +392,7 @@ async def process_document(  # nosonar  # async required: callers use await
         document_id=document_id,
         file_name=file_name,
         num_pages=len(pages),
+        pages_truncated=pages_truncated,
         pdf_type=pdf_type,
         dqs=dqs,
         ocr_routing_recommendation=ocr_recommendation,

@@ -265,6 +265,24 @@ async def submit_batch_job(
         # cumulative cap, instead of waiting until after the whole file
         # has been buffered into memory.
         remaining_batch_bytes = max_total_bytes - total_bytes
+        if remaining_batch_bytes <= 0:
+            # Reject upstream rather than letting the file's first
+            # chunk trip a confusing "remaining batch budget (0.0MB)"
+            # error: the fault is the batch as a whole, not this file.
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=(
+                    f"Batch total size limit of "
+                    f"{settings.max_batch_total_size_mb}MB reached "
+                    f"before file {file.filename}; subsequent files "
+                    f"rejected."
+                ),
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
         try:
             content = await read_with_size_limit(
                 file,
