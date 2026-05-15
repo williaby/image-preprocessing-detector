@@ -388,3 +388,9 @@ class TestPDFTooManyPages:
             pages = list(loader.load(tmp.name))
 
         assert len(pages) == 3
+
+    @pytest.mark.parametrize("bad_value", [0, -1, -1000])
+    def test_invalid_max_pages_raises_value_error(self, bad_value: int) -> None:
+        """Non-positive max_pages must be rejected at construction time."""
+        with pytest.raises(ValueError, match="max_pages must be > 0"):
+            PDFLoader(max_pages=bad_value)
