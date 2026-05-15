@@ -38,15 +38,13 @@ from image_preprocessing_detector.api.models import (
     ProcessingStatus,
 )
 from image_preprocessing_detector.api.routes.process import (
+    make_content_validator,
     process_document,
     read_with_size_limit,
     validate_file,
 )
 from image_preprocessing_detector.utils.datetime_compat import utc_now
-from image_preprocessing_detector.utils.file_validation import (
-    FileTypeMismatchError,
-    validate_file_content,
-)
+from image_preprocessing_detector.utils.file_validation import FileTypeMismatchError
 
 logger = structlog.get_logger(__name__)
 
@@ -266,9 +264,7 @@ async def submit_batch_job(
             content = await read_with_size_limit(
                 file,
                 settings.max_file_size_mb,
-                early_validate=lambda first_chunk, _ext=ext: validate_file_content(
-                    first_chunk, _ext
-                ),
+                early_validate=make_content_validator(ext),
             )
         except FileTypeMismatchError as exc:
             error = ErrorResponse(

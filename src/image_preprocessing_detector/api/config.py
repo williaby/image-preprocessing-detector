@@ -123,6 +123,16 @@ class APISettings(BaseSettings):
             "internal callers, down for hostile environments."
         ),
     )
+    max_pdf_pages_per_request: int = Field(
+        default=100,
+        description=(
+            "Maximum number of PDF pages the /process and /batch routes "
+            "will render per request. Pages beyond this limit are "
+            "silently truncated by the API (the underlying PDFLoader "
+            "would otherwise raise PDFTooManyPagesError). Lower this "
+            "for stricter tenants; raise it for trusted callers."
+        ),
+    )
 
     # Processing options
     default_prefer_gpu: bool = Field(

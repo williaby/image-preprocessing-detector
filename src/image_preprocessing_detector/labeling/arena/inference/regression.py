@@ -159,15 +159,15 @@ class RegressionBackend(InferenceBackend):
         """
         import torch
 
-        # Validate spec.id rejects traversal patterns (".." etc.) before
-        # attempting either the direct or checkpoints/ relative resolution.
+        # Reject traversal patterns (".." etc.) in spec.id and use the
+        # resolved absolute path for the literal-path check below. The
+        # `checkpoints/` fallback further down is constrained separately.
         try:
-            validate_safe_path(spec.id)
+            model_path = validate_safe_path(spec.id)
         except ValueError as exc:
             msg = f"Invalid model path: {spec.id}"
             raise ModelLoadError(msg) from exc
 
-        model_path = Path(spec.id)
         if not model_path.exists():
             # Try as relative to checkpoints directory; constrain the
             # resolved path to stay within ./checkpoints to prevent escape.

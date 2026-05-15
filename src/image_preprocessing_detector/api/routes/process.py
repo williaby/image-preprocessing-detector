@@ -106,6 +106,22 @@ def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
     return None
 
 
+def make_content_validator(ext: str) -> Callable[[bytes], None]:
+    """Return a single-arg callback that magic-byte-validates against `ext`.
+
+    Centralised so route handlers don't have to reach for the
+    `lambda first_chunk, _ext=ext: ...` default-argument idiom to
+    capture `ext` correctly inside a loop. Callers just pass
+    `make_content_validator(ext)` to `read_with_size_limit`'s
+    `early_validate` parameter.
+    """
+
+    def _validate(first_chunk: bytes) -> None:
+        validate_file_content(first_chunk, ext)
+
+    return _validate
+
+
 async def read_with_size_limit(
     file: UploadFile,
     max_size_mb: int,
@@ -128,7 +144,10 @@ async def read_with_size_limit(
             magic-byte content validation on the first ~1 MB so spoofed
             uploads are rejected without paying the full memory cost.
             Any exception raised by the callback aborts the read and
-            propagates to the caller.
+            propagates to the caller. The callback is **not** invoked
+            when the upload is zero bytes (the loop exits immediately
+            on an empty first chunk); callers that care about empty
+            uploads must check `len(content)` after this returns.
 
     Returns:
         The file content bytes.
@@ -219,11 +238,12 @@ async def process_document(  # nosonar  # async required: callers use await
             )
             from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 
-            # The API endpoint already breaks at 100 pages on its own,
-            # so opt into the loader's truncation behavior (with a
-            # matching cap) rather than letting it raise. The 100-page
-            # break below is the authoritative limit for the API.
-            api_pdf_page_cap = 100
+            # The API caps page rendering at `max_pdf_pages_per_request`
+            # (configurable via APISettings). Opt into the loader's
+            # truncation behavior with a matching cap rather than
+            # letting it raise; the safety-stop break below is the
+            # authoritative limit for this code path.
+            api_pdf_page_cap = get_api_settings().max_pdf_pages_per_request
             pdf_loader = PDFLoader(max_pages=api_pdf_page_cap, allow_truncation=True)
 
             # Classify PDF type
@@ -409,9 +429,7 @@ async def process_single_document(
             content = await read_with_size_limit(
                 file,
                 settings.max_file_size_mb,
-                early_validate=lambda first_chunk: validate_file_content(
-                    first_chunk, ext
-                ),
+                early_validate=make_content_validator(ext),
             )
         except FileTypeMismatchError as exc:
             # Must precede the `except ValueError` below: this subclass
