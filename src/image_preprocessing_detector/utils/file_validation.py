@@ -174,6 +174,19 @@ def validate_file_content(
         FileTypeMismatchError: If the extension is unsupported, or if
             the magic bytes confirm a different type than declared.
     """
+    ext = declared_extension.lower()
+    if not ext.startswith("."):
+        ext = "." + ext
+
+    # Validate the declared extension BEFORE the too-short fast path.
+    # An unsupported extension is always an error, even when content
+    # is empty or below `min_bytes` — otherwise a 0-byte `.exe`
+    # upload would slip through as "too short to assess".
+    expected_type = _EXTENSION_TO_TYPE.get(ext)
+    if expected_type is None:
+        msg = f"Unsupported file extension for content validation: {ext}"
+        raise FileTypeMismatchError(msg)
+
     if not content:
         return None
     if len(content) < min_bytes:
@@ -182,15 +195,6 @@ def validate_file_content(
         # downstream parsers will reject with a clearer error than
         # "magic bytes don't match".
         return None
-
-    ext = declared_extension.lower()
-    if not ext.startswith("."):
-        ext = "." + ext
-
-    expected_type = _EXTENSION_TO_TYPE.get(ext)
-    if expected_type is None:
-        msg = f"Unsupported file extension for content validation: {ext}"
-        raise FileTypeMismatchError(msg)
 
     detected_type = detect_file_type(content)
     if detected_type != expected_type:

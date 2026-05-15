@@ -191,7 +191,15 @@ async def read_with_size_limit(
     chunks: list[bytes] = []
     total = 0
     while True:
-        chunk = await file.read(chunk_size)
+        # Clamp each read to (remaining_budget + 1) so we ask for at
+        # most one byte past the limit. This bounds the peak memory
+        # overshoot on a single oversize file to ~1 byte instead of
+        # up to a full chunk_size (1 MiB by default) — important
+        # when the helper is reused for the cumulative batch cap,
+        # where many medium-size files share the same allowance.
+        remaining = max_bytes - total
+        read_size = min(chunk_size, remaining + 1) if remaining >= 0 else 1
+        chunk = await file.read(read_size)
         if not chunk:
             break
         chunks.append(chunk)

@@ -121,9 +121,14 @@ constrain the `checkpoints/` fallback with
 - `torch.load(..., weights_only=True)` at `regression.py:171` — already safe.
 - `np.load(...)` calls have no `allow_pickle=True` flag — safe by default.
 - ONNX model loading does not invoke pickle.
-- HuggingFace `from_pretrained()` / `snapshot_download()` calls use HF Hub,
-  which provides signature verification server-side; model IDs are hard-coded,
-  not user-supplied.
+- HuggingFace `from_pretrained()` / `snapshot_download()` calls use HF Hub.
+  Model IDs are hard-coded (not user-supplied), and the Hub client provides
+  integrity via standard download caching plus the ability to pin to a
+  specific revision/commit. It does **not** perform cryptographic signature
+  verification of downloaded artifacts by default
+  ([huggingface_hub docs](https://huggingface.co/docs/huggingface_hub/main/en/guides/download)),
+  so for stronger guarantees the calls in this repo should be tightened
+  to pin a `revision=` argument once we settle on production weights.
 
 ---
 
@@ -229,8 +234,20 @@ in-handler `if len(page_data) >= 100: break`, but other callers (CLI,
 Celery workers, Modal jobs) had no protection.
 
 **Fix**: Added `max_pages` constructor argument with a
-`DEFAULT_MAX_PAGES = 500` cap. Pages beyond the limit are skipped and
-a `pdf_page_limit_exceeded` warning is logged.
+`DEFAULT_MAX_PAGES = 500` cap, plus an explicit `allow_truncation`
+flag (default `False`). Behaviour is now asymmetric by caller:
+
+- **CLI / Celery / Modal callers** (default `allow_truncation=False`):
+  documents exceeding `max_pages` raise `PDFTooManyPagesError` so a
+  partial analysis cannot be mistaken for a complete one.
+- **API `/process` and `/batch` routes** (opt in via
+  `allow_truncation=True` with the route-level
+  `max_pdf_pages_per_request` setting, default 100): pages beyond
+  the cap are skipped, a `pdf_page_limit_exceeded_truncating`
+  warning is logged, and the count is surfaced to the client via
+  `ProcessingResult.pages_truncated`. The loader also records the
+  truncation state in `last_total_pages` / `last_pages_truncated`
+  so callers can detect partial results without re-opening the PDF.
 
 ---
 

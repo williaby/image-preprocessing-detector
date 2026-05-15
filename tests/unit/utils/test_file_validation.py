@@ -113,6 +113,15 @@ class TestValidateFileContent:
         with pytest.raises(FileTypeMismatchError, match="Unsupported"):
             validate_file_content(PNG_BYTES, ".exe")
 
+    def test_rejects_unsupported_extension_even_for_tiny_content(self) -> None:
+        # Extension check must run BEFORE the too-short fast path so
+        # a 0-byte or near-empty `.exe` upload doesn't slip through as
+        # "too short to assess".
+        with pytest.raises(FileTypeMismatchError, match="Unsupported"):
+            validate_file_content(b"", ".exe")
+        with pytest.raises(FileTypeMismatchError, match="Unsupported"):
+            validate_file_content(b"abc", ".zip")
+
     def test_returns_none_for_too_small_content(self) -> None:
         # 4-byte content is too short to validate; we return None instead
         # of raising so the caller can let downstream parsers reject it
