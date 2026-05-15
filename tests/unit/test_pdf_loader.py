@@ -394,3 +394,11 @@ class TestPDFTooManyPages:
         """Non-positive max_pages must be rejected at construction time."""
         with pytest.raises(ValueError, match="max_pages must be > 0"):
             PDFLoader(max_pages=bad_value)
+
+    @pytest.mark.parametrize(
+        "bad_value", [10.5, "100", True, False, None.__class__, [100]]
+    )
+    def test_non_int_max_pages_raises_type_error(self, bad_value: object) -> None:
+        """Non-int (or bool) max_pages must be rejected with TypeError."""
+        with pytest.raises(TypeError, match="max_pages must be a positive int"):
+            PDFLoader(max_pages=bad_value)  # type: ignore[arg-type]

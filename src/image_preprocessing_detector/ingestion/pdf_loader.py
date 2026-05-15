@@ -104,10 +104,20 @@ class PDFLoader:
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
-        self.max_pages = max_pages if max_pages is not None else self.DEFAULT_MAX_PAGES
-        if self.max_pages <= 0:
-            msg = f"max_pages must be > 0, got {self.max_pages}"
+        validated_max_pages = self.DEFAULT_MAX_PAGES if max_pages is None else max_pages
+        # Explicitly reject bool (which `isinstance(_, int)` accepts) and
+        # non-int types: range(min(page_count, max_pages)) would later
+        # raise TypeError for e.g. `max_pages=10.5`, and bool values
+        # collapse to 0/1 which is almost certainly a programming bug.
+        if isinstance(validated_max_pages, bool) or not isinstance(
+            validated_max_pages, int
+        ):
+            msg = f"max_pages must be a positive int, got {validated_max_pages!r}"
+            raise TypeError(msg)
+        if validated_max_pages <= 0:
+            msg = f"max_pages must be > 0, got {validated_max_pages}"
             raise ValueError(msg)
+        self.max_pages = validated_max_pages
         self.allow_truncation = allow_truncation
         # Truncation state from the most recent `load()` call. Reset on
         # each call. Callers in `allow_truncation=True` mode should
@@ -154,24 +164,28 @@ class PDFLoader:
         except Exception as e:
             raise ValueError(f"Invalid PDF file: {pdf_path}") from e
 
-        page_count = len(doc)
-        self.last_total_pages = page_count
-        logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
-
-        if page_count > self.max_pages:
-            if not self.allow_truncation:
-                doc.close()
-                raise PDFTooManyPagesError(page_count, self.max_pages, str(pdf_path))
-            self.last_pages_truncated = page_count - self.max_pages
-            logger.warning(
-                "pdf_page_limit_exceeded_truncating",
-                path=str(pdf_path),
-                page_count=page_count,
-                max_pages=self.max_pages,
-                pages_truncated=self.last_pages_truncated,
-            )
-
+        # Single try/finally enclosing ALL post-open logic so the
+        # fitz.Document is released even if page-count inspection,
+        # the max_pages check, or the render loop raises.
         try:
+            page_count = len(doc)
+            self.last_total_pages = page_count
+            logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
+
+            if page_count > self.max_pages:
+                if not self.allow_truncation:
+                    raise PDFTooManyPagesError(
+                        page_count, self.max_pages, str(pdf_path)
+                    )
+                self.last_pages_truncated = page_count - self.max_pages
+                logger.warning(
+                    "pdf_page_limit_exceeded_truncating",
+                    path=str(pdf_path),
+                    page_count=page_count,
+                    max_pages=self.max_pages,
+                    pages_truncated=self.last_pages_truncated,
+                )
+
             for page_num in range(min(page_count, self.max_pages)):
                 yield self._render_page(doc, page_num)
         finally:
