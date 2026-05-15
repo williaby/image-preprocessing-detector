@@ -59,6 +59,14 @@ class PDFLoader:
     """Loads PDF files and converts pages to images.
 
     Uses PyMuPDF (fitz) for efficient PDF parsing and rendering.
+
+    .. warning::
+        Not safe for concurrent use. ``last_total_pages`` and
+        ``last_pages_truncated`` are mutable per-call state on the
+        instance; two threads/tasks calling ``load()`` on the same
+        loader will clobber each other's truncation bookkeeping.
+        Construct one ``PDFLoader`` per request instead of sharing
+        a singleton.
     """
 
     # Hard upper bound on page count to prevent CPU/memory exhaustion

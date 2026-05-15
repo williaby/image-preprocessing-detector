@@ -80,6 +80,14 @@ def _jpeg_app_marker_alternatives() -> list[list[_Part]]:
 # Windows BMP (BITMAPCORE, INFO, V2..V5) plus the OS/2 short and long
 # variants — operators who upload from OS/2-derived pipelines should
 # not see false rejections.
+#
+# Design note: this is an exact-match allowlist rather than a range
+# check (e.g. 12..256). A range check would accept random DIB-size
+# fields that happen to fall in the plausible range, which is exactly
+# the false-positive class the strengthened BMP signature was added
+# to close. Adobe-extended BMP variants and other rare formats are
+# intentionally rejected with INVALID_FILE_TYPE; the operator can
+# add the specific header size to this list once observed.
 _BMP_DIB_HEADER_SIZES = [
     b"\x0c\x00\x00\x00",  # BITMAPCOREHEADER / OS22XBITMAPHEADER short (12)
     b"\x10\x00\x00\x00",  # OS22XBITMAPHEADER short variant (16)

@@ -162,20 +162,23 @@ async def read_with_size_limit(
         chunk_size: Chunk size in bytes for incremental reads.
         early_validate: Optional callback invoked with the first chunk's
             bytes before any further reads. Use this to enforce
-            magic-byte content validation on the first ~1 MB so spoofed
-            uploads are rejected without paying the full memory cost.
-            Any exception raised by the callback aborts the read and
+            magic-byte content validation on the first
+            ``MIN_VALIDATION_BYTES`` of the upload so spoofed uploads
+            are rejected without paying the full memory cost. Any
+            exception raised by the callback aborts the read and
             propagates to the caller. The callback is **not** invoked
             when the upload is zero bytes (the loop exits immediately
             on an empty first chunk); callers that care about empty
             uploads must check `len(content)` after this returns.
             Note that when `extra_byte_limit` clamps the first read
-            below the validator's `min_bytes` threshold, the callback
-            will receive too few bytes to render a verdict and
-            `validate_file_content` returns ``None`` — the content
-            check is effectively skipped and the file is then
-            rejected by the size cap. This is acceptable because the
-            file already cannot fit in the remaining batch budget.
+            below ``MIN_VALIDATION_BYTES`` the callback receives too
+            few bytes and `validate_file_content` will raise
+            ``FileTypeMismatchError("...too small...")``, surfacing
+            as ``INVALID_FILE_TYPE`` to the client. The batch route
+            avoids this by pre-rejecting requests whose remaining
+            budget is below ``MIN_VALIDATION_BYTES`` with a clearer
+            ``FILE_TOO_LARGE`` (batch-cap) error; other callers
+            should apply the same guard before invoking this helper.
         extra_byte_limit: Optional secondary byte cap, applied as
             `min(max_size_mb_in_bytes, extra_byte_limit)`. Used by
             batch endpoints to pass the *remaining* batch budget so a
@@ -208,6 +211,7 @@ async def read_with_size_limit(
 
     chunks: list[bytes] = []
     total = 0
+    validated = False
     while True:
         # Clamp each read to (remaining_budget + 1) so we ask for at
         # most one byte past the limit. This bounds the peak memory
@@ -218,26 +222,26 @@ async def read_with_size_limit(
         # `remaining` is always >= 0 here: the size-check below
         # raises before the next iteration can run with a deficit.
         #
-        # When an `early_validate` callback is provided, also clamp
-        # the *first* read down to MIN_VALIDATION_BYTES. The
-        # validator only needs that many bytes to render a verdict,
-        # so a spoofed upload is rejected after ~18 bytes of I/O
-        # rather than a full chunk_size. Subsequent reads use the
-        # full chunk_size.
+        # When an `early_validate` callback is provided, narrow the
+        # initial read(s) to MIN_VALIDATION_BYTES so spoofed uploads
+        # are rejected after ~18 bytes of I/O instead of a full
+        # chunk_size. Once enough bytes have been accumulated to run
+        # the validator, fall through to chunk_size reads.
         remaining = max_bytes - total
-        first_read_needs_validation = early_validate is not None and not chunks
-        head_cap = MIN_VALIDATION_BYTES if first_read_needs_validation else chunk_size
+        needs_validation = early_validate is not None and not validated
+        head_cap = MIN_VALIDATION_BYTES if needs_validation else chunk_size
         read_size = min(head_cap, remaining + 1)
         chunk = await file.read(read_size)
         if not chunk:
+            # EOF. If we never accumulated enough bytes to invoke the
+            # validator, run it now on the partial content — it will
+            # correctly raise FileTypeMismatchError for a
+            # too-short-to-be-valid upload, or return None for an
+            # empty one (which the caller surfaces as EMPTY_FILE).
+            if early_validate is not None and not validated and chunks:
+                early_validate(b"".join(chunks))
             break
         chunks.append(chunk)
-        # Run early validation on the first chunk *before* the size
-        # check so a spoofed-and-oversize payload returns the more
-        # specific INVALID_FILE_TYPE error instead of FILE_TOO_LARGE.
-        # Memory is still bounded to a single chunk at this point.
-        if early_validate is not None and len(chunks) == 1:
-            early_validate(chunk)
         total += len(chunk)
         if total > max_bytes:
             msg = (
@@ -245,6 +249,20 @@ async def read_with_size_limit(
                 f"(read >{total / (1024 * 1024):.1f}MB)"
             )
             raise ValueError(msg)
+        # `file.read(n)` is only guaranteed to return up to n bytes
+        # (FastAPI's SpooledTemporaryFile-backed reader can return
+        # fewer). Defer the validator call until we have at least
+        # MIN_VALIDATION_BYTES accumulated, otherwise a short first
+        # read would falsely trip `FileTypeMismatchError("too
+        # small")` on a well-formed upload. Once invoked, mark
+        # validated=True so we don't re-run it.
+        if (
+            early_validate is not None
+            and not validated
+            and total >= MIN_VALIDATION_BYTES
+        ):
+            early_validate(b"".join(chunks))
+            validated = True
     return b"".join(chunks)
 
 
@@ -332,23 +350,17 @@ async def process_document(  # nosonar  # async required: callers use await
                 for page_obj in pdf_loader.load(file_path)
             )
 
-            # PDFLoader sets `last_total_pages` / `last_pages_truncated`
-            # at the start of `load()`, before yielding the first page.
-            # If the for loop above raised mid-iteration, the count
-            # reflects the *planned* truncation (i.e. how many pages
-            # the loader would have skipped if it had completed) — not
-            # the number of pages actually skipped due to that error.
-            # That's still the right value to report here because the
-            # mid-iter failure path raises out of `process_document`
-            # entirely and the response is built as a 422, so this
-            # `pages_truncated` is only surfaced when the loop ran to
-            # completion (in which case "planned" equals "actual").
-            if pdf_loader.last_pages_truncated > 0:
-                pages_truncated = pdf_loader.last_pages_truncated
+            # Derive pages_truncated from the actual rendered count
+            # (len(page_data)) rather than reading pdf_loader's
+            # planned figure directly. This stays correct even if a
+            # future _render_page swallows per-page errors or yields
+            # fewer than max_pages pages for any other reason.
+            if pdf_loader.last_total_pages > len(page_data):
+                pages_truncated = pdf_loader.last_total_pages - len(page_data)
                 logger.warning(
                     "api_pdf_truncation",
                     total_pages=pdf_loader.last_total_pages,
-                    rendered_pages=api_pdf_page_cap,
+                    rendered_pages=len(page_data),
                     pages_truncated=pages_truncated,
                 )
         else:

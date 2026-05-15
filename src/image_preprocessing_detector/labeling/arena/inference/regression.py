@@ -168,6 +168,10 @@ class RegressionBackend(InferenceBackend):
         # `allowed_base=checkpoints_base`. If callers ever start
         # supplying spec.id from an untrusted boundary (HTTP API,
         # public CLI flag), pass `allowed_base=<models_root>` here.
+        #
+        # We intentionally do NOT pass `must_exist=True` here (unlike
+        # LocalBackend.load): a non-existent literal path is the
+        # signal that triggers the `checkpoints/` fallback below.
         try:
             model_path = validate_safe_path(spec.id)
         except ValueError as exc:
