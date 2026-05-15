@@ -125,15 +125,15 @@ def make_content_validator(ext: str) -> Callable[[bytes], None]:
     `make_content_validator(ext)` to `read_with_size_limit`'s
     `early_validate` parameter.
 
-    `ext` must be a supported extension (validated upstream by
-    `validate_file()`). Defensive guard here so a future caller that
-    skips that step gets a clear error rather than the cryptic
-    "Unsupported file extension: ." that `validate_file_content`
-    would emit on an empty string.
+    `ext` must be a supported extension; this is the caller's
+    responsibility (`validate_file()` rejects empty/unsupported
+    extensions upstream, and `validate_file_content` will raise
+    `FileTypeMismatchError("Unsupported file extension: ...")` if a
+    stray empty string ever reaches it). No extra guard here so the
+    error code surfaced to the client matches the actual fault
+    (`INVALID_FILE_TYPE`) rather than being relabeled as
+    `FILE_TOO_LARGE` by the `except ValueError` branch below.
     """
-    if not ext or ext == ".":
-        msg = "make_content_validator requires a non-empty file extension"
-        raise ValueError(msg)
 
     def _validate(first_chunk: bytes) -> None:
         validate_file_content(first_chunk, ext)
@@ -168,6 +168,13 @@ async def read_with_size_limit(
             when the upload is zero bytes (the loop exits immediately
             on an empty first chunk); callers that care about empty
             uploads must check `len(content)` after this returns.
+            Note that when `extra_byte_limit` clamps the first read
+            below the validator's `min_bytes` threshold, the callback
+            will receive too few bytes to render a verdict and
+            `validate_file_content` returns ``None`` — the content
+            check is effectively skipped and the file is then
+            rejected by the size cap. This is acceptable because the
+            file already cannot fit in the remaining batch budget.
         extra_byte_limit: Optional secondary byte cap, applied as
             `min(max_size_mb_in_bytes, extra_byte_limit)`. Used by
             batch endpoints to pass the *remaining* batch budget so a
@@ -183,7 +190,17 @@ async def read_with_size_limit(
     file_max_bytes = max_size_mb * 1024 * 1024
     if extra_byte_limit is not None and extra_byte_limit < file_max_bytes:
         max_bytes = max(extra_byte_limit, 0)
-        limit_label = f"remaining batch budget ({max_bytes / (1024 * 1024):.1f}MB)"
+        # Use byte/KB-aware formatting so a near-empty budget (e.g.
+        # 100 KB) doesn't render as a misleading "0.0MB". Operators
+        # reading this error need to recognise the batch cap as the
+        # cause, not the file itself.
+        if max_bytes >= 1024 * 1024:
+            budget_str = f"{max_bytes / (1024 * 1024):.1f}MB"
+        elif max_bytes >= 1024:
+            budget_str = f"{max_bytes / 1024:.1f}KB"
+        else:
+            budget_str = f"{max_bytes} bytes"
+        limit_label = f"remaining batch budget ({budget_str})"
     else:
         max_bytes = file_max_bytes
         limit_label = f"{max_size_mb}MB"
@@ -197,8 +214,10 @@ async def read_with_size_limit(
         # up to a full chunk_size (1 MiB by default) — important
         # when the helper is reused for the cumulative batch cap,
         # where many medium-size files share the same allowance.
+        # `remaining` is always >= 0 here: the size-check below
+        # raises before the next iteration can run with a deficit.
         remaining = max_bytes - total
-        read_size = min(chunk_size, remaining + 1) if remaining >= 0 else 1
+        read_size = min(chunk_size, remaining + 1)
         chunk = await file.read(read_size)
         if not chunk:
             break
@@ -302,9 +321,17 @@ async def process_document(  # nosonar  # async required: callers use await
                 if len(page_data) >= api_pdf_page_cap:
                     break
 
-            # PDFLoader populates these only after at least one page is
-            # iterated, so it's safe to read them here regardless of
-            # whether a per-page error short-circuited the loop.
+            # PDFLoader sets `last_total_pages` / `last_pages_truncated`
+            # at the start of `load()`, before yielding the first page.
+            # If the for loop above raised mid-iteration, the count
+            # reflects the *planned* truncation (i.e. how many pages
+            # the loader would have skipped if it had completed) — not
+            # the number of pages actually skipped due to that error.
+            # That's still the right value to report here because the
+            # mid-iter failure path raises out of `process_document`
+            # entirely and the response is built as a 422, so this
+            # `pages_truncated` is only surfaced when the loop ran to
+            # completion (in which case "planned" equals "actual").
             if pdf_loader.last_pages_truncated > 0:
                 pages_truncated = pdf_loader.last_pages_truncated
                 logger.warning(
