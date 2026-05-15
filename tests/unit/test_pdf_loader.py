@@ -10,6 +10,7 @@ import pytest
 from image_preprocessing_detector.ingestion.pdf_loader import (
     PageImage,
     PDFLoader,
+    PDFTooManyPagesError,
     load_pdf,
 )
 
@@ -316,3 +317,70 @@ class TestLoadPDFConvenience:
         # Verify load was called
         assert len(pages) == 1
         assert pages[0].page_number == 0
+
+
+class TestPDFTooManyPages:
+    """Verify the max_pages safety guard behaviour."""
+
+    def _build_mock_doc(self, page_count: int) -> MagicMock:
+        mock_doc = MagicMock()
+        mock_doc.__len__.return_value = page_count
+        mock_page = MagicMock()
+        mock_page.rect.width = 612.0
+        mock_page.rect.height = 792.0
+        mock_page.get_images.return_value = []
+        mock_pix = MagicMock()
+        mock_pix.width = 100
+        mock_pix.height = 100
+        mock_pix.n = 3
+        mock_pix.samples = (np.zeros((100, 100, 3), dtype=np.uint8)).tobytes()
+        mock_page.get_pixmap.return_value = mock_pix
+        mock_doc.__getitem__.return_value = mock_page
+        return mock_doc
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_raises_when_page_count_exceeds_limit(self, mock_fitz: Mock) -> None:
+        """By default, exceeding max_pages raises PDFTooManyPagesError."""
+        mock_fitz.open.return_value = self._build_mock_doc(page_count=10)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            with pytest.raises(PDFTooManyPagesError) as exc_info:
+                list(loader.load(tmp.name))
+
+        assert exc_info.value.page_count == 10
+        assert exc_info.value.max_pages == 5
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_truncates_when_allow_truncation_true(self, mock_fitz: Mock) -> None:
+        """allow_truncation=True restores the previous silent-truncate behavior."""
+        mock_fitz.open.return_value = self._build_mock_doc(page_count=10)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5, allow_truncation=True)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 5
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_under_limit_loads_normally(self, mock_fitz: Mock) -> None:
+        """Documents under max_pages load all pages without raising."""
+        mock_fitz.open.return_value = self._build_mock_doc(page_count=3)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 3

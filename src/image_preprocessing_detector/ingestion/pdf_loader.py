@@ -38,6 +38,23 @@ class PageImage:
     needs_upscaling: bool
 
 
+class PDFTooManyPagesError(ValueError):
+    """Raised when a PDF exceeds the configured `max_pages` limit.
+
+    Carries `page_count` and `max_pages` so callers can either propagate
+    a structured error to the client or fall back to opening the loader
+    with `allow_truncation=True`.
+    """
+
+    def __init__(self, page_count: int, max_pages: int, pdf_path: str) -> None:
+        self.page_count = page_count
+        self.max_pages = max_pages
+        self.pdf_path = pdf_path
+        super().__init__(
+            f"PDF has {page_count} pages, exceeds max_pages={max_pages}: {pdf_path}"
+        )
+
+
 class PDFLoader:
     """Loads PDF files and converts pages to images.
 
@@ -56,6 +73,7 @@ class PDFLoader:
         color_space: str = "RGB",
         alpha: bool = False,
         max_pages: int | None = None,
+        allow_truncation: bool = False,
     ) -> None:
         """Initialize PDF loader.
 
@@ -63,21 +81,29 @@ class PDFLoader:
             target_dpi: Target DPI for rendering (default: 300)
             color_space: Color space for rendering (RGB or GRAY)
             alpha: Whether to include alpha channel
-            max_pages: Maximum number of pages to render. Pages beyond
-                this limit are skipped and a warning is logged. Defaults
-                to DEFAULT_MAX_PAGES; pass a smaller value for stricter
+            max_pages: Maximum number of pages to render. Defaults to
+                DEFAULT_MAX_PAGES; pass a smaller value for stricter
                 tenants or untrusted uploads.
+            allow_truncation: If True, silently truncate documents that
+                exceed `max_pages` (the previous behavior). If False
+                (the default) the loader raises PDFTooManyPagesError so
+                callers cannot accidentally analyse a partial document
+                and surface incomplete results to users. Set True only
+                when downstream code is explicitly designed to handle
+                a partial page sequence.
         """
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
         self.max_pages = max_pages if max_pages is not None else self.DEFAULT_MAX_PAGES
+        self.allow_truncation = allow_truncation
 
         logger.info(
             "PDF loader initialized",
             target_dpi=target_dpi,
             color_space=color_space,
             max_pages=self.max_pages,
+            allow_truncation=self.allow_truncation,
         )
 
     def load(self, pdf_path: str | Path) -> Iterator[PageImage]:
@@ -92,6 +118,8 @@ class PDFLoader:
         Raises:
             FileNotFoundError: If PDF file doesn't exist
             ValueError: If file is not a valid PDF
+            PDFTooManyPagesError: If page count exceeds `max_pages` and
+                `allow_truncation=False` (the default).
         """
         pdf_path = Path(pdf_path)
 
@@ -109,8 +137,11 @@ class PDFLoader:
         logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
 
         if page_count > self.max_pages:
+            if not self.allow_truncation:
+                doc.close()
+                raise PDFTooManyPagesError(page_count, self.max_pages, str(pdf_path))
             logger.warning(
-                "pdf_page_limit_exceeded",
+                "pdf_page_limit_exceeded_truncating",
                 path=str(pdf_path),
                 page_count=page_count,
                 max_pages=self.max_pages,

@@ -94,3 +94,11 @@ class TestValidateFileContent:
     def test_rejects_too_small_content(self) -> None:
         with pytest.raises(FileTypeMismatchError, match="too small"):
             validate_file_content(b"%PDF", ".pdf")
+
+    def test_partial_webp_rejected(self) -> None:
+        # WebP requires both RIFF (offset 0) and WEBP (offset 8). A
+        # RIFF container with a different format (here "ABCD") must
+        # not be accepted as WebP.
+        partial = b"RIFF\x00\x00\x00\x00ABCD" + b"\x00" * 8
+        with pytest.raises(FileTypeMismatchError, match="does not match"):
+            validate_file_content(partial, ".webp")

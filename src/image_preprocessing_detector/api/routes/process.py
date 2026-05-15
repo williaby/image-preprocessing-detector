@@ -11,6 +11,7 @@ import asyncio
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -106,7 +107,11 @@ def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
 
 
 async def read_with_size_limit(
-    file: UploadFile, max_size_mb: int, *, chunk_size: int = 1024 * 1024
+    file: UploadFile,
+    max_size_mb: int,
+    *,
+    chunk_size: int = 1024 * 1024,
+    early_validate: Callable[[bytes], None] | None = None,
 ) -> bytes:
     """Read file content in chunks, aborting early if the size cap is exceeded.
 
@@ -118,6 +123,12 @@ async def read_with_size_limit(
         file: The uploaded file.
         max_size_mb: Maximum allowed total size in MB.
         chunk_size: Chunk size in bytes for incremental reads.
+        early_validate: Optional callback invoked with the first chunk's
+            bytes before any further reads. Use this to enforce
+            magic-byte content validation on the first ~1 MB so spoofed
+            uploads are rejected without paying the full memory cost.
+            Any exception raised by the callback aborts the read and
+            propagates to the caller.
 
     Returns:
         The file content bytes.
@@ -140,6 +151,11 @@ async def read_with_size_limit(
             )
             raise ValueError(msg)
         chunks.append(chunk)
+        # Run early validation on the first chunk only. Raising here
+        # short-circuits the read so attackers cannot force the server
+        # to buffer max_size_mb of bytes before being rejected.
+        if early_validate is not None and len(chunks) == 1:
+            early_validate(chunk)
     return b"".join(chunks)
 
 
@@ -203,7 +219,12 @@ async def process_document(  # nosonar  # async required: callers use await
             )
             from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 
-            pdf_loader = PDFLoader()
+            # The API endpoint already breaks at 100 pages on its own,
+            # so opt into the loader's truncation behavior (with a
+            # matching cap) rather than letting it raise. The 100-page
+            # break below is the authoritative limit for the API.
+            api_pdf_page_cap = 100
+            pdf_loader = PDFLoader(max_pages=api_pdf_page_cap, allow_truncation=True)
 
             # Classify PDF type
             pdf_type_result = classify_pdf_type(file_path)
@@ -212,7 +233,7 @@ async def process_document(  # nosonar  # async required: callers use await
             # Load pages - PDFLoader.load() returns PageImage objects
             for page_obj in pdf_loader.load(file_path):
                 page_data.append((page_obj.image, page_obj.width, page_obj.height))
-                if len(page_data) >= 100:
+                if len(page_data) >= api_pdf_page_cap:
                     break
         else:
             # Single image processing
@@ -378,13 +399,42 @@ async def process_single_document(
 
     # Save file to temp location and process
     try:
-        # Read file content with a streaming size cap so a malicious
-        # client cannot exhaust memory by lying about Content-Length.
+        # Read file content with a streaming size cap and magic-byte
+        # validation on the first chunk. This rejects spoofed types
+        # (e.g. a .exe renamed .pdf) without buffering the full payload,
+        # and aborts oversize uploads early instead of trusting
+        # Content-Length.
+        ext = Path(file.filename or "document").suffix.lower()
         try:
-            content = await read_with_size_limit(file, settings.max_file_size_mb)
+            content = await read_with_size_limit(
+                file,
+                settings.max_file_size_mb,
+                early_validate=lambda first_chunk: validate_file_content(
+                    first_chunk, ext
+                ),
+            )
         except ValueError as exc:
             error = ErrorResponse(
                 error=ErrorCode.FILE_TOO_LARGE,
+                message=str(exc),
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ProcessResponse(
+                    status=ProcessingStatus.FAILED,
+                    error=error,
+                ).model_dump(),
+            )
+        except FileTypeMismatchError as exc:
+            logger.warning(
+                "file_content_mismatch",
+                filename=file.filename,
+                declared_extension=ext,
+                error=str(exc),
+            )
+            error = ErrorResponse(
+                error=ErrorCode.INVALID_FILE_TYPE,
                 message=str(exc),
                 correlation_id=correlation_id,
             )
@@ -401,32 +451,6 @@ async def process_single_document(
             error = ErrorResponse(
                 error=ErrorCode.EMPTY_FILE,
                 message="Uploaded file is empty",
-                correlation_id=correlation_id,
-            )
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content=ProcessResponse(
-                    status=ProcessingStatus.FAILED,
-                    error=error,
-                ).model_dump(),
-            )
-
-        # Magic-byte content validation: refuse files whose true type
-        # does not match the declared extension. This blocks extension
-        # spoofing before the bytes reach PyMuPDF / OpenCV / PIL.
-        ext = Path(file.filename or "document").suffix.lower()
-        try:
-            validate_file_content(content, ext)
-        except FileTypeMismatchError as exc:
-            logger.warning(
-                "file_content_mismatch",
-                filename=file.filename,
-                declared_extension=ext,
-                error=str(exc),
-            )
-            error = ErrorResponse(
-                error=ErrorCode.INVALID_FILE_TYPE,
-                message=str(exc),
                 correlation_id=correlation_id,
             )
             return JSONResponse(

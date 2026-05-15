@@ -113,6 +113,16 @@ class APISettings(BaseSettings):
         default=50,
         description="Maximum file size in MB",
     )
+    max_batch_total_size_mb: int = Field(
+        default=500,
+        description=(
+            "Maximum cumulative size in MB across all files in a batch "
+            "request. Defaults to 500MB so a worst-case batch cannot "
+            "consume the full max_batch_size * max_file_size_mb (= 5GB "
+            "with default settings) of memory. Tune up for trusted "
+            "internal callers, down for hostile environments."
+        ),
+    )
 
     # Processing options
     default_prefer_gpu: bool = Field(
