@@ -174,8 +174,11 @@ class RegressionBackend(InferenceBackend):
         # signal that triggers the `checkpoints/` fallback below.
         try:
             model_path = validate_safe_path(spec.id)
-        except ValueError as exc:
-            msg = f"Invalid model path: {spec.id}"
+        except (ValueError, TypeError) as exc:
+            # TypeError defends against a non-str spec.id (e.g.
+            # accidentally None or a Path that Pydantic didn't
+            # coerce); ValueError catches traversal-pattern rejects.
+            msg = f"Invalid model path: {spec.id!r}"
             raise ModelLoadError(msg) from exc
 
         if not model_path.exists():

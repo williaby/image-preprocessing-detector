@@ -56,7 +56,7 @@ def _jpeg_app_marker_alternatives() -> list[list[_Part]]:
     """
     # Standalone markers commonly seen right after SOI in raw JPEGs
     # (DQT, DRI, COM, SOF0/2/3, DHT — strict subset of valid post-SOI
-    # markers; restful enough that random binary noise won't pass).
+    # markers; restrictive enough that random binary noise won't pass).
     standalone_markers = [
         b"\xdb",  # DQT - Define Quantization Table
         b"\xdc",  # DNL - Define Number of Lines

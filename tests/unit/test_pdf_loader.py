@@ -396,9 +396,20 @@ class TestPDFTooManyPages:
             PDFLoader(max_pages=bad_value)
 
     @pytest.mark.parametrize(
-        "bad_value", [10.5, "100", True, False, None.__class__, [100]]
+        "bad_value",
+        [10.5, "100", True, False, [100], object()],
     )
     def test_non_int_max_pages_raises_type_error(self, bad_value: object) -> None:
-        """Non-int (or bool) max_pages must be rejected with TypeError."""
+        """Non-int (or bool) max_pages must be rejected with TypeError.
+
+        Note: `None` itself is NOT tested here because the constructor
+        treats `None` as a sentinel for "use DEFAULT_MAX_PAGES" — that
+        path is exercised by `test_init_default_params`.
+        """
         with pytest.raises(TypeError, match="max_pages must be a positive int"):
             PDFLoader(max_pages=bad_value)  # type: ignore[arg-type]
+
+    def test_none_max_pages_uses_default(self) -> None:
+        """`None` is treated as a sentinel for DEFAULT_MAX_PAGES."""
+        loader = PDFLoader(max_pages=None)
+        assert loader.max_pages == PDFLoader.DEFAULT_MAX_PAGES

@@ -222,14 +222,19 @@ async def read_with_size_limit(
         # `remaining` is always >= 0 here: the size-check below
         # raises before the next iteration can run with a deficit.
         #
-        # When an `early_validate` callback is provided, narrow the
-        # initial read(s) to MIN_VALIDATION_BYTES so spoofed uploads
+        # When an `early_validate` callback is provided, narrow only
+        # the *first* read to MIN_VALIDATION_BYTES so spoofed uploads
         # are rejected after ~18 bytes of I/O instead of a full
-        # chunk_size. Once enough bytes have been accumulated to run
-        # the validator, fall through to chunk_size reads.
+        # chunk_size. Subsequent reads use chunk_size even before
+        # validation completes — that bounds the worst case at one
+        # extra chunk if the very first read returns short (rather
+        # than potentially thousands of 18-byte syscalls under a
+        # pathological reader that always returns <MIN_VALIDATION_BYTES
+        # at a time).
         remaining = max_bytes - total
-        needs_validation = early_validate is not None and not validated
-        head_cap = MIN_VALIDATION_BYTES if needs_validation else chunk_size
+        is_first_read = not chunks
+        narrow_first = early_validate is not None and is_first_read
+        head_cap = MIN_VALIDATION_BYTES if narrow_first else chunk_size
         read_size = min(head_cap, remaining + 1)
         chunk = await file.read(read_size)
         if not chunk:
