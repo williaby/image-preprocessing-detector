@@ -33,6 +33,7 @@ from image_preprocessing_detector.api.models import (
     ProcessResponse,
 )
 from image_preprocessing_detector.utils.file_validation import (
+    MIN_VALIDATION_BYTES,
     FileTypeMismatchError,
     validate_file_content,
 )
@@ -216,8 +217,17 @@ async def read_with_size_limit(
         # where many medium-size files share the same allowance.
         # `remaining` is always >= 0 here: the size-check below
         # raises before the next iteration can run with a deficit.
+        #
+        # When an `early_validate` callback is provided, also clamp
+        # the *first* read down to MIN_VALIDATION_BYTES. The
+        # validator only needs that many bytes to render a verdict,
+        # so a spoofed upload is rejected after ~18 bytes of I/O
+        # rather than a full chunk_size. Subsequent reads use the
+        # full chunk_size.
         remaining = max_bytes - total
-        read_size = min(chunk_size, remaining + 1)
+        first_read_needs_validation = early_validate is not None and not chunks
+        head_cap = MIN_VALIDATION_BYTES if first_read_needs_validation else chunk_size
+        read_size = min(head_cap, remaining + 1)
         chunk = await file.read(read_size)
         if not chunk:
             break
