@@ -31,6 +31,10 @@ from image_preprocessing_detector.api.models import (
     ProcessingStatus,
     ProcessResponse,
 )
+from image_preprocessing_detector.utils.file_validation import (
+    FileTypeMismatchError,
+    validate_file_content,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -48,12 +52,15 @@ SUPPORTED_MIME_TYPES = {
 SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
 
 
-def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
-    """Validate uploaded file.
+def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
+    """Validate uploaded file metadata (name, extension, advertised size).
+
+    Magic-byte content validation is performed separately by the caller
+    after bytes are read.
 
     Args:
         file: The uploaded file.
-        _max_size_mb: Maximum allowed file size in MB (reserved for future use).
+        max_size_mb: Maximum allowed file size in MB.
 
     Returns:
         ErrorResponse if validation fails, None if valid.
@@ -74,6 +81,18 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
             details={"supported_extensions": list(SUPPORTED_EXTENSIONS)},
         )
 
+    # Reject early if the multipart Content-Length advertises an oversize
+    # payload, before allocating memory for the read. This is advisory —
+    # clients can lie, so the post-read size check below is still required.
+    if file.size is not None and file.size > max_size_mb * 1024 * 1024:
+        return ErrorResponse(
+            error=ErrorCode.FILE_TOO_LARGE,
+            message=(
+                f"File size {file.size / (1024 * 1024):.1f}MB "
+                f"exceeds limit of {max_size_mb}MB"
+            ),
+        )
+
     # Check MIME type if available
     if file.content_type and file.content_type not in SUPPORTED_MIME_TYPES:
         # Allow if extension is valid (MIME type detection can be unreliable)
@@ -84,6 +103,44 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
         )
 
     return None
+
+
+async def read_with_size_limit(
+    file: UploadFile, max_size_mb: int, *, chunk_size: int = 1024 * 1024
+) -> bytes:
+    """Read file content in chunks, aborting early if the size cap is exceeded.
+
+    This avoids loading a multi-GB upload into memory before the post-read
+    size check would catch it. Streaming aborts as soon as the cumulative
+    byte count crosses the limit.
+
+    Args:
+        file: The uploaded file.
+        max_size_mb: Maximum allowed total size in MB.
+        chunk_size: Chunk size in bytes for incremental reads.
+
+    Returns:
+        The file content bytes.
+
+    Raises:
+        ValueError: If the file exceeds the size limit.
+    """
+    max_bytes = max_size_mb * 1024 * 1024
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            msg = (
+                f"File size exceeds limit of {max_size_mb}MB "
+                f"(read >{total / (1024 * 1024):.1f}MB)"
+            )
+            raise ValueError(msg)
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 async def process_document(  # nosonar  # async required: callers use await
@@ -321,15 +378,14 @@ async def process_single_document(
 
     # Save file to temp location and process
     try:
-        # Read file content
-        content = await file.read()
-
-        # Check file size
-        file_size_mb = len(content) / (1024 * 1024)
-        if file_size_mb > settings.max_file_size_mb:
+        # Read file content with a streaming size cap so a malicious
+        # client cannot exhaust memory by lying about Content-Length.
+        try:
+            content = await read_with_size_limit(file, settings.max_file_size_mb)
+        except ValueError as exc:
             error = ErrorResponse(
                 error=ErrorCode.FILE_TOO_LARGE,
-                message=f"File size {file_size_mb:.1f}MB exceeds limit of {settings.max_file_size_mb}MB",
+                message=str(exc),
                 correlation_id=correlation_id,
             )
             return JSONResponse(
@@ -345,6 +401,32 @@ async def process_single_document(
             error = ErrorResponse(
                 error=ErrorCode.EMPTY_FILE,
                 message="Uploaded file is empty",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ProcessResponse(
+                    status=ProcessingStatus.FAILED,
+                    error=error,
+                ).model_dump(),
+            )
+
+        # Magic-byte content validation: refuse files whose true type
+        # does not match the declared extension. This blocks extension
+        # spoofing before the bytes reach PyMuPDF / OpenCV / PIL.
+        ext = Path(file.filename or "document").suffix.lower()
+        try:
+            validate_file_content(content, ext)
+        except FileTypeMismatchError as exc:
+            logger.warning(
+                "file_content_mismatch",
+                filename=file.filename,
+                declared_extension=ext,
+                error=str(exc),
+            )
+            error = ErrorResponse(
+                error=ErrorCode.INVALID_FILE_TYPE,
+                message=str(exc),
                 correlation_id=correlation_id,
             )
             return JSONResponse(

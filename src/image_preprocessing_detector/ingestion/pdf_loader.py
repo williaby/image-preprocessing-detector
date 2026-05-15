@@ -44,11 +44,18 @@ class PDFLoader:
     Uses PyMuPDF (fitz) for efficient PDF parsing and rendering.
     """
 
+    # Hard upper bound on page count to prevent CPU/memory exhaustion
+    # from adversarial PDFs (e.g. thousands of pages or pages with huge
+    # rendered dimensions). Override via the constructor when a legitimate
+    # use case requires it.
+    DEFAULT_MAX_PAGES: int = 500
+
     def __init__(
         self,
         target_dpi: int = 300,
         color_space: str = "RGB",
         alpha: bool = False,
+        max_pages: int | None = None,
     ) -> None:
         """Initialize PDF loader.
 
@@ -56,15 +63,21 @@ class PDFLoader:
             target_dpi: Target DPI for rendering (default: 300)
             color_space: Color space for rendering (RGB or GRAY)
             alpha: Whether to include alpha channel
+            max_pages: Maximum number of pages to render. Pages beyond
+                this limit are skipped and a warning is logged. Defaults
+                to DEFAULT_MAX_PAGES; pass a smaller value for stricter
+                tenants or untrusted uploads.
         """
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
+        self.max_pages = max_pages if max_pages is not None else self.DEFAULT_MAX_PAGES
 
         logger.info(
             "PDF loader initialized",
             target_dpi=target_dpi,
             color_space=color_space,
+            max_pages=self.max_pages,
         )
 
     def load(self, pdf_path: str | Path) -> Iterator[PageImage]:
@@ -92,10 +105,19 @@ class PDFLoader:
         except Exception as e:
             raise ValueError(f"Invalid PDF file: {pdf_path}") from e
 
-        logger.info("PDF loaded", pages=len(doc), path=str(pdf_path))
+        page_count = len(doc)
+        logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
+
+        if page_count > self.max_pages:
+            logger.warning(
+                "pdf_page_limit_exceeded",
+                path=str(pdf_path),
+                page_count=page_count,
+                max_pages=self.max_pages,
+            )
 
         try:
-            for page_num in range(len(doc)):
+            for page_num in range(min(page_count, self.max_pages)):
                 yield self._render_page(doc, page_num)
         finally:
             doc.close()

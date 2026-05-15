@@ -491,8 +491,13 @@ def _create_multitask_model(
             Args:
                 path: Path to v2 IQA checkpoint file.
             """
-            ckpt = torch.load(path, map_location="cpu", weights_only=False)
-            state_dict = ckpt.get("model_state_dict", ckpt)
+            # weights_only=True prevents arbitrary code execution via pickle
+            # deserialization. v2 IQA checkpoints contain only tensors and
+            # a small set of safe primitives.
+            ckpt = torch.load(path, map_location="cpu", weights_only=True)
+            state_dict = (
+                ckpt.get("model_state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
+            )
             missing, unexpected = self.load_state_dict(state_dict, strict=False)
 
             loaded_backbone = sum(1 for k in state_dict if k.startswith("backbone."))

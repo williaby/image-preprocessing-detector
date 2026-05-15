@@ -233,12 +233,18 @@ class SigLIP2MultiTaskDetector:
 
         # Load checkpoint if provided
         if self.checkpoint_path and self.checkpoint_path.exists():
+            # weights_only=True prevents arbitrary code execution via pickle
+            # deserialization (CVE-2025-32434 class). The checkpoint is
+            # expected to contain only tensors plus a small set of safe
+            # primitives; if loading fails, the file is untrusted or malformed.
             ckpt = torch.load(
                 self.checkpoint_path,
                 map_location=self._device,
-                weights_only=False,
+                weights_only=True,
             )
-            state_dict = ckpt.get("model_state_dict", ckpt)
+            state_dict = (
+                ckpt.get("model_state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
+            )
             missing, unexpected = self._model.load_state_dict(
                 state_dict,
                 strict=False,

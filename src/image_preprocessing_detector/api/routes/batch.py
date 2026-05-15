@@ -39,9 +39,14 @@ from image_preprocessing_detector.api.models import (
 )
 from image_preprocessing_detector.api.routes.process import (
     process_document,
+    read_with_size_limit,
     validate_file,
 )
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.file_validation import (
+    FileTypeMismatchError,
+    validate_file_content,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -237,8 +242,12 @@ async def submit_batch_job(
             content=error.model_dump(),
         )
 
-    # Validate each file and read content
+    # Validate each file and read content. Read with a streaming size cap
+    # so a single oversize file (or a batch of them) cannot exhaust memory
+    # before the size check fires.
     files_data: list[tuple[str, bytes]] = []
+    total_bytes = 0
+    max_total_bytes = settings.max_batch_size * settings.max_file_size_mb * 1024 * 1024
     for file in files:
         validation_error = validate_file(file, settings.max_file_size_mb)
         if validation_error:
@@ -248,11 +257,54 @@ async def submit_batch_job(
                 content=validation_error.model_dump(),
             )
 
-        content = await file.read()
+        try:
+            content = await read_with_size_limit(file, settings.max_file_size_mb)
+        except ValueError as exc:
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=f"File {file.filename}: {exc}",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+
         if len(content) == 0:
             error = ErrorResponse(
                 error=ErrorCode.EMPTY_FILE,
                 message=f"File {file.filename} is empty",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+
+        # Magic-byte content validation per file
+        ext = Path(file.filename or "document").suffix.lower()
+        try:
+            validate_file_content(content, ext)
+        except FileTypeMismatchError as exc:
+            error = ErrorResponse(
+                error=ErrorCode.INVALID_FILE_TYPE,
+                message=f"File {file.filename}: {exc}",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+
+        # Cumulative batch size cap defends against many-small-file uploads.
+        total_bytes += len(content)
+        if total_bytes > max_total_bytes:
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=(
+                    f"Batch total size exceeds limit of "
+                    f"{max_total_bytes // (1024 * 1024)}MB"
+                ),
                 correlation_id=correlation_id,
             )
             return JSONResponse(

@@ -28,6 +28,7 @@ from image_preprocessing_detector.labeling.arena.schemas import (
     DIQAPrediction,
     ProvenanceInfo,
 )
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -158,13 +159,28 @@ class RegressionBackend(InferenceBackend):
         """
         import torch
 
+        # Validate spec.id rejects traversal patterns (".." etc.) before
+        # attempting either the direct or checkpoints/ relative resolution.
+        try:
+            validate_safe_path(spec.id)
+        except ValueError as exc:
+            msg = f"Invalid model path: {spec.id}"
+            raise ModelLoadError(msg) from exc
+
         model_path = Path(spec.id)
         if not model_path.exists():
-            # Try as relative to checkpoints directory
-            model_path = Path("checkpoints") / spec.id
-            if not model_path.exists():
+            # Try as relative to checkpoints directory; constrain the
+            # resolved path to stay within ./checkpoints to prevent escape.
+            checkpoints_base = Path("checkpoints").resolve()
+            try:
+                model_path = validate_safe_path(
+                    checkpoints_base / spec.id,
+                    allowed_base=checkpoints_base,
+                    must_exist=True,
+                )
+            except (ValueError, FileNotFoundError) as exc:
                 msg = f"Model path not found: {spec.id}"
-                raise ModelLoadError(msg)
+                raise ModelLoadError(msg) from exc
 
         # Load the complete model (base + regression head)
         if (model_path / "pytorch_model.bin").exists():
