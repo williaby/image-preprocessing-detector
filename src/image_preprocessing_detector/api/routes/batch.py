@@ -44,7 +44,10 @@ from image_preprocessing_detector.api.routes.process import (
     validate_file,
 )
 from image_preprocessing_detector.utils.datetime_compat import utc_now
-from image_preprocessing_detector.utils.file_validation import FileTypeMismatchError
+from image_preprocessing_detector.utils.file_validation import (
+    MIN_VALIDATION_BYTES,
+    FileTypeMismatchError,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -265,10 +268,12 @@ async def submit_batch_job(
         # cumulative cap, instead of waiting until after the whole file
         # has been buffered into memory.
         remaining_batch_bytes = max_total_bytes - total_bytes
-        if remaining_batch_bytes <= 0:
-            # Reject upstream rather than letting the file's first
-            # chunk trip a confusing "remaining batch budget (0.0MB)"
-            # error: the fault is the batch as a whole, not this file.
+        if remaining_batch_bytes < MIN_VALIDATION_BYTES:
+            # Reject upstream rather than letting the file's clamped
+            # first chunk trip a confusing INVALID_FILE_TYPE (when
+            # validation can't see enough bytes to render a verdict)
+            # or "remaining batch budget (0.0MB)" — the actual fault
+            # is the batch as a whole, not this file.
             error = ErrorResponse(
                 error=ErrorCode.FILE_TOO_LARGE,
                 message=(

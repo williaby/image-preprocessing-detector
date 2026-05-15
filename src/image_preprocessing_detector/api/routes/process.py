@@ -300,10 +300,11 @@ async def process_document(  # nosonar  # async required: callers use await
             from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 
             # The API caps page rendering at `max_pdf_pages_per_request`
-            # (configurable via APISettings). Opt into the loader's
-            # truncation behavior with a matching cap rather than
-            # letting it raise; the safety-stop break below is the
-            # authoritative limit for this code path.
+            # (configurable via APISettings). PDFLoader is the
+            # authoritative limit: its own iteration is bounded by
+            # `range(min(page_count, self.max_pages))`, so passing
+            # `max_pages=api_pdf_page_cap` is sufficient. No need for
+            # an in-handler `break`.
             api_pdf_page_cap = get_api_settings().max_pdf_pages_per_request
             pdf_loader = PDFLoader(max_pages=api_pdf_page_cap, allow_truncation=True)
 
@@ -316,10 +317,10 @@ async def process_document(  # nosonar  # async required: callers use await
             # `last_pages_truncated` after iteration, which we read
             # below to surface truncation in the response. This avoids
             # re-opening the PDF just to peek at the page count.
-            for page_obj in pdf_loader.load(file_path):
-                page_data.append((page_obj.image, page_obj.width, page_obj.height))
-                if len(page_data) >= api_pdf_page_cap:
-                    break
+            page_data.extend(
+                (page_obj.image, page_obj.width, page_obj.height)
+                for page_obj in pdf_loader.load(file_path)
+            )
 
             # PDFLoader sets `last_total_pages` / `last_pages_truncated`
             # at the start of `load()`, before yielding the first page.

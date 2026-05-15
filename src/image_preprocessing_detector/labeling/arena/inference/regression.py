@@ -160,8 +160,14 @@ class RegressionBackend(InferenceBackend):
         import torch
 
         # Reject traversal patterns (".." etc.) in spec.id and use the
-        # resolved absolute path for the literal-path check below. The
-        # `checkpoints/` fallback further down is constrained separately.
+        # resolved absolute path for the literal-path check below.
+        # NOTE: like LocalBackend, this literal-path branch does NOT
+        # constrain to a model-registry root — operators are trusted
+        # to supply explicit absolute paths in this Arena tooling.
+        # The `checkpoints/` fallback further down IS constrained via
+        # `allowed_base=checkpoints_base`. If callers ever start
+        # supplying spec.id from an untrusted boundary (HTTP API,
+        # public CLI flag), pass `allowed_base=<models_root>` here.
         try:
             model_path = validate_safe_path(spec.id)
         except ValueError as exc:

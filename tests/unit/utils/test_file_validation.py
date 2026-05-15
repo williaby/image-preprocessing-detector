@@ -122,13 +122,15 @@ class TestValidateFileContent:
         with pytest.raises(FileTypeMismatchError, match="Unsupported"):
             validate_file_content(b"abc", ".zip")
 
-    def test_returns_none_for_too_small_content(self) -> None:
-        # 4-byte content is too short to validate; we return None instead
-        # of raising so the caller can let downstream parsers reject it
-        # with a more accurate error than "does not match".
-        assert validate_file_content(b"%PDF", ".pdf") is None
+    def test_raises_for_too_small_nonempty_content(self) -> None:
+        # 4-byte content is too short to be a legitimate PDF/PNG/etc.
+        # We raise FileTypeMismatchError so a crafted sub-header
+        # payload cannot reach the parser libraries.
+        with pytest.raises(FileTypeMismatchError, match="too small"):
+            validate_file_content(b"%PDF", ".pdf")
 
     def test_returns_none_for_empty_content(self) -> None:
+        # Truly empty content defers to the caller's EMPTY_FILE check.
         assert validate_file_content(b"", ".pdf") is None
 
     def test_partial_webp_rejected(self) -> None:

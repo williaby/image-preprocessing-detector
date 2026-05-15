@@ -20,13 +20,16 @@ without subtle bugs.
 
 Tiny uploads
 ------------
-`validate_file_content` returns ``None`` for content shorter than
-``min_bytes`` instead of raising. A 5-byte file claiming to be a PDF
-isn't a security finding — downstream parsers (PyMuPDF/PIL/OpenCV)
-will reject it with an accurate error. Returning ``None`` keeps the
-"too short to assess" case distinct from "magic bytes confirm
-mismatch" so the caller can surface a clearer error code than
-``INVALID_FILE_TYPE``.
+For our supported types, no legitimate file exists below
+``_DEFAULT_MIN_BYTES`` (18). Any non-empty upload shorter than the
+threshold therefore cannot match the declared extension and is
+rejected with ``FileTypeMismatchError`` — this keeps crafted
+sub-header payloads (e.g. a ~15-byte JPEG fragment shaped to
+exploit a PIL/OpenCV CVE) from reaching the parser.
+
+Truly empty content (``b""``) is treated separately: the validator
+returns ``None`` so the route can surface the more specific
+``EMPTY_FILE`` error its post-read check provides.
 """
 
 from __future__ import annotations
@@ -73,12 +76,17 @@ def _jpeg_app_marker_alternatives() -> list[list[_Part]]:
 
 # BMP DIB header sizes (at offset 14, 4 bytes little-endian) for the
 # standard variants we accept. Chained with the "BM" prefix so a random
-# binary blob starting with "BM" cannot be misidentified as BMP.
+# binary blob starting with "BM" cannot be misidentified as BMP. Covers
+# Windows BMP (BITMAPCORE, INFO, V2..V5) plus the OS/2 short and long
+# variants — operators who upload from OS/2-derived pipelines should
+# not see false rejections.
 _BMP_DIB_HEADER_SIZES = [
-    b"\x0c\x00\x00\x00",  # BITMAPCOREHEADER (12)
+    b"\x0c\x00\x00\x00",  # BITMAPCOREHEADER / OS22XBITMAPHEADER short (12)
+    b"\x10\x00\x00\x00",  # OS22XBITMAPHEADER short variant (16)
     b"\x28\x00\x00\x00",  # BITMAPINFOHEADER (40)
     b"\x34\x00\x00\x00",  # BITMAPV2INFOHEADER (52)
     b"\x38\x00\x00\x00",  # BITMAPV3INFOHEADER (56)
+    b"\x40\x00\x00\x00",  # OS22XBITMAPHEADER long variant (64)
     b"\x6c\x00\x00\x00",  # BITMAPV4HEADER (108)
     b"\x7c\x00\x00\x00",  # BITMAPV5HEADER (124)
 ]
@@ -113,11 +121,13 @@ _EXTENSION_TO_TYPE: dict[str, str] = {
     ".bmp": "bmp",
 }
 
-# Default minimum content length for validation. Set to 18 so the
-# strengthened BMP signature (which inspects bytes 14-17) can run.
-# Files shorter than this are treated as "too small to assess" — not
-# a security failure, since downstream parsers will reject them anyway.
-_DEFAULT_MIN_BYTES = 18
+# Minimum content length for meaningful magic-byte validation. Set
+# to 18 so the strengthened BMP signature (which inspects bytes
+# 14-17) has enough data to run. Exported as part of the public
+# surface so batch handlers can pre-reject requests whose remaining
+# budget cannot fund a validation read.
+MIN_VALIDATION_BYTES = 18
+_DEFAULT_MIN_BYTES = MIN_VALIDATION_BYTES  # alias kept for back-compat
 
 
 class FileTypeMismatchError(ValueError):
@@ -166,19 +176,22 @@ def validate_file_content(
     Returns:
         - The canonical type name (e.g. ``"pdf"``) if magic bytes
           confirm the declared extension.
-        - ``None`` if `content` is shorter than `min_bytes` — too small
-          to validate meaningfully. The caller should let downstream
-          parsing reject the file with a more accurate error.
+        - ``None`` only when ``content`` is empty (``b""``). The
+          caller's downstream ``EMPTY_FILE`` check handles that case
+          with a more specific error code.
 
     Raises:
-        FileTypeMismatchError: If the extension is unsupported, or if
+        FileTypeMismatchError: If the extension is unsupported, if
+            ``content`` is non-empty but shorter than ``min_bytes``
+            (no legitimate file of our supported types fits in
+            <18 bytes, so a short upload is presumed crafted), or if
             the magic bytes confirm a different type than declared.
     """
     ext = declared_extension.lower()
     if not ext.startswith("."):
         ext = "." + ext
 
-    # Validate the declared extension BEFORE the too-short fast path.
+    # Validate the declared extension BEFORE the short-content checks.
     # An unsupported extension is always an error, even when content
     # is empty or below `min_bytes` — otherwise a 0-byte `.exe`
     # upload would slip through as "too short to assess".
@@ -188,13 +201,19 @@ def validate_file_content(
         raise FileTypeMismatchError(msg)
 
     if not content:
+        # Empty content: defer to the caller's EMPTY_FILE check.
         return None
     if len(content) < min_bytes:
-        # Too short to validate meaningfully. Don't raise: a 5-byte
-        # file claiming to be a PDF is an obvious malformation that
-        # downstream parsers will reject with a clearer error than
-        # "magic bytes don't match".
-        return None
+        # Sub-header payload: no legitimate file of any supported
+        # type fits in less than `min_bytes`. Reject as a type
+        # mismatch rather than letting a crafted short payload
+        # reach PyMuPDF / PIL / OpenCV where it could exercise a
+        # parser CVE.
+        msg = (
+            f"File content too small to be a valid {expected_type}: "
+            f"got {len(content)} bytes, need at least {min_bytes}"
+        )
+        raise FileTypeMismatchError(msg)
 
     detected_type = detect_file_type(content)
     if detected_type != expected_type:
