@@ -90,7 +90,8 @@ class PDFLoader:
                 callers cannot accidentally analyse a partial document
                 and surface incomplete results to users. Set True only
                 when downstream code is explicitly designed to handle
-                a partial page sequence.
+                a partial page sequence — and read
+                `last_pages_truncated` after iteration to detect it.
         """
         self.target_dpi = target_dpi
         self.color_space = color_space
@@ -100,6 +101,11 @@ class PDFLoader:
             msg = f"max_pages must be > 0, got {self.max_pages}"
             raise ValueError(msg)
         self.allow_truncation = allow_truncation
+        # Truncation state from the most recent `load()` call. Reset on
+        # each call. Callers in `allow_truncation=True` mode should
+        # check this after iterating to detect partial results.
+        self.last_total_pages: int = 0
+        self.last_pages_truncated: int = 0
 
         logger.info(
             "PDF loader initialized",
@@ -126,6 +132,10 @@ class PDFLoader:
         """
         pdf_path = Path(pdf_path)
 
+        # Reset truncation state for this call.
+        self.last_total_pages = 0
+        self.last_pages_truncated = 0
+
         if not pdf_path.exists():
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
 
@@ -137,17 +147,20 @@ class PDFLoader:
             raise ValueError(f"Invalid PDF file: {pdf_path}") from e
 
         page_count = len(doc)
+        self.last_total_pages = page_count
         logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
 
         if page_count > self.max_pages:
             if not self.allow_truncation:
                 doc.close()
                 raise PDFTooManyPagesError(page_count, self.max_pages, str(pdf_path))
+            self.last_pages_truncated = page_count - self.max_pages
             logger.warning(
                 "pdf_page_limit_exceeded_truncating",
                 path=str(pdf_path),
                 page_count=page_count,
                 max_pages=self.max_pages,
+                pages_truncated=self.last_pages_truncated,
             )
 
         try:

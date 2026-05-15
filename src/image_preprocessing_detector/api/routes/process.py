@@ -194,6 +194,13 @@ async def read_with_size_limit(
         chunk = await file.read(chunk_size)
         if not chunk:
             break
+        chunks.append(chunk)
+        # Run early validation on the first chunk *before* the size
+        # check so a spoofed-and-oversize payload returns the more
+        # specific INVALID_FILE_TYPE error instead of FILE_TOO_LARGE.
+        # Memory is still bounded to a single chunk at this point.
+        if early_validate is not None and len(chunks) == 1:
+            early_validate(chunk)
         total += len(chunk)
         if total > max_bytes:
             msg = (
@@ -201,12 +208,6 @@ async def read_with_size_limit(
                 f"(read >{total / (1024 * 1024):.1f}MB)"
             )
             raise ValueError(msg)
-        chunks.append(chunk)
-        # Run early validation on the first chunk only. Raising here
-        # short-circuits the read so attackers cannot force the server
-        # to buffer max_size_mb of bytes before being rejected.
-        if early_validate is not None and len(chunks) == 1:
-            early_validate(chunk)
     return b"".join(chunks)
 
 
@@ -283,30 +284,27 @@ async def process_document(  # nosonar  # async required: callers use await
             pdf_type_result = classify_pdf_type(file_path)
             pdf_type = pdf_type_result.value if pdf_type_result else None
 
-            # Peek at the PDF's actual page count so we can report
-            # truncation in the response (the loader-internal warning
-            # log isn't visible to API clients).
-            try:
-                import fitz  # PyMuPDF
-
-                with fitz.open(str(file_path)) as _doc:
-                    total_pdf_pages = len(_doc)
-                if total_pdf_pages > api_pdf_page_cap:
-                    pages_truncated = total_pdf_pages - api_pdf_page_cap
-                    logger.warning(
-                        "api_pdf_truncation",
-                        total_pages=total_pdf_pages,
-                        rendered_pages=api_pdf_page_cap,
-                        pages_truncated=pages_truncated,
-                    )
-            except Exception as exc:
-                logger.debug("pdf_page_count_peek_failed", error=str(exc))
-
-            # Load pages - PDFLoader.load() returns PageImage objects
+            # Load pages - PDFLoader.load() returns PageImage objects.
+            # The loader records the truncated-page count in
+            # `last_pages_truncated` after iteration, which we read
+            # below to surface truncation in the response. This avoids
+            # re-opening the PDF just to peek at the page count.
             for page_obj in pdf_loader.load(file_path):
                 page_data.append((page_obj.image, page_obj.width, page_obj.height))
                 if len(page_data) >= api_pdf_page_cap:
                     break
+
+            # PDFLoader populates these only after at least one page is
+            # iterated, so it's safe to read them here regardless of
+            # whether a per-page error short-circuited the loop.
+            if pdf_loader.last_pages_truncated > 0:
+                pages_truncated = pdf_loader.last_pages_truncated
+                logger.warning(
+                    "api_pdf_truncation",
+                    total_pages=pdf_loader.last_total_pages,
+                    rendered_pages=api_pdf_page_cap,
+                    pages_truncated=pages_truncated,
+                )
         else:
             # Single image processing
             # ImageLoader.load() returns (np.ndarray, ImageMetadata)

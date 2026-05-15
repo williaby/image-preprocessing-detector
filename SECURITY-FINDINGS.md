@@ -181,9 +181,14 @@ Each file in a batch was validated for its individual size cap, but
 the endpoint accepted up to `max_batch_size` (default 100) files in
 one request. 100 × 50 MB = 5 GB into RAM before processing started.
 
-**Fix**: Track cumulative `total_bytes` across the batch loop and
-reject the request the moment it crosses
-`max_batch_size × max_file_size_mb`.
+**Fix**: Added a separate `max_batch_total_size_mb` setting (default
+500 MB) and track cumulative `total_bytes` across the batch loop;
+the per-file streaming read is also given `extra_byte_limit =
+remaining_batch_bytes` so a single file aborts mid-stream the moment
+it would push the batch over the cap. The cap is deliberately
+**smaller** than `max_batch_size × max_file_size_mb` (which equals
+5 GB at defaults — the original worst case) so the new check
+actually triggers under abuse, not just at the theoretical maximum.
 
 ---
 

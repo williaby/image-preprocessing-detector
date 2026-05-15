@@ -369,6 +369,10 @@ class TestPDFTooManyPages:
             pages = list(loader.load(tmp.name))
 
         assert len(pages) == 5
+        # last_pages_truncated / last_total_pages let callers detect the
+        # partial result without re-opening the PDF.
+        assert loader.last_total_pages == 10
+        assert loader.last_pages_truncated == 5
 
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_under_limit_loads_normally(self, mock_fitz: Mock) -> None:

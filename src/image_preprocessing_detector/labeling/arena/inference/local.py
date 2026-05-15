@@ -81,9 +81,14 @@ class LocalBackend(InferenceBackend):
             ModelLoadError: If model cannot be loaded.
         """
         try:
-            # Validate spec.id is a safe path. spec.id is operator-supplied
-            # (model registry / config), but we still reject path traversal
-            # patterns to prevent loading models from outside expected dirs.
+            # Validate spec.id rejects path-traversal patterns (".." etc.)
+            # and that the resolved file exists. NOTE: this does NOT
+            # constrain the path to a model-registry root — operators
+            # are trusted to supply paths in this Arena tooling, and a
+            # registry-scoped helper would need a configurable base.
+            # If callers ever start supplying spec.id from an
+            # untrusted boundary (HTTP API, public CLI flag), pass
+            # `allowed_base=<models_root>` here.
             try:
                 artifact_path = validate_safe_path(spec.id, must_exist=True)
             except (ValueError, FileNotFoundError) as exc:

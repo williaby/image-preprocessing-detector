@@ -322,22 +322,11 @@ async def submit_batch_job(
                 content=error.model_dump(),
             )
 
-        # Cumulative batch size cap defends against many-medium-file uploads.
+        # Update the cumulative cursor. `extra_byte_limit` already
+        # capped the per-file read to `remaining_batch_bytes`, so
+        # `total_bytes` can never exceed `max_total_bytes` here —
+        # a redundant post-read check would be dead code.
         total_bytes += len(content)
-        if total_bytes > max_total_bytes:
-            error = ErrorResponse(
-                error=ErrorCode.FILE_TOO_LARGE,
-                message=(
-                    f"Batch total size exceeds limit of "
-                    f"{settings.max_batch_total_size_mb}MB"
-                ),
-                correlation_id=correlation_id,
-            )
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content=error.model_dump(),
-            )
-
         files_data.append((file.filename or "document", content))
 
     # Create job
