@@ -48,6 +48,7 @@ inference path bypassed it.
 **Location**: `src/image_preprocessing_detector/detection/siglip2_multitask.py:236`
 
 **Before**:
+
 ```python
 ckpt = torch.load(
     self.checkpoint_path,

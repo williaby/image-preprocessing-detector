@@ -260,11 +260,17 @@ async def submit_batch_job(
             )
 
         ext = Path(file.filename or "document").suffix.lower()
+        # Pass the remaining batch budget so the streaming read aborts
+        # the moment a single file would push the batch over the
+        # cumulative cap, instead of waiting until after the whole file
+        # has been buffered into memory.
+        remaining_batch_bytes = max_total_bytes - total_bytes
         try:
             content = await read_with_size_limit(
                 file,
                 settings.max_file_size_mb,
                 early_validate=make_content_validator(ext),
+                extra_byte_limit=remaining_batch_bytes,
             )
         except FileTypeMismatchError as exc:
             error = ErrorResponse(

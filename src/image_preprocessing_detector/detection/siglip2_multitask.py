@@ -234,9 +234,14 @@ class SigLIP2MultiTaskDetector:
         # Load checkpoint if provided
         if self.checkpoint_path and self.checkpoint_path.exists():
             # weights_only=True prevents arbitrary code execution via pickle
-            # deserialization (CVE-2025-32434 class). The checkpoint is
-            # expected to contain only tensors plus a small set of safe
-            # primitives; if loading fails, the file is untrusted or malformed.
+            # deserialization. NOTE: CVE-2025-32434 demonstrated that
+            # weights_only=True alone was bypassable in PyTorch <= 2.5.1;
+            # it is only a complete mitigation in PyTorch >= 2.6.0.
+            # pyproject.toml pins torch>=2.10.0 specifically for this
+            # reason — do not relax that bound without also migrating
+            # checkpoints to safetensors. The checkpoint is expected to
+            # contain only tensors plus a small set of safe primitives;
+            # if loading fails, the file is untrusted or malformed.
             ckpt = torch.load(
                 self.checkpoint_path,
                 map_location=self._device,

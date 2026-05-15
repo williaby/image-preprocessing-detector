@@ -48,9 +48,19 @@ SUPPORTED_MIME_TYPES = {
     "image/jpeg",
     "image/tiff",
     "image/webp",
+    "image/bmp",
 }
 
-SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tiff",
+    ".tif",
+    ".webp",
+    ".bmp",
+}
 
 
 def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
@@ -128,12 +138,13 @@ async def read_with_size_limit(
     *,
     chunk_size: int = 1024 * 1024,
     early_validate: Callable[[bytes], None] | None = None,
+    extra_byte_limit: int | None = None,
 ) -> bytes:
     """Read file content in chunks, aborting early if the size cap is exceeded.
 
     This avoids loading a multi-GB upload into memory before the post-read
     size check would catch it. Streaming aborts as soon as the cumulative
-    byte count crosses the limit.
+    byte count crosses the effective limit.
 
     Args:
         file: The uploaded file.
@@ -148,14 +159,26 @@ async def read_with_size_limit(
             when the upload is zero bytes (the loop exits immediately
             on an empty first chunk); callers that care about empty
             uploads must check `len(content)` after this returns.
+        extra_byte_limit: Optional secondary byte cap, applied as
+            `min(max_size_mb_in_bytes, extra_byte_limit)`. Used by
+            batch endpoints to pass the *remaining* batch budget so a
+            file cannot exceed the cumulative cap mid-stream. Pass
+            `None` (the default) for single-file uploads.
 
     Returns:
         The file content bytes.
 
     Raises:
-        ValueError: If the file exceeds the size limit.
+        ValueError: If the file exceeds the effective size limit.
     """
-    max_bytes = max_size_mb * 1024 * 1024
+    file_max_bytes = max_size_mb * 1024 * 1024
+    if extra_byte_limit is not None and extra_byte_limit < file_max_bytes:
+        max_bytes = max(extra_byte_limit, 0)
+        limit_label = f"remaining batch budget ({max_bytes / (1024 * 1024):.1f}MB)"
+    else:
+        max_bytes = file_max_bytes
+        limit_label = f"{max_size_mb}MB"
+
     chunks: list[bytes] = []
     total = 0
     while True:
@@ -165,7 +188,7 @@ async def read_with_size_limit(
         total += len(chunk)
         if total > max_bytes:
             msg = (
-                f"File size exceeds limit of {max_size_mb}MB "
+                f"File size exceeds limit of {limit_label} "
                 f"(read >{total / (1024 * 1024):.1f}MB)"
             )
             raise ValueError(msg)

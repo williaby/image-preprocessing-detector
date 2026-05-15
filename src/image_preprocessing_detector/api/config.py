@@ -115,6 +115,7 @@ class APISettings(BaseSettings):
     )
     max_batch_total_size_mb: int = Field(
         default=500,
+        gt=0,
         description=(
             "Maximum cumulative size in MB across all files in a batch "
             "request. Defaults to 500MB so a worst-case batch cannot "
@@ -125,6 +126,7 @@ class APISettings(BaseSettings):
     )
     max_pdf_pages_per_request: int = Field(
         default=100,
+        gt=0,
         description=(
             "Maximum number of PDF pages the /process and /batch routes "
             "will render per request. Pages beyond this limit are "

@@ -96,6 +96,9 @@ class PDFLoader:
         self.color_space = color_space
         self.alpha = alpha
         self.max_pages = max_pages if max_pages is not None else self.DEFAULT_MAX_PAGES
+        if self.max_pages <= 0:
+            msg = f"max_pages must be > 0, got {self.max_pages}"
+            raise ValueError(msg)
         self.allow_truncation = allow_truncation
 
         logger.info(
