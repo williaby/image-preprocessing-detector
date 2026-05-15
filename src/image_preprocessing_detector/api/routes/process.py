@@ -413,9 +413,17 @@ async def process_single_document(
                     first_chunk, ext
                 ),
             )
-        except ValueError as exc:
+        except FileTypeMismatchError as exc:
+            # Must precede the `except ValueError` below: this subclass
+            # would otherwise be subsumed by the broader handler.
+            logger.warning(
+                "file_content_mismatch",
+                filename=file.filename,
+                declared_extension=ext,
+                error=str(exc),
+            )
             error = ErrorResponse(
-                error=ErrorCode.FILE_TOO_LARGE,
+                error=ErrorCode.INVALID_FILE_TYPE,
                 message=str(exc),
                 correlation_id=correlation_id,
             )
@@ -426,15 +434,9 @@ async def process_single_document(
                     error=error,
                 ).model_dump(),
             )
-        except FileTypeMismatchError as exc:
-            logger.warning(
-                "file_content_mismatch",
-                filename=file.filename,
-                declared_extension=ext,
-                error=str(exc),
-            )
+        except ValueError as exc:
             error = ErrorResponse(
-                error=ErrorCode.INVALID_FILE_TYPE,
+                error=ErrorCode.FILE_TOO_LARGE,
                 message=str(exc),
                 correlation_id=correlation_id,
             )
