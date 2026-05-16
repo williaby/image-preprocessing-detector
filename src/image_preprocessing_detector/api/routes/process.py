@@ -254,13 +254,80 @@ async def process_document(  # nosonar  # async required: callers use await
 @router.post(
     "",
     response_model=ProcessResponse,
+    status_code=status.HTTP_200_OK,
     summary="Process a single document",
-    description="Upload and process a single PDF or image file for IQA analysis.",
+    description=(
+        "Upload a single document (PDF or image) and run the full Project A "
+        "preprocessing pipeline: ingestion, PDF type classification, "
+        "classical IQA, optional ML IQA (teacher/student), correction "
+        "decisions, DQS calculation, and OCR routing recommendation.\n\n"
+        "**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, "
+        "`.tif`, `.webp`.\n\n"
+        "**Request shape**: `multipart/form-data` with a single `file` field. "
+        "Pipeline behavior is tuned via query parameters "
+        "(`prefer_gpu`, `enable_corrections`, `enable_teacher`).\n\n"
+        "**Response shape**: a `ProcessResponse` envelope. On success "
+        "`status=completed` and `result` is populated with the document "
+        "summary (per-page IQA scores, DQS, routing). On validation or "
+        "processing errors, the envelope carries `status=failed` and a "
+        "structured `error` (see error codes in `/docs/api/rest-api.md`)."
+    ),
+    response_description="Processing envelope with per-page IQA summary, DQS, and OCR routing recommendation.",
     responses={
-        200: {"description": "Document processed successfully"},
-        400: {"description": "Invalid request (file type, size, etc.)"},
-        422: {"description": "Processing failed"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document processed successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "completed",
+                        "result": {
+                            "document_id": "550e8400-e29b-41d4-a716-446655440000",
+                            "file_name": "document.pdf",
+                            "num_pages": 1,
+                            "pdf_type": "image_only",
+                            "dqs": {
+                                "degradation_score": 0.25,
+                                "structural_complexity_score": 0.3,
+                                "pre_ocr_risk": None,
+                            },
+                            "ocr_routing_recommendation": "ocr_fast",
+                            "pages": [
+                                {
+                                    "page_index": 0,
+                                    "width_px": 2550,
+                                    "height_px": 3300,
+                                    "issues_detected": 1,
+                                    "corrections_applied": 0,
+                                    "iqa_scores": {
+                                        "blur_score": 0.85,
+                                        "noise_score": 0.92,
+                                        "contrast_score": 0.78,
+                                        "skew_angle": None,
+                                    },
+                                }
+                            ],
+                            "processing_time_ms": 1250.5,
+                            "device_used": "cpu",
+                        },
+                        "metadata_url": None,
+                        "corrected_images_url": None,
+                        "error": None,
+                    }
+                }
+            },
+        },
+        400: {
+            "model": ProcessResponse,
+            "description": "Validation error (invalid file type, oversized, empty filename).",
+        },
+        401: {"model": ErrorResponse, "description": "Missing API key (auth enabled)."},
+        403: {"model": ErrorResponse, "description": "Invalid API key (auth enabled)."},
+        422: {
+            "model": ProcessResponse,
+            "description": "Processing failed (corrupt file, pipeline error).",
+        },
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded."},
+        500: {"model": ErrorResponse, "description": "Internal server error."},
     },
 )
 async def process_single_document(
@@ -273,16 +340,28 @@ async def process_single_document(
         bool, Query(description="Whether to enable teacher model")
     ] = False,
 ) -> ProcessResponse | JSONResponse:
-    """Process a single document.
+    """Run the full preprocessing pipeline on a single uploaded document.
+
+    The handler validates the upload (extension allowlist, max size, non-empty),
+    persists it to a temp file, then invokes :func:`process_document` which
+    performs ingestion, classical IQA, DQS scoring, and OCR routing
+    recommendation. Temp files are cleaned up in the `finally` block.
 
     Args:
-        file: The uploaded document file.
-        prefer_gpu: Whether to prefer GPU for processing.
-        enable_corrections: Whether to apply automatic corrections.
-        enable_teacher: Whether to enable teacher model inference.
+        file: Uploaded document (PDF / PNG / JPEG / TIFF / WebP).
+        prefer_gpu: When true, prefer a local CUDA device for ML inference;
+            falls back to CPU if no GPU is available.
+        enable_corrections: When true, allow the pipeline to apply geometric
+            and quality corrections (deskew, CLAHE, sharpening, denoising)
+            after IQA assessment.
+        enable_teacher: When true, run the higher-capacity ResNet-50 teacher
+            model in addition to the student. The teacher is otherwise
+            invoked only on uncertain or high-risk pages.
 
     Returns:
-        ProcessResponse with processing results.
+        ``ProcessResponse`` (HTTP 200) on success, or ``JSONResponse``
+        carrying a ``ProcessResponse`` envelope with HTTP 400 (validation)
+        or 422 (processing failure).
     """
     settings = get_api_settings()
     correlation_id = get_correlation_id()

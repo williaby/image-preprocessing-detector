@@ -156,6 +156,20 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        terms_of_service=settings.terms_of_service,
+        contact={
+            "name": settings.contact_name,
+            "url": settings.contact_url,
+            "email": settings.contact_email,
+        },
+        license_info={
+            "name": settings.license_name,
+            "url": settings.license_url,
+        },
+        servers=[
+            {"url": "http://localhost:8000", "description": "Local development server"},
+            {"url": "https://api.example.com", "description": "Production server"},
+        ],
     )
 
     # Add request logging middleware

@@ -1,0 +1,154 @@
+# Postman / Newman API smoke tests against the FastAPI app.
+#
+# Required env vars (configured below; override via workflow inputs or repo
+# variables when needed):
+#   IMGPREP_API_AUTH_ENABLED  – disable auth for the test run (default: false)
+#   IMGPREP_API_RATE_LIMIT_ENABLED – disable rate limits for the test run
+#   IMGPREP_SKIP_MODEL_LOAD   – skip downloading / loading ML models on
+#                               startup. The FastAPI lifespan handler must
+#                               check this and avoid touching the model
+#                               registry when set to "true".
+#   PYTHONPATH                – `src` (so the in-tree package is importable)
+#
+# Required secrets:
+#   None for the default (auth-disabled) run. If you flip
+#   IMGPREP_API_AUTH_ENABLED=true, also provide:
+#     IMGPREP_API_API_KEYS – JSON list of accepted API keys, e.g.
+#                            ["test-key-1"]; the matching value is then
+#                            exported as POSTMAN_API_KEY for Newman.
+#
+# Local repro:
+#   uv sync --extra dev --extra api
+#   IMGPREP_SKIP_MODEL_LOAD=true uv run uvicorn \
+#       image_preprocessing_detector.api.app:app --port 8000 &
+#   curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8000/health
+#   npx newman run docs/api/postman-collection.json \
+#       --env-var baseUrl=http://localhost:8000
+
+name: Postman API Tests
+
+on:
+  pull_request:
+    paths:
+      - "src/image_preprocessing_detector/api/**"
+      - "docs/api/openapi.json"
+      - "docs/api/postman-collection.json"
+      - "scripts/export_openapi.py"
+      - ".github/workflows/postman-api-tests.yml"
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  newman:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      PYTHONPATH: src
+      IMGPREP_API_AUTH_ENABLED: "false"
+      IMGPREP_API_RATE_LIMIT_ENABLED: "false"
+      IMGPREP_SKIP_MODEL_LOAD: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: uv sync (api + dev extras)
+        run: uv sync --extra dev --extra api
+
+      - name: Set up Node.js for Newman
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Newman
+        run: npm install --global newman
+
+      - name: Generate test fixtures
+        run: |
+          mkdir -p tests/fixtures
+          uv run python - <<'PY'
+          from pathlib import Path
+          import numpy as np
+          from PIL import Image
+
+          fixtures = Path("tests/fixtures")
+          fixtures.mkdir(parents=True, exist_ok=True)
+
+          # Minimal valid PNG (white 64x64).
+          arr = np.full((64, 64, 3), 255, dtype="uint8")
+          Image.fromarray(arr).save(fixtures / "sample.png")
+
+          # Plain text file to exercise the invalid-file-type path.
+          (fixtures / "not-an-image.txt").write_text("not an image\n")
+          PY
+          ls -la tests/fixtures
+
+      - name: Start FastAPI app
+        run: |
+          uv run uvicorn image_preprocessing_detector.api.app:app \
+            --host 127.0.0.1 --port 8000 \
+            > uvicorn.log 2>&1 &
+          echo "UVICORN_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for /health to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/health > /dev/null; then
+              echo "API ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::API did not become ready within 60s"
+          cat uvicorn.log || true
+          exit 1
+
+      - name: Run Newman
+        run: |
+          newman run docs/api/postman-collection.json \
+            --env-var "baseUrl=http://127.0.0.1:8000" \
+            --env-var "apiKey=${POSTMAN_API_KEY:-}" \
+            --env-var "sampleImagePath=$(pwd)/tests/fixtures/sample.png" \
+            --working-dir "$(pwd)" \
+            --reporters cli,junit \
+            --reporter-junit-export newman-report.xml
+        env:
+          POSTMAN_API_KEY: ${{ secrets.IMGPREP_POSTMAN_API_KEY }}
+
+      - name: Upload Newman JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: newman-report.xml
+          if-no-files-found: warn
+
+      - name: Upload uvicorn logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uvicorn-log
+          path: uvicorn.log
+          if-no-files-found: warn
+
+      - name: Stop FastAPI app
+        if: always()
+        run: |
+          if [ -n "${UVICORN_PID:-}" ]; then
+            kill "${UVICORN_PID}" || true
+          fi

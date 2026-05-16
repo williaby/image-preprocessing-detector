@@ -1,0 +1,397 @@
+{
+  "info": {
+    "name": "Image Preprocessing Detector API",
+    "description": "Postman collection for the Image Preprocessing Detector REST API. Variables:\n\n- `baseUrl` — root URL of the API (default: `http://localhost:8000`).\n- `apiKey` — value sent in the `X-API-Key` header (only required when `IMGPREP_API_AUTH_ENABLED=true`).\n- `sampleImagePath` — absolute path to a small test PDF or image on the machine running Newman/Postman. CI workflows generate one at runtime and override this variable.\n- `jobId` — captured automatically by the `Batch / Submit` request's test script.\n\nDerived from `docs/api/openapi.json`. Re-generate after API changes via `scripts/export_openapi.py` then keep this file in sync.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "ipd-api-collection-v1"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sampleImagePath",
+      "value": "./tests/fixtures/sample.png",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {"key": "key", "value": "X-API-Key", "type": "string"},
+      {"key": "value", "value": "{{apiKey}}", "type": "string"},
+      {"key": "in", "value": "header", "type": "string"}
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Liveness probe. Returns 200 with `status=healthy`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body has status=healthy', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('status', 'healthy');",
+                  "  pm.expect(body).to.have.property('timestamp');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Readiness check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["ready"]
+            },
+            "description": "Readiness probe; 200 when all dependency checks pass, 503 otherwise."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 or 503', function () {",
+                  "  pm.expect([200, 503]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('body has checks and device', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('status');",
+                  "  pm.expect(body).to.have.property('checks');",
+                  "  pm.expect(body).to.have.property('device');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Version info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": ["{{baseUrl}}"],
+              "path": ["version"]
+            },
+            "description": "Returns API, Python, pipeline and detected model versions."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body has api_version and models', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('api_version');",
+                  "  pm.expect(body).to.have.property('python_version');",
+                  "  pm.expect(body).to.have.property('pipeline_version');",
+                  "  pm.expect(body).to.have.property('models');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Detection / Process",
+      "item": [
+        {
+          "name": "Process single document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/process?prefer_gpu=true&enable_corrections=true&enable_teacher=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["process"],
+              "query": [
+                {"key": "prefer_gpu", "value": "true"},
+                {"key": "enable_corrections", "value": "true"},
+                {"key": "enable_teacher", "value": "false"}
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}",
+                  "description": "PDF or image file (.pdf, .png, .jpg, .jpeg, .tiff, .tif, .webp)."
+                }
+              ]
+            },
+            "description": "Upload a PDF or image and run the IQA pipeline. Returns a `ProcessResponse` envelope with `status=completed` and per-page IQA + DQS + routing on success."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body has status=completed and result', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('status', 'completed');",
+                  "  pm.expect(body).to.have.property('result');",
+                  "  pm.expect(body.result).to.have.property('document_id');",
+                  "  pm.expect(body.result).to.have.property('num_pages');",
+                  "  pm.expect(body.result).to.have.property('pages');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process — invalid file type (negative test)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["process"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "./tests/fixtures/not-an-image.txt",
+                  "description": "Path to a `.txt` file used to exercise the validation error path."
+                }
+              ]
+            },
+            "description": "Negative test: posting a non-image file should be rejected with HTTP 400 and `error=invalid_file_type`. Skip in Newman if the fixture is not present."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('error code is invalid_file_type', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('status', 'failed');",
+                  "  pm.expect(body).to.have.property('error');",
+                  "  pm.expect(body.error).to.have.property('error', 'invalid_file_type');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Correction / Batch",
+      "description": "The batch endpoints orchestrate the same correction pipeline applied by `/process` over multiple files asynchronously.",
+      "item": [
+        {
+          "name": "Submit batch (correction pipeline)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/batch?prefer_gpu=true&enable_corrections=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["batch"],
+              "query": [
+                {"key": "prefer_gpu", "value": "true"},
+                {"key": "enable_corrections", "value": "true"}
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}",
+                  "description": "One or more files; corrections (deskew, CLAHE, sharpening, denoising) are applied per page when enabled."
+                }
+              ]
+            },
+            "description": "Submit an async batch job. Captures the returned `job_id` into the `jobId` collection variable for the polling requests below."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body has job_id and capture it', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('job_id');",
+                  "  pm.expect(body).to.have.property('status');",
+                  "  pm.expect(body).to.have.property('total_files');",
+                  "  pm.collectionVariables.set('jobId', body.job_id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Batch status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/batch/{{jobId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["batch", "{{jobId}}", "status"]
+            },
+            "description": "Poll progress for the `jobId` captured by the submit request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body has progress counters', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('job_id');",
+                  "  pm.expect(body).to.have.property('status');",
+                  "  pm.expect(body).to.have.property('total_files');",
+                  "  pm.expect(body).to.have.property('processed_files');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Batch result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/batch/{{jobId}}/result?offset=0&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["batch", "{{jobId}}", "result"],
+              "query": [
+                {"key": "offset", "value": "0"},
+                {"key": "limit", "value": "100"}
+              ]
+            },
+            "description": "Fetch paginated results. Returns 425 if the job is still running."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200, 404 or 425', function () {",
+                  "  pm.expect([200, 404, 425]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('body shape', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('job_id');",
+                  "    pm.expect(body).to.have.property('status');",
+                  "    pm.expect(body).to.have.property('results');",
+                  "    pm.expect(body).to.have.property('errors');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete batch job",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/batch/{{jobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["batch", "{{jobId}}"]
+            },
+            "description": "Tear down the batch job created above so the test run is self-cleaning."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 or 404', function () {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('body has message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('message');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

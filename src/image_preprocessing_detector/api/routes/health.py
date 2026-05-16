@@ -73,18 +73,43 @@ def get_uptime_seconds() -> float | None:
 
 @router.get(
     "/health",
-    summary="Health check",
-    description="Basic liveness check - returns healthy if server is running.",
+    response_model=HealthResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Liveness check",
+    description=(
+        "Basic liveness probe for load balancers and orchestrators. "
+        "Returns `healthy` whenever the process is responding, along with a "
+        "server timestamp and (if startup completed) uptime in seconds. Does "
+        "not perform dependency checks — use `/ready` for that."
+    ),
+    response_description="Server is alive; returns liveness status, timestamp, and uptime.",
     responses={
-        200: {"description": "Server is healthy"},
+        200: {
+            "description": "Server is healthy",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "healthy",
+                        "timestamp": "2025-01-15T10:30:00Z",
+                        "uptime_seconds": 3600.5,
+                    }
+                }
+            },
+        },
         503: {"description": "Server is unhealthy"},
     },
 )
 async def health_check() -> HealthResponse:
-    """Check if the server is alive and responding.
+    """Return liveness status of the API process.
+
+    Used by container orchestrators (Kubernetes, Docker Swarm) and load
+    balancers as a cheap liveness probe. Does NOT validate that downstream
+    dependencies (models, GPU, configuration) are available; that is the
+    responsibility of `/ready`.
 
     Returns:
-        HealthResponse with status and timestamp.
+        HealthResponse with status (`healthy`), current UTC timestamp, and
+        uptime in seconds since application startup.
     """
     logger.debug("health_check_called")
     return HealthResponse(
@@ -96,11 +121,47 @@ async def health_check() -> HealthResponse:
 
 @router.get(
     "/ready",
+    response_model=ReadyResponse,
+    status_code=status.HTTP_200_OK,
     summary="Readiness check",
-    description="Readiness check with dependency validation for load balancer probes.",
+    description=(
+        "Readiness probe that validates dependencies required to serve "
+        "requests:\n\n"
+        "- Device capability probe (GPU/CPU detection)\n"
+        "- Classical IQA detector imports\n"
+        "- Pydantic schema imports\n"
+        "- Configuration loading\n\n"
+        "Returns HTTP 200 with `status=ready` when all checks pass, or HTTP "
+        "503 with `status=not_ready` and per-check details when any fail. "
+        "Use this for Kubernetes readiness probes — failing readiness "
+        "removes the pod from the service load balancer."
+    ),
+    response_description="Per-component readiness checks and detected device information.",
     responses={
-        200: {"description": "Server is ready to accept requests"},
-        503: {"description": "Server is not ready"},
+        200: {
+            "description": "Server is ready to accept requests",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "ready",
+                        "timestamp": "2025-01-15T10:30:00Z",
+                        "checks": {
+                            "device_probe": True,
+                            "iqa_detectors": True,
+                            "schema": True,
+                            "configuration": True,
+                        },
+                        "device": {
+                            "has_local_gpu": False,
+                            "gpu_name": None,
+                            "cpu_count": 8,
+                            "modal_available": False,
+                        },
+                    }
+                }
+            },
+        },
+        503: {"description": "Server is not ready (one or more checks failed)"},
     },
 )
 async def readiness_check(response: Response) -> ReadyResponse:
@@ -185,8 +246,36 @@ async def readiness_check(response: Response) -> ReadyResponse:
 
 @router.get(
     "/version",
+    response_model=VersionResponse,
+    status_code=status.HTTP_200_OK,
     summary="Version information",
-    description="Returns API version, Python version, and model versions.",
+    description=(
+        "Return the running API version, Python runtime version, processing "
+        "pipeline version, and the resolved on-disk filenames for any "
+        "currently-installed ONNX models (teacher / student / layout). "
+        "Useful for diagnostics, support requests, and verifying model "
+        "rollouts in production."
+    ),
+    response_description="Version metadata for API, runtime, pipeline, and ML models.",
+    responses={
+        200: {
+            "description": "Version metadata",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "api_version": "0.1.0",
+                        "python_version": "3.11.6",
+                        "pipeline_version": "1.0.0",
+                        "models": {
+                            "teacher_model": "resnet50_teacher_50epoch",
+                            "student_model": "resnet18_student",
+                            "layout_model": None,
+                        },
+                    }
+                }
+            },
+        },
+    },
 )
 async def version_info() -> VersionResponse:
     """Get version information for the API and models.
