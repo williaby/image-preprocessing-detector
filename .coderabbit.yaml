@@ -27,7 +27,7 @@ reviews:
       - develop
 
   # Request changes workflow - makes reviews actionable
-  request_changes_workflow: true
+  request_changes_workflow: false
 
   # High-level summary - executive overview of changes
   high_level_summary: true
