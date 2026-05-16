@@ -3,11 +3,9 @@
   "info": {
     "title": "Image Preprocessing Detector API",
     "description": "Front door for the RAG document pipeline. Accepts raw documents (PDF, PNG, JPEG, TIFF, WebP), assesses image quality, applies geometric and quality corrections, and returns structured `DocumentMetadata` plus OCR routing recommendations.\n\n## Features\n\n- **IQA pipeline**: 9 classical detectors + ResNet teacher/student ML IQA\n- **Document Quality Score (DQS)**: degradation + structural complexity\n- **PDF classification**: image_only / born_digital / hybrid\n- **Routing**: 4-strategy recommendation for downstream OCR\n- **Async batch**: submit-and-poll jobs for high-throughput ingestion\n\nSee [docs/api/rest-api.md](https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api/rest-api.md) for detailed contracts and examples.",
-    "termsOfService": "https://github.com/williaby/image-preprocessing-detector/blob/main/LICENSE",
     "contact": {
       "name": "Image Preprocessing Detector Maintainers",
-      "url": "https://github.com/williaby/image-preprocessing-detector",
-      "email": "byron@example.com"
+      "url": "https://github.com/williaby/image-preprocessing-detector"
     },
     "license": {
       "name": "Apache-2.0",
@@ -19,10 +17,6 @@
     {
       "url": "http://localhost:8000",
       "description": "Local development server"
-    },
-    {
-      "url": "https://api.example.com",
-      "description": "Production server"
     }
   ],
   "paths": {

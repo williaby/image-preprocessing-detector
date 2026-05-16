@@ -59,8 +59,11 @@ class APISettings(BaseSettings):
         description="OpenAPI contact URL",
     )
     contact_email: str = Field(
-        default="byron@example.com",
-        description="OpenAPI contact email",
+        default="",
+        description=(
+            "OpenAPI contact email. Leave empty to omit `email` from the "
+            "published `info.contact` object — preferred over a placeholder."
+        ),
     )
     license_name: str = Field(
         default="Apache-2.0",
@@ -71,8 +74,12 @@ class APISettings(BaseSettings):
         description="OpenAPI license URL",
     )
     terms_of_service: str = Field(
-        default="https://github.com/williaby/image-preprocessing-detector/blob/main/LICENSE",
-        description="OpenAPI terms of service URL",
+        default="",
+        description=(
+            "OpenAPI terms-of-service URL. Leave empty to omit "
+            "`info.termsOfService` from the published schema; do not point "
+            "this at the project LICENSE."
+        ),
     )
 
     # CORS settings

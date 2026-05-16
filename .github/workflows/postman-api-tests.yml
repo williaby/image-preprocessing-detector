@@ -1,26 +1,24 @@
 # Postman / Newman API smoke tests against the FastAPI app.
 #
-# Required env vars (configured below; override via workflow inputs or repo
-# variables when needed):
-#   IMGPREP_API_AUTH_ENABLED  – disable auth for the test run (default: false)
-#   IMGPREP_API_RATE_LIMIT_ENABLED – disable rate limits for the test run
-#   IMGPREP_SKIP_MODEL_LOAD   – skip downloading / loading ML models on
-#                               startup. The FastAPI lifespan handler must
-#                               check this and avoid touching the model
-#                               registry when set to "true".
-#   PYTHONPATH                – `src` (so the in-tree package is importable)
+# Required env vars (configured in the job below):
+#   IMGPREP_API_AUTH_ENABLED        – disable auth for the test run (default: false)
+#   IMGPREP_API_RATE_LIMIT_ENABLED  – disable rate limits for the test run
+#   PYTHONPATH                      – `src` (so the in-tree package is importable)
+#
+# Model loading: the FastAPI lifespan already falls back gracefully when the
+# ONNX model files are absent (it logs `model_preload_failed` and continues),
+# so no explicit skip flag is required to run the smoke tests without models.
 #
 # Required secrets:
 #   None for the default (auth-disabled) run. If you flip
 #   IMGPREP_API_AUTH_ENABLED=true, also provide:
-#     IMGPREP_API_API_KEYS – JSON list of accepted API keys, e.g.
-#                            ["test-key-1"]; the matching value is then
-#                            exported as POSTMAN_API_KEY for Newman.
+#     IMGPREP_POSTMAN_API_KEY – an API key accepted by the running server;
+#                               passed to Newman as the `apiKey` collection
+#                               variable.
 #
 # Local repro:
 #   uv sync --extra dev --extra api
-#   IMGPREP_SKIP_MODEL_LOAD=true uv run uvicorn \
-#       image_preprocessing_detector.api.app:app --port 8000 &
+#   uv run uvicorn image_preprocessing_detector.api.app:app --port 8000 &
 #   curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8000/health
 #   npx newman run docs/api/postman-collection.json \
 #       --env-var baseUrl=http://localhost:8000
@@ -51,7 +49,6 @@ jobs:
       PYTHONPATH: src
       IMGPREP_API_AUTH_ENABLED: "false"
       IMGPREP_API_RATE_LIMIT_ENABLED: "false"
-      IMGPREP_SKIP_MODEL_LOAD: "true"
 
     steps:
       - name: Checkout
