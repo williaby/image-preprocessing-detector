@@ -8,7 +8,6 @@
 #   - CodeQL: Python security-extended and quality queries
 #   - Dependency Review: PR-based dependency vulnerability detection
 #   - Bandit: Python static security analysis
-#   - Safety: Python dependency CVE scanning
 #   - Image Processing Security: Custom validation for file handling
 #
 # EXTERNAL GITHUB APPS (Complementary - No Duplication):
@@ -18,7 +17,7 @@
 #
 # REMOVED DUPLICATIONS:
 #   - Semgrep workflow step (now using Semgrep App)
-#   - Bandit/Safety from ci.yml (consolidated here)
+#   - Bandit from ci.yml (consolidated here)
 #   - CodeQL standalone check (using workflow version with custom queries)
 #
 # BENEFITS:
@@ -255,23 +254,6 @@ jobs:
           # Also generate human-readable output
           uv run bandit -r src -c pyproject.toml || true
 
-      # Safety dependency vulnerability scanning
-      - name: Safety Vulnerability Scan
-        run: |
-          echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
-
-          # Export requirements for safety scanning
-          uv pip compile pyproject.toml -o requirements-scan.txt
-
-          # Run safety scan
-          uv run safety check \
-            --file requirements-scan.txt \
-            --json --output safety-report.json || true
-
-          # Human readable output
-          uv run safety check \
-            --file requirements-scan.txt || true
-
       # Note: Semgrep scanning provided by Semgrep Cloud Platform GitHub App
       # This eliminates duplicate scanning and provides better UI/tracking
 
@@ -283,7 +265,6 @@ jobs:
           name: security-scan-reports
           path: |
             bandit-report.json
-            safety-report.json
             requirements-scan.txt
 
   # Image processing specific security validations
