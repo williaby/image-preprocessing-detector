@@ -53,7 +53,7 @@ dependencies = [
     "structlog>=23.1.0",
     "rich>=13.5.0",
     "opencv-python-headless (>=4.8.0,<5.0.0)",
-    "huggingface-hub[cli]>=0.20.0,<1.0.0",  # <1.0 for transformers compatibility
+    "huggingface-hub[cli]>=1.16.1,<1.17.0",  # <1.0 for transformers compatibility
     # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
     # "pytesseract (>=0.3.13,<0.4.0)",
     "gitpython (>=3.1.45,<4.0.0)",
