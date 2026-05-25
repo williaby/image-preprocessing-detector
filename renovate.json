@@ -29,7 +29,7 @@
         "pep621"
       ],
       "matchDepTypes": [
-        "dependencies"
+        "project.dependencies"
       ],
       "groupName": "Python dependencies",
       "automerge": false,
@@ -43,7 +43,8 @@
         "pep621"
       ],
       "matchDepTypes": [
-        "devDependencies"
+        "dependency-groups",
+        "tool.uv.dev-dependencies"
       ],
       "groupName": "Python dev dependencies",
       "automerge": false,
