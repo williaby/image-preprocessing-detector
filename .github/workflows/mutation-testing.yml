@@ -32,7 +32,7 @@ permissions:
 jobs:
   mutation:
     name: Mutation Testing
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-mutation.yml@74323d9
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-mutation.yml@62bfd795d1273b4819a3f66aa9cef0b917acb830
     permissions:
       contents: read
       pull-requests: write  # Required for PR comments
