@@ -1,58 +1,51 @@
 # Semantic Release for Image Preprocessing Detector
-# Automated release with semantic versioning, changelog generation, and SLSA provenance
-#
-# This workflow uses the org-level reusable python-release.yml workflow for:
-# - Automatic version bumping based on Conventional Commits
-# - Auto-generated CHANGELOG from commit messages
-# - SLSA provenance generation (supply chain security)
-# - PyPI publishing with OIDC trusted publishing
-# - GitHub Release creation with artifacts
+# Automated release with semantic versioning, changelog generation, and SLSA provenance.
 #
 # Conventional Commit Format:
 # - feat: triggers MINOR version bump (0.X.0)
 # - fix: triggers PATCH version bump (0.0.X)
 # - feat!: or fix!: triggers MAJOR version bump (X.0.0)
 # - docs/chore/test/refactor: no version bump, changelog only
-#
-# Migration from Manual Tags:
-# - Previous workflow required manual git tags (v*.*.*)
-# - New workflow automatically determines version from commits
-# - Force release options available for manual control
 
 name: Semantic Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches:
-      - main  # Auto-release on merge to main
+      - main
   workflow_dispatch:
     inputs:
       force_release:
-        description: 'Force release type'
+        description: 'Force release type (leave empty for auto)'
         required: false
         type: choice
-        default: 'auto'
+        default: ''
         options:
-          - auto  # Auto-determine from commits
-          - patch  # Force 0.0.X bump
-          - minor  # Force 0.X.0 bump
-          - major  # Force X.0.0 bump
+          - ''
+          - patch
+          - minor
+          - major
 
 # Prevent concurrent releases
 concurrency:
-  group: release-${{ github.ref }}
+  group: "release-${{ github.event.workflow_run.head_branch || github.ref_name }}"
   cancel-in-progress: false
 
 permissions:
-  contents: write  # Required for creating releases and tags
-  issues: write  # Required for semantic-release
-  pull-requests: write  # Required for semantic-release
-  id-token: write  # Required for OIDC/SLSA
-  attestations: write  # Required for SLSA provenance
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
     name: Semantic Release Pipeline
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5d88a71b91949ee88382284cb6b292d6e0
     permissions:
       contents: write
@@ -61,31 +54,17 @@ jobs:
       id-token: write
       attestations: write
     with:
-      # Python version for building
       python-version: '3.12'
-
-      # Project structure
       source-directory: 'src'
-
-      # Enable semantic versioning (Conventional Commits)
       semantic-release: true
-
-      # Force release type (if manual dispatch, convert 'auto' to empty string for reusable workflow)
-      force-release: ${{ github.event.inputs.force_release == 'auto' && '' || github.event.inputs.force_release || '' }}
-
-      # PyPI publishing configuration
-      publish-to-pypi: true
+      force-release: "${{ github.event.inputs.force_release || '' }}"
+      publish-to-pypi: false
       pypi-package-name: 'image-preprocessing-detector'
-
-      # Run tests before release
-      run-tests: true
+      run-tests: false
+      skip-tests-reason: 'Tests run in upstream CI pipeline before this workflow fires'
       coverage-threshold: 80
-
-      # SLSA provenance generation
-      generate-slsa-provenance: true
-
-      # Changelog generation
-      changelog-generator: 'auto'  # Auto-generate from commits
+      generate-sbom: true
+      sign-artifacts: true
 
   release-summary:
     name: Release Summary
@@ -94,26 +73,26 @@ jobs:
     if: always()
     steps:
       - name: Report release status
+        env:
+          RELEASE_RESULT: ${{ needs.release.result }}
         run: |
           {
             echo "## Semantic Release Complete"
             echo ""
-            echo "**Status**: ${{ needs.release.result }}"
+            echo "**Status**: $RELEASE_RESULT"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "${{ needs.release.result }}" == "success" ]; then
+          if [ "$RELEASE_RESULT" == "success" ]; then
             {
-              echo "### Release Published ✅"
+              echo "### Release Published"
               echo ""
               echo "- Version automatically determined from Conventional Commits"
               echo "- CHANGELOG.md updated with release notes"
-              echo "- SLSA provenance generated for supply chain security"
-              echo "- Package published to PyPI (if version bumped)"
             } >> "$GITHUB_STEP_SUMMARY"
-          elif [ "${{ needs.release.result }}" == "skipped" ]; then
+          elif [ "$RELEASE_RESULT" == "skipped" ]; then
             {
-              echo "### No Release Required ℹ️"
+              echo "### No Release Required"
               echo ""
               echo "No commits since last release require a version bump."
               echo ""
@@ -121,17 +100,8 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
-              echo "### Release Failed ❌"
+              echo "### Release Failed"
               echo ""
               echo "Check workflow logs for details."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
-
-          {
-            echo ""
-            echo "### Conventional Commit Types"
-            echo "- \`feat:\` - New feature (MINOR bump)"
-            echo "- \`fix:\` - Bug fix (PATCH bump)"
-            echo "- \`feat!:\` or \`fix!:\` - Breaking change (MAJOR bump)"
-            echo "- \`docs:\`, \`chore:\`, \`test:\` - No version bump"
-          } >> "$GITHUB_STEP_SUMMARY"
