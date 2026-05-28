@@ -115,6 +115,13 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 > — consolidated plan replacing PROJECT_PLAN.md and PHASE_10_11_RESTRUCTURED_PLAN.md.
 >
 > **Last synchronized**: 2026-02-21
+>
+> **Local folder naming**: The canonical local checkout is `~/dev/image_detection/`. This name
+> matches the Python module path convention and is intentional. The GitHub repository name
+> (`williaby/image-preprocessing-detector`) is kept as-is per the project's no-rename policy.
+> Do not rename the local folder to match GitHub or create a second clone. See
+> [docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md](docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md)
+> for the full decision record.
 
 ### Six-Service RAG Pipeline Architecture
 
