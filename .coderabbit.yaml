@@ -26,7 +26,8 @@ reviews:
       - master
       - develop
 
-  # Request changes workflow - set to false to post comments without blocking merges
+  # Request changes workflow - false keeps CodeRabbit in advisory mode;
+  # "assertive" profile on a solo repo would block every PR otherwise
   request_changes_workflow: false
 
   # High-level summary - executive overview of changes
