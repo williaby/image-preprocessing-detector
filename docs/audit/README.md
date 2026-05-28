@@ -1083,7 +1083,7 @@ PYTHONPATH=. uv run python3 scripts/audit/automated_prescreening.py \
 
 For audit methodology questions or script issues, see:
 
-- GitHub Issues: [image_detection/issues](https://github.com/ByronWilliamsCPA/image_detection/issues)
+- GitHub Issues: [image-preprocessing-detector/issues](https://github.com/williaby/image-preprocessing-detector/issues)
 - Project Documentation: [docs/](../)
 - Layer 2 Enrichment Spec: [schema.py](../../src/image_preprocessing_detector/schema.py)
 
