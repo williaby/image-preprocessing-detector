@@ -1,7 +1,7 @@
 ---
 schema_type: common
-title: "foundry-unify: Team Handoff and Initial Scope"
-description: "Complete onboarding handoff for the team assigned to build foundry-unify.
+title: "Unify: Team Handoff and Initial Scope"
+description: "Complete onboarding handoff for the team assigned to build Unify.
   Covers pipeline position, input/output contracts, GCS artifact paths, reference files
   across all upstream repos, infrastructure already in place, known issues, and the
   phase roadmap."
@@ -13,7 +13,7 @@ tags:
   - documentation
 status: active
 owner: core-maintainer
-purpose: "Give the foundry-unify team everything they need to understand scope, locate
+purpose: "Give the Unify team everything they need to understand scope, locate
   all reference material, and begin Phase B1 without requiring context from prior sessions."
 ---
 
@@ -23,27 +23,27 @@ purpose: "Give the foundry-unify team everything they need to understand scope, 
 
 ## 1. Pipeline Position
 
-foundry-unify is the third stage in the six-service Foundry RAG pipeline. It sits between
+Unify is the third stage in the six-service Foundry RAG pipeline. It sits between
 two upstream preprocessing services and one downstream chunking service:
 
 ```text
-foundry-ingest
+rag-processor
       │
-      ├── audio/video ──► foundry-prepare-audio ──┐
+      ├── audio/video ──► audio-processor ──┐
       │                                            │
-      └── documents ────► foundry-prepare-doc ─────┤
+      └── documents ────► image_detection ─────┤
                                                    │
-                                          foundry-unify   ◄─── YOU ARE HERE
+                                          Unify   ◄─── YOU ARE HERE
                                                    │
-                                          foundry-chunk
+                                          data_ingestor
                                                    │
                                     per-application embedding
 ```
 
-**foundry-unify mission**: Receive preprocessing metadata and corrected artifacts from
+**Unify mission**: Receive preprocessing metadata and corrected artifacts from
 both upstream tracks, run OCR orchestration and layout analysis via Docling, assemble a
 unified Docling DOM, and write a single `DoclingDOM.json` artifact to GCS that
-foundry-chunk can consume regardless of whether the source was a document or audio file.
+data_ingestor can consume regardless of whether the source was a document or audio file.
 
 **Key architectural constraint**: Unify normalizes two radically different input tracks
 into one output schema. The document track requires full OCR orchestration. The audio
@@ -61,16 +61,16 @@ gs://rag-pipeline-{env}/{trace_id}/
   01-preprocessed/    ← Prepare-Doc writes here (document track)
   02-transcribed/     ← Prepare-Audio writes here (audio track)
   03-docling-dom/     ← Unify writes here  ◄─── YOUR OUTPUT
-  04-chunks/          ← Chunk reads from here (foundry-chunk input)
+  04-chunks/          ← Chunk reads from here (data_ingestor input)
 ```
 
 | Artifact | Path | Written by | Read by |
 |----------|------|-----------|---------|
-| `DocumentMetadata.json` | `01-preprocessed/` | foundry-prepare-doc | foundry-unify |
-| Corrected page images (PNG, 300 DPI) | `01-preprocessed/` | foundry-prepare-doc | foundry-unify |
-| Model registry (ONNX models) | `01-preprocessed/models/` | foundry-prepare-doc | foundry-unify |
-| `TranscriptMetadata.json` | `02-transcribed/` | foundry-prepare-audio | foundry-unify |
-| **`DoclingDOM.json`** | **`03-docling-dom/`** | **foundry-unify** | **foundry-chunk** |
+| `DocumentMetadata.json` | `01-preprocessed/` | image_detection | Unify |
+| Corrected page images (PNG, 300 DPI) | `01-preprocessed/` | image_detection | Unify |
+| Model registry (ONNX models) | `01-preprocessed/models/` | image_detection | Unify |
+| `TranscriptMetadata.json` | `02-transcribed/` | audio-processor | Unify |
+| **`DoclingDOM.json`** | **`03-docling-dom/`** | **Unify** | **data_ingestor** |
 
 ---
 
@@ -230,7 +230,7 @@ Unify writes a single artifact regardless of input track:
 gs://rag-pipeline-{env}/{trace_id}/03-docling-dom/DoclingDOM.json
 ```
 
-The schema is identical for both document-track and audio-track outputs. foundry-chunk
+The schema is identical for both document-track and audio-track outputs. data_ingestor
 reads `DoclingDOM.json` and does not need to know which track produced it.
 
 Key fields Chunk expects from Unify:
@@ -310,15 +310,15 @@ A `docling-serve` instance is deployed and operational on the homelab network:
 | Health | `GET /health` |
 | Deployment | Docker (standard, VLM, and GCS-sync variants) |
 
-**Docker configs** (in `foundry-prepare-doc` repo — for reference):
+**Docker configs** (in `image_detection` repo — for reference):
 
 - [`deployment/docker-compose.docling.yml`](../../../deployment/docker-compose.docling.yml) — Standard mode
 - [`deployment/docker-compose.docling-vlm.yml`](../../../deployment/docker-compose.docling-vlm.yml) — VLM mode (`ibm-granite/granite-docling-258M`)
 - [`deployment/docker-compose.docling-gcs.yml`](../../../deployment/docker-compose.docling-gcs.yml) — GCS sync variant
 - [`deployment/deploy-docling.sh`](../../../deployment/deploy-docling.sh) — Deploy script
 
-**Note**: These configs live in `foundry-prepare-doc` because docling-serve was originally
-deployed there for testing. foundry-unify should own its own deployment configuration in
+**Note**: These configs live in `image_detection` because docling-serve was originally
+deployed there for testing. Unify should own its own deployment configuration in
 the new repo. The existing configs are reference only.
 
 ### 7.2 HTTP Client Wrapper
@@ -326,7 +326,7 @@ the new repo. The existing configs are reference only.
 A working REST client for docling-serve is already implemented:
 [`src/image_preprocessing_detector/text_extraction/docling_client.py`](../../../src/image_preprocessing_detector/text_extraction/docling_client.py)
 
-This can be copied into foundry-unify as a starting point. It handles:
+This can be copied into Unify as a starting point. It handles:
 
 - File upload to `/v1/convert/file`
 - Routing params as form data
@@ -337,7 +337,7 @@ This can be copied into foundry-unify as a starting point. It handles:
 ### 7.3 API Contract
 
 A Foundry Unify Adapter API contract is defined in homelab-infra. This specifies the
-service interface that foundry-unify should implement:
+service interface that Unify should implement:
 
 - **Location**: `homelab-infra/docs/planning/contracts/DOCLING-API-CONTRACT.md`
 - **GitHub**: [ByronWilliamsCPA/homelab-infra](https://github.com/ByronWilliamsCPA/homelab-infra) (private)
@@ -429,12 +429,12 @@ Pre-rendered SVG/PNG variants exist alongside each `.puml` file.
 
 | Repo | Visibility | Relevance |
 |------|-----------|-----------|
-| [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) | Public | foundry-prepare-audio — audio track upstream |
+| [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) | Public | audio-processor — audio track upstream |
 | [ByronWilliamsCPA/homelab-infra](https://github.com/ByronWilliamsCPA/homelab-infra) | Private | Deployment tracking, DOCLING-API-CONTRACT.md, integration plan |
 | [ByronWilliamsCPA/DeQA-Doc](https://github.com/ByronWilliamsCPA/DeQA-Doc) | Public | OCR-IQA correlation research — includes working `DoclingOCREngine` implementation for reference |
 
-foundry-ingest and foundry-prepare-doc do not have standalone repos yet — this
-`image_detection` repo IS foundry-prepare-doc.
+rag-processor and image_detection do not have standalone repos yet — this
+`image_detection` repo IS image_detection.
 
 ---
 
@@ -512,7 +512,7 @@ From the contract doc — use to gate Phase B1 completion:
 
 ## 15. Key Reference Files — Quick Index
 
-### In this repo (foundry-prepare-doc / image_detection)
+### In this repo (image_detection / image_detection)
 
 | File | Purpose |
 |------|---------|
@@ -529,7 +529,7 @@ From the contract doc — use to gate Phase B1 completion:
 | [`docs/known_issues/KI-002-docling-table-multicolumn.md`](../../known_issues/KI-002-docling-table-multicolumn.md) | Table misclassification — HIGH severity |
 | [`docs/known_issues/KI-003-docling-picture-dense-text.md`](../../known_issues/KI-003-docling-picture-dense-text.md) | Picture misclassification — MEDIUM severity |
 | [`docs/known_issues/KI-008-docling-multicolumn-text-extraction.md`](../../known_issues/KI-008-docling-multicolumn-text-extraction.md) | Reading order corruption — HIGH severity, OPEN |
-| [`docs/_archived/cross-project/unify-f-nf.md`](../../_archived/cross-project/unify-f-nf.md) | Functional and non-functional requirements (Project B / foundry-unify) |
+| [`docs/_archived/cross-project/unify-f-nf.md`](../../_archived/cross-project/unify-f-nf.md) | Functional and non-functional requirements (Project B / Unify) |
 | [`docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml`](../../architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify internal workflow diagram |
 | [`deployment/docker-compose.docling.yml`](../../../deployment/docker-compose.docling.yml) | Reference docling-serve deployment config |
 | [`deployment/docker-compose.docling-vlm.yml`](../../../deployment/docker-compose.docling-vlm.yml) | Reference VLM-mode deployment config |
@@ -571,4 +571,4 @@ From the contract doc — use to gate Phase B1 completion:
    but requires a completely separate code path. Phase B2 is the right milestone for this.
 
 6. **Questions on Prepare-Doc outputs** — Raise in GitHub issues against this repo
-   (foundry-prepare-doc). The schema and routing logic are owned here.
+   (image_detection). The schema and routing logic are owned here.

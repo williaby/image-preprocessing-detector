@@ -57,8 +57,8 @@ The Image Preprocessing Detector API can be deployed in multiple configurations:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/image_detection.git
-cd image_detection
+git clone https://github.com/williaby/image-preprocessing-detector.git
+cd image-preprocessing-detector
 
 # Install dependencies
 uv sync --extra dev

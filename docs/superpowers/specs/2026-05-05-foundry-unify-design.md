@@ -1,9 +1,9 @@
 ---
 schema_type: common
-title: "foundry-unify: Repository and Architecture Design"
-description: "Design spec for the foundry-unify Python service: repo scaffolding, layered
+title: "Unify: Repository and Architecture Design"
+description: "Design spec for the Unify Python service: repo scaffolding, layered
   architecture, data contracts, core interfaces, FastAPI surface, and Phase B1 scope."
-purpose: "Give the foundry-unify team the full architectural design, interface contracts,
+purpose: "Give the Unify team the full architectural design, interface contracts,
   and Phase B1 scope boundary needed to scaffold and begin development."
 status: active
 owner: core-maintainer
@@ -22,31 +22,31 @@ tags:
 
 ## 1. Context
 
-foundry-unify is Stage 3 of the six-service Foundry RAG pipeline. It sits between two
+Unify is Stage 3 of the six-service Foundry RAG pipeline. It sits between two
 upstream preprocessing services and the downstream chunking service:
 
 ```text
-foundry-ingest
+rag-processor
       │
-      ├── audio/video ──► foundry-prepare-audio ──┐
+      ├── audio/video ──► audio-processor ──┐
       │                                            │
-      └── documents ────► foundry-prepare-doc ─────┤
+      └── documents ────► image_detection ─────┤
                                                    │
-                                          foundry-unify   ◄─── THIS SERVICE
+                                          Unify   ◄─── THIS SERVICE
                                                    │
-                                          foundry-chunk
+                                          data_ingestor
 ```
 
 **Mission**: Receive preprocessing metadata and corrected artifacts from both upstream
 tracks, run OCR orchestration via docling-serve, assemble a unified `DoclingDOM.json`,
-and write it to GCS `03-docling-dom/` for foundry-chunk to consume.
+and write it to GCS `03-docling-dom/` for data_ingestor to consume.
 
 **Key constraint**: Two radically different input tracks produce one identical output
 schema. The document track requires full OCR orchestration. The audio track skips OCR
 entirely and passes through a pre-assembled DOM after schema normalization.
 
 **Reference**: Full pipeline context and all input/output contracts are in
-[`docs/development/RAG Pipeline/foundry-unify-team-handoff.md`](../RAG%20Pipeline/foundry-unify-team-handoff.md).
+[`docs/development/RAG Pipeline/Unify-team-handoff.md`](../RAG%20Pipeline/Unify-team-handoff.md).
 
 ---
 
@@ -182,7 +182,7 @@ class TranscriptMetadata(BaseModel):
 
 ### 5.3 Unified Output (`contracts/output.py`)
 
-Schema is identical regardless of input track. foundry-chunk reads this without knowing
+Schema is identical regardless of input track. data_ingestor reads this without knowing
 which track produced it.
 
 ```python
@@ -381,13 +381,13 @@ patching internals.
 ## 9. Repo File Deliverables
 
 ```text
-foundry-unify/
+Unify/
 ├── src/foundry_unify/         ← full package skeleton, all modules stubbed
 ├── tests/
 │   ├── unit/                  ← interface and contract tests
 │   └── integration/           ← GCS adapter + docling_client against live endpoints
 ├── deployment/
-│   └── docker-compose.yml     ← foundry-unify service (mirrors docling-serve pattern)
+│   └── docker-compose.yml     ← Unify service (mirrors docling-serve pattern)
 ├── docs/
 │   ├── development/           ← Phase roadmap, contracts (from image_detection)
 │   └── known_issues/          ← KI-002, KI-003, KI-008 (from image_detection)

@@ -424,7 +424,7 @@ tmp_cleanup/* linguist-generated=true
 ## 📞 Support
 
 - **What The Diff Support**: <support@whatthediff.ai>
-- **Project Issues**: [GitHub Issues](https://github.com/YOUR_ORG/image_detection/issues)
+- **Project Issues**: [GitHub Issues](https://github.com/williaby/image-preprocessing-detector/issues)
 - **Internal Questions**: Ask in #dev-tools Slack channel (if applicable)
 
 ---

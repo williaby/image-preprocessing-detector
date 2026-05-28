@@ -1,5 +1,5 @@
 ---
-title: Prepare-Doc (foundry-prepare-doc) — System Overview
+title: Prepare-Doc (image_detection) — System Overview
 schema_type: common
 status: active
 owner: core-maintainer
@@ -30,7 +30,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Prepare-Doc (foundry-prepare-doc) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
+Prepare-Doc (image_detection) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs: a corrected page image and
 a `DocumentMetadata.json` record containing everything the downstream OCR system needs to
@@ -42,7 +42,7 @@ Raw Documents (PDF, image, any condition)
         ▼
 ┌────────────────────────────────────────┐
 │            PREPARE-DOC                 │
-│  (foundry-prepare-doc)                 │
+│  (image_detection)                     │
 │  Preprocessing, IQA & Coarse Gateway   │
 │                                        │
 │  • Orientation / skew correction       │
@@ -59,7 +59,7 @@ Raw Documents (PDF, image, any condition)
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
 │       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │       EMBED         │
-│  (foundry-unify)    │    │  (foundry-chunk)    │    │  (foundry-embed)    │
+│  (Unify)            │    │  (data_ingestor)    │    │  (per-application)  │
 │  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
 │  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
 │  Reading Order      │    │  Trust Scoring      │    │  Semantic Search    │
