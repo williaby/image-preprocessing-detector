@@ -113,7 +113,7 @@ Ingest POSTs to `POST /api/v1/process` on the Prepare-Audio FastAPI service.
   "trace_id": "uuid-v4",
   "source_gcs_uri": "gs://rag-pipeline-{env}/{trace_id}/00-source/{filename}",
   "output_gcs_prefix": "gs://rag-pipeline-{env}/{trace_id}/02-transcribed/",
-  "callback_url": "https://ingest.foundry.{env}/api/v1/jobs/{trace_id}/status",
+  "callback_url": "https://rag-processor.{env}/api/v1/jobs/{trace_id}/status",
   "options": {
     "language": "en",
     "diarization": true,

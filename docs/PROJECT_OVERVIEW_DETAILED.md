@@ -32,7 +32,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Prepare-Doc (image_detection) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
+Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs for Unify (OCR
 Orchestration): a corrected page image and a `DocumentMetadata.json` record containing

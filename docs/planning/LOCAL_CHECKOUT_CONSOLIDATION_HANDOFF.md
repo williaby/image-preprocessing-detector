@@ -168,10 +168,10 @@ These need explicit decisions before execution:
 | **B. Keep `~/dev/image-preprocessing-detector/`** | Matches GitHub repo name exactly; eliminates the local/remote name mismatch | Requires updating CLAUDE.md, settings, and any tooling that hardcodes the `image_detection` path |
 | **C. Rename to `image_preprocessing_detector`** | Matches the Python module name (snake_case); aligns with Python convention | Doesn't match GitHub either; introduces a third naming variant |
 
-**Recommendation**: Option B if the owner is willing to do the path migration; Option A if not.
-The hyphenated GitHub name is awkward but it's the actual identity. The cost of Option A is
-permanent low-grade confusion every time someone clones from GitHub and gets a different folder
-name than the team uses.
+**Decision**: Option A — keep `~/dev/image_detection/` as the canonical local checkout.
+This decision is recorded in `CLAUDE.md` (see "Local folder naming" note in the Project
+Overview section). The Python module path convention (`image_detection`) takes precedence
+over folder-name alignment with the GitHub repo. See `CLAUDE.md` for the full rationale.
 
 ### Decision 2: What to do with the non-canonical clone
 
@@ -192,55 +192,44 @@ name than the team uses.
 **Recommendation**: README.md update + brief mention in CLAUDE.md. ADRs are heavier than this
 decision warrants.
 
-## Recommended Approach
+## Resolution Steps (Option A — decided)
 
-Assuming Decision 1 = Option B (use `image-preprocessing-detector/` to match GitHub):
+`~/dev/image_detection/` is the canonical local checkout (see `CLAUDE.md`). The steps below
+decommission the non-canonical clone at `~/dev/image-preprocessing-detector/`.
+
+Assuming Decision 1 = Option A (use `~/dev/image_detection/` — already decided):
 
 ```bash
-# Step 1: In ~/dev/image_detection/, commit and push all in-flight work
-cd ~/dev/image_detection
+# Step 1: In ~/dev/image-preprocessing-detector/, commit and push any in-flight work
+cd ~/dev/image-preprocessing-detector
 git status                              # confirm what's there
 git add <files>; git commit -S; git push
 # Repeat for any branches that have unpushed work
 
-# Step 2: Capture branch list for migration
-git branch -a > /tmp/image_detection_branches.txt
-git worktree list > /tmp/image_detection_worktrees.txt
+# Step 2: Capture branch list for reference
+git branch -a > /tmp/image_preprocessing_detector_branches.txt
+git worktree list > /tmp/image_preprocessing_detector_worktrees.txt
 
-# Step 3: In ~/dev/image-preprocessing-detector/, fetch all branches and ensure it's current
-cd ~/dev/image-preprocessing-detector
+# Step 3: In ~/dev/image_detection/ (canonical), fetch all branches
+cd ~/dev/image_detection
 git fetch --all --prune
 git checkout main && git pull
 
-# Step 4: Recreate any worktrees that were in image_detection/.worktrees/
-# (only if they're not already in image-preprocessing-detector/)
+# Step 4: Recreate any worktrees from image-preprocessing-detector/.worktrees/
+# (only if they are not already present in image_detection/)
 git worktree add .worktrees/<branch-name> <branch-name>
 
 # Step 5: Verify the canonical clone has everything
 git log --oneline --all --graph | head -30
 git worktree list
 
-# Step 6: Move IDE/editor state if any
-mv ~/dev/image_detection/.claude ~/dev/image-preprocessing-detector/.claude 2>/dev/null || true
-# Verify what other dot-files exist that may need migration
-ls -la ~/dev/image_detection/ | grep '^\.' | grep -v '^\.\.$\|^\.$\|^\.git$'
-
-# Step 7: Delete the old clone after final verification
-cd ~/dev/image_detection
+# Step 6: Delete the non-canonical clone after final verification
+cd ~/dev/image-preprocessing-detector
 git status                              # MUST be clean
 git stash list                          # MUST be empty
 git log --branches --not --remotes --oneline  # MUST be empty
-cd ~ && rm -rf ~/dev/image_detection
-
-# Step 8: Update CLAUDE.md, README.md, and any tooling that references the old path
-grep -rln "/home/byron/dev/image_detection\|~/dev/image_detection\|dev/image_detection" \
-  ~/dev/image-preprocessing-detector --include="*.md" --include="*.json" \
-  --include="*.yaml" --include="*.yml" --include="*.sh"
-# Update each occurrence
+cd ~ && rm -rf ~/dev/image-preprocessing-detector
 ```
-
-**If Decision 1 = Option A** (keep `image_detection/` as canonical): invert the source/target
-directories in the above sequence.
 
 ## Risks & Mitigations
 

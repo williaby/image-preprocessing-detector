@@ -62,7 +62,7 @@ backwards compatibility for readers of older documents.
 
 | Legacy ID | Service Name | Repository | Primary Function |
 | --- | --- | --- | --- |
-| ~~Project A~~ | **Prepare-Doc** | `image_detection` | Visual quality, corrections, routing metadata (THIS REPO) |
+| ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) |
 | ~~Project B~~ | **Unify** | `Unify` | Multi-engine OCR, Docling DOM unification |
 | ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring |
 | ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service |
@@ -1107,7 +1107,7 @@ The future `data_ingestor` service will be built by refactoring `williaby/data_i
 contains working chunking code developed in parallel with this project. Transition begins after
 Prepare-Doc SigLIP 2 training is complete and validated (Tier 3 dependency).
 
-**data_ingestor → data_ingestor migration inventory:**
+**foundry-chunk → data_ingestor migration inventory:**
 
 | Module | data_ingestor path | Disposition |
 | --- | --- | --- |

@@ -433,8 +433,10 @@ Pre-rendered SVG/PNG variants exist alongside each `.puml` file.
 | [ByronWilliamsCPA/homelab-infra](https://github.com/ByronWilliamsCPA/homelab-infra) | Private | Deployment tracking, DOCLING-API-CONTRACT.md, integration plan |
 | [ByronWilliamsCPA/DeQA-Doc](https://github.com/ByronWilliamsCPA/DeQA-Doc) | Public | OCR-IQA correlation research — includes working `DoclingOCREngine` implementation for reference |
 
-rag-processor and image_detection do not have standalone repos yet — this
-`image_detection` repo IS image_detection.
+Both `rag-processor` ([ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor))
+and `image-preprocessing-detector` ([williaby/image-preprocessing-detector](https://github.com/williaby/image-preprocessing-detector))
+have standalone repos. This IS the `image-preprocessing-detector` repo (local checkout:
+`~/dev/image_detection/`).
 
 ---
 
@@ -512,7 +514,7 @@ From the contract doc — use to gate Phase B1 completion:
 
 ## 15. Key Reference Files — Quick Index
 
-### In this repo (image_detection / image_detection)
+### In this repo (image-preprocessing-detector / image_detection)
 
 | File | Purpose |
 |------|---------|

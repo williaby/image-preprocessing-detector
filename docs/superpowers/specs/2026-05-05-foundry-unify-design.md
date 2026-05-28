@@ -46,7 +46,7 @@ schema. The document track requires full OCR orchestration. The audio track skip
 entirely and passes through a pre-assembled DOM after schema normalization.
 
 **Reference**: Full pipeline context and all input/output contracts are in
-[`docs/development/RAG Pipeline/Unify-team-handoff.md`](../RAG%20Pipeline/Unify-team-handoff.md).
+[`docs/development/RAG Pipeline/foundry-unify-team-handoff.md`](../RAG%20Pipeline/foundry-unify-team-handoff.md).
 
 ---
 

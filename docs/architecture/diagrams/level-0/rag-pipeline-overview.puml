@@ -41,7 +41,7 @@ package "Ingest (rag-processor)\n<size:10><color:green>■ Active</color></size>
 
 together {
 
-  rectangle "Prepare-Doc (image_detection)\n<size:10><color:green>■ Active</color></size>\n<size:10>All non-audio documents · ~55ms GPU total</size>" as PrepareDoc #E8F5E9 {
+  rectangle "Prepare-Doc (image-preprocessing-detector)\n<size:10><color:green>■ Active</color></size>\n<size:10>All non-audio documents · ~55ms GPU total</size>" as PrepareDoc #E8F5E9 {
     component "Stage 0 — Document Type Router\n<size:9>MIME detect · PDF sub-classify · Text-layer validity · <20ms CPU\nnative_text | image_only | born_digital | scanned | hybrid</size>" as Stage0
     component "Pre-Correction Pipeline (Steps 1–4)\n<size:9>Rasterize · PNG · MobileNetV4 ~3ms · Geometric Corrections</size>" as Stage1
     component "Quality Analysis + Corrections (Steps 5–7)\n<size:9>Text Gate · Classical IQA · SigLIP 2 ~50ms · Layout · CLAHE</size>" as Stage2

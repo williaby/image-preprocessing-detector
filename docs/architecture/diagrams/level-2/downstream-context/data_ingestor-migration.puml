@@ -1,0 +1,129 @@
+@startuml data_ingestor-migration
+title Chunk Service Refactoring: data_ingestor repo → data_ingestor service
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+start
+
+partition "Trigger Condition" {
+  :Prepare-Doc SigLIP 2 validated\n(mAP > 0.88 on holdout set — Tier 3 prerequisite);
+  note right
+    This migration is BLOCKED until SigLIP 2
+    graduates in Model Arena (Workstream 6).
+    Do not begin migration work until trigger fires.
+    Estimated trigger: after Stream 4 datasets
+    assembled and SigLIP 2 training completes.
+  end note
+}
+
+partition "Module Disposition Audit (9 modules)" {
+  :Audit all modules in williaby/data_ingestor;
+  note right
+    **KEEP (3 modules)**
+    chunk_builder.py — core chunking algorithms
+      (by_title, token, semantic boundary)
+    trust_scorer.py — placeholder (receives IQA from Prepare-Doc)
+    ragchunkset_serializer.py — JSON output serialization
+
+    **AUDIT (3 modules)**
+    ocr_fusion.py — may overlap with Unify OCR output
+    hallucination_filter.py — verify RAGChunkSet contract fields
+    normalization.py — check unicode / encoding handling
+
+    **NEW (3 modules to build)**
+    siglip2_signal_consumer.py
+      — reads G1 IQA heads from DocumentMetadata.json
+      — computes page_IQA_risk per chunk
+    docling_dom_receiver.py
+      — accepts Docling DOM from both tracks:
+        document: Unify OCRDocument output
+        audio: Prepare-Audio TranscriptMetadata
+    multitrack_router.py
+      — routes by source_track: "document" vs "audio"
+  end note
+}
+
+partition "RAGChunkSet.json Contract Verification" {
+  :Verify all KEEP modules emit required contract fields;
+  note right
+    Required fields (all mandatory):
+    - chunk_id: UUID (searchable in vector store)
+    - trust_score: float 0-1 (from Prepare-Doc IQA fields)
+    - ocr_engine_provenance: string (from Unify output)
+    - document_id: UUID
+    - trace_id: UUID (pipeline audit chain)
+    - chunk_type: paragraph / table_block / list_block / etc.
+    - source_elements: list of LayoutElement IDs + page + bbox
+    Full spec: docs/development/RAG Pipeline/
+               chunk-embed-contract.md
+  end note
+  if (All contract fields present\nin KEEP modules?) then (yes)
+  else (no — missing fields)
+    :Add missing field emission\nto affected KEEP modules;
+    :Re-verify;
+  endif
+}
+
+partition "New Module Implementation" {
+  :Implement siglip2_signal_consumer.py\n(reads DocumentMetadata.json IQA fields;\ncomputes page_IQA_risk per chunk);
+  :Implement docling_dom_receiver.py\n(accepts OCRDocument from Unify;\naccepts TranscriptMetadata from Prepare-Audio;\nunifies into ChunkInput regardless of track);
+  :Implement multitrack_router.py\n(routes by source_track field;\n"document" -> OCR/layout fusion path;\n"audio" -> transcript-only path);
+}
+
+partition "Integration Testing" {
+  :Run end-to-end pipeline:\nPrepare-Doc -> Unify -> foundry-chunk;
+  :Verify RAGChunkSet.json against schema;
+  :Verify trust_score populated\nfrom Prepare-Doc IQA G1 overall_quality;
+  :Verify audio track skips OCR fusion\n(multitrack_router routes to docling_dom only);
+  :Verify chunk_id and trace_id are UUIDs\n(not null, not empty string);
+  if (All integration tests pass?) then (yes)
+    :foundry-chunk deployment approved;
+  else (no)
+    :Debug and fix;\nRetest;
+  endif
+}
+
+:Archive data_ingestor service\n(90-day grace period; do not delete);
+
+stop
+
+note right
+  **CONTEXT DIAGRAM**
+  This migration is in the downstream
+  data_ingestor service (formerly foundry-chunk).
+  NOT part of the Prepare-Doc codebase.
+  Shown here because Prepare-Doc SigLIP 2
+  validation is the trigger condition.
+
+  **Source Repository:**
+  williaby/data_ingestor
+
+  **Trigger:**
+  SigLIP 2 mAP > 0.88 on holdout (Tier 3)
+
+  **Module Summary:**
+  KEEP:  3 (chunking + serialization)
+  AUDIT: 3 (verify contract compliance)
+  NEW:   3 (IQA consumer + DOM + multitrack)
+
+  **RAGChunkSet.json Contract:**
+  Full spec:
+  docs/development/RAG Pipeline/
+  chunk-embed-contract.md
+
+  **Documentation:**
+  [[docs/architecture/diagrams/level-2/downstream-context/index.md]]
+
+  **ADR:**
+  [[docs/ADRs/0029-prepare-doc-scope-boundaries.md]]
+end note
+
+
+' ── Level 1 Context ──────────────────────────────────────────────────────────
+' Parent: docs/architecture/diagrams/level-1/index.md
+'   ├─ PREPARE_DOC_ARCHITECTURE_OVERVIEW.puml  (8 workstreams overview)
+'   └─ PREPARE_DOC_WORKFLOW_HIERARCHY.puml     (swimlane data flow)
+
+@enduml
