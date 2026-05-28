@@ -152,8 +152,11 @@ See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/develo
 
 ```bash
 # Clone repository
-git clone https://github.com/williaby/image-preprocessing-detector.git
-cd image-preprocessing-detector
+# Note: clone into image_detection/ (not the default image-preprocessing-detector/)
+# The GitHub repo name is kept as-is per the project's no-rename policy; image_detection
+# is the canonical local folder, matching the Python module path convention.
+git clone https://github.com/williaby/image-preprocessing-detector.git image_detection
+cd image_detection
 
 # Install with Poetry
 poetry install
