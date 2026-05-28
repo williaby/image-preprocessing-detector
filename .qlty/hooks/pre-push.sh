@@ -1,14 +1,6 @@
 #!/bin/sh
-# Scope pre-push to fast linters only. Slow security scanners (semgrep,
-# trufflehog, osv-scanner) run in CI where they have no timeout pressure.
-qlty check \
-	--trigger pre-push \
-	--upstream-from-pre-push \
-	--no-formatters \
-	--skip-errored-plugins \
-	--filter ruff \
-	--filter markdownlint \
-	--filter yamllint \
-	--filter actionlint \
-	--filter hadolint \
-	--filter shellcheck
+# qlty's pre-push trigger runs semgrep and trufflehog across the full tree
+# and hangs indefinitely. Fast checks (ruff, yamllint, etc.) already run via
+# pre-commit on every commit. Slow security scanners run in CI. Nothing to
+# add here that isn't already covered.
+exit 0
