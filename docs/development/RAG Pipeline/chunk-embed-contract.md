@@ -11,7 +11,7 @@ tags:
 - rag_pipeline
 status: active
 owner: core-maintainer
-purpose: "Define the complete interface contract between Chunk (foundry-chunk) and all
+purpose: "Define the complete interface contract between Chunk (data_ingestor) and all
   per-application embedding implementations. Embedding is not a shared service, but the
   input interface is standardized across all AI applications."
 ---
@@ -22,11 +22,11 @@ purpose: "Define the complete interface contract between Chunk (foundry-chunk) a
 
 This document defines the interface contract between:
 
-- **Chunk** (`foundry-chunk`, Upstream): Trust scoring, semantic chunking, RAGChunkSet assembly
+- **Chunk** (`data_ingestor`, Upstream): Trust scoring, semantic chunking, RAGChunkSet assembly
 - **Application Embedding** (Downstream): Per-application — each AI application implements
   its own embedding component
 
-**Embedding is NOT a shared foundry service.** There is no `foundry-embed` repository. Instead,
+**Embedding is NOT a shared pipeline service.** There is no shared embedding repository. Instead,
 each AI application that requires retrieval implements its own embedding component. However, ALL
 such implementations MUST conform to this contract — they must accept the `RAGChunkSet` artifact
 from Chunk and preserve the required metadata fields in their vector store entries.
@@ -39,7 +39,7 @@ from Chunk and preserve the required metadata fields in their vector store entri
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│                    CHUNK (foundry-chunk)                      │
+│                    CHUNK (data_ingestor)                      │
 │              Trust scoring + RAG chunking                     │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │

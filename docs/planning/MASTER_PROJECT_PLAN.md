@@ -24,29 +24,29 @@ tags:
 
 ## 1. Service Identity and Mission
 
-**Prepare-Doc** (`foundry-prepare-doc`) is the **preprocessing, IQA, and coarse layout gateway**
+**Prepare-Doc** (`image_detection`) is the **preprocessing, IQA, and coarse layout gateway**
 in a six-service RAG document pipeline. It accepts raw documents in any condition — rotated,
 blurred, shadowed, photographed — and delivers corrected page images plus a
 `DocumentMetadata.json` record to Unify. Every downstream service depends on the accuracy of
 this output.
 
 ```text
-Ingest                                                                        (foundry-ingest)
+Ingest                                                                        (rag-processor)
     │ (file upload + workflow trigger)
     ▼
     ├── Native text / born-digital PDFs ────────────────────────────────────────────────────┐
     │                                                                                        │
-    ├── Images / scanned PDFs ──▶ Prepare-Doc (foundry-prepare-doc) ──▶ corrected images    │
+    ├── Images / scanned PDFs ──▶ Prepare-Doc (image_detection) ──▶ corrected images    │
     │                             IQA, corrections, routing metadata         + metadata ──┐  │
     │                                                                                     │  │
-    └── Audio / Video ─────────▶ Prepare-Audio (foundry-prepare-audio) ─▶ transcript ──┐ │  │
+    └── Audio / Video ─────────▶ Prepare-Audio (audio-processor) ─▶ transcript ──┐ │  │
                                   FFmpeg + Deepgram Nova-2 + diarization     + metadata ┘ │  │
                                                                                           ▼  ▼
-                                                          Unify (foundry-unify) ◄──────────────
+                                                          Unify (Unify) ◄──────────────
                                                           Multi-engine OCR + Docling DOM
                                                                     │
                                                                     ▼
-                                                          Chunk (foundry-chunk)
+                                                          Chunk (data_ingestor)
                                                           Trust scoring + RAG chunking
                                                                     │
                                                                     ▼
@@ -62,12 +62,12 @@ backwards compatibility for readers of older documents.
 
 | Legacy ID | Service Name | Repository | Primary Function |
 | --- | --- | --- | --- |
-| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) |
-| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification |
-| ~~Project C~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring |
+| ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) |
+| ~~Project B~~ | **Unify** | `Unify` | Multi-engine OCR, Docling DOM unification |
+| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring |
 | ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service |
-| ~~Project E~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization |
-| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI, file upload, Cloud Workflows triggering |
+| ~~Project E~~ | **Prepare-Audio** | `audio-processor` | Audio transcription, speaker diarization |
+| ~~Project F~~ | **Ingest** | `rag-processor` | Web UI, file upload, Cloud Workflows triggering |
 
 **Naming rules**: Use service names in all documentation and code. Legacy IDs appear only in
 `docs/_archived/` with ~~strikethrough~~ notation.
@@ -1101,13 +1101,13 @@ Each student stage targets the same 16 prediction heads with progressive latency
 
 ---
 
-### Chunk Service Transition (foundry-chunk)
+### Chunk Service Transition (data_ingestor)
 
-The future `foundry-chunk` service will be built by refactoring `williaby/data_ingestor`, which
+The future `data_ingestor` service will be built by refactoring `williaby/data_ingestor`, which
 contains working chunking code developed in parallel with this project. Transition begins after
 Prepare-Doc SigLIP 2 training is complete and validated (Tier 3 dependency).
 
-**data_ingestor → foundry-chunk migration inventory:**
+**foundry-chunk → data_ingestor migration inventory:**
 
 | Module | data_ingestor path | Disposition |
 | --- | --- | --- |
