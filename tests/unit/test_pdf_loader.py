@@ -10,6 +10,7 @@ import pytest
 from image_preprocessing_detector.ingestion.pdf_loader import (
     PageImage,
     PDFLoader,
+    PDFPageTooLargeError,
     PDFTooManyPagesError,
     load_pdf,
 )
@@ -413,3 +414,69 @@ class TestPDFTooManyPages:
         """`None` is treated as a sentinel for DEFAULT_MAX_PAGES."""
         loader = PDFLoader(max_pages=None)
         assert loader.max_pages == PDFLoader.DEFAULT_MAX_PAGES
+
+
+class TestPDFPixelBomb:
+    """Verify the per-page pixel-bomb guard."""
+
+    def _build_mock_doc(self, width: int, height: int) -> MagicMock:
+        mock_doc = MagicMock()
+        mock_doc.__len__.return_value = 1
+        mock_page = MagicMock()
+        mock_page.rect.width = float(width)
+        mock_page.rect.height = float(height)
+        mock_page.get_images.return_value = []
+        mock_pix = MagicMock()
+        mock_pix.width = width
+        mock_pix.height = height
+        mock_pix.n = 3
+        mock_pix.samples = (np.zeros((1, 1, 3), dtype=np.uint8)).tobytes()
+        mock_page.get_pixmap.return_value = mock_pix
+        mock_doc.__getitem__.return_value = mock_page
+        return mock_doc
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_raises_when_projected_pixels_exceed_limit(self, mock_fitz: Mock) -> None:
+        """A page whose MediaBox*zoom exceeds max_pixels is rejected
+        before get_pixmap allocates the buffer."""
+        # 10000pt x 10000pt at 300 DPI -> zoom ~4.17 -> ~41667^2 pixels.
+        mock_doc = self._build_mock_doc(width=10000, height=10000)
+        mock_fitz.open.return_value = mock_doc
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pixels=1_000_000)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            with pytest.raises(PDFPageTooLargeError):
+                list(loader.load(tmp.name))
+
+        # get_pixmap must NOT have been called - the guard fires first.
+        mock_doc.__getitem__.return_value.get_pixmap.assert_not_called()
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_normal_page_under_pixel_limit_renders(self, mock_fitz: Mock) -> None:
+        """A normal page well under the limit renders without raising."""
+        mock_doc = self._build_mock_doc(width=612, height=792)
+        mock_fitz.open.return_value = mock_doc
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pixels=200_000_000)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 1
+
+    @pytest.mark.parametrize("bad_value", [0, -1])
+    def test_invalid_max_pixels_raises_value_error(self, bad_value: int) -> None:
+        with pytest.raises(ValueError, match="max_pixels must be > 0"):
+            PDFLoader(max_pixels=bad_value)
+
+    @pytest.mark.parametrize("bad_value", [10.5, "100", True])
+    def test_non_int_max_pixels_raises_type_error(self, bad_value: object) -> None:
+        with pytest.raises(TypeError, match="max_pixels must be a positive int"):
+            PDFLoader(max_pixels=bad_value)  # type: ignore[arg-type]

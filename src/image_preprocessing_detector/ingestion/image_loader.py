@@ -78,15 +78,32 @@ class ImageLoader:
         ".webp",
     }
 
-    def __init__(self, target_dpi: int = 300, ensure_bgr: bool = True) -> None:
+    # Hard upper bound on the decoded pixel count. Defends against
+    # pixel-dimension bombs: a PNG/TIFF header can declare enormous
+    # dimensions (e.g. 65535x65535) in a tiny file that OOMs the worker
+    # at cv2.imread. PIL reports the declared size cheaply (without
+    # decoding), so we check it before handing the file to OpenCV.
+    DEFAULT_MAX_PIXELS: int = 200_000_000
+
+    def __init__(
+        self,
+        target_dpi: int = 300,
+        ensure_bgr: bool = True,
+        max_pixels: int | None = None,
+    ) -> None:
         """Initialize image loader.
 
         Args:
             target_dpi: Target DPI for quality assessment (default: 300)
             ensure_bgr: Convert images to BGR format for OpenCV (default: True)
+            max_pixels: Maximum decoded pixel count. Images whose
+                declared dimensions exceed this raise ValueError before
+                cv2.imread allocates the buffer. Defaults to
+                DEFAULT_MAX_PIXELS.
         """
         self.target_dpi = target_dpi
         self.ensure_bgr = ensure_bgr
+        self.max_pixels = self.DEFAULT_MAX_PIXELS if max_pixels is None else max_pixels
 
         logger.info("Image loader initialized", target_dpi=target_dpi)
 
@@ -103,7 +120,8 @@ class ImageLoader:
 
         Raises:
             FileNotFoundError: If image file doesn't exist
-            ValueError: If file format is not supported or image is invalid
+            ValueError: If file format is not supported, the declared
+                dimensions exceed `max_pixels`, or the image is invalid.
         """
         image_path = Path(image_path)
 
@@ -120,6 +138,16 @@ class ImageLoader:
 
         # Extract metadata using PIL
         metadata = self._extract_metadata(image_path)
+
+        # Pixel-bomb guard: PIL reports declared dimensions without
+        # decoding pixel data, so reject oversize images before
+        # cv2.imread allocates a potentially multi-gigabyte buffer.
+        declared_pixels = metadata.width * metadata.height
+        if declared_pixels > self.max_pixels:
+            raise ValueError(
+                f"Image dimensions {metadata.width}x{metadata.height} "
+                f"({declared_pixels} pixels) exceed max_pixels={self.max_pixels}"
+            )
 
         # Load image using OpenCV
         img = cv2.imread(str(image_path), cv2.IMREAD_COLOR)

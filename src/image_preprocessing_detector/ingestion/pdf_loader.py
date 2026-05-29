@@ -55,6 +55,26 @@ class PDFTooManyPagesError(ValueError):
         )
 
 
+class PDFPageTooLargeError(ValueError):
+    """Raised when a single page would rasterize beyond `max_pixels`.
+
+    Defends against pixel-dimension bombs: a PDF with a tiny byte size
+    but a huge MediaBox renders, at the target DPI, into a pixmap large
+    enough to exhaust memory at ``page.get_pixmap()``. The projected
+    output size is checked *before* rasterization so the allocation
+    never happens.
+    """
+
+    def __init__(self, page_num: int, projected_pixels: int, max_pixels: int) -> None:
+        self.page_num = page_num
+        self.projected_pixels = projected_pixels
+        self.max_pixels = max_pixels
+        super().__init__(
+            f"PDF page {page_num} would rasterize to {projected_pixels} pixels, "
+            f"exceeds max_pixels={max_pixels}"
+        )
+
+
 class PDFLoader:
     """Loads PDF files and converts pages to images.
 
@@ -75,6 +95,14 @@ class PDFLoader:
     # use case requires it.
     DEFAULT_MAX_PAGES: int = 500
 
+    # Hard upper bound on the rasterized pixel count of a single page.
+    # Defends against pixel-dimension bombs (a small PDF whose MediaBox
+    # is enormous renders into a multi-gigabyte pixmap at target DPI).
+    # 200 MP blocks the billions-of-pixels bombs (65535x65535 ~= 4.29e9)
+    # while still allowing large legitimate pages. Tune down for
+    # stricter tenants.
+    DEFAULT_MAX_PIXELS: int = 200_000_000
+
     def __init__(
         self,
         target_dpi: int = 300,
@@ -82,6 +110,7 @@ class PDFLoader:
         alpha: bool = False,
         max_pages: int | None = None,
         allow_truncation: bool = False,
+        max_pixels: int | None = None,
     ) -> None:
         """Initialize PDF loader.
 
@@ -100,6 +129,11 @@ class PDFLoader:
                 when downstream code is explicitly designed to handle
                 a partial page sequence - and read
                 `last_pages_truncated` after iteration to detect it.
+            max_pixels: Maximum rasterized pixel count for a single
+                page. Pages whose projected output (MediaBox scaled to
+                target DPI) exceeds this raise PDFPageTooLargeError
+                *before* the pixmap is allocated. Defaults to
+                DEFAULT_MAX_PIXELS.
         """
         self.target_dpi = target_dpi
         self.color_space = color_space
@@ -118,6 +152,18 @@ class PDFLoader:
             msg = f"max_pages must be > 0, got {validated_max_pages}"
             raise ValueError(msg)
         self.max_pages = validated_max_pages
+        validated_max_pixels = (
+            self.DEFAULT_MAX_PIXELS if max_pixels is None else max_pixels
+        )
+        if isinstance(validated_max_pixels, bool) or not isinstance(
+            validated_max_pixels, int
+        ):
+            msg = f"max_pixels must be a positive int, got {validated_max_pixels!r}"
+            raise TypeError(msg)
+        if validated_max_pixels <= 0:
+            msg = f"max_pixels must be > 0, got {validated_max_pixels}"
+            raise ValueError(msg)
+        self.max_pixels = validated_max_pixels
         self.allow_truncation = allow_truncation
         # Truncation state from the most recent `load()` call. Reset on
         # each call. Callers in `allow_truncation=True` mode should
@@ -208,6 +254,16 @@ class PDFLoader:
 
         # Calculate zoom factor to achieve target DPI
         zoom = self.target_dpi / 72.0  # PDF default is 72 DPI
+
+        # Pixel-bomb guard: project the rasterized output size from the
+        # page MediaBox scaled by zoom and reject before allocating the
+        # pixmap. A tiny PDF with a huge MediaBox would otherwise OOM
+        # the worker inside page.get_pixmap().
+        projected_w = int(page.rect.width * zoom)
+        projected_h = int(page.rect.height * zoom)
+        projected_pixels = projected_w * projected_h
+        if projected_pixels > self.max_pixels:
+            raise PDFPageTooLargeError(page_num, projected_pixels, self.max_pixels)
 
         # Render page to pixmap
         mat = fitz.Matrix(zoom, zoom)
