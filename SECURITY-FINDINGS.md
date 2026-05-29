@@ -23,8 +23,8 @@ branch; **OPEN** findings require operator action documented below.
 | 7 | High | API | Batch endpoint has no cumulative size cap | **FIXED** |
 | 8 | Medium | API | `validate_file()` `_max_size_mb` parameter unused | **FIXED** |
 | 9 | Medium | Ingestion | PDF loader has no `max_pages` limit (DoS risk) | **FIXED** |
-| 10 | High | CI | `actions/github-script@v7` not SHA-pinned | **FIXED** |
-| 11 | High | CI | `astral-sh/setup-uv@v5` not SHA-pinned (3 locations) | **FIXED** |
+| 10 | High | CI | `actions/github-script@v7` not SHA-pinned | **Resolved on `main` (#191)** |
+| 11 | High | CI | `astral-sh/setup-uv@v5` not SHA-pinned (3 locations) | **Resolved on `main` (#191)** |
 | 12 | Medium | CI | Org-reusable workflows pinned to `@main` (3 files) | **OPEN** |
 | 13 | Low | CI | 13 workflows lack `step-security/harden-runner` | **OPEN** |
 | 14 | Low | Deps | `transformers` constraint in `iqa` extra (`==4.37.2`) | **OPEN** |
@@ -308,15 +308,21 @@ upstream constraint allows would close the window entirely.
 
 ## GitHub Actions Hardening
 
-### 10/11. Unpinned action references - **FIXED**
+### 10/11. Unpinned action references - **RESOLVED ON `main`**
 
-| File | Line | Before | After |
-|---|---|---|---|
-| `.github/workflows/performance-regression.yml` | 139 | `actions/github-script@v7` | `@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1` |
-| `.github/workflows/security-analysis.yml` | 98, 238, 309 | `astral-sh/setup-uv@v5` | `@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5` |
+`main` pinned these two actions independently in PR #191 ("pin third-party
+Actions to commit SHAs"). After merging `main` into this branch, the two
+workflow files match `main` exactly and this PR no longer modifies them. The
+current pins are:
 
-Both SHAs were already in use elsewhere in the repo (`fips-compatibility.yml`,
-`sonarcloud.yml`), so the pinning is consistent across workflows.
+| File | Line | Pinned to |
+|---|---|---|
+| `.github/workflows/performance-regression.yml` | 139 | `actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0` |
+| `.github/workflows/security-analysis.yml` | 97, 237, 290 | `astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2` |
+
+This branch's original pins (`@60a0d83... # v7.0.1`, `@e58605a9... # v5`) were
+superseded by `main`'s newer SHAs during the merge, so no separate change is
+needed here.
 
 Audit confirmed all other third-party `uses:` lines in this repo are pinned to 40-char SHAs.
 
