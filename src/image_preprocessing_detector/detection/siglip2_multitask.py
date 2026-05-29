@@ -242,11 +242,30 @@ class SigLIP2MultiTaskDetector:
             # checkpoints to safetensors. The checkpoint is expected to
             # contain only tensors plus a small set of safe primitives;
             # if loading fails, the file is untrusted or malformed.
-            ckpt = torch.load(
-                self.checkpoint_path,
-                map_location=self._device,
-                weights_only=True,
-            )
+            try:
+                ckpt = torch.load(
+                    self.checkpoint_path,
+                    map_location=self._device,
+                    weights_only=True,
+                )
+            except Exception as exc:
+                # A legacy checkpoint that pickled non-tensor objects will
+                # fail under weights_only=True. Surface a clear, actionable
+                # error instead of the opaque torch traceback - and do NOT
+                # fall back to weights_only=False (that reopens CVE-2025-32434).
+                logger.error(
+                    "checkpoint_load_failed_weights_only",
+                    path=str(self.checkpoint_path),
+                    error=str(exc),
+                )
+                msg = (
+                    f"Failed to load checkpoint {self.checkpoint_path} with "
+                    "weights_only=True. The file is either malformed/untrusted "
+                    "or a legacy checkpoint containing non-tensor pickled "
+                    "objects. Re-export it as a plain state_dict or convert to "
+                    "safetensors; do not disable weights_only (CVE-2025-32434)."
+                )
+                raise ValueError(msg) from exc
             state_dict = (
                 ckpt.get("model_state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
             )
