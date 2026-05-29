@@ -6,7 +6,7 @@ scans. The Teklia HuggingFace edition provides 52,160 Chinese handwriting line i
 
 After downloading via HuggingFace CLI, the Parquet files must be materialized to
 individual JPEG images. During materialization, a sidecar index file is written:
-    {split}_index.jsonl  — one JSON object per line with keys:
+    {split}_index.jsonl - one JSON object per line with keys:
         filename: str  (relative path under images/{split}/)
         text: str      (Chinese transcription, 1-50 chars)
 
@@ -85,7 +85,7 @@ class CasiaHwdb2LineParser(BaseParser):
     by the materialization script. Each image file maps to one line in
     the split's index file.
 
-    Script metadata (Hans, zho, ISO 15924 Hans) is always set — all
+    Script metadata (Hans, zho, ISO 15924 Hans) is always set - all
     images in this dataset are Chinese simplified handwriting.
     """
 
@@ -184,7 +184,7 @@ class CasiaHwdb2LineParser(BaseParser):
 def _load_index(dataset_path: Path, split: str) -> dict[str, str] | None:
     """Load and cache a split's JSONL transcription index.
 
-    Cached per (dataset_path, split) pair — loaded once per process.
+    Cached per (dataset_path, split) pair - loaded once per process.
 
     Args:
         dataset_path: Root path of the dataset.
@@ -197,7 +197,7 @@ def _load_index(dataset_path: Path, split: str) -> dict[str, str] | None:
     index_path = dataset_path / f"{split}_index.jsonl"
     if not index_path.exists():
         logger.warning(
-            "CASIA-HWDB2-line index not found: %s — run "
+            "CASIA-HWDB2-line index not found: %s - run "
             "scripts/materialize_casia_hwdb2_line.py first",
             index_path,
         )

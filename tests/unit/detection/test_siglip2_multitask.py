@@ -519,7 +519,7 @@ class TestSigLIP2MultiTaskDetector:
     def test_idempotent_initialization(self) -> None:
         """Calling _ensure_initialized twice doesn't reload."""
         detector = self._make_pre_initialized_detector()
-        # Already initialized — second call should be a no-op
+        # Already initialized - second call should be a no-op
         assert detector._initialized
         detector._ensure_initialized()
         assert detector._initialized

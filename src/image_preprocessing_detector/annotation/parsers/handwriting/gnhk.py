@@ -40,7 +40,7 @@ JSON Annotation Format:
 
 Special Text Tokens:
     - ``%math%``: Mathematical content (654 occurrences)
-    - ``%SC%``: Scribble / illegible (571 occurrences) — key for legibility
+    - ``%SC%``: Scribble / illegible (571 occurrences) - key for legibility
     - ``%NA%``: Not applicable / unreadable (466 occurrences)
 
 Labels Extracted:

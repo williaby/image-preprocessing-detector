@@ -1,4 +1,4 @@
-"""Perspective Correction — Fix perspective distortion in camera captures.
+"""Perspective Correction - Fix perspective distortion in camera captures.
 
 Uses Canny edge detection + contour approximation to find a quadrilateral
 document boundary, then applies a perspective warp to rectify the image.

@@ -36,14 +36,14 @@ has a white "#N" badge in its top-left corner identifying it.
 
 For EACH image in the grid, assess two independent dimensions:
 
-PRESENCE — how much of the image area contains handwriting:
+PRESENCE - how much of the image area contains handwriting:
   NONE         = no handwriting visible at all (printed text, blank, non-text image)
   MARGINAL     = traces or annotations only (<10% of area)
   PARTIAL      = handwriting alongside printed text (10-50% of area)
   SUBSTANTIAL  = mostly handwriting (50-90% of area)
   DOMINANT     = image is almost entirely handwriting (>90% of area)
 
-LEGIBILITY — how readable the handwriting is (only when presence != NONE):
+LEGIBILITY - how readable the handwriting is (only when presence != NONE):
   NOT_APPLICABLE = presence is NONE (no handwriting to score)
   ILLEGIBLE      = cannot be read at all (severe degradation, crossed-out, \
 smeared beyond recognition)
@@ -55,11 +55,11 @@ smeared beyond recognition)
 Scoring rules:
 - Set legibility to NOT_APPLICABLE when presence is NONE
 - legibility_score must be null when presence is NONE
-- Score each image INDEPENDENTLY — do not compare images to each other
+- Score each image INDEPENDENTLY - do not compare images to each other
 - Focus on ink clarity, stroke definition, letter spacing, and line separation
 - Degradation (blur, fading, stains) that makes handwriting harder to read \
   LOWERS legibility_score
-- Respond ONLY with a valid JSON object — no markdown fences, no extra text
+- Respond ONLY with a valid JSON object - no markdown fences, no extra text
 
 Required output format (keys are image numbers as strings):
 {"1": {"presence": "DOMINANT", "presence_score": 0.85, \

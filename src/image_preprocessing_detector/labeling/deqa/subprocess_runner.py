@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess  # nosec B404 — subprocess isolation is by design for DeQA venv bridge
+import subprocess  # nosec B404 - subprocess isolation is by design for DeQA venv bridge
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -378,7 +378,7 @@ class DeQASubprocessRunner:
 
         try:
             resolved_cwd = str(Path(self._config.deqa_root).resolve())
-            proc = subprocess.Popen(  # noqa: S603  # nosec B603 — trusted cmd from DeQA config
+            proc = subprocess.Popen(  # noqa: S603  # nosec B603 - trusted cmd from DeQA config
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,

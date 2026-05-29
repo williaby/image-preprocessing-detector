@@ -416,10 +416,10 @@ class ModalClient:
         # Convert float arrays to uint8, detecting the value range
         if image_array.dtype != np.uint8:
             if image_array.max() <= 1.0:
-                # Normalized [0, 1] float — scale to [0, 255]
+                # Normalized [0, 1] float - scale to [0, 255]
                 image_array = (image_array * 255).astype(np.uint8)
             else:
-                # Already in [0, 255] float range — clip and cast only
+                # Already in [0, 255] float range - clip and cast only
                 image_array = np.clip(image_array, 0, 255).astype(np.uint8)
 
         img = PILImage.fromarray(image_array)

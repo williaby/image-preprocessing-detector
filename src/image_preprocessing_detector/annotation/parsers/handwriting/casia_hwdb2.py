@@ -388,7 +388,7 @@ def _read_line_record(
 
     bitmap_size = h * w
     if bitmap_size > 0:
-        fh.seek(bitmap_size, 1)  # SEEK_CUR — skip grayscale bitmap
+        fh.seek(bitmap_size, 1)  # SEEK_CUR - skip grayscale bitmap
 
     return {
         "bbox": [x, y, w, h],
