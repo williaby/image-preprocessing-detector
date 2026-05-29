@@ -403,7 +403,7 @@ class TestPDFTooManyPages:
         """Non-int (or bool) max_pages must be rejected with TypeError.
 
         Note: `None` itself is NOT tested here because the constructor
-        treats `None` as a sentinel for "use DEFAULT_MAX_PAGES" — that
+        treats `None` as a sentinel for "use DEFAULT_MAX_PAGES" - that
         path is exercised by `test_init_default_params`.
         """
         with pytest.raises(TypeError, match="max_pages must be a positive int"):

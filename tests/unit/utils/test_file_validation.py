@@ -70,7 +70,7 @@ class TestDetectFileType:
         assert detect_file_type(b"NOTAREALFILEFORMAT") is None
 
     def test_rejects_bm_prefix_without_dib_header(self) -> None:
-        # "BM" at offset 0 alone is no longer enough — the DIB header
+        # "BM" at offset 0 alone is no longer enough - the DIB header
         # size at offset 14 must also match a known BMP variant.
         bm_only = b"BM" + b"\x00" * 16
         assert detect_file_type(bm_only) is None

@@ -272,7 +272,7 @@ async def submit_batch_job(
             # Reject upstream rather than letting the file's clamped
             # first chunk trip a confusing INVALID_FILE_TYPE (when
             # validation can't see enough bytes to render a verdict)
-            # or "remaining batch budget (0.0MB)" — the actual fault
+            # or "remaining batch budget (0.0MB)" - the actual fault
             # is the batch as a whole, not this file.
             error = ErrorResponse(
                 error=ErrorCode.FILE_TOO_LARGE,
@@ -329,8 +329,7 @@ async def submit_batch_job(
 
         # Update the cumulative cursor. `extra_byte_limit` already
         # capped the per-file read to `remaining_batch_bytes`, so
-        # `total_bytes` can never exceed `max_total_bytes` here —
-        # a redundant post-read check would be dead code.
+        # `total_bytes` can never exceed `max_total_bytes` here - # a redundant post-read check would be dead code.
         total_bytes += len(content)
         files_data.append((file.filename or "document", content))
 

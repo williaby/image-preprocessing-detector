@@ -1,4 +1,4 @@
-# Security Findings — Image Preprocessing Detector
+# Security Findings - Image Preprocessing Detector
 
 **Date**: 2026-05-15
 **Branch**: `claude/secure-image-preprocessing-yn1RK`
@@ -36,7 +36,7 @@ Total: **11 fixed**, **3 documented for follow-up**, **1 accepted**.
 
 ## ML Pipeline Security
 
-### 1. `torch.load(weights_only=False)` in production inference — **FIXED**
+### 1. `torch.load(weights_only=False)` in production inference - **FIXED**
 
 **Severity**: High (Remote Code Execution if checkpoint source is untrusted)
 
@@ -64,12 +64,11 @@ when the checkpoint is a raw state dict.
 
 **Risk if exploited**: An attacker who can write to the configured
 `checkpoint_path` (filesystem, mounted volume, or shared model
-registry) could execute arbitrary code in the inference process —
-including credential exfiltration and lateral movement.
+registry) could execute arbitrary code in the inference process - including credential exfiltration and lateral movement.
 
 ---
 
-### 2. `torch.load(weights_only=False)` in Modal training script — **FIXED**
+### 2. `torch.load(weights_only=False)` in Modal training script - **FIXED**
 
 **Severity**: High (same mechanism, training context)
 
@@ -82,7 +81,7 @@ defensive `isinstance` guard.
 
 ---
 
-### 3. Unvalidated artifact path in Arena `LocalBackend` — **FIXED**
+### 3. Unvalidated artifact path in Arena `LocalBackend` - **FIXED**
 
 **Severity**: Medium (Path traversal / arbitrary read)
 
@@ -99,7 +98,7 @@ raise `ModelLoadError`.
 
 ---
 
-### 4. Unvalidated model path in Arena `RegressionBackend` — **FIXED**
+### 4. Unvalidated model path in Arena `RegressionBackend` - **FIXED**
 
 **Severity**: Medium
 
@@ -118,8 +117,8 @@ constrain the `checkpoints/` fallback with
 
 ### Already-secure ML loading (verified, no changes needed)
 
-- `torch.load(..., weights_only=True)` at `regression.py:171` — already safe.
-- `np.load(...)` calls have no `allow_pickle=True` flag — safe by default.
+- `torch.load(..., weights_only=True)` at `regression.py:171` - already safe.
+- `np.load(...)` calls have no `allow_pickle=True` flag - safe by default.
 - ONNX model loading does not invoke pickle.
 - HuggingFace `from_pretrained()` / `snapshot_download()` calls use HF Hub.
   Model IDs are hard-coded (not user-supplied), and the Hub client provides
@@ -134,7 +133,7 @@ constrain the `checkpoints/` fallback with
 
 ## API Upload Security
 
-### 5. No magic-byte validation on uploads — **FIXED**
+### 5. No magic-byte validation on uploads - **FIXED**
 
 **Severity**: High (extension spoofing → parser exposure)
 
@@ -143,7 +142,7 @@ constrain the `checkpoints/` fallback with
 The API validated only the file extension and (loosely) the
 client-supplied MIME type. A caller could upload an executable, a
 zip-bomb, or a malformed PDF/image polyglot under a `.png` name and
-the bytes would reach PyMuPDF / OpenCV / PIL — libraries with their
+the bytes would reach PyMuPDF / OpenCV / PIL - libraries with their
 own history of parser CVEs.
 
 **Fix**: Added `src/image_preprocessing_detector/utils/file_validation.py`,
@@ -153,14 +152,14 @@ after reading bytes and return 400 if the magic bytes do not match the
 declared extension. Tests added in
 `tests/unit/utils/test_file_validation.py`.
 
-We deliberately did **not** add `python-magic` as a dependency — it
+We deliberately did **not** add `python-magic` as a dependency - it
 requires the libmagic system library, which would complicate the
 Docker image and Modal runtime. The hand-rolled signature table is
 sufficient for our supported types.
 
 ---
 
-### 6. Full upload buffered before size check — **FIXED**
+### 6. Full upload buffered before size check - **FIXED**
 
 **Severity**: High (memory exhaustion DoS)
 
@@ -176,7 +175,7 @@ both the `/process` and `/batch` endpoints.
 
 ---
 
-### 7. Batch endpoint has no cumulative size cap — **FIXED**
+### 7. Batch endpoint has no cumulative size cap - **FIXED**
 
 **Severity**: High (memory exhaustion DoS)
 
@@ -192,12 +191,12 @@ the per-file streaming read is also given `extra_byte_limit =
 remaining_batch_bytes` so a single file aborts mid-stream the moment
 it would push the batch over the cap. The cap is deliberately
 **smaller** than `max_batch_size × max_file_size_mb` (which equals
-5 GB at defaults — the original worst case) so the new check
+5 GB at defaults - the original worst case) so the new check
 actually triggers under abuse, not just at the theoretical maximum.
 
 ---
 
-### 8. `validate_file()` `_max_size_mb` parameter ignored — **FIXED**
+### 8. `validate_file()` `_max_size_mb` parameter ignored - **FIXED**
 
 **Severity**: Medium (latent bug)
 
@@ -207,7 +206,7 @@ the cap, the request is rejected before any bytes are read.
 
 ---
 
-### Path traversal in API temp files — **Verified safe**
+### Path traversal in API temp files - **Verified safe**
 
 `tempfile.NamedTemporaryFile(suffix=Path(filename).suffix)` uses an OS-
 generated random basename in the system temp directory. The
@@ -221,7 +220,7 @@ do reach the filesystem (`office_processor.py:436`,
 
 ## Ingestion Hardening
 
-### 9. PDF loader has no page-count limit — **FIXED**
+### 9. PDF loader has no page-count limit - **FIXED**
 
 **Severity**: Medium (CPU/memory exhaustion DoS)
 
@@ -253,7 +252,7 @@ flag (default `False`). Behaviour is now asymmetric by caller:
 
 ## Metadata Handling
 
-### 15. EXIF DPI extraction lacks bounds checking — **Accepted**
+### 15. EXIF DPI extraction lacks bounds checking - **Accepted**
 
 **Location**: `src/image_preprocessing_detector/ingestion/image_loader.py:171`
 
@@ -268,7 +267,7 @@ vulnerability. No fix applied to avoid breaking legitimate scans with
 unusual resolutions.
 
 No EXIF values are interpolated into shell commands, SQL, filenames,
-or log strings — verified via repository-wide grep.
+or log strings - verified via repository-wide grep.
 
 ---
 
@@ -291,7 +290,7 @@ files are well-maintained. Highlights:
 | protobuf | `>=6.33.5` | 6.33.5 | GHSA-7gcm-g887-7qv7 |
 | pyasn1 | `>=0.6.2` | 0.6.2 | GHSA-63vm-454h-vhhq |
 
-### 14. `transformers` pin in `iqa` extra — **OPEN**
+### 14. `transformers` pin in `iqa` extra - **OPEN**
 
 **Severity**: Low (track upstream)
 
@@ -299,7 +298,7 @@ The `iqa` optional extra pins `transformers==4.37.2`. Newer
 `transformers` releases have addressed several deserialization issues
 in `trust_remote_code` paths. Project code does pass
 `trust_remote_code=True` to `AutoProcessor.from_pretrained()` in
-`regression.py:191` — this is only invoked for operator-loaded local
+`regression.py:191` - this is only invoked for operator-loaded local
 checkpoints, so impact is bounded, but bumping to `>=4.48` when the
 upstream constraint allows would close the window entirely.
 
@@ -309,7 +308,7 @@ upstream constraint allows would close the window entirely.
 
 ## GitHub Actions Hardening
 
-### 10/11. Unpinned action references — **FIXED**
+### 10/11. Unpinned action references - **FIXED**
 
 | File | Line | Before | After |
 |---|---|---|---|
@@ -321,7 +320,7 @@ Both SHAs were already in use elsewhere in the repo (`fips-compatibility.yml`,
 
 Audit confirmed all other third-party `uses:` lines in this repo are pinned to 40-char SHAs.
 
-### 12. Org-reusable workflows pinned to `@main` — **OPEN**
+### 12. Org-reusable workflows pinned to `@main` - **OPEN**
 
 These reference workflows in repositories outside this audit's scope:
 
@@ -342,10 +341,10 @@ compromised shared repo to forge provenance.
 `ByronWilliamsCPA/.github` and `williaby/.github`. Already done for
 `mutation-testing.yml` (pinned to `@74323d9`) and `release.yml`
 (pinned to `@3bf8bf5d88a71b91949ee88382284cb6b292d6e0`), so the
-pattern is established — this is just applying it to the remaining
+pattern is established - this is just applying it to the remaining
 three.
 
-### 13. `harden-runner` missing from 13 workflows — **OPEN**
+### 13. `harden-runner` missing from 13 workflows - **OPEN**
 
 **Severity**: Low (defense-in-depth)
 
@@ -373,12 +372,12 @@ Workflows missing it: `benchmark-results.yml`, `container-security.yml`,
 Not fixed in this PR because adding a step to 13 unrelated workflows
 introduces broad CI surface area better validated incrementally.
 
-### Other workflow checks — **Verified clean**
+### Other workflow checks - **Verified clean**
 
 - **Permissions blocks**: every workflow has a top-level `permissions:`
   block; no `write-all` granted; broad permissions consistently
   scoped to a single job rather than workflow-wide.
-- **`pull_request_target`**: not used anywhere — every PR-triggered
+- **`pull_request_target`**: not used anywhere - every PR-triggered
   workflow uses safe `pull_request`.
 - **Script injection**: no `${{ github.event.*.title|.body|.head.ref|.comment.body }}`
   interpolated into `run:` shells. Where `github.event.inputs.*` is
@@ -388,7 +387,7 @@ introduces broad CI surface area better validated incrementally.
 - **Pip installs from unverified sources**: `cyclonedx-bom==4.6.1` and
   `twine==6.2.0` are version-pinned in workflow `pip install` calls;
   no arbitrary URLs.
-- **External model downloads in CI**: none — benchmarks and training
+- **External model downloads in CI**: none - benchmarks and training
   do not run in GitHub Actions.
 
 ---
@@ -416,13 +415,12 @@ grep -rn "weights_only=False" src/ modal/
 
 ## Follow-up Work (outside this PR's scope)
 
-1. Pin the three org-reusable workflows (finding 12) — requires a
+1. Pin the three org-reusable workflows (finding 12) - requires a
    commit SHA selection in `ByronWilliamsCPA/.github` and
    `williaby/.github`.
 2. Roll `harden-runner` out to the remaining 13 workflows (finding
    13).
 3. Bump the `iqa` extra's `transformers` pin when upstream `iqa`
    dependencies allow `>=4.48` (finding 14).
-4. Consider migrating any new ML checkpoints to safetensors format —
-   even with `weights_only=True`, safetensors gives a stricter
+4. Consider migrating any new ML checkpoints to safetensors format - even with `weights_only=True`, safetensors gives a stricter
    parser and explicit metadata separation.

@@ -94,8 +94,7 @@ def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
         )
 
     # Reject early if the multipart Content-Length advertises an oversize
-    # payload, before allocating memory for the read. This is advisory —
-    # clients can lie, so the post-read size check below is still required.
+    # payload, before allocating memory for the read. This is advisory - # clients can lie, so the post-read size check below is still required.
     if file.size is not None and file.size > max_size_mb * 1024 * 1024:
         return ErrorResponse(
             error=ErrorCode.FILE_TOO_LARGE,
@@ -216,7 +215,7 @@ async def read_with_size_limit(
         # Clamp each read to (remaining_budget + 1) so we ask for at
         # most one byte past the limit. This bounds the peak memory
         # overshoot on a single oversize file to ~1 byte instead of
-        # up to a full chunk_size (1 MiB by default) — important
+        # up to a full chunk_size (1 MiB by default) - important
         # when the helper is reused for the cumulative batch cap,
         # where many medium-size files share the same allowance.
         # `remaining` is always >= 0 here: the size-check below
@@ -226,7 +225,7 @@ async def read_with_size_limit(
         # the *first* read to MIN_VALIDATION_BYTES so spoofed uploads
         # are rejected after ~18 bytes of I/O instead of a full
         # chunk_size. Subsequent reads use chunk_size even before
-        # validation completes — that bounds the worst case at one
+        # validation completes - that bounds the worst case at one
         # extra chunk if the very first read returns short (rather
         # than potentially thousands of 18-byte syscalls under a
         # pathological reader that always returns <MIN_VALIDATION_BYTES
@@ -239,7 +238,7 @@ async def read_with_size_limit(
         chunk = await file.read(read_size)
         if not chunk:
             # EOF. If we never accumulated enough bytes to invoke the
-            # validator, run it now on the partial content — it will
+            # validator, run it now on the partial content - it will
             # correctly raise FileTypeMismatchError for a
             # too-short-to-be-valid upload, or return None for an
             # empty one (which the caller surfaces as EMPTY_FILE).

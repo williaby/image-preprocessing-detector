@@ -83,7 +83,7 @@ class LocalBackend(InferenceBackend):
         try:
             # Validate spec.id rejects path-traversal patterns (".." etc.)
             # and that the resolved file exists. NOTE: this does NOT
-            # constrain the path to a model-registry root — operators
+            # constrain the path to a model-registry root - operators
             # are trusted to supply paths in this Arena tooling, and a
             # registry-scoped helper would need a configurable base.
             # If callers ever start supplying spec.id from an

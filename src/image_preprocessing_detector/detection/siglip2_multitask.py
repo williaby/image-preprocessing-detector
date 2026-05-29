@@ -238,7 +238,7 @@ class SigLIP2MultiTaskDetector:
             # weights_only=True alone was bypassable in PyTorch <= 2.5.1;
             # it is only a complete mitigation in PyTorch >= 2.6.0.
             # pyproject.toml pins torch>=2.10.0 specifically for this
-            # reason — do not relax that bound without also migrating
+            # reason - do not relax that bound without also migrating
             # checkpoints to safetensors. The checkpoint is expected to
             # contain only tensors plus a small set of safe primitives;
             # if loading fails, the file is untrusted or malformed.

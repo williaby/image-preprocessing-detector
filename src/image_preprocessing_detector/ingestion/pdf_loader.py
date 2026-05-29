@@ -98,7 +98,7 @@ class PDFLoader:
                 callers cannot accidentally analyse a partial document
                 and surface incomplete results to users. Set True only
                 when downstream code is explicitly designed to handle
-                a partial page sequence — and read
+                a partial page sequence - and read
                 `last_pages_truncated` after iteration to detect it.
         """
         self.target_dpi = target_dpi

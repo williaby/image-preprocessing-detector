@@ -127,7 +127,7 @@ class ProcessingResult(BaseModel):
             "Number of pages dropped because the document exceeded the "
             "API's max_pdf_pages_per_request cap. Zero means the result "
             "covers the full document. Non-zero means analysis is "
-            "partial — re-submit with smaller documents or contact the "
+            "partial - re-submit with smaller documents or contact the "
             "operator to raise the cap."
         ),
     )

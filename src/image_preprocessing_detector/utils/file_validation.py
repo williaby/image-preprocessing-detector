@@ -3,7 +3,7 @@
 Defends against extension spoofing where a caller uploads a malicious
 file (executable, polyglot, archive bomb) with a benign-looking
 extension. Validation here is a hard gate run before the bytes ever
-reach PyMuPDF, OpenCV, or PIL — libraries with their own history of
+reach PyMuPDF, OpenCV, or PIL - libraries with their own history of
 parser CVEs that should not be exposed to arbitrary untrusted input.
 
 Stdlib-only (no libmagic dependency).
@@ -23,7 +23,7 @@ Tiny uploads
 For our supported types, no legitimate file exists below
 ``_DEFAULT_MIN_BYTES`` (18). Any non-empty upload shorter than the
 threshold therefore cannot match the declared extension and is
-rejected with ``FileTypeMismatchError`` — this keeps crafted
+rejected with ``FileTypeMismatchError`` - this keeps crafted
 sub-header payloads (e.g. a ~15-byte JPEG fragment shaped to
 exploit a PIL/OpenCV CVE) from reaching the parser.
 
@@ -55,7 +55,7 @@ def _jpeg_app_marker_alternatives() -> list[list[_Part]]:
     common encoders or pipelines that strip APP segments.
     """
     # Standalone markers commonly seen right after SOI in raw JPEGs
-    # (DQT, DRI, COM, SOF0/2/3, DHT — strict subset of valid post-SOI
+    # (DQT, DRI, COM, SOF0/2/3, DHT - strict subset of valid post-SOI
     # markers; restrictive enough that random binary noise won't pass).
     standalone_markers = [
         b"\xdb",  # DQT - Define Quantization Table
@@ -78,7 +78,7 @@ def _jpeg_app_marker_alternatives() -> list[list[_Part]]:
 # standard variants we accept. Chained with the "BM" prefix so a random
 # binary blob starting with "BM" cannot be misidentified as BMP. Covers
 # Windows BMP (BITMAPCORE, INFO, V2..V5) plus the OS/2 short and long
-# variants — operators who upload from OS/2-derived pipelines should
+# variants - operators who upload from OS/2-derived pipelines should
 # not see false rejections.
 #
 # Design note: this is an exact-match allowlist rather than a range
@@ -111,8 +111,7 @@ _SIGNATURES: dict[str, _Signature] = {
     # between are a little-endian length field). Both parts required.
     "webp": [[(0, b"RIFF"), (8, b"WEBP")]],
     # BMP requires "BM" at offset 0 AND a recognised DIB header size
-    # at offset 14, both must match. The BM-only check was too weak —
-    # many random binary blobs start with the ASCII "BM" pair.
+    # at offset 14, both must match. The BM-only check was too weak - # many random binary blobs start with the ASCII "BM" pair.
     "bmp": [[(0, b"BM"), (14, dib_size)] for dib_size in _BMP_DIB_HEADER_SIZES],
 }
 
@@ -201,7 +200,7 @@ def validate_file_content(
 
     # Validate the declared extension BEFORE the short-content checks.
     # An unsupported extension is always an error, even when content
-    # is empty or below `min_bytes` — otherwise a 0-byte `.exe`
+    # is empty or below `min_bytes` - otherwise a 0-byte `.exe`
     # upload would slip through as "too short to assess".
     expected_type = _EXTENSION_TO_TYPE.get(ext)
     if expected_type is None:
