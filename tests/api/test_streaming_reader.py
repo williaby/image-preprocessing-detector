@@ -12,10 +12,8 @@ import pytest
 
 pytest.importorskip("fastapi", reason="FastAPI required for API tests")
 
-from image_preprocessing_detector.api.routes import process  # noqa: E402
-from image_preprocessing_detector.utils.file_validation import (  # noqa: E402
-    FileTypeMismatchError,
-)
+from image_preprocessing_detector.api.routes import process
+from image_preprocessing_detector.utils.file_validation import FileTypeMismatchError
 
 # Minimal valid magic-byte headers (>= MIN_VALIDATION_BYTES = 18).
 PDF_BYTES = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n%%EOF\n"
