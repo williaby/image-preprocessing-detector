@@ -444,3 +444,56 @@ class TestImageLoaderRealOperations:
                 assert metadata.dpi_y == pytest.approx(150.0)
         finally:
             Path(tmp_path).unlink()
+
+
+class TestImageLoaderPixelBomb:
+    """Verify the pixel-dimension-bomb guard in ImageLoader.load."""
+
+    @patch("image_preprocessing_detector.ingestion.image_loader.cv2.imread")
+    @patch("image_preprocessing_detector.ingestion.image_loader.Image.open")
+    def test_rejects_pixel_bomb_before_imread(
+        self, mock_pil_open: Mock, mock_cv2_imread: Mock
+    ) -> None:
+        """An image whose PIL-declared dimensions exceed max_pixels is
+        rejected before cv2.imread is ever called."""
+        mock_pil_img = MagicMock()
+        mock_pil_img.size = (65535, 65535)  # ~4.29e9 pixels
+        mock_pil_img.mode = "RGB"
+        mock_pil_img.format = "PNG"
+        mock_pil_img.getexif.return_value = {}
+        mock_pil_img.info = {}
+        mock_pil_open.return_value.__enter__.return_value = mock_pil_img
+
+        loader = ImageLoader(max_pixels=200_000_000)
+
+        with patch("pathlib.Path.exists", return_value=True):
+            with pytest.raises(ValueError, match="exceed max_pixels"):
+                loader.load("huge.png")
+
+        # cv2.imread must NOT have been called - the guard fires first.
+        mock_cv2_imread.assert_not_called()
+
+    @patch("image_preprocessing_detector.ingestion.image_loader.cv2.imread")
+    @patch("image_preprocessing_detector.ingestion.image_loader.Image.open")
+    def test_under_pixel_limit_loads(
+        self, mock_pil_open: Mock, mock_cv2_imread: Mock
+    ) -> None:
+        """A normal image under max_pixels loads without raising."""
+        mock_pil_img = MagicMock()
+        mock_pil_img.size = (800, 600)
+        mock_pil_img.mode = "RGB"
+        mock_pil_img.format = "PNG"
+        mock_pil_img.getexif.return_value = {}
+        mock_pil_img.info = {}
+        mock_pil_open.return_value.__enter__.return_value = mock_pil_img
+        mock_cv2_imread.return_value = np.zeros((600, 800, 3), dtype=np.uint8)
+
+        loader = ImageLoader(max_pixels=200_000_000)
+
+        with patch("pathlib.Path.exists", return_value=True):
+            img, metadata = loader.load("ok.png")
+
+        assert img is not None
+        assert metadata.width == 800
+        assert metadata.height == 600
+        mock_cv2_imread.assert_called_once()
