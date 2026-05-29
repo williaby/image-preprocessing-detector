@@ -253,10 +253,9 @@ class SigLIP2MultiTaskDetector:
                 # fail under weights_only=True. Surface a clear, actionable
                 # error instead of the opaque torch traceback - and do NOT
                 # fall back to weights_only=False (that reopens CVE-2025-32434).
-                logger.error(
+                logger.exception(
                     "checkpoint_load_failed_weights_only",
                     path=str(self.checkpoint_path),
-                    error=str(exc),
                 )
                 msg = (
                     f"Failed to load checkpoint {self.checkpoint_path} with "
