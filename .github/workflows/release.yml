@@ -55,7 +55,7 @@ jobs:
       python-version: '3.12'
       source-directory: 'src'
       semantic-release: true
-      force-release: "${{ github.event.inputs.force_release == 'auto' && '' || github.event.inputs.force_release }}"
+      force-release: "${{ github.event.inputs.force_release != 'auto' && github.event.inputs.force_release || '' }}"
       publish-to-pypi: false
       pypi-package-name: 'image-preprocessing-detector'
       run-tests: false
