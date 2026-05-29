@@ -18,12 +18,12 @@ on:
   workflow_dispatch:
     inputs:
       force_release:
-        description: 'Force release type (leave empty for auto)'
+        description: 'Force release type (auto = determine from commits)'
         required: false
         type: choice
-        default: ''
+        default: 'auto'
         options:
-          - ''
+          - auto
           - patch
           - minor
           - major
@@ -33,12 +33,10 @@ concurrency:
   group: "release-${{ github.event.workflow_run.head_branch || github.ref_name }}"
   cancel-in-progress: false
 
+# Least privilege at workflow level; the release job elevates its own scopes.
+# The release-summary job only writes to $GITHUB_STEP_SUMMARY and needs no token scopes.
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
   release:
@@ -57,11 +55,10 @@ jobs:
       python-version: '3.12'
       source-directory: 'src'
       semantic-release: true
-      force-release: "${{ github.event.inputs.force_release || '' }}"
+      force-release: "${{ github.event.inputs.force_release == 'auto' && '' || github.event.inputs.force_release }}"
       publish-to-pypi: false
       pypi-package-name: 'image-preprocessing-detector'
       run-tests: false
-      skip-tests-reason: 'Tests run in upstream CI pipeline before this workflow fires'
       coverage-threshold: 80
       generate-sbom: true
       sign-artifacts: true
