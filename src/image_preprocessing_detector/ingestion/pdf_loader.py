@@ -15,6 +15,35 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _validate_positive_int(value: int | None, name: str, default: int) -> int:
+    """Return a validated positive int, applying ``default`` when ``value`` is None.
+
+    Rejects ``bool`` (which ``isinstance(_, int)`` accepts) and non-int
+    types so a misconfigured caller fails fast at construction rather
+    than deep inside ``range(...)`` or arithmetic later.
+
+    Args:
+        value: Caller-supplied value, or None to use the default.
+        name: Parameter name, used in error messages.
+        default: Value to use when ``value`` is None.
+
+    Returns:
+        The validated positive integer.
+
+    Raises:
+        TypeError: If the resolved value is a bool or not an int.
+        ValueError: If the resolved value is not greater than zero.
+    """
+    resolved = default if value is None else value
+    if isinstance(resolved, bool) or not isinstance(resolved, int):
+        msg = f"{name} must be a positive int, got {resolved!r}"
+        raise TypeError(msg)
+    if resolved <= 0:
+        msg = f"{name} must be > 0, got {resolved}"
+        raise ValueError(msg)
+    return resolved
+
+
 @dataclass
 class PageImage:
     """Represents a single page converted to an image.
@@ -47,6 +76,7 @@ class PDFTooManyPagesError(ValueError):
     """
 
     def __init__(self, page_count: int, max_pages: int, pdf_path: str) -> None:
+        """Record the offending page count, cap, and source path."""
         self.page_count = page_count
         self.max_pages = max_pages
         self.pdf_path = pdf_path
@@ -66,6 +96,7 @@ class PDFPageTooLargeError(ValueError):
     """
 
     def __init__(self, page_num: int, projected_pixels: int, max_pixels: int) -> None:
+        """Record the offending page index, projected pixel count, and cap."""
         self.page_num = page_num
         self.projected_pixels = projected_pixels
         self.max_pixels = max_pixels
@@ -138,32 +169,12 @@ class PDFLoader:
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
-        validated_max_pages = self.DEFAULT_MAX_PAGES if max_pages is None else max_pages
-        # Explicitly reject bool (which `isinstance(_, int)` accepts) and
-        # non-int types: range(min(page_count, max_pages)) would later
-        # raise TypeError for e.g. `max_pages=10.5`, and bool values
-        # collapse to 0/1 which is almost certainly a programming bug.
-        if isinstance(validated_max_pages, bool) or not isinstance(
-            validated_max_pages, int
-        ):
-            msg = f"max_pages must be a positive int, got {validated_max_pages!r}"
-            raise TypeError(msg)
-        if validated_max_pages <= 0:
-            msg = f"max_pages must be > 0, got {validated_max_pages}"
-            raise ValueError(msg)
-        self.max_pages = validated_max_pages
-        validated_max_pixels = (
-            self.DEFAULT_MAX_PIXELS if max_pixels is None else max_pixels
+        self.max_pages = _validate_positive_int(
+            max_pages, "max_pages", self.DEFAULT_MAX_PAGES
         )
-        if isinstance(validated_max_pixels, bool) or not isinstance(
-            validated_max_pixels, int
-        ):
-            msg = f"max_pixels must be a positive int, got {validated_max_pixels!r}"
-            raise TypeError(msg)
-        if validated_max_pixels <= 0:
-            msg = f"max_pixels must be > 0, got {validated_max_pixels}"
-            raise ValueError(msg)
-        self.max_pixels = validated_max_pixels
+        self.max_pixels = _validate_positive_int(
+            max_pixels, "max_pixels", self.DEFAULT_MAX_PIXELS
+        )
         self.allow_truncation = allow_truncation
         # Truncation state from the most recent `load()` call. Reset on
         # each call. Callers in `allow_truncation=True` mode should

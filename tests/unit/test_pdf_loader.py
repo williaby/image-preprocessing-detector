@@ -16,6 +16,36 @@ from image_preprocessing_detector.ingestion.pdf_loader import (
 )
 
 
+def _make_pdf_mock(
+    page_count: int = 1,
+    mediabox_w: float = 612.0,
+    mediabox_h: float = 792.0,
+    pix_w: int = 16,
+    pix_h: int = 16,
+) -> MagicMock:
+    """Build a mock fitz document for PDFLoader tests.
+
+    ``mediabox_w``/``mediabox_h`` set the page rect (which drives the
+    pixel-bomb projection guard), while ``pix_w``/``pix_h`` size the
+    rendered pixmap with a matching ``samples`` buffer so
+    ``_render_page``'s reshape succeeds.
+    """
+    mock_doc = MagicMock()
+    mock_doc.__len__.return_value = page_count
+    mock_page = MagicMock()
+    mock_page.rect.width = float(mediabox_w)
+    mock_page.rect.height = float(mediabox_h)
+    mock_page.get_images.return_value = []
+    mock_pix = MagicMock()
+    mock_pix.width = pix_w
+    mock_pix.height = pix_h
+    mock_pix.n = 3
+    mock_pix.samples = (np.zeros((pix_h, pix_w, 3), dtype=np.uint8)).tobytes()
+    mock_page.get_pixmap.return_value = mock_pix
+    mock_doc.__getitem__.return_value = mock_page
+    return mock_doc
+
+
 class TestPageImage:
     """Test PageImage dataclass."""
 
@@ -323,26 +353,10 @@ class TestLoadPDFConvenience:
 class TestPDFTooManyPages:
     """Verify the max_pages safety guard behaviour."""
 
-    def _build_mock_doc(self, page_count: int) -> MagicMock:
-        mock_doc = MagicMock()
-        mock_doc.__len__.return_value = page_count
-        mock_page = MagicMock()
-        mock_page.rect.width = 612.0
-        mock_page.rect.height = 792.0
-        mock_page.get_images.return_value = []
-        mock_pix = MagicMock()
-        mock_pix.width = 100
-        mock_pix.height = 100
-        mock_pix.n = 3
-        mock_pix.samples = (np.zeros((100, 100, 3), dtype=np.uint8)).tobytes()
-        mock_page.get_pixmap.return_value = mock_pix
-        mock_doc.__getitem__.return_value = mock_page
-        return mock_doc
-
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_raises_when_page_count_exceeds_limit(self, mock_fitz: Mock) -> None:
         """By default, exceeding max_pages raises PDFTooManyPagesError."""
-        mock_fitz.open.return_value = self._build_mock_doc(page_count=10)
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=10)
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
         loader = PDFLoader(max_pages=5)
@@ -359,7 +373,7 @@ class TestPDFTooManyPages:
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_truncates_when_allow_truncation_true(self, mock_fitz: Mock) -> None:
         """allow_truncation=True restores the previous silent-truncate behavior."""
-        mock_fitz.open.return_value = self._build_mock_doc(page_count=10)
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=10)
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
         loader = PDFLoader(max_pages=5, allow_truncation=True)
@@ -378,7 +392,7 @@ class TestPDFTooManyPages:
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_under_limit_loads_normally(self, mock_fitz: Mock) -> None:
         """Documents under max_pages load all pages without raising."""
-        mock_fitz.open.return_value = self._build_mock_doc(page_count=3)
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=3)
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
         loader = PDFLoader(max_pages=5)
@@ -446,7 +460,7 @@ class TestPDFPixelBomb:
         """A page whose MediaBox*zoom exceeds max_pixels is rejected
         before get_pixmap allocates the buffer."""
         # 10000pt x 10000pt at 300 DPI -> zoom ~4.17 -> ~41667^2 pixels.
-        mock_doc = self._build_mock_doc(width=10000, height=10000)
+        mock_doc = _make_pdf_mock(mediabox_w=10000, mediabox_h=10000)
         mock_fitz.open.return_value = mock_doc
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
@@ -464,7 +478,7 @@ class TestPDFPixelBomb:
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_normal_page_under_pixel_limit_renders(self, mock_fitz: Mock) -> None:
         """A normal page well under the limit renders without raising."""
-        mock_doc = self._build_mock_doc(width=612, height=792)
+        mock_doc = _make_pdf_mock(mediabox_w=612, mediabox_h=792)
         mock_fitz.open.return_value = mock_doc
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
@@ -518,7 +532,7 @@ class TestPDFPixelBomb:
         """A page whose MediaBox*zoom exceeds max_pixels is rejected
         before get_pixmap allocates the buffer."""
         # 10000pt x 10000pt at 300 DPI -> zoom ~4.17 -> ~41667^2 pixels.
-        mock_doc = self._build_mock_doc(width=10000, height=10000)
+        mock_doc = _make_pdf_mock(mediabox_w=10000, mediabox_h=10000)
         mock_fitz.open.return_value = mock_doc
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
@@ -536,7 +550,7 @@ class TestPDFPixelBomb:
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_normal_page_under_pixel_limit_renders(self, mock_fitz: Mock) -> None:
         """A normal page well under the limit renders without raising."""
-        mock_doc = self._build_mock_doc(width=612, height=792)
+        mock_doc = _make_pdf_mock(mediabox_w=612, mediabox_h=792)
         mock_fitz.open.return_value = mock_doc
         mock_fitz.Matrix = lambda x, y: MagicMock()
 
