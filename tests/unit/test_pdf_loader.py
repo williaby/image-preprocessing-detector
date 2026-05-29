@@ -420,6 +420,11 @@ class TestPDFPixelBomb:
     """Verify the per-page pixel-bomb guard."""
 
     def _build_mock_doc(self, width: int, height: int) -> MagicMock:
+        # `width`/`height` set the page MediaBox, which drives the
+        # pixel-bomb projection guard. The rendered pixmap is kept small
+        # (16x16) with a matching `samples` buffer so _render_page's
+        # reshape succeeds when the page is under the limit (the
+        # projection math is independent of the returned pixmap size).
         mock_doc = MagicMock()
         mock_doc.__len__.return_value = 1
         mock_page = MagicMock()
@@ -427,10 +432,11 @@ class TestPDFPixelBomb:
         mock_page.rect.height = float(height)
         mock_page.get_images.return_value = []
         mock_pix = MagicMock()
-        mock_pix.width = width
-        mock_pix.height = height
+        pix_w, pix_h = 16, 16
+        mock_pix.width = pix_w
+        mock_pix.height = pix_h
         mock_pix.n = 3
-        mock_pix.samples = (np.zeros((1, 1, 3), dtype=np.uint8)).tobytes()
+        mock_pix.samples = (np.zeros((pix_h, pix_w, 3), dtype=np.uint8)).tobytes()
         mock_page.get_pixmap.return_value = mock_pix
         mock_doc.__getitem__.return_value = mock_page
         return mock_doc
