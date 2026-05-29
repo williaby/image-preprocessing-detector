@@ -222,3 +222,11 @@ rag_architecture.png
 # Binary planning documents (use .md equivalents instead)
 *.docx
 siglip2_diqa5000_outputs/
+
+# qlty-materialized tool configs at repo root (absolute-path symlinks regenerated
+# by qlty; canonical copies are tracked under .qlty/configs/)
+/.hadolint.yaml
+/.shellcheckrc
+
+# In-repo git worktrees (created under .worktrees/<branch-slug>)
+/.worktrees/

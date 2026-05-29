@@ -21,9 +21,9 @@ purpose: "Define the complete interface contract between Prepare-Audio and Unify
 
 This document defines the interface contract between:
 
-- **Prepare-Audio** (`foundry-prepare-audio`, Upstream): Audio signal conditioning,
+- **Prepare-Audio** (`audio-processor`, Upstream): Audio signal conditioning,
   Deepgram Nova-2 transcription, speaker diarization, and Docling DOM assembly
-- **Unify** (`foundry-unify`, Downstream): Docling DOM unification — skips OCR for
+- **Unify** (`Unify`, Downstream): Docling DOM unification — skips OCR for
   audio-derived content; performs DOM normalization only
 
 **Key architectural constraint**: Unify MUST NOT run OCR engines when receiving
@@ -36,7 +36,7 @@ and branches to DOM-unification-only mode.
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
-│              PREPARE-AUDIO (foundry-prepare-audio)            │
+│              PREPARE-AUDIO (audio-processor)            │
 │         Audio signal conditioning + Deepgram transcription    │
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │
@@ -56,7 +56,7 @@ and branches to DOM-unification-only mode.
                               │
                               ▼
 ┌───────────────────────────────────────────────────────────────┐
-│                    UNIFY (foundry-unify)                      │
+│                    UNIFY (Unify)                      │
 │              Docling DOM unification (audio-track mode)       │
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │

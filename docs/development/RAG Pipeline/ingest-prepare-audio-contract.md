@@ -21,9 +21,9 @@ purpose: "Define the complete interface contract between Ingest and Prepare-Audi
 
 This document defines the interface contract between:
 
-- **Ingest** (`foundry-ingest`, Upstream): React SPA + FastAPI gateway — receives files
+- **Ingest** (`rag-processor`, Upstream): React SPA + FastAPI gateway — receives files
   from users, routes to appropriate processing service, tracks job status
-- **Prepare-Audio** (`foundry-prepare-audio`, Downstream): Audio signal conditioning,
+- **Prepare-Audio** (`audio-processor`, Downstream): Audio signal conditioning,
   Deepgram transcription, speaker diarization, DOM assembly
 
 The contract covers:
@@ -39,7 +39,7 @@ The contract covers:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                    INGEST (foundry-ingest)                      │
+│                    INGEST (rag-processor)                      │
 │              React SPA + FastAPI + Redis/RQ                     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
@@ -54,7 +54,7 @@ The contract covers:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              PREPARE-AUDIO (foundry-prepare-audio)              │
+│              PREPARE-AUDIO (audio-processor)              │
 │         FastAPI + Redis/RQ + AudioConditioner pipeline          │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
@@ -113,7 +113,7 @@ Ingest POSTs to `POST /api/v1/process` on the Prepare-Audio FastAPI service.
   "trace_id": "uuid-v4",
   "source_gcs_uri": "gs://rag-pipeline-{env}/{trace_id}/00-source/{filename}",
   "output_gcs_prefix": "gs://rag-pipeline-{env}/{trace_id}/02-transcribed/",
-  "callback_url": "https://ingest.foundry.{env}/api/v1/jobs/{trace_id}/status",
+  "callback_url": "https://rag-processor.{env}/api/v1/jobs/{trace_id}/status",
   "options": {
     "language": "en",
     "diarization": true,

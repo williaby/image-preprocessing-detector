@@ -71,13 +71,13 @@ See also: [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk
 
 ---
 
-## Chunk Service Migration (foundry-chunk)
+## Chunk Service Migration (data_ingestor)
 
-Migration disposition for the 9 modules in `williaby/data_ingestor` → `foundry-chunk`: KEEP 3 (chunk_builder, trust_scorer, ragchunkset_serializer), AUDIT 3 (ocr_fusion, hallucination_filter, normalization), NEW 3 (siglip2_signal_consumer, docling_dom_receiver, multitrack_router). Verifies all KEEP modules emit the required RAGChunkSet.json contract fields (chunk_id, trust_score, ocr_engine_provenance, document_id, trace_id, chunk_type, source_elements). **Trigger condition**: Prepare-Doc SigLIP 2 mAP > 0.88 on holdout set (Tier 3) — migration is BLOCKED until then.
+Migration disposition for the 9 modules in `williaby/data_ingestor` → `data_ingestor`: KEEP 3 (chunk_builder, trust_scorer, ragchunkset_serializer), AUDIT 3 (ocr_fusion, hallucination_filter, normalization), NEW 3 (siglip2_signal_consumer, docling_dom_receiver, multitrack_router). Verifies all KEEP modules emit the required RAGChunkSet.json contract fields (chunk_id, trust_score, ocr_engine_provenance, document_id, trace_id, chunk_type, source_elements). **Trigger condition**: Prepare-Doc SigLIP 2 mAP > 0.88 on holdout set (Tier 3) — migration is BLOCKED until then.
 
-![Chunk Service Migration](foundry-chunk-migration.svg)
+![Chunk Service Migration](data_ingestor-migration.svg)
 
-*PlantUML source: [`foundry-chunk-migration.puml`](foundry-chunk-migration.puml)*
+*PlantUML source: [`data_ingestor-migration.puml`](data_ingestor-migration.puml)*
 
 ---
 

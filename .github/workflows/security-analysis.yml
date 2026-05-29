@@ -8,7 +8,6 @@
 #   - CodeQL: Python security-extended and quality queries
 #   - Dependency Review: PR-based dependency vulnerability detection
 #   - Bandit: Python static security analysis
-#   - Safety: Python dependency CVE scanning
 #   - Image Processing Security: Custom validation for file handling
 #
 # EXTERNAL GITHUB APPS (Complementary - No Duplication):
@@ -18,7 +17,7 @@
 #
 # REMOVED DUPLICATIONS:
 #   - Semgrep workflow step (now using Semgrep App)
-#   - Bandit/Safety from ci.yml (consolidated here)
+#   - Bandit from ci.yml (consolidated here)
 #   - CodeQL standalone check (using workflow version with custom queries)
 #
 # BENEFITS:
@@ -54,11 +53,11 @@ jobs:
       security_files: ${{ steps.filter.outputs.security }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Check for security-relevant file changes
         id: filter
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
         with:
           filters: |
             security:
@@ -82,12 +81,12 @@ jobs:
       actions: read
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Python for Image Processing Dependencies
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -95,7 +94,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5.4.2
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -119,7 +118,7 @@ jobs:
           "
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@48ab28a6f5dbc2a99bf1e0131198dd8f1df78169 # v3.27.5
+        uses: github/codeql-action/init@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
         with:
           languages: python
           queries: security-extended,security-and-quality
@@ -135,10 +134,10 @@ jobs:
               - uses: security-and-quality
 
       - name: Build CodeQL Database
-        uses: github/codeql-action/autobuild@48ab28a6f5dbc2a99bf1e0131198dd8f1df78169 # v3.27.5
+        uses: github/codeql-action/autobuild@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@48ab28a6f5dbc2a99bf1e0131198dd8f1df78169 # v3.27.5
+        uses: github/codeql-action/analyze@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
         with:
           category: "/language:python"
           upload: true
@@ -158,15 +157,15 @@ jobs:
       pull-requests: write  # Required for PR comments
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Dependency Review for Image Processing Libraries
-        uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a # v4.5.0
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           # Moderate threshold for image processing systems
           fail-on-severity: moderate
@@ -223,11 +222,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python 3.12
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -235,7 +234,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5.4.2
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -255,23 +254,6 @@ jobs:
           # Also generate human-readable output
           uv run bandit -r src -c pyproject.toml || true
 
-      # Safety dependency vulnerability scanning
-      - name: Safety Vulnerability Scan
-        run: |
-          echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
-
-          # Export requirements for safety scanning
-          uv pip compile pyproject.toml -o requirements-scan.txt
-
-          # Run safety scan
-          uv run safety check \
-            --file requirements-scan.txt \
-            --json --output safety-report.json || true
-
-          # Human readable output
-          uv run safety check \
-            --file requirements-scan.txt || true
-
       # Note: Semgrep scanning provided by Semgrep Cloud Platform GitHub App
       # This eliminates duplicate scanning and provides better UI/tracking
 
@@ -283,7 +265,6 @@ jobs:
           name: security-scan-reports
           path: |
             bandit-report.json
-            safety-report.json
             requirements-scan.txt
 
   # Image processing specific security validations
@@ -294,11 +275,11 @@ jobs:
     if: needs.detect-changes.outputs.security_files == 'true'
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python 3.12
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -306,7 +287,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5.4.2
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -389,16 +370,16 @@ jobs:
     if: needs.detect-changes.outputs.security_files == 'true'
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run OSV Scanner
         id: osv-scan
-        uses: google/osv-scanner-action/osv-scanner-action@9bb69575e74019c2ad085a1860787043adf47ccb # v2.2.4
+        uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
         with:
           scan-args: |-
             --lockfile=uv.lock

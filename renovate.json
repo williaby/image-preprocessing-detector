@@ -1,242 +1,246 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended",
-        ":dependencyDashboard",
-        ":semanticCommits",
-        ":preserveSemverRanges"
-    ],
-    "timezone": "America/New_York",
-    "schedule": [
-        "after 10pm every weekday",
-        "before 5am every weekday",
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":preserveSemverRanges"
+  ],
+  "timezone": "America/New_York",
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "labels": [
+    "dependencies",
+    "automated"
+  ],
+  "assignees": [
+    "williaby"
+  ],
+  "reviewers": [
+    "williaby"
+  ],
+  "packageRules": [
+    {
+      "description": "Group Python dependencies by type",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "project.dependencies"
+      ],
+      "groupName": "Python dependencies",
+      "automerge": false,
+      "schedule": [
         "every weekend"
-    ],
-    "labels": [
+      ]
+    },
+    {
+      "description": "Group Python dev dependencies",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "dependency-groups",
+        "tool.uv.dev-dependencies"
+      ],
+      "groupName": "Python dev dependencies",
+      "automerge": false,
+      "schedule": [
+        "every weekend"
+      ]
+    },
+    {
+      "description": "Auto-merge GitHub Actions minor/patch updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "commitMessageTopic": "GitHub Actions"
+    },
+    {
+      "description": "Security updates - high priority",
+      "matchDatasources": [
+        "pypi",
+        "github-actions"
+      ],
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "labels": [
+        "security",
+        "dependencies"
+      ],
+      "automerge": false,
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Critical security updates - immediate",
+      "matchDatasources": [
+        "pypi"
+      ],
+      "matchCurrentVersion": "!/^0/",
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "labels": [
+        "security",
+        "critical",
+        "dependencies"
+      ],
+      "automerge": false,
+      "prPriority": 10,
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Pin GitHub Actions to commit SHA",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "pinDigests": true
+    },
+    {
+      "description": "Image processing libraries - careful updates",
+      "matchPackageNames": [
+        "opencv-python",
+        "pillow",
+        "numpy",
+        "pymupdf"
+      ],
+      "automerge": false,
+      "labels": [
         "dependencies",
-        "automated"
+        "image-processing",
+        "needs-testing"
+      ],
+      "reviewersFromCodeOwners": true
+    },
+    {
+      "description": "ML libraries - Phase 2+ dependencies",
+      "matchPackageNames": [
+        "torch",
+        "torchvision",
+        "ultralytics",
+        "timm",
+        "albumentations",
+        "onnxruntime"
+      ],
+      "enabled": false,
+      "labels": [
+        "dependencies",
+        "ml",
+        "phase-2"
+      ]
+    },
+    {
+      "description": "Pydantic v2 - maintain major version",
+      "matchPackageNames": [
+        "pydantic",
+        "pydantic-settings"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false,
+      "labels": [
+        "dependencies",
+        "breaking-change"
+      ]
+    },
+    {
+      "description": "Python version updates - manual review required",
+      "matchDepTypes": [
+        "python"
+      ],
+      "enabled": false,
+      "labels": [
+        "dependencies",
+        "python-version",
+        "breaking-change"
+      ]
+    },
+    {
+      "description": "Track org workflow floating v1 tag for SHA pin updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackagePatterns": [
+        "ByronWilliamsCPA/.github",
+        "williaby/.github"
+      ],
+      "versioning": "semver",
+      "followTag": "v1"
+    }
+  ],
+  "python": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 5am on monday"
+    ],
+    "commitMessageAction": "Update",
+    "automerge": false,
+    "labels": [
+      "dependencies",
+      "lock-file-maintenance"
+    ]
+  },
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "rebaseWhen": "conflicted",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "rangeStrategy": "bump",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
     ],
     "assignees": [
-        "williaby"
+      "williaby"
     ],
     "reviewers": [
-        "williaby"
-    ],
-    "packageRules": [
-        {
-            "description": "Group Python dependencies by type",
-            "matchManagers": [
-                "poetry"
-            ],
-            "matchDepTypes": [
-                "dependencies"
-            ],
-            "groupName": "Python dependencies",
-            "automerge": false,
-            "schedule": [
-                "every weekend"
-            ]
-        },
-        {
-            "description": "Group Python dev dependencies",
-            "matchManagers": [
-                "poetry"
-            ],
-            "matchDepTypes": [
-                "devDependencies"
-            ],
-            "groupName": "Python dev dependencies",
-            "automerge": false,
-            "schedule": [
-                "every weekend"
-            ]
-        },
-        {
-            "description": "Auto-merge GitHub Actions minor/patch updates",
-            "matchManagers": [
-                "github-actions"
-            ],
-            "matchUpdateTypes": [
-                "minor",
-                "patch"
-            ],
-            "automerge": true,
-            "automergeType": "pr",
-            "automergeStrategy": "squash"
-        },
-        {
-            "description": "Group GitHub Actions updates",
-            "matchManagers": [
-                "github-actions"
-            ],
-            "groupName": "GitHub Actions",
-            "commitMessageTopic": "GitHub Actions"
-        },
-        {
-            "description": "Security updates - high priority",
-            "matchDatasources": [
-                "pypi",
-                "github-actions"
-            ],
-            "vulnerabilityAlerts": {
-                "enabled": true
-            },
-            "labels": [
-                "security",
-                "dependencies"
-            ],
-            "automerge": false,
-            "schedule": [
-                "at any time"
-            ]
-        },
-        {
-            "description": "Critical security updates - immediate",
-            "matchDatasources": [
-                "pypi"
-            ],
-            "matchCurrentVersion": "!/^0/",
-            "vulnerabilityAlerts": {
-                "enabled": true
-            },
-            "labels": [
-                "security",
-                "critical",
-                "dependencies"
-            ],
-            "automerge": false,
-            "prPriority": 10,
-            "schedule": [
-                "at any time"
-            ]
-        },
-        {
-            "description": "Pin GitHub Actions to commit SHA",
-            "matchManagers": [
-                "github-actions"
-            ],
-            "pinDigests": true
-        },
-        {
-            "description": "Image processing libraries - careful updates",
-            "matchPackageNames": [
-                "opencv-python",
-                "pillow",
-                "numpy",
-                "pymupdf"
-            ],
-            "automerge": false,
-            "labels": [
-                "dependencies",
-                "image-processing",
-                "needs-testing"
-            ],
-            "reviewersFromCodeOwners": true
-        },
-        {
-            "description": "ML libraries - Phase 2+ dependencies",
-            "matchPackageNames": [
-                "torch",
-                "torchvision",
-                "ultralytics",
-                "timm",
-                "albumentations",
-                "onnxruntime"
-            ],
-            "enabled": false,
-            "labels": [
-                "dependencies",
-                "ml",
-                "phase-2"
-            ]
-        },
-        {
-            "description": "Pydantic v2 - maintain major version",
-            "matchPackageNames": [
-                "pydantic",
-                "pydantic-settings"
-            ],
-            "matchUpdateTypes": [
-                "major"
-            ],
-            "enabled": false,
-            "labels": [
-                "dependencies",
-                "breaking-change"
-            ]
-        },
-        {
-            "description": "Python version updates - manual review required",
-            "matchDepTypes": [
-                "python"
-            ],
-            "enabled": false,
-            "labels": [
-                "dependencies",
-                "python-version",
-                "breaking-change"
-            ]
-        }
-    ],
-    "python": {
-        "enabled": true
-    },
-    "poetry": {
-        "enabled": true,
-        "fileMatch": [
-            "(^|/)pyproject\\.toml$"
-        ]
-    },
-    "lockFileMaintenance": {
-        "enabled": true,
-        "schedule": [
-            "before 5am on monday"
-        ],
-        "commitMessageAction": "Update",
-        "automerge": false,
-        "labels": [
-            "dependencies",
-            "lock-file-maintenance"
-        ]
-    },
-    "separateMajorMinor": true,
-    "separateMinorPatch": false,
-    "prConcurrentLimit": 5,
-    "prHourlyLimit": 0,
-    "rebaseWhen": "conflicted",
-    "semanticCommits": "enabled",
-    "commitMessagePrefix": "chore(deps):",
-    "rangeStrategy": "bump",
-    "vulnerabilityAlerts": {
-        "enabled": true,
-        "labels": [
-            "security"
-        ],
-        "assignees": [
-            "williaby"
-        ],
-        "reviewers": [
-            "williaby"
-        ]
-    },
-    "osvVulnerabilityAlerts": true,
-    "transitiveRemediation": true,
-    "postUpdateOptions": [
-        "poetryMassage"
-    ],
-    "customManagers": [
-        {
-            "customType": "regex",
-            "fileMatch": [
-                "^\\.github/workflows/.*\\.ya?ml$"
-            ],
-            "matchStrings": [
-                "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.*?_VERSION:\\s*[\"']?(?<currentValue>.*?)[\"']?\\s"
-            ]
-        }
-    ],
-    "enabledManagers": [
-        "poetry",
-        "github-actions"
+      "williaby"
     ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "transitiveRemediation": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^\\.github/workflows/.*\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.*?_VERSION:\\s*[\"']?(?<currentValue>.*?)[\"']?\\s"
+      ]
+    }
+  ],
+  "enabledManagers": [
+    "pep621",
+    "github-actions"
+  ]
 }
