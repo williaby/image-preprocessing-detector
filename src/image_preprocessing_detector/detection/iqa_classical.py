@@ -54,11 +54,11 @@ class SkewDetectionResult:
     """Result of skew detection analysis.
 
     Attributes:
-        is_skewed: Whether significant skew is detected
-        angle: Detected skew angle in degrees (-45 to +45)
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
-        method: Detection method used (hough, projection, ensemble)
+        is_skewed (bool): Whether significant skew is detected
+        angle (float): Detected skew angle in degrees (-45 to +45)
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
+        method (str): Detection method used (hough, projection, ensemble)
     """
 
     is_skewed: bool
@@ -72,6 +72,13 @@ class SkewDetector:
     """Detects page skew using Hough Transform and projection profile analysis.
 
     Optimized for document images with text or structured content.
+
+    Args:
+        threshold_low (float): Low severity threshold in degrees (default: 0.5°)
+        threshold_medium (float): Medium severity threshold in degrees (default: 2.0°)
+        threshold_high (float): High severity threshold in degrees (default: 5.0°)
+        min_line_length (int): Minimum line length for Hough detection (default: 100)
+        max_line_gap (int): Maximum gap between line segments (default: 10)
     """
 
     def __init__(
@@ -82,15 +89,6 @@ class SkewDetector:
         min_line_length: int = 100,
         max_line_gap: int = 10,
     ) -> None:
-        """Initialize skew detector.
-
-        Args:
-            threshold_low: Low severity threshold in degrees (default: 0.5°)
-            threshold_medium: Medium severity threshold in degrees (default: 2.0°)
-            threshold_high: High severity threshold in degrees (default: 5.0°)
-            min_line_length: Minimum line length for Hough detection (default: 100)
-            max_line_gap: Maximum gap between line segments (default: 10)
-        """
         self.threshold_low = threshold_low
         self.threshold_medium = threshold_medium
         self.threshold_high = threshold_high
@@ -108,10 +106,10 @@ class SkewDetector:
         """Detect skew in an image using ensemble of methods.
 
         Args:
-            image: Input image (BGR format, from OpenCV)
+            image (np.ndarray): Input image (BGR format, from OpenCV)
 
         Returns:
-            SkewDetectionResult with angle and confidence
+            SkewDetectionResult: SkewDetectionResult with angle and confidence
 
         Raises:
             ValueError: If image is invalid or empty
@@ -173,10 +171,10 @@ class SkewDetector:
         """Detect skew using Hough Line Transform.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Tuple of (angle, confidence)
+            tuple[float, float]: Tuple of (angle, confidence)
         """
         try:
             # Edge detection
@@ -231,10 +229,10 @@ class SkewDetector:
         """Detect skew using horizontal projection profile.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Tuple of (angle, confidence)
+            tuple[float, float]: Tuple of (angle, confidence)
         """
         try:
             # Binarize image
@@ -279,10 +277,10 @@ class SkewDetector:
         """Compute severity based on absolute skew angle.
 
         Args:
-            abs_angle: Absolute value of skew angle
+            abs_angle (float): Absolute value of skew angle
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if abs_angle >= self.threshold_high:
             return Severity.CRITICAL
@@ -298,11 +296,11 @@ class BlurMetrics:
     """Detailed blur metrics for analysis.
 
     Attributes:
-        laplacian_variance: Raw Laplacian variance score (higher = sharper)
-        blur_score: Normalized 0-1 score (0=very blurry, 1=very sharp)
-        local_variance_mean: Mean of local variance across image blocks
-        local_variance_std: Std dev of local variance (uniformity indicator)
-        edge_density: Proportion of edge pixels (0-1)
+        laplacian_variance (float): Raw Laplacian variance score (higher = sharper)
+        blur_score (float): Normalized 0-1 score (0=very blurry, 1=very sharp)
+        local_variance_mean (float): Mean of local variance across image blocks
+        local_variance_std (float): Std dev of local variance (uniformity indicator)
+        edge_density (float): Proportion of edge pixels (0-1)
     """
 
     laplacian_variance: float
@@ -317,12 +315,12 @@ class BlurDetectionResult:
     """Result of blur detection analysis.
 
     Attributes:
-        is_blurred: Whether significant blur is detected
-        score: Laplacian variance score (higher = sharper)
-        blur_score: Normalized 0-1 blur score (0=blurry, 1=sharp)
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
-        metrics: Detailed blur metrics (optional)
+        is_blurred (bool): Whether significant blur is detected
+        score (float): Laplacian variance score (higher = sharper)
+        blur_score (float): Normalized 0-1 blur score (0=blurry, 1=sharp)
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
+        metrics (BlurMetrics | None): Detailed blur metrics (optional)
     """
 
     is_blurred: bool
@@ -341,12 +339,12 @@ def normalize_blur_score(
     """Normalize Laplacian variance to 0-1 blur score.
 
     Args:
-        variance: Raw Laplacian variance value
-        min_variance: Minimum expected variance (very blurry)
-        max_variance: Maximum expected variance (very sharp)
+        variance (float): Raw Laplacian variance value
+        min_variance (float): Minimum expected variance (very blurry)
+        max_variance (float): Maximum expected variance (very sharp)
 
     Returns:
-        Normalized score between 0 (very blurry) and 1 (very sharp)
+        float: Normalized score between 0 (very blurry) and 1 (very sharp)
 
     Example:
         >>> normalize_blur_score(50.0)  # Low variance = blurry
@@ -368,10 +366,10 @@ def compute_laplacian_variance(image: np.ndarray) -> float:
     """Compute Laplacian variance for blur detection.
 
     Args:
-        image: Grayscale image (single channel)
+        image (np.ndarray): Grayscale image (single channel)
 
     Returns:
-        Laplacian variance (higher = sharper)
+        float: Laplacian variance (higher = sharper)
 
     Example:
         >>> import cv2
@@ -387,13 +385,13 @@ class BlurDetector:
 
     Higher variance indicates sharper images (more high-frequency content).
 
-    Attributes:
-        threshold_critical: Critical blur threshold (variance < 50)
-        threshold_high: High blur threshold (variance < 100)
-        threshold_medium: Medium blur threshold (variance < 200)
-        min_variance: Minimum variance for normalization
-        max_variance: Maximum variance for normalization
-        block_size: Block size for local variance analysis
+    Args:
+        threshold_critical (float): Critical blur threshold (< 50 = severe blur)
+        threshold_high (float): High blur threshold (< 100 = noticeable blur)
+        threshold_medium (float): Medium blur threshold (< 200 = slight blur)
+        min_variance (float): Minimum variance for normalization (default: 10.0)
+        max_variance (float): Maximum variance for normalization (default: 500.0)
+        block_size (int): Block size for local analysis (default: 64)
     """
 
     def __init__(
@@ -405,16 +403,6 @@ class BlurDetector:
         max_variance: float = 500.0,
         block_size: int = 64,
     ) -> None:
-        """Initialize blur detector.
-
-        Args:
-            threshold_critical: Critical blur threshold (< 50 = severe blur)
-            threshold_high: High blur threshold (< 100 = noticeable blur)
-            threshold_medium: Medium blur threshold (< 200 = slight blur)
-            min_variance: Minimum variance for normalization (default: 10.0)
-            max_variance: Maximum variance for normalization (default: 500.0)
-            block_size: Block size for local analysis (default: 64)
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -437,11 +425,11 @@ class BlurDetector:
         """Detect blur using Laplacian variance.
 
         Args:
-            image: Input image (BGR or grayscale format)
-            compute_detailed_metrics: Whether to compute detailed metrics
+            image (np.ndarray): Input image (BGR or grayscale format)
+            compute_detailed_metrics (bool): Whether to compute detailed metrics
 
         Returns:
-            BlurDetectionResult with score and severity
+            BlurDetectionResult: BlurDetectionResult with score and severity
 
         Raises:
             ValueError: If image is invalid or empty
@@ -501,11 +489,11 @@ class BlurDetector:
         """Detect blur in a specific region of interest.
 
         Args:
-            image: Input image (BGR or grayscale format)
-            bbox: Region of interest as (x, y, width, height) in COCO format
+            image (np.ndarray): Input image (BGR or grayscale format)
+            bbox (tuple[int, int, int, int]): Region of interest as (x, y, width, height) in COCO format
 
         Returns:
-            BlurDetectionResult for the specified region
+            BlurDetectionResult: BlurDetectionResult for the specified region
 
         Raises:
             ValueError: If image or bbox is invalid
@@ -538,11 +526,14 @@ class BlurDetector:
         """Detect blur in image blocks for spatial analysis.
 
         Args:
-            image: Input image (BGR or grayscale format)
-            block_size: Size of blocks to analyze (default: self.block_size)
+            image (np.ndarray): Input image (BGR or grayscale format)
+            block_size (int | None): Size of blocks to analyze (default: self.block_size)
 
         Returns:
-            List of (bbox, BlurDetectionResult) tuples for each block
+            list[tuple[tuple[int, int, int, int], BlurDetectionResult]]: List of (bbox, BlurDetectionResult) tuples for each block
+
+        Raises:
+            ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
             raise ValueError(_INVALID_IMAGE_ERROR)
@@ -580,10 +571,13 @@ class BlurDetector:
         """Convert image to grayscale if needed.
 
         Args:
-            image: Input image (BGR or grayscale)
+            image (np.ndarray): Input image (BGR or grayscale)
 
         Returns:
-            Grayscale image
+            np.ndarray: Grayscale image
+
+        Raises:
+            ValueError: If image shape is not supported
         """
         if len(image.shape) == 2:
             return image
@@ -600,10 +594,10 @@ class BlurDetector:
         """Compute severity based on Laplacian variance.
 
         Args:
-            variance: Laplacian variance value
+            variance (float): Laplacian variance value
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if variance < self.threshold_critical:
             return Severity.CRITICAL
@@ -622,10 +616,10 @@ class BlurDetector:
         Higher confidence when image properties are suitable for blur analysis.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Confidence score (0.0-1.0)
+            float: Confidence score (0.0-1.0)
         """
         # Base confidence is high for Laplacian variance
         base_confidence = 0.9
@@ -651,12 +645,12 @@ class BlurDetector:
         """Compute detailed blur metrics.
 
         Args:
-            gray: Grayscale image
-            variance: Global Laplacian variance
-            blur_score: Normalized blur score
+            gray (np.ndarray): Grayscale image
+            variance (float): Global Laplacian variance
+            blur_score (float): Normalized blur score
 
         Returns:
-            BlurMetrics with detailed measurements
+            BlurMetrics: BlurMetrics with detailed measurements
         """
         h, w = gray.shape[:2]
         block_size = min(self.block_size, h // 2, w // 2)
@@ -696,11 +690,11 @@ class NoiseMetrics:
     """Detailed noise metrics for analysis.
 
     Attributes:
-        noise_sigma: Estimated noise standard deviation
-        noise_score: Normalized 0-1 score (0=very noisy, 1=clean)
-        wavelet_detail_energy: Energy in wavelet detail coefficients
-        snr_estimate: Estimated signal-to-noise ratio (dB)
-        noise_type_hint: Suggested noise type (gaussian, salt_pepper, uniform)
+        noise_sigma (float): Estimated noise standard deviation
+        noise_score (float): Normalized 0-1 score (0=very noisy, 1=clean)
+        wavelet_detail_energy (float): Energy in wavelet detail coefficients
+        snr_estimate (float): Estimated signal-to-noise ratio (dB)
+        noise_type_hint (str): Suggested noise type (gaussian, salt_pepper, uniform)
     """
 
     noise_sigma: float
@@ -725,12 +719,12 @@ class NoiseDetectionResult:
     """Result of noise detection analysis.
 
     Attributes:
-        is_noisy: Whether significant noise is detected
-        noise_sigma: Estimated noise standard deviation
-        noise_score: Normalized 0-1 score (0=noisy, 1=clean)
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
-        metrics: Detailed noise metrics (optional)
+        is_noisy (bool): Whether significant noise is detected
+        noise_sigma (float): Estimated noise standard deviation
+        noise_score (float): Normalized 0-1 score (0=noisy, 1=clean)
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
+        metrics (NoiseMetrics | None): Detailed noise metrics (optional)
     """
 
     is_noisy: bool
@@ -748,10 +742,10 @@ def estimate_noise_mad(detail_coeffs: np.ndarray) -> float:
     noise estimation in wavelet domain.
 
     Args:
-        detail_coeffs: Wavelet detail coefficients (HH subband preferred)
+        detail_coeffs (np.ndarray): Wavelet detail coefficients (HH subband preferred)
 
     Returns:
-        Estimated noise standard deviation
+        float: Estimated noise standard deviation
 
     Note:
         Uses the formula: sigma = MAD / 0.6745
@@ -778,12 +772,12 @@ def normalize_noise_score(
     """Normalize noise sigma to 0-1 score (inverted: 0=noisy, 1=clean).
 
     Args:
-        sigma: Estimated noise standard deviation
-        min_sigma: Minimum sigma (clean image)
-        max_sigma: Maximum sigma (very noisy)
+        sigma (float): Estimated noise standard deviation
+        min_sigma (float): Minimum sigma (clean image)
+        max_sigma (float): Maximum sigma (very noisy)
 
     Returns:
-        Normalized score between 0 (very noisy) and 1 (clean)
+        float: Normalized score between 0 (very noisy) and 1 (clean)
     """
     if sigma <= min_sigma:
         return 1.0
@@ -802,12 +796,14 @@ class NoiseDetector:
     to estimate noise levels in images. This method is robust and commonly
     used in image denoising algorithms.
 
-    Attributes:
-        threshold_critical: Critical noise threshold (sigma > 20)
-        threshold_high: High noise threshold (sigma > 12)
-        threshold_medium: Medium noise threshold (sigma > 5)
-        wavelet: Wavelet family to use (default: 'db1' Daubechies)
-        level: Decomposition level (default: 1)
+    Args:
+        threshold_critical (float): Critical noise threshold (sigma > 20 = severe)
+        threshold_high (float): High noise threshold (sigma > 12 = noticeable)
+        threshold_medium (float): Medium noise threshold (sigma > 5 = slight)
+        wavelet (str): Wavelet family ('db1', 'haar', 'sym2', etc.)
+        level (int): Wavelet decomposition level (1-3 recommended)
+        min_sigma (float): Minimum sigma for score normalization
+        max_sigma (float): Maximum sigma for score normalization
     """
 
     def __init__(
@@ -820,17 +816,6 @@ class NoiseDetector:
         min_sigma: float = 0.0,
         max_sigma: float = 30.0,
     ) -> None:
-        """Initialize noise detector.
-
-        Args:
-            threshold_critical: Critical noise threshold (sigma > 20 = severe)
-            threshold_high: High noise threshold (sigma > 12 = noticeable)
-            threshold_medium: Medium noise threshold (sigma > 5 = slight)
-            wavelet: Wavelet family ('db1', 'haar', 'sym2', etc.)
-            level: Wavelet decomposition level (1-3 recommended)
-            min_sigma: Minimum sigma for score normalization
-            max_sigma: Maximum sigma for score normalization
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -855,11 +840,11 @@ class NoiseDetector:
         """Detect noise using wavelet-based MAD estimation.
 
         Args:
-            image: Input image (BGR or grayscale format)
-            compute_detailed_metrics: Whether to compute detailed metrics
+            image (np.ndarray): Input image (BGR or grayscale format)
+            compute_detailed_metrics (bool): Whether to compute detailed metrics
 
         Returns:
-            NoiseDetectionResult with sigma and severity
+            NoiseDetectionResult: NoiseDetectionResult with sigma and severity
 
         Raises:
             ValueError: If image is invalid or empty
@@ -928,11 +913,11 @@ class NoiseDetector:
         """Detect noise in a specific region of interest.
 
         Args:
-            image: Input image (BGR or grayscale format)
-            bbox: Region of interest as (x, y, width, height) in COCO format
+            image (np.ndarray): Input image (BGR or grayscale format)
+            bbox (tuple[int, int, int, int]): Region of interest as (x, y, width, height) in COCO format
 
         Returns:
-            NoiseDetectionResult for the specified region
+            NoiseDetectionResult: NoiseDetectionResult for the specified region
 
         Raises:
             ValueError: If image or bbox is invalid
@@ -976,10 +961,10 @@ class NoiseDetector:
         """Compute severity based on noise sigma.
 
         Args:
-            sigma: Estimated noise standard deviation
+            sigma (float): Estimated noise standard deviation
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if sigma >= self.threshold_critical:
             return Severity.CRITICAL
@@ -996,10 +981,10 @@ class NoiseDetector:
         """Compute confidence score for noise detection.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Confidence score (0.0-1.0)
+            float: Confidence score (0.0-1.0)
         """
         # Base confidence
         base_confidence = 0.85
@@ -1026,13 +1011,13 @@ class NoiseDetector:
         """Compute detailed noise metrics.
 
         Args:
-            gray: Grayscale image (float64)
-            coeffs: Wavelet coefficients from decomposition
-            noise_sigma: Estimated noise sigma
-            noise_score: Normalized noise score
+            gray (np.ndarray): Grayscale image (float64)
+            coeffs (list[Any]): Wavelet coefficients from decomposition
+            noise_sigma (float): Estimated noise sigma
+            noise_score (float): Normalized noise score
 
         Returns:
-            NoiseMetrics with detailed measurements
+            NoiseMetrics: NoiseMetrics with detailed measurements
         """
         # Compute detail energy
         detail_hh = coeffs[1][2]
@@ -1062,11 +1047,11 @@ class NoiseDetector:
         """Estimate the type of noise present.
 
         Args:
-            gray: Grayscale image
-            sigma: Estimated noise sigma
+            gray (np.ndarray): Grayscale image
+            sigma (float): Estimated noise sigma
 
         Returns:
-            Noise type hint: 'gaussian', 'salt_pepper', 'uniform', or 'mixed'
+            str: Noise type hint ('gaussian', 'salt_pepper', 'uniform', or 'mixed')
         """
         if sigma < 1.0:
             return "clean"
@@ -1104,10 +1089,10 @@ def detect_noise(image: np.ndarray) -> NoiseDetectionResult:
     """Convenience function for noise detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        NoiseDetectionResult
+        NoiseDetectionResult: NoiseDetectionResult
 
     Example:
         >>> img = cv2.imread("scan.jpg")
@@ -1124,10 +1109,10 @@ class ContrastDetectionResult:
     """Result of contrast detection analysis.
 
     Attributes:
-        is_low_contrast: Whether low contrast is detected
-        score: Contrast score (0.0-1.0, higher = better contrast)
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
+        is_low_contrast (bool): Whether low contrast is detected
+        score (float): Contrast score (0.0-1.0, higher = better contrast)
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
     """
 
     is_low_contrast: bool
@@ -1140,6 +1125,14 @@ class ContrastDetector:
     """Detects low contrast using histogram analysis.
 
     Analyzes distribution of pixel intensities to determine contrast quality.
+    Thresholds calibrated on real-world DocLayNet documents:
+    - Mean contrast: 0.18, Median: 0.18, Std: 0.047
+    - Synthetic images have higher contrast (~0.50) than real-world
+
+    Args:
+        threshold_critical (float): Critical contrast threshold (< 0.08 = very low, mean - 2sigma)
+        threshold_high (float): High severity threshold (< 0.13 = low, mean - 1sigma)
+        threshold_medium (float): Medium severity threshold (< 0.18 = slightly low, median)
     """
 
     def __init__(
@@ -1148,17 +1141,6 @@ class ContrastDetector:
         threshold_high: float = 0.13,
         threshold_medium: float = 0.18,
     ) -> None:
-        """Initialize contrast detector.
-
-        Thresholds calibrated on real-world DocLayNet documents:
-        - Mean contrast: 0.18, Median: 0.18, Std: 0.047
-        - Synthetic images have higher contrast (~0.50) than real-world
-
-        Args:
-            threshold_critical: Critical contrast threshold (< 0.08 = very low, mean - 2sigma)
-            threshold_high: High severity threshold (< 0.13 = low, mean - 1sigma)
-            threshold_medium: Medium severity threshold (< 0.18 = slightly low, median)
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -1174,10 +1156,10 @@ class ContrastDetector:
         """Detect low contrast using histogram analysis.
 
         Args:
-            image: Input image (BGR format)
+            image (np.ndarray): Input image (BGR format)
 
         Returns:
-            ContrastDetectionResult with score and severity
+            ContrastDetectionResult: ContrastDetectionResult with score and severity
 
         Raises:
             ValueError: If image is invalid or empty
@@ -1241,10 +1223,10 @@ def detect_skew(image: np.ndarray) -> SkewDetectionResult:
     """Convenience function for skew detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        SkewDetectionResult
+        SkewDetectionResult: SkewDetectionResult
 
     Example:
         >>> img = cv2.imread("document.jpg")
@@ -1260,10 +1242,10 @@ def detect_blur(image: np.ndarray) -> BlurDetectionResult:
     """Convenience function for blur detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        BlurDetectionResult
+        BlurDetectionResult: BlurDetectionResult
 
     Example:
         >>> img = cv2.imread("photo.jpg")
@@ -1281,10 +1263,10 @@ def detect_contrast(image: np.ndarray) -> ContrastDetectionResult:
     """Convenience function for contrast detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        ContrastDetectionResult
+        ContrastDetectionResult: ContrastDetectionResult
 
     Example:
         >>> img = cv2.imread("scan.jpg")
@@ -1313,15 +1295,15 @@ class IlluminationDetectionResult:
     """Result of illumination detection analysis.
 
     Attributes:
-        has_issues: Whether illumination issues are detected
-        score: Illumination quality score (0.0-1.0, higher = better uniformity)
-        issue_type: Classified type of illumination issue
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
-        uniformity: Regional intensity uniformity (0.0-1.0)
-        vignetting_ratio: Edge-to-center intensity ratio (1.0 = no vignetting)
-        shadow_ratio: Ratio of shadow pixels (0.0-1.0)
-        hotspot_ratio: Ratio of hotspot pixels (0.0-1.0)
+        has_issues (bool): Whether illumination issues are detected
+        score (float): Illumination quality score (0.0-1.0, higher = better uniformity)
+        issue_type (IlluminationType): Classified type of illumination issue
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
+        uniformity (float): Regional intensity uniformity (0.0-1.0)
+        vignetting_ratio (float): Edge-to-center intensity ratio (1.0 = no vignetting)
+        shadow_ratio (float): Ratio of shadow pixels (0.0-1.0)
+        hotspot_ratio (float): Ratio of hotspot pixels (0.0-1.0)
     """
 
     has_issues: bool
@@ -1343,6 +1325,14 @@ class IlluminationDetector:
     - Shadows (unexpectedly dark regions)
     - Hotspots (overexposed regions)
     - Vignetting (darkening towards edges)
+
+    Args:
+        threshold_critical (float): Critical uniformity threshold (< 0.50 = severe issues)
+        threshold_high (float): High severity threshold (< 0.65 = noticeable issues)
+        threshold_medium (float): Medium severity threshold (< 0.80 = slight issues)
+        grid_size (int): Grid divisions for regional analysis (default: 5x5)
+        shadow_percentile (float): Percentile for shadow detection (default: 10%)
+        hotspot_percentile (float): Percentile for hotspot detection (default: 95%)
     """
 
     def __init__(
@@ -1354,16 +1344,6 @@ class IlluminationDetector:
         shadow_percentile: float = 10.0,
         hotspot_percentile: float = 95.0,
     ) -> None:
-        """Initialize illumination detector.
-
-        Args:
-            threshold_critical: Critical uniformity threshold (< 0.50 = severe issues)
-            threshold_high: High severity threshold (< 0.65 = noticeable issues)
-            threshold_medium: Medium severity threshold (< 0.80 = slight issues)
-            grid_size: Grid divisions for regional analysis (default: 5x5)
-            shadow_percentile: Percentile for shadow detection (default: 10%)
-            hotspot_percentile: Percentile for hotspot detection (default: 95%)
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -1383,10 +1363,10 @@ class IlluminationDetector:
         """Detect illumination issues in an image.
 
         Args:
-            image: Input image (BGR format)
+            image (np.ndarray): Input image (BGR format)
 
         Returns:
-            IlluminationDetectionResult with uniformity and issue details
+            IlluminationDetectionResult: IlluminationDetectionResult with uniformity and issue details
 
         Raises:
             ValueError: If image is invalid or empty
@@ -1465,10 +1445,10 @@ class IlluminationDetector:
         Divides image into grid and measures intensity variation.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Uniformity score (0-1, higher = more uniform)
+            float: Uniformity score (0-1, higher = more uniform)
         """
         h, w = gray.shape
         cell_h = h // self.grid_size
@@ -1507,10 +1487,10 @@ class IlluminationDetector:
         Vignetting causes edges to be darker than center.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Vignetting ratio (edge_mean / center_mean, <1.0 = vignetting)
+            float: Vignetting ratio (edge_mean / center_mean, <1.0 = vignetting)
         """
         h, w = gray.shape
 
@@ -1553,10 +1533,10 @@ class IlluminationDetector:
         shadows and hotspots represent scanning/lighting artifacts.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Tuple of (shadow_ratio, hotspot_ratio)
+            tuple[float, float]: Tuple of (shadow_ratio, hotspot_ratio)
         """
         # Use absolute thresholds for document images
         # Shadows: very dark regions (< 50 intensity)
@@ -1594,13 +1574,13 @@ class IlluminationDetector:
         """Compute overall illumination quality score.
 
         Args:
-            uniformity: Regional uniformity (0-1)
-            vignetting_ratio: Edge/center ratio
-            shadow_ratio: Shadow pixel ratio
-            hotspot_ratio: Hotspot pixel ratio
+            uniformity (float): Regional uniformity (0-1)
+            vignetting_ratio (float): Edge/center ratio
+            shadow_ratio (float): Shadow pixel ratio
+            hotspot_ratio (float): Hotspot pixel ratio
 
         Returns:
-            Quality score (0-1, higher = better)
+            float: Quality score (0-1, higher = better)
         """
         # Vignetting penalty (ratio < 0.8 means significant vignetting)
         vignetting_score = min(1.0, vignetting_ratio / 0.8)
@@ -1629,13 +1609,13 @@ class IlluminationDetector:
         """Classify the primary illumination issue.
 
         Args:
-            uniformity: Regional uniformity (0-1)
-            vignetting_ratio: Edge/center ratio
-            shadow_ratio: Shadow pixel ratio
-            hotspot_ratio: Hotspot pixel ratio
+            uniformity (float): Regional uniformity (0-1)
+            vignetting_ratio (float): Edge/center ratio
+            shadow_ratio (float): Shadow pixel ratio
+            hotspot_ratio (float): Hotspot pixel ratio
 
         Returns:
-            Primary IlluminationType
+            IlluminationType: Primary IlluminationType
         """
         # Check for specific issues in order of severity
         # Prioritize shadows and hotspots (specific artifacts) over vignetting
@@ -1653,10 +1633,10 @@ class IlluminationDetector:
         """Compute severity based on illumination score.
 
         Args:
-            score: Illumination quality score (0-1)
+            score (float): Illumination quality score (0-1)
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if score < self.threshold_critical:
             return Severity.CRITICAL
@@ -1670,11 +1650,11 @@ class IlluminationDetector:
         """Compute confidence score for the detection.
 
         Args:
-            gray: Grayscale image
-            score: Computed quality score
+            gray (np.ndarray): Grayscale image
+            score (float): Computed quality score
 
         Returns:
-            Confidence score (0-1)
+            float: Confidence score (0-1)
         """
         # Base confidence from image size
         pixels = gray.size
@@ -1698,14 +1678,14 @@ class JPEGBlockinessResult:
     """Result of JPEG blockiness detection analysis.
 
     Attributes:
-        has_artifacts: Whether significant JPEG blockiness is detected
-        blockiness_score: Blockiness metric (0.0-1.0, higher = more blocky)
-        compression_score: Quality score (0.0-1.0, higher = better quality)
-        estimated_quality: Estimated JPEG quality factor (1-100)
-        confidence: Confidence score (0.0-1.0)
-        severity: Issue severity level
-        horizontal_blockiness: Blockiness at horizontal block boundaries
-        vertical_blockiness: Blockiness at vertical block boundaries
+        has_artifacts (bool): Whether significant JPEG blockiness is detected
+        blockiness_score (float): Blockiness metric (0.0-1.0, higher = more blocky)
+        compression_score (float): Quality score (0.0-1.0, higher = better quality)
+        estimated_quality (int): Estimated JPEG quality factor (1-100)
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Issue severity level
+        horizontal_blockiness (float): Blockiness at horizontal block boundaries
+        vertical_blockiness (float): Blockiness at vertical block boundaries
     """
 
     has_artifacts: bool
@@ -1728,9 +1708,17 @@ class JPEGBlockinessDetector:
     This detector measures the difference between pixel gradients at
     8x8 block boundaries versus within blocks. Higher ratio indicates
     more visible compression artifacts.
+
+    Attributes:
+        BLOCK_SIZE (int): JPEG DCT block size (always 8)
+
+    Args:
+        threshold_critical (float): Critical blockiness threshold (> 0.25 = severe artifacts)
+        threshold_high (float): High severity threshold (> 0.15 = noticeable artifacts)
+        threshold_medium (float): Medium severity threshold (> 0.08 = slight artifacts)
     """
 
-    BLOCK_SIZE = 8  # JPEG uses 8x8 DCT blocks
+    BLOCK_SIZE: int = 8  # JPEG uses 8x8 DCT blocks
 
     def __init__(
         self,
@@ -1738,13 +1726,6 @@ class JPEGBlockinessDetector:
         threshold_high: float = 0.15,
         threshold_medium: float = 0.08,
     ) -> None:
-        """Initialize JPEG blockiness detector.
-
-        Args:
-            threshold_critical: Critical blockiness threshold (> 0.25 = severe artifacts)
-            threshold_high: High severity threshold (> 0.15 = noticeable artifacts)
-            threshold_medium: Medium severity threshold (> 0.08 = slight artifacts)
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -1760,10 +1741,10 @@ class JPEGBlockinessDetector:
         """Detect JPEG blockiness in an image.
 
         Args:
-            image: Input image (BGR format)
+            image (np.ndarray): Input image (BGR format)
 
         Returns:
-            JPEGBlockinessResult with blockiness metrics
+            JPEGBlockinessResult: JPEGBlockinessResult with blockiness metrics
 
         Raises:
             ValueError: If image is invalid or empty
@@ -1845,10 +1826,10 @@ class JPEGBlockinessDetector:
         at block boundaries versus within blocks.
 
         Args:
-            gray: Grayscale image as float64
+            gray (np.ndarray): Grayscale image as float64
 
         Returns:
-            Horizontal blockiness metric
+            float: Horizontal blockiness metric
         """
         _h, w = gray.shape
 
@@ -1878,10 +1859,10 @@ class JPEGBlockinessDetector:
         """Compute blockiness at vertical 8-pixel boundaries.
 
         Args:
-            gray: Grayscale image as float64
+            gray (np.ndarray): Grayscale image as float64
 
         Returns:
-            Vertical blockiness metric
+            float: Vertical blockiness metric
         """
         h, _w = gray.shape
 
@@ -1913,10 +1894,10 @@ class JPEGBlockinessDetector:
         Uses empirical mapping based on typical JPEG compression behavior.
 
         Args:
-            blockiness_score: Normalized blockiness (0-1)
+            blockiness_score (float): Normalized blockiness (0-1)
 
         Returns:
-            Estimated quality factor (1-100)
+            int: Estimated quality factor (1-100)
         """
         # Empirical mapping: higher blockiness = lower quality
         # blockiness 0.0 -> quality ~95
@@ -1935,10 +1916,10 @@ class JPEGBlockinessDetector:
         """Compute severity based on blockiness score.
 
         Args:
-            blockiness_score: Normalized blockiness (0-1)
+            blockiness_score (float): Normalized blockiness (0-1)
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if blockiness_score >= self.threshold_critical:
             return Severity.CRITICAL
@@ -1952,11 +1933,11 @@ class JPEGBlockinessDetector:
         """Compute confidence score for the detection.
 
         Args:
-            gray: Grayscale image
-            blockiness_score: Computed blockiness score
+            gray (np.ndarray): Grayscale image
+            blockiness_score (float): Computed blockiness score
 
         Returns:
-            Confidence score (0-1)
+            float: Confidence score (0-1)
         """
         # Size confidence
         h, w = gray.shape
@@ -1980,12 +1961,12 @@ class ProblemRegion:
     """A region with binarization issues.
 
     Attributes:
-        x: X coordinate of region (top-left)
-        y: Y coordinate of region (top-left)
-        width: Width of region
-        height: Height of region
-        issue: Type of issue (low_contrast, noisy, blurry)
-        severity: Severity of the issue
+        x (int): X coordinate of region (top-left)
+        y (int): Y coordinate of region (top-left)
+        width (int): Width of region
+        height (int): Height of region
+        issue (str): Type of issue (low_contrast, noisy, blurry)
+        severity (float): Severity of the issue
     """
 
     x: int
@@ -2001,14 +1982,14 @@ class BinarizationQualityResult:
     """Result of binarization quality assessment.
 
     Attributes:
-        binarization_score: Overall quality score (0.0-1.0, higher = better)
-        bimodality_score: Histogram bimodality (0.0-1.0, higher = clearer separation)
-        contrast_score: Local contrast score (0.0-1.0)
-        noise_score: Noise impact score (0.0-1.0, higher = less noise)
-        problem_regions: List of regions with binarization issues
-        confidence: Confidence score (0.0-1.0)
-        severity: Overall severity level
-        estimated_threshold: Estimated optimal Otsu threshold (0-255)
+        binarization_score (float): Overall quality score (0.0-1.0, higher = better)
+        bimodality_score (float): Histogram bimodality (0.0-1.0, higher = clearer separation)
+        contrast_score (float): Local contrast score (0.0-1.0)
+        noise_score (float): Noise impact score (0.0-1.0, higher = less noise)
+        problem_regions (list[ProblemRegion]): List of regions with binarization issues
+        confidence (float): Confidence score (0.0-1.0)
+        severity (Severity): Overall severity level
+        estimated_threshold (int): Estimated optimal Otsu threshold (0-255)
     """
 
     binarization_score: float
@@ -2031,6 +2012,13 @@ class BinarizationQualityDetector:
     - Edge clarity for text boundaries
 
     Identifies problem regions that may need special handling.
+
+    Args:
+        threshold_critical (float): Critical quality threshold (< 0.40 = severe issues)
+        threshold_high (float): High severity threshold (< 0.55 = noticeable issues)
+        threshold_medium (float): Medium severity threshold (< 0.70 = slight issues)
+        grid_size (int): Grid divisions for regional analysis (default: 4x4)
+        min_contrast (float): Minimum contrast to consider region viable (default: 0.15)
     """
 
     def __init__(
@@ -2041,15 +2029,6 @@ class BinarizationQualityDetector:
         grid_size: int = 4,
         min_contrast: float = 0.15,
     ) -> None:
-        """Initialize binarization quality detector.
-
-        Args:
-            threshold_critical: Critical quality threshold (< 0.40 = severe issues)
-            threshold_high: High severity threshold (< 0.55 = noticeable issues)
-            threshold_medium: Medium severity threshold (< 0.70 = slight issues)
-            grid_size: Grid divisions for regional analysis (default: 4x4)
-            min_contrast: Minimum contrast to consider region viable (default: 0.15)
-        """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
@@ -2068,10 +2047,10 @@ class BinarizationQualityDetector:
         """Assess binarization quality of an image.
 
         Args:
-            image: Input image (BGR format)
+            image (np.ndarray): Input image (BGR format)
 
         Returns:
-            BinarizationQualityResult with quality metrics
+            BinarizationQualityResult: BinarizationQualityResult with quality metrics
 
         Raises:
             ValueError: If image is invalid or empty
@@ -2144,10 +2123,10 @@ class BinarizationQualityDetector:
         which is ideal for binarization.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Tuple of (bimodality_score, estimated_threshold)
+            tuple[float, int]: Tuple of (bimodality_score, estimated_threshold)
         """
         # Use Otsu's method to find optimal threshold
         threshold, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -2199,11 +2178,11 @@ class BinarizationQualityDetector:
         """Determine the type of contrast issue for a cell.
 
         Args:
-            cell_std: Standard deviation of cell pixel values
-            local_contrast: Normalized local contrast value
+            cell_std (float): Standard deviation of cell pixel values
+            local_contrast (float): Normalized local contrast value
 
         Returns:
-            Issue type string: 'uniform', 'low_contrast', or 'marginal_contrast'
+            str: Issue type ('uniform', 'low_contrast', or 'marginal_contrast')
         """
         if cell_std < 5:
             return "uniform"
@@ -2226,18 +2205,18 @@ class BinarizationQualityDetector:
         """Create a ProblemRegion for a low-contrast cell.
 
         Args:
-            x1: Cell x-coordinate in subsampled image
-            y1: Cell y-coordinate in subsampled image
-            cell_w: Cell width in subsampled image
-            cell_h: Cell height in subsampled image
-            scale: Scale factor used for subsampling
-            original_w: Original image width
-            original_h: Original image height
-            issue: Issue type string
-            local_contrast: Normalized local contrast value
+            x1 (int): Cell x-coordinate in subsampled image
+            y1 (int): Cell y-coordinate in subsampled image
+            cell_w (int): Cell width in subsampled image
+            cell_h (int): Cell height in subsampled image
+            scale (float): Scale factor used for subsampling
+            original_w (int): Original image width
+            original_h (int): Original image height
+            issue (str): Issue type string
+            local_contrast (float): Normalized local contrast value
 
         Returns:
-            ProblemRegion instance
+            ProblemRegion: ProblemRegion instance
         """
         orig_x = int(x1 / scale)
         orig_y = int(y1 / scale)
@@ -2260,13 +2239,13 @@ class BinarizationQualityDetector:
         """Analyze local contrast across image regions.
 
         Args:
-            gray: Grayscale image (possibly subsampled)
-            scale: Scale factor used for subsampling
-            original_h: Original image height
-            original_w: Original image width
+            gray (np.ndarray): Grayscale image (possibly subsampled)
+            scale (float): Scale factor used for subsampling
+            original_h (int): Original image height
+            original_w (int): Original image width
 
         Returns:
-            Tuple of (contrast_score, problem_regions)
+            tuple[float, list[ProblemRegion]]: Tuple of (contrast_score, problem_regions)
         """
         h, w = gray.shape
         cell_h = h // self.grid_size
@@ -2328,10 +2307,10 @@ class BinarizationQualityDetector:
         High noise makes binarization difficult.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Noise impact score (0-1, higher = less noise = better)
+            float: Noise impact score (0-1, higher = less noise = better)
         """
         # Compute Laplacian
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
@@ -2358,10 +2337,10 @@ class BinarizationQualityDetector:
         """Compute severity based on binarization score.
 
         Args:
-            score: Binarization quality score (0-1)
+            score (float): Binarization quality score (0-1)
 
         Returns:
-            Severity level
+            Severity: Severity level
         """
         if score < self.threshold_critical:
             return Severity.CRITICAL
@@ -2375,11 +2354,11 @@ class BinarizationQualityDetector:
         """Compute confidence score for the detection.
 
         Args:
-            gray: Grayscale image
-            score: Binarization quality score
+            gray (np.ndarray): Grayscale image
+            score (float): Binarization quality score
 
         Returns:
-            Confidence score (0-1)
+            float: Confidence score (0-1)
         """
         # Size confidence
         h, w = gray.shape
@@ -2403,14 +2382,14 @@ class BleedThroughResult:
     """Result from bleed-through detection.
 
     Attributes:
-        bleed_through_detected: Whether bleed-through is present
-        severity: Overall severity (0-1, higher = worse)
-        affected_ratio: Ratio of image area affected by bleed-through
-        affected_regions: List of ProblemRegion objects identifying affected areas
-        confidence: Detection confidence (0-1)
-        severity_level: Categorical severity level
-        background_uniformity: How uniform the background is (0-1, higher = more uniform)
-        bleed_intensity: Average intensity of detected bleed-through patterns
+        bleed_through_detected (bool): Whether bleed-through is present
+        severity (float): Overall severity (0-1, higher = worse)
+        affected_ratio (float): Ratio of image area affected by bleed-through
+        affected_regions (list[ProblemRegion]): List of ProblemRegion objects identifying affected areas
+        confidence (float): Detection confidence (0-1)
+        severity_level (Severity): Categorical severity level
+        background_uniformity (float): How uniform the background is (0-1, higher = more uniform)
+        bleed_intensity (float): Average intensity of detected bleed-through patterns
     """
 
     bleed_through_detected: bool
@@ -2436,12 +2415,12 @@ class BleedThroughDetector:
     3. Detect low-contrast, diffuse patterns characteristic of bleed-through
     4. Distinguish from legitimate content using intensity and structure analysis
 
-    Attributes:
-        severity_threshold_low: Minimum severity for LOW rating
-        severity_threshold_medium: Minimum severity for MEDIUM rating
-        severity_threshold_high: Minimum severity for HIGH rating
-        min_region_size: Minimum pixels for a region to be considered
-        background_sample_ratio: Ratio of image to sample for background analysis
+    Args:
+        severity_threshold_low (float): Threshold for LOW severity (default: 0.1)
+        severity_threshold_medium (float): Threshold for MEDIUM severity (default: 0.25)
+        severity_threshold_high (float): Threshold for HIGH severity (default: 0.5)
+        min_region_size (int): Minimum region size in pixels (default: 100)
+        background_sample_ratio (float): Expected background ratio (default: 0.3)
 
     Example:
         >>> detector = BleedThroughDetector()
@@ -2460,15 +2439,6 @@ class BleedThroughDetector:
         min_region_size: int = 100,
         background_sample_ratio: float = 0.3,
     ) -> None:
-        """Initialize bleed-through detector.
-
-        Args:
-            severity_threshold_low: Threshold for LOW severity (default: 0.1)
-            severity_threshold_medium: Threshold for MEDIUM severity (default: 0.25)
-            severity_threshold_high: Threshold for HIGH severity (default: 0.5)
-            min_region_size: Minimum region size in pixels (default: 100)
-            background_sample_ratio: Expected background ratio (default: 0.3)
-        """
         self.severity_threshold_low = severity_threshold_low
         self.severity_threshold_medium = severity_threshold_medium
         self.severity_threshold_high = severity_threshold_high
@@ -2479,10 +2449,10 @@ class BleedThroughDetector:
         """Detect bleed-through artifacts in an image.
 
         Args:
-            image: Input image (BGR or grayscale format)
+            image (np.ndarray): Input image (BGR or grayscale format)
 
         Returns:
-            BleedThroughResult with detection details
+            BleedThroughResult: BleedThroughResult with detection details
 
         Raises:
             ValueError: If image is invalid or too small
@@ -2558,10 +2528,10 @@ class BleedThroughDetector:
         3. Using morphological operations to isolate ghost text/images
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Tuple of (bleed_mask, bleed_intensity, background_uniformity)
+            tuple[np.ndarray, float, float]: Tuple of (bleed_mask, bleed_intensity, background_uniformity)
         """
         # Apply Gaussian blur to reduce noise
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -2621,11 +2591,11 @@ class BleedThroughDetector:
         """Find and characterize affected regions.
 
         Args:
-            bleed_mask: Binary mask of bleed-through areas
-            scale: Scale factor used for subsampling
+            bleed_mask (np.ndarray): Binary mask of bleed-through areas
+            scale (float): Scale factor used for subsampling
 
         Returns:
-            List of ProblemRegion objects
+            list[ProblemRegion]: List of ProblemRegion objects
         """
         regions: list[ProblemRegion] = []
 
@@ -2680,12 +2650,12 @@ class BleedThroughDetector:
         """Calculate overall bleed-through severity.
 
         Args:
-            affected_ratio: Ratio of image affected by bleed-through
-            bleed_intensity: Average intensity of bleed-through patterns
-            background_uniformity: How uniform the background is
+            affected_ratio (float): Ratio of image affected by bleed-through
+            bleed_intensity (float): Average intensity of bleed-through patterns
+            background_uniformity (float): How uniform the background is
 
         Returns:
-            Severity score (0-1)
+            float: Severity score (0-1)
         """
         # Affected ratio is the primary factor
         # More affected area = higher severity
@@ -2707,10 +2677,10 @@ class BleedThroughDetector:
         """Convert severity score to categorical level.
 
         Args:
-            severity: Numeric severity (0-1)
+            severity (float): Numeric severity (0-1)
 
         Returns:
-            Severity enum value
+            Severity: Severity enum value
         """
         if severity >= self.severity_threshold_high:
             return Severity.HIGH
@@ -2725,12 +2695,12 @@ class BleedThroughDetector:
         """Compute detection confidence.
 
         Args:
-            gray: Grayscale image
-            severity: Calculated severity score
-            detected: Whether bleed-through was detected
+            gray (np.ndarray): Grayscale image
+            severity (float): Calculated severity score
+            detected (bool): Whether bleed-through was detected
 
         Returns:
-            Confidence score (0-1)
+            float: Confidence score (0-1)
         """
         # Size-based confidence
         h, w = gray.shape
@@ -2758,10 +2728,10 @@ def detect_illumination(image: np.ndarray) -> IlluminationDetectionResult:
     """Convenience function for illumination detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        IlluminationDetectionResult
+        IlluminationDetectionResult: IlluminationDetectionResult
 
     Example:
         >>> img = cv2.imread("scanned_page.jpg")
@@ -2780,10 +2750,10 @@ def detect_jpeg_blockiness(image: np.ndarray) -> JPEGBlockinessResult:
     """Convenience function for JPEG blockiness detection.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        JPEGBlockinessResult
+        JPEGBlockinessResult: JPEGBlockinessResult
 
     Example:
         >>> img = cv2.imread("compressed.jpg")
@@ -2802,10 +2772,10 @@ def detect_binarization_quality(image: np.ndarray) -> BinarizationQualityResult:
     """Convenience function for binarization quality assessment.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        BinarizationQualityResult
+        BinarizationQualityResult: BinarizationQualityResult
 
     Example:
         >>> img = cv2.imread("document.jpg")
@@ -2827,10 +2797,10 @@ def detect_bleed_through(image: np.ndarray) -> BleedThroughResult:
     of a scanned document, common with thin paper or aggressive scanning.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        BleedThroughResult
+        BleedThroughResult: BleedThroughResult
 
     Example:
         >>> img = cv2.imread("scanned_page.jpg")

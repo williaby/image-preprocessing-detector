@@ -78,18 +78,18 @@ class MLIQAScores:
         - severities dict provides raw [0,1] severity values
 
     Attributes:
-        blur_score: Blur quality score 0-1 (v1: 0=blurry, v2: 0=none)
-        noise_score: Noise quality score 0-1
-        contrast_score: Contrast quality score 0-1
-        skew_score: Skew quality score 0-1
-        compression_score: Compression artifact score 0-1
-        overall_quality: Aggregated quality score 0-1 (higher=better for both versions)
-        confidences: Per-head confidence scores (softmax max)
-        model_type: Which model produced these scores (student/teacher)
-        device: Device used for inference
-        inference_time_ms: Inference latency in milliseconds
-        model_version: Model version (binary_v1 or continuous_v2)
-        severities: Raw severity scores for v2 models (optional)
+        blur_score (float): Blur quality score 0-1 (v1: 0=blurry, v2: 0=none)
+        noise_score (float): Noise quality score 0-1
+        contrast_score (float): Contrast quality score 0-1
+        skew_score (float): Skew quality score 0-1
+        compression_score (float): Compression artifact score 0-1
+        overall_quality (float): Aggregated quality score 0-1 (higher=better for both versions)
+        confidences (dict[str, float]): Per-head confidence scores (softmax max)
+        model_type (ModelType): Which model produced these scores (student/teacher)
+        device (Device): Device used for inference
+        inference_time_ms (float): Inference latency in milliseconds
+        model_version (ModelVersion): Model version (binary_v1 or continuous_v2)
+        severities (dict[str, float] | None): Raw severity scores for v2 models (optional)
     """
 
     blur_score: float
@@ -111,7 +111,7 @@ class MLIQAScores:
         For v1 models, inverts quality scores to approximate severity.
 
         Returns:
-            List of [blur, noise, contrast, skew, compression] severities
+            list[float]: List of [blur, noise, contrast, skew, compression] severities
         """
         if self.model_version == ModelVersion.CONTINUOUS_V2 and self.severities:
             return [
@@ -140,10 +140,10 @@ class UncertaintyMetrics:
     """Uncertainty metrics for teacher escalation decisions.
 
     Attributes:
-        entropy: Softmax entropy across heads (higher = more uncertain)
-        min_confidence: Minimum confidence across all heads
-        mean_confidence: Average confidence across heads
-        head_confidences: Per-head confidence scores
+        entropy (float): Softmax entropy across heads (higher = more uncertain)
+        min_confidence (float): Minimum confidence across all heads
+        mean_confidence (float): Average confidence across heads
+        head_confidences (dict[str, float]): Per-head confidence scores
     """
 
     entropy: float
@@ -157,9 +157,9 @@ class EscalationDecision:
     """Decision whether to escalate to teacher model.
 
     Attributes:
-        should_escalate: Whether to escalate to teacher
-        reason: Reason for escalation (or None if not escalating)
-        uncertainty_metrics: Calculated uncertainty metrics
+        should_escalate (bool): Whether to escalate to teacher
+        reason (str | None): Reason for escalation (or None if not escalating)
+        uncertainty_metrics (UncertaintyMetrics): Calculated uncertainty metrics
     """
 
     should_escalate: bool
@@ -175,14 +175,14 @@ class ClassicalIQAScores:
     All scores are continuous [0.0, 1.0] to enable quantitative discrepancy analysis.
 
     Attributes:
-        blur_score: Blur quality (from Laplacian variance, normalized)
-        contrast_score: Contrast quality (from histogram analysis)
-        skew_score: Skew quality (1 - normalized_angle)
-        noise_score: Noise quality (0=noisy, 1=clean) - replaces has_noise boolean
-        illumination_score: Illumination quality (0=poor lighting, 1=good lighting)
-        compression_score: Compression artifact quality (0=artifacts, 1=clean) - replaces has_compression boolean
-        binarization_score: Binarization quality (0=poor, 1=good) - document-specific
-        bleed_through_score: Bleed-through quality (0=severe, 1=none) - document-specific
+        blur_score (float): Blur quality (from Laplacian variance, normalized)
+        contrast_score (float): Contrast quality (from histogram analysis)
+        skew_score (float): Skew quality (1 - normalized_angle)
+        noise_score (float): Noise quality (0=noisy, 1=clean) - replaces has_noise boolean
+        illumination_score (float): Illumination quality (0=poor lighting, 1=good lighting)
+        compression_score (float): Compression artifact quality (0=artifacts, 1=clean) - replaces has_compression boolean
+        binarization_score (float): Binarization quality (0=poor, 1=good) - document-specific
+        bleed_through_score (float): Bleed-through quality (0=severe, 1=none) - document-specific
     """
 
     # Core dimensions (required)
@@ -226,17 +226,17 @@ class DiscrepancyMetrics:
     All discrepancies are absolute differences in [0.0, 1.0] range.
 
     Attributes:
-        blur_discrepancy: Absolute difference in blur scores
-        contrast_discrepancy: Absolute difference in contrast scores
-        skew_discrepancy: Absolute difference in skew scores
-        noise_discrepancy: Absolute difference in noise scores
-        illumination_discrepancy: Absolute difference in illumination scores
-        compression_discrepancy: Absolute difference in compression scores
-        binarization_discrepancy: Absolute difference in binarization scores
-        bleed_through_discrepancy: Absolute difference in bleed-through scores
-        max_discrepancy: Maximum discrepancy across all metrics
-        mean_discrepancy: Mean discrepancy across all metrics
-        per_head_discrepancies: Per-head discrepancy values
+        blur_discrepancy (float): Absolute difference in blur scores
+        contrast_discrepancy (float): Absolute difference in contrast scores
+        skew_discrepancy (float): Absolute difference in skew scores
+        noise_discrepancy (float): Absolute difference in noise scores
+        illumination_discrepancy (float): Absolute difference in illumination scores
+        compression_discrepancy (float): Absolute difference in compression scores
+        binarization_discrepancy (float): Absolute difference in binarization scores
+        bleed_through_discrepancy (float): Absolute difference in bleed-through scores
+        max_discrepancy (float): Maximum discrepancy across all metrics
+        mean_discrepancy (float): Mean discrepancy across all metrics
+        per_head_discrepancies (dict[str, float]): Per-head discrepancy values
     """
 
     # Core dimensions
@@ -264,6 +264,20 @@ class MLIQADetector:
 
     Loads ONNX models for efficient inference with multi-head predictions.
     Supports device fallback: GPU → CPU → Modal.
+
+    Args:
+        student_model_path (str | Path | None): Path to student ONNX model (ResNet-18)
+        teacher_model_path (str | Path | None): Path to teacher ONNX model (ResNet-50)
+        device (Device | None): Preferred device (auto-detect if None) - LEGACY, use device_policy instead
+        enable_modal_fallback (bool): Allow fallback to Modal GPU if local unavailable - LEGACY
+        entropy_threshold (float): Entropy threshold for escalation (default: 0.8)
+        min_confidence_threshold (float): Min confidence threshold for escalation (default: 0.6)
+        mean_confidence_threshold (float): Mean confidence threshold for escalation (default: 0.7)
+        device_policy (DevicePolicyConfig | None): Device policy configuration (Phase 4)
+        modal_endpoint (str | None): Modal serverless endpoint URL (Phase 4)
+        use_orchestrator (bool): Enable Phase 4 device orchestration (default: True)
+        model_version (ModelVersion | str): Model version (binary_v1 or continuous_v2) - Phase 7
+        v2_rollout_percentage (float): Percentage of requests to use v2 model (0-100) - Phase 7
     """
 
     def __init__(
@@ -283,22 +297,6 @@ class MLIQADetector:
         model_version: ModelVersion | str = ModelVersion.BINARY_V1,
         v2_rollout_percentage: float = 0.0,
     ) -> None:
-        """Initialize ML IQA detector.
-
-        Args:
-            student_model_path: Path to student ONNX model (ResNet-18)
-            teacher_model_path: Path to teacher ONNX model (ResNet-50)
-            device: Preferred device (auto-detect if None) - LEGACY, use device_policy instead
-            enable_modal_fallback: Allow fallback to Modal GPU if local unavailable - LEGACY
-            entropy_threshold: Entropy threshold for escalation (default: 0.8)
-            min_confidence_threshold: Min confidence threshold for escalation (default: 0.6)
-            mean_confidence_threshold: Mean confidence threshold for escalation (default: 0.7)
-            device_policy: Device policy configuration (Phase 4)
-            modal_endpoint: Modal serverless endpoint URL (Phase 4)
-            use_orchestrator: Enable Phase 4 device orchestration (default: True)
-            model_version: Model version (binary_v1 or continuous_v2) - Phase 7
-            v2_rollout_percentage: Percentage of requests to use v2 model (0-100) - Phase 7
-        """
         self.student_model_path = student_model_path
         self.teacher_model_path = teacher_model_path
         self.enable_modal_fallback = enable_modal_fallback
@@ -378,10 +376,10 @@ class MLIQADetector:
         - 1-99: Probabilistic selection based on request_id hash
 
         Args:
-            request_id: Optional request ID for deterministic selection
+            request_id (str | None): Optional request ID for deterministic selection
 
         Returns:
-            True if v2 model should be used
+            bool: True if v2 model should be used
         """
         if self.v2_rollout_percentage <= 0:
             return False
@@ -410,10 +408,10 @@ class MLIQADetector:
         Quality scores are computed as 1 - severity for compatibility.
 
         Args:
-            outputs: Raw model outputs (sigmoid outputs for continuous regression)
+            outputs (dict[str, np.ndarray]): Raw model outputs (sigmoid outputs for continuous regression)
 
         Returns:
-            Tuple of (scores_dict, confidences_dict, severities_dict)
+            tuple[dict[str, float], dict[str, float], dict[str, float]]: Tuple of (scores_dict, confidences_dict, severities_dict)
         """
         scores = {}
         confidences = {}
@@ -456,10 +454,10 @@ class MLIQADetector:
         """Get the effective model version for a request.
 
         Args:
-            request_id: Optional request ID for deterministic version selection
+            request_id (str | None): Optional request ID for deterministic version selection
 
         Returns:
-            ModelVersion to use for this request
+            ModelVersion: ModelVersion to use for this request
         """
         if self._should_use_v2_model(request_id):
             return ModelVersion.CONTINUOUS_V2
@@ -471,13 +469,14 @@ class MLIQADetector:
         Sprint 4.3.1: BatchInferenceEngine integration for throughput optimization.
 
         Args:
-            device: Device to use for batch inference
+            device (str): Device to use for batch inference
 
         Returns:
-            BatchInferenceEngine instance
+            Any: BatchInferenceEngine instance
 
         Raises:
             RuntimeError: If student model not available
+            Exception: If the batch inference engine fails to start
         """
         if self._batch_engine is None:
             try:
@@ -543,15 +542,14 @@ class MLIQADetector:
         Sprint 4.3.1: High-throughput batch processing with caching.
 
         Args:
-            images: List of input images (BGR format)
-            request_ids: Optional request IDs for each image
+            images (list[np.ndarray]): List of input images (BGR format)
+            request_ids (list[str] | None): Optional request IDs for each image
 
         Returns:
-            List of MLIQAScores (one per image)
+            list[MLIQAScores]: List of MLIQAScores (one per image)
 
         Raises:
             ValueError: If images is empty
-            RuntimeError: If model not available
         """
         if not images:
             raise ValueError("Images list cannot be empty")
@@ -612,7 +610,7 @@ class MLIQADetector:
         Priority: Local GPU → Local CPU → Modal GPU
 
         Returns:
-            Device enum
+            Device: Device enum
         """
         if ort is None:
             logger.warning("ONNX Runtime not available, using CPU")
@@ -633,12 +631,13 @@ class MLIQADetector:
         """Load student model ONNX session (lazy initialization).
 
         Args:
-            device: Device for session (cuda/cpu, None for legacy mode)
+            device (str | None): Device for session (cuda/cpu, None for legacy mode)
 
         Returns:
-            ONNX InferenceSession
+            Any: ONNX InferenceSession
 
         Raises:
+            ValueError: If student model path is not set
             FileNotFoundError: If model file doesn't exist
             RuntimeError: If ONNX Runtime not available
         """
@@ -677,12 +676,13 @@ class MLIQADetector:
         """Load teacher model ONNX session (lazy initialization).
 
         Args:
-            device: Device for session (cuda/cpu/modal, None for legacy mode)
+            device (str | None): Device for session (cuda/cpu/modal, None for legacy mode)
 
         Returns:
-            ONNX InferenceSession
+            Any: ONNX InferenceSession
 
         Raises:
+            ValueError: If teacher model path is not set
             FileNotFoundError: If model file doesn't exist
             RuntimeError: If ONNX Runtime not available
         """
@@ -721,10 +721,10 @@ class MLIQADetector:
         """Get ONNX Runtime execution providers based on device.
 
         Args:
-            device: Device string (cuda/cpu/legacy, None for auto-detect)
+            device (str | None): Device string (cuda/cpu/legacy, None for auto-detect)
 
         Returns:
-            List of provider names in priority order
+            list[str]: List of provider names in priority order
         """
         if self.use_orchestrator and device:
             # Phase 4: Device from orchestrator
@@ -740,10 +740,10 @@ class MLIQADetector:
         """Preprocess image for model input.
 
         Args:
-            image: Input image (BGR format, HxWx3)
+            image (np.ndarray): Input image (BGR format, HxWx3)
 
         Returns:
-            Preprocessed image (1x3x224x224, float32, normalized)
+            np.ndarray: Preprocessed image (1x3x224x224, float32, normalized)
         """
         import cv2
 
@@ -773,10 +773,10 @@ class MLIQADetector:
         """Postprocess model outputs to scores and confidences.
 
         Args:
-            outputs: Raw model outputs (logits or softmax)
+            outputs (dict[str, np.ndarray]): Raw model outputs (logits or softmax)
 
         Returns:
-            Tuple of (scores_dict, confidences_dict)
+            tuple[dict[str, float], dict[str, float]]: Tuple of (scores_dict, confidences_dict)
         """
         # Expected output format: multi-head predictions
         # Each head: [batch, num_classes] where class 0=bad, class 1=good
@@ -808,11 +808,11 @@ class MLIQADetector:
         """Run teacher inference on Modal GPU.
 
         Args:
-            image: Input image (BGR format)
-            doc_id: Optional document ID for tracking
+            image (np.ndarray): Input image (BGR format)
+            doc_id (str | None): Optional document ID for tracking
 
         Returns:
-            MLIQAScores from Modal or None if Modal unavailable
+            MLIQAScores | None: MLIQAScores from Modal or None if Modal unavailable
         """
         if not self.modal_client:
             logger.warning("Modal client not configured")
@@ -854,10 +854,10 @@ class MLIQADetector:
         """Run student model inference.
 
         Args:
-            image: Input image (BGR format)
+            image (np.ndarray): Input image (BGR format)
 
         Returns:
-            MLIQAScores with student predictions
+            MLIQAScores: MLIQAScores with student predictions
 
         Raises:
             ValueError: If image is invalid
@@ -946,11 +946,11 @@ class MLIQADetector:
         """Select device for teacher and optionally route to Modal.
 
         Args:
-            image: Input image for potential Modal inference
-            doc_id: Optional document ID for budget tracking
+            image (np.ndarray): Input image for potential Modal inference
+            doc_id (str | None): Optional document ID for budget tracking
 
         Returns:
-            Tuple of (device_string, modal_scores_or_none)
+            tuple[str | None, MLIQAScores | None]: Tuple of (device_string, modal_scores_or_none)
 
         Raises:
             RuntimeError: If no device available
@@ -988,15 +988,14 @@ class MLIQADetector:
         """Run teacher model inference (for high-risk pages).
 
         Args:
-            image: Input image (BGR format)
-            doc_id: Optional document ID for budget tracking
+            image (np.ndarray): Input image (BGR format)
+            doc_id (str | None): Optional document ID for budget tracking
 
         Returns:
-            MLIQAScores with teacher predictions
+            MLIQAScores: MLIQAScores with teacher predictions
 
         Raises:
             ValueError: If image is invalid
-            RuntimeError: If model not loaded or device unavailable
         """
         if image is None or image.size == 0:
             raise ValueError("Invalid or empty image")
@@ -1080,10 +1079,10 @@ class MLIQADetector:
         Used for teacher escalation decisions.
 
         Args:
-            scores: ML IQA scores from student model
+            scores (MLIQAScores): ML IQA scores from student model
 
         Returns:
-            UncertaintyMetrics with entropy and confidence measures
+            UncertaintyMetrics: UncertaintyMetrics with entropy and confidence measures
         """
         confidences = {
             name: float(np.clip(value, 0.0, 1.0))
@@ -1136,10 +1135,10 @@ class MLIQADetector:
         3. Low mean confidence across all heads
 
         Args:
-            student_scores: Student model IQA scores
+            student_scores (MLIQAScores): Student model IQA scores
 
         Returns:
-            EscalationDecision with escalation decision and reason
+            EscalationDecision: EscalationDecision with escalation decision and reason
         """
         # Calculate uncertainty metrics
         uncertainty = self.calculate_uncertainty(student_scores)
@@ -1199,11 +1198,11 @@ class MLIQADetector:
         comprehensive discrepancy analysis for teacher escalation decisions.
 
         Args:
-            student_scores: Student model ML IQA scores
-            classical_scores: Classical IQA scores (normalized to 0-1)
+            student_scores (MLIQAScores): Student model ML IQA scores
+            classical_scores (ClassicalIQAScores): Classical IQA scores (normalized to 0-1)
 
         Returns:
-            DiscrepancyMetrics with per-head and aggregate discrepancies
+            DiscrepancyMetrics: DiscrepancyMetrics with per-head and aggregate discrepancies
         """
         # Calculate per-head absolute differences (all 8 dimensions)
         blur_discrepancy = abs(student_scores.blur_score - classical_scores.blur_score)
@@ -1276,11 +1275,11 @@ class MLIQADetector:
         for discrepancies that exceed the threshold.
 
         Args:
-            student_scores: Student model ML IQA scores
-            classical_scores: Classical IQA scores
+            student_scores (MLIQAScores): Student model ML IQA scores
+            classical_scores (ClassicalIQAScores): Classical IQA scores
 
         Returns:
-            EscalationDecision with escalation decision and reason
+            EscalationDecision: EscalationDecision with escalation decision and reason
         """
         # Calculate discrepancy
         discrepancy = self.calculate_discrepancy(student_scores, classical_scores)
@@ -1356,12 +1355,12 @@ class MLIQADetector:
         5. Returns final scores
 
         Args:
-            image: Input image (BGR format)
-            classical_scores: Optional classical IQA scores for discrepancy check
-            doc_id: Optional document ID for budget tracking (Phase 4)
+            image (np.ndarray): Input image (BGR format)
+            classical_scores (ClassicalIQAScores | None): Optional classical IQA scores for discrepancy check
+            doc_id (str | None): Optional document ID for budget tracking (Phase 4)
 
         Returns:
-            Tuple of (student_scores, teacher_scores_or_none, escalation_reason_or_none)
+            tuple[MLIQAScores, MLIQAScores | None, str | None]: Tuple of (student_scores, teacher_scores_or_none, escalation_reason_or_none)
 
         Example:
             >>> detector = MLIQADetector(
@@ -1430,10 +1429,10 @@ def ml_iqa_scores_to_dict(scores: MLIQAScores) -> dict[str, Any]:
     """Convert MLIQAScores to dictionary for JSON serialization.
 
     Args:
-        scores: MLIQAScores dataclass instance
+        scores (MLIQAScores): MLIQAScores dataclass instance
 
     Returns:
-        Dictionary suitable for JSON serialization
+        dict[str, Any]: Dictionary suitable for JSON serialization
     """
     result = {
         "source": scores.model_type.value,
@@ -1464,11 +1463,11 @@ def teacher_iqa_to_dict(
     """Convert teacher MLIQAScores to dictionary with escalation reason.
 
     Args:
-        scores: Teacher MLIQAScores dataclass instance
-        escalation_reason: Reason for teacher escalation
+        scores (MLIQAScores): Teacher MLIQAScores dataclass instance
+        escalation_reason (str | None): Reason for teacher escalation
 
     Returns:
-        Dictionary suitable for JSON serialization
+        dict[str, Any]: Dictionary suitable for JSON serialization
     """
     result = ml_iqa_scores_to_dict(scores)
     result["escalation_reason"] = escalation_reason
@@ -1479,10 +1478,10 @@ def uncertainty_metrics_to_dict(metrics: UncertaintyMetrics) -> dict[str, Any]:
     """Convert UncertaintyMetrics to dictionary.
 
     Args:
-        metrics: UncertaintyMetrics dataclass instance
+        metrics (UncertaintyMetrics): UncertaintyMetrics dataclass instance
 
     Returns:
-        Dictionary suitable for JSON serialization
+        dict[str, Any]: Dictionary suitable for JSON serialization
     """
     return {
         "entropy": round(metrics.entropy, 4),
@@ -1498,10 +1497,10 @@ def discrepancy_metrics_to_dict(metrics: DiscrepancyMetrics) -> dict[str, Any]:
     """Convert DiscrepancyMetrics to dictionary.
 
     Args:
-        metrics: DiscrepancyMetrics dataclass instance
+        metrics (DiscrepancyMetrics): DiscrepancyMetrics dataclass instance
 
     Returns:
-        Dictionary suitable for JSON serialization
+        dict[str, Any]: Dictionary suitable for JSON serialization
     """
     return {
         "blur_discrepancy": round(metrics.blur_discrepancy, 4),
