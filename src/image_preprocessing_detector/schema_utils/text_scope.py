@@ -220,11 +220,10 @@ def estimate_scope_from_chars(char_count: int) -> TextScope:
     """Estimate text scope from character count.
 
     Args:
-        char_count: Number of characters in the text
+        char_count (int): Number of characters in the text
 
     Returns:
-        Best-matching TextScope
-    """
+        TextScope: Best-matching TextScope"""
     if char_count <= 1:
         return TextScope.CHARACTER
     if char_count <= 20:
@@ -244,11 +243,10 @@ def estimate_scope_from_words(word_count: int) -> TextScope:
     """Estimate text scope from word count.
 
     Args:
-        word_count: Number of words in the text
+        word_count (int): Number of words in the text
 
     Returns:
-        Best-matching TextScope
-    """
+        TextScope: Best-matching TextScope"""
     if word_count == 0:
         return TextScope.CHARACTER
     if word_count == 1:
@@ -275,13 +273,12 @@ def estimate_scope_from_dimensions(
     Assumes standard document proportions.
 
     Args:
-        width_px: Image width in pixels
-        height_px: Image height in pixels
-        dpi: Dots per inch (default 300)
+        width_px (int): Image width in pixels
+        height_px (int): Image height in pixels
+        dpi (int): Dots per inch (default 300)
 
     Returns:
-        Best-matching TextScope
-    """
+        TextScope: Best-matching TextScope"""
     # Convert to inches
     width_in = width_px / dpi
     height_in = height_px / dpi
@@ -317,17 +314,16 @@ def create_text_scope_info(
     """Create a TextScopeInfo dict for schema integration.
 
     Args:
-        scope: Text scope classification
-        content_type: Primary content type (printed/handwritten/etc.)
-        density: Text density classification
-        estimated_chars: Estimated character count (optional)
-        estimated_words: Estimated word count (optional)
-        confidence: Detection confidence (0-1)
-        detection_method: How scope was determined
+        scope (TextScope | str): Text scope classification
+        content_type (ContentType | str): Primary content type (printed/handwritten/etc.)
+        density (TextDensity | str): Text density classification
+        estimated_chars (int | None): Estimated character count (optional)
+        estimated_words (int | None): Estimated word count (optional)
+        confidence (float): Detection confidence (0-1)
+        detection_method (str): How scope was determined
 
     Returns:
-        TextScopeInfo TypedDict
-    """
+        TextScopeInfo: TextScopeInfo TypedDict"""
     # Convert enums to strings if needed
     scope_str = scope.value if isinstance(scope, TextScope) else scope
     content_str = (
@@ -350,15 +346,14 @@ def compare_scopes(scope1: TextScope, scope2: TextScope) -> int:
     """Compare two text scopes.
 
     Args:
-        scope1: First scope
-        scope2: Second scope
+        scope1 (TextScope): First scope
+        scope2 (TextScope): Second scope
 
     Returns:
-        -1 if scope1 < scope2
+        int: -1 if scope1 < scope2
          0 if scope1 == scope2
          1 if scope1 > scope2
-        None if comparison not possible (MIXED or UNKNOWN)
-    """
+        None if comparison not possible (MIXED or UNKNOWN)"""
     order1 = SCOPE_ORDER.get(scope1, -1)
     order2 = SCOPE_ORDER.get(scope2, -1)
 
@@ -380,12 +375,12 @@ def is_scope_compatible(
     """Check if a sample's scope is compatible with a required scope.
 
     Args:
-        sample_scope: The scope of the sample
-        required_scope: The required scope for the task
-        allow_larger: If True, larger scopes are also compatible
+        sample_scope (TextScope): The scope of the sample
+        required_scope (TextScope): The required scope for the task
+        allow_larger (bool): If True, larger scopes are also compatible
 
     Returns:
-        True if compatible, False otherwise
+        bool: True if compatible, False otherwise
 
     Example:
         >>> is_scope_compatible(TextScope.PAGE, TextScope.SENTENCE, allow_larger=True)

@@ -127,13 +127,12 @@ def compute_text_yield(
     """Characters extracted per megapixel of image area.
 
     Args:
-        text: Extracted OCR text.
-        image_width: Image width in pixels.
-        image_height: Image height in pixels.
+        text (str): Extracted OCR text.
+        image_width (int): Image width in pixels.
+        image_height (int): Image height in pixels.
 
     Returns:
-        Characters per megapixel. 0.0 if image area is zero.
-    """
+        float: Characters per megapixel. 0.0 if image area is zero."""
     area_mpx = (image_width * image_height) / 1_000_000.0
     if area_mpx <= 0.0:
         return 0.0
@@ -148,12 +147,11 @@ def compute_word_density(
     """Words per square pixel of text-region area.
 
     Args:
-        text: Extracted OCR text.
-        text_region_area_px: Total area in pixels of layout text regions.
+        text (str): Extracted OCR text.
+        text_region_area_px (float): Total area in pixels of layout text regions.
 
     Returns:
-        Word density. 0.0 if text_region_area is zero.
-    """
+        float: Word density. 0.0 if text_region_area is zero."""
     if text_region_area_px <= 0.0:
         return 0.0
     words = text.split()
@@ -171,12 +169,11 @@ def compute_ocr_completeness(
     to [0, 1] using a saturation threshold of 50 chars per region.
 
     Args:
-        text_char_count: Total non-whitespace characters from OCR.
-        layout_text_region_count: Number of text-class regions from layout.
+        text_char_count (int): Total non-whitespace characters from OCR.
+        layout_text_region_count (int): Number of text-class regions from layout.
 
     Returns:
-        Completeness score in [0, 1]. 1.0 if all regions well-populated.
-    """
+        float: Completeness score in [0, 1]. 1.0 if all regions well-populated."""
     if layout_text_region_count <= 0:
         return 1.0 if text_char_count > 0 else 0.0
     chars_per_region = text_char_count / layout_text_region_count
@@ -198,11 +195,10 @@ def compute_cjk_latin_consistency(text: str) -> float:
     dispersed text.
 
     Args:
-        text: Extracted OCR text (whitespace excluded from analysis).
+        text (str): Extracted OCR text (whitespace excluded from analysis).
 
     Returns:
-        Normalized entropy in [0, 1]. Lower = more consistent.
-    """
+        float: Normalized entropy in [0, 1]. Lower = more consistent."""
     chars = [c for c in text if not c.isspace()]
     if len(chars) < 2:
         return 0.0
@@ -242,11 +238,10 @@ def compute_line_regularity(text: str) -> float:
     Higher = more regular.
 
     Args:
-        text: Extracted OCR text.
+        text (str): Extracted OCR text.
 
     Returns:
-        Regularity score in [0, 1]. 1.0 = perfectly uniform lines.
-    """
+        float: Regularity score in [0, 1]. 1.0 = perfectly uniform lines."""
     lines = [line for line in text.split("\n") if len(line.strip()) > 0]
     if len(lines) < 3:
         return 0.5  # Insufficient data for meaningful CV
@@ -271,11 +266,10 @@ def compute_valid_char_rate(text: str) -> float:
     area chars, and replacement characters.
 
     Args:
-        text: Extracted OCR text.
+        text (str): Extracted OCR text.
 
     Returns:
-        Valid character rate in [0, 1]. Higher = cleaner text.
-    """
+        float: Valid character rate in [0, 1]. Higher = cleaner text."""
     chars = [c for c in text if not c.isspace()]
     if not chars:
         return 0.0
@@ -301,13 +295,12 @@ def compute_layout_text_agreement(
     quality issues.
 
     Args:
-        text_char_count: Total non-whitespace OCR characters.
-        layout_text_region_count: Number of text-class layout regions.
-        layout_text_area_ratio: Fraction of image area covered by text regions.
+        text_char_count (int): Total non-whitespace OCR characters.
+        layout_text_region_count (int): Number of text-class layout regions.
+        layout_text_area_ratio (float): Fraction of image area covered by text regions.
 
     Returns:
-        Agreement score in [0, 1]. 1.0 = consistent signals.
-    """
+        float: Agreement score in [0, 1]. 1.0 = consistent signals."""
     if layout_text_region_count == 0 and text_char_count == 0:
         return 1.0  # Both agree: no text
     if layout_text_region_count == 0:
@@ -338,8 +331,8 @@ def compute_ori_res_text_delta(
     should yield more/better text extraction.
 
     Args:
-        res_text_yield: text_yield of the enhanced (res/) image.
-        ori_text_yield: text_yield of the original (ori/) image.
+        res_text_yield (float): text_yield of the enhanced (res/) image.
+        ori_text_yield (float): text_yield of the original (ori/) image.
 
     Returns:
         Relative delta: (res - ori) / max(ori, epsilon).
@@ -360,13 +353,12 @@ def compute_siglip2_ocr_agreement(
     readable text. Disagreement suggests calibration issues.
 
     Args:
-        iqa_overall_mu: SigLIP2 overall IQA prediction (0-1 scale).
-        text_yield: OCR text_yield for this image.
-        text_yield_max: Maximum text_yield across the dataset (for normalization).
+        iqa_overall_mu (float): SigLIP2 overall IQA prediction (0-1 scale).
+        text_yield (float): OCR text_yield for this image.
+        text_yield_max (float): Maximum text_yield across the dataset (for normalization).
 
     Returns:
-        Agreement score in [0, 1]. 1.0 = perfect agreement.
-    """
+        float: Agreement score in [0, 1]. 1.0 = perfect agreement."""
     if text_yield_max <= 0:
         return 0.5
 
@@ -394,19 +386,18 @@ def compute_all_proxies(
     """Compute all 9 OCR quality proxy metrics for a single image.
 
     Args:
-        text: Extracted OCR text.
-        image_width: Image width in pixels.
-        image_height: Image height in pixels.
-        layout_text_region_count: Number of text-class layout regions.
-        text_region_area_px: Total area of text regions in pixels.
-        layout_text_area_ratio: Fraction of image area covered by text regions.
-        ori_text_yield: text_yield of the paired original image (optional).
-        iqa_overall_mu: SigLIP2 IQA overall prediction (optional).
-        text_yield_max: Max text_yield across dataset for normalization (optional).
+        text (str): Extracted OCR text.
+        image_width (int): Image width in pixels.
+        image_height (int): Image height in pixels.
+        layout_text_region_count (int): Number of text-class layout regions.
+        text_region_area_px (float): Total area of text regions in pixels.
+        layout_text_area_ratio (float): Fraction of image area covered by text regions.
+        ori_text_yield (float | None): text_yield of the paired original image (optional).
+        iqa_overall_mu (float | None): SigLIP2 IQA overall prediction (optional).
+        text_yield_max (float | None): Max text_yield across dataset for normalization (optional).
 
     Returns:
-        OcrProxyMetrics with all computed values.
-    """
+        OcrProxyMetrics: OcrProxyMetrics with all computed values."""
     non_ws_chars = len(text.replace(" ", "").replace("\n", "").replace("\t", ""))
     text_yield_val = compute_text_yield(text, image_width, image_height)
 

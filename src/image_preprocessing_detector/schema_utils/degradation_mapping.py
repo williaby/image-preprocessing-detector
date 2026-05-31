@@ -441,12 +441,12 @@ def iqa_vector_to_runtime_issues(
     issue types, taking the maximum severity for each issue type.
 
     Args:
-        iqa_vector: 45-dimensional severity vector (0.0-1.0 per degradation)
-        threshold: Minimum severity to consider as "detected"
-        min_confidence: Minimum confidence to report
+        iqa_vector (list[float]): 45-dimensional severity vector (0.0-1.0 per degradation)
+        threshold (float): Minimum severity to consider as "detected"
+        min_confidence (float): Minimum confidence to report
 
     Returns:
-        List of RuntimeIssue dicts matching document_metadata.schema.json
+        list[RuntimeIssue]: List of RuntimeIssue dicts matching document_metadata.schema.json
 
     Example:
         >>> vector = [0.0] * 45
@@ -525,11 +525,10 @@ def runtime_issues_to_iqa_vector(
     to the same runtime issue. Uses the first degradation in each group.
 
     Args:
-        issues: List of RuntimeIssue dicts
+        issues (list[RuntimeIssue]): List of RuntimeIssue dicts
 
     Returns:
-        45-dimensional severity vector
-    """
+        list[float]: 45-dimensional severity vector"""
     vector = [0.0] * 45
 
     # Map issue type to first degradation index in that group
@@ -583,11 +582,10 @@ def aggregate_group_scores(
     Uses max-pooling within each group.
 
     Args:
-        iqa_vector: 45-dimensional severity vector
+        iqa_vector (list[float]): 45-dimensional severity vector
 
     Returns:
-        Dict mapping group name to maximum severity in that group
-    """
+        dict[str, float]: Dict mapping group name to maximum severity in that group"""
     if len(iqa_vector) != 45:
         raise ValueError(f"Expected 45-dim vector, got {len(iqa_vector)}")
 

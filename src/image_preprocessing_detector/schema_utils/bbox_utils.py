@@ -118,10 +118,9 @@ class BoundingBox:
         YOLO format uses center point and dimensions, all normalized to 0-1.
 
         Args:
-            bbox: [center_x, center_y, width, height] normalized 0-1
-            image_width: Image width in pixels for denormalization
-            image_height: Image height in pixels for denormalization
-        """
+            bbox (list[float] | tuple[float, ...]): [center_x, center_y, width, height] normalized 0-1
+            image_width (int): Image width in pixels for denormalization
+            image_height (int): Image height in pixels for denormalization"""
         if len(bbox) != 4:
             raise ValueError(f"Expected 4 values, got {len(bbox)}")
 
@@ -240,14 +239,14 @@ def convert_bbox(
     """Convert between bbox formats.
 
     Args:
-        bbox: Input bounding box (4 values)
-        from_format: Source format
-        to_format: Target format
-        image_width: Required for YOLO conversion
-        image_height: Required for YOLO conversion
+        bbox (list[float] | tuple[float, ...]): Input bounding box (4 values)
+        from_format (BBoxFormat | str): Source format
+        to_format (BBoxFormat | str): Target format
+        image_width (int | None): Required for YOLO conversion
+        image_height (int | None): Required for YOLO conversion
 
     Returns:
-        Converted bounding box as list
+        list[float]: Converted bounding box as list
 
     Example:
         >>> convert_bbox([100, 200, 300, 250], "xyxy", "coco_xywh")
@@ -297,14 +296,13 @@ def standardize_layout_detection(
     - XYXY has x2 > x1 and y2 > y1 with larger absolute values
 
     Args:
-        detection: Layout detection dict with 'bbox' key
-        source_format: Optional explicit source format
-        image_width: Image width (required for YOLO)
-        image_height: Image height (required for YOLO)
+        detection (dict): Layout detection dict with 'bbox' key
+        source_format (BBoxFormat | str | None): Optional explicit source format
+        image_width (int | None): Image width (required for YOLO)
+        image_height (int | None): Image height (required for YOLO)
 
     Returns:
-        Detection dict with standardized COCO bbox
-    """
+        dict: Detection dict with standardized COCO bbox"""
     if "bbox" not in detection:
         raise ValueError("Detection must have 'bbox' key")
 
@@ -379,14 +377,13 @@ def batch_standardize_detections(
     """Batch standardize layout detections based on source.
 
     Args:
-        detections: List of detection dicts
-        source: Detection source identifier
-        image_width: Image width for YOLO
-        image_height: Image height for YOLO
+        detections (list[dict]): List of detection dicts
+        source (str): Detection source identifier
+        image_width (int | None): Image width for YOLO
+        image_height (int | None): Image height for YOLO
 
     Returns:
-        List of standardized detections
-    """
+        list[dict]: List of standardized detections"""
     # Determine format based on source
     source_format_map: dict[str, BBoxFormat] = {
         "doclayout_yolo": BBoxFormat.XYXY,  # YOLO outputs xyxy

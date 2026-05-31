@@ -86,11 +86,11 @@ def validate_enrichment(
     """Validate Layer 2 enrichment data against schema.
 
     Args:
-        data: Enrichment data dictionary
-        raise_on_error: If True, raise ValidationError on first error
+        data (dict[str, Any]): Enrichment data dictionary
+        raise_on_error (bool): If True, raise ValidationError on first error
 
     Returns:
-        ValidationResult with valid flag, errors, and warnings
+        ValidationResult: ValidationResult with valid flag, errors, and warnings
 
     Raises:
         ValidationError: If raise_on_error=True and validation fails
@@ -113,12 +113,11 @@ def validate_document_metadata(
     """Validate document metadata against output schema.
 
     Args:
-        data: Document metadata dictionary
-        raise_on_error: If True, raise ValidationError on first error
+        data (dict[str, Any]): Document metadata dictionary
+        raise_on_error (bool): If True, raise ValidationError on first error
 
     Returns:
-        ValidationResult with valid flag, errors, and warnings
-    """
+        ValidationResult: ValidationResult with valid flag, errors, and warnings"""
     if not JSONSCHEMA_AVAILABLE:
         raise ImportError(
             "jsonschema package required for validation. "
@@ -212,12 +211,11 @@ def validate_iqa_vector(
     """Validate a 45-dimensional IQA vector.
 
     Args:
-        vector: IQA severity vector
-        strict: If True, require values in [0, 1]
+        vector (list[float]): IQA severity vector
+        strict (bool): If True, require values in [0, 1]
 
     Returns:
-        ValidationResult
-    """
+        ValidationResult: ValidationResult"""
     errors = []
     warnings = []
 
@@ -249,13 +247,12 @@ def validate_bbox(
     """Validate a COCO-format bounding box.
 
     Args:
-        bbox: [x, y, width, height]
-        image_width: Optional image width for bounds check
-        image_height: Optional image height for bounds check
+        bbox (list[float]): [x, y, width, height]
+        image_width (int | None): Optional image width for bounds check
+        image_height (int | None): Optional image height for bounds check
 
     Returns:
-        ValidationResult
-    """
+        ValidationResult: ValidationResult"""
     errors = []
     warnings = []
 
@@ -308,8 +305,7 @@ class SchemaValidator:
         """Initialize validator.
 
         Args:
-            schema_type: "layer2" for enrichment, "output" for document metadata
-        """
+            schema_type (str): "layer2" for enrichment, "output" for document metadata"""
         if not JSONSCHEMA_AVAILABLE:
             raise ImportError("jsonschema package required")
 

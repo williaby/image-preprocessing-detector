@@ -144,13 +144,13 @@ def detect_paper_size(
     """Detect paper size from pixel dimensions and DPI.
 
     Args:
-        width_px: Image width in pixels
-        height_px: Image height in pixels
-        dpi: Dots per inch (default 300)
-        tolerance_percent: Allowed deviation from standard size (default 3%)
+        width_px (int): Image width in pixels
+        height_px (int): Image height in pixels
+        dpi (int): Dots per inch (default 300)
+        tolerance_percent (float): Allowed deviation from standard size (default 3%)
 
     Returns:
-        PaperSizeInfo with detected size and confidence
+        PaperSizeInfo: PaperSizeInfo with detected size and confidence
 
     Example:
         >>> info = detect_paper_size(2480, 3508, dpi=300)
@@ -222,13 +222,12 @@ def get_expected_pixels(
     """Get expected pixel dimensions for a paper size at given DPI.
 
     Args:
-        paper_size: Paper size enum value
-        dpi: Target DPI
-        orientation: "portrait" or "landscape"
+        paper_size (PaperSize): Paper size enum value
+        dpi (int): Target DPI
+        orientation (str): "portrait" or "landscape"
 
     Returns:
-        (width_px, height_px) tuple
-    """
+        tuple[int, int]: (width_px, height_px) tuple"""
     if paper_size not in PAPER_SIZE_SPECS:
         raise ValueError(f"Unknown paper size: {paper_size}")
 

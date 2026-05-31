@@ -470,11 +470,10 @@ def get_dataset_info(dataset_name: str) -> DatasetInfo | None:
     """Get dataset metadata from registry.
 
     Args:
-        dataset_name: Short dataset name (e.g., "doclaynet")
+        dataset_name (str): Short dataset name (e.g., "doclaynet")
 
     Returns:
-        DatasetInfo if found, None otherwise
-    """
+        DatasetInfo | None: DatasetInfo if found, None otherwise"""
     if dataset_name not in DATASET_REGISTRY:
         return None
 
@@ -502,15 +501,14 @@ def create_source_info(
     """Create a SourceInfo dict for a sample.
 
     Args:
-        dataset_name: Short dataset name
-        dataset_version: Version of the dataset
-        original_path: Path within the dataset
-        original_filename: Original filename
-        download_date: When the dataset was obtained
+        dataset_name (str): Short dataset name
+        dataset_version (str): Version of the dataset
+        original_path (str): Path within the dataset
+        original_filename (str): Original filename
+        download_date (str | None): When the dataset was obtained
 
     Returns:
-        SourceInfo TypedDict
-    """
+        SourceInfo: SourceInfo TypedDict"""
     dataset_url = None
     if dataset_name in DATASET_REGISTRY:
         dataset_url = DATASET_REGISTRY[dataset_name].get("url")
@@ -533,13 +531,12 @@ def create_file_integrity(
     """Create a FileIntegrity dict.
 
     Args:
-        file_hash: SHA-256 hash of file contents
-        file_size_bytes: File size in bytes
-        hash_algorithm: Hash algorithm used (default: sha256)
+        file_hash (str): SHA-256 hash of file contents
+        file_size_bytes (int): File size in bytes
+        hash_algorithm (str): Hash algorithm used (default: sha256)
 
     Returns:
-        FileIntegrity TypedDict
-    """
+        FileIntegrity: FileIntegrity TypedDict"""
     return FileIntegrity(
         file_hash=file_hash,
         hash_algorithm=hash_algorithm,
@@ -551,11 +548,10 @@ def validate_sample_id(sample_id: str) -> bool:
     """Validate that a sample_id is a valid UUID.
 
     Args:
-        sample_id: Sample identifier to validate
+        sample_id (str): Sample identifier to validate
 
     Returns:
-        True if valid UUID format
-    """
+        bool: True if valid UUID format"""
     import re
 
     uuid_pattern = re.compile(
@@ -569,11 +565,10 @@ def get_datasets_by_category(category: DatasetCategory) -> list[str]:
     """Get all dataset names in a category.
 
     Args:
-        category: DatasetCategory to filter by
+        category (DatasetCategory): DatasetCategory to filter by
 
     Returns:
-        List of dataset names
-    """
+        list[str]: List of dataset names"""
     return [
         name
         for name, info in DATASET_REGISTRY.items()
@@ -585,8 +580,7 @@ def get_datasets_with_mos() -> list[str]:
     """Get datasets that have Mean Opinion Score annotations.
 
     Returns:
-        List of dataset names with MOS annotations
-    """
+        list[str]: List of dataset names with MOS annotations"""
     return [
         name for name, info in DATASET_REGISTRY.items() if info.get("has_mos", False)
     ]
@@ -596,11 +590,10 @@ def get_datasets_by_license(license_type: LicenseType) -> list[str]:
     """Get datasets with a specific license type.
 
     Args:
-        license_type: License to filter by
+        license_type (LicenseType): License to filter by
 
     Returns:
-        List of dataset names
-    """
+        list[str]: List of dataset names"""
     return [
         name
         for name, info in DATASET_REGISTRY.items()

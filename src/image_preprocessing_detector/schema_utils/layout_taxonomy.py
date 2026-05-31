@@ -77,9 +77,7 @@ class LayoutTaxonomy:
         """Initialize taxonomy from config file.
 
         Args:
-            config_path: Path to config YAML. If None, uses default path.
-                        Searches relative to package, then project root.
-        """
+            config_path (Path | str | None): Path to config YAML. If None, uses default path. Searches relative to package, then project root."""
         self.config_path = self._resolve_config_path(config_path)
         self._load_config()
 
@@ -137,11 +135,10 @@ class LayoutTaxonomy:
         """Resolve alias to normalized label form.
 
         Args:
-            label: Raw label string from any source.
+            label (str): Raw label string from any source.
 
         Returns:
-            Normalized label after alias resolution.
-        """
+            str: Normalized label after alias resolution."""
         return self._aliases.get(label, label)
 
     @lru_cache(maxsize=512)  # noqa: B019 - Intentional caching for config lookups
@@ -168,23 +165,21 @@ class LayoutTaxonomy:
         """Map a schema-specific label to its canonical class.
 
         Args:
-            label: Native label from the schema (e.g., "figure_caption").
-            schema: Schema name (e.g., "docstructbench").
+            label (str): Native label from the schema (e.g., "figure_caption").
+            schema (str): Schema name (e.g., "docstructbench").
 
         Returns:
-            Canonical class name (e.g., "FIGURE_CAPTION"), or "UNKNOWN".
-        """
+            str: Canonical class name (e.g., "FIGURE_CAPTION"), or "UNKNOWN"."""
         return self._cached_to_canonical(label, schema)
 
     def _get_parent(self, canonical: str) -> str | None:
         """Get parent canonical class, or None if top-level.
 
         Args:
-            canonical: Canonical class name.
+            canonical (str): Canonical class name.
 
         Returns:
-            Parent canonical class name, or None.
-        """
+            str | None: Parent canonical class name, or None."""
         cls_def = self._canonical.get(canonical)
         if cls_def is None:
             return None
@@ -194,11 +189,10 @@ class LayoutTaxonomy:
         """Walk parent chain until reaching a DocLayNet top-level class.
 
         Args:
-            canonical: Starting canonical class.
+            canonical (str): Starting canonical class.
 
         Returns:
-            DocLayNet top-level canonical class, or None if unreachable.
-        """
+            str | None: DocLayNet top-level canonical class, or None if unreachable."""
         visited: set[str] = set()
         current: str | None = canonical
         while current is not None and current not in visited:
@@ -221,11 +215,11 @@ class LayoutTaxonomy:
         walks the parent chain to find the nearest mapped ancestor.
 
         Args:
-            canonical: Canonical class name.
-            target_schema: Target schema name.
+            canonical (str): Canonical class name.
+            target_schema (str): Target schema name.
 
         Returns:
-            ConversionResult with target label and loss metadata.
+            ConversionResult: ConversionResult with target label and loss metadata.
 
         Raises:
             ValueError: If target_schema is not recognized.
@@ -304,13 +298,12 @@ class LayoutTaxonomy:
         """Convert a label from one schema to another via canonical hub.
 
         Args:
-            label: Native label in the source schema.
-            source: Source schema name.
-            target: Target schema name.
+            label (str): Native label in the source schema.
+            source (str): Source schema name.
+            target (str): Target schema name.
 
         Returns:
-            ConversionResult with full conversion metadata.
-        """
+            ConversionResult: ConversionResult with full conversion metadata."""
         canonical = self.to_canonical(label, source)
         result = self.from_canonical(canonical, target)
         return ConversionResult(
@@ -344,11 +337,10 @@ class LayoutTaxonomy:
         then returns the native DocLayNet label string.
 
         Args:
-            canonical_class: Canonical class name.
+            canonical_class (str): Canonical class name.
 
         Returns:
-            DocLayNet label string (e.g., "Caption"), or "UNKNOWN".
-        """
+            str: DocLayNet label string (e.g., "Caption"), or "UNKNOWN"."""
         return self._cached_to_doclaynet(canonical_class)
 
     def to_doclaynet_index(self, canonical_class: str) -> int | None:
@@ -358,11 +350,10 @@ class LayoutTaxonomy:
         and returns its index.
 
         Args:
-            canonical_class: Canonical class name.
+            canonical_class (str): Canonical class name.
 
         Returns:
-            DocLayNet index (0-10), or None if not mappable.
-        """
+            int | None: DocLayNet index (0-10), or None if not mappable."""
         doclaynet_canonical = self._walk_to_doclaynet(canonical_class)
         if doclaynet_canonical is None:
             return None
@@ -380,8 +371,7 @@ class LayoutTaxonomy:
         nearest DocLayNet ancestor.
 
         Returns:
-            Dict mapping label strings to DocLayNet indices (0-10).
-        """
+            dict[str, int]: Dict mapping label strings to DocLayNet indices (0-10)."""
         index_map: dict[str, int] = {}
 
         # Map all native labels from all schemas
@@ -423,13 +413,12 @@ class LayoutTaxonomy:
         converted and additional metadata fields are added.
 
         Args:
-            anns: List of annotation dicts with ``"label"`` keys.
-            source: Source schema name.
-            target: Target schema name.
+            anns (list[dict[str, Any]]): List of annotation dicts with ``"label"`` keys.
+            source (str): Source schema name.
+            target (str): Target schema name.
 
         Returns:
-            New list of annotation dicts with converted labels and metadata.
-        """
+            list[dict[str, Any]]: New list of annotation dicts with converted labels and metadata."""
         results: list[dict[str, Any]] = []
         for ann in anns:
             converted = self.convert(ann.get("label", ""), source, target)
@@ -448,10 +437,10 @@ class LayoutTaxonomy:
         """Get all native class labels for a schema.
 
         Args:
-            schema: Schema name.
+            schema (str): Schema name.
 
         Returns:
-            Sorted list of native class labels.
+            list[str]: Sorted list of native class labels.
 
         Raises:
             ValueError: If schema is not recognized.
@@ -470,11 +459,10 @@ class LayoutTaxonomy:
         configuring segmentation mask dimensions.
 
         Args:
-            schema: Schema name.
+            schema (str): Schema name.
 
         Returns:
-            Number of classes in the schema.
-        """
+            int: Number of classes in the schema."""
         return len(self.get_schema_classes(schema))
 
     def build_mask_index_map(self, schema: str) -> dict[str, int]:
@@ -484,11 +472,10 @@ class LayoutTaxonomy:
         alphabetical order.
 
         Args:
-            schema: Schema name.
+            schema (str): Schema name.
 
         Returns:
-            Dict mapping native labels to integer indices.
-        """
+            dict[str, int]: Dict mapping native labels to integer indices."""
         classes = self.get_schema_classes(schema)
         return {cls: idx for idx, cls in enumerate(classes)}
 
@@ -496,16 +483,14 @@ class LayoutTaxonomy:
         """Get list of all available schema names.
 
         Returns:
-            Sorted list of schema names.
-        """
+            list[str]: Sorted list of schema names."""
         return sorted(self._schemas.keys())
 
     def get_canonical_classes(self) -> list[str]:
         """Get list of all canonical class names.
 
         Returns:
-            Sorted list of canonical class names.
-        """
+            list[str]: Sorted list of canonical class names."""
         return sorted(self._canonical.keys())
 
     def reload(self) -> None:
@@ -538,8 +523,7 @@ def get_default_taxonomy() -> LayoutTaxonomy:
     """Get default LayoutTaxonomy singleton.
 
     Returns:
-        LayoutTaxonomy instance with default config.
-    """
+        LayoutTaxonomy: LayoutTaxonomy instance with default config."""
     global _default_taxonomy
     if _default_taxonomy is None:
         _default_taxonomy = LayoutTaxonomy()
