@@ -71,10 +71,10 @@ class ScriptAwareMeasurementConfig:
     to apply script-appropriate CC filtering and morphological operations.
 
     Attributes:
-        script_family: Script family identifier ("cjk", "latin", "arabic", etc.).
-        cc_aspect_ratio_range: Valid component height/width ratio range for CC filtering.
-        morphological_closing_kernel: Kernel size (h, w) for reconnecting strokes.
-        min_script_confidence: Minimum script confidence required to use these params.
+        script_family (str): Script family identifier ("cjk", "latin", "arabic", etc.).
+        cc_aspect_ratio_range (tuple[float, float]): Valid component height/width ratio range for CC filtering.
+        morphological_closing_kernel (tuple[int, int]): Kernel size (h, w) for reconnecting strokes.
+        min_script_confidence (float): Minimum script confidence required to use these params.
     """
 
     script_family: str
@@ -106,7 +106,7 @@ def resolve_script_family(iso15924_code: str) -> str:
         iso15924_code (str): ISO 15924 4-letter script code (e.g., "Latn", "Hans").
 
     Returns:
-        Script family string: "cjk", "arabic", "devanagari", or "latin" (default).
+        str: Script family string ("cjk", "arabic", "devanagari", or "latin" (default)).
     """
     if iso15924_code in _CJK_SCRIPTS:
         return "cjk"
@@ -149,25 +149,25 @@ class ResolutionQualityResult:
     """Per-image resolution quality measurement with confidence and range.
 
     Attributes:
-        resolution_quality_score: Primary label (0-1), piecewise-mapped from char_height_px.
-        confidence_pct: Measurement confidence (0-1).
-        char_height_px: Weighted median character height across all text regions.
-        char_height_range_px: 95% CI as [P25, P75] of per-region heights.
-        score_range: Quality score range from char_height_range_px through piecewise mapping.
-        coarse_bucket: One of the CoarseBucket enum values.
-        measurement_method: 'stage_1_2' (full) or 'stage_1_only' (CC failed).
-        num_text_regions: Total text line regions detected by DBNet.
-        num_valid_cc_regions: Regions where Stage 2 CC analysis succeeded.
-        height_cv: Coefficient of variation of per-region heights.
-        flagged_for_review: True if low confidence or insufficient data.
-        label_provenance: Provenance tier for weak label pipeline.
-        label_source: Source identifier for the label.
-        label_confidence: Confidence in the label (0-1), used for training weight.
-        script_used: ISO 15924 code if script-aware measurement was used.
-        script_confidence: Confidence of script detection (None if N/A).
-        bucket_probabilities: Soft label distribution over 5 coarse buckets.
-        quality_score_std: Teacher's quality_score regression uncertainty (std dev).
-        char_height_std: Teacher's char_height regression uncertainty (std dev).
+        resolution_quality_score (float): Primary label (0-1), piecewise-mapped from char_height_px.
+        confidence_pct (float): Measurement confidence (0-1).
+        char_height_px (float): Weighted median character height across all text regions.
+        char_height_range_px (tuple[float, float]): 95% CI as [P25, P75] of per-region heights.
+        score_range (tuple[float, float]): Quality score range from char_height_range_px through piecewise mapping.
+        coarse_bucket (str): One of the CoarseBucket enum values.
+        measurement_method (str): 'stage_1_2' (full) or 'stage_1_only' (CC failed).
+        num_text_regions (int): Total text line regions detected by DBNet.
+        num_valid_cc_regions (int): Regions where Stage 2 CC analysis succeeded.
+        height_cv (float): Coefficient of variation of per-region heights.
+        flagged_for_review (bool): True if low confidence or insufficient data.
+        label_provenance (str): Provenance tier for weak label pipeline.
+        label_source (str): Source identifier for the label.
+        label_confidence (float): Confidence in the label (0-1), used for training weight.
+        script_used (str | None): ISO 15924 code if script-aware measurement was used.
+        script_confidence (float | None): Confidence of script detection (None if N/A).
+        bucket_probabilities (dict[str, float] | None): Soft label distribution over 5 coarse buckets.
+        quality_score_std (float | None): Teacher's quality_score regression uncertainty (std dev).
+        char_height_std (float | None): Teacher's char_height regression uncertainty (std dev).
     """
 
     resolution_quality_score: float

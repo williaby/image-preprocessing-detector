@@ -33,17 +33,12 @@ from pathlib import Path
 class EnrichmentError(Exception):
     """Base class for all enrichment errors.
 
-    Attributes:
-        message: Human-readable error message
-        cause: Original exception that caused this error (if any)
+    Args:
+        message (str): Error message describing what went wrong.
+        cause (Exception | None): Original exception that caused this error.
     """
 
     def __init__(self, message: str, cause: Exception | None = None):
-        """Initialize EnrichmentError.
-
-        Args:
-            message (str): Error message describing what went wrong
-            cause (Exception | None): Original exception that caused this error"""
         self.cause = cause
         super().__init__(message)
 
@@ -54,19 +49,13 @@ class InferenceError(EnrichmentError):
     Raised when a provider encounters an error during model inference,
     such as CUDA out of memory, model loading failure, or inference timeout.
 
-    Attributes:
-        provider_name: Name of the provider that failed
-        batch_size: Size of the batch being processed
-        cause: Original exception
+    Args:
+        provider_name (str): Name of the provider (e.g., "doclayout_yolo").
+        batch_size (int): Number of images in the batch.
+        cause (Exception): Original exception from inference.
     """
 
     def __init__(self, provider_name: str, batch_size: int, cause: Exception):
-        """Initialize InferenceError.
-
-        Args:
-            provider_name (str): Name of the provider (e.g., "doclayout_yolo")
-            batch_size (int): Number of images in the batch
-            cause (Exception): Original exception from inference"""
         self.provider_name = provider_name
         self.batch_size = batch_size
         message = (
@@ -83,17 +72,12 @@ class ProviderUnavailableError(EnrichmentError):
     GPU is required but not available, model checkpoint is missing, or
     dependencies are not installed.
 
-    Attributes:
-        provider_name: Name of the provider
-        reason: Why the provider is unavailable
+    Args:
+        provider_name (str): Name of the provider (e.g., "siglip_iqa").
+        reason (str): Explanation of why the provider is unavailable.
     """
 
     def __init__(self, provider_name: str, reason: str):
-        """Initialize ProviderUnavailableError.
-
-        Args:
-            provider_name (str): Name of the provider (e.g., "siglip_iqa")
-            reason (str): Explanation of why the provider is unavailable"""
         self.provider_name = provider_name
         self.reason = reason
         message = f"Provider '{provider_name}' is unavailable: {reason}"
@@ -107,17 +91,12 @@ class ValidationError(EnrichmentError):
     such as confidence scores out of range, invalid bounding boxes,
     or missing required fields.
 
-    Attributes:
-        errors: List of validation error messages
-        warnings: List of validation warning messages
+    Args:
+        errors (list[str]): List of validation error messages.
+        warnings (list[str] | None): List of non-fatal warning messages.
     """
 
     def __init__(self, errors: list[str], warnings: list[str] | None = None):
-        """Initialize ValidationError.
-
-        Args:
-            errors (list[str]): List of validation error messages
-            warnings (list[str] | None): List of non-fatal warning messages"""
         self.errors = errors
         self.warnings = warnings or []
         message = f"Validation failed with {len(errors)} error(s): {errors[0]}"
@@ -130,11 +109,11 @@ class BatchProcessingError(EnrichmentError):
     Raised when batch processing completes but some images failed to process.
     Contains details about which images failed and why.
 
-    Attributes:
-        total_count: Total number of images in batch
-        failed_count: Number of images that failed
-        failed_paths: Paths to images that failed
-        partial_results: Successfully processed results (if any)
+    Args:
+        total_count (int): Total images in the batch.
+        failed_count (int): Number that failed processing.
+        failed_paths (list[Path]): List of paths that failed.
+        partial_results (list | None): Any successfully processed results.
     """
 
     def __init__(
@@ -144,13 +123,6 @@ class BatchProcessingError(EnrichmentError):
         failed_paths: list[Path],
         partial_results: list | None = None,
     ):
-        """Initialize BatchProcessingError.
-
-        Args:
-            total_count (int): Total images in the batch
-            failed_count (int): Number that failed processing
-            failed_paths (list[Path]): List of paths that failed
-            partial_results (list | None): Any successfully processed results"""
         self.total_count = total_count
         self.failed_count = failed_count
         self.failed_paths = failed_paths

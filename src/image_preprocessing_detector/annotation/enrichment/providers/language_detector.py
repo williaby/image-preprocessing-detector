@@ -124,10 +124,10 @@ class ExtractedText:
     """Result of text extraction from parser output.
 
     Attributes:
-        text: Combined extracted text
-        source: Where text came from (transcription, text_instances, raw_labels, etc.)
-        char_count: Number of characters extracted
-        word_count: Estimated word count
+        text (str): Combined extracted text
+        source (str): Where text came from (transcription, text_instances, raw_labels, etc.)
+        char_count (int): Number of characters extracted
+        word_count (int): Estimated word count
     """
 
     text: str
@@ -286,11 +286,10 @@ class LanguageDetectionProvider:
         - BCP 47 language tags
         - Confidence scores
 
-    Attributes:
-        name: Provider identifier ("openlid_v2")
-        tier: Enrichment tier ("tier_2_model")
-        min_confidence: Minimum confidence threshold
-        min_text_length: Minimum text length for reliable detection
+    Args:
+        min_confidence (float): Minimum confidence for valid detection (0.0-1.0).
+        min_text_length (int): Minimum characters needed for reliable detection.
+        model_path (Path | str | None): Optional custom path to OpenLID model.
     """
 
     def __init__(
@@ -299,12 +298,6 @@ class LanguageDetectionProvider:
         min_text_length: int = 10,
         model_path: Path | str | None = None,
     ):
-        """Initialize language detection provider.
-
-        Args:
-            min_confidence (float): Minimum confidence for valid detection (0.0-1.0)
-            min_text_length (int): Minimum characters needed for reliable detection
-            model_path (Path | str | None): Optional custom path to OpenLID model"""
         self.min_confidence = min_confidence
         self.min_text_length = min_text_length
         self._model_path = model_path
@@ -478,9 +471,6 @@ class LanguageDetectionProvider:
 
         Returns:
             EnrichmentData: Empty EnrichmentData (images require OCR first)
-
-        Raises:
-            NotImplementedError: Direct image detection not supported
         """
         # For now, return empty - images need OCR first
         logger.warning(

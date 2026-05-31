@@ -53,7 +53,7 @@ def _hash_to_split(
         ratios (tuple[float, float, float]): (train, val, test) ratios summing to 1.0
 
     Returns:
-        Split name: "train", "val", or "test"
+        str: Split name ("train", "val", or "test").
     """
     # Take first 8 bytes of hash -> uint64 -> normalize to [0, 1)
     hash_bytes = bytes.fromhex(sha256_hex[:16])
@@ -96,16 +96,11 @@ class SplitRegistry:
     - Existing entries are never modified
     - Lookups are O(1) via in-memory dict loaded at init
 
-    Attributes:
-        registry_path: Path to the JSONL registry file
-        _entries: In-memory dict mapping SHA256 -> split assignment
+    Args:
+        registry_path (str | Path): Path to the JSONL file (created if not exists).
     """
 
     def __init__(self, registry_path: str | Path) -> None:
-        """Initialize the split registry.
-
-        Args:
-            registry_path (str | Path): Path to the JSONL file (created if not exists)"""
         self.registry_path = Path(registry_path)
         self._entries: dict[str, dict[str, Any]] = {}
         if self.registry_path.exists():

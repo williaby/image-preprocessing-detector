@@ -63,16 +63,21 @@ class SigLIPProvider:
     - 1.0 = Bad quality, severe degradation
 
     Attributes:
-        model_path: Path to SigLIP model checkpoint (HuggingFace format)
-        batch_size: Batch size for inference
-        device: Device to use ("cuda", "cpu", or None for auto-detect)
-        min_confidence_threshold: Minimum confidence for predictions
+        DEFAULT_BATCH_SIZE (int): Default batch size for inference.
+        DEFAULT_MIN_CONFIDENCE (float): Default minimum confidence threshold.
+        MODEL_NAME (str): Provider model identifier.
 
     Design Notes:
         - Implements both EnrichmentProvider and QualityScoreProvider protocols
         - Lazy-loads model on first use to avoid startup overhead
         - Auto-detects GPU availability and falls back to CPU with warning
         - Uses transformers library for model loading and inference
+
+    Args:
+        model_path (Path | str | None): Path to SigLIP model checkpoint (HuggingFace format). Should contain config.json, model.safetensors, etc.
+        batch_size (int): Batch size for inference (default: 32).
+        device (str | None): Device to use (None for auto-detect, "cuda" or "cpu").
+        min_confidence_threshold (float): Minimum confidence threshold (default: 0.5).
     """
 
     # Model configuration constants
@@ -87,13 +92,6 @@ class SigLIPProvider:
         device: str | None = None,
         min_confidence_threshold: float = DEFAULT_MIN_CONFIDENCE,
     ):
-        """Initialize SigLIPProvider.
-
-        Args:
-            model_path (Path | str | None): Path to SigLIP model checkpoint (HuggingFace format). Should contain config.json, model.safetensors, etc.
-            batch_size (int): Batch size for inference (default: 32)
-            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")
-            min_confidence_threshold (float): Minimum confidence threshold (default: 0.5)"""
         self.model_path = Path(model_path) if model_path else None
         self.batch_size = batch_size
         self._requested_device = device
@@ -298,15 +296,8 @@ class SigLIPProvider:
             image_path (Path): Path to image file
 
         Returns:
-            EnrichmentData with LLM quality scores populated:
-            - llm_predicted_mos: MOS score (1.0-5.0)
-            - llm_predicted_normalized: Normalized score (0.0-1.0)
-            - llm_prediction_confidence: Prediction confidence (0.0-1.0)
-            - llm_model_name: "siglip_iqa"
-
-        Raises:
-            InferenceError: If inference fails
-            ProviderUnavailableError: If provider is not available
+            EnrichmentData: EnrichmentData with llm_predicted_mos, llm_predicted_normalized,
+                llm_prediction_confidence, and llm_model_name populated.
         """
         return self.enrich_batch([image_path])[0]
 
@@ -325,8 +316,7 @@ class SigLIPProvider:
             list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
-            InferenceError: If batch inference fails
-            ProviderUnavailableError: If provider is not available
+            InferenceError: If batch inference fails.
         """
         # Short-circuit before loading model for empty batches
         if not image_paths:

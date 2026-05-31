@@ -59,10 +59,10 @@ class ValidationMessage:
     """Single validation message with context.
 
     Attributes:
-        severity: ERROR, WARNING, or INFO
-        field: Field name that has the issue (or None for general issues)
-        message: Human-readable description of the issue
-        suggestion: Optional suggestion for fixing the issue
+        severity (ValidationSeverity): ERROR, WARNING, or INFO
+        field (str | None): Field name that has the issue (or None for general issues)
+        message (str): Human-readable description of the issue
+        suggestion (str | None): Optional suggestion for fixing the issue
     """
 
     severity: ValidationSeverity
@@ -83,9 +83,8 @@ class ValidationResult:
     """Result of validating a dataset configuration.
 
     Attributes:
-        dataset_name: Name of the validated dataset
-        is_valid: True if no errors (warnings OK)
-        messages: List of all validation messages
+        dataset_name (str): Name of the validated dataset
+        messages (list[ValidationMessage]): List of all validation messages
     """
 
     dataset_name: str
@@ -167,7 +166,7 @@ class BatchValidationReport:
     """Report from validating multiple dataset configs.
 
     Attributes:
-        results: Mapping of dataset name to validation result
+        results (dict[str, ValidationResult]): Mapping of dataset name to validation result
     """
 
     results: dict[str, ValidationResult] = field(default_factory=dict)

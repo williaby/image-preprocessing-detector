@@ -39,21 +39,21 @@ class OcrProxyMetrics:
     """Per-image OCR quality proxy metrics.
 
     Attributes:
-        text_yield: Characters extracted per megapixel of image area.
-        word_density: Words per unit of text-region area (px^2), or 0.0.
-        ocr_completeness: Fraction of layout text regions with extracted text.
-        cjk_latin_consistency: Normalized Shannon entropy of Unicode block
+        text_yield (float): Characters extracted per megapixel of image area.
+        word_density (float): Words per unit of text-region area (px^2), or 0.0.
+        ocr_completeness (float): Fraction of layout text regions with extracted text.
+        cjk_latin_consistency (float): Normalized Shannon entropy of Unicode block
             distribution (0=single block, 1=maximally dispersed/garbled).
-        line_regularity: 1 - coefficient of variation of line lengths.
+        line_regularity (float): 1 - coefficient of variation of line lengths.
             Higher = more regular (well-extracted text).
-        valid_char_rate: Fraction of non-whitespace chars in expected Unicode
+        valid_char_rate (float): Fraction of non-whitespace chars in expected Unicode
             categories (Lo, Lu, Ll, Nd, Po, Ps, Pe). Garbled OCR produces
             control chars and private-use-area characters.
-        layout_text_agreement: Normalized agreement between layout text-region
+        layout_text_agreement (float): Normalized agreement between layout text-region
             count and OCR text volume. 1.0 = perfect agreement.
-        ori_res_text_delta: Change in text_yield relative to the original
+        ori_res_text_delta (float | None): Change in text_yield relative to the original
             image (for paired datasets). None if not applicable.
-        siglip2_ocr_agreement: 1 - |normalized_iqa_mu - normalized_text_yield|.
+        siglip2_ocr_agreement (float | None): 1 - |normalized_iqa_mu - normalized_text_yield|.
             1.0 = perfect agreement. None if SigLIP2 data unavailable.
     """
 
@@ -335,8 +335,8 @@ def compute_ori_res_text_delta(
         ori_text_yield (float): text_yield of the original (ori/) image.
 
     Returns:
-        Relative delta: (res - ori) / max(ori, epsilon).
-        Positive = enhanced image yields more text.
+        float: Relative delta (res - ori) / max(ori, epsilon).
+            Positive = enhanced image yields more text.
     """
     epsilon = 1.0  # Avoid division by zero
     return (res_text_yield - ori_text_yield) / max(ori_text_yield, epsilon)

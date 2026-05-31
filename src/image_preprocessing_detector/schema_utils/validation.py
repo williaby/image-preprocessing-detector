@@ -93,7 +93,6 @@ def validate_enrichment(
         ValidationResult: ValidationResult with valid flag, errors, and warnings
 
     Raises:
-        ValidationError: If raise_on_error=True and validation fails
         ImportError: If jsonschema is not installed
     """
     if not JSONSCHEMA_AVAILABLE:
@@ -117,7 +116,11 @@ def validate_document_metadata(
         raise_on_error (bool): If True, raise ValidationError on first error
 
     Returns:
-        ValidationResult: ValidationResult with valid flag, errors, and warnings"""
+        ValidationResult: ValidationResult with valid flag, errors, and warnings
+
+    Raises:
+        ImportError: If jsonschema is not installed
+    """
     if not JSONSCHEMA_AVAILABLE:
         raise ImportError(
             "jsonschema package required for validation. "
@@ -299,13 +302,16 @@ class SchemaValidator:
     """Reusable validator with cached schema.
 
     Use this when validating many records against the same schema.
+
+    Args:
+        schema_type (str): "layer2" for enrichment, "output" for document metadata.
+
+    Raises:
+        ImportError: If jsonschema is not installed.
+        ValueError: If schema_type is not "layer2" or "output".
     """
 
     def __init__(self, schema_type: str = "layer2"):
-        """Initialize validator.
-
-        Args:
-            schema_type (str): "layer2" for enrichment, "output" for document metadata"""
         if not JSONSCHEMA_AVAILABLE:
             raise ImportError("jsonschema package required")
 

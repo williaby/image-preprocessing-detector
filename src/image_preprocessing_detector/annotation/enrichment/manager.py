@@ -52,10 +52,10 @@ class EnrichmentResult:
     """Result of enrichment with optional errors.
 
     Attributes:
-        data: Enriched data (may be partial on error)
-        errors: List of error messages encountered
-        warnings: List of non-fatal warning messages
-        providers_used: Names of providers that processed this image
+        data (EnrichmentData): Enriched data (may be partial on error)
+        errors (list[str]): List of error messages encountered
+        warnings (list[str]): List of non-fatal warning messages
+        providers_used (list[str]): Names of providers that processed this image
     """
 
     data: EnrichmentData
@@ -83,10 +83,10 @@ class EnrichmentManager:
         - Dead-letter queue for failed samples
         - Retry logic for transient failures
 
-    Attributes:
-        providers: List of enrichment providers
-        validate: Whether to validate enrichment results
-        max_retries: Maximum retry attempts for transient failures
+    Args:
+        providers (list[EnrichmentProvider]): List of enrichment providers to use.
+        validate (bool): Whether to validate enrichment results (default: True).
+        max_retries (int): Maximum retry attempts for transient failures.
     """
 
     def __init__(
@@ -95,12 +95,6 @@ class EnrichmentManager:
         validate: bool = True,
         max_retries: int = 2,
     ):
-        """Initialize EnrichmentManager.
-
-        Args:
-            providers (list[EnrichmentProvider]): List of enrichment providers to use
-            validate (bool): Whether to validate enrichment results (default: True)
-            max_retries (int): Maximum retry attempts for transient failures"""
         self.providers = providers
         self.validate = validate
         self.max_retries = max_retries

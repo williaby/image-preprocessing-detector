@@ -136,6 +136,22 @@ def add_dataset(
 
     Generates parser boilerplate, config entry, and test stub for a new dataset.
 
+    Args:
+        name (str | None): Dataset name (prompted if not provided in interactive mode).
+        category (str | None): Parser category (prompted if not provided).
+        domain (str | None): Document domain (prompted if not provided).
+        url (str): Dataset URL.
+        license_ (str): Dataset license identifier.
+        samples (str): Approximate sample count.
+        output_dir (Path | None): Output directory for generated files.
+        interactive (bool): Enable/disable interactive prompts.
+        overwrite (bool): Overwrite existing files.
+
+    Raises:
+        click.Abort: If user declines to proceed.
+        click.BadParameter: If required parameter is missing.
+        click.UsageError: If required args missing in non-interactive mode.
+
     \b
     Examples:
         # Interactive mode (prompts for missing values)
@@ -314,6 +330,11 @@ def add_dataset(
 def validate(dataset: str | None, check_paths: bool, _verbose: bool) -> None:
     r"""Validate dataset configurations.
 
+    Args:
+        dataset (str | None): Validate specific dataset (default: all).
+        check_paths (bool): Also check if dataset paths exist.
+        _verbose (bool): Show all messages including INFO.
+
     \b
     Examples:
         # Validate all datasets
@@ -382,6 +403,10 @@ def validate(dataset: str | None, check_paths: bool, _verbose: bool) -> None:
 )
 def list_datasets(category: str, output_format: str) -> None:
     r"""List all registered datasets.
+
+    Args:
+        category (str): Filter by category ("all", "benchmark", or "training").
+        output_format (str): Output format ("table", "json", or "names").
 
     \b
     Examples:
@@ -502,6 +527,14 @@ def migrate(
     r"""Run schema migrations on metadata files.
 
     Uses FileMigrator for safe, atomic migrations with backup support.
+
+    Args:
+        path (Path): Path to file or directory to migrate.
+        target_version (str | None): Target schema version (default: latest).
+        dry_run (bool): Preview changes without modifying files.
+        backup (bool): Create backup before migration.
+        recursive (bool): Process directory recursively.
+        rollback (str | None): Rollback to specific version.
 
     \b
     Examples:
@@ -708,6 +741,17 @@ def preflight(
 
     Validates disk space, path accessibility, model files, and system
     readiness before starting long-running annotation operations.
+
+    Args:
+        dataset (Path | None): Dataset path to validate.
+        output (Path | None): Output directory for results.
+        checkpoint (Path | None): Checkpoint directory.
+        min_disk_gb (float): Minimum required disk space in GB.
+        check_models (bool): Check model file existence.
+        verbose (bool): Show detailed check results.
+        output_json (bool): Output results as JSON.
+        from_settings (bool): Load paths from AnnotationSettings.
+        check_providers (tuple[str, ...]): Provider names to check availability for.
 
     \b
     Examples:

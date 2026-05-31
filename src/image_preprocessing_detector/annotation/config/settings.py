@@ -50,26 +50,19 @@ class AnnotationSettings:
     Frozen dataclass ensures settings are immutable after creation.
 
     Attributes:
-        # Paths
-        e_drive_root: Root path for image detection data
-        metadata_root: Root path for metadata registry output
-        checkpoint_dir: Directory for checkpoint files
-
-        # Processing
-        cache_size_limit: Maximum LRU cache entries
-        batch_size: Images per batch for GPU inference
-        checkpoint_interval: Batches between checkpoints
-        workers: CPU worker processes for parallel parsing
-
-        # Integrity (P0-1, P2-2 fixes)
-        hash_full_file: Always True - enables full-file SHA256
-        atomic_fsync: Enable fsync for critical data durability
-
-        # ML Providers
-        yolo_confidence_threshold: Minimum YOLO detection confidence
-        yolo_model_path: Path to YOLO model weights (None = default)
-        siglip_model_path: Path to SigLIP model checkpoint (HuggingFace format)
-        siglip_batch_size: Batch size for SigLIP inference
+        e_drive_root (Path): Root path for image detection data
+        metadata_root (Path): Root path for metadata registry output
+        checkpoint_dir (Path): Directory for checkpoint files
+        cache_size_limit (int): Maximum LRU cache entries
+        batch_size (int): Images per batch for GPU inference
+        checkpoint_interval (int): Batches between checkpoints
+        workers (int): CPU worker processes for parallel parsing
+        hash_full_file (bool): Always True - enables full-file SHA256
+        atomic_fsync (bool): Enable fsync for critical data durability
+        yolo_confidence_threshold (float): Minimum YOLO detection confidence
+        yolo_model_path (Path | None): Path to YOLO model weights (None = default)
+        siglip_model_path (Path | None): Path to SigLIP model checkpoint (HuggingFace format)
+        siglip_batch_size (int): Batch size for SigLIP inference
     """
 
     # Paths
@@ -173,8 +166,7 @@ class AnnotationSettings:
             AnnotationSettings: AnnotationSettings instance
 
         Raises:
-            FileNotFoundError: If config file doesn't exist
-            ValueError: If config is malformed
+            TypeError: If config file is not a valid mapping.
         """
         config_path = Path(config_path)
         with open(config_path) as f:

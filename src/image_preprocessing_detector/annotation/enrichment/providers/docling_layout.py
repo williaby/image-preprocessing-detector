@@ -76,10 +76,12 @@ class DoclingLayoutProvider:
     detection across 17 document element classes.
 
     Attributes:
-        model_repo: HuggingFace model repository ID
-        confidence_threshold: Minimum confidence for detections (0.0-1.0)
-        batch_size: Batch size for processing (sequential per-image)
-        device: Device to use ("cuda", "cpu", or None for auto-detect)
+        MODEL_REPO: HuggingFace model repository ID.
+
+    Args:
+        confidence_threshold (float): Minimum detection confidence (default: 0.3).
+        batch_size (int): Number of images per batch (default: 1, sequential).
+        device (str | None): Device to use (None for auto-detect, "cuda" or "cpu").
     """
 
     MODEL_REPO = "ds4sd/docling-layout-egret-xlarge"
@@ -90,12 +92,6 @@ class DoclingLayoutProvider:
         batch_size: int = 1,
         device: str | None = None,
     ):
-        """Initialize DoclingLayoutProvider.
-
-        Args:
-            confidence_threshold (float): Minimum detection confidence (default: 0.3)
-            batch_size (int): Number of images per batch (default: 1, sequential)
-            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")"""
         self.confidence_threshold = confidence_threshold
         self.batch_size = batch_size
         self._device = device
@@ -247,10 +243,6 @@ class DoclingLayoutProvider:
 
         Returns:
             EnrichmentData: EnrichmentData with layout_detections and content flags populated
-
-        Raises:
-            InferenceError: If inference fails
-            ProviderUnavailableError: If provider is not available
         """
         return self.enrich_batch([image_path])[0]
 
@@ -265,7 +257,6 @@ class DoclingLayoutProvider:
 
         Raises:
             InferenceError: If batch inference fails
-            ProviderUnavailableError: If provider is not available
         """
         if not image_paths:
             return []

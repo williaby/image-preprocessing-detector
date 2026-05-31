@@ -471,12 +471,12 @@ class OpenLIDResult:
     """Result from OpenLID-v2 language detection.
 
     Attributes:
-        language_639_3: ISO 639-3 language code (e.g., "eng", "cmn")
-        language_639_1: ISO 639-1 language code (e.g., "en", "zh")
-        script_code: ISO 15924 script code (e.g., "Latn", "Hans")
-        confidence: Detection confidence (0.0 - 1.0)
-        raw_label: Original model label (e.g., "__label__eng_Latn")
-        is_dialect: Whether this is a dialect/variant code
+        language_639_3 (str): ISO 639-3 language code (e.g., "eng", "cmn")
+        language_639_1 (str): ISO 639-1 language code (e.g., "en", "zh")
+        script_code (str): ISO 15924 script code (e.g., "Latn", "Hans")
+        confidence (float): Detection confidence (0.0 - 1.0)
+        raw_label (str): Original model label (e.g., "__label__eng_Latn")
+        is_dialect (bool): Whether this is a dialect/variant code
     """
 
     language_639_3: str
@@ -514,6 +514,10 @@ class OpenLIDDetector:
 
     Handles model loading, numpy 2.x compatibility, and result parsing.
 
+    Args:
+        model_path (Path | str | None): Path to openlid_v2.bin model file. If None, uses default path.
+        auto_download (bool): If True and model not found, download from HuggingFace.
+
     Example:
         >>> detector = OpenLIDDetector()
         >>> result = detector.detect("Hello, world!")
@@ -526,11 +530,6 @@ class OpenLIDDetector:
         model_path: Path | str | None = None,
         auto_download: bool = True,
     ) -> None:
-        """Initialize the OpenLID detector.
-
-        Args:
-            model_path (Path | str | None): Path to openlid_v2.bin model file. If None, uses default path.
-            auto_download (bool): If True and model not found, download from HuggingFace."""
         if model_path is None:
             model_path = DEFAULT_MODEL_DIR / OPENLID_MODEL_FILENAME
         else:

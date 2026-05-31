@@ -49,11 +49,11 @@ class YOLOProvider:
     Provides batch processing for GPU efficiency and availability
     checking for robust operation.
 
-    Attributes:
-        model_path: Path to YOLO model checkpoint
-        confidence_threshold: Minimum confidence for detections (0.0-1.0)
-        batch_size: Batch size for inference
-        device: Device to use ("cuda", "cpu", or None for auto-detect)
+    Args:
+        model_path (Path | str | None): Path to YOLO checkpoint (e.g., "doclayout_yolo.pt").
+        confidence_threshold (float): Minimum detection confidence (default: 0.25).
+        batch_size (int): Batch size for inference (default: 8).
+        device (str | None): Device to use (None for auto-detect, "cuda" or "cpu").
     """
 
     def __init__(
@@ -63,13 +63,6 @@ class YOLOProvider:
         batch_size: int = 8,
         device: str | None = None,
     ):
-        """Initialize YOLOProvider.
-
-        Args:
-            model_path (Path | str | None): Path to YOLO checkpoint (e.g., "doclayout_yolo.pt")
-            confidence_threshold (float): Minimum detection confidence (default: 0.25)
-            batch_size (int): Batch size for inference (default: 8)
-            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")"""
         self.model_path = Path(model_path) if model_path else None
         self.confidence_threshold = confidence_threshold
         self.batch_size = batch_size
@@ -201,10 +194,6 @@ class YOLOProvider:
 
         Returns:
             EnrichmentData: EnrichmentData with layout_detections populated
-
-        Raises:
-            InferenceError: If inference fails
-            ProviderUnavailableError: If provider is not available
         """
         return self.enrich_batch([image_path])[0]
 
@@ -223,8 +212,7 @@ class YOLOProvider:
             list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
-            InferenceError: If batch inference fails
-            ProviderUnavailableError: If provider is not available
+            InferenceError: If batch inference fails.
         """
         # Short-circuit before loading model for empty batches
         if not image_paths:

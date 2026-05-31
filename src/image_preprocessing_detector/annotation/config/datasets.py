@@ -66,36 +66,26 @@ class DatasetConfig:
     Uses path suffixes for portability across environments.
 
     Attributes:
-        name: Unique dataset identifier (matches DATASET_CONFIGS key)
-        path_suffix: Path relative to e_drive_root (e.g., "01_base_data/tables/tablebank")
-        pattern: Glob pattern for finding images (e.g., "**/*.jpg")
-        capture_method: How the document was captured/digitized
-        domain: Primary document domain classification
-        is_benchmark: True if dataset is in BENCHMARK_ONLY (not BASE_DATA)
-        has_human_mos: True if dataset contains human Mean Opinion Scores
-
-        # Optional content flags (Tier 0 exact)
-        has_table: Guaranteed table presence (True/False) or None (unknown)
-        has_formula: Guaranteed formula presence (True/False) or None (unknown)
-        has_handwriting: Guaranteed handwriting presence (True/False) or None (unknown)
-        has_signature: Guaranteed signature presence (True/False) or None (unknown)
-
-        # Parser reference
-        parser_name: Name of parser function (e.g., "diqa" for DIQAParser)
-
-        # Special flags
-        has_coco_annotations: True if dataset has COCO-format annotations
-        arrow_format: True if dataset requires Arrow format extraction
-        has_paired_gt: True if dataset has pixel-aligned ground truth
-
-        # Multilingual fields
-        iso639_language: ISO 639-1 or 639-3 language code (e.g., "ur", "ar")
-        iso15924_script: ISO 15924 script code (e.g., "Arab", "Deva")
-        text_scope: Text granularity level (word/line/phrase/paragraph/page/mixed)
-        paper_size: Physical paper size if known (e.g., "A4", "Letter")
-
-        # Dataset-specific
-        mos_file: Path to MOS scores file relative to dataset root
+        name (str): Unique dataset identifier (matches DATASET_CONFIGS key)
+        path_suffix (str): Path relative to e_drive_root (e.g., "01_base_data/tables/tablebank")
+        pattern (str): Glob pattern for finding images (e.g., "**/*.jpg")
+        capture_method (CaptureMethod): How the document was captured/digitized
+        domain (DomainLevel1): Primary document domain classification
+        is_benchmark (bool): True if dataset is in BENCHMARK_ONLY (not BASE_DATA)
+        has_human_mos (bool): True if dataset contains human Mean Opinion Scores
+        has_table (bool | None): Guaranteed table presence (True/False) or None (unknown)
+        has_formula (bool | None): Guaranteed formula presence (True/False) or None (unknown)
+        has_handwriting (bool | None): Guaranteed handwriting presence (True/False) or None (unknown)
+        has_signature (bool | None): Guaranteed signature presence (True/False) or None (unknown)
+        parser_name (str | None): Name of parser function (e.g., "diqa" for DIQAParser)
+        has_coco_annotations (bool): True if dataset has COCO-format annotations
+        arrow_format (bool): True if dataset requires Arrow format extraction
+        has_paired_gt (bool): True if dataset has pixel-aligned ground truth
+        iso639_language (str | None): ISO 639-1 or 639-3 language code (e.g., "ur", "ar")
+        iso15924_script (str | None): ISO 15924 script code (e.g., "Arab", "Deva")
+        text_scope (str | None): Text granularity level (word/line/phrase/paragraph/page/mixed)
+        paper_size (str | None): Physical paper size if known (e.g., "A4", "Letter")
+        mos_file (str | None): Path to MOS scores file relative to dataset root
     """
 
     # Required fields

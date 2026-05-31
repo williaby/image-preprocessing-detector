@@ -35,21 +35,16 @@ class ScriptMLMapping:
     methods to convert ISO 15924 codes to ML training classes.
 
     Attributes:
-        config_path: Path to the YAML config file
-        ml_classes: Set of valid ML class names
-        mapping: Dict mapping ISO 15924 codes to ML classes
-        default: Default ML class for unmapped scripts
-        class_weights: Optional dict of class weights for training
+        DEFAULT_CONFIG_PATH: Default config path relative to project root.
+
+    Args:
+        config_path (Path | str | None): Path to config YAML. If None, uses default path. Searches relative to package, then project root.
     """
 
     # Default config path relative to project root
     DEFAULT_CONFIG_PATH = Path("config/script_ml_classes.yaml")
 
     def __init__(self, config_path: Path | str | None = None) -> None:
-        """Initialize mapping from config file.
-
-        Args:
-            config_path (Path | str | None): Path to config YAML. If None, uses default path. Searches relative to package, then project root."""
         self.config_path = self._resolve_config_path(config_path)
         self._load_config()
 
@@ -212,9 +207,6 @@ class ScriptMLMapping:
 
         Returns:
             str: ML class name
-
-        Raises:
-            IndexError: If index is out of range
         """
         classes = list(self.ml_classes)
         return classes[index]

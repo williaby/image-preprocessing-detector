@@ -135,10 +135,6 @@ class EnrichmentProvider(Protocol):
         Returns:
             EnrichmentData: EnrichmentData with derived annotations
 
-        Raises:
-            InferenceError: If inference fails
-            ProviderUnavailableError: If provider is not available
-
         Example:
             >>> enrichment = provider.enrich(Path("document.jpg"))
             >>> print(enrichment.layout_detections)
@@ -161,10 +157,6 @@ class EnrichmentProvider(Protocol):
 
         Returns:
             list[EnrichmentData]: List of EnrichmentData in same order as image_paths
-
-        Raises:
-            InferenceError: If batch inference fails
-            ProviderUnavailableError: If provider is not available
 
         Example:
             >>> paths = [Path("doc1.jpg"), Path("doc2.jpg")]

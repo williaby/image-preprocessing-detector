@@ -59,11 +59,14 @@ class SimulatedInferenceProvider:
     - Performance benchmarking of pipeline logic
     - Unit testing of downstream consumers
 
-    Attributes:
-        name: Provider identifier
-        tier: Enrichment tier (tier_2_model for simulation)
-        failure_rate: Probability of simulated failures (0.0-1.0)
-        seed: Random seed for reproducibility
+    Args:
+        failure_rate (float): Probability of simulated inference failure (0.0-1.0).
+        seed (int): Random seed for reproducible outputs.
+        simulate_latency (bool): Whether to add artificial latency.
+        latency_ms (int): Latency to add in milliseconds (if enabled).
+
+    Raises:
+        ValueError: If failure_rate is not in [0.0, 1.0].
     """
 
     def __init__(
@@ -73,13 +76,6 @@ class SimulatedInferenceProvider:
         simulate_latency: bool = False,
         latency_ms: int = 10,
     ):
-        """Initialize simulated provider.
-
-        Args:
-            failure_rate (float): Probability of simulated inference failure (0.0-1.0)
-            seed (int): Random seed for reproducible outputs
-            simulate_latency (bool): Whether to add artificial latency
-            latency_ms (int): Latency to add in milliseconds (if enabled)"""
         if not 0.0 <= failure_rate <= 1.0:
             raise ValueError(f"failure_rate must be 0.0-1.0, got {failure_rate}")
 
@@ -293,9 +289,6 @@ class SimulatedInferenceProvider:
 
         Returns:
             list[EnrichmentData]: List of EnrichmentData in same order as inputs
-
-        Raises:
-            InferenceError: If any simulated failure occurs
         """
         return [self.enrich(p) for p in image_paths]
 
