@@ -85,15 +85,13 @@ class FunsdPlusParser(BaseParser):
         """Parse FUNSD+ form annotations.
 
         Args:
-            dataset_path: Root path of the FUNSD+ dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the FUNSD+ dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with funsd_annotations (dict) and raw_labels populated
+            OriginalLabels: OriginalLabels with funsd_annotations (dict) and raw_labels populated
 
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
         """
         labels = OriginalLabels()
 

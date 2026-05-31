@@ -70,7 +70,6 @@ class HindiOcrSyntheticParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with CSV cache."""
         super().__init__()
         self._csv_cache: dict[Path, dict[str, dict[str, Any]]] = {}
 
@@ -88,12 +87,12 @@ class HindiOcrSyntheticParser(BaseParser):
         """Parse Hindi OCR Synthetic labels from CSV.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, transcription,
+            OriginalLabels: OriginalLabels with language_code, script_name, transcription,
             and raw_labels containing font and generation metadata
         """
         labels = OriginalLabels()
@@ -126,10 +125,10 @@ class HindiOcrSyntheticParser(BaseParser):
         """Load and cache CSV data for the dataset.
 
         Args:
-            dataset_path: Root path of the dataset
+            dataset_path (Path): Root path of the dataset
 
         Returns:
-            Dictionary mapping image filename to record data
+            dict[str, dict[str, Any]]: Dictionary mapping image filename to record data
         """
         if dataset_path in self._csv_cache:
             return self._csv_cache[dataset_path]

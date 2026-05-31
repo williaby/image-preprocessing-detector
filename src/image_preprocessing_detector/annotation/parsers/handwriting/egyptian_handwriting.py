@@ -83,12 +83,12 @@ class EgyptianHandwritingParser(BaseParser):
         """Parse Egyptian Handwriting labels for a single image.
 
         Args:
-            dataset_path: Root path of the Egyptian Handwriting dataset
-            image_path: Path to the extracted image (expected: row_{idx}.png)
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the Egyptian Handwriting dataset
+            image_path (Path): Path to the extracted image (expected: row_{idx}.png)
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            OriginalLabels with Arabic word label and script metadata
+            OriginalLabels: OriginalLabels with Arabic word label and script metadata
         """
         labels = OriginalLabels()
 
@@ -144,10 +144,10 @@ class EgyptianHandwritingParser(BaseParser):
         Supports patterns: row_0, row_00042, 0, 42, img_0, etc.
 
         Args:
-            stem: Image filename stem (without extension)
+            stem (str): Image filename stem (without extension)
 
         Returns:
-            Integer row index, or None if not extractable
+            int | None: Integer row index, or None if not extractable
         """
         # Try "row_{idx}" pattern
         if stem.startswith("row_"):
@@ -176,10 +176,10 @@ class EgyptianHandwritingParser(BaseParser):
         """Load and cache label column from parquet file.
 
         Args:
-            dataset_path: Root path of the dataset
+            dataset_path (Path): Root path of the dataset
 
         Returns:
-            List of label strings indexed by row number
+            list[str]: List of label strings indexed by row number
         """
         cache_key = str(dataset_path)
         if cache_key in self._parquet_cache:

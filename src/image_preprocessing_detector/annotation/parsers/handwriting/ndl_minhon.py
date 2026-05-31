@@ -74,7 +74,6 @@ class NdlMinhonParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with metadata cache."""
         super().__init__()
         self._metadata_cache: dict[Path, dict[str, dict[str, str]]] = {}
         self._annotation_cache: dict[str, dict[str, Any]] = {}
@@ -93,12 +92,12 @@ class NdlMinhonParser(BaseParser):
         """Parse NDL-Minhon labels from metadata CSV and annotations.
 
         Args:
-            dataset_path: Root path of the NDL-Minhon images directory
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the NDL-Minhon images directory
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language/script metadata, kuzushiji flag,
+            OriginalLabels: OriginalLabels with language/script metadata, kuzushiji flag,
             and book-level bibliographic information
         """
         labels = OriginalLabels()
@@ -156,11 +155,11 @@ class NdlMinhonParser(BaseParser):
         Expected path: images/{project_id}/{book_id}/image.png
 
         Args:
-            dataset_path: Root images directory
-            image_path: Absolute path to image
+            dataset_path (Path): Root images directory
+            image_path (Path): Absolute path to image
 
         Returns:
-            Tuple of (project_id, book_id)
+            tuple[str, str]: Tuple of (project_id, book_id)
         """
         try:
             rel = image_path.relative_to(dataset_path)
@@ -180,10 +179,10 @@ class NdlMinhonParser(BaseParser):
         book_name, attribution, ...
 
         Args:
-            dataset_root: Root path of NDL-Minhon dataset (parent of images/)
+            dataset_root (Path): Root path of NDL-Minhon dataset (parent of images/)
 
         Returns:
-            Dictionary mapping book_id to row data
+            dict[str, dict[str, str]]: Dictionary mapping book_id to row data
         """
         if dataset_root in self._metadata_cache:
             return self._metadata_cache[dataset_root]
@@ -221,11 +220,11 @@ class NdlMinhonParser(BaseParser):
         """Load transcription from per-book JSON annotation file.
 
         Args:
-            dataset_root: Root path of NDL-Minhon dataset
-            book_id: Book identifier
+            dataset_root (Path): Root path of NDL-Minhon dataset
+            book_id (str): Book identifier
 
         Returns:
-            Transcription text if available, None otherwise
+            str | None: Transcription text if available, None otherwise
         """
         if not book_id:
             return None
@@ -266,12 +265,12 @@ class NdlMinhonParser(BaseParser):
         Loads v2_metadata.csv once and extracts labels for all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Pre-load metadata CSV
         dataset_root = dataset_path.parent

@@ -81,11 +81,11 @@ class CcOcrParser(BaseParser):
         to find the TSV files in the sibling track directories.
 
         Args:
-            dataset_path: Root path of the CC-OCR extracted_images directory
-            image_path: Absolute path to the image file being processed
+            dataset_path (Path): Root path of the CC-OCR extracted_images directory
+            image_path (Path): Absolute path to the image file being processed
 
         Returns:
-            Path to TSV file, or None if not found
+            Path | None: Path to TSV file, or None if not found
         """
         # Extract path components
         parts = image_path.parts
@@ -123,10 +123,10 @@ class CcOcrParser(BaseParser):
         """Load TSV file and index by image_name.
 
         Args:
-            tsv_path: Path to TSV file
+            tsv_path (Path): Path to TSV file
 
         Returns:
-            Dict mapping image_name to row dict
+            dict[str, dict[str, str]]: Dict mapping image_name to row dict
 
         Note:
             Sets csv.field_size_limit to handle base64-encoded images
@@ -158,12 +158,12 @@ class CcOcrParser(BaseParser):
         """Parse CC-OCR labels from directory and JSON annotations.
 
         Args:
-            dataset_path: Root path of the CC-OCR dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the CC-OCR dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, transcription, and track
+            OriginalLabels: OriginalLabels with language_code, transcription, and track
             information populated
         """
         labels = OriginalLabels()

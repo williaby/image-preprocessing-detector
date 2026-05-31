@@ -120,10 +120,10 @@ class CocotextParser(BaseParser):
         Uses class-level caching to avoid reloading for each image.
 
         Args:
-            dataset_path: Root path of the COCO-Text dataset
+            dataset_path (Path): Root path of the COCO-Text dataset
 
         Returns:
-            True if annotations loaded successfully, False otherwise
+            bool: True if annotations loaded successfully, False otherwise
         """
         # Check if already cached for this path
         if (
@@ -188,10 +188,10 @@ class CocotextParser(BaseParser):
         """Get COCO image ID from filename.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            Image ID if found, None otherwise
+            int | None: Image ID if found, None otherwise
         """
         if CocotextParser._filename_to_id_cache is None:
             return None
@@ -221,12 +221,12 @@ class CocotextParser(BaseParser):
         """Parse COCO-Text annotations for an image.
 
         Args:
-            dataset_path: Root path of the COCO-Text dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the COCO-Text dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with text_instances and raw_labels containing
+            OriginalLabels: OriginalLabels with text_instances and raw_labels containing
             text annotations, language info, and attribute statistics
         """
         labels = OriginalLabels()
@@ -356,12 +356,12 @@ class CocotextParser(BaseParser):
         Loads annotations once and processes all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Ensure annotations are loaded
         self._load_annotations(dataset_path)

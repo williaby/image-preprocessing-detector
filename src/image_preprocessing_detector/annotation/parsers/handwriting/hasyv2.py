@@ -86,10 +86,10 @@ class HASYv2Parser(BaseParser):
         """Build a cache mapping image filenames to their labels.
 
         Args:
-            dataset_path: Root path of the HASYv2 dataset
+            dataset_path (Path): Root path of the HASYv2 dataset
 
         Returns:
-            Dictionary mapping filename (e.g., 'v2-00016.png') to label dict
+            dict[str, dict[str, Any]]: Dictionary mapping filename (e.g., 'v2-00016.png') to label dict
         """
         if self._label_cache is not None:
             return self._label_cache
@@ -147,12 +147,12 @@ class HASYv2Parser(BaseParser):
         """Parse HASYv2 labels for an image.
 
         Args:
-            dataset_path: Root path of the HASYv2 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the HASYv2 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with raw_labels containing:
+            OriginalLabels: OriginalLabels with raw_labels containing:
                 - symbol_id: Numeric class ID
                 - latex: LaTeX symbol representation
                 - user_id: Crowdsource contributor ID

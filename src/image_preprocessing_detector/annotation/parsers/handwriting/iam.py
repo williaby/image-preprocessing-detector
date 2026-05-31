@@ -83,7 +83,6 @@ class IAMParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize IAM parser with cached annotation data."""
         super().__init__()
         self._forms_cache: dict[str, dict[str, str]] = {}
         self._lines_cache: dict[str, dict[str, Any]] = {}
@@ -314,12 +313,12 @@ class IAMParser(BaseParser):
         """Parse IAM Handwriting labels from XML and TXT files.
 
         Args:
-            dataset_path: Root path of the IAM dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the IAM dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, provenance,
+            OriginalLabels: OriginalLabels with language_code, script_name, provenance,
             text_content, and raw_labels containing handwriting annotations
         """
         labels = OriginalLabels()

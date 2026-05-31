@@ -109,12 +109,12 @@ class IIITHWHindiParser(BaseParser):
         """Parse IIIT-HW-Hindi labels from TSV ground truth and filename metadata.
 
         Args:
-            dataset_path: Root path of the locally-extracted IIIT-HW-Hindi dataset
-            image_path: Absolute path to the JPEG image being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the locally-extracted IIIT-HW-Hindi dataset
+            image_path (Path): Absolute path to the JPEG image being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with Hindi text, language/script metadata, and split info
+            OriginalLabels: OriginalLabels with Hindi text, language/script metadata, and split info
         """
         labels = OriginalLabels()
 
@@ -172,10 +172,10 @@ class IIITHWHindiParser(BaseParser):
         """Load and cache the iiit_hw_hindi_groundtruth.tsv index.
 
         Args:
-            dataset_path: Root path of locally-extracted IIIT-HW-Hindi data
+            dataset_path (Path): Root path of locally-extracted IIIT-HW-Hindi data
 
         Returns:
-            Dict mapping filename -> {"hindi_text": "...", "split": "..."}
+            dict[str, dict[str, str]]: Dict mapping filename -> {"hindi_text": "...", "split": "..."}
         """
         cache_key = str(dataset_path)
         if cache_key in self._tsv_cache:

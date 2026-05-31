@@ -150,12 +150,12 @@ class KuzushijiParser(BaseParser):
         """Parse Kuzushiji labels for a single character image.
 
         Args:
-            dataset_path: Root path of the kuzushiji dataset directory.
-            image_path: Absolute path to a single character crop PNG.
-            config: Dataset configuration dictionary (unused).
+            dataset_path (Path): Root path of the kuzushiji dataset directory.
+            image_path (Path): Absolute path to a single character crop PNG.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with Japanese script metadata and (where available)
+            OriginalLabels: OriginalLabels with Japanese script metadata and (where available)
             the Unicode character transcription.
         """
         labels = OriginalLabels()
@@ -198,8 +198,8 @@ class KuzushijiParser(BaseParser):
         name is the Unicode character itself (e.g. ``kkanji2/亡/001.png``).
 
         Args:
-            image_path: Path to the PNG file.
-            labels: OriginalLabels instance to populate in-place.
+            image_path (Path): Path to the PNG file.
+            labels (OriginalLabels): OriginalLabels instance to populate in-place.
         """
         char = image_path.parent.name
         if not char or char in _KKANJI_MARKERS:
@@ -231,11 +231,11 @@ class KuzushijiParser(BaseParser):
         """Populate labels for K-MNIST / K-49 images via sidecar JSONL index.
 
         Args:
-            dataset_path: Root kuzushiji dataset path.
-            image_path: Path to the materialized PNG image.
-            sub_dataset: Sub-dataset name (``"kmnist"`` or ``"k49"``).
-            split: Split name (``"train"`` or ``"test"``).
-            labels: OriginalLabels instance to populate in-place.
+            dataset_path (Path): Root kuzushiji dataset path.
+            image_path (Path): Path to the materialized PNG image.
+            sub_dataset (str): Sub-dataset name (``"kmnist"`` or ``"k49"``).
+            split (str): Split name (``"train"`` or ``"test"``).
+            labels (OriginalLabels): OriginalLabels instance to populate in-place.
         """
         sub_root = dataset_path / sub_dataset
         entry = _lookup_entry(sub_root, sub_dataset, split, image_path.name)
@@ -273,10 +273,10 @@ def _detect_sub_dataset(image_path: Path) -> str:
     """Detect Kuzushiji sub-dataset from path components.
 
     Args:
-        image_path: Path to the image file.
+        image_path (Path): Path to the image file.
 
     Returns:
-        One of ``"kmnist"``, ``"k49"``, ``"kkanji"``, or ``"unknown"``.
+        str: One of ``"kmnist"``, ``"k49"``, ``"kkanji"``, or ``"unknown"``.
     """
     for part in image_path.parts:
         part_lower = part.lower()
@@ -293,10 +293,10 @@ def _detect_split(image_path: Path) -> str:
     """Detect split name from path components.
 
     Args:
-        image_path: Path to the image file.
+        image_path (Path): Path to the image file.
 
     Returns:
-        ``"train"``, ``"test"``, or ``"unknown"``.
+        str: ``"train"``, ``"test"``, or ``"unknown"``.
     """
     for part in reversed(image_path.parts):
         if part in _VALID_SPLITS:
@@ -313,13 +313,13 @@ def _lookup_entry(
     """Look up a sidecar JSONL entry for a K-MNIST or K-49 image.
 
     Args:
-        sub_root: Root path for the sub-dataset (e.g. ``kuzushiji/kmnist/``).
-        sub_dataset: Sub-dataset name for cache keying.
-        split: Split name (``"train"`` or ``"test"``).
-        filename: Base filename of the image.
+        sub_root (Path): Root path for the sub-dataset (e.g. ``kuzushiji/kmnist/``).
+        sub_dataset (str): Sub-dataset name for cache keying.
+        split (str): Split name (``"train"`` or ``"test"``).
+        filename (str): Base filename of the image.
 
     Returns:
-        Dict with ``filename``, ``label_int``, ``char_unicode`` keys,
+        dict[str, Any] | None: Dict with ``filename``, ``label_int``, ``char_unicode`` keys,
         or None if not found.
     """
     index = _load_sidecar_index(sub_root, sub_dataset, split)
@@ -342,12 +342,12 @@ def _load_sidecar_index(
     ``{"filename": "00000001.png", "label_int": 0, "char_unicode": "お"}``
 
     Args:
-        sub_root: Root path for the sub-dataset.
-        sub_dataset: Sub-dataset name (used only for log messages).
-        split: Split name (``"train"`` or ``"test"``).
+        sub_root (Path): Root path for the sub-dataset.
+        sub_dataset (str): Sub-dataset name (used only for log messages).
+        split (str): Split name (``"train"`` or ``"test"``).
 
     Returns:
-        Dict mapping filename → record dict, or None if index not found.
+        dict[str, dict[str, Any]] | None: Dict mapping filename → record dict, or None if index not found.
     """
     index_path = sub_root / f"{split}_index.jsonl"
 

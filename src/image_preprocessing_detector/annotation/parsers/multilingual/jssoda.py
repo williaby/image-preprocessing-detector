@@ -96,7 +96,6 @@ class JssodaParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with manifest cache."""
         super().__init__()
         self._manifest_cache: dict[Path, dict[str, dict[str, Any]]] = {}
 
@@ -114,12 +113,12 @@ class JssodaParser(BaseParser):
         """Parse JSSODa labels from manifest.json.
 
         Args:
-            dataset_path: Root path of the JSSODa dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the JSSODa dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script codes, and text
+            OriginalLabels: OriginalLabels with language_code, script codes, and text
             orientation metadata (is_vertical, num_columns, text_orientation)
         """
         labels = OriginalLabels()
@@ -167,10 +166,10 @@ class JssodaParser(BaseParser):
         """Load and cache manifest data, indexed by filename.
 
         Args:
-            dataset_path: Root path of the JSSODa dataset
+            dataset_path (Path): Root path of the JSSODa dataset
 
         Returns:
-            Dictionary mapping image filename to record data
+            dict[str, dict[str, Any]]: Dictionary mapping image filename to record data
         """
         if dataset_path in self._manifest_cache:
             return self._manifest_cache[dataset_path]
@@ -214,12 +213,12 @@ class JssodaParser(BaseParser):
         Loads manifest once and extracts labels for all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Pre-load manifest
         self._load_manifest(dataset_path)

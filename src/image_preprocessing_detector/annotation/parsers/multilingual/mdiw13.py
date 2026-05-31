@@ -128,10 +128,10 @@ class Mdiw13Parser(BaseParser):
         """Load ground truth labels from file (cached).
 
         Args:
-            dataset_path: Root path of the MDIW-13 dataset
+            dataset_path (Path): Root path of the MDIW-13 dataset
 
         Returns:
-            Dict mapping sample number to numeric label
+            dict[int, int]: Dict mapping sample number to numeric label
         """
         gt_path = (
             dataset_path
@@ -181,11 +181,11 @@ class Mdiw13Parser(BaseParser):
         """Try to parse labels from ground truth file for test competition.
 
         Args:
-            image_path: Path to the image
-            dataset_path: Root path of the dataset
+            image_path (Path): Path to the image
+            dataset_path (Path): Root path of the dataset
 
         Returns:
-            OriginalLabels if found in ground truth, None otherwise
+            OriginalLabels | None: OriginalLabels if found in ground truth, None otherwise
         """
         sample_num = self._extract_sample_number(image_path.name)
         if sample_num is None:
@@ -225,12 +225,12 @@ class Mdiw13Parser(BaseParser):
         2. Check ground truth file for test competition samples
 
         Args:
-            dataset_path: Root path of the MDIW-13 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the MDIW-13 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with script_name, language_code, and metadata
+            OriginalLabels: OriginalLabels with script_name, language_code, and metadata
         """
         labels = OriginalLabels()
         labels.raw_labels = {}

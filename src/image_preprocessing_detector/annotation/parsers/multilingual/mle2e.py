@@ -87,12 +87,12 @@ class Mle2eParser(BaseParser):
         """Parse MLE2E labels from directory and annotation files.
 
         Args:
-            dataset_path: Root path of the MLE2E dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the MLE2E dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, text_instances,
+            OriginalLabels: OriginalLabels with language_code, script_name, text_instances,
             and split information
         """
         labels = OriginalLabels()

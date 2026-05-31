@@ -69,12 +69,12 @@ class YarmoukParser(BaseParser):
         """Parse Yarmouk OCR labels from directory structure.
 
         Args:
-            dataset_path: Root path of the yarmouk_ocr dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the yarmouk_ocr dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code="ar", script_name="Arabic",
+            OriginalLabels: OriginalLabels with language_code="ar", script_name="Arabic",
             and split information (Training/Testing/Samples)
         """
         labels = OriginalLabels()

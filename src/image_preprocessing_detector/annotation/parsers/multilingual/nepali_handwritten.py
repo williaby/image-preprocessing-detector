@@ -83,12 +83,12 @@ class NepaliHandwrittenParser(BaseParser):
         to COCO format [x, y, width, height] for Layer 2 compatibility.
 
         Args:
-            dataset_path: Root path of the nepali_handwritten dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the nepali_handwritten dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with:
+            OriginalLabels: OriginalLabels with:
                 - language_code="ne" (Nepali)
                 - script_name="Devanagari"
                 - iso15924_script_code="Deva"

@@ -95,12 +95,12 @@ class MuharafParser(BaseParser):
         """Parse Muharaf labels from PAGE XML files.
 
         Args:
-            dataset_path: Root path of the Muharaf dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the Muharaf dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with Arabic text, language/script metadata,
+            OriginalLabels: OriginalLabels with Arabic text, language/script metadata,
             and polygon coordinates converted to YOLO bboxes
         """
         labels = OriginalLabels()
@@ -149,9 +149,9 @@ class MuharafParser(BaseParser):
         """Parse PAGE XML file and populate labels.
 
         Args:
-            xml_path: Path to PAGE XML file
-            _image_path: Path to image file (reserved; dimensions from XML)
-            labels: OriginalLabels instance to populate
+            xml_path (Path): Path to PAGE XML file
+            _image_path (Path): Path to image file (reserved; dimensions from XML)
+            labels (OriginalLabels): OriginalLabels instance to populate
         """
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -282,10 +282,10 @@ class MuharafParser(BaseParser):
         """Extract polygon coordinates from Coords element.
 
         Args:
-            elem: XML element containing Coords child
+            elem (ET.Element): XML element containing Coords child
 
         Returns:
-            List of [x, y] coordinate pairs, or None if not found
+            list[list[float]] | None: List of [x, y] coordinate pairs, or None if not found
         """
         coords_elem = elem.find(".//page:Coords", PAGE_NS)
         if coords_elem is None:
@@ -315,12 +315,12 @@ class MuharafParser(BaseParser):
         """Convert polygon coordinates to YOLO bbox format.
 
         Args:
-            polygon: List of [x, y] coordinate pairs
-            image_width: Image width in pixels
-            image_height: Image height in pixels
+            polygon (list[list[float]]): List of [x, y] coordinate pairs
+            image_width (int): Image width in pixels
+            image_height (int): Image height in pixels
 
         Returns:
-            Dict with normalized YOLO bbox [x_center, y_center, width, height]
+            dict[str, Any]: Dict with normalized YOLO bbox [x_center, y_center, width, height]
             and metadata about the conversion
         """
         if not polygon or image_width == 0 or image_height == 0:
@@ -355,10 +355,10 @@ class MuharafParser(BaseParser):
         """Extract reading order metadata from ReadingOrder element.
 
         Args:
-            root: Root XML element
+            root (ET.Element): Root XML element
 
         Returns:
-            List of reading order group dictionaries, or None if not found
+            list[dict[str, Any]] | None: List of reading order group dictionaries, or None if not found
         """
         reading_order_elem = root.find(".//page:ReadingOrder", PAGE_NS)
         if reading_order_elem is None:
@@ -393,10 +393,10 @@ class MuharafParser(BaseParser):
         """Extract center-line (baseline) coordinates from UserDefined.
 
         Args:
-            line_elem: TextLine XML element
+            line_elem (ET.Element): TextLine XML element
 
         Returns:
-            List of [x, y] coordinate pairs for baseline, or None if not found
+            list[list[float]] | None: List of [x, y] coordinate pairs for baseline, or None if not found
         """
         user_attr = line_elem.find(
             './/page:UserDefined/page:UserAttribute[@name="center-line"]', PAGE_NS

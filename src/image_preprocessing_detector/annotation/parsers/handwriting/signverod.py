@@ -97,12 +97,12 @@ class SignverODParser(BaseParser):
         """Parse SignverOD labels from CSV annotation files.
 
         Args:
-            dataset_path: Root path of the SignverOD dataset
-            image_path: Absolute path to the image being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the SignverOD dataset
+            image_path (Path): Absolute path to the image being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with signature/handwriting presence,
+            OriginalLabels: OriginalLabels with signature/handwriting presence,
             annotation counts, and document source metadata
         """
         labels = OriginalLabels()
@@ -183,10 +183,10 @@ class SignverODParser(BaseParser):
         """Load image_ids.csv mapping filename -> image_id.
 
         Args:
-            dataset_path: Root path of SignverOD dataset
+            dataset_path (Path): Root path of SignverOD dataset
 
         Returns:
-            Dict mapping file_name -> id
+            dict[str, str]: Dict mapping file_name -> id
         """
         cache_key = str(dataset_path)
         if cache_key in self._image_id_cache:
@@ -212,10 +212,10 @@ class SignverODParser(BaseParser):
         """Load and merge train.csv + test.csv annotations by image_id.
 
         Args:
-            dataset_path: Root path of SignverOD dataset
+            dataset_path (Path): Root path of SignverOD dataset
 
         Returns:
-            Dict mapping image_id -> list of annotation dicts
+            dict[str, list[dict[str, Any]]]: Dict mapping image_id -> list of annotation dicts
         """
         cache_key = str(dataset_path)
         if cache_key in self._annotation_cache:
@@ -246,11 +246,11 @@ class SignverODParser(BaseParser):
         """Get image IDs belonging to a specific split.
 
         Args:
-            dataset_path: Root path of SignverOD dataset
-            split: "train" or "test"
+            dataset_path (Path): Root path of SignverOD dataset
+            split (str): "train" or "test"
 
         Returns:
-            Set of image_id strings for the given split
+            set[str]: Set of image_id strings for the given split
         """
         cache_key = f"{dataset_path}:{split}"
         if cache_key in self._split_ids_cache:

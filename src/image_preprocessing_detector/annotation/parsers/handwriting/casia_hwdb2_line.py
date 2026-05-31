@@ -103,12 +103,12 @@ class CasiaHwdb2LineParser(BaseParser):
         """Parse CASIA-HWDB2-line labels for a single line image.
 
         Args:
-            dataset_path: Root path of the casia-hwdb2-line dataset.
-            image_path: Absolute path to a materialized JPEG line image.
-            config: Dataset configuration dictionary (unused).
+            dataset_path (Path): Root path of the casia-hwdb2-line dataset.
+            image_path (Path): Absolute path to a materialized JPEG line image.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with Chinese transcription and Hans script metadata.
+            OriginalLabels: OriginalLabels with Chinese transcription and Hans script metadata.
         """
         labels = OriginalLabels()
 
@@ -145,10 +145,10 @@ class CasiaHwdb2LineParser(BaseParser):
         """Detect split name from the image path parent directory.
 
         Args:
-            image_path: Path to the image file.
+            image_path (Path): Path to the image file.
 
         Returns:
-            Split name ("train", "validation", "test") or "unknown".
+            str: Split name ("train", "validation", "test") or "unknown".
         """
         for part in reversed(image_path.parts):
             if part in _VALID_SPLITS:
@@ -166,12 +166,12 @@ class CasiaHwdb2LineParser(BaseParser):
         The index file is loaded once and cached by (dataset_path, split).
 
         Args:
-            dataset_path: Root path of the dataset.
-            image_path: Path to the image file.
-            split: Split name (train/validation/test).
+            dataset_path (Path): Root path of the dataset.
+            image_path (Path): Path to the image file.
+            split (str): Split name (train/validation/test).
 
         Returns:
-            Chinese transcription string, or None if not found.
+            str | None: Chinese transcription string, or None if not found.
         """
         index = _load_index(dataset_path, split)
         if index is None:
@@ -187,11 +187,11 @@ def _load_index(dataset_path: Path, split: str) -> dict[str, str] | None:
     Cached per (dataset_path, split) pair — loaded once per process.
 
     Args:
-        dataset_path: Root path of the dataset.
-        split: Split name (train/validation/test).
+        dataset_path (Path): Root path of the dataset.
+        split (str): Split name (train/validation/test).
 
     Returns:
-        Dict mapping filename → transcription string, or None if index
+        dict[str, str] | None: Dict mapping filename → transcription string, or None if index
         file does not exist.
     """
     index_path = dataset_path / f"{split}_index.jsonl"

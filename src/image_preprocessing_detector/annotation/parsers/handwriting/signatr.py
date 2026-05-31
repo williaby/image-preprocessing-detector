@@ -84,12 +84,12 @@ class SignaTRParser(BaseParser):
         """Parse SignaTR6K labels from directory structure.
 
         Args:
-            dataset_path: Root path of the SignaTR6K dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the SignaTR6K dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with raw_labels containing split, image_type,
+            OriginalLabels: OriginalLabels with raw_labels containing split, image_type,
             signature_id, has_mask, and optional mask_path
         """
         labels = OriginalLabels()

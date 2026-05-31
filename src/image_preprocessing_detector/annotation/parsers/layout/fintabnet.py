@@ -98,10 +98,10 @@ class FinTabNetParser(BaseParser):
         """Get or create a StreamingJSONLReader for the JSONL file.
 
         Args:
-            jsonl_path: Path to the JSONL annotation file
+            jsonl_path (Path): Path to the JSONL annotation file
 
         Returns:
-            StreamingJSONLReader instance (cached per file path)
+            StreamingJSONLReader: StreamingJSONLReader instance (cached per file path)
         """
         cache_key = str(jsonl_path)
         if cache_key not in _FINTABNET_READERS:
@@ -122,15 +122,13 @@ class FinTabNetParser(BaseParser):
         """Parse FinTabNet table annotations from JSONL file.
 
         Args:
-            dataset_path: Root path of the FinTabNet dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the FinTabNet dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with table_html, cell_annotations, and language/script
+            OriginalLabels: OriginalLabels with table_html, cell_annotations, and language/script
 
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
         """
         labels = OriginalLabels()
 

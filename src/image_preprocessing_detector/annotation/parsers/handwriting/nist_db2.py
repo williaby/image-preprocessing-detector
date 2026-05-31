@@ -79,12 +79,12 @@ class NistDb2Parser(BaseParser):
         """Parse NIST DB2 labels from .fmt files.
 
         Args:
-            dataset_path: Root path of the NIST DB2 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the NIST DB2 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, and raw_labels
+            OriginalLabels: OriginalLabels with language_code, script_name, and raw_labels
             containing form metadata and field annotations
         """
         labels = OriginalLabels()
