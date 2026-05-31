@@ -36,10 +36,10 @@ def _validate_and_preprocess(
     """Validate image and return grayscale + binary versions.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale)
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale)
 
     Returns:
-        Tuple of (grayscale, binary, height, width)
+        tuple[np.ndarray, np.ndarray, int, int]: Tuple of (grayscale, binary, height, width)
 
     Raises:
         ValueError: If image is invalid
@@ -72,15 +72,14 @@ def _get_filtered_components(
     """Get connected components filtered by size.
 
     Args:
-        binary: Binary image
-        h: Image height
-        w: Image width
-        min_area: Minimum component area
-        min_size: Minimum component width/height
+        binary (np.ndarray): Binary image
+        h (int): Image height
+        w (int): Image width
+        min_area (int): Minimum component area
+        min_size (int): Minimum component width/height
 
     Returns:
-        List of component dictionaries with bbox, area, centroid, aspect_ratio
-    """
+        list[dict[str, Any]]: List of component dictionaries with bbox, area, centroid, aspect_ratio"""
     num_labels, _labels, stats, centroids = cv2.connectedComponentsWithStats(
         binary, connectivity=8
     )
@@ -132,10 +131,10 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
     in book scans where pages curve near the spine.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        WarpingResult with curvature metrics
+        WarpingResult: WarpingResult with curvature metrics
 
     Raises:
         ValueError: If the image is None or empty.
@@ -276,10 +275,10 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
     at an angle, causing trapezoidal distortion.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        PerspectiveResult with distortion metrics
+        PerspectiveResult: PerspectiveResult with distortion metrics
 
     Raises:
         ValueError: If the image is None or empty.
@@ -510,11 +509,10 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
     consider integrating with a dedicated formula detection model.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        FormulaResult with detected formula regions
-    """
+        FormulaResult: FormulaResult with detected formula regions"""
     # Preprocess image
     _gray, binary, h, w = _validate_and_preprocess(image)
 
@@ -575,10 +573,10 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
     Stamps: Circular or rectangular regions with uniform patterns
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        SignatureStampResult with detected regions
+        SignatureStampResult: SignatureStampResult with detected regions
 
     Raises:
         ValueError: If the image is None or empty.
@@ -738,11 +736,10 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     use OCR output with a language classification model.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        LanguageResult with detected script information
-    """
+        LanguageResult: LanguageResult with detected script information"""
     # Preprocess image
     _gray, binary, h, w = _validate_and_preprocess(image)
 
@@ -814,10 +811,10 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
     affects OCR and reading order.
 
     Args:
-        image: Input image (BGR format)
+        image (np.ndarray): Input image (BGR format)
 
     Returns:
-        OrientationResult with orientation information
+        OrientationResult: OrientationResult with orientation information
 
     Raises:
         ValueError: If the image is None or empty.

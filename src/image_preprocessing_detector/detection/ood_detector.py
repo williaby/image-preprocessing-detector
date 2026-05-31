@@ -54,10 +54,10 @@ class EmbeddingOODDetector:
     distribution, using Ledoit-Wolf shrinkage for covariance estimation.
 
     Args:
-        mean: Mean embedding vector (768-dim).
-        precision_matrix: Inverse covariance matrix (768x768).
-        threshold: Mahalanobis distance threshold for OOD flag.
-        calibration_distances: Sorted distances from calibration set for percentile.
+        mean (np.ndarray): Mean embedding vector (768-dim).
+        precision_matrix (np.ndarray): Inverse covariance matrix (768x768).
+        threshold (float): Mahalanobis distance threshold for OOD flag.
+        calibration_distances (np.ndarray | None): Sorted distances from calibration set for percentile.
     """
 
     def __init__(

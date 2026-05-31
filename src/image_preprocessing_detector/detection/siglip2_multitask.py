@@ -180,8 +180,8 @@ class SigLIP2MultiTaskDetector:
     Lazy-loads the model on first prediction. Caches per device.
 
     Args:
-        checkpoint_path: Path to trained model checkpoint (.pt file).
-        config: Optional configuration overrides.
+        checkpoint_path (str | Path | None): Path to trained model checkpoint (.pt file).
+        config (SigLIP2MultiTaskConfig | None): Optional configuration overrides.
 
     Example:
         >>> detector = SigLIP2MultiTaskDetector("best_model.pt")

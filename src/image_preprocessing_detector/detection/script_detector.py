@@ -152,11 +152,10 @@ def _compute_aspect_ratio_signal(
     """Compute mean aspect ratio (w/h) of filtered connected components.
 
     Args:
-        components: List of CC dicts from ``_get_filtered_components``.
+        components (list[dict[str, Any]]): List of CC dicts from ``_get_filtered_components``.
 
     Returns:
-        Mean aspect ratio as a float.
-    """
+        float: Mean aspect ratio as a float."""
     ratios = [c["aspect_ratio"] for c in components]
     return float(np.mean(ratios))
 
@@ -167,11 +166,10 @@ def _compute_stroke_density_signal(
     """Compute mean stroke density (fill ratio) of bounding boxes.
 
     Args:
-        components: List of CC dicts from ``_get_filtered_components``.
+        components (list[dict[str, Any]]): List of CC dicts from ``_get_filtered_components``.
 
     Returns:
-        Mean density in [0, 1].
-    """
+        float: Mean density in [0, 1]."""
     densities = [c["density"] for c in components]
     return float(np.mean(densities))
 
@@ -185,11 +183,10 @@ def _compute_cc_complexity_signal(
     have many strokes yielding large perimeters relative to area).
 
     Args:
-        binary: Binary (thresholded) image.
+        binary (np.ndarray): Binary (thresholded) image.
 
     Returns:
-        Mean form factor (perimeter^2 / area).
-    """
+        float: Mean form factor (perimeter^2 / area)."""
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
@@ -223,12 +220,11 @@ def _compute_rtl_flow_signal(
     right to left.
 
     Args:
-        components: List of CC dicts from ``_get_filtered_components``.
-        image_height: Height of the image in pixels.
+        components (list[dict[str, Any]]): List of CC dicts from ``_get_filtered_components``.
+        image_height (int): Height of the image in pixels.
 
     Returns:
-        RTL score in [0, 1].  Values > 0.5 suggest RTL text flow.
-    """
+        float: RTL score in [0, 1].  Values > 0.5 suggest RTL text flow."""
     if len(components) < 3:
         return 0.0
 
@@ -283,15 +279,14 @@ def _score_family(
     proximity to the profile centre, weighted by the signal weights.
 
     Args:
-        mean_aspect: Observed mean aspect ratio.
-        mean_density: Observed mean stroke density.
-        mean_complexity: Observed mean CC complexity.
-        rtl_score: Observed RTL flow score (0-1).
-        profile: Reference profile for a script family.
+        mean_aspect (float): Observed mean aspect ratio.
+        mean_density (float): Observed mean stroke density.
+        mean_complexity (float): Observed mean CC complexity.
+        rtl_score (float): Observed RTL flow score (0-1).
+        profile (_ScriptScoreProfile): Reference profile for a script family.
 
     Returns:
-        Weighted match score in [0, 1].
-    """
+        float: Weighted match score in [0, 1]."""
     # Aspect ratio match
     ar_low, ar_high = profile.aspect_ratio_range
     ar_span = ar_high - ar_low
@@ -339,11 +334,10 @@ def _build_probabilities(
     """Normalise family scores into ISO 15924 probability distribution.
 
     Args:
-        family_scores: Raw match scores keyed by family name.
+        family_scores (dict[str, float]): Raw match scores keyed by family name.
 
     Returns:
-        dict mapping ISO 15924 codes to probabilities summing to ~1.0.
-    """
+        dict[str, float]: dict mapping ISO 15924 codes to probabilities summing to ~1.0."""
     total = sum(family_scores.values())
     if total < 1e-9:
         return {_FAMILY_TO_ISO["unknown"]: 1.0}
@@ -365,14 +359,13 @@ def _compute_confidence(
     """Derive detection confidence from score separation and data quantity.
 
     Args:
-        best_score: Highest family match score.
-        second_score: Second-highest family match score.
-        num_components: Number of connected components used.
-        min_components: Minimum components for full confidence.
+        best_score (float): Highest family match score.
+        second_score (float): Second-highest family match score.
+        num_components (int): Number of connected components used.
+        min_components (int): Minimum components for full confidence.
 
     Returns:
-        Confidence value in [0, 1].
-    """
+        float: Confidence value in [0, 1]."""
     # Score separation: wider gap = higher confidence
     separation = best_score - second_score if best_score > 0 else 0.0
     separation_factor = min(1.0, separation / 0.3)
@@ -426,12 +419,11 @@ class ScriptDetectorHeuristic:
         """Detect the dominant script family in a document image.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale numpy array).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            ScriptDetectionResult with ISO 15924 code, confidence,
-            and probability distribution.
-        """
+            ScriptDetectionResult: ScriptDetectionResult with ISO 15924 code, confidence,
+            and probability distribution."""
         _gray, binary, height, width = _validate_and_preprocess(image)
 
         # Get filtered connected components
@@ -511,12 +503,11 @@ class ScriptDetectorHeuristic:
         """Create an unknown/indeterminate result.
 
         Args:
-            num_components: Number of CCs found (for logging).
-            reason: Human-readable explanation.
+            num_components (int): Number of CCs found (for logging).
+            reason (str): Human-readable explanation.
 
         Returns:
-            ScriptDetectionResult with ``Zzzz`` code and ``is_unknown=True``.
-        """
+            ScriptDetectionResult: ScriptDetectionResult with ``Zzzz`` code and ``is_unknown=True``."""
         logger.debug(
             "script_detection_unknown",
             reason=reason,
@@ -549,12 +540,11 @@ def detect_script_heuristic(image: np.ndarray) -> ScriptDetectionResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale numpy array).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        ScriptDetectionResult with ISO 15924 code, confidence,
-        and probability distribution.
-    """
+        ScriptDetectionResult: ScriptDetectionResult with ISO 15924 code, confidence,
+        and probability distribution."""
     global _default_detector
     if _default_detector is None:
         _default_detector = ScriptDetectorHeuristic()

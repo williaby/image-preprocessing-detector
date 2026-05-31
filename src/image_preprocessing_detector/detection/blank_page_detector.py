@@ -132,11 +132,10 @@ class BlankPageDetector:
         """Analyse an image and determine whether it is blank.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale numpy array).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            BlankPageResult with classification, score, and raw signals.
-        """
+            BlankPageResult: BlankPageResult with classification, score, and raw signals."""
         gray, binary, height, width = _validate_and_preprocess(image)
         total_pixels = height * width
 
@@ -212,12 +211,11 @@ class BlankPageDetector:
         disagree the confidence is reduced, reflecting ambiguity.
 
         Args:
-            blank_votes: Number of signals that voted "blank" (0-3).
-            blankness_score: Fused blankness score (0-1).
+            blank_votes (int): Number of signals that voted "blank" (0-3).
+            blankness_score (float): Fused blankness score (0-1).
 
         Returns:
-            Confidence value between 0 and 1.
-        """
+            float: Confidence value between 0 and 1."""
         if blank_votes == 3:
             return min(1.0, 0.85 + 0.15 * blankness_score)
         if blank_votes == 0:
@@ -239,11 +237,10 @@ def detect_blank_page(image: np.ndarray) -> BlankPageResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale numpy array).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        BlankPageResult with classification, score, and raw signals.
-    """
+        BlankPageResult: BlankPageResult with classification, score, and raw signals."""
     global _default_detector
     if _default_detector is None:
         _default_detector = BlankPageDetector()

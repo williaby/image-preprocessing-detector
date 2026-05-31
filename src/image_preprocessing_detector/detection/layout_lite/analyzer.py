@@ -72,10 +72,10 @@ class LayoutLiteAnalyzer:
         """Run all enabled detections on an image.
 
         Args:
-            image: Input image (BGR format, from OpenCV)
+            image (np.ndarray): Input image (BGR format, from OpenCV)
 
         Returns:
-            Dictionary with all detection results
+            dict[str, Any]: Dictionary with all detection results
 
         Raises:
             ValueError: If image is invalid or empty
@@ -120,10 +120,10 @@ def analyze_layout(image: np.ndarray) -> dict[str, Any]:
     """Convenience function for layout analysis with default settings.
 
     Args:
-        image: Input image (BGR format, from OpenCV)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
 
     Returns:
-        Dictionary with all detection results
+        dict[str, Any]: Dictionary with all detection results
 
     Example:
         >>> import cv2

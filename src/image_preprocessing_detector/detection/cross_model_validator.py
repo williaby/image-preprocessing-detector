@@ -112,11 +112,11 @@ class CrossModelValidator:
     - Tier 2: Cross-model agreement scoring (conditional, ~2-3s)
 
     Args:
-        ood_detector: Fitted embedding OOD detector.
-        calibrator: Fitted cross-model calibrator.
-        z_precision: Inverse covariance of z-score vector (for Mahalanobis).
-        z_mean: Mean z-score vector from calibration.
-        agreement_threshold: Threshold on agreement distance for flagging.
+        ood_detector (EmbeddingOODDetector): Fitted embedding OOD detector.
+        calibrator (CrossModelCalibrator): Fitted cross-model calibrator.
+        z_precision (np.ndarray | None): Inverse covariance of z-score vector (for Mahalanobis).
+        z_mean (np.ndarray | None): Mean z-score vector from calibration.
+        agreement_threshold (float): Threshold on agreement distance for flagging.
     """
 
     def __init__(
