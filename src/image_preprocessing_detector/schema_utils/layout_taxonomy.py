@@ -43,13 +43,13 @@ class ConversionResult:
     """Result of converting a label between schemas.
 
     Attributes:
-        canonical_class: The canonical superset class name.
-        target_label: The label in the target schema.
-        is_lossy: True if information was lost during conversion.
-        loss_description: Human-readable description of what was lost.
-        confidence: 1.0 for exact mappings, <1.0 for ambiguous expansions.
-        source_schema: The source schema name.
-        source_label: The original label in the source schema.
+        canonical_class (str): The canonical superset class name.
+        target_label (str): The label in the target schema.
+        is_lossy (bool): True if information was lost during conversion.
+        loss_description (str | None): Human-readable description of what was lost.
+        confidence (float): 1.0 for exact mappings, <1.0 for ambiguous expansions.
+        source_schema (str): The source schema name.
+        source_label (str): The original label in the source schema.
     """
 
     canonical_class: str
@@ -68,16 +68,16 @@ class LayoutTaxonomy:
     to convert labels between schemas via a canonical superset hierarchy.
 
     Attributes:
-        config_path: Path to the YAML config file.
+        DEFAULT_CONFIG_PATH: Default path to the YAML config file (relative to project root).
+
+    Args:
+        config_path (Path | str | None): Path to config YAML. If None, uses default path.
+            Searches relative to package, then project root.
     """
 
     DEFAULT_CONFIG_PATH = Path("config/layout_taxonomy.yaml")
 
     def __init__(self, config_path: Path | str | None = None) -> None:
-        """Initialize taxonomy from config file.
-
-        Args:
-            config_path (Path | str | None): Path to config YAML. If None, uses default path. Searches relative to package, then project root."""
         self.config_path = self._resolve_config_path(config_path)
         self._load_config()
 

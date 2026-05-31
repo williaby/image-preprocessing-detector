@@ -227,7 +227,11 @@ def get_expected_pixels(
         orientation (str): "portrait" or "landscape"
 
     Returns:
-        tuple[int, int]: (width_px, height_px) tuple"""
+        tuple[int, int]: (width_px, height_px) tuple
+
+    Raises:
+        ValueError: If paper_size is not a known size.
+    """
     if paper_size not in PAPER_SIZE_SPECS:
         raise ValueError(f"Unknown paper size: {paper_size}")
 

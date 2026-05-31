@@ -448,6 +448,9 @@ def iqa_vector_to_runtime_issues(
     Returns:
         list[RuntimeIssue]: List of RuntimeIssue dicts matching document_metadata.schema.json
 
+    Raises:
+        ValueError: If iqa_vector does not have exactly 45 dimensions.
+
     Example:
         >>> vector = [0.0] * 45
         >>> vector[0] = 0.65  # motion_blur
@@ -585,7 +588,11 @@ def aggregate_group_scores(
         iqa_vector (list[float]): 45-dimensional severity vector
 
     Returns:
-        dict[str, float]: Dict mapping group name to maximum severity in that group"""
+        dict[str, float]: Dict mapping group name to maximum severity in that group
+
+    Raises:
+        ValueError: If iqa_vector does not have exactly 45 dimensions.
+    """
     if len(iqa_vector) != 45:
         raise ValueError(f"Expected 45-dim vector, got {len(iqa_vector)}")
 

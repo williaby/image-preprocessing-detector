@@ -320,6 +320,11 @@ class LanguageScriptTag:
     Combines ISO 639 language with ISO 15924 script.
     Format: language[-script][-region]
 
+    Attributes:
+        language (str): ISO 639-1/3 language code.
+        script (str | None): ISO 15924 4-letter script code.
+        region (str | None): ISO 3166-1 alpha-2 region code.
+
     Examples:
         - "en" (English, Latin implied)
         - "zh-Hans" (Chinese, Simplified Han)

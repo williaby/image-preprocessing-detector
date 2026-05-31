@@ -120,7 +120,14 @@ class BoundingBox:
         Args:
             bbox (list[float] | tuple[float, ...]): [center_x, center_y, width, height] normalized 0-1
             image_width (int): Image width in pixels for denormalization
-            image_height (int): Image height in pixels for denormalization"""
+            image_height (int): Image height in pixels for denormalization
+
+        Returns:
+            BoundingBox: BoundingBox instance in COCO format.
+
+        Raises:
+            ValueError: If bbox does not have 4 values or values are outside [0, 1].
+        """
         if len(bbox) != 4:
             raise ValueError(f"Expected 4 values, got {len(bbox)}")
 
@@ -248,6 +255,10 @@ def convert_bbox(
     Returns:
         list[float]: Converted bounding box as list
 
+    Raises:
+        ValueError: If source format is unknown, target format is unknown, or YOLO
+            conversion is requested without image dimensions.
+
     Example:
         >>> convert_bbox([100, 200, 300, 250], "xyxy", "coco_xywh")
         [100, 200, 200, 50]
@@ -302,7 +313,12 @@ def standardize_layout_detection(
         image_height (int | None): Image height (required for YOLO)
 
     Returns:
-        dict: Detection dict with standardized COCO bbox"""
+        dict: Detection dict with standardized COCO bbox.
+
+    Raises:
+        ValueError: If detection does not have a 'bbox' key, or YOLO format is
+            detected without image dimensions provided.
+    """
     if "bbox" not in detection:
         raise ValueError("Detection must have 'bbox' key")
 
