@@ -136,6 +136,9 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
 
     Returns:
         WarpingResult with curvature metrics
+
+    Raises:
+        ValueError: If the image is None or empty.
     """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
@@ -277,6 +280,9 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
 
     Returns:
         PerspectiveResult with distortion metrics
+
+    Raises:
+        ValueError: If the image is None or empty.
     """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
@@ -573,6 +579,9 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
 
     Returns:
         SignatureStampResult with detected regions
+
+    Raises:
+        ValueError: If the image is None or empty.
     """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
@@ -809,6 +818,9 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
 
     Returns:
         OrientationResult with orientation information
+
+    Raises:
+        ValueError: If the image is None or empty.
     """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)

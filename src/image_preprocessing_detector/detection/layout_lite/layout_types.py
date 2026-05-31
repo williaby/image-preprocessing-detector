@@ -8,10 +8,10 @@ class ColumnDetectionResult:
     """Result of column detection analysis.
 
     Attributes:
-        column_type: "single" / "multi" / "three_column" / "complex"
-        confidence: Confidence score (0.0-1.0)
-        num_columns: Estimated number of columns
-        column_boundaries: List of x-coordinates marking column boundaries
+        column_type (str): "single" / "multi" / "three_column" / "complex"
+        confidence (float): Confidence score (0.0-1.0)
+        num_columns (int): Estimated number of columns
+        column_boundaries (list[int]): List of x-coordinates marking column boundaries
     """
 
     column_type: str
@@ -25,11 +25,11 @@ class TableDetectionResult:
     """Result of table detection analysis.
 
     Attributes:
-        has_tables: Whether tables are detected
-        confidence: Confidence score (0.0-1.0)
-        num_horizontal_lines: Number of horizontal lines detected
-        num_vertical_lines: Number of vertical lines detected
-        grid_score: Grid pattern strength score
+        has_tables (bool): Whether tables are detected
+        confidence (float): Confidence score (0.0-1.0)
+        num_horizontal_lines (int): Number of horizontal lines detected
+        num_vertical_lines (int): Number of vertical lines detected
+        grid_score (float): Grid pattern strength score
     """
 
     has_tables: bool
@@ -44,10 +44,10 @@ class FigureDetectionResult:
     """Result of figure detection analysis.
 
     Attributes:
-        has_figures: Whether figures are detected
-        confidence: Confidence score (0.0-1.0)
-        num_figures: Number of figure-like regions detected
-        largest_figure_area_ratio: Ratio of largest figure to page area
+        has_figures (bool): Whether figures are detected
+        confidence (float): Confidence score (0.0-1.0)
+        num_figures (int): Number of figure-like regions detected
+        largest_figure_area_ratio (float): Ratio of largest figure to page area
     """
 
     has_figures: bool
@@ -61,10 +61,10 @@ class FuzzyScanDetectionResult:
     """Result of fuzzy scan detection analysis.
 
     Attributes:
-        fuzzy_scan: Whether fuzzy scan is detected
-        confidence: Confidence score (0.0-1.0)
-        blur_score: Blur metric (Laplacian variance)
-        noise_score: Noise estimation metric
+        fuzzy_scan (bool): Whether fuzzy scan is detected
+        confidence (float): Confidence score (0.0-1.0)
+        blur_score (float): Blur metric (Laplacian variance)
+        noise_score (float): Noise estimation metric
     """
 
     fuzzy_scan: bool
@@ -78,10 +78,10 @@ class WatermarkDetectionResult:
     """Result of watermark detection analysis.
 
     Attributes:
-        watermark: Whether watermark is detected
-        confidence: Confidence score (0.0-1.0)
-        low_freq_energy: Low-frequency energy metric from FFT
-        opacity_score: Estimated watermark opacity
+        watermark (bool): Whether watermark is detected
+        confidence (float): Confidence score (0.0-1.0)
+        low_freq_energy (float): Low-frequency energy metric from FFT
+        opacity_score (float): Estimated watermark opacity
     """
 
     watermark: bool
@@ -95,10 +95,10 @@ class ColorfulBackgroundResult:
     """Result of colorful background detection analysis.
 
     Attributes:
-        colorful_background: Whether colorful background is detected
-        confidence: Confidence score (0.0-1.0)
-        unique_colors: Number of unique colors
-        avg_saturation: Average saturation in HSV space
+        colorful_background (bool): Whether colorful background is detected
+        confidence (float): Confidence score (0.0-1.0)
+        unique_colors (int): Number of unique colors
+        avg_saturation (float): Average saturation in HSV space
     """
 
     colorful_background: bool

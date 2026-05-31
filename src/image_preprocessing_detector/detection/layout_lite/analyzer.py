@@ -32,6 +32,14 @@ class LayoutLiteAnalyzer:
 
     Runs all heuristic-based detections and populates PageLayoutSummary model.
     Optimized for speed (< 100ms per page on CPU).
+
+    Args:
+        enable_column_detection (bool): Enable column detection (default: True)
+        enable_table_detection (bool): Enable table detection (default: True)
+        enable_figure_detection (bool): Enable figure detection (default: True)
+        enable_fuzzy_scan_detection (bool): Enable fuzzy scan detection (default: True)
+        enable_watermark_detection (bool): Enable watermark detection (default: True)
+        enable_colorful_bg_detection (bool): Enable colorful background detection (default: True)
     """
 
     def __init__(
@@ -43,16 +51,6 @@ class LayoutLiteAnalyzer:
         enable_watermark_detection: bool = True,
         enable_colorful_bg_detection: bool = True,
     ) -> None:
-        """Initialize layout-lite analyzer.
-
-        Args:
-            enable_column_detection: Enable column detection (default: True)
-            enable_table_detection: Enable table detection (default: True)
-            enable_figure_detection: Enable figure detection (default: True)
-            enable_fuzzy_scan_detection: Enable fuzzy scan detection (default: True)
-            enable_watermark_detection: Enable watermark detection (default: True)
-            enable_colorful_bg_detection: Enable colorful background detection (default: True)
-        """
         self.enable_column_detection = enable_column_detection
         self.enable_table_detection = enable_table_detection
         self.enable_figure_detection = enable_figure_detection

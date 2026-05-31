@@ -285,10 +285,6 @@ class TableComplexityAnalyzer:
 
         Returns:
             :class:`TableComplexity` with grid estimates and complexity score.
-
-        Raises:
-            ValueError: If the image is invalid or the bbox produces an
-                empty region.
         """
         region = self._extract_region(image, bbox)
         _gray, binary, height, width = _validate_and_preprocess(region)
@@ -467,8 +463,5 @@ def analyze_table_complexity(
 
     Returns:
         :class:`TableComplexity` with grid estimates and complexity score.
-
-    Raises:
-        ValueError: If the image is invalid.
     """
     return TableComplexityAnalyzer().analyze(image, bbox)

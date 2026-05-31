@@ -221,12 +221,12 @@ class DetectedElement:
     """A single detected document element.
 
     Attributes:
-        class_id: Numeric class ID from model
-        class_name: Human-readable class name
-        class_enum: DocLayoutClass enum value (if recognized)
-        confidence: Detection confidence (0-1)
-        bbox: Bounding box in COCO format [x, y, width, height]
-        bbox_xyxy: Bounding box in xyxy format [x1, y1, x2, y2]
+        class_id (int): Numeric class ID from model
+        class_name (str): Human-readable class name
+        class_enum (DocLayoutClass | None): DocLayoutClass enum value (if recognized)
+        confidence (float): Detection confidence (0-1)
+        bbox (list[int]): Bounding box in COCO format [x, y, width, height]
+        bbox_xyxy (list[int]): Bounding box in xyxy format [x1, y1, x2, y2]
     """
 
     class_id: int
@@ -276,13 +276,13 @@ class LayoutDetectionResult:
     """Result of document layout detection.
 
     Attributes:
-        elements: List of detected elements
-        inference_time_ms: Time taken for inference in milliseconds
-        image_size: Original image size (height, width)
-        model_name: Name of the model used
-        device: Device used for inference (cpu/cuda)
-        success: Whether detection succeeded
-        error_message: Error message if detection failed
+        elements (list[DetectedElement]): List of detected elements
+        inference_time_ms (float): Time taken for inference in milliseconds
+        image_size (tuple[int, int]): Original image size (height, width)
+        model_name (str): Name of the model used
+        device (str): Device used for inference (cpu/cuda)
+        success (bool): Whether detection succeeded
+        error_message (str | None): Error message if detection failed
     """
 
     elements: list[DetectedElement] = field(default_factory=list)
@@ -412,6 +412,20 @@ class DocLayoutYOLODetector:
         - Configurable confidence threshold
         - ONNX export support for production deployment
 
+    Args:
+        model_key (str | None): Model key from config. Options:
+                  - "doclaynet_pretrained" (default, recommended): 11 classes, mAP 79.7
+                  - "doclaynet_scratch": 11 classes, mAP 77.7
+                  - "docstructbench": 10 classes, general-purpose
+                  - "d4la_pretrained": 10 classes, mAP 70.3
+                  - "d4la_scratch": 10 classes, mAP 69.8
+                  If None, uses the active model from config.
+        device (str | None): Device to run inference on ("cpu", "cuda", "cuda:0", etc.).
+               If None, automatically selects based on availability.
+        confidence_threshold (float | None): Minimum confidence for detections (0-1).
+                             If None, uses value from config.
+        image_size (int | None): Input image size for model. If None, uses recommended size.
+
     Example:
         >>> detector = DocLayoutYOLODetector()  # Uses doclaynet_pretrained
         >>> result = detector.detect(image)
@@ -430,22 +444,6 @@ class DocLayoutYOLODetector:
         confidence_threshold: float | None = None,
         image_size: int | None = None,
     ) -> None:
-        """Initialize the DocLayout-YOLO detector.
-
-        Args:
-            model_key: Model key from config. Options:
-                      - "doclaynet_pretrained" (default, recommended): 11 classes, mAP 79.7
-                      - "doclaynet_scratch": 11 classes, mAP 77.7
-                      - "docstructbench": 10 classes, general-purpose
-                      - "d4la_pretrained": 10 classes, mAP 70.3
-                      - "d4la_scratch": 10 classes, mAP 69.8
-                      If None, uses the active model from config.
-            device: Device to run inference on ("cpu", "cuda", "cuda:0", etc.).
-                   If None, automatically selects based on availability.
-            confidence_threshold: Minimum confidence for detections (0-1).
-                                 If None, uses value from config.
-            image_size: Input image size for model. If None, uses recommended size.
-        """
         # Load configuration
         self._config = get_doclayout_yolo_config(model_key)
         self._common_config = get_doclayout_yolo_common_config()

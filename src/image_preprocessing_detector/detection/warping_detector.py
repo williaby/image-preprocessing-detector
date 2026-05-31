@@ -38,12 +38,12 @@ class WarpingDetectionResult:
     """Result of warping distortion detection.
 
     Attributes:
-        has_warping: Whether the page exhibits significant warping.
-        warping_score: Severity from 0 (no warping) to 1 (severe warping).
-        warping_type: Classification -- ``"barrel"``, ``"pincushion"``,
+        has_warping (bool): Whether the page exhibits significant warping.
+        warping_score (float): Severity from 0 (no warping) to 1 (severe warping).
+        warping_type (str | None): Classification -- ``"barrel"``, ``"pincushion"``,
             ``"perspective"``, ``"wave"``, or ``None`` when no warping.
-        line_count: Number of horizontal lines detected via Hough transform.
-        confidence: Confidence in the detection result (0-1).
+        line_count (int): Number of horizontal lines detected via Hough transform.
+        confidence (float): Confidence in the detection result (0-1).
     """
 
     has_warping: bool
@@ -347,6 +347,14 @@ class WarpingDetector:
 
     Signals are fused via weighted average into ``warping_score`` (0-1).
 
+    Args:
+        warping_threshold (float): Score above which ``has_warping`` is True.
+        min_horizontal_lines (int): Minimum horizontal lines required for
+            reliable analysis (below this, returns no-warping).
+        curvature_weight (float): Weight for line curvature signal.
+        rectangularity_weight (float): Weight for page rectangularity signal.
+        polynomial_weight (float): Weight for polynomial fit signal.
+
     Example:
         >>> detector = WarpingDetector()
         >>> image = cv2.imread("book_scan.jpg")
@@ -365,16 +373,6 @@ class WarpingDetector:
         rectangularity_weight: float = _DEFAULT_RECTANGULARITY_WEIGHT,
         polynomial_weight: float = _DEFAULT_POLYNOMIAL_WEIGHT,
     ) -> None:
-        """Initialise warping detector with configurable thresholds.
-
-        Args:
-            warping_threshold: Score above which ``has_warping`` is True.
-            min_horizontal_lines: Minimum horizontal lines required for
-                reliable analysis (below this, returns no-warping).
-            curvature_weight: Weight for line curvature signal.
-            rectangularity_weight: Weight for page rectangularity signal.
-            polynomial_weight: Weight for polynomial fit signal.
-        """
         self.warping_threshold = warping_threshold
         self.min_horizontal_lines = min_horizontal_lines
         self.curvature_weight = curvature_weight
@@ -399,9 +397,6 @@ class WarpingDetector:
 
         Returns:
             WarpingDetectionResult with warping classification and metrics.
-
-        Raises:
-            ValueError: If the image is ``None`` or empty.
         """
         gray, _binary, height, width = _validate_and_preprocess(image)
 
@@ -506,9 +501,6 @@ def detect_warping_distortion(image: np.ndarray) -> WarpingDetectionResult:
 
     Returns:
         WarpingDetectionResult with warping classification and metrics.
-
-    Raises:
-        ValueError: If the image is ``None`` or empty.
     """
     global _default_detector
     if _default_detector is None:

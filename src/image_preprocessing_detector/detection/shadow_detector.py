@@ -39,11 +39,11 @@ class ShadowDetectionResult:
     """Result of shadow detection analysis.
 
     Attributes:
-        has_shadows: Whether the page has detectable shadow artifacts.
-        shadow_score: Aggregate shadow severity from 0 (none) to 1 (severe).
-        shadow_severity: Categorical severity label for display.
-        shadow_ratio: Ratio of shadow-region area to total image area (0-1).
-        confidence: Confidence in the detection result (0-1).
+        has_shadows (bool): Whether the page has detectable shadow artifacts.
+        shadow_score (float): Aggregate shadow severity from 0 (none) to 1 (severe).
+        shadow_severity (Literal["none", "mild", "moderate", "severe"]): Categorical severity label for display.
+        shadow_ratio (float): Ratio of shadow-region area to total image area (0-1).
+        confidence (float): Confidence in the detection result (0-1).
     """
 
     has_shadows: bool
@@ -275,6 +275,12 @@ class ShadowDetector:
 
     Each signal is fused via weighted average to produce the final
     ``shadow_score``.
+
+    Args:
+        grid_size (int): Number of grid divisions per axis for local variance
+            analysis (default: 8, yielding 64 cells).
+        shadow_threshold (float): Fraction of global mean intensity below which
+            a grid cell is flagged as a shadow candidate (default: 0.6).
     """
 
     def __init__(
@@ -282,14 +288,6 @@ class ShadowDetector:
         grid_size: int = _DEFAULT_GRID_SIZE,
         shadow_threshold: float = _DEFAULT_SHADOW_THRESHOLD,
     ) -> None:
-        """Initialise shadow detector.
-
-        Args:
-            grid_size: Number of grid divisions per axis for local variance
-                analysis (default: 8, yielding 64 cells).
-            shadow_threshold: Fraction of global mean intensity below which
-                a grid cell is flagged as a shadow candidate (default: 0.6).
-        """
         self.grid_size = grid_size
         self.shadow_threshold = shadow_threshold
 
@@ -311,9 +309,6 @@ class ShadowDetector:
 
         Returns:
             ShadowDetectionResult with score, severity, ratio, and confidence.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
         """
         gray, _binary, _height, _width = _validate_and_preprocess(image)
 
@@ -377,9 +372,6 @@ def detect_shadows(image: np.ndarray) -> ShadowDetectionResult:
 
     Returns:
         ShadowDetectionResult with score, severity, ratio, and confidence.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
     """
     global _default_detector
     if _default_detector is None:

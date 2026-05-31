@@ -56,13 +56,13 @@ class HandwritingDetectionResult:
     """Result of handwriting detection analysis.
 
     Attributes:
-        has_handwriting: Whether the page contains handwriting.
-        handwriting_score: Aggregate handwriting likelihood (0-1).
-        stroke_width_variance: Normalised stroke-width variance signal (0-1).
-        baseline_irregularity: Normalised baseline irregularity signal (0-1).
-        spacing_variance: Normalised inter-component spacing variance (0-1).
-        form_factor_score: Normalised component complexity signal (0-1).
-        confidence: Confidence in the detection result (0-1).
+        has_handwriting (bool): Whether the page contains handwriting.
+        handwriting_score (float): Aggregate handwriting likelihood (0-1).
+        stroke_width_variance (float): Normalised stroke-width variance signal (0-1).
+        baseline_irregularity (float): Normalised baseline irregularity signal (0-1).
+        spacing_variance (float): Normalised inter-component spacing variance (0-1).
+        form_factor_score (float): Normalised component complexity signal (0-1).
+        confidence (float): Confidence in the detection result (0-1).
     """
 
     has_handwriting: bool
@@ -402,6 +402,16 @@ class HandwritingDetector:
            distinguishes complex handwriting glyphs from simpler typeset.
 
     Signals are fused via weighted average into ``handwriting_score`` (0-1).
+
+    Args:
+        threshold (float): Score threshold for binary has_handwriting decision
+            (default: 0.4).
+        min_components (int): Minimum CCs required for reliable analysis
+            (default: 5).
+
+    Raises:
+        ValueError: If threshold is not between 0.0 and 1.0, or if
+            min_components is less than 1.
     """
 
     def __init__(
@@ -409,14 +419,6 @@ class HandwritingDetector:
         threshold: float = _DEFAULT_THRESHOLD,
         min_components: int = _MIN_COMPONENTS,
     ) -> None:
-        """Initialise handwriting detector.
-
-        Args:
-            threshold: Score threshold for binary has_handwriting decision
-                (default: 0.4).
-            min_components: Minimum CCs required for reliable analysis
-                (default: 5).
-        """
         if not 0.0 <= threshold <= 1.0:
             msg = f"threshold must be between 0.0 and 1.0, got {threshold}"
             raise ValueError(msg)
@@ -446,9 +448,6 @@ class HandwritingDetector:
         Returns:
             HandwritingDetectionResult with score, per-signal breakdown,
             and confidence.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
         """
         _gray, binary, height, width = _validate_and_preprocess(image)
 
@@ -547,9 +546,6 @@ def detect_handwriting(image: np.ndarray) -> HandwritingDetectionResult:
     Returns:
         HandwritingDetectionResult with score, signal breakdown, and
         confidence.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
     """
     global _default_detector
     if _default_detector is None:

@@ -35,14 +35,14 @@ class CodeDetectionResult:
     """Result of code/monospace text detection.
 
     Attributes:
-        has_code: Whether the page likely contains code blocks.
-        code_confidence: Overall confidence in code detection (0-1).
-        width_uniformity: Character-width uniformity score
+        has_code (bool): Whether the page likely contains code blocks.
+        code_confidence (float): Overall confidence in code detection (0-1).
+        width_uniformity (float): Character-width uniformity score
             (0-1, 1 = perfectly uniform / monospace-like).
-        indentation_levels: Number of distinct indentation levels found.
-        line_height_uniformity: Line-spacing uniformity score
+        indentation_levels (int): Number of distinct indentation levels found.
+        line_height_uniformity (float): Line-spacing uniformity score
             (0-1, 1 = perfectly uniform).
-        confidence: Alias for code_confidence (for API consistency).
+        confidence (float): Alias for code_confidence (for API consistency).
     """
 
     has_code: bool
@@ -210,6 +210,12 @@ class CodeDetector:
 
     Each signal is independently mapped to a 0-1 score, then fused via
     weighted average to produce the final ``code_confidence``.
+
+    Args:
+        confidence_threshold (float): Confidence above which ``has_code``
+            is True (default: 0.5).
+        min_components (int): Minimum connected components required for
+            analysis (default: 15).
     """
 
     def __init__(
@@ -217,14 +223,6 @@ class CodeDetector:
         confidence_threshold: float = _DEFAULT_CONFIDENCE_THRESHOLD,
         min_components: int = _MIN_COMPONENTS,
     ) -> None:
-        """Initialise code detector.
-
-        Args:
-            confidence_threshold: Confidence above which ``has_code``
-                is True (default: 0.5).
-            min_components: Minimum connected components required for
-                analysis (default: 15).
-        """
         self.confidence_threshold = confidence_threshold
         self.min_components = min_components
 
@@ -246,9 +244,6 @@ class CodeDetector:
 
         Returns:
             CodeDetectionResult with classification and signal scores.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
         """
         _gray, binary, height, width = _validate_and_preprocess(image)
 
@@ -330,9 +325,6 @@ def detect_code(image: np.ndarray) -> CodeDetectionResult:
 
     Returns:
         CodeDetectionResult with classification and signal scores.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
     """
     global _default_detector
     if _default_detector is None:

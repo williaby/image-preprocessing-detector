@@ -82,13 +82,13 @@ class _ScriptScoreProfile:
     """Ideal signal values for a script family.
 
     Attributes:
-        aspect_ratio_center: Expected mean aspect ratio.
-        aspect_ratio_range: Acceptable (low, high) bounds.
-        density_center: Expected mean stroke density.
-        density_range: Acceptable (low, high) bounds.
-        complexity_center: Expected mean CC complexity.
-        complexity_range: Acceptable (low, high) bounds.
-        expects_rtl: Whether the family is right-to-left.
+        aspect_ratio_center (float): Expected mean aspect ratio.
+        aspect_ratio_range (tuple[float, float]): Acceptable (low, high) bounds.
+        density_center (float): Expected mean stroke density.
+        density_range (tuple[float, float]): Acceptable (low, high) bounds.
+        complexity_center (float): Expected mean CC complexity.
+        complexity_range (tuple[float, float]): Acceptable (low, high) bounds.
+        expects_rtl (bool): Whether the family is right-to-left.
     """
 
     aspect_ratio_center: float
@@ -404,19 +404,17 @@ class ScriptDetectorHeuristic:
     Each signal is scored against script family profiles and combined
     via weighted average to produce a probability distribution over
     ISO 15924 codes.
+
+    Args:
+        min_components (int): Minimum connected components required for
+            reliable detection.  Below this threshold the result
+            is ``Zzzz`` (unknown) with an appropriate reason.
     """
 
     def __init__(
         self,
         min_components: int = _DEFAULT_MIN_COMPONENTS,
     ) -> None:
-        """Initialise the heuristic script detector.
-
-        Args:
-            min_components: Minimum connected components required for
-                reliable detection.  Below this threshold the result
-                is ``Zzzz`` (unknown) with an appropriate reason.
-        """
         self.min_components = min_components
 
         logger.info(
@@ -433,9 +431,6 @@ class ScriptDetectorHeuristic:
         Returns:
             ScriptDetectionResult with ISO 15924 code, confidence,
             and probability distribution.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
         """
         _gray, binary, height, width = _validate_and_preprocess(image)
 
@@ -559,9 +554,6 @@ def detect_script_heuristic(image: np.ndarray) -> ScriptDetectionResult:
     Returns:
         ScriptDetectionResult with ISO 15924 code, confidence,
         and probability distribution.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
     """
     global _default_detector
     if _default_detector is None:

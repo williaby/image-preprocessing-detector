@@ -42,15 +42,15 @@ class OrientationConfig:
     """Configuration for orientation detection.
 
     Attributes:
-        consensus_required: Number of methods that must agree (default: 2 of 3)
-        min_confidence: Minimum confidence to accept detection (default: 0.6)
-        auto_correct_threshold: Confidence threshold for auto-correction (default: 0.8)
-        hough_threshold: Threshold for Hough line detection
-        min_line_length: Minimum line length for Hough transform
-        max_line_gap: Maximum gap between line segments
-        edge_canny_low: Canny edge detection low threshold
-        edge_canny_high: Canny edge detection high threshold
-        min_component_area: Minimum area for connected component analysis
+        consensus_required (int): Number of methods that must agree (default: 2 of 3)
+        min_confidence (float): Minimum confidence to accept detection (default: 0.6)
+        auto_correct_threshold (float): Confidence threshold for auto-correction (default: 0.8)
+        hough_threshold (int): Threshold for Hough line detection
+        min_line_length (int): Minimum line length for Hough transform
+        max_line_gap (int): Maximum gap between line segments
+        edge_canny_low (int): Canny edge detection low threshold
+        edge_canny_high (int): Canny edge detection high threshold
+        min_component_area (int): Minimum area for connected component analysis
     """
 
     consensus_required: int = 2
@@ -74,6 +74,9 @@ class OrientationDetector:
 
     Requires consensus (default 2/3) for reliable detection.
 
+    Args:
+        config (OrientationConfig | None): Configuration options. Uses defaults if not provided.
+
     Example:
         >>> detector = OrientationDetector()
         >>> image = cv2.imread("rotated_scan.jpg")
@@ -83,11 +86,6 @@ class OrientationDetector:
     """
 
     def __init__(self, config: OrientationConfig | None = None) -> None:
-        """Initialize the orientation detector.
-
-        Args:
-            config: Configuration options. Uses defaults if not provided.
-        """
         self.config = config or OrientationConfig()
 
     def detect(self, image: np.ndarray) -> OrientationDetection:

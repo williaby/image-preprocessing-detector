@@ -35,10 +35,10 @@ class OODResult:
     """Result of OOD detection for a single image.
 
     Attributes:
-        mahalanobis_distance: Mahalanobis distance from training distribution.
-        is_ood: Whether the image is flagged as out-of-distribution.
-        percentile: Approximate percentile rank vs calibration set (0-100).
-        threshold: The threshold used for OOD decision.
+        mahalanobis_distance (float): Mahalanobis distance from training distribution.
+        is_ood (bool): Whether the image is flagged as out-of-distribution.
+        percentile (float): Approximate percentile rank vs calibration set (0-100).
+        threshold (float): The threshold used for OOD decision.
     """
 
     mahalanobis_distance: float

@@ -41,11 +41,11 @@ class TextDetectionResult:
     """Result of text detection analysis.
 
     Attributes:
-        has_text: Whether text is detected in the image
-        confidence: Overall confidence score (0.0-1.0)
-        stroke_density: Morphological stroke density score
-        component_score: Connected components text score
-        edge_score: Edge density text score
+        has_text (bool): Whether text is detected in the image
+        confidence (float): Overall confidence score (0.0-1.0)
+        stroke_density (float): Morphological stroke density score
+        component_score (float): Connected components text score
+        edge_score (float): Edge density text score
     """
 
     has_text: bool
@@ -60,6 +60,16 @@ class TextGate:
 
     Uses ensemble of fast classical CV methods to detect text presence.
     Optimized for speed (< 50ms per page on CPU).
+
+    Args:
+        stroke_threshold (float): Minimum stroke density for text (default: 0.05)
+        min_text_components (int): Minimum text-like components (default: 10)
+        edge_threshold_low (int): Canny low threshold (default: 50)
+        edge_threshold_high (int): Canny high threshold (default: 150)
+        min_component_area (int): Minimum component area in pixels (default: 20)
+        max_component_area (int): Maximum component area in pixels (default: 5000)
+        min_aspect_ratio (float): Minimum aspect ratio for text (default: 0.1)
+        max_aspect_ratio (float): Maximum aspect ratio for text (default: 10.0)
     """
 
     def __init__(
@@ -73,18 +83,6 @@ class TextGate:
         min_aspect_ratio: float = DEFAULT_MIN_ASPECT_RATIO,
         max_aspect_ratio: float = DEFAULT_MAX_ASPECT_RATIO,
     ) -> None:
-        """Initialize text detection gate.
-
-        Args:
-            stroke_threshold: Minimum stroke density for text (default: 0.05)
-            min_text_components: Minimum text-like components (default: 10)
-            edge_threshold_low: Canny low threshold (default: 50)
-            edge_threshold_high: Canny high threshold (default: 150)
-            min_component_area: Minimum component area in pixels (default: 20)
-            max_component_area: Maximum component area in pixels (default: 5000)
-            min_aspect_ratio: Minimum aspect ratio for text (default: 0.1)
-            max_aspect_ratio: Maximum aspect ratio for text (default: 10.0)
-        """
         self.stroke_threshold = stroke_threshold
         self.min_text_components = min_text_components
         self.edge_threshold_low = edge_threshold_low

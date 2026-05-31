@@ -106,17 +106,17 @@ class MultiTaskPrediction:
     """Complete multi-task prediction from SigLIP 2 teacher.
 
     Attributes:
-        iqa_overall: Overall image quality score.
-        iqa_sharpness: Sharpness quality score.
-        iqa_color: Color quality score.
-        script: Script detection result with full distribution.
-        source: Document source classification.
-        orientation: Orientation detection.
-        shadow: Shadow severity (0=none, 1=severe).
-        warping: Warping severity (0=none, 1=severe).
-        embedding: Penultimate-layer embedding (768-dim) for OOD detection.
-        inference_time_ms: Inference time in milliseconds.
-        device: Device used for inference.
+        iqa_overall (IQAScore): Overall image quality score.
+        iqa_sharpness (IQAScore): Sharpness quality score.
+        iqa_color (IQAScore): Color quality score.
+        script (ClassificationResult): Script detection result with full distribution.
+        source (ClassificationResult): Document source classification.
+        orientation (ClassificationResult): Orientation detection.
+        shadow (RegressionResult): Shadow severity (0=none, 1=severe).
+        warping (RegressionResult): Warping severity (0=none, 1=severe).
+        embedding (np.ndarray | None): Penultimate-layer embedding (768-dim) for OOD detection.
+        inference_time_ms (float): Inference time in milliseconds.
+        device (str): Device used for inference.
     """
 
     iqa_overall: IQAScore
@@ -157,10 +157,10 @@ class SigLIP2MultiTaskConfig:
     """Configuration for SigLIP2 multi-task inference.
 
     Attributes:
-        model_id: HuggingFace model ID for backbone + processor.
-        max_num_patches: Maximum NaFlex patches.
-        device: Device override (None = auto-detect).
-        use_fp16: Use half-precision for inference.
+        model_id (str): HuggingFace model ID for backbone + processor.
+        max_num_patches (int): Maximum NaFlex patches.
+        device (str | None): Device override (None = auto-detect).
+        use_fp16 (bool): Use half-precision for inference.
     """
 
     model_id: str = "google/siglip2-base-patch16-naflex"

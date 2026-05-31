@@ -73,14 +73,14 @@ class LayoutAnalysisMetrics:
     """Metrics derived from DocLayout-YOLO detection.
 
     Attributes:
-        element_counts: Count of each element type detected
-        total_elements: Total number of detected elements
-        element_coverage: Fraction of page covered by detected elements
-        has_tables: Whether tables were detected
-        has_figures: Whether figures were detected
-        has_formulas: Whether formulas were detected
-        complexity_score: Calculated complexity (0-1)
-        inference_time_ms: Time taken for ML inference
+        element_counts (dict[str, int]): Count of each element type detected
+        total_elements (int): Total number of detected elements
+        element_coverage (float): Fraction of page covered by detected elements
+        has_tables (bool): Whether tables were detected
+        has_figures (bool): Whether figures were detected
+        has_formulas (bool): Whether formulas were detected
+        complexity_score (float): Calculated complexity (0-1)
+        inference_time_ms (float): Time taken for ML inference
     """
 
     element_counts: dict[str, int] = field(default_factory=dict)
@@ -99,6 +99,12 @@ class DocLayoutIntegration:
     This class converts ML-based detections to the attributes needed for
     PageLayoutSummary and routing decisions.
 
+    Args:
+        complexity_weights (dict[str, float] | None): Custom weights for element types.
+                          If None, uses default ELEMENT_COMPLEXITY_WEIGHTS.
+        max_complexity_elements (int): Maximum element count for normalization.
+                                More elements than this won't increase score.
+
     Example:
         >>> from image_preprocessing_detector.detection.doclayout_yolo import (
         ...     DocLayoutYOLODetector,
@@ -114,14 +120,6 @@ class DocLayoutIntegration:
         complexity_weights: dict[str, float] | None = None,
         max_complexity_elements: int = 20,
     ) -> None:
-        """Initialize the integration.
-
-        Args:
-            complexity_weights: Custom weights for element types.
-                              If None, uses default ELEMENT_COMPLEXITY_WEIGHTS.
-            max_complexity_elements: Maximum element count for normalization.
-                                    More elements than this won't increase score.
-        """
         self._weights = complexity_weights or ELEMENT_COMPLEXITY_WEIGHTS
         self._max_elements = max_complexity_elements
 
@@ -351,6 +349,12 @@ class HybridLayoutAnalyzer:
     - Reliable quality detection (heuristics)
     - Graceful degradation when ML unavailable
 
+    Args:
+        enable_ml (bool): Enable DocLayout-YOLO ML detection
+        enable_heuristics (bool): Enable heuristic-based detection
+        ml_model_key (str | None): DocLayout-YOLO model key (default: active model)
+        ml_confidence_threshold (float): Confidence threshold for ML detection
+
     Example:
         >>> analyzer = HybridLayoutAnalyzer()
         >>> summary = analyzer.analyze(image, page_number=1)
@@ -365,14 +369,6 @@ class HybridLayoutAnalyzer:
         ml_model_key: str | None = None,
         ml_confidence_threshold: float = 0.2,
     ) -> None:
-        """Initialize the hybrid analyzer.
-
-        Args:
-            enable_ml: Enable DocLayout-YOLO ML detection
-            enable_heuristics: Enable heuristic-based detection
-            ml_model_key: DocLayout-YOLO model key (default: active model)
-            ml_confidence_threshold: Confidence threshold for ML detection
-        """
         self._enable_ml = enable_ml
         self._enable_heuristics = enable_heuristics
         self._ml_model_key = ml_model_key
