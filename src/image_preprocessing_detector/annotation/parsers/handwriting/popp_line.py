@@ -78,12 +78,12 @@ class PoppLineParser(BaseParser):
         """Parse POPP-line labels from image path metadata.
 
         Args:
-            dataset_path: Root path of the POPP dataset
-            image_path: Absolute path to the PNG image being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the POPP dataset
+            image_path (Path): Absolute path to the PNG image being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with French language/script metadata
+            OriginalLabels: OriginalLabels with French language/script metadata
             and split information
         """
         labels = OriginalLabels()

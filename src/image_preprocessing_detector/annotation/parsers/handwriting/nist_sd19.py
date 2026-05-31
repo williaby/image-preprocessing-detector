@@ -79,12 +79,12 @@ class NistSd19Parser(BaseParser):
         """Parse NIST SD-19 labels from directory structure.
 
         Args:
-            dataset_path: Root path of the NIST SD-19 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the NIST SD-19 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with writer_id, transcription, and raw_labels
+            OriginalLabels: OriginalLabels with writer_id, transcription, and raw_labels
             containing class_id and sample_id
         """
         labels = OriginalLabels()

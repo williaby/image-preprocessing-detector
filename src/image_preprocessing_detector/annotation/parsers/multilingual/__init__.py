@@ -84,7 +84,7 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     """Register all multilingual parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with
     """
     registry.register(MultilingualScriptsParser())
     registry.register(Mdiw13Parser())

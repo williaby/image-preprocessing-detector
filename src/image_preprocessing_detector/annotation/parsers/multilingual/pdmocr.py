@@ -72,7 +72,6 @@ class PdmocrParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with CSV cache."""
         super().__init__()
         self._csv_cache: dict[Path, dict[str, dict[str, str]]] = {}
 
@@ -90,12 +89,12 @@ class PdmocrParser(BaseParser):
         """Parse PDM OCR labels from info.csv metadata.
 
         Args:
-            dataset_path: Root path of the PDM OCR images directory
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the PDM OCR images directory
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language/script metadata and bibliographic
+            OriginalLabels: OriginalLabels with language/script metadata and bibliographic
             information from info.csv
         """
         labels = OriginalLabels()
@@ -144,10 +143,10 @@ class PdmocrParser(BaseParser):
         underscore-delimited segment, or the full stem if no underscore.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            PID string extracted from filename
+            str: PID string extracted from filename
         """
         stem = image_path.stem
         # PID is typically the first part before underscore
@@ -160,10 +159,10 @@ class PdmocrParser(BaseParser):
         """Extract decade from DatasetID field.
 
         Args:
-            dataset_id: DatasetID string (e.g., "tosho_1870_bunkei")
+            dataset_id (str): DatasetID string (e.g., "tosho_1870_bunkei")
 
         Returns:
-            Decade string (e.g., "1870") or empty string if not found
+            str: Decade string (e.g., "1870") or empty string if not found
         """
         match = _DECADE_RE.search(dataset_id)
         if match:
@@ -174,10 +173,10 @@ class PdmocrParser(BaseParser):
         """Load and cache info.csv, indexed by PID.
 
         Args:
-            dataset_root: Root path of the PDM OCR dataset (parent of images/)
+            dataset_root (Path): Root path of the PDM OCR dataset (parent of images/)
 
         Returns:
-            Dictionary mapping PID to row data
+            dict[str, dict[str, str]]: Dictionary mapping PID to row data
         """
         if dataset_root in self._csv_cache:
             return self._csv_cache[dataset_root]
@@ -216,12 +215,12 @@ class PdmocrParser(BaseParser):
         Loads info.csv once and extracts labels for all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Pre-load CSV
         dataset_root = dataset_path.parent

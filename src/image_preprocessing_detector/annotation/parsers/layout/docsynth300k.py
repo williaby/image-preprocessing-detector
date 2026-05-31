@@ -71,10 +71,10 @@ def _parse_yolo_annotation(anno_str: str) -> dict[str, Any]:
     """Parse a single YOLO-format annotation string.
 
     Args:
-        anno_str: YOLO annotation string "class_id x_center y_center width height ..."
+        anno_str (str): YOLO annotation string "class_id x_center y_center width height ..."
 
     Returns:
-        Dict with parsed annotation fields
+        dict[str, Any]: Dict with parsed annotation fields
     """
     parts = anno_str.strip().split()
     if len(parts) < 5:
@@ -109,10 +109,10 @@ def _build_parquet_index(dataset_path: Path) -> dict[str, list[dict[str, Any]]] 
     Results are cached at module level.
 
     Args:
-        dataset_path: Root path of the DocSynth300K dataset
+        dataset_path (Path): Root path of the DocSynth300K dataset
 
     Returns:
-        Mapping of filename -> list of parsed annotations, or None if loading fails
+        dict[str, list[dict[str, Any]]] | None: Mapping of filename -> list of parsed annotations, or None if loading fails
     """
     cache_key = str(dataset_path)
     if cache_key in _PARQUET_INDEX:
@@ -192,12 +192,12 @@ class DocSynth300KParser(BaseParser):
         """Parse DocSynth300K YOLO annotations.
 
         Args:
-            dataset_path: Root path of the DocSynth300K dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the DocSynth300K dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with raw_labels["docsynth300k_annotations"] populated
+            OriginalLabels: OriginalLabels with raw_labels["docsynth300k_annotations"] populated
 
         Note:
             First call builds an index from parquet files, which may take time.

@@ -69,7 +69,6 @@ class VjrodaParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with manifest caches."""
         super().__init__()
         self._url_cache: dict[Path, dict[str, dict[str, Any]]] = {}
         self._text_cache: dict[Path, dict[str, str]] = {}
@@ -88,12 +87,12 @@ class VjrodaParser(BaseParser):
         """Parse VJRODa labels from JSONL metadata files.
 
         Args:
-            dataset_path: Root path of the VJRODa dataset (images/ dir)
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the VJRODa dataset (images/ dir)
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script codes, and vertical
+            OriginalLabels: OriginalLabels with language_code, script codes, and vertical
             text orientation metadata including transcription
         """
         labels = OriginalLabels()
@@ -136,10 +135,10 @@ class VjrodaParser(BaseParser):
         """Load and cache url_list.jsonl, indexed by image ID.
 
         Args:
-            dataset_root: Root path of the VJRODa dataset (parent of images/)
+            dataset_root (Path): Root path of the VJRODa dataset (parent of images/)
 
         Returns:
-            Dictionary mapping image ID to URL record data
+            dict[str, dict[str, Any]]: Dictionary mapping image ID to URL record data
         """
         if dataset_root in self._url_cache:
             return self._url_cache[dataset_root]
@@ -170,10 +169,10 @@ class VjrodaParser(BaseParser):
         """Load and cache rw_data_texts.jsonl, indexed by image ID.
 
         Args:
-            dataset_root: Root path of the VJRODa dataset (parent of images/)
+            dataset_root (Path): Root path of the VJRODa dataset (parent of images/)
 
         Returns:
-            Dictionary mapping image ID to transcription text
+            dict[str, str]: Dictionary mapping image ID to transcription text
         """
         if dataset_root in self._text_cache:
             return self._text_cache[dataset_root]
@@ -222,12 +221,12 @@ class VjrodaParser(BaseParser):
         Loads JSONL files once and extracts labels for all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Pre-load JSONL files
         dataset_root = dataset_path.parent

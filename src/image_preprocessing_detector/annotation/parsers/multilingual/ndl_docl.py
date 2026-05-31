@@ -93,7 +93,6 @@ class NdlDoclParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser."""
         super().__init__()
 
     @property
@@ -110,12 +109,12 @@ class NdlDoclParser(BaseParser):
         """Parse NDL-DocL labels from Pascal VOC XML annotations.
 
         Args:
-            dataset_path: Root path of the NDL-DocL full_images directory
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the NDL-DocL full_images directory
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language/script metadata, subset info,
+            OriginalLabels: OriginalLabels with language/script metadata, subset info,
             kuzushiji flag, and layout annotations from XML
         """
         labels = OriginalLabels()
@@ -147,10 +146,10 @@ class NdlDoclParser(BaseParser):
         """Determine the subset (kotenseki or kindai) from the image path.
 
         Args:
-            image_path: Absolute path to the image
+            image_path (Path): Absolute path to the image
 
         Returns:
-            Subset name string ("kotenseki", "kindai", or "unknown")
+            str: Subset name string ("kotenseki", "kindai", or "unknown")
         """
         parts = image_path.parts
         for part in parts:
@@ -167,12 +166,12 @@ class NdlDoclParser(BaseParser):
         """Parse Pascal VOC XML annotation file for the given image.
 
         Args:
-            dataset_root: Root path of the NDL-DocL dataset (parent of full_images/)
-            image_path: Absolute path to the image
-            subset: Dataset subset ("kotenseki" or "kindai")
+            dataset_root (Path): Root path of the NDL-DocL dataset (parent of full_images/)
+            image_path (Path): Absolute path to the image
+            subset (str): Dataset subset ("kotenseki" or "kindai")
 
         Returns:
-            List of annotation dicts with label and bbox keys
+            list[dict[str, Any]]: List of annotation dicts with label and bbox keys
         """
         # XML annotations are in tugidigi-annotation/{subset}/
         xml_name = image_path.stem + ".xml"
@@ -225,12 +224,12 @@ class NdlDoclParser(BaseParser):
         """Parse labels for multiple images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         return [self.parse(dataset_path, p, config) for p in image_paths]
 

@@ -141,12 +141,12 @@ class CasiaHwdb2Parser(BaseParser):
         """Parse CASIA-HWDB2 labels for a single DGRL page file.
 
         Args:
-            dataset_path: Root path of the casia-hwdb2 dataset (unused for DGRL).
-            image_path: Absolute path to a DGRL binary file (e.g. ``1001-c.dgrl``).
-            config: Dataset configuration dictionary (unused).
+            dataset_path (Path): Root path of the casia-hwdb2 dataset (unused for DGRL).
+            image_path (Path): Absolute path to a DGRL binary file (e.g. ``1001-c.dgrl``).
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with Chinese transcription, Hans script metadata,
+            OriginalLabels: OriginalLabels with Chinese transcription, Hans script metadata,
             and per-line bounding-box annotations in raw_labels.
         """
         labels = OriginalLabels()
@@ -216,10 +216,10 @@ def _extract_writer_id(filename: str) -> str | None:
     (e.g. ``006-P16.dgrl``).  We extract the leading digit sequence.
 
     Args:
-        filename: Base filename (e.g. ``1001-c.dgrl``).
+        filename (str): Base filename (e.g. ``1001-c.dgrl``).
 
     Returns:
-        Writer ID string, or None if not determinable.
+        str | None: Writer ID string, or None if not determinable.
     """
     match = _WRITER_ID_RE.match(Path(filename).stem)
     return match.group(1) if match else None
@@ -229,10 +229,10 @@ def _detect_sub_dataset_and_split(image_path: Path) -> tuple[str, str]:
     """Infer HWDB2 sub-dataset and split from the directory path.
 
     Args:
-        image_path: Full path to the DGRL file.
+        image_path (Path): Full path to the DGRL file.
 
     Returns:
-        Tuple of (sub_dataset, split), each either a detected value or "unknown".
+        tuple[str, str]: Tuple of (sub_dataset, split), each either a detected value or "unknown".
     """
     sub_dataset = "unknown"
     for part in image_path.parts:
@@ -257,14 +257,12 @@ def _parse_dgrl_page(path: Path) -> dict[str, Any] | None:
     """Parse a single DGRL page file.
 
     Args:
-        path: Path to the .dgrl file.
+        path (Path): Path to the .dgrl file.
 
     Returns:
-        Dict with ``height``, ``width``, ``line_num``, and ``lines`` list,
+        dict[str, Any] | None: Dict with ``height``, ``width``, ``line_num``, and ``lines`` list,
         or None if the file header is malformed.
 
-    Raises:
-        OSError: If the file cannot be opened or read.
     """
     with path.open("rb") as fh:
         code_length = _read_file_header(fh, path.name)
@@ -300,11 +298,11 @@ def _read_file_header(fh: Any, filename: str) -> int | None:
     """Read the variable-length DGRL file header and return code_length.
 
     Args:
-        fh: Open binary file handle at position 0.
-        filename: Filename used only for log messages.
+        fh (Any): Open binary file handle at position 0.
+        filename (str): Filename used only for log messages.
 
     Returns:
-        ``code_length`` (bytes per character in label blocks), or None on error.
+        int | None: ``code_length`` (bytes per character in label blocks), or None on error.
     """
     size_raw = fh.read(4)
     if len(size_raw) < 4:
@@ -353,12 +351,12 @@ def _read_line_record(
     """Read and decode one line record from an open DGRL file handle.
 
     Args:
-        fh: Open binary file handle positioned at the start of a line record.
-        code_length: Bytes per character in the label block (typically 4).
-        filename: Filename used only for log messages.
+        fh (Any): Open binary file handle positioned at the start of a line record.
+        code_length (int): Bytes per character in the label block (typically 4).
+        filename (str): Filename used only for log messages.
 
     Returns:
-        Dict with ``bbox`` ([x, y, w, h] page-relative), ``char_count``,
+        dict[str, Any] | None: Dict with ``bbox`` ([x, y, w, h] page-relative), ``char_count``,
         and ``text``, or None on EOF or corrupt data.
     """
     char_num_raw = fh.read(4)
@@ -406,12 +404,12 @@ def _decode_labels(label_raw: bytes, char_num: int, code_length: int) -> str:
     official CASIA ``read_dgrl.py`` reference script.
 
     Args:
-        label_raw: Raw bytes containing all character labels.
-        char_num: Number of characters.
-        code_length: Bytes per character (2 or 4).
+        label_raw (bytes): Raw bytes containing all character labels.
+        char_num (int): Number of characters.
+        code_length (int): Bytes per character (2 or 4).
 
     Returns:
-        Decoded Unicode string with null bytes stripped.
+        str: Decoded Unicode string with null bytes stripped.
     """
     text_parts: list[str] = []
     for idx in range(char_num):

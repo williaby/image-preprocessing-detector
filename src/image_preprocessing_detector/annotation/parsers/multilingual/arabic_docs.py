@@ -99,12 +99,12 @@ class ArabicDocsParser(BaseParser):
         """Parse Arabic Documents labels from Supervisely JSON.
 
         Args:
-            dataset_path: Root path of the arabic_docs_ocr dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the arabic_docs_ocr dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with bounding boxes, text transcriptions, layout classes,
+            OriginalLabels: OriginalLabels with bounding boxes, text transcriptions, layout classes,
             language/script metadata, and document category
         """
         labels = OriginalLabels()

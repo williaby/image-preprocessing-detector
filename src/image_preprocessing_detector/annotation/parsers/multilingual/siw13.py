@@ -90,12 +90,12 @@ class Siw13Parser(BaseParser):
         """Parse SIW-13 labels from directory structure.
 
         Args:
-            dataset_path: Root path of the SIW-13 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the SIW-13 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name (ISO 15924),
+            OriginalLabels: OriginalLabels with language_code, script_name (ISO 15924),
             and split information
         """
         labels = OriginalLabels()

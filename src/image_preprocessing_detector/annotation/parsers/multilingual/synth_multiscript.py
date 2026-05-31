@@ -95,12 +95,12 @@ class SynthMultiscriptParser(BaseParser):
         containing complete metadata.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script codes, and rich
+            OriginalLabels: OriginalLabels with language_code, script codes, and rich
             metadata in raw_labels including layout detections, text
             statistics, and quality scores.
         """
@@ -191,11 +191,11 @@ class SynthMultiscriptParser(BaseParser):
         """Create fallback labels from directory structure when JSON missing.
 
         Args:
-            image_path: Path to the image file
-            labels: OriginalLabels instance to populate
+            image_path (Path): Path to the image file
+            labels (OriginalLabels): OriginalLabels instance to populate
 
         Returns:
-            OriginalLabels with script inferred from directory name
+            OriginalLabels: OriginalLabels with script inferred from directory name
         """
         # Ensure raw_labels is initialized
         if labels.raw_labels is None:

@@ -73,7 +73,7 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     """Register all handwriting parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with
     """
     registry.register(SignaTRParser())
     registry.register(PucitOhulParser())

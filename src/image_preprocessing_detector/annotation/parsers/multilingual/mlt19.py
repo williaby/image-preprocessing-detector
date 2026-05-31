@@ -109,12 +109,12 @@ class Mlt19Parser(BaseParser):
         """Parse MLT19 labels from ground truth files.
 
         Args:
-            dataset_path: Root path of the MLT19 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the MLT19 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, and raw_labels
+            OriginalLabels: OriginalLabels with language_code, script_name, and raw_labels
             containing word annotations, bounding boxes, and language statistics
         """
         labels = OriginalLabels()
@@ -248,11 +248,11 @@ class Mlt19Parser(BaseParser):
         """Find the ground truth file for an image.
 
         Args:
-            dataset_path: Root dataset path
-            image_path: Path to the image file
+            dataset_path (Path): Root dataset path
+            image_path (Path): Path to the image file
 
         Returns:
-            Path to ground truth file or None if not found
+            Path | None: Path to ground truth file or None if not found
         """
         stem = image_path.stem
 

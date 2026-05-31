@@ -81,10 +81,10 @@ def _load_coco_annotations(coco_path: Path) -> dict[str, Any] | None:
         - categories: Mapping of category_id -> category_name
 
     Args:
-        coco_path: Path to COCO JSON file
+        coco_path (Path): Path to COCO JSON file
 
     Returns:
-        Cached annotations dict or None if loading fails
+        dict[str, Any] | None: Cached annotations dict or None if loading fails
     """
     cache_key = str(coco_path)
     if cache_key in _COCO_CACHE:
@@ -160,15 +160,13 @@ class DocLayNetParser(BaseParser):
         """Parse DocLayNet COCO annotations.
 
         Args:
-            dataset_path: Root path of the DocLayNet dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the DocLayNet dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with raw_labels["doclaynet_annotations"] populated
+            OriginalLabels: OriginalLabels with raw_labels["doclaynet_annotations"] populated
 
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
         """
         labels = OriginalLabels()
 

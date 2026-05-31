@@ -83,12 +83,12 @@ class OpenpechaOcrDrutsaParser(BaseParser):
         transcription extraction script to populate ``labels.transcription``.
 
         Args:
-            dataset_path: Root path of the OCR Drutsa dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the OCR Drutsa dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with script_name="Tibetan", language_code="bo"
+            OriginalLabels: OriginalLabels with script_name="Tibetan", language_code="bo"
         """
         labels = OriginalLabels()
         labels.raw_labels = {}

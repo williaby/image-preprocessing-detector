@@ -37,7 +37,7 @@ def register_layout_parsers(registry: ParserRegistry) -> None:
     """Register all layout parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with
     """
     from .doclaynet import DocLayNetParser
     from .docsynth300k import DocSynth300KParser

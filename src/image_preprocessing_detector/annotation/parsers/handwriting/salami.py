@@ -116,12 +116,12 @@ class SalamiParser(BaseParser):
         """Parse SALAMI legibility labels for a single image.
 
         Args:
-            dataset_path: Root path of the SALAMI dataset
-            image_path: Path to a PNG in images/input/
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the SALAMI dataset
+            image_path (Path): Path to a PNG in images/input/
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            OriginalLabels with legibility ratings and script metadata
+            OriginalLabels: OriginalLabels with legibility ratings and script metadata
         """
         labels = OriginalLabels()
 
@@ -183,10 +183,10 @@ class SalamiParser(BaseParser):
         """Load and cache images.json metadata index.
 
         Args:
-            dataset_path: Root of SALAMI dataset
+            dataset_path (Path): Root of SALAMI dataset
 
         Returns:
-            Dict mapping img_id to metadata (lang, batch)
+            dict[str, dict[str, Any]]: Dict mapping img_id to metadata (lang, batch)
         """
         cache_key = str(dataset_path)
         if cache_key in self._images_cache:
@@ -218,10 +218,10 @@ class SalamiParser(BaseParser):
         """Load and cache assessments.json, grouped by img_id.
 
         Args:
-            dataset_path: Root of SALAMI dataset
+            dataset_path (Path): Root of SALAMI dataset
 
         Returns:
-            Dict mapping img_id to list of assessment entries
+            dict[str, list[dict[str, Any]]]: Dict mapping img_id to list of assessment entries
         """
         cache_key = str(dataset_path)
         if cache_key in self._assessments_cache:

@@ -106,13 +106,12 @@ class MultilingualScriptsParser(BaseParser):
         """Parse Multilingual Scripts labels from directory structure and manifests.
 
         Args:
-            dataset_path: Root path of the multilingual_scripts dataset
-            image_path: Absolute path to the image file being processed
-            _config: Dataset configuration (unused)
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the multilingual_scripts dataset
+            image_path (Path): Absolute path to the image file being processed
+            _config (dict[str, Any]): Dataset configuration (unused)
 
         Returns:
-            OriginalLabels with script_name, language_code, and raw_labels
+            OriginalLabels: OriginalLabels with script_name, language_code, and raw_labels
             populated based on subdataset
         """
         labels = OriginalLabels()

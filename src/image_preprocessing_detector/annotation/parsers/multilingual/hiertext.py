@@ -128,10 +128,10 @@ class HiertextParser(BaseParser):
         Loads all splits (train, validation, test) into a unified index.
 
         Args:
-            dataset_path: Root path of the HierText dataset
+            dataset_path (Path): Root path of the HierText dataset
 
         Returns:
-            True if annotations loaded successfully, False otherwise
+            bool: True if annotations loaded successfully, False otherwise
         """
         # Check if already cached for this path
         if (
@@ -191,10 +191,10 @@ class HiertextParser(BaseParser):
         HierText uses 16-character hex IDs as filenames.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            Image ID string if valid, None otherwise
+            str | None: Image ID string if valid, None otherwise
         """
         stem = image_path.stem
         # HierText IDs are 16-character hex strings
@@ -206,10 +206,10 @@ class HiertextParser(BaseParser):
         """Convert polygon vertices to COCO-format bounding box.
 
         Args:
-            vertices: List of [x, y] coordinate pairs
+            vertices (list[list[int]]): List of [x, y] coordinate pairs
 
         Returns:
-            Bounding box as [x, y, width, height]
+            list[int]: Bounding box as [x, y, width, height]
         """
         if not vertices:
             return [0, 0, 0, 0]
@@ -232,10 +232,10 @@ class HiertextParser(BaseParser):
         - mixed: Multiple types present
 
         Args:
-            words: List of word annotations with text
+            words (list[dict[str, Any]]): List of word annotations with text
 
         Returns:
-            Content type string
+            str: Content type string
         """
         if not words:
             return "not_applicable"
@@ -276,12 +276,12 @@ class HiertextParser(BaseParser):
         computing statistics for graded assessment training.
 
         Args:
-            dataset_path: Root path of the HierText dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the HierText dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with text_instances and raw_labels containing
+            OriginalLabels: OriginalLabels with text_instances and raw_labels containing
             handwriting/legibility statistics for graded assessment
         """
         labels = OriginalLabels()
@@ -439,12 +439,12 @@ class HiertextParser(BaseParser):
         Loads annotations once and processes all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         # Ensure annotations are loaded
         self._load_annotations(dataset_path)

@@ -122,12 +122,12 @@ class GNHKParser(BaseParser):
         """Parse GNHK labels from companion JSON annotation file.
 
         Args:
-            dataset_path: Root path of the GNHK dataset
-            image_path: Absolute path to the JPEG image being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the GNHK dataset
+            image_path (Path): Absolute path to the JPEG image being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with English text metadata, word counts,
+            OriginalLabels: OriginalLabels with English text metadata, word counts,
             legibility statistics, and writer identity
         """
         labels = OriginalLabels()

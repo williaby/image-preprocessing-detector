@@ -105,12 +105,12 @@ class KHATTParser(BaseParser):
         """Parse KHATT labels from TSV ground truth and filename metadata.
 
         Args:
-            dataset_path: Root path of the KHATT dataset
-            image_path: Absolute path to the JPEG image being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the KHATT dataset
+            image_path (Path): Absolute path to the JPEG image being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with Arabic text, language/script metadata,
+            OriginalLabels: OriginalLabels with Arabic text, language/script metadata,
             writer identity, and paragraph coordinates
         """
         labels = OriginalLabels()
@@ -180,10 +180,10 @@ class KHATTParser(BaseParser):
         """Load and cache the khatt_groundtruth.tsv index.
 
         Args:
-            dataset_path: Root path of KHATT dataset
+            dataset_path (Path): Root path of KHATT dataset
 
         Returns:
-            Dict mapping image_stem -> {"arabic_text": "...", "split": "..."}
+            dict[str, dict[str, str]]: Dict mapping image_stem -> {"arabic_text": "...", "split": "..."}
         """
         cache_key = str(dataset_path)
         if cache_key in self._tsv_cache:
@@ -222,11 +222,11 @@ class KHATTParser(BaseParser):
         """Load Arabic transcription from companion .txt file (fallback).
 
         Args:
-            dataset_path: Root path of KHATT dataset
-            image_path: Path to the JPEG image
+            dataset_path (Path): Root path of KHATT dataset
+            image_path (Path): Path to the JPEG image
 
         Returns:
-            Arabic text string, or None if not found
+            str | None: Arabic text string, or None if not found
         """
         # Try .txt sibling of the .jpg
         txt_path: Path = image_path.with_suffix(".txt")

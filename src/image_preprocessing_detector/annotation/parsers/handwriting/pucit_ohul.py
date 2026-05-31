@@ -73,7 +73,6 @@ class PucitOhulParser(BaseParser):
     """
 
     def __init__(self) -> None:
-        """Initialize parser with Excel label cache."""
         super().__init__()
         # Cache: excel_path -> {image_stem: (transcription, writer_id)}
         self._label_cache: dict[Path, dict[str, tuple[str | None, str | None]]] = {}
@@ -89,10 +88,10 @@ class PucitOhulParser(BaseParser):
         """Load and cache all labels from an Excel file.
 
         Args:
-            excel_file: Path to the XLSX label file.
+            excel_file (Path): Path to the XLSX label file.
 
         Returns:
-            Dict mapping image stem to (transcription, writer_id) tuple.
+            dict[str, tuple[str | None, str | None]]: Dict mapping image stem to (transcription, writer_id) tuple.
         """
         if excel_file in self._label_cache:
             return self._label_cache[excel_file]
@@ -130,12 +129,12 @@ class PucitOhulParser(BaseParser):
         """Parse PUCIT-OHUL labels from cached Excel data.
 
         Args:
-            dataset_path: Root path of the PUCIT-OHUL dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the PUCIT-OHUL dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code, script_name, transcription,
+            OriginalLabels: OriginalLabels with language_code, script_name, transcription,
             writer_id, and raw_labels containing split
         """
         labels = OriginalLabels()
