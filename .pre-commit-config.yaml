@@ -143,6 +143,16 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+  # Docstring linting with pydoclint (replaces darglint, TOOL-007/PC-006/TOOL-013)
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 88d83c94156c5e51a09938e77019f2c58e92ab58  # 0.8.4
+    hooks:
+      - id: pydoclint
+        args: ["--config=pyproject.toml"]
+        types: [python]
+        stages: [pre-commit]
+        exclude: ^(tests|scripts|benchmarks|tools)/
+
   # Security scanning with Bandit
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.6
