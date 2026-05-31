@@ -110,10 +110,10 @@ def get_annotation_logger(name: str) -> BoundLogger:
     instead of the base get_logger for annotation module code.
 
     Args:
-        name: Logger name (typically __name__)
+        name (str): Logger name (typically __name__).
 
     Returns:
-        Configured structlog logger with annotation context
+        BoundLogger: Configured structlog logger with annotation context.
 
     Example:
         >>> logger = get_annotation_logger(__name__)
@@ -139,11 +139,11 @@ def log_scan_started(
     """Log scan start event.
 
     Args:
-        logger: Logger instance
-        dataset: Dataset name
-        dataset_path: Path to dataset
-        total_files: Total files to scan
-        config: Optional scan configuration
+        logger (BoundLogger): Logger instance.
+        dataset (str): Dataset name.
+        dataset_path (Path | str): Path to dataset.
+        total_files (int): Total files to scan.
+        config (dict[str, Any] | None): Optional scan configuration.
     """
     logger.info(
         LOG_EVENTS.SCAN_STARTED,
@@ -165,12 +165,12 @@ def log_scan_completed(
     """Log scan completion event.
 
     Args:
-        logger: Logger instance
-        dataset: Dataset name
-        total_files: Total files scanned
-        batches: Number of batches created
-        duration_seconds: Scan duration
-        resumed: Whether scan was resumed from checkpoint
+        logger (BoundLogger): Logger instance.
+        dataset (str): Dataset name.
+        total_files (int): Total files scanned.
+        batches (int): Number of batches created.
+        duration_seconds (float): Scan duration.
+        resumed (bool): Whether scan was resumed from checkpoint.
     """
     logger.info(
         LOG_EVENTS.SCAN_COMPLETED,
@@ -196,12 +196,12 @@ def log_batch_processed(
     """Log batch processing event.
 
     Args:
-        logger: Logger instance
-        batch_num: Batch number
-        batch_size: Number of items in batch
-        duration_seconds: Processing duration
-        success: Whether processing succeeded
-        error: Error message if failed
+        logger (BoundLogger): Logger instance.
+        batch_num (int): Batch number.
+        batch_size (int): Number of items in batch.
+        duration_seconds (float): Processing duration.
+        success (bool): Whether processing succeeded.
+        error (str): Error message if failed.
     """
     event = LOG_EVENTS.BATCH_COMPLETED if success else LOG_EVENTS.BATCH_ERROR
     log_data: dict[str, Any] = {
@@ -231,12 +231,12 @@ def log_parse_operation(
     """Log parser operation.
 
     Args:
-        logger: Logger instance
-        parser: Parser name
-        duration_ms: Operation duration in milliseconds
-        success: Whether operation succeeded
-        samples: Number of samples parsed
-        error: Error message if failed
+        logger (BoundLogger): Logger instance.
+        parser (str): Parser name.
+        duration_ms (float): Operation duration in milliseconds.
+        success (bool): Whether operation succeeded.
+        samples (int): Number of samples parsed.
+        error (str): Error message if failed.
     """
     event = LOG_EVENTS.PARSE_COMPLETED if success else LOG_EVENTS.PARSE_ERROR
     log_data: dict[str, Any] = {
@@ -262,11 +262,11 @@ def log_checkpoint_operation(
     """Log checkpoint operation.
 
     Args:
-        logger: Logger instance
-        operation: Operation type (save, load, clear)
-        dataset: Dataset name
-        batch_num: Batch number (for save operations)
-        duration_ms: Operation duration
+        logger (BoundLogger): Logger instance.
+        operation (str): Operation type (save, load, clear).
+        dataset (str): Dataset name.
+        batch_num (int | None): Batch number (for save operations).
+        duration_ms (float | None): Operation duration.
     """
     event_map = {
         "save": LOG_EVENTS.CHECKPOINT_SAVED,
@@ -297,12 +297,12 @@ def log_cache_stats(
     """Log cache statistics.
 
     Args:
-        logger: Logger instance
-        cache_name: Name of the cache
-        size: Current cache size
-        max_size: Maximum cache size
-        hit_rate: Cache hit rate (0-1)
-        evictions: Total evictions
+        logger (BoundLogger): Logger instance.
+        cache_name (str): Name of the cache.
+        size (int): Current cache size.
+        max_size (int): Maximum cache size.
+        hit_rate (float): Cache hit rate (0-1).
+        evictions (int): Total evictions.
     """
     logger.info(
         "cache_stats",
@@ -326,12 +326,12 @@ def log_pipeline_stage(
     """Log pipeline stage execution.
 
     Args:
-        logger: Logger instance
-        stage: Stage name
-        duration_ms: Execution duration
-        success: Whether stage succeeded
-        error: Error message if failed
-        **context: Additional context
+        logger (BoundLogger): Logger instance.
+        stage (str): Stage name.
+        duration_ms (float): Execution duration.
+        success (bool): Whether stage succeeded.
+        error (str): Error message if failed.
+        **context (Any): Additional context.
     """
     event = (
         LOG_EVENTS.PIPELINE_STAGE_COMPLETED if success else LOG_EVENTS.PIPELINE_ERROR
@@ -364,13 +364,16 @@ def batch_logging_context(
     """Context manager that adds batch context to all log entries.
 
     Args:
-        logger: Base logger instance
-        batch_num: Batch number
-        batch_size: Batch size
-        dataset: Optional dataset name
+        logger (BoundLogger): Base logger instance.
+        batch_num (int): Batch number.
+        batch_size (int): Batch size.
+        dataset (str): Optional dataset name.
 
     Yields:
-        Logger with batch context bound
+        BoundLogger: Logger with batch context bound.
+
+    Raises:
+        Exception: Re-raises any exception from the context block.
 
     Example:
         >>> with batch_logging_context(
@@ -410,11 +413,14 @@ def parse_logging_context(
     """Context manager for parser operation logging.
 
     Args:
-        logger: Base logger instance
-        parser: Parser name
+        logger (BoundLogger): Base logger instance.
+        parser (str): Parser name.
 
     Yields:
-        Logger with parser context bound
+        BoundLogger: Logger with parser context bound.
+
+    Raises:
+        Exception: Re-raises any exception from the context block.
 
     Example:
         >>> with parse_logging_context(logger, "pubtabnet") as parse_logger:
@@ -450,12 +456,15 @@ def pipeline_stage_context(
     """Context manager for pipeline stage logging.
 
     Args:
-        logger: Base logger instance
-        stage: Stage name
-        **context: Additional context to bind
+        logger (BoundLogger): Base logger instance.
+        stage (str): Stage name.
+        **context (Any): Additional context to bind.
 
     Yields:
-        Logger with stage context bound
+        BoundLogger: Logger with stage context bound.
+
+    Raises:
+        Exception: Re-raises any exception from the context block.
 
     Example:
         >>> with pipeline_stage_context(logger, "validation", dataset="pubtabnet"):

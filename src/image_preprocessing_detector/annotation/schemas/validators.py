@@ -52,9 +52,9 @@ class ValidationResult:
     Follows the pattern from schema_utils/validation.py.
 
     Attributes:
-        valid: Whether validation passed
-        errors: List of validation error messages
-        warnings: List of non-fatal warning messages
+        valid (bool): Whether validation passed.
+        errors (list[str]): List of validation error messages.
+        warnings (list[str]): List of non-fatal warning messages.
     """
 
     valid: bool
@@ -211,10 +211,10 @@ def validate_sample_metadata(data: dict[str, Any]) -> ValidationResult:
     Validates required fields, field formats, and consistency.
 
     Args:
-        data: Dictionary representation of SampleMetadata
+        data (dict[str, Any]): Dictionary representation of SampleMetadata.
 
     Returns:
-        ValidationResult with valid flag, errors, and warnings
+        ValidationResult: Result with valid flag, errors, and warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -313,10 +313,10 @@ def validate_enrichment_version(data: dict[str, Any]) -> ValidationResult:
     """Validate EnrichmentVersion dictionary.
 
     Args:
-        data: Dictionary representation of EnrichmentVersion
+        data (dict[str, Any]): Dictionary representation of EnrichmentVersion.
 
     Returns:
-        ValidationResult
+        ValidationResult: Result with valid flag, errors, and warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -374,10 +374,10 @@ def validate_enrichment_data(data: dict[str, Any]) -> ValidationResult:
     """Validate EnrichmentData dictionary.
 
     Args:
-        data: Dictionary representation of EnrichmentData
+        data (dict[str, Any]): Dictionary representation of EnrichmentData.
 
     Returns:
-        ValidationResult
+        ValidationResult: Result with valid flag, errors, and warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -649,10 +649,10 @@ def validate_original_file_metadata(data: dict[str, Any]) -> ValidationResult:
     """Validate OriginalFileMetadata dictionary.
 
     Args:
-        data: Dictionary representation of OriginalFileMetadata
+        data (dict[str, Any]): Dictionary representation of OriginalFileMetadata.
 
     Returns:
-        ValidationResult
+        ValidationResult: Result with valid flag, errors, and warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -733,10 +733,10 @@ def validate_original_labels(data: dict[str, Any]) -> ValidationResult:
     """Validate OriginalLabels dictionary.
 
     Args:
-        data: Dictionary representation of OriginalLabels
+        data (dict[str, Any]): Dictionary representation of OriginalLabels.
 
     Returns:
-        ValidationResult
+        ValidationResult: Result with valid flag, errors, and warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []

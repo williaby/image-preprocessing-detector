@@ -53,19 +53,19 @@ def atomic_write(
     multiple processes write to the same target path concurrently.
 
     Args:
-        path: Target file path for the final output
-        fsync: If True, call fsync before rename for durability guarantee.
+        path (Path): Target file path for the final output.
+        fsync (bool): If True, call fsync before rename for durability guarantee.
             Use for critical data that must survive power loss.
             Has performance cost (~10-100ms depending on storage).
-        suffix: Suffix for temporary file (default ".tmp")
+        suffix (str): Suffix for temporary file (default ".tmp").
 
     Yields:
-        Temporary file Path to write to. The context manager handles
+        Path: Temporary file Path to write to. The context manager handles
         the atomic rename on successful exit.
 
     Raises:
-        Original exception if write fails. Temp file is cleaned up
-        automatically on failure.
+        Exception: If write fails. Temp file is cleaned up automatically on
+            failure.
 
     Example:
         >>> with atomic_write(Path("output.json"), fsync=True) as temp:
@@ -105,7 +105,7 @@ def _fsync_file(path: Path) -> None:
     This is more efficient than opening read-write.
 
     Args:
-        path: Path to file to fsync
+        path (Path): Path to file to fsync.
     """
     fd = os.open(str(path), os.O_RDONLY)
     try:
@@ -125,10 +125,10 @@ def safe_write_text(
     Convenience function for simple text file writes.
 
     Args:
-        path: Target file path
-        content: Text content to write
-        encoding: Text encoding (default UTF-8)
-        fsync: If True, fsync before rename
+        path (Path): Target file path.
+        content (str): Text content to write.
+        encoding (str): Text encoding (default UTF-8).
+        fsync (bool): If True, fsync before rename.
     """
     with atomic_write(path, fsync=fsync) as temp_path:
         temp_path.write_text(content, encoding=encoding)
@@ -144,9 +144,9 @@ def safe_write_bytes(
     Convenience function for simple binary file writes.
 
     Args:
-        path: Target file path
-        content: Binary content to write
-        fsync: If True, fsync before rename
+        path (Path): Target file path.
+        content (bytes): Binary content to write.
+        fsync (bool): If True, fsync before rename.
     """
     with atomic_write(path, fsync=fsync) as temp_path:
         temp_path.write_bytes(content)
@@ -163,10 +163,10 @@ def atomic_json_write(
     Convenience function for JSON output with atomic safety.
 
     Args:
-        path: Target file path
-        data: JSON-serializable data
-        indent: JSON indentation (None for compact, 2 for readable)
-        fsync: If True, fsync before rename
+        path (Path): Target file path.
+        data (dict[str, Any] | list[Any]): JSON-serializable data.
+        indent (int | None): JSON indentation (None for compact, 2 for readable).
+        fsync (bool): If True, fsync before rename.
     """
     import json
 

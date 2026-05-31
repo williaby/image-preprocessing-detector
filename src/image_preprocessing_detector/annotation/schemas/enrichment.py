@@ -41,20 +41,20 @@ class LayoutDetection:
     standardization, includes canonical class mapping metadata.
 
     Attributes:
-        class_name: Detected element class (table, figure, text, etc.)
-        bbox: Bounding box coordinates [x1, y1, x2, y2] or [x, y, w, h]
-        confidence: Detection confidence score (0.0-1.0)
-        source: Detection source ("doclayout_yolo", "coco_annotation", etc.)
-        canonical_class: Canonical taxonomy class (e.g., "TABLE", "FIGURE_CAPTION").
+        class_name (str): Detected element class (table, figure, text, etc.).
+        bbox (list[float]): Bounding box coordinates [x1, y1, x2, y2] or [x, y, w, h].
+        confidence (float): Detection confidence score (0.0-1.0).
+        source (str): Detection source ("doclayout_yolo", "coco_annotation", etc.).
+        canonical_class (str | None): Canonical taxonomy class (e.g., "TABLE", "FIGURE_CAPTION").
             Set by layout taxonomy standardization (v2.2+).
-        source_schema: Layout schema that produced the class_name
+        source_schema (str | None): Layout schema that produced the class_name
             (e.g., "doclaynet", "docstructbench", "docling"). Set by standardization.
-        source_label: Original label before conversion (preserved for traceability).
-        is_lossy: Whether the canonical mapping lost information (e.g.,
+        source_label (str | None): Original label before conversion (preserved for traceability).
+        is_lossy (bool | None): Whether the canonical mapping lost information (e.g.,
             "figure_caption" -> "Caption" loses figure context).
-        conversion_confidence: Confidence of the taxonomy conversion (1.0 = exact,
+        conversion_confidence (float | None): Confidence of the taxonomy conversion (1.0 = exact,
             <1.0 = ambiguous expansion).
-        loss_description: Human-readable description of information lost, if any.
+        loss_description (str | None): Human-readable description of information lost, if any.
     """
 
     class_name: str
@@ -79,78 +79,119 @@ class EnrichmentData:
     Fields are grouped by category and include provenance information.
 
     Attributes:
-        # Capture method detection
-        capture_method: Detected capture method (CaptureMethod value)
-        capture_confidence: Confidence in capture method detection
-        capture_detection_method: How capture method was determined
-
-        # Resolution analysis
-        resolution_dpi: Detected DPI
-        resolution_category: ResolutionCategory value
-        resolution_pixels: (width, height) tuple
-
-        # Domain classification
-        domain_level1: DomainLevel1 value (3-letter code)
-        domain_level2: Secondary domain classification
-        domain_level3: Tertiary domain classification
-        domain_confidence: Classification confidence
-
-        # Structure analysis
-        text_density: Text density classification
-        layout_type: Layout type (single-column, multi-column, etc.)
-        element_types: List of detected element types
-
-        # Quality/degradation
-        quality_overall: Overall quality score (0.0-1.0)
-        degradations: List of detected degradations
-
-        # Language detection (legacy)
-        primary_language: Detected primary language
-        language_confidence: Language detection confidence
-        script_type: Detected script type
-
-        # Language/Script (ISO-compliant, v2.1+)
-        iso639_language: ISO 639-1/3 language code
-        iso15924_script: ISO 15924 script code
-        script_family: Script family classification
-        bcp47_tag: Full BCP 47 language tag
-
-        # Text Scope (v2.1+)
-        text_scope: Text scope level
-        text_scope_content_type: Content type classification
-        text_scope_estimated_chars: Estimated character count
-        text_scope_estimated_words: Estimated word count
-        text_scope_detection_method: How scope was determined
-
-        # Paper Size (ISO 216, v2.1+)
-        paper_size: Detected paper size (A4, Letter, etc.)
-        paper_size_standard: Size standard (iso, ansi, jis)
-        paper_size_orientation: portrait/landscape
-        paper_size_confidence: Detection confidence
-        paper_size_is_exact: Whether exact match found
-
-        # Dataset Source (v2.1+)
-        dataset_short_code: Standardized dataset short code
-
-        # LLM perceptual scores
-        llm_predicted_mos: LLM-predicted MOS
-        llm_predicted_normalized: Normalized LLM prediction
-        llm_prediction_confidence: Prediction confidence
-        llm_model_name: Model used for prediction
-
-        # Content flags with provenance
-        has_table: Whether document contains tables
-        has_formula: Whether document contains formulas
-        has_handwriting: Whether document contains handwriting
-        has_signature: Whether document contains signatures
-        has_figure: Whether document contains figures
-        content_flags_tier: EnrichmentTier value for flags
-        content_flags_source: Source of content flag detection
-
-        # Layout detections (with optional taxonomy standardization, v2.2+)
-        layout_detections: List of LayoutDetection dicts. After taxonomy
-            standardization, each detection includes canonical_class,
-            source_schema, is_lossy, and conversion_confidence fields.
+        capture_method (str | None): Detected capture method (CaptureMethod value).
+        capture_confidence (float | None): Confidence in capture method detection.
+        capture_detection_method (str | None): How capture method was determined.
+        resolution_dpi (int | None): Detected DPI.
+        resolution_category (str | None): ResolutionCategory value.
+        resolution_pixels (tuple[int, int] | None): (width, height) tuple.
+        domain_level1 (str | None): DomainLevel1 value (3-letter code).
+        domain_level2 (str | None): Secondary domain classification.
+        domain_level3 (str | None): Tertiary domain classification.
+        domain_confidence (float | None): Classification confidence.
+        text_density (str | None): Text density classification.
+        layout_type (str | None): Layout type (single-column, multi-column, etc.).
+        element_types (list[str] | None): List of detected element types.
+        text_directions_present (list[str] | None): Text directions present (v2.3).
+        quality_overall (float | None): Overall quality score (0.0-1.0).
+        degradations (list[dict[str, Any]] | None): List of detected degradations.
+        primary_language (str | None): Detected primary language (legacy).
+        language_confidence (float | None): Language detection confidence (legacy).
+        script_type (str | None): Detected script type (legacy).
+        iso639_language (str | None): ISO 639-1/3 language code (v2.1+).
+        iso15924_script (str | None): ISO 15924 script code (v2.1+).
+        script_family (str | None): Script family classification (v2.1+).
+        bcp47_tag (str | None): Full BCP 47 language tag (v2.1+).
+        text_direction (str | None): Text direction "ltr", "rtl", "ttb" (v2.3).
+        text_scope (str | None): Text scope level (v2.1+).
+        text_scope_content_type (str | None): Content type classification (v2.1+).
+        text_scope_estimated_chars (int | None): Estimated character count (v2.1+).
+        text_scope_estimated_words (int | None): Estimated word count (v2.1+).
+        text_scope_detection_method (str | None): How scope was determined (v2.1+).
+        paper_size (str | None): Detected paper size (A4, Letter, etc.) (v2.1+).
+        paper_size_standard (str | None): Size standard (iso, ansi, jis) (v2.1+).
+        paper_size_orientation (str | None): portrait/landscape (v2.1+).
+        paper_size_confidence (float | None): Detection confidence (v2.1+).
+        paper_size_is_exact (bool | None): Whether exact match found (v2.1+).
+        dataset_short_code (str | None): Standardized dataset short code (v2.1+).
+        llm_predicted_mos (float | None): LLM-predicted MOS.
+        llm_predicted_normalized (float | None): Normalized LLM prediction.
+        llm_prediction_confidence (float | None): Prediction confidence.
+        llm_model_name (str | None): Model used for prediction.
+        has_table (bool | None): Whether document contains tables.
+        has_formula (bool | None): Whether document contains formulas.
+        has_handwriting (bool | None): Whether document contains handwriting.
+        has_signature (bool | None): Whether document contains signatures.
+        has_figure (bool | None): Whether document contains figures.
+        content_flags_tier (str | None): EnrichmentTier value for flags.
+        content_flags_source (str | None): Source of content flag detection.
+        layout_detections (list[dict[str, Any]] | None): List of LayoutDetection dicts.
+        orientation_class (int | None): Orientation class 0/90/180/270 (v2.1+).
+        orientation_confidence (float | None): Orientation detection confidence (v2.1+).
+        orientation_corrected (bool | None): Whether orientation was corrected (v2.1+).
+        orientation_detection_method (str | None): How orientation was detected (v2.1+).
+        skew_angle_degrees (float | None): Skew angle in degrees +-180 (v2.1+).
+        skew_confidence (float | None): Skew detection confidence (v2.1+).
+        skew_detection_method (str | None): How skew was detected (v2.1+).
+        shadow_severity (float | None): Shadow severity 0-1 (v2.1+).
+        shadow_type (str | None): Shadow type (v2.1+).
+        shadow_confidence (float | None): Shadow detection confidence (v2.1+).
+        warping_severity (float | None): Warping severity 0-1 (v2.1+).
+        warping_type (str | None): Warping type (v2.1+).
+        warping_confidence (float | None): Warping detection confidence (v2.1+).
+        watermark_severity (float | None): Watermark severity 0-1 (v2.1+).
+        watermark_type (str | None): Watermark type (v2.1+).
+        watermark_confidence (float | None): Watermark detection confidence (v2.1+).
+        fuzzy_scan_score (float | None): Fuzzy scan score 0-1 (v2.1+).
+        ml_iqa_blur (float | None): ML IQA blur score 0-1 (v2.1+).
+        ml_iqa_noise (float | None): ML IQA noise score 0-1 (v2.1+).
+        ml_iqa_contrast (float | None): ML IQA contrast score 0-1 (v2.1+).
+        ml_iqa_compression (float | None): ML IQA compression score 0-1 (v2.1+).
+        ml_iqa_skew (float | None): ML IQA skew score 0-1 (v2.1+).
+        ml_iqa_overall (float | None): ML IQA overall score 0-1 (v2.1+).
+        ml_iqa_model_name (str | None): ML IQA model name (v2.1+).
+        ml_iqa_model_version (str | None): ML IQA model version (v2.1+).
+        vlm_iqa_sharpness (float | None): VLM IQA sharpness 1-5 (v2.2+).
+        vlm_iqa_noise (float | None): VLM IQA noise 1-5 (v2.2+).
+        vlm_iqa_contrast (float | None): VLM IQA contrast 1-5 (v2.2+).
+        vlm_iqa_illumination (float | None): VLM IQA illumination 1-5 (v2.2+).
+        vlm_iqa_compression (float | None): VLM IQA compression 1-5 (v2.2+).
+        vlm_iqa_overall (float | None): VLM IQA overall 1-5 (v2.2+).
+        vlm_iqa_model_name (str | None): VLM IQA model name (v2.2+).
+        vlm_iqa_model_version (str | None): VLM IQA model version (v2.2+).
+        vlm_iqa_prompt_version (str | None): VLM IQA prompt version (v2.2+).
+        has_code (bool | None): Whether document contains code (v2.1+).
+        code_confidence (float | None): Code detection confidence 0-1 (v2.1+).
+        code_language (str | None): Detected code language (v2.1+).
+        code_rendering_style (str | None): Code rendering style (v2.1+).
+        character_height_px (float | None): Character height in pixels (v2.1+).
+        resolution_quality_score (float | None): Resolution quality score 0-1 (v2.1+).
+        effective_dpi (int | None): Effective DPI (v2.1+).
+        character_height_clean_px (float | None): Pre-degradation character height (v2.2+).
+        character_height_degraded_px (float | None): Post-degradation character height (v2.2+).
+        character_height_analytical_px (float | None): Analytical character height (v2.2+).
+        character_height_rendered_px (float | None): Rendered character height (v2.3+).
+        resolution_quality_coarse_bucket (str | None): CoarseBucket value (v2.2+).
+        resolution_quality_measurement_method (str | None): Measurement method (v2.2+).
+        font_size_pt (float | None): Pillow font size in points (synthetic only).
+        target_dpi (int | None): DPI tier target (synthetic only).
+        output_size_px (int | None): Derived view output size (v2.3+).
+        resolution_quality_label_provenance (str | None): Label provenance (v2.2+).
+        resolution_quality_label_source (str | None): Label source (v2.2+).
+        resolution_quality_label_confidence (float | None): Label confidence 0-1 (v2.2+).
+        resolution_quality_script_used (str | None): Script used ISO 15924 (v2.2+).
+        resolution_quality_script_confidence (float | None): Script detection confidence (v2.2+).
+        resolution_quality_bucket_probabilities (dict[str, float] | None): 5-bucket distribution (v2.2+).
+        resolution_quality_score_std (float | None): Teacher quality score uncertainty (v2.2+).
+        resolution_quality_char_height_std (float | None): Teacher char height uncertainty (v2.2+).
+        color_mode (str | None): Color mode "color", "grayscale", "binarized" (v2.1+).
+        document_age (str | None): Document age "modern", "aged", "historical" (v2.1+).
+        ocr_engine (str | None): OCR engine used (future, v2.1+).
+        ocr_engine_version (str | None): OCR engine version (future, v2.1+).
+        ocr_char_error_rate (float | None): OCR character error rate (future, v2.1+).
+        ocr_word_error_rate (float | None): OCR word error rate (future, v2.1+).
+        ocr_quality_before_correction (float | None): OCR quality before correction (future, v2.1+).
+        ocr_quality_after_correction (float | None): OCR quality after correction (future, v2.1+).
     """
 
     # Capture method detection
@@ -342,16 +383,16 @@ class EnrichmentVersion:
     for reproducibility.
 
     Attributes:
-        version: Version number (1-indexed)
-        created_at: ISO 8601 timestamp of creation
-        created_by: Identifier for creator (script name, model, etc.)
-        method: Enrichment method (EnrichmentTier value)
-        description: Human-readable description of this version
-        data: EnrichmentData containing actual annotations
-        git_sha: Git commit SHA for reproducibility
-        model_checkpoint: Model checkpoint used (if applicable)
-        config_hash: Hash of configuration used
-        script_version: Version of annotation script
+        version (int): Version number (1-indexed).
+        created_at (str): ISO 8601 timestamp of creation.
+        created_by (str): Identifier for creator (script name, model, etc.).
+        method (str): Enrichment method (EnrichmentTier value).
+        description (str): Human-readable description of this version.
+        data (EnrichmentData): EnrichmentData containing actual annotations.
+        git_sha (str | None): Git commit SHA for reproducibility.
+        model_checkpoint (str | None): Model checkpoint used (if applicable).
+        config_hash (str | None): Hash of configuration used.
+        script_version (str | None): Version of annotation script.
     """
 
     version: int
