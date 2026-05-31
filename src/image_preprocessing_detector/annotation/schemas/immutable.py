@@ -43,14 +43,14 @@ class OriginalFileMetadata:
     captured once and never modified.
 
     Attributes:
-        format: Image format (png, jpg, tiff, etc.)
-        width_px: Image width in pixels
-        height_px: Image height in pixels
-        channels: Number of color channels (1=grayscale, 3=RGB, 4=RGBA)
-        bit_depth: Bits per channel (typically 8 or 16)
-        file_size_bytes: File size on disk
-        dpi: Resolution in dots per inch (if available from metadata)
-        color_space: Color space (RGB, CMYK, grayscale, etc.)
+        format (str): Image format (png, jpg, tiff, etc.).
+        width_px (int): Image width in pixels.
+        height_px (int): Image height in pixels.
+        channels (int): Number of color channels (1=grayscale, 3=RGB, 4=RGBA).
+        bit_depth (int): Bits per channel (typically 8 or 16).
+        file_size_bytes (int): File size on disk.
+        dpi (int | None): Resolution in dots per inch (if available from metadata).
+        color_space (str | None): Color space (RGB, CMYK, grayscale, etc.).
     """
 
     format: str
@@ -74,51 +74,34 @@ class OriginalLabels:
     See docs/schema/LABEL_MAPPING_SPECIFICATION.md for field mappings.
 
     Attributes:
-        # Quality Scores (dataset-specific)
-        diqa_overall: DIQA overall quality MOS (1-5 scale, higher=better)
-        diqa_sharpness: DIQA sharpness quality MOS
-        diqa_color_fidelity: DIQA color fidelity MOS
-        diqa_original_image: Reference to original (ori) image
-        diqa_mos: Legacy alias for diqa_overall
-        diqa_mos_std: Standard deviation (if available)
-        diqa_distortion_type: Distortion category
-
-        # OCR-Quality human scores (1-4 scale, 1=best - INVERTED!)
-        ocr_quality_score: Human quality score
-        ocr_quality_source: Source of quality annotation
-        ocr_quality_text: Associated text content
-
-        # SmartDoc quality scores
-        smartdoc_mos: SmartDoc mean opinion score
-        smartdoc_capture_device: Capture device used
-        smartdoc_lighting: Lighting conditions
-
-        # Layout Annotations (COCO/FUNSD format)
-        doclaynet_annotations: DocLayNet COCO annotations (list)
-        tablebank_annotations: TableBank COCO annotations (list)
-        funsd_annotations: FUNSD annotations (dict - P0-4 FIX)
-        pubtabnet_annotations: PubTabNet COCO annotations (list)
-
-        # Handwriting Datasets
-        signatr_writer_id: Writer ID for signature datasets
-        signatr_is_genuine: Whether signature is genuine
-        writer_id: Generic writer ID (IAM, NIST-SD19)
-        transcription: Ground truth text transcription
-
-        # Multilingual/Script Datasets
-        language_code: Original language label (e.g., "ur", "jp")
-        script_name: Original script label (e.g., "Arabic", "Devanagari")
-        iso15924_script_code: Standardized 4-letter ISO 15924 code (e.g., "Arab", "Deva")
-
-        # Scene Text Datasets (MLT-19 style)
-        text_instances: List of text instance annotations
-
-        # Table Structure (PubTabNet)
-        table_html: HTML representation of table structure
-        cell_annotations: Cell-level annotations
-
-        # Generic Fallback
-        raw_labels: Raw labels dict for unsupported formats
+        diqa_overall (float | None): DIQA overall quality MOS (1-5 scale, higher=better).
+        diqa_sharpness (float | None): DIQA sharpness quality MOS.
+        diqa_color_fidelity (float | None): DIQA color fidelity MOS.
+        diqa_original_image (str | None): Reference to original (ori) image.
+        diqa_mos (float | None): Legacy alias for diqa_overall.
+        diqa_mos_std (float | None): Standard deviation (if available).
+        diqa_distortion_type (str | None): Distortion category.
+        ocr_quality_score (int | None): Human quality score (1-4, 1=best, inverted).
+        ocr_quality_source (str | None): Source of quality annotation.
+        ocr_quality_text (str | None): Associated text content.
+        smartdoc_mos (float | None): SmartDoc mean opinion score.
+        smartdoc_capture_device (str | None): Capture device used.
+        smartdoc_lighting (str | None): Lighting conditions.
+        doclaynet_annotations (list[dict[str, Any]] | None): DocLayNet COCO annotations.
+        tablebank_annotations (list[dict[str, Any]] | None): TableBank COCO annotations.
+        funsd_annotations (dict[str, Any] | None): FUNSD annotations (dict, P0-4 FIX).
+        pubtabnet_annotations (list[dict[str, Any]] | None): PubTabNet COCO annotations.
+        signatr_writer_id (str | None): Writer ID for signature datasets.
+        signatr_is_genuine (bool | None): Whether signature is genuine.
+        writer_id (str | None): Generic writer ID (IAM, NIST-SD19).
+        transcription (str | None): Ground truth text transcription.
+        language_code (str | None): Original language label (e.g., "ur", "jp").
+        script_name (str | None): Original script label (e.g., "Arabic", "Devanagari").
+        iso15924_script_code (str | None): Standardized 4-letter ISO 15924 code.
+        text_instances (list[dict[str, Any]] | None): List of text instance annotations.
+        table_html (str | None): HTML representation of table structure.
+        cell_annotations (list[dict[str, Any]] | None): Cell-level annotations.
+        raw_labels (dict[str, Any] | None): Raw labels dict for unsupported formats.
     """
 
     # === Quality Scores (dataset-specific) ===

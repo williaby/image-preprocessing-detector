@@ -65,11 +65,11 @@ class Migration:
     """Represents a single migration step.
 
     Attributes:
-        from_version: Source schema version
-        to_version: Target schema version
-        forward: Function to migrate forward
-        backward: Function to migrate backward (rollback)
-        description: Human-readable description
+        from_version (str): Source schema version.
+        to_version (str): Target schema version.
+        forward (Callable[[dict[str, Any]], dict[str, Any]]): Function to migrate forward.
+        backward (Callable[[dict[str, Any]], dict[str, Any]]): Function to migrate backward (rollback).
+        description (str): Human-readable description.
     """
 
     from_version: str
@@ -87,14 +87,13 @@ class MigrationRegistry:
     """
 
     def __init__(self) -> None:
-        """Initialize empty migration registry."""
         self._migrations: dict[tuple[str, str], Migration] = {}
 
     def register(self, migration: Migration) -> None:
         """Register a migration.
 
         Args:
-            migration: Migration to register
+            migration (Migration): Migration to register.
         """
         key = (migration.from_version, migration.to_version)
         self._migrations[key] = migration
@@ -103,11 +102,11 @@ class MigrationRegistry:
         """Get a direct migration between versions.
 
         Args:
-            from_version: Source version
-            to_version: Target version
+            from_version (str): Source version.
+            to_version (str): Target version.
 
         Returns:
-            Migration if exists, None otherwise
+            Migration | None: Migration if exists, None otherwise.
         """
         return self._migrations.get((from_version, to_version))
 
@@ -117,14 +116,14 @@ class MigrationRegistry:
         Uses breadth-first search to find shortest path.
 
         Args:
-            from_version: Source version
-            to_version: Target version
+            from_version (str): Source version.
+            to_version (str): Target version.
 
         Returns:
-            List of migrations to apply in order
+            list[Migration]: List of migrations to apply in order.
 
         Raises:
-            ValueError: If no path exists
+            ValueError: If no path exists.
         """
         if from_version == to_version:
             return []
@@ -163,11 +162,11 @@ def register_migration(
     """Register a new migration.
 
     Args:
-        from_version: Source schema version
-        to_version: Target schema version
-        forward: Forward migration function
-        backward: Backward migration function
-        description: Human-readable description
+        from_version (str): Source schema version.
+        to_version (str): Target schema version.
+        forward (Callable[[dict[str, Any]], dict[str, Any]]): Forward migration function.
+        backward (Callable[[dict[str, Any]], dict[str, Any]]): Backward migration function.
+        description (str): Human-readable description.
     """
     migration = Migration(
         from_version=from_version,
@@ -187,15 +186,12 @@ def migrate_sample(
     """Migrate sample data between schema versions.
 
     Args:
-        data: Sample data dictionary
-        from_version: Source version (auto-detected from data if None)
-        to_version: Target version (defaults to current)
+        data (dict[str, Any]): Sample data dictionary.
+        from_version (str | None): Source version (auto-detected from data if None).
+        to_version (str): Target version (defaults to current).
 
     Returns:
-        Migrated data dictionary
-
-    Raises:
-        ValueError: If migration path not found
+        dict[str, Any]: Migrated data dictionary.
     """
     if from_version is None:
         record_meta = data.get("record_meta", {})
@@ -224,14 +220,11 @@ def rollback_sample(
     """Rollback sample data to an earlier schema version.
 
     Args:
-        data: Sample data dictionary
-        to_version: Target version to rollback to
+        data (dict[str, Any]): Sample data dictionary.
+        to_version (str): Target version to rollback to.
 
     Returns:
-        Rolled back data dictionary
-
-    Raises:
-        ValueError: If rollback path not found
+        dict[str, Any]: Rolled back data dictionary.
     """
     from_version = data.get("record_meta", {}).get("schema_version", CURRENT_VERSION)
 
@@ -256,11 +249,11 @@ def get_migration_path(from_version: str, to_version: str) -> list[str]:
     """Get human-readable migration path.
 
     Args:
-        from_version: Source version
-        to_version: Target version
+        from_version (str): Source version.
+        to_version (str): Target version.
 
     Returns:
-        List of migration step descriptions (e.g., ["1.0->2.0", "2.0->2.1"])
+        list[str]: List of migration step descriptions (e.g., ["1.0->2.0", "2.0->2.1"]).
     """
     path = _registry.get_path(from_version, to_version)
     return [f"{m.from_version}->{m.to_version}" for m in path]
@@ -364,11 +357,11 @@ register_migration(
 class MigrationError(Exception):
     """Exception raised when migration fails.
 
-    Attributes:
-        file_path: Path to the file being migrated
-        from_version: Source version
-        to_version: Target version
-        cause: Original exception
+    Args:
+        file_path (Path | str): Path to the file being migrated.
+        from_version (str): Source schema version.
+        to_version (str): Target schema version.
+        cause (Exception | None): Original exception that triggered the failure.
     """
 
     def __init__(
@@ -378,14 +371,6 @@ class MigrationError(Exception):
         to_version: str,
         cause: Exception | None = None,
     ):
-        """Initialize migration error.
-
-        Args:
-            file_path: Path to the file being migrated.
-            from_version: Source schema version.
-            to_version: Target schema version.
-            cause: Original exception that triggered the failure.
-        """
         self.file_path = Path(file_path)
         self.from_version = from_version
         self.to_version = to_version
@@ -402,14 +387,14 @@ class MigrationResult:
     """Result of a file migration operation.
 
     Attributes:
-        file_path: Path to the migrated file
-        success: Whether migration succeeded
-        from_version: Source schema version
-        to_version: Target schema version
-        backup_path: Path to backup file (if created)
-        dry_run: Whether this was a dry run (no changes made)
-        error: Error message if migration failed
-        migrations_applied: List of migration steps applied
+        file_path (Path): Path to the migrated file.
+        success (bool): Whether migration succeeded.
+        from_version (str): Source schema version.
+        to_version (str): Target schema version.
+        backup_path (Path | None): Path to backup file (if created).
+        dry_run (bool): Whether this was a dry run (no changes made).
+        error (str | None): Error message if migration failed.
+        migrations_applied (list[str]): List of migration steps applied.
     """
 
     file_path: Path
@@ -444,10 +429,10 @@ class FileMigrator:
     CRITICAL: Always creates backup before modifying files.
     Backups are preserved on failure for manual recovery.
 
-    Attributes:
-        backup_dir: Directory for backup files (default: alongside original)
-        backup_suffix: Suffix for backup files (default: .bak_v{version})
-        fsync: Whether to fsync after writes for durability
+    Args:
+        backup_dir (Path | None): Directory for backups (None = same dir as file).
+        backup_suffix (str): Suffix template for backup files.
+        fsync (bool): Whether to fsync writes for durability.
 
     Example:
         >>> migrator = FileMigrator()
@@ -470,13 +455,6 @@ class FileMigrator:
         backup_suffix: str = ".bak_v{version}",
         fsync: bool = False,
     ):
-        """Initialize FileMigrator.
-
-        Args:
-            backup_dir: Directory for backups (None = same dir as file)
-            backup_suffix: Suffix template for backup files
-            fsync: Whether to fsync writes for durability
-        """
         self.backup_dir = backup_dir
         self.backup_suffix = backup_suffix
         self.fsync = fsync
@@ -493,16 +471,13 @@ class FileMigrator:
         CRITICAL: Creates backup before any modification.
 
         Args:
-            file_path: Path to JSON metadata file
-            target_version: Target schema version (default: current)
-            dry_run: If True, return result without modifying file
-            skip_backup: If True, skip backup creation (dangerous)
+            file_path (Path): Path to JSON metadata file.
+            target_version (str): Target schema version (default: current).
+            dry_run (bool): If True, return result without modifying file.
+            skip_backup (bool): If True, skip backup creation (dangerous).
 
         Returns:
-            MigrationResult with details of the operation
-
-        Raises:
-            MigrationError: If migration fails and backup cannot be restored
+            MigrationResult: Details of the operation.
         """
         file_path = Path(file_path)
 
@@ -602,11 +577,11 @@ class FileMigrator:
         applies backward migrations.
 
         Args:
-            file_path: Path to file to rollback
-            to_version: Version to rollback to
+            file_path (Path): Path to file to rollback.
+            to_version (str): Version to rollback to.
 
         Returns:
-            MigrationResult with rollback details
+            MigrationResult: Details of the rollback operation.
         """
         file_path = Path(file_path)
 
@@ -667,13 +642,13 @@ class FileMigrator:
         """Migrate all JSON files in a directory.
 
         Args:
-            directory: Directory to process
-            target_version: Target schema version
-            pattern: Glob pattern for files
-            dry_run: If True, preview changes without modifying
+            directory (Path): Directory to process.
+            target_version (str): Target schema version.
+            pattern (str): Glob pattern for files.
+            dry_run (bool): If True, preview changes without modifying.
 
         Returns:
-            List of MigrationResult for each file
+            list[MigrationResult]: List of MigrationResult for each file.
         """
         directory = Path(directory)
         results = []
@@ -689,10 +664,10 @@ class FileMigrator:
         """List all backup files in a directory.
 
         Args:
-            directory: Directory to search
+            directory (Path): Directory to search.
 
         Returns:
-            List of backup file paths
+            list[Path]: List of backup file paths.
         """
         return list(directory.glob("*.bak_v*"))
 
@@ -705,12 +680,12 @@ class FileMigrator:
         """Clean old backup files, keeping recent versions.
 
         Args:
-            directory: Directory to clean
-            keep_versions: Number of backup versions to keep per file
-            dry_run: If True, return files that would be deleted
+            directory (Path): Directory to clean.
+            keep_versions (int): Number of backup versions to keep per file.
+            dry_run (bool): If True, return files that would be deleted.
 
         Returns:
-            List of deleted (or would-be-deleted) backup paths
+            list[Path]: List of deleted (or would-be-deleted) backup paths.
         """
         # Group backups by original file
         backup_groups: dict[str, list[Path]] = {}
@@ -741,11 +716,11 @@ class FileMigrator:
         """Create backup of file before migration.
 
         Args:
-            file_path: File to backup
-            version: Current version for backup naming
+            file_path (Path): File to backup.
+            version (str): Current version for backup naming.
 
         Returns:
-            Path to backup file
+            Path: Path to backup file.
         """
         # Determine backup path
         suffix = self.backup_suffix.format(version=version)
@@ -773,11 +748,11 @@ class FileMigrator:
         matching the version pattern.
 
         Args:
-            file_path: Original file path
-            version: Version to find backup for
+            file_path (Path): Original file path.
+            version (str): Version to find backup for.
 
         Returns:
-            Path to most recent backup for this version (may not exist)
+            Path: Path to most recent backup for this version (may not exist).
         """
         suffix = self.backup_suffix.format(version=version)
 
@@ -813,8 +788,8 @@ class FileMigrator:
         Uses atomic write pattern to prevent corruption on crash.
 
         Args:
-            file_path: File to write
-            data: Data to serialize
+            file_path (Path): File to write.
+            data (dict[str, Any]): Data to serialize.
         """
         from ..integrity.atomic import atomic_json_write
 

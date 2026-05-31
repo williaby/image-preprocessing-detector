@@ -87,12 +87,12 @@ class CheckpointInfo:
     """Information about a processing checkpoint.
 
     Attributes:
-        dataset_name: Name of the dataset being processed
-        processed_count: Number of items processed so far
-        last_path: Path to the last successfully processed image
-        last_hash: SHA256 hash of the last processed image
-        timestamp: When checkpoint was created (ISO 8601)
-        version: Checkpoint format version
+        dataset_name (str): Name of the dataset being processed.
+        processed_count (int): Number of items processed so far.
+        last_path (str): Path to the last successfully processed image.
+        last_hash (str): SHA256 hash of the last processed image.
+        timestamp (str): When checkpoint was created (ISO 8601).
+        version (int): Checkpoint format version.
     """
 
     dataset_name: str
@@ -113,14 +113,10 @@ class CheckpointInfo:
         """Create from dictionary (JSON deserialization).
 
         Args:
-            data: Dictionary with checkpoint fields
+            data (dict[str, Any]): Dictionary with checkpoint fields.
 
         Returns:
-            CheckpointInfo instance
-
-        Raises:
-            KeyError: If required field is missing
-            TypeError: If field has wrong type
+            CheckpointInfo: Reconstructed checkpoint instance.
         """
         return cls(
             dataset_name=data["dataset_name"],
@@ -145,9 +141,9 @@ class CheckpointManager:
     This allows multiple threads AND multiple processes (e.g., Celery workers,
     parallel scripts) to safely share the same checkpoint directory.
 
-    Attributes:
-        checkpoint_dir: Directory for checkpoint files
-        fsync: Whether to call fsync for durability
+    Args:
+        checkpoint_dir (Path): Directory to store checkpoint files.
+        fsync (bool): Enable fsync for durability (slower but safer).
     """
 
     def __init__(
@@ -155,12 +151,6 @@ class CheckpointManager:
         checkpoint_dir: Path,
         fsync: bool = False,
     ):
-        """Initialize checkpoint manager.
-
-        Args:
-            checkpoint_dir: Directory to store checkpoint files
-            fsync: Enable fsync for durability (slower but safer)
-        """
         self.checkpoint_dir = Path(checkpoint_dir)
         self.fsync = fsync
 
@@ -176,10 +166,10 @@ class CheckpointManager:
         """Get checkpoint file path for a dataset.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset.
 
         Returns:
-            Path to checkpoint JSON file
+            Path: Path to checkpoint JSON file.
         """
         # Sanitize dataset name for filesystem
         safe_name = dataset_name.replace("/", "_").replace("\\", "_")
@@ -191,10 +181,10 @@ class CheckpointManager:
         Thread-safe and process-safe: Uses layered locking to prevent races.
 
         Args:
-            dataset_name: Name of the dataset to check
+            dataset_name (str): Name of the dataset to check.
 
         Returns:
-            CheckpointInfo if checkpoint exists, None otherwise
+            CheckpointInfo | None: CheckpointInfo if checkpoint exists, None otherwise.
         """
         # Cross-process and thread safety
         with self._file_lock, self._thread_lock:
@@ -233,10 +223,10 @@ class CheckpointManager:
         The checkpoint is written atomically to prevent corruption.
 
         Args:
-            dataset_name: Name of the dataset
-            processed_count: Number of items processed so far
-            last_path: Relative path to last processed image
-            last_hash: SHA256 hash of last processed image
+            dataset_name (str): Name of the dataset.
+            processed_count (int): Number of items processed so far.
+            last_path (str): Relative path to last processed image.
+            last_hash (str): SHA256 hash of last processed image.
         """
         checkpoint = CheckpointInfo(
             dataset_name=dataset_name,
@@ -265,10 +255,10 @@ class CheckpointManager:
         Call this when processing completes successfully.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset.
 
         Returns:
-            True if checkpoint was removed, False if it didn't exist
+            bool: True if checkpoint was removed, False if it didn't exist.
         """
         # Cross-process and thread safety
         with self._file_lock, self._thread_lock:
@@ -286,7 +276,7 @@ class CheckpointManager:
         Thread-safe and process-safe: Uses layered locking for consistent reads.
 
         Returns:
-            List of CheckpointInfo for all datasets with checkpoints
+            list[CheckpointInfo]: List of CheckpointInfo for all datasets with checkpoints.
         """
         # Cross-process and thread safety
         with self._file_lock, self._thread_lock:
@@ -305,7 +295,7 @@ class CheckpointManager:
         """Get checkpoint statistics.
 
         Returns:
-            Dictionary with checkpoint stats
+            dict[str, Any]: Dictionary with checkpoint stats.
         """
         checkpoints = self.list_checkpoints()
         return {
@@ -330,19 +320,18 @@ class CheckpointManager:
         and optionally verifies its hash matches.
 
         Args:
-            dataset_name: Name of the dataset
-            image_paths: List of all image paths in processing order
-            compute_hash: Optional function to compute file hash for validation
-                         Signature: (Path) -> str
-            strict_matching: If True (default), only match by full path or
-                           normalized relative path. If False, also allow
-                           filename-only matching (less safe for datasets
-                           with duplicate filenames across directories).
-            strict_hash: If True, hash validation errors fail the resume.
-                        If False (default), log warning and continue.
+            dataset_name (str): Name of the dataset.
+            image_paths (list[Path]): List of all image paths in processing order.
+            compute_hash (Callable[[Path], str] | None): Optional function to compute file hash
+                for validation. Signature: (Path) -> str.
+            strict_matching (bool): If True (default), only match by full path or
+                normalized relative path. If False, also allow filename-only matching
+                (less safe for datasets with duplicate filenames across directories).
+            strict_hash (bool): If True, hash validation errors fail the resume.
+                If False (default), log warning and continue.
 
         Returns:
-            ValidationResult with validation status and resume index
+            CheckpointValidationResult: Validation result with status and resume index.
 
         Example:
             >>> result = manager.get_validated_resume_point(
@@ -447,10 +436,10 @@ class CheckpointValidationResult:
     config.validators.ValidationResult which serves a different purpose.
 
     Attributes:
-        is_valid: Whether checkpoint is valid for resume
-        resume_index: Index to resume from (0 if starting fresh)
-        checkpoint: Original checkpoint info (if found)
-        reason: Human-readable explanation
+        is_valid (bool): Whether checkpoint is valid for resume.
+        resume_index (int): Index to resume from (0 if starting fresh).
+        checkpoint (CheckpointInfo | None): Original checkpoint info (if found).
+        reason (str): Human-readable explanation.
     """
 
     is_valid: bool
@@ -468,10 +457,11 @@ class BatchCheckpointInfo(CheckpointInfo):
     """Extended checkpoint info with batch metadata.
 
     Attributes:
-        batch_idx: Current batch index
-        batch_size: Number of items per batch
-        total_batches: Total number of batches (if known)
-        items_in_current_batch: Items processed in current batch
+        batch_idx (int): Current batch index.
+        batch_size (int): Number of items per batch.
+        total_batches (int | None): Total number of batches (if known).
+        items_in_current_batch (int): Items processed in current batch.
+        version (int): Checkpoint version (2 for batch checkpoints).
     """
 
     batch_idx: int = 0
@@ -503,10 +493,11 @@ class BatchCheckpointManager(CheckpointManager):
     Automatically saves checkpoints at configurable batch intervals,
     providing efficient checkpointing for large-scale processing.
 
-    Attributes:
-        batch_size: Number of items per batch
-        checkpoint_interval: Save checkpoint every N batches
-        pending_updates: Counter for batches since last checkpoint
+    Args:
+        checkpoint_dir (Path): Directory to store checkpoint files.
+        batch_size (int): Number of items per processing batch.
+        checkpoint_interval (int): Save checkpoint every N batches.
+        fsync (bool): Enable fsync for durability.
     """
 
     def __init__(
@@ -516,14 +507,6 @@ class BatchCheckpointManager(CheckpointManager):
         checkpoint_interval: int = 100,
         fsync: bool = False,
     ):
-        """Initialize batch checkpoint manager.
-
-        Args:
-            checkpoint_dir: Directory to store checkpoint files
-            batch_size: Number of items per processing batch
-            checkpoint_interval: Save checkpoint every N batches
-            fsync: Enable fsync for durability
-        """
         super().__init__(checkpoint_dir, fsync)
         self.batch_size = batch_size
         self.checkpoint_interval = checkpoint_interval
@@ -546,16 +529,16 @@ class BatchCheckpointManager(CheckpointManager):
         or immediately if force=True.
 
         Args:
-            dataset_name: Name of the dataset
-            batch_idx: Current batch index
-            last_path: Path to last processed image
-            last_hash: Hash of last processed image
-            items_in_batch: Number of items in this batch (default: batch_size)
-            total_batches: Total batches if known (for progress tracking)
-            force: Force checkpoint save regardless of interval
+            dataset_name (str): Name of the dataset.
+            batch_idx (int): Current batch index.
+            last_path (str): Path to last processed image.
+            last_hash (str): Hash of last processed image.
+            items_in_batch (int | None): Number of items in this batch (default: batch_size).
+            total_batches (int | None): Total batches if known (for progress tracking).
+            force (bool): Force checkpoint save regardless of interval.
 
         Returns:
-            True if checkpoint was saved, False if deferred
+            bool: True if checkpoint was saved, False if deferred.
         """
         items = items_in_batch or self.batch_size
         processed_count = (batch_idx * self.batch_size) + items
@@ -594,10 +577,10 @@ class BatchCheckpointManager(CheckpointManager):
         """Force save all pending checkpoints.
 
         Args:
-            dataset_name: Specific dataset to flush, or None for all
+            dataset_name (str | None): Specific dataset to flush, or None for all.
 
         Returns:
-            Number of checkpoints saved
+            int: Number of checkpoints saved.
         """
         saved = 0
 
@@ -620,10 +603,10 @@ class BatchCheckpointManager(CheckpointManager):
         Thread-safe and process-safe: Uses layered locking.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset.
 
         Returns:
-            BatchCheckpointInfo if checkpoint exists, None otherwise
+            BatchCheckpointInfo | None: BatchCheckpointInfo if checkpoint exists, None otherwise.
         """
         # Cross-process and thread safety
         with self._file_lock, self._thread_lock:
@@ -659,10 +642,10 @@ class BatchCheckpointManager(CheckpointManager):
         """Get progress information from checkpoint.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset.
 
         Returns:
-            Dictionary with progress info (batches, items, percentage)
+            dict[str, Any]: Dictionary with progress info (batches, items, percentage).
         """
         checkpoint = self.get_batch_resume_point(dataset_name)
 
@@ -696,8 +679,8 @@ class BatchCheckpointManager(CheckpointManager):
         Thread-safe and process-safe: Uses layered locking.
 
         Args:
-            dataset_name: Name of the dataset
-            checkpoint: Checkpoint info to save
+            dataset_name (str): Name of the dataset.
+            checkpoint (BatchCheckpointInfo): Checkpoint info to save.
         """
         checkpoint_path = self._checkpoint_path(dataset_name)
 

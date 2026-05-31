@@ -51,11 +51,11 @@ class CacheStats:
     """Statistics for cache performance monitoring.
 
     Attributes:
-        size: Current number of items in cache
-        max_size: Maximum allowed items
-        hits: Number of cache hits
-        misses: Number of cache misses
-        evictions: Number of items evicted due to size limit
+        size (int): Current number of items in cache.
+        max_size (int): Maximum allowed items.
+        hits (int): Number of cache hits.
+        misses (int): Number of cache misses.
+        evictions (int): Number of items evicted due to size limit.
     """
 
     size: int = 0
@@ -96,6 +96,12 @@ class BoundedCache(Generic[T]):  # noqa: UP046
 
     Thread-safe implementation using RLock for concurrent access.
 
+    Args:
+        max_size (int): Maximum number of entries to cache (default 10,000).
+
+    Raises:
+        ValueError: If max_size is not positive.
+
     Example:
         >>> cache: BoundedCache[dict] = BoundedCache(max_size=10_000)
         >>> cache.put("key1", {"label": "text"})
@@ -104,11 +110,6 @@ class BoundedCache(Generic[T]):  # noqa: UP046
     """
 
     def __init__(self, max_size: int = DEFAULT_CACHE_SIZE) -> None:
-        """Initialize bounded cache.
-
-        Args:
-            max_size: Maximum number of entries to cache (default 10,000)
-        """
         if max_size <= 0:
             raise ValueError("max_size must be positive")
 
@@ -128,10 +129,10 @@ class BoundedCache(Generic[T]):  # noqa: UP046
         """Get item from cache, updating LRU order.
 
         Args:
-            key: Cache key to retrieve
+            key (str): Cache key to retrieve.
 
         Returns:
-            Cached value or None if not found
+            T | None: Cached value or None if not found.
         """
         with self._lock:
             if key in self._cache:
@@ -147,8 +148,8 @@ class BoundedCache(Generic[T]):  # noqa: UP046
         """Put item in cache, evicting oldest if at capacity.
 
         Args:
-            key: Cache key
-            value: Value to cache
+            key (str): Cache key.
+            value (T): Value to cache.
         """
         with self._lock:
             if key in self._cache:
@@ -167,10 +168,10 @@ class BoundedCache(Generic[T]):  # noqa: UP046
         """Remove item from cache.
 
         Args:
-            key: Cache key to remove
+            key (str): Cache key to remove.
 
         Returns:
-            True if item was removed, False if not found
+            bool: True if item was removed, False if not found.
         """
         with self._lock:
             if key in self._cache:
@@ -188,10 +189,10 @@ class BoundedCache(Generic[T]):  # noqa: UP046
         """Check if key exists (without affecting LRU order).
 
         Args:
-            key: Cache key to check
+            key (str): Cache key to check.
 
         Returns:
-            True if key exists in cache
+            bool: True if key exists in cache.
         """
         with self._lock:
             return key in self._cache
@@ -200,7 +201,7 @@ class BoundedCache(Generic[T]):  # noqa: UP046
         """Get all cache keys (ordered by access, oldest first).
 
         Returns:
-            List of cache keys
+            list[str]: List of cache keys.
         """
         with self._lock:
             return list(self._cache.keys())
@@ -239,8 +240,8 @@ class JSONLIndexEntry:
     """Index entry for JSONL random access.
 
     Attributes:
-        offset: Byte offset to start of line in file
-        length: Length of the line in bytes
+        offset (int): Byte offset to start of line in file.
+        length (int): Length of the line in bytes.
     """
 
     offset: int
@@ -258,6 +259,15 @@ class StreamingJSONLReader:
     - LRU cache for recently accessed entries
     - Thread-safe for concurrent reads
 
+    Args:
+        file_path (Path): Path to JSONL file.
+        cache_size (int): Number of entries to cache (default 1,000).
+        filename_key (str | None): Key to use for filename lookup. If None, tries
+            'filename', 'file_name', 'image_id' in order.
+
+    Raises:
+        FileNotFoundError: If the JSONL file does not exist.
+
     Example:
         >>> reader = StreamingJSONLReader(Path("pubtabnet.jsonl"))
         >>> entry = reader.get("PMC123456_001.png")
@@ -270,14 +280,6 @@ class StreamingJSONLReader:
         cache_size: int = DEFAULT_INDEX_CACHE_SIZE,
         filename_key: str | None = None,
     ) -> None:
-        """Initialize streaming JSONL reader.
-
-        Args:
-            file_path: Path to JSONL file
-            cache_size: Number of entries to cache (default 1,000)
-            filename_key: Key to use for filename lookup. If None, tries
-                         'filename', 'file_name', 'image_id' in order.
-        """
         self.file_path = Path(file_path)
         self.cache: BoundedCache[dict] = BoundedCache(max_size=cache_size)
         self.filename_key = filename_key
@@ -302,10 +304,10 @@ class StreamingJSONLReader:
         """Extract filename from JSON entry.
 
         Args:
-            data: Parsed JSON entry
+            data (dict): Parsed JSON entry.
 
         Returns:
-            Filename string or None if not found
+            str | None: Filename string or None if not found.
         """
         if self.filename_key:
             return data.get(self.filename_key)
@@ -325,10 +327,7 @@ class StreamingJSONLReader:
         Subsequent lookups use seek() for O(1) access.
 
         Returns:
-            Number of entries indexed
-
-        Raises:
-            IOError: If file cannot be read
+            int: Number of entries indexed.
         """
         with self._lock:
             if self._indexed:
@@ -395,10 +394,10 @@ class StreamingJSONLReader:
         """Get annotation for filename with caching.
 
         Args:
-            filename: Filename to look up
+            filename (str): Filename to look up.
 
         Returns:
-            Parsed JSON entry or None if not found
+            dict[str, Any] | None: Parsed JSON entry or None if not found.
         """
         # Check cache first
         cached = self.cache.get(filename)
@@ -441,10 +440,10 @@ class StreamingJSONLReader:
         """Get multiple annotations efficiently.
 
         Args:
-            filenames: List of filenames to look up
+            filenames (list[str]): List of filenames to look up.
 
         Returns:
-            Dictionary mapping filename → annotation (missing entries omitted)
+            dict[str, dict]: Dictionary mapping filename to annotation (missing entries omitted).
         """
         results: dict[str, dict] = {}
 
@@ -459,7 +458,7 @@ class StreamingJSONLReader:
         """Iterate over all entries (streaming, no full load).
 
         Yields:
-            Tuples of (filename, annotation_dict)
+            tuple[str, dict]: Tuples of (filename, annotation_dict).
         """
         with open(self.file_path, encoding="utf-8") as f:
             for line in f:
@@ -505,7 +504,7 @@ class StreamingJSONLReader:
         """Get combined statistics.
 
         Returns:
-            Dictionary with index and cache stats
+            dict[str, int | float]: Dictionary with index and cache stats.
         """
         cache_stats = self.cache.stats.to_dict()
         return {
@@ -524,9 +523,9 @@ class AnnotationCacheConfig:
     """Configuration for annotation caching.
 
     Attributes:
-        sample_cache_size: Max entries for sample metadata cache
-        jsonl_cache_size: Max entries for JSONL reader cache
-        enable_caching: Global flag to enable/disable caching
+        sample_cache_size (int): Max entries for sample metadata cache.
+        jsonl_cache_size (int): Max entries for JSONL reader cache.
+        enable_caching (bool): Global flag to enable/disable caching.
     """
 
     sample_cache_size: int = DEFAULT_CACHE_SIZE
@@ -543,10 +542,10 @@ def create_sample_cache(
     """Create a cache for sample metadata.
 
     Args:
-        max_size: Maximum entries (default 10,000)
+        max_size (int): Maximum entries (default 10,000).
 
     Returns:
-        Configured BoundedCache instance
+        BoundedCache[dict]: Configured BoundedCache instance.
     """
     return BoundedCache[dict](max_size=max_size)
 
@@ -558,11 +557,11 @@ def create_jsonl_reader(
     """Create a streaming JSONL reader.
 
     Args:
-        file_path: Path to JSONL file
-        cache_size: Cache size for entries (default 1,000)
+        file_path (Path): Path to JSONL file.
+        cache_size (int): Cache size for entries (default 1,000).
 
     Returns:
-        Configured StreamingJSONLReader instance
+        StreamingJSONLReader: Configured StreamingJSONLReader instance.
     """
     return StreamingJSONLReader(file_path=file_path, cache_size=cache_size)
 

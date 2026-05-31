@@ -46,7 +46,7 @@ def _get_git_sha() -> str:
     """Get current git commit SHA for reproducibility.
 
     Returns:
-        Short (12 char) git SHA or "unknown" if not in a git repo.
+        str: Short (12 char) git SHA or "unknown" if not in a git repo.
     """
     import subprocess
     from pathlib import Path
@@ -72,30 +72,19 @@ class SampleMetadata:
     enrichment layer (enrichment_versions) into a complete metadata record.
 
     Attributes:
-        # Identity
-        id: Deterministic sample ID (from compute_sample_id)
-        file_hash: Full SHA256 hash of file content
-
-        # Source information (immutable)
-        dataset_name: Name of source dataset
-        dataset_version: Version of source dataset
-        original_path: Path relative to dataset root
-        original_filename: Original filename
-        download_date: Date dataset was downloaded
-
-        # Original labels (immutable)
-        original_labels: OriginalLabels instance
-
-        # Original file metadata (immutable)
-        original_file: OriginalFileMetadata instance
-
-        # Enrichment history (versioned)
-        current_version: Current active enrichment version number
-        enrichment_versions: List of all enrichment versions
-
-        # Record metadata
-        created_at: ISO 8601 timestamp of record creation
-        schema_version: Schema version for migration support
+        id (str): Deterministic sample ID (from compute_sample_id).
+        file_hash (str): Full SHA256 hash of file content.
+        dataset_name (str): Name of source dataset.
+        dataset_version (str): Version of source dataset.
+        original_path (str): Path relative to dataset root.
+        original_filename (str): Original filename.
+        download_date (str): Date dataset was downloaded.
+        original_labels (OriginalLabels): OriginalLabels instance.
+        original_file (OriginalFileMetadata): OriginalFileMetadata instance.
+        current_version (int): Current active enrichment version number.
+        enrichment_versions (list[EnrichmentVersion]): List of all enrichment versions.
+        created_at (str): ISO 8601 timestamp of record creation.
+        schema_version (str): Schema version for migration support.
     """
 
     # Identity
@@ -139,16 +128,16 @@ class SampleMetadata:
         and appends it to the version history.
 
         Args:
-            data: EnrichmentData containing annotations
-            created_by: Identifier for creator
-            method: Enrichment method (EnrichmentTier value)
-            description: Human-readable description
-            git_sha: Git commit SHA (auto-detected if None)
-            model_checkpoint: Model checkpoint used
-            config_hash: Hash of configuration
+            data (EnrichmentData): EnrichmentData containing annotations.
+            created_by (str): Identifier for creator.
+            method (str): Enrichment method (EnrichmentTier value).
+            description (str): Human-readable description.
+            git_sha (str | None): Git commit SHA (auto-detected if None).
+            model_checkpoint (str | None): Model checkpoint used.
+            config_hash (str | None): Hash of configuration.
 
         Returns:
-            New version number (1-indexed)
+            int: New version number (1-indexed).
         """
         new_version = len(self.enrichment_versions) + 1
         enrichment = EnrichmentVersion(
@@ -171,7 +160,7 @@ class SampleMetadata:
         """Get the current active enrichment data.
 
         Returns:
-            EnrichmentData for current version, or None if no enrichments.
+            EnrichmentData | None: EnrichmentData for current version, or None if no enrichments.
         """
         if not self.enrichment_versions or self.current_version == 0:
             return None
@@ -185,10 +174,10 @@ class SampleMetadata:
         """Get a specific enrichment version.
 
         Args:
-            version: Version number to retrieve (1-indexed)
+            version (int): Version number to retrieve (1-indexed).
 
         Returns:
-            EnrichmentVersion if found, None otherwise.
+            EnrichmentVersion | None: EnrichmentVersion if found, None otherwise.
         """
         for enrichment in self.enrichment_versions:
             if enrichment.version == version:
@@ -199,7 +188,7 @@ class SampleMetadata:
         """Convert to dictionary for JSON serialization.
 
         Returns:
-            Dictionary representation suitable for JSON output.
+            dict[str, Any]: Dictionary representation suitable for JSON output.
         """
         return {
             "id": self.id,
@@ -248,14 +237,10 @@ class SampleMetadata:
         """Create SampleMetadata from dictionary.
 
         Args:
-            data: Dictionary representation (e.g., from JSON)
+            data (dict[str, Any]): Dictionary representation (e.g., from JSON).
 
         Returns:
-            SampleMetadata instance
-
-        Raises:
-            KeyError: If required fields are missing
-            ValueError: If data is malformed
+            SampleMetadata: Reconstructed instance.
         """
         source = data["source"]
         original_labels_data = data.get("original_labels", {})

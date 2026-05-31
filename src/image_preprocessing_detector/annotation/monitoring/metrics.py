@@ -34,7 +34,7 @@ except ImportError:
         """No-op counter stub when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize no-op counter."""
+            pass
 
         def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
@@ -47,7 +47,7 @@ except ImportError:
         """No-op gauge stub when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize no-op gauge."""
+            pass
 
         def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
@@ -66,7 +66,7 @@ except ImportError:
         """No-op histogram stub when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize no-op histogram."""
+            pass
 
         def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
@@ -112,7 +112,6 @@ class AnnotationMetrics:
         return cls._instance
 
     def __init__(self) -> None:
-        """Initialize metrics if not already done."""
         if AnnotationMetrics._initialized:
             return
 
@@ -312,11 +311,11 @@ class AnnotationMetrics:
         """Record a parse operation.
 
         Args:
-            parser: Parser name (e.g., "pubtabnet", "fintabnet")
-            duration_seconds: Operation duration
-            success: Whether operation succeeded
-            samples: Number of samples parsed
-            error_type: Error type if failed
+            parser (str): Parser name (e.g., "pubtabnet", "fintabnet").
+            duration_seconds (float): Operation duration.
+            success (bool): Whether operation succeeded.
+            samples (int): Number of samples parsed.
+            error_type (str): Error type if failed.
         """
         status = "success" if success else "error"
         self.parse_operations.labels(parser=parser, status=status).inc()
@@ -337,10 +336,10 @@ class AnnotationMetrics:
         """Record a cache operation.
 
         Args:
-            cache_name: Name of the cache
-            operation: Operation type (hit, miss, put, evict)
-            hit_rate: Current hit rate (0-1)
-            size: Current cache size
+            cache_name (str): Name of the cache.
+            operation (str): Operation type (hit, miss, put, evict).
+            hit_rate (float | None): Current hit rate (0-1).
+            size (int | None): Current cache size.
         """
         self.cache_operations.labels(cache_name=cache_name, operation=operation).inc()
 
@@ -363,10 +362,10 @@ class AnnotationMetrics:
         """Record a processed batch.
 
         Args:
-            dataset: Dataset name
-            batch_size: Number of items in batch
-            duration_seconds: Processing duration
-            success: Whether processing succeeded
+            dataset (str): Dataset name.
+            batch_size (int): Number of items in batch.
+            duration_seconds (float): Processing duration.
+            success (bool): Whether processing succeeded.
         """
         status = "success" if success else "error"
         self.batches_processed.labels(dataset=dataset, status=status).inc()
@@ -388,11 +387,11 @@ class AnnotationMetrics:
         """Record a scan operation.
 
         Args:
-            dataset: Dataset name
-            duration_seconds: Scan duration
-            files_found: Number of files discovered
-            success: Whether scan succeeded
-            resumed: Whether scan was resumed from checkpoint
+            dataset (str): Dataset name.
+            duration_seconds (float): Scan duration.
+            files_found (int): Number of files discovered.
+            success (bool): Whether scan succeeded.
+            resumed (bool): Whether scan was resumed from checkpoint.
         """
         status = "success" if success else "error"
         self.scan_operations.labels(dataset=dataset, status=status).inc()
@@ -410,8 +409,8 @@ class AnnotationMetrics:
         """Record a checkpoint operation.
 
         Args:
-            operation: Operation type (save, load, clear)
-            duration_seconds: Operation duration
+            operation (str): Operation type (save, load, clear).
+            duration_seconds (float): Operation duration.
         """
         self.checkpoint_operations.labels(operation=operation).inc()
         self.checkpoint_latency.labels(operation=operation).observe(duration_seconds)
@@ -425,9 +424,9 @@ class AnnotationMetrics:
         """Record JSONL index build.
 
         Args:
-            file_name: JSONL file name
-            entries: Number of entries indexed
-            duration_seconds: Index build duration
+            file_name (str): JSONL file name.
+            entries (int): Number of entries indexed.
+            duration_seconds (float): Index build duration.
         """
         self.jsonl_index_operations.labels(file=file_name, operation="build").inc()
         self.jsonl_index_latency.observe(duration_seconds)
@@ -442,9 +441,9 @@ class AnnotationMetrics:
         """Record pipeline stage execution.
 
         Args:
-            stage: Stage name
-            duration_seconds: Execution duration
-            error_type: Error type if failed
+            stage (str): Stage name.
+            duration_seconds (float): Execution duration.
+            error_type (str): Error type if failed.
         """
         self.pipeline_stage_latency.labels(stage=stage).observe(duration_seconds)
 
@@ -455,7 +454,7 @@ class AnnotationMetrics:
         """Set the number of active pipelines.
 
         Args:
-            count: Number of active pipelines
+            count (int): Number of active pipelines.
         """
         self.active_pipelines.set(count)
 
@@ -464,10 +463,13 @@ class AnnotationMetrics:
         """Context manager to time a parse operation.
 
         Args:
-            parser: Parser name
+            parser (str): Parser name.
 
         Yields:
-            None
+            None: Yields control to the block.
+
+        Raises:
+            Exception: Re-raises any exception from the timed block.
         """
         start = time.perf_counter()
         success = True
@@ -485,11 +487,14 @@ class AnnotationMetrics:
         """Context manager to time batch processing.
 
         Args:
-            dataset: Dataset name
-            batch_size: Batch size
+            dataset (str): Dataset name.
+            batch_size (int): Batch size.
 
         Yields:
-            None
+            None: Yields control to the block.
+
+        Raises:
+            Exception: Re-raises any exception from the timed block.
         """
         start = time.perf_counter()
         success = True
@@ -507,10 +512,13 @@ class AnnotationMetrics:
         """Context manager to time a pipeline stage.
 
         Args:
-            stage: Stage name
+            stage (str): Stage name.
 
         Yields:
-            None
+            None: Yields control to the block.
+
+        Raises:
+            Exception: Re-raises any exception from the timed block.
         """
         start = time.perf_counter()
         error_type = ""
@@ -535,7 +543,7 @@ def get_annotation_metrics() -> AnnotationMetrics:
     """Get the global annotation metrics instance.
 
     Returns:
-        AnnotationMetrics singleton instance
+        AnnotationMetrics: The singleton instance.
     """
     global _metrics
     if _metrics is None:
@@ -608,11 +616,11 @@ def timed_annotation(
     """Decorator to time annotation operations.
 
     Args:
-        operation_type: Type of operation (parse, batch, stage)
-        name: Operation name
+        operation_type (str): Type of operation (parse, batch, stage).
+        name (str): Operation name.
 
     Returns:
-        Decorated function
+        Callable[[Callable[..., T]], Callable[..., T]]: Decorated function.
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:

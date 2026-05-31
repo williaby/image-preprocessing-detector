@@ -70,7 +70,7 @@ class ParquetSchema:
         """Get PyArrow schema for SampleMetadata.
 
         Returns:
-            PyArrow schema with all fields properly typed
+            pa.Schema: PyArrow schema with all fields properly typed.
         """
         return pa.schema(
             [
@@ -128,9 +128,9 @@ class PartitionedParquetWriter:
         │   └── part-0000.parquet
         └── ...
 
-    Attributes:
-        parquet_root: Root directory for Parquet partitions
-        compression: Compression algorithm (default: snappy)
+    Args:
+        parquet_root (Path): Root directory for partitioned storage.
+        compression (str): Compression algorithm (snappy, zstd, gzip, none).
     """
 
     def __init__(
@@ -138,12 +138,6 @@ class PartitionedParquetWriter:
         parquet_root: Path,
         compression: str = "snappy",
     ):
-        """Initialize the Parquet writer.
-
-        Args:
-            parquet_root: Root directory for partitioned storage
-            compression: Compression algorithm (snappy, zstd, gzip, none)
-        """
         self.parquet_root = Path(parquet_root)
         self.compression = compression
         self.parquet_root.mkdir(parents=True, exist_ok=True)
@@ -166,17 +160,16 @@ class PartitionedParquetWriter:
         When set, samples are written in batches to avoid loading all into memory.
 
         Args:
-            dataset_name: Name of the dataset
-            samples: List of SampleMetadata to write
-            streaming_batch_size: If set, write samples in batches of this size
-                                  to reduce memory usage. Recommended for >10k samples.
+            dataset_name (str): Name of the dataset.
+            samples (list[SampleMetadata]): List of SampleMetadata to write.
+            streaming_batch_size (int | None): If set, write samples in batches of this size
+                to reduce memory usage. Recommended for >10k samples.
 
         Returns:
-            Number of samples written
+            int: Number of samples written.
 
         Raises:
-            ValueError: If samples list is empty
-            IOError: If write fails
+            Exception: If the write operation fails.
         """
         if not samples:
             logger.debug(f"No samples to write for {dataset_name}")
@@ -223,12 +216,15 @@ class PartitionedParquetWriter:
         Writes samples in batches using row group streaming.
 
         Args:
-            dataset_name: Name of the dataset
-            samples: List of SampleMetadata to write
-            batch_size: Number of samples per batch
+            dataset_name (str): Name of the dataset.
+            samples (list[SampleMetadata]): List of SampleMetadata to write.
+            batch_size (int): Number of samples per batch.
 
         Returns:
-            Number of samples written
+            int: Number of samples written.
+
+        Raises:
+            Exception: If the streaming write operation fails.
         """
         partition_dir = self._get_partition_dir(dataset_name)
         partition_dir.mkdir(parents=True, exist_ok=True)
@@ -282,11 +278,11 @@ class PartitionedParquetWriter:
         Creates a new part file to avoid read-modify-write.
 
         Args:
-            dataset_name: Name of the dataset
-            samples: List of SampleMetadata to append
+            dataset_name (str): Name of the dataset.
+            samples (list[SampleMetadata]): List of SampleMetadata to append.
 
         Returns:
-            Number of samples appended
+            int: Number of samples appended.
         """
         if not samples:
             return 0
@@ -322,7 +318,7 @@ class PartitionedParquetWriter:
         with predicate pushdown.
 
         Returns:
-            pyarrow Dataset for all partitions
+            ds.Dataset: PyArrow Dataset for all partitions.
         """
         if not self.parquet_root.exists():
             # Return empty dataset
@@ -348,7 +344,7 @@ class PartitionedParquetWriter:
         Warning: May use significant memory for large datasets.
 
         Returns:
-            PyArrow Table with all samples
+            pa.Table: PyArrow Table with all samples.
         """
         dataset = self.get_dataset()
         return dataset.to_table()
@@ -360,10 +356,10 @@ class PartitionedParquetWriter:
         P2 Fix: Accepts both sanitized and unsanitized names for convenience.
 
         Args:
-            dataset_name: Name of the dataset to read (sanitized or original)
+            dataset_name (str): Name of the dataset to read (sanitized or original).
 
         Returns:
-            PyArrow Table with samples from the specified dataset
+            pa.Table: PyArrow Table with samples from the specified dataset.
         """
         dataset = self.get_dataset()
         # Try original name first, then sanitized
@@ -379,10 +375,10 @@ class PartitionedParquetWriter:
         """Delete a dataset partition.
 
         Args:
-            dataset_name: Name of the dataset to delete
+            dataset_name (str): Name of the dataset to delete.
 
         Returns:
-            True if partition was deleted, False if it didn't exist
+            bool: True if partition was deleted, False if it didn't exist.
         """
         partition_dir = self._get_partition_dir(dataset_name)
         if partition_dir.exists():
@@ -395,7 +391,7 @@ class PartitionedParquetWriter:
         """List all dataset partitions.
 
         Returns:
-            List of dataset names with existing partitions
+            list[str]: List of dataset names with existing partitions.
         """
         datasets = []
         for path in self.parquet_root.glob("dataset_name=*"):
@@ -409,7 +405,7 @@ class PartitionedParquetWriter:
         """Get storage statistics.
 
         Returns:
-            Dictionary with storage statistics
+            dict[str, Any]: Dictionary with storage statistics.
         """
         datasets = self.list_datasets()
         total_files = 0
@@ -440,10 +436,13 @@ class PartitionedParquetWriter:
         If writing fails, the original parts remain intact.
 
         Args:
-            dataset_name: Name of the dataset to compact
+            dataset_name (str): Name of the dataset to compact.
 
         Returns:
-            Number of samples in compacted file
+            int: Number of samples in compacted file.
+
+        Raises:
+            Exception: If the compaction write operation fails.
         """
         partition_dir = self._get_partition_dir(dataset_name)
         if not partition_dir.exists():
@@ -501,10 +500,10 @@ class PartitionedParquetWriter:
         partition directories and stored dataset names.
 
         Args:
-            dataset_name: Raw dataset name (may contain path separators)
+            dataset_name (str): Raw dataset name (may contain path separators).
 
         Returns:
-            Filesystem-safe dataset name
+            str: Filesystem-safe dataset name.
         """
         return dataset_name.replace("/", "_").replace("\\", "_")
 
@@ -512,10 +511,10 @@ class PartitionedParquetWriter:
         """Get partition directory for a dataset.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset.
 
         Returns:
-            Path to partition directory
+            Path: Path to partition directory.
         """
         safe_name = self._sanitize_dataset_name(dataset_name)
         return self.parquet_root / f"dataset_name={safe_name}"
@@ -527,10 +526,10 @@ class PartitionedParquetWriter:
         """Convert samples to Arrow table.
 
         Args:
-            samples: List of SampleMetadata instances
+            samples (list[SampleMetadata]): List of SampleMetadata instances.
 
         Returns:
-            PyArrow Table with columnar data
+            pa.Table: PyArrow Table with columnar data.
         """
         import json
 

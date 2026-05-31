@@ -44,16 +44,11 @@ def compute_full_sha256(
     without loading the entire file into memory.
 
     Args:
-        file_path: Path to the file to hash
-        chunk_size: Size of chunks to read (default 64KB)
+        file_path (Path): Path to the file to hash.
+        chunk_size (int): Size of chunks to read (default 64KB).
 
     Returns:
-        Lowercase hexadecimal SHA256 hash string (64 characters)
-
-    Raises:
-        FileNotFoundError: If file does not exist
-        PermissionError: If file cannot be read
-        IsADirectoryError: If path is a directory
+        str: Lowercase hexadecimal SHA256 hash string (64 characters).
     """
     sha256_hash = hashlib.sha256()
     with open(file_path, "rb") as f:
@@ -79,12 +74,12 @@ def compute_sample_id(
     providing collision resistance while keeping IDs manageable.
 
     Args:
-        dataset_name: Name of the source dataset (e.g., "diqa-5000")
-        relative_path: Path relative to dataset root (e.g., "train/img001.png")
-        file_hash: Full SHA256 hash of file content
+        dataset_name (str): Name of the source dataset (e.g., "diqa-5000").
+        relative_path (str): Path relative to dataset root (e.g., "train/img001.png").
+        file_hash (str): Full SHA256 hash of file content.
 
     Returns:
-        32-character lowercase hexadecimal ID
+        str: 32-character lowercase hexadecimal ID.
 
     Example:
         >>> sample_id = compute_sample_id(
@@ -106,10 +101,10 @@ def compute_content_hash(data: bytes) -> str:
     non-file data for provenance tracking.
 
     Args:
-        data: Bytes to hash
+        data (bytes): Bytes to hash.
 
     Returns:
-        Lowercase hexadecimal SHA256 hash string
+        str: Lowercase hexadecimal SHA256 hash string.
     """
     return hashlib.sha256(data).hexdigest()
 
@@ -121,11 +116,11 @@ def compute_string_hash(text: str, encoding: str = "utf-8") -> str:
     or JSON serializations.
 
     Args:
-        text: String to hash
-        encoding: Text encoding (default UTF-8)
+        text (str): String to hash.
+        encoding (str): Text encoding (default UTF-8).
 
     Returns:
-        Lowercase hexadecimal SHA256 hash string
+        str: Lowercase hexadecimal SHA256 hash string.
     """
     return hashlib.sha256(text.encode(encoding)).hexdigest()
 
@@ -134,14 +129,11 @@ def verify_file_hash(file_path: Path, expected_hash: str) -> bool:
     """Verify file content matches expected hash.
 
     Args:
-        file_path: Path to file to verify
-        expected_hash: Expected SHA256 hash (lowercase hex)
+        file_path (Path): Path to file to verify.
+        expected_hash (str): Expected SHA256 hash (lowercase hex).
 
     Returns:
-        True if hash matches, False otherwise
-
-    Raises:
-        FileNotFoundError: If file does not exist
+        bool: True if hash matches, False otherwise.
     """
     actual_hash = compute_full_sha256(file_path)
     return actual_hash.lower() == expected_hash.lower()
