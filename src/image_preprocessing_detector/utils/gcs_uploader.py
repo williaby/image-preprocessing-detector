@@ -41,9 +41,9 @@ class GCSRunConfig:
         gs://{bucket_name}/{project_name}/{model_name}/runs/{run_id}/
 
     Attributes:
-        bucket_name: GCS bucket name (e.g., "rag-pipeline-models")
-        project_name: Project name (e.g., "image-preprocessing-detector")
-        model_name: Model name (e.g., "resnet50_teacher")
+        bucket_name (str): GCS bucket name (e.g., "rag-pipeline-models")
+        project_name (str): Project name (e.g., "image-preprocessing-detector")
+        model_name (str): Model name (e.g., "resnet50_teacher")
     """
 
     bucket_name: str
@@ -75,19 +75,18 @@ def upload_dir_to_gcs(
     """Upload a directory to GCS, preserving structure.
 
     Args:
-        local_dir: Local directory to upload
-        bucket_name: GCS bucket name
-        gcs_prefix: Prefix path in GCS (e.g., "project/model/runs/run-id")
-        verbose: Print upload progress
+        local_dir (str): Local directory to upload
+        bucket_name (str): GCS bucket name
+        gcs_prefix (str): Prefix path in GCS (e.g., "project/model/runs/run-id")
+        verbose (bool): Print upload progress
 
     Returns:
-        Dictionary with upload statistics:
+        dict[str, int]: Dictionary with upload statistics:
             - files_uploaded: Number of files uploaded
             - total_bytes: Total bytes uploaded
 
     Raises:
         ValueError: If local_dir doesn't exist
-        google.cloud.exceptions.GoogleCloudError: If upload fails
     """
     local_path_obj = Path(local_dir)
     if not local_path_obj.exists():
@@ -139,13 +138,13 @@ def upload_run_to_gcs(
         gs://{bucket}/{project}/{model}/runs/{run_id}/
 
     Args:
-        config: GCS location configuration (bucket, project, model)
-        run_id: Run identifier (e.g., "2025-11-15T01-20Z_run-abc123")
-        local_dir: Local directory containing run artifacts
-        verbose: Print upload progress
+        config (GCSRunConfig): GCS location configuration (bucket, project, model)
+        run_id (str): Run identifier (e.g., "2025-11-15T01-20Z_run-abc123")
+        local_dir (str): Local directory containing run artifacts
+        verbose (bool): Print upload progress
 
     Returns:
-        GCS path to the uploaded run (gs://...)
+        str: GCS path to the uploaded run (gs://...)
 
     Example:
         >>> config = GCSRunConfig(
@@ -210,17 +209,16 @@ def upload_file_to_gcs(
     """Upload a single file to GCS.
 
     Args:
-        local_file: Path to local file
-        bucket_name: GCS bucket name
-        gcs_path: Destination path in GCS (without gs:// prefix)
-        verbose: Print upload progress
+        local_file (str): Path to local file
+        bucket_name (str): GCS bucket name
+        gcs_path (str): Destination path in GCS (without gs:// prefix)
+        verbose (bool): Print upload progress
 
     Returns:
-        Full GCS path (gs://...)
+        str: Full GCS path (gs://...)
 
     Raises:
         ValueError: If local_file doesn't exist
-        google.cloud.exceptions.GoogleCloudError: If upload fails
     """
     local_file_path = Path(local_file)
     if not local_file_path.exists():
@@ -248,11 +246,11 @@ def list_runs(
     """List all training runs for a model in GCS.
 
     Args:
-        config: GCS location configuration (bucket, project, model)
-        max_results: Maximum number of runs to return (None = all)
+        config (GCSRunConfig): GCS location configuration (bucket, project, model)
+        max_results (int | None): Maximum number of runs to return (None = all)
 
     Returns:
-        List of run IDs (sorted newest first)
+        list[str]: List of run IDs (sorted newest first)
 
     Example:
         >>> config = GCSRunConfig(
@@ -295,13 +293,13 @@ def download_run_from_gcs(
     """Download a training run from GCS.
 
     Args:
-        config: GCS location configuration (bucket, project, model)
-        run_id: Run identifier
-        local_dir: Local directory to download to
-        verbose: Print download progress
+        config (GCSRunConfig): GCS location configuration (bucket, project, model)
+        run_id (str): Run identifier
+        local_dir (str): Local directory to download to
+        verbose (bool): Print download progress
 
     Returns:
-        Local path to downloaded run
+        str: Local path to downloaded run
 
     Example:
         >>> config = GCSRunConfig(

@@ -30,7 +30,16 @@ class UpscaleAlgorithm(str, Enum):
 
 
 class PDFUpscaler:
-    """Upscales low-resolution PDFs to improve OCR quality."""
+    """Upscales low-resolution PDFs to improve OCR quality.
+
+    # CRITICAL: Target DPI: 300 DPI is standard for OCR, 600 for high-quality scans
+    # #VERIFY: Higher DPI increases file size and processing time
+
+    Args:
+        target_dpi (int): Target DPI for upscaling (default: 300)
+        algorithm (UpscaleAlgorithm): Upscaling algorithm to use
+        preserve_original (bool): Keep original file if upscaling fails
+    """
 
     def __init__(
         self,
@@ -38,16 +47,6 @@ class PDFUpscaler:
         algorithm: UpscaleAlgorithm = UpscaleAlgorithm.LANCZOS,
         preserve_original: bool = True,
     ) -> None:
-        """Initialize PDF upscaler.
-
-        # CRITICAL: Target DPI: 300 DPI is standard for OCR, 600 for high-quality scans
-        # #VERIFY: Higher DPI increases file size and processing time
-
-        Args:
-            target_dpi: Target DPI for upscaling (default: 300)
-            algorithm: Upscaling algorithm to use
-            preserve_original: Keep original file if upscaling fails
-        """
         self.target_dpi = target_dpi
         self.algorithm = algorithm
         self.preserve_original = preserve_original
@@ -66,11 +65,11 @@ class PDFUpscaler:
         # #VERIFY: Use file locking or copy to temp location
 
         Args:
-            input_path: Path to input PDF file
-            output_path: Path for output file (default: creates temp file)
+            input_path (str | Path): Path to input PDF file
+            output_path (str | Path | None): Path for output file (default: creates temp file)
 
         Returns:
-            Dictionary containing:
+            dict[str, Any]: Dictionary containing:
                 - success: bool indicating if upscaling succeeded
                 - output_path: Path to upscaled PDF
                 - processing_time: Time taken in seconds
@@ -245,12 +244,12 @@ class PDFUpscaler:
         for use by both pdf_upscaler.py and image_upscaler.py.
 
         Args:
-            img: Input image as numpy array
-            target_width: Target width in pixels
-            target_height: Target height in pixels
+            img (np.ndarray): Input image as numpy array
+            target_width (int): Target width in pixels
+            target_height (int): Target height in pixels
 
         Returns:
-            Upscaled image as numpy array
+            np.ndarray: Upscaled image as numpy array
         """
         # Map algorithm to OpenCV/PIL methods
         if self.algorithm == UpscaleAlgorithm.BICUBIC:
@@ -300,13 +299,13 @@ def upscale_if_needed(
     Convenience function that combines resolution analysis and upscaling.
 
     Args:
-        pdf_path: Path to PDF file
-        min_dpi: Minimum acceptable DPI (default: 300)
-        target_dpi: Target DPI for upscaling (default: 300)
-        output_path: Optional output path (default: creates temp file)
+        pdf_path (str | Path): Path to PDF file
+        min_dpi (int): Minimum acceptable DPI (default: 300)
+        target_dpi (int): Target DPI for upscaling (default: 300)
+        output_path (str | Path | None): Optional output path (default: creates temp file)
 
     Returns:
-        Dictionary with upscaling results (or skipped if not needed)
+        dict[str, Any]: Dictionary with upscaling results (or skipped if not needed)
     """
     from image_preprocessing_detector.ingestion.pdf_resolution import (
         quick_resolution_check,

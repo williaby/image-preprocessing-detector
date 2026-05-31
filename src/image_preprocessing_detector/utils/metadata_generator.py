@@ -38,10 +38,10 @@ def get_git_commit_hash(repo_path: str = ".") -> str:
     """Get current Git commit hash.
 
     Args:
-        repo_path: Path to git repository (default: current directory)
+        repo_path (str): Path to git repository (default: current directory)
 
     Returns:
-        Full commit hash (40 characters)
+        str: Full commit hash (40 characters)
 
     Raises:
         RuntimeError: If not in a git repository or git command fails
@@ -63,10 +63,10 @@ def get_git_branch(repo_path: str = ".") -> str:
     """Get current Git branch name.
 
     Args:
-        repo_path: Path to git repository
+        repo_path (str): Path to git repository
 
     Returns:
-        Branch name
+        str: Branch name
     """
     try:
         result = subprocess.run(  # nosec B603 B607 - hardcoded git command
@@ -85,10 +85,10 @@ def get_git_status(repo_path: str = ".") -> str:
     """Check if repository has uncommitted changes.
 
     Args:
-        repo_path: Path to git repository
+        repo_path (str): Path to git repository
 
     Returns:
-        "clean" or "dirty" (has uncommitted changes)
+        str: "clean" or "dirty" (has uncommitted changes)
     """
     try:
         result = subprocess.run(  # nosec B603 B607 - hardcoded git command
@@ -107,11 +107,11 @@ def generate_commit_hash_file(output_dir: str, repo_path: str = ".") -> str:
     """Generate commit_hash.txt file.
 
     Args:
-        output_dir: Directory to write file
-        repo_path: Path to git repository
+        output_dir (str): Directory to write file
+        repo_path (str): Path to git repository
 
     Returns:
-        Path to generated file
+        str: Path to generated file
 
     Example content:
         commit: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
@@ -145,12 +145,12 @@ def generate_dataset_version_file(
     """Generate dataset_version.txt file.
 
     Args:
-        output_dir: Directory to write file
-        dataset_version: Dataset version identifier (e.g., "v1.2.0", "sha256:abc123...")
-        dataset_info: Additional dataset metadata (optional)
+        output_dir (str): Directory to write file
+        dataset_version (str): Dataset version identifier (e.g., "v1.2.0", "sha256:abc123...")
+        dataset_info (dict[str, Any] | None): Additional dataset metadata (optional)
 
     Returns:
-        Path to generated file
+        str: Path to generated file
 
     Example content:
         version: v1.2.0
@@ -178,7 +178,7 @@ def get_cuda_version() -> str:
     """Get CUDA version if available.
 
     Returns:
-        CUDA version string or "N/A"
+        str: CUDA version string or "N/A"
     """
     try:
         result = subprocess.run(  # nosec B603 B607 - hardcoded nvcc command
@@ -205,7 +205,7 @@ def get_installed_packages() -> dict[str, str]:
     """Get versions of key ML packages.
 
     Returns:
-        Dictionary of package names to versions
+        dict[str, str]: Dictionary of package names to versions
     """
     packages: dict[str, str] = {}
 
@@ -252,10 +252,10 @@ def generate_env_info_file(output_dir: str) -> str:
     """Generate env_info.txt file with environment details.
 
     Args:
-        output_dir: Directory to write file
+        output_dir (str): Directory to write file
 
     Returns:
-        Path to generated file
+        str: Path to generated file
 
     Example content:
         python: 3.12.0
@@ -292,11 +292,11 @@ def generate_training_config_file(
     """Generate training_config.yaml file.
 
     Args:
-        output_dir: Directory to write file
-        config: Training configuration dictionary
+        output_dir (str): Directory to write file
+        config (dict[str, Any]): Training configuration dictionary
 
     Returns:
-        Path to generated file
+        str: Path to generated file
 
     Example config:
         {
@@ -326,11 +326,11 @@ def generate_metrics_file(
     """Generate metrics.json file.
 
     Args:
-        output_dir: Directory to write file
-        metrics: Training and evaluation metrics
+        output_dir (str): Directory to write file
+        metrics (dict[str, Any]): Training and evaluation metrics
 
     Returns:
-        Path to generated file
+        str: Path to generated file
 
     Example metrics:
         {
@@ -365,15 +365,15 @@ def generate_run_metadata(
     Creates all required files for reproducibility.
 
     Args:
-        output_dir: Directory to write metadata files
-        config: Training configuration dictionary
-        dataset_version: Dataset version identifier
-        metrics: Training/evaluation metrics (optional, can be added later)
-        dataset_info: Additional dataset metadata (optional)
-        repo_path: Path to git repository
+        output_dir (str): Directory to write metadata files
+        config (dict[str, Any]): Training configuration dictionary
+        dataset_version (str): Dataset version identifier
+        metrics (dict[str, Any] | None): Training/evaluation metrics (optional, can be added later)
+        dataset_info (dict[str, Any] | None): Additional dataset metadata (optional)
+        repo_path (str): Path to git repository
 
     Returns:
-        Dictionary mapping metadata type to file path
+        dict[str, str]: Dictionary mapping metadata type to file path
 
     Example:
         >>> metadata = generate_run_metadata(
@@ -426,10 +426,10 @@ def generate_run_id(prefix: str = "run") -> str:
     """Generate a unique run identifier with timestamp.
 
     Args:
-        prefix: Prefix for run ID (default: "run")
+        prefix (str): Prefix for run ID (default: "run")
 
     Returns:
-        Run ID in format: YYYY-MM-DDTHH-MMZ_{prefix}-{random}
+        str: Run ID in format: YYYY-MM-DDTHH-MMZ_{prefix}-{random}
 
     Example:
         >>> run_id = generate_run_id("iqa-phase2")

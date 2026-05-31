@@ -30,13 +30,13 @@ class BudgetState:
     """Current budget usage state.
 
     Attributes:
-        daily_usage_dollars: GPU cost accumulated today
-        monthly_usage_dollars: GPU cost accumulated this month
-        daily_gpu_seconds: GPU seconds used today
-        monthly_gpu_seconds: GPU seconds used this month
-        last_reset_date: Date of last daily reset (YYYY-MM-DD)
-        last_month_reset: Month of last monthly reset (YYYY-MM)
-        warnings_issued: Number of budget warnings issued
+        daily_usage_dollars (float): GPU cost accumulated today
+        monthly_usage_dollars (float): GPU cost accumulated this month
+        daily_gpu_seconds (float): GPU seconds used today
+        monthly_gpu_seconds (float): GPU seconds used this month
+        last_reset_date (str): Date of last daily reset (YYYY-MM-DD)
+        last_month_reset (str): Month of last monthly reset (YYYY-MM)
+        warnings_issued (int): Number of budget warnings issued
     """
 
     daily_usage_dollars: float = 0.0
@@ -57,11 +57,11 @@ class BudgetConfig:
     """Budget configuration settings.
 
     Attributes:
-        enabled: Whether budget enforcement is active
-        daily_limit_dollars: Maximum daily spend
-        monthly_limit_dollars: Maximum monthly spend
-        cost_per_gpu_hour: Cost per GPU hour
-        warning_threshold: Ratio at which to issue warnings (0-1)
+        enabled (bool): Whether budget enforcement is active
+        daily_limit_dollars (float): Maximum daily spend
+        monthly_limit_dollars (float): Maximum monthly spend
+        cost_per_gpu_hour (float): Cost per GPU hour
+        warning_threshold (float): Ratio at which to issue warnings (0-1)
     """
 
     enabled: bool = True
@@ -76,11 +76,11 @@ class BudgetCheckResult:
     """Result of budget check.
 
     Attributes:
-        allowed: Whether GPU usage is allowed
-        reason: Reason if not allowed
-        daily_remaining: Remaining daily budget
-        monthly_remaining: Remaining monthly budget
-        warning: Warning message if near limit
+        allowed (bool): Whether GPU usage is allowed
+        reason (str | None): Reason if not allowed
+        daily_remaining (float): Remaining daily budget
+        monthly_remaining (float): Remaining monthly budget
+        warning (str | None): Warning message if near limit
     """
 
     allowed: bool
@@ -95,6 +95,10 @@ class BudgetEnforcer:
 
     Tracks daily and monthly GPU usage and prevents usage when
     budget limits are exceeded.
+
+    Args:
+        config (BudgetConfig | None): Budget configuration (uses defaults if None)
+        storage_path (Path | None): Path to persist budget state
 
     Example:
         >>> enforcer = BudgetEnforcer(BudgetConfig(daily_limit_dollars=5.0))
@@ -112,12 +116,6 @@ class BudgetEnforcer:
         config: BudgetConfig | None = None,
         storage_path: Path | None = None,
     ) -> None:
-        """Initialize budget enforcer.
-
-        Args:
-            config: Budget configuration (uses defaults if None)
-            storage_path: Path to persist budget state
-        """
         self.config = config or BudgetConfig()
         self.storage_path = storage_path or DEFAULT_BUDGET_FILE
         self._state: BudgetState | None = None
@@ -202,7 +200,7 @@ class BudgetEnforcer:
         """Check if GPU usage is allowed within budget.
 
         Returns:
-            BudgetCheckResult with allowed status and remaining budget
+            BudgetCheckResult: Result with allowed status and remaining budget
         """
         if not self.config.enabled:
             return BudgetCheckResult(
@@ -299,10 +297,10 @@ class BudgetEnforcer:
         """Record GPU usage.
 
         Args:
-            gpu_seconds: Number of GPU seconds used
+            gpu_seconds (float): Number of GPU seconds used
 
         Returns:
-            Cost in dollars for this usage
+            float: Cost in dollars for this usage
         """
         if not self.config.enabled:
             return 0.0
@@ -333,7 +331,7 @@ class BudgetEnforcer:
         """Get current usage summary.
 
         Returns:
-            Dictionary with usage statistics
+            dict[str, Any]: Dictionary with usage statistics
         """
         self._check_and_reset()
         state = self.state
@@ -386,7 +384,7 @@ def get_budget_enforcer() -> BudgetEnforcer:
     - IMGPREP_MODAL_GPU_COST_HOUR: Cost per GPU hour
 
     Returns:
-        Configured BudgetEnforcer instance
+        BudgetEnforcer: Configured BudgetEnforcer instance
     """
     config = BudgetConfig(
         enabled=os.getenv("IMGPREP_MODAL_BUDGET_ENABLED", "true").lower()

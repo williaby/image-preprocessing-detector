@@ -71,13 +71,13 @@ class EmbeddedImage:
     """Represents an embedded image extracted from an office document.
 
     Attributes:
-        image: The extracted image as numpy array (BGR format)
-        image_index: Sequential index of the image in the document
-        source_location: Location in document (e.g., "slide_3", "page_5", "sheet_2")
-        original_filename: Original filename within the document archive
-        original_size: Original image dimensions (width, height)
-        format: Original image format (png, jpeg, etc.)
-        metadata: Additional metadata from extraction
+        image (np.ndarray): The extracted image as numpy array (BGR format)
+        image_index (int): Sequential index of the image in the document
+        source_location (str): Location in document (e.g., "slide_3", "page_5", "sheet_2")
+        original_filename (str): Original filename within the document archive
+        original_size (tuple[int, int]): Original image dimensions (width, height)
+        format (str): Original image format (png, jpeg, etc.)
+        metadata (dict[str, Any]): Additional metadata from extraction
     """
 
     image: np.ndarray
@@ -94,12 +94,12 @@ class OfficeDocumentInfo:
     """Information about an office document.
 
     Attributes:
-        document_type: Type of office document
-        file_path: Path to the document
-        num_images: Number of embedded images found
-        images: List of extracted embedded images
-        extraction_method: Method used for extraction (docling, native, zipfile)
-        errors: Any errors encountered during extraction
+        document_type (DocumentType): Type of office document
+        file_path (str): Path to the document
+        num_images (int): Number of embedded images found
+        images (list[EmbeddedImage]): List of extracted embedded images
+        extraction_method (str): Method used for extraction (docling, native, zipfile)
+        errors (list[str]): Any errors encountered during extraction
     """
 
     document_type: DocumentType
@@ -116,6 +116,9 @@ class OfficeProcessor:
     Supports Word (.docx), Excel (.xlsx), and PowerPoint (.pptx) documents.
     Extracts all embedded images for preprocessing in the IQA pipeline.
 
+    Args:
+        use_docling (bool): Whether to try using Docling for extraction (falls back if unavailable)
+
     Example:
         >>> processor = OfficeProcessor()
         >>> doc_info = processor.process("presentation.pptx")
@@ -125,11 +128,6 @@ class OfficeProcessor:
     """
 
     def __init__(self, use_docling: bool = True) -> None:
-        """Initialize the office processor.
-
-        Args:
-            use_docling: Whether to try using Docling for extraction (falls back if unavailable)
-        """
         self.use_docling = use_docling
         self._docling_available = (
             self._check_docling_available() if use_docling else False
@@ -155,10 +153,10 @@ class OfficeProcessor:
         """Detect office document type from file extension.
 
         Args:
-            file_path: Path to the document
+            file_path (str | Path): Path to the document
 
         Returns:
-            DocumentType if office document, None otherwise
+            DocumentType | None: DocumentType if office document, None otherwise
         """
         path = Path(file_path)
         ext = path.suffix.lower()
@@ -168,10 +166,10 @@ class OfficeProcessor:
         """Check if file is a supported office document.
 
         Args:
-            file_path: Path to the document
+            file_path (str | Path): Path to the document
 
         Returns:
-            True if office document, False otherwise
+            bool: True if office document, False otherwise
         """
         return self.detect_document_type(file_path) is not None
 
@@ -179,10 +177,10 @@ class OfficeProcessor:
         """Process an office document and extract embedded images.
 
         Args:
-            file_path: Path to the office document
+            file_path (str | Path): Path to the office document
 
         Returns:
-            OfficeDocumentInfo with extracted images and metadata
+            OfficeDocumentInfo: With extracted images and metadata
 
         Raises:
             ValueError: If file is not a supported office document
@@ -221,11 +219,16 @@ class OfficeProcessor:
         """Extract images using Docling library.
 
         Args:
-            file_path: Path to the document
-            doc_type: Type of office document
+            file_path (Path): Path to the document
+            doc_type (DocumentType): Type of office document
 
         Returns:
-            OfficeDocumentInfo with extracted images
+            OfficeDocumentInfo: With extracted images
+
+        Raises:
+            OSError: If file access fails
+            RuntimeError: If Docling internal processing fails
+            ValueError: If the document format is invalid
         """
         # Note: This is a placeholder for Docling integration
         # Docling API may vary - this shows the expected interface
@@ -300,11 +303,11 @@ class OfficeProcessor:
         media files in specific directories.
 
         Args:
-            file_path: Path to the document
-            doc_type: Type of office document
+            file_path (Path): Path to the document
+            doc_type (DocumentType): Type of office document
 
         Returns:
-            OfficeDocumentInfo with extracted images
+            OfficeDocumentInfo: With extracted images
         """
         images: list[EmbeddedImage] = []
         errors: list[str] = []
@@ -397,11 +400,11 @@ class OfficeProcessor:
         """Determine the source location of an image within the document.
 
         Args:
-            archive_path: Path within the ZIP archive
-            doc_type: Type of office document
+            archive_path (str): Path within the ZIP archive
+            doc_type (DocumentType): Type of office document
 
         Returns:
-            Human-readable source location string
+            str: Human-readable source location string
         """
         # For now, use a simple naming based on document type
         # More sophisticated location tracking would require parsing rels files
@@ -424,12 +427,12 @@ class OfficeProcessor:
         """Extract embedded images to files.
 
         Args:
-            doc_info: Document info from process()
-            output_dir: Directory to save images
-            output_format: Output image format (png, jpg)
+            doc_info (OfficeDocumentInfo): Document info from process()
+            output_dir (str | Path): Directory to save images
+            output_format (str): Output image format (png, jpg)
 
         Returns:
-            List of saved file paths
+            list[str]: List of saved file paths
         """
         import cv2
 
@@ -455,10 +458,10 @@ def detect_office_type(file_path: str | Path) -> DocumentType | None:
     """Convenience function to detect office document type.
 
     Args:
-        file_path: Path to the document
+        file_path (str | Path): Path to the document
 
     Returns:
-        DocumentType if office document, None otherwise
+        DocumentType | None: DocumentType if office document, None otherwise
 
     Example:
         >>> doc_type = detect_office_type("report.docx")
@@ -476,11 +479,11 @@ def extract_office_images(
     """Convenience function to extract images from office document.
 
     Args:
-        file_path: Path to the office document
-        use_docling: Whether to use Docling if available
+        file_path (str | Path): Path to the office document
+        use_docling (bool): Whether to use Docling if available
 
     Returns:
-        OfficeDocumentInfo with extracted images
+        OfficeDocumentInfo: With extracted images
 
     Example:
         >>> doc_info = extract_office_images("presentation.pptx")

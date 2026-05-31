@@ -18,13 +18,13 @@ def validate_safe_path(
     and base directory restrictions.
 
     Args:
-        file_path: Path to validate (string or Path object)
-        allowed_base: Optional base directory to restrict access to.
+        file_path (str | Path): Path to validate (string or Path object)
+        allowed_base (str | Path | None): Optional base directory to restrict access to.
                      If provided, the resolved path must be within this directory.
-        must_exist: If True, raise error if path doesn't exist
+        must_exist (bool): If True, raise error if path doesn't exist
 
     Returns:
-        Resolved absolute Path object
+        Path: Resolved absolute Path object
 
     Raises:
         ValueError: If path contains traversal patterns or escapes allowed_base
