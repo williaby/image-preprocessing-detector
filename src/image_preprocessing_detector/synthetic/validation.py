@@ -48,18 +48,19 @@ def create_stratified_splits(
     which is critical for balanced model training and evaluation.
 
     Args:
-        samples: List of GeneratedSample objects to split
-        train_ratio: Proportion for training set (default 0.80)
-        val_ratio: Proportion for validation set (default 0.10)
-        test_ratio: Proportion for test set (default 0.10)
-        seed: Random seed for reproducibility
-        in_place: If True, sets the `split` attribute on each sample
+        samples (list[GeneratedSample]): List of GeneratedSample objects to split
+        train_ratio (float): Proportion for training set (default 0.80)
+        val_ratio (float): Proportion for validation set (default 0.10)
+        test_ratio (float): Proportion for test set (default 0.10)
+        seed (int): Random seed for reproducibility
+        in_place (bool): If True, sets the `split` attribute on each sample
 
     Returns:
-        Tuple of (train_samples, val_samples, test_samples)
+        tuple[list[GeneratedSample], list[GeneratedSample], list[GeneratedSample]]: Tuple of (train_samples, val_samples, test_samples)
 
     Raises:
         ValueError: If ratios don't sum to 1.0 or samples is empty
+
     """
     if abs(train_ratio + val_ratio + test_ratio - 1.0) > 0.001:
         raise ValueError(
@@ -147,10 +148,11 @@ class ValidationIssue:
     """Single validation issue.
 
     Attributes:
-        category: Issue category (coverage, distribution, etc.)
-        severity: Issue severity (error, warning, info)
-        message: Human-readable description
-        details: Additional context
+        category (str): Issue category (coverage, distribution, etc.)
+        severity (str): Issue severity (error, warning, info)
+        message (str): Human-readable description
+        details (dict[str, Any]): Additional context
+
     """
 
     category: str
@@ -164,9 +166,10 @@ class ValidationReport:
     """Complete validation report for a dataset.
 
     Attributes:
-        is_valid: True if dataset passes all required checks
-        issues: List of validation issues found
-        statistics: Computed statistics about the dataset
+        is_valid (bool): True if dataset passes all required checks
+        issues (list[ValidationIssue]): List of validation issues found
+        statistics (dict[str, Any]): Computed statistics about the dataset
+
     """
 
     is_valid: bool = True
@@ -274,11 +277,12 @@ def validate_dataset(
     - Language diversity for major scripts
 
     Args:
-        samples: List of GeneratedSample objects
-        thresholds: Override default thresholds
+        samples (list[GeneratedSample]): List of GeneratedSample objects
+        thresholds (dict[str, Any] | None): Override default thresholds
 
     Returns:
-        ValidationReport with issues and statistics
+        ValidationReport: ValidationReport with issues and statistics
+
     """
     report = ValidationReport()
     thresh = {**VALIDATION_THRESHOLDS, **(thresholds or {})}
@@ -318,10 +322,11 @@ def compute_dataset_statistics(
     """Compute comprehensive statistics for a dataset.
 
     Args:
-        samples: List of GeneratedSample objects
+        samples (list[GeneratedSample]): List of GeneratedSample objects
 
     Returns:
-        Dictionary of statistics
+        dict[str, Any]: Dictionary of statistics
+
     """
     stats: dict[str, Any] = {
         "total_samples": len(samples),
@@ -575,11 +580,12 @@ def generate_dataset_report(
     """Generate a comprehensive human-readable dataset report.
 
     Args:
-        samples: List of samples to analyze
-        output_path: Optional path to write report
+        samples (list[GeneratedSample]): List of samples to analyze
+        output_path (str | None): Optional path to write report
 
     Returns:
-        Formatted report string
+        str: Formatted report string
+
     """
     stats = compute_dataset_statistics(samples)
     validation = validate_dataset(samples)

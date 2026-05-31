@@ -69,11 +69,12 @@ def numeric_to_categorical_severity(
     """Convert numeric severity (0-1) to categorical (none/mild/moderate/severe).
 
     Args:
-        value: Numeric severity value in range [0, 1]
-        thresholds: Tuple of (mild, moderate, severe) thresholds
+        value (float): Numeric severity value in range [0, 1]
+        thresholds (tuple[float, float, float]): Tuple of (mild, moderate, severe) thresholds
 
     Returns:
-        Categorical severity string
+        str: Categorical severity string
+
     """
     mild, moderate, severe = thresholds
     if value < mild:
@@ -168,28 +169,37 @@ class GeneratedSample:
     Contains all metadata needed to create Layer 2 enrichment.
 
     Attributes:
-        image: PIL Image object
-        sample_id: Unique identifier (UUID)
-        scripts: Set of ISO 15924 script codes present
-        language_codes: List of ISO 639-3 language codes (OpenLID format)
-        layout_type: Document layout type
-        text_density: Text density level
-        iqa_labels: 8-dimension IQA quality labels
-        text_blocks: List of rendered text blocks with bounding boxes
-        resolution_dpi: Output resolution (72-600)
-        width_px: Image width in pixels
-        height_px: Image height in pixels
-        generation_params: Additional generation parameters
-        is_pristine: True if no degradation applied
-        resolution_tier: Resolution tier for NaFlex
-        quality_tier: Quality tier (PRISTINE/HIGH/MEDIUM/LOW/DEGRADED)
-        split: Dataset split assignment (train/val/test)
-        color_mode: Color mode applied (color/grayscale/binarized)
-        skew_angle_degrees: Exact skew angle if skew augmentation applied
-        orientation_class: Orientation class (0/90/180/270) if orientation augmentation applied
-        char_height_px: Measured character height in pixels
-        char_height_quality_score: Quality score derived from character height (0-1)
-        document_age: Simulated document age (modern/aged/historical)
+        image (Any): PIL Image object
+        sample_id (str): Unique identifier (UUID)
+        scripts (set[str]): Set of ISO 15924 script codes present
+        language_codes (list[str]): List of ISO 639-3 language codes (OpenLID format)
+        layout_type (LayoutType): Document layout type
+        text_density (TextDensity): Text density level
+        iqa_labels (IQALabels): 8-dimension IQA quality labels
+        text_blocks (list[TextBlock]): List of rendered text blocks with bounding boxes
+        resolution_dpi (int): Output resolution (72-600)
+        width_px (int): Image width in pixels
+        height_px (int): Image height in pixels
+        generation_params (dict[str, Any]): Additional generation parameters
+        is_pristine (bool): True if no degradation applied
+        resolution_tier (str): Resolution tier for NaFlex
+        quality_tier (str): Quality tier (PRISTINE/HIGH/MEDIUM/LOW/DEGRADED)
+        split (str | None): Dataset split assignment (train/val/test)
+        color_mode (str): Color mode applied (color/grayscale/binarized)
+        skew_angle_degrees (float | None): Exact skew angle if skew augmentation applied
+        orientation_class (int | None): Orientation class (0/90/180/270) if orientation augmentation applied
+        char_height_px (float | None): Measured character height in pixels
+        char_height_quality_score (float | None): Quality score derived from character height (0-1)
+        document_age (str | None): Simulated document age (modern/aged/historical)
+        font_size_pt (float | None): Pillow font size used during rendering
+        target_dpi (int | None): DPI tier target (72-600)
+        char_height_clean_px (float | None): Pre-degradation character height measurement
+        char_height_degraded_px (float | None): Post-degradation character height measurement
+        char_height_analytical_px (float | None): Analytically computed character height
+        char_height_rendered_px (float | None): Measured character height from pristine image
+        output_size_px (int | None): Derived view output size in pixels
+        text_directions (dict[str, str] | None): Script code to text direction mapping
+
     """
 
     image: Any  # PIL.Image.Image
@@ -246,12 +256,6 @@ class Layer2SchemaAdapter:
         generator_version: str = "1.0.0",
         git_sha: str | None = None,
     ) -> None:
-        """Initialize the schema adapter.
-
-        Args:
-            generator_version: Semantic version of the generator
-            git_sha: Git commit SHA for provenance tracking
-        """
         self.generator_version = generator_version
         self.git_sha = git_sha
 
@@ -263,11 +267,12 @@ class Layer2SchemaAdapter:
         """Map IQA dimensions to Layer 2 Degradation objects.
 
         Args:
-            iqa_labels: IQA labels from synthetic generation
-            augmentation_source: Source of augmentation ("augraphy", "albumentations", "hybrid")
+            iqa_labels (IQALabels): IQA labels from synthetic generation
+            augmentation_source (str): Source of augmentation ("augraphy", "albumentations", "hybrid")
 
         Returns:
-            List of Degradation dictionaries
+            list[dict[str, Any]]: List of Degradation dictionaries
+
         """
         degradations: list[dict[str, Any]] = []
         iqa_dict = iqa_labels.to_dict()
@@ -309,11 +314,12 @@ class Layer2SchemaAdapter:
         OpenLID format: language_code_script (e.g., "eng_Latn", "ara_Arab")
 
         Args:
-            openlid_code: OpenLID format language code (e.g., "ace_Latn")
+            openlid_code (str): OpenLID format language code (e.g., "ace_Latn")
 
         Returns:
-            Tuple of (iso639_code, iso15924_code or None)
+            tuple[str, str | None]: Tuple of (iso639_code, iso15924_code or None)
             Example: ("ace", "Latn") or ("en", None) if already ISO format
+
         """
         if "_" in openlid_code:
             parts = openlid_code.split("_", 1)
@@ -336,14 +342,15 @@ class Layer2SchemaAdapter:
         embedded in OpenLID is used only for validation/logging.
 
         Args:
-            script_code: ISO 15924 script code (authoritative)
-            language_code: Language code in OpenLID format (xxx_Yyyy) or ISO 639-1/3
-            is_primary: Whether this is the primary/dominant language
-            confidence: Detection confidence (1.0 for synthetic ground truth)
-            text_direction: Writing direction used ("ltr", "rtl", "ttb") or None
+            script_code (str): ISO 15924 script code (authoritative)
+            language_code (str): Language code in OpenLID format (xxx_Yyyy) or ISO 639-1/3
+            is_primary (bool): Whether this is the primary/dominant language
+            confidence (float): Detection confidence (1.0 for synthetic ground truth)
+            text_direction (str | None): Writing direction used ("ltr", "rtl", "ttb") or None
 
         Returns:
-            LanguageInfo dictionary matching Layer 2 schema
+            dict[str, Any]: LanguageInfo dictionary matching Layer 2 schema
+
         """
         # Parse OpenLID format to extract ISO 639 code
         iso639_code, _embedded_script = self._parse_openlid_code(language_code)
@@ -384,10 +391,11 @@ class Layer2SchemaAdapter:
         """Build LayoutDetection array from text blocks.
 
         Args:
-            text_blocks: List of TextBlock objects from rendering
+            text_blocks (list[TextBlock]): List of TextBlock objects from rendering
 
         Returns:
-            List of LayoutDetection dictionaries in COCO format
+            list[dict[str, Any]]: List of LayoutDetection dictionaries in COCO format
+
         """
         detections: list[dict[str, Any]] = []
 
@@ -426,11 +434,12 @@ class Layer2SchemaAdapter:
         """Build complete Layer 2 enrichment metadata from GeneratedSample.
 
         Args:
-            sample: Generated sample with all metadata
-            augmentation_source: Source of augmentation ("augraphy", "albumentations", "hybrid")
+            sample (GeneratedSample): Generated sample with all metadata
+            augmentation_source (str): Source of augmentation ("augraphy", "albumentations", "hybrid")
 
         Returns:
-            Complete Layer2EnrichmentMetadata dictionary
+            dict[str, Any]: Complete Layer2EnrichmentMetadata dictionary
+
         """
         # Generate UUID if not provided or convert existing ID
         if sample.sample_id.startswith("syn-"):
@@ -694,10 +703,11 @@ class Layer2SchemaAdapter:
         """Build GeometricInfo from sample orientation and skew data.
 
         Args:
-            sample: Generated sample with orientation/skew fields
+            sample (GeneratedSample): Generated sample with orientation/skew fields
 
         Returns:
-            GeometricInfo dictionary or None if no geometric data
+            dict[str, Any] | None: GeometricInfo dictionary or None if no geometric data
+
         """
         has_data = (
             sample.orientation_class is not None
@@ -734,10 +744,11 @@ class Layer2SchemaAdapter:
         Maps the 8-dim synthetic IQA to the 6-dim ML IQA schema fields.
 
         Args:
-            sample: Generated sample with IQA labels
+            sample (GeneratedSample): Generated sample with IQA labels
 
         Returns:
-            MLImageQualityInfo dictionary
+            dict[str, Any]: MLImageQualityInfo dictionary
+
         """
         iqa = sample.iqa_labels
         return {
@@ -766,10 +777,11 @@ class Layer2SchemaAdapter:
         """Build ImagePropertiesInfo from sample properties.
 
         Args:
-            sample: Generated sample with color mode and document age
+            sample (GeneratedSample): Generated sample with color mode and document age
 
         Returns:
-            ImagePropertiesInfo dictionary or None if defaults only
+            dict[str, Any] | None: ImagePropertiesInfo dictionary or None if defaults only
+
         """
         has_data = sample.color_mode != "color" or sample.document_age is not None
         if not has_data:

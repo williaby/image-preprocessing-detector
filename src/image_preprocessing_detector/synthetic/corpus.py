@@ -208,11 +208,12 @@ class TextSample:
     """A text sample from the corpus.
 
     Attributes:
-        text: The actual text content
-        language_code: ISO 639-1/3 language code
-        script_code: ISO 15924 script code
-        source: Where the text came from (e.g., "openlid-v2")
-        char_count: Number of characters
+        text (str): The actual text content
+        language_code (str): ISO 639-1/3 language code
+        script_code (str): ISO 15924 script code
+        source (str): Where the text came from (e.g., "openlid-v2")
+        char_count (int): Number of characters
+
     """
 
     text: str
@@ -232,9 +233,10 @@ class ScriptCorpus:
     """Corpus of text samples for a single script.
 
     Attributes:
-        script_code: ISO 15924 script code
-        samples: List of TextSample objects
-        samples_by_density: Samples organized by density category
+        script_code (str): ISO 15924 script code
+        samples (list[TextSample]): List of TextSample objects
+        samples_by_density (dict[TextDensity, list[TextSample]]): Samples organized by density category
+
     """
 
     script_code: str
@@ -247,7 +249,8 @@ class ScriptCorpus:
         """Add a sample and categorize by density.
 
         Args:
-            sample: TextSample to add
+            sample (TextSample): TextSample to add
+
         """
         self.samples.append(sample)
 
@@ -267,12 +270,13 @@ class ScriptCorpus:
         """Get a random sample, optionally filtered by density.
 
         Args:
-            density: Optional density filter
-            rng: Optional seeded Random instance for reproducibility.
+            density (TextDensity | None): Optional density filter
+            rng (random.Random | None): Optional seeded Random instance for reproducibility.
                  If None, uses global random (not recommended for reproducible generation).
 
         Returns:
-            Random TextSample or None if no samples available
+            TextSample | None: Random TextSample or None if no samples available
+
         """
         # FIX BUG #5: Use provided RNG for reproducibility, fallback to global random
         if density and density in self.samples_by_density:
@@ -303,15 +307,6 @@ class TextCorpusManager:
         max_text_length: int = 5000,
         seed: int | None = None,
     ) -> None:
-        """Initialize the corpus manager.
-
-        Args:
-            cache_dir: Directory for caching downloaded corpus
-            max_samples_per_language: Maximum samples to load per language
-            min_text_length: Minimum text length in characters
-            max_text_length: Maximum text length in characters
-            seed: Random seed for reproducible text selection
-        """
         self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -330,7 +325,8 @@ class TextCorpusManager:
         """Set or update the random seed for reproducible sampling.
 
         Args:
-            seed: Random seed (None uses global random)
+            seed (int | None): Random seed (None uses global random)
+
         """
         self._seed = seed
         self._rng = random.Random(seed) if seed is not None else None
@@ -339,10 +335,11 @@ class TextCorpusManager:
         """Get cache file path for a script.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            Path to cache file
+            Path: Path to cache file
+
         """
         return self.cache_dir / f"corpus_{script_code}.json"
 
@@ -352,10 +349,11 @@ class TextCorpusManager:
         Uses predefined sample texts when corpus download is unavailable.
 
         Args:
-            script_codes: Specific scripts to load (None = all available)
+            script_codes (list[str] | None): Specific scripts to load (None = all available)
 
         Returns:
-            Number of samples loaded
+            int: Number of samples loaded
+
         """
         scripts_to_load = script_codes or list(SAMPLE_TEXTS.keys())
         total_loaded = 0
@@ -386,10 +384,11 @@ class TextCorpusManager:
         """Load corpora from cached JSON files.
 
         Args:
-            script_codes: Specific scripts to load (None = all available)
+            script_codes (list[str] | None): Specific scripts to load (None = all available)
 
         Returns:
-            Number of samples loaded
+            int: Number of samples loaded
+
         """
         total_loaded = 0
         scripts_to_load = script_codes or list(SCRIPT_CONFIGS.keys())
@@ -432,7 +431,8 @@ class TextCorpusManager:
         """Save corpus to cache file.
 
         Args:
-            script_code: Script code to save
+            script_code (str): Script code to save
+
         """
         if script_code not in self.corpora:
             return
@@ -472,11 +472,12 @@ class TextCorpusManager:
         from HuggingFace for subsequent runs.
 
         Args:
-            script_codes: Specific scripts to load (None = all configured)
-            gcs_path: GCS bucket path (default: GCS_CORPUS_BUCKET)
+            script_codes (list[str] | None): Specific scripts to load (None = all configured)
+            gcs_path (str): GCS bucket path (default: GCS_CORPUS_BUCKET)
 
         Returns:
-            Number of samples loaded
+            int: Number of samples loaded
+
         """
         import subprocess
 
@@ -533,11 +534,12 @@ class TextCorpusManager:
         """Load text corpus from OpenLID-v2 dataset.
 
         Args:
-            script_codes: Specific scripts to load (None = all configured)
-            streaming: Use streaming mode to avoid downloading full dataset
+            script_codes (list[str] | None): Specific scripts to load (None = all configured)
+            streaming (bool): Use streaming mode to avoid downloading full dataset
 
         Returns:
-            Number of samples loaded
+            int: Number of samples loaded
+
         """
         try:
             from datasets import load_dataset
@@ -679,12 +681,13 @@ class TextCorpusManager:
         4. Built-in sample texts (fallback)
 
         Args:
-            script_codes: Specific scripts to load
-            use_sample_fallback: Use built-in sample texts if download fails
-            prefer_gcs: Try GCS before HuggingFace (default: True)
+            script_codes (list[str] | None): Specific scripts to load
+            use_sample_fallback (bool): Use built-in sample texts if download fails
+            prefer_gcs (bool): Try GCS before HuggingFace (default: True)
 
         Returns:
-            Number of samples loaded
+            int: Number of samples loaded
+
         """
         # Try cache first
         loaded = self.load_from_cache(script_codes)
@@ -742,11 +745,12 @@ class TextCorpusManager:
         """Get random text for a script.
 
         Args:
-            script_code: ISO 15924 script code
-            density: Optional text density filter
+            script_code (str): ISO 15924 script code
+            density (TextDensity | None): Optional text density filter
 
         Returns:
-            Text string or None if not available
+            str | None: Text string or None if not available
+
         """
         if not self._loaded:
             logger.warning(
@@ -779,11 +783,12 @@ class TextCorpusManager:
         """Get random text with its language code.
 
         Args:
-            script_code: ISO 15924 script code
-            density: Optional text density filter
+            script_code (str): ISO 15924 script code
+            density (TextDensity | None): Optional text density filter
 
         Returns:
-            Tuple of (text, language_code) or (None, None) if not available
+            tuple[str, str] | tuple[None, None]: Tuple of (text, language_code) or (None, None) if not available
+
         """
         if not self._loaded:
             logger.warning(
@@ -815,7 +820,8 @@ class TextCorpusManager:
         """Get list of scripts with loaded text samples.
 
         Returns:
-            List of ISO 15924 script codes
+            list[str]: List of ISO 15924 script codes
+
         """
         return [code for code, corpus in self.corpora.items() if corpus.samples]
 
@@ -823,10 +829,11 @@ class TextCorpusManager:
         """Get number of samples for a script.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            Number of samples (0 if not loaded)
+            int: Number of samples (0 if not loaded)
+
         """
         corpus = self.corpora.get(script_code)
         return len(corpus.samples) if corpus else 0
@@ -835,7 +842,8 @@ class TextCorpusManager:
         """Get corpus statistics.
 
         Returns:
-            Dictionary with corpus statistics
+            dict[str, Any]: Dictionary with corpus statistics
+
         """
         stats: dict[str, Any] = {
             "total_scripts": len(self.corpora),

@@ -147,11 +147,12 @@ class RenderRegion:
     """A rectangular region for text rendering.
 
     Attributes:
-        x: Left edge x coordinate
-        y: Top edge y coordinate
-        width: Region width in pixels
-        height: Region height in pixels
-        is_rtl: Whether text flows right-to-left
+        x (int): Left edge x coordinate
+        y (int): Top edge y coordinate
+        width (int): Region width in pixels
+        height (int): Region height in pixels
+        is_rtl (bool): Whether text flows right-to-left
+
     """
 
     x: int
@@ -166,10 +167,11 @@ class RenderState:
     """Tracks current rendering state.
 
     Attributes:
-        current_y: Current vertical position
-        current_column: Current column index (0-based)
-        text_blocks: Accumulated TextBlock objects
-        used_height: Total height used in current column
+        current_y (int): Current vertical position
+        current_column (int): Current column index (0-based)
+        text_blocks (list[TextBlock]): Accumulated TextBlock objects
+        used_height (int): Total height used in current column
+
     """
 
     current_y: int = 0
@@ -194,16 +196,6 @@ class DocumentRenderer:
         background_color: tuple[int, int, int] = (255, 255, 255),
         text_color: tuple[int, int, int] = (0, 0, 0),
     ) -> None:
-        """Initialize the document renderer.
-
-        Args:
-            font_manager: FontManager instance for font lookup
-            page_size: Page dimensions (width, height) in pixels
-            margins: Margins (top, right, bottom, left) in pixels
-            dpi: Resolution for the output image
-            background_color: RGB background color
-            text_color: RGB text color
-        """
         self.font_manager = font_manager
         self.page_size = page_size
         self.margins = margins
@@ -217,7 +209,8 @@ class DocumentRenderer:
         """Get the content area after margins.
 
         Returns:
-            Tuple of (x, y, width, height) for content area
+            tuple[int, int, int, int]: Tuple of (x, y, width, height) for content area
+
         """
         top, right, bottom, left = self.margins
         width, height = self.page_size
@@ -236,11 +229,12 @@ class DocumentRenderer:
         """Calculate column regions for layout type.
 
         Args:
-            layout_type: The layout type to use
-            is_rtl: Whether text is right-to-left
+            layout_type (LayoutType): The layout type to use
+            is_rtl (bool): Whether text is right-to-left
 
         Returns:
-            List of RenderRegion objects for columns
+            list[RenderRegion]: List of RenderRegion objects for columns
+
         """
         config = LAYOUT_CONFIGS.get(layout_type, LAYOUT_CONFIGS[LayoutType.STACKED])
         num_columns = config.get("columns", 1)
@@ -292,14 +286,15 @@ class DocumentRenderer:
         ADVERSARIAL (5%) tiers for font diversity in training data.
 
         Args:
-            script_code: ISO 15924 script code
-            size: Font size in points
-            role: Text role (title, header, body, etc.)
-            language_code: Optional language code (e.g., "urd_Arab") for
+            script_code (str): ISO 15924 script code
+            size (int): Font size in points
+            role (str): Text role (title, header, body, etc.)
+            language_code (str | None): Optional language code (e.g., "urd_Arab") for
                           Nastaliq/Bulgarian variant selection
 
         Returns:
-            PIL ImageFont object
+            ImageFont.FreeTypeFont | ImageFont.ImageFont: PIL ImageFont object
+
         """
         # Use tiered font sampling for diversity
         font = self.font_manager.get_tiered_font(script_code, size, language_code)
@@ -324,7 +319,8 @@ class DocumentRenderer:
         """Record which font was actually rendered for metadata tracking.
 
         Args:
-            font: The PIL font object that will be used for rendering.
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): The PIL font object that will be used for rendering.
+
         """
         if isinstance(font, ImageFont.FreeTypeFont) and hasattr(font, "path"):
             font_path = Path(str(font.path))
@@ -366,13 +362,14 @@ class DocumentRenderer:
         Uses character-based wrapping for scripts without word boundaries.
 
         Args:
-            text: Text to wrap
-            font: Font to use for measurement
-            max_width: Maximum line width in pixels
-            script_code: ISO 15924 script code
+            text (str): Text to wrap
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font to use for measurement
+            max_width (int): Maximum line width in pixels
+            script_code (str): ISO 15924 script code
 
         Returns:
-            List of wrapped lines
+            list[str]: List of wrapped lines
+
         """
         if script_code in CHAR_WRAP_SCRIPTS:
             return self._wrap_text_by_char(text, font, max_width)
@@ -387,12 +384,13 @@ class DocumentRenderer:
         """Wrap text by word boundaries.
 
         Args:
-            text: Text to wrap
-            font: Font for measurement
-            max_width: Maximum line width
+            text (str): Text to wrap
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font for measurement
+            max_width (int): Maximum line width
 
         Returns:
-            List of wrapped lines
+            list[str]: List of wrapped lines
+
         """
         # Split into paragraphs first
         paragraphs = text.split("\n")
@@ -434,12 +432,13 @@ class DocumentRenderer:
         """Wrap text by character for CJK and similar scripts.
 
         Args:
-            text: Text to wrap
-            font: Font for measurement
-            max_width: Maximum line width
+            text (str): Text to wrap
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font for measurement
+            max_width (int): Maximum line width
 
         Returns:
-            List of wrapped lines
+            list[str]: List of wrapped lines
+
         """
         lines: list[str] = []
         current_line = ""
@@ -533,19 +532,20 @@ class DocumentRenderer:
         Japanese novels, newspapers, and Chinese calligraphy.
 
         Args:
-            draw: ImageDraw object
-            text: Text to render
-            region: Region to render into
-            font: Font to use
-            script_code: ISO 15924 script code
-            language_code: ISO 639-1/3 language code
-            state: Current render state
-            is_header: Whether this is a header
-            is_caption: Whether this is a caption
-            column_spacing: Column spacing multiplier
+            draw (ImageDraw.ImageDraw): ImageDraw object
+            text (str): Text to render
+            region (RenderRegion): Region to render into
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font to use
+            script_code (str): ISO 15924 script code
+            language_code (str): ISO 639-1/3 language code
+            state (RenderState): Current render state
+            is_header (bool): Whether this is a header
+            is_caption (bool): Whether this is a caption
+            column_spacing (float): Column spacing multiplier
 
         Returns:
-            Height used in pixels (full region height for vertical text)
+            int: Height used in pixels (full region height for vertical text)
+
         """
         if not text.strip():
             return 0
@@ -628,17 +628,18 @@ class DocumentRenderer:
         """Draw a single vertical column of characters.
 
         Args:
-            draw: ImageDraw object
-            chars: Characters to render in this column
-            x: X position for column
-            start_y: Starting Y position
-            char_height: Height per character cell
-            font: Font to use
-            script_code: ISO 15924 script code
-            language_code: Language code
-            state: Render state for tracking blocks
-            is_header: Header flag
-            is_caption: Caption flag
+            draw (ImageDraw.ImageDraw): ImageDraw object
+            chars (list[str]): Characters to render in this column
+            x (int): X position for column
+            start_y (int): Starting Y position
+            char_height (int): Height per character cell
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font to use
+            script_code (str): ISO 15924 script code
+            language_code (str): Language code
+            state (RenderState): Render state for tracking blocks
+            is_header (bool): Header flag
+            is_caption (bool): Caption flag
+
         """
         y = start_y
         column_text = "".join(chars)
@@ -687,20 +688,21 @@ class DocumentRenderer:
         """Render a text block and return height used.
 
         Args:
-            draw: ImageDraw object
-            text: Text to render
-            region: Region to render into
-            font: Font to use
-            script_code: ISO 15924 script code
-            language_code: ISO 639-1/3 language code
-            state: Current render state
-            is_header: Whether this is a header
-            is_caption: Whether this is a caption
-            line_spacing: Line spacing multiplier
-            direction: Text direction override ("ltr", "rtl", "ttb")
+            draw (ImageDraw.ImageDraw): ImageDraw object
+            text (str): Text to render
+            region (RenderRegion): Region to render into
+            font (ImageFont.FreeTypeFont | ImageFont.ImageFont): Font to use
+            script_code (str): ISO 15924 script code
+            language_code (str): ISO 639-1/3 language code
+            state (RenderState): Current render state
+            is_header (bool): Whether this is a header
+            is_caption (bool): Whether this is a caption
+            line_spacing (float): Line spacing multiplier
+            direction (str | None): Text direction override ("ltr", "rtl", "ttb")
 
         Returns:
-            Height used in pixels
+            int: Height used in pixels
+
         """
         # Route to vertical renderer for TTB direction
         if direction == "ttb":
@@ -779,16 +781,17 @@ class DocumentRenderer:
         """Render a document with the given text and layout.
 
         Args:
-            text: Main body text
-            script_code: ISO 15924 script code
-            language_code: ISO 639-1/3 language code
-            layout_type: Layout type to use
-            _text_density: Text density level (reserved for future use)
-            include_header: Whether to include a header
-            header_text: Custom header text (optional)
+            text (str): Main body text
+            script_code (str): ISO 15924 script code
+            language_code (str): ISO 639-1/3 language code
+            layout_type (LayoutType): Layout type to use
+            _text_density (TextDensity): Text density level (reserved for future use)
+            include_header (bool): Whether to include a header
+            header_text (str | None): Custom header text (optional)
 
         Returns:
-            Tuple of (PIL Image, list of TextBlock objects)
+            tuple[Image.Image, list[TextBlock]]: Tuple of (PIL Image, list of TextBlock objects)
+
         """
         # Reset font tracking for this render call
         self.last_rendered_fonts = []
@@ -878,11 +881,12 @@ class DocumentRenderer:
         - Body is rendered below in body_data's script(s)
 
         Args:
-            header_data: Tuple of (text, script_code, language_code) for header
-            body_data: List of (text, script_code, language_code) for body
+            header_data (tuple[str, str, str]): Tuple of (text, script_code, language_code) for header
+            body_data (list[tuple[str, str, str]]): List of (text, script_code, language_code) for body
 
         Returns:
-            Tuple of (PIL Image, list of TextBlock objects)
+            tuple[Image.Image, list[TextBlock]]: Tuple of (PIL Image, list of TextBlock objects)
+
         """
         # Reset font tracking for this render call
         self.last_rendered_fonts = []
@@ -969,11 +973,12 @@ class DocumentRenderer:
         """Render a document with multiple scripts.
 
         Args:
-            text_blocks_data: List of (text, script_code, language_code) tuples
-            layout_type: Layout type to use
+            text_blocks_data (list[tuple[str, str, str]]): List of (text, script_code, language_code) tuples
+            layout_type (LayoutType): Layout type to use
 
         Returns:
-            Tuple of (PIL Image, list of TextBlock objects)
+            tuple[Image.Image, list[TextBlock]]: Tuple of (PIL Image, list of TextBlock objects)
+
         """
         # Reset font tracking for this render call
         self.last_rendered_fonts = []

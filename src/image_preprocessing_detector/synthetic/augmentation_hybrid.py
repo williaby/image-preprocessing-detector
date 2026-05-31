@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -60,7 +60,7 @@ except ImportError:
 HYBRID_AVAILABLE = AUGRAPHY_AVAILABLE and ALBUMENTATIONS_AVAILABLE
 
 
-class HybridProfile(str, Enum):
+class HybridProfile(StrEnum):
     """Hybrid augmentation intensity profiles."""
 
     PRISTINE = "pristine"  # No augmentation
@@ -133,16 +133,17 @@ class HybridIQALabels:
     """IQA labels from hybrid augmentation pipeline.
 
     Attributes:
-        blur: From Albumentations (0-1)
-        noise: From Albumentations (0-1)
-        compression: From Albumentations (0-1)
-        ink_degradation: From Augraphy InkBleed/DirtyDrum (0-1)
-        paper_degradation: From Augraphy ColorPaper/BookBinding (0-1)
-        geometric_distortion: From Albumentations (0-1)
-        bleed_through: From Augraphy BleedThrough (0-1) - TRUE simulation
-        overall_quality: Composite quality score (0-1, higher is better)
-        augraphy_applied: Whether Augraphy effects were applied
-        albumentations_applied: Whether Albumentations effects were applied
+        blur (float): From Albumentations (0-1)
+        noise (float): From Albumentations (0-1)
+        compression (float): From Albumentations (0-1)
+        ink_degradation (float): From Augraphy InkBleed/DirtyDrum (0-1)
+        paper_degradation (float): From Augraphy ColorPaper/BookBinding (0-1)
+        geometric_distortion (float): From Albumentations (0-1)
+        bleed_through (float): From Augraphy BleedThrough (0-1) - TRUE simulation
+        overall_quality (float): Composite quality score (0-1, higher is better)
+        augraphy_applied (bool): Whether Augraphy effects were applied
+        albumentations_applied (bool): Whether Albumentations effects were applied
+
     """
 
     blur: float = 0.0
@@ -196,9 +197,9 @@ class HybridAugmentationPipeline:
     2. Augraphy's BleedThrough needs a clean image to simulate properly
 
     Args:
-        seed: Random seed for reproducibility
-        augraphy_probability: Probability of applying Augraphy effects (default 0.7)
-        albumentations_probability: Probability of applying Albumentations effects (default 1.0)
+        seed (int | None): Random seed for reproducibility
+        augraphy_probability (float): Probability of applying Augraphy effects (default 0.7)
+        albumentations_probability (float): Probability of applying Albumentations effects (default 1.0)
     """
 
     def __init__(
@@ -207,13 +208,6 @@ class HybridAugmentationPipeline:
         augraphy_probability: float = 0.7,
         albumentations_probability: float = 1.0,
     ) -> None:
-        """Initialize the hybrid pipeline.
-
-        Args:
-            seed: Random seed for reproducibility
-            augraphy_probability: Chance to apply Augraphy document effects
-            albumentations_probability: Chance to apply Albumentations effects
-        """
         self._seed = seed
         self._rng = random.Random(seed)
         self._np_rng = np.random.default_rng(seed)
@@ -239,11 +233,12 @@ class HybridAugmentationPipeline:
         - ColorPaper, BookBinding (paper aging effects)
 
         Args:
-            image: Input PIL Image
-            profile: Degradation profile
+            image (Image.Image): Input PIL Image
+            profile (HybridProfile): Degradation profile
 
         Returns:
-            Tuple of (augmented image, severity dict)
+            tuple[Image.Image, dict[str, float]]: Tuple of (augmented image, severity dict)
+
         """
         severities = {
             "ink_degradation": 0.0,
@@ -372,11 +367,12 @@ class HybridAugmentationPipeline:
         Applied in addition to standard Augraphy/Albumentations for AGED/HISTORICAL profiles.
 
         Args:
-            image: Input PIL Image
-            profile: Must be AGED or HISTORICAL
+            image (Image.Image): Input PIL Image
+            profile (HybridProfile): Must be AGED or HISTORICAL
 
         Returns:
-            Tuple of (aged image, severity dict)
+            tuple[Image.Image, dict[str, float]]: Tuple of (aged image, severity dict)
+
         """
         severities = {"paper_degradation": 0.0, "ink_degradation": 0.0}
 
@@ -469,11 +465,12 @@ class HybridAugmentationPipeline:
         - Geometric distortion (Rotate, Perspective)
 
         Args:
-            image: Input PIL Image
-            profile: Augmentation profile
+            image (Image.Image): Input PIL Image
+            profile (HybridProfile): Augmentation profile
 
         Returns:
-            Tuple of (augmented image, severity dict)
+            tuple[Image.Image, dict[str, float]]: Tuple of (augmented image, severity dict)
+
         """
         severities = {
             "blur": 0.0,
@@ -566,11 +563,12 @@ class HybridAugmentationPipeline:
         2. Albumentations (capture effects: blur, noise, compression, geometric)
 
         Args:
-            image: Input PIL Image
-            profile: Augmentation intensity profile
+            image (Image.Image): Input PIL Image
+            profile (HybridProfile): Augmentation intensity profile
 
         Returns:
-            Tuple of (augmented image, IQA labels)
+            tuple[Image.Image, IQALabels]: Tuple of (augmented image, IQA labels)
+
         """
         if not HYBRID_AVAILABLE:
             return image, IQALabels(overall_quality=1.0)

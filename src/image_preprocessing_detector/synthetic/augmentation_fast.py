@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -40,7 +40,7 @@ except ImportError:
     A = None
 
 
-class AugmentationProfile(str, Enum):
+class AugmentationProfile(StrEnum):
     """Augmentation intensity profiles."""
 
     PRISTINE = "pristine"  # No augmentation
@@ -57,14 +57,15 @@ class FastIQALabels:
     for training IQA models alongside script detection.
 
     Attributes:
-        blur: Blur severity from Gaussian, motion, median blur (0-1)
-        noise: Noise severity from sensor/paper texture noise (0-1)
-        compression: JPEG compression artifact severity (0-1)
-        ink_degradation: Ink bleed, fading, low ink effects (0-1)
-        paper_degradation: Paper texture, stains, aging effects (0-1)
-        geometric_distortion: Rotation, perspective warping (0-1)
-        bleed_through: Show-through from reverse side (0-1)
-        overall_quality: Composite quality score (0-1, higher is better)
+        blur (float): Blur severity from Gaussian, motion, median blur (0-1)
+        noise (float): Noise severity from sensor/paper texture noise (0-1)
+        compression (float): JPEG compression artifact severity (0-1)
+        ink_degradation (float): Ink bleed, fading, low ink effects (0-1)
+        paper_degradation (float): Paper texture, stains, aging effects (0-1)
+        geometric_distortion (float): Rotation, perspective warping (0-1)
+        bleed_through (float): Show-through from reverse side (0-1)
+        overall_quality (float): Composite quality score (0-1, higher is better)
+
     """
 
     blur: float = 0.0
@@ -131,7 +132,7 @@ class FastAugmentationPipeline:
     - Paper texture effects
 
     Args:
-        seed: Random seed for reproducibility
+        seed (int | None): Random seed for reproducibility
 
     Example:
         >>> pipeline = FastAugmentationPipeline(seed=42)
@@ -140,11 +141,6 @@ class FastAugmentationPipeline:
     """
 
     def __init__(self, seed: int | None = None) -> None:
-        """Initialize the pipeline.
-
-        Args:
-            seed: Random seed for reproducibility
-        """
         if not ALBUMENTATIONS_AVAILABLE:
             logger.warning(
                 "Albumentations not available. Install with: uv sync --extra synthetic"
@@ -159,10 +155,11 @@ class FastAugmentationPipeline:
         """Create an Albumentations pipeline for the given profile.
 
         Args:
-            profile: Augmentation intensity profile
+            profile (AugmentationProfile): Augmentation intensity profile
 
         Returns:
-            Tuple of (Albumentations Compose pipeline, severity dict)
+            tuple[A.Compose | None, dict[str, float]]: Tuple of (Albumentations Compose pipeline, severity dict)
+
         """
         if not ALBUMENTATIONS_AVAILABLE:
             return None, {}
@@ -296,11 +293,12 @@ class FastAugmentationPipeline:
         """Apply augmentation to an image.
 
         Args:
-            image: Input PIL Image
-            profile: Augmentation intensity profile
+            image (Image.Image): Input PIL Image
+            profile (AugmentationProfile): Augmentation intensity profile
 
         Returns:
-            Tuple of (augmented image, IQA labels)
+            tuple[Image.Image, FastIQALabels]: Tuple of (augmented image, IQA labels)
+
         """
         if not ALBUMENTATIONS_AVAILABLE:
             return image, FastIQALabels(overall_quality=1.0)
