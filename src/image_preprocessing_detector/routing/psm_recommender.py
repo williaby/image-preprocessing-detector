@@ -36,14 +36,14 @@ class PSMInput:
     """Input characteristics for PSM recommendation.
 
     Attributes:
-        layout_type: Coarse page layout classification (e.g. "single_column",
+        layout_type (str | None): Coarse page layout classification (e.g. "single_column",
             "multi_column", "table_dominant", "figure_dominant", "mixed").
-        has_tables: Whether the page contains detected tables.
-        is_sparse: Whether the text layout is sparse / scattered.
-        has_handwriting: Whether handwriting was detected on the page.
-        orientation_confidence: Confidence in the detected page orientation
+        has_tables (bool): Whether the page contains detected tables.
+        is_sparse (bool): Whether the text layout is sparse / scattered.
+        has_handwriting (bool): Whether handwriting was detected on the page.
+        orientation_confidence (float): Confidence in the detected page orientation
             (0 = unknown, 1 = certain).
-        element_count: Number of detected layout elements on the page.
+        element_count (int): Number of detected layout elements on the page.
     """
 
     layout_type: str | None = None
@@ -59,9 +59,9 @@ class PSMRecommendation:
     """Recommended Tesseract Page Segmentation Mode.
 
     Attributes:
-        psm: Tesseract PSM value (0-13).
-        reason: Human-readable explanation of why this PSM was chosen.
-        confidence: Confidence in the recommendation (0-1).
+        psm (int): Tesseract PSM value (0-13).
+        reason (str): Human-readable explanation of why this PSM was chosen.
+        confidence (float): Confidence in the recommendation (0-1).
     """
 
     psm: int
@@ -87,10 +87,10 @@ class PSMRecommender:
         """Select the best PSM for the given page characteristics.
 
         Args:
-            inp: Layout characteristics for the page.
+            inp (PSMInput): Layout characteristics for the page.
 
         Returns:
-            PSMRecommendation with the selected PSM, reason, and confidence.
+            PSMRecommendation: PSMRecommendation with the selected PSM, reason, and confidence.
         """
         # Rule 1: Low orientation confidence → PSM 1 (auto + OSD)
         if inp.orientation_confidence < _ORIENTATION_CONFIDENCE_THRESHOLD:
@@ -213,9 +213,9 @@ def recommend_psm(inp: PSMInput) -> PSMRecommendation:
     """Convenience function — recommend a PSM using the default recommender.
 
     Args:
-        inp: Layout characteristics for the page.
+        inp (PSMInput): Layout characteristics for the page.
 
     Returns:
-        PSMRecommendation with the selected PSM, reason, and confidence.
+        PSMRecommendation: PSMRecommendation with the selected PSM, reason, and confidence.
     """
     return _get_default_recommender().recommend(inp)

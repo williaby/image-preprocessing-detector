@@ -47,10 +47,10 @@ def _extract_page_dimensions(
     """Extract page dimensions and DPI from page data.
 
     Args:
-        page_data: PageImage from PDF or (image, metadata) tuple from direct image
+        page_data ('PageImage | tuple[np.ndarray, ImageMetadata]'): PageImage from PDF or (image, metadata) tuple from direct image
 
     Returns:
-        Tuple of (width, height, dpi_input, dpi_effective)
+        tuple[int, int, int, int]: Tuple of (width, height, dpi_input, dpi_effective)
     """
     if isinstance(page_data, PageImage):
         return (
@@ -72,12 +72,12 @@ def _collect_detected_issues(
     """Collect detected issues from detection results.
 
     Args:
-        skew_result: Skew detection result
-        blur_result: Blur detection result
-        contrast_result: Contrast detection result
+        skew_result ('SkewDetectionResult | None'): Skew detection result
+        blur_result ('BlurDetectionResult | None'): Blur detection result
+        contrast_result ('ContrastDetectionResult | None'): Contrast detection result
 
     Returns:
-        List of detected issues
+        list[DetectedIssue]: List of detected issues
     """
     issues: list[DetectedIssue] = []
 
@@ -125,12 +125,12 @@ def _build_planned_actions(
     """Build planned actions from detection results.
 
     Args:
-        skew_result: Skew detection result
-        blur_result: Blur detection result
-        contrast_result: Contrast detection result
+        skew_result ('SkewDetectionResult | None'): Skew detection result
+        blur_result ('BlurDetectionResult | None'): Blur detection result
+        contrast_result ('ContrastDetectionResult | None'): Contrast detection result
 
     Returns:
-        List of planned actions
+        list[PlannedAction]: List of planned actions
     """
     actions: list[PlannedAction] = []
 
@@ -174,11 +174,11 @@ def _add_transform_entry(
     """Create a transform history entry if correction was applied.
 
     Args:
-        correction: Correction result
-        action_name: Name of the transform action
+        correction ('CorrectionResult | None'): Correction result
+        action_name (str): Name of the transform action
 
     Returns:
-        TransformHistory entry or None if not applied
+        TransformHistory | None: TransformHistory entry or None if not applied
     """
     if not correction or not correction.applied:
         return None
@@ -201,12 +201,12 @@ def _build_transform_history(
     """Build transform history from correction results.
 
     Args:
-        skew_correction: Skew correction result
-        contrast_correction: Contrast correction result
-        blur_correction: Blur correction result
+        skew_correction ('CorrectionResult | None'): Skew correction result
+        contrast_correction ('CorrectionResult | None'): Contrast correction result
+        blur_correction ('CorrectionResult | None'): Blur correction result
 
     Returns:
-        List of transform history entries
+        list[TransformHistory]: List of transform history entries
     """
     history: list[TransformHistory] = []
 
@@ -224,15 +224,13 @@ class MetadataBuilder:
     """Builds document metadata from detection and correction results.
 
     Aggregates per-page results into a complete DocumentMetadata object.
+
+    Args:
+        document_id (str): Unique document identifier
+        file_name (str): Original filename
     """
 
     def __init__(self, document_id: str, file_name: str) -> None:
-        """Initialize metadata builder.
-
-        Args:
-            document_id: Unique document identifier
-            file_name: Original filename
-        """
         self.document_id = document_id
         self.file_name = file_name
         self.pages: list[PageMetadata] = []
@@ -248,7 +246,7 @@ class MetadataBuilder:
         """Set PDF upscaling metadata (Phase 1B).
 
         Args:
-            upscaling_result: Upscaling result from PDFUpscaler
+            upscaling_result (dict[str, Any]): Upscaling result from PDFUpscaler
         """
         self.upscaling_metadata = upscaling_result
         logger.info(
@@ -276,19 +274,19 @@ class MetadataBuilder:
         """Add page metadata from detection and correction results.
 
         Args:
-            page_number: Zero-based page index
-            page_data: PageImage from PDF or (image, metadata) tuple from direct image
-            _text_result: Text detection result (reserved for future use)
-            skew_result: Skew detection result (optional)
-            blur_result: Blur detection result (optional)
-            contrast_result: Contrast detection result (optional)
-            skew_correction: Skew correction result (optional)
-            contrast_correction: Contrast correction result (optional)
-            blur_correction: Blur correction result (optional)
-            elements: Document elements (tables, images, etc.) (optional)
-            ml_iqa_student: Student ML IQA scores (Phase 2) (optional)
-            ml_iqa_teacher: Teacher ML IQA scores if escalated (Phase 2) (optional)
-            ml_iqa_escalation_reason: Reason for teacher escalation (Phase 2) (optional)
+            page_number (int): Zero-based page index
+            page_data (PageImage | tuple[np.ndarray, ImageMetadata]): PageImage from PDF or (image, metadata) tuple from direct image
+            _text_result (TextDetectionResult | None): Text detection result (reserved for future use)
+            skew_result (SkewDetectionResult | None): Skew detection result (optional)
+            blur_result (BlurDetectionResult | None): Blur detection result (optional)
+            contrast_result (ContrastDetectionResult | None): Contrast detection result (optional)
+            skew_correction (CorrectionResult | None): Skew correction result (optional)
+            contrast_correction (CorrectionResult | None): Contrast correction result (optional)
+            blur_correction (CorrectionResult | None): Blur correction result (optional)
+            elements (list[DocumentElement] | None): Document elements (tables, images, etc.) (optional)
+            ml_iqa_student (MLIQAScores | None): Student ML IQA scores (Phase 2) (optional)
+            ml_iqa_teacher (MLIQAScores | None): Teacher ML IQA scores if escalated (Phase 2) (optional)
+            ml_iqa_escalation_reason (str | None): Reason for teacher escalation (Phase 2) (optional)
         """
         # Extract page dimensions using helper
         width, height, dpi_input, dpi_effective = _extract_page_dimensions(page_data)
@@ -345,10 +343,10 @@ class MetadataBuilder:
         """Build final DocumentMetadata object.
 
         Args:
-            processing_version: Version of processing pipeline
+            processing_version (str): Version of processing pipeline
 
         Returns:
-            Complete DocumentMetadata object
+            DocumentMetadata: Complete DocumentMetadata object
 
         Raises:
             ValueError: If no pages have been added
@@ -422,9 +420,9 @@ def generate_json(
     """Generate JSON output file from DocumentMetadata.
 
     Args:
-        metadata: Complete document metadata
-        output_path: Path to write JSON file
-        pretty: Use pretty printing (default: True)
+        metadata (DocumentMetadata): Complete document metadata
+        output_path (str | Path): Path to write JSON file
+        pretty (bool): Use pretty printing (default: True)
 
     Example:
         >>> metadata = MetadataBuilder("doc_001", "sample.pdf").build()
@@ -456,14 +454,13 @@ def load_json(input_path: str | Path) -> DocumentMetadata:
     """Load DocumentMetadata from JSON file.
 
     Args:
-        input_path: Path to JSON file
+        input_path (str | Path): Path to JSON file
 
     Returns:
-        DocumentMetadata object
+        DocumentMetadata: DocumentMetadata object
 
     Raises:
         FileNotFoundError: If file doesn't exist
-        ValueError: If JSON is invalid
 
     Example:
         >>> metadata = load_json("output.json")

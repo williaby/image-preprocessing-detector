@@ -57,13 +57,13 @@ def recommend_ocr_routing(
     5. ELSE → ocr_advanced (conservative fallback)
 
     Args:
-        pdf_type: PDF classification (image_only, born_digital, hybrid, or None)
-        dqs: Document Quality Score with degradation and complexity metrics
-        pre_ocr_risk: Aggregated risk score for OCR difficulty (0-1)
-        page_layout_summary: Per-page layout analysis with content flags
+        pdf_type (PDFType | None): PDF classification (image_only, born_digital, hybrid, or None)
+        dqs (DocumentQualityScore): Document Quality Score with degradation and complexity metrics
+        pre_ocr_risk (float): Aggregated risk score for OCR difficulty (0-1)
+        page_layout_summary (list[PageLayoutSummary]): Per-page layout analysis with content flags
 
     Returns:
-        Tuple of (routing_recommendation, rationale_string)
+        tuple[OCRRoutingRecommendation, str]: Tuple of (routing_recommendation, rationale_string)
 
     Examples:
         >>> dqs = DocumentQualityScore(

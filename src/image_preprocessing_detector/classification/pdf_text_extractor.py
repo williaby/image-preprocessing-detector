@@ -23,10 +23,10 @@ def extract_text_from_pdf(pdf_path: Path | str) -> str:
     Handles errors gracefully for corrupted or password-protected PDFs.
 
     Args:
-        pdf_path: Path to the PDF file
+        pdf_path (Path | str): Path to the PDF file
 
     Returns:
-        Extracted text as a single string (whitespace normalized)
+        str: Extracted text as a single string (whitespace normalized)
 
     Raises:
         FileNotFoundError: If PDF file doesn't exist

@@ -49,14 +49,14 @@ class DocumentSourceResult:
     """Result of document source classification.
 
     Attributes:
-        capture_method: CaptureMethod enum value string.
-        scanner_score: Weighted ensemble score in [0, 1] (1 = definitely scanner).
-        background_uniformity: Border region uniformity in [0, 1].
-        edge_sharpness: Canny edge density at page boundaries in [0, 1].
-        rectangularity: Contour-to-bounding-rect area ratio in [0, 1].
-        perspective_distortion: Degree of line convergence in [0, 1] (1 = heavy).
-        illumination_evenness: Quadrant intensity variance in [0, 1] (1 = even).
-        confidence: Classification confidence in [0, 1].
+        capture_method (str): CaptureMethod enum value string.
+        scanner_score (float): Weighted ensemble score in [0, 1] (1 = definitely scanner).
+        background_uniformity (float): Border region uniformity in [0, 1].
+        edge_sharpness (float): Canny edge density at page boundaries in [0, 1].
+        rectangularity (float): Contour-to-bounding-rect area ratio in [0, 1].
+        perspective_distortion (float): Degree of line convergence in [0, 1] (1 = heavy).
+        illumination_evenness (float): Quadrant intensity variance in [0, 1] (1 = even).
+        confidence (float): Classification confidence in [0, 1].
     """
 
     capture_method: str
@@ -113,10 +113,10 @@ class DocumentSourceClassifier:
            intensity across image quadrants.  Low variance = scanner.
 
     Args:
-        border_fraction: Fraction of width/height used as the border region.
-        scanner_high_threshold: Scanner score above this -> scanner_flatbed.
-        scanner_mid_threshold: Scanner score above this -> scanner_adf.
-        camera_threshold: Scanner score below this -> camera_smartphone.
+        border_fraction (float): Fraction of width/height used as the border region.
+        scanner_high_threshold (float): Scanner score above this -> scanner_flatbed.
+        scanner_mid_threshold (float): Scanner score above this -> scanner_adf.
+        camera_threshold (float): Scanner score below this -> camera_smartphone.
     """
 
     def __init__(
@@ -138,13 +138,10 @@ class DocumentSourceClassifier:
         """Classify document capture method from a single page image.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale).
 
         Returns:
-            DocumentSourceResult with all signal scores and final label.
-
-        Raises:
-            ValueError: If image is None, empty, or otherwise invalid.
+            DocumentSourceResult: DocumentSourceResult with all signal scores and final label.
         """
         gray, _binary, height, width = _validate_and_preprocess(image)
 
@@ -199,12 +196,12 @@ class DocumentSourceClassifier:
         background).  The score is inverted so 1.0 = perfectly uniform.
 
         Args:
-            gray: Grayscale image.
-            height: Image height in pixels.
-            width: Image width in pixels.
+            gray (np.ndarray): Grayscale image.
+            height (int): Image height in pixels.
+            width (int): Image width in pixels.
 
         Returns:
-            Uniformity score in [0, 1].
+            float: Uniformity score in [0, 1].
         """
         inset_y = max(1, int(height * self.border_fraction))
         inset_x = max(1, int(width * self.border_fraction))
@@ -230,12 +227,12 @@ class DocumentSourceClassifier:
         scanner cut.  Soft or blurred edges suggest a camera capture.
 
         Args:
-            gray: Grayscale image.
-            height: Image height in pixels.
-            width: Image width in pixels.
+            gray (np.ndarray): Grayscale image.
+            height (int): Image height in pixels.
+            width (int): Image width in pixels.
 
         Returns:
-            Edge sharpness score in [0, 1].
+            float: Edge sharpness score in [0, 1].
         """
         inset_y = max(1, int(height * self.border_fraction))
         inset_x = max(1, int(width * self.border_fraction))
@@ -259,10 +256,10 @@ class DocumentSourceClassifier:
         strongly suggests a scanner.
 
         Args:
-            gray: Grayscale image.
+            gray (np.ndarray): Grayscale image.
 
         Returns:
-            Rectangularity score in [0, 1].
+            float: Rectangularity score in [0, 1].
         """
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         contours, _ = cv2.findContours(
@@ -295,10 +292,10 @@ class DocumentSourceClassifier:
         near-zero within-group variance.
 
         Args:
-            gray: Grayscale image.
+            gray (np.ndarray): Grayscale image.
 
         Returns:
-            Distortion score in [0, 1] (1 = heavy distortion).
+            float: Distortion score in [0, 1] (1 = heavy distortion).
         """
         edges = cv2.Canny(gray, 50, 150)
         lines = cv2.HoughLinesP(
@@ -330,10 +327,10 @@ class DocumentSourceClassifier:
         indicates even illumination (scanner).
 
         Args:
-            gray: Grayscale image.
+            gray (np.ndarray): Grayscale image.
 
         Returns:
-            Evenness score in [0, 1] (1 = perfectly even).
+            float: Evenness score in [0, 1] (1 = perfectly even).
         """
         height, width = gray.shape[:2]
         mid_y = height // 2
@@ -376,14 +373,14 @@ class DocumentSourceClassifier:
         camera), so it is inverted (1 - distortion) before weighting.
 
         Args:
-            background_uniformity: [0, 1] score from border analysis.
-            edge_sharpness: [0, 1] score from Canny edge density.
-            rectangularity: [0, 1] score from contour analysis.
-            perspective_distortion: [0, 1] distortion score.
-            illumination_evenness: [0, 1] evenness score.
+            background_uniformity (float): [0, 1] score from border analysis.
+            edge_sharpness (float): [0, 1] score from Canny edge density.
+            rectangularity (float): [0, 1] score from contour analysis.
+            perspective_distortion (float): [0, 1] distortion score.
+            illumination_evenness (float): [0, 1] evenness score.
 
         Returns:
-            Combined scanner likelihood in [0, 1].
+            float: Combined scanner likelihood in [0, 1].
         """
         score = (
             _DEFAULT_BACKGROUND_WEIGHT * background_uniformity
@@ -398,10 +395,10 @@ class DocumentSourceClassifier:
         """Map aggregate scanner score to a CaptureMethod value.
 
         Args:
-            scanner_score: Combined scanner likelihood in [0, 1].
+            scanner_score (float): Combined scanner likelihood in [0, 1].
 
         Returns:
-            CaptureMethod enum value string.
+            str: CaptureMethod enum value string.
         """
         if scanner_score > self.scanner_high_threshold:
             return CaptureMethod.SCANNER_FLATBED.value
@@ -419,10 +416,10 @@ class DocumentSourceClassifier:
         boundaries yield lower confidence.
 
         Args:
-            scanner_score: Combined scanner likelihood in [0, 1].
+            scanner_score (float): Combined scanner likelihood in [0, 1].
 
         Returns:
-            Confidence in [0.5, 1.0].
+            float: Confidence in [0.5, 1.0].
         """
         boundaries = [
             _DEFAULT_CAMERA_THRESHOLD,
@@ -451,12 +448,12 @@ def _extract_border_pixels(
     edge, excluding the interior.
 
     Args:
-        image: 2-D array (grayscale or single-channel).
-        inset_y: Vertical inset in pixels.
-        inset_x: Horizontal inset in pixels.
+        image (np.ndarray): 2-D array (grayscale or single-channel).
+        inset_y (int): Vertical inset in pixels.
+        inset_x (int): Horizontal inset in pixels.
 
     Returns:
-        1-D array of border pixel values.
+        np.ndarray: 1-D array of border pixel values.
     """
     height, width = image.shape[:2]
 
@@ -475,10 +472,10 @@ def _compute_line_angles(lines: np.ndarray) -> np.ndarray:
     """Compute angles (in degrees) for Hough line segments.
 
     Args:
-        lines: Output of ``cv2.HoughLinesP``, shape ``(N, 1, 4)``.
+        lines (np.ndarray): Output of ``cv2.HoughLinesP``, shape ``(N, 1, 4)``.
 
     Returns:
-        1-D array of angles in degrees, range [0, 90].
+        np.ndarray: 1-D array of angles in degrees, range [0, 90].
     """
     angles: list[float] = []
     for line in lines:
@@ -502,10 +499,10 @@ def _compute_within_group_distortion(angles: np.ndarray) -> float:
     distortion if they constitute a significant fraction.
 
     Args:
-        angles: 1-D array of line angles in [0, 90] degrees.
+        angles (np.ndarray): 1-D array of line angles in [0, 90] degrees.
 
     Returns:
-        Distortion score in [0, 1].
+        float: Distortion score in [0, 1].
     """
     horizontal = angles[angles < 20.0]
     vertical = angles[angles > 70.0]
@@ -544,12 +541,9 @@ def classify_document_source(image: np.ndarray) -> DocumentSourceResult:
     :meth:`DocumentSourceClassifier.classify`.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale).
 
     Returns:
-        DocumentSourceResult with all signal scores and final label.
-
-    Raises:
-        ValueError: If image is None, empty, or otherwise invalid.
+        DocumentSourceResult: DocumentSourceResult with all signal scores and final label.
     """
     return DocumentSourceClassifier().classify(image)

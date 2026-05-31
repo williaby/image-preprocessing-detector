@@ -57,9 +57,9 @@ class RoutingDecision:
     """Captures the routing decision with audit trail.
 
     Attributes:
-        params: Generated Docling CLI parameters.
-        vlm_reasons: Reasons for VLM escalation (empty if standard pipeline).
-        rule_trace: Ordered list of rules that modified the params.
+        params (DoclingRoutingParams): Generated Docling CLI parameters.
+        vlm_reasons (list[str]): Reasons for VLM escalation (empty if standard pipeline).
+        rule_trace (list[str]): Ordered list of rules that modified the params.
     """
 
     params: DoclingRoutingParams
@@ -97,6 +97,12 @@ class DoclingRoutingEngine:
     representative ``PageLayoutSummary`` to produce a ``DoclingRoutingParams``
     instance with an audit trail of which rules fired.
 
+    Args:
+        script_router (ScriptRouter | None): ScriptRouter for engine/VLM lookups. If None,
+            lazily loaded via ``get_default_router()``.
+        psm_recommender (PSMRecommender | None): PSMRecommender for PSM selection. If None,
+            a new default instance is created.
+
     Example:
         >>> from image_preprocessing_detector.routing.docling_router import (
         ...     DoclingRoutingEngine,
@@ -112,14 +118,6 @@ class DoclingRoutingEngine:
         script_router: ScriptRouter | None = None,
         psm_recommender: PSMRecommender | None = None,
     ) -> None:
-        """Initialize with optional injected dependencies.
-
-        Args:
-            script_router: ScriptRouter for engine/VLM lookups. If None,
-                lazily loaded via ``get_default_router()``.
-            psm_recommender: PSMRecommender for PSM selection. If None,
-                a new default instance is created.
-        """
         self._script_router = script_router
         self._psm_recommender = psm_recommender or PSMRecommender()
 
@@ -146,13 +144,13 @@ class DoclingRoutingEngine:
         because they control independent aspects of the Docling config.
 
         Args:
-            metadata: Document-level analysis results.
-            page_summary: Representative page layout summary (typically the
+            metadata (DocumentMetadata): Document-level analysis results.
+            page_summary (PageLayoutSummary | None): Representative page layout summary (typically the
                 first or most complex page). If None and metadata has
                 page_layout_summary entries, the first one is used.
 
         Returns:
-            RoutingDecision with params, VLM reasons, and rule trace.
+            RoutingDecision: RoutingDecision with params, VLM reasons, and rule trace.
         """
         # Use first page summary if none provided
         if page_summary is None and metadata.page_layout_summary:
@@ -535,11 +533,11 @@ def route_document(
     """Convenience function — route a document using the default engine.
 
     Args:
-        metadata: Document-level analysis results.
-        page_summary: Optional representative page layout summary.
+        metadata (DocumentMetadata): Document-level analysis results.
+        page_summary (PageLayoutSummary | None): Optional representative page layout summary.
 
     Returns:
-        RoutingDecision with Docling params, VLM reasons, and audit trail.
+        RoutingDecision: RoutingDecision with Docling params, VLM reasons, and audit trail.
     """
     return get_default_engine().route(metadata, page_summary)
 

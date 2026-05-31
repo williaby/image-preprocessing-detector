@@ -21,10 +21,10 @@ def _open_pdf_document(pdf_path: Path) -> fitz.Document:
     """Open a PDF document with proper error handling.
 
     Args:
-        pdf_path: Path to the PDF file
+        pdf_path (Path): Path to the PDF file
 
     Returns:
-        Opened fitz.Document
+        fitz.Document: Opened fitz.Document
 
     Raises:
         PDFImageDetectionError: If PDF cannot be opened
@@ -52,13 +52,13 @@ def _extract_image_metadata(
     """Extract metadata for a single image.
 
     Args:
-        doc: PDF document
-        page_num: Page number (zero-based)
-        img_index: Image index on the page
-        xref: Image cross-reference number
+        doc (fitz.Document): PDF document
+        page_num (int): Page number (zero-based)
+        img_index (int): Image index on the page
+        xref (int): Image cross-reference number
 
     Returns:
-        Image metadata dictionary or None if extraction fails
+        dict[str, Any] | None: Image metadata dictionary or None if extraction fails
     """
     try:
         img_dict = doc.extract_image(xref)
@@ -86,11 +86,11 @@ def _extract_page_images(doc: fitz.Document, page_num: int) -> list[dict[str, An
     """Extract all images from a single page.
 
     Args:
-        doc: PDF document
-        page_num: Page number (zero-based)
+        doc (fitz.Document): PDF document
+        page_num (int): Page number (zero-based)
 
     Returns:
-        List of image metadata dictionaries
+        list[dict[str, Any]]: List of image metadata dictionaries
     """
     images: list[dict[str, Any]] = []
     try:
@@ -119,10 +119,10 @@ def detect_embedded_images(pdf_path: Path | str) -> list[dict[str, Any]]:
     format, and page location.
 
     Args:
-        pdf_path: Path to the PDF file
+        pdf_path (Path | str): Path to the PDF file
 
     Returns:
-        List of dictionaries containing image metadata:
+        list[dict[str, Any]]: List of dictionaries containing image metadata:
         - page_number: Page index (zero-based)
         - image_index: Index of image on the page
         - width: Image width in pixels

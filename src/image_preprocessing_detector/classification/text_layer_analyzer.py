@@ -62,18 +62,18 @@ class TextLayerAnalysisResult:
     All score fields are clamped to the ``[0, 1]`` range.
 
     Attributes:
-        text_layer_quality: Weighted aggregate quality score (1 = perfect).
-        text_layer_skip_ocr: Whether the quality is high enough to skip OCR.
-        extractability_rate: Fraction of pages that contain extractable text.
-        replacement_char_ratio: Fraction of extracted characters that are
+        text_layer_quality (float): Weighted aggregate quality score (1 = perfect).
+        text_layer_skip_ocr (bool): Whether the quality is high enough to skip OCR.
+        extractability_rate (float): Fraction of pages that contain extractable text.
+        replacement_char_ratio (float): Fraction of extracted characters that are
             Unicode replacement characters (lower is better; the *score*
             stored here is ``1 - ratio`` so that 1 means no replacements).
-        font_embedding_score: Fraction of referenced fonts that are embedded.
-        coordinate_precision_score: Fraction of word coordinates that are
+        font_embedding_score (float): Fraction of referenced fonts that are embedded.
+        coordinate_precision_score (float): Fraction of word coordinates that are
             *not* suspiciously round (1 = all precise).
-        page_count: Total number of pages analysed.
-        total_characters: Total characters extracted across all pages.
-        confidence: Confidence in the result (higher when more data available).
+        page_count (int): Total number of pages analysed.
+        total_characters (int): Total characters extracted across all pages.
+        confidence (float): Confidence in the result (higher when more data available).
     """
 
     text_layer_quality: float
@@ -91,12 +91,16 @@ class TextLayerAnalyzer:
     """Analyse the text layer of a PDF document.
 
     Args:
-        skip_ocr_threshold: Minimum ``text_layer_quality`` needed to
+        skip_ocr_threshold (float): Minimum ``text_layer_quality`` needed to
             recommend skipping OCR.  Defaults to ``0.85``.
-        weights: Optional dict mapping signal names to their weights in the
+        weights (dict[str, float] | None): Optional dict mapping signal names to their weights in the
             aggregate quality calculation.  Keys must be a subset of
             ``{extractability, replacement_char, font_embedding,
             coordinate_precision}``.  Weights are normalised internally.
+
+    Raises:
+        ImportError: If PyMuPDF (fitz) is not installed.
+        ValueError: If a weight key is invalid or weight value is negative.
     """
 
     def __init__(
@@ -145,17 +149,12 @@ class TextLayerAnalyzer:
         """Analyse the text layer of *pdf_path*.
 
         Args:
-            pdf_path: Filesystem path to a PDF file (str or Path).
+            pdf_path (str | Path): Filesystem path to a PDF file (str or Path).
 
         Returns:
-            A :class:`TextLayerAnalysisResult` with per-signal scores and
+            TextLayerAnalysisResult: A :class:`TextLayerAnalysisResult` with per-signal scores and
             an aggregate quality metric.
 
-        Raises:
-            FileNotFoundError: When *pdf_path* does not exist or is not a file.
-            ImportError: When PyMuPDF is not installed.
-            ValueError: When *pdf_path* fails security validation (path traversal).
-            fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
         """
         path = validate_safe_path(pdf_path, must_exist=True)
 
@@ -361,16 +360,11 @@ def analyze_text_layer(pdf_path: str | Path) -> TextLayerAnalysisResult:
     one-shot usage.
 
     Args:
-        pdf_path: Filesystem path to a PDF file (str or Path).
+        pdf_path (str | Path): Filesystem path to a PDF file (str or Path).
 
     Returns:
-        A :class:`TextLayerAnalysisResult`.
+        TextLayerAnalysisResult: A :class:`TextLayerAnalysisResult`.
 
-    Raises:
-        ImportError: When PyMuPDF (``fitz``) is not installed.
-        FileNotFoundError: When *pdf_path* does not exist or is not a file.
-        ValueError: When *pdf_path* fails path-traversal security validation.
-        fitz.FileDataError: When PyMuPDF cannot open or parse the PDF.
     """
     analyzer = TextLayerAnalyzer()
     return analyzer.analyze(pdf_path)

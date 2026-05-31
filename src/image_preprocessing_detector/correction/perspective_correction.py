@@ -44,10 +44,10 @@ def _order_points(pts: np.ndarray) -> np.ndarray:
     Uses sum and difference of coordinates to determine corner positions.
 
     Args:
-        pts: Array of shape (4, 2) with unordered corner points.
+        pts (np.ndarray): Array of shape (4, 2) with unordered corner points.
 
     Returns:
-        Array of shape (4, 2) with ordered corner points.
+        np.ndarray: Array of shape (4, 2) with ordered corner points.
     """
     rect = np.zeros((4, 2), dtype=np.float32)
     s = pts.sum(axis=1)
@@ -74,6 +74,12 @@ class PerspectiveCorrector:
     7. Compute destination rectangle from max width/height
     8. Apply perspective transform
 
+    Args:
+        warping_block_threshold (float): Maximum warping score for classical
+            correction. Above this, VLM should handle it.
+        min_contour_area_ratio (float): Minimum contour area as fraction
+            of image area to qualify as document boundary.
+
     Example:
         >>> corrector = PerspectiveCorrector()
         >>> result = corrector.correct(image, warping_score=0.5)
@@ -86,14 +92,6 @@ class PerspectiveCorrector:
         warping_block_threshold: float = _WARPING_BLOCK_THRESHOLD,
         min_contour_area_ratio: float = _MIN_CONTOUR_AREA_RATIO,
     ) -> None:
-        """Initialize perspective corrector.
-
-        Args:
-            warping_block_threshold: Maximum warping score for classical
-                correction. Above this, VLM should handle it.
-            min_contour_area_ratio: Minimum contour area as fraction
-                of image area to qualify as document boundary.
-        """
         self.warping_block_threshold = warping_block_threshold
         self.min_contour_area_ratio = min_contour_area_ratio
 
@@ -105,12 +103,12 @@ class PerspectiveCorrector:
         """Apply perspective correction.
 
         Args:
-            image: Input image (BGR format).
-            warping_score: Detected warping severity (0-1) from Stream 2
+            image (np.ndarray): Input image (BGR format).
+            warping_score (float): Detected warping severity (0-1) from Stream 2
                 warping detector. Scores > 0.75 are blocked.
 
         Returns:
-            CorrectionResult with corrected image and metadata.
+            CorrectionResult: CorrectionResult with corrected image and metadata.
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -186,10 +184,10 @@ class PerspectiveCorrector:
         """Find the largest quadrilateral contour in the image.
 
         Args:
-            image: Input BGR image.
+            image (np.ndarray): Input BGR image.
 
         Returns:
-            Array of 4 corner points, or None if not found.
+            np.ndarray | None: Array of 4 corner points, or None if not found.
         """
         original_h, original_w = image.shape[:2]
         min_area = original_h * original_w * self.min_contour_area_ratio
@@ -235,10 +233,10 @@ class PerspectiveCorrector:
         """Compute output width and height from ordered corner points.
 
         Args:
-            ordered: Array of shape (4, 2) with [TL, TR, BR, BL] corners.
+            ordered (np.ndarray): Array of shape (4, 2) with [TL, TR, BR, BL] corners.
 
         Returns:
-            Tuple of (width, height) for the output image.
+            tuple[int, int]: Tuple of (width, height) for the output image.
         """
         tl, tr, br, bl = ordered
 
@@ -278,11 +276,11 @@ def correct_perspective(
     """Correct perspective distortion using default settings.
 
     Args:
-        image: Input image (BGR format).
-        warping_score: Detected warping severity (0-1).
+        image (np.ndarray): Input image (BGR format).
+        warping_score (float): Detected warping severity (0-1).
 
     Returns:
-        CorrectionResult with corrected image.
+        CorrectionResult: CorrectionResult with corrected image.
     """
     return PerspectiveCorrector().correct(image, warping_score)
 
