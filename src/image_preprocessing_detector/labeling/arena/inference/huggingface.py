@@ -56,7 +56,6 @@ class HuggingFaceBackend(InferenceBackend):
     """
 
     def __init__(self) -> None:
-        """Initialize the HuggingFace backend."""
         self._model: Any = None
         self._processor: Any = None
         self._tokenizer: Any = None
@@ -68,8 +67,8 @@ class HuggingFaceBackend(InferenceBackend):
         """Load a model from HuggingFace Hub.
 
         Args:
-            spec: Model specification with HF repo and revision.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification with HF repo and revision.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If model cannot be loaded.
@@ -169,10 +168,10 @@ class HuggingFaceBackend(InferenceBackend):
         """Get quantization configuration for model loading.
 
         Args:
-            spec: Model specification with quantization info.
+            spec (ModelSpec): Model specification with quantization info.
 
         Returns:
-            Dictionary with quantization kwargs.
+            dict[str, Any]:             Dictionary with quantization kwargs.
         """
         try:
             from transformers import BitsAndBytesConfig
@@ -203,7 +202,10 @@ class HuggingFaceBackend(InferenceBackend):
         """Load a LoRA adapter onto the base model.
 
         Args:
-            adapter_path: Path or HF repo for the adapter.
+            adapter_path (str): Path or HF repo for the adapter.
+
+        Raises:
+            ModelLoadError: If PEFT library is not available.
         """
         try:
             from peft import PeftModel
@@ -255,14 +257,13 @@ class HuggingFaceBackend(InferenceBackend):
         """Run inference on a single image.
 
         Args:
-            image: Input image as numpy array or PIL Image.
+            image (NDArray[np.uint8] | Image.Image): Input image as numpy array or PIL Image.
 
         Returns:
-            DIQAPrediction with quality scores.
+            DIQAPrediction:             DIQAPrediction with quality scores.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.
-            InferenceError: If inference fails.
         """
         if not self.is_loaded():
             msg = "Model not loaded. Call load() first."
@@ -278,10 +279,10 @@ class HuggingFaceBackend(InferenceBackend):
         """Run inference on a batch of images.
 
         Args:
-            images: List of input images.
+            images (list[NDArray[np.uint8] | Image.Image]): List of input images.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.
@@ -328,10 +329,10 @@ class HuggingFaceBackend(InferenceBackend):
         call the actual model.
 
         Args:
-            images: Batch of PIL Images.
+            images (list[Image.Image]): Batch of PIL Images.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
         """
         import torch
 
@@ -375,7 +376,7 @@ class HuggingFaceBackend(InferenceBackend):
         """Get provenance information for the loaded model.
 
         Returns:
-            ProvenanceInfo with checksums and metadata.
+            ProvenanceInfo:             ProvenanceInfo with checksums and metadata.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.

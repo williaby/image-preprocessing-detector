@@ -51,13 +51,13 @@ class CircuitBreakerConfig:
     """Configuration for circuit breaker behavior.
 
     Attributes:
-        failure_threshold: Consecutive failures before opening circuit
-        success_threshold: Consecutive successes to close circuit (from half-open)
-        timeout_seconds: Time to wait before trying half-open state
-        request_timeout_ms: Individual request timeout in milliseconds
-        max_retries: Maximum retry attempts per request
-        base_backoff_ms: Base backoff time for exponential backoff
-        max_backoff_ms: Maximum backoff time
+        failure_threshold (int): Consecutive failures before opening circuit
+        success_threshold (int): Consecutive successes to close circuit (from half-open)
+        timeout_seconds (float): Time to wait before trying half-open state
+        request_timeout_ms (int): Individual request timeout in milliseconds
+        max_retries (int): Maximum retry attempts per request
+        base_backoff_ms (int): Base backoff time for exponential backoff
+        max_backoff_ms (int): Maximum backoff time
     """
 
     failure_threshold: int = 3
@@ -74,12 +74,12 @@ class ArenaInferenceRequest:
     """Request format for Arena VLM inference.
 
     Attributes:
-        image: PIL Image or numpy array
-        prompt: Text prompt for the model
-        model_id: HuggingFace model ID
-        max_new_tokens: Maximum tokens to generate
-        temperature: Sampling temperature
-        request_id: Unique request identifier
+        image (Any): PIL Image or numpy array
+        prompt (str): Text prompt for the model
+        model_id (str): HuggingFace model ID
+        max_new_tokens (int): Maximum tokens to generate
+        temperature (float): Sampling temperature
+        request_id (str | None): Unique request identifier
     """
 
     image: Any  # PIL Image or np.ndarray
@@ -95,11 +95,11 @@ class ArenaInferenceResponse:
     """Response format from Arena VLM inference.
 
     Attributes:
-        text: Generated text response
-        inference_time_ms: Server-side inference latency
-        model_id: Model that generated the response
-        device: Device used (GPU name)
-        request_id: Request identifier for correlation
+        text (str): Generated text response
+        inference_time_ms (float): Server-side inference latency
+        model_id (str): Model that generated the response
+        device (str): Device used (GPU name)
+        request_id (str | None): Request identifier for correlation
     """
 
     text: str
@@ -142,6 +142,11 @@ class ArenaModalClient:
         >>> response = client.predict(request)
         >>> if response:
         ...     print(f"Response: {response.text}")
+
+    Args:
+        config (CircuitBreakerConfig | None): Circuit breaker configuration.
+        app_name (str): Modal app name.
+        class_name (str): Modal class name.
     """
 
     def __init__(
@@ -150,13 +155,6 @@ class ArenaModalClient:
         app_name: str = "arena-benchmark",
         class_name: str = "VLMInference",
     ) -> None:
-        """Initialize Arena Modal client.
-
-        Args:
-            config: Circuit breaker configuration
-            app_name: Modal app name
-            class_name: Modal class name
-        """
         self.config = config or CircuitBreakerConfig()
         self.app_name = app_name
         self.class_name = class_name
@@ -174,10 +172,10 @@ class ArenaModalClient:
         """Execute VLM inference on Modal GPU.
 
         Args:
-            request: Inference request with image and prompt
+            request (ArenaInferenceRequest): Inference request with image and prompt
 
         Returns:
-            ArenaInferenceResponse if successful, None if unavailable
+            ArenaInferenceResponse | None:             ArenaInferenceResponse if successful, None if unavailable
         """
         self.breaker_state.total_requests += 1
 
@@ -229,10 +227,10 @@ class ArenaModalClient:
         """Execute batch VLM inference on Modal GPU.
 
         Args:
-            requests: List of inference requests
+            requests (list[ArenaInferenceRequest]): List of inference requests
 
         Returns:
-            List of responses (None for failed requests)
+            list[ArenaInferenceResponse | None]:             List of responses (None for failed requests)
         """
         if not requests:
             return []
@@ -401,10 +399,10 @@ class ArenaModalClient:
         """Encode image as base64 JPEG.
 
         Args:
-            image: PIL Image or numpy array
+            image (Any): PIL Image or numpy array
 
         Returns:
-            Base64-encoded JPEG string
+            str:             Base64-encoded JPEG string
         """
         from PIL import Image as PILImage
 
@@ -531,6 +529,6 @@ class ArenaModalClient:
         """Check if Modal service is available.
 
         Returns:
-            True if circuit is closed or half-open
+            bool:             True if circuit is closed or half-open
         """
         return not self._should_reject_request()

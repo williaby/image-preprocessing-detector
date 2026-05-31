@@ -28,14 +28,14 @@ class LeaderboardEntry:
     """Single entry in the leaderboard.
 
     Attributes:
-        rank: Position in the leaderboard.
-        model_name: Display name for the model.
-        model_id: Full model identifier.
-        variant: Model variant (base, int8, int4, finetuned).
-        metrics: ArenaMetrics for this model.
-        run_id: Benchmark run identifier.
-        timestamp: When the benchmark was run.
-        metadata: Additional metadata.
+        rank (int): Position in the leaderboard.
+        model_name (str): Display name for the model.
+        model_id (str): Full model identifier.
+        variant (str): Model variant (base, int8, int4, finetuned).
+        metrics (ArenaMetrics): ArenaMetrics for this model.
+        run_id (str): Benchmark run identifier.
+        timestamp (str): When the benchmark was run.
+        metadata (dict[str, Any]): Additional metadata.
     """
 
     rank: int
@@ -66,15 +66,15 @@ class LeaderboardConfig:
     """Configuration for leaderboard generation.
 
     Attributes:
-        title: Leaderboard title.
-        description: Optional description text.
-        sort_by: Metric to sort by (e.g., "aggregate.plcc").
-        filter_variant: Only include specific variants.
-        filter_family: Only include specific model families.
-        max_entries: Maximum number of entries to show.
-        show_timestamps: Whether to show run timestamps.
-        show_run_ids: Whether to show run IDs.
-        decimal_places: Number of decimal places for metrics.
+        title (str): Leaderboard title.
+        description (str | None): Optional description text.
+        sort_by (str): Metric to sort by (e.g., "aggregate.plcc").
+        filter_variant (list[str] | None): Only include specific variants.
+        filter_family (list[str] | None): Only include specific model families.
+        max_entries (int | None): Maximum number of entries to show.
+        show_timestamps (bool): Whether to show run timestamps.
+        show_run_ids (bool): Whether to show run IDs.
+        decimal_places (int): Number of decimal places for metrics.
     """
 
     title: str = "DIQA-5000 Benchmark Leaderboard"
@@ -97,14 +97,12 @@ class LeaderboardGenerator:
         >>> generator.add_result(result2)
         >>> markdown = generator.to_markdown()
         >>> generator.to_html("leaderboard.html")
+
+    Args:
+        config (LeaderboardConfig | None): Leaderboard configuration.
     """
 
     def __init__(self, config: LeaderboardConfig | None = None) -> None:
-        """Initialize the generator.
-
-        Args:
-            config: Leaderboard configuration.
-        """
         self._config = config or LeaderboardConfig()
         self._results: dict[str, BenchmarkResult] = {}
         self._entries: list[LeaderboardEntry] = []
@@ -120,8 +118,8 @@ class LeaderboardGenerator:
         """Add a benchmark result to the leaderboard.
 
         Args:
-            result: BenchmarkResult to add.
-            _model_name: Optional display name (defaults to model_id). Reserved for future use.
+            result (BenchmarkResult): BenchmarkResult to add.
+            _model_name (str | None): Optional display name (defaults to model_id). Reserved for future use.
         """
         if result.status.value != "completed":
             logger.warning(
@@ -144,10 +142,10 @@ class LeaderboardGenerator:
         """Load all results from a directory.
 
         Args:
-            directory: Directory containing result JSON files.
+            directory (Path | str): Directory containing result JSON files.
 
         Returns:
-            Number of results loaded.
+            int:             Number of results loaded.
         """
         directory = Path(directory)
         count = 0
@@ -273,10 +271,10 @@ class LeaderboardGenerator:
         """Generate Markdown leaderboard.
 
         Args:
-            config: Optional config override.
+            config (LeaderboardConfig | None): Optional config override.
 
         Returns:
-            Markdown formatted leaderboard.
+            str:             Markdown formatted leaderboard.
         """
         cfg = config or self._config
         entries = self._build_entries()
@@ -384,11 +382,11 @@ class LeaderboardGenerator:
         """Generate HTML leaderboard.
 
         Args:
-            output_path: Optional path to save HTML file.
-            config: Optional config override.
+            output_path (Path | str | None): Optional path to save HTML file.
+            config (LeaderboardConfig | None): Optional config override.
 
         Returns:
-            HTML formatted leaderboard.
+            str:             HTML formatted leaderboard.
         """
         cfg = config or self._config
         entries = self._build_entries()
@@ -603,10 +601,10 @@ class LeaderboardGenerator:
         """Export leaderboard as JSON.
 
         Args:
-            output_path: Optional path to save JSON file.
+            output_path (Path | str | None): Optional path to save JSON file.
 
         Returns:
-            JSON string representation.
+            str:             JSON string representation.
         """
         entries = self._build_entries()
 
@@ -633,11 +631,11 @@ class LeaderboardGenerator:
         """Save leaderboard in all formats.
 
         Args:
-            output_dir: Directory to save files.
-            basename: Base filename (without extension).
+            output_dir (Path | str): Directory to save files.
+            basename (str): Base filename (without extension).
 
         Returns:
-            Dict mapping format to file path.
+            dict[str, Path]:             Dict mapping format to file path.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -678,14 +676,14 @@ def generate_leaderboard(
     """Convenience function to generate leaderboard from results directory.
 
     Args:
-        results_dir: Directory containing result JSON files.
-        output_dir: Directory to save leaderboard files.
-        sort_by: Metric to sort by.
-        title: Leaderboard title.
-        filter_variant: Optional variant filter.
+        results_dir (Path | str): Directory containing result JSON files.
+        output_dir (Path | str): Directory to save leaderboard files.
+        sort_by (str): Metric to sort by.
+        title (str): Leaderboard title.
+        filter_variant (list[str] | None): Optional variant filter.
 
     Returns:
-        Dict mapping format to file path.
+        dict[str, Path]:         Dict mapping format to file path.
 
     Example:
         >>> paths = generate_leaderboard(

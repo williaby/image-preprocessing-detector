@@ -78,6 +78,10 @@ class ModalBackend(InferenceBackend):
         >>> backend = ModalBackend()
         >>> backend.load(spec, InferenceConfig(device="modal"))
         >>> prediction = backend.predict(image)
+
+    Args:
+        circuit_breaker_config (CircuitBreakerConfig | None): Configuration for circuit breaker.
+        custom_prompt (str | None): Custom prompt for DIQA assessment (optional).
     """
 
     def __init__(
@@ -85,12 +89,6 @@ class ModalBackend(InferenceBackend):
         circuit_breaker_config: CircuitBreakerConfig | None = None,
         custom_prompt: str | None = None,
     ) -> None:
-        """Initialize the Modal backend.
-
-        Args:
-            circuit_breaker_config: Configuration for circuit breaker.
-            custom_prompt: Custom prompt for DIQA assessment (optional).
-        """
         self._client: ArenaModalClient | None = None
         self._spec: ModelSpec | None = None
         self._config: InferenceConfig | None = None
@@ -105,8 +103,8 @@ class ModalBackend(InferenceBackend):
         mainly validates configuration and sets up the client.
 
         Args:
-            spec: Model specification.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If Modal client cannot be initialized.
@@ -162,14 +160,13 @@ class ModalBackend(InferenceBackend):
         """Run inference on a single image via Modal.
 
         Args:
-            image: Input image as numpy array or PIL Image.
+            image (NDArray[np.uint8] | Image.Image): Input image as numpy array or PIL Image.
 
         Returns:
-            DIQAPrediction with quality scores.
+            DIQAPrediction:             DIQAPrediction with quality scores.
 
         Raises:
             ModelNotLoadedError: If backend is not initialized.
-            InferenceError: If inference fails.
         """
         if not self.is_loaded():
             msg = "Modal backend not initialized. Call load() first."
@@ -185,10 +182,10 @@ class ModalBackend(InferenceBackend):
         """Run inference on a batch of images via Modal.
 
         Args:
-            images: List of input images.
+            images (list[NDArray[np.uint8] | Image.Image]): List of input images.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
 
         Raises:
             ModelNotLoadedError: If backend is not initialized.
@@ -232,11 +229,11 @@ class ModalBackend(InferenceBackend):
         """Process a batch of images through Modal.
 
         Args:
-            images: Batch of PIL Images.
-            start_idx: Starting index for image IDs.
+            images (list[Image.Image]): Batch of PIL Images.
+            start_idx (int): Starting index for image IDs.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
         """
         if self._client is None or self._spec is None:
             return []
@@ -311,10 +308,10 @@ class ModalBackend(InferenceBackend):
             Color: 0.68
 
         Args:
-            response_text: Raw text from VLM.
+            response_text (str): Raw text from VLM.
 
         Returns:
-            Dictionary with overall, sharpness, color scores.
+            dict[str, float]:             Dictionary with overall, sharpness, color scores.
         """
         scores: dict[str, float] = {
             "overall": 0.5,
@@ -346,7 +343,7 @@ class ModalBackend(InferenceBackend):
         """Get provenance information for the model.
 
         Returns:
-            ProvenanceInfo with checksums and metadata.
+            ProvenanceInfo:             ProvenanceInfo with checksums and metadata.
 
         Raises:
             ModelNotLoadedError: If backend is not initialized.
@@ -415,7 +412,7 @@ class ModalBackend(InferenceBackend):
         """Check if Modal service is available.
 
         Returns:
-            True if circuit breaker allows requests.
+            bool:             True if circuit breaker allows requests.
         """
         if self._client is None:
             return False

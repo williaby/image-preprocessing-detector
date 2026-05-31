@@ -60,12 +60,22 @@ class APIBackend(InferenceBackend):
         >>> backend = APIBackend(provider="openai")
         >>> backend.load(spec, InferenceConfig())
         >>> prediction = backend.predict(image)
+
+    Attributes:
+        SUPPORTED_PROVIDERS (ClassVar[set[str]]): Set of supported API provider names.
+        DIQA_PROMPT (str): Prompt template for DIQA scoring.
+
+    Args:
+        provider (str): API provider name (openai, google, anthropic).
+
+    Raises:
+        ValueError: If provider is not in SUPPORTED_PROVIDERS.
     """
 
     SUPPORTED_PROVIDERS: ClassVar[set[str]] = {"openai", "google", "anthropic"}
 
     # Prompt template for DIQA scoring
-    DIQA_PROMPT = """Analyze this document image and provide quality scores.
+    DIQA_PROMPT: str = """Analyze this document image and provide quality scores.
 
 Rate the following aspects on a scale from 0.0 to 1.0:
 1. Overall quality (0.0 = very poor, 1.0 = excellent)
@@ -76,11 +86,6 @@ Respond ONLY with three decimal numbers separated by commas, like: 0.85, 0.72, 0
 No other text or explanation."""
 
     def __init__(self, provider: str = "openai") -> None:
-        """Initialize the API backend.
-
-        Args:
-            provider: API provider name (openai, google, anthropic).
-        """
         if provider not in self.SUPPORTED_PROVIDERS:
             msg = f"Unsupported provider: {provider}. Must be one of {self.SUPPORTED_PROVIDERS}"
             raise ValueError(msg)
@@ -97,8 +102,8 @@ No other text or explanation."""
         """Initialize API client with credentials.
 
         Args:
-            spec: Model specification with API model ID.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification with API model ID.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If API client cannot be initialized.
@@ -423,7 +428,7 @@ No other text or explanation."""
         """Get API usage statistics.
 
         Returns:
-            Dictionary with token counts and cost estimates.
+            dict[str, Any]:             Dictionary with token counts and cost estimates.
         """
         return {
             "provider": self._provider,

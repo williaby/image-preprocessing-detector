@@ -54,16 +54,11 @@ class OpenRouterClient:
     Handles text classification and vision classification with retry logic,
     rate limiting, and structured JSON response parsing.
 
-    Attributes:
-        config: Pipeline configuration with model settings and thresholds.
+    Args:
+        config (DomainPipelineConfig): Pipeline configuration.
     """
 
     def __init__(self, config: DomainPipelineConfig) -> None:
-        """Initialize the OpenRouter client.
-
-        Args:
-            config: Pipeline configuration.
-        """
         self._config = config
         self._client: Any = None
         self._total_tokens = 0
@@ -73,7 +68,7 @@ class OpenRouterClient:
         """Lazily initialize the OpenAI client.
 
         Returns:
-            Initialized OpenAI client.
+            Any:             Initialized OpenAI client.
 
         Raises:
             OpenRouterError: If openai library is not installed.
@@ -109,14 +104,11 @@ class OpenRouterClient:
         """Classify a document from its text content.
 
         Args:
-            text: Document text to classify.
-            model_id: OpenRouter model identifier.
+            text (str): Document text to classify.
+            model_id (str): OpenRouter model identifier.
 
         Returns:
-            EnrichmentResult with domain, language, script, and content type.
-
-        Raises:
-            OpenRouterError: If all retries fail.
+            EnrichmentResult: EnrichmentResult with domain, language, script, and content type.
         """
         messages = build_text_prompt(text, self._config.text_truncation_chars)
         raw = self._call_with_retry(model_id, messages)
@@ -130,14 +122,11 @@ class OpenRouterClient:
         """Classify a document from its image.
 
         Args:
-            image_path: Path to the document image file.
-            model_id: OpenRouter model identifier (must support vision).
+            image_path (Path): Path to the document image file.
+            model_id (str): OpenRouter model identifier (must support vision).
 
         Returns:
-            EnrichmentResult with all fields (domain, language, capture, flags).
-
-        Raises:
-            OpenRouterError: If all retries fail or image cannot be loaded.
+            EnrichmentResult: EnrichmentResult with all fields (domain, language, capture, flags).
         """
         image_b64 = self._encode_image(image_path)
         messages = build_vision_prompt()
@@ -166,11 +155,11 @@ class OpenRouterClient:
         """Make an API call with exponential backoff retry.
 
         Args:
-            model_id: OpenRouter model identifier.
-            messages: Chat messages to send.
+            model_id (str): OpenRouter model identifier.
+            messages (list[dict[str, Any]]): Chat messages to send.
 
         Returns:
-            Parsed JSON response dict from the model.
+            dict[str, Any]:             Parsed JSON response dict from the model.
 
         Raises:
             OpenRouterError: If all retries exhausted.
@@ -242,10 +231,10 @@ class OpenRouterClient:
         Resizes images exceeding max_pixels to fit within bounds.
 
         Args:
-            image_path: Path to the image file.
+            image_path (Path): Path to the image file.
 
         Returns:
-            Base64-encoded PNG string.
+            str:             Base64-encoded PNG string.
 
         Raises:
             OpenRouterError: If image cannot be loaded.
@@ -281,7 +270,7 @@ class OpenRouterClient:
         """Get cumulative API usage statistics.
 
         Returns:
-            Dict with total_tokens and total_calls.
+            dict[str, Any]:             Dict with total_tokens and total_calls.
         """
         return {
             "total_tokens": self._total_tokens,
@@ -298,10 +287,10 @@ def _extract_json(text: str) -> dict[str, Any]:
     - JSON with leading/trailing text
 
     Args:
-        text: Raw model response text.
+        text (str): Raw model response text.
 
     Returns:
-        Parsed JSON dict.
+        dict[str, Any]:         Parsed JSON dict.
 
     Raises:
         OpenRouterError: If no valid JSON found.
@@ -348,11 +337,11 @@ def _parse_text_response(
     """Parse text model response into EnrichmentResult.
 
     Args:
-        raw: Parsed JSON dict from model response.
-        model_id: Model that produced the response.
+        raw (dict[str, Any]): Parsed JSON dict from model response.
+        model_id (str): Model that produced the response.
 
     Returns:
-        EnrichmentResult with text-extractable fields populated.
+        EnrichmentResult:         EnrichmentResult with text-extractable fields populated.
     """
     domain = str(raw.get("domain", "UNK")).upper().strip()
     if domain not in VALID_DOMAIN_CODES:
@@ -379,11 +368,11 @@ def _parse_vision_response(
     """Parse vision model response into EnrichmentResult.
 
     Args:
-        raw: Parsed JSON dict from model response.
-        model_id: Model that produced the response.
+        raw (dict[str, Any]): Parsed JSON dict from model response.
+        model_id (str): Model that produced the response.
 
     Returns:
-        EnrichmentResult with all fields populated (text + vision).
+        EnrichmentResult:         EnrichmentResult with all fields populated (text + vision).
     """
     domain = str(raw.get("domain", "UNK")).upper().strip()
     if domain not in VALID_DOMAIN_CODES:
@@ -422,10 +411,10 @@ def _clamp_confidence(value: Any) -> float:
     """Clamp a confidence value to [0.0, 1.0].
 
     Args:
-        value: Raw confidence value from model response.
+        value (Any): Raw confidence value from model response.
 
     Returns:
-        Float clamped between 0.0 and 1.0.
+        float:         Float clamped between 0.0 and 1.0.
     """
     try:
         conf = float(value)
@@ -438,10 +427,10 @@ def _safe_str(value: Any) -> str | None:
     """Safely convert a value to string or None.
 
     Args:
-        value: Raw value from model response.
+        value (Any): Raw value from model response.
 
     Returns:
-        Stripped string or None.
+        str | None:         Stripped string or None.
     """
     if value is None:
         return None
@@ -453,10 +442,10 @@ def _safe_bool(value: Any) -> bool | None:
     """Safely convert a value to bool or None.
 
     Args:
-        value: Raw value from model response.
+        value (Any): Raw value from model response.
 
     Returns:
-        Boolean or None.
+        bool | None:         Boolean or None.
     """
     if value is None:
         return None

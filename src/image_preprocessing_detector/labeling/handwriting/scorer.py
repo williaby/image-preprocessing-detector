@@ -45,12 +45,12 @@ class SheetScoringResult:
     """Raw scoring output for a single contact sheet across all models.
 
     Attributes:
-        sheet_path: Path to the contact sheet image file.
-        n_images: Number of images on the sheet.
-        model_scores: Map from model_id to per-image score dicts.
+        sheet_path (Path): Path to the contact sheet image file.
+        n_images (int): Number of images on the sheet.
+        model_scores (dict[str, dict[int, dict[str, Any]]]): Map from model_id to per-image score dicts.
             Each inner dict maps 1-based image index to score dict.
-        model_errors: Map from model_id to error message if scoring failed.
-        total_tokens: Cumulative token count across all model calls.
+        model_errors (dict[str, str]): Map from model_id to error message if scoring failed.
+        total_tokens (int): Cumulative token count across all model calls.
     """
 
     sheet_path: Path
@@ -67,16 +67,11 @@ class HwLegibilityScorer:
     model. Responses are parsed into per-image score dicts stored in
     SheetScoringResult.model_scores.
 
-    Attributes:
-        config: Pipeline configuration with model roster and API settings.
+    Args:
+        config (LegibilityScorerConfig): LegibilityScorerConfig with model roster and API settings.
     """
 
     def __init__(self, config: LegibilityScorerConfig) -> None:
-        """Initialise the scorer.
-
-        Args:
-            config: LegibilityScorerConfig with model roster and API settings.
-        """
         self._config = config
         self._client: Any = None
         self._total_tokens = 0
@@ -90,11 +85,11 @@ class HwLegibilityScorer:
         """Score all images on a contact sheet using every configured model.
 
         Args:
-            sheet_path: Path to the saved contact sheet JPEG.
-            n_images: Number of labeled images present on the sheet.
+            sheet_path (Path): Path to the saved contact sheet JPEG.
+            n_images (int): Number of labeled images present on the sheet.
 
         Returns:
-            SheetScoringResult with per-model, per-image score dicts.
+            SheetScoringResult:             SheetScoringResult with per-model, per-image score dicts.
         """
         result = SheetScoringResult(sheet_path=sheet_path, n_images=n_images)
         sheet_b64 = self._encode_sheet(sheet_path)
@@ -127,7 +122,7 @@ class HwLegibilityScorer:
         """Return cumulative API usage statistics.
 
         Returns:
-            Dict with total_tokens and total_calls.
+            dict[str, int]:             Dict with total_tokens and total_calls.
         """
         return {"total_tokens": self._total_tokens, "total_calls": self._total_calls}
 
@@ -145,16 +140,13 @@ class HwLegibilityScorer:
         """Send sheet to one model and return parsed per-image scores.
 
         Args:
-            model_cfg: Model configuration (id, max_tokens, weight).
-            messages: Base chat messages (system + user text).
-            sheet_b64: Base64-encoded contact sheet PNG string.
-            n_images: Expected image count for response parsing.
+            model_cfg (HwVisionModelConfig): Model configuration (id, max_tokens, weight).
+            messages (list[dict[str, Any]]): Base chat messages (system + user text).
+            sheet_b64 (str): Base64-encoded contact sheet PNG string.
+            n_images (int): Expected image count for response parsing.
 
         Returns:
-            Dict mapping 1-based image index to score dict.
-
-        Raises:
-            RuntimeError: If all retries fail for this model.
+            dict[int, dict[str, Any]]: Dict mapping 1-based image index to score dict.
         """
         # Deep-copy messages and append image block to user content
         import copy
@@ -183,11 +175,11 @@ class HwLegibilityScorer:
         """Make an OpenRouter API call with exponential backoff retry.
 
         Args:
-            model_cfg: Model to call.
-            messages: Full message list including image content.
+            model_cfg (HwVisionModelConfig): Model to call.
+            messages (list[dict[str, Any]]): Full message list including image content.
 
         Returns:
-            Parsed JSON dict from the model.
+            dict[str, Any]:             Parsed JSON dict from the model.
 
         Raises:
             RuntimeError: If all retries are exhausted.
@@ -220,12 +212,12 @@ class HwLegibilityScorer:
         """Validate and parse a raw API response into a score dict.
 
         Args:
-            response: Raw response object from the OpenAI client.
-            model_cfg: Model configuration used for logging.
-            attempt: 0-based attempt index for log context.
+            response (Any): Raw response object from the OpenAI client.
+            model_cfg (HwVisionModelConfig): Model configuration used for logging.
+            attempt (int): 0-based attempt index for log context.
 
         Returns:
-            Parsed JSON dict from the model response content.
+            dict[str, Any]:             Parsed JSON dict from the model response content.
 
         Raises:
             RuntimeError: If the response has no choices or empty content.
@@ -267,9 +259,9 @@ class HwLegibilityScorer:
         """Log a failed attempt and sleep before the next retry.
 
         Args:
-            model_cfg: Model configuration used for logging.
-            attempt: 0-based attempt index (sleep skipped on the last attempt).
-            exc: Exception that caused this attempt to fail.
+            model_cfg (HwVisionModelConfig): Model configuration used for logging.
+            attempt (int): 0-based attempt index (sleep skipped on the last attempt).
+            exc (Exception): Exception that caused this attempt to fail.
         """
         delay = self._config.retry_base_delay * (2**attempt)
         logger.warning(
@@ -287,7 +279,7 @@ class HwLegibilityScorer:
         """Lazily initialise the OpenAI SDK client for OpenRouter.
 
         Returns:
-            Initialised OpenAI client.
+            Any:             Initialised OpenAI client.
 
         Raises:
             ImportError: If openai library is not installed.
@@ -317,12 +309,13 @@ class HwLegibilityScorer:
         Resizes if larger than image_max_pixels.
 
         Args:
-            sheet_path: Path to the contact sheet JPEG file.
+            sheet_path (Path): Path to the contact sheet JPEG file.
 
         Returns:
-            Base64-encoded JPEG string.
+            str:             Base64-encoded JPEG string.
 
         Raises:
+            ImportError: If Pillow is not installed.
             RuntimeError: If the image cannot be loaded.
         """
         try:

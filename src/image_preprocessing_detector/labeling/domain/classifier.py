@@ -42,10 +42,10 @@ class SampleInput:
     """Input for a single sample to enrich.
 
     Attributes:
-        image_id: Unique identifier for the sample.
-        text: Document text content (if available).
-        image_path: Path to document image (if available).
-        text_source: How text was obtained ('ground_truth', 'extracted', 'ocr').
+        image_id (str): Unique identifier for the sample.
+        text (str | None): Document text content (if available).
+        image_path (Path | None): Path to document image (if available).
+        text_source (str): How text was obtained ('ground_truth', 'extracted', 'ocr').
     """
 
     image_id: str
@@ -63,17 +63,11 @@ class MetadataEnricher:
     3. Samples without text -> vision model (paid)
     4. Low confidence vision results -> escalate to secondary vision model (paid)
 
-    Attributes:
-        config: Pipeline configuration.
-        client: OpenRouter API client.
+    Args:
+        config (DomainPipelineConfig): Pipeline configuration with model roster and thresholds.
     """
 
     def __init__(self, config: DomainPipelineConfig) -> None:
-        """Initialize the enricher.
-
-        Args:
-            config: Pipeline configuration with model roster and thresholds.
-        """
         self._config = config
         self._client = OpenRouterClient(config)
         self._stats: dict[str, Any] = {
@@ -96,12 +90,12 @@ class MetadataEnricher:
         with confidence-based escalation to secondary models.
 
         Args:
-            text: Document text (if available).
-            image_path: Path to document image (if available).
-            text_source: How text was obtained.
+            text (str | None): Document text (if available).
+            image_path (Path | None): Path to document image (if available).
+            text_source (str): How text was obtained.
 
         Returns:
-            EnrichmentResult with extracted metadata fields.
+            EnrichmentResult:             EnrichmentResult with extracted metadata fields.
 
         Raises:
             ValueError: If neither text nor image_path provided.
@@ -126,11 +120,11 @@ class MetadataEnricher:
         """Enrich a batch of samples with progress tracking.
 
         Args:
-            samples: List of SampleInput objects.
-            skip_ids: Set of image_ids to skip (for resume support).
+            samples (list[SampleInput]): List of SampleInput objects.
+            skip_ids (set[str] | None): Set of image_ids to skip (for resume support).
 
         Returns:
-            List of (image_id, EnrichmentResult) tuples.
+            list[tuple[str, EnrichmentResult]]:             List of (image_id, EnrichmentResult) tuples.
         """
         results: list[tuple[str, EnrichmentResult]] = []
         skip = skip_ids or set()
@@ -171,11 +165,11 @@ class MetadataEnricher:
         """Classify using text-only models with escalation.
 
         Args:
-            text: Document text.
-            _text_source: How text was obtained (reserved for future routing).
+            text (str): Document text.
+            _text_source (str): How text was obtained (reserved for future routing).
 
         Returns:
-            EnrichmentResult from text classification.
+            EnrichmentResult:             EnrichmentResult from text classification.
         """
         primary = self._config.primary_text_model
         threshold = self._config.text_confidence_threshold
@@ -229,10 +223,10 @@ class MetadataEnricher:
         """Classify using vision models with escalation.
 
         Args:
-            image_path: Path to document image.
+            image_path (Path): Path to document image.
 
         Returns:
-            EnrichmentResult from vision classification.
+            EnrichmentResult:             EnrichmentResult from vision classification.
         """
         primary = self._config.primary_vision_model
         threshold = self._config.vision_confidence_threshold
@@ -287,7 +281,7 @@ class MetadataEnricher:
         """Track model call count.
 
         Args:
-            model_id: Model identifier.
+            model_id (str): Model identifier.
         """
         usage = self._stats["model_usage"]
         if model_id not in usage:
@@ -298,7 +292,7 @@ class MetadataEnricher:
         """Get enrichment statistics.
 
         Returns:
-            Dict with call counts, escalation rate, error count, model usage.
+            dict[str, Any]:             Dict with call counts, escalation rate, error count, model usage.
         """
         total = self._stats["text_calls"] + self._stats["vision_calls"]
         client_stats = self._client.get_usage_stats()
@@ -317,11 +311,11 @@ def _fallback_result(input_mode: str, reason: str) -> EnrichmentResult:
     """Create a fallback result when classification fails.
 
     Args:
-        input_mode: Input type that was attempted.
-        reason: Reason for fallback.
+        input_mode (str): Input type that was attempted.
+        reason (str): Reason for fallback.
 
     Returns:
-        EnrichmentResult with UNK domain and low confidence.
+        EnrichmentResult:         EnrichmentResult with UNK domain and low confidence.
     """
     return EnrichmentResult(
         domain_level1="UNK",

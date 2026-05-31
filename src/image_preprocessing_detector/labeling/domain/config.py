@@ -60,12 +60,12 @@ class DomainModelConfig:
     """Configuration for a single OpenRouter model.
 
     Attributes:
-        model_id: OpenRouter model identifier (e.g., 'deepseek/deepseek-r1-0528:free').
-        role: Model role in the pipeline ('primary_text', 'secondary_text',
+        model_id (str): OpenRouter model identifier (e.g., 'deepseek/deepseek-r1-0528:free').
+        role (str): Model role in the pipeline ('primary_text', 'secondary_text',
             'primary_vision', 'secondary_vision').
-        max_tokens: Maximum output tokens per request.
-        temperature: Sampling temperature (0.0 for deterministic).
-        supports_vision: Whether the model accepts image input.
+        max_tokens (int): Maximum output tokens per request.
+        temperature (float): Sampling temperature (0.0 for deterministic).
+        supports_vision (bool): Whether the model accepts image input.
     """
 
     model_id: str
@@ -80,21 +80,21 @@ class DomainPipelineConfig:
     """Pipeline configuration for domain classification and metadata enrichment.
 
     Attributes:
-        primary_text_model: Primary text-only model (free).
-        secondary_text_model: Fallback text model for low confidence (free).
-        primary_vision_model: Primary vision model for image-only samples (paid).
-        secondary_vision_model: Fallback vision model (paid).
-        text_confidence_threshold: Minimum confidence to accept primary text result.
-        vision_confidence_threshold: Minimum confidence to accept primary vision result.
-        text_truncation_chars: Max characters of sample text to include in prompt.
-        image_max_pixels: Max dimension for image resizing before API call.
-        rate_limit_delay: Seconds to wait between API calls.
-        max_retries: Maximum retry attempts per API call.
-        retry_base_delay: Base delay for exponential backoff (seconds).
-        openrouter_base_url: OpenRouter API base URL.
-        openrouter_api_key: API key (loaded from env if not provided).
-        http_referer: HTTP-Referer header for OpenRouter (best practice).
-        app_title: X-Title header for OpenRouter (best practice).
+        primary_text_model (DomainModelConfig): Primary text-only model (free).
+        secondary_text_model (DomainModelConfig): Fallback text model for low confidence (free).
+        primary_vision_model (DomainModelConfig): Primary vision model for image-only samples (paid).
+        secondary_vision_model (DomainModelConfig): Fallback vision model (paid).
+        text_confidence_threshold (float): Minimum confidence to accept primary text result.
+        vision_confidence_threshold (float): Minimum confidence to accept primary vision result.
+        text_truncation_chars (int): Max characters of sample text to include in prompt.
+        image_max_pixels (int): Max dimension for image resizing before API call.
+        rate_limit_delay (float): Seconds to wait between API calls.
+        max_retries (int): Maximum retry attempts per API call.
+        retry_base_delay (float): Base delay for exponential backoff (seconds).
+        openrouter_base_url (str): OpenRouter API base URL.
+        openrouter_api_key (str | None): API key (loaded from env if not provided).
+        http_referer (str): HTTP-Referer header for OpenRouter (best practice).
+        app_title (str): X-Title header for OpenRouter (best practice).
     """
 
     primary_text_model: DomainModelConfig = field(
@@ -141,7 +141,7 @@ class DomainPipelineConfig:
         """Resolve API key from config or environment.
 
         Returns:
-            OpenRouter API key.
+            str:             OpenRouter API key.
 
         Raises:
             ValueError: If no API key found.
@@ -164,23 +164,23 @@ class EnrichmentResult:
     (capture_method, content flags) are None for text-only classification.
 
     Attributes:
-        domain_level1: Primary domain code (3-letter, from DomainLevel1 enum).
-        domain_confidence: Classification confidence (0.0-1.0).
-        iso639_language: ISO 639-1/3 language code (e.g., 'en', 'ar').
-        iso15924_script: ISO 15924 script code (e.g., 'Latn', 'Arab').
-        content_type: Content type classification (e.g., 'scientific_paper').
-        capture_method: Capture method (vision-only, CaptureMethod value).
-        has_table: Table presence flag (vision-only).
-        has_formula: Formula/equation presence flag (vision-only).
-        has_handwriting: Handwriting presence flag (vision-only).
-        has_signature: Signature presence flag (vision-only).
-        has_figure: Figure/chart presence flag (vision-only).
-        orientation: Page orientation (vision-only, 'portrait'/'landscape').
-        reasoning: Model's reasoning for classification.
-        model_used: OpenRouter model ID used for classification.
-        tokens_used: Total tokens consumed by the API call.
-        input_mode: Input type used ('text' or 'vision').
-        escalated: Whether the result was escalated to a secondary model.
+        domain_level1 (str): Primary domain code (3-letter, from DomainLevel1 enum).
+        domain_confidence (float): Classification confidence (0.0-1.0).
+        iso639_language (str | None): ISO 639-1/3 language code (e.g., 'en', 'ar').
+        iso15924_script (str | None): ISO 15924 script code (e.g., 'Latn', 'Arab').
+        content_type (str | None): Content type classification (e.g., 'scientific_paper').
+        capture_method (str | None): Capture method (vision-only, CaptureMethod value).
+        has_table (bool | None): Table presence flag (vision-only).
+        has_formula (bool | None): Formula/equation presence flag (vision-only).
+        has_handwriting (bool | None): Handwriting presence flag (vision-only).
+        has_signature (bool | None): Signature presence flag (vision-only).
+        has_figure (bool | None): Figure/chart presence flag (vision-only).
+        orientation (str | None): Page orientation (vision-only, 'portrait'/'landscape').
+        reasoning (str): Model's reasoning for classification.
+        model_used (str): OpenRouter model ID used for classification.
+        tokens_used (int): Total tokens consumed by the API call.
+        input_mode (str): Input type used ('text' or 'vision').
+        escalated (bool): Whether the result was escalated to a secondary model.
     """
 
     domain_level1: str
@@ -206,7 +206,7 @@ def get_default_config() -> DomainPipelineConfig:
     """Create default pipeline configuration.
 
     Returns:
-        DomainPipelineConfig with default model roster and thresholds.
+        DomainPipelineConfig:         DomainPipelineConfig with default model roster and thresholds.
     """
     return DomainPipelineConfig()
 

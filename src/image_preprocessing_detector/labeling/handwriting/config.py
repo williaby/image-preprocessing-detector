@@ -68,9 +68,9 @@ class HwVisionModelConfig:
     """Configuration for a single OpenRouter vision model.
 
     Attributes:
-        model_id: OpenRouter model identifier.
-        max_tokens: Maximum output tokens per request.
-        weight: Relative weight when computing weighted consensus (1.0 = equal).
+        model_id (str): OpenRouter model identifier.
+        max_tokens (int): Maximum output tokens per request.
+        weight (float): Relative weight when computing weighted consensus (1.0 = equal).
     """
 
     model_id: str
@@ -83,22 +83,22 @@ class LegibilityScorerConfig:
     """Pipeline configuration for handwriting legibility VLM scoring.
 
     Attributes:
-        vision_models: Ordered list of vision models to query per sheet.
-        sheet_cols: Number of columns in the contact sheet grid.
-        sheet_rows: Number of rows in the contact sheet grid.
-        cell_width_px: Width of each cell thumbnail in pixels.
-        sheet_jpeg_quality: JPEG quality for saved contact sheets (1-95).
-        label_font_size: Font size for the "#N" cell badge overlay.
-        image_max_pixels: Max dimension for sheet resizing before API call.
-        disagreement_threshold: Std dev above which a score is flagged.
-        min_model_responses: Minimum valid model responses required for consensus.
-        rate_limit_delay: Seconds to wait between API calls.
-        max_retries: Maximum retry attempts per API call.
-        retry_base_delay: Base delay for exponential backoff (seconds).
-        openrouter_base_url: OpenRouter API base URL.
-        openrouter_api_key: API key (loaded from env if None).
-        http_referer: HTTP-Referer header for OpenRouter.
-        app_title: X-Title header for OpenRouter.
+        vision_models (tuple[HwVisionModelConfig, ...]): Ordered list of vision models to query per sheet.
+        sheet_cols (int): Number of columns in the contact sheet grid.
+        sheet_rows (int): Number of rows in the contact sheet grid.
+        cell_width_px (int): Width of each cell thumbnail in pixels.
+        sheet_jpeg_quality (int): JPEG quality for saved contact sheets (1-95).
+        label_font_size (int): Font size for the "#N" cell badge overlay.
+        image_max_pixels (int): Max dimension for sheet resizing before API call.
+        disagreement_threshold (float): Std dev above which a score is flagged.
+        min_model_responses (int): Minimum valid model responses required for consensus.
+        rate_limit_delay (float): Seconds to wait between API calls.
+        max_retries (int): Maximum retry attempts per API call.
+        retry_base_delay (float): Base delay for exponential backoff (seconds).
+        openrouter_base_url (str): OpenRouter API base URL.
+        openrouter_api_key (str | None): API key (loaded from env if None).
+        http_referer (str): HTTP-Referer header for OpenRouter.
+        app_title (str): X-Title header for OpenRouter.
     """
 
     vision_models: tuple[HwVisionModelConfig, ...] = field(
@@ -149,7 +149,7 @@ class LegibilityScorerConfig:
         """Resolve API key from config or environment.
 
         Returns:
-            OpenRouter API key string.
+            str:             OpenRouter API key string.
 
         Raises:
             ValueError: If no API key is found in config or environment.
@@ -168,6 +168,6 @@ def get_default_config() -> LegibilityScorerConfig:
     """Create default pipeline configuration with 3-model roster.
 
     Returns:
-        LegibilityScorerConfig with production defaults.
+        LegibilityScorerConfig:         LegibilityScorerConfig with production defaults.
     """
     return LegibilityScorerConfig()
