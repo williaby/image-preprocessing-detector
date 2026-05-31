@@ -171,8 +171,7 @@ class CardinalityGuard:
         """Initialize the guard.
 
         Args:
-            max_unique_values: Maximum unique values to track.
-        """
+            max_unique_values (int): Maximum unique values to track."""
         self._max_values = max_unique_values
         self._seen_values: set[str] = set()
         self._overflow_value = "__other__"
@@ -181,11 +180,10 @@ class CardinalityGuard:
         """Sanitize a label value, limiting cardinality.
 
         Args:
-            value: The label value to sanitize.
+            value (str): The label value to sanitize.
 
         Returns:
-            Sanitized value or overflow bucket.
-        """
+            str: Sanitized value or overflow bucket."""
         if value in self._seen_values:
             return value
 
@@ -474,10 +472,9 @@ class MetricsCollector:
         """Set build information.
 
         Args:
-            version: Application version.
-            git_commit: Git commit hash.
-            build_time: Build timestamp.
-        """
+            version (str): Application version.
+            git_commit (str): Git commit hash.
+            build_time (str): Build timestamp."""
         self.build_info.info(
             {
                 "version": version,
@@ -501,12 +498,11 @@ class MetricsCollector:
         """Record a processed page.
 
         Args:
-            status: Processing status (success, error).
-            gate_result: Gate decision (text_detected, no_text).
-            duration_seconds: Processing duration.
-            device: Device used (cpu, gpu, modal).
-            model: Model used (student, teacher).
-        """
+            status (str): Processing status (success, error).
+            gate_result (str): Gate decision (text_detected, no_text).
+            duration_seconds (float): Processing duration.
+            device (str): Device used (cpu, gpu, modal).
+            model (str): Model used (student, teacher)."""
         self.pages_processed.labels(status=status, gate_result=gate_result).inc()
         self.processing_latency.labels(
             operation="page", device=device, model=model
@@ -516,9 +512,8 @@ class MetricsCollector:
         """Record an error.
 
         Args:
-            error_code: Error code (e.g., E2001).
-            category: Error category (e.g., processing).
-        """
+            error_code (str): Error code (e.g., E2001).
+            category (str): Error category (e.g., processing)."""
         sanitized_code = self._error_guard.sanitize(error_code)
         self.errors.labels(error_code=sanitized_code, category=category).inc()
 
@@ -533,12 +528,11 @@ class MetricsCollector:
         """Record teacher model usage.
 
         Args:
-            reason: Reason for teacher invocation.
-            device: Device used.
-            duration_seconds: Processing duration.
-            blocked: Whether invocation was blocked.
-            blocked_reason: Reason for blocking.
-        """
+            reason (str): Reason for teacher invocation.
+            device (str): Device used.
+            duration_seconds (float): Processing duration.
+            blocked (bool): Whether invocation was blocked.
+            blocked_reason (str): Reason for blocking."""
         if blocked:
             self.teacher_blocked.labels(reason=blocked_reason).inc()
         else:
@@ -557,9 +551,8 @@ class MetricsCollector:
         """Record a correction operation.
 
         Args:
-            correction_type: Type of correction (deskew, contrast, etc).
-            duration_seconds: Processing duration.
-        """
+            correction_type (str): Type of correction (deskew, contrast, etc).
+            duration_seconds (float): Processing duration."""
         self.corrections_applied.labels(correction_type=correction_type).inc()
         self.correction_latency.labels(correction_type=correction_type).observe(
             duration_seconds
@@ -569,27 +562,24 @@ class MetricsCollector:
         """Record a quality score.
 
         Args:
-            score: Quality score (0-1).
-            gate_result: Gate decision.
-        """
+            score (float): Quality score (0-1).
+            gate_result (str): Gate decision."""
         self.quality_score.labels(gate_result=gate_result).observe(score)
 
     def set_queue_depth(self, queue_name: str, depth: int) -> None:
         """Set current queue depth.
 
         Args:
-            queue_name: Name of the queue.
-            depth: Current depth.
-        """
+            queue_name (str): Name of the queue.
+            depth (int): Current depth."""
         self.queue_depth.labels(queue_name=queue_name).set(depth)
 
     def set_active_workers(self, worker_type: str, count: int) -> None:
         """Set active worker count.
 
         Args:
-            worker_type: Type of worker.
-            count: Number of active workers.
-        """
+            worker_type (str): Type of worker.
+            count (int): Number of active workers."""
         self.active_workers.labels(worker_type=worker_type).set(count)
 
     def record_drift_result(
@@ -602,11 +592,10 @@ class MetricsCollector:
         """Record drift detection result.
 
         Args:
-            feature: Feature name (e.g., quality_score, blur_score).
-            kl_divergence: KL divergence value.
-            psi: PSI value.
-            severity: Severity level (0=none, 1=warning, 2=critical).
-        """
+            feature (str): Feature name (e.g., quality_score, blur_score).
+            kl_divergence (float): KL divergence value.
+            psi (float): PSI value.
+            severity (int): Severity level (0=none, 1=warning, 2=critical)."""
         self.drift_kl_divergence.labels(feature=feature).set(kl_divergence)
         self.drift_psi.labels(feature=feature).set(psi)
         self.drift_severity.labels(feature=feature).set(severity)
@@ -624,13 +613,12 @@ class MetricsCollector:
         """Record model performance metrics.
 
         Args:
-            model_name: Name of the model (student, teacher).
-            dataset: Dataset used for evaluation.
-            map_score: Mean Average Precision.
-            f1_score: F1 score.
-            precision: Precision score (optional).
-            recall: Recall score (optional).
-        """
+            model_name (str): Name of the model (student, teacher).
+            dataset (str): Dataset used for evaluation.
+            map_score (float): Mean Average Precision.
+            f1_score (float): F1 score.
+            precision (float | None): Precision score (optional).
+            recall (float | None): Recall score (optional)."""
         self.model_map.labels(model_name=model_name, dataset=dataset).set(map_score)
         self.model_f1.labels(model_name=model_name, dataset=dataset).set(f1_score)
         if precision is not None:
@@ -650,9 +638,9 @@ class MetricsCollector:
         """Context manager to time an operation.
 
         Args:
-            operation: Operation name.
-            device: Device used.
-            model: Model used.
+            operation (str): Operation name.
+            device (str): Device used.
+            model (str): Model used.
 
         Yields:
             None
@@ -670,8 +658,7 @@ class MetricsCollector:
         """Get metrics in Prometheus format.
 
         Returns:
-            Metrics as bytes.
-        """
+            bytes: Metrics as bytes."""
         if not PROMETHEUS_AVAILABLE:
             return b"# prometheus_client not installed\n"
         result = generate_latest(self._registry)  # type: ignore[arg-type, unused-ignore]
@@ -681,8 +668,7 @@ class MetricsCollector:
         """Start the metrics HTTP server.
 
         Args:
-            port: Port to listen on.
-        """
+            port (int | None): Port to listen on."""
         if not PROMETHEUS_AVAILABLE:
             return
 
@@ -703,8 +689,7 @@ def get_metrics() -> MetricsCollector:
     """Get the global metrics collector instance.
 
     Returns:
-        MetricsCollector instance.
-    """
+        MetricsCollector: MetricsCollector instance."""
     global _metrics
     if _metrics is None:
         _metrics = MetricsCollector()
@@ -761,11 +746,10 @@ def record_drift_result(
     """Record drift detection result.
 
     Args:
-        feature: Feature name.
-        kl_divergence: KL divergence value.
-        psi: PSI value.
-        severity: Severity level (0=none, 1=warning, 2=critical).
-    """
+        feature (str): Feature name.
+        kl_divergence (float): KL divergence value.
+        psi (float): PSI value.
+        severity (int): Severity level (0=none, 1=warning, 2=critical)."""
     get_metrics().record_drift_result(feature, kl_divergence, psi, severity)
 
 
@@ -780,13 +764,12 @@ def record_model_performance(
     """Record model performance metrics.
 
     Args:
-        model_name: Name of the model.
-        dataset: Dataset used for evaluation.
-        map_score: Mean Average Precision.
-        f1_score: F1 score.
-        precision: Precision score (optional).
-        recall: Recall score (optional).
-    """
+        model_name (str): Name of the model.
+        dataset (str): Dataset used for evaluation.
+        map_score (float): Mean Average Precision.
+        f1_score (float): F1 score.
+        precision (float | None): Precision score (optional).
+        recall (float | None): Recall score (optional)."""
     get_metrics().record_model_performance(
         model_name, dataset, map_score, f1_score, precision, recall
     )
@@ -803,13 +786,12 @@ def timed(
     """Decorator to time a function.
 
     Args:
-        operation: Operation name.
-        device: Device used.
-        model: Model used.
+        operation (str): Operation name.
+        device (str): Device used.
+        model (str): Model used.
 
     Returns:
-        Decorated function.
-    """
+        Callable[[Callable[..., T]], Callable[..., T]]: Decorated function."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
@@ -831,8 +813,7 @@ def metrics_endpoint() -> tuple[bytes, str]:
     """Generate metrics response for HTTP endpoint.
 
     Returns:
-        Tuple of (content, content_type).
-    """
+        tuple[bytes, str]: Tuple of (content, content_type)."""
     content = get_metrics().get_metrics()
     content_type = "text/plain; version=0.0.4; charset=utf-8"
     return content, content_type

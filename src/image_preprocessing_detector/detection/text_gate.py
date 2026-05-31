@@ -76,15 +76,14 @@ class TextGate:
         """Initialize text detection gate.
 
         Args:
-            stroke_threshold: Minimum stroke density for text (default: 0.05)
-            min_text_components: Minimum text-like components (default: 10)
-            edge_threshold_low: Canny low threshold (default: 50)
-            edge_threshold_high: Canny high threshold (default: 150)
-            min_component_area: Minimum component area in pixels (default: 20)
-            max_component_area: Maximum component area in pixels (default: 5000)
-            min_aspect_ratio: Minimum aspect ratio for text (default: 0.1)
-            max_aspect_ratio: Maximum aspect ratio for text (default: 10.0)
-        """
+            stroke_threshold (float): Minimum stroke density for text (default: 0.05)
+            min_text_components (int): Minimum text-like components (default: 10)
+            edge_threshold_low (int): Canny low threshold (default: 50)
+            edge_threshold_high (int): Canny high threshold (default: 150)
+            min_component_area (int): Minimum component area in pixels (default: 20)
+            max_component_area (int): Maximum component area in pixels (default: 5000)
+            min_aspect_ratio (float): Minimum aspect ratio for text (default: 0.1)
+            max_aspect_ratio (float): Maximum aspect ratio for text (default: 10.0)"""
         self.stroke_threshold = stroke_threshold
         self.min_text_components = min_text_components
         self.edge_threshold_low = edge_threshold_low
@@ -104,10 +103,10 @@ class TextGate:
         """Detect text presence in an image.
 
         Args:
-            image: Input image (BGR format, from OpenCV)
+            image (np.ndarray): Input image (BGR format, from OpenCV)
 
         Returns:
-            TextDetectionResult with detection decision and confidence scores
+            TextDetectionResult: TextDetectionResult with detection decision and confidence scores
 
         Raises:
             ValueError: If image is invalid or empty
@@ -163,11 +162,10 @@ class TextGate:
         Text has high stroke density due to character edges and strokes.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Stroke density score (0.0-1.0)
-        """
+            float: Stroke density score (0.0-1.0)"""
         # Apply morphological gradient to detect edges/strokes
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL_SIZE)
         gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, kernel)
@@ -184,11 +182,10 @@ class TextGate:
         Text typically consists of many small components with specific aspect ratios.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Component score (0.0-1.0) based on text-like component count
-        """
+            float: Component score (0.0-1.0) based on text-like component count"""
         # Binarize image with Otsu's method
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
@@ -232,11 +229,10 @@ class TextGate:
         Text regions have consistent edge patterns due to character boundaries.
 
         Args:
-            gray: Grayscale image
+            gray (np.ndarray): Grayscale image
 
         Returns:
-            Edge density score (0.0-1.0)
-        """
+            float: Edge density score (0.0-1.0)"""
         # Apply Canny edge detection
         edges = cv2.Canny(gray, self.edge_threshold_low, self.edge_threshold_high)
 
@@ -254,13 +250,12 @@ class TextGate:
         Weights prioritize stroke density and component analysis over edge density.
 
         Args:
-            stroke_density: Stroke density score
-            component_score: Component analysis score
-            edge_score: Edge density score
+            stroke_density (float): Stroke density score
+            component_score (float): Component analysis score
+            edge_score (float): Edge density score
 
         Returns:
-            Weighted confidence score (0.0-1.0)
-        """
+            float: Weighted confidence score (0.0-1.0)"""
         # Weighted average: stroke and components are more reliable
         confidence = (
             WEIGHT_STROKE * stroke_density
@@ -279,12 +274,12 @@ def detect_text(
     """Convenience function for text detection.
 
     Args:
-        image: Input image (BGR format)
-        stroke_threshold: Minimum stroke density for text (default: 0.05)
-        min_text_components: Minimum text-like components (default: 10)
+        image (np.ndarray): Input image (BGR format)
+        stroke_threshold (float): Minimum stroke density for text (default: 0.05)
+        min_text_components (int): Minimum text-like components (default: 10)
 
     Returns:
-        TextDetectionResult with detection decision and scores
+        TextDetectionResult: TextDetectionResult with detection decision and scores
 
     Example:
         >>> import cv2

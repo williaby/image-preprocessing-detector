@@ -30,11 +30,11 @@ def detect_watermark(
     5. Threshold: low-frequency energy >threshold
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        low_freq_threshold: Minimum low-frequency energy for watermark (default: 0.15)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        low_freq_threshold (float): Minimum low-frequency energy for watermark (default: 0.15)
 
     Returns:
-        WatermarkDetectionResult with detection decision and metrics
+        WatermarkDetectionResult: WatermarkDetectionResult with detection decision and metrics
 
     Raises:
         ValueError: If image is invalid or empty

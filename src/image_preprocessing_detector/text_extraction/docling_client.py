@@ -82,11 +82,10 @@ def _routing_params_to_form_data(
     """Convert DoclingRoutingParams to REST API form data fields.
 
     Args:
-        params: Routing params from the routing engine, or None for defaults.
+        params (DoclingRoutingParams | None): Routing params from the routing engine, or None for defaults.
 
     Returns:
-        Dictionary of form field names to string values.
-    """
+        dict[str, str]: Dictionary of form field names to string values."""
     data: dict[str, str] = {"output_format": "json"}
 
     if params is None:
@@ -165,8 +164,7 @@ class DoclingClient:
         """Check if the Docling server is reachable.
 
         Returns:
-            True if the server responds to health check.
-        """
+            bool: True if the server responds to health check."""
         try:
             client = self._get_client()
             response = client.get("/health", timeout=5.0)
@@ -183,11 +181,11 @@ class DoclingClient:
         """Convert a document file via the Docling REST API.
 
         Args:
-            file_path: Path to the document (PDF, image, etc.).
-            routing_params: Optional routing params from DoclingRoutingEngine.
+            file_path (Path): Path to the document (PDF, image, etc.).
+            routing_params (DoclingRoutingParams | None): Optional routing params from DoclingRoutingEngine.
 
         Returns:
-            DoclingResult with extracted text, markdown, and metadata.
+            DoclingResult: DoclingResult with extracted text, markdown, and metadata.
 
         Raises:
             DoclingServerError: If the server returns an error or is unreachable.
@@ -242,13 +240,12 @@ class DoclingClient:
         """Parse the Docling JSON response into a DoclingResult.
 
         Args:
-            result: Raw JSON response from the server.
-            file_path: Source file path for metadata.
-            elapsed_ms: Client-side elapsed time.
+            result (dict[str, Any]): Raw JSON response from the server.
+            file_path (Path): Source file path for metadata.
+            elapsed_ms (float): Client-side elapsed time.
 
         Returns:
-            Structured DoclingResult.
-        """
+            DoclingResult: Structured DoclingResult."""
         doc = result.get("document", {})
 
         # Extract text content

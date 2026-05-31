@@ -32,12 +32,12 @@ def detect_figures(
     5. Classify as figure if text density <5%
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        min_figure_area_ratio: Minimum area ratio for figure (default: 0.20 = 20%)
-        max_text_density: Maximum text density for figure (default: 0.05 = 5%)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        min_figure_area_ratio (float): Minimum area ratio for figure (default: 0.20 = 20%)
+        max_text_density (float): Maximum text density for figure (default: 0.05 = 5%)
 
     Returns:
-        FigureDetectionResult with detection decision and figure count
+        FigureDetectionResult: FigureDetectionResult with detection decision and figure count
 
     Raises:
         ValueError: If image is invalid or empty

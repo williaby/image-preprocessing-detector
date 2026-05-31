@@ -138,11 +138,10 @@ class CrossModelValidator:
         """Load validator from saved configuration files.
 
         Args:
-            config: Paths to all saved parameter files.
+            config (ValidatorConfig): Paths to all saved parameter files.
 
         Returns:
-            Loaded CrossModelValidator instance.
-        """
+            CrossModelValidator: Loaded CrossModelValidator instance."""
         ood_detector = EmbeddingOODDetector.load(config.ood_params_path)
         calibrator = CrossModelCalibrator.load(config.calibration_path)
 
@@ -168,10 +167,10 @@ class CrossModelValidator:
         """Run Tier 1 embedding OOD detection only.
 
         Args:
-            prediction: SigLIP2 prediction (must have embedding).
+            prediction (MultiTaskPrediction): SigLIP2 prediction (must have embedding).
 
         Returns:
-            OODResult with Mahalanobis distance.
+            OODResult: OODResult with Mahalanobis distance.
 
         Raises:
             ValueError: If prediction has no embedding.
@@ -191,16 +190,13 @@ class CrossModelValidator:
         """Run full tiered validation.
 
         Args:
-            prediction: SigLIP2 prediction (must have embedding).
-            vlm_ratings: VLM categorical ratings per dimension
-                (e.g. {"overall": "good", "sharpness": "fair"}).
-            clip_scores: CLIP-IQA continuous scores per dimension
-                (e.g. {"overall": 0.72}).
-            force_tier2: Force Tier 2 even if Tier 1 passes.
+            prediction (MultiTaskPrediction): SigLIP2 prediction (must have embedding).
+            vlm_ratings (dict[str, str] | None): VLM categorical ratings per dimension (e.g. {"overall": "good", "sharpness": "fair"}).
+            clip_scores (dict[str, float] | None): CLIP-IQA continuous scores per dimension (e.g. {"overall": 0.72}).
+            force_tier2 (bool): Force Tier 2 even if Tier 1 passes.
 
         Returns:
-            ReliabilityResult with full assessment.
-        """
+            ReliabilityResult: ReliabilityResult with full assessment."""
         # Tier 1: Embedding OOD
         ood_result = self.validate_tier1(prediction)
 
@@ -263,13 +259,12 @@ class CrossModelValidator:
         silently skip unknown dimension keys.
 
         Args:
-            siglip_scores: SigLIP2 IQA scores per dimension.
-            vlm_ratings: VLM categorical ratings per dimension.
-            clip_scores: CLIP-IQA continuous scores per dimension.
+            siglip_scores (dict[str, float]): SigLIP2 IQA scores per dimension.
+            vlm_ratings (dict[str, str] | None): VLM categorical ratings per dimension.
+            clip_scores (dict[str, float] | None): CLIP-IQA continuous scores per dimension.
 
         Returns:
-            Tuple of (validator_scores, z_values).
-        """
+            tuple[list[ValidatorScore], list[float]]: Tuple of (validator_scores, z_values)."""
         validator_scores: list[ValidatorScore] = []
         z_values: list[float] = []
 
@@ -296,12 +291,11 @@ class CrossModelValidator:
         """Collect z-scores for a validator across dimensions.
 
         Args:
-            validator: Validator name ("vlm" or "clip").
-            dim_scores: Per-dimension ratings or scores from the validator.
-            siglip_scores: SigLIP reference scores per dimension.
-            out_scores: Accumulator for ValidatorScore results.
-            out_z: Accumulator for non-None z-score values.
-        """
+            validator (str): Validator name ("vlm" or "clip").
+            dim_scores (Mapping[str, str | float]): Per-dimension ratings or scores from the validator.
+            siglip_scores (dict[str, float]): SigLIP reference scores per dimension.
+            out_scores (list[ValidatorScore]): Accumulator for ValidatorScore results.
+            out_z (list[float]): Accumulator for non-None z-score values."""
         for dim in DIMENSIONS:
             if dim not in dim_scores:
                 continue
@@ -323,11 +317,10 @@ class CrossModelValidator:
         """Compute Mahalanobis or Euclidean agreement distance from z-scores.
 
         Args:
-            z_values: List of z-score values from validators.
+            z_values (list[float]): List of z-score values from validators.
 
         Returns:
-            Agreement distance (0.0 if no z-values).
-        """
+            float: Agreement distance (0.0 if no z-values)."""
         if not z_values:
             return 0.0
         z_vec = np.array(z_values)
@@ -353,12 +346,11 @@ class CrossModelValidator:
         Uses Ledoit-Wolf shrinkage for robust estimation.
 
         Args:
-            z_vectors: Calibration z-scores, shape (n_samples, n_validators).
-            save_path: Optional path to save parameters.
+            z_vectors (np.ndarray): Calibration z-scores, shape (n_samples, n_validators).
+            save_path (str | Path | None): Optional path to save parameters.
 
         Returns:
-            Tuple of (precision_matrix, mean_vector).
-        """
+            tuple[np.ndarray, np.ndarray]: Tuple of (precision_matrix, mean_vector)."""
         from sklearn.covariance import LedoitWolf
 
         lw = LedoitWolf()
@@ -390,11 +382,10 @@ def reliability_result_to_dict(result: ReliabilityResult) -> dict[str, Any]:
     """Convert ReliabilityResult to JSON-serializable dict.
 
     Args:
-        result: Reliability assessment result.
+        result (ReliabilityResult): Reliability assessment result.
 
     Returns:
-        Nested dict with all assessment data.
-    """
+        dict[str, Any]: Nested dict with all assessment data."""
     return {
         "ood": {
             "mahalanobis_distance": result.ood_result.mahalanobis_distance,

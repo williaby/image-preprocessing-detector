@@ -66,14 +66,13 @@ def _classify_lines(
     """Classify detected lines as horizontal or vertical.
 
     Args:
-        lines: HoughLinesP output array of shape (N, 1, 4).
-        img_width: Image width for minimum length filtering.
-        img_height: Image height for minimum length filtering.
+        lines (np.ndarray): HoughLinesP output array of shape (N, 1, 4).
+        img_width (int): Image width for minimum length filtering.
+        img_height (int): Image height for minimum length filtering.
 
     Returns:
-        Tuple of (horizontal_y_positions, vertical_x_positions) for the
-        midpoints of qualifying lines.
-    """
+        tuple[list[int], list[int]]: Tuple of (horizontal_y_positions, vertical_x_positions) for the
+        midpoints of qualifying lines."""
     horizontal_ys: list[int] = []
     vertical_xs: list[int] = []
     angle_tol_rad = np.radians(_ANGLE_TOLERANCE_DEG)
@@ -110,12 +109,11 @@ def _cluster_positions(positions: list[int], min_gap: int) -> list[int]:
     cluster, sorted in ascending order.
 
     Args:
-        positions: Raw line midpoint positions.
-        min_gap: Minimum pixel distance between distinct clusters.
+        positions (list[int]): Raw line midpoint positions.
+        min_gap (int): Minimum pixel distance between distinct clusters.
 
     Returns:
-        Sorted list of distinct cluster center positions.
-    """
+        list[int]: Sorted list of distinct cluster center positions."""
     if not positions:
         return []
 
@@ -142,16 +140,15 @@ def _is_gap_at_point(
     """Check if a grid line gap exists at the given point.
 
     Args:
-        binary: Binary (inverted) image where lines are white.
-        center_x: X coordinate of the sample center.
-        center_y: Y coordinate of the sample center.
-        img_w: Image width.
-        img_h: Image height.
-        radius: Half-size of the sampling window.
+        binary (np.ndarray): Binary (inverted) image where lines are white.
+        center_x (int): X coordinate of the sample center.
+        center_y (int): Y coordinate of the sample center.
+        img_w (int): Image width.
+        img_h (int): Image height.
+        radius (int): Half-size of the sampling window.
 
     Returns:
-        True if the region around the point has low intensity (gap).
-    """
+        bool: True if the region around the point has low intensity (gap)."""
     if not (0 <= center_x < img_w and 0 <= center_y < img_h):
         return False
     y_lo = max(0, center_y - radius)
@@ -173,13 +170,12 @@ def _detect_merged_cells(
     segment is present. Large gaps suggest merged cells.
 
     Args:
-        binary: Binary (inverted) image where lines are white.
-        row_positions: Distinct row-boundary y-positions.
-        col_positions: Distinct column-boundary x-positions.
+        binary (np.ndarray): Binary (inverted) image where lines are white.
+        row_positions (list[int]): Distinct row-boundary y-positions.
+        col_positions (list[int]): Distinct column-boundary x-positions.
 
     Returns:
-        True if the gap pattern suggests merged cells.
-    """
+        bool: True if the gap pattern suggests merged cells."""
     if len(row_positions) < 3 or len(col_positions) < 3:
         return False
 
@@ -227,14 +223,13 @@ def _compute_complexity_score(
         capped at 1.0
 
     Args:
-        estimated_rows: Number of detected rows.
-        estimated_columns: Number of detected columns.
-        has_merged_cells: Whether merged cells were detected.
-        has_borders: Whether the table has visible borders.
+        estimated_rows (int): Number of detected rows.
+        estimated_columns (int): Number of detected columns.
+        has_merged_cells (bool): Whether merged cells were detected.
+        has_borders (bool): Whether the table has visible borders.
 
     Returns:
-        Complexity score between 0.0 and 1.0.
-    """
+        float: Complexity score between 0.0 and 1.0."""
     score = 0.1
 
     if estimated_rows > 10 or estimated_columns > 5:
@@ -279,12 +274,11 @@ class TableComplexityAnalyzer:
         """Analyze a table region and return complexity indicators.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale).
-            bbox: Optional bounding box ``(x, y, w, h)`` to crop the table
-                region before analysis. If ``None``, the entire image is used.
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale).
+            bbox (tuple[int, int, int, int] | None): Optional bounding box ``(x, y, w, h)`` to crop the table region before analysis. If ``None``, the entire image is used.
 
         Returns:
-            :class:`TableComplexity` with grid estimates and complexity score.
+            TableComplexity: :class:`TableComplexity` with grid estimates and complexity score.
 
         Raises:
             ValueError: If the image is invalid or the bbox produces an
@@ -368,11 +362,11 @@ class TableComplexityAnalyzer:
         """Crop the image to the bounding box if provided.
 
         Args:
-            image: Full input image.
-            bbox: ``(x, y, w, h)`` or ``None``.
+            image (np.ndarray): Full input image.
+            bbox (tuple[int, int, int, int] | None): ``(x, y, w, h)`` or ``None``.
 
         Returns:
-            Cropped region or original image.
+            np.ndarray: Cropped region or original image.
 
         Raises:
             ValueError: If bbox yields an empty region.
@@ -406,13 +400,12 @@ class TableComplexityAnalyzer:
         """Run HoughLinesP on the binary image.
 
         Args:
-            binary: Binary (inverted) image.
-            width: Image width.
-            height: Image height.
+            binary (np.ndarray): Binary (inverted) image.
+            width (int): Image width.
+            height (int): Image height.
 
         Returns:
-            Array of detected lines or ``None``.
-        """
+            np.ndarray | None: Array of detected lines or ``None``."""
         min_length = int(min(width, height) * _MIN_LINE_LENGTH_FRACTION)
         min_length = max(min_length, 10)
 
@@ -438,14 +431,13 @@ class TableComplexityAnalyzer:
         ``columns + 1`` vertical grid lines.
 
         Args:
-            num_h_lines: Total horizontal lines detected (before clustering).
-            num_v_lines: Total vertical lines detected (before clustering).
-            estimated_rows: Number of estimated rows.
-            estimated_columns: Number of estimated columns.
+            num_h_lines (int): Total horizontal lines detected (before clustering).
+            num_v_lines (int): Total vertical lines detected (before clustering).
+            estimated_rows (int): Number of estimated rows.
+            estimated_columns (int): Number of estimated columns.
 
         Returns:
-            ``True`` if the table appears to have visible borders.
-        """
+            bool: ``True`` if the table appears to have visible borders."""
         expected_h = estimated_rows + 1 if estimated_rows > 0 else 1
         expected_v = estimated_columns + 1 if estimated_columns > 0 else 1
 
@@ -462,11 +454,11 @@ def analyze_table_complexity(
     """Module-level convenience function for table complexity analysis.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale).
-        bbox: Optional bounding box ``(x, y, w, h)`` to crop the table region.
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale).
+        bbox (tuple[int, int, int, int] | None): Optional bounding box ``(x, y, w, h)`` to crop the table region.
 
     Returns:
-        :class:`TableComplexity` with grid estimates and complexity score.
+        TableComplexity: :class:`TableComplexity` with grid estimates and complexity score.
 
     Raises:
         ValueError: If the image is invalid.

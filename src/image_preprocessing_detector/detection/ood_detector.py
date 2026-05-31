@@ -81,13 +81,11 @@ class EmbeddingOODDetector:
         """Fit OOD detector from training set embeddings.
 
         Args:
-            embeddings: Training embeddings, shape (n_samples, embed_dim).
-            threshold_percentile: Percentile of training distances to use
-                as OOD threshold (default: 95th percentile).
+            embeddings (np.ndarray): Training embeddings, shape (n_samples, embed_dim).
+            threshold_percentile (float): Percentile of training distances to use as OOD threshold (default: 95th percentile).
 
         Returns:
-            Fitted EmbeddingOODDetector instance.
-        """
+            EmbeddingOODDetector: Fitted EmbeddingOODDetector instance."""
         from sklearn.covariance import LedoitWolf
 
         n_samples, embed_dim = embeddings.shape
@@ -133,11 +131,10 @@ class EmbeddingOODDetector:
         """Build an OODResult from a Mahalanobis distance.
 
         Args:
-            distance: Mahalanobis distance value.
+            distance (float): Mahalanobis distance value.
 
         Returns:
-            OODResult with distance, flag, and percentile.
-        """
+            OODResult: OODResult with distance, flag, and percentile."""
         percentile = 0.0
         if self._calibration_distances is not None:
             idx = np.searchsorted(self._calibration_distances, distance)
@@ -154,11 +151,10 @@ class EmbeddingOODDetector:
         """Compute OOD score for a single embedding.
 
         Args:
-            embedding: Single embedding vector (768-dim).
+            embedding (np.ndarray): Single embedding vector (768-dim).
 
         Returns:
-            OODResult with distance, flag, and percentile.
-        """
+            OODResult: OODResult with distance, flag, and percentile."""
         diff = embedding - self._mean
         distance = float(np.sqrt(diff @ self._precision @ diff))
         return self._build_result(distance)
@@ -167,11 +163,10 @@ class EmbeddingOODDetector:
         """Compute OOD scores for a batch of embeddings.
 
         Args:
-            embeddings: Batch of embeddings, shape (n, embed_dim).
+            embeddings (np.ndarray): Batch of embeddings, shape (n, embed_dim).
 
         Returns:
-            List of OODResult for each embedding.
-        """
+            list[OODResult]: List of OODResult for each embedding."""
         diffs = embeddings - self._mean
         distances = np.sqrt(np.sum(diffs @ self._precision * diffs, axis=1))
         return [self._build_result(float(dist)) for dist in distances]
@@ -180,8 +175,7 @@ class EmbeddingOODDetector:
         """Save detector parameters to disk.
 
         Args:
-            path: Output path (.npz file).
-        """
+            path (str | Path): Output path (.npz file)."""
         save_dict: dict[str, Any] = {
             "mean": self._mean,
             "precision_matrix": self._precision,
@@ -197,11 +191,10 @@ class EmbeddingOODDetector:
         """Load detector parameters from disk.
 
         Args:
-            path: Path to saved .npz file.
+            path (str | Path): Path to saved .npz file.
 
         Returns:
-            Loaded EmbeddingOODDetector instance.
-        """
+            EmbeddingOODDetector: Loaded EmbeddingOODDetector instance."""
         data = np.load(str(path))
         cal_dist = data.get("calibration_distances")
         detector = cls(

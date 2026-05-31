@@ -20,12 +20,11 @@ def _find_valley_boundaries(valleys: np.ndarray, min_column_gap: int) -> list[in
     """Find column boundaries from valley regions.
 
     Args:
-        valleys: Boolean array marking valley positions
-        min_column_gap: Minimum gap width to consider as column boundary
+        valleys (np.ndarray): Boolean array marking valley positions
+        min_column_gap (int): Minimum gap width to consider as column boundary
 
     Returns:
-        List of boundary positions (centers of significant valleys)
-    """
+        list[int]: List of boundary positions (centers of significant valleys)"""
     boundaries: list[int] = []
     in_valley = False
     valley_start = 0
@@ -48,11 +47,10 @@ def _classify_column_type(num_columns: int) -> tuple[str, float]:
     """Classify column type based on number of columns.
 
     Args:
-        num_columns: Number of detected columns
+        num_columns (int): Number of detected columns
 
     Returns:
-        Tuple of (column_type, confidence)
-    """
+        tuple[str, float]: Tuple of (column_type, confidence)"""
     if num_columns <= 1:
         return "single_column", 0.9
     if num_columns == 2:
@@ -77,12 +75,12 @@ def detect_column_count(
     5. Classify as single/multi/three_column/complex
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        min_column_gap: Minimum gap width between columns in pixels (default: 30)
-        min_column_width: Minimum column width in pixels (default: 100)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        min_column_gap (int): Minimum gap width between columns in pixels (default: 30)
+        min_column_width (int): Minimum column width in pixels (default: 100)
 
     Returns:
-        ColumnDetectionResult with column type and boundaries
+        ColumnDetectionResult: ColumnDetectionResult with column type and boundaries
 
     Raises:
         ValueError: If image is invalid or empty

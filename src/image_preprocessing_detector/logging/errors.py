@@ -224,11 +224,10 @@ class StructuredError:
         """Convert to dictionary for JSON serialization.
 
         Args:
-            include_traceback: Include traceback in output (for debugging).
+            include_traceback (bool): Include traceback in output (for debugging).
 
         Returns:
-            Dictionary representation.
-        """
+            dict[str, Any]: Dictionary representation."""
         result = {
             "error_code": self.code.value,
             "error_name": self.code.name,
@@ -249,8 +248,7 @@ class StructuredError:
         """Convert to API error response format.
 
         Returns:
-            API-friendly error response.
-        """
+            dict[str, Any]: API-friendly error response."""
         return {
             "error": self.code.name.lower(),
             "error_code": self.code.value,
@@ -277,10 +275,9 @@ class AppError(Exception):
         """Initialize application error.
 
         Args:
-            code: Error code.
-            message: Human-readable message.
-            details: Additional details.
-        """
+            code (ErrorCode): Error code.
+            message (str): Human-readable message.
+            details (dict[str, Any] | None): Additional details."""
         super().__init__(message)
         self.code = code
         self.message = message
@@ -308,10 +305,9 @@ class ValidationError(AppError):
         """Initialize validation error.
 
         Args:
-            code: Error code identifying the validation failure type.
-            message: Human-readable error message.
-            details: Additional context about the validation failure.
-        """
+            code (ErrorCode): Error code identifying the validation failure type.
+            message (str): Human-readable error message.
+            details (dict[str, Any] | None): Additional context about the validation failure."""
         super().__init__(code, message, details)
 
 
@@ -327,10 +323,9 @@ class ProcessingError(AppError):
         """Initialize processing error.
 
         Args:
-            code: Error code identifying the processing failure type.
-            message: Human-readable error message.
-            details: Additional context about the processing failure.
-        """
+            code (ErrorCode): Error code identifying the processing failure type.
+            message (str): Human-readable error message.
+            details (dict[str, Any] | None): Additional context about the processing failure."""
         super().__init__(code, message, details)
 
 
@@ -346,10 +341,9 @@ class InfrastructureError(AppError):
         """Initialize infrastructure error.
 
         Args:
-            code: Error code identifying the infrastructure failure type.
-            message: Human-readable error message.
-            details: Additional context about the infrastructure failure.
-        """
+            code (ErrorCode): Error code identifying the infrastructure failure type.
+            message (str): Human-readable error message.
+            details (dict[str, Any] | None): Additional context about the infrastructure failure."""
         super().__init__(code, message, details)
 
 
@@ -365,10 +359,9 @@ class AuthenticationError(AppError):
         """Initialize authentication error.
 
         Args:
-            code: Error code identifying the authentication failure type.
-            message: Human-readable error message.
-            details: Additional context about the authentication failure.
-        """
+            code (ErrorCode): Error code identifying the authentication failure type.
+            message (str): Human-readable error message.
+            details (dict[str, Any] | None): Additional context about the authentication failure."""
         super().__init__(code, message, details)
 
 
@@ -384,10 +377,9 @@ class RateLimitError(AppError):
         """Initialize rate limit error.
 
         Args:
-            code: Error code identifying the rate limit failure type.
-            message: Human-readable error message.
-            details: Additional context about the rate limit failure.
-        """
+            code (ErrorCode): Error code identifying the rate limit failure type.
+            message (str): Human-readable error message.
+            details (dict[str, Any] | None): Additional context about the rate limit failure."""
         super().__init__(code, message, details)
 
 
@@ -414,11 +406,10 @@ def map_exception_to_error(exception: Exception) -> StructuredError:
     """Map an exception to a structured error.
 
     Args:
-        exception: The exception to map.
+        exception (Exception): The exception to map.
 
     Returns:
-        StructuredError with appropriate code.
-    """
+        StructuredError: StructuredError with appropriate code."""
     # Check if it's already an AppError
     if isinstance(exception, AppError):
         return exception.to_structured_error()
@@ -464,15 +455,14 @@ class SentryIntegration:
         """Initialize Sentry integration.
 
         Args:
-            dsn: Sentry DSN. If None, reads from SENTRY_DSN env var.
-            environment: Environment name.
-            release: Release version.
-            sample_rate: Error sampling rate (0.0-1.0).
-            traces_sample_rate: Transaction sampling rate.
+            dsn (str | None): Sentry DSN. If None, reads from SENTRY_DSN env var.
+            environment (str | None): Environment name.
+            release (str | None): Release version.
+            sample_rate (float): Error sampling rate (0.0-1.0).
+            traces_sample_rate (float): Transaction sampling rate.
 
         Returns:
-            True if initialization succeeded.
-        """
+            bool: True if initialization succeeded."""
         # Check if enabled
         enabled = os.environ.get("IMGPREP_SENTRY_ENABLED", "false").lower() == "true"
         if not enabled:
@@ -527,12 +517,11 @@ class SentryIntegration:
         """Capture an error to Sentry.
 
         Args:
-            error: Error to capture.
-            extra: Additional context.
+            error (StructuredError | Exception): Error to capture.
+            extra (dict[str, Any] | None): Additional context.
 
         Returns:
-            Sentry event ID if captured, None otherwise.
-        """
+            str | None: Sentry event ID if captured, None otherwise."""
         if not cls.is_enabled():
             return None
 
@@ -580,11 +569,10 @@ class SentryIntegration:
         """Add a breadcrumb for context.
 
         Args:
-            message: Breadcrumb message.
-            category: Category name.
-            level: Log level.
-            data: Additional data.
-        """
+            message (str): Breadcrumb message.
+            category (str): Category name.
+            level (str): Log level.
+            data (dict[str, Any] | None): Additional data."""
         if not cls.is_enabled():
             return
 
@@ -606,9 +594,7 @@ class SentryIntegration:
         """Set user context for Sentry.
 
         Args:
-            user_id: User identifier.
-            **extra: Additional user data.
-        """
+            user_id (str): User identifier."""
         if not cls.is_enabled():
             return
 
@@ -633,8 +619,7 @@ class ErrorLogger:
         """Initialize error logger.
 
         Args:
-            logger: Structlog logger instance.
-        """
+            logger (Any | None): Structlog logger instance."""
         self.logger = logger or get_logger(__name__)
 
     def log_error(
@@ -646,13 +631,12 @@ class ErrorLogger:
         """Log an error with full context.
 
         Args:
-            error: Error to log.
-            context: Additional context.
-            capture_to_sentry: Whether to capture to Sentry.
+            error (StructuredError | Exception): Error to log.
+            context (dict[str, Any] | None): Additional context.
+            capture_to_sentry (bool): Whether to capture to Sentry.
 
         Returns:
-            StructuredError representation.
-        """
+            StructuredError: StructuredError representation."""
         if isinstance(error, StructuredError):
             structured = error
         else:
@@ -686,10 +670,9 @@ class ErrorLogger:
         """Log a warning.
 
         Args:
-            message: Warning message.
-            code: Optional error code.
-            context: Additional context.
-        """
+            message (str): Warning message.
+            code (ErrorCode | None): Optional error code.
+            context (dict[str, Any] | None): Additional context."""
         self.logger.warning(
             "warning_occurred",
             message=message,
@@ -717,14 +700,13 @@ def create_error(
     """Create a structured error.
 
     Args:
-        code: Error code.
-        message: Human-readable message.
-        details: Additional details.
-        exception: Original exception.
+        code (ErrorCode): Error code.
+        message (str): Human-readable message.
+        details (dict[str, Any] | None): Additional details.
+        exception (Exception | None): Original exception.
 
     Returns:
-        StructuredError instance.
-    """
+        StructuredError: StructuredError instance."""
     return StructuredError(
         code=code,
         message=message,

@@ -100,14 +100,12 @@ def _compute_local_variance_signal(
     is below ``shadow_threshold * global_mean`` are shadow candidates.
 
     Args:
-        gray: Grayscale image (uint8).
-        grid_size: Number of grid divisions per axis.
-        shadow_threshold: Fraction of global mean below which a cell is
-            considered a shadow candidate.
+        gray (np.ndarray): Grayscale image (uint8).
+        grid_size (int): Number of grid divisions per axis.
+        shadow_threshold (float): Fraction of global mean below which a cell is considered a shadow candidate.
 
     Returns:
-        Tuple of (local_variance_signal, shadow_ratio) both in [0, 1].
-    """
+        tuple[float, float]: Tuple of (local_variance_signal, shadow_ratio) both in [0, 1]."""
     height, width = gray.shape[:2]
     global_mean = float(np.mean(gray))
 
@@ -162,11 +160,10 @@ def _compute_gradient_consistency_signal(gray: np.ndarray) -> float:
     and measure how dominant the peak bin is relative to a uniform baseline.
 
     Args:
-        gray: Grayscale image (uint8).
+        gray (np.ndarray): Grayscale image (uint8).
 
     Returns:
-        Gradient consistency signal in [0, 1].
-    """
+        float: Gradient consistency signal in [0, 1]."""
     # Sobel gradients
     grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
     grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
@@ -208,11 +205,10 @@ def _score_to_severity(
     """Map a continuous shadow score to a categorical severity label.
 
     Args:
-        shadow_score: Aggregate shadow score in [0, 1].
+        shadow_score (float): Aggregate shadow score in [0, 1].
 
     Returns:
-        Severity label string.
-    """
+        Literal['none', 'mild', 'moderate', 'severe']: Severity label string."""
     if shadow_score >= _SEVERITY_SEVERE:
         return "severe"
     if shadow_score >= _SEVERITY_MODERATE:
@@ -233,13 +229,12 @@ def _compute_confidence(
     confidence is elevated.  Disagreement reduces confidence.
 
     Args:
-        shadow_score: Fused shadow score (0-1).
-        shadow_ratio: Raw shadow-area ratio (0-1).
-        gradient_signal: Gradient consistency signal (0-1).
+        shadow_score (float): Fused shadow score (0-1).
+        shadow_ratio (float): Raw shadow-area ratio (0-1).
+        gradient_signal (float): Gradient consistency signal (0-1).
 
     Returns:
-        Confidence value in [0, 1].
-    """
+        float: Confidence value in [0, 1]."""
     signals = [shadow_score, shadow_ratio, gradient_signal]
     mean_signal = sum(signals) / len(signals)
 
@@ -285,11 +280,8 @@ class ShadowDetector:
         """Initialise shadow detector.
 
         Args:
-            grid_size: Number of grid divisions per axis for local variance
-                analysis (default: 8, yielding 64 cells).
-            shadow_threshold: Fraction of global mean intensity below which
-                a grid cell is flagged as a shadow candidate (default: 0.6).
-        """
+            grid_size (int): Number of grid divisions per axis for local variance analysis (default: 8, yielding 64 cells).
+            shadow_threshold (float): Fraction of global mean intensity below which a grid cell is flagged as a shadow candidate (default: 0.6)."""
         self.grid_size = grid_size
         self.shadow_threshold = shadow_threshold
 
@@ -307,10 +299,10 @@ class ShadowDetector:
         """Analyse an image for shadow artifacts.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale numpy array).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            ShadowDetectionResult with score, severity, ratio, and confidence.
+            ShadowDetectionResult: ShadowDetectionResult with score, severity, ratio, and confidence.
 
         Raises:
             ValueError: If the image is *None* or empty.
@@ -373,10 +365,10 @@ def detect_shadows(image: np.ndarray) -> ShadowDetectionResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale numpy array).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        ShadowDetectionResult with score, severity, ratio, and confidence.
+        ShadowDetectionResult: ShadowDetectionResult with score, severity, ratio, and confidence.
 
     Raises:
         ValueError: If the image is *None* or empty.

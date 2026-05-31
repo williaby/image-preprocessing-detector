@@ -46,8 +46,7 @@ class ONNXSessionConfig:
         """Convert to ONNX Runtime SessionOptions.
 
         Returns:
-            Configured SessionOptions instance.
-        """
+            ort.SessionOptions: Configured SessionOptions instance."""
         import onnxruntime as ort
 
         options = ort.SessionOptions()
@@ -91,7 +90,7 @@ class ONNXModelRunner:
         """Load ONNX model if not already loaded.
 
         Returns:
-            Active ONNX Runtime InferenceSession.
+            ort.InferenceSession: Active ONNX Runtime InferenceSession.
 
         Raises:
             FileNotFoundError: If model file does not exist.
@@ -143,12 +142,11 @@ class ONNXModelRunner:
         """Run inference on a single input tensor.
 
         Args:
-            input_array: Input tensor (e.g., [B, C, H, W] for images).
-            input_name: Name of the input node. If None, uses first input.
+            input_array (NDArray[np.float32]): Input tensor (e.g., [B, C, H, W] for images).
+            input_name (str | None): Name of the input node. If None, uses first input.
 
         Returns:
-            List of output arrays, one per model output head.
-        """
+            list[NDArray[np.float32]]: List of output arrays, one per model output head."""
         session = self._ensure_session()
 
         if input_name is None:
@@ -167,8 +165,7 @@ class ONNXModelRunner:
         """Get the expected input shape from the model.
 
         Returns:
-            Input shape as list (may contain string dims for dynamic axes).
-        """
+            list[int | str]: Input shape as list (may contain string dims for dynamic axes)."""
         session = self._ensure_session()
         return list(session.get_inputs()[0].shape)
 
@@ -176,8 +173,7 @@ class ONNXModelRunner:
         """Get names of all output tensors.
 
         Returns:
-            List of output tensor names.
-        """
+            list[str]: List of output tensor names."""
         session = self._ensure_session()
         return [out.name for out in session.get_outputs()]
 
