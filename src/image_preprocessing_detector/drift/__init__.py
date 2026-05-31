@@ -250,12 +250,12 @@ def compute_histogram(
     """Compute normalized histogram from values.
 
     Args:
-        values: List of feature values
-        num_bins: Number of histogram bins
-        bounds: Optional (min, max) bounds for binning
+        values (list[float]): List of feature values
+        num_bins (int): Number of histogram bins
+        bounds (tuple[float, float] | None): Optional (min, max) bounds for binning
 
     Returns:
-        Tuple of (normalized_counts, bin_edges)
+        tuple[list[float], list[float]]: Tuple of (normalized_counts, bin_edges)
     """
     if not values:
         return [], []
@@ -288,10 +288,10 @@ def compute_stats(values: list[float]) -> HistogramStats:
     """Compute statistical summary of values.
 
     Args:
-        values: List of feature values
+        values (list[float]): List of feature values
 
     Returns:
-        HistogramStats with computed statistics
+        HistogramStats: HistogramStats with computed statistics
     """
     if not values:
         return HistogramStats(
@@ -333,12 +333,15 @@ def kl_divergence(
     - Higher values indicate greater divergence
 
     Args:
-        p: Current distribution (normalized histogram)
-        q: Reference distribution (normalized histogram)
-        epsilon: Smoothing factor to avoid log(0)
+        p (list[float]): Current distribution (normalized histogram)
+        q (list[float]): Reference distribution (normalized histogram)
+        epsilon (float): Smoothing factor to avoid log(0)
 
     Returns:
-        KL divergence value (non-negative float)
+        float: KL divergence value (non-negative float)
+
+    Raises:
+        ValueError: If distribution lengths do not match.
     """
     if len(p) != len(q):
         raise ValueError(f"Distribution lengths must match: {len(p)} != {len(q)}")
@@ -369,12 +372,15 @@ def psi(
     - PSI > 0.25: Significant shift
 
     Args:
-        expected: Reference distribution (normalized histogram)
-        actual: Current distribution (normalized histogram)
-        epsilon: Smoothing factor
+        expected (list[float]): Reference distribution (normalized histogram)
+        actual (list[float]): Current distribution (normalized histogram)
+        epsilon (float): Smoothing factor
 
     Returns:
-        PSI value (non-negative float)
+        float: PSI value (non-negative float)
+
+    Raises:
+        ValueError: If distribution lengths do not match.
     """
     if len(expected) != len(actual):
         raise ValueError(
@@ -401,12 +407,12 @@ def symmetric_kl(
     """Compute symmetric KL divergence (Jensen-Shannon divergence approximation).
 
     Args:
-        p: First distribution
-        q: Second distribution
-        epsilon: Smoothing factor
+        p (list[float]): First distribution
+        q (list[float]): Second distribution
+        epsilon (float): Smoothing factor
 
     Returns:
-        Symmetric KL divergence value
+        float: Symmetric KL divergence value
     """
     return (kl_divergence(p, q, epsilon) + kl_divergence(q, p, epsilon)) / 2
 
@@ -421,6 +427,10 @@ class DistributionTracker:
 
     Uses reservoir sampling to maintain a representative sample of
     feature values without storing all data points.
+
+    Args:
+        sample_rate (float): Probability of including each sample (0-1)
+        max_samples (int): Maximum samples to store per feature
     """
 
     def __init__(
@@ -428,12 +438,6 @@ class DistributionTracker:
         sample_rate: float = DEFAULT_SAMPLE_RATE,
         max_samples: int = MAX_SAMPLES_PER_FEATURE,
     ):
-        """Initialize distribution tracker.
-
-        Args:
-            sample_rate: Probability of including each sample (0-1)
-            max_samples: Maximum samples to store per feature
-        """
         self.sample_rate = sample_rate
         self.max_samples = max_samples
         self._samples: dict[str, list[tuple[float, str]]] = defaultdict(list)
@@ -451,12 +455,12 @@ class DistributionTracker:
         Uses reservoir sampling to maintain representative distribution.
 
         Args:
-            feature: Feature name or type
-            value: Feature value
-            sample_id: Optional identifier for the sample
+            feature (str | FeatureType): Feature name or type
+            value (float): Feature value
+            sample_id (str | None): Optional identifier for the sample
 
         Returns:
-            True if sample was added, False if skipped
+            bool: True if sample was added, False if skipped
         """
         feature_name = feature.value if isinstance(feature, FeatureType) else feature
         sample_id = sample_id or f"sample_{self._counts[feature_name]}"
@@ -540,7 +544,7 @@ class DistributionTracker:
         """Clear tracked samples.
 
         Args:
-            feature: Specific feature to clear, or None to clear all
+            feature (str | FeatureType | None): Specific feature to clear, or None to clear all
         """
         if feature is None:
             self._samples.clear()
@@ -567,6 +571,10 @@ class ReferenceStore:
 
     Reference distributions are used as baselines for drift detection.
     They are rotated monthly by default.
+
+    Args:
+        storage_path (str | Path): Directory to store reference distributions
+        rotation_days (int): Days before reference distributions expire
     """
 
     def __init__(
@@ -574,12 +582,6 @@ class ReferenceStore:
         storage_path: str | Path,
         rotation_days: int = DEFAULT_REFERENCE_ROTATION_DAYS,
     ):
-        """Initialize reference store.
-
-        Args:
-            storage_path: Directory to store reference distributions
-            rotation_days: Days before reference distributions expire
-        """
         self.storage_path = Path(storage_path)
         self.rotation_days = rotation_days
         self._references: dict[str, ReferenceDistribution] = {}
@@ -625,14 +627,14 @@ class ReferenceStore:
         """Save a new reference distribution.
 
         Args:
-            feature: Feature name or type
-            histogram: Normalized histogram counts
-            bin_edges: Histogram bin edges
-            stats: Statistical summary
-            sample_count: Number of samples used
+            feature (str | FeatureType): Feature name or type
+            histogram (list[float]): Normalized histogram counts
+            bin_edges (list[float]): Histogram bin edges
+            stats (HistogramStats): Statistical summary
+            sample_count (int): Number of samples used
 
         Returns:
-            Created ReferenceDistribution
+            ReferenceDistribution: Created ReferenceDistribution
         """
         feature_name = feature.value if isinstance(feature, FeatureType) else feature
 
@@ -667,10 +669,10 @@ class ReferenceStore:
         """Get reference distribution for a feature.
 
         Args:
-            feature: Feature name or type
+            feature (str | FeatureType): Feature name or type
 
         Returns:
-            ReferenceDistribution or None if not found/expired
+            ReferenceDistribution | None: ReferenceDistribution or None if not found/expired
         """
         feature_name = feature.value if isinstance(feature, FeatureType) else feature
         ref = self._references.get(feature_name)
@@ -689,7 +691,7 @@ class ReferenceStore:
         """Remove expired references.
 
         Returns:
-            List of expired feature names that were removed
+            list[str]: List of expired feature names that were removed
         """
         expired = []
         for (
@@ -732,6 +734,13 @@ class DriftDetector:
 
     Compares current feature distributions against stored references
     to detect drift that may indicate model degradation.
+
+    Args:
+        reference_store (ReferenceStore): Store for reference distributions
+        kl_warning (float): KL divergence threshold for warning
+        kl_critical (float): KL divergence threshold for critical
+        psi_warning (float): PSI threshold for warning
+        psi_critical (float): PSI threshold for critical
     """
 
     def __init__(
@@ -742,15 +751,6 @@ class DriftDetector:
         psi_warning: float = PSI_WARNING_THRESHOLD,
         psi_critical: float = PSI_CRITICAL_THRESHOLD,
     ):
-        """Initialize drift detector.
-
-        Args:
-            reference_store: Store for reference distributions
-            kl_warning: KL divergence threshold for warning
-            kl_critical: KL divergence threshold for critical
-            psi_warning: PSI threshold for warning
-            psi_critical: PSI threshold for critical
-        """
         self.reference_store = reference_store
         self.kl_warning = kl_warning
         self.kl_critical = kl_critical
@@ -767,13 +767,13 @@ class DriftDetector:
         """Detect drift for a single feature.
 
         Args:
-            feature: Feature name or type
-            current_histogram: Current normalized histogram
-            current_stats: Optional current statistics
-            sample_ids: Optional list of sample IDs for triage
+            feature (str | FeatureType): Feature name or type
+            current_histogram (list[float]): Current normalized histogram
+            current_stats (HistogramStats | None): Optional current statistics
+            sample_ids (list[str] | None): Optional list of sample IDs for triage
 
         Returns:
-            DriftResult with analysis
+            DriftResult: DriftResult with analysis
         """
         feature_name = feature.value if isinstance(feature, FeatureType) else feature
 
@@ -828,11 +828,11 @@ class DriftDetector:
         """Detect drift for all tracked features.
 
         Args:
-            tracker: Distribution tracker with current samples
-            features: Optional list of specific features to check
+            tracker (DistributionTracker): Distribution tracker with current samples
+            features (list[str | FeatureType] | None): Optional list of specific features to check
 
         Returns:
-            List of DriftResults for each feature
+            list[DriftResult]: List of DriftResults for each feature
         """
         if features is None:
             # Use raw feature names to avoid ValueError for custom string features
@@ -901,12 +901,12 @@ class DriftDetector:
         """Create reference distribution from tracked samples.
 
         Args:
-            tracker: Distribution tracker with samples
-            feature: Feature to create reference for
-            min_samples: Minimum samples required
+            tracker (DistributionTracker): Distribution tracker with samples
+            feature (str | FeatureType): Feature to create reference for
+            min_samples (int): Minimum samples required
 
         Returns:
-            Created ReferenceDistribution or None if insufficient samples
+            ReferenceDistribution | None: Created ReferenceDistribution or None if insufficient samples
         """
         stored_count = tracker.get_stored_count(feature)
 
@@ -940,11 +940,11 @@ def create_drift_detector(
     """Create a drift detector with default configuration.
 
     Args:
-        storage_path: Path for reference distribution storage
-        rotation_days: Days before references expire
+        storage_path (str | Path): Path for reference distribution storage
+        rotation_days (int): Days before references expire
 
     Returns:
-        Configured DriftDetector instance
+        DriftDetector: Configured DriftDetector instance
     """
     store = ReferenceStore(storage_path, rotation_days)
     return DriftDetector(store)
@@ -957,11 +957,11 @@ def create_tracker(
     """Create a distribution tracker with default configuration.
 
     Args:
-        sample_rate: Sampling probability
-        max_samples: Maximum samples per feature
+        sample_rate (float): Sampling probability
+        max_samples (int): Maximum samples per feature
 
     Returns:
-        Configured DistributionTracker instance
+        DistributionTracker: Configured DistributionTracker instance
     """
     return DistributionTracker(sample_rate, max_samples)
 

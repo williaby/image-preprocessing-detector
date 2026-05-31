@@ -157,6 +157,10 @@ class PrivacyReviewManager:
     - Review and update sample status
     - Track review sessions
     - Generate review reports
+
+    Args:
+        manifest_generator (ManifestGenerator): Manifest generator for loading/saving manifests
+        output_dir (str): Directory for review session records
     """
 
     def __init__(
@@ -164,12 +168,6 @@ class PrivacyReviewManager:
         manifest_generator: ManifestGenerator,
         output_dir: str = DEFAULT_REVIEW_OUTPUT_DIR,
     ):
-        """Initialize review manager.
-
-        Args:
-            manifest_generator: Manifest generator for loading/saving manifests
-            output_dir: Directory for review session records
-        """
         self.manifest_generator = manifest_generator
         self.output_path = Path(output_dir)
         self.output_path.mkdir(parents=True, exist_ok=True)
@@ -181,7 +179,7 @@ class PrivacyReviewManager:
         """Get summary of samples pending review.
 
         Returns:
-            ReviewSummary with counts and breakdown
+            ReviewSummary: ReviewSummary with counts and breakdown
         """
         summary = ReviewSummary()
 
@@ -222,12 +220,12 @@ class PrivacyReviewManager:
         """Get samples that need review.
 
         Args:
-            manifest_id: Specific manifest to review (None for all)
-            limit: Maximum samples to return
-            include_flagged: Include samples that were flagged
+            manifest_id (str | None): Specific manifest to review (None for all)
+            limit (int): Maximum samples to return
+            include_flagged (bool): Include samples that were flagged
 
         Returns:
-            List of (manifest_id, sample) tuples
+            list[tuple[str, HarvestedSample]]: List of (manifest_id, sample) tuples
         """
         samples_to_review: list[tuple[str, HarvestedSample]] = []
 
@@ -266,11 +264,11 @@ class PrivacyReviewManager:
         """Start a new review session.
 
         Args:
-            reviewer: Name/ID of reviewer
-            manifest_ids: Specific manifests to review (None for all pending)
+            reviewer (str): Name/ID of reviewer
+            manifest_ids (list[str] | None): Specific manifests to review (None for all pending)
 
         Returns:
-            ReviewSession object
+            ReviewSession: ReviewSession object
         """
         self._session_counter += 1
         session_id = (
@@ -308,14 +306,14 @@ class PrivacyReviewManager:
         """Review a single sample and update its status.
 
         Args:
-            manifest_id: ID of manifest containing sample
-            sample_id: ID of sample to review
-            decision: Review decision
-            reviewer: Reviewer name/ID
-            notes: Optional review notes
+            manifest_id (str): ID of manifest containing sample
+            sample_id (str): ID of sample to review
+            decision (ReviewDecision): Review decision
+            reviewer (str): Reviewer name/ID
+            notes (str): Optional review notes
 
         Returns:
-            True if review was recorded successfully
+            bool: True if review was recorded successfully
         """
         # Find manifest
         manifest_paths = [
@@ -398,14 +396,14 @@ class PrivacyReviewManager:
         """Batch review multiple samples with the same decision.
 
         Args:
-            manifest_id: Manifest to review
-            decision: Decision to apply to all samples
-            reviewer: Reviewer name/ID
-            notes: Notes for all reviews
-            sample_ids: Specific samples (None for all pending)
+            manifest_id (str): Manifest to review
+            decision (ReviewDecision): Decision to apply to all samples
+            reviewer (str): Reviewer name/ID
+            notes (str): Notes for all reviews
+            sample_ids (list[str] | None): Specific samples (None for all pending)
 
         Returns:
-            Number of samples reviewed
+            int: Number of samples reviewed
         """
         reviewed = 0
 
@@ -471,7 +469,7 @@ class PrivacyReviewManager:
         """End the current review session.
 
         Returns:
-            Completed ReviewSession or None if no active session
+            ReviewSession | None: Completed ReviewSession or None if no active session
         """
         if not self._current_session:
             return None
@@ -506,10 +504,10 @@ class PrivacyReviewManager:
         """Get recent review sessions.
 
         Args:
-            limit: Maximum sessions to return
+            limit (int): Maximum sessions to return
 
         Returns:
-            List of sessions, newest first
+            list[ReviewSession]: List of sessions, newest first
         """
         sessions: list[ReviewSession] = []
         sessions_dir = self.output_path / "sessions"
@@ -566,7 +564,7 @@ class PrivacyReviewManager:
         """Generate a review status report.
 
         Returns:
-            Report dictionary with summary and details
+            dict[str, Any]: Report dictionary with summary and details
         """
         summary = self.get_review_summary()
         sessions = self.get_session_history(limit=5)
@@ -593,11 +591,11 @@ def format_sample_for_review(
     """Format a sample for CLI review display.
 
     Args:
-        sample: Sample to format
-        manifest_id: ID of containing manifest
+        sample (HarvestedSample): Sample to format
+        manifest_id (str): ID of containing manifest
 
     Returns:
-        Formatted string for display
+        str: Formatted string for display
     """
     lines = [
         f"Sample ID: {sample.sample_id}",
@@ -630,10 +628,10 @@ def format_review_summary(summary: ReviewSummary) -> str:
     """Format review summary for CLI display.
 
     Args:
-        summary: Summary to format
+        summary (ReviewSummary): Summary to format
 
     Returns:
-        Formatted string
+        str: Formatted string
     """
     lines = [
         "=== Privacy Review Summary ===",
@@ -671,11 +669,11 @@ def create_review_manager(
     """Create a privacy review manager.
 
     Args:
-        manifest_dir: Directory containing harvest manifests
-        output_dir: Directory for review records
+        manifest_dir (str): Directory containing harvest manifests
+        output_dir (str): Directory for review records
 
     Returns:
-        Configured PrivacyReviewManager
+        PrivacyReviewManager: Configured PrivacyReviewManager
     """
     manifest_generator = ManifestGenerator(manifest_dir)
     return PrivacyReviewManager(manifest_generator, output_dir)
