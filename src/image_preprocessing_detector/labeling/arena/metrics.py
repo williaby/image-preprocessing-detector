@@ -42,11 +42,11 @@ def compute_plcc(
     values. A value of 1 indicates perfect positive correlation.
 
     Args:
-        predictions: Model predictions as array-like.
-        ground_truth: Ground truth values as array-like.
+        predictions (ArrayLike): Model predictions as array-like.
+        ground_truth (ArrayLike): Ground truth values as array-like.
 
     Returns:
-        PLCC value in range [-1, 1]. Higher is better.
+        float:         PLCC value in range [-1, 1]. Higher is better.
 
     Raises:
         ValueError: If inputs have different lengths or contain NaN.
@@ -90,11 +90,11 @@ def compute_srcc(
     truth rankings. It is robust to outliers and non-linear relationships.
 
     Args:
-        predictions: Model predictions as array-like.
-        ground_truth: Ground truth values as array-like.
+        predictions (ArrayLike): Model predictions as array-like.
+        ground_truth (ArrayLike): Ground truth values as array-like.
 
     Returns:
-        SRCC value in range [-1, 1]. Higher is better.
+        float:         SRCC value in range [-1, 1]. Higher is better.
 
     Raises:
         ValueError: If inputs have different lengths or contain NaN.
@@ -138,11 +138,11 @@ def compute_mae(
     and ground truth. Lower values indicate better performance.
 
     Args:
-        predictions: Model predictions as array-like.
-        ground_truth: Ground truth values as array-like.
+        predictions (ArrayLike): Model predictions as array-like.
+        ground_truth (ArrayLike): Ground truth values as array-like.
 
     Returns:
-        MAE value >= 0. Lower is better.
+        float:         MAE value >= 0. Lower is better.
 
     Raises:
         ValueError: If inputs have different lengths or contain NaN.
@@ -178,11 +178,11 @@ def compute_rmse(
     more heavily than MAE.
 
     Args:
-        predictions: Model predictions as array-like.
-        ground_truth: Ground truth values as array-like.
+        predictions (ArrayLike): Model predictions as array-like.
+        ground_truth (ArrayLike): Ground truth values as array-like.
 
     Returns:
-        RMSE value >= 0. Lower is better.
+        float:         RMSE value >= 0. Lower is better.
 
     Raises:
         ValueError: If inputs have different lengths or contain NaN.
@@ -212,11 +212,11 @@ class DimensionMetrics:
     """Metrics for a single DIQA dimension.
 
     Attributes:
-        plcc: Pearson Linear Correlation Coefficient [-1, 1]
-        srcc: Spearman Rank Correlation Coefficient [-1, 1]
-        mae: Mean Absolute Error [0, inf)
-        rmse: Root Mean Squared Error [0, inf)
-        num_samples: Number of samples used for computation
+        plcc (float): Pearson Linear Correlation Coefficient [-1, 1]
+        srcc (float): Spearman Rank Correlation Coefficient [-1, 1]
+        mae (float): Mean Absolute Error [0, inf)
+        rmse (float): Root Mean Squared Error [0, inf)
+        num_samples (int): Number of samples used for computation
     """
 
     plcc: float
@@ -244,11 +244,11 @@ class DimensionMetrics:
         """Compute all metrics for a dimension.
 
         Args:
-            predictions: Model predictions.
-            ground_truth: Ground truth values.
+            predictions (ArrayLike): Model predictions.
+            ground_truth (ArrayLike): Ground truth values.
 
         Returns:
-            DimensionMetrics with all computed values.
+            DimensionMetrics:             DimensionMetrics with all computed values.
         """
         preds = np.asarray(predictions)
         gt = np.asarray(ground_truth)
@@ -270,10 +270,10 @@ class ArenaMetrics:
     This is the primary output of a benchmark run.
 
     Attributes:
-        overall: Metrics for overall quality dimension
-        sharpness: Metrics for sharpness dimension
-        color: Metrics for color fidelity dimension
-        aggregate: Macro-averaged metrics across dimensions
+        overall (DimensionMetrics): Metrics for overall quality dimension
+        sharpness (DimensionMetrics): Metrics for sharpness dimension
+        color (DimensionMetrics): Metrics for color fidelity dimension
+        aggregate (DimensionMetrics): Macro-averaged metrics across dimensions
 
     Example:
         >>> metrics = ArenaMetrics.compute(predictions, ground_truth)
@@ -320,13 +320,13 @@ class ArenaMetrics:
         """Compute arena metrics from predictions and ground truth.
 
         Args:
-            predictions: Dict with keys "overall", "sharpness", "color"
+            predictions (dict[str, ArrayInput]): Dict with keys "overall", "sharpness", "color"
                         mapping to prediction arrays.
-            ground_truth: Dict with keys "overall", "sharpness", "color"
+            ground_truth (dict[str, ArrayInput]): Dict with keys "overall", "sharpness", "color"
                          mapping to ground truth arrays.
 
         Returns:
-            ArenaMetrics with all dimensions computed.
+            ArenaMetrics:             ArenaMetrics with all dimensions computed.
 
         Raises:
             KeyError: If required dimension keys are missing.
@@ -373,7 +373,7 @@ class ArenaMetrics:
         """Generate a human-readable summary of metrics.
 
         Returns:
-            Formatted string with metrics table.
+            str:             Formatted string with metrics table.
         """
         lines = [
             "Arena Metrics Summary",
@@ -407,7 +407,7 @@ class ArenaMetrics:
         """Generate Markdown-formatted metrics table.
 
         Returns:
-            Markdown table string suitable for reports.
+            str:             Markdown table string suitable for reports.
         """
         lines = [
             "## Arena Metrics",
@@ -443,12 +443,12 @@ def compare_models(
     """Compare multiple models and rank by specified metric.
 
     Args:
-        results: Dict mapping model names to ArenaMetrics.
-        sort_by: Metric to sort by in format "dimension.metric".
+        results (dict[str, ArenaMetrics]): Dict mapping model names to ArenaMetrics.
+        sort_by (str): Metric to sort by in format "dimension.metric".
                 E.g., "aggregate.plcc", "overall.srcc", "sharpness.mae".
 
     Returns:
-        List of (model_name, metrics) tuples sorted by metric.
+        list[tuple[str, ArenaMetrics]]:         List of (model_name, metrics) tuples sorted by metric.
         For correlation metrics (PLCC, SRCC), higher is better.
         For error metrics (MAE, RMSE), lower is better.
 

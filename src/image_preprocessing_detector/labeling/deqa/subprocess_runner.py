@@ -45,15 +45,15 @@ class DeQARunnerConfig:
     """Configuration for DeQA subprocess runner.
 
     Attributes:
-        deqa_venv: Path to DeQA-Doc venv (e.g., /home/user/DeQA-Doc/DeQA-Score/.venv)
-        deqa_root: Path to DeQA-Score root (for PYTHONPATH)
-        model_paths: Mapping of dimension name to model checkpoint path
-        device: CUDA device string
-        batch_size: Images per inference batch
-        timeout_per_image_s: Max seconds per image before killing subprocess
-        preprocessor_path: Optional path to image preprocessor config
-        load_8bit: Use 8-bit quantization
-        load_4bit: Use 4-bit quantization
+        deqa_venv (str): Path to DeQA-Doc venv (e.g., /home/user/DeQA-Doc/DeQA-Score/.venv)
+        deqa_root (str): Path to DeQA-Score root (for PYTHONPATH)
+        model_paths (dict[str, str]): Mapping of dimension name to model checkpoint path
+        device (str): CUDA device string
+        batch_size (int): Images per inference batch
+        timeout_per_image_s (float): Max seconds per image before killing subprocess
+        preprocessor_path (str | None): Optional path to image preprocessor config
+        load_8bit (bool): Use 8-bit quantization
+        load_4bit (bool): Use 4-bit quantization
     """
 
     deqa_venv: str
@@ -103,10 +103,10 @@ class DimensionScore:
     """Score for a single dimension of a single image.
 
     Attributes:
-        level_probs: Probability distribution over 5 levels
+        level_probs (list[float]): Probability distribution over 5 levels
             [excellent, good, fair, poor, bad]
-        expected_mos: Expected MOS (1-5 scale)
-        score_normalized: MOS normalized to [0, 1]
+        expected_mos (float): Expected MOS (1-5 scale)
+        score_normalized (float): MOS normalized to [0, 1]
     """
 
     level_probs: list[float]
@@ -119,12 +119,12 @@ class DeQAPrediction:
     """Complete DeQA-Doc prediction for a single image.
 
     Attributes:
-        image_path: Absolute path to scored image
-        overall: Overall quality dimension score
-        sharpness: Sharpness dimension score
-        color_fidelity: Color fidelity dimension score
-        inference_time_ms: Total inference time across all dimensions
-        errors: List of error messages (empty if successful)
+        image_path (str): Absolute path to scored image
+        overall (DimensionScore | None): Overall quality dimension score
+        sharpness (DimensionScore | None): Sharpness dimension score
+        color_fidelity (DimensionScore | None): Color fidelity dimension score
+        inference_time_ms (float): Total inference time across all dimensions
+        errors (list[str]): List of error messages (empty if successful)
     """
 
     image_path: str
@@ -168,14 +168,12 @@ class DeQASubprocessRunner:
     Launches a bridge script inside the DeQA-Doc venv for each
     dimension, passing image paths over stdin and reading predictions
     from stdout.
+
+    Args:
+        config (DeQARunnerConfig): Runner configuration with venv paths and model locations.
     """
 
     def __init__(self, config: DeQARunnerConfig) -> None:
-        """Initialize runner with configuration.
-
-        Args:
-            config: Runner configuration with venv paths and model locations.
-        """
         self._config = config
         self._bridge_script = str(Path(__file__).parent / BRIDGE_SCRIPT_NAME)
 
@@ -185,12 +183,12 @@ class DeQASubprocessRunner:
         """Score a list of images across all 3 dimensions.
 
         Args:
-            image_paths: Absolute paths to images to score.
-            progress_callback: Optional callable(dimension, processed, total)
+            image_paths (list[str]): Absolute paths to images to score.
+            progress_callback (Any | None): Optional callable(dimension, processed, total)
                 for progress reporting.
 
         Returns:
-            List of DeQAPrediction, one per input image. Images that
+            list[DeQAPrediction]:             List of DeQAPrediction, one per input image. Images that
             failed on some dimensions will have None for those scores.
         """
         predictions: dict[str, DeQAPrediction] = {
@@ -233,10 +231,10 @@ class DeQASubprocessRunner:
         """Build the bridge subprocess command line.
 
         Args:
-            dimension: Quality dimension to score.
+            dimension (str): Quality dimension to score.
 
         Returns:
-            Command list suitable for subprocess.Popen.
+            list[str]:             Command list suitable for subprocess.Popen.
         """
         python_bin = str(Path(self._config.deqa_venv).resolve() / "bin" / "python")
         model_path = str(Path(self._config.model_paths[dimension]).resolve())
@@ -268,7 +266,7 @@ class DeQASubprocessRunner:
         injection of malicious library paths from the parent process.
 
         Returns:
-            Environment dict with PYTHONPATH, CUDA vars, and minimal PATH.
+            dict[str, str]:             Environment dict with PYTHONPATH, CUDA vars, and minimal PATH.
         """
         resolved_root = str(Path(self._config.deqa_root).resolve())
         resolved_venv_bin = str(Path(self._config.deqa_venv).resolve() / "bin")
@@ -307,13 +305,16 @@ class DeQASubprocessRunner:
         received or stdout is exhausted. Reports progress via callback.
 
         Args:
-            proc: Running subprocess with stdout PIPE.
-            dimension: Dimension name for logging and progress.
-            num_images: Total images for progress denominator.
-            progress_callback: Optional callable(dimension, processed, total).
+            proc (subprocess.Popen[str]): Running subprocess with stdout PIPE.
+            dimension (str): Dimension name for logging and progress.
+            num_images (int): Total images for progress denominator.
+            progress_callback (Any | None): Optional callable(dimension, processed, total).
 
         Returns:
-            List of result dicts (excludes the sentinel record).
+            list[dict[str, Any]]: List of result dicts (excludes the sentinel record).
+
+        Raises:
+            RuntimeError: If subprocess stdout is not available.
         """
         results: list[dict[str, Any]] = []
         if proc.stdout is None:
@@ -354,12 +355,15 @@ class DeQASubprocessRunner:
         """Run inference for a single dimension via subprocess.
 
         Args:
-            image_paths: Images to score.
-            dimension: One of "overall", "sharpness", "color_fidelity".
-            progress_callback: Optional progress reporter.
+            image_paths (list[str]): Images to score.
+            dimension (str): One of "overall", "sharpness", "color_fidelity".
+            progress_callback (Any | None): Optional progress reporter.
 
         Returns:
-            List of result dicts from bridge script.
+            list[dict[str, Any]]: List of result dicts from bridge script.
+
+        Raises:
+            RuntimeError: If subprocess pipes are not available or subprocess fails.
         """
         cmd = self._build_subprocess_command(dimension)
         env = self._build_subprocess_env()
@@ -442,10 +446,10 @@ class DeQASubprocessRunner:
         """Score a single image across all 3 dimensions.
 
         Args:
-            image_path: Absolute path to image.
+            image_path (str): Absolute path to image.
 
         Returns:
-            DeQAPrediction with scores for all dimensions.
+            DeQAPrediction:             DeQAPrediction with scores for all dimensions.
         """
         results = self.score_images([image_path])
         return results[0]

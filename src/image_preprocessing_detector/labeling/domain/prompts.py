@@ -96,11 +96,11 @@ def build_text_prompt(
     """Build chat messages for text-based domain classification.
 
     Args:
-        text: Document text content to classify.
-        max_chars: Maximum characters to include (truncates with notice).
+        text (str): Document text content to classify.
+        max_chars (int): Maximum characters to include (truncates with notice).
 
     Returns:
-        List of chat message dicts ready for OpenRouter API.
+        list[dict[str, str]]:         List of chat message dicts ready for OpenRouter API.
     """
     if len(text) > max_chars:
         truncated_text = text[:max_chars] + "\n\n[TEXT TRUNCATED]"
@@ -123,7 +123,7 @@ def build_vision_prompt() -> list[dict[str, object]]:
     depends on the image encoding format (base64 or URL).
 
     Returns:
-        List of chat message dicts with system prompt and user text.
+        list[dict[str, object]]:         List of chat message dicts with system prompt and user text.
         Caller must append image content to the user message's content list.
     """
     return [

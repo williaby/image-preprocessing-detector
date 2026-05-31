@@ -62,7 +62,6 @@ class LocalBackend(InferenceBackend):
     """
 
     def __init__(self) -> None:
-        """Initialize the local backend."""
         self._model: Any = None
         self._spec: ModelSpec | None = None
         self._config: InferenceConfig | None = None
@@ -73,8 +72,8 @@ class LocalBackend(InferenceBackend):
         """Load a model from local artifact.
 
         Args:
-            spec: Model specification with local path.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification with local path.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If model cannot be loaded.

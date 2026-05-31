@@ -54,15 +54,15 @@ def create_hw_contact_sheet(
     receives a white "#N" badge in the top-left corner.
 
     Args:
-        image_paths: Ordered list of image file paths (max 12 recommended).
-        output_path: Destination path for the output JPEG.
-        cols: Number of columns in the grid.
-        cell_width_px: Width of each cell in pixels.
-        jpeg_quality: JPEG save quality (1-95).
-        label_font_size: Font size for the number badge overlay.
+        image_paths (list[Path]): Ordered list of image file paths (max 12 recommended).
+        output_path (Path): Destination path for the output JPEG.
+        cols (int): Number of columns in the grid.
+        cell_width_px (int): Width of each cell in pixels.
+        jpeg_quality (int): JPEG save quality (1-95).
+        label_font_size (int): Font size for the number badge overlay.
 
     Returns:
-        Path to the saved contact sheet image.
+        Path:         Path to the saved contact sheet image.
 
     Raises:
         ImportError: If Pillow is not installed.
@@ -122,11 +122,14 @@ def partition_into_sheets(
     """Split a list of image paths into fixed-size batches for contact sheets.
 
     Args:
-        image_paths: Full list of image file paths.
-        images_per_sheet: Maximum images per sheet (e.g., 12 for 4x3 grid).
+        image_paths (list[Path]): Full list of image file paths.
+        images_per_sheet (int): Maximum images per sheet (e.g., 12 for 4x3 grid).
 
     Returns:
-        List of batches; the last batch may be smaller than images_per_sheet.
+        list[list[Path]]: List of batches; the last batch may be smaller than images_per_sheet.
+
+    Raises:
+        ValueError: If images_per_sheet is not positive.
     """
     if images_per_sheet <= 0:
         msg = f"images_per_sheet must be positive, got {images_per_sheet}"
@@ -152,12 +155,12 @@ def _load_thumbnails(
     Failed loads are replaced with a grey placeholder cell.
 
     Args:
-        image_paths: Paths to load.
-        cell_width_px: Target width for each thumbnail.
-        pil_image: PIL.Image module reference.
+        image_paths (list[Path]): Paths to load.
+        cell_width_px (int): Target width for each thumbnail.
+        pil_image (Any): PIL.Image module reference.
 
     Returns:
-        List of PIL Image objects in RGB mode.
+        list[Any]:         List of PIL Image objects in RGB mode.
     """
     thumbnails: list[Any] = []
     for path in image_paths:
@@ -182,10 +185,10 @@ def _load_font(font_size: int) -> Any:
     """Load a truetype font, falling back to PIL default.
 
     Args:
-        font_size: Desired font size in points.
+        font_size (int): Desired font size in points.
 
     Returns:
-        PIL ImageFont object.
+        Any:         PIL ImageFont object.
     """
     from PIL import ImageFont
 
@@ -208,12 +211,12 @@ def _draw_label(
     """Draw a white background badge with black text at (x, y).
 
     Args:
-        sheet: PIL Image to draw on (modified in place).
-        label: Text to render (e.g., "#1").
-        x: Left edge of the cell in pixels.
-        y: Top edge of the cell in pixels.
-        font: PIL ImageFont to use.
-        image_draw_module: PIL.ImageDraw module reference.
+        sheet (Any): PIL Image to draw on (modified in place).
+        label (str): Text to render (e.g., "#1").
+        x (int): Left edge of the cell in pixels.
+        y (int): Top edge of the cell in pixels.
+        font (Any): PIL ImageFont to use.
+        image_draw_module (Any): PIL.ImageDraw module reference.
     """
     draw = image_draw_module.Draw(sheet)
     padding = 4

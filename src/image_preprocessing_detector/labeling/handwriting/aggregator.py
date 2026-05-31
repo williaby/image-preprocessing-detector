@@ -33,16 +33,16 @@ class AggregatedScore:
     """Consensus handwriting score for a single image.
 
     Attributes:
-        image_idx: 1-based position index in the contact sheet.
-        presence: Consensus presence class (majority vote).
-        presence_score: Weighted mean presence_score across models.
-        legibility: Consensus legibility class (majority vote, conservative tie-break).
-        legibility_score: Weighted mean legibility_score across models (None if N/A).
-        legibility_confidence: Agreement score 0-1 (1 - std; None when < 2 responses).
-        model_count: Number of models that returned a valid score.
-        model_names: List of model IDs that contributed to the consensus.
-        high_disagreement: True when legibility_score std > disagreement_threshold.
-        needs_review: True when fewer than min_model_responses responded.
+        image_idx (int): 1-based position index in the contact sheet.
+        presence (str | None): Consensus presence class (majority vote).
+        presence_score (float | None): Weighted mean presence_score across models.
+        legibility (str | None): Consensus legibility class (majority vote, conservative tie-break).
+        legibility_score (float | None): Weighted mean legibility_score across models (None if N/A).
+        legibility_confidence (float | None): Agreement score 0-1 (1 - std; None when < 2 responses).
+        model_count (int): Number of models that returned a valid score.
+        model_names (list[str]): List of model IDs that contributed to the consensus.
+        high_disagreement (bool): True when legibility_score std > disagreement_threshold.
+        needs_review (bool): True when fewer than min_model_responses responded.
     """
 
     image_idx: int
@@ -66,17 +66,17 @@ def aggregate_sheet_scores(
     """Aggregate per-model, per-image scores into consensus results.
 
     Args:
-        model_scores: Map from model_id to per-image score dicts.
+        model_scores (dict[str, dict[int, dict[str, Any]]]): Map from model_id to per-image score dicts.
             Inner dict maps 1-based image index to score dict.
-        model_weights: Optional map from model_id to weight. Missing
+        model_weights (dict[str, float] | None): Optional map from model_id to weight. Missing
             models default to weight 1.0.
-        disagreement_threshold: Std dev above which the score is flagged
+        disagreement_threshold (float): Std dev above which the score is flagged
             as high_disagreement.
-        min_model_responses: Minimum valid model responses for consensus.
+        min_model_responses (int): Minimum valid model responses for consensus.
             Images below this are marked needs_review.
 
     Returns:
-        Dict mapping 1-based image index to AggregatedScore.
+        dict[int, AggregatedScore]:         Dict mapping 1-based image index to AggregatedScore.
     """
     weights = model_weights or {}
 
@@ -111,12 +111,12 @@ def _accumulate_model_votes(
     and (score, weight) pairs where the score is non-null.
 
     Args:
-        entry: Per-image score dict from one model.
-        weight: This model's contribution weight.
-        presence_votes: Accumulated presence class labels (mutated).
-        presence_values: Accumulated (presence_score, weight) pairs (mutated).
-        legibility_votes: Accumulated legibility class labels (mutated).
-        legibility_values: Accumulated (legibility_score, weight) pairs (mutated).
+        entry (dict[str, Any]): Per-image score dict from one model.
+        weight (float): This model's contribution weight.
+        presence_votes (list[str]): Accumulated presence class labels (mutated).
+        presence_values (list[tuple[float, float]]): Accumulated (presence_score, weight) pairs (mutated).
+        legibility_votes (list[str]): Accumulated legibility class labels (mutated).
+        legibility_values (list[tuple[float, float]]): Accumulated (legibility_score, weight) pairs (mutated).
     """
     presence = entry.get("presence")
     if presence and presence in VALID_PRESENCE_CLASSES:
@@ -141,14 +141,14 @@ def _aggregate_single_image(
     """Compute consensus for a single image index.
 
     Args:
-        idx: 1-based image index.
-        model_scores: Full model_scores mapping.
-        weights: Model weight overrides.
-        disagreement_threshold: Std threshold for high_disagreement flag.
-        min_model_responses: Minimum valid responses required.
+        idx (int): 1-based image index.
+        model_scores (dict[str, dict[int, dict[str, Any]]]): Full model_scores mapping.
+        weights (dict[str, float]): Model weight overrides.
+        disagreement_threshold (float): Std threshold for high_disagreement flag.
+        min_model_responses (int): Minimum valid responses required.
 
     Returns:
-        AggregatedScore for this image.
+        AggregatedScore:         AggregatedScore for this image.
     """
     valid_model_ids: list[str] = []
     presence_votes: list[str] = []
@@ -206,11 +206,11 @@ def _majority_vote(votes: list[str], order: dict[str, int]) -> str | None:
     """Return majority-vote winner, breaking ties conservatively (lower quality).
 
     Args:
-        votes: List of class labels from each model.
-        order: Dict mapping class label to ordinal (lower = worse quality).
+        votes (list[str]): List of class labels from each model.
+        order (dict[str, int]): Dict mapping class label to ordinal (lower = worse quality).
 
     Returns:
-        Winning class label, or None if votes is empty.
+        str | None:         Winning class label, or None if votes is empty.
     """
     if not votes:
         return None
@@ -230,10 +230,10 @@ def _weighted_mean(values: list[tuple[float, float]]) -> float | None:
     """Compute weighted mean of (value, weight) pairs.
 
     Args:
-        values: List of (score, weight) tuples.
+        values (list[tuple[float, float]]): List of (score, weight) tuples.
 
     Returns:
-        Weighted mean float, or None if values is empty.
+        float | None:         Weighted mean float, or None if values is empty.
     """
     if not values:
         return None
@@ -250,11 +250,11 @@ def _compute_confidence(
     """Compute agreement confidence (1 - std) and disagreement flag.
 
     Args:
-        values: List of (score, weight) tuples from each model.
-        threshold: Std dev above which disagreement is flagged.
+        values (list[tuple[float, float]]): List of (score, weight) tuples from each model.
+        threshold (float): Std dev above which disagreement is flagged.
 
     Returns:
-        Tuple of (confidence, high_disagreement). Confidence is None
+        tuple[float | None, bool]:         Tuple of (confidence, high_disagreement). Confidence is None
         when fewer than 2 values are available.
     """
     if len(values) < 2:

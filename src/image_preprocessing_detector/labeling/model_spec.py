@@ -65,21 +65,23 @@ class ModelSpec:
     - Project C (Fine-Tuning)
 
     Attributes:
-        source: Where the model comes from (huggingface, local, api)
-        id: Model identifier (HF repo, local path, or API model name)
-        revision: Version identifier (commit hash, tag, or build ID)
-        variant: Type of model variant (base, int8, int4, finetuned)
-        runtime: Inference backend to use
-        checksum: SHA256 hash of model weights for verification
-        config_hash: Hash of model configuration
-        tokenizer_hash: Hash of tokenizer files
-        api_version: Version string for API models
-        api_params: Parameters for API calls (temperature, max_tokens, etc.)
-        quant_method: Quantization method used (unsloth, bitsandbytes, etc.)
-        quant_params: Quantization parameters (bits, group_size, etc.)
-        lora_adapter_path: Path to LoRA adapter weights
-        base_model_ref: Reference to base model this was derived from
-        notes: Additional notes or metadata
+        source (ModelSource): Where the model comes from (huggingface, local, api).
+        id (str): Model identifier (HF repo, local path, or API model name).
+        revision (str): Version identifier (commit hash, tag, or build ID).
+        variant (ModelVariant): Type of model variant (base, int8, int4, finetuned).
+        runtime (RuntimeBackend): Inference backend to use.
+        checksum (str | None): SHA256 hash of model weights for verification.
+        config_hash (str | None): Hash of model configuration.
+        tokenizer_hash (str | None): Hash of tokenizer files.
+        api_version (str | None): Version string for API models.
+        api_params (dict[str, Any] | None): Parameters for API calls (temperature, max_tokens, etc.).
+        quant_method (str | None): Quantization method used (unsloth, bitsandbytes, etc.).
+        quant_params (dict[str, Any] | None): Quantization parameters (bits, group_size, etc.).
+        lora_adapter_path (str | None): Path to LoRA adapter weights.
+        base_model_ref (str | None): Reference to base model this was derived from.
+        notes (str | None): Additional notes or metadata.
+        created_at (str | None): Timestamp when the spec was created.
+        created_by (str | None): Creator identifier.
 
     Example:
         >>> spec = ModelSpec(
@@ -167,7 +169,7 @@ class ModelSpec:
         """Serialize to dictionary for JSON/YAML storage.
 
         Returns:
-            Dictionary representation of the ModelSpec.
+            dict[str, Any]:             Dictionary representation of the ModelSpec.
         """
         return {
             "source": self.source.value,
@@ -194,10 +196,10 @@ class ModelSpec:
         """Deserialize from dictionary.
 
         Args:
-            data: Dictionary representation of a ModelSpec.
+            data (dict[str, Any]): Dictionary representation of a ModelSpec.
 
         Returns:
-            ModelSpec instance.
+            ModelSpec:             ModelSpec instance.
 
         Raises:
             ValueError: If required fields are missing.
@@ -232,11 +234,11 @@ class ModelSpec:
         """Serialize to JSON string or file.
 
         Args:
-            path: Optional path to write JSON file.
-            indent: JSON indentation level.
+            path (Path | str | None): Optional path to write JSON file.
+            indent (int): JSON indentation level.
 
         Returns:
-            JSON string representation.
+            str:             JSON string representation.
         """
         json_str = json.dumps(self.to_dict(), indent=indent, default=str)
 
@@ -250,10 +252,10 @@ class ModelSpec:
         """Load from JSON file or string.
 
         Args:
-            source: Path to JSON file or JSON string.
+            source (Path | str): Path to JSON file or JSON string.
 
         Returns:
-            ModelSpec instance.
+            ModelSpec:             ModelSpec instance.
         """
         path = Path(source)
         if path.exists():
@@ -268,10 +270,10 @@ class ModelSpec:
         """Serialize to YAML string or file.
 
         Args:
-            path: Optional path to write YAML file.
+            path (Path | str | None): Optional path to write YAML file.
 
         Returns:
-            YAML string representation.
+            str:             YAML string representation.
         """
         yaml_str = yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
 
@@ -285,10 +287,10 @@ class ModelSpec:
         """Load from YAML file or string.
 
         Args:
-            source: Path to YAML file or YAML string.
+            source (Path | str): Path to YAML file or YAML string.
 
         Returns:
-            ModelSpec instance.
+            ModelSpec:             ModelSpec instance.
         """
         path = Path(source)
         if path.exists():
@@ -304,7 +306,7 @@ class ModelSpec:
         """Compute a hash of the spec content for comparison.
 
         Returns:
-            SHA256 hash of the spec's core content.
+            str:             SHA256 hash of the spec's core content.
         """
         # Include only fields that affect model behavior
         content = {
@@ -332,14 +334,14 @@ class ModelSpec:
         """Create a new ModelSpec for a quantized version of this model.
 
         Args:
-            bits: Quantization bits (4 or 8).
-            quant_method: Quantization method used.
-            quant_params: Additional quantization parameters.
-            new_revision: New revision string for the quantized model.
-            new_id: New model ID (defaults to original with suffix).
+            bits (int): Quantization bits (4 or 8).
+            quant_method (str): Quantization method used.
+            quant_params (dict[str, Any] | None): Additional quantization parameters.
+            new_revision (str | None): New revision string for the quantized model.
+            new_id (str | None): New model ID (defaults to original with suffix).
 
         Returns:
-            New ModelSpec for the quantized variant.
+            ModelSpec:             New ModelSpec for the quantized variant.
         """
         variant = ModelVariant.INT4 if bits == 4 else ModelVariant.INT8
 
@@ -364,12 +366,12 @@ class ModelSpec:
         """Create a new ModelSpec for a fine-tuned version of this model.
 
         Args:
-            lora_adapter_path: Path to LoRA adapter weights.
-            new_revision: New revision string for the fine-tuned model.
-            new_id: New model ID (defaults to original with suffix).
+            lora_adapter_path (str): Path to LoRA adapter weights.
+            new_revision (str): New revision string for the fine-tuned model.
+            new_id (str | None): New model ID (defaults to original with suffix).
 
         Returns:
-            New ModelSpec for the fine-tuned variant.
+            ModelSpec:             New ModelSpec for the fine-tuned variant.
         """
         return ModelSpec(
             source=self.source,
@@ -397,11 +399,11 @@ class ModelSpecRegistry:
         """Add a ModelSpec to the registry.
 
         Args:
-            spec: ModelSpec to add.
-            spec_id: Optional custom ID (defaults to spec.spec_id).
+            spec (ModelSpec): ModelSpec to add.
+            spec_id (str | None): Optional custom ID (defaults to spec.spec_id).
 
         Returns:
-            The ID used to store the spec.
+            str:             The ID used to store the spec.
         """
         key = spec_id or spec.spec_id
         self.specs[key] = spec
@@ -411,10 +413,10 @@ class ModelSpecRegistry:
         """Get a ModelSpec by ID.
 
         Args:
-            spec_id: The spec identifier.
+            spec_id (str): The spec identifier.
 
         Returns:
-            ModelSpec if found, None otherwise.
+            ModelSpec | None:             ModelSpec if found, None otherwise.
         """
         return self.specs.get(spec_id)
 
@@ -426,11 +428,11 @@ class ModelSpecRegistry:
         """List spec IDs, optionally filtered.
 
         Args:
-            source: Filter by source type.
-            variant: Filter by variant type.
+            source (ModelSource | None): Filter by source type.
+            variant (ModelVariant | None): Filter by variant type.
 
         Returns:
-            List of matching spec IDs.
+            list[str]:             List of matching spec IDs.
         """
         results = []
         for spec_id, spec in self.specs.items():
@@ -445,7 +447,10 @@ class ModelSpecRegistry:
         """Save registry to YAML file.
 
         Args:
-            path: Path to save to (uses registry_path if not provided).
+            path (Path | str | None): Path to save to (uses registry_path if not provided).
+
+        Raises:
+            ValueError: If no path provided and registry_path not set.
         """
         save_path = Path(path) if path else self.registry_path
         if save_path is None:
@@ -463,10 +468,10 @@ class ModelSpecRegistry:
         """Load registry from YAML file.
 
         Args:
-            path: Path to load from.
+            path (Path | str): Path to load from.
 
         Returns:
-            ModelSpecRegistry instance.
+            ModelSpecRegistry:             ModelSpecRegistry instance.
         """
         path = Path(path)
         with open(path, encoding="utf-8") as f:

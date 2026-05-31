@@ -27,11 +27,11 @@ class DatasetSample:
     """A single sample from a benchmark dataset.
 
     Attributes:
-        sample_id: Unique identifier for this sample.
-        image: Image as numpy array (H, W, C) in RGB format.
-        ground_truth: Dictionary of ground truth scores.
+        sample_id (str): Unique identifier for this sample.
+        image (NDArray[np.uint8]): Image as numpy array (H, W, C) in RGB format.
+        ground_truth (dict[str, float]): Dictionary of ground truth scores.
             For DIQA-5000: {"overall": float, "sharpness": float, "color": float}
-        metadata: Additional sample metadata.
+        metadata (dict[str, str | int | float]): Additional sample metadata.
     """
 
     sample_id: str
@@ -108,7 +108,7 @@ class BenchmarkDataset(ABC):
         """Compute a checksum for the dataset.
 
         Returns:
-            SHA256 hash of dataset metadata.
+            str:             SHA256 hash of dataset metadata.
         """
         import hashlib
 
@@ -120,6 +120,11 @@ class SyntheticDataset(BenchmarkDataset):
     """Synthetic dataset for testing purposes.
 
     Generates random images with synthetic ground truth labels.
+
+    Args:
+        num_samples (int): Number of synthetic samples to generate.
+        image_size (tuple[int, int]): Size of generated images (height, width).
+        seed (int): Random seed for reproducibility.
     """
 
     def __init__(
@@ -128,13 +133,6 @@ class SyntheticDataset(BenchmarkDataset):
         image_size: tuple[int, int] = (224, 224),
         seed: int = 42,
     ) -> None:
-        """Initialize synthetic dataset.
-
-        Args:
-            num_samples: Number of synthetic samples to generate.
-            image_size: Size of generated images (height, width).
-            seed: Random seed for reproducibility.
-        """
         self._num_samples = num_samples
         self._image_size = image_size
         self._seed = seed
@@ -219,6 +217,11 @@ class DIQA5000Dataset(BenchmarkDataset):
         test_res_00001.jpg,test_ori_00001.jpg,3.76,3.653,3.707
 
     Scores are MOS (Mean Opinion Scores) on 1-5 scale, normalized to 0-1.
+
+    Args:
+        root_dir (str | Path): Path to dataset root directory.
+        split (str): Dataset split ('train', 'val', 'test').
+        normalize_scores (bool): If True, normalize 1-5 MOS scores to 0-1 range.
     """
 
     def __init__(
@@ -227,13 +230,6 @@ class DIQA5000Dataset(BenchmarkDataset):
         split: str = "test",
         normalize_scores: bool = True,
     ) -> None:
-        """Initialize DIQA-5000 dataset.
-
-        Args:
-            root_dir: Path to dataset root directory.
-            split: Dataset split ('train', 'val', 'test').
-            normalize_scores: If True, normalize 1-5 MOS scores to 0-1 range.
-        """
         self._root_dir = Path(root_dir)
         self._split = split
         self._normalize_scores = normalize_scores

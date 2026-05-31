@@ -60,7 +60,6 @@ class RegressionBackend(InferenceBackend):
     """
 
     def __init__(self) -> None:
-        """Initialize the regression backend."""
         self._model: Any = None
         self._processor: Any = None
         self._spec: ModelSpec | None = None
@@ -72,8 +71,8 @@ class RegressionBackend(InferenceBackend):
         """Load a regression head model.
 
         Args:
-            spec: Model specification with path to fine-tuned model.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification with path to fine-tuned model.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If model cannot be loaded.
@@ -136,8 +135,11 @@ class RegressionBackend(InferenceBackend):
         """Load model based on specification source.
 
         Args:
-            spec: Model specification.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification.
+            config (InferenceConfig): Inference configuration.
+
+        Raises:
+            ModelLoadError: If the model source is not supported or model cannot be loaded.
         """
         from image_preprocessing_detector.labeling.model_spec import ModelSource
 
@@ -153,8 +155,11 @@ class RegressionBackend(InferenceBackend):
         """Load model from local path.
 
         Args:
-            spec: Model specification with local path.
-            _config: Inference configuration (unused).
+            spec (ModelSpec): Model specification with local path.
+            _config (InferenceConfig): Inference configuration (unused).
+
+        Raises:
+            ModelLoadError: If model path does not exist or model cannot be loaded.
         """
         import torch
 
@@ -202,8 +207,8 @@ class RegressionBackend(InferenceBackend):
         as part of a custom model class.
 
         Args:
-            spec: Model specification.
-            _config: Inference configuration (unused).
+            spec (ModelSpec): Model specification.
+            _config (InferenceConfig): Inference configuration (unused).
         """
         from transformers import AutoModel, AutoProcessor
 
@@ -232,11 +237,14 @@ class RegressionBackend(InferenceBackend):
         """Create model architecture and load weights.
 
         Args:
-            state_dict: Model state dictionary.
-            spec: Model specification.
+            state_dict (dict[str, Any]): Model state dictionary.
+            spec (ModelSpec): Model specification.
 
         Returns:
-            Loaded model.
+            Any: Loaded model.
+
+        Raises:
+            ModelLoadError: If regression model package is not available.
         """
         try:
             from image_preprocessing_detector.labeling.finetuning.regression_head import (
@@ -297,14 +305,13 @@ class RegressionBackend(InferenceBackend):
         """Run regression inference on a single image.
 
         Args:
-            image: Input image as numpy array or PIL Image.
+            image (NDArray[np.uint8] | Image.Image): Input image as numpy array or PIL Image.
 
         Returns:
-            DIQAPrediction with quality scores.
+            DIQAPrediction:             DIQAPrediction with quality scores.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.
-            InferenceError: If inference fails.
         """
         if not self.is_loaded():
             msg = "Model not loaded. Call load() first."
@@ -320,10 +327,10 @@ class RegressionBackend(InferenceBackend):
         """Run regression inference on a batch of images.
 
         Args:
-            images: List of input images.
+            images (list[NDArray[np.uint8] | Image.Image]): List of input images.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.
@@ -367,11 +374,11 @@ class RegressionBackend(InferenceBackend):
         """Process a batch of images through the regression model.
 
         Args:
-            images: Batch of PIL Images.
-            start_idx: Starting index for image IDs.
+            images (list[Image.Image]): Batch of PIL Images.
+            start_idx (int): Starting index for image IDs.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
         """
         import torch
 
@@ -446,7 +453,7 @@ class RegressionBackend(InferenceBackend):
         """Get provenance information for the loaded model.
 
         Returns:
-            ProvenanceInfo with checksums and metadata.
+            ProvenanceInfo:             ProvenanceInfo with checksums and metadata.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.

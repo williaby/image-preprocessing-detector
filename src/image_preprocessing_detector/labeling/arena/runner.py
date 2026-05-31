@@ -57,13 +57,13 @@ class RunConfig:
     """Configuration for a benchmark run.
 
     Attributes:
-        output_dir: Directory for saving results and manifests.
-        save_sample_results: Whether to include per-sample results.
-        save_manifest: Whether to generate reproducibility manifest.
-        warmup_iterations: Number of warmup inference passes.
-        progress_interval: Log progress every N samples.
-        max_samples: Maximum samples to process (None for all).
-        fail_fast: Stop on first inference error.
+        output_dir (Path | None): Directory for saving results and manifests.
+        save_sample_results (bool): Whether to include per-sample results.
+        save_manifest (bool): Whether to generate reproducibility manifest.
+        warmup_iterations (int): Number of warmup inference passes.
+        progress_interval (int): Log progress every N samples.
+        max_samples (int | None): Maximum samples to process (None for all).
+        fail_fast (bool): Stop on first inference error.
     """
 
     output_dir: Path | None = None
@@ -85,13 +85,13 @@ class RunContext:
     """Internal context for tracking run state.
 
     Attributes:
-        run_id: Unique identifier for this run.
-        start_time: Unix timestamp when run started.
-        predictions: Dict mapping dimension to list of predictions.
-        ground_truth: Dict mapping dimension to list of ground truth.
-        sample_results: Per-sample detailed results.
-        inference_times: List of inference times in ms.
-        errors: List of (sample_id, error_message) tuples.
+        run_id (str): Unique identifier for this run.
+        start_time (float): Unix timestamp when run started.
+        predictions (dict[str, list[float]]): Dict mapping dimension to list of predictions.
+        ground_truth (dict[str, list[float]]): Dict mapping dimension to list of ground truth.
+        sample_results (list[SampleResult]): Per-sample detailed results.
+        inference_times (list[float]): List of inference times in ms.
+        errors (list[tuple[str, str]]): List of (sample_id, error_message) tuples.
     """
 
     run_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
@@ -138,6 +138,10 @@ class ArenaRunner:
         >>> runner = ArenaRunner()
         >>> result = runner.run(spec, dataset)
         >>> print(result.metrics["aggregate"])
+
+    Args:
+        inference_config (InferenceConfig | None): Configuration for inference execution.
+        run_config (RunConfig | None): Configuration for the benchmark run.
     """
 
     def __init__(
@@ -145,12 +149,6 @@ class ArenaRunner:
         inference_config: InferenceConfig | None = None,
         run_config: RunConfig | None = None,
     ) -> None:
-        """Initialize the ArenaRunner.
-
-        Args:
-            inference_config: Configuration for inference execution.
-            run_config: Configuration for the benchmark run.
-        """
         self._inference_config = inference_config or InferenceConfig()
         self._run_config = run_config or RunConfig()
         self._backend: InferenceBackend | None = None
@@ -165,17 +163,13 @@ class ArenaRunner:
         """Execute a complete benchmark run.
 
         Args:
-            model_spec: Specification of the model to evaluate.
-            dataset: Benchmark dataset to evaluate on.
-            inference_config: Override inference configuration.
-            run_config: Override run configuration.
+            model_spec (ModelSpec): Specification of the model to evaluate.
+            dataset (BenchmarkDataset): Benchmark dataset to evaluate on.
+            inference_config (InferenceConfig | None): Override inference configuration.
+            run_config (RunConfig | None): Override run configuration.
 
         Returns:
-            BenchmarkResult with metrics and metadata.
-
-        Raises:
-            ModelLoadError: If model cannot be loaded.
-            InferenceError: If inference fails and fail_fast is True.
+            BenchmarkResult: BenchmarkResult with metrics and metadata.
         """
         config = inference_config or self._inference_config
         run_cfg = run_config or self._run_config
@@ -588,16 +582,16 @@ def run_benchmark(
     """Convenience function for running a benchmark.
 
     Args:
-        model_spec: ModelSpec or dict representation.
-        dataset: Dataset to benchmark on.
-        output_dir: Optional output directory.
-        batch_size: Batch size for inference.
-        device: Device to run on.
-        seed: Random seed.
-        save_samples: Whether to save per-sample results.
+        model_spec (ModelSpec | dict[str, Any]): ModelSpec or dict representation.
+        dataset (BenchmarkDataset): Dataset to benchmark on.
+        output_dir (Path | str | None): Optional output directory.
+        batch_size (int): Batch size for inference.
+        device (str): Device to run on.
+        seed (int): Random seed.
+        save_samples (bool): Whether to save per-sample results.
 
     Returns:
-        BenchmarkResult with metrics and metadata.
+        BenchmarkResult:         BenchmarkResult with metrics and metadata.
 
     Example:
         >>> from image_preprocessing_detector.labeling.arena.runner import run_benchmark

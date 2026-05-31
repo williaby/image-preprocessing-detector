@@ -75,10 +75,10 @@ def build_sheet_prompt(n_images: int) -> list[dict[str, Any]]:
     function returns, since encoding is handled by the scorer.
 
     Args:
-        n_images: Number of labeled images in the contact sheet (1-12).
+        n_images (int): Number of labeled images in the contact sheet (1-12).
 
     Returns:
-        List of chat message dicts ready for the OpenRouter API.
+        list[dict[str, Any]]:         List of chat message dicts ready for the OpenRouter API.
         Caller appends the base64 image block to messages[1]["content"].
     """
     image_list = ", ".join(f'"{i}"' for i in range(1, n_images + 1))
@@ -115,11 +115,11 @@ def parse_sheet_response(
     - Partial responses (missing images marked as needs_review)
 
     Args:
-        raw: Parsed JSON dict from the model (output of _extract_json).
-        n_images: Expected number of images on the sheet.
+        raw (dict[str, Any]): Parsed JSON dict from the model (output of _extract_json).
+        n_images (int): Expected number of images on the sheet.
 
     Returns:
-        Dict mapping image index (1-based int) to a score dict with keys:
+        dict[int, dict[str, Any]]:         Dict mapping image index (1-based int) to a score dict with keys:
         ``presence``, ``presence_score``, ``legibility``, ``legibility_score``,
         ``needs_review``.
     """
@@ -159,10 +159,10 @@ def _coerce_presence(value: Any) -> str:
     """Coerce raw presence value to a valid enum string.
 
     Args:
-        value: Raw value from model response.
+        value (Any): Raw value from model response.
 
     Returns:
-        Valid VALID_PRESENCE_CLASSES member, or "NONE" as safe fallback.
+        str:         Valid VALID_PRESENCE_CLASSES member, or "NONE" as safe fallback.
     """
     if value is None:
         return "NONE"
@@ -183,11 +183,11 @@ def _coerce_legibility(value: Any, presence: str) -> str:
     """Coerce raw legibility value to a valid enum string.
 
     Args:
-        value: Raw value from model response.
-        presence: Already-coerced presence class for this image.
+        value (Any): Raw value from model response.
+        presence (str): Already-coerced presence class for this image.
 
     Returns:
-        Valid VALID_LEGIBILITY_CLASSES member. Returns NOT_APPLICABLE
+        str:         Valid VALID_LEGIBILITY_CLASSES member. Returns NOT_APPLICABLE
         when presence is NONE regardless of model output.
     """
     if presence == "NONE":
@@ -210,10 +210,10 @@ def _coerce_score(value: Any) -> float | None:
     """Coerce a raw score value to a clamped float or None.
 
     Args:
-        value: Raw score value from model response.
+        value (Any): Raw score value from model response.
 
     Returns:
-        Float in [0.0, 1.0] or None if value is null/missing.
+        float | None:         Float in [0.0, 1.0] or None if value is null/missing.
     """
     if value is None:
         return None
@@ -228,11 +228,11 @@ def _coerce_legibility_score(value: Any, legibility: str) -> float | None:
     """Coerce legibility score, enforcing null for NOT_APPLICABLE.
 
     Args:
-        value: Raw legibility_score from model response.
-        legibility: Already-coerced legibility class.
+        value (Any): Raw legibility_score from model response.
+        legibility (str): Already-coerced legibility class.
 
     Returns:
-        Float in [0.0, 1.0], or None when legibility is NOT_APPLICABLE
+        float | None:         Float in [0.0, 1.0], or None when legibility is NOT_APPLICABLE
         or when the model returned null.
     """
     if legibility == "NOT_APPLICABLE":
@@ -250,10 +250,10 @@ def _make_needs_review(_idx: int) -> dict[str, Any]:
     Used when a model response is missing an image's entry entirely.
 
     Args:
-        idx: 1-based image index.
+        _idx (int): 1-based image index (unused, included for API consistency).
 
     Returns:
-        Score dict with all fields set to None and needs_review=True.
+        dict[str, Any]: Score dict with all fields set to None and needs_review=True.
     """
     return {
         "presence": None,
@@ -273,10 +273,10 @@ def extract_json_from_response(text: str) -> dict[str, Any]:
     - JSON with leading/trailing prose
 
     Args:
-        text: Raw model response content string.
+        text (str): Raw model response content string.
 
     Returns:
-        Parsed JSON dict.
+        dict[str, Any]:         Parsed JSON dict.
 
     Raises:
         ValueError: If no valid JSON object can be extracted.

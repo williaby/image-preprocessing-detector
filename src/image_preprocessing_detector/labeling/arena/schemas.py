@@ -34,11 +34,11 @@ class DIQAPrediction:
     """Model prediction for a single document image.
 
     Attributes:
-        overall: Overall quality score [0, 1]
-        sharpness: Sharpness score [0, 1]
-        color: Color fidelity score [0, 1]
-        image_id: Identifier for the source image
-        inference_time_ms: Time taken for inference in milliseconds
+        overall (float): Overall quality score [0, 1]
+        sharpness (float): Sharpness score [0, 1]
+        color (float): Color fidelity score [0, 1]
+        image_id (str): Identifier for the source image
+        inference_time_ms (float): Time taken for inference in milliseconds
     """
 
     overall: float
@@ -71,12 +71,12 @@ class DIQAGroundTruth:
     """Ground truth labels for a single document image.
 
     Attributes:
-        overall: Overall quality score [0, 1]
-        sharpness: Sharpness score [0, 1]
-        color: Color fidelity score [0, 1]
-        image_id: Identifier for the source image
-        image_path: Path to the image file
-        metadata: Additional metadata from dataset
+        overall (float): Overall quality score [0, 1]
+        sharpness (float): Sharpness score [0, 1]
+        color (float): Color fidelity score [0, 1]
+        image_id (str): Identifier for the source image
+        image_path (str): Path to the image file
+        metadata (dict[str, Any]): Additional metadata from dataset
     """
 
     overall: float
@@ -103,11 +103,11 @@ class DatasetInfo:
     """Information about the benchmark dataset.
 
     Attributes:
-        name: Dataset name (e.g., "diqa5000")
-        version: Dataset version
-        split: Data split used (train/val/test)
-        num_samples: Number of samples in the split
-        checksum: Hash of the dataset for verification
+        name (str): Dataset name (e.g., "diqa5000")
+        version (str): Dataset version
+        split (str): Data split used (train/val/test)
+        num_samples (int): Number of samples in the split
+        checksum (str | None): Hash of the dataset for verification
     """
 
     name: str
@@ -132,13 +132,13 @@ class ExecutionInfo:
     """Information about the execution environment.
 
     Attributes:
-        hardware: GPU/CPU description
-        duration_seconds: Total execution time
-        batch_size: Batch size used for inference
-        seed: Random seed for reproducibility
-        python_version: Python version
-        cuda_version: CUDA version (if applicable)
-        timestamp: Execution start timestamp
+        hardware (str): GPU/CPU description
+        duration_seconds (float): Total execution time
+        batch_size (int): Batch size used for inference
+        seed (int): Random seed for reproducibility
+        python_version (str): Python version
+        cuda_version (str | None): CUDA version (if applicable)
+        timestamp (str): Execution start timestamp
     """
 
     hardware: str
@@ -172,11 +172,11 @@ class ProvenanceInfo:
     """Provenance information for reproducibility.
 
     Attributes:
-        model_checksum: SHA256 of model weights
-        config_hash: Hash of model configuration
-        tokenizer_hash: Hash of tokenizer files
-        code_version: Git commit hash of the code
-        dependencies_hash: Hash of requirements lock file
+        model_checksum (str | None): SHA256 of model weights
+        config_hash (str | None): Hash of model configuration
+        tokenizer_hash (str | None): Hash of tokenizer files
+        code_version (str | None): Git commit hash of the code
+        dependencies_hash (str | None): Hash of requirements lock file
     """
 
     model_checksum: str | None = None
@@ -201,10 +201,10 @@ class SampleResult:
     """Result for a single sample in the benchmark.
 
     Attributes:
-        image_id: Sample identifier
-        prediction: Model prediction
-        ground_truth: Ground truth values
-        per_dimension_error: Absolute error per dimension
+        image_id (str): Sample identifier
+        prediction (DIQAPrediction): Model prediction
+        ground_truth (DIQAGroundTruth): Ground truth values
+        per_dimension_error (dict[str, float]): Absolute error per dimension
     """
 
     image_id: str
@@ -240,16 +240,16 @@ class BenchmarkResult:
     This is the primary output structure of the Arena runner.
 
     Attributes:
-        run_id: Unique identifier for this run
-        status: Run status (completed, failed, etc.)
-        model_spec: ModelSpec dictionary
-        dataset: Dataset information
-        metrics: Computed arena metrics
-        execution: Execution environment info
-        provenance: Provenance for reproducibility
-        sample_results: Per-sample results (optional, for detailed analysis)
-        manifest_path: Path to reproducibility manifest
-        error_message: Error message if run failed
+        run_id (str): Unique identifier for this run
+        status (RunStatus): Run status (completed, failed, etc.)
+        model_spec (dict[str, Any]): ModelSpec dictionary
+        dataset (DatasetInfo): Dataset information
+        metrics (dict[str, Any]): Computed arena metrics
+        execution (ExecutionInfo): Execution environment info
+        provenance (ProvenanceInfo): Provenance for reproducibility
+        sample_results (list[SampleResult]): Per-sample results (optional, for detailed analysis)
+        manifest_path (str | None): Path to reproducibility manifest
+        error_message (str | None): Error message if run failed
     """
 
     run_id: str
@@ -282,11 +282,11 @@ class BenchmarkResult:
         """Serialize to JSON string or file.
 
         Args:
-            path: Optional path to write JSON file.
-            indent: JSON indentation level.
+            path (Path | str | None): Optional path to write JSON file.
+            indent (int): JSON indentation level.
 
         Returns:
-            JSON string representation.
+            str:             JSON string representation.
         """
         json_str = json.dumps(self.to_dict(), indent=indent, default=str)
 
@@ -300,10 +300,10 @@ class BenchmarkResult:
         """Create from dictionary representation.
 
         Args:
-            data: Dictionary with result data.
+            data (dict[str, Any]): Dictionary with result data.
 
         Returns:
-            BenchmarkResult instance.
+            BenchmarkResult:             BenchmarkResult instance.
         """
         return cls(
             run_id=data["run_id"],
@@ -323,10 +323,10 @@ class BenchmarkResult:
         """Load from JSON file or string.
 
         Args:
-            source: Path to JSON file or JSON string.
+            source (Path | str): Path to JSON file or JSON string.
 
         Returns:
-            BenchmarkResult instance.
+            BenchmarkResult:             BenchmarkResult instance.
         """
         # Check if source looks like a path (doesn't start with '{')
         if isinstance(source, (str, Path)):
@@ -351,7 +351,7 @@ class BenchmarkResult:
         """Compute a hash of the result content for verification.
 
         Returns:
-            SHA256 hash of the result's core content.
+            str:             SHA256 hash of the result's core content.
         """
         content = {
             "run_id": self.run_id,
@@ -371,12 +371,13 @@ class ReproducibilityManifest:
     benchmark results.
 
     Attributes:
-        run_id: Unique identifier for the run
-        model: Model specification details
-        dataset: Dataset details
-        environment: Environment details
-        seeds: Random seeds used
-        result_hash: Hash of the results for verification
+        run_id (str): Unique identifier for the run.
+        model (dict[str, Any]): Model specification details.
+        dataset (dict[str, Any]): Dataset details.
+        environment (dict[str, Any]): Environment details.
+        seeds (dict[str, int]): Random seeds used.
+        result_hash (str): Hash of the results for verification.
+        created_at (str): Timestamp when the manifest was created.
     """
 
     run_id: str
@@ -408,10 +409,10 @@ class ReproducibilityManifest:
         """Serialize to YAML string or file.
 
         Args:
-            path: Optional path to write YAML file.
+            path (Path | str | None): Optional path to write YAML file.
 
         Returns:
-            YAML string representation.
+            str:             YAML string representation.
         """
         yaml_str = yaml.dump(
             self.to_dict(),
@@ -430,10 +431,10 @@ class ReproducibilityManifest:
         """Load from YAML file or string.
 
         Args:
-            source: Path to YAML file or YAML string.
+            source (Path | str): Path to YAML file or YAML string.
 
         Returns:
-            ReproducibilityManifest instance.
+            ReproducibilityManifest:             ReproducibilityManifest instance.
         """
         path = Path(source)
         if path.exists():
@@ -453,11 +454,11 @@ class ReproducibilityManifest:
         """Create manifest from a benchmark result.
 
         Args:
-            result: Completed benchmark result.
-            environment: Additional environment details.
+            result (BenchmarkResult): Completed benchmark result.
+            environment (dict[str, Any] | None): Additional environment details.
 
         Returns:
-            ReproducibilityManifest instance.
+            ReproducibilityManifest:             ReproducibilityManifest instance.
         """
         return cls(
             run_id=result.run_id,

@@ -142,6 +142,19 @@ def run(
     \b
     Example:
         arena run -m model.yaml -d /data/diqa5000 -o ./results
+
+    Args:
+        ctx (click.Context): Click context object.
+        model (str): Path to model spec YAML/JSON file.
+        dataset (str): Path to dataset root directory.
+        output (str): Output directory for results.
+        split (str): Dataset split to use.
+        batch_size (int): Inference batch size.
+        device (str): Device for inference (cpu, cuda, modal).
+        seed (int): Random seed for reproducibility.
+        max_samples (int | None): Maximum number of samples to evaluate.
+        save_samples (bool): Save per-sample predictions.
+        no_manifest (bool): Skip reproducibility manifest generation.
     """
     ctx.obj.get("verbose", False)
 
@@ -267,7 +280,7 @@ def leaderboard(
     filter_variant: tuple[str, ...],
     max_entries: int | None,
 ) -> None:
-    r"""Generate leaderboard from benchmark results.
+    """Generate leaderboard from benchmark results.
 
     \b
     Reads all result files from a directory, ranks models by the specified
@@ -276,6 +289,19 @@ def leaderboard(
     \b
     Example:
         arena leaderboard -r ./results -o ./leaderboard --sort-by aggregate.plcc
+
+    Args:
+        _ctx (click.Context): Click context object (unused).
+        results (str): Path to results directory.
+        output (str): Output directory for leaderboard files.
+        sort_by (str): Metric to sort by.
+        title (str): Leaderboard title.
+        formats (str): Comma-separated output formats (markdown,html,json).
+        filter_variant (tuple[str, ...]): Filter by model variant.
+        max_entries (int | None): Maximum entries to show.
+
+    Raises:
+        click.ClickException: If results directory does not exist.
     """
     click.echo(f"Loading results from: {results}")
 
@@ -357,6 +383,12 @@ def validate(
     \b
     Example:
         arena validate -m manifest.yaml -r result.json
+
+    Args:
+        _ctx (click.Context): Click context object (unused).
+        manifest (str): Path to reproducibility manifest YAML file.
+        result (str | None): Path to result file to validate against.
+        strict (bool): Fail on any mismatch.
     """
     click.echo(f"Loading manifest: {manifest}")
 
@@ -441,6 +473,11 @@ def show(
     Example:
         arena show -r result_abc123.json
         arena show -r result.json -f table
+
+    Args:
+        _ctx (click.Context): Click context object (unused).
+        result (str): Path to benchmark result JSON file.
+        output_format (str): Output format (summary, json, table).
     """
     result_obj = BenchmarkResult.from_json(result)
 
@@ -514,6 +551,11 @@ def compare(
     \b
     Example:
         arena compare -r result1.json -r result2.json -m aggregate.plcc
+
+    Args:
+        _ctx (click.Context): Click context object (unused).
+        results (tuple[str, ...]): Paths to benchmark result JSON files.
+        metric (str): Metric to compare (format: dimension.metric_name).
     """
     if len(results) < 2:
         click.echo("Need at least 2 results to compare")

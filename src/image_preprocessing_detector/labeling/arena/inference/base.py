@@ -29,13 +29,14 @@ class InferenceConfig:
     """Configuration for inference execution.
 
     Attributes:
-        batch_size: Number of images to process at once
-        device: Device to run inference on ("cpu", "cuda", "cuda:0")
-        seed: Random seed for reproducibility
-        max_length: Maximum sequence length for text generation
-        temperature: Sampling temperature (for API models)
-        deterministic: Enforce deterministic execution
-        timeout_seconds: Timeout for inference operations
+        batch_size (int): Number of images to process at once.
+        device (str): Device to run inference on ("cpu", "cuda", "cuda:0").
+        seed (int): Random seed for reproducibility.
+        max_length (int): Maximum sequence length for text generation.
+        temperature (float): Sampling temperature (for API models).
+        deterministic (bool): Enforce deterministic execution.
+        timeout_seconds (int): Timeout for inference operations.
+        extra_params (dict[str, Any]): Additional backend-specific parameters.
     """
 
     batch_size: int = 8
@@ -84,8 +85,8 @@ class InferenceBackend(ABC):
         """Load the model from the specification.
 
         Args:
-            spec: Model specification with source and identifiers.
-            config: Inference configuration.
+            spec (ModelSpec): Model specification with source and identifiers.
+            config (InferenceConfig): Inference configuration.
 
         Raises:
             ModelLoadError: If model cannot be loaded.
@@ -105,7 +106,7 @@ class InferenceBackend(ABC):
         """Check if a model is currently loaded.
 
         Returns:
-            True if model is loaded and ready for inference.
+            bool:             True if model is loaded and ready for inference.
         """
 
     @abstractmethod
@@ -113,10 +114,10 @@ class InferenceBackend(ABC):
         """Run inference on a single image.
 
         Args:
-            image: Input image as numpy array (H, W, C) or PIL Image.
+            image (NDArray[np.uint8] | Image.Image): Input image as numpy array (H, W, C) or PIL Image.
 
         Returns:
-            DIQAPrediction with quality scores.
+            DIQAPrediction:             DIQAPrediction with quality scores.
 
         Raises:
             InferenceError: If inference fails.
@@ -131,10 +132,10 @@ class InferenceBackend(ABC):
         """Run inference on a batch of images.
 
         Args:
-            images: List of input images.
+            images (list[NDArray[np.uint8] | Image.Image]): List of input images.
 
         Returns:
-            List of DIQAPrediction objects.
+            list[DIQAPrediction]:             List of DIQAPrediction objects.
 
         Raises:
             InferenceError: If inference fails.
@@ -146,7 +147,7 @@ class InferenceBackend(ABC):
         """Get provenance information for the loaded model.
 
         Returns:
-            ProvenanceInfo with checksums and metadata.
+            ProvenanceInfo:             ProvenanceInfo with checksums and metadata.
 
         Raises:
             ModelNotLoadedError: If model is not loaded.
@@ -157,15 +158,15 @@ class InferenceBackend(ABC):
         """Get metadata about the loaded model.
 
         Returns:
-            Dictionary with model information (name, size, etc.)
+            dict[str, Any]:             Dictionary with model information (name, size, etc.)
         """
 
     def warmup(self, num_iterations: int = 3, seed: int | None = None) -> None:
         """Run warmup inference to prime the model.
 
         Args:
-            num_iterations: Number of warmup iterations.
-            seed: Optional seed for reproducible dummy image generation.
+            num_iterations (int): Number of warmup iterations.
+            seed (int | None): Optional seed for reproducible dummy image generation.
         """
         if not self.is_loaded():
             return
@@ -199,11 +200,11 @@ def create_backend(source: str, **kwargs: Any) -> InferenceBackend:
     """Factory function to create an inference backend.
 
     Args:
-        source: Backend type ("huggingface", "local", "api")
-        **kwargs: Additional arguments passed to backend constructor.
+        source (str): Backend type ("huggingface", "local", "api")
+        **kwargs (Any): Additional arguments passed to backend constructor.
 
     Returns:
-        Appropriate InferenceBackend instance.
+        InferenceBackend:         Appropriate InferenceBackend instance.
 
     Raises:
         ValueError: If source is not recognized.

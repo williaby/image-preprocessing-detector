@@ -225,16 +225,16 @@ def _flush_batch(
     """Score a batch and emit results to stdout via JSONL protocol.
 
     Args:
-        batch_paths: Image paths to score in this batch.
-        model: Loaded mPLUG-Owl2 model.
-        image_processor: Image preprocessor.
-        input_ids: Tokenized input IDs for the dimension prompt.
-        level_ids: Token IDs for quality level names.
-        device: CUDA device string.
-        dimension: Quality dimension name.
+        batch_paths (list[str]): Image paths to score in this batch.
+        model (Any): Loaded mPLUG-Owl2 model.
+        image_processor (Any): Image preprocessor.
+        input_ids (torch.Tensor): Tokenized input IDs for the dimension prompt.
+        level_ids (list[int]): Token IDs for quality level names.
+        device (str): CUDA device string.
+        dimension (str): Quality dimension name.
 
     Returns:
-        Tuple of (processed_count, error_count) for this batch.
+        tuple[int, int]:         Tuple of (processed_count, error_count) for this batch.
     """
     processed = 0
     errors = 0
@@ -266,13 +266,13 @@ def _process_stdin_loop(
     sentinel object when stdin is exhausted.
 
     Args:
-        model: Loaded mPLUG-Owl2 model.
-        image_processor: Image preprocessor.
-        input_ids: Tokenized input IDs for the dimension prompt.
-        level_ids: Token IDs for quality level names.
-        device: CUDA device string.
-        dimension: Quality dimension name.
-        batch_size: Number of images per inference batch.
+        model (Any): Loaded mPLUG-Owl2 model.
+        image_processor (Any): Image preprocessor.
+        input_ids (torch.Tensor): Tokenized input IDs for the dimension prompt.
+        level_ids (list[int]): Token IDs for quality level names.
+        device (str): CUDA device string.
+        dimension (str): Quality dimension name.
+        batch_size (int): Number of images per inference batch.
     """
     processed = 0
     errors = 0
