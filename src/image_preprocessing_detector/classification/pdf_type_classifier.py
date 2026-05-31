@@ -35,18 +35,13 @@ def classify_pdf_type(
     - Otherwise → hybrid
 
     Args:
-        pdf_path: Path to the PDF file
-        text_min_threshold: Minimum characters for text detection (default from config: 10)
-        text_max_threshold: Minimum characters for born_digital classification (default from config: 50)
-        settings: Configuration settings (uses defaults if None)
+        pdf_path (Path | str): Path to the PDF file
+        text_min_threshold (int | None): Minimum characters for text detection (default from config: 10)
+        text_max_threshold (int | None): Minimum characters for born_digital classification (default from config: 50)
+        settings (Settings | None): Configuration settings (uses defaults if None)
 
     Returns:
-        PDFType enum value (BORN_DIGITAL, IMAGE_ONLY, or HYBRID)
-
-    Raises:
-        FileNotFoundError: If PDF file doesn't exist
-        PDFTextExtractionError: If PDF cannot be processed for text extraction
-        PDFImageDetectionError: If PDF cannot be processed for image detection
+        PDFType: PDFType enum value (BORN_DIGITAL, IMAGE_ONLY, or HYBRID)
 
     Example:
         >>> pdf_type = classify_pdf_type("document.pdf")

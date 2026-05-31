@@ -47,25 +47,21 @@ class ScriptRouter:
     methods to determine OCR engine selection and VLM escalation.
 
     Attributes:
-        ml_mapping: ScriptMLMapping instance for Tier 2 lookups
-        routing_config_path: Path to routing YAML config
-        routing: Loaded routing configuration dict
+        DEFAULT_CONFIG_PATH (Path): Default config path relative to project root.
+
+    Args:
+        ml_mapping (ScriptMLMapping): ScriptMLMapping instance for Tier 2 lookups
+        routing_config_path (Path | str | None): Path to routing YAML. If None, uses default.
     """
 
     # Default config path relative to project root
-    DEFAULT_CONFIG_PATH = Path("config/script_routing.yaml")
+    DEFAULT_CONFIG_PATH: Path = Path("config/script_routing.yaml")
 
     def __init__(
         self,
         ml_mapping: ScriptMLMapping,
         routing_config_path: Path | str | None = None,
     ) -> None:
-        """Initialize router with ML mapping and config.
-
-        Args:
-            ml_mapping: ScriptMLMapping instance for Tier 2 lookups
-            routing_config_path: Path to routing YAML. If None, uses default.
-        """
         self.ml_mapping = ml_mapping
         self.routing_config_path = self._resolve_config_path(routing_config_path)
         self._load_routing_config()
@@ -154,10 +150,10 @@ class ScriptRouter:
         3. Default config
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
+            iso15924_code (str): 4-letter ISO 15924 script code
 
         Returns:
-            Dict with engine, batch_size, and other routing params
+            dict[str, Any]: Dict with engine, batch_size, and other routing params
         """
         # Convert cached tuple back to dict
         cached = self._get_cached_engine_config(iso15924_code)
@@ -167,10 +163,10 @@ class ScriptRouter:
         """Get OCR engine name for a script.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
+            iso15924_code (str): 4-letter ISO 15924 script code
 
         Returns:
-            Engine name string (e.g., "rapidocr", "tesseract", "auto")
+            str: Engine name string (e.g., "rapidocr", "tesseract", "auto")
         """
         config = self.get_engine_config(iso15924_code)
         return str(config.get("engine", self._default_engine))
@@ -179,10 +175,10 @@ class ScriptRouter:
         """Get recommended batch size for a script.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
+            iso15924_code (str): 4-letter ISO 15924 script code
 
         Returns:
-            Recommended batch size
+            int: Recommended batch size
         """
         config = self.get_engine_config(iso15924_code)
         return int(config.get("batch_size", self._default_batch_size))
@@ -191,10 +187,10 @@ class ScriptRouter:
         """Get language hint for OCR engine.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
+            iso15924_code (str): 4-letter ISO 15924 script code
 
         Returns:
-            Language hint string or None
+            str | None: Language hint string or None
         """
         config = self.get_engine_config(iso15924_code)
         return config.get("lang_hint")
@@ -203,10 +199,10 @@ class ScriptRouter:
         """Check if script requires RTL handling.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
+            iso15924_code (str): 4-letter ISO 15924 script code
 
         Returns:
-            True if RTL handling required
+            bool: True if RTL handling required
         """
         config = self.get_engine_config(iso15924_code)
         return bool(config.get("rtl", False))
@@ -219,11 +215,11 @@ class ScriptRouter:
         """Check if script should escalate to VLM pipeline.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
-            confidence: Detection confidence (0-1)
+            iso15924_code (str): 4-letter ISO 15924 script code
+            confidence (float): Detection confidence (0-1)
 
         Returns:
-            True if VLM escalation recommended
+            bool: True if VLM escalation recommended
         """
         vlm_config = self.routing.get("vlm_escalation", {})
 
@@ -254,11 +250,11 @@ class ScriptRouter:
         """Get reasons why script should escalate to VLM.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code
-            confidence: Detection confidence (0-1)
+            iso15924_code (str): 4-letter ISO 15924 script code
+            confidence (float): Detection confidence (0-1)
 
         Returns:
-            List of escalation reason strings
+            list[str]: List of escalation reason strings
         """
         reasons = []
         vlm_config = self.routing.get("vlm_escalation", {})
@@ -291,10 +287,10 @@ class ScriptRouter:
         """Get configuration for a specific OCR engine.
 
         Args:
-            engine: Engine name (e.g., "rapidocr", "tesseract")
+            engine (str): Engine name (e.g., "rapidocr", "tesseract")
 
         Returns:
-            Engine-specific configuration dict
+            dict[str, Any]: Engine-specific configuration dict
         """
         engine_configs = self.routing.get("engine_configs", {})
         result: dict[str, Any] = engine_configs.get(engine, {})
@@ -328,7 +324,7 @@ def get_default_router() -> ScriptRouter:
     Lazy-loads ScriptMLMapping and ScriptRouter on first call.
 
     Returns:
-        ScriptRouter instance with default configs
+        ScriptRouter: ScriptRouter instance with default configs
     """
     global _default_router
     if _default_router is None:

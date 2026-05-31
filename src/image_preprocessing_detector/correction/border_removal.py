@@ -41,6 +41,11 @@ class BorderRemover:
     5. Crop to bounding rectangle of largest contour
     6. Guardrail: reject crop if area < 70% of original
 
+    Args:
+        min_area_ratio (float): Minimum ratio of crop area to original area.
+            If crop is smaller, the original image is returned.
+        morph_kernel_size (int): Size of the morphological closing kernel.
+
     Example:
         >>> remover = BorderRemover()
         >>> result = remover.correct(image)
@@ -53,13 +58,6 @@ class BorderRemover:
         min_area_ratio: float = _MIN_AREA_RATIO,
         morph_kernel_size: int = _MORPH_KERNEL_SIZE,
     ) -> None:
-        """Initialize border remover.
-
-        Args:
-            min_area_ratio: Minimum ratio of crop area to original area.
-                If crop is smaller, the original image is returned.
-            morph_kernel_size: Size of the morphological closing kernel.
-        """
         self.min_area_ratio = min_area_ratio
         self.morph_kernel_size = morph_kernel_size
 
@@ -67,10 +65,10 @@ class BorderRemover:
         """Remove borders from the image.
 
         Args:
-            image: Input image (BGR or grayscale).
+            image (np.ndarray): Input image (BGR or grayscale).
 
         Returns:
-            CorrectionResult with cropped image and metadata.
+            CorrectionResult: CorrectionResult with cropped image and metadata.
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -179,11 +177,11 @@ def remove_borders(
     """Remove borders using default settings.
 
     Args:
-        image: Input image (BGR or grayscale).
-        min_area_ratio: Minimum ratio of crop area to original.
+        image (np.ndarray): Input image (BGR or grayscale).
+        min_area_ratio (float): Minimum ratio of crop area to original.
 
     Returns:
-        CorrectionResult with cropped image.
+        CorrectionResult: CorrectionResult with cropped image.
     """
     return BorderRemover(min_area_ratio=min_area_ratio).correct(image)
 

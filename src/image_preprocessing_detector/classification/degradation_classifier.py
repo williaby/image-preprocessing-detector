@@ -31,12 +31,12 @@ class DegradationInput:
     """Input signals for degradation severity classification.
 
     Attributes:
-        capture_method: How the document was digitised (CaptureMethod enum value).
-        dqs_score: Document Quality Score in [0, 1], or None if unavailable.
-        has_shadows: Whether shadow artefacts were detected.
-        has_warping: Whether geometric warping was detected.
-        has_handwriting: Whether handwriting regions were detected.
-        has_bleed_through: Whether bleed-through artefacts were detected.
+        capture_method (str | None): How the document was digitised (CaptureMethod enum value).
+        dqs_score (float | None): Document Quality Score in [0, 1], or None if unavailable.
+        has_shadows (bool): Whether shadow artefacts were detected.
+        has_warping (bool): Whether geometric warping was detected.
+        has_handwriting (bool): Whether handwriting regions were detected.
+        has_bleed_through (bool): Whether bleed-through artefacts were detected.
     """
 
     capture_method: str | None = None
@@ -52,10 +52,10 @@ class DegradationClassification:
     """Result of degradation severity classification.
 
     Attributes:
-        severity: Overall severity label.
-        reasons: Human-readable explanations for the classification.
-        indicator_count: Number of severe indicators that were active.
-        confidence: Classification confidence in [0, 1].
+        severity (Literal["simple", "complex"]): Overall severity label.
+        reasons (list[str]): Human-readable explanations for the classification.
+        indicator_count (int): Number of severe indicators that were active.
+        confidence (float): Classification confidence in [0, 1].
     """
 
     severity: Literal["simple", "complex"] = "simple"
@@ -86,10 +86,10 @@ class DegradationSeverityClassifier:
         """Classify degradation severity for a single document.
 
         Args:
-            inp: Aggregated quality signals for one document.
+            inp (DegradationInput): Aggregated quality signals for one document.
 
         Returns:
-            Classification result with severity, reasons, count, and confidence.
+            DegradationClassification: Classification result with severity, reasons, count, and confidence.
         """
         reasons: list[str] = []
         indicator_count = 0
@@ -177,12 +177,12 @@ class DegradationSeverityClassifier:
         - DQS near the threshold boundary.
 
         Args:
-            is_camera: Whether the document was camera-captured.
-            indicator_count: Number of severe indicators active.
-            dqs_score: Document quality score, if available.
+            is_camera (bool): Whether the document was camera-captured.
+            indicator_count (int): Number of severe indicators active.
+            dqs_score (float | None): Document quality score, if available.
 
         Returns:
-            Confidence value in [0.5, 1.0].
+            float: Confidence value in [0.5, 1.0].
         """
         if is_camera:
             # Camera gate is deterministic; still modulate slightly by indicator
@@ -216,9 +216,9 @@ def classify_degradation_severity(
     """Module-level convenience wrapper around DegradationSeverityClassifier.
 
     Args:
-        inp: Aggregated quality signals for one document.
+        inp (DegradationInput): Aggregated quality signals for one document.
 
     Returns:
-        Classification result with severity, reasons, count, and confidence.
+        DegradationClassification: Classification result with severity, reasons, count, and confidence.
     """
     return DegradationSeverityClassifier().classify(inp)

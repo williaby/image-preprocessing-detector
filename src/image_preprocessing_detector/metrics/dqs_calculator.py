@@ -51,14 +51,22 @@ class DQSWeightConfig:
     to sum to 1.0 during calculation.
 
     Attributes:
-        blur_weight: Weight for blur quality (default: 0.30)
-        noise_weight: Weight for noise quality (default: 0.25)
-        contrast_weight: Weight for contrast quality (default: 0.20)
-        illumination_weight: Weight for illumination quality (default: 0.15)
-        artifacts_weight: Weight for artifact presence (default: 0.10)
-        ml_blend_ratio: Ratio for blending ML IQA with classical (default: 0.30)
-        structural_base_scores: Base complexity scores by layout type
-        structural_feature_weights: Weights for structural features
+        blur_weight (float): Weight for blur quality (default: 0.30)
+        noise_weight (float): Weight for noise quality (default: 0.25)
+        contrast_weight (float): Weight for contrast quality (default: 0.20)
+        illumination_weight (float): Weight for illumination quality (default: 0.15)
+        artifacts_weight (float): Weight for artifact presence (default: 0.10)
+        ml_blend_ratio (float): Ratio for blending ML IQA with classical (default: 0.30)
+        ml_overall_weight (float): Weight for ML overall quality within the ML blend (default: 0.60)
+        ml_sharpness_weight (float): Weight for ML sharpness within the ML blend (default: 0.25)
+        ml_color_weight (float): Weight for ML color within the ML blend (default: 0.15)
+        structural_base_scores (dict[LayoutType, float]): Base complexity scores by layout type
+        structural_feature_weights (dict[str, float]): Weights for structural features
+        risk_degradation_weight (float): Weight for degradation in pre-OCR risk (default: 0.40)
+        risk_complexity_weight (float): Weight for complexity in pre-OCR risk (default: 0.30)
+        risk_pdf_type_penalty_image_only (float): Penalty for image-only PDFs (default: 0.20)
+        risk_pdf_type_penalty_hybrid (float): Penalty for hybrid PDFs (default: 0.10)
+        risk_handwriting_penalty (float): Additional penalty for handwriting (default: 0.15)
 
     Example:
         >>> config = DQSWeightConfig(blur_weight=0.35, noise_weight=0.30)
@@ -199,7 +207,7 @@ class DQSWeightConfig:
         """Get degradation weights normalized to sum to 1.0.
 
         Returns:
-            Dictionary with normalized weights for each degradation metric
+            dict[str, float]: Dictionary with normalized weights for each degradation metric
         """
         total = (
             self.blur_weight
@@ -231,7 +239,7 @@ class DQSWeightConfig:
         """Convert configuration to dictionary.
 
         Returns:
-            Dictionary representation of the configuration
+            dict[str, Any]: Dictionary representation of the configuration
         """
         return {
             "degradation_weights": {
@@ -265,10 +273,10 @@ class DQSWeightConfig:
         """Create configuration from dictionary.
 
         Args:
-            data: Dictionary with weight configuration
+            data (dict[str, Any]): Dictionary with weight configuration
 
         Returns:
-            DQSWeightConfig instance
+            'DQSWeightConfig': 'DQSWeightConfig': DQSWeightConfig instance
         """
         config = cls()
 
@@ -327,14 +335,14 @@ class CalibrationSample:
     """A single calibration sample with IQA metrics and ground truth.
 
     Attributes:
-        sample_id: Unique identifier for the sample
-        blur_score: Normalized blur score (0-1, 1=sharp)
-        noise_score: Normalized noise score (0-1, 1=clean)
-        contrast_score: Normalized contrast score (0-1, 1=good)
-        illumination_score: Normalized illumination score (0-1, 1=good)
-        artifacts_score: Normalized artifacts score (0-1, 1=clean)
-        ground_truth_quality: Human-labeled quality score (0-1)
-        metadata: Optional additional metadata
+        sample_id (str): Unique identifier for the sample
+        blur_score (float): Normalized blur score (0-1, 1=sharp)
+        noise_score (float): Normalized noise score (0-1, 1=clean)
+        contrast_score (float): Normalized contrast score (0-1, 1=good)
+        illumination_score (float): Normalized illumination score (0-1, 1=good)
+        artifacts_score (float): Normalized artifacts score (0-1, 1=clean)
+        ground_truth_quality (float): Human-labeled quality score (0-1)
+        metadata (dict[str, Any]): Optional additional metadata
     """
 
     sample_id: str
@@ -352,12 +360,12 @@ class CalibrationResult:
     """Result from DQS weight calibration.
 
     Attributes:
-        optimized_config: The optimized weight configuration
-        initial_mae: Mean Absolute Error before optimization
-        final_mae: Mean Absolute Error after optimization
-        improvement_pct: Percentage improvement in MAE
-        num_samples: Number of samples used for calibration
-        convergence_iterations: Number of iterations to converge
+        optimized_config (DQSWeightConfig): The optimized weight configuration
+        initial_mae (float): Mean Absolute Error before optimization
+        final_mae (float): Mean Absolute Error after optimization
+        improvement_pct (float): Percentage improvement in MAE
+        num_samples (int): Number of samples used for calibration
+        convergence_iterations (int): Number of iterations to converge
     """
 
     optimized_config: DQSWeightConfig
@@ -373,6 +381,12 @@ class DQSCalibrator:
 
     Uses gradient-free optimization to find weights that minimize the error
     between calculated DQS and human-labeled quality scores.
+
+    Args:
+        initial_config (DQSWeightConfig | None): Starting weight configuration (uses defaults if None)
+        learning_rate (float): Step size for weight updates
+        max_iterations (int): Maximum optimization iterations
+        convergence_threshold (float): Stop when improvement is below this threshold
 
     Example:
         >>> calibrator = DQSCalibrator()
@@ -399,14 +413,6 @@ class DQSCalibrator:
         max_iterations: int = 1000,
         convergence_threshold: float = 1e-6,
     ) -> None:
-        """Initialize the calibrator.
-
-        Args:
-            initial_config: Starting weight configuration (uses defaults if None)
-            learning_rate: Step size for weight updates
-            max_iterations: Maximum optimization iterations
-            convergence_threshold: Stop when improvement is below this threshold
-        """
         self.initial_config = initial_config or DQSWeightConfig()
         self.learning_rate = learning_rate
         self.max_iterations = max_iterations
@@ -420,11 +426,11 @@ class DQSCalibrator:
         """Calculate degradation score using given weights.
 
         Args:
-            sample: Calibration sample with IQA metrics
-            weights: Normalized weights for each metric
+            sample (CalibrationSample): Calibration sample with IQA metrics
+            weights (dict[str, float]): Normalized weights for each metric
 
         Returns:
-            Calculated quality score
+            float: Calculated quality score
         """
         return (
             weights["blur"] * sample.blur_score
@@ -442,11 +448,11 @@ class DQSCalibrator:
         """Calculate Mean Absolute Error for given configuration.
 
         Args:
-            samples: List of calibration samples
-            config: Weight configuration to evaluate
+            samples (list[CalibrationSample]): List of calibration samples
+            config (DQSWeightConfig): Weight configuration to evaluate
 
         Returns:
-            Mean Absolute Error between predicted and ground truth
+            float: Mean Absolute Error between predicted and ground truth
         """
         if not samples:
             return 0.0
@@ -481,14 +487,14 @@ class DQSCalibrator:
         """Try adjusting a single weight and return result if improved.
 
         Args:
-            samples: Calibration samples
-            best_config: Current best configuration
-            best_mae: Current best MAE
-            weight_name: Name of weight to adjust (without _weight suffix)
-            delta: Amount to adjust (positive or negative)
+            samples (list[CalibrationSample]): Calibration samples
+            best_config (DQSWeightConfig): Current best configuration
+            best_mae (float): Current best MAE
+            weight_name (str): Name of weight to adjust (without _weight suffix)
+            delta (float): Amount to adjust (positive or negative)
 
         Returns:
-            Tuple of (new_config, new_mae, improved)
+            tuple[DQSWeightConfig, float, bool]: Tuple of (new_config, new_mae, improved)
         """
         test_config = self._copy_config(best_config)
         attr_name = f"{weight_name}_weight"
@@ -509,8 +515,14 @@ class DQSCalibrator:
     ) -> tuple[DQSWeightConfig, float, bool]:
         """Optimize a single weight by trying both directions.
 
+        Args:
+            samples (list[CalibrationSample]): Calibration samples with ground truth
+            config (DQSWeightConfig): Current weight configuration
+            mae (float): Current mean absolute error
+            weight_name (str): Name of the weight to optimize
+
         Returns:
-            Tuple of (new_config, new_mae, improved)
+            tuple[DQSWeightConfig, float, bool]: Tuple of (new_config, new_mae, improved)
         """
         # Try increasing the weight
         new_config, new_mae, inc_improved = self._try_weight_adjustment(
@@ -532,11 +544,11 @@ class DQSCalibrator:
         """Calibrate weights using coordinate descent optimization.
 
         Args:
-            samples: List of calibration samples with ground truth
-            verbose: Whether to log progress
+            samples (list[CalibrationSample]): List of calibration samples with ground truth
+            verbose (bool): Whether to log progress
 
         Returns:
-            CalibrationResult with optimized configuration and metrics
+            CalibrationResult: CalibrationResult with optimized configuration and metrics
 
         Raises:
             ValueError: If samples list is empty
@@ -605,11 +617,11 @@ class DQSCalibrator:
         """Evaluate a configuration on calibration samples.
 
         Args:
-            samples: List of calibration samples
-            config: Configuration to evaluate (uses initial if None)
+            samples (list[CalibrationSample]): List of calibration samples
+            config (DQSWeightConfig | None): Configuration to evaluate (uses initial if None)
 
         Returns:
-            Dictionary with evaluation metrics (MAE, RMSE, R²)
+            dict[str, float]: Dictionary with evaluation metrics (MAE, RMSE, R²)
         """
         config = config or self.initial_config
         weights = config.get_normalized_degradation_weights()
@@ -672,7 +684,7 @@ def _validate_classical_metrics(classical_iqa: dict[str, Any]) -> None:
     """Validate that all required classical IQA metrics are present and in range.
 
     Args:
-        classical_iqa: Classical IQA metrics dict.
+        classical_iqa (dict[str, Any]): Classical IQA metrics dict.
 
     Raises:
         ValueError: If a required metric is missing or out of [0.0, 1.0].
@@ -704,12 +716,12 @@ def _blend_ml_iqa(
     the configured blend ratio.
 
     Args:
-        degradation_score: Classical-only degradation score (0-1).
-        ml_iqa: ML IQA metrics dict (must contain 'overall_quality').
-        config: Weight configuration with blend ratio and sub-weights.
+        degradation_score (float): Classical-only degradation score (0-1).
+        ml_iqa (dict[str, Any]): ML IQA metrics dict (must contain 'overall_quality').
+        config (DQSWeightConfig): Weight configuration with blend ratio and sub-weights.
 
     Returns:
-        Blended degradation score, or the original if ML data is invalid.
+        float: Blended degradation score, or the original if ML data is invalid.
     """
     ml_overall = ml_iqa["overall_quality"]
     ml_sharpness = ml_iqa.get("sharpness")
@@ -769,21 +781,18 @@ def calculate_degradation_score(
     to 0-1 range where 1=best quality.
 
     Args:
-        classical_iqa: Classical IQA metrics dict with keys:
+        classical_iqa (dict[str, Any]): Classical IQA metrics dict with keys:
             - blur_score: Laplacian variance normalized (0-1, higher=sharper)
             - noise_score: Noise level normalized (0-1, higher=cleaner)
             - contrast_score: Contrast quality normalized (0-1, higher=better)
             - illumination_score: Illumination quality normalized (0-1, higher=better)
             - artifacts_score: Artifact presence normalized (0-1, higher=fewer artifacts)
-        ml_iqa: Optional ML-based IQA metrics (Phase 2+). If provided, will be
+        ml_iqa (dict[str, Any] | None): Optional ML-based IQA metrics (Phase 2+). If provided, will be
             blended with classical metrics.
-        config: Optional weight configuration. Uses defaults if not provided.
+        config (DQSWeightConfig | None): Optional weight configuration. Uses defaults if not provided.
 
     Returns:
-        Degradation score (0-1, where 0=worst degradation, 1=pristine quality)
-
-    Raises:
-        ValueError: If required metrics are missing or out of range
+        float: Degradation score (0-1, where 0=worst degradation, 1=pristine quality)
 
     Example:
         >>> classical_iqa = {
@@ -858,11 +867,11 @@ def calculate_structural_complexity_score(
     Score is capped at 1.0.
 
     Args:
-        layout_summary: PageLayoutSummary with layout type and feature flags
-        config: Optional weight configuration. Uses defaults if not provided.
+        layout_summary (PageLayoutSummary): PageLayoutSummary with layout type and feature flags
+        config (DQSWeightConfig | None): Optional weight configuration. Uses defaults if not provided.
 
     Returns:
-        Structural complexity score (0-1, where 0=simple, 1=very complex)
+        float: Structural complexity score (0-1, where 0=simple, 1=very complex)
 
     Example:
         >>> from image_preprocessing_detector.schema import (
@@ -948,10 +957,10 @@ def aggregate_dqs(
     and be aware of the typical quality level across all pages.
 
     Args:
-        page_dqs_list: List of DQSMetadata instances, one per page
+        page_dqs_list (list[DQSMetadata]): List of DQSMetadata instances, one per page
 
     Returns:
-        Aggregated DQSMetadata for the entire document
+        DQSMetadata: Aggregated DQSMetadata for the entire document
 
     Raises:
         ValueError: If page_dqs_list is empty
@@ -1011,21 +1020,21 @@ def normalize_classical_iqa(
     Uses sensible defaults for missing metrics.
 
     Args:
-        blur_result: BlurDetectionResult from BlurDetector. If the result has a
+        blur_result (BlurDetectionResult | None): BlurDetectionResult from BlurDetector. If the result has a
             `blur_score` attribute (0-1 normalized), it will be used directly.
             Otherwise, the raw `score` (Laplacian variance) is normalized.
-        contrast_result: ContrastDetectionResult from ContrastDetector
-        _skew_result: SkewDetectionResult from SkewDetector (not directly used in DQS,
+        contrast_result (ContrastDetectionResult | None): ContrastDetectionResult from ContrastDetector
+        _skew_result (SkewDetectionResult | None): SkewDetectionResult from SkewDetector (not directly used in DQS,
             but provided for completeness)
-        noise_result: NoiseDetectionResult from NoiseDetector (Milestone 4.2).
+        noise_result (NoiseDetectionResult | None): NoiseDetectionResult from NoiseDetector (Milestone 4.2).
             Takes precedence over noise_score if provided.
-        noise_score: Pre-normalized noise score (0-1, 1=clean). Deprecated, use
+        noise_score (float | None): Pre-normalized noise score (0-1, 1=clean). Deprecated, use
             noise_result instead.
-        illumination_score: Pre-normalized illumination score (0-1, 1=good)
-        artifacts_score: Pre-normalized artifacts score (0-1, 1=clean)
+        illumination_score (float | None): Pre-normalized illumination score (0-1, 1=good)
+        artifacts_score (float | None): Pre-normalized artifacts score (0-1, 1=clean)
 
     Returns:
-        Dictionary with normalized IQA metrics ready for calculate_degradation_score()
+        dict[str, Any]: Dictionary with normalized IQA metrics ready for calculate_degradation_score()
 
     Example:
         >>> from image_preprocessing_detector.detection.iqa_classical import (
@@ -1108,14 +1117,14 @@ def calculate_dqs(
     Aggregates IQA metrics across all pages to produce document-level DQS.
 
     Args:
-        blur_scores: List of blur scores per page (0-1, 1=sharp)
-        contrast_scores: List of contrast scores per page (0-1, 1=good)
-        noise_scores: List of noise scores per page (0-1, 1=clean)
-        _skew_angles: List of skew angles per page (degrees, unused in current implementation)
-        layout_complexities: List of layout complexity scores per page (0-1)
+        blur_scores (list[float]): List of blur scores per page (0-1, 1=sharp)
+        contrast_scores (list[float]): List of contrast scores per page (0-1, 1=good)
+        noise_scores (list[float]): List of noise scores per page (0-1, 1=clean)
+        _skew_angles (list[float]): List of skew angles per page (degrees, unused in current implementation)
+        layout_complexities (list[float]): List of layout complexity scores per page (0-1)
 
     Returns:
-        DQSMetadata with aggregated degradation and complexity scores
+        DQSMetadata: DQSMetadata with aggregated degradation and complexity scores
 
     Example:
         >>> dqs = calculate_dqs(
@@ -1165,11 +1174,11 @@ def _compute_pdf_type_penalty(
     """Return the risk penalty for the given PDF type.
 
     Args:
-        pdf_type: PDF classification (image_only/born_digital/hybrid), or None.
-        config: Weight configuration with per-type penalty values.
+        pdf_type (PDFType | None): PDF classification (image_only/born_digital/hybrid), or None.
+        config (DQSWeightConfig): Weight configuration with per-type penalty values.
 
     Returns:
-        Penalty value (0.0 for born_digital or unknown types).
+        float: Penalty value (0.0 for born_digital or unknown types).
     """
     if pdf_type == PDFType.IMAGE_ONLY:
         return config.risk_pdf_type_penalty_image_only
@@ -1187,11 +1196,11 @@ def _compute_layout_penalties(
     Currently checks for handwriting presence across all pages.
 
     Args:
-        page_layout_summary: Per-page layout analysis results.
-        config: Weight configuration with feature penalty values.
+        page_layout_summary (list[PageLayoutSummary]): Per-page layout analysis results.
+        config (DQSWeightConfig): Weight configuration with feature penalty values.
 
     Returns:
-        Layout penalty value (0.0 if no penalizable features found).
+        float: Layout penalty value (0.0 if no penalizable features found).
     """
     has_handwriting = any(page.has_handwriting for page in page_layout_summary)
     return config.risk_handwriting_penalty if has_handwriting else 0.0
@@ -1215,13 +1224,13 @@ def calculate_pre_ocr_risk(
     - Layout features: +0.1 if has_handwriting
 
     Args:
-        dqs: Document Quality Score
-        pdf_type: PDF classification (image_only/born_digital/hybrid)
-        page_layout_summary: Per-page layout analysis
-        config: Optional weight configuration. Uses defaults if not provided.
+        dqs (DQSMetadata): Document Quality Score
+        pdf_type (PDFType | None): PDF classification (image_only/born_digital/hybrid)
+        page_layout_summary (list[PageLayoutSummary]): Per-page layout analysis
+        config (DQSWeightConfig | None): Optional weight configuration. Uses defaults if not provided.
 
     Returns:
-        Pre-OCR risk score (0-1, where 0=low risk, 1=high risk)
+        float: Pre-OCR risk score (0-1, where 0=low risk, 1=high risk)
 
     Example:
         >>> dqs = DQSMetadata(degradation_score=0.7, structural_complexity_score=0.5)
@@ -1272,13 +1281,13 @@ class ExtendedIQAScores:
     All scores normalized to 0-1 where 1=best quality.
 
     Attributes:
-        blur_score: Blur quality (from BlurDetector)
-        noise_score: Noise quality (from NoiseDetector)
-        contrast_score: Contrast quality (from ContrastDetector)
-        illumination_score: Illumination quality (from IlluminationDetector)
-        compression_score: Compression quality (from JPEGBlockinessDetector)
-        binarization_score: Binarization quality (from BinarizationQualityDetector)
-        bleed_through_score: Bleed-through quality (from BleedThroughDetector)
+        blur_score (float): Blur quality (from BlurDetector)
+        noise_score (float): Noise quality (from NoiseDetector)
+        contrast_score (float): Contrast quality (from ContrastDetector)
+        illumination_score (float): Illumination quality (from IlluminationDetector)
+        compression_score (float): Compression quality (from JPEGBlockinessDetector)
+        binarization_score (float): Binarization quality (from BinarizationQualityDetector)
+        bleed_through_score (float): Bleed-through quality (from BleedThroughDetector)
     """
 
     blur_score: float = 1.0
@@ -1318,10 +1327,10 @@ def _severity_to_quality(severity_value: str) -> float:
     """Convert severity level to quality score.
 
     Args:
-        severity_value: Severity enum value string
+        severity_value (str): Severity enum value string
 
     Returns:
-        Quality score (0-1, higher is better)
+        float: Quality score (0-1, higher is better)
     """
     return _SEVERITY_QUALITY_MAP.get(severity_value, 0.5)
 
@@ -1379,17 +1388,17 @@ def normalize_extended_iqa(
     unified score format for DQS calculation.
 
     Args:
-        blur_result: BlurDetectionResult from BlurDetector
-        noise_result: NoiseDetectionResult from NoiseDetector
-        contrast_result: ContrastDetectionResult from ContrastDetector
-        illumination_result: IlluminationDetectionResult from IlluminationDetector
-        compression_result: JPEGBlockinessResult from JPEGBlockinessDetector
-        binarization_result: BinarizationQualityResult from BinarizationQualityDetector
-        bleed_through_result: BleedThroughResult from BleedThroughDetector
-        skew_result: SkewDetectionResult (not used in DQS, but accepted for API completeness)
+        blur_result (BlurDetectionResult | None): BlurDetectionResult from BlurDetector
+        noise_result (NoiseDetectionResult | None): NoiseDetectionResult from NoiseDetector
+        contrast_result (ContrastDetectionResult | None): ContrastDetectionResult from ContrastDetector
+        illumination_result (IlluminationDetectionResult | None): IlluminationDetectionResult from IlluminationDetector
+        compression_result (JPEGBlockinessResult | None): JPEGBlockinessResult from JPEGBlockinessDetector
+        binarization_result (BinarizationQualityResult | None): BinarizationQualityResult from BinarizationQualityDetector
+        bleed_through_result (BleedThroughResult | None): BleedThroughResult from BleedThroughDetector
+        _skew_result (SkewDetectionResult | None): SkewDetectionResult (not used in DQS, but accepted for API completeness)
 
     Returns:
-        ExtendedIQAScores with all normalized scores
+        ExtendedIQAScores: ExtendedIQAScores with all normalized scores
 
     Example:
         >>> from image_preprocessing_detector.detection import (
@@ -1450,12 +1459,12 @@ def calculate_extended_degradation_score(
     bleed-through scores.
 
     Args:
-        iqa_scores: ExtendedIQAScores with all normalized IQA metrics
-        weights: DQSWeightConfig with calibrated weights (default: DEFAULT_DQS_WEIGHTS)
-        ml_iqa: Optional ML-based IQA metrics. If provided, blends with classical.
+        iqa_scores (ExtendedIQAScores): ExtendedIQAScores with all normalized IQA metrics
+        weights (DQSWeightConfig | None): DQSWeightConfig with calibrated weights (default: DEFAULT_DQS_WEIGHTS)
+        ml_iqa (dict[str, Any] | None): Optional ML-based IQA metrics. If provided, blends with classical.
 
     Returns:
-        Degradation score (0-1, where 0=worst degradation, 1=pristine quality)
+        float: Degradation score (0-1, where 0=worst degradation, 1=pristine quality)
 
     Example:
         >>> scores = ExtendedIQAScores(

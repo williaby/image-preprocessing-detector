@@ -33,10 +33,10 @@ class CorrectionResult:
     """Result of a correction operation.
 
     Attributes:
-        corrected_image: The corrected image
-        applied: Whether correction was actually applied
-        parameters: Parameters used for the correction
-        skipped_reason: Reason if correction was skipped (None if applied)
+        corrected_image (np.ndarray): The corrected image
+        applied (bool): Whether correction was actually applied
+        parameters (dict[str, Any]): Parameters used for the correction
+        skipped_reason (str | None): Reason if correction was skipped (None if applied)
     """
 
     corrected_image: np.ndarray
@@ -49,6 +49,11 @@ class DeskewCorrector:
     """Corrects image skew using rotation.
 
     Includes guardrails to prevent over-correction and quality degradation.
+
+    Args:
+        min_angle (float): Minimum angle to correct (< 0.5° skipped)
+        max_angle (float): Maximum angle to correct (> 45° too risky)
+        border_value (int): Border fill value (0-255, default white)
     """
 
     def __init__(
@@ -57,13 +62,6 @@ class DeskewCorrector:
         max_angle: float = 45.0,
         border_value: int = 255,
     ) -> None:
-        """Initialize deskew corrector.
-
-        Args:
-            min_angle: Minimum angle to correct (< 0.5° skipped)
-            max_angle: Maximum angle to correct (> 45° too risky)
-            border_value: Border fill value (0-255, default white)
-        """
         self.min_angle = min_angle
         self.max_angle = max_angle
         self.border_value = border_value
@@ -80,12 +78,12 @@ class DeskewCorrector:
         """Apply deskew correction.
 
         Args:
-            image: Input image (BGR format)
-            angle: Detected skew angle in degrees
-            confidence: Detection confidence (0.0-1.0)
+            image (np.ndarray): Input image (BGR format)
+            angle (float): Detected skew angle in degrees
+            confidence (float): Detection confidence (0.0-1.0)
 
         Returns:
-            CorrectionResult with corrected image and metadata
+            CorrectionResult: CorrectionResult with corrected image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -184,6 +182,11 @@ class ContrastEnhancer:
     """Enhances image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization).
 
     Includes guardrails to prevent over-enhancement.
+
+    Args:
+        clip_limit (float): CLAHE clip limit (higher = more contrast)
+        tile_grid_size (tuple[int, int]): Size of grid for histogram equalization
+        min_score (float): Minimum contrast score to skip enhancement
     """
 
     def __init__(
@@ -192,13 +195,6 @@ class ContrastEnhancer:
         tile_grid_size: tuple[int, int] = (8, 8),
         min_score: float = 0.4,
     ) -> None:
-        """Initialize contrast enhancer.
-
-        Args:
-            clip_limit: CLAHE clip limit (higher = more contrast)
-            tile_grid_size: Size of grid for histogram equalization
-            min_score: Minimum contrast score to skip enhancement
-        """
         self.clip_limit = clip_limit
         self.tile_grid_size = tile_grid_size
         self.min_score = min_score
@@ -215,12 +211,12 @@ class ContrastEnhancer:
         """Apply contrast enhancement.
 
         Args:
-            image: Input image (BGR format)
-            score: Detected contrast score (0.0-1.0)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            score (float): Detected contrast score (0.0-1.0)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with enhanced image and metadata
+            CorrectionResult: CorrectionResult with enhanced image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -284,6 +280,12 @@ class Sharpener:
     """Sharpens blurred images using unsharp mask.
 
     Includes guardrails to prevent over-sharpening and noise amplification.
+
+    Args:
+        amount (float): Sharpening strength (0.0-2.0)
+        kernel_size (int): Gaussian blur kernel size (odd number)
+        sigma (float): Gaussian blur sigma
+        min_blur_score (float): Minimum blur score to skip sharpening
     """
 
     def __init__(
@@ -293,14 +295,6 @@ class Sharpener:
         sigma: float = 1.0,
         min_blur_score: float = 200.0,
     ) -> None:
-        """Initialize sharpener.
-
-        Args:
-            amount: Sharpening strength (0.0-2.0)
-            kernel_size: Gaussian blur kernel size (odd number)
-            sigma: Gaussian blur sigma
-            min_blur_score: Minimum blur score to skip sharpening
-        """
         self.amount = amount
         self.kernel_size = kernel_size if kernel_size % 2 == 1 else kernel_size + 1
         self.sigma = sigma
@@ -318,12 +312,12 @@ class Sharpener:
         """Apply sharpening correction.
 
         Args:
-            image: Input image (BGR format)
-            blur_score: Detected blur score (Laplacian variance)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            blur_score (float): Detected blur score (Laplacian variance)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with sharpened image and metadata
+            CorrectionResult: CorrectionResult with sharpened image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -386,6 +380,13 @@ class Denoiser:
 
     NLMeans is effective for Gaussian noise while preserving edges.
     Includes guardrails to prevent over-smoothing.
+
+    Args:
+        h_luminance (float): Filter strength for luminance (higher = more smoothing)
+        h_color (float): Filter strength for color components
+        template_window_size (int): Size of template patch (odd number)
+        search_window_size (int): Size of search window (odd number)
+        min_noise_score (float): Minimum noise score to skip denoising (0-1, higher = cleaner)
     """
 
     def __init__(
@@ -396,15 +397,6 @@ class Denoiser:
         search_window_size: int = 21,
         min_noise_score: float = 0.7,
     ) -> None:
-        """Initialize denoiser.
-
-        Args:
-            h_luminance: Filter strength for luminance (higher = more smoothing)
-            h_color: Filter strength for color components
-            template_window_size: Size of template patch (odd number)
-            search_window_size: Size of search window (odd number)
-            min_noise_score: Minimum noise score to skip denoising (0-1, higher = cleaner)
-        """
         self.h_luminance = h_luminance
         self.h_color = h_color
         self.template_window_size = template_window_size
@@ -424,12 +416,12 @@ class Denoiser:
         """Apply noise reduction.
 
         Args:
-            image: Input image (BGR format)
-            noise_score: Detected noise score (0-1, 0=noisy, 1=clean)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            noise_score (float): Detected noise score (0-1, 0=noisy, 1=clean)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with denoised image and metadata
+            CorrectionResult: CorrectionResult with denoised image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -502,6 +494,12 @@ class BinarizationCorrector:
 
     Useful for scanned documents with uneven lighting or faded text.
     Includes guardrails to prevent destroying color information.
+
+    Args:
+        block_size (int): Size of adaptive threshold neighborhood (odd number)
+        c_offset (int): Constant subtracted from mean/weighted mean
+        min_binarization_score (float): Minimum score to skip correction (0-1)
+        apply_morphology (bool): Apply morphological opening to clean up
     """
 
     def __init__(
@@ -511,14 +509,6 @@ class BinarizationCorrector:
         min_binarization_score: float = 0.7,
         apply_morphology: bool = True,
     ) -> None:
-        """Initialize binarization corrector.
-
-        Args:
-            block_size: Size of adaptive threshold neighborhood (odd number)
-            c_offset: Constant subtracted from mean/weighted mean
-            min_binarization_score: Minimum score to skip correction (0-1)
-            apply_morphology: Apply morphological opening to clean up
-        """
         self.block_size = block_size if block_size % 2 == 1 else block_size + 1
         self.c_offset = c_offset
         self.min_binarization_score = min_binarization_score
@@ -537,12 +527,12 @@ class BinarizationCorrector:
         """Apply binarization correction.
 
         Args:
-            image: Input image (BGR format)
-            binarization_score: Detected binarization quality (0-1, 0=poor, 1=good)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            binarization_score (float): Detected binarization quality (0-1, 0=poor, 1=good)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with corrected image and metadata
+            CorrectionResult: CorrectionResult with corrected image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -626,6 +616,11 @@ class IlluminationNormalizer:
 
     Effective for documents with shadows, uneven lighting, or scanner artifacts.
     Includes guardrails to preserve document content.
+
+    Args:
+        kernel_size (int): Size of morphological kernel (odd number, larger = more smoothing)
+        min_illumination_score (float): Minimum score to skip normalization (0-1)
+        blend_alpha (float): Blending factor with original (0-1, higher = more correction)
     """
 
     def __init__(
@@ -634,13 +629,6 @@ class IlluminationNormalizer:
         min_illumination_score: float = 0.7,
         blend_alpha: float = 0.8,
     ) -> None:
-        """Initialize illumination normalizer.
-
-        Args:
-            kernel_size: Size of morphological kernel (odd number, larger = more smoothing)
-            min_illumination_score: Minimum score to skip normalization (0-1)
-            blend_alpha: Blending factor with original (0-1, higher = more correction)
-        """
         self.kernel_size = kernel_size if kernel_size % 2 == 1 else kernel_size + 1
         self.min_illumination_score = min_illumination_score
         self.blend_alpha = blend_alpha
@@ -657,12 +645,12 @@ class IlluminationNormalizer:
         """Apply illumination normalization.
 
         Args:
-            image: Input image (BGR format)
-            illumination_score: Detected illumination uniformity (0-1, 0=uneven, 1=uniform)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            illumination_score (float): Detected illumination uniformity (0-1, 0=uneven, 1=uniform)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with normalized image and metadata
+            CorrectionResult: CorrectionResult with normalized image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -767,6 +755,12 @@ class BleedThroughSuppressor:
     Uses cross-channel analysis and morphological filtering to remove
     faint text showing through from the other side.
     Includes guardrails to prevent removing legitimate content.
+
+    Args:
+        kernel_size (int): Size of morphological kernel
+        min_bleed_score (float): Minimum score to skip suppression (0-1, 0=severe bleed, 1=none)
+        intensity_threshold (int): Threshold for detecting bleed-through regions
+        blend_alpha (float): Blending factor for correction
     """
 
     def __init__(
@@ -776,14 +770,6 @@ class BleedThroughSuppressor:
         intensity_threshold: int = 200,
         blend_alpha: float = 0.7,
     ) -> None:
-        """Initialize bleed-through suppressor.
-
-        Args:
-            kernel_size: Size of morphological kernel
-            min_bleed_score: Minimum score to skip suppression (0-1, 0=severe bleed, 1=none)
-            intensity_threshold: Threshold for detecting bleed-through regions
-            blend_alpha: Blending factor for correction
-        """
         self.kernel_size = kernel_size if kernel_size % 2 == 1 else kernel_size + 1
         self.min_bleed_score = min_bleed_score
         self.intensity_threshold = intensity_threshold
@@ -801,12 +787,12 @@ class BleedThroughSuppressor:
         """Apply bleed-through suppression.
 
         Args:
-            image: Input image (BGR format)
-            bleed_score: Detected bleed-through score (0-1, 0=severe, 1=none)
-            severity: Issue severity
+            image (np.ndarray): Input image (BGR format)
+            bleed_score (float): Detected bleed-through score (0-1, 0=severe, 1=none)
+            severity (Severity): Issue severity
 
         Returns:
-            CorrectionResult with suppressed image and metadata
+            CorrectionResult: CorrectionResult with suppressed image and metadata
 
         Raises:
             ValueError: If image is invalid or empty
@@ -914,6 +900,10 @@ class OrientationCorrector:
 
     Phase 8 implementation for handling rotated scans/photos.
     Includes guardrails based on confidence thresholds.
+
+    Args:
+        min_confidence (float): Minimum confidence to apply correction
+        auto_correct_threshold (float): Confidence threshold for auto-correction
     """
 
     def __init__(
@@ -921,12 +911,6 @@ class OrientationCorrector:
         min_confidence: float = 0.7,
         auto_correct_threshold: float = 0.85,
     ) -> None:
-        """Initialize orientation corrector.
-
-        Args:
-            min_confidence: Minimum confidence to apply correction
-            auto_correct_threshold: Confidence threshold for auto-correction
-        """
         self.min_confidence = min_confidence
         self.auto_correct_threshold = auto_correct_threshold
 
@@ -946,13 +930,13 @@ class OrientationCorrector:
         """Apply orientation correction.
 
         Args:
-            image: Input image (BGR format)
-            angle: Detected orientation angle (0, 90, 180, 270)
-            confidence: Detection confidence (0.0-1.0)
-            force: Force correction even if confidence is low
+            image (np.ndarray): Input image (BGR format)
+            angle (int): Detected orientation angle (0, 90, 180, 270)
+            confidence (float): Detection confidence (0.0-1.0)
+            force (bool): Force correction even if confidence is low
 
         Returns:
-            CorrectionResult with corrected image and metadata
+            CorrectionResult: CorrectionResult with corrected image and metadata
 
         Raises:
             ValueError: If image is invalid, empty, or angle is invalid
@@ -1031,12 +1015,12 @@ def correct_skew(
     """Convenience function for deskew correction.
 
     Args:
-        image: Input image (BGR format)
-        angle: Detected skew angle in degrees
-        confidence: Detection confidence (0.0-1.0)
+        image (np.ndarray): Input image (BGR format)
+        angle (float): Detected skew angle in degrees
+        confidence (float): Detection confidence (0.0-1.0)
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("skewed.jpg")
@@ -1054,12 +1038,12 @@ def enhance_contrast(
     """Convenience function for contrast enhancement.
 
     Args:
-        image: Input image (BGR format)
-        score: Detected contrast score (0.0-1.0)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        score (float): Detected contrast score (0.0-1.0)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("low_contrast.jpg")
@@ -1077,12 +1061,12 @@ def sharpen_image(
     """Convenience function for sharpening.
 
     Args:
-        image: Input image (BGR format)
-        blur_score: Detected blur score (Laplacian variance)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        blur_score (float): Detected blur score (Laplacian variance)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("blurred.jpg")
@@ -1100,12 +1084,12 @@ def denoise_image(
     """Convenience function for denoising.
 
     Args:
-        image: Input image (BGR format)
-        noise_score: Detected noise score (0-1, 0=noisy, 1=clean)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        noise_score (float): Detected noise score (0-1, 0=noisy, 1=clean)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("noisy.jpg")
@@ -1123,12 +1107,12 @@ def correct_binarization(
     """Convenience function for binarization correction.
 
     Args:
-        image: Input image (BGR format)
-        binarization_score: Detected binarization quality (0-1)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        binarization_score (float): Detected binarization quality (0-1)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("faded_document.jpg")
@@ -1148,12 +1132,12 @@ def normalize_illumination(
     """Convenience function for illumination normalization.
 
     Args:
-        image: Input image (BGR format)
-        illumination_score: Detected illumination uniformity (0-1)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        illumination_score (float): Detected illumination uniformity (0-1)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("uneven_lighting.jpg")
@@ -1173,12 +1157,12 @@ def suppress_bleed_through(
     """Convenience function for bleed-through suppression.
 
     Args:
-        image: Input image (BGR format)
-        bleed_score: Detected bleed-through score (0-1, 0=severe, 1=none)
-        severity: Issue severity
+        image (np.ndarray): Input image (BGR format)
+        bleed_score (float): Detected bleed-through score (0-1, 0=severe, 1=none)
+        severity (Severity): Issue severity
 
     Returns:
-        CorrectionResult
+        CorrectionResult: CorrectionResult
 
     Example:
         >>> img = cv2.imread("bleed_through_scan.jpg")
@@ -1204,13 +1188,13 @@ def correct_orientation(
     Common in scanned/photographed documents.
 
     Args:
-        image: Input image (BGR format)
-        angle: Detected orientation angle (0, 90, 180, 270 degrees)
-        confidence: Detection confidence (0.0-1.0)
-        force: Force correction even if confidence is low
+        image (np.ndarray): Input image (BGR format)
+        angle (int): Detected orientation angle (0, 90, 180, 270 degrees)
+        confidence (float): Detection confidence (0.0-1.0)
+        force (bool): Force correction even if confidence is low
 
     Returns:
-        CorrectionResult with corrected image and metadata
+        CorrectionResult: CorrectionResult with corrected image and metadata
 
     Example:
         >>> img = cv2.imread("rotated_scan.jpg")

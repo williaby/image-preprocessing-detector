@@ -33,13 +33,14 @@ class CalibrationResult:
     """Result of calibration evaluation.
 
     Attributes:
-        ece: Expected Calibration Error (weighted average over bins)
-        mce: Maximum Calibration Error (worst bin)
-        bin_accuracies: Accuracy per confidence bin
-        bin_confidences: Mean confidence per bin
-        bin_counts: Number of samples per bin
-        num_bins: Number of bins used
-        total_samples: Total number of samples evaluated
+        ece (float): Expected Calibration Error (weighted average over bins)
+        mce (float): Maximum Calibration Error (worst bin)
+        bin_accuracies (list[float]): Accuracy per confidence bin
+        bin_confidences (list[float]): Mean confidence per bin
+        bin_counts (list[int]): Number of samples per bin
+        num_bins (int): Number of bins used
+        total_samples (int): Total number of samples evaluated
+        per_class_ece (dict[str, float]): ECE per class for multi-class evaluation
     """
 
     ece: float
@@ -82,13 +83,13 @@ def compute_ece(
     and conf is mean confidence.
 
     Args:
-        predictions: Predicted probabilities, shape (n_samples,) or (n_samples, n_classes)
-        labels: True labels (continuous [0,1] or binary)
-        num_bins: Number of confidence bins (default: 15)
-        binary_threshold: Threshold for converting continuous labels (default: 0.5)
+        predictions (NDArray[np.floating[Any]]): Predicted probabilities, shape (n_samples,) or (n_samples, n_classes)
+        labels (NDArray[np.floating[Any]]): True labels (continuous [0,1] or binary)
+        num_bins (int): Number of confidence bins (default: 15)
+        binary_threshold (float): Threshold for converting continuous labels (default: 0.5)
 
     Returns:
-        CalibrationResult with ECE, MCE, and per-bin statistics
+        CalibrationResult: CalibrationResult with ECE, MCE, and per-bin statistics
 
     Example:
         >>> preds = np.array([0.9, 0.8, 0.3, 0.2])
@@ -176,14 +177,14 @@ def compute_multiclass_ece(
     per-class ECE and macro-averaged ECE.
 
     Args:
-        predictions: Predicted probabilities, shape (n_samples, n_classes)
-        labels: True labels, shape (n_samples, n_classes)
-        class_names: Optional list of class names for reporting
-        num_bins: Number of confidence bins (default: 15)
-        binary_threshold: Threshold for continuous labels (default: 0.5)
+        predictions (NDArray[np.floating[Any]]): Predicted probabilities, shape (n_samples, n_classes)
+        labels (NDArray[np.floating[Any]]): True labels, shape (n_samples, n_classes)
+        class_names (list[str] | None): Optional list of class names for reporting
+        num_bins (int): Number of confidence bins (default: 15)
+        binary_threshold (float): Threshold for continuous labels (default: 0.5)
 
     Returns:
-        CalibrationResult with per-class ECE in per_class_ece dict
+        CalibrationResult: CalibrationResult with per-class ECE in per_class_ece dict
 
     Example:
         >>> preds = np.array([[0.9, 0.2], [0.8, 0.7], [0.3, 0.1]])
@@ -247,11 +248,11 @@ def compute_severity_metrics(
     the model predicts the severity/magnitude of quality issues.
 
     Args:
-        predictions: Predicted severities [0, 1], shape (n_samples,) or (n_samples, n_classes)
-        targets: True severity values [0, 1]
+        predictions (NDArray[np.floating[Any]]): Predicted severities [0, 1], shape (n_samples,) or (n_samples, n_classes)
+        targets (NDArray[np.floating[Any]]): True severity values [0, 1]
 
     Returns:
-        Dictionary with severity metrics:
+        dict[str, float]: Dictionary with severity metrics:
         - severity_mae: Mean Absolute Error
         - severity_mse: Mean Squared Error
         - severity_rmse: Root Mean Squared Error
@@ -288,10 +289,10 @@ def generate_reliability_diagram_data(
     observed accuracy (y-axis). Perfect calibration = diagonal line.
 
     Args:
-        result: CalibrationResult from compute_ece
+        result (CalibrationResult): CalibrationResult from compute_ece
 
     Returns:
-        Dictionary with plot data:
+        dict[str, Any]: Dictionary with plot data:
         - bin_midpoints: X-axis values (confidence bin centers)
         - bin_accuracies: Y-axis values (observed accuracy)
         - bin_counts: Size of each bin (for bar widths)
