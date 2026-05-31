@@ -35,7 +35,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -96,7 +96,7 @@ except ImportError:
     logger.warning("Augraphy not available. Install with: uv sync --extra synthetic")
 
 
-class DegradationProfile(str, Enum):
+class DegradationProfile(StrEnum):
     """Predefined degradation intensity profiles."""
 
     PRISTINE = "pristine"
@@ -125,10 +125,11 @@ class AugmenterConfig:
     """Configuration for a single augmenter.
 
     Attributes:
-        name: Human-readable augmenter name
-        iqa_dimension: Which IQA dimension this affects
-        weight: Contribution weight to the dimension (0-1)
-        params: Dictionary of parameter ranges
+        name (str): Human-readable augmenter name
+        iqa_dimension (str): Which IQA dimension this affects
+        weight (float): Contribution weight to the dimension (0-1)
+        params (dict[str, Any]): Dictionary of parameter ranges
+
     """
 
     name: str
@@ -220,10 +221,11 @@ def _pil_to_numpy(image: Image.Image) -> np.ndarray:
     """Convert PIL Image to numpy array.
 
     Args:
-        image: PIL Image
+        image (Image.Image): PIL Image
 
     Returns:
-        Numpy array in BGR format (for OpenCV/Augraphy compatibility)
+        np.ndarray: Numpy array in BGR format (for OpenCV/Augraphy compatibility)
+
     """
     rgb = np.array(image)
     if len(rgb.shape) == 2:
@@ -240,10 +242,11 @@ def _numpy_to_pil(array: np.ndarray) -> Image.Image:
     """Convert numpy array to PIL Image.
 
     Args:
-        array: Numpy array in BGR format
+        array (np.ndarray): Numpy array in BGR format
 
     Returns:
-        PIL Image in RGB format
+        Image.Image: PIL Image in RGB format
+
     """
     if len(array.shape) == 2:
         return Image.fromarray(array)
@@ -264,12 +267,6 @@ class AugmentationPipeline:
         seed: int | None = None,
         enable_all_dimensions: bool = True,
     ) -> None:
-        """Initialize the augmentation pipeline.
-
-        Args:
-            seed: Random seed for reproducibility
-            enable_all_dimensions: Whether to potentially use all IQA dimensions
-        """
         self.seed = seed
         self.enable_all_dimensions = enable_all_dimensions
         self._rng = random.Random(seed)
@@ -287,11 +284,12 @@ class AugmentationPipeline:
         """Scale augmenter parameters based on severity.
 
         Args:
-            config: Augmenter configuration
-            severity: Severity level (0-1)
+            config (AugmenterConfig): Augmenter configuration
+            severity (float): Severity level (0-1)
 
         Returns:
-            Scaled parameter dictionary
+            dict[str, Any]: Scaled parameter dictionary
+
         """
         scaled: dict[str, Any] = {}
 
@@ -319,11 +317,12 @@ class AugmentationPipeline:
         Updated for augraphy 8.x API.
 
         Args:
-            config: Augmenter configuration
-            severity: Severity level (0-1)
+            config (AugmenterConfig): Augmenter configuration
+            severity (float): Severity level (0-1)
 
         Returns:
-            Augraphy augmenter instance or None
+            Any | None: Augraphy augmenter instance or None
+
         """
         if not AUGRAPHY_AVAILABLE:
             return None
@@ -449,11 +448,12 @@ class AugmentationPipeline:
         """Select augmenters based on profile.
 
         Args:
-            profile: Degradation profile
-            custom_severities: Optional custom severities per dimension
+            profile (DegradationProfile): Degradation profile
+            custom_severities (dict[str, float] | None): Optional custom severities per dimension
 
         Returns:
-            Tuple of (augmenter list, severity dict per IQA dimension)
+            tuple[list[Any], dict[str, float]]: Tuple of (augmenter list, severity dict per IQA dimension)
+
         """
         if not AUGRAPHY_AVAILABLE:
             return [], {}
@@ -510,12 +510,13 @@ class AugmentationPipeline:
         """Apply degradation to an image.
 
         Args:
-            image: Input PIL Image
-            profile: Degradation profile to use
-            custom_severities: Optional custom severities per IQA dimension
+            image (Image.Image): Input PIL Image
+            profile (DegradationProfile): Degradation profile to use
+            custom_severities (dict[str, float] | None): Optional custom severities per IQA dimension
 
         Returns:
-            Tuple of (degraded image, IQA labels)
+            tuple[Image.Image, IQALabels]: Tuple of (degraded image, IQA labels)
+
         """
         if not AUGRAPHY_AVAILABLE:
             # Return original with pristine labels
@@ -576,12 +577,13 @@ class AugmentationPipeline:
         """Apply specific degradation types.
 
         Args:
-            image: Input PIL Image
-            degradations: List of degradation names to apply
-            severity: Severity level (0-1)
+            image (Image.Image): Input PIL Image
+            degradations (list[str]): List of degradation names to apply
+            severity (float): Severity level (0-1)
 
         Returns:
-            Tuple of (degraded image, IQA labels)
+            tuple[Image.Image, IQALabels]: Tuple of (degraded image, IQA labels)
+
         """
         custom_severities: dict[str, float] = {}
 

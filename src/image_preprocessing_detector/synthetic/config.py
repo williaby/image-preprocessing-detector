@@ -21,7 +21,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from image_preprocessing_detector.schema_utils.iso_language_script import (
@@ -30,7 +30,7 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
 )
 
 
-class ColorMode(str, Enum):
+class ColorMode(StrEnum):
     """Color mode for generated document images.
 
     Controls post-processing color conversion for training diversity.
@@ -54,7 +54,7 @@ COLOR_MODE_WEIGHTS: dict[ColorMode, float] = {
 }
 
 
-class LayoutType(str, Enum):
+class LayoutType(StrEnum):
     """Document layout types for synthetic generation.
 
     These map to Layer 2 StructureInfo.layout_type values.
@@ -94,7 +94,7 @@ class LayoutType(str, Enum):
     """Dense paragraphs with minimal margins."""
 
 
-class TextDensity(str, Enum):
+class TextDensity(StrEnum):
     """Text density levels for generated documents.
 
     Controls text length and coverage in generated images.
@@ -318,16 +318,19 @@ class ScriptConfig:
     text direction, and OpenLID-v2 language mappings.
 
     Attributes:
-        code: ISO 15924 4-letter script code (e.g., "Tibt", "Arab")
-        name: Human-readable script name (e.g., "Tibetan", "Arabic")
-        direction: Text direction ("ltr", "rtl", or "ttb")
-        fonts: List of Noto font filenames for this script
-        openlid_languages: OpenLID-v2 language codes that use this script
-        script_family: High-level script family for OCR routing
-        is_rtl: True if script is right-to-left
-        requires_shaping: True if script requires HarfBuzz text shaping
-        min_font_size: Minimum readable font size in pixels
-        max_font_size: Maximum font size in pixels
+        code (str): ISO 15924 4-letter script code (e.g., "Tibt", "Arab")
+        name (str): Human-readable script name (e.g., "Tibetan", "Arabic")
+        direction (Literal['ltr', 'rtl', 'ttb']): Text direction ("ltr", "rtl", or "ttb")
+        fonts (list[str]): List of Noto font filenames for this script
+        openlid_languages (list[str]): OpenLID-v2 language codes that use this script
+        script_family (ScriptFamily): High-level script family for OCR routing
+        is_rtl (bool): True if script is right-to-left
+        requires_shaping (bool): True if script requires HarfBuzz text shaping
+        min_font_size (int): Minimum readable font size in pixels
+        max_font_size (int): Maximum font size in pixels
+        rq_min_font_size (int): Minimum font size for resolution quality training
+        rq_max_font_size (int): Maximum font size covering all coarse buckets
+
     """
 
     code: str
@@ -1165,10 +1168,11 @@ def get_script_config(script_code: str) -> ScriptConfig | None:
     """Get configuration for a script by its ISO 15924 code.
 
     Args:
-        script_code: ISO 15924 4-letter script code
+        script_code (str): ISO 15924 4-letter script code
 
     Returns:
-        ScriptConfig if found, None otherwise
+        ScriptConfig | None: ScriptConfig if found, None otherwise
+
     """
     return SCRIPT_CONFIGS.get(script_code)
 
@@ -1177,10 +1181,11 @@ def get_scripts_by_family(family: ScriptFamily) -> list[ScriptConfig]:
     """Get all script configurations for a given script family.
 
     Args:
-        family: Script family to filter by
+        family (ScriptFamily): Script family to filter by
 
     Returns:
-        List of ScriptConfig objects in that family
+        list[ScriptConfig]: List of ScriptConfig objects in that family
+
     """
     return [cfg for cfg in SCRIPT_CONFIGS.values() if cfg.script_family == family]
 

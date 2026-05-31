@@ -92,17 +92,23 @@ class GenerationConfig:
     """Configuration for document generation.
 
     Attributes:
-        scripts: List of ISO 15924 script codes to generate
-        samples_per_script: Number of samples per script
-        layout_types: Layout types to use (None = all)
-        text_densities: Text densities to use (None = all)
-        degradation_profiles: Degradation profiles (None = all)
-        output_dir: Directory to save generated images
-        save_images: Whether to save images to disk
-        save_metadata: Whether to save metadata JSON
-        image_format: Output image format (png, jpg)
-        seed: Random seed for reproducibility
-        pristine_ratio: Ratio of pristine (undegraded) samples (0-1)
+        scripts (list[str]): List of ISO 15924 script codes to generate
+        samples_per_script (int): Number of samples per script
+        layout_types (list[LayoutType] | None): Layout types to use (None = all)
+        text_densities (list[TextDensity] | None): Text densities to use (None = all)
+        degradation_profiles (list[DegradationProfile] | None): Degradation profiles (None = all)
+        output_dir (Path | None): Directory to save generated images
+        save_images (bool): Whether to save images to disk
+        save_metadata (bool): Whether to save metadata JSON
+        image_format (str): Output image format (png, jpg)
+        seed (int | None): Random seed for reproducibility
+        pristine_ratio (float): Ratio of pristine (undegraded) samples (0-1)
+        dpi (int): Output resolution in DPI
+        augmenter (str): Augmentation backend (augraphy, albumentations, or hybrid)
+        color_mode_enabled (bool): Apply random color mode conversion
+        skew_augmentation (bool): Apply random skew augmentation
+        orientation_augmentation (bool): Apply random orientation augmentation
+
     """
 
     scripts: list[str] = field(
@@ -149,12 +155,13 @@ class GenerationStats:
     """Statistics from a generation run.
 
     Attributes:
-        total_samples: Total samples generated
-        samples_per_script: Count per script code
-        samples_per_layout: Count per layout type
-        samples_per_profile: Count per degradation profile
-        failed_samples: Number of failed generations
-        errors: List of error messages
+        total_samples (int): Total samples generated
+        samples_per_script (dict[str, int]): Count per script code
+        samples_per_layout (dict[str, int]): Count per layout type
+        samples_per_profile (dict[str, int]): Count per degradation profile
+        failed_samples (int): Number of failed generations
+        errors (list[str]): List of error messages
+
     """
 
     total_samples: int = 0
@@ -176,11 +183,6 @@ class MultiScriptDocumentGenerator:
         self,
         config: GenerationConfig | None = None,
     ) -> None:
-        """Initialize the generator.
-
-        Args:
-            config: Generation configuration (uses defaults if None)
-        """
         self.config = config or GenerationConfig()
         self._initialized = False
 
@@ -276,11 +278,14 @@ class MultiScriptDocumentGenerator:
         """Initialize all components.
 
         Args:
-            download_corpus: Whether to download missing corpus data
-            scan_fonts: Whether to scan for available fonts
+            download_corpus (bool): Whether to download missing corpus data
+            scan_fonts (bool): Whether to scan for available fonts
 
         Returns:
-            True if initialization successful
+            bool: True if initialization successful
+
+        Raises:
+            RuntimeError: If corpus is empty or no fonts are found for configured scripts
         """
         import random
 
@@ -344,10 +349,11 @@ class MultiScriptDocumentGenerator:
         """Select an item based on weighted probability.
 
         Args:
-            weights: Dictionary mapping items to their probability weights
+            weights (dict[Any, float]): Dictionary mapping items to their probability weights
 
         Returns:
-            Selected item based on weighted random choice
+            Any: Selected item based on weighted random choice
+
         """
         items = list(weights.keys())
         probs = list(weights.values())
@@ -373,10 +379,11 @@ class MultiScriptDocumentGenerator:
         """Select a two-script combination based on configured weights.
 
         Args:
-            available_scripts: List of available script codes
+            available_scripts (list[str]): List of available script codes
 
         Returns:
-            Tuple of (primary_script, secondary_script)
+            tuple[str, str]: Tuple of (primary_script, secondary_script)
+
         """
         # Filter TWO_SCRIPT_COMBINATIONS to available scripts
         valid_pairs = {
@@ -411,10 +418,11 @@ class MultiScriptDocumentGenerator:
         """Select appropriate layout for multi-script documents.
 
         Args:
-            num_scripts: Number of scripts in the document
+            num_scripts (int): Number of scripts in the document
 
         Returns:
-            LayoutType appropriate for the script count
+            LayoutType: LayoutType appropriate for the script count
+
         """
         if num_scripts == 2:
             # Two scripts: HEADER_BODY, COLUMNS, or INTERLEAVED
@@ -448,10 +456,11 @@ class MultiScriptDocumentGenerator:
         """Get target DPI for a resolution tier.
 
         Args:
-            tier: Resolution tier (LOW, MEDIUM, HIGH)
+            tier (str): Resolution tier (LOW, MEDIUM, HIGH)
 
         Returns:
-            Target DPI value
+            int: Target DPI value
+
         """
         tier_config = RESOLUTION_TIERS.get(tier, RESOLUTION_TIERS["STANDARD"])
         dpi = tier_config["target_dpi"]
@@ -464,10 +473,11 @@ class MultiScriptDocumentGenerator:
         not just labeled with the tier but rendered at a fixed DPI.
 
         Args:
-            resolution_tier: Resolution tier (LOW, MEDIUM, HIGH)
+            resolution_tier (str): Resolution tier (LOW, MEDIUM, HIGH)
 
         Returns:
-            DocumentRenderer configured for the tier's DPI
+            DocumentRenderer: DocumentRenderer configured for the tier's DPI
+
         """
         if resolution_tier in self._renderers_by_tier:
             return self._renderers_by_tier[resolution_tier]
@@ -508,10 +518,11 @@ class MultiScriptDocumentGenerator:
         The image is always returned as RGB (3-channel) for model compatibility.
 
         Args:
-            image: PIL Image in RGB mode
+            image (Any): PIL Image in RGB mode
 
         Returns:
-            Tuple of (converted image, color_mode string)
+            tuple[Any, str]: Tuple of (converted image, color_mode string)
+
         """
         mode = self._select_weighted(COLOR_MODE_WEIGHTS)
 
@@ -539,10 +550,11 @@ class MultiScriptDocumentGenerator:
         for regression training.
 
         Args:
-            image: PIL Image
+            image (Any): PIL Image
 
         Returns:
-            Tuple of (rotated image, angle in degrees)
+            tuple[Any, float]: Tuple of (rotated image, angle in degrees)
+
         """
         angle = self._rng.uniform(SKEW_RANGE_DEGREES[0], SKEW_RANGE_DEGREES[1])
         rotated = image.rotate(
@@ -556,10 +568,11 @@ class MultiScriptDocumentGenerator:
         """Apply random 0/90/180/270 degree rotation with class label.
 
         Args:
-            image: PIL Image
+            image (Any): PIL Image
 
         Returns:
-            Tuple of (rotated image, orientation class)
+            tuple[Any, int]: Tuple of (rotated image, orientation class)
+
         """
         from PIL import Image as PILImage
 
@@ -579,10 +592,11 @@ class MultiScriptDocumentGenerator:
         the median character height in the image.
 
         Args:
-            image: PIL Image
+            image (Any): PIL Image
 
         Returns:
-            Tuple of (char_height_px, quality_score) or (None, None) if measurement fails
+            tuple[float | None, float | None]: Tuple of (char_height_px, quality_score) or (None, None) if measurement fails
+
         """
         try:
             import numpy as np
@@ -657,10 +671,11 @@ class MultiScriptDocumentGenerator:
         This provides a content-addressable identifier for the pristine image.
 
         Args:
-            image: PIL Image
+            image (Any): PIL Image
 
         Returns:
-            Hex-encoded SHA256 hash string
+            str: Hex-encoded SHA256 hash string
+
         """
         buf = io.BytesIO()
         image.save(buf, format="PNG")
@@ -674,10 +689,11 @@ class MultiScriptDocumentGenerator:
         key advantage of synthetic data: exact ground truth, not estimates.
 
         Args:
-            image: Pristine rendered PIL Image (no degradation applied)
+            image (Any): Pristine rendered PIL Image (no degradation applied)
 
         Returns:
-            Median character height in pixels, or None if measurement fails
+            float | None: Median character height in pixels, or None if measurement fails
+
         """
         char_height, _ = self._measure_char_height(image)
         return char_height
@@ -690,10 +706,11 @@ class MultiScriptDocumentGenerator:
         Other scripts use their default direction from ScriptConfig.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            Text direction: "ltr", "rtl", or "ttb"
+            str: Text direction: "ltr", "rtl", or "ttb"
+
         """
         vertical_ratio = CJK_VERTICAL_RATIOS.get(script_code)
         if vertical_ratio is not None and self._rng.random() < vertical_ratio:
@@ -717,12 +734,13 @@ class MultiScriptDocumentGenerator:
         first, then sensor noise is added on top.
 
         Args:
-            image: Clean rendered image (pre-augmentation)
+            image (Any): Clean rendered image (pre-augmentation)
 
         Returns:
-            Tuple of (transformed_image, skew_angle_degrees, orientation_class).
+            tuple[Any, float | None, int | None]: Tuple of (transformed_image, skew_angle_degrees, orientation_class).
             skew_angle is None if skew augmentation is disabled.
             orientation_class is None if orientation augmentation is disabled.
+
         """
         skew_angle: float | None = None
         orientation_class: int | None = None
@@ -749,10 +767,11 @@ class MultiScriptDocumentGenerator:
         to avoid unrealistic "rotated noise" artifacts.
 
         Args:
-            sample: Generated sample to post-process
+            sample (GeneratedSample): Generated sample to post-process
 
         Returns:
-            Sample with post-processing applied and metadata updated
+            GeneratedSample: Sample with post-processing applied and metadata updated
+
         """
         image = sample.image
 
@@ -782,15 +801,16 @@ class MultiScriptDocumentGenerator:
         """Generate a single sample.
 
         Args:
-            script_code: ISO 15924 script code
-            layout_type: Layout type to use
-            text_density: Text density level
-            degradation_profile: Degradation profile
-            quality_tier: Quality tier (PRISTINE, HIGH, MEDIUM, LOW, DEGRADED)
-            resolution_tier: Resolution tier (LOW, MEDIUM, HIGH)
+            script_code (str): ISO 15924 script code
+            layout_type (LayoutType): Layout type to use
+            text_density (TextDensity): Text density level
+            degradation_profile (DegradationProfile): Degradation profile
+            quality_tier (str): Quality tier (PRISTINE, HIGH, MEDIUM, LOW, DEGRADED)
+            resolution_tier (str): Resolution tier (LOW, MEDIUM, HIGH)
 
         Returns:
-            GeneratedSample or None if failed
+            GeneratedSample | None: GeneratedSample or None if failed
+
         """
         # Get text from corpus
         text, language_code = self.corpus_manager.get_text_with_language(
@@ -986,7 +1006,7 @@ class MultiScriptDocumentGenerator:
         the problem early and log a meaningful error.
 
         Yields:
-            GeneratedSample objects
+            GeneratedSample: Generated document sample with metadata and labels
 
         Raises:
             RuntimeError: If the generator has not been initialised via
@@ -1248,7 +1268,8 @@ class MultiScriptDocumentGenerator:
         """Save sample to disk.
 
         Args:
-            sample: Sample to save
+            sample (GeneratedSample): Sample to save
+
         """
         if not self.config.output_dir:
             return
@@ -1282,11 +1303,14 @@ class MultiScriptDocumentGenerator:
         """Generate a batch of samples.
 
         Args:
-            scripts: Scripts to use (None = use config)
-            count: Total samples to generate
+            scripts (list[str] | None): Scripts to use (None = use config)
+            count (int): Total samples to generate
 
         Returns:
-            List of GeneratedSample objects
+            list[GeneratedSample]: List of GeneratedSample objects
+
+        Raises:
+            RuntimeError: If generator is not initialized before calling this method
         """
         if not self._initialized:
             raise RuntimeError(_NOT_INITIALIZED_MSG)
@@ -1327,15 +1351,16 @@ class MultiScriptDocumentGenerator:
         For INTERLEAVED: scripts alternate in blocks.
 
         Args:
-            scripts: List of ISO 15924 script codes (2-4 scripts)
-            layout_type: Layout type to use
-            text_density: Text density level
-            degradation_profile: Degradation profile
-            quality_tier: Quality tier (PRISTINE, HIGH, MEDIUM, LOW, DEGRADED)
-            resolution_tier: Resolution tier (LOW, MEDIUM, HIGH)
+            scripts (list[str]): List of ISO 15924 script codes (2-4 scripts)
+            layout_type (LayoutType): Layout type to use
+            text_density (TextDensity): Text density level
+            degradation_profile (DegradationProfile): Degradation profile
+            quality_tier (str): Quality tier (PRISTINE, HIGH, MEDIUM, LOW, DEGRADED)
+            resolution_tier (str): Resolution tier (LOW, MEDIUM, HIGH)
 
         Returns:
-            GeneratedSample or None if failed
+            GeneratedSample | None: GeneratedSample or None if failed
+
         """
         if not scripts:
             return None
@@ -1606,12 +1631,13 @@ class MultiScriptDocumentGenerator:
         metadata reflects the fonts that were truly rendered.
 
         Args:
-            all_scripts: Set of script codes (kept for API compat, unused).
-            renderer: The renderer instance whose tracked fonts to read.
+            _all_scripts (set[str]): Set of script codes (kept for API compat, unused).
+            renderer (Any | None): The renderer instance whose tracked fonts to read.
                 Falls back to ``self.renderer`` if not provided.
 
         Returns:
-            Tuple of (font_families, font_styles).
+            tuple[list[str], list[str]]: Tuple of (font_families, font_styles).
+
         """
         target_renderer = renderer or self.renderer
         if (
@@ -1633,12 +1659,15 @@ class MultiScriptDocumentGenerator:
         """Generate a document with multiple scripts.
 
         Args:
-            scripts: List of ISO 15924 script codes to include
-            layout_type: Layout type to use
-            degradation_profile: Degradation profile
+            scripts (list[str]): List of ISO 15924 script codes to include
+            layout_type (LayoutType): Layout type to use
+            degradation_profile (DegradationProfile): Degradation profile
 
         Returns:
-            GeneratedSample or None if failed
+            GeneratedSample | None: GeneratedSample or None if failed
+
+        Raises:
+            RuntimeError: If generator is not initialized before calling this method
         """
         if not self._initialized:
             raise RuntimeError(_NOT_INITIALIZED_MSG)
@@ -1713,7 +1742,8 @@ class MultiScriptDocumentGenerator:
         """Get generation statistics.
 
         Returns:
-            GenerationStats from the last generation run
+            GenerationStats: GenerationStats from the last generation run
+
         """
         return self._stats
 
@@ -1721,7 +1751,8 @@ class MultiScriptDocumentGenerator:
         """Get scripts with available corpus and fonts.
 
         Returns:
-            List of ISO 15924 script codes
+            list[str]: List of ISO 15924 script codes
+
         """
         corpus_scripts = set(self.corpus_manager.get_available_scripts())
         font_scripts = set(self.font_manager.get_available_scripts())

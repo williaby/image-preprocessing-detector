@@ -66,12 +66,13 @@ class FontInfo:
     """Information about a discovered font file.
 
     Attributes:
-        path: Full path to the font file
-        family: Font family name (extracted from filename)
-        style: Font style (Regular, Bold, Italic, etc.)
-        script_hint: Guessed script from font name (e.g., "Tibetan" from NotoSerifTibetan)
-        is_noto: True if this is a Noto font
-        font_style: Typographic classification (serif, sans, mono, handwriting, display)
+        path (Path): Full path to the font file
+        family (str): Font family name (extracted from filename)
+        style (str): Font style (Regular, Bold, Italic, etc.)
+        script_hint (str | None): Guessed script from font name (e.g., "Tibetan" from NotoSerifTibetan)
+        is_noto (bool): True if this is a Noto font
+        font_style (str): Typographic classification (serif, sans, mono, handwriting, display)
+
     """
 
     path: Path
@@ -87,9 +88,10 @@ class FontCache:
     """Cached font information for a script.
 
     Attributes:
-        script_code: ISO 15924 script code
-        fonts: List of FontInfo objects for this script
-        default_font: Preferred font for this script
+        script_code (str): ISO 15924 script code
+        fonts (list[FontInfo]): List of FontInfo objects for this script
+        default_font (FontInfo | None): Preferred font for this script
+
     """
 
     script_code: str
@@ -285,10 +287,11 @@ def _extract_script_from_font_name(name: str) -> str | None:
     """Extract script code from font filename.
 
     Args:
-        name: Font filename (without path)
+        name (str): Font filename (without path)
 
     Returns:
-        ISO 15924 script code if detected, None otherwise
+        str | None: ISO 15924 script code if detected, None otherwise
+
     """
     # Remove extension and common prefixes
     base = name.rsplit(".", 1)[0]
@@ -307,10 +310,11 @@ def _extract_style_from_font_name(name: str) -> str:
     """Extract font style from filename.
 
     Args:
-        name: Font filename
+        name (str): Font filename
 
     Returns:
-        Style string (Regular, Bold, Italic, etc.)
+        str: Style string (Regular, Bold, Italic, etc.)
+
     """
     name_lower = name.lower()
     if "bold" in name_lower and "italic" in name_lower:
@@ -332,10 +336,11 @@ def _extract_family_from_font_name(name: str) -> str:
     """Extract font family from filename.
 
     Args:
-        name: Font filename
+        name (str): Font filename
 
     Returns:
-        Family name
+        str: Family name
+
     """
     base = name.rsplit(".", 1)[0]
     # Remove style suffixes
@@ -440,10 +445,11 @@ def _classify_font_style_from_name(name: str) -> str:
     handwriting > mono > serif > display > sans > unknown.
 
     Args:
-        name: Font filename or family name.
+        name (str): Font filename or family name.
 
     Returns:
-        One of: handwriting, mono, serif, display, sans, unknown.
+        str: One of: handwriting, mono, serif, display, sans, unknown.
+
     """
     lower = name.lower()
     for pat in _HANDWRITING_PATTERNS:
@@ -471,10 +477,9 @@ class FontManager:
     and other fonts suitable for multi-script rendering. It maintains
     a cache of discovered fonts organized by script.
 
-    Attributes:
-        fonts_by_script: Dict mapping script codes to FontCache objects
-        all_fonts: List of all discovered fonts
-        search_paths: List of directories to search for fonts
+    Args:
+        additional_paths (list[Path] | None): Extra directories to search for fonts
+        prefer_noto (bool): If True, prefer Noto fonts over other fonts
     """
 
     def __init__(
@@ -482,12 +487,6 @@ class FontManager:
         additional_paths: list[Path] | None = None,
         prefer_noto: bool = True,
     ) -> None:
-        """Initialize the font manager.
-
-        Args:
-            additional_paths: Extra directories to search for fonts
-            prefer_noto: If True, prefer Noto fonts over others
-        """
         self.search_paths = list(FONT_SEARCH_PATHS)
         if additional_paths:
             self.search_paths.extend(additional_paths)
@@ -502,7 +501,8 @@ class FontManager:
         """Scan system directories for fonts.
 
         Returns:
-            Number of fonts discovered
+            int: Number of fonts discovered
+
         """
         self.all_fonts = []
         self.fonts_by_script = {}
@@ -529,7 +529,8 @@ class FontManager:
         """Recursively scan a directory for font files.
 
         Args:
-            directory: Directory to scan
+            directory (Path): Directory to scan
+
         """
         try:
             for item in directory.iterdir():
@@ -553,10 +554,11 @@ class FontManager:
         """Parse font file metadata.
 
         Args:
-            path: Path to font file
+            path (Path): Path to font file
 
         Returns:
-            FontInfo if valid font, None otherwise
+            FontInfo | None: FontInfo if valid font, None otherwise
+
         """
         name = path.name
         family = _extract_family_from_font_name(name)
@@ -580,10 +582,11 @@ class FontManager:
         This creates separate FontInfo entries for each.
 
         Args:
-            path: Path to .ttc file
+            path (Path): Path to .ttc file
 
         Returns:
-            List of FontInfo objects for each CJK variant
+            list[FontInfo]: List of FontInfo objects for each CJK variant
+
         """
         name = path.name
         style = _extract_style_from_font_name(name)
@@ -680,12 +683,13 @@ class FontManager:
         """Get a font for a specific script.
 
         Args:
-            script_code: ISO 15924 script code
-            size: Font size in points
-            style: Preferred style (Regular, Bold, etc.)
+            script_code (str): ISO 15924 script code
+            size (int): Font size in points
+            style (str): Preferred style (Regular, Bold, etc.)
 
         Returns:
-            Loaded ImageFont or None if not available
+            ImageFont.FreeTypeFont | None: Loaded ImageFont or None if not available
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -733,11 +737,12 @@ class FontManager:
         """Get a random font for a script (for variety in generation).
 
         Args:
-            script_code: ISO 15924 script code
-            size: Font size in points
+            script_code (str): ISO 15924 script code
+            size (int): Font size in points
 
         Returns:
-            Loaded ImageFont or None if not available
+            ImageFont.FreeTypeFont | None: Loaded ImageFont or None if not available
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -767,7 +772,8 @@ class FontManager:
         """Get list of scripts with available fonts.
 
         Returns:
-            List of ISO 15924 script codes
+            list[str]: List of ISO 15924 script codes
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -777,10 +783,11 @@ class FontManager:
         """Get font cache info for a script.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            FontCache or None if not found
+            FontCache | None: FontCache or None if not found
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -790,10 +797,11 @@ class FontManager:
         """Check if fonts are available for a script.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            True if fonts available
+            bool: True if fonts available
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -814,13 +822,14 @@ class FontManager:
         Special handling for Urdu/Punjabi Arabic (Nastaliq style).
 
         Args:
-            script_code: ISO 15924 script code
-            size: Font size in points
-            language_code: Optional OpenLID language code (e.g., "urd_Arab")
+            script_code (str): ISO 15924 script code
+            size (int): Font size in points
+            language_code (str | None): Optional OpenLID language code (e.g., "urd_Arab")
                           Used to detect Nastaliq requirement for Urdu
 
         Returns:
-            Loaded ImageFont or None if not available
+            ImageFont.FreeTypeFont | None: Loaded ImageFont or None if not available
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -905,10 +914,11 @@ class FontManager:
         """Select a tier based on probability weights.
 
         Args:
-            tier_weights: Dict mapping tier names to probabilities
+            tier_weights (dict[str, float]): Dict mapping tier names to probabilities
 
         Returns:
-            Selected tier name
+            str: Selected tier name
+
         """
         tiers = list(tier_weights.keys())
         weights = list(tier_weights.values())
@@ -922,11 +932,12 @@ class FontManager:
         """Find fonts matching any of the given family patterns.
 
         Args:
-            script_code: Script to search within
-            family_patterns: List of family name substrings to match
+            script_code (str): Script to search within
+            family_patterns (list[str]): List of family name substrings to match
 
         Returns:
-            List of matching FontInfo objects
+            list[FontInfo]: List of matching FontInfo objects
+
         """
         matching = []
 
@@ -953,10 +964,11 @@ class FontManager:
         """Get statistics about font diversity for a script.
 
         Args:
-            script_code: ISO 15924 script code
+            script_code (str): ISO 15924 script code
 
         Returns:
-            Dict with counts by tier and total
+            dict[str, int]: Dict with counts by tier and total
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -993,11 +1005,12 @@ class FontManager:
         be labeled as Latin in training data.
 
         Args:
-            target_script: Script being mimicked (e.g., "Arab", "Grek", "Hans")
-            size: Font size in points
+            target_script (str): Script being mimicked (e.g., "Arab", "Grek", "Hans")
+            size (int): Font size in points
 
         Returns:
-            Tuple of (loaded ImageFont, font_family_name) or (None, "")
+            tuple[ImageFont.FreeTypeFont | None, str]: Tuple of (loaded ImageFont, font_family_name) or (None, "")
+
         """
         if not self._scanned:
             self.scan_fonts()
@@ -1060,11 +1073,12 @@ class FontManager:
         in real handwriting (e.g., Russian cursive т→m, Arabic Ruq'ah cascade).
 
         Args:
-            script_code: ISO 15924 script code
-            size: Font size in points
+            script_code (str): ISO 15924 script code
+            size (int): Font size in points
 
         Returns:
-            Loaded ImageFont or None if not available
+            ImageFont.FreeTypeFont | None: Loaded ImageFont or None if not available
+
         """
         if not self._scanned:
             self.scan_fonts()

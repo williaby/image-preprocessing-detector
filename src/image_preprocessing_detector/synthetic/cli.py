@@ -64,10 +64,11 @@ def _get_output_path(custom_path: Path | None = None) -> Path:
     """Determine the output path, checking availability.
 
     Args:
-        custom_path: User-specified path (takes priority)
+        custom_path (Path | None): User-specified path (takes priority)
 
     Returns:
-        Available output path
+        Path: Available output path
+
     """
     if custom_path:
         return custom_path
@@ -210,6 +211,24 @@ def generate(  # nosonar  # Click CLI params are framework-driven
 
     Creates synthetic document images with ground truth labels for
     training SigLIP on script identification.
+
+    Args:
+        output (Path | None): Output directory for generated dataset
+        scripts (str | None): Comma-separated script codes (e.g., Arab,Latn,Deva)
+        samples_per_script (int): Number of samples to generate per script
+        pristine_ratio (float): Fraction of samples to generate without degradation
+        seed (int | None): Random seed for reproducibility
+        image_format (str): Output image format (png, jpg, tiff)
+        skip_download (bool): Skip corpus download and use sample texts
+        no_metadata (bool): Skip metadata JSON generation
+        dry_run (bool): Preview generation plan without creating files
+        yes (bool): Skip confirmation prompt for large datasets
+        profile (str): Degradation profile (fast, mild, moderate, severe, all)
+        dpi (str): Output resolution in DPI
+        augmenter (str): Augmentation backend (augraphy, albumentations, hybrid)
+        color_mode (bool): Enable color mode label generation
+        skew (bool): Enable random skew augmentation
+        orientation (bool): Enable random orientation augmentation
 
     Examples:
         # Generate 100 samples per MVP script (10 scripts = 1000 total)
@@ -507,6 +526,12 @@ def preview(output: Path, scripts: str, count: int, skip_download: bool) -> None
 
     Creates a small number of samples to verify rendering quality
     before full dataset generation.
+
+    Args:
+        output (Path): Output directory for preview samples
+        scripts (str): Comma-separated script codes to preview
+        count (int): Number of samples to generate per script
+        skip_download (bool): Skip corpus download and use sample texts
 
     Example:
         imgprep synthetic preview
