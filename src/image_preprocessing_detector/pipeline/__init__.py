@@ -121,7 +121,6 @@ class PipelineHooks:
             return cls._instance
 
     def __init__(self) -> None:
-        """Initialize pipeline hooks with default settings."""
         if getattr(self, "_initialized", False):
             return
 
@@ -162,10 +161,10 @@ class PipelineHooks:
         """Configure pipeline hooks after initialization.
 
         Args:
-            sample_rate: Sampling rate for drift detection (0.0 to 1.0).
-            enable_drift_detection: Whether to enable drift detection.
-            enable_metrics: Whether to enable Prometheus metrics.
-            alert_manager: Optional AlertManager for drift alerting.
+            sample_rate (float | None): Sampling rate for drift detection (0.0 to 1.0).
+            enable_drift_detection (bool | None): Whether to enable drift detection.
+            enable_metrics (bool | None): Whether to enable Prometheus metrics.
+            alert_manager (AlertManager | None): Optional AlertManager for drift alerting.
         """
         if sample_rate is not None:
             self._sample_rate = sample_rate
@@ -193,11 +192,11 @@ class PipelineHooks:
         """Start processing a document.
 
         Args:
-            document_id: Unique document identifier.
-            device: Device being used (cpu, gpu, modal).
+            document_id (str): Unique document identifier.
+            device (str): Device being used (cpu, gpu, modal).
 
         Returns:
-            ProcessingContext to track the document's processing.
+            ProcessingContext: ProcessingContext to track the document's processing.
         """
         ctx = ProcessingContext(
             document_id=document_id,
@@ -226,14 +225,14 @@ class PipelineHooks:
         """Record metrics for a processed page.
 
         Args:
-            ctx: Processing context for the document.
-            quality_score: Overall quality score (0-1).
-            gate_result: Text gate result (text_detected, no_text).
-            blur_score: Blur score (0-1), optional.
-            noise_score: Noise score (0-1), optional.
-            contrast_score: Contrast score (0-1), optional.
-            skew_angle: Detected skew angle in degrees, optional.
-            processing_time_ms: Processing time in milliseconds, optional.
+            ctx (ProcessingContext): Processing context for the document.
+            quality_score (float): Overall quality score (0-1).
+            gate_result (str): Text gate result (text_detected, no_text).
+            blur_score (float | None): Blur score (0-1), optional.
+            noise_score (float | None): Noise score (0-1), optional.
+            contrast_score (float | None): Contrast score (0-1), optional.
+            skew_angle (float | None): Detected skew angle in degrees, optional.
+            processing_time_ms (float | None): Processing time in milliseconds, optional.
         """
         ctx.page_count += 1
         ctx.gate_result = gate_result
@@ -277,9 +276,9 @@ class PipelineHooks:
         """Record an error during page processing.
 
         Args:
-            ctx: Processing context for the document.
-            error_code: Error code (e.g., E2001).
-            category: Error category (e.g., processing, infrastructure).
+            ctx (ProcessingContext): Processing context for the document.
+            error_code (str): Error code (e.g., E2001).
+            category (str): Error category (e.g., processing, infrastructure).
         """
         ctx.errors.append(error_code)
 
@@ -298,9 +297,9 @@ class PipelineHooks:
         """Record a correction that was applied.
 
         Args:
-            ctx: Processing context for the document.
-            correction_type: Type of correction (deskew, contrast, etc.).
-            duration_ms: Time taken in milliseconds.
+            ctx (ProcessingContext): Processing context for the document.
+            correction_type (str): Type of correction (deskew, contrast, etc.).
+            duration_ms (float): Time taken in milliseconds.
         """
         ctx.corrections_applied.append(correction_type)
 
@@ -322,12 +321,12 @@ class PipelineHooks:
         """Record teacher model usage.
 
         Args:
-            ctx: Processing context for the document.
-            reason: Reason for teacher invocation.
-            duration_ms: Time taken in milliseconds.
-            device: Device used (gpu, modal).
-            blocked: Whether the invocation was blocked.
-            blocked_reason: Reason for blocking.
+            ctx (ProcessingContext): Processing context for the document.
+            reason (str): Reason for teacher invocation.
+            duration_ms (float): Time taken in milliseconds.
+            device (str): Device used (gpu, modal).
+            blocked (bool): Whether the invocation was blocked.
+            blocked_reason (str): Reason for blocking.
         """
         ctx.teacher_used = True
         ctx.teacher_reason = reason
@@ -357,11 +356,11 @@ class PipelineHooks:
         """Finish processing a document.
 
         Args:
-            ctx: Processing context for the document.
-            success: Whether processing succeeded.
+            ctx (ProcessingContext): Processing context for the document.
+            success (bool): Whether processing succeeded.
 
         Returns:
-            Total processing time in milliseconds.
+            float: Total processing time in milliseconds.
         """
         elapsed_ms = (time.perf_counter() - ctx.start_time) * 1000
 
@@ -396,7 +395,7 @@ class PipelineHooks:
         """Update pipeline metrics for a drift result.
 
         Args:
-            severity: The severity of the detected drift.
+            severity (DriftSeverity): The severity of the detected drift.
         """
         with self._metrics_lock:
             if severity == DriftSeverity.WARNING:
@@ -411,7 +410,7 @@ class PipelineHooks:
         distribution shifts.
 
         Returns:
-            List of DriftResult objects for features with detected drift.
+            list[DriftResult]: List of DriftResult objects for features with detected drift.
         """
         if not self._enable_drift or not self._tracker or not self._detector:
             return []
@@ -480,7 +479,7 @@ class PipelineHooks:
         """Get aggregated pipeline metrics.
 
         Returns:
-            Current PipelineMetrics snapshot.
+            PipelineMetrics: Current PipelineMetrics snapshot.
         """
         with self._metrics_lock:
             return PipelineMetrics(
@@ -513,7 +512,7 @@ def get_pipeline_hooks() -> PipelineHooks:
     """Get the global PipelineHooks instance.
 
     Returns:
-        PipelineHooks singleton instance.
+        PipelineHooks: PipelineHooks singleton instance.
     """
     return PipelineHooks()
 
@@ -525,11 +524,11 @@ def start_document_processing(
     """Start processing a document.
 
     Args:
-        document_id: Unique document identifier.
-        device: Device being used.
+        document_id (str): Unique document identifier.
+        device (str): Device being used.
 
     Returns:
-        ProcessingContext for tracking.
+        ProcessingContext: ProcessingContext for tracking.
     """
     return get_pipeline_hooks().start_document(document_id, device)
 
@@ -543,10 +542,10 @@ def record_page_metrics(
     """Record metrics for a processed page.
 
     Args:
-        ctx: Processing context.
-        quality_score: Overall quality score.
-        gate_result: Text gate result.
-        **kwargs: Additional metrics (blur_score, noise_score, etc.).
+        ctx (ProcessingContext): Processing context.
+        quality_score (float): Overall quality score.
+        gate_result (str): Text gate result.
+        **kwargs (Any): Additional metrics (blur_score, noise_score, etc.).
     """
     get_pipeline_hooks().record_page(ctx, quality_score, gate_result, **kwargs)
 
@@ -558,11 +557,11 @@ def finish_document_processing(
     """Finish processing a document.
 
     Args:
-        ctx: Processing context.
-        success: Whether processing succeeded.
+        ctx (ProcessingContext): Processing context.
+        success (bool): Whether processing succeeded.
 
     Returns:
-        Total processing time in milliseconds.
+        float: Total processing time in milliseconds.
     """
     return get_pipeline_hooks().finish_document(ctx, success)
 
@@ -571,7 +570,7 @@ def run_drift_check() -> list[DriftResult]:
     """Run drift detection check.
 
     Returns:
-        List of drift results.
+        list[DriftResult]: List of drift results.
     """
     return get_pipeline_hooks().check_drift()
 

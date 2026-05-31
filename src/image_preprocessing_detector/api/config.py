@@ -74,6 +74,9 @@ class APISettings(BaseSettings):
         legacy ``cors_origins`` / ``cors_allow_credentials`` values are
         irrelevant and must not block startup.
 
+        Returns:
+            APISettings: The validated settings instance.
+
         Raises:
             ValueError: If cors_enabled is True, cors_allow_credentials is
                 True, and "*" appears in cors_origins.

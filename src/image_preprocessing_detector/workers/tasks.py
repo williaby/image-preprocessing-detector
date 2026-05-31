@@ -137,14 +137,20 @@ def run_iqa_analysis(
     """Run IQA analysis on an image with device-priority routing.
 
     Args:
-        self: Task instance (bound by Celery)
-        image_b64: Base64-encoded image data
-        request_id: Optional request identifier
-        enable_teacher: Whether to enable teacher model fallback
-        doc_id: Document ID for budget tracking
+        self (IQATask): Task instance (bound by Celery).
+        image_b64 (str): Base64-encoded image data.
+        request_id (str | None): Optional request identifier.
+        enable_teacher (bool): Whether to enable teacher model fallback.
+        doc_id (str | None): Document ID for budget tracking.
 
     Returns:
-        Dictionary with IQA scores and metadata including device selection
+        dict[str, Any]: Dictionary with IQA scores and metadata including device selection.
+
+    Raises:
+        RuntimeError: If the student model is not available.
+        SoftTimeLimitExceeded: If the task exceeds the soft time limit.
+        ValueError: If the image cannot be decoded.
+        self.retry: If the task fails and should be retried.
     """
     start_time = time.perf_counter()
 
@@ -247,13 +253,16 @@ def process_single_document(
     """Process a single document.
 
     Args:
-        self: Task instance (bound by Celery)
-        file_content_b64: Base64-encoded file content
-        filename: Original filename
-        options: Processing options
+        self (Task): Task instance (bound by Celery).
+        file_content_b64 (str): Base64-encoded file content.
+        filename (str): Original filename.
+        options (dict[str, Any] | None): Processing options.
 
     Returns:
-        Dictionary with processing results
+        dict[str, Any]: Dictionary with processing results.
+
+    Raises:
+        self.retry: If the task fails and should be retried.
     """
     start_time = time.perf_counter()
 
@@ -334,13 +343,13 @@ def process_batch_documents(
     """Process a batch of documents.
 
     Args:
-        self: Task instance (bound by Celery)
-        files_data: List of {"filename": str, "content_b64": str} dicts
-        options: Processing options
-        job_id: Optional job identifier
+        self (Task): Task instance (bound by Celery).
+        files_data (list[dict[str, str]]): List of {"filename": str, "content_b64": str} dicts.
+        options (dict[str, Any] | None): Processing options.
+        job_id (str | None): Optional job identifier.
 
     Returns:
-        Dictionary with batch results
+        dict[str, Any]: Dictionary with batch results.
     """
     start_time = time.perf_counter()
     options = options or {}
@@ -411,10 +420,10 @@ def _preprocess_image(image: np.ndarray) -> np.ndarray:
     """Preprocess image for model input.
 
     Args:
-        image: Input image (BGR format, HxWx3)
+        image (np.ndarray): Input image (BGR format, HxWx3).
 
     Returns:
-        Preprocessed tensor (1x3x224x224, float32)
+        np.ndarray: Preprocessed tensor (1x3x224x224, float32).
     """
     import cv2
 
@@ -445,10 +454,10 @@ def _postprocess_outputs(
     """Postprocess model outputs to scores.
 
     Args:
-        outputs: Raw model outputs
+        outputs (dict[str, np.ndarray]): Raw model outputs.
 
     Returns:
-        Tuple of (scores, confidences)
+        tuple[dict[str, float], dict[str, float]]: Tuple of (scores, confidences).
     """
     head_names = ["blur", "noise", "contrast", "skew", "compression"]
     scores = {}

@@ -42,13 +42,13 @@ class CircuitBreakerConfig:
     """Configuration for circuit breaker behavior.
 
     Attributes:
-        failure_threshold: Consecutive failures before opening circuit
-        success_threshold: Consecutive successes to close circuit (from half-open)
-        timeout_seconds: Time to wait before trying half-open state
-        request_timeout_ms: Individual request timeout in milliseconds
-        max_retries: Maximum retry attempts per request
-        base_backoff_ms: Base backoff time for exponential backoff
-        max_backoff_ms: Maximum backoff time
+        failure_threshold (int): Consecutive failures before opening circuit
+        success_threshold (int): Consecutive successes to close circuit (from half-open)
+        timeout_seconds (float): Time to wait before trying half-open state
+        request_timeout_ms (int): Individual request timeout in milliseconds
+        max_retries (int): Maximum retry attempts per request
+        base_backoff_ms (int): Base backoff time for exponential backoff
+        max_backoff_ms (int): Maximum backoff time
     """
 
     failure_threshold: int = 3
@@ -65,9 +65,9 @@ class ModalInferenceRequest:
     """Request format for Modal teacher inference.
 
     Attributes:
-        image_array: Image as numpy array (H, W, C) uint8
-        model_version: Model version to use for inference
-        request_id: Unique request identifier for tracking
+        image_array (np.ndarray): Image as numpy array (H, W, C) uint8
+        model_version (str): Model version to use for inference
+        request_id (str | None): Unique request identifier for tracking
     """
 
     image_array: np.ndarray
@@ -80,12 +80,12 @@ class ModalInferenceResponse:
     """Response format from Modal teacher inference.
 
     Attributes:
-        scores: Multi-head IQA scores (blur, noise, contrast, skew, compression)
-        confidences: Per-head confidence scores
-        inference_time_ms: Server-side inference latency
-        device_tag: Device used on Modal (e.g., "T4", "A10")
-        model_version: Model version that generated scores
-        request_id: Request identifier for correlation
+        scores (dict[str, float]): Multi-head IQA scores (blur, noise, contrast, skew, compression)
+        confidences (dict[str, float]): Per-head confidence scores
+        inference_time_ms (float): Server-side inference latency
+        device_tag (str): Device used on Modal (e.g., "T4", "A10")
+        model_version (str): Model version that generated scores
+        request_id (str | None): Request identifier for correlation
     """
 
     scores: dict[str, float]
@@ -101,13 +101,13 @@ class CircuitBreakerState:
     """Track circuit breaker state and statistics.
 
     Attributes:
-        state: Current circuit state
-        failure_count: Consecutive failures in current state
-        success_count: Consecutive successes in half-open state
-        last_failure_time: Timestamp of last failure
-        total_requests: Total requests attempted
-        total_failures: Total failures (all-time)
-        total_successes: Total successes (all-time)
+        state (CircuitState): Current circuit state
+        failure_count (int): Consecutive failures in current state
+        success_count (int): Consecutive successes in half-open state
+        last_failure_time (float): Timestamp of last failure
+        total_requests (int): Total requests attempted
+        total_failures (int): Total failures (all-time)
+        total_successes (int): Total successes (all-time)
     """
 
     state: CircuitState = CircuitState.CLOSED
@@ -129,6 +129,10 @@ class ModalClient:
     - Request/response logging for observability
     - Cost estimation based on inference time
 
+    Args:
+        config (CircuitBreakerConfig | None): Circuit breaker configuration
+        modal_endpoint (str | None): Modal serverless endpoint URL
+
     Example:
         >>> config = CircuitBreakerConfig(failure_threshold=3)
         >>> client = ModalClient(config=config, modal_endpoint="https://...")
@@ -145,12 +149,6 @@ class ModalClient:
         config: CircuitBreakerConfig | None = None,
         modal_endpoint: str | None = None,
     ) -> None:
-        """Initialize Modal client with circuit breaker.
-
-        Args:
-            config: Circuit breaker configuration
-            modal_endpoint: Modal serverless endpoint URL
-        """
         self.config = config or CircuitBreakerConfig()
         self.modal_endpoint = modal_endpoint
         self.breaker_state = CircuitBreakerState()
@@ -171,10 +169,10 @@ class ModalClient:
         3. Update circuit state based on success/failure
 
         Args:
-            request: Inference request with image array and metadata
+            request (ModalInferenceRequest): Inference request with image array and metadata
 
         Returns:
-            ModalInferenceResponse if successful, None if breaker open or all retries failed
+            ModalInferenceResponse | None: ModalInferenceResponse if successful, None if breaker open or all retries failed
 
         Example:
             >>> request = ModalInferenceRequest(image_array=img, model_version="v1.0")
@@ -233,7 +231,7 @@ class ModalClient:
         """Check if circuit breaker should reject the request.
 
         Returns:
-            True if circuit is OPEN and timeout hasn't elapsed
+            bool: True if circuit is OPEN and timeout hasn't elapsed
         """
         if self.breaker_state.state != CircuitState.OPEN:
             return False
@@ -257,15 +255,14 @@ class ModalClient:
         """Execute single request to Modal endpoint.
 
         Args:
-            request: Inference request
-            attempt: Current attempt number (0-indexed)
+            request (ModalInferenceRequest): Inference request
+            attempt (int): Current attempt number (0-indexed)
 
         Returns:
-            ModalInferenceResponse from Modal
+            ModalInferenceResponse: ModalInferenceResponse from Modal
 
         Raises:
-            RuntimeError: If Modal endpoint not configured
-            Exception: If request fails (timeout, network error, etc.)
+            RuntimeError: If Modal endpoint not configured or request fails.
         """
         if not self.modal_endpoint:
             msg = "Modal endpoint not configured"
@@ -340,7 +337,7 @@ class ModalClient:
         - Modal SDK is not available
 
         Returns:
-            True if mock mode should be used
+            bool: True if mock mode should be used
         """
         import os
 
@@ -360,10 +357,10 @@ class ModalClient:
         """Call Modal function with image data.
 
         Args:
-            request: Inference request with image
+            request (ModalInferenceRequest): Inference request with image
 
         Returns:
-            Response dictionary from Modal
+            dict[str, Any]: Response dictionary from Modal
 
         Raises:
             RuntimeError: If Modal call fails
@@ -402,14 +399,14 @@ class ModalClient:
         """Encode numpy image array as base64 JPEG.
 
         Args:
-            image_array: Image as numpy array (H, W, C), either uint8 or float32.
+            image_array (np.ndarray): Image as numpy array (H, W, C), either uint8 or float32.
                 Float arrays must be normalized to [0, 1] OR already in [0, 255].
                 If float and max <= 1.0, values are scaled by 255.
                 If float and max > 1.0, values are assumed to be in [0, 255] and
                 only clipped and cast (no additional scaling).
 
         Returns:
-            Base64-encoded JPEG string
+            str: Base64-encoded JPEG string
         """
         from PIL import Image as PILImage
 
@@ -437,10 +434,10 @@ class ModalClient:
         """Generate mock response for testing.
 
         Args:
-            request: Inference request
+            request (ModalInferenceRequest): Inference request
 
         Returns:
-            Mock ModalInferenceResponse
+            ModalInferenceResponse: Mock ModalInferenceResponse
         """
         logger.debug(
             "Using mock Modal response",
@@ -472,10 +469,10 @@ class ModalClient:
         """Calculate exponential backoff with jitter.
 
         Args:
-            attempt: Current attempt number (0-indexed)
+            attempt (int): Current attempt number (0-indexed)
 
         Returns:
-            Backoff time in milliseconds
+            int: Backoff time in milliseconds
         """
         # Exponential backoff: base * 2^attempt
         backoff = min(
@@ -536,7 +533,7 @@ class ModalClient:
         """Get circuit breaker statistics.
 
         Returns:
-            Dictionary with circuit breaker metrics
+            dict[str, Any]: Dictionary with circuit breaker metrics
         """
         total = self.breaker_state.total_requests
         success_rate = self.breaker_state.total_successes / total if total > 0 else 0.0

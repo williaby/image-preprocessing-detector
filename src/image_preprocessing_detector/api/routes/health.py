@@ -84,7 +84,7 @@ async def health_check() -> HealthResponse:
     """Check if the server is alive and responding.
 
     Returns:
-        HealthResponse with status and timestamp.
+        HealthResponse: HealthResponse with status and timestamp.
     """
     logger.debug("health_check_called")
     return HealthResponse(
@@ -112,10 +112,10 @@ async def readiness_check(response: Response) -> ReadyResponse:
     - Configuration validity
 
     Args:
-        response: FastAPI response object for setting status code.
+        response (Response): FastAPI response object for setting status code.
 
     Returns:
-        ReadyResponse with detailed check results.
+        ReadyResponse: ReadyResponse with detailed check results.
     """
     logger.debug("readiness_check_called")
 
@@ -192,7 +192,7 @@ async def version_info() -> VersionResponse:
     """Get version information for the API and models.
 
     Returns:
-        VersionResponse with version details.
+        VersionResponse: VersionResponse with version details.
     """
     logger.debug("version_info_called")
 

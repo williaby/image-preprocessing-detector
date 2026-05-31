@@ -32,7 +32,13 @@ def get_correlation_id() -> str:
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Middleware for logging requests and responses with timing."""
+    """Middleware for logging requests and responses with timing.
+
+    Args:
+        app (Any): The ASGI application.
+        log_request_body (bool): Whether to log request body.
+        log_response_body (bool): Whether to log response body.
+    """
 
     def __init__(
         self,
@@ -40,13 +46,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         log_request_body: bool = False,
         log_response_body: bool = False,
     ) -> None:
-        """Initialize the middleware.
-
-        Args:
-            app: The ASGI application.
-            log_request_body: Whether to log request body.
-            log_response_body: Whether to log response body.
-        """
         super().__init__(app)
         self.log_request_body = log_request_body
         self.log_response_body = log_response_body
@@ -59,11 +58,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         """Process the request and log details.
 
         Args:
-            request: The incoming request.
-            call_next: The next middleware/handler.
+            request (Request): The incoming request.
+            call_next (Callable[[Request], Awaitable[Response]]): The next middleware/handler.
 
         Returns:
-            The response from the handler.
+            Response: The response from the handler.
+
+        Raises:
+            Exception: Re-raises any exception from the handler after logging.
         """
         # Generate or extract correlation ID
         correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
@@ -125,11 +127,11 @@ class CorrelationIDMiddleware(BaseHTTPMiddleware):
         """Set correlation ID and process request.
 
         Args:
-            request: The incoming request.
-            call_next: The next middleware/handler.
+            request (Request): The incoming request.
+            call_next (Callable[[Request], Awaitable[Response]]): The next middleware/handler.
 
         Returns:
-            The response with correlation ID header.
+            Response: The response with correlation ID header.
         """
         correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
         correlation_id_var.set(correlation_id)
@@ -147,6 +149,15 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     - Internal callers (by IP)
     - Health/ready endpoints
     - OpenAPI documentation endpoints
+
+    Attributes:
+        PUBLIC_PATHS (ClassVar[frozenset[str]]): Endpoints that do not require authentication.
+
+    Args:
+        app (Any): The ASGI application.
+        api_keys (list[str]): List of valid API keys.
+        internal_callers (list[str] | None): IP addresses allowed without auth.
+        enabled (bool): Whether authentication is enabled.
     """
 
     # Endpoints that don't require authentication (frozen to prevent accidental modification)
@@ -169,14 +180,6 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         internal_callers: list[str] | None = None,
         enabled: bool = True,
     ) -> None:
-        """Initialize the auth middleware.
-
-        Args:
-            app: The ASGI application.
-            api_keys: List of valid API keys.
-            internal_callers: IP addresses allowed without auth.
-            enabled: Whether authentication is enabled.
-        """
         super().__init__(app)
         self.api_keys = set(api_keys)
         self.internal_callers = set(internal_callers or [])
@@ -213,11 +216,11 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         """Validate API key and process request.
 
         Args:
-            request: The incoming request.
-            call_next: The next middleware/handler.
+            request (Request): The incoming request.
+            call_next (Callable[[Request], Awaitable[Response]]): The next middleware/handler.
 
         Returns:
-            The response or 401/403 error.
+            Response: The response or 401/403 error.
         """
         # Skip if auth is disabled
         if not self.enabled:
@@ -281,6 +284,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     Uses a simple in-memory sliding window counter.
     For production, consider Redis-based rate limiting.
+
+    Args:
+        app (Any): The ASGI application.
+        requests_per_window (int): Maximum requests allowed per window.
+        window_seconds (int): Window duration in seconds.
+        enabled (bool): Whether rate limiting is enabled.
+        limit_paths (list[str] | None): Specific paths to rate limit (None = all paths).
     """
 
     def __init__(
@@ -291,15 +301,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         enabled: bool = True,
         limit_paths: list[str] | None = None,
     ) -> None:
-        """Initialize the rate limiter.
-
-        Args:
-            app: The ASGI application.
-            requests_per_window: Maximum requests allowed per window.
-            window_seconds: Window duration in seconds.
-            enabled: Whether rate limiting is enabled.
-            limit_paths: Specific paths to rate limit (None = all paths).
-        """
         super().__init__(app)
         self.requests_per_window = requests_per_window
         self.window_seconds = window_seconds
@@ -360,11 +361,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Check rate limit and process request.
 
         Args:
-            request: The incoming request.
-            call_next: The next middleware/handler.
+            request (Request): The incoming request.
+            call_next (Callable[[Request], Awaitable[Response]]): The next middleware/handler.
 
         Returns:
-            The response or 429 error if rate limited.
+            Response: The response or 429 error if rate limited.
         """
         # Skip if rate limiting is disabled
         if not self.enabled:
