@@ -35,12 +35,12 @@ class CacheMetrics:
     """Statistics for cache performance monitoring.
 
     Attributes:
-        hits: Number of cache hits
-        misses: Number of cache misses
-        evictions: Number of items evicted due to size limit
-        current_size_bytes: Current cache size in bytes
-        max_size_bytes: Maximum allowed cache size in bytes
-        total_items: Current number of items in cache
+        hits (int): Number of cache hits
+        misses (int): Number of cache misses
+        evictions (int): Number of items evicted due to size limit
+        current_size_bytes (int): Current cache size in bytes
+        max_size_bytes (int): Maximum allowed cache size in bytes
+        total_items (int): Current number of items in cache
     """
 
     hits: int = 0
@@ -84,11 +84,11 @@ class CacheEntry(Generic[T]):  # noqa: UP046
     """Individual cache entry with metadata.
 
     Attributes:
-        value: Cached value
-        size_bytes: Size of the cached value in bytes
-        created_at: Unix timestamp when entry was created
-        last_accessed: Unix timestamp of last access
-        access_count: Number of times this entry was accessed
+        value (T): Cached value
+        size_bytes (int): Size of the cached value in bytes
+        created_at (float): Unix timestamp when entry was created
+        last_accessed (float): Unix timestamp of last access
+        access_count (int): Number of times this entry was accessed
     """
 
     value: T
@@ -112,6 +112,11 @@ class LRUCache(Generic[T]):  # noqa: UP046
     - Provides detailed metrics for monitoring
     - Is thread-safe for concurrent access
 
+    Args:
+        max_size_mb (int): Maximum cache size in megabytes
+        ttl_seconds (int | None): Time-to-live for cache entries (None for no expiry)
+        name (str): Cache name for logging purposes
+
     Example:
         >>> cache = LRUCache[np.ndarray](max_size_mb=256, name="tensor")
         >>> cache.put("key1", tensor_array, size_bytes=1024)
@@ -125,13 +130,6 @@ class LRUCache(Generic[T]):  # noqa: UP046
         ttl_seconds: int | None = DEFAULT_TTL_SECONDS,
         name: str = "cache",
     ) -> None:
-        """Initialize LRU cache.
-
-        Args:
-            max_size_mb: Maximum cache size in megabytes
-            ttl_seconds: Time-to-live for cache entries (None for no expiry)
-            name: Cache name for logging purposes
-        """
         self._cache: OrderedDict[str, CacheEntry[T]] = OrderedDict()
         self._lock = threading.RLock()
         self._max_size_bytes = max_size_mb * 1024 * 1024
@@ -149,10 +147,10 @@ class LRUCache(Generic[T]):  # noqa: UP046
         """Get item from cache.
 
         Args:
-            key: Cache key
+            key (str): Cache key
 
         Returns:
-            Cached value or None if not found/expired
+            T | None: Cached value or None if not found/expired
         """
         with self._lock:
             entry = self._cache.get(key)
@@ -184,9 +182,9 @@ class LRUCache(Generic[T]):  # noqa: UP046
         """Put item in cache.
 
         Args:
-            key: Cache key
-            value: Value to cache
-            size_bytes: Size of the value in bytes
+            key (str): Cache key
+            value (T): Value to cache
+            size_bytes (int): Size of the value in bytes
         """
         with self._lock:
             # Remove existing entry if present
@@ -265,12 +263,12 @@ def compute_tensor_key(
     """Compute cache key for a preprocessed tensor.
 
     Args:
-        image_array: Input image as numpy array
-        model_name: Name of the target model
-        input_size: Target input size for the model
+        image_array (np.ndarray): Input image as numpy array
+        model_name (str): Name of the target model
+        input_size (tuple[int, int]): Target input size for the model
 
     Returns:
-        Unique cache key string
+        str: Unique cache key string
     """
     # Hash the image content
     content_hash = hashlib.sha256(image_array.tobytes()).hexdigest()[:16]
@@ -285,12 +283,12 @@ def compute_page_key(
     """Compute cache key for a rendered page.
 
     Args:
-        file_hash: Hash of the source file
-        page_num: Page number (0-indexed)
-        dpi: Render DPI
+        file_hash (str): Hash of the source file
+        page_num (int): Page number (0-indexed)
+        dpi (int): Render DPI
 
     Returns:
-        Unique cache key string
+        str: Unique cache key string
     """
     return f"page_{file_hash}_{page_num}_{dpi}"
 
@@ -313,7 +311,7 @@ def get_tensor_cache() -> LRUCache[np.ndarray]:
     Cache size can be configured via IMGPREP_TENSOR_CACHE_MB environment variable.
 
     Returns:
-        Global tensor cache instance
+        LRUCache[np.ndarray]: Global tensor cache instance
     """
     global _tensor_cache
     if _tensor_cache is None:
@@ -344,7 +342,7 @@ def get_page_cache() -> LRUCache[np.ndarray]:
     Cache size can be configured via IMGPREP_PAGE_CACHE_MB environment variable.
 
     Returns:
-        Global page cache instance
+        LRUCache[np.ndarray]: Global page cache instance
     """
     global _page_cache
     if _page_cache is None:
@@ -396,7 +394,7 @@ def get_combined_cache_metrics() -> dict[str, dict[str, int | float]]:
     """Get combined metrics from all caches.
 
     Returns:
-        Dictionary with metrics for each cache type
+        dict[str, dict[str, int | float]]: Dictionary with metrics for each cache type
     """
     result: dict[str, dict[str, int | float]] = {}
 

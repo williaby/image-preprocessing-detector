@@ -20,14 +20,14 @@ def _analyze_single_image(
     """Analyze a single image to extract DPI values.
 
     Args:
-        doc: PyMuPDF document
-        page: Page containing the image
-        img: Image info tuple from get_images
-        img_index: Image index on page
-        page_num: Page number (0-indexed)
+        doc (Any): PyMuPDF document
+        page (Any): Page containing the image
+        img (tuple): Image info tuple from get_images
+        img_index (int): Image index on page
+        page_num (int): Page number (0-indexed)
 
     Returns:
-        Tuple of (width_dpi, height_dpi) or None if analysis fails
+        tuple[float, float] | None: Tuple of (width_dpi, height_dpi) or None if analysis fails
     """
     try:
         xref = img[0]
@@ -58,7 +58,7 @@ def _build_empty_result() -> dict[str, Any]:
     """Build result for PDFs with no images.
 
     Returns:
-        Empty result dictionary
+        dict[str, Any]: Empty result dictionary
     """
     return {
         "needs_upscaling": False,
@@ -77,11 +77,11 @@ def _calculate_page_stats(
     """Calculate statistics for a single page.
 
     Args:
-        page_dpi_values: List of (width_dpi, height_dpi) tuples for page
-        page_num: Page number (0-indexed)
+        page_dpi_values (list[tuple[float, float]]): List of (width_dpi, height_dpi) tuples for page
+        page_num (int): Page number (0-indexed)
 
     Returns:
-        Page statistics dict or None if no images
+        dict[str, Any] | None: Page statistics dict or None if no images
     """
     if not page_dpi_values:
         return None
@@ -109,14 +109,14 @@ def _process_page_images(
     """Process all images on a single page.
 
     Args:
-        doc: PyMuPDF document
-        page: Page object
-        page_num: Page number (0-indexed)
-        image_list: List of images on the page
-        min_dpi_threshold: Minimum DPI threshold for low-res detection
+        doc (Any): PyMuPDF document
+        page (Any): Page object
+        page_num (int): Page number (0-indexed)
+        image_list (list): List of images on the page
+        min_dpi_threshold (int): Minimum DPI threshold for low-res detection
 
     Returns:
-        Tuple of (dpi_values list, low_res_count)
+        tuple[list[tuple[float, float]], int]: Tuple of (dpi_values list, low_res_count)
     """
     page_dpi_values: list[tuple[float, float]] = []
     low_res_count = 0
@@ -133,17 +133,16 @@ def _process_page_images(
 
 
 class PDFResolutionAnalyzer:
-    """Analyzes PDF resolution to determine if upscaling is needed."""
+    """Analyzes PDF resolution to determine if upscaling is needed.
+
+    # CRITICAL: DPI Threshold: 300 DPI is standard for high-quality OCR
+    # #VERIFY: Threshold may need adjustment based on OCR engine requirements
+
+    Args:
+        min_dpi_threshold (int): Minimum DPI for acceptable quality (default: 300)
+    """
 
     def __init__(self, min_dpi_threshold: int = 300) -> None:
-        """Initialize PDF resolution analyzer.
-
-        # CRITICAL: DPI Threshold: 300 DPI is standard for high-quality OCR
-        # #VERIFY: Threshold may need adjustment based on OCR engine requirements
-
-        Args:
-            min_dpi_threshold: Minimum DPI for acceptable quality (default: 300)
-        """
         self.min_dpi_threshold = min_dpi_threshold
 
     def analyze_pdf_resolution(self, pdf_path: str | Path) -> dict[str, Any]:
@@ -153,10 +152,10 @@ class PDFResolutionAnalyzer:
         # #VERIFY: Handle encryption and corruption gracefully
 
         Args:
-            pdf_path: Path to PDF file
+            pdf_path (str | Path): Path to PDF file
 
         Returns:
-            Dictionary containing:
+            dict[str, Any]: Dictionary containing:
                 - needs_upscaling: bool indicating if upscaling is recommended
                 - min_dpi: Minimum DPI found across all images
                 - avg_dpi: Average DPI across all images
@@ -246,11 +245,11 @@ def quick_resolution_check(pdf_path: str | Path, min_dpi: int = 300) -> bool:
     """Quick check if PDF needs upscaling.
 
     Args:
-        pdf_path: Path to PDF file
-        min_dpi: Minimum acceptable DPI (default: 300)
+        pdf_path (str | Path): Path to PDF file
+        min_dpi (int): Minimum acceptable DPI (default: 300)
 
     Returns:
-        True if upscaling is recommended, False otherwise
+        bool: True if upscaling is recommended, False otherwise
     """
     analyzer = PDFResolutionAnalyzer(min_dpi_threshold=min_dpi)
     try:

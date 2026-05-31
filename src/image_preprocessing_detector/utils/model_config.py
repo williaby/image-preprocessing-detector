@@ -43,17 +43,20 @@ def get_doclayout_yolo_config(
     """Get DocLayout-YOLO model configuration.
 
     Args:
-        model_key: Specific model to get (e.g., "docstructbench", "d4la_pretrained").
+        model_key (str | None): Specific model to get (e.g., "docstructbench", "d4la_pretrained").
                    If None, uses the active_model from config.
 
     Returns:
-        Dictionary with model configuration including:
+        dict[str, Any]: Dictionary with model configuration including:
         - huggingface_id: HuggingFace model identifier
         - recommended_image_size: Recommended input image size
         - confidence_threshold: Default confidence threshold
         - name: Human-readable model name
         - description: Model description
         - use_case: Recommended use case
+
+    Raises:
+        ValueError: If model_key is not found in available models
 
     Example:
         >>> config = get_doclayout_yolo_config()
@@ -84,7 +87,7 @@ def get_doclayout_yolo_common_config() -> dict[str, Any]:
     """Get common DocLayout-YOLO settings that apply to all models.
 
     Returns:
-        Dictionary with common settings including:
+        dict[str, Any]: Dictionary with common settings including:
         - architecture: Base architecture (YOLOv10)
         - package: pip package name
         - import_statement: Python import statement
@@ -103,7 +106,7 @@ def get_active_doclayout_yolo_model_id() -> str:
     This is a convenience function for the most common use case.
 
     Returns:
-        HuggingFace model identifier string.
+        str: HuggingFace model identifier string.
 
     Example:
         >>> get_active_doclayout_yolo_model_id()
@@ -117,7 +120,7 @@ def list_available_doclayout_yolo_models() -> list[str]:
     """List all available DocLayout-YOLO model keys.
 
     Returns:
-        List of model keys that can be passed to get_doclayout_yolo_config().
+        list[str]: List of model keys that can be passed to get_doclayout_yolo_config().
 
     Example:
         >>> list_available_doclayout_yolo_models()

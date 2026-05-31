@@ -39,12 +39,12 @@ class DeviceCapabilities:
     """Available compute resources for ML inference.
 
     Attributes:
-        has_local_gpu: True if CUDA GPU available locally
-        gpu_name: GPU device name (e.g., "NVIDIA T4", "CUDA (via ONNX Runtime)")
-        gpu_memory_mb: Total GPU memory in megabytes
-        cpu_count: Number of CPU cores available
-        modal_available: True if Modal credentials configured
-        modal_workspace: Modal environment/workspace name
+        has_local_gpu (bool): True if CUDA GPU available locally
+        gpu_name (str | None): GPU device name (e.g., "NVIDIA T4", "CUDA (via ONNX Runtime)")
+        gpu_memory_mb (int | None): Total GPU memory in megabytes
+        cpu_count (int): Number of CPU cores available
+        modal_available (bool): True if Modal credentials configured
+        modal_workspace (str | None): Modal environment/workspace name
     """
 
     has_local_gpu: bool
@@ -69,7 +69,7 @@ def probe_device_capabilities() -> DeviceCapabilities:
     Subsequent calls return the same result.
 
     Returns:
-        DeviceCapabilities with detected hardware
+        DeviceCapabilities: With detected hardware
 
     Example:
         >>> caps = probe_device_capabilities()
@@ -148,11 +148,11 @@ def get_recommended_device(
     """Get recommended device based on availability.
 
     Args:
-        prefer_gpu: Prefer GPU if available (default: True)
-        allow_cpu_fallback: Allow CPU if GPU unavailable (default: True)
+        prefer_gpu (bool): Prefer GPU if available (default: True)
+        allow_cpu_fallback (bool): Allow CPU if GPU unavailable (default: True)
 
     Returns:
-        Device string: "cuda" or "cpu"
+        str: Device string: "cuda" or "cpu"
 
     Raises:
         RuntimeError: If no compute resources available (CPU fallback disabled)

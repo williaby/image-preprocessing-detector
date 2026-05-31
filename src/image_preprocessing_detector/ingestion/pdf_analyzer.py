@@ -19,7 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class PDFPreflightResult:
-    """Results from PDF pre-flight analysis."""
+    """Results from PDF pre-flight analysis.
+
+    Args:
+        needs_upscaling (bool): Whether upscaling is needed
+        resolution_analysis (dict[str, Any]): Resolution analysis results
+        upscaled_path (str | None): Path to upscaled PDF (if created)
+        upscaling_result (dict[str, Any] | None): Upscaling results (if performed)
+        processing_time (float): Total processing time
+    """
 
     def __init__(
         self,
@@ -29,15 +37,6 @@ class PDFPreflightResult:
         upscaling_result: dict[str, Any] | None = None,
         processing_time: float = 0.0,
     ) -> None:
-        """Initialize preflight result.
-
-        Args:
-            needs_upscaling: Whether upscaling is needed
-            resolution_analysis: Resolution analysis results
-            upscaled_path: Path to upscaled PDF (if created)
-            upscaling_result: Upscaling results (if performed)
-            processing_time: Total processing time
-        """
         self.needs_upscaling = needs_upscaling
         self.resolution_analysis = resolution_analysis
         self.upscaled_path = upscaled_path
@@ -49,7 +48,7 @@ class PDFPreflightResult:
         """Determine if upscaled version should be used.
 
         Returns:
-            True if upscaling succeeded and should be used
+            bool: True if upscaling succeeded and should be used
         """
         return self.upscaled_path is not None and self.upscaling_result.get(
             "success", False
@@ -60,7 +59,7 @@ class PDFPreflightResult:
         """Get recommended PDF path (upscaled or original).
 
         Returns:
-            Path to recommended PDF for processing
+            str | None: Path to recommended PDF for processing
         """
         return self.upscaled_path if self.should_use_upscaled else None
 
@@ -68,7 +67,7 @@ class PDFPreflightResult:
         """Convert to dictionary.
 
         Returns:
-            Dictionary representation
+            dict[str, Any]: Dictionary representation
         """
         return {
             "needs_upscaling": self.needs_upscaling,
@@ -88,14 +87,12 @@ class PDFDocumentAnalyzer:
     1. If resolution is sufficient for OCR
     2. If upscaling would improve quality
     3. Which version of the PDF should be used for processing
+
+    Args:
+        settings (Settings | None): Optional settings instance
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
-        """Initialize PDF document analyzer.
-
-        Args:
-            settings: Optional settings instance
-        """
         self.settings = settings or Settings()
 
         # Initialize components
@@ -133,11 +130,11 @@ class PDFDocumentAnalyzer:
         # #VERIFY: Implement proper cleanup and error handling
 
         Args:
-            pdf_path: Path to PDF file
-            perform_upscaling: Override upscaling decision (None = use config)
+            pdf_path (str | Path): Path to PDF file
+            perform_upscaling (bool | None): Override upscaling decision (None = use config)
 
         Returns:
-            PDFPreflightResult with analysis and upscaling results
+            PDFPreflightResult: With analysis and upscaling results
 
         Raises:
             FileNotFoundError: If PDF doesn't exist
@@ -240,10 +237,10 @@ class PDFDocumentAnalyzer:
         """Quick resolution check without upscaling.
 
         Args:
-            pdf_path: Path to PDF file
+            pdf_path (str | Path): Path to PDF file
 
         Returns:
-            True if upscaling is recommended
+            bool: True if upscaling is recommended
         """
         try:
             resolution_analysis = self.resolution_analyzer.analyze_pdf_resolution(

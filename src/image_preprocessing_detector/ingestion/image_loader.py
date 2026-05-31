@@ -18,14 +18,14 @@ logger = get_logger(__name__)
 class ImageMetadata:
     """Metadata extracted from an image file.
 
-    Attributes:
-        width: Image width in pixels
-        height: Image height in pixels
-        dpi_x: Horizontal DPI (dots per inch), None if not available
-        dpi_y: Vertical DPI (dots per inch), None if not available
-        color_mode: PIL color mode (RGB, RGBA, L, etc.)
-        format: Image format (JPEG, PNG, TIFF, etc.)
-        has_exif: Whether EXIF data is present
+    Args:
+        width (int): Image width in pixels
+        height (int): Image height in pixels
+        dpi_x (float | None): Horizontal DPI (dots per inch), None if not available
+        dpi_y (float | None): Vertical DPI (dots per inch), None if not available
+        color_mode (str): PIL color mode (RGB, RGBA, L, etc.)
+        format (str): Image format (JPEG, PNG, TIFF, etc.)
+        has_exif (bool): Whether EXIF data is present
     """
 
     def __init__(
@@ -38,7 +38,6 @@ class ImageMetadata:
         format: str = "UNKNOWN",
         has_exif: bool = False,
     ) -> None:
-        """Initialize image metadata."""
         self.width = width
         self.height = height
         self.dpi_x = dpi_x
@@ -66,6 +65,13 @@ class ImageLoader:
     """Loads images from various formats (JPG, PNG, TIFF, etc.).
 
     Uses PIL for metadata extraction and OpenCV for image loading.
+
+    Args:
+        target_dpi (int): Target DPI for quality assessment (default: 300)
+        ensure_bgr (bool): Convert images to BGR format for OpenCV (default: True)
+
+    Attributes:
+        SUPPORTED_FORMATS (ClassVar[set[str]]): Set of supported file extensions
     """
 
     SUPPORTED_FORMATS: ClassVar[set[str]] = {
@@ -79,12 +85,6 @@ class ImageLoader:
     }
 
     def __init__(self, target_dpi: int = 300, ensure_bgr: bool = True) -> None:
-        """Initialize image loader.
-
-        Args:
-            target_dpi: Target DPI for quality assessment (default: 300)
-            ensure_bgr: Convert images to BGR format for OpenCV (default: True)
-        """
         self.target_dpi = target_dpi
         self.ensure_bgr = ensure_bgr
 
@@ -94,12 +94,12 @@ class ImageLoader:
         """Load image and extract metadata.
 
         Args:
-            image_path: Path to image file
+            image_path (str | Path): Path to image file
 
         Returns:
-            Tuple of (image_array, metadata)
-            - image_array: NumPy array in BGR format (H, W, C)
-            - metadata: ImageMetadata object with DPI and format info
+            tuple[np.ndarray, ImageMetadata]: Tuple of (image_array, metadata) where
+            image_array is a NumPy array in BGR format (H, W, C) and metadata is an
+            ImageMetadata object with DPI and format info
 
         Raises:
             FileNotFoundError: If image file doesn't exist
@@ -153,10 +153,13 @@ class ImageLoader:
         """Extract metadata from image using PIL.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            ImageMetadata object
+            ImageMetadata: Extracted metadata with DPI and format information
+
+        Raises:
+            ValueError: If metadata extraction fails
         """
         try:
             with Image.open(image_path) as pil_img:
@@ -214,10 +217,10 @@ class ImageLoader:
         """Check if file format is supported.
 
         Args:
-            file_path: Path to check
+            file_path (str | Path): Path to check
 
         Returns:
-            True if format is supported, False otherwise
+            bool: True if format is supported, False otherwise
         """
         return Path(file_path).suffix.lower() in cls.SUPPORTED_FORMATS
 
@@ -228,11 +231,11 @@ def load_image(
     """Convenience function to load an image.
 
     Args:
-        image_path: Path to image file
-        target_dpi: Target DPI for quality assessment (default: 300)
+        image_path (str | Path): Path to image file
+        target_dpi (int): Target DPI for quality assessment (default: 300)
 
     Returns:
-        Tuple of (image_array, metadata)
+        tuple[np.ndarray, ImageMetadata]: Tuple of (image_array, metadata)
 
     Example:
         >>> img, metadata = load_image("document.jpg")

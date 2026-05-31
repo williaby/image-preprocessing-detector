@@ -20,13 +20,13 @@ class PageImage:
     """Represents a single page converted to an image.
 
     Attributes:
-        page_number: Zero-based page index
-        image: Image as numpy array (H, W, C) in BGR format
-        width: Image width in pixels
-        height: Image height in pixels
-        dpi_input: Original DPI of the PDF page
-        dpi_effective: Effective DPI after rendering
-        needs_upscaling: Whether the page needs DPI upscaling
+        page_number (int): Zero-based page index
+        image (np.ndarray): Image as numpy array (H, W, C) in BGR format
+        width (int): Image width in pixels
+        height (int): Image height in pixels
+        dpi_input (float): Original DPI of the PDF page
+        dpi_effective (float): Effective DPI after rendering
+        needs_upscaling (bool): Whether the page needs DPI upscaling
     """
 
     page_number: int
@@ -42,6 +42,11 @@ class PDFLoader:
     """Loads PDF files and converts pages to images.
 
     Uses PyMuPDF (fitz) for efficient PDF parsing and rendering.
+
+    Args:
+        target_dpi (int): Target DPI for rendering (default: 300)
+        color_space (str): Color space for rendering (RGB or GRAY)
+        alpha (bool): Whether to include alpha channel
     """
 
     def __init__(
@@ -50,13 +55,6 @@ class PDFLoader:
         color_space: str = "RGB",
         alpha: bool = False,
     ) -> None:
-        """Initialize PDF loader.
-
-        Args:
-            target_dpi: Target DPI for rendering (default: 300)
-            color_space: Color space for rendering (RGB or GRAY)
-            alpha: Whether to include alpha channel
-        """
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
@@ -71,10 +69,10 @@ class PDFLoader:
         """Load PDF and yield pages as images.
 
         Args:
-            pdf_path: Path to PDF file
+            pdf_path (str | Path): Path to PDF file
 
         Yields:
-            PageImage objects for each page
+            PageImage: Objects for each page
 
         Raises:
             FileNotFoundError: If PDF file doesn't exist
@@ -104,11 +102,11 @@ class PDFLoader:
         """Render a single PDF page to an image.
 
         Args:
-            doc: PyMuPDF document object
-            page_num: Zero-based page index
+            doc (fitz.Document): PyMuPDF document object
+            page_num (int): Zero-based page index
 
         Returns:
-            PageImage object with rendered image and metadata
+            PageImage: Object with rendered image and metadata
         """
         page = doc[page_num]
 
@@ -166,10 +164,10 @@ class PDFLoader:
         """Detect the effective DPI of a PDF page.
 
         Args:
-            page: PyMuPDF page object
+            page (fitz.Page): PyMuPDF page object
 
         Returns:
-            Estimated DPI based on page dimensions
+            float: Estimated DPI based on page dimensions
         """
         # Get page dimensions in points (1/72 inch)
         rect = page.rect
@@ -226,11 +224,11 @@ def load_pdf(
     """Convenience function to load a PDF and return all pages as a list.
 
     Args:
-        pdf_path: Path to PDF file
-        target_dpi: Target DPI for rendering (default: 300)
+        pdf_path (str | Path): Path to PDF file
+        target_dpi (int): Target DPI for rendering (default: 300)
 
     Returns:
-        List of PageImage objects, one per page
+        list[PageImage]: List of PageImage objects, one per page
 
     Example:
         >>> pages = load_pdf("document.pdf", target_dpi=300)

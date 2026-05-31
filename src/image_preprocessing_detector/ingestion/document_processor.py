@@ -36,14 +36,12 @@ class DocumentProcessor:
 
     Coordinates document loading, quality analysis, layout detection,
     and metadata generation for RAG pipeline integration.
+
+    Args:
+        pipeline_version (str): Version identifier for this processing pipeline
     """
 
     def __init__(self, pipeline_version: str = "0.1.0") -> None:
-        """Initialize the document processor.
-
-        Args:
-            pipeline_version: Version identifier for this processing pipeline
-        """
         self.pipeline_version = pipeline_version
 
     def process_document(
@@ -57,8 +55,8 @@ class DocumentProcessor:
         all analysis stages and returns complete DocumentMetadata.
 
         Args:
-            file_path: Path to document file (PDF or image)
-            document_id: Optional document identifier (generated if not provided)
+            file_path (str | Path): Path to document file (PDF or image)
+            document_id (str | None): Optional document identifier (generated if not provided)
 
         Returns:
             DocumentMetadata: Complete analysis results with DQS and pre-OCR risk
@@ -157,10 +155,10 @@ class DocumentProcessor:
         which analyzes text content and embedded images.
 
         Args:
-            file_path: Path to PDF file
+            file_path (Path): Path to PDF file
 
         Returns:
-            PDFType or None if classification fails
+            PDFType | None: PDFType or None if classification fails
         """
         return classify_pdf_type(file_path)
 
@@ -171,10 +169,10 @@ class DocumentProcessor:
         IQA scores are placeholder values until IQA integration is complete.
 
         Args:
-            file_path: Path to PDF document file
+            file_path (Path): Path to PDF document file
 
         Returns:
-            List of PageMetadata with actual dimensions from PDF
+            list[PageMetadata]: List of PageMetadata with actual dimensions from PDF
         """
         if file_path.suffix.lower() != ".pdf":
             # For non-PDF files, return placeholder single page
@@ -217,10 +215,10 @@ class DocumentProcessor:
         - Will integrate with iqa_classical.py metrics in future sprints
 
         Args:
-            pages: List of page metadata with IQA metrics
+            pages (list[PageMetadata]): List of page metadata with IQA metrics
 
         Returns:
-            DocumentQualityScore with degradation and complexity scores
+            DQSMetadata: With degradation and complexity scores
         """
         # Placeholder: Use moderate quality values
         # TODO: Extract actual metrics from pages once IQA is integrated
@@ -252,10 +250,10 @@ class DocumentProcessor:
         - Model config: configs/models/doclayout_yolo.yaml
 
         Args:
-            pages: List of page metadata
+            pages (list[PageMetadata]): List of page metadata
 
         Returns:
-            List of PageLayoutSummary with layout analysis
+            list[PageLayoutSummary]: List of PageLayoutSummary with layout analysis
         """
         summaries = []
         for i, _page in enumerate(pages):
@@ -285,9 +283,9 @@ def process_document(
     """Convenience function to process a document.
 
     Args:
-        file_path: Path to document file (PDF or image)
-        document_id: Optional document identifier
-        pipeline_version: Pipeline version string
+        file_path (str | Path): Path to document file (PDF or image)
+        document_id (str | None): Optional document identifier
+        pipeline_version (str): Pipeline version string
 
     Returns:
         DocumentMetadata: Complete analysis results
