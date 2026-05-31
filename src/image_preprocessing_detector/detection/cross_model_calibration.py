@@ -75,14 +75,13 @@ class CrossModelCalibrator:
         """Fit conditional MOS distributions for a categorical validator.
 
         Args:
-            validator_name: Identifier (e.g. "qwen3.5_overall").
-            categories: VLM category per image (e.g. ["good", "fair", ...]).
-            mos_values: Ground-truth MOS per image.
-            min_samples_per_category: Minimum samples to compute distribution.
+            validator_name (str): Identifier (e.g. "qwen3.5_overall").
+            categories (list[str]): VLM category per image (e.g. ["good", "fair", ...]).
+            mos_values (list[float]): Ground-truth MOS per image.
+            min_samples_per_category (int): Minimum samples to compute distribution.
 
         Returns:
-            Dict mapping category to CategoryDistribution.
-        """
+            dict[str, CategoryDistribution]: Dict mapping category to CategoryDistribution."""
         cats = np.array(categories)
         mos = np.array(mos_values, dtype=np.float64)
         unique_cats = sorted(set(categories))
@@ -138,13 +137,12 @@ class CrossModelCalibrator:
         validator score space to MOS space.
 
         Args:
-            validator_name: Identifier (e.g. "clip_iqa_overall").
-            validator_scores: Continuous scores from validator.
-            mos_values: Ground-truth MOS per image.
+            validator_name (str): Identifier (e.g. "clip_iqa_overall").
+            validator_scores (list[float]): Continuous scores from validator.
+            mos_values (list[float]): Ground-truth MOS per image.
 
         Returns:
-            Dict with regression parameters and residual statistics.
-        """
+            dict[str, Any]: Dict with regression parameters and residual statistics."""
         from sklearn.isotonic import IsotonicRegression
 
         scores = np.array(validator_scores, dtype=np.float64)
@@ -187,13 +185,12 @@ class CrossModelCalibrator:
         z = (siglip_mu - E[MOS | category]) / Std[MOS | category]
 
         Args:
-            validator_name: Validator identifier.
-            category: VLM output category.
-            siglip_mu: SigLIP2 predicted score for this dimension.
+            validator_name (str): Validator identifier.
+            category (str): VLM output category.
+            siglip_mu (float): SigLIP2 predicted score for this dimension.
 
         Returns:
-            Z-score, or None if category not in calibration.
-        """
+            float | None: Z-score, or None if category not in calibration."""
         distributions = self._categorical_maps.get(validator_name, {})
         dist = distributions.get(category)
         if dist is None:
@@ -213,13 +210,12 @@ class CrossModelCalibrator:
         z = (siglip_mu - f(validator_score)) / residual_std
 
         Args:
-            validator_name: Validator identifier.
-            validator_score: Raw score from continuous validator.
-            siglip_mu: SigLIP2 predicted score for this dimension.
+            validator_name (str): Validator identifier.
+            validator_score (float): Raw score from continuous validator.
+            siglip_mu (float): SigLIP2 predicted score for this dimension.
 
         Returns:
-            Z-score, or None if validator not calibrated.
-        """
+            float | None: Z-score, or None if validator not calibrated."""
         params = self._continuous_maps.get(validator_name)
         if params is None:
             return None
@@ -239,8 +235,7 @@ class CrossModelCalibrator:
         """Save calibration parameters to JSON.
 
         Args:
-            path: Output file path.
-        """
+            path (str | Path): Output file path."""
         data: dict[str, Any] = {
             "categorical": {},
             "continuous": self._continuous_maps,
@@ -266,11 +261,10 @@ class CrossModelCalibrator:
         """Load calibration parameters from JSON.
 
         Args:
-            path: Input file path.
+            path (str | Path): Input file path.
 
         Returns:
-            Loaded CrossModelCalibrator instance.
-        """
+            CrossModelCalibrator: Loaded CrossModelCalibrator instance."""
         with open(str(path)) as f:  # nosemgrep: cli-path-traversal-open
             data = json.load(f)
 

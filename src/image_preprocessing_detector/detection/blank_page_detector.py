@@ -97,6 +97,11 @@ class BlankPageDetector:
 
     Each signal is independently mapped to a 0-1 blankness indicator, then
     fused via weighted average to produce the final ``blankness_score``.
+
+    Args:
+        variance_threshold (float): Pixel variance below which the image is likely blank (default: 100).
+        edge_density_threshold (float): Edge density below which the image is likely blank (default: 0.01).
+        content_ratio_threshold (float): Content ratio below which the image is likely blank (default: 0.02).
     """
 
     def __init__(
@@ -105,16 +110,6 @@ class BlankPageDetector:
         edge_density_threshold: float = _DEFAULT_EDGE_DENSITY_THRESHOLD,
         content_ratio_threshold: float = _DEFAULT_CONTENT_RATIO_THRESHOLD,
     ) -> None:
-        """Initialise blank page detector.
-
-        Args:
-            variance_threshold: Pixel variance below which the image is likely
-                blank (default: 100).
-            edge_density_threshold: Edge density below which the image is
-                likely blank (default: 0.01).
-            content_ratio_threshold: Content ratio below which the image is
-                likely blank (default: 0.02).
-        """
         self.variance_threshold = variance_threshold
         self.edge_density_threshold = edge_density_threshold
         self.content_ratio_threshold = content_ratio_threshold
@@ -134,10 +129,10 @@ class BlankPageDetector:
         """Analyse an image and determine whether it is blank.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale numpy array).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            BlankPageResult with classification, score, and raw signals.
+            BlankPageResult: BlankPageResult with classification, score, and raw signals.
 
         Raises:
             ValueError: If the image is *None* or empty.
@@ -217,12 +212,11 @@ class BlankPageDetector:
         disagree the confidence is reduced, reflecting ambiguity.
 
         Args:
-            blank_votes: Number of signals that voted "blank" (0-3).
-            blankness_score: Fused blankness score (0-1).
+            blank_votes (int): Number of signals that voted "blank" (0-3).
+            blankness_score (float): Fused blankness score (0-1).
 
         Returns:
-            Confidence value between 0 and 1.
-        """
+            float: Confidence value between 0 and 1."""
         if blank_votes == 3:
             return min(1.0, 0.85 + 0.15 * blankness_score)
         if blank_votes == 0:
@@ -244,10 +238,10 @@ def detect_blank_page(image: np.ndarray) -> BlankPageResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale numpy array).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        BlankPageResult with classification, score, and raw signals.
+        BlankPageResult: BlankPageResult with classification, score, and raw signals.
 
     Raises:
         ValueError: If the image is *None* or empty.

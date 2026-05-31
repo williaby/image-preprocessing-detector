@@ -27,11 +27,10 @@ def _classify_lines(
     """Classify lines as horizontal or vertical based on angle.
 
     Args:
-        lines: Array of lines from HoughLinesP
+        lines (np.ndarray): Array of lines from HoughLinesP
 
     Returns:
-        Tuple of (horizontal_lines, vertical_lines)
-    """
+        tuple[list[np.ndarray], list[np.ndarray]]: Tuple of (horizontal_lines, vertical_lines)"""
     horizontal_lines: list[np.ndarray] = []
     vertical_lines: list[np.ndarray] = []
 
@@ -69,13 +68,13 @@ def detect_tables(
     5. Threshold: >10 horizontal AND >5 vertical lines forming grid
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        min_horizontal_lines: Minimum horizontal lines for table (default: 10)
-        min_vertical_lines: Minimum vertical lines for table (default: 5)
-        grid_intersection_threshold: Minimum intersection ratio for grid (default: 0.3)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        min_horizontal_lines (int): Minimum horizontal lines for table (default: 10)
+        min_vertical_lines (int): Minimum vertical lines for table (default: 5)
+        grid_intersection_threshold (float): Minimum intersection ratio for grid (default: 0.3)
 
     Returns:
-        TableDetectionResult with detection decision and line counts
+        TableDetectionResult: TableDetectionResult with detection decision and line counts
 
     Raises:
         ValueError: If image is invalid or empty

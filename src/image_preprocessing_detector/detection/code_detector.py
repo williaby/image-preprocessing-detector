@@ -81,11 +81,10 @@ def _compute_width_uniformity(components: list[dict[str, Any]]) -> float:
     robust measure: lower CV means more uniform.
 
     Args:
-        components: Filtered connected components from the binary image.
+        components (list[dict[str, Any]]): Filtered connected components from the binary image.
 
     Returns:
-        Score in [0, 1] where 1 means perfectly uniform (monospace-like).
-    """
+        float: Score in [0, 1] where 1 means perfectly uniform (monospace-like)."""
     widths = np.array([c["bbox"][2] for c in components], dtype=np.float64)
     mean_w = float(np.mean(widths))
     if mean_w <= 0:
@@ -110,11 +109,10 @@ def _compute_indentation_score(
     count the number of distinct levels.
 
     Args:
-        components: Filtered connected components from the binary image.
+        components (list[dict[str, Any]]): Filtered connected components from the binary image.
 
     Returns:
-        Tuple of (indentation_score 0-1, indentation_levels count).
-    """
+        tuple[float, int]: Tuple of (indentation_score 0-1, indentation_levels count)."""
     left_edges = np.array([c["bbox"][0] for c in components], dtype=np.float64)
 
     if len(left_edges) == 0:
@@ -145,11 +143,10 @@ def _compute_line_height_uniformity(
     coefficient of variation.
 
     Args:
-        components: Filtered connected components from the binary image.
+        components (list[dict[str, Any]]): Filtered connected components from the binary image.
 
     Returns:
-        Score in [0, 1] where 1 means perfectly uniform line spacing.
-    """
+        float: Score in [0, 1] where 1 means perfectly uniform line spacing."""
     y_centroids = np.array([c["centroid"][1] for c in components], dtype=np.float64)
 
     if len(y_centroids) < 3:
@@ -210,6 +207,10 @@ class CodeDetector:
 
     Each signal is independently mapped to a 0-1 score, then fused via
     weighted average to produce the final ``code_confidence``.
+
+    Args:
+        confidence_threshold (float): Confidence above which ``has_code`` is True (default: 0.5).
+        min_components (int): Minimum connected components required for analysis (default: 15).
     """
 
     def __init__(
@@ -217,14 +218,6 @@ class CodeDetector:
         confidence_threshold: float = _DEFAULT_CONFIDENCE_THRESHOLD,
         min_components: int = _MIN_COMPONENTS,
     ) -> None:
-        """Initialise code detector.
-
-        Args:
-            confidence_threshold: Confidence above which ``has_code``
-                is True (default: 0.5).
-            min_components: Minimum connected components required for
-                analysis (default: 15).
-        """
         self.confidence_threshold = confidence_threshold
         self.min_components = min_components
 
@@ -242,10 +235,10 @@ class CodeDetector:
         """Analyse an image for code/monospace text content.
 
         Args:
-            image: Input image (BGR, BGRA, or grayscale numpy array).
+            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            CodeDetectionResult with classification and signal scores.
+            CodeDetectionResult: CodeDetectionResult with classification and signal scores.
 
         Raises:
             ValueError: If the image is *None* or empty.
@@ -326,10 +319,10 @@ def detect_code(image: np.ndarray) -> CodeDetectionResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image: Input image (BGR, BGRA, or grayscale numpy array).
+        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        CodeDetectionResult with classification and signal scores.
+        CodeDetectionResult: CodeDetectionResult with classification and signal scores.
 
     Raises:
         ValueError: If the image is *None* or empty.

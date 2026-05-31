@@ -32,12 +32,12 @@ def detect_fuzzy_scan(
     4. Threshold: blur_score >0.7 AND noise_score >0.5
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        blur_threshold: Minimum blur score for fuzzy scan (default: 0.7)
-        noise_threshold: Minimum noise score for fuzzy scan (default: 0.5)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        blur_threshold (float): Minimum blur score for fuzzy scan (default: 0.7)
+        noise_threshold (float): Minimum noise score for fuzzy scan (default: 0.5)
 
     Returns:
-        FuzzyScanDetectionResult with detection decision and scores
+        FuzzyScanDetectionResult: FuzzyScanDetectionResult with detection decision and scores
 
     Raises:
         ValueError: If image is invalid or empty

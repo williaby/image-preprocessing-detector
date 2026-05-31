@@ -33,12 +33,12 @@ def detect_colorful_background(
     4. Threshold: unique_colors >100 AND avg_saturation >0.3
 
     Args:
-        image: Input image (BGR format, from OpenCV)
-        min_unique_colors: Minimum unique colors for colorful background (default: 100)
-        min_avg_saturation: Minimum average saturation (default: 0.3)
+        image (np.ndarray): Input image (BGR format, from OpenCV)
+        min_unique_colors (int): Minimum unique colors for colorful background (default: 100)
+        min_avg_saturation (float): Minimum average saturation (default: 0.3)
 
     Returns:
-        ColorfulBackgroundResult with detection decision and metrics
+        ColorfulBackgroundResult: ColorfulBackgroundResult with detection decision and metrics
 
     Raises:
         ValueError: If image is invalid or empty

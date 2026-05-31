@@ -42,12 +42,11 @@ def extract_element_region(
     """Extract element region from page image using bounding box.
 
     Args:
-        page_image: Full page image (BGR format)
-        element: Document element with COCO-format bbox [x, y, width, height]
+        page_image (np.ndarray): Full page image (BGR format)
+        element (DocumentElement): Document element with COCO-format bbox [x, y, width, height]
 
     Returns:
-        Cropped element image or None if bbox is invalid
-    """
+        np.ndarray | None: Cropped element image or None if bbox is invalid"""
     if not element.bbox or len(element.bbox) < 4:
         logger.warning("Invalid bbox for element", element_id=element.id)
         return None
@@ -82,12 +81,11 @@ def assess_element_quality_classical(
     """Assess element quality using classical IQA detectors.
 
     Args:
-        element_image: Cropped element image (BGR format)
-        element: Document element metadata
+        element_image (np.ndarray): Cropped element image (BGR format)
+        element (DocumentElement): Document element metadata
 
     Returns:
-        List of detected quality issues
-    """
+        list[DetectedIssue]: List of detected quality issues"""
     issues: list[DetectedIssue] = []
 
     # Blur detection
@@ -167,13 +165,12 @@ def assess_element_quality_ml(
     """Assess element quality using ML IQA detector.
 
     Args:
-        element_image: Cropped element image (BGR format)
-        element: Document element metadata
-        ml_detector: ML IQA detector instance
+        element_image (np.ndarray): Cropped element image (BGR format)
+        element (DocumentElement): Document element metadata
+        ml_detector ('MLIQADetector'): ML IQA detector instance
 
     Returns:
-        List of detected quality issues from ML model
-    """
+        list[DetectedIssue]: List of detected quality issues from ML model"""
     issues: list[DetectedIssue] = []
 
     try:
@@ -236,14 +233,13 @@ def assess_element_iqa(
     Performs hybrid IQA: classical detectors + optional ML inference.
 
     Args:
-        page_image: Full page image (BGR format)
-        element: Document element to assess
-        ml_detector: Optional ML IQA detector
-        use_ml: Whether to use ML IQA (if detector available)
+        page_image (np.ndarray): Full page image (BGR format)
+        element (DocumentElement): Document element to assess
+        ml_detector ('MLIQADetector | None'): Optional ML IQA detector
+        use_ml (bool): Whether to use ML IQA (if detector available)
 
     Returns:
-        Updated DocumentElement with quality_issues populated
-    """
+        DocumentElement: Updated DocumentElement with quality_issues populated"""
     # Only assess quality for elements that benefit from it
     assessable_categories = {
         ElementCategory.IMAGE,
@@ -313,14 +309,13 @@ def assess_page_elements_iqa(
     """Assess quality for all elements on a page.
 
     Args:
-        page_image: Full page image (BGR format)
-        elements: List of document elements to assess
-        ml_detector: Optional ML IQA detector
-        use_ml: Whether to use ML IQA (if detector available)
+        page_image (np.ndarray): Full page image (BGR format)
+        elements (list[DocumentElement]): List of document elements to assess
+        ml_detector ('MLIQADetector | None'): Optional ML IQA detector
+        use_ml (bool): Whether to use ML IQA (if detector available)
 
     Returns:
-        List of updated DocumentElements with quality_issues populated
-    """
+        list[DocumentElement]: List of updated DocumentElements with quality_issues populated"""
     assessed_elements = []
 
     for element in elements:

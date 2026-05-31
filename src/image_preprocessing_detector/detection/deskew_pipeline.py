@@ -57,11 +57,10 @@ class DeskewConfig:
         """Load pipeline config from skew_estimation.yaml.
 
         Args:
-            config_path: Path to config YAML. None uses default.
+            config_path (str | Path | None): Path to config YAML. None uses default.
 
         Returns:
-            Populated DeskewConfig.
-        """
+            DeskewConfig: Populated DeskewConfig."""
         if config_path is None:
             config_path = (
                 Path(__file__).resolve().parents[3] / "config" / "skew_estimation.yaml"
@@ -142,14 +141,12 @@ class DeskewPipeline:
         result = pipeline.process(image)
         if result.correction_applied:
             corrected = result.corrected_image
+
+    Args:
+        config (DeskewConfig | None): Pipeline configuration. None loads from YAML.
     """
 
     def __init__(self, config: DeskewConfig | None = None) -> None:
-        """Initialize deskew pipeline.
-
-        Args:
-            config: Pipeline configuration. None loads from YAML.
-        """
         self.config = config or DeskewConfig.from_yaml()
         self._ml_estimator: Any | None = None
         self._classical_detector: Any | None = None
@@ -167,11 +164,10 @@ class DeskewPipeline:
         """Create pipeline from YAML config file.
 
         Args:
-            config_path: Path to skew_estimation.yaml.
+            config_path (str | Path | None): Path to skew_estimation.yaml.
 
         Returns:
-            Configured DeskewPipeline instance.
-        """
+            DeskewPipeline: Configured DeskewPipeline instance."""
         config = DeskewConfig.from_yaml(config_path)
         return cls(config=config)
 
@@ -179,10 +175,10 @@ class DeskewPipeline:
         """Run the full deskew pipeline on an image.
 
         Args:
-            image: Input image (BGR uint8, from OpenCV).
+            image (np.ndarray): Input image (BGR uint8, from OpenCV).
 
         Returns:
-            DeskewResult with corrected image and metadata.
+            DeskewResult: DeskewResult with corrected image and metadata.
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -228,11 +224,10 @@ class DeskewPipeline:
         """Run ML-based deskew with optional classical fallback.
 
         Args:
-            image: Input BGR image.
+            image (np.ndarray): Input BGR image.
 
         Returns:
-            DeskewResult from ML inference.
-        """
+            DeskewResult: DeskewResult from ML inference."""
         from image_preprocessing_detector.models.skew_estimator import (
             SkewEstimatorInference,
         )
@@ -379,11 +374,10 @@ class DeskewPipeline:
         """Run classical Hough+Projection skew detection and correction.
 
         Args:
-            image: Input BGR image.
+            image (np.ndarray): Input BGR image.
 
         Returns:
-            DeskewResult from classical detection.
-        """
+            DeskewResult: DeskewResult from classical detection."""
         from image_preprocessing_detector.detection.iqa_classical import SkewDetector
 
         if self._classical_detector is None:
@@ -439,12 +433,11 @@ def _rotate_90(image: np.ndarray, angle: int) -> np.ndarray:
     """Rotate image by 90/180/270 degrees.
 
     Args:
-        image: Input BGR image.
-        angle: Rotation angle (0, 90, 180, 270).
+        image (np.ndarray): Input BGR image.
+        angle (int): Rotation angle (0, 90, 180, 270).
 
     Returns:
-        Rotated image.
-    """
+        np.ndarray: Rotated image."""
     if angle == 90:
         return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     if angle == 180:
@@ -462,13 +455,12 @@ def _apply_skew_correction(
     """Apply fine skew correction using OpenCV warpAffine.
 
     Args:
-        image: Input BGR image.
-        angle: Skew angle in degrees (positive = clockwise).
-        border_value: Fill value for borders after rotation.
+        image (np.ndarray): Input BGR image.
+        angle (float): Skew angle in degrees (positive = clockwise).
+        border_value (int): Fill value for borders after rotation.
 
     Returns:
-        Deskewed image.
-    """
+        np.ndarray: Deskewed image."""
     h, w = image.shape[:2]
     center = (w / 2.0, h / 2.0)
 

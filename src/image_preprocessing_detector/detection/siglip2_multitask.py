@@ -405,11 +405,10 @@ class SigLIP2MultiTaskDetector:
         """Convert BGR/grayscale numpy image to model inputs.
 
         Args:
-            image: Input image (BGR uint8 or grayscale).
+            image (np.ndarray): Input image (BGR uint8 or grayscale).
 
         Returns:
-            Dict with pixel_values and spatial_shapes tensors.
-        """
+            dict[str, Any]: Dict with pixel_values and spatial_shapes tensors."""
         import cv2
         from PIL import Image
 
@@ -440,12 +439,11 @@ class SigLIP2MultiTaskDetector:
         """Convert raw model outputs to structured prediction.
 
         Args:
-            outputs: Raw model forward pass outputs.
-            return_embedding: If True, include penultimate embedding in result.
+            outputs (dict[str, Any]): Raw model forward pass outputs.
+            return_embedding (bool): If True, include penultimate embedding in result.
 
         Returns:
-            MultiTaskPrediction with all task results.
-        """
+            MultiTaskPrediction: MultiTaskPrediction with all task results."""
         import torch
 
         def _cls_result(
@@ -502,12 +500,11 @@ class SigLIP2MultiTaskDetector:
         """Run multi-task inference on a single image.
 
         Args:
-            image: Input image (BGR uint8 or grayscale numpy array).
-            return_embedding: If True, include 768-dim penultimate embedding
-                for OOD detection via Mahalanobis distance.
+            image (np.ndarray): Input image (BGR uint8 or grayscale numpy array).
+            return_embedding (bool): If True, include 768-dim penultimate embedding for OOD detection via Mahalanobis distance.
 
         Returns:
-            MultiTaskPrediction with all 8 task predictions (and optional embedding).
+            MultiTaskPrediction: MultiTaskPrediction with all 8 task predictions (and optional embedding).
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -575,12 +572,11 @@ class SigLIP2MultiTaskDetector:
         can be added when NaFlex padding is standardized.
 
         Args:
-            images: List of input images (BGR uint8).
-            return_embedding: If True, include embeddings for OOD detection.
+            images (list[np.ndarray]): List of input images (BGR uint8).
+            return_embedding (bool): If True, include embeddings for OOD detection.
 
         Returns:
-            List of MultiTaskPrediction results.
-        """
+            list[MultiTaskPrediction]: List of MultiTaskPrediction results."""
         return [self.predict(img, return_embedding=return_embedding) for img in images]
 
 
@@ -599,12 +595,11 @@ def get_multitask_detector(
     """Get or create the default multi-task detector singleton.
 
     Args:
-        checkpoint_path: Path to model checkpoint.
-        config: Optional configuration.
+        checkpoint_path (str | Path | None): Path to model checkpoint.
+        config (SigLIP2MultiTaskConfig | None): Optional configuration.
 
     Returns:
-        Cached SigLIP2MultiTaskDetector instance.
-    """
+        SigLIP2MultiTaskDetector: Cached SigLIP2MultiTaskDetector instance."""
     global _default_detector
     if _default_detector is None:
         _default_detector = SigLIP2MultiTaskDetector(
@@ -621,12 +616,11 @@ def predict_multitask(
     """Convenience function for single-image prediction.
 
     Args:
-        image: Input image (BGR uint8 or grayscale).
-        checkpoint_path: Path to model checkpoint.
+        image (np.ndarray): Input image (BGR uint8 or grayscale).
+        checkpoint_path (str | Path | None): Path to model checkpoint.
 
     Returns:
-        MultiTaskPrediction with all task results.
-    """
+        MultiTaskPrediction: MultiTaskPrediction with all task results."""
     detector = get_multitask_detector(checkpoint_path=checkpoint_path)
     return detector.predict(image)
 
@@ -635,11 +629,10 @@ def prediction_to_dict(prediction: MultiTaskPrediction) -> dict[str, Any]:
     """Convert MultiTaskPrediction to JSON-serializable dict.
 
     Args:
-        prediction: Multi-task prediction result.
+        prediction (MultiTaskPrediction): Multi-task prediction result.
 
     Returns:
-        Nested dict with all prediction data.
-    """
+        dict[str, Any]: Nested dict with all prediction data."""
     return {
         "iqa": {
             "overall": {
