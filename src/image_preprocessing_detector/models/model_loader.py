@@ -32,17 +32,14 @@ def _load_model(
     """Load an ONNX IQA model.
 
     Args:
-        model_filename: ONNX model filename (e.g., ``resnet18_student.onnx``).
-        label: Human-readable label for log messages (e.g., ``"Student"``).
-        device: Target device (``"cpu"`` or ``"cuda"``).
-        model_dir: Directory containing ONNX model files.
-            Defaults to ``<package>/onnx/`` relative to the module's
-            package directory.
+        model_filename (str): ONNX model filename (e.g., ``resnet18_student.onnx``).
+        label (str): Human-readable label for log messages (e.g., ``"Student"``).
+        device (str): Target device (``"cpu"`` or ``"cuda"``).
+        model_dir (Path | None): Directory containing ONNX model files. Defaults to ``<package>/onnx/`` relative to the module's package directory.
 
     Returns:
-        An ``ONNXModelRunner`` instance, or ``None`` if the model
-        file is not found or onnxruntime is unavailable.
-    """
+        Any: An ``ONNXModelRunner`` instance, or ``None`` if the model
+        file is not found or onnxruntime is unavailable."""
     device = device.lower()
     if device not in _VALID_DEVICES:
         logger.warning(
@@ -84,15 +81,12 @@ def load_student_model(
     """Load the ResNet-18 student IQA model.
 
     Args:
-        device: Target device ("cpu" or "cuda").
-        model_dir: Directory containing ONNX model files.
-            Defaults to ``<package>/onnx/`` relative to the module's
-            package directory.
+        device (str): Target device ("cpu" or "cuda").
+        model_dir (Path | None): Directory containing ONNX model files. Defaults to ``<package>/onnx/`` relative to the module's package directory.
 
     Returns:
-        An ``ONNXModelRunner`` instance, or ``None`` if the model
-        file is not found or onnxruntime is unavailable.
-    """
+        Any: An ``ONNXModelRunner`` instance, or ``None`` if the model
+        file is not found or onnxruntime is unavailable."""
     return _load_model(
         model_filename="resnet18_student.onnx",
         label="Student",
@@ -109,15 +103,12 @@ def load_teacher_model(
     """Load the ResNet-50 teacher IQA model.
 
     Args:
-        device: Target device ("cpu" or "cuda").
-        model_dir: Directory containing ONNX model files.
-            Defaults to ``<package>/onnx/`` relative to the module's
-            package directory.
+        device (str): Target device ("cpu" or "cuda").
+        model_dir (Path | None): Directory containing ONNX model files. Defaults to ``<package>/onnx/`` relative to the module's package directory.
 
     Returns:
-        An ``ONNXModelRunner`` instance, or ``None`` if the model
-        file is not found or onnxruntime is unavailable.
-    """
+        Any: An ``ONNXModelRunner`` instance, or ``None`` if the model
+        file is not found or onnxruntime is unavailable."""
     return _load_model(
         model_filename="resnet50_teacher_50epoch.onnx",
         label="Teacher",
@@ -133,9 +124,13 @@ def _warmup_single_model(
 ) -> float:
     """Run dummy inference on a single model and return elapsed time in ms.
 
+    Args:
+        model (Any): Loaded model with a ``run`` method.
+        label (str): Human-readable model label for log messages.
+        dummy_input (Any): Pre-constructed dummy input tensor.
+
     Returns:
-        Elapsed time in milliseconds, or -1.0 on failure.
-    """
+        float: Elapsed time in milliseconds, or -1.0 on failure."""
     import time
 
     try:
@@ -159,12 +154,11 @@ def warmup_models(
     """Run dummy inference to warm up loaded models.
 
     Args:
-        student_model: Loaded student model (or ``None``).
-        teacher_model: Loaded teacher model (or ``None``).
+        student_model (Any | None): Loaded student model (or ``None``).
+        teacher_model (Any | None): Loaded teacher model (or ``None``).
 
     Returns:
-        Dictionary with warmup timing statistics (milliseconds).
-    """
+        dict[str, float]: Dictionary with warmup timing statistics (milliseconds)."""
     import numpy as np
 
     stats: dict[str, float] = {}
@@ -187,11 +181,10 @@ def get_model_info(model: Any) -> dict[str, Any]:
     """Extract metadata from a loaded model.
 
     Args:
-        model: A loaded model instance (ONNXModelRunner or similar).
+        model (Any): A loaded model instance (ONNXModelRunner or similar).
 
     Returns:
-        Dictionary with model metadata (name, device, input shape, etc.).
-    """
+        dict[str, Any]: Dictionary with model metadata (name, device, input shape, etc.)."""
     info: dict[str, Any] = {"type": type(model).__name__}
 
     if hasattr(model, "config"):
