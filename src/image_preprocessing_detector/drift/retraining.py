@@ -193,14 +193,13 @@ class RetrainingConfig:
 
 
 class DatasetBuilder:
-    """Builds training datasets from harvested samples."""
+    """Builds training datasets from harvested samples.
+
+    Args:
+        config (RetrainingConfig | None): Retraining configuration
+    """
 
     def __init__(self, config: RetrainingConfig | None = None):
-        """Initialize dataset builder.
-
-        Args:
-            config: Retraining configuration
-        """
         self.config = config or RetrainingConfig()
         self.output_path = Path(self.config.dataset_dir)
         self.output_path.mkdir(parents=True, exist_ok=True)
@@ -216,11 +215,11 @@ class DatasetBuilder:
         Only includes approved samples.
 
         Args:
-            manifests: List of harvest manifests
-            metadata: Optional additional metadata
+            manifests (list[HarvestManifest]): List of harvest manifests
+            metadata (dict[str, Any] | None): Optional additional metadata
 
         Returns:
-            RetrainingDataset or None if insufficient samples
+            RetrainingDataset | None: RetrainingDataset or None if insufficient samples
         """
         # Collect all approved samples
         approved_samples: list[HarvestedSample] = []
@@ -296,12 +295,12 @@ class DatasetBuilder:
         """Create a dataset split.
 
         Args:
-            name: Split name (train, val, test)
-            samples: Samples for this split
-            dataset_path: Base dataset path
+            name (str): Split name (train, val, test)
+            samples (list[HarvestedSample]): Samples for this split
+            dataset_path (Path): Base dataset path
 
         Returns:
-            DatasetSplit object
+            DatasetSplit: DatasetSplit object
         """
         split_path = dataset_path / name
         split_path.mkdir(exist_ok=True)
@@ -369,6 +368,10 @@ class RetrainingOrchestrator:
     2. Build training dataset
     3. Create and track retraining jobs
     4. Update job status
+
+    Args:
+        config (RetrainingConfig | None): Retraining configuration
+        manifest_generator (ManifestGenerator | None): Manifest generator for loading manifests
     """
 
     def __init__(
@@ -376,12 +379,6 @@ class RetrainingOrchestrator:
         config: RetrainingConfig | None = None,
         manifest_generator: ManifestGenerator | None = None,
     ):
-        """Initialize orchestrator.
-
-        Args:
-            config: Retraining configuration
-            manifest_generator: Manifest generator for loading manifests
-        """
         self.config = config or RetrainingConfig()
         self.output_path = Path(self.config.output_dir)
         self.output_path.mkdir(parents=True, exist_ok=True)
@@ -459,14 +456,14 @@ class RetrainingOrchestrator:
         """Create a new retraining job.
 
         Args:
-            trigger: Trigger for retraining
-            model_name: Name of model to retrain
-            base_model_path: Path to base model (for fine-tuning)
-            training_config: Training hyperparameters
-            metadata: Additional metadata
+            trigger (RetrainingTrigger): Trigger for retraining
+            model_name (str): Name of model to retrain
+            base_model_path (str | None): Path to base model (for fine-tuning)
+            training_config (dict[str, Any] | None): Training hyperparameters
+            metadata (dict[str, Any] | None): Additional metadata
 
         Returns:
-            RetrainingJob object
+            RetrainingJob: RetrainingJob object
         """
         self._job_counter += 1
         job_id = (
@@ -498,11 +495,11 @@ class RetrainingOrchestrator:
         """Prepare a job by building the dataset.
 
         Args:
-            job: Retraining job
-            manifests: Harvest manifests to use
+            job (RetrainingJob): Retraining job
+            manifests (list[HarvestManifest]): Harvest manifests to use
 
         Returns:
-            True if preparation succeeded
+            bool: True if preparation succeeded
         """
         job.status = RetrainingStatus.PREPARING
         self._save_job(job)
@@ -546,10 +543,10 @@ class RetrainingOrchestrator:
         started and returns training configuration.
 
         Args:
-            job: Retraining job to start
+            job (RetrainingJob): Retraining job to start
 
         Returns:
-            True if job started successfully
+            bool: True if job started successfully
         """
         if job.dataset_id is None:
             logger.error(f"Job {job.job_id} has no dataset, cannot start")
@@ -577,11 +574,11 @@ class RetrainingOrchestrator:
         """Mark a job as completed.
 
         Args:
-            job: Retraining job
-            success: Whether training succeeded
-            metrics: Training metrics (loss, accuracy, etc.)
-            output_model_path: Path to trained model
-            error_message: Error message if failed
+            job (RetrainingJob): Retraining job
+            success (bool): Whether training succeeded
+            metrics (dict[str, float] | None): Training metrics (loss, accuracy, etc.)
+            output_model_path (str | None): Path to trained model
+            error_message (str | None): Error message if failed
         """
         job.completed_at = utc_now()
 
@@ -601,8 +598,8 @@ class RetrainingOrchestrator:
         """Cancel a retraining job.
 
         Args:
-            job: Job to cancel
-            reason: Reason for cancellation
+            job (RetrainingJob): Job to cancel
+            reason (str): Reason for cancellation
         """
         job.status = RetrainingStatus.CANCELLED
         job.error_message = reason or "Cancelled by user"
@@ -615,10 +612,10 @@ class RetrainingOrchestrator:
         """Get a job by ID.
 
         Args:
-            job_id: Job identifier
+            job_id (str): Job identifier
 
         Returns:
-            RetrainingJob or None
+            RetrainingJob | None: RetrainingJob or None
         """
         return self._jobs.get(job_id)
 
@@ -630,11 +627,11 @@ class RetrainingOrchestrator:
         """List retraining jobs.
 
         Args:
-            status: Filter by status
-            limit: Maximum jobs to return
+            status (RetrainingStatus | None): Filter by status
+            limit (int): Maximum jobs to return
 
         Returns:
-            List of jobs, newest first
+            list[RetrainingJob]: List of jobs, newest first
         """
         jobs = list(self._jobs.values())
 
@@ -650,7 +647,7 @@ class RetrainingOrchestrator:
         """Get count of approved samples not yet used in retraining.
 
         Returns:
-            Number of pending samples
+            int: Number of pending samples
         """
         if not self.manifest_generator:
             return 0
@@ -680,7 +677,7 @@ class RetrainingOrchestrator:
         """Check if retraining should be triggered.
 
         Returns:
-            Tuple of (should_trigger, trigger_reason)
+            tuple[bool, RetrainingTrigger | None]: Tuple of (should_trigger, trigger_reason)
         """
         if not self.config.auto_trigger_on_threshold:
             return False, None
@@ -705,12 +702,12 @@ def create_retraining_orchestrator(
     """Create a retraining orchestrator.
 
     Args:
-        output_dir: Output directory for retraining artifacts
-        manifest_dir: Directory containing harvest manifests
-        min_samples: Minimum samples required for retraining
+        output_dir (str): Output directory for retraining artifacts
+        manifest_dir (str | None): Directory containing harvest manifests
+        min_samples (int): Minimum samples required for retraining
 
     Returns:
-        Configured RetrainingOrchestrator
+        RetrainingOrchestrator: Configured RetrainingOrchestrator
     """
     config = RetrainingConfig(
         output_dir=output_dir,

@@ -231,7 +231,7 @@ class JobConfig:
         """Validate configuration.
 
         Returns:
-            List of validation error messages (empty if valid)
+            list[str]: List of validation error messages (empty if valid)
         """
         errors = []
 
@@ -285,6 +285,10 @@ class MetricsStore:
     """Persistent storage for evaluation metrics.
 
     Stores evaluation results and provides trend analysis.
+
+    Args:
+        storage_path (str | Path): Directory for metric storage
+        retention_days (int): Days to retain historical data
     """
 
     def __init__(
@@ -292,12 +296,6 @@ class MetricsStore:
         storage_path: str | Path,
         retention_days: int = DEFAULT_RETENTION_DAYS,
     ):
-        """Initialize metrics store.
-
-        Args:
-            storage_path: Directory for metric storage
-            retention_days: Days to retain historical data
-        """
         self.storage_path = Path(storage_path)
         self.retention_days = retention_days
         self._results: list[EvaluationResult] = []
@@ -343,7 +341,7 @@ class MetricsStore:
         """Add an evaluation result.
 
         Args:
-            result: Evaluation result to store
+            result (EvaluationResult): Evaluation result to store
         """
         self._results.append(result)
         self._results.sort(key=lambda r: r.timestamp)
@@ -361,11 +359,11 @@ class MetricsStore:
         """Get latest evaluation result.
 
         Args:
-            model_version: Filter by model version
-            dataset_name: Filter by dataset name
+            model_version (str | None): Filter by model version
+            dataset_name (str | None): Filter by dataset name
 
         Returns:
-            Latest matching result or None
+            EvaluationResult | None: Latest matching result or None
         """
         filtered = self._filter_results(model_version, dataset_name)
         return filtered[-1] if filtered else None
@@ -379,12 +377,12 @@ class MetricsStore:
         """Get baseline evaluation (average of window period).
 
         Args:
-            window_days: Days to include in baseline window
-            model_version: Filter by model version
-            dataset_name: Filter by dataset name
+            window_days (int): Days to include in baseline window
+            model_version (str | None): Filter by model version
+            dataset_name (str | None): Filter by dataset name
 
         Returns:
-            Baseline result (aggregated) or None
+            EvaluationResult | None: Baseline result (aggregated) or None
         """
         cutoff = utc_now() - timedelta(days=window_days)
         filtered = [
@@ -431,13 +429,13 @@ class MetricsStore:
         """Get metric history.
 
         Args:
-            metric: Metric name to retrieve
-            days: Number of days of history
-            model_version: Filter by model version
-            dataset_name: Filter by dataset name
+            metric (str): Metric name to retrieve
+            days (int): Number of days of history
+            model_version (str | None): Filter by model version
+            dataset_name (str | None): Filter by dataset name
 
         Returns:
-            List of (timestamp, value) tuples
+            list[tuple[datetime, float]]: List of (timestamp, value) tuples
         """
         cutoff = utc_now() - timedelta(days=days)
         filtered = [
@@ -472,7 +470,7 @@ class MetricsStore:
         """Remove results older than retention period.
 
         Returns:
-            Number of results removed
+            int: Number of results removed
         """
         cutoff = utc_now() - timedelta(days=self.retention_days)
         original_count = len(self._results)
@@ -507,6 +505,10 @@ class PerformanceEvaluator:
 
     This is a stub implementation. In production, this would integrate
     with the actual model evaluation pipeline.
+
+    Args:
+        metrics_store (MetricsStore): Store for persisting results
+        config (JobConfig): Job configuration
     """
 
     def __init__(
@@ -514,12 +516,6 @@ class PerformanceEvaluator:
         metrics_store: MetricsStore,
         config: JobConfig,
     ):
-        """Initialize evaluator.
-
-        Args:
-            metrics_store: Store for persisting results
-            config: Job configuration
-        """
         self.metrics_store = metrics_store
         self.config = config
         self._evaluator_fn: ModelEvaluatorProtocol | None = None
@@ -528,7 +524,7 @@ class PerformanceEvaluator:
         """Set the model evaluator function.
 
         Args:
-            evaluator: Function that evaluates model and returns metrics
+            evaluator (ModelEvaluatorProtocol): Function that evaluates model and returns metrics
         """
         self._evaluator_fn = evaluator
 
@@ -540,11 +536,11 @@ class PerformanceEvaluator:
         """Run evaluation and store results.
 
         Args:
-            model_version: Version identifier for the model
-            dataset_version: Version identifier for the dataset
+            model_version (str): Version identifier for the model
+            dataset_version (str): Version identifier for the dataset
 
         Returns:
-            Evaluation result
+            EvaluationResult: Evaluation result
         """
         import time
 
@@ -582,7 +578,10 @@ class PerformanceEvaluator:
         """Generate stub metrics for testing.
 
         Args:
-            seed: Optional seed for reproducible random generation.
+            seed (int | None): Optional seed for reproducible random generation.
+
+        Returns:
+            dict[str, float]: Dictionary of metric name to value.
         """
         rng = np.random.default_rng(seed)
         return {
@@ -608,11 +607,11 @@ class PerformanceEvaluator:
         """Analyze performance trends.
 
         Args:
-            current: Current evaluation result
-            baseline_window_days: Days for baseline window
+            current (EvaluationResult): Current evaluation result
+            baseline_window_days (int): Days for baseline window
 
         Returns:
-            List of performance trends for each metric
+            list[PerformanceTrend]: List of performance trends for each metric
         """
         baseline = self.metrics_store.get_baseline(
             window_days=baseline_window_days,
@@ -699,10 +698,10 @@ class PerformanceEvaluator:
         """Generate comprehensive performance report.
 
         Args:
-            current: Current evaluation (runs new evaluation if None)
+            current (EvaluationResult | None): Current evaluation (runs new evaluation if None)
 
         Returns:
-            Performance report
+            PerformanceReport: Performance report
         """
         if current is None:
             current = self.evaluate()
@@ -747,6 +746,10 @@ class PerformanceJob:
     """Scheduled performance monitoring job.
 
     Runs periodic evaluations and generates reports.
+
+    Args:
+        config (JobConfig): Job configuration
+        storage_path (str | Path): Directory for storing results
     """
 
     def __init__(
@@ -754,12 +757,6 @@ class PerformanceJob:
         config: JobConfig,
         storage_path: str | Path,
     ):
-        """Initialize job.
-
-        Args:
-            config: Job configuration
-            storage_path: Directory for storing results
-        """
         self.config = config
         self.storage_path = Path(storage_path)
         self.metrics_store = MetricsStore(
@@ -789,12 +786,12 @@ class PerformanceJob:
         """Run the evaluation job.
 
         Args:
-            model_version: Model version identifier
-            dataset_version: Dataset version identifier
-            force: Force run even if not scheduled
+            model_version (str): Model version identifier
+            dataset_version (str): Dataset version identifier
+            force (bool): Force run even if not scheduled
 
         Returns:
-            Performance report or None if skipped
+            PerformanceReport | None: Performance report or None if skipped
         """
         if not force and not self.should_run():
             logger.info("Skipping evaluation - not yet scheduled")
@@ -895,10 +892,10 @@ def validate_job_config(config_path: str | Path) -> tuple[bool, list[str]]:
     For use in CI hooks to ensure config is valid before deployment.
 
     Args:
-        config_path: Path to configuration file
+        config_path (str | Path): Path to configuration file
 
     Returns:
-        Tuple of (is_valid, error_messages)
+        tuple[bool, list[str]]: Tuple of (is_valid, error_messages)
     """
     config_path = Path(config_path)
 
@@ -925,7 +922,7 @@ def create_sample_config(output_path: str | Path) -> None:
     """Create a sample configuration file.
 
     Args:
-        output_path: Path to write sample config
+        output_path (str | Path): Path to write sample config
     """
     config = JobConfig(
         dataset_path="/data/change_detection_set",
@@ -959,12 +956,12 @@ def get_dashboard_panel_data(
     """Get data formatted for Grafana dashboard panel.
 
     Args:
-        metrics_store: Metrics store to query
-        metrics: Specific metrics to include (None for all)
-        days: Days of history to include
+        metrics_store (MetricsStore): Metrics store to query
+        metrics (list[str] | None): Specific metrics to include (None for all)
+        days (int): Days of history to include
 
     Returns:
-        Dictionary formatted for dashboard consumption
+        dict[str, Any]: Dictionary formatted for dashboard consumption
     """
     if metrics is None:
         metrics = [

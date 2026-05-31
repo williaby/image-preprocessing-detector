@@ -210,6 +210,13 @@ class PrivacyChecker:
 
     This is a stub implementation. In production, this would integrate
     with actual privacy scanning and PII detection systems.
+
+    Args:
+        custom_rules (list[Callable[[HarvestedSample], bool]] | None): Optional list of custom validation functions
+
+    Attributes:
+        PII_INDICATORS (ClassVar[list[str]]): Keywords that may indicate PII in metadata.
+        SENSITIVE_PATTERNS (ClassVar[list[str]]): File path patterns that require review.
     """
 
     # Keywords that might indicate PII
@@ -238,21 +245,16 @@ class PrivacyChecker:
     def __init__(
         self, custom_rules: list[Callable[[HarvestedSample], bool]] | None = None
     ):
-        """Initialize privacy checker.
-
-        Args:
-            custom_rules: Optional list of custom validation functions
-        """
         self.custom_rules = custom_rules or []
 
     def check_sample(self, sample: HarvestedSample) -> tuple[PrivacyStatus, str]:
         """Check sample against privacy requirements.
 
         Args:
-            sample: Sample to check
+            sample (HarvestedSample): Sample to check
 
         Returns:
-            Tuple of (status, notes)
+            tuple[PrivacyStatus, str]: Tuple of (status, notes)
         """
         notes = []
 
@@ -293,10 +295,10 @@ class PrivacyChecker:
         """Check multiple samples.
 
         Args:
-            samples: List of samples to check
+            samples (list[HarvestedSample]): List of samples to check
 
         Returns:
-            Dict mapping sample_id to (status, notes)
+            dict[str, tuple[PrivacyStatus, str]]: Dict mapping sample_id to (status, notes)
         """
         results = {}
         for sample in samples:
@@ -318,6 +320,10 @@ class SampleHarvester:
     - Low agreement (model disagreement)
     - Quality outliers
     - Drift indicators
+
+    Args:
+        config (HarvesterConfig | None): Harvester configuration
+        privacy_checker (PrivacyChecker | None): Optional privacy checker
     """
 
     def __init__(
@@ -325,12 +331,6 @@ class SampleHarvester:
         config: HarvesterConfig | None = None,
         privacy_checker: PrivacyChecker | None = None,
     ):
-        """Initialize harvester.
-
-        Args:
-            config: Harvester configuration
-            privacy_checker: Optional privacy checker
-        """
         self.config = config or HarvesterConfig()
         self.privacy_checker = privacy_checker or PrivacyChecker()
         self._sample_counter = 0
@@ -350,13 +350,13 @@ class SampleHarvester:
         """Determine if a sample should be harvested.
 
         Args:
-            entropy: Model prediction entropy (higher = more uncertain)
-            agreement: Agreement between models (lower = more disagreement)
-            is_teacher_escalation: Whether teacher was invoked
-            quality_scores: Quality assessment scores
+            entropy (float | None): Model prediction entropy (higher = more uncertain)
+            agreement (float | None): Agreement between models (lower = more disagreement)
+            is_teacher_escalation (bool): Whether teacher was invoked
+            quality_scores (dict[str, float] | None): Quality assessment scores
 
         Returns:
-            Tuple of (should_harvest, reason)
+            tuple[bool, HarvestReason | None]: Tuple of (should_harvest, reason)
         """
         # Check entropy threshold
         if entropy is not None and entropy >= self.config.entropy_threshold:
@@ -391,16 +391,16 @@ class SampleHarvester:
         """Harvest a sample.
 
         Args:
-            source_path: Path to source file
-            reason: Reason for harvesting
-            entropy: Model entropy value
-            agreement: Model agreement score
-            model_predictions: Dict of model -> prediction
-            quality_scores: Dict of quality metrics
-            metadata: Additional metadata
+            source_path (str): Path to source file
+            reason (HarvestReason): Reason for harvesting
+            entropy (float | None): Model entropy value
+            agreement (float | None): Model agreement score
+            model_predictions (dict[str, float] | None): Dict of model -> prediction
+            quality_scores (dict[str, float] | None): Dict of quality metrics
+            metadata (dict[str, Any] | None): Additional metadata
 
         Returns:
-            HarvestedSample object
+            HarvestedSample: HarvestedSample object
         """
         self._sample_counter += 1
         sample_id = (
@@ -454,10 +454,10 @@ class SampleHarvester:
         """Copy sample file to output directory.
 
         Args:
-            sample: Sample to copy
+            sample (HarvestedSample): Sample to copy
 
         Returns:
-            True if successful
+            bool: True if successful
         """
         source = Path(sample.source_path)
         if not source.exists():
@@ -506,14 +506,12 @@ class ManifestGenerator:
     """Generates metadata manifests for re-training pipeline.
 
     Creates structured manifests compatible with ML training workflows.
+
+    Args:
+        output_dir (str | Path): Directory to write manifests
     """
 
     def __init__(self, output_dir: str | Path):
-        """Initialize manifest generator.
-
-        Args:
-            output_dir: Directory to write manifests
-        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._manifest_counter = 0
@@ -526,11 +524,11 @@ class ManifestGenerator:
         """Create a manifest for a batch of samples.
 
         Args:
-            samples: List of harvested samples
-            metadata: Optional additional metadata
+            samples (list[HarvestedSample]): List of harvested samples
+            metadata (dict[str, Any] | None): Optional additional metadata
 
         Returns:
-            HarvestManifest object
+            HarvestManifest: HarvestManifest object
         """
         self._manifest_counter += 1
         manifest_id = f"manifest_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._manifest_counter:04d}"
@@ -551,10 +549,10 @@ class ManifestGenerator:
         """Save manifest to disk.
 
         Args:
-            manifest: Manifest to save
+            manifest (HarvestManifest): Manifest to save
 
         Returns:
-            Path to saved manifest file
+            Path: Path to saved manifest file
         """
         # Save to dated subdirectory
         date_dir = self.output_dir / utc_now().strftime("%Y%m")
@@ -578,10 +576,10 @@ class ManifestGenerator:
         """Load manifest from disk.
 
         Args:
-            manifest_path: Path to manifest file
+            manifest_path (str | Path): Path to manifest file
 
         Returns:
-            HarvestManifest object
+            HarvestManifest: HarvestManifest object
         """
         with open(manifest_path) as f:
             data = json.load(f)
@@ -592,7 +590,7 @@ class ManifestGenerator:
         """Get the most recent manifest.
 
         Returns:
-            Latest manifest or None if not found
+            HarvestManifest | None: Latest manifest or None if not found
         """
         latest_path = self.output_dir / "latest_manifest.json"
 
@@ -605,10 +603,10 @@ class ManifestGenerator:
         """List manifest files within a time range.
 
         Args:
-            _days: Number of days to look back (reserved for future filtering)
+            _days (int): Number of days to look back (reserved for future filtering)
 
         Returns:
-            List of manifest file paths
+            list[Path]: List of manifest file paths
         """
         manifests: list[Path] = []
 
@@ -630,13 +628,13 @@ class ManifestGenerator:
         Only includes approved samples.
 
         Args:
-            manifest: Source manifest
-            train_ratio: Training set ratio
-            val_ratio: Validation set ratio
-            test_ratio: Test set ratio
+            manifest (HarvestManifest): Source manifest
+            train_ratio (float): Training set ratio
+            val_ratio (float): Validation set ratio
+            _test_ratio (float): Test set ratio
 
         Returns:
-            Dict with train/val/test sample IDs
+            dict[str, list[str]]: Dict with train/val/test sample IDs
         """
         # Filter to approved samples only
         approved_samples = [
@@ -721,7 +719,7 @@ def get_privacy_checklist() -> str:
     """Get the privacy review checklist template.
 
     Returns:
-        Checklist markdown text
+        str: Checklist markdown text
     """
     return PRIVACY_REVIEW_CHECKLIST
 
@@ -730,7 +728,7 @@ def save_privacy_checklist(output_path: str | Path) -> None:
     """Save privacy checklist to file.
 
     Args:
-        output_path: Path to save checklist
+        output_path (str | Path): Path to save checklist
     """
     with open(output_path, "w") as f:
         f.write(PRIVACY_REVIEW_CHECKLIST)
@@ -749,12 +747,12 @@ def create_harvester(
     """Create a sample harvester with default configuration.
 
     Args:
-        output_dir: Directory for harvested samples
-        entropy_threshold: Entropy threshold for harvesting
-        agreement_threshold: Agreement threshold for harvesting
+        output_dir (str): Directory for harvested samples
+        entropy_threshold (float): Entropy threshold for harvesting
+        agreement_threshold (float): Agreement threshold for harvesting
 
     Returns:
-        Configured SampleHarvester
+        SampleHarvester: Configured SampleHarvester
     """
     config = HarvesterConfig(
         output_dir=output_dir,
@@ -774,9 +772,9 @@ def harvest_and_manifest(
     Convenience function for batch harvesting.
 
     Args:
-        harvester: Sample harvester
-        manifest_generator: Manifest generator
-        samples_to_harvest: List of sample dicts with keys:
+        harvester (SampleHarvester): Sample harvester
+        manifest_generator (ManifestGenerator): Manifest generator
+        samples_to_harvest (list[dict[str, Any]]): List of sample dicts with keys:
             - source_path: str
             - entropy: float (optional)
             - agreement: float (optional)
@@ -785,7 +783,7 @@ def harvest_and_manifest(
             - metadata: dict (optional)
 
     Returns:
-        Generated manifest or None if no samples harvested
+        HarvestManifest | None: Generated manifest or None if no samples harvested
     """
     for sample_data in samples_to_harvest:
         source_path = sample_data.get("source_path", "")

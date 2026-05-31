@@ -275,16 +275,12 @@ def _validated_urlopen(url: str, data: bytes, timeout: int) -> int:
     for testing) by the validation layer in each dispatcher's __init__.
 
     Args:
-        url: Pre-validated webhook URL (HTTPS or localhost HTTP only)
-        data: JSON-encoded payload bytes
-        timeout: Request timeout in seconds
+        url (str): Pre-validated webhook URL (HTTPS or localhost HTTP only)
+        data (bytes): JSON-encoded payload bytes
+        timeout (int): Request timeout in seconds
 
     Returns:
-        HTTP response status code
-
-    Raises:
-        OSError: On network/connection errors
-        ValueError: On malformed URLs
+        int: HTTP response status code
     """
     import urllib.request
 
@@ -303,8 +299,8 @@ def _validate_webhook_url(url: str, allow_localhost_http: bool = True) -> None:
     """Validate webhook URL for security.
 
     Args:
-        url: The webhook URL to validate
-        allow_localhost_http: Whether to allow http:// for localhost (for testing)
+        url (str): The webhook URL to validate
+        allow_localhost_http (bool): Whether to allow http:// for localhost (for testing)
 
     Raises:
         ValueError: If URL scheme is not allowed
@@ -328,18 +324,14 @@ def _validate_webhook_url(url: str, allow_localhost_http: bool = True) -> None:
 
 
 class WebhookDispatcher:
-    """Dispatches alerts to a webhook endpoint."""
+    """Dispatches alerts to a webhook endpoint.
+
+    Args:
+        webhook_url (str): URL to POST alerts to
+        timeout (int): Request timeout in seconds
+    """
 
     def __init__(self, webhook_url: str, timeout: int = 30):
-        """Initialize webhook dispatcher.
-
-        Args:
-            webhook_url: URL to POST alerts to
-            timeout: Request timeout in seconds
-
-        Raises:
-            ValueError: If webhook URL is invalid (must be HTTPS or localhost)
-        """
         _validate_webhook_url(webhook_url)
         self.webhook_url = webhook_url
         self.timeout = timeout
@@ -360,17 +352,13 @@ class WebhookDispatcher:
 
 
 class SlackDispatcher:
-    """Dispatches alerts to Slack."""
+    """Dispatches alerts to Slack.
+
+    Args:
+        webhook_url (str): Slack incoming webhook URL
+    """
 
     def __init__(self, webhook_url: str):
-        """Initialize Slack dispatcher.
-
-        Args:
-            webhook_url: Slack incoming webhook URL
-
-        Raises:
-            ValueError: If webhook URL is invalid (must be HTTPS or localhost)
-        """
         _validate_webhook_url(webhook_url)
         self.webhook_url = webhook_url
 
@@ -439,7 +427,6 @@ class DryRunDispatcher:
     """Dispatcher for dry-run mode - logs but doesn't page."""
 
     def __init__(self) -> None:
-        """Initialize dry-run dispatcher."""
         self.dispatched_alerts: list[DriftAlert] = []
 
     def dispatch(self, alert: DriftAlert) -> bool:
@@ -465,19 +452,18 @@ class DryRunDispatcher:
 
 
 class AlertHistory:
-    """Tracks alert history for cooldown and deduplication."""
+    """Tracks alert history for cooldown and deduplication.
+
+    Args:
+        storage_path (str | Path | None): Optional path for persistence
+        retention_days (int): Days to retain alert history
+    """
 
     def __init__(
         self,
         storage_path: str | Path | None = None,
         retention_days: int = ALERT_HISTORY_RETENTION_DAYS,
     ):
-        """Initialize alert history.
-
-        Args:
-            storage_path: Optional path for persistence
-            retention_days: Days to retain alert history
-        """
         self.storage_path = Path(storage_path) if storage_path else None
         self.retention_days = retention_days
         self._alerts: dict[str, DriftAlert] = {}
@@ -550,12 +536,12 @@ class AlertHistory:
         """Check if alert is in cooldown period.
 
         Args:
-            alert_type: Type of alert
-            feature: Feature name
-            cooldown_minutes: Cooldown period in minutes
+            alert_type (AlertType): Type of alert
+            feature (str): Feature name
+            cooldown_minutes (int): Cooldown period in minutes
 
         Returns:
-            True if in cooldown period
+            bool: True if in cooldown period
         """
         key = f"{alert_type.value}:{feature}"
         last_time = self._last_alert_times.get(key)
@@ -578,11 +564,11 @@ class AlertHistory:
         """Get recent alerts.
 
         Args:
-            hours: Hours of history to include
-            severity: Filter by severity (optional)
+            hours (int): Hours of history to include
+            severity (AlertSeverity | None): Filter by severity (optional)
 
         Returns:
-            List of recent alerts
+            list[DriftAlert]: List of recent alerts
         """
         cutoff = utc_now() - timedelta(hours=hours)
         alerts = [a for a in self._alerts.values() if a.timestamp > cutoff]
@@ -614,7 +600,7 @@ class AlertHistory:
         """Remove old alerts beyond retention period.
 
         Returns:
-            Number of alerts removed
+            int: Number of alerts removed
         """
         cutoff = utc_now() - timedelta(days=self.retention_days)
 
@@ -649,6 +635,10 @@ class AlertManager:
     - Cooldown management
     - Multi-channel dispatch
     - Dry-run mode for validation
+
+    Args:
+        config (AlertConfig): Alert configuration
+        history (AlertHistory | None): Optional alert history tracker
     """
 
     def __init__(
@@ -656,12 +646,6 @@ class AlertManager:
         config: AlertConfig,
         history: AlertHistory | None = None,
     ):
-        """Initialize alert manager.
-
-        Args:
-            config: Alert configuration
-            history: Optional alert history tracker
-        """
         self.config = config
         self.history = history or AlertHistory()
         self._dispatchers: dict[AlertChannel, AlertDispatcherProtocol] = {
@@ -682,8 +666,8 @@ class AlertManager:
         """Add a dispatcher for a channel.
 
         Args:
-            channel: Alert channel
-            dispatcher: Dispatcher implementation
+            channel (AlertChannel): Alert channel
+            dispatcher (AlertDispatcherProtocol): Dispatcher implementation
         """
         self._dispatchers[channel] = dispatcher
 
@@ -696,12 +680,12 @@ class AlertManager:
         """Check KL divergence and create alert if needed.
 
         Args:
-            feature: Feature name
-            kl_value: KL divergence value
-            samples: Optional list of (sample_id, value) for triage
+            feature (str): Feature name
+            kl_value (float): KL divergence value
+            samples (list[tuple[str, float]] | None): Optional list of (sample_id, value) for triage
 
         Returns:
-            Alert if threshold exceeded, None otherwise
+            DriftAlert | None: Alert if threshold exceeded, None otherwise
         """
         if kl_value >= self.config.kl_critical:
             severity = AlertSeverity.CRITICAL
@@ -735,12 +719,12 @@ class AlertManager:
         """Check PSI and create alert if needed.
 
         Args:
-            feature: Feature name
-            psi_value: PSI value
-            samples: Optional list of (sample_id, value) for triage
+            feature (str): Feature name
+            psi_value (float): PSI value
+            samples (list[tuple[str, float]] | None): Optional list of (sample_id, value) for triage
 
         Returns:
-            Alert if threshold exceeded, None otherwise
+            DriftAlert | None: Alert if threshold exceeded, None otherwise
         """
         if psi_value >= self.config.psi_critical:
             severity = AlertSeverity.CRITICAL
@@ -774,12 +758,12 @@ class AlertManager:
         """Check mAP drop and create alert if needed.
 
         Args:
-            current_map: Current mAP value
-            baseline_map: Baseline mAP value
-            samples: Optional list of (sample_id, value) for triage
+            current_map (float): Current mAP value
+            baseline_map (float): Baseline mAP value
+            samples (list[tuple[str, float]] | None): Optional list of (sample_id, value) for triage
 
         Returns:
-            Alert if drop exceeds threshold, None otherwise
+            DriftAlert | None: Alert if drop exceeds threshold, None otherwise
         """
         if baseline_map == 0:
             return None
@@ -819,12 +803,12 @@ class AlertManager:
         """Check F1 drop and create alert if needed.
 
         Args:
-            current_f1: Current F1 value
-            baseline_f1: Baseline F1 value
-            samples: Optional list of (sample_id, value) for triage
+            current_f1 (float): Current F1 value
+            baseline_f1 (float): Baseline F1 value
+            samples (list[tuple[str, float]] | None): Optional list of (sample_id, value) for triage
 
         Returns:
-            Alert if drop exceeds threshold, None otherwise
+            DriftAlert | None: Alert if drop exceeds threshold, None otherwise
         """
         if baseline_f1 == 0:
             return None
@@ -869,17 +853,17 @@ class AlertManager:
         """Create and dispatch an alert.
 
         Args:
-            alert_type: Type of drift alert
-            severity: Alert severity
-            feature: Feature name
-            current_value: Current metric value
-            threshold: Threshold that was exceeded
-            baseline_value: Baseline value for comparison
-            message: Alert message
-            samples: Optional samples for triage
+            alert_type (AlertType): Type of drift alert
+            severity (AlertSeverity): Alert severity
+            feature (str): Feature name
+            current_value (float): Current metric value
+            threshold (float): Threshold that was exceeded
+            baseline_value (float | None): Baseline value for comparison
+            message (str): Alert message
+            samples (list[tuple[str, float]] | None): Optional samples for triage
 
         Returns:
-            Created alert or None if in cooldown
+            DriftAlert | None: Created alert or None if in cooldown
         """
         # Check cooldown
         if self.history.is_in_cooldown(
@@ -952,7 +936,7 @@ class AlertManager:
         """Get alerts from dry-run mode.
 
         Returns:
-            List of alerts that would have been dispatched
+            list[DriftAlert]: List of alerts that would have been dispatched
         """
         if self._dry_run_dispatcher:
             return self._dry_run_dispatcher.get_dispatched_alerts()
@@ -976,11 +960,11 @@ def create_alert_manager(
     """Create an alert manager with default configuration.
 
     Args:
-        config: Optional alert configuration
-        storage_path: Optional path for alert history storage
+        config (AlertConfig | None): Optional alert configuration
+        storage_path (str | Path | None): Optional path for alert history storage
 
     Returns:
-        Configured AlertManager instance
+        AlertManager: Configured AlertManager instance
     """
     if config is None:
         config = AlertConfig()
@@ -1002,14 +986,14 @@ def check_drift_and_alert(
     Convenience function to check multiple metrics at once.
 
     Args:
-        alert_manager: AlertManager instance
-        kl_values: Dict of feature -> KL divergence values
-        psi_values: Dict of feature -> PSI values
-        map_values: Tuple of (current_map, baseline_map)
-        f1_values: Tuple of (current_f1, baseline_f1)
+        alert_manager (AlertManager): AlertManager instance
+        kl_values (dict[str, float] | None): Dict of feature -> KL divergence values
+        psi_values (dict[str, float] | None): Dict of feature -> PSI values
+        map_values (tuple[float, float] | None): Tuple of (current_map, baseline_map)
+        f1_values (tuple[float, float] | None): Tuple of (current_f1, baseline_f1)
 
     Returns:
-        List of created alerts
+        list[DriftAlert]: List of created alerts
     """
     alerts = []
 
