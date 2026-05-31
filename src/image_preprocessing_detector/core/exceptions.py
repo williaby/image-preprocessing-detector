@@ -45,10 +45,10 @@ class ProjectBaseError(Exception):
     All custom exceptions in the project should inherit from this class
     to enable unified error handling and logging.
 
-    Attributes:
-        message: Human-readable error message.
-        details: Additional context about the error (optional).
-        error_code: Machine-readable error code for API responses (optional).
+    Args:
+        message (str): Human-readable error description.
+        details (dict[str, Any] | None): Additional context as key-value pairs.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise ProjectBaseError("Something went wrong", error_code="ERR001")
@@ -61,13 +61,6 @@ class ProjectBaseError(Exception):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize the exception.
-
-        Args:
-            message: Human-readable error description.
-            details: Additional context as key-value pairs.
-            error_code: Machine-readable error code.
-        """
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -77,7 +70,7 @@ class ProjectBaseError(Exception):
         """Convert exception to dictionary for JSON serialization.
 
         Returns:
-            Dictionary with error details suitable for JSON serialization.
+            dict[str, Any]: Dictionary with error details suitable for JSON serialization.
         """
         result: dict[str, Any] = {
             "error": self.__class__.__name__,
@@ -110,6 +103,13 @@ class ValidationError(ProjectBaseError):
     Raised when user input or data fails validation rules.
     Includes field-level error details for form validation.
 
+    Args:
+        message (str): Description of the validation failure.
+        field (str | None): Name of the field that failed validation.
+        value (Any): The invalid value (will be sanitized in logs).
+        details (dict[str, Any] | None): Additional validation context.
+        error_code (str | None): Machine-readable error code.
+
     Example:
         >>> raise ValidationError(
         ...     "Invalid image format",
@@ -127,15 +127,6 @@ class ValidationError(ProjectBaseError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize validation error with field context.
-
-        Args:
-            message: Description of the validation failure.
-            field: Name of the field that failed validation.
-            value: The invalid value (will be sanitized in logs).
-            details: Additional validation context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if field:
             details["field"] = field
@@ -155,6 +146,13 @@ class ResourceNotFoundError(ProjectBaseError):
 
     Raised when a requested resource (file, model, record) cannot be found.
 
+    Args:
+        message (str): Description of what was not found.
+        resource_type (str | None): Type of resource (e.g., "model", "document", "file").
+        resource_id (str | None): Identifier of the missing resource.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
+
     Example:
         >>> raise ResourceNotFoundError(
         ...     "Model file not found",
@@ -172,15 +170,6 @@ class ResourceNotFoundError(ProjectBaseError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize resource not found error.
-
-        Args:
-            message: Description of what was not found.
-            resource_type: Type of resource (e.g., "model", "document", "file").
-            resource_id: Identifier of the missing resource.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if resource_type:
             details["resource_type"] = resource_type
@@ -193,6 +182,13 @@ class ExternalServiceError(ProjectBaseError):
     """External service/dependency errors.
 
     Base class for errors from external services (storage, ML models, etc.).
+
+    Args:
+        message (str): Description of the service error.
+        service_name (str | None): Name of the external service.
+        status_code (int | None): HTTP status code if applicable.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise ExternalServiceError(
@@ -211,15 +207,6 @@ class ExternalServiceError(ProjectBaseError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize external service error.
-
-        Args:
-            message: Description of the service error.
-            service_name: Name of the external service.
-            status_code: HTTP status code if applicable.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if service_name:
             details["service_name"] = service_name
@@ -234,6 +221,13 @@ class ModelLoadError(ExternalServiceError):
     """ML model loading errors.
 
     Raised when ML model loading or initialization fails.
+
+    Args:
+        message (str): Description of the model loading error.
+        model_name (str | None): Name of the model that failed to load.
+        model_path (str | None): Path to the model file.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise ModelLoadError(
@@ -252,15 +246,6 @@ class ModelLoadError(ExternalServiceError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize model load error.
-
-        Args:
-            message: Description of the model loading error.
-            model_name: Name of the model that failed to load.
-            model_path: Path to the model file.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if model_name:
             details["model_name"] = model_name
@@ -279,6 +264,13 @@ class StorageError(ExternalServiceError):
 
     Raised when file or storage operations fail.
 
+    Args:
+        message (str): Description of the storage error.
+        operation (str | None): The storage operation that failed (read, write, delete).
+        path (str | None): The file/storage path involved.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
+
     Example:
         >>> raise StorageError(
         ...     "Failed to write output file",
@@ -296,15 +288,6 @@ class StorageError(ExternalServiceError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize storage error.
-
-        Args:
-            message: Description of the storage error.
-            operation: The storage operation that failed (read, write, delete).
-            path: The file/storage path involved.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if operation:
             details["operation"] = operation
@@ -323,6 +306,13 @@ class ImageProcessingError(ProjectBaseError):
 
     Base class for errors during image or PDF processing operations.
 
+    Args:
+        message (str): Description of the processing error.
+        page_number (int | None): Page number where the error occurred.
+        document_id (str | None): Identifier of the document being processed.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
+
     Example:
         >>> raise ImageProcessingError(
         ...     "Failed to process page",
@@ -340,15 +330,6 @@ class ImageProcessingError(ProjectBaseError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize image processing error.
-
-        Args:
-            message: Description of the processing error.
-            page_number: Page number where the error occurred.
-            document_id: Identifier of the document being processed.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if page_number is not None:
             details["page_number"] = page_number
@@ -363,6 +344,14 @@ class IngestionError(ImageProcessingError):
     """Document ingestion errors.
 
     Raised when document ingestion (PDF parsing, image loading) fails.
+
+    Args:
+        message (str): Description of the ingestion error.
+        source_path (str | None): Path to the source file.
+        page_number (int | None): Page number where ingestion failed.
+        document_id (str | None): Identifier of the document.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise IngestionError(
@@ -382,16 +371,6 @@ class IngestionError(ImageProcessingError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize ingestion error.
-
-        Args:
-            message: Description of the ingestion error.
-            source_path: Path to the source file.
-            page_number: Page number where ingestion failed.
-            document_id: Identifier of the document.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if source_path:
             details["source_path"] = source_path
@@ -408,6 +387,14 @@ class DetectionError(ImageProcessingError):
     """Detection/analysis errors.
 
     Raised when IQA detection or text detection fails.
+
+    Args:
+        message (str): Description of the detection error.
+        detector_type (str | None): Type of detector that failed (iqa_classical, iqa_ml, text_gate).
+        page_number (int | None): Page number where detection failed.
+        document_id (str | None): Identifier of the document.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise DetectionError(
@@ -427,16 +414,6 @@ class DetectionError(ImageProcessingError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize detection error.
-
-        Args:
-            message: Description of the detection error.
-            detector_type: Type of detector that failed (iqa_classical, iqa_ml, text_gate).
-            page_number: Page number where detection failed.
-            document_id: Identifier of the document.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if detector_type:
             details["detector_type"] = detector_type
@@ -453,6 +430,14 @@ class CorrectionError(ImageProcessingError):
     """Image correction errors.
 
     Raised when image correction operations fail.
+
+    Args:
+        message (str): Description of the correction error.
+        correction_type (str | None): Type of correction that failed (deskew, clahe, denoise).
+        page_number (int | None): Page number where correction failed.
+        document_id (str | None): Identifier of the document.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise CorrectionError(
@@ -472,16 +457,6 @@ class CorrectionError(ImageProcessingError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize correction error.
-
-        Args:
-            message: Description of the correction error.
-            correction_type: Type of correction that failed (deskew, clahe, denoise).
-            page_number: Page number where correction failed.
-            document_id: Identifier of the document.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if correction_type:
             details["correction_type"] = correction_type
@@ -498,6 +473,13 @@ class PipelineError(ProjectBaseError):
     """Pipeline orchestration errors.
 
     Raised when the document processing pipeline fails at a stage boundary.
+
+    Args:
+        message (str): Description of the pipeline error.
+        stage (str | None): Pipeline stage that failed (ingestion, detection, correction, output).
+        document_id (str | None): Identifier of the document.
+        details (dict[str, Any] | None): Additional context.
+        error_code (str | None): Machine-readable error code.
 
     Example:
         >>> raise PipelineError(
@@ -516,15 +498,6 @@ class PipelineError(ProjectBaseError):
         details: dict[str, Any] | None = None,
         error_code: str | None = None,
     ) -> None:
-        """Initialize pipeline error.
-
-        Args:
-            message: Description of the pipeline error.
-            stage: Pipeline stage that failed (ingestion, detection, correction, output).
-            document_id: Identifier of the document.
-            details: Additional context.
-            error_code: Machine-readable error code.
-        """
         details = details or {}
         if stage:
             details["stage"] = stage

@@ -35,16 +35,16 @@ class DevicePolicyConfig:
     """Configuration for device selection policy.
 
     Attributes:
-        mode: Inference mode (production/qa/development)
-        allow_cpu_teacher: Allow teacher inference on CPU (QA/dev only)
-        enable_modal: Enable Modal GPU fallback
-        modal_timeout_ms: Modal request timeout in milliseconds
-        modal_max_retries: Maximum retry attempts for Modal
-        teacher_budget_per_doc: Max teacher pages per document
-        teacher_budget_per_batch: Max teacher pages per batch
-        teacher_budget_monthly_hours: Monthly Modal GPU hours budget
-        force_device: Force specific device (override priority logic)
-        disable_teacher: Completely disable teacher inference
+        mode (InferenceMode): Inference mode (production/qa/development)
+        allow_cpu_teacher (bool): Allow teacher inference on CPU (QA/dev only)
+        enable_modal (bool): Enable Modal GPU fallback
+        modal_timeout_ms (int): Modal request timeout in milliseconds
+        modal_max_retries (int): Maximum retry attempts for Modal
+        teacher_budget_per_doc (int): Max teacher pages per document
+        teacher_budget_per_batch (int): Max teacher pages per batch
+        teacher_budget_monthly_hours (float): Monthly Modal GPU hours budget
+        force_device (Literal["cuda", "cpu", "modal"] | None): Force specific device (override priority logic)
+        disable_teacher (bool): Completely disable teacher inference
     """
 
     mode: InferenceMode = InferenceMode.PRODUCTION
@@ -80,11 +80,11 @@ class DeviceChoice:
     """Device selection result with rationale.
 
     Attributes:
-        device: Selected device ("cuda", "cpu", "modal", or None)
-        rationale: Human-readable explanation of choice
-        fallback_applied: Whether fallback logic was used
-        blocked_reason: Reason device was blocked (if applicable)
-        estimated_cost_usd: Estimated cost for Modal inference (0 for local)
+        device (Literal["cuda", "cpu", "modal"] | None): Selected device ("cuda", "cpu", "modal", or None)
+        rationale (str): Human-readable explanation of choice
+        fallback_applied (bool): Whether fallback logic was used
+        blocked_reason (str | None): Reason device was blocked (if applicable)
+        estimated_cost_usd (float): Estimated cost for Modal inference (0 for local)
     """
 
     device: Literal["cuda", "cpu", "modal"] | None
@@ -99,10 +99,10 @@ class BudgetTracker:
     """Track teacher inference budget usage.
 
     Attributes:
-        pages_processed_doc: Pages processed in current document
-        pages_processed_batch: Pages processed in current batch
-        modal_gpu_hours_month: Modal GPU hours used this month
-        documents_processed: Total documents processed
+        pages_processed_doc (int): Pages processed in current document
+        pages_processed_batch (int): Pages processed in current batch
+        modal_gpu_hours_month (float): Modal GPU hours used this month
+        documents_processed (int): Total documents processed
     """
 
     pages_processed_doc: int = 0
@@ -115,7 +115,7 @@ class BudgetTracker:
         """Reset per-document counters for new document.
 
         Args:
-            doc_id: Unique document identifier
+            doc_id (str): Unique document identifier
         """
         if self._current_doc_id != doc_id:
             self.pages_processed_doc = 0
@@ -134,8 +134,8 @@ class BudgetTracker:
         """Record teacher inference for budget tracking.
 
         Args:
-            device: Device used for inference
-            inference_time_ms: Inference latency in milliseconds
+            device (Literal["cuda", "cpu", "modal"]): Device used for inference
+            inference_time_ms (float): Inference latency in milliseconds
         """
         self.pages_processed_doc += 1
         self.pages_processed_batch += 1
@@ -164,6 +164,10 @@ class DeviceOrchestrator:
       - Per-batch page caps
       - Monthly Modal GPU hours cap
 
+    Args:
+        config (DevicePolicyConfig | None): Device policy configuration (default: production mode)
+        capabilities (DeviceCapabilities | None): Pre-probed device capabilities (default: auto-probe)
+
     Example:
         >>> config = DevicePolicyConfig(mode=InferenceMode.PRODUCTION)
         >>> orchestrator = DeviceOrchestrator(config)
@@ -181,12 +185,6 @@ class DeviceOrchestrator:
         config: DevicePolicyConfig | None = None,
         capabilities: DeviceCapabilities | None = None,
     ) -> None:
-        """Initialize device orchestrator.
-
-        Args:
-            config: Device policy configuration (default: production mode)
-            capabilities: Pre-probed device capabilities (default: auto-probe)
-        """
         self.config = config or DevicePolicyConfig()
         self.capabilities = capabilities or probe_device_capabilities()
         self.budget = BudgetTracker()
@@ -207,7 +205,7 @@ class DeviceOrchestrator:
         2. Local CPU (always allowed fallback)
 
         Returns:
-            DeviceChoice with selected device and rationale
+            DeviceChoice: DeviceChoice with selected device and rationale
 
         Raises:
             RuntimeError: If no compute resources available (should never happen)
@@ -263,11 +261,11 @@ class DeviceOrchestrator:
         - Monthly Modal GPU hours cap
 
         Args:
-            doc_id: Document identifier for budget tracking
-            bypass_budget: Skip budget checks (for admin/testing)
+            doc_id (str | None): Document identifier for budget tracking
+            bypass_budget (bool): Skip budget checks (for admin/testing)
 
         Returns:
-            DeviceChoice with selected device and rationale
+            DeviceChoice: DeviceChoice with selected device and rationale
             (device=None if teacher is blocked)
         """
         # Teacher disabled globally
@@ -387,8 +385,8 @@ class DeviceOrchestrator:
         """Record teacher inference for budget tracking.
 
         Args:
-            device: Device used for inference
-            inference_time_ms: Inference latency in milliseconds
+            device (Literal["cuda", "cpu", "modal"]): Device used for inference
+            inference_time_ms (float): Inference latency in milliseconds
         """
         self.budget.record_teacher_usage(device, inference_time_ms)
 
@@ -405,7 +403,7 @@ class DeviceOrchestrator:
         """Get current budget usage statistics.
 
         Returns:
-            Dictionary with budget usage metrics
+            dict[str, float | int]: Dictionary with budget usage metrics
         """
         return {
             "pages_processed_doc": self.budget.pages_processed_doc,

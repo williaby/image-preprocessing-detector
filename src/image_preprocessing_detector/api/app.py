@@ -7,6 +7,7 @@ Creates and configures the FastAPI application with:
 - Processing routes (when implemented)
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -33,16 +34,16 @@ logger = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> Any:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager.
 
     Handles startup and shutdown events.
 
     Args:
-        _app: The FastAPI application instance (unused but required by FastAPI).
+        _app (FastAPI): The FastAPI application instance (unused but required by FastAPI).
 
     Yields:
-        None during application runtime.
+        None: Yields control during application runtime.
     """
     # Startup
     logger.info("application_starting")
@@ -139,10 +140,10 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
 
     Args:
-        settings: Optional API settings. If None, loads from environment.
+        settings (APISettings | None): Optional API settings. If None, loads from environment.
 
     Returns:
-        Configured FastAPI application instance.
+        FastAPI: Configured FastAPI application instance.
     """
     if settings is None:
         settings = get_api_settings()

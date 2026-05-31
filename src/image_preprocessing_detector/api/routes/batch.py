@@ -85,9 +85,9 @@ async def process_batch_job(
     """Background task to process batch job.
 
     Args:
-        job_id: The job ID.
-        files_data: List of (filename, content) tuples.
-        options: Processing options.
+        job_id (str): The job ID.
+        files_data (list[tuple[str, bytes]]): List of (filename, content) tuples.
+        options (ProcessingOptions): Processing options.
     """
     logger.info("batch_job_started", job_id=job_id, num_files=len(files_data))
 
@@ -196,14 +196,14 @@ async def submit_batch_job(
     """Submit a batch processing job.
 
     Args:
-        background_tasks: FastAPI background tasks.
-        files: List of files to process.
-        prefer_gpu: Whether to prefer GPU.
-        enable_corrections: Whether to enable corrections.
-        enable_teacher: Whether to enable teacher model.
+        background_tasks (BackgroundTasks): FastAPI background tasks.
+        files (Annotated[list[UploadFile], File(description="Documents to process")]): List of files to process.
+        prefer_gpu (Annotated[bool, Query(description="Whether to prefer GPU")]): Whether to prefer GPU.
+        enable_corrections (Annotated[bool, Query(description="Whether to enable corrections")]): Whether to enable corrections.
+        enable_teacher (Annotated[bool, Query(description="Whether to enable teacher model")]): Whether to enable teacher model.
 
     Returns:
-        BatchJobStatus with job ID and initial status.
+        BatchJobStatus | JSONResponse: BatchJobStatus with job ID and initial status.
     """
     settings = get_api_settings()
     correlation_id = get_correlation_id()
@@ -319,10 +319,13 @@ async def get_batch_status(job_id: str) -> BatchJobStatus:
     """Get the status of a batch job.
 
     Args:
-        job_id: The job ID.
+        job_id (str): The job ID.
 
     Returns:
-        BatchJobStatus with current progress.
+        BatchJobStatus: BatchJobStatus with current progress.
+
+    Raises:
+        HTTPException: If job not found (404).
     """
     job = _get_job(job_id)
     if not job:
@@ -362,12 +365,15 @@ async def get_batch_result(
     """Get the results of a batch job.
 
     Args:
-        job_id: The job ID.
-        offset: Pagination offset.
-        limit: Maximum results to return.
+        job_id (str): The job ID.
+        offset (int): Pagination offset.
+        limit (int): Maximum results to return.
 
     Returns:
-        BatchJobResult with processing results.
+        BatchJobResult | JSONResponse: BatchJobResult with processing results.
+
+    Raises:
+        HTTPException: If job not found (404).
     """
     job = _get_job(job_id)
     if not job:
@@ -412,10 +418,13 @@ async def delete_batch_job(job_id: str) -> dict[str, str]:
     """Delete a batch job.
 
     Args:
-        job_id: The job ID.
+        job_id (str): The job ID.
 
     Returns:
-        Confirmation message.
+        dict[str, str]: Confirmation message.
+
+    Raises:
+        HTTPException: If job not found (404).
     """
     if job_id not in _job_store:
         raise HTTPException(

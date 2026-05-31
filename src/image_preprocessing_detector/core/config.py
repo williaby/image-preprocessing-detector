@@ -16,6 +16,17 @@ class Settings:
 
     Settings can be overridden via environment variables with prefix IMAGE_PREP_.
     Keyword arguments take precedence over environment variables.
+
+    Args:
+        enable_pdf_upscaling (bool | None): Enable/disable upscaling (overrides env var)
+        pdf_min_dpi (int | None): Minimum DPI threshold (overrides env var)
+        pdf_target_dpi (int | None): Target DPI for upscaling (overrides env var)
+        pdf_upscale_algorithm (Literal["lanczos", "bicubic", "inter_cubic", "inter_linear", "inter_area"] | None): Algorithm selection (overrides env var)
+        pdf_preserve_original_on_error (bool | None): Preserve original on error (overrides env var)
+        enable_pdf_classification (bool | None): Enable/disable PDF classification (overrides env var)
+        pdf_text_min_threshold (int | None): Minimum character count for text detection (default: 10)
+        pdf_text_max_threshold (int | None): Minimum character count for born_digital classification (default: 50)
+        pdf_image_threshold_count (int | None): Minimum image count for image-heavy classification (overrides env var)
     """
 
     def __init__(
@@ -33,19 +44,6 @@ class Settings:
         pdf_text_max_threshold: int | None = None,
         pdf_image_threshold_count: int | None = None,
     ) -> None:
-        """Initialize settings from environment variables or keyword arguments.
-
-        Args:
-            enable_pdf_upscaling: Enable/disable upscaling (overrides env var)
-            pdf_min_dpi: Minimum DPI threshold (overrides env var)
-            pdf_target_dpi: Target DPI for upscaling (overrides env var)
-            pdf_upscale_algorithm: Algorithm selection (overrides env var)
-            pdf_preserve_original_on_error: Preserve original on error (overrides env var)
-            enable_pdf_classification: Enable/disable PDF classification (overrides env var)
-            pdf_text_min_threshold: Minimum character count for text detection (default: 10)
-            pdf_text_max_threshold: Minimum character count for born_digital classification (default: 50)
-            pdf_image_threshold_count: Minimum image count for image-heavy classification (overrides env var)
-        """
         # PDF Resolution Pre-processing (Phase 1B)
         self.enable_pdf_upscaling: bool = (
             enable_pdf_upscaling
@@ -115,11 +113,11 @@ class Settings:
         """Get boolean from environment variable.
 
         Args:
-            key: Environment variable key
-            default: Default value if not set
+            key (str): Environment variable key
+            default (bool): Default value if not set
 
         Returns:
-            Boolean value from environment or default
+            bool: Boolean value from environment or default
         """
         value = os.getenv(key)
         if value is None:
@@ -130,11 +128,11 @@ class Settings:
         """Get integer from environment variable.
 
         Args:
-            key: Environment variable key
-            default: Default value if not set
+            key (str): Environment variable key
+            default (int): Default value if not set
 
         Returns:
-            Integer value from environment or default
+            int: Integer value from environment or default
         """
         value = os.getenv(key)
         if value is None:
@@ -148,11 +146,11 @@ class Settings:
         """Get string from environment variable.
 
         Args:
-            key: Environment variable key
-            default: Default value if not set
+            key (str): Environment variable key
+            default (str): Default value if not set
 
         Returns:
-            String value from environment or default
+            str: String value from environment or default
         """
         return os.getenv(key, default)
 
@@ -162,12 +160,12 @@ class Settings:
         """Get and validate upscaling algorithm from environment variable.
 
         Args:
-            key: Environment variable key
-            default: Default value if not set or invalid
-            valid_algorithms: Tuple of valid algorithm names
+            key (str): Environment variable key
+            default (str): Default value if not set or invalid
+            valid_algorithms (tuple[str, ...]): Tuple of valid algorithm names
 
         Returns:
-            Valid algorithm string from environment or default
+            str: Valid algorithm string from environment or default
         """
         value = os.getenv(key)
         if value is None:

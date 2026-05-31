@@ -43,16 +43,17 @@ class CeleryConfig:
     """Celery configuration settings.
 
     Attributes:
-        broker_url: Redis connection URL for message broker
-        result_backend: Redis connection URL for results
-        task_serializer: Serialization format for tasks
-        result_serializer: Serialization format for results
-        accept_content: Accepted content types
-        task_acks_late: Acknowledge after task completion
-        worker_prefetch_multiplier: Tasks to prefetch per worker
-        task_default_queue: Default queue name
-        task_queues: Queue configurations
-        task_routes: Task routing rules
+        broker_url (str): Redis connection URL for message broker.
+        result_backend (str): Redis connection URL for results.
+        task_serializer (str): Serialization format for tasks.
+        result_serializer (str): Serialization format for results.
+        accept_content (list[str]): Accepted content types.
+        task_acks_late (bool): Acknowledge after task completion.
+        worker_prefetch_multiplier (int): Tasks to prefetch per worker.
+        task_default_queue (str): Default queue name.
+        task_time_limit (int): Hard time limit in seconds.
+        task_soft_time_limit (int): Soft time limit in seconds.
+        result_expires (int): Result expiration time in seconds.
     """
 
     broker_url: str = field(
@@ -200,7 +201,7 @@ def get_worker_stats() -> dict[str, Any]:
     """Get statistics from active workers.
 
     Returns:
-        Dictionary with worker statistics
+        dict[str, Any]: Dictionary with worker statistics.
     """
     try:
         inspect = celery_app.control.inspect()
@@ -230,7 +231,7 @@ def get_queue_lengths() -> dict[str, int | str]:
     """Get message counts for each queue.
 
     Returns:
-        Dictionary mapping queue names to message counts or error message
+        dict[str, int | str]: Dictionary mapping queue names to message counts or error message.
     """
     try:
         with celery_app.connection() as conn:

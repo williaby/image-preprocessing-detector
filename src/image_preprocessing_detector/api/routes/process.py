@@ -52,11 +52,11 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
     """Validate uploaded file.
 
     Args:
-        file: The uploaded file.
-        _max_size_mb: Maximum allowed file size in MB (reserved for future use).
+        file (UploadFile): The uploaded file.
+        _max_size_mb (int): Maximum allowed file size in MB (reserved for future use).
 
     Returns:
-        ErrorResponse if validation fails, None if valid.
+        ErrorResponse | None: ErrorResponse if validation fails, None if valid.
     """
     # Check file name
     if not file.filename:
@@ -94,12 +94,15 @@ async def process_document(  # nosonar  # async required: callers use await
     """Process a document through the IQA pipeline.
 
     Args:
-        file_path: Path to the uploaded file.
-        file_name: Original file name.
-        options: Processing options.
+        file_path (Path): Path to the uploaded file.
+        file_name (str): Original file name.
+        options (ProcessingOptions): Processing options.
 
     Returns:
-        ProcessingResult with analysis data.
+        ProcessingResult: ProcessingResult with analysis data.
+
+    Raises:
+        Exception: Re-raises any exception from the processing pipeline.
     """
     start_time = time.perf_counter()
     document_id = str(uuid.uuid4())
@@ -276,13 +279,13 @@ async def process_single_document(
     """Process a single document.
 
     Args:
-        file: The uploaded document file.
-        prefer_gpu: Whether to prefer GPU for processing.
-        enable_corrections: Whether to apply automatic corrections.
-        enable_teacher: Whether to enable teacher model inference.
+        file (Annotated[UploadFile, File(description="Document to process (PDF or image)")]): The uploaded document file.
+        prefer_gpu (Annotated[bool, Query(description="Whether to prefer GPU")]): Whether to prefer GPU for processing.
+        enable_corrections (Annotated[bool, Query(description="Whether to enable corrections")]): Whether to apply automatic corrections.
+        enable_teacher (Annotated[bool, Query(description="Whether to enable teacher model")]): Whether to enable teacher model inference.
 
     Returns:
-        ProcessResponse with processing results.
+        ProcessResponse | JSONResponse: ProcessResponse with processing results.
     """
     settings = get_api_settings()
     correlation_id = get_correlation_id()
