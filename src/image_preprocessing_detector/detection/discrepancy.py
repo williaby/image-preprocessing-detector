@@ -75,9 +75,9 @@ class ThresholdConfig(NamedTuple):
     """Configuration for a single discrepancy threshold.
 
     Attributes:
-        value: Threshold value (0-1 scale)
-        rationale: Documentation explaining why this threshold was chosen
-        weight: Weight for aggregate discrepancy calculation (0-1)
+        value (float): Threshold value (0-1 scale)
+        rationale (str): Documentation explaining why this threshold was chosen
+        weight (float): Weight for aggregate discrepancy calculation (0-1)
     """
 
     value: float
@@ -95,14 +95,14 @@ class DiscrepancyThresholds:
     - A weight for aggregate scoring
 
     Attributes:
-        blur: Threshold for blur discrepancy (default: 0.25)
-        contrast: Threshold for contrast discrepancy (default: 0.30)
-        skew: Threshold for skew discrepancy (default: 0.20)
-        noise: Threshold for noise discrepancy (default: 0.35)
-        compression: Threshold for compression artifact discrepancy (default: 0.35)
-        illumination: Threshold for illumination discrepancy (default: 0.30)
-        aggregate_threshold: Threshold for weighted mean discrepancy (default: 0.25)
-        min_heads_exceeded: Min number of heads exceeding threshold to escalate (default: 1)
+        blur (ThresholdConfig): Threshold for blur discrepancy (default: 0.25)
+        contrast (ThresholdConfig): Threshold for contrast discrepancy (default: 0.30)
+        skew (ThresholdConfig): Threshold for skew discrepancy (default: 0.20)
+        noise (ThresholdConfig): Threshold for noise discrepancy (default: 0.35)
+        compression (ThresholdConfig): Threshold for compression artifact discrepancy (default: 0.35)
+        illumination (ThresholdConfig): Threshold for illumination discrepancy (default: 0.30)
+        aggregate_threshold (float): Threshold for weighted mean discrepancy (default: 0.25)
+        min_heads_exceeded (int): Min number of heads exceeding threshold to escalate (default: 1)
     """
 
     blur: ThresholdConfig = field(
@@ -174,10 +174,10 @@ class DiscrepancyThresholds:
         """Get threshold value for a specific head.
 
         Args:
-            head_name: Name of the IQA head (blur, contrast, skew, etc.)
+            head_name (str): Name of the IQA head (blur, contrast, skew, etc.)
 
         Returns:
-            Threshold value (0-1)
+            float: Threshold value (0-1)
         """
         config = getattr(self, head_name, None)
         if config is None or not isinstance(config, ThresholdConfig):
@@ -188,10 +188,10 @@ class DiscrepancyThresholds:
         """Get weight for a specific head.
 
         Args:
-            head_name: Name of the IQA head
+            head_name (str): Name of the IQA head
 
         Returns:
-            Weight value (typically 0.5-1.5)
+            float: Weight value (typically 0.5-1.5)
         """
         config = getattr(self, head_name, None)
         if config is None or not isinstance(config, ThresholdConfig):
@@ -202,10 +202,10 @@ class DiscrepancyThresholds:
         """Get rationale for a specific head threshold.
 
         Args:
-            head_name: Name of the IQA head
+            head_name (str): Name of the IQA head
 
         Returns:
-            Rationale string
+            str: Rationale string
         """
         config = getattr(self, head_name, None)
         if config is None or not isinstance(config, ThresholdConfig):
@@ -222,14 +222,14 @@ class ClassicalScores:
     - 1.0 = good quality (sharp, clean, no artifacts)
 
     Attributes:
-        blur_score: Blur quality (1=sharp, 0=blurry)
-        contrast_score: Contrast quality (1=good contrast, 0=low contrast)
-        skew_score: Skew quality (1=straight, 0=highly skewed)
-        noise_score: Noise quality (1=clean, 0=noisy)
-        compression_score: Compression quality (1=clean, 0=artifacts)
-        illumination_score: Illumination quality (1=uniform, 0=uneven)
-        binarization_score: Binarization quality (1=good, 0=poor)
-        bleed_through_score: Bleed-through quality (1=clean, 0=bleed-through)
+        blur_score (float): Blur quality (1=sharp, 0=blurry)
+        contrast_score (float): Contrast quality (1=good contrast, 0=low contrast)
+        skew_score (float): Skew quality (1=straight, 0=highly skewed)
+        noise_score (float): Noise quality (1=clean, 0=noisy)
+        compression_score (float): Compression quality (1=clean, 0=artifacts)
+        illumination_score (float): Illumination quality (1=uniform, 0=uneven)
+        binarization_score (float): Binarization quality (1=good, 0=poor)
+        bleed_through_score (float): Bleed-through quality (1=clean, 0=bleed-through)
     """
 
     blur_score: float = 1.0
@@ -263,6 +263,13 @@ class ClassicalScoreAdapter:
     - Severity levels mapped to quality reduction factors
     - Boolean flags (is_blurred, is_skewed, etc.) used to invert quality
 
+    Attributes:
+        SEVERITY_FACTORS (ClassVar[dict[Severity, float]]): Severity to quality reduction mapping
+
+    Args:
+        blur_score_scale (float): Scale factor for normalizing Laplacian variance
+        skew_max_angle (float): Maximum skew angle for normalization (degrees)
+
     Example:
         >>> adapter = ClassicalScoreAdapter()
         >>> blur_result = detect_blur(image)
@@ -287,12 +294,6 @@ class ClassicalScoreAdapter:
         blur_score_scale: float = 1000.0,
         skew_max_angle: float = 10.0,
     ) -> None:
-        """Initialize adapter.
-
-        Args:
-            blur_score_scale: Scale factor for normalizing Laplacian variance
-            skew_max_angle: Maximum skew angle for normalization (degrees)
-        """
         self.blur_score_scale = blur_score_scale
         self.skew_max_angle = skew_max_angle
 
@@ -300,10 +301,10 @@ class ClassicalScoreAdapter:
         """Convert severity level to quality score.
 
         Args:
-            severity: Severity enum value
+            severity (Severity): Severity enum value
 
         Returns:
-            Quality score (0-1)
+            float: Quality score (0-1)
         """
         return self.SEVERITY_FACTORS.get(severity, 1.0)
 
@@ -311,10 +312,10 @@ class ClassicalScoreAdapter:
         """Convert blur detection result to normalized score.
 
         Args:
-            result: BlurDetectionResult from classical detector
+            result (BlurDetectionResult): BlurDetectionResult from classical detector
 
         Returns:
-            Normalized blur quality score (0=blurry, 1=sharp)
+            float: Normalized blur quality score (0=blurry, 1=sharp)
         """
         if result.is_blurred:
             # Use severity for quality estimation
@@ -330,10 +331,10 @@ class ClassicalScoreAdapter:
         """Convert contrast detection result to normalized score.
 
         Args:
-            result: ContrastDetectionResult from classical detector
+            result (ContrastDetectionResult): ContrastDetectionResult from classical detector
 
         Returns:
-            Normalized contrast quality score (0=low contrast, 1=good contrast)
+            float: Normalized contrast quality score (0=low contrast, 1=good contrast)
         """
         if result.is_low_contrast:
             return self._severity_to_quality(result.severity)
@@ -345,10 +346,10 @@ class ClassicalScoreAdapter:
         """Convert skew detection result to normalized score.
 
         Args:
-            result: SkewDetectionResult from classical detector
+            result (SkewDetectionResult): SkewDetectionResult from classical detector
 
         Returns:
-            Normalized skew quality score (0=highly skewed, 1=straight)
+            float: Normalized skew quality score (0=highly skewed, 1=straight)
         """
         # Skew angle to quality: 0° = 1.0, max_angle = 0.0
         angle_abs = abs(result.angle)
@@ -359,10 +360,10 @@ class ClassicalScoreAdapter:
         """Convert noise detection result to normalized score.
 
         Args:
-            result: NoiseDetectionResult from classical detector
+            result (NoiseDetectionResult): NoiseDetectionResult from classical detector
 
         Returns:
-            Normalized noise quality score (0=noisy, 1=clean)
+            float: Normalized noise quality score (0=noisy, 1=clean)
         """
         if result.is_noisy:
             return self._severity_to_quality(result.severity)
@@ -375,10 +376,10 @@ class ClassicalScoreAdapter:
         """Convert illumination detection result to normalized score.
 
         Args:
-            result: IlluminationDetectionResult from classical detector
+            result (IlluminationDetectionResult): IlluminationDetectionResult from classical detector
 
         Returns:
-            Normalized illumination quality score (0=uneven, 1=uniform)
+            float: Normalized illumination quality score (0=uneven, 1=uniform)
         """
         if result.has_issues:
             return self._severity_to_quality(result.severity)
@@ -390,10 +391,10 @@ class ClassicalScoreAdapter:
         """Convert JPEG blockiness result to normalized score.
 
         Args:
-            result: JPEGBlockinessResult from classical detector
+            result (JPEGBlockinessResult): JPEGBlockinessResult from classical detector
 
         Returns:
-            Normalized compression quality score (0=artifacts, 1=clean)
+            float: Normalized compression quality score (0=artifacts, 1=clean)
         """
         if result.has_artifacts:
             return self._severity_to_quality(result.severity)
@@ -405,10 +406,10 @@ class ClassicalScoreAdapter:
         """Convert binarization quality result to normalized score.
 
         Args:
-            result: BinarizationQualityResult from classical detector
+            result (BinarizationQualityResult): BinarizationQualityResult from classical detector
 
         Returns:
-            Normalized binarization quality score (0=poor, 1=good)
+            float: Normalized binarization quality score (0=poor, 1=good)
         """
         # Binarization score is already 0-1
         return float(np.clip(result.binarization_score, 0.0, 1.0))
@@ -417,10 +418,10 @@ class ClassicalScoreAdapter:
         """Convert bleed-through result to normalized score.
 
         Args:
-            result: BleedThroughResult from classical detector
+            result (BleedThroughResult): BleedThroughResult from classical detector
 
         Returns:
-            Normalized bleed-through quality score (0=bleed-through, 1=clean)
+            float: Normalized bleed-through quality score (0=bleed-through, 1=clean)
         """
         if result.bleed_through_detected:
             # Invert severity: high severity = low quality
@@ -443,17 +444,17 @@ class ClassicalScoreAdapter:
         """Convert all classical detector outputs to normalized scores.
 
         Args:
-            blur_result: BlurDetectionResult (optional)
-            contrast_result: ContrastDetectionResult (optional)
-            skew_result: SkewDetectionResult (optional)
-            noise_result: NoiseDetectionResult (optional)
-            illumination_result: IlluminationDetectionResult (optional)
-            compression_result: JPEGBlockinessResult (optional)
-            binarization_result: BinarizationQualityResult (optional)
-            bleed_through_result: BleedThroughResult (optional)
+            blur_result (BlurDetectionResult | None): BlurDetectionResult (optional)
+            contrast_result (ContrastDetectionResult | None): ContrastDetectionResult (optional)
+            skew_result (SkewDetectionResult | None): SkewDetectionResult (optional)
+            noise_result (NoiseDetectionResult | None): NoiseDetectionResult (optional)
+            illumination_result (IlluminationDetectionResult | None): IlluminationDetectionResult (optional)
+            compression_result (JPEGBlockinessResult | None): JPEGBlockinessResult (optional)
+            binarization_result (BinarizationQualityResult | None): BinarizationQualityResult (optional)
+            bleed_through_result (BleedThroughResult | None): BleedThroughResult (optional)
 
         Returns:
-            ClassicalScores with all normalized scores
+            ClassicalScores: ClassicalScores with all normalized scores
         """
         scores = ClassicalScores()
 
@@ -491,14 +492,14 @@ class DiscrepancyResult:
     """Result from discrepancy analysis.
 
     Attributes:
-        per_head_discrepancies: Per-head discrepancy values (0-1)
-        per_head_exceeded: Boolean flags for which heads exceeded threshold
-        weighted_mean_discrepancy: Weighted mean of all discrepancies
-        max_discrepancy: Maximum discrepancy across all heads
-        max_discrepancy_head: Name of head with maximum discrepancy
-        num_heads_exceeded: Number of heads exceeding their thresholds
-        should_escalate: Whether to escalate to teacher model
-        escalation_reasons: List of reasons for escalation
+        per_head_discrepancies (dict[str, float]): Per-head discrepancy values (0-1)
+        per_head_exceeded (dict[str, bool]): Boolean flags for which heads exceeded threshold
+        weighted_mean_discrepancy (float): Weighted mean of all discrepancies
+        max_discrepancy (float): Maximum discrepancy across all heads
+        max_discrepancy_head (str): Name of head with maximum discrepancy
+        num_heads_exceeded (int): Number of heads exceeding their thresholds
+        should_escalate (bool): Whether to escalate to teacher model
+        escalation_reasons (list[EscalationReason]): List of reasons for escalation
     """
 
     per_head_discrepancies: dict[str, float]
@@ -516,11 +517,11 @@ class MLScores:
     """ML IQA scores for comparison (simplified interface).
 
     Attributes:
-        blur_score: Blur quality (0=blurry, 1=sharp)
-        contrast_score: Contrast quality (0=low, 1=good)
-        skew_score: Skew quality (0=skewed, 1=straight)
-        noise_score: Noise quality (0=noisy, 1=clean)
-        compression_score: Compression quality (0=artifacts, 1=clean)
+        blur_score (float): Blur quality (0=blurry, 1=sharp)
+        contrast_score (float): Contrast quality (0=low, 1=good)
+        skew_score (float): Skew quality (0=skewed, 1=straight)
+        noise_score (float): Noise quality (0=noisy, 1=clean)
+        compression_score (float): Compression quality (0=artifacts, 1=clean)
     """
 
     blur_score: float = 1.0
@@ -549,13 +550,13 @@ def _calculate_head_discrepancy(
     """Calculate discrepancy for a single head.
 
     Args:
-        head: Head name (blur, contrast, etc.)
-        ml_dict: ML scores dictionary
-        classical_dict: Classical scores dictionary
-        thresholds: Discrepancy thresholds configuration
+        head (str): Head name (blur, contrast, etc.)
+        ml_dict (dict[str, float]): ML scores dictionary
+        classical_dict (dict[str, float]): Classical scores dictionary
+        thresholds (DiscrepancyThresholds): Discrepancy thresholds configuration
 
     Returns:
-        Tuple of (discrepancy, exceeded, weighted_discrepancy, weight)
+        tuple[float, bool, float, float]: Tuple of (discrepancy, exceeded, weighted_discrepancy, weight)
     """
     ml_val = ml_dict.get(head, 1.0)
     classical_val = classical_dict.get(head, 1.0)
@@ -577,12 +578,12 @@ def _collect_escalation_reasons(
     """Collect escalation reasons from discrepancy analysis.
 
     Args:
-        per_head_exceeded: Per-head threshold exceeded flags
-        weighted_mean: Weighted mean discrepancy
-        thresholds: Discrepancy thresholds configuration
+        per_head_exceeded (dict[str, bool]): Per-head threshold exceeded flags
+        weighted_mean (float): Weighted mean discrepancy
+        thresholds (DiscrepancyThresholds): Discrepancy thresholds configuration
 
     Returns:
-        List of escalation reasons
+        list[EscalationReason]: List of escalation reasons
     """
     escalation_reasons: list[EscalationReason] = []
 
@@ -609,6 +610,9 @@ class DiscrepancyAnalyzer:
     2. Weighted aggregate discrepancy
     3. Number of heads exceeding thresholds
 
+    Args:
+        thresholds (DiscrepancyThresholds | None): Custom thresholds (default: DiscrepancyThresholds())
+
     Example:
         >>> analyzer = DiscrepancyAnalyzer()
         >>> result = analyzer.analyze(ml_scores, classical_scores)
@@ -620,11 +624,6 @@ class DiscrepancyAnalyzer:
         self,
         thresholds: DiscrepancyThresholds | None = None,
     ) -> None:
-        """Initialize discrepancy analyzer.
-
-        Args:
-            thresholds: Custom thresholds (default: DiscrepancyThresholds())
-        """
         self.thresholds = thresholds or DiscrepancyThresholds()
 
     def analyze(
@@ -635,11 +634,11 @@ class DiscrepancyAnalyzer:
         """Analyze discrepancies between ML and classical scores.
 
         Args:
-            ml_scores: ML IQA scores (from student model)
-            classical_scores: Classical IQA scores (normalized)
+            ml_scores (MLScores): ML IQA scores (from student model)
+            classical_scores (ClassicalScores): Classical IQA scores (normalized)
 
         Returns:
-            DiscrepancyResult with analysis details
+            DiscrepancyResult: DiscrepancyResult with analysis details
         """
         ml_dict = ml_scores.to_dict()
         classical_dict = classical_scores.to_dict()
@@ -709,7 +708,7 @@ class DiscrepancyAnalyzer:
         """Get documentation for all threshold settings.
 
         Returns:
-            Dictionary with threshold values, rationales, and weights
+            dict[str, dict[str, str | float | int]]: Dictionary with threshold values, rationales, and weights
         """
         heads = ["blur", "contrast", "skew", "noise", "compression", "illumination"]
         docs: dict[str, dict[str, str | float | int]] = {}
@@ -745,15 +744,15 @@ def create_discrepancy_analyzer(
     """Create a discrepancy analyzer with custom thresholds.
 
     Args:
-        blur_threshold: Threshold for blur discrepancy
-        contrast_threshold: Threshold for contrast discrepancy
-        skew_threshold: Threshold for skew discrepancy
-        noise_threshold: Threshold for noise discrepancy
-        compression_threshold: Threshold for compression discrepancy
-        aggregate_threshold: Threshold for weighted mean discrepancy
+        blur_threshold (float): Threshold for blur discrepancy
+        contrast_threshold (float): Threshold for contrast discrepancy
+        skew_threshold (float): Threshold for skew discrepancy
+        noise_threshold (float): Threshold for noise discrepancy
+        compression_threshold (float): Threshold for compression discrepancy
+        aggregate_threshold (float): Threshold for weighted mean discrepancy
 
     Returns:
-        Configured DiscrepancyAnalyzer
+        DiscrepancyAnalyzer: Configured DiscrepancyAnalyzer
     """
     thresholds = DiscrepancyThresholds(
         blur=ThresholdConfig(
