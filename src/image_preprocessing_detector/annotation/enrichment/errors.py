@@ -42,9 +42,8 @@ class EnrichmentError(Exception):
         """Initialize EnrichmentError.
 
         Args:
-            message: Error message describing what went wrong
-            cause: Original exception that caused this error
-        """
+            message (str): Error message describing what went wrong
+            cause (Exception | None): Original exception that caused this error"""
         self.cause = cause
         super().__init__(message)
 
@@ -65,10 +64,9 @@ class InferenceError(EnrichmentError):
         """Initialize InferenceError.
 
         Args:
-            provider_name: Name of the provider (e.g., "doclayout_yolo")
-            batch_size: Number of images in the batch
-            cause: Original exception from inference
-        """
+            provider_name (str): Name of the provider (e.g., "doclayout_yolo")
+            batch_size (int): Number of images in the batch
+            cause (Exception): Original exception from inference"""
         self.provider_name = provider_name
         self.batch_size = batch_size
         message = (
@@ -94,9 +92,8 @@ class ProviderUnavailableError(EnrichmentError):
         """Initialize ProviderUnavailableError.
 
         Args:
-            provider_name: Name of the provider (e.g., "siglip_iqa")
-            reason: Explanation of why the provider is unavailable
-        """
+            provider_name (str): Name of the provider (e.g., "siglip_iqa")
+            reason (str): Explanation of why the provider is unavailable"""
         self.provider_name = provider_name
         self.reason = reason
         message = f"Provider '{provider_name}' is unavailable: {reason}"
@@ -119,9 +116,8 @@ class ValidationError(EnrichmentError):
         """Initialize ValidationError.
 
         Args:
-            errors: List of validation error messages
-            warnings: List of non-fatal warning messages
-        """
+            errors (list[str]): List of validation error messages
+            warnings (list[str] | None): List of non-fatal warning messages"""
         self.errors = errors
         self.warnings = warnings or []
         message = f"Validation failed with {len(errors)} error(s): {errors[0]}"
@@ -151,11 +147,10 @@ class BatchProcessingError(EnrichmentError):
         """Initialize BatchProcessingError.
 
         Args:
-            total_count: Total images in the batch
-            failed_count: Number that failed processing
-            failed_paths: List of paths that failed
-            partial_results: Any successfully processed results
-        """
+            total_count (int): Total images in the batch
+            failed_count (int): Number that failed processing
+            failed_paths (list[Path]): List of paths that failed
+            partial_results (list | None): Any successfully processed results"""
         self.total_count = total_count
         self.failed_count = failed_count
         self.failed_paths = failed_paths

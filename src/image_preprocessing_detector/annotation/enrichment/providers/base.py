@@ -72,7 +72,7 @@ class EnrichmentProvider(Protocol):
         """Provider name for logging and provenance.
 
         Returns:
-            Unique identifier for this provider (e.g., "doclayout_yolo")
+            str: Unique identifier for this provider (e.g., "doclayout_yolo")
 
         Example:
             >>> provider.name
@@ -84,7 +84,7 @@ class EnrichmentProvider(Protocol):
         """Enrichment tier for this provider.
 
         Returns:
-            EnrichmentTier value (tier_0_exact, tier_1_annotation,
+            str: EnrichmentTier value (tier_0_exact, tier_1_annotation,
             tier_2_model, tier_3_heuristic)
 
         Example:
@@ -99,7 +99,7 @@ class EnrichmentProvider(Protocol):
         and required dependencies.
 
         Returns:
-            True if provider can be used, False otherwise
+            bool: True if provider can be used, False otherwise
 
         Example:
             >>> provider.is_available()
@@ -113,10 +113,10 @@ class EnrichmentProvider(Protocol):
         existing annotations, or other criteria.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            True if this provider should process the image
+            bool: True if this provider should process the image
 
         Example:
             >>> provider.supports(Path("document.jpg"))
@@ -130,10 +130,10 @@ class EnrichmentProvider(Protocol):
         For batch processing, use enrich_batch() instead.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            EnrichmentData with derived annotations
+            EnrichmentData: EnrichmentData with derived annotations
 
         Raises:
             InferenceError: If inference fails
@@ -157,10 +157,10 @@ class EnrichmentProvider(Protocol):
         Providers should override this for optimized batch processing.
 
         Args:
-            image_paths: List of image file paths
+            image_paths (list[Path]): List of image file paths
 
         Returns:
-            List of EnrichmentData in same order as image_paths
+            list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
             InferenceError: If batch inference fails

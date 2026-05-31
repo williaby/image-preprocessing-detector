@@ -135,11 +135,11 @@ def get_dataset_path(config: DatasetConfig, settings: AnnotationSettings) -> Pat
     """Resolve full path for a dataset.
 
     Args:
-        config: Dataset configuration
-        settings: AnnotationSettings instance with e_drive_root
+        config (DatasetConfig): Dataset configuration
+        settings (AnnotationSettings): AnnotationSettings instance with e_drive_root
 
     Returns:
-        Full resolved path to dataset directory
+        Path: Full resolved path to dataset directory
 
     Example:
         >>> settings = AnnotationSettings(e_drive_root=Path("/mnt/e/image_detection"))
@@ -154,11 +154,10 @@ def is_benchmark_dataset(config: DatasetConfig) -> bool:
     """Check if dataset is a benchmark dataset.
 
     Args:
-        config: Dataset configuration
+        config (DatasetConfig): Dataset configuration
 
     Returns:
-        True if dataset is in BENCHMARK_ONLY, False if in BASE_DATA
-    """
+        bool: True if dataset is in BENCHMARK_ONLY, False if in BASE_DATA"""
     return config.is_benchmark
 
 
@@ -168,10 +167,10 @@ def get_parser_module_name(config: DatasetConfig) -> str | None:
     Maps parser_name to module path in parsers/ directory.
 
     Args:
-        config: Dataset configuration
+        config (DatasetConfig): Dataset configuration
 
     Returns:
-        Module name (e.g., "diqa_parser") or None if no parser
+        str | None: Module name (e.g., "diqa_parser") or None if no parser
 
     Example:
         >>> config = DATASET_CONFIGS["diqa-5000"]
@@ -1200,8 +1199,7 @@ def validate_dataset_configs() -> list[str]:
         - Multilingual fields are consistent
 
     Returns:
-        List of validation error messages (empty if valid)
-    """
+        list[str]: List of validation error messages (empty if valid)"""
     issues: list[str] = []
 
     for key, config in DATASET_CONFIGS.items():

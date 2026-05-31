@@ -90,12 +90,10 @@ class SigLIPProvider:
         """Initialize SigLIPProvider.
 
         Args:
-            model_path: Path to SigLIP model checkpoint (HuggingFace format).
-                        Should contain config.json, model.safetensors, etc.
-            batch_size: Batch size for inference (default: 32)
-            device: Device to use (None for auto-detect, "cuda" or "cpu")
-            min_confidence_threshold: Minimum confidence threshold (default: 0.5)
-        """
+            model_path (Path | str | None): Path to SigLIP model checkpoint (HuggingFace format). Should contain config.json, model.safetensors, etc.
+            batch_size (int): Batch size for inference (default: 32)
+            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")
+            min_confidence_threshold (float): Minimum confidence threshold (default: 0.5)"""
         self.model_path = Path(model_path) if model_path else None
         self.batch_size = batch_size
         self._requested_device = device
@@ -129,8 +127,7 @@ class SigLIPProvider:
         3. CPU with warning (SigLIP is slow on CPU)
 
         Returns:
-            Device string ("cuda" or "cpu")
-        """
+            str: Device string ("cuda" or "cpu")"""
         if self._device is not None:
             return self._device
 
@@ -170,8 +167,7 @@ class SigLIPProvider:
         - GPU available if device is "cuda"
 
         Returns:
-            True if provider can be used
-        """
+            bool: True if provider can be used"""
         if self._device_available is not None:
             return self._device_available
 
@@ -243,11 +239,10 @@ class SigLIPProvider:
         images that already have quality scores above a threshold.
 
         Args:
-            _image_path: Path to image file (unused)
+            _image_path (Path): Path to image file (unused)
 
         Returns:
-            True (processes all images by default)
-        """
+            bool: True (processes all images by default)"""
         return True
 
     def _ensure_loaded(self) -> None:
@@ -300,7 +295,7 @@ class SigLIPProvider:
         """Enrich a single image with quality score prediction.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
             EnrichmentData with LLM quality scores populated:
@@ -324,10 +319,10 @@ class SigLIPProvider:
         - Memory usage is more efficient
 
         Args:
-            image_paths: List of image file paths
+            image_paths (list[Path]): List of image file paths
 
         Returns:
-            List of EnrichmentData in same order as image_paths
+            list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
             InferenceError: If batch inference fails
@@ -359,11 +354,10 @@ class SigLIPProvider:
         """Process a single batch through SigLIP.
 
         Args:
-            paths: List of image paths in this batch
+            paths (list[Path]): List of image paths in this batch
 
         Returns:
-            List of EnrichmentData with quality scores
-        """
+            list[EnrichmentData]: List of EnrichmentData with quality scores"""
         import torch
         from PIL import Image
 

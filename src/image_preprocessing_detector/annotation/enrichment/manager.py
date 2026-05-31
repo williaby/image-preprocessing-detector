@@ -98,10 +98,9 @@ class EnrichmentManager:
         """Initialize EnrichmentManager.
 
         Args:
-            providers: List of enrichment providers to use
-            validate: Whether to validate enrichment results (default: True)
-            max_retries: Maximum retry attempts for transient failures
-        """
+            providers (list[EnrichmentProvider]): List of enrichment providers to use
+            validate (bool): Whether to validate enrichment results (default: True)
+            max_retries (int): Maximum retry attempts for transient failures"""
         self.providers = providers
         self.validate = validate
         self.max_retries = max_retries
@@ -123,11 +122,10 @@ class EnrichmentManager:
         """Enrich a single image.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            EnrichmentResult with data and any errors
-        """
+            EnrichmentResult: EnrichmentResult with data and any errors"""
         return self.enrich_batch([image_path])[0]
 
     def enrich_batch(
@@ -144,12 +142,11 @@ class EnrichmentManager:
         4. Tier 3 (heuristics) - lowest confidence
 
         Args:
-            image_paths: Paths to images to enrich
-            existing: Optional existing enrichment data to augment
+            image_paths (list[Path]): Paths to images to enrich
+            existing (list[EnrichmentData | None] | None): Optional existing enrichment data to augment
 
         Returns:
-            List of EnrichmentResult with data and any errors
-        """
+            list[EnrichmentResult]: List of EnrichmentResult with data and any errors"""
         from ..schemas.enrichment import EnrichmentData
 
         if not image_paths:
@@ -208,8 +205,7 @@ class EnrichmentManager:
         """Get available providers sorted by tier priority.
 
         Returns:
-            List of available providers in priority order
-        """
+            list[EnrichmentProvider]: List of available providers in priority order"""
         available = [p for p in self.providers if p.is_available()]
 
         # Sort by tier (lower tier number = higher priority)
@@ -235,15 +231,14 @@ class EnrichmentManager:
         """Process batch with retry logic for transient failures.
 
         Args:
-            provider: Provider to use
-            batch_paths: Image paths to process
-            _batch_existing: Existing enrichment data (reserved for incremental enrichment)
-            indices: Indices in original results list
-            results: Results list to update on error
+            provider (EnrichmentProvider): Provider to use
+            batch_paths (list[Path]): Image paths to process
+            _batch_existing (list[EnrichmentData]): Existing enrichment data (reserved for incremental enrichment)
+            indices (list[int]): Indices in original results list
+            results (list[EnrichmentResult]): Results list to update on error
 
         Returns:
-            List of enriched data, or None on failure
-        """
+            list[EnrichmentData] | None: List of enriched data, or None on failure"""
         for attempt in range(self.max_retries + 1):
             try:
                 enriched = provider.enrich_batch(batch_paths)
@@ -294,11 +289,10 @@ class EnrichmentManager:
         """Check if error is transient and worth retrying.
 
         Args:
-            error: Exception to check
+            error (Exception): Exception to check
 
         Returns:
-            True if error might be transient
-        """
+            bool: True if error might be transient"""
         # Check for CUDA OOM or other transient GPU errors
         error_msg = str(error).lower()
         transient_indicators = [
@@ -314,8 +308,7 @@ class EnrichmentManager:
         """Validate enrichment results using schema validators.
 
         Args:
-            results: List of results to validate
-        """
+            results (list[EnrichmentResult]): List of results to validate"""
         from ..schemas.validators import validate_enrichment_data
 
         for i, result in enumerate(results):
@@ -344,11 +337,10 @@ class EnrichmentManager:
         """Convert EnrichmentData to dictionary for validation.
 
         Args:
-            data: EnrichmentData instance
+            data (EnrichmentData): EnrichmentData instance
 
         Returns:
-            Dictionary representation
-        """
+            dict: Dictionary representation"""
         from dataclasses import asdict
 
         return asdict(data)
@@ -357,8 +349,7 @@ class EnrichmentManager:
         """Get samples that failed enrichment.
 
         Returns:
-            List of (image_path, exception) tuples
-        """
+            list[tuple[Path, Exception]]: List of (image_path, exception) tuples"""
         return list(self._dead_letter)
 
     def clear_dead_letter_queue(self) -> None:
@@ -370,8 +361,7 @@ class EnrichmentManager:
         """Get enrichment statistics.
 
         Returns:
-            Dictionary with processing statistics
-        """
+            dict: Dictionary with processing statistics"""
         available_count = len([p for p in self.providers if p.is_available()])
 
         return {

@@ -107,11 +107,10 @@ def get_script_family(script_code: str) -> str:
     """Get script family from ISO 15924 code.
 
     Args:
-        script_code: ISO 15924 4-letter script code
+        script_code (str): ISO 15924 4-letter script code
 
     Returns:
-        Script family name (latin, arabic, cjk, cyrillic, indic, etc.)
-    """
+        str: Script family name (latin, arabic, cjk, cyrillic, indic, etc.)"""
     return SCRIPT_FAMILIES.get(script_code, "other")
 
 
@@ -153,11 +152,10 @@ def extract_text_from_labels(labels: OriginalLabels) -> ExtractedText:
     5. raw_labels.transcription - Fallback transcription
 
     Args:
-        labels: OriginalLabels from parser
+        labels (OriginalLabels): OriginalLabels from parser
 
     Returns:
-        ExtractedText with combined text and source info
-    """
+        ExtractedText: ExtractedText with combined text and source info"""
     # Priority 1: Direct transcription
     if labels.transcription:
         text = labels.transcription.strip()
@@ -304,10 +302,9 @@ class LanguageDetectionProvider:
         """Initialize language detection provider.
 
         Args:
-            min_confidence: Minimum confidence for valid detection (0.0-1.0)
-            min_text_length: Minimum characters needed for reliable detection
-            model_path: Optional custom path to OpenLID model
-        """
+            min_confidence (float): Minimum confidence for valid detection (0.0-1.0)
+            min_text_length (int): Minimum characters needed for reliable detection
+            model_path (Path | str | None): Optional custom path to OpenLID model"""
         self.min_confidence = min_confidence
         self.min_text_length = min_text_length
         self._model_path = model_path
@@ -361,11 +358,10 @@ class LanguageDetectionProvider:
         """Detect language and script from text.
 
         Args:
-            text: Text to analyze
+            text (str): Text to analyze
 
         Returns:
-            Dictionary with language detection results
-        """
+            dict[str, Any]: Dictionary with language detection results"""
         self._ensure_detector()
         assert self._detector is not None
 
@@ -418,14 +414,12 @@ class LanguageDetectionProvider:
         processing. It extracts text from OriginalLabels and runs OpenLID.
 
         Args:
-            labels: OriginalLabels from parser
-            existing: Optional existing EnrichmentData to augment
-            preserve_high_confidence: If True, don't overwrite existing language
-                data if it has higher confidence than new detection
+            labels (OriginalLabels): OriginalLabels from parser
+            existing (EnrichmentData | None): Optional existing EnrichmentData to augment
+            preserve_high_confidence (bool): If True, don't overwrite existing language data if it has higher confidence than new detection
 
         Returns:
-            EnrichmentData with language/script fields populated
-        """
+            EnrichmentData: EnrichmentData with language/script fields populated"""
         if existing is None:
             existing = EnrichmentData()
 
@@ -480,10 +474,10 @@ class LanguageDetectionProvider:
         Docling OCR first, then call detect_language() on extracted text.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            Empty EnrichmentData (images require OCR first)
+            EnrichmentData: Empty EnrichmentData (images require OCR first)
 
         Raises:
             NotImplementedError: Direct image detection not supported
@@ -510,12 +504,11 @@ class LanguageDetectionProvider:
         """Batch process labels for language detection.
 
         Args:
-            labels_list: List of OriginalLabels from parsers
-            existing_list: Optional existing EnrichmentData to augment
+            labels_list (list[OriginalLabels]): List of OriginalLabels from parsers
+            existing_list (list[EnrichmentData | None] | None): Optional existing EnrichmentData to augment
 
         Returns:
-            List of EnrichmentData with language/script fields populated
-        """
+            list[EnrichmentData]: List of EnrichmentData with language/script fields populated"""
         if existing_list is None:
             existing_list = [None] * len(labels_list)
 
