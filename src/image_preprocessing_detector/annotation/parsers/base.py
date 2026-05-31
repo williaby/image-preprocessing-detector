@@ -51,11 +51,11 @@ class ParseResult:
     callers to handle partial failures gracefully.
 
     Attributes:
-        labels: Parsed OriginalLabels (may be partial on error)
-        success: Whether parsing completed successfully
-        errors: List of error messages encountered
-        warnings: List of non-fatal warning messages
-        source_files: List of source files used for parsing
+        labels (OriginalLabels | None): Parsed OriginalLabels (may be partial on error)
+        success (bool): Whether parsing completed successfully
+        errors (list[str]): List of error messages encountered
+        warnings (list[str]): List of non-fatal warning messages
+        source_files (list[str]): List of source files used for parsing
     """
 
     labels: OriginalLabels | None
@@ -88,7 +88,7 @@ class DatasetParser(Protocol):
         """Dataset names this parser handles.
 
         Returns:
-            List of dataset name strings that this parser can process.
+            list[str]: List of dataset name strings that this parser can process.
             Names should match keys in DATASET_CONFIGS.
 
         Example:
@@ -109,17 +109,12 @@ class DatasetParser(Protocol):
         instance.
 
         Args:
-            dataset_path: Root path of the dataset (from DATASET_CONFIGS)
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary from DATASET_CONFIGS
+            dataset_path (Path): Root path of the dataset (from DATASET_CONFIGS)
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary from DATASET_CONFIGS
 
         Returns:
-            Populated OriginalLabels instance with all available labels
-
-        Raises:
-            FileNotFoundError: If annotation files are missing
-            ValueError: If annotation format is invalid
-            ParseError: If parsing fails for any other reason
+            OriginalLabels: Populated OriginalLabels instance with all available labels
 
         Example:
             >>> labels = parser.parse(
@@ -138,9 +133,8 @@ class DatasetParser(Protocol):
         with shared annotation files (e.g., single COCO JSON for all images).
 
         Returns:
-            True if parse_batch() provides optimized batch processing,
-            False if it just loops over parse() (default implementation).
-        """
+            bool: True if parse_batch() provides optimized batch processing,
+            False if it just loops over parse() (default implementation)."""
         return False
 
     def parse_batch(
@@ -159,15 +153,12 @@ class DatasetParser(Protocol):
         Override this method to provide optimized batch processing.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
-
-        Raises:
-            Same exceptions as parse()
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         return [self.parse(dataset_path, p, config) for p in image_paths]
 
@@ -178,11 +169,10 @@ class DatasetParser(Protocol):
         valid values for this parser.
 
         Args:
-            config: Dataset configuration to validate
+            config (dict[str, Any]): Dataset configuration to validate
 
         Returns:
-            List of validation error messages (empty if valid)
-        """
+            list[str]: List of validation error messages (empty if valid)"""
         return []
 
 
@@ -238,12 +228,11 @@ class BaseParser:
         """Get image path relative to dataset root.
 
         Args:
-            dataset_path: Dataset root path
-            image_path: Absolute image path
+            dataset_path (Path): Dataset root path
+            image_path (Path): Absolute image path
 
         Returns:
-            Relative path string
-        """
+            str: Relative path string"""
         try:
             return str(image_path.relative_to(dataset_path))
         except ValueError:
@@ -258,12 +247,11 @@ class BaseParser:
         """Find annotation file matching patterns.
 
         Args:
-            dataset_path: Dataset root path
-            patterns: List of glob patterns to try
+            dataset_path (Path): Dataset root path
+            patterns (list[str]): List of glob patterns to try
 
         Returns:
-            First matching file path, or None if not found
-        """
+            Path | None: First matching file path, or None if not found"""
         for pattern in patterns:
             matches = list(dataset_path.glob(pattern))
             if matches:
@@ -274,11 +262,11 @@ class BaseParser:
 class ParseError(Exception):
     """Exception raised when parsing fails.
 
-    Attributes:
-        dataset_name: Name of the dataset being parsed
-        image_path: Path to the image being processed
-        cause: Original exception that caused the failure
-        message: Human-readable error message
+    Args:
+        dataset_name (str): Name of the dataset being parsed
+        image_path (str | Path): Path to the image being processed
+        cause (Exception | None): Original exception that caused the failure
+        message (str | None): Human-readable error message
     """
 
     def __init__(
@@ -288,14 +276,6 @@ class ParseError(Exception):
         cause: Exception | None = None,
         message: str | None = None,
     ):
-        """Initialize ParseError.
-
-        Args:
-            dataset_name: Name of the dataset
-            image_path: Path to the problematic image
-            cause: Original exception (if any)
-            message: Custom error message (if any)
-        """
         self.dataset_name = dataset_name
         self.image_path = str(image_path)
         self.cause = cause

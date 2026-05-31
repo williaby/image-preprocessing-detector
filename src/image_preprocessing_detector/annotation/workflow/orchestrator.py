@@ -58,12 +58,12 @@ class DatasetResult:
     """Result of processing a single dataset.
 
     Attributes:
-        dataset_name: Name of the processed dataset
-        success: True if processing completed without fatal errors
-        samples_processed: Number of samples successfully processed
-        samples_failed: Number of samples that failed processing
-        errors: List of error messages
-        duration_seconds: Total processing time
+        dataset_name (str): Name of the processed dataset
+        success (bool): True if processing completed without fatal errors
+        samples_processed (int): Number of samples successfully processed
+        samples_failed (int): Number of samples that failed processing
+        errors (list[str]): List of error messages
+        duration_seconds (float): Total processing time
     """
 
     dataset_name: str
@@ -79,10 +79,10 @@ class OrchestrationResult:
     """Result of processing multiple datasets.
 
     Attributes:
-        dataset_results: Results for each processed dataset
-        total_samples: Total samples across all datasets
-        total_errors: Total errors across all datasets
-        duration_seconds: Total orchestration time
+        dataset_results (list[DatasetResult]): Results for each processed dataset
+        total_samples (int): Total samples across all datasets
+        total_errors (int): Total errors across all datasets
+        duration_seconds (float): Total orchestration time
     """
 
     dataset_results: list[DatasetResult] = field(default_factory=list)
@@ -112,13 +112,16 @@ class AnnotationOrchestrator:
     Direct replacement for subprocess-based incremental processing.
     All configuration and state managed in-process.
 
-    Attributes:
-        settings: Annotation configuration settings
-        parsers: Parser registry for label extraction
-        enrichment: Enrichment manager for ML inference
-        checkpoints: Checkpoint manager for resumable processing
-        parquet_writer: Writer for Parquet output
-        progress: Progress tracker for monitoring
+    Args:
+        settings (AnnotationSettings): Annotation configuration settings
+        parser_registry (ParserRegistry): Registry of dataset parsers
+        enrichment_manager (EnrichmentManager): Manager for ML enrichment providers
+        checkpoint_manager (CheckpointManager | None): Optional checkpoint manager
+            (created if None)
+        parquet_writer (PartitionedParquetWriter | None): Optional Parquet writer
+            (created if None)
+        progress_tracker (ProgressTracker | None): Optional progress tracker
+            (created if None)
     """
 
     def __init__(
@@ -130,16 +133,6 @@ class AnnotationOrchestrator:
         parquet_writer: PartitionedParquetWriter | None = None,
         progress_tracker: ProgressTracker | None = None,
     ):
-        """Initialize orchestrator with dependencies.
-
-        Args:
-            settings: Annotation configuration settings
-            parser_registry: Registry of dataset parsers
-            enrichment_manager: Manager for ML enrichment providers
-            checkpoint_manager: Optional checkpoint manager (created if None)
-            parquet_writer: Optional Parquet writer (created if None)
-            progress_tracker: Optional progress tracker (created if None)
-        """
         self.settings = settings
         self.parsers = parser_registry
         self.enrichment = enrichment_manager
@@ -166,12 +159,12 @@ class AnnotationOrchestrator:
         Directly callable - no subprocess involved (P0-3 fix).
 
         Args:
-            dataset_name: Name of dataset from DATASET_CONFIGS
-            use_yolo: Whether to use YOLO enrichment
-            max_samples: Optional limit on samples to process
+            dataset_name (str): Name of dataset from DATASET_CONFIGS
+            use_yolo (bool): Whether to use YOLO enrichment
+            max_samples (int | None): Optional limit on samples to process
 
         Returns:
-            DatasetResult with processing status and metrics
+            DatasetResult: DatasetResult with processing status and metrics
         """
         start_time = time.perf_counter()
 
@@ -260,13 +253,13 @@ class AnnotationOrchestrator:
         """Process multiple datasets.
 
         Args:
-            dataset_names: List of datasets to process (all if None)
-            resume: Skip already-completed datasets
-            use_yolo: Whether to use YOLO enrichment
-            max_samples_per_dataset: Optional per-dataset sample limit
+            dataset_names (list[str] | None): List of datasets to process (all if None)
+            resume (bool): Skip already-completed datasets
+            use_yolo (bool): Whether to use YOLO enrichment
+            max_samples_per_dataset (int | None): Optional per-dataset sample limit
 
         Returns:
-            OrchestrationResult with aggregate statistics
+            OrchestrationResult: OrchestrationResult with aggregate statistics
         """
         start_time = time.perf_counter()
 
@@ -309,7 +302,7 @@ class AnnotationOrchestrator:
         """Get list of datasets that haven't been processed.
 
         Returns:
-            List of dataset names not yet completed
+            list[str]: List of dataset names not yet completed
         """
         return [name for name in DATASET_CONFIGS if not self._is_completed(name)]
 
@@ -319,10 +312,10 @@ class AnnotationOrchestrator:
         Removes checkpoints and Parquet data.
 
         Args:
-            dataset_name: Dataset to reset
+            dataset_name (str): Dataset to reset
 
         Returns:
-            True if reset successful
+            bool: True if reset successful
         """
         try:
             # Clear checkpoint
@@ -347,11 +340,11 @@ class AnnotationOrchestrator:
         """Discover images in a dataset directory.
 
         Args:
-            config: Dataset configuration
-            max_samples: Optional limit on number of images
+            config (DatasetConfig): Dataset configuration
+            max_samples (int | None): Optional limit on number of images
 
         Returns:
-            Sorted list of image paths
+            list[Path]: Sorted list of image paths
         """
         dataset_path = get_dataset_path(config, self.settings)
 
@@ -373,10 +366,10 @@ class AnnotationOrchestrator:
         """Convert DatasetConfig to dict for pipeline.
 
         Args:
-            config: Dataset configuration
+            config (DatasetConfig): Dataset configuration
 
         Returns:
-            Dictionary with configuration values
+            dict: Dictionary with configuration values
         """
         return {
             "name": config.name,
@@ -405,8 +398,8 @@ class AnnotationOrchestrator:
         """Write pipeline results to storage.
 
         Args:
-            dataset_name: Name of the dataset
-            result: Pipeline processing result
+            dataset_name (str): Name of the dataset
+            result (PipelineResult): Pipeline processing result
         """
         # Write to Parquet
         count = self.parquet_writer.write_dataset(dataset_name, result.samples)
@@ -460,11 +453,11 @@ def create_orchestrator(
     This is the primary entry point for using the annotation system.
 
     Args:
-        settings: Optional settings (loaded from env if None)
-        use_yolo: Whether to configure YOLO enrichment provider
+        settings (AnnotationSettings | None): Optional settings (loaded from env if None)
+        use_yolo (bool): Whether to configure YOLO enrichment provider
 
     Returns:
-        Configured AnnotationOrchestrator instance
+        AnnotationOrchestrator: Configured AnnotationOrchestrator instance
 
     Example:
         >>> orchestrator = create_orchestrator()

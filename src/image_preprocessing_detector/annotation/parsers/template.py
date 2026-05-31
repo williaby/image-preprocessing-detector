@@ -64,22 +64,23 @@ class DatasetInfo:
     """Information needed to generate a parser template.
 
     Attributes:
-        dataset_name: Human-readable dataset name (e.g., "DIQA-5000")
-        url: Dataset source URL
-        license: License type (e.g., "Apache-2.0", "CC-BY-4.0")
-        domain: Primary domain category (maps to DomainLevel1 enum)
-        sample_count: Approximate number of samples (e.g., "5000", "~10K")
-        label_description: Description of label/annotation format
-        category: Parser category for directory placement
-        capture_method: How documents were captured (default: UNKNOWN)
-        has_human_mos: Whether dataset has human Mean Opinion Scores
-        has_table: Known table content (True/False/None)
-        has_formula: Known formula content (True/False/None)
-        has_handwriting: Known handwriting content (True/False/None)
-        has_signature: Known signature content (True/False/None)
-        has_coco_annotations: Whether annotations are in COCO format
-        iso639_language: Language code for multilingual datasets
-        iso15924_script: Script code for script identification datasets
+        dataset_name (str): Human-readable dataset name (e.g., "DIQA-5000")
+        url (str): Dataset source URL
+        license (str): License type (e.g., "Apache-2.0", "CC-BY-4.0")
+        domain (str): Primary domain category (maps to DomainLevel1 enum)
+        sample_count (str): Approximate number of samples (e.g., "5000", "~10K")
+        label_description (str): Description of label/annotation format
+        category (ParserCategory): Parser category for directory placement
+        capture_method (str): How documents were captured (default: UNKNOWN)
+        has_human_mos (bool): Whether dataset has human Mean Opinion Scores
+        has_table (bool | None): Known table content (True/False/None)
+        has_formula (bool | None): Known formula content (True/False/None)
+        has_handwriting (bool | None): Known handwriting content (True/False/None)
+        has_signature (bool | None): Known signature content (True/False/None)
+        has_coco_annotations (bool): Whether annotations are in COCO format
+        iso639_language (str | None): Language code for multilingual datasets
+        iso15924_script (str | None): Script code for script identification datasets
+        extra_fields (dict[str, Any]): Additional dataset-specific fields
     """
 
     dataset_name: str
@@ -104,7 +105,7 @@ class DatasetInfo:
         """Generate Python class name from dataset name.
 
         Returns:
-            PascalCase class name (e.g., "DIQA5000" -> "Diqa5000Parser")
+            str: PascalCase class name (e.g., "DIQA5000" -> "Diqa5000Parser")
         """
         # Remove special characters, capitalize each word
         clean = re.sub(r"[^a-zA-Z0-9]", " ", self.dataset_name)
@@ -116,7 +117,7 @@ class DatasetInfo:
         """Generate URL-safe dataset slug.
 
         Returns:
-            Lowercase hyphenated slug (e.g., "diqa-5000")
+            str: Lowercase hyphenated slug (e.g., "diqa-5000")
         """
         slug = self.dataset_name.lower()
         slug = re.sub(r"[^a-z0-9]+", "-", slug)
@@ -126,7 +127,7 @@ class DatasetInfo:
         """Generate Python module name.
 
         Returns:
-            Lowercase underscore name (e.g., "diqa_5000")
+            str: Lowercase underscore name (e.g., "diqa_5000")
         """
         slug = self.get_dataset_slug()
         return slug.replace("-", "_")
@@ -139,7 +140,7 @@ class DatasetInfo:
         - Provides suggestions for common errors (case, legacy names)
 
         Returns:
-            Tuple of (is_valid, error_or_suggestion_message)
+            tuple[bool, str | None]: Tuple of (is_valid, error_or_suggestion_message)
             Returns (True, None) if no script code set or code is valid
 
         Example:
@@ -321,13 +322,12 @@ def generate_parser(
     following project conventions and best practices.
 
     Args:
-        info: Dataset information for template substitution
-        output_dir: Directory to write parser file. If None, uses default
-                    based on category (e.g., parsers/quality/)
-        overwrite: If True, overwrite existing file. Default False.
+        info (DatasetInfo): Dataset information for template substitution
+        output_dir (Path | None): Directory to write parser file. If None, uses default based on category (e.g., parsers/quality/)
+        overwrite (bool): If True, overwrite existing file. Default False.
 
     Returns:
-        Path to generated parser file
+        Path: Path to generated parser file
 
     Raises:
         FileExistsError: If file exists and overwrite=False
@@ -389,13 +389,12 @@ def generate_config_entry(
     """Generate DatasetConfig entry for config/datasets.py.
 
     Args:
-        info: Dataset information
-        path_suffix: Path suffix relative to e_drive_root.
-                     If None, generates based on category and slug.
-        image_ext: Image file extension (default: "jpg")
+        info (DatasetInfo): Dataset information
+        path_suffix (str | None): Path suffix relative to e_drive_root. If None, generates based on category and slug.
+        image_ext (str): Image file extension (default: "jpg")
 
     Returns:
-        String containing DatasetConfig instantiation code
+        str: String containing DatasetConfig instantiation code
 
     Example:
         >>> info = DatasetInfo(dataset_name="My Dataset", domain="FORMS")
@@ -450,10 +449,10 @@ def generate_test_stub(info: DatasetInfo) -> str:
     """Generate test stub for parser.
 
     Args:
-        info: Dataset information
+        info (DatasetInfo): Dataset information
 
     Returns:
-        String containing pytest test class stub
+        str: String containing pytest test class stub
 
     Example:
         >>> info = DatasetInfo(dataset_name="My Dataset")
@@ -524,11 +523,10 @@ def validate_dataset_info(info: DatasetInfo) -> list[str]:
     """Validate DatasetInfo for completeness.
 
     Args:
-        info: Dataset info to validate
+        info (DatasetInfo): Dataset info to validate
 
     Returns:
-        List of validation warnings/errors
-    """
+        list[str]: List of validation warnings/errors"""
     warnings = []
 
     if not info.dataset_name:

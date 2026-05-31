@@ -24,7 +24,7 @@ def register_correction_parsers(registry: ParserRegistry) -> None:
     """Register all correction parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with
     """
     from .anyphotodoc6300 import Anyphotodoc6300Parser
     from .doc3d import Doc3DParser

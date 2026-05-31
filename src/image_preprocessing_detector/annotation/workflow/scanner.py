@@ -50,14 +50,14 @@ class ScanConfig:
     """Configuration for batch scanning.
 
     Attributes:
-        batch_size: Number of images per batch (default 100)
-        checkpoint_every: Checkpoint after N batches (default 10)
-        file_patterns: Glob patterns to match (default ["*.png", "*.jpg", "*.jpeg"])
-        recursive: Scan subdirectories recursively (default True)
-        skip_hidden: Skip hidden files/directories (default True)
-        max_batches: Maximum batches to process (None for unlimited)
-        resume_from_checkpoint: Resume from existing checkpoint (default True)
-        checkpoint_dir: Directory for checkpoint files (default ".annotation_checkpoints")
+        batch_size (int): Number of images per batch (default 100)
+        checkpoint_every (int): Checkpoint after N batches (default 10)
+        file_patterns (list[str]): Glob patterns to match (default ["*.png", "*.jpg", "*.jpeg"])
+        recursive (bool): Scan subdirectories recursively (default True)
+        skip_hidden (bool): Skip hidden files/directories (default True)
+        max_batches (int | None): Maximum batches to process (None for unlimited)
+        resume_from_checkpoint (bool): Resume from existing checkpoint (default True)
+        checkpoint_dir (str): Directory for checkpoint files (default ".annotation_checkpoints")
     """
 
     batch_size: int = 100
@@ -77,11 +77,11 @@ class ScanBatch:
     """A batch of image paths for processing.
 
     Attributes:
-        batch_num: Batch number (0-indexed)
-        paths: List of image paths in this batch
-        dataset_name: Name of the dataset being scanned
-        start_index: Index of first image in overall scan
-        checkpoint_hash: Hash for checkpoint identification
+        batch_num (int): Batch number (0-indexed)
+        paths (list[Path]): List of image paths in this batch
+        dataset_name (str): Name of the dataset being scanned
+        start_index (int): Index of first image in overall scan
+        checkpoint_hash (str): Hash for checkpoint identification
     """
 
     batch_num: int
@@ -109,14 +109,14 @@ class ScanProgress:
     """Progress information for scan operations.
 
     Attributes:
-        total_files: Total files discovered
-        files_processed: Files processed so far
-        batches_completed: Batches completed
-        batches_total: Total batches (if known)
-        current_batch: Current batch number
-        elapsed_seconds: Time elapsed since start
-        estimated_remaining: Estimated time remaining
-        throughput: Files per second
+        total_files (int): Total files discovered
+        files_processed (int): Files processed so far
+        batches_completed (int): Batches completed
+        batches_total (int | None): Total batches (if known)
+        current_batch (int): Current batch number
+        elapsed_seconds (float): Time elapsed since start
+        estimated_remaining (float | None): Estimated time remaining
+        throughput (float): Files per second
     """
 
     total_files: int = 0
@@ -141,13 +141,13 @@ class ScanCheckpoint:
     """Checkpoint state for resumable scanning.
 
     Attributes:
-        dataset_name: Name of the dataset
-        dataset_path: Path to the dataset
-        last_batch_completed: Last successfully completed batch number
-        total_batches: Total number of batches
-        files_processed: Total files processed
-        timestamp: When checkpoint was created
-        scan_hash: Hash of scan parameters for validation
+        dataset_name (str): Name of the dataset
+        dataset_path (str): Path to the dataset
+        last_batch_completed (int): Last successfully completed batch number
+        total_batches (int): Total number of batches
+        files_processed (int): Total files processed
+        timestamp (str): When checkpoint was created
+        scan_hash (str): Hash of scan parameters for validation
     """
 
     dataset_name: str
@@ -199,38 +199,33 @@ class ProgressCallback:
         """Called when scan starts.
 
         Args:
-            dataset_name: Name of the dataset
-            total_files: Total files to process
-        """
+            dataset_name (str): Name of the dataset
+            total_files (int): Total files to process"""
 
     def on_batch_start(self, batch: ScanBatch) -> None:
         """Called when a batch starts processing.
 
         Args:
-            batch: The batch starting
-        """
+            batch (ScanBatch): The batch starting"""
 
     def on_batch_complete(self, batch: ScanBatch, progress: ScanProgress) -> None:
         """Called when a batch completes.
 
         Args:
-            batch: The completed batch
-            progress: Current progress information
-        """
+            batch (ScanBatch): The completed batch
+            progress (ScanProgress): Current progress information"""
 
     def on_checkpoint(self, checkpoint: ScanCheckpoint) -> None:
         """Called when a checkpoint is saved.
 
         Args:
-            checkpoint: The saved checkpoint
-        """
+            checkpoint (ScanCheckpoint): The saved checkpoint"""
 
     def on_scan_complete(self, progress: ScanProgress) -> None:
         """Called when scan completes.
 
         Args:
-            progress: Final progress information
-        """
+            progress (ScanProgress): Final progress information"""
 
 
 class LoggingProgressCallback(ProgressCallback):
@@ -288,6 +283,10 @@ class BatchScanner:
     Scans directories for image files, groups them into batches, and
     provides checkpointing for resumable long-running scans.
 
+    Args:
+        config (ScanConfig | None): Scan configuration (defaults to ScanConfig())
+        progress_callback (ProgressCallback | None): Callback for progress reporting
+
     Example:
         >>> scanner = BatchScanner(ScanConfig(batch_size=100))
         >>> for batch in scanner.scan(Path("/data/dataset")):
@@ -300,12 +299,6 @@ class BatchScanner:
         config: ScanConfig | None = None,
         progress_callback: ProgressCallback | None = None,
     ) -> None:
-        """Initialize batch scanner.
-
-        Args:
-            config: Scan configuration (defaults to ScanConfig())
-            progress_callback: Callback for progress reporting
-        """
         self.config = config or ScanConfig()
         self.progress_callback = progress_callback or LoggingProgressCallback()
 
@@ -323,11 +316,11 @@ class BatchScanner:
         """Scan a dataset directory and yield batches.
 
         Args:
-            dataset_path: Path to dataset root directory
-            dataset_name: Name of the dataset (defaults to directory name)
+            dataset_path (Path): Path to dataset root directory
+            dataset_name (str | None): Name of the dataset (defaults to directory name)
 
         Yields:
-            ScanBatch objects containing paths to process
+            ScanBatch: Batch objects containing paths to process
         """
         dataset_path = Path(dataset_path)
         dataset_name = dataset_name or dataset_path.name
@@ -402,10 +395,9 @@ class BatchScanner:
         Call this after successfully processing a batch.
 
         Args:
-            batch: The completed batch
-            total_files: Total files in scan (for progress calculation)
-            total_batches: Total batches in scan (for progress calculation)
-        """
+            batch (ScanBatch): The completed batch
+            total_files (int | None): Total files in scan (for progress calculation)
+            total_batches (int | None): Total batches in scan (for progress calculation)"""
         self._files_processed += len(batch)
         self._batches_completed += 1
 
@@ -429,23 +421,21 @@ class BatchScanner:
         """Explicitly save a checkpoint.
 
         Args:
-            batch: The batch to checkpoint at
-            total_batches: Total number of batches
+            batch (ScanBatch): The batch to checkpoint at
+            total_batches (int | None): Total number of batches
 
         Returns:
-            The saved checkpoint
-        """
+            ScanCheckpoint: The saved checkpoint"""
         return self._save_checkpoint(batch, total_batches or batch.batch_num + 1)
 
     def clear_checkpoint(self, dataset_name: str) -> bool:
         """Clear checkpoint for a dataset.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset
 
         Returns:
-            True if checkpoint was cleared
-        """
+            bool: True if checkpoint was cleared"""
         checkpoint_path = self._get_checkpoint_path(dataset_name)
         if checkpoint_path.exists():
             checkpoint_path.unlink()
@@ -457,10 +447,10 @@ class BatchScanner:
         """Discover image files in a directory.
 
         Args:
-            dataset_path: Directory to scan
+            dataset_path (Path): Directory to scan
 
         Yields:
-            Paths to image files
+            Path: Paths to image files
         """
         for pattern in self.config.file_patterns:
             glob_pattern = f"**/{pattern}" if self.config.recursive else pattern
@@ -478,12 +468,11 @@ class BatchScanner:
         """Compute hash of scan parameters for checkpoint validation.
 
         Args:
-            dataset_path: Path to dataset
-            dataset_name: Dataset name
+            dataset_path (Path): Path to dataset
+            dataset_name (str): Dataset name
 
         Returns:
-            Hash string
-        """
+            str: Hash string"""
         content = (
             f"{dataset_path.resolve()}:{dataset_name}:"
             f"{self.config.batch_size}:{','.join(sorted(self.config.file_patterns))}"
@@ -494,11 +483,10 @@ class BatchScanner:
         """Get checkpoint file path for a dataset.
 
         Args:
-            dataset_name: Dataset name
+            dataset_name (str): Dataset name
 
         Returns:
-            Path to checkpoint file
-        """
+            Path: Path to checkpoint file"""
         checkpoint_dir = Path(self.config.checkpoint_dir)
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         safe_name = dataset_name.replace("/", "_").replace("\\", "_")
@@ -512,12 +500,11 @@ class BatchScanner:
         """Load checkpoint if valid.
 
         Args:
-            dataset_name: Dataset name
-            scan_hash: Expected scan hash
+            dataset_name (str): Dataset name
+            scan_hash (str): Expected scan hash
 
         Returns:
-            Checkpoint if valid, None otherwise
-        """
+            ScanCheckpoint | None: Checkpoint if valid, None otherwise"""
         checkpoint_path = self._get_checkpoint_path(dataset_name)
         if not checkpoint_path.exists():
             return None
@@ -548,12 +535,11 @@ class BatchScanner:
         """Save checkpoint to disk.
 
         Args:
-            batch: Current batch
-            total_batches: Total number of batches
+            batch (ScanBatch): Current batch
+            total_batches (int): Total number of batches
 
         Returns:
-            Saved checkpoint
-        """
+            ScanCheckpoint: Saved checkpoint"""
         checkpoint = ScanCheckpoint(
             dataset_name=batch.dataset_name,
             dataset_path=str(batch.paths[0].parent) if batch.paths else "",
@@ -584,12 +570,11 @@ class BatchScanner:
         """Calculate current progress.
 
         Args:
-            total_files: Total files in scan
-            total_batches: Total batches in scan
+            total_files (int): Total files in scan
+            total_batches (int | None): Total batches in scan
 
         Returns:
-            Current progress
-        """
+            ScanProgress: Current progress"""
         elapsed = time.time() - self._start_time if self._start_time else 0.0
         throughput = self._files_processed / elapsed if elapsed > 0 else 0.0
 
