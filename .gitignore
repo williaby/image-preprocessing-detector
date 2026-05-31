@@ -114,6 +114,8 @@ logs/
 
 # Claude Code local settings (may contain API keys or secrets)
 .claude/settings.local.json
+# Claude Code agent worktrees (temporary, auto-cleaned)
+.claude/worktrees/
 
 # GCS service account keys (base64 encoded)
 *.b64
