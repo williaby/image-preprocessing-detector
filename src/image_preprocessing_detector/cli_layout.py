@@ -36,10 +36,7 @@ def _get_taxonomy() -> LayoutTaxonomy:
     """Import and return the LayoutTaxonomy singleton.
 
     Returns:
-        LayoutTaxonomy instance from get_default_taxonomy()
-
-    Raises:
-        SystemExit: If the layout taxonomy module is not available
+        LayoutTaxonomy: Instance from get_default_taxonomy()
     """
     try:
         from image_preprocessing_detector.schema_utils.layout_taxonomy import (
@@ -108,13 +105,12 @@ def _build_comparison_rows(
     """Build comparison rows for two schemas.
 
     Args:
-        taxonomy: LayoutTaxonomy instance
-        source_schema: Source schema name
-        target_schema: Target schema name
+        taxonomy (LayoutTaxonomy): LayoutTaxonomy instance
+        source_schema (str): Source schema name
+        target_schema (str): Target schema name
 
     Returns:
-        List of dicts with keys: source_label, canonical, target_label,
-        is_lossy
+        list[dict[str, str | bool]]: List of dicts with keys: source_label, canonical, target_label, is_lossy
     """
     source_classes = taxonomy.get_schema_classes(source_schema)
     rows: list[dict[str, str | bool]] = []
@@ -144,14 +140,14 @@ def _format_table(
     """Format comparison rows as a human-readable table.
 
     Args:
-        rows: Comparison row data
-        source_schema: Source schema name
-        target_schema: Target schema name
-        source_count: Number of classes in source schema
-        target_count: Number of classes in target schema
+        rows (list[dict[str, str | bool]]): Comparison row data
+        source_schema (str): Source schema name
+        target_schema (str): Target schema name
+        source_count (int): Number of classes in source schema
+        target_count (int): Number of classes in target schema
 
     Returns:
-        Formatted table string
+        str: Formatted table string
     """
     lines: list[str] = []
 
@@ -220,14 +216,14 @@ def _format_json(
     """Format comparison rows as JSON.
 
     Args:
-        rows: Comparison row data
-        source_schema: Source schema name
-        target_schema: Target schema name
-        source_count: Number of classes in source schema
-        target_count: Number of classes in target schema
+        rows (list[dict[str, str | bool]]): Comparison row data
+        source_schema (str): Source schema name
+        target_schema (str): Target schema name
+        source_count (int): Number of classes in source schema
+        target_count (int): Number of classes in target schema
 
     Returns:
-        JSON string
+        str: JSON string
     """
     lossless = sum(1 for r in rows if not r["is_lossy"])
     lossy = sum(1 for r in rows if r["is_lossy"])
@@ -263,10 +259,10 @@ def _format_csv(rows: list[dict[str, str | bool]]) -> str:
     """Format comparison rows as CSV.
 
     Args:
-        rows: Comparison row data
+        rows (list[dict[str, str | bool]]): Comparison row data
 
     Returns:
-        CSV string
+        str: CSV string
     """
     output = io.StringIO()
     writer = csv.writer(output)
@@ -303,6 +299,11 @@ def compare(
     Shows a side-by-side mapping of every class in SOURCE_SCHEMA to its
     equivalent in TARGET_SCHEMA, via the canonical superset. Lossy
     conversions (where information is lost) are flagged.
+
+    Args:
+        source_schema (str): Source schema name (e.g., 'docstructbench')
+        target_schema (str): Target schema name (e.g., 'doclaynet')
+        output_format (str): Output format: 'table', 'json', or 'csv'
 
     Examples:
         imgprep layout compare docstructbench doclaynet

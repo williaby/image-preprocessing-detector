@@ -106,10 +106,10 @@ class ElementCategory(str, Enum):
         the corresponding ElementCategory enum value.
 
         Args:
-            canonical_class: Canonical taxonomy class name (UPPERCASE).
+            canonical_class (str): Canonical taxonomy class name (UPPERCASE).
 
         Returns:
-            Matching ElementCategory, or TEXT as safe fallback.
+            ElementCategory: Matching ElementCategory, or TEXT as safe fallback.
         """
         from image_preprocessing_detector.schema_utils.layout_taxonomy import (
             get_default_taxonomy,
@@ -132,7 +132,7 @@ class ElementCategory(str, Enum):
         canonical UPPERCASE taxonomy class names via LayoutTaxonomy.
 
         Returns:
-            Canonical class name (e.g. "CAPTION", "TABLE").
+            str: Canonical class name (e.g. "CAPTION", "TABLE").
         """
         from image_preprocessing_detector.schema_utils.layout_taxonomy import (
             get_default_taxonomy,
@@ -362,11 +362,11 @@ class LanguageInfo(BaseModel):
         """Create LanguageInfo from legacy string script name.
 
         Args:
-            script_name: Legacy script name (e.g., "Latin", "CJK", "Arabic")
-            confidence: Detection confidence
+            script_name (str): Legacy script name (e.g., "Latin", "CJK", "Arabic")
+            confidence (float): Detection confidence
 
         Returns:
-            LanguageInfo with typed script enum
+            LanguageInfo: LanguageInfo with typed script enum
         """
         iso_code = normalize_legacy_script(script_name)
         try:
@@ -429,10 +429,10 @@ class ScriptDetectionResult(BaseModel):
         """Get ML training class (Tier 2) via config mapping.
 
         Args:
-            mapping: ScriptMLMapping instance with loaded config
+            mapping (ScriptMLMapping): ScriptMLMapping instance with loaded config
 
         Returns:
-            ML class string (e.g., "LATN", "INDIC_OTHER", "UNKNOWN")
+            str: ML class string (e.g., "LATN", "INDIC_OTHER", "UNKNOWN")
         """
         return mapping.to_ml_class(self.detected_script)
 
@@ -440,10 +440,10 @@ class ScriptDetectionResult(BaseModel):
         """Get OCR routing config (Tier 3) via config.
 
         Args:
-            router: ScriptRouter instance with loaded config
+            router (ScriptRouter): ScriptRouter instance with loaded config
 
         Returns:
-            Dict with engine, batch_size, and other routing params
+            dict[str, Any]: Dict with engine, batch_size, and other routing params
         """
         return router.get_engine_config(self.detected_script)
 
@@ -481,12 +481,12 @@ class ScriptDetectionResult(BaseModel):
         """Create from source dataset label, normalizing to ISO 15924.
 
         Args:
-            source_label: Original label from dataset
-            confidence: Confidence in the label
-            method: Detection method identifier
+            source_label (str): Original label from dataset
+            confidence (float): Confidence in the label
+            method (str): Detection method identifier
 
         Returns:
-            ScriptDetectionResult with normalized ISO 15924 code
+            ScriptDetectionResult: ScriptDetectionResult with normalized ISO 15924 code
         """
         iso_code = normalize_legacy_script(source_label)
         return cls(
@@ -546,10 +546,10 @@ class DocumentScriptDetection(BaseModel):
         """Get distribution over ML classes (Tier 2) for training/routing.
 
         Args:
-            mapping: ScriptMLMapping instance
+            mapping (ScriptMLMapping): ScriptMLMapping instance
 
         Returns:
-            Dict mapping ML class names to percentages
+            dict[str, float]: Dict mapping ML class names to percentages
         """
         ml_dist: dict[str, float] = {}
         for iso_code, pct in self.script_distribution.items():
@@ -577,10 +577,10 @@ class DocumentScriptDetection(BaseModel):
         """Aggregate script instances to document level.
 
         Args:
-            instances: List of per-region/per-page script detections
+            instances (list[ScriptDetectionResult]): List of per-region/per-page script detections
 
         Returns:
-            DocumentScriptDetection with aggregated statistics
+            DocumentScriptDetection: DocumentScriptDetection with aggregated statistics
         """
         if not instances:
             return cls(
@@ -807,7 +807,7 @@ class DoclingRoutingParams(BaseModel):
         """Convert to Docling CLI arguments.
 
         Returns:
-            List of CLI argument strings
+            list[str]: List of CLI argument strings
         """
         args = [f"--pipeline={self.pipeline}"]
 

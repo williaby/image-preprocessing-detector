@@ -47,13 +47,10 @@ def _parse_roi_string(roi: str | None) -> tuple[int, int, int, int] | None:
     """Parse ROI string to bbox tuple.
 
     Args:
-        roi: ROI string in format 'x,y,width,height' or None
+        roi (str | None): ROI string in format 'x,y,width,height' or None
 
     Returns:
-        Tuple of (x, y, width, height) or None if no ROI
-
-    Raises:
-        SystemExit: If ROI format is invalid
+        tuple[int, int, int, int] | None: Tuple of (x, y, width, height) or None if no ROI
     """
     if not roi:
         return None
@@ -75,13 +72,10 @@ def _load_image_for_check(input_path: Path) -> Any:
     """Load image for detection check commands.
 
     Args:
-        input_path: Path to image file
+        input_path (Path): Path to image file
 
     Returns:
-        Loaded image array
-
-    Raises:
-        SystemExit: If image cannot be loaded
+        Any: Loaded image array
     """
     import cv2
 
@@ -100,9 +94,9 @@ def _output_check_result(
     """Output detection check result as JSON or pretty print.
 
     Args:
-        output_data: Result data dictionary
-        json_output: Path to JSON output file or None for console output
-        print_fn: Function to call for pretty printing (takes output_data)
+        output_data (dict[str, Any]): Result data dictionary
+        json_output (Path | None): Path to JSON output file or None for console output
+        print_fn (Any): Function to call for pretty printing (takes output_data)
     """
     import json
 
@@ -253,8 +247,12 @@ def _load_document_pages(input_path: Path, builder: MetadataBuilder) -> list[Any
 def _run_iqa_detection(image: np.ndarray, has_text: bool) -> tuple[Any, Any, Any]:
     """Run IQA detection if page has text.
 
+    Args:
+        image (np.ndarray): Page image array to analyze
+        has_text (bool): Whether text was detected on this page
+
     Returns:
-        Tuple of (skew_result, blur_result, contrast_result), all None if no text.
+        tuple[Any, Any, Any]: Tuple of (skew_result, blur_result, contrast_result), all None if no text.
     """
     if not has_text:
         return None, None, None
@@ -362,16 +360,12 @@ def process_single_file(
     """Process a single file with image preprocessing detection.
 
     Args:
-        input_path: Path to input PDF or image file
-        output: Path to output JSON file
-        dry_run: If True, skip corrections (detection only)
-        blur_threshold: Blur detection threshold (0.0-1.0)
-        skew_threshold: Skew detection threshold (0.0-1.0)
-        contrast_threshold: Contrast detection threshold (0.0-1.0)
-
-    Raises:
-        ValueError: If file format is unsupported
-        Exception: If processing fails
+        input_path (Path): Path to input PDF or image file
+        output (Path): Path to output JSON file
+        dry_run (bool): If True, skip corrections (detection only)
+        blur_threshold (float): Blur detection threshold (0.0-1.0)
+        skew_threshold (float): Skew detection threshold (0.0-1.0)
+        contrast_threshold (float): Contrast detection threshold (0.0-1.0)
     """
     logger.info(
         "Processing file",
@@ -483,6 +477,14 @@ def process(
 ) -> None:
     """Process a single PDF or image file.
 
+    Args:
+        input_path (Path): Path to input PDF or image file
+        output (Path): Path to output JSON file
+        dry_run (bool): If True, skip corrections (detection only)
+        blur_threshold (float): Blur detection threshold (0.0-1.0)
+        skew_threshold (float): Skew detection threshold (0.0-1.0)
+        contrast_threshold (float): Contrast detection threshold (0.0-1.0)
+
     Examples:
         imgprep process input.pdf --output result.json
         imgprep process image.jpg --output result.json --dry-run
@@ -546,6 +548,14 @@ def batch(
     contrast_threshold: float,
 ) -> None:
     """Process a directory of PDF and image files.
+
+    Args:
+        input_dir (Path): Directory containing PDF and image files
+        output_dir (Path): Output directory for JSON result files
+        dry_run (bool): If True, skip corrections (detection only)
+        blur_threshold (float): Blur detection threshold (0.0-1.0)
+        skew_threshold (float): Skew detection threshold (0.0-1.0)
+        contrast_threshold (float): Contrast detection threshold (0.0-1.0)
 
     Examples:
         imgprep batch input_dir/ --output-dir results/
@@ -680,6 +690,15 @@ def blur_check(
     Analyzes image sharpness and provides blur severity assessment.
     Higher variance values indicate sharper images.
 
+    Args:
+        input_path (Path): Path to image file
+        threshold_critical (float): Critical blur threshold (variance < value = severe blur)
+        threshold_high (float): High blur threshold
+        threshold_medium (float): Medium blur threshold
+        detailed (bool): If True, show detailed blur metrics
+        json_output (Path | None): Output results to JSON file if provided
+        roi (str | None): Region of interest as 'x,y,width,height' (COCO format)
+
     Examples:
         imgprep blur-check image.jpg
         imgprep blur-check scan.png --detailed
@@ -796,6 +815,16 @@ def noise_check(
     Analyzes image noise using discrete wavelet transform and Median
     Absolute Deviation (MAD) to estimate noise standard deviation.
 
+    Args:
+        input_path (Path): Path to image file
+        threshold_critical (float): Critical noise threshold (sigma > value = severe noise)
+        threshold_high (float): High noise threshold
+        threshold_medium (float): Medium noise threshold
+        wavelet (str): Wavelet family for decomposition (e.g. 'db1', 'haar')
+        detailed (bool): If True, show detailed noise metrics (SNR, noise type)
+        json_output (Path | None): Output results to JSON file if provided
+        roi (str | None): Region of interest as 'x,y,width,height' (COCO format)
+
     Examples:
         imgprep noise-check image.jpg
         imgprep noise-check scan.png --detailed
@@ -899,6 +928,13 @@ def deskew_cmd(
     Runs the ML-based SkewNet pipeline (orientation + fine skew) with
     classical fallback. Reports detected angles, confidence, and
     whether correction was applied.
+
+    Args:
+        input_path (Path): Path to input image file
+        output (Path | None): Output JSON file path (default: stdout)
+        save_image (Path | None): Save corrected image to this path
+        config (Path | None): Path to skew_estimation.yaml config
+        classical_only (bool): If True, force classical Hough+Projection detection
 
     Examples:
         imgprep deskew scan.png
@@ -1034,6 +1070,16 @@ def extract(
     for text extraction.
 
     Outputs both DocumentMetadata.json and docling_output.json.
+
+    Args:
+        input_path (Path): Path to input PDF or image file
+        output (Path): Output directory for result files
+        docling_host (str): Docling server hostname
+        docling_port (int): Docling server port
+        dry_run (bool): If True, skip corrections (detection only)
+        blur_threshold (float): Blur detection threshold (0.0-1.0)
+        skew_threshold (float): Skew detection threshold (0.0-1.0)
+        contrast_threshold (float): Contrast detection threshold (0.0-1.0)
 
     Examples:
         imgprep extract input.pdf --output results/
