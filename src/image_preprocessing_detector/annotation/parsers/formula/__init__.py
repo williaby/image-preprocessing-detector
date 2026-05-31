@@ -33,7 +33,7 @@ def register_formula_parsers(registry: ParserRegistry) -> None:
     """Register all formula parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with.
     """
     registry.register(Im2latexParser())
 

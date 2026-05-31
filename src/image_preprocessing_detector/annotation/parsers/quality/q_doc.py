@@ -60,10 +60,10 @@ def _load_quality_scores(score_path: Path) -> dict[str, Any] | None:
     """Load and cache quality score file (JSON or CSV).
 
     Args:
-        score_path: Path to quality score file
+        score_path (Path): Path to quality score file.
 
     Returns:
-        Dict mapping image identifiers to score entries, or None
+        dict[str, Any] | None: Dict mapping image identifiers to score entries, or None.
     """
     cache_key = str(score_path)
     if cache_key in _SCORE_CACHE:
@@ -134,12 +134,12 @@ class QDocParser(BaseParser):
         """Parse Q-Doc quality scores.
 
         Args:
-            dataset_path: Root path of the Q-Doc dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the Q-Doc dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with quality assessment metadata in raw_labels
+            OriginalLabels: OriginalLabels with quality assessment metadata in raw_labels.
         """
         labels = OriginalLabels()
 

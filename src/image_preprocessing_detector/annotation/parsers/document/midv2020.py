@@ -172,10 +172,10 @@ def _get_capture_condition(image_num: int) -> str:
     """Map image number (0-99) to its capture condition label.
 
     Args:
-        image_num: Integer image number (0-99).
+        image_num (int): Integer image number (0-99).
 
     Returns:
-        Capture condition string.
+        str: Capture condition string.
     """
     for r, label in _CAPTURE_CONDITIONS:
         if image_num in r:
@@ -187,10 +187,10 @@ def _is_samsung(image_num: int) -> bool | None:
     """Return True if the image number is a Samsung capture, False for iPhone.
 
     Args:
-        image_num: Integer image number (0-99).
+        image_num (int): Integer image number (0-99).
 
     Returns:
-        True for Samsung, False for iPhone, None if indeterminate.
+        bool | None: True for Samsung, False for iPhone, None if indeterminate.
     """
     for lo, hi in _SAMSUNG_RANGES:
         if lo <= image_num <= hi:
@@ -244,11 +244,11 @@ class Midv2020Parser(BaseParser):
             {root} / {capture_mode} / images / {doc_type_code} / {NN}.jpg
 
         Args:
-            image_path: Absolute or relative path to image file.
+            image_path (Path): Absolute or relative path to image file.
 
         Returns:
-            Tuple of (doc_type_code, capture_mode, image_number).
-            Any element may be None if not determinable.
+            tuple[str | None, str | None, int | None]: Tuple of (doc_type_code, capture_mode, image_number).
+                Any element may be None if not determinable.
         """
         parts = list(image_path.parts)
         doc_code: str | None = None
@@ -290,11 +290,11 @@ class Midv2020Parser(BaseParser):
             {dataset_path}/../../annotations/{doc_code}.json
 
         Args:
-            dataset_path: Root dataset path (may be the extracted tar root).
-            doc_code: Document type code (e.g. "rus_internalpassport").
+            dataset_path (Path): Root dataset path (may be the extracted tar root).
+            doc_code (str): Document type code (e.g. "rus_internalpassport").
 
         Returns:
-            Path to annotation JSON, or None if not found.
+            Path | None: Path to annotation JSON, or None if not found.
         """
         candidates = [
             dataset_path / "annotations" / f"{doc_code}.json",
@@ -314,10 +314,10 @@ class Midv2020Parser(BaseParser):
         """Load VIA JSON annotation file.
 
         Args:
-            annotation_path: Path to the VIA .json file.
+            annotation_path (Path): Path to the VIA .json file.
 
         Returns:
-            Parsed JSON dict, or None on failure.
+            dict[str, Any] | None: Parsed JSON dict, or None on failure.
         """
         try:
             with open(annotation_path, encoding="utf-8") as fh:
@@ -335,11 +335,11 @@ class Midv2020Parser(BaseParser):
         VIA keys images as "{filename}{size}", so we search by filename prefix.
 
         Args:
-            via_data: Parsed VIA JSON.
-            filename: Bare filename to look up (e.g. "05.jpg").
+            via_data (dict[str, Any]): Parsed VIA JSON.
+            filename (str): Bare filename to look up (e.g. "05.jpg").
 
         Returns:
-            VIA image record dict, or None if not found.
+            dict[str, Any] | None: VIA image record dict, or None if not found.
         """
         img_meta: dict[str, Any] = via_data.get("_via_img_metadata", {})
         # Exact key match or prefix match (key = filename + size)
@@ -354,11 +354,11 @@ class Midv2020Parser(BaseParser):
         """Convert a VIA polygon region to a COCO layout detection.
 
         Args:
-            region: A VIA region dict with shape_attributes and region_attributes.
-            source_tag: Provenance tag string.
+            region (dict[str, Any]): A VIA region dict with shape_attributes and region_attributes.
+            source_tag (str): Provenance tag string.
 
         Returns:
-            COCO layout detection dict, or None if the region is invalid.
+            dict[str, Any] | None: COCO layout detection dict, or None if the region is invalid.
         """
         shape = region.get("shape_attributes", {})
         if shape.get("name") not in ("polygon", "polyline"):
@@ -409,12 +409,12 @@ class Midv2020Parser(BaseParser):
         """Extract all layout detections for one image from VIA annotation.
 
         Args:
-            via_data: Parsed VIA JSON dict.
-            filename: Image filename to look up (e.g. "05.jpg").
-            source_tag: Provenance label.
+            via_data (dict[str, Any]): Parsed VIA JSON dict.
+            filename (str): Image filename to look up (e.g. "05.jpg").
+            source_tag (str): Provenance label.
 
         Returns:
-            List of COCO layout detection dicts.
+            list[dict[str, Any]]: List of COCO layout detection dicts.
         """
         record = self._find_image_record(via_data, filename)
         if not record:
@@ -440,16 +440,14 @@ class Midv2020Parser(BaseParser):
         """Parse MIDV-2020 labels from path structure and VIA annotation JSON.
 
         Args:
-            dataset_path: Root path of the extracted MIDV-2020 archive.
-            image_path: Absolute path to the image file being processed.
-            config: Dataset configuration dictionary (unused).
+            dataset_path (Path): Root path of the extracted MIDV-2020 archive.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with:
-              - raw_labels: doc_type_code, country_code, capture_mode,
-                capture_method, image_num, capture_condition, device_model
-              - layout_detections: document + field quads as COCO bboxes
-              - script_name: "Cyrillic", "Greek", or "Latin"
+            OriginalLabels: OriginalLabels with raw_labels containing doc_type_code,
+                country_code, capture_mode, capture_method, image_num, capture_condition,
+                device_model; layout_detections as COCO bboxes; and script_name set.
         """
         labels = OriginalLabels()
         if labels.raw_labels is None:

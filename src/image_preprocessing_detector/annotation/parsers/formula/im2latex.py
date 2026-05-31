@@ -115,10 +115,10 @@ class Im2latexParser(BaseParser):
         """Load LaTeX formulas from im2latex_formulas.lst.
 
         Args:
-            dataset_path: Root path of the im2latex dataset
+            dataset_path (Path): Root path of the im2latex dataset.
 
         Returns:
-            Dict mapping formula_id (line number) to LaTeX source
+            dict[int, str]: Dict mapping formula_id (line number) to LaTeX source.
         """
         if (
             Im2latexParser._formulas_cache is not None
@@ -162,10 +162,10 @@ class Im2latexParser(BaseParser):
         """Load image→formula mappings from split files.
 
         Args:
-            dataset_path: Root path of the im2latex dataset
+            dataset_path (Path): Root path of the im2latex dataset.
 
         Returns:
-            Dict mapping image_id to (split_name, formula_id)
+            dict[int, tuple[str, int]]: Dict mapping image_id to (split_name, formula_id).
         """
         if (
             Im2latexParser._splits_cache is not None
@@ -214,7 +214,7 @@ class Im2latexParser(BaseParser):
         """Ensure caches are loaded for the given dataset path.
 
         Args:
-            dataset_path: Root path of the im2latex dataset
+            dataset_path (Path): Root path of the im2latex dataset.
         """
         if Im2latexParser._cache_path != dataset_path:
             # Clear caches for new dataset path
@@ -233,10 +233,10 @@ class Im2latexParser(BaseParser):
         r"""Count LaTeX commands/symbols in formula.
 
         Args:
-            latex: LaTeX source code
+            latex (str): LaTeX source code.
 
         Returns:
-            Count of LaTeX commands (e.g., \\alpha, \\frac)
+            int: Count of LaTeX commands (e.g., \\alpha, \\frac).
         """
         return len(self.LATEX_COMMAND_PATTERN.findall(latex))
 
@@ -244,10 +244,10 @@ class Im2latexParser(BaseParser):
         """Extract numeric image ID from filename.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file.
 
         Returns:
-            Image ID as integer, or None if extraction fails
+            int | None: Image ID as integer, or None if extraction fails.
         """
         stem = image_path.stem
 
@@ -275,19 +275,14 @@ class Im2latexParser(BaseParser):
         Extracts LaTeX source code and split membership.
 
         Args:
-            dataset_path: Root path of the im2latex dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the im2latex dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with raw_labels containing:
-                - latex_source: Full LaTeX formula code
-                - formula_id: Index into formulas list
-                - split: train/validate/test
-                - sequence_length: Character count of LaTeX
-                - symbol_count: Count of LaTeX commands
-                - content_type: "formula"
-                - is_synthetic: True (born-digital rendered)
+            OriginalLabels: OriginalLabels with raw_labels containing latex_source,
+                formula_id, split, sequence_length, symbol_count, content_type,
+                and is_synthetic fields.
         """
         labels = OriginalLabels()
 
@@ -390,12 +385,12 @@ class Im2latexParser(BaseParser):
         Loads formulas and splits once, then processes all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset.
+            image_paths (list[Path]): List of absolute paths to image files.
+            config (dict[str, Any]): Dataset configuration dictionary.
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths.
         """
         # Ensure caches are loaded
         self._ensure_caches(dataset_path)

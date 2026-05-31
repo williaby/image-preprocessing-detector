@@ -106,10 +106,10 @@ class Midv500Parser(BaseParser):
         """Extract document ID from image path.
 
         Args:
-            image_path: Path to image file (e.g., .../01_alb_id/images/01_alb_id.tif)
+            image_path (Path): Path to image file (e.g., .../01_alb_id/images/01_alb_id.tif).
 
         Returns:
-            Document ID string (e.g., "01_alb_id") or None if not found
+            str | None: Document ID string (e.g., "01_alb_id") or None if not found.
         """
         # Document ID is the parent directory name (e.g., 01_alb_id, 02_aut_drvlic_new)
         # Path structure: {doc_id}/images/{image_file}
@@ -133,11 +133,11 @@ class Midv500Parser(BaseParser):
         """Load ground truth template JSON for document type.
 
         Args:
-            dataset_path: Root dataset path
-            doc_id: Document ID (e.g., "01_alb_id")
+            dataset_path (Path): Root dataset path.
+            doc_id (str): Document ID (e.g., "01_alb_id").
 
         Returns:
-            Template JSON data or None if not found
+            dict[str, Any] | None: Template JSON data or None if not found.
         """
         # Try multiple template file path patterns
         template_patterns = [
@@ -170,10 +170,10 @@ class Midv500Parser(BaseParser):
         """Extract all text values from template JSON.
 
         Args:
-            template_data: Template JSON with field## entries
+            template_data (dict[str, Any]): Template JSON with field## entries.
 
         Returns:
-            Concatenated text from all fields
+            str: Concatenated text from all fields.
         """
         text_parts = []
         for field_id in sorted(template_data.keys()):
@@ -191,10 +191,10 @@ class Midv500Parser(BaseParser):
         """Extract quadrilateral annotations from template JSON.
 
         Args:
-            template_data: Template JSON with field## entries containing quads
+            template_data (dict[str, Any]): Template JSON with field## entries containing quads.
 
         Returns:
-            List of layout detections with COCO bboxes
+            list[dict[str, Any]]: List of layout detections with COCO bboxes.
         """
         layout_detections = []
 
@@ -253,14 +253,14 @@ class Midv500Parser(BaseParser):
         """Parse MIDV-500 labels from path structure and template JSON.
 
         Args:
-            dataset_path: Root path of the MIDV-500 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the MIDV-500 dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with country_code, document_type in raw_labels,
-            text_content from template JSON, layout_detections from field quads,
-            and script_name set for Cyrillic countries
+            OriginalLabels: OriginalLabels with country_code, document_type in raw_labels,
+                text_content from template JSON, layout_detections from field quads,
+                and script_name set for Cyrillic countries.
         """
         labels = OriginalLabels()
 
