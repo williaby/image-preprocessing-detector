@@ -93,10 +93,9 @@ class DoclingLayoutProvider:
         """Initialize DoclingLayoutProvider.
 
         Args:
-            confidence_threshold: Minimum detection confidence (default: 0.3)
-            batch_size: Number of images per batch (default: 1, sequential)
-            device: Device to use (None for auto-detect, "cuda" or "cpu")
-        """
+            confidence_threshold (float): Minimum detection confidence (default: 0.3)
+            batch_size (int): Number of images per batch (default: 1, sequential)
+            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")"""
         self.confidence_threshold = confidence_threshold
         self.batch_size = batch_size
         self._device = device
@@ -140,8 +139,7 @@ class DoclingLayoutProvider:
         - torch + CUDA if device is "cuda"
 
         Returns:
-            True if provider can be used
-        """
+            bool: True if provider can be used"""
         if self._device_available is not None:
             return self._device_available
 
@@ -174,11 +172,10 @@ class DoclingLayoutProvider:
         """Check if this image should be processed.
 
         Args:
-            _image_path: Path to image file (unused)
+            _image_path (Path): Path to image file (unused)
 
         Returns:
-            True (processes all images by default)
-        """
+            bool: True (processes all images by default)"""
         return True
 
     def _ensure_loaded(self) -> None:
@@ -246,10 +243,10 @@ class DoclingLayoutProvider:
         """Enrich a single image with layout detection.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            EnrichmentData with layout_detections and content flags populated
+            EnrichmentData: EnrichmentData with layout_detections and content flags populated
 
         Raises:
             InferenceError: If inference fails
@@ -261,10 +258,10 @@ class DoclingLayoutProvider:
         """Enrich multiple images with layout detection.
 
         Args:
-            image_paths: List of image file paths
+            image_paths (list[Path]): List of image file paths
 
         Returns:
-            List of EnrichmentData in same order as image_paths
+            list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
             InferenceError: If batch inference fails
@@ -290,11 +287,10 @@ class DoclingLayoutProvider:
         """Process a single image through egret.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            EnrichmentData with layout detections
-        """
+            EnrichmentData: EnrichmentData with layout detections"""
         from PIL import Image as PILImage
 
         assert self._predictor is not None
@@ -338,12 +334,11 @@ class DoclingLayoutProvider:
         We convert to COCO xywh format and map labels via LayoutTaxonomy.
 
         Args:
-            raw_preds: List of prediction dicts from LayoutPredictor
-            taxonomy: LayoutTaxonomy instance for label mapping
+            raw_preds (list[dict[str, Any]]): List of prediction dicts from LayoutPredictor
+            taxonomy (Any): LayoutTaxonomy instance for label mapping
 
         Returns:
-            Tuple of (detection_list, set_of_canonical_classes)
-        """
+            tuple[list[dict[str, Any]], set[str]]: Tuple of (detection_list, set_of_canonical_classes)"""
         detections: list[dict[str, Any]] = []
         canonical_classes: set[str] = set()
 

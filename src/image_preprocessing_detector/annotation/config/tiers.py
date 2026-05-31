@@ -123,11 +123,10 @@ def get_tier_for_dataset(dataset_name: str) -> EnrichmentTier:
     """Determine the enrichment tier for a dataset.
 
     Args:
-        dataset_name: Name of the dataset
+        dataset_name (str): Name of the dataset
 
     Returns:
-        EnrichmentTier value for the dataset
-    """
+        EnrichmentTier: EnrichmentTier value for the dataset"""
     if dataset_name in TIER_0_DATASETS:
         return EnrichmentTier.TIER_0_EXACT
     if dataset_name in TIER_1_DATASETS:
@@ -140,11 +139,10 @@ def get_tier_0_flags(dataset_name: str) -> dict[str, Any] | None:
     """Get Tier 0 content flags for a dataset.
 
     Args:
-        dataset_name: Name of the dataset
+        dataset_name (str): Name of the dataset
 
     Returns:
-        Content flags dict if Tier 0, None otherwise
-    """
+        dict[str, Any] | None: Content flags dict if Tier 0, None otherwise"""
     return TIER_0_DATASETS.get(dataset_name)
 
 
@@ -152,11 +150,10 @@ def is_tier_0(dataset_name: str) -> bool:
     """Check if dataset is Tier 0 (exact by construction).
 
     Args:
-        dataset_name: Name of the dataset
+        dataset_name (str): Name of the dataset
 
     Returns:
-        True if Tier 0, False otherwise
-    """
+        bool: True if Tier 0, False otherwise"""
     return dataset_name in TIER_0_DATASETS
 
 
@@ -164,11 +161,10 @@ def is_tier_1(dataset_name: str) -> bool:
     """Check if dataset is Tier 1 (has COCO annotations).
 
     Args:
-        dataset_name: Name of the dataset
+        dataset_name (str): Name of the dataset
 
     Returns:
-        True if Tier 1, False otherwise
-    """
+        bool: True if Tier 1, False otherwise"""
     return dataset_name in TIER_1_DATASETS
 
 

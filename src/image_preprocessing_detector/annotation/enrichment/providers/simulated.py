@@ -76,11 +76,10 @@ class SimulatedInferenceProvider:
         """Initialize simulated provider.
 
         Args:
-            failure_rate: Probability of simulated inference failure (0.0-1.0)
-            seed: Random seed for reproducible outputs
-            simulate_latency: Whether to add artificial latency
-            latency_ms: Latency to add in milliseconds (if enabled)
-        """
+            failure_rate (float): Probability of simulated inference failure (0.0-1.0)
+            seed (int): Random seed for reproducible outputs
+            simulate_latency (bool): Whether to add artificial latency
+            latency_ms (int): Latency to add in milliseconds (if enabled)"""
         if not 0.0 <= failure_rate <= 1.0:
             raise ValueError(f"failure_rate must be 0.0-1.0, got {failure_rate}")
 
@@ -149,14 +148,13 @@ class SimulatedInferenceProvider:
         """Generate a deterministic value based on image path and field.
 
         Args:
-            image_path: Path to image
-            field_name: Name of the field being generated
-            min_val: Minimum value
-            max_val: Maximum value
+            image_path (Path): Path to image
+            field_name (str): Name of the field being generated
+            min_val (float): Minimum value
+            max_val (float): Maximum value
 
         Returns:
-            Deterministic float in [min_val, max_val]
-        """
+            float: Deterministic float in [min_val, max_val]"""
         hash_input = f"{image_path.name}:{field_name}:{self._seed}"
         hash_value = int(
             hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8], 16
@@ -218,10 +216,10 @@ class SimulatedInferenceProvider:
         """Enrich a single image with simulated data.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            EnrichmentData with simulated values
+            EnrichmentData: EnrichmentData with simulated values
 
         Raises:
             InferenceError: If simulated failure occurs
@@ -291,10 +289,10 @@ class SimulatedInferenceProvider:
         """Enrich multiple images in batch.
 
         Args:
-            image_paths: List of image paths
+            image_paths (list[Path]): List of image paths
 
         Returns:
-            List of EnrichmentData in same order as inputs
+            list[EnrichmentData]: List of EnrichmentData in same order as inputs
 
         Raises:
             InferenceError: If any simulated failure occurs

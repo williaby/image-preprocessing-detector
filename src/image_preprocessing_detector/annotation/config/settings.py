@@ -112,8 +112,7 @@ class AnnotationSettings:
             - ANNOTATION_SIGLIP_BATCH_SIZE
 
         Returns:
-            AnnotationSettings instance with values from environment
-        """
+            AnnotationSettings: AnnotationSettings instance with values from environment"""
 
         def get_path(key: str, default: str) -> Path:
             return Path(os.getenv(f"ANNOTATION_{key}", default))
@@ -168,10 +167,10 @@ class AnnotationSettings:
             ```
 
         Args:
-            config_path: Path to YAML configuration file
+            config_path (str | Path): Path to YAML configuration file
 
         Returns:
-            AnnotationSettings instance
+            AnnotationSettings: AnnotationSettings instance
 
         Raises:
             FileNotFoundError: If config file doesn't exist
@@ -225,8 +224,7 @@ class AnnotationSettings:
         """Validate settings and return list of issues.
 
         Returns:
-            List of validation error messages (empty if valid)
-        """
+            list[str]: List of validation error messages (empty if valid)"""
         issues: list[str] = []
 
         # Path validations (warnings only - may not exist yet)
@@ -271,8 +269,7 @@ class AnnotationSettings:
         """Convert settings to dictionary for serialization.
 
         Returns:
-            Dictionary representation of settings
-        """
+            dict[str, Any]: Dictionary representation of settings"""
         return {
             "e_drive_root": str(self.e_drive_root),
             "metadata_root": str(self.metadata_root),

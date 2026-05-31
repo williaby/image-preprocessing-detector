@@ -243,12 +243,12 @@ def validate_dataset_config(
     - Path existence (if settings provided and check_paths=True)
 
     Args:
-        config: DatasetConfig to validate
-        settings: Optional AnnotationSettings for path validation
-        check_paths: If True and settings provided, verify paths exist
+        config (DatasetConfig): DatasetConfig to validate
+        settings (AnnotationSettings | None): Optional AnnotationSettings for path validation
+        check_paths (bool): If True and settings provided, verify paths exist
 
     Returns:
-        ValidationResult with all messages
+        ValidationResult: ValidationResult with all messages
 
     Example:
         >>> result = validate_dataset_config(config)
@@ -500,12 +500,12 @@ def validate_all_configs(
     """Validate all dataset configurations.
 
     Args:
-        configs: Dictionary mapping dataset names to configs
-        settings: Optional settings for path validation
-        check_paths: Whether to verify paths exist
+        configs (dict[str, DatasetConfig]): Dictionary mapping dataset names to configs
+        settings (AnnotationSettings | None): Optional settings for path validation
+        check_paths (bool): Whether to verify paths exist
 
     Returns:
-        BatchValidationReport with all results
+        BatchValidationReport: BatchValidationReport with all results
 
     Example:
         >>> report = validate_all_configs(DATASET_CONFIGS)
@@ -534,10 +534,10 @@ def quick_validate(config: DatasetConfig | dict[str, Any]) -> bool:
     """Quick validation check for essential fields only.
 
     Args:
-        config: DatasetConfig or dict with config fields
+        config (DatasetConfig | dict[str, Any]): DatasetConfig or dict with config fields
 
     Returns:
-        True if essential fields are present and valid
+        bool: True if essential fields are present and valid
 
     Example:
         >>> if quick_validate(config):

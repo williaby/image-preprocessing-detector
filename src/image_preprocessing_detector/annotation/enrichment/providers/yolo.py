@@ -66,11 +66,10 @@ class YOLOProvider:
         """Initialize YOLOProvider.
 
         Args:
-            model_path: Path to YOLO checkpoint (e.g., "doclayout_yolo.pt")
-            confidence_threshold: Minimum detection confidence (default: 0.25)
-            batch_size: Batch size for inference (default: 8)
-            device: Device to use (None for auto-detect, "cuda" or "cpu")
-        """
+            model_path (Path | str | None): Path to YOLO checkpoint (e.g., "doclayout_yolo.pt")
+            confidence_threshold (float): Minimum detection confidence (default: 0.25)
+            batch_size (int): Batch size for inference (default: 8)
+            device (str | None): Device to use (None for auto-detect, "cuda" or "cpu")"""
         self.model_path = Path(model_path) if model_path else None
         self.confidence_threshold = confidence_threshold
         self.batch_size = batch_size
@@ -115,8 +114,7 @@ class YOLOProvider:
         - GPU available if device is "cuda"
 
         Returns:
-            True if provider can be used
-        """
+            bool: True if provider can be used"""
         if self._device_available is not None:
             return self._device_available
 
@@ -158,11 +156,10 @@ class YOLOProvider:
         images that already have layout annotations.
 
         Args:
-            _image_path: Path to image file (unused)
+            _image_path (Path): Path to image file (unused)
 
         Returns:
-            True (processes all images by default)
-        """
+            bool: True (processes all images by default)"""
         return True
 
     def _ensure_loaded(self) -> None:
@@ -200,10 +197,10 @@ class YOLOProvider:
         """Enrich a single image with layout detection.
 
         Args:
-            image_path: Path to image file
+            image_path (Path): Path to image file
 
         Returns:
-            EnrichmentData with layout_detections populated
+            EnrichmentData: EnrichmentData with layout_detections populated
 
         Raises:
             InferenceError: If inference fails
@@ -220,10 +217,10 @@ class YOLOProvider:
         - Memory usage is more efficient
 
         Args:
-            image_paths: List of image file paths
+            image_paths (list[Path]): List of image file paths
 
         Returns:
-            List of EnrichmentData in same order as image_paths
+            list[EnrichmentData]: List of EnrichmentData in same order as image_paths
 
         Raises:
             InferenceError: If batch inference fails
@@ -255,11 +252,10 @@ class YOLOProvider:
         """Process a single batch through YOLO.
 
         Args:
-            paths: List of image paths in this batch
+            paths (list[Path]): List of image paths in this batch
 
         Returns:
-            List of EnrichmentData with layout detections
-        """
+            list[EnrichmentData]: List of EnrichmentData with layout detections"""
         # Convert paths to strings for YOLO
         image_paths = [str(p) for p in paths]
 
@@ -285,11 +281,10 @@ class YOLOProvider:
         """Convert YOLO prediction to LayoutDetection dicts.
 
         Args:
-            prediction: YOLO prediction object
+            prediction (Any): YOLO prediction object
 
         Returns:
-            List of LayoutDetection dictionaries
-        """
+            list[dict[str, Any]]: List of LayoutDetection dictionaries"""
         detections: list[dict[str, Any]] = []
 
         # Extract boxes, classes, and confidences
