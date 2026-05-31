@@ -52,10 +52,10 @@ class ProgressCallback(Protocol):
         """Handle progress update.
 
         Args:
-            current: Current number of items processed
-            total: Total number of items to process
-            rate: Current processing rate (items/second)
-            dataset_name: Name of dataset being processed (optional)
+            current (int): Current number of items processed
+            total (int): Total number of items to process
+            rate (float): Current processing rate (items/second)
+            dataset_name (str | None): Name of dataset being processed (optional)
         """
 
 
@@ -64,12 +64,12 @@ class ProgressState:
     """State for tracking progress of a single dataset.
 
     Attributes:
-        dataset_name: Name of the dataset
-        total: Total items to process
-        current: Current items processed
-        start_time: When processing started
-        last_update: Last update timestamp
-        errors: Number of errors encountered
+        dataset_name (str): Name of the dataset
+        total (int): Total items to process
+        current (int): Current items processed
+        start_time (float): When processing started
+        last_update (float): Last update timestamp
+        errors (int): Number of errors encountered
     """
 
     dataset_name: str
@@ -114,9 +114,10 @@ class ProgressTracker:
     Provides progress tracking with optional callback for UI updates.
     Supports multi-dataset processing with per-dataset stats.
 
-    Attributes:
-        callback: Optional callback for progress updates
-        update_interval: Minimum seconds between callback invocations
+    Args:
+        callback (Callable[[int, int, float, str | None], None] | None): Optional
+            callback function for progress updates
+        update_interval (float): Minimum interval between updates (seconds)
     """
 
     def __init__(
@@ -124,12 +125,6 @@ class ProgressTracker:
         callback: Callable[[int, int, float, str | None], None] | None = None,
         update_interval: float = 0.5,
     ):
-        """Initialize progress tracker.
-
-        Args:
-            callback: Optional callback function for progress updates
-            update_interval: Minimum interval between updates (seconds)
-        """
         self.callback = callback
         self.update_interval = update_interval
 
@@ -142,8 +137,8 @@ class ProgressTracker:
         """Start tracking a new dataset.
 
         Args:
-            dataset_name: Name of the dataset
-            total: Total items to process
+            dataset_name (str): Name of the dataset
+            total (int): Total items to process
         """
         self._states[dataset_name] = ProgressState(
             dataset_name=dataset_name,
@@ -160,8 +155,8 @@ class ProgressTracker:
         """Update progress for current dataset.
 
         Args:
-            increment: Number of items completed
-            errors: Number of errors in this batch
+            increment (int): Number of items completed
+            errors (int): Number of errors in this batch
         """
         if self._current_dataset is None:
             return
@@ -180,10 +175,10 @@ class ProgressTracker:
         """Finish tracking for a dataset.
 
         Args:
-            dataset_name: Dataset to finish (default: current dataset)
+            dataset_name (str | None): Dataset to finish (default: current dataset)
 
         Returns:
-            Final ProgressState for the dataset
+            ProgressState | None: Final ProgressState for the dataset
         """
         name = dataset_name or self._current_dataset
         if name is None:
@@ -212,10 +207,10 @@ class ProgressTracker:
         """Get progress state for a dataset.
 
         Args:
-            dataset_name: Dataset name (default: current dataset)
+            dataset_name (str | None): Dataset name (default: current dataset)
 
         Returns:
-            ProgressState or None if not tracking
+            ProgressState | None: ProgressState or None if not tracking
         """
         name = dataset_name or self._current_dataset
         if name is None:
@@ -226,7 +221,7 @@ class ProgressTracker:
         """Get all progress states.
 
         Returns:
-            Dictionary mapping dataset names to ProgressState
+            dict[str, ProgressState]: Dictionary mapping dataset names to ProgressState
         """
         return dict(self._states)
 
@@ -234,7 +229,7 @@ class ProgressTracker:
         """Get summary statistics across all datasets.
 
         Returns:
-            Dictionary with aggregate statistics
+            dict[str, int | float]: Dictionary with aggregate statistics
         """
         total_items = sum(s.total for s in self._states.values())
         total_processed = sum(s.current for s in self._states.values())
@@ -280,10 +275,10 @@ def format_eta(eta_seconds: float | None) -> str:
     """Format ETA as human-readable string.
 
     Args:
-        eta_seconds: Estimated seconds remaining (or None)
+        eta_seconds (float | None): Estimated seconds remaining (or None)
 
     Returns:
-        Human-readable string like "2h 30m" or "unknown"
+        str: Human-readable string like "2h 30m" or "unknown"
     """
     if eta_seconds is None:
         return "unknown"

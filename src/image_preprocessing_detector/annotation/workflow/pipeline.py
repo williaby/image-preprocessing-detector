@@ -77,11 +77,11 @@ class ParsedSample:
     Contains the raw parsed data before ML enrichment.
 
     Attributes:
-        image_path: Absolute path to the image file
-        relative_path: Path relative to dataset root
-        file_hash: Full-file SHA256 hash
-        original_labels: Parsed labels from dataset source
-        dataset_name: Name of the source dataset
+        image_path (Path): Absolute path to the image file
+        relative_path (str): Path relative to dataset root
+        file_hash (str): Full-file SHA256 hash
+        original_labels (OriginalLabels): Parsed labels from dataset source
+        dataset_name (str): Name of the source dataset
     """
 
     image_path: Path
@@ -98,9 +98,9 @@ class EnrichedSample:
     Contains parsed data plus ML-derived enrichments.
 
     Attributes:
-        parsed: Original ParsedSample
-        enrichment: ML enrichment results
-        enrichment_errors: Any errors during enrichment
+        parsed (ParsedSample): Original ParsedSample
+        enrichment (EnrichmentData): ML enrichment results
+        enrichment_errors (list[str]): Any errors during enrichment
     """
 
     parsed: ParsedSample
@@ -113,14 +113,14 @@ class PipelineStats:
     """Statistics from pipeline execution.
 
     Attributes:
-        total_images: Total images submitted
-        success_count: Successfully processed images
-        error_count: Images with errors
-        cpu_time_seconds: Time spent in CPU stage
-        parse_time_seconds: Time spent in parse stage
-        gpu_time_seconds: Time spent in GPU stage
-        io_time_seconds: Time spent in IO stage
-        images_per_second: Throughput metric
+        total_images (int): Total images submitted
+        success_count (int): Successfully processed images
+        error_count (int): Images with errors
+        cpu_time_seconds (float): Time spent in CPU stage
+        parse_time_seconds (float): Time spent in parse stage
+        gpu_time_seconds (float): Time spent in GPU stage
+        io_time_seconds (float): Time spent in IO stage
+        images_per_second (float): Throughput metric
     """
 
     total_images: int = 0
@@ -138,10 +138,10 @@ class PipelineResult:
     """Result of processing a dataset through the pipeline.
 
     Attributes:
-        dataset_name: Name of processed dataset
-        samples: List of processed SampleMetadata
-        errors: List of (path, error) tuples for failed images
-        stats: Pipeline execution statistics
+        dataset_name (str): Name of processed dataset
+        samples (list[SampleMetadata]): List of processed SampleMetadata
+        errors (list[tuple[Path, str]]): List of (path, error) tuples for failed images
+        stats (PipelineStats): Pipeline execution statistics
     """
 
     dataset_name: str
@@ -177,13 +177,13 @@ def _parse_single_image(
     It must be a top-level function (not a method) for pickling.
 
     Args:
-        image_path: Absolute path to the image
-        dataset_path: Root path of the dataset
-        dataset_name: Name of the source dataset
-        _parser_config: Configuration for the parser (unused, parsing happens in main)
+        image_path (Path): Absolute path to the image
+        dataset_path (Path): Root path of the dataset
+        dataset_name (str): Name of the source dataset
+        _parser_config (dict[str, Any]): Configuration for the parser (unused, parsing happens in main)
 
     Returns:
-        ParsedSample on success, or (path, error_message) tuple on failure
+        ParsedSample | tuple[Path, str]: ParsedSample on success, or (path, error_message) tuple on failure
     """
     try:
         # Compute file hash (P0-1 fix: full-file SHA256)
@@ -230,11 +230,11 @@ class AnnotationPipeline:
     - Maintain internal state
     - Use non-picklable objects
 
-    Attributes:
-        settings: Configuration settings
-        parsers: Parser registry for dataset-specific parsing
-        enrichment: Enrichment manager for ML inference
-        checkpoints: Checkpoint manager for resumability
+    Args:
+        settings (AnnotationSettings): Annotation configuration settings
+        parser_registry (ParserRegistry): Registry of dataset parsers
+        enrichment_manager (EnrichmentManager): Manager for ML enrichment providers
+        checkpoint_manager (CheckpointManager): Manager for checkpointing
     """
 
     def __init__(
@@ -244,14 +244,6 @@ class AnnotationPipeline:
         enrichment_manager: EnrichmentManager,
         checkpoint_manager: CheckpointManager,
     ):
-        """Initialize the pipeline.
-
-        Args:
-            settings: Annotation configuration settings
-            parser_registry: Registry of dataset parsers
-            enrichment_manager: Manager for ML enrichment providers
-            checkpoint_manager: Manager for checkpointing
-        """
         self.settings = settings
         self.parsers = parser_registry
         self.enrichment = enrichment_manager
@@ -279,12 +271,12 @@ class AnnotationPipeline:
         """Process dataset through three-stage pipeline.
 
         Args:
-            dataset_name: Name of the dataset
-            image_paths: List of absolute paths to images
-            dataset_config: Dataset configuration dictionary
+            dataset_name (str): Name of the dataset
+            image_paths (list[Path]): List of absolute paths to images
+            dataset_config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            PipelineResult with processed samples and statistics
+            PipelineResult: PipelineResult with processed samples and statistics
         """
         start_time = time.perf_counter()
 
@@ -634,10 +626,10 @@ class AnnotationPipeline:
         """Create SampleMetadata from enriched sample.
 
         Args:
-            sample: EnrichedSample with parsed data and enrichment
+            sample (EnrichedSample): EnrichedSample with parsed data and enrichment
 
         Returns:
-            Complete SampleMetadata instance
+            SampleMetadata: Complete SampleMetadata instance
         """
         from datetime import datetime
 
@@ -700,11 +692,11 @@ class AnnotationPipeline:
         """Find index to resume from based on last processed path.
 
         Args:
-            image_paths: List of image paths
-            last_path: Relative path of last processed image
+            image_paths (list[Path]): List of image paths
+            last_path (str): Relative path of last processed image
 
         Returns:
-            Index to resume from (0 if not found)
+            int: Index to resume from (0 if not found)
         """
         for i, path in enumerate(image_paths):
             if str(path).endswith(last_path) or last_path in str(path):
@@ -717,11 +709,11 @@ class AnnotationPipeline:
         """Yield successive batches from items.
 
         Args:
-            items: List of items to batch
-            size: Batch size
+            items (list[Any]): List of items to batch
+            size (int): Batch size
 
         Yields:
-            Batches of items
+            list[Any]: Successive batches of items
         """
         for i in range(0, len(items), size):
             yield items[i : i + size]

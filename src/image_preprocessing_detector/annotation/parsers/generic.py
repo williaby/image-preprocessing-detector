@@ -59,17 +59,12 @@ class GenericParser(BaseParser):
         - Preserves relative path for traceability
         - Supports all image formats
 
-    Attributes:
-        _datasets: List of dataset names this parser handles
+    Args:
+        datasets (list[str] | None): Optional custom list of dataset names.
+            Defaults to GENERIC_DATASETS if not provided.
     """
 
     def __init__(self, datasets: list[str] | None = None) -> None:
-        """Initialize GenericParser.
-
-        Args:
-            datasets: Optional custom list of dataset names. Defaults to
-                     GENERIC_DATASETS if not provided.
-        """
         super().__init__()
         self._datasets = datasets or GENERIC_DATASETS
 
@@ -90,15 +85,12 @@ class GenericParser(BaseParser):
         Additional metadata is expected to be added by enrichment providers.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary with optional fields:
-                - name: Dataset identifier
-                - domain: Document domain (e.g., 'ADM', 'FIN', 'EDU')
-                - capture_method: How document was captured
+            dataset_path (Path): Root path of the dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary with optional fields: - name: Dataset identifier - domain: Document domain (e.g., 'ADM', 'FIN', 'EDU') - capture_method: How document was captured
 
         Returns:
-            OriginalLabels with raw_labels containing:
+            OriginalLabels: OriginalLabels with raw_labels containing:
                 - source: 'generic'
                 - dataset: Dataset name
                 - domain: Document domain (if available)
@@ -160,10 +152,10 @@ class GenericParser(BaseParser):
         """Extract dataset-specific metadata where possible.
 
         Args:
-            labels: OriginalLabels to update
-            dataset_name: Name of the dataset
-            _image_path: Path to the image (reserved for future per-image logic)
-            _config: Dataset configuration (reserved for future per-dataset logic)
+            labels (OriginalLabels): OriginalLabels to update
+            dataset_name (str): Name of the dataset
+            _image_path (Path): Path to the image (reserved for future per-image logic)
+            _config (dict[str, Any]): Dataset configuration (reserved for future per-dataset logic)
         """
         if labels.raw_labels is None:
             return
@@ -200,12 +192,12 @@ class GenericParser(BaseParser):
         there are no shared annotation files to optimize access for.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset
+            image_paths (list[Path]): List of absolute paths to image files
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths
         """
         return [self.parse(dataset_path, p, config) for p in image_paths]
 
@@ -214,7 +206,7 @@ def register_generic_parser(registry: Any) -> None:
     """Register the generic parser in the parser registry.
 
     Args:
-        registry: ParserRegistry instance to register with
+        registry (Any): ParserRegistry instance to register with
     """
     parser = GenericParser()
     registry.register(parser)

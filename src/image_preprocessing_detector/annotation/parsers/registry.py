@@ -51,13 +51,9 @@ class ParserRegistry:
         The registry is designed for single-threaded registration
         during initialization, followed by multi-threaded read access.
         Do not register parsers after concurrent read access begins.
-
-    Attributes:
-        _parsers: Internal mapping of dataset names to parsers
     """
 
     def __init__(self) -> None:
-        """Initialize an empty parser registry."""
         self._parsers: dict[str, DatasetParser] = {}
 
     def register(self, parser: DatasetParser) -> None:
@@ -67,7 +63,7 @@ class ParserRegistry:
         datasets it handles. Each dataset name is registered.
 
         Args:
-            parser: Parser instance implementing DatasetParser protocol
+            parser (DatasetParser): Parser instance implementing DatasetParser protocol
 
         Raises:
             ValueError: If a parser is already registered for any dataset name
@@ -94,10 +90,10 @@ class ParserRegistry:
         Useful for testing or dynamic parser replacement.
 
         Args:
-            dataset_name: Dataset name to unregister
+            dataset_name (str): Dataset name to unregister
 
         Returns:
-            True if a parser was unregistered, False if not found
+            bool: True if a parser was unregistered, False if not found
         """
         if dataset_name in self._parsers:
             del self._parsers[dataset_name]
@@ -108,10 +104,10 @@ class ParserRegistry:
         """Get parser for a dataset.
 
         Args:
-            dataset_name: Name of the dataset (as in DATASET_CONFIGS)
+            dataset_name (str): Name of the dataset (as in DATASET_CONFIGS)
 
         Returns:
-            DatasetParser instance, or None if not found
+            DatasetParser | None: DatasetParser instance, or None if not found
         """
         return self._parsers.get(dataset_name)
 
@@ -119,10 +115,10 @@ class ParserRegistry:
         """Check if a parser is registered for a dataset.
 
         Args:
-            dataset_name: Name of the dataset
+            dataset_name (str): Name of the dataset
 
         Returns:
-            True if a parser is registered
+            bool: True if a parser is registered
         """
         return dataset_name in self._parsers
 
@@ -130,7 +126,7 @@ class ParserRegistry:
         """List all registered dataset names.
 
         Returns:
-            Sorted list of dataset names
+            list[str]: Sorted list of dataset names
         """
         return sorted(self._parsers.keys())
 
@@ -138,7 +134,7 @@ class ParserRegistry:
         """List all registered parsers with their datasets.
 
         Returns:
-            List of (dataset_name, parser_class_name) tuples
+            list[tuple[str, str]]: List of (dataset_name, parser_class_name) tuples
         """
         return [
             (name, type(parser).__name__)
@@ -161,7 +157,7 @@ class ParserRegistry:
         All parsers from the parsers subpackages are registered.
 
         Returns:
-            ParserRegistry with all standard parsers
+            ParserRegistry: ParserRegistry with all standard parsers
 
         Example:
             >>> registry = ParserRegistry.create_default()
@@ -246,7 +242,7 @@ class ParserRegistry:
         """Create an empty registry for testing.
 
         Returns:
-            Empty ParserRegistry
+            ParserRegistry: Empty ParserRegistry
         """
         return cls()
 

@@ -72,12 +72,12 @@ class Anyphotodoc6300Parser(BaseParser):
         """Parse AnyPhotoDoc6300 labels from directory structure.
 
         Args:
-            dataset_path: Root path of the AnyPhotoDoc6300 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the AnyPhotoDoc6300 dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with dewarping metadata in raw_labels
+            OriginalLabels: OriginalLabels with dewarping metadata in raw_labels
         """
         labels = OriginalLabels()
 

@@ -116,12 +116,12 @@ class Doc3DParser(BaseParser):
         """Parse Doc3D labels from filename pattern.
 
         Args:
-            dataset_path: Root path of the Doc3D dataset.
-            image_path: Absolute path to the image file being processed.
-            config: Dataset configuration dictionary (unused).
+            dataset_path (Path): Root path of the Doc3D dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with synthetic dewarping metadata in raw_labels.
+            OriginalLabels: OriginalLabels with synthetic dewarping metadata in raw_labels.
         """
         labels = OriginalLabels()
 

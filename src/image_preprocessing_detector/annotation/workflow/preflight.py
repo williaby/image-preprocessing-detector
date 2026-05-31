@@ -66,12 +66,12 @@ class CheckResult:
     """Result of a single pre-flight check.
 
     Attributes:
-        name: Check name
-        passed: Whether check passed
-        category: Check category
-        severity: Failure severity (if failed)
-        message: Human-readable message
-        details: Additional details
+        name (str): Check name
+        passed (bool): Whether check passed
+        category (CheckCategory): Check category
+        severity (CheckSeverity): Failure severity (if failed)
+        message (str): Human-readable message
+        details (dict[str, Any]): Additional details
     """
 
     name: str
@@ -98,10 +98,10 @@ class PreflightResult:
     """Aggregated result of all pre-flight checks.
 
     Attributes:
-        passed: Whether all critical checks passed
-        checks: Individual check results
-        warnings: List of warning messages
-        errors: List of error messages
+        passed (bool): Whether all critical checks passed
+        checks (list[CheckResult]): Individual check results
+        warnings (list[str]): List of warning messages
+        errors (list[str]): List of error messages
     """
 
     passed: bool = True
@@ -125,7 +125,7 @@ class PreflightResult:
         """Add a check result.
 
         Args:
-            check: Check result to add
+            check (CheckResult): Check result to add
         """
         self.checks.append(check)
 
@@ -154,11 +154,15 @@ class PreflightConfig:
     """Configuration for pre-flight checks.
 
     Attributes:
-        min_disk_space_gb: Minimum free disk space required
-        check_write_permission: Whether to verify write permissions
-        check_model_availability: Whether to verify model files
-        check_provider_connectivity: Whether to check external providers
-        timeout_seconds: Timeout for connectivity checks
+        min_disk_space_gb (float): Minimum free disk space required
+        check_write_permission (bool): Whether to verify write permissions
+        check_model_availability (bool): Whether to verify model files
+        check_provider_connectivity (bool): Whether to check external providers
+        timeout_seconds (float): Timeout for connectivity checks
+        required_read_paths (list[Path]): Paths that must be readable
+        required_write_paths (list[Path]): Paths that must be writable
+        model_paths (list[Path]): Model files to check
+        provider_names (list[str]): Provider names to check
     """
 
     min_disk_space_gb: float = 10.0
@@ -185,14 +189,12 @@ class PreflightChecker:
 
     Runs a series of validation checks before starting annotation
     operations to catch configuration issues early.
+
+    Args:
+        config (PreflightConfig | None): Pre-flight configuration
     """
 
     def __init__(self, config: PreflightConfig | None = None) -> None:
-        """Initialize pre-flight checker.
-
-        Args:
-            config: Pre-flight configuration
-        """
         self.config = config or PreflightConfig()
         self._custom_checks: list[Callable[[PreflightResult], None]] = []
 
@@ -203,7 +205,8 @@ class PreflightChecker:
         """Register a custom pre-flight check.
 
         Args:
-            check_fn: Check function that takes PreflightResult and adds checks
+            check_fn (Callable[[PreflightResult], None]): Check function that takes
+                PreflightResult and adds checks
         """
         self._custom_checks.append(check_fn)
 
@@ -215,11 +218,11 @@ class PreflightChecker:
         """Check available disk space.
 
         Args:
-            path: Path to check disk space for
-            min_gb: Minimum required GB (uses config default if None)
+            path (Path): Path to check disk space for
+            min_gb (float | None): Minimum required GB (uses config default if None)
 
         Returns:
-            Check result
+            CheckResult: Check result
         """
         min_required = min_gb or self.config.min_disk_space_gb
 
@@ -273,10 +276,10 @@ class PreflightChecker:
         """Check if a path is readable.
 
         Args:
-            path: Path to check
+            path (Path): Path to check
 
         Returns:
-            Check result
+            CheckResult: Check result
         """
         name = f"path_readable:{path.name}"
 
@@ -312,10 +315,10 @@ class PreflightChecker:
         """Check if a path is writable.
 
         Args:
-            path: Path to check (creates parent if needed)
+            path (Path): Path to check (creates parent if needed)
 
         Returns:
-            Check result
+            CheckResult: Check result
         """
         name = f"path_writable:{path.name}"
 
@@ -376,10 +379,10 @@ class PreflightChecker:
         """Check if a model file exists and is readable.
 
         Args:
-            path: Path to model file
+            path (Path): Path to model file
 
         Returns:
-            Check result
+            CheckResult: Check result
         """
         name = f"model:{path.name}"
 
@@ -438,12 +441,12 @@ class PreflightChecker:
         """Check dataset directory structure.
 
         Args:
-            path: Dataset path
-            required_subdirs: List of required subdirectory names
-            required_files: List of required file names
+            path (Path): Dataset path
+            required_subdirs (list[str] | None): List of required subdirectory names
+            required_files (list[str] | None): List of required file names
 
         Returns:
-            Check result
+            CheckResult: Check result
         """
         name = f"dataset_structure:{path.name}"
 
@@ -499,10 +502,10 @@ class PreflightChecker:
         Supports YOLO and SigLIP providers.
 
         Args:
-            provider_name: Name of provider ("yolo" or "siglip")
+            provider_name (str): Name of provider ("yolo" or "siglip")
 
         Returns:
-            Check result indicating provider availability
+            CheckResult: Check result indicating provider availability
         """
         name = f"provider:{provider_name}"
 
@@ -671,12 +674,12 @@ class PreflightChecker:
         """Run all pre-flight checks.
 
         Args:
-            dataset_path: Path to dataset (optional)
-            output_path: Path for output files (optional)
-            checkpoint_path: Path for checkpoints (optional)
+            dataset_path (Path | None): Path to dataset (optional)
+            output_path (Path | None): Path for output files (optional)
+            checkpoint_path (Path | None): Path for checkpoints (optional)
 
         Returns:
-            Aggregated pre-flight result
+            PreflightResult: Aggregated pre-flight result
         """
         result = PreflightResult()
 
@@ -711,13 +714,13 @@ def run_preflight_checks(
     """Convenience function to run pre-flight checks.
 
     Args:
-        dataset_path: Path to dataset
-        output_path: Path for output files
-        checkpoint_path: Path for checkpoints
-        config: Pre-flight configuration
+        dataset_path (Path | None): Path to dataset
+        output_path (Path | None): Path for output files
+        checkpoint_path (Path | None): Path for checkpoints
+        config (PreflightConfig | None): Pre-flight configuration
 
     Returns:
-        Pre-flight result
+        PreflightResult: Pre-flight result
 
     Example:
         >>> result = run_preflight_checks(
