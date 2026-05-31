@@ -113,7 +113,15 @@ class TeacherUsageContext:
 
 
 class OutcomeLogger:
-    """Logs processing outcomes with sampling support."""
+    """Logs processing outcomes with sampling support.
+
+    Args:
+        logger (Any | None): Structlog logger instance.
+        sample_rate (float): Sampling rate for single document mode (0.0-1.0).
+        batch_sample_rate (float): Sampling rate for batch mode (typically lower).
+        always_log_errors (bool): Always log errors regardless of sampling.
+        always_log_teacher (bool): Always log teacher usage regardless of sampling.
+    """
 
     def __init__(
         self,
@@ -123,15 +131,6 @@ class OutcomeLogger:
         always_log_errors: bool = True,
         always_log_teacher: bool = True,
     ) -> None:
-        """Initialize outcome logger.
-
-        Args:
-            logger: Structlog logger instance.
-            sample_rate: Sampling rate for single document mode (0.0-1.0).
-            batch_sample_rate: Sampling rate for batch mode (typically lower).
-            always_log_errors: Always log errors regardless of sampling.
-            always_log_teacher: Always log teacher usage regardless of sampling.
-        """
         self.logger = logger or get_logger(__name__)
         self.sample_rate = sample_rate
         self.batch_sample_rate = batch_sample_rate
@@ -157,7 +156,7 @@ class OutcomeLogger:
         """Log a page processing outcome.
 
         Args:
-            outcome: Page outcome data.
+            outcome (PageOutcome): Page outcome data.
         """
         is_error = outcome.error is not None
         is_teacher = outcome.model_selection != ModelSelection.STUDENT_ONLY
@@ -200,7 +199,7 @@ class OutcomeLogger:
         """Log teacher model usage context.
 
         Args:
-            context: Teacher usage context.
+            context (TeacherUsageContext): Teacher usage context.
         """
         if context.blocked:
             log_method = self.logger.warning
@@ -242,12 +241,12 @@ class OutcomeLogger:
         """Log text gate decision.
 
         Args:
-            document_id: Document identifier.
-            page_index: Page number.
-            decision: Gate decision.
-            confidence: Decision confidence.
-            metrics: Gate metrics (stroke density, edge density, etc.).
-            processing_time_ms: Processing time.
+            document_id (str): Document identifier.
+            page_index (int): Page number.
+            decision (GateDecision): Gate decision.
+            confidence (float): Decision confidence.
+            metrics (dict[str, float]): Gate metrics (stroke density, edge density, etc.).
+            processing_time_ms (float): Processing time.
         """
         if not self._should_log():
             return
@@ -276,14 +275,14 @@ class OutcomeLogger:
         """Log correction application outcome.
 
         Args:
-            document_id: Document identifier.
-            page_index: Page number.
-            correction_type: Type of correction (deskew, contrast, etc.).
-            applied: Whether correction was applied.
-            reason: Reason for decision.
-            before_score: Quality score before correction.
-            after_score: Quality score after correction.
-            processing_time_ms: Processing time.
+            document_id (str): Document identifier.
+            page_index (int): Page number.
+            correction_type (str): Type of correction (deskew, contrast, etc.).
+            applied (bool): Whether correction was applied.
+            reason (str): Reason for decision.
+            before_score (float | None): Quality score before correction.
+            after_score (float | None): Quality score after correction.
+            processing_time_ms (float | None): Processing time.
         """
         if not self._should_log():
             return
@@ -314,11 +313,11 @@ class OutcomeLogger:
         """Context manager for batch processing mode.
 
         Args:
-            batch_id: Unique batch identifier.
-            total_files: Total number of files in batch.
+            batch_id (str): Unique batch identifier.
+            total_files (int): Total number of files in batch.
 
         Yields:
-            Self with batch mode enabled.
+            OutcomeLogger: Self with batch mode enabled.
         """
         self._batch_mode = True
         self._batch_id = batch_id
@@ -419,11 +418,11 @@ def get_outcome_logger(
     """Get an outcome logger with configuration from environment.
 
     Args:
-        sample_rate: Override sample rate for single docs.
-        batch_sample_rate: Override sample rate for batches.
+        sample_rate (float | None): Override sample rate for single docs.
+        batch_sample_rate (float | None): Override sample rate for batches.
 
     Returns:
-        Configured OutcomeLogger.
+        OutcomeLogger: Configured OutcomeLogger.
     """
     config = get_logging_config()
 
@@ -458,13 +457,16 @@ def timed_operation(
     """Context manager for timing operations.
 
     Args:
-        operation_name: Name of the operation.
-        logger: Logger instance.
-        log_on_complete: Log when operation completes.
-        **context: Additional context for logging.
+        operation_name (str): Name of the operation.
+        logger (Any | None): Logger instance.
+        log_on_complete (bool): Log when operation completes.
+        **context (Any): Additional context for logging.
 
     Yields:
-        TimingResult that will be populated on exit.
+        TimingResult: TimingResult that will be populated on exit.
+
+    Raises:
+        Exception: Re-raises any exception from the wrapped block.
     """
     result = TimingResult(duration_ms=0.0, success=False)
     start_time = time.perf_counter()
