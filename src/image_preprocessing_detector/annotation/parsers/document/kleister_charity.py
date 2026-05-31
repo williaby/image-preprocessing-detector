@@ -87,12 +87,12 @@ class KleisterCharityParser(BaseParser):
         """Load per-document labels from JSON sidecar file.
 
         Args:
-            dataset_path: Root path of the dataset
-            split: Split name (train, dev-0, test-A)
-            doc_id: MD5 document identifier
+            dataset_path (Path): Root path of the dataset
+            split (str): Split name (train, dev-0, test-A)
+            doc_id (str): MD5 document identifier
 
         Returns:
-            Dict of label key->value, empty dict if sidecar not found
+            dict[str, Any]: Dict of label key->value, empty dict if sidecar not found
         """
         cache_key = f"{split}/{doc_id}"
         if cache_key in self._labels_cache:
@@ -123,12 +123,12 @@ class KleisterCharityParser(BaseParser):
         """Parse labels from rendered page image filename.
 
         Args:
-            dataset_path: Root path of the Kleister Charity dataset
-            image_path: Absolute path to the rendered page image
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the Kleister Charity dataset
+            image_path (Path): Absolute path to the rendered page image
+            config (dict[str, Any]): Dataset configuration dictionary
 
         Returns:
-            OriginalLabels with document metadata in raw_labels
+            OriginalLabels: OriginalLabels with document metadata in raw_labels
         """
         labels = OriginalLabels()
         labels.language_code = "en"

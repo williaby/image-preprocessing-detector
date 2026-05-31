@@ -84,12 +84,12 @@ class Nara1950CensusParser(BaseParser):
         """Parse labels from NARA census image filename.
 
         Args:
-            dataset_path: Root path of the NARA 1950 Census dataset
-            image_path: Absolute path to the census page image
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the NARA 1950 Census dataset.
+            image_path (Path): Absolute path to the census page image.
+            config (dict[str, Any]): Dataset configuration dictionary.
 
         Returns:
-            OriginalLabels with census metadata in raw_labels
+            OriginalLabels: OriginalLabels with census metadata in raw_labels.
         """
         labels = OriginalLabels()
         labels.language_code = "en"

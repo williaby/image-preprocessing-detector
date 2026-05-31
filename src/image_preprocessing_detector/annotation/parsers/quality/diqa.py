@@ -102,18 +102,15 @@ class DIQAParser(BaseParser):
         folder and stores appropriate metadata for layer 2 enrichment.
 
         Args:
-            dataset_path: Root path of the DIQA-5000 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the DIQA-5000 dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with:
-            - diqa_overall, diqa_sharpness, diqa_color_fidelity, diqa_mos
-            - diqa_original_image (reference to paired image)
-            - raw_labels with is_synthetic_degradation, base_capture_method, paired_image
-
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
+            OriginalLabels: OriginalLabels with diqa_overall, diqa_sharpness,
+                diqa_color_fidelity, diqa_mos, diqa_original_image; and raw_labels
+                with is_synthetic_degradation, base_capture_method, paired_image.
+                Returns empty OriginalLabels if parsing fails.
         """
         labels = OriginalLabels()
 

@@ -73,16 +73,13 @@ class OcrQualityParser(BaseParser):
         """Parse OCR-Quality labels from Parquet or JSON file.
 
         Args:
-            dataset_path: Root path of the OCR-Quality dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the OCR-Quality dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with ocr_quality_score, ocr_quality_source,
-            and ocr_quality_text populated
-
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
+            OriginalLabels: OriginalLabels with ocr_quality_score, ocr_quality_source,
+                and ocr_quality_text populated. Returns empty OriginalLabels if parsing fails.
         """
         labels = OriginalLabels()
 

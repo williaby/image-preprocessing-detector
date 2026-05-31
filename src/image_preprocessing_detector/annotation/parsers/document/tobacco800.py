@@ -65,12 +65,12 @@ class Tobacco800Parser(BaseParser):
         """Parse Tobacco800 labels from directory structure.
 
         Args:
-            dataset_path: Root path of the Tobacco800 dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the Tobacco800 dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with basic metadata in raw_labels
+            OriginalLabels: OriginalLabels with basic metadata in raw_labels.
         """
         labels = OriginalLabels()
 

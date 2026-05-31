@@ -114,10 +114,10 @@ class FinanceBenchParser(BaseParser):
         """Load document information from JSONL file.
 
         Args:
-            dataset_path: Root path of the FinanceBench dataset
+            dataset_path (Path): Root path of the FinanceBench dataset
 
         Returns:
-            Dict mapping doc_name to document metadata
+            dict[str, dict[str, Any]]: Dict mapping doc_name to document metadata
         """
         if self._doc_info_cache is not None:
             return self._doc_info_cache
@@ -148,10 +148,10 @@ class FinanceBenchParser(BaseParser):
         """Load evidence page numbers from Q&A data.
 
         Args:
-            dataset_path: Root path of the FinanceBench dataset
+            dataset_path (Path): Root path of the FinanceBench dataset
 
         Returns:
-            Dict mapping doc_name to set of evidence page numbers
+            dict[str, set[int]]: Dict mapping doc_name to set of evidence page numbers
         """
         if self._evidence_pages_cache is not None:
             return self._evidence_pages_cache
@@ -186,10 +186,10 @@ class FinanceBenchParser(BaseParser):
         """Parse metadata from image filename.
 
         Args:
-            image_path: Path to the image file
+            image_path (Path): Path to the image file
 
         Returns:
-            Dict with company, period, doc_type, page_num or None if no match
+            dict[str, Any] | None: Dict with company, period, doc_type, page_num or None if no match
         """
         filename = image_path.name
         match = self.FILENAME_PATTERN.match(filename)
@@ -226,12 +226,12 @@ class FinanceBenchParser(BaseParser):
         """Parse FinanceBench labels from filename and metadata files.
 
         Args:
-            dataset_path: Root path of the FinanceBench dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the FinanceBench dataset
+            image_path (Path): Absolute path to the image file being processed
+            config (dict[str, Any]): Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with document metadata in raw_labels
+            OriginalLabels: OriginalLabels with document metadata in raw_labels
         """
         labels = OriginalLabels()
 

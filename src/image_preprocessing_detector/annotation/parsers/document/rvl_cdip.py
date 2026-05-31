@@ -136,15 +136,15 @@ class RvlCdipParser(BaseParser):
         """Parse RVL-CDIP labels from filename, layout annotations, and OCR text.
 
         Args:
-            dataset_path: Root path of the RVL-CDIP dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (optional)
-                - extract_layout: bool (default True) - Extract layout annotations
-                - extract_ocr: bool (default True) - Extract OCR text
+            dataset_path (Path): Root path of the RVL-CDIP dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (optional).
+                extract_layout (bool): Default True - Extract layout annotations.
+                extract_ocr (bool): Default True - Extract OCR text.
 
         Returns:
-            OriginalLabels with document_class, document_class_id, document_type,
-            layout_detections, and text_content populated in raw_labels
+            OriginalLabels: OriginalLabels with document_class, document_class_id,
+                document_type, layout_detections, and text_content populated in raw_labels.
         """
         labels = OriginalLabels()
 
@@ -201,12 +201,12 @@ class RvlCdipParser(BaseParser):
         """Extract layout annotations from COCO JSON batch files.
 
         Args:
-            filename: Image filename (e.g., "rvl_advertisement_0000.jpg")
-            dataset_path: Root path of the RVL-CDIP dataset
+            filename (str): Image filename (e.g., "rvl_advertisement_0000.jpg").
+            dataset_path (Path): Root path of the RVL-CDIP dataset.
 
         Returns:
-            List of layout detections with bounding boxes and class labels,
-            or None if no annotations found
+            list[dict[str, Any]] | None: List of layout detections with bounding boxes
+                and class labels, or None if no annotations found.
         """
         # Determine annotation directory path
         # Try multiple possible paths for flexibility
@@ -282,12 +282,12 @@ class RvlCdipParser(BaseParser):
         """Extract OCR text from JSONL batch files.
 
         Args:
-            filename: Image filename (e.g., "rvl_advertisement_0000.jpg")
-            dataset_path: Root path of the RVL-CDIP dataset
+            filename (str): Image filename (e.g., "rvl_advertisement_0000.jpg").
+            dataset_path (Path): Root path of the RVL-CDIP dataset.
 
         Returns:
-            Dictionary with full_text, confidence, and provenance metadata,
-            or None if no OCR found
+            dict[str, Any] | None: Dictionary with full_text, confidence, and provenance
+                metadata, or None if no OCR found.
         """
         # Determine annotation directory path
         possible_paths = [

@@ -77,16 +77,14 @@ class DibcoParser(BaseParser):
         """Parse DIBCO metadata from directory structure.
 
         Args:
-            dataset_path: Root path of the DIBCO dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the DIBCO dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with raw_labels containing dibco_year, document_type,
-            has_handwriting, is_ground_truth, has_ground_truth, and ground_truth_path
-
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
+            OriginalLabels: OriginalLabels with raw_labels containing dibco_year,
+                document_type, has_handwriting, is_ground_truth, has_ground_truth,
+                and ground_truth_path. Returns empty OriginalLabels if parsing fails.
         """
         labels = OriginalLabels()
 

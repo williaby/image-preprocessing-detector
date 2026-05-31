@@ -43,7 +43,7 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     """Register all document parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with.
     """
     from .document_haystack import DocumentHaystackParser
     from .financebench import FinanceBenchParser

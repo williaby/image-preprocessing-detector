@@ -33,7 +33,7 @@ def register_quality_parsers(registry: ParserRegistry) -> None:
     """Register all quality parsers with the registry.
 
     Args:
-        registry: ParserRegistry instance to register parsers with
+        registry (ParserRegistry): ParserRegistry instance to register parsers with.
     """
     registry.register(DIQAParser())
     registry.register(SmartDocParser())

@@ -150,10 +150,10 @@ class OhrBenchParser(BaseParser):
         Builds an index mapping image names to metadata records.
 
         Args:
-            dataset_path: Local dataset path (used as cache_dir)
+            dataset_path (Path): Local dataset path (used as cache_dir).
 
         Returns:
-            True if dataset loaded successfully, False otherwise
+            bool: True if dataset loaded successfully, False otherwise.
         """
         if OhrBenchParser._cache_initialized:
             return OhrBenchParser._hf_dataset_cache is not None
@@ -183,10 +183,10 @@ class OhrBenchParser(BaseParser):
         """Try to load dataset from HuggingFace or local Arrow files.
 
         Args:
-            dataset_path: Local dataset path
+            dataset_path (Path): Local dataset path.
 
         Returns:
-            Loaded dataset or None if loading fails
+            Any | None: Loaded dataset or None if loading fails.
         """
         from datasets import load_dataset
 
@@ -207,10 +207,10 @@ class OhrBenchParser(BaseParser):
         """Try to load dataset from local Arrow files.
 
         Args:
-            dataset_path: Local dataset path
+            dataset_path (Path): Local dataset path.
 
         Returns:
-            Loaded dataset or None if loading fails
+            Any | None: Loaded dataset or None if loading fails.
         """
         arrow_files = list(dataset_path.glob("**/*.arrow"))
         if not arrow_files:
@@ -229,10 +229,10 @@ class OhrBenchParser(BaseParser):
         """Build index mapping image names to metadata records.
 
         Args:
-            ds: HuggingFace dataset (Dataset or DatasetDict)
+            ds (Any): HuggingFace dataset (Dataset or DatasetDict).
 
         Returns:
-            Dict mapping image identifiers to metadata records
+            dict[str, dict[str, Any]]: Dict mapping image identifiers to metadata records.
         """
         image_index: dict[str, dict[str, Any]] = {}
 
@@ -251,8 +251,8 @@ class OhrBenchParser(BaseParser):
         """Index records from a single dataset split.
 
         Args:
-            split_ds: Dataset split to index
-            image_index: Index dict to update
+            split_ds (Any): Dataset split to index.
+            image_index (dict[str, dict[str, Any]]): Index dict to update.
         """
         for record in split_ds:
             if "image_id" in record:
@@ -269,11 +269,11 @@ class OhrBenchParser(BaseParser):
         """Get Arrow metadata for an image.
 
         Args:
-            image_path: Path to the image file
-            dataset_path: Root path of the dataset
+            image_path (Path): Path to the image file.
+            dataset_path (Path): Root path of the dataset.
 
         Returns:
-            Metadata dict if found, None otherwise
+            dict[str, Any] | None: Metadata dict if found, None otherwise.
         """
         if not self._load_hf_dataset(dataset_path):
             return None
@@ -310,17 +310,15 @@ class OhrBenchParser(BaseParser):
         3. Domain mapping from category
 
         Args:
-            dataset_path: Root path of the OHR-Bench dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the OHR-Bench dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with:
-            - category, document_type from directory structure
-            - ohr_quality_score (0-100), quality_normalized (0-1) from Arrow
-            - hallucination_score from Arrow
-            - ocr_text_sample, estimated_chars, estimated_words from Arrow
-            - domain mapped from category
+            OriginalLabels: OriginalLabels with category, document_type from directory
+                structure; ohr_quality_score, quality_normalized, hallucination_score,
+                ocr_text_sample, estimated_chars, estimated_words from Arrow; and
+                domain mapped from category.
         """
         labels = OriginalLabels()
         if labels.raw_labels is None:
@@ -347,11 +345,11 @@ class OhrBenchParser(BaseParser):
         """Extract category from filename or parent directory.
 
         Args:
-            image_path: Path to the image file
-            labels: OriginalLabels to update
+            image_path (Path): Path to the image file.
+            labels (OriginalLabels): OriginalLabels to update.
 
         Returns:
-            Category string if found, None otherwise
+            str | None: Category string if found, None otherwise.
         """
         filename = image_path.stem.lower()
         parent = image_path.parent.name.lower()
@@ -374,12 +372,12 @@ class OhrBenchParser(BaseParser):
         """Extract metadata from Arrow record.
 
         Args:
-            arrow_meta: Arrow metadata dict
-            labels: OriginalLabels to update
-            category: Current category (may be None)
+            arrow_meta (dict[str, Any]): Arrow metadata dict.
+            labels (OriginalLabels): OriginalLabels to update.
+            category (str | None): Current category (may be None).
 
         Returns:
-            Updated category string
+            str | None: Updated category string.
         """
         if labels.raw_labels is None:
             labels.raw_labels = {}
@@ -411,8 +409,8 @@ class OhrBenchParser(BaseParser):
         """Extract OCR text and compute statistics.
 
         Args:
-            arrow_meta: Arrow metadata dict
-            labels: OriginalLabels to update
+            arrow_meta (dict[str, Any]): Arrow metadata dict.
+            labels (OriginalLabels): OriginalLabels to update.
         """
         if "ocr_text" not in arrow_meta:
             return
@@ -439,12 +437,12 @@ class OhrBenchParser(BaseParser):
         Loads Arrow metadata once and processes all images.
 
         Args:
-            dataset_path: Root path of the dataset
-            image_paths: List of absolute paths to image files
-            config: Dataset configuration dictionary
+            dataset_path (Path): Root path of the dataset.
+            image_paths (list[Path]): List of absolute paths to image files.
+            config (dict[str, Any]): Dataset configuration dictionary.
 
         Returns:
-            List of OriginalLabels in same order as image_paths
+            list[OriginalLabels]: List of OriginalLabels in same order as image_paths.
         """
         # Trigger Arrow loading for cache
         self._load_hf_dataset(dataset_path)

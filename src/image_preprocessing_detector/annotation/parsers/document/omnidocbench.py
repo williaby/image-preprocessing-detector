@@ -66,12 +66,12 @@ class OmnidocbenchParser(BaseParser):
         """Parse OmniDocBench labels.
 
         Args:
-            dataset_path: Root path of the OmniDocBench dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the OmniDocBench dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with minimal metadata (labels come from Arrow format)
+            OriginalLabels: OriginalLabels with minimal metadata (labels come from Arrow format).
 
         Note:
             Full label parsing requires Arrow metadata access during extraction.
@@ -97,10 +97,10 @@ class OmnidocbenchParser(BaseParser):
         """Validate OmniDocBench configuration.
 
         Args:
-            config: Dataset configuration to validate
+            config (dict[str, Any]): Dataset configuration to validate.
 
         Returns:
-            List of validation error messages (empty if valid)
+            list[str]: List of validation error messages (empty if valid).
         """
         errors = []
 

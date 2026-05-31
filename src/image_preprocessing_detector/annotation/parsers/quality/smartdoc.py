@@ -87,16 +87,14 @@ class SmartDocParser(BaseParser):
         """Parse SmartDoc labels from filename and OCR accuracy files.
 
         Args:
-            dataset_path: Root path of the SmartDoc-QA dataset
-            image_path: Absolute path to the image file being processed
-            config: Dataset configuration dictionary (unused)
+            dataset_path (Path): Root path of the SmartDoc-QA dataset.
+            image_path (Path): Absolute path to the image file being processed.
+            config (dict[str, Any]): Dataset configuration dictionary (unused).
 
         Returns:
-            OriginalLabels with smartdoc_mos, smartdoc_capture_device,
-            smartdoc_lighting, and raw_labels populated
-
-        Raises:
-            No exceptions raised - returns empty OriginalLabels if parsing fails
+            OriginalLabels: OriginalLabels with smartdoc_mos, smartdoc_capture_device,
+                smartdoc_lighting, and raw_labels populated. Returns empty OriginalLabels
+                if parsing fails.
         """
         labels = OriginalLabels()
 
