@@ -41,11 +41,11 @@ class TextDetectionResult:
     """Result of text detection analysis.
 
     Attributes:
-        has_text: Whether text is detected in the image
-        confidence: Overall confidence score (0.0-1.0)
-        stroke_density: Morphological stroke density score
-        component_score: Connected components text score
-        edge_score: Edge density text score
+        has_text (bool): Whether text is detected in the image
+        confidence (float): Overall confidence score (0.0-1.0)
+        stroke_density (float): Morphological stroke density score
+        component_score (float): Connected components text score
+        edge_score (float): Edge density text score
     """
 
     has_text: bool
@@ -60,6 +60,16 @@ class TextGate:
 
     Uses ensemble of fast classical CV methods to detect text presence.
     Optimized for speed (< 50ms per page on CPU).
+
+    Args:
+        stroke_threshold (float): Minimum stroke density for text (default: 0.05)
+        min_text_components (int): Minimum text-like components (default: 10)
+        edge_threshold_low (int): Canny low threshold (default: 50)
+        edge_threshold_high (int): Canny high threshold (default: 150)
+        min_component_area (int): Minimum component area in pixels (default: 20)
+        max_component_area (int): Maximum component area in pixels (default: 5000)
+        min_aspect_ratio (float): Minimum aspect ratio for text (default: 0.1)
+        max_aspect_ratio (float): Maximum aspect ratio for text (default: 10.0)
     """
 
     def __init__(
@@ -73,17 +83,6 @@ class TextGate:
         min_aspect_ratio: float = DEFAULT_MIN_ASPECT_RATIO,
         max_aspect_ratio: float = DEFAULT_MAX_ASPECT_RATIO,
     ) -> None:
-        """Initialize text detection gate.
-
-        Args:
-            stroke_threshold (float): Minimum stroke density for text (default: 0.05)
-            min_text_components (int): Minimum text-like components (default: 10)
-            edge_threshold_low (int): Canny low threshold (default: 50)
-            edge_threshold_high (int): Canny high threshold (default: 150)
-            min_component_area (int): Minimum component area in pixels (default: 20)
-            max_component_area (int): Maximum component area in pixels (default: 5000)
-            min_aspect_ratio (float): Minimum aspect ratio for text (default: 0.1)
-            max_aspect_ratio (float): Maximum aspect ratio for text (default: 10.0)"""
         self.stroke_threshold = stroke_threshold
         self.min_text_components = min_text_components
         self.edge_threshold_low = edge_threshold_low
@@ -103,10 +102,10 @@ class TextGate:
         """Detect text presence in an image.
 
         Args:
-            image (np.ndarray): Input image (BGR format, from OpenCV)
+            image: Input image (BGR format, from OpenCV)
 
         Returns:
-            TextDetectionResult: TextDetectionResult with detection decision and confidence scores
+            TextDetectionResult with detection decision and confidence scores
 
         Raises:
             ValueError: If image is invalid or empty
@@ -162,10 +161,11 @@ class TextGate:
         Text has high stroke density due to character edges and strokes.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            float: Stroke density score (0.0-1.0)"""
+            Stroke density score (0.0-1.0)
+        """
         # Apply morphological gradient to detect edges/strokes
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL_SIZE)
         gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, kernel)
@@ -182,10 +182,11 @@ class TextGate:
         Text typically consists of many small components with specific aspect ratios.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            float: Component score (0.0-1.0) based on text-like component count"""
+            Component score (0.0-1.0) based on text-like component count
+        """
         # Binarize image with Otsu's method
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
@@ -229,10 +230,11 @@ class TextGate:
         Text regions have consistent edge patterns due to character boundaries.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            float: Edge density score (0.0-1.0)"""
+            Edge density score (0.0-1.0)
+        """
         # Apply Canny edge detection
         edges = cv2.Canny(gray, self.edge_threshold_low, self.edge_threshold_high)
 
@@ -250,12 +252,13 @@ class TextGate:
         Weights prioritize stroke density and component analysis over edge density.
 
         Args:
-            stroke_density (float): Stroke density score
-            component_score (float): Component analysis score
-            edge_score (float): Edge density score
+            stroke_density: Stroke density score
+            component_score: Component analysis score
+            edge_score: Edge density score
 
         Returns:
-            float: Weighted confidence score (0.0-1.0)"""
+            Weighted confidence score (0.0-1.0)
+        """
         # Weighted average: stroke and components are more reliable
         confidence = (
             WEIGHT_STROKE * stroke_density
@@ -274,12 +277,12 @@ def detect_text(
     """Convenience function for text detection.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
-        stroke_threshold (float): Minimum stroke density for text (default: 0.05)
-        min_text_components (int): Minimum text-like components (default: 10)
+        image: Input image (BGR format)
+        stroke_threshold: Minimum stroke density for text (default: 0.05)
+        min_text_components: Minimum text-like components (default: 10)
 
     Returns:
-        TextDetectionResult: TextDetectionResult with detection decision and scores
+        TextDetectionResult with detection decision and scores
 
     Example:
         >>> import cv2

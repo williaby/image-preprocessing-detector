@@ -73,14 +73,14 @@ class LayoutAnalysisMetrics:
     """Metrics derived from DocLayout-YOLO detection.
 
     Attributes:
-        element_counts: Count of each element type detected
-        total_elements: Total number of detected elements
-        element_coverage: Fraction of page covered by detected elements
-        has_tables: Whether tables were detected
-        has_figures: Whether figures were detected
-        has_formulas: Whether formulas were detected
-        complexity_score: Calculated complexity (0-1)
-        inference_time_ms: Time taken for ML inference
+        element_counts (dict[str, int]): Count of each element type detected
+        total_elements (int): Total number of detected elements
+        element_coverage (float): Fraction of page covered by detected elements
+        has_tables (bool): Whether tables were detected
+        has_figures (bool): Whether figures were detected
+        has_formulas (bool): Whether formulas were detected
+        complexity_score (float): Calculated complexity (0-1)
+        inference_time_ms (float): Time taken for ML inference
     """
 
     element_counts: dict[str, int] = field(default_factory=dict)
@@ -99,6 +99,12 @@ class DocLayoutIntegration:
     This class converts ML-based detections to the attributes needed for
     PageLayoutSummary and routing decisions.
 
+    Args:
+        complexity_weights (dict[str, float] | None): Custom weights for element types.
+                          If None, uses default ELEMENT_COMPLEXITY_WEIGHTS.
+        max_complexity_elements (int): Maximum element count for normalization.
+                                More elements than this won't increase score.
+
     Example:
         >>> from image_preprocessing_detector.detection.doclayout_yolo import (
         ...     DocLayoutYOLODetector,
@@ -114,11 +120,6 @@ class DocLayoutIntegration:
         complexity_weights: dict[str, float] | None = None,
         max_complexity_elements: int = 20,
     ) -> None:
-        """Initialize the integration.
-
-        Args:
-            complexity_weights (dict[str, float] | None): Custom weights for element types. If None, uses default ELEMENT_COMPLEXITY_WEIGHTS.
-            max_complexity_elements (int): Maximum element count for normalization. More elements than this won't increase score."""
         self._weights = complexity_weights or ELEMENT_COMPLEXITY_WEIGHTS
         self._max_elements = max_complexity_elements
 
@@ -136,11 +137,12 @@ class DocLayoutIntegration:
         """Analyze DocLayout-YOLO detection results.
 
         Args:
-            result (LayoutDetectionResult): Detection result from DocLayoutYOLODetector
-            image_shape (tuple[int, int]): Image shape as (height, width)
+            result: Detection result from DocLayoutYOLODetector
+            image_shape: Image shape as (height, width)
 
         Returns:
-            LayoutAnalysisMetrics: LayoutAnalysisMetrics with derived metrics"""
+            LayoutAnalysisMetrics with derived metrics
+        """
         if not result.success or not result.elements:
             return LayoutAnalysisMetrics(
                 inference_time_ms=result.inference_time_ms,
@@ -188,10 +190,11 @@ class DocLayoutIntegration:
         normalization for backward compatibility.
 
         Args:
-            class_name (str): Raw class name from detection model.
+            class_name: Raw class name from detection model.
 
         Returns:
-            str: Canonical class name (UPPERCASE)."""
+            Canonical class name (UPPERCASE).
+        """
         try:
             from image_preprocessing_detector.schema_utils.layout_taxonomy import (
                 get_default_taxonomy,
@@ -217,11 +220,12 @@ class DocLayoutIntegration:
         3. Element coverage (higher coverage = more complex layout)
 
         Args:
-            element_counts (dict[str, int]): Count of each element type
-            element_coverage (float): Fraction of page covered by elements
+            element_counts: Count of each element type
+            element_coverage: Fraction of page covered by elements
 
         Returns:
-            float: Complexity score in range [0, 1]"""
+            Complexity score in range [0, 1]
+        """
         # Component 1: Weighted element type score
         type_score = 0.0
         for elem_type, count in element_counts.items():
@@ -257,11 +261,13 @@ class DocLayoutIntegration:
         heuristic-based column detection if available.
 
         Args:
-            result (LayoutDetectionResult): Detection result from DocLayoutYOLODetector
-            heuristic_column_type (str | None): Column type from heuristic detector ("single", "multi", "three_column", "complex")
+            result: Detection result from DocLayoutYOLODetector
+            heuristic_column_type: Column type from heuristic detector
+                                  ("single", "multi", "three_column", "complex")
 
         Returns:
-            LayoutType: LayoutType enum value"""
+            LayoutType enum value
+        """
         if not result.success:
             # Fall back to heuristic if available
             return self._column_type_to_layout(heuristic_column_type)
@@ -311,10 +317,11 @@ class DocLayoutIntegration:
         """Convert heuristic column type to LayoutType enum.
 
         Args:
-            column_type (str | None): String from heuristic column detector
+            column_type: String from heuristic column detector
 
         Returns:
-            LayoutType: LayoutType enum value"""
+            LayoutType enum value
+        """
         if column_type is None:
             return LayoutType.UNKNOWN
 
@@ -342,6 +349,12 @@ class HybridLayoutAnalyzer:
     - Reliable quality detection (heuristics)
     - Graceful degradation when ML unavailable
 
+    Args:
+        enable_ml (bool): Enable DocLayout-YOLO ML detection
+        enable_heuristics (bool): Enable heuristic-based detection
+        ml_model_key (str | None): DocLayout-YOLO model key (default: active model)
+        ml_confidence_threshold (float): Confidence threshold for ML detection
+
     Example:
         >>> analyzer = HybridLayoutAnalyzer()
         >>> summary = analyzer.analyze(image, page_number=1)
@@ -356,13 +369,6 @@ class HybridLayoutAnalyzer:
         ml_model_key: str | None = None,
         ml_confidence_threshold: float = 0.2,
     ) -> None:
-        """Initialize the hybrid analyzer.
-
-        Args:
-            enable_ml (bool): Enable DocLayout-YOLO ML detection
-            enable_heuristics (bool): Enable heuristic-based detection
-            ml_model_key (str | None): DocLayout-YOLO model key (default: active model)
-            ml_confidence_threshold (float): Confidence threshold for ML detection"""
         self._enable_ml = enable_ml
         self._enable_heuristics = enable_heuristics
         self._ml_model_key = ml_model_key
@@ -432,11 +438,12 @@ class HybridLayoutAnalyzer:
         """Analyze page layout using hybrid ML + heuristic approach.
 
         Args:
-            image (NDArray[np.uint8]): Input image as numpy array (BGR format)
-            page_number (int): 1-based page number
+            image: Input image as numpy array (BGR format)
+            page_number: 1-based page number
 
         Returns:
-            PageLayoutSummary: PageLayoutSummary with all layout attributes"""
+            PageLayoutSummary with all layout attributes
+        """
         if image is None or image.size == 0:
             logger.warning("Empty image provided to hybrid analyzer")
             return self._create_empty_summary(page_number)
@@ -475,10 +482,11 @@ class HybridLayoutAnalyzer:
         """Run DocLayout-YOLO detection.
 
         Args:
-            image (NDArray[np.uint8]): Input image
+            image: Input image
 
         Returns:
-            LayoutDetectionResult | None: Detection result or None if ML not available"""
+            Detection result or None if ML not available
+        """
         try:
             detector = self._get_ml_detector()
             if detector is None:
@@ -499,10 +507,11 @@ class HybridLayoutAnalyzer:
         """Run heuristic-based detection.
 
         Args:
-            image (NDArray[np.uint8]): Input image
+            image: Input image
 
         Returns:
-            dict[str, Any]: Dictionary with heuristic detection results"""
+            Dictionary with heuristic detection results
+        """
         try:
             analyzer = self._get_heuristic_analyzer()
             if analyzer is None:
@@ -527,13 +536,14 @@ class HybridLayoutAnalyzer:
         Heuristic results are used for quality attributes.
 
         Args:
-            page_number (int): 1-based page number
-            ml_metrics (LayoutAnalysisMetrics | None): Metrics from ML detection
-            ml_result (LayoutDetectionResult | None): Raw ML detection result
-            heuristic_results (dict[str, Any]): Results from heuristic analyzers
+            page_number: 1-based page number
+            ml_metrics: Metrics from ML detection
+            ml_result: Raw ML detection result
+            heuristic_results: Results from heuristic analyzers
 
         Returns:
-            PageLayoutSummary: PageLayoutSummary combining both sources"""
+            PageLayoutSummary combining both sources
+        """
         # Structural attributes (prefer ML if available)
         if ml_metrics is not None:
             has_tables = ml_metrics.has_tables
@@ -615,10 +625,11 @@ class HybridLayoutAnalyzer:
         Used when ML detection is not available.
 
         Args:
-            heuristic_results (dict[str, Any]): Results from heuristic analyzers
+            heuristic_results: Results from heuristic analyzers
 
         Returns:
-            float: Complexity score in range [0, 1]"""
+            Complexity score in range [0, 1]
+        """
         score = 0.0
 
         # Table presence adds complexity
@@ -658,10 +669,11 @@ class HybridLayoutAnalyzer:
         """Create an empty summary for invalid input.
 
         Args:
-            page_number (int): 1-based page number
+            page_number: 1-based page number
 
         Returns:
-            PageLayoutSummary: PageLayoutSummary with default values"""
+            PageLayoutSummary with default values
+        """
         return PageLayoutSummary(
             page_number=page_number,
             layout_type=LayoutType.UNKNOWN,
@@ -685,13 +697,13 @@ def analyze_layout_hybrid(
     """Convenience function for hybrid layout analysis.
 
     Args:
-        image (NDArray[np.uint8]): Input image as numpy array
-        page_number (int): 1-based page number
-        enable_ml (bool): Enable DocLayout-YOLO detection
-        enable_heuristics (bool): Enable heuristic detection
+        image: Input image as numpy array
+        page_number: 1-based page number
+        enable_ml: Enable DocLayout-YOLO detection
+        enable_heuristics: Enable heuristic detection
 
     Returns:
-        PageLayoutSummary: PageLayoutSummary with layout attributes
+        PageLayoutSummary with layout attributes
 
     Example:
         >>> import cv2

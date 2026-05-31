@@ -36,11 +36,11 @@ class CategoryDistribution:
     """Statistics of MOS conditioned on a VLM category.
 
     Attributes:
-        category: Quality level name (e.g. "good").
-        mean_mos: E[MOS | category].
-        std_mos: Std[MOS | category].
-        count: Number of calibration samples in this category.
-        quantiles: 5th, 25th, 50th, 75th, 95th percentiles of MOS.
+        category (str): Quality level name (e.g. "good").
+        mean_mos (float): E[MOS | category].
+        std_mos (float): Std[MOS | category].
+        count (int): Number of calibration samples in this category.
+        quantiles (dict[str, float]): 5th, 25th, 50th, 75th, 95th percentiles of MOS.
     """
 
     category: str
@@ -55,10 +55,6 @@ class CrossModelCalibrator:
 
     Stores conditional distributions P(MOS | validator_output) for both
     categorical (VLM) and continuous (CLIP-IQA) validators.
-
-    Attributes:
-        categorical_maps: Per-validator, per-category MOS distributions.
-        continuous_maps: Per-validator isotonic regression parameters.
     """
 
     def __init__(self) -> None:

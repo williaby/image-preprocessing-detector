@@ -50,10 +50,10 @@ class ValidatorScore:
     """Individual validator's assessment for one dimension.
 
     Attributes:
-        validator: Validator name.
-        dimension: Quality dimension.
-        raw_output: Raw output from validator (category or score).
-        z_score: Calibrated z-score vs expected MOS.
+        validator (str): Validator name.
+        dimension (str): Quality dimension.
+        raw_output (str | float): Raw output from validator (category or score).
+        z_score (float | None): Calibrated z-score vs expected MOS.
     """
 
     validator: str
@@ -67,13 +67,13 @@ class ReliabilityResult:
     """Complete reliability assessment for a document image.
 
     Attributes:
-        ood_result: Tier 1 embedding OOD detection result.
-        tier2_invoked: Whether Tier 2 validators were run.
-        validator_scores: Per-validator, per-dimension z-scores.
-        agreement_distance: Mahalanobis distance over z-score vector.
-        reliability_score: Combined reliability (0=reliable, higher=suspect).
-        needs_review: Whether the image should be flagged for review.
-        z_vector: Raw z-score vector used for agreement distance.
+        ood_result (OODResult): Tier 1 embedding OOD detection result.
+        tier2_invoked (bool): Whether Tier 2 validators were run.
+        validator_scores (list[ValidatorScore]): Per-validator, per-dimension z-scores.
+        agreement_distance (float): Mahalanobis distance over z-score vector.
+        reliability_score (float): Combined reliability (0=reliable, higher=suspect).
+        needs_review (bool): Whether the image should be flagged for review.
+        z_vector (list[float]): Raw z-score vector used for agreement distance.
     """
 
     ood_result: OODResult
@@ -90,11 +90,11 @@ class ValidatorConfig:
     """Configuration for cross-model validation.
 
     Attributes:
-        ood_params_path: Path to saved OOD detector parameters.
-        calibration_path: Path to saved calibration parameters.
-        tier2_threshold: Mahalanobis distance threshold for invoking Tier 2.
-        agreement_threshold: Z-score agreement threshold for flagging review.
-        z_covariance_path: Path to saved z-score covariance matrix.
+        ood_params_path (str | Path): Path to saved OOD detector parameters.
+        calibration_path (str | Path): Path to saved calibration parameters.
+        tier2_threshold (float | None): Mahalanobis distance threshold for invoking Tier 2.
+        agreement_threshold (float): Z-score agreement threshold for flagging review.
+        z_covariance_path (str | Path | None): Path to saved z-score covariance matrix.
     """
 
     ood_params_path: str | Path

@@ -105,10 +105,11 @@ class DocLayoutClass(str, Enum):
         Handles both DocLayNet and DocStructBench class names.
 
         Args:
-            class_name (str): Class name from model prediction
+            class_name: Class name from model prediction
 
         Returns:
-            DocLayoutClass | None: DocLayoutClass enum value or None if not recognized"""
+            DocLayoutClass enum value or None if not recognized
+        """
         # Normalize: lowercase and handle variations
         normalized = class_name.lower().strip()
 
@@ -161,7 +162,8 @@ class DocLayoutClass(str, Enum):
         - DocLayNet: Canonical schema used by downstream pipeline
 
         Returns:
-            DocLayoutClass: DocLayNet-equivalent class (may return self if already DocLayNet)"""
+            DocLayNet-equivalent class (may return self if already DocLayNet)
+        """
         # Taxonomy translation map (DocStructBench → DocLayNet)
         # Each entry maps DocStructBench terminology to its DocLayNet equivalent
         mapping = {
@@ -203,7 +205,8 @@ class DocLayoutClass(str, Enum):
         DocStructBench classes use the "docstructbench" schema.
 
         Returns:
-            str: Canonical class name (e.g. "CAPTION", "FIGURE_CAPTION")."""
+            Canonical class name (e.g. "CAPTION", "FIGURE_CAPTION").
+        """
         from image_preprocessing_detector.schema_utils.layout_taxonomy import (
             get_default_taxonomy,
         )
@@ -218,12 +221,12 @@ class DetectedElement:
     """A single detected document element.
 
     Attributes:
-        class_id: Numeric class ID from model
-        class_name: Human-readable class name
-        class_enum: DocLayoutClass enum value (if recognized)
-        confidence: Detection confidence (0-1)
-        bbox: Bounding box in COCO format [x, y, width, height]
-        bbox_xyxy: Bounding box in xyxy format [x1, y1, x2, y2]
+        class_id (int): Numeric class ID from model
+        class_name (str): Human-readable class name
+        class_enum (DocLayoutClass | None): DocLayoutClass enum value (if recognized)
+        confidence (float): Detection confidence (0-1)
+        bbox (list[int]): Bounding box in COCO format [x, y, width, height]
+        bbox_xyxy (list[int]): Bounding box in xyxy format [x1, y1, x2, y2]
     """
 
     class_id: int
@@ -244,13 +247,14 @@ class DetectedElement:
         """Create element from model prediction.
 
         Args:
-            class_id (int): Numeric class ID
-            class_name (str): Class name from model
-            confidence (float): Detection confidence
-            bbox_xyxy (list[float]): Bounding box in [x1, y1, x2, y2] format
+            class_id: Numeric class ID
+            class_name: Class name from model
+            confidence: Detection confidence
+            bbox_xyxy: Bounding box in [x1, y1, x2, y2] format
 
         Returns:
-            DetectedElement: DetectedElement instance"""
+            DetectedElement instance
+        """
         # Convert xyxy to integers (round returns int in Python 3)
         x1, y1, x2, y2 = [round(v) for v in bbox_xyxy]
 
@@ -272,13 +276,13 @@ class LayoutDetectionResult:
     """Result of document layout detection.
 
     Attributes:
-        elements: List of detected elements
-        inference_time_ms: Time taken for inference in milliseconds
-        image_size: Original image size (height, width)
-        model_name: Name of the model used
-        device: Device used for inference (cpu/cuda)
-        success: Whether detection succeeded
-        error_message: Error message if detection failed
+        elements (list[DetectedElement]): List of detected elements
+        inference_time_ms (float): Time taken for inference in milliseconds
+        image_size (tuple[int, int]): Original image size (height, width)
+        model_name (str): Name of the model used
+        device (str): Device used for inference (cpu/cuda)
+        success (bool): Whether detection succeeded
+        error_message (str | None): Error message if detection failed
     """
 
     elements: list[DetectedElement] = field(default_factory=list)
@@ -350,10 +354,11 @@ class LayoutDetectionResult:
         """Get all elements of a specific class.
 
         Args:
-            class_enum (DocLayoutClass): The class to filter by
+            class_enum: The class to filter by
 
         Returns:
-            list[DetectedElement]: List of elements matching the class"""
+            List of elements matching the class
+        """
         return [e for e in self.elements if e.class_enum == class_enum]
 
     def to_dict(self) -> dict[str, Any]:
@@ -407,6 +412,20 @@ class DocLayoutYOLODetector:
         - Configurable confidence threshold
         - ONNX export support for production deployment
 
+    Args:
+        model_key (str | None): Model key from config. Options:
+                  - "doclaynet_pretrained" (default, recommended): 11 classes, mAP 79.7
+                  - "doclaynet_scratch": 11 classes, mAP 77.7
+                  - "docstructbench": 10 classes, general-purpose
+                  - "d4la_pretrained": 10 classes, mAP 70.3
+                  - "d4la_scratch": 10 classes, mAP 69.8
+                  If None, uses the active model from config.
+        device (str | None): Device to run inference on ("cpu", "cuda", "cuda:0", etc.).
+               If None, automatically selects based on availability.
+        confidence_threshold (float | None): Minimum confidence for detections (0-1).
+                             If None, uses value from config.
+        image_size (int | None): Input image size for model. If None, uses recommended size.
+
     Example:
         >>> detector = DocLayoutYOLODetector()  # Uses doclaynet_pretrained
         >>> result = detector.detect(image)
@@ -425,13 +444,6 @@ class DocLayoutYOLODetector:
         confidence_threshold: float | None = None,
         image_size: int | None = None,
     ) -> None:
-        """Initialize the DocLayout-YOLO detector.
-
-        Args:
-            model_key (str | None): Model key from config. Options: - "doclaynet_pretrained" (default, recommended): 11 classes, mAP 79.7 - "doclaynet_scratch": 11 classes, mAP 77.7 - "docstructbench": 10 classes, general-purpose - "d4la_pretrained": 10 classes, mAP 70.3 - "d4la_scratch": 10 classes, mAP 69.8 If None, uses the active model from config.
-            device (str | None): Device to run inference on ("cpu", "cuda", "cuda:0", etc.). If None, automatically selects based on availability.
-            confidence_threshold (float | None): Minimum confidence for detections (0-1). If None, uses value from config.
-            image_size (int | None): Input image size for model. If None, uses recommended size."""
         # Load configuration
         self._config = get_doclayout_yolo_config(model_key)
         self._common_config = get_doclayout_yolo_common_config()
@@ -483,7 +495,8 @@ class DocLayoutYOLODetector:
         """Determine the best device to use for inference.
 
         Returns:
-            str: Device string ("cuda:0", "cpu", etc.)"""
+            Device string ("cuda:0", "cpu", etc.)
+        """
         if self._requested_device is not None:
             return self._requested_device
 
@@ -548,11 +561,11 @@ class DocLayoutYOLODetector:
         """Detect document layout elements in an image.
 
         Args:
-            image (NDArray[np.uint8]): Input image as numpy array (BGR or RGB format, HWC)
-            confidence_threshold (float | None): Override confidence threshold for this detection
+            image: Input image as numpy array (BGR or RGB format, HWC)
+            confidence_threshold: Override confidence threshold for this detection
 
         Returns:
-            LayoutDetectionResult: LayoutDetectionResult containing detected elements and metadata
+            LayoutDetectionResult containing detected elements and metadata
 
         Example:
             >>> import cv2
@@ -636,10 +649,11 @@ class DocLayoutYOLODetector:
         """Parse YOLO results into DetectedElement objects.
 
         Args:
-            results (Any): Results from model.predict()
+            results: Results from model.predict()
 
         Returns:
-            list[DetectedElement]: List of DetectedElement objects"""
+            List of DetectedElement objects
+        """
         elements = []
 
         # Results is a list (one per image in batch)
@@ -690,13 +704,13 @@ class DocLayoutYOLODetector:
         """Export model to ONNX format for production deployment.
 
         Args:
-            output_path (str | Path): Path to save the ONNX model
-            image_size (int | None): Input image size (default: uses configured size)
-            opset_version (int): ONNX opset version (default: 17)
-            simplify (bool): Whether to simplify the ONNX graph (default: True)
+            output_path: Path to save the ONNX model
+            image_size: Input image size (default: uses configured size)
+            opset_version: ONNX opset version (default: 17)
+            simplify: Whether to simplify the ONNX graph (default: True)
 
         Returns:
-            Path: Path to the exported ONNX model
+            Path to the exported ONNX model
 
         Example:
             >>> detector = DocLayoutYOLODetector()
@@ -743,12 +757,12 @@ def detect_layout(
     For repeated detection, create a DocLayoutYOLODetector instance instead.
 
     Args:
-        image (NDArray[np.uint8]): Input image as numpy array
-        model_key (str | None): Model key from config (default: active model)
-        confidence_threshold (float): Minimum confidence (default: 0.2)
+        image: Input image as numpy array
+        model_key: Model key from config (default: active model)
+        confidence_threshold: Minimum confidence (default: 0.2)
 
     Returns:
-        LayoutDetectionResult: LayoutDetectionResult with detected elements
+        LayoutDetectionResult with detected elements
 
     Example:
         >>> import cv2
@@ -767,7 +781,8 @@ def is_doclayout_yolo_available() -> bool:
     """Check if DocLayout-YOLO package is installed and available.
 
     Returns:
-        bool: True if doclayout-yolo can be imported, False otherwise"""
+        True if doclayout-yolo can be imported, False otherwise
+    """
     try:
         from doclayout_yolo import (
             YOLOv10,  # noqa: F401  # Import to check availability
@@ -782,7 +797,8 @@ def get_doclayout_yolo_model_info() -> dict[str, Any]:
     """Get information about the configured DocLayout-YOLO model.
 
     Returns:
-        dict[str, Any]: Dictionary with model configuration details"""
+        Dictionary with model configuration details
+    """
     config = get_doclayout_yolo_config()
     common = get_doclayout_yolo_common_config()
 

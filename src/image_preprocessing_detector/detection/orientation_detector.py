@@ -42,15 +42,15 @@ class OrientationConfig:
     """Configuration for orientation detection.
 
     Attributes:
-        consensus_required: Number of methods that must agree (default: 2 of 3)
-        min_confidence: Minimum confidence to accept detection (default: 0.6)
-        auto_correct_threshold: Confidence threshold for auto-correction (default: 0.8)
-        hough_threshold: Threshold for Hough line detection
-        min_line_length: Minimum line length for Hough transform
-        max_line_gap: Maximum gap between line segments
-        edge_canny_low: Canny edge detection low threshold
-        edge_canny_high: Canny edge detection high threshold
-        min_component_area: Minimum area for connected component analysis
+        consensus_required (int): Number of methods that must agree (default: 2 of 3)
+        min_confidence (float): Minimum confidence to accept detection (default: 0.6)
+        auto_correct_threshold (float): Confidence threshold for auto-correction (default: 0.8)
+        hough_threshold (int): Threshold for Hough line detection
+        min_line_length (int): Minimum line length for Hough transform
+        max_line_gap (int): Maximum gap between line segments
+        edge_canny_low (int): Canny edge detection low threshold
+        edge_canny_high (int): Canny edge detection high threshold
+        min_component_area (int): Minimum area for connected component analysis
     """
 
     consensus_required: int = 2
@@ -74,6 +74,9 @@ class OrientationDetector:
 
     Requires consensus (default 2/3) for reliable detection.
 
+    Args:
+        config (OrientationConfig | None): Configuration options. Uses defaults if not provided.
+
     Example:
         >>> detector = OrientationDetector()
         >>> image = cv2.imread("rotated_scan.jpg")
@@ -83,20 +86,17 @@ class OrientationDetector:
     """
 
     def __init__(self, config: OrientationConfig | None = None) -> None:
-        """Initialize the orientation detector.
-
-        Args:
-            config (OrientationConfig | None): Configuration options. Uses defaults if not provided."""
         self.config = config or OrientationConfig()
 
     def detect(self, image: np.ndarray) -> OrientationDetection:
         """Detect document orientation using ensemble of methods.
 
         Args:
-            image (np.ndarray): Input image as numpy array (BGR or grayscale)
+            image: Input image as numpy array (BGR or grayscale)
 
         Returns:
-            OrientationDetection: OrientationDetection with detected angle, confidence, and method details"""
+            OrientationDetection with detected angle, confidence, and method details
+        """
         # Convert to grayscale if needed
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -131,10 +131,11 @@ class OrientationDetector:
         Text typically runs horizontal; 90°/270° rotation shows vertical lines.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            OrientationVote | None: OrientationVote or None if detection fails"""
+            OrientationVote or None if detection fails
+        """
         # Edge detection
         edges = cv2.Canny(gray, self.config.edge_canny_low, self.config.edge_canny_high)
 
@@ -215,10 +216,11 @@ class OrientationDetector:
         In 180° rotated text, they appear above the baseline.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            bool: True if 180° rotation is detected"""
+            True if 180° rotation is detected
+        """
         # This is a simplified heuristic - could be enhanced with ML
         # For now, use intensity distribution analysis
 
@@ -247,10 +249,11 @@ class OrientationDetector:
         predominantly horizontal/vertical. 90° rotation swaps H/V distributions.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            OrientationVote | None: OrientationVote or None if detection fails"""
+            OrientationVote or None if detection fails
+        """
         # Compute gradients
         sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
         sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
@@ -332,10 +335,11 @@ class OrientationDetector:
         If most components are wider than tall, document may be 90°/270° rotated.
 
         Args:
-            gray (np.ndarray): Grayscale image
+            gray: Grayscale image
 
         Returns:
-            OrientationVote | None: OrientationVote or None if detection fails"""
+            OrientationVote or None if detection fails
+        """
         # Binarize
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
@@ -418,10 +422,11 @@ class OrientationDetector:
         """Aggregate votes from multiple methods using consensus.
 
         Args:
-            votes (list[OrientationVote]): List of votes from detection methods
+            votes: List of votes from detection methods
 
         Returns:
-            OrientationDetection: Final OrientationDetection result"""
+            Final OrientationDetection result
+        """
         if not votes:
             logger.warning("No orientation votes received, defaulting to upright")
             return OrientationDetection(
@@ -536,11 +541,11 @@ def detect_orientation(
     """Convenience function to detect document orientation.
 
     Args:
-        image (np.ndarray): Input image as numpy array (BGR or grayscale)
-        config (OrientationConfig | None): Configuration options. Uses defaults if not provided.
+        image: Input image as numpy array (BGR or grayscale)
+        config: Configuration options. Uses defaults if not provided.
 
     Returns:
-        OrientationDetection: OrientationDetection with detected angle and confidence
+        OrientationDetection with detected angle and confidence
 
     Example:
         >>> import cv2
@@ -564,11 +569,11 @@ def correct_orientation(
     """Apply orientation correction to image if needed.
 
     Args:
-        image (np.ndarray): Input image as numpy array
-        detection (OrientationDetection): OrientationDetection result from detect_orientation
+        image: Input image as numpy array
+        detection: OrientationDetection result from detect_orientation
 
     Returns:
-        tuple[np.ndarray, bool]: Tuple of (corrected_image, was_corrected)
+        Tuple of (corrected_image, was_corrected)
 
     Example:
         >>> detection = detect_orientation(image)

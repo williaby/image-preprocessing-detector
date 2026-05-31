@@ -38,12 +38,12 @@ class WarpingDetectionResult:
     """Result of warping distortion detection.
 
     Attributes:
-        has_warping: Whether the page exhibits significant warping.
-        warping_score: Severity from 0 (no warping) to 1 (severe warping).
-        warping_type: Classification -- ``"barrel"``, ``"pincushion"``,
+        has_warping (bool): Whether the page exhibits significant warping.
+        warping_score (float): Severity from 0 (no warping) to 1 (severe warping).
+        warping_type (str | None): Classification -- ``"barrel"``, ``"pincushion"``,
             ``"perspective"``, ``"wave"``, or ``None`` when no warping.
-        line_count: Number of horizontal lines detected via Hough transform.
-        confidence: Confidence in the detection result (0-1).
+        line_count (int): Number of horizontal lines detected via Hough transform.
+        confidence (float): Confidence in the detection result (0-1).
     """
 
     has_warping: bool
@@ -80,11 +80,12 @@ def _detect_lines_for_warping(
     that appear as short line fragments.
 
     Args:
-        gray (np.ndarray): Grayscale image.
-        width (int): Image width in pixels.
+        gray: Grayscale image.
+        width: Image width in pixels.
 
     Returns:
-        np.ndarray | None: Array of detected line segments, or None."""
+        Array of detected line segments, or None.
+    """
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
     min_line_length = max(width // 8, 30)
     return cv2.HoughLinesP(
@@ -108,13 +109,14 @@ def _compute_line_curvature(
     captures how much the lines bow upward or downward.
 
     Args:
-        horizontal_lines (list[tuple[int, int, int, int]]): Filtered near-horizontal lines (x1, y1, x2, y2).
-        image_height (int): Height of the source image in pixels.
+        horizontal_lines: Filtered near-horizontal lines (x1, y1, x2, y2).
+        image_height: Height of the source image in pixels.
 
     Returns:
-        tuple[float, float]: Tuple of (curvature_score, max_deviation).
+        Tuple of (curvature_score, max_deviation).
         ``curvature_score`` is in [0, 1]; ``max_deviation`` is the largest
-        normalised endpoint offset observed."""
+        normalised endpoint offset observed.
+    """
     if not horizontal_lines or image_height <= 0:
         return 0.0, 0.0
 
@@ -146,12 +148,13 @@ def _compute_rectangularity(
     contours (e.g. barrel-distorted or wavy edges) produce higher scores.
 
     Args:
-        gray (np.ndarray): Grayscale image.
-        image_height (int): Image height in pixels.
-        image_width (int): Image width in pixels.
+        gray: Grayscale image.
+        image_height: Image height in pixels.
+        image_width: Image width in pixels.
 
     Returns:
-        float: Rectangularity deficit in [0, 1] where 0 = perfect rectangle."""
+        Rectangularity deficit in [0, 1] where 0 = perfect rectangle.
+    """
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges = cv2.Canny(blurred, 30, 100)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
@@ -193,14 +196,15 @@ def _compute_polynomial_fit(
     distortion.  High residuals indicate wavy distortion.
 
     Args:
-        horizontal_lines (list[tuple[int, int, int, int]]): Filtered near-horizontal lines (x1, y1, x2, y2).
-        image_width (int): Image width in pixels.
+        horizontal_lines: Filtered near-horizontal lines (x1, y1, x2, y2).
+        image_width: Image width in pixels.
 
     Returns:
-        tuple[float, float, float]: Tuple of (poly_score, quadratic_coefficient, residual_score).
+        Tuple of (poly_score, quadratic_coefficient, residual_score).
         ``poly_score`` is in [0, 1]; ``quadratic_coefficient`` is the raw
         a-coefficient from the fit; ``residual_score`` is the normalised
-        mean absolute residual."""
+        mean absolute residual.
+    """
     if len(horizontal_lines) < 3 or image_width <= 0:
         return 0.0, 0.0, 0.0
 
@@ -265,13 +269,14 @@ def _classify_warping_type(
     """Classify the warping type based on polynomial fit and line analysis.
 
     Args:
-        quadratic_coeff (float): Quadratic coefficient from polynomial fit.
-        residual_score (float): Normalised mean residual from polynomial fit.
-        horizontal_lines (list[tuple[int, int, int, int]]): Filtered near-horizontal lines.
+        quadratic_coeff: Quadratic coefficient from polynomial fit.
+        residual_score: Normalised mean residual from polynomial fit.
+        horizontal_lines: Filtered near-horizontal lines.
 
     Returns:
-        str | None: One of ``"barrel"``, ``"pincushion"``, ``"perspective"``, ``"wave"``,
-        or ``None`` if no warping type can be determined."""
+        One of ``"barrel"``, ``"pincushion"``, ``"perspective"``, ``"wave"``,
+        or ``None`` if no warping type can be determined.
+    """
     # High residuals indicate wavy distortion
     if residual_score > 0.3:
         return "wave"
@@ -302,11 +307,12 @@ def _compute_confidence(line_count: int, warping_score: float) -> float:
     """Compute detection confidence from evidence quality.
 
     Args:
-        line_count (int): Number of horizontal lines detected.
-        warping_score (float): Combined warping score.
+        line_count: Number of horizontal lines detected.
+        warping_score: Combined warping score.
 
     Returns:
-        float: Confidence value in [0, 1]."""
+        Confidence value in [0, 1].
+    """
     # More lines => higher confidence
     if line_count >= 20:
         base_confidence = 0.85
@@ -341,6 +347,14 @@ class WarpingDetector:
 
     Signals are fused via weighted average into ``warping_score`` (0-1).
 
+    Args:
+        warping_threshold (float): Score above which ``has_warping`` is True.
+        min_horizontal_lines (int): Minimum horizontal lines required for
+            reliable analysis (below this, returns no-warping).
+        curvature_weight (float): Weight for line curvature signal.
+        rectangularity_weight (float): Weight for page rectangularity signal.
+        polynomial_weight (float): Weight for polynomial fit signal.
+
     Example:
         >>> detector = WarpingDetector()
         >>> image = cv2.imread("book_scan.jpg")
@@ -359,14 +373,6 @@ class WarpingDetector:
         rectangularity_weight: float = _DEFAULT_RECTANGULARITY_WEIGHT,
         polynomial_weight: float = _DEFAULT_POLYNOMIAL_WEIGHT,
     ) -> None:
-        """Initialise warping detector with configurable thresholds.
-
-        Args:
-            warping_threshold (float): Score above which ``has_warping`` is True.
-            min_horizontal_lines (int): Minimum horizontal lines required for reliable analysis (below this, returns no-warping).
-            curvature_weight (float): Weight for line curvature signal.
-            rectangularity_weight (float): Weight for page rectangularity signal.
-            polynomial_weight (float): Weight for polynomial fit signal."""
         self.warping_threshold = warping_threshold
         self.min_horizontal_lines = min_horizontal_lines
         self.curvature_weight = curvature_weight
@@ -387,13 +393,10 @@ class WarpingDetector:
         """Analyse an image for warping distortion.
 
         Args:
-            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+            image: Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            WarpingDetectionResult: WarpingDetectionResult with warping classification and metrics.
-
-        Raises:
-            ValueError: If the image is ``None`` or empty.
+            WarpingDetectionResult with warping classification and metrics.
         """
         gray, _binary, height, width = _validate_and_preprocess(image)
 
@@ -466,10 +469,11 @@ class WarpingDetector:
         """Create a result indicating no warping detected.
 
         Args:
-            line_count (int): Number of horizontal lines found (may be 0).
+            line_count: Number of horizontal lines found (may be 0).
 
         Returns:
-            WarpingDetectionResult: WarpingDetectionResult with has_warping=False."""
+            WarpingDetectionResult with has_warping=False.
+        """
         confidence = _compute_confidence(line_count, 0.0)
         return WarpingDetectionResult(
             has_warping=False,
@@ -493,13 +497,10 @@ def detect_warping_distortion(image: np.ndarray) -> WarpingDetectionResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+        image: Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        WarpingDetectionResult: WarpingDetectionResult with warping classification and metrics.
-
-    Raises:
-        ValueError: If the image is ``None`` or empty.
+        WarpingDetectionResult with warping classification and metrics.
     """
     global _default_detector
     if _default_detector is None:

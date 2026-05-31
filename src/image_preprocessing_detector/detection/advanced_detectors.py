@@ -36,10 +36,10 @@ def _validate_and_preprocess(
     """Validate image and return grayscale + binary versions.
 
     Args:
-        image (np.ndarray): Input image (BGR, BGRA, or grayscale)
+        image: Input image (BGR, BGRA, or grayscale)
 
     Returns:
-        tuple[np.ndarray, np.ndarray, int, int]: Tuple of (grayscale, binary, height, width)
+        Tuple of (grayscale, binary, height, width)
 
     Raises:
         ValueError: If image is invalid
@@ -72,14 +72,15 @@ def _get_filtered_components(
     """Get connected components filtered by size.
 
     Args:
-        binary (np.ndarray): Binary image
-        h (int): Image height
-        w (int): Image width
-        min_area (int): Minimum component area
-        min_size (int): Minimum component width/height
+        binary: Binary image
+        h: Image height
+        w: Image width
+        min_area: Minimum component area
+        min_size: Minimum component width/height
 
     Returns:
-        list[dict[str, Any]]: List of component dictionaries with bbox, area, centroid, aspect_ratio"""
+        List of component dictionaries with bbox, area, centroid, aspect_ratio
+    """
     num_labels, _labels, stats, centroids = cv2.connectedComponentsWithStats(
         binary, connectivity=8
     )
@@ -131,10 +132,14 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
     in book scans where pages curve near the spine.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        WarpingResult: WarpingResult with curvature metrics"""
+        WarpingResult with curvature metrics
+
+    Raises:
+        ValueError: If the image is None or empty.
+    """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
 
@@ -271,10 +276,14 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
     at an angle, causing trapezoidal distortion.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        PerspectiveResult: PerspectiveResult with distortion metrics"""
+        PerspectiveResult with distortion metrics
+
+    Raises:
+        ValueError: If the image is None or empty.
+    """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
 
@@ -501,10 +510,11 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
     consider integrating with a dedicated formula detection model.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        FormulaResult: FormulaResult with detected formula regions"""
+        FormulaResult with detected formula regions
+    """
     # Preprocess image
     _gray, binary, h, w = _validate_and_preprocess(image)
 
@@ -565,10 +575,14 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
     Stamps: Circular or rectangular regions with uniform patterns
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        SignatureStampResult: SignatureStampResult with detected regions"""
+        SignatureStampResult with detected regions
+
+    Raises:
+        ValueError: If the image is None or empty.
+    """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
 
@@ -724,10 +738,11 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     use OCR output with a language classification model.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        LanguageResult: LanguageResult with detected script information"""
+        LanguageResult with detected script information
+    """
     # Preprocess image
     _gray, binary, h, w = _validate_and_preprocess(image)
 
@@ -799,10 +814,14 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
     affects OCR and reading order.
 
     Args:
-        image (np.ndarray): Input image (BGR format)
+        image: Input image (BGR format)
 
     Returns:
-        OrientationResult: OrientationResult with orientation information"""
+        OrientationResult with orientation information
+
+    Raises:
+        ValueError: If the image is None or empty.
+    """
     if image is None or image.size == 0:
         raise ValueError(INVALID_IMAGE_MSG)
 

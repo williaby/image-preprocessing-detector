@@ -31,15 +31,15 @@ class DeskewConfig:
     """Configuration for the deskew pipeline.
 
     Attributes:
-        model_path: Path to the ONNX SkewNet model.
-        orientation_confidence_threshold: Min confidence to apply orientation.
-        orientation_fallback_threshold: Below this, fall back to classical.
-        skew_confidence_threshold: Min bin probability to trust skew prediction.
-        min_correction_angle: Skip correction below this angle.
-        max_correction_angle: Flag for review above this angle.
-        uncertainty_gate: Skip correction if uncertainty > |angle|.
-        fallback_enabled: Whether to allow classical fallback.
-        border_value: Pixel value for rotation borders (255 = white).
+        model_path (Path | None): Path to the ONNX SkewNet model.
+        orientation_confidence_threshold (float): Min confidence to apply orientation.
+        orientation_fallback_threshold (float): Below this, fall back to classical.
+        skew_confidence_threshold (float): Min bin probability to trust skew prediction.
+        min_correction_angle (float): Skip correction below this angle.
+        max_correction_angle (float): Flag for review above this angle.
+        uncertainty_gate (bool): Skip correction if uncertainty > |angle|.
+        fallback_enabled (bool): Whether to allow classical fallback.
+        border_value (int): Pixel value for rotation borders (255 = white).
     """
 
     model_path: Path | None = None
@@ -57,10 +57,11 @@ class DeskewConfig:
         """Load pipeline config from skew_estimation.yaml.
 
         Args:
-            config_path (str | Path | None): Path to config YAML. None uses default.
+            config_path: Path to config YAML. None uses default.
 
         Returns:
-            DeskewConfig: Populated DeskewConfig."""
+            Populated DeskewConfig.
+        """
         if config_path is None:
             config_path = (
                 Path(__file__).resolve().parents[3] / "config" / "skew_estimation.yaml"
@@ -107,17 +108,17 @@ class DeskewResult:
     """Result of the full deskew pipeline.
 
     Attributes:
-        corrected_image: The deskewed image (may be same as input if skipped).
-        orientation_applied: Whether orientation correction was applied.
-        orientation_angle: Detected orientation (0, 90, 180, 270).
-        orientation_confidence: Confidence of orientation prediction.
-        skew_angle: Detected fine skew angle in degrees.
-        skew_confidence: Confidence of skew prediction.
-        skew_uncertainty: Predicted uncertainty from regression head.
-        correction_applied: Whether skew correction was applied.
-        skipped_reason: Reason if correction was skipped.
-        method: Detection method used (ml, classical, ml+fallback).
-        latency_ms: Total pipeline latency in milliseconds.
+        corrected_image (np.ndarray): The deskewed image (may be same as input if skipped).
+        orientation_applied (bool): Whether orientation correction was applied.
+        orientation_angle (int): Detected orientation (0, 90, 180, 270).
+        orientation_confidence (float): Confidence of orientation prediction.
+        skew_angle (float): Detected fine skew angle in degrees.
+        skew_confidence (float): Confidence of skew prediction.
+        skew_uncertainty (float): Predicted uncertainty from regression head.
+        correction_applied (bool): Whether skew correction was applied.
+        skipped_reason (str | None): Reason if correction was skipped.
+        method (str): Detection method used (ml, classical, ml+fallback).
+        latency_ms (float): Total pipeline latency in milliseconds.
     """
 
     corrected_image: np.ndarray
@@ -141,13 +142,12 @@ class DeskewPipeline:
         result = pipeline.process(image)
         if result.correction_applied:
             corrected = result.corrected_image
+
+    Args:
+        config (DeskewConfig | None): Pipeline configuration. None loads from YAML.
     """
 
     def __init__(self, config: DeskewConfig | None = None) -> None:
-        """Initialize deskew pipeline.
-
-        Args:
-            config (DeskewConfig | None): Pipeline configuration. None loads from YAML."""
         self.config = config or DeskewConfig.from_yaml()
         self._ml_estimator: Any | None = None
         self._classical_detector: Any | None = None
@@ -165,10 +165,11 @@ class DeskewPipeline:
         """Create pipeline from YAML config file.
 
         Args:
-            config_path (str | Path | None): Path to skew_estimation.yaml.
+            config_path: Path to skew_estimation.yaml.
 
         Returns:
-            DeskewPipeline: Configured DeskewPipeline instance."""
+            Configured DeskewPipeline instance.
+        """
         config = DeskewConfig.from_yaml(config_path)
         return cls(config=config)
 
@@ -176,10 +177,10 @@ class DeskewPipeline:
         """Run the full deskew pipeline on an image.
 
         Args:
-            image (np.ndarray): Input image (BGR uint8, from OpenCV).
+            image: Input image (BGR uint8, from OpenCV).
 
         Returns:
-            DeskewResult: DeskewResult with corrected image and metadata.
+            DeskewResult with corrected image and metadata.
 
         Raises:
             ValueError: If image is invalid or empty.
@@ -225,10 +226,11 @@ class DeskewPipeline:
         """Run ML-based deskew with optional classical fallback.
 
         Args:
-            image (np.ndarray): Input BGR image.
+            image: Input BGR image.
 
         Returns:
-            DeskewResult: DeskewResult from ML inference."""
+            DeskewResult from ML inference.
+        """
         from image_preprocessing_detector.models.skew_estimator import (
             SkewEstimatorInference,
         )
@@ -375,10 +377,11 @@ class DeskewPipeline:
         """Run classical Hough+Projection skew detection and correction.
 
         Args:
-            image (np.ndarray): Input BGR image.
+            image: Input BGR image.
 
         Returns:
-            DeskewResult: DeskewResult from classical detection."""
+            DeskewResult from classical detection.
+        """
         from image_preprocessing_detector.detection.iqa_classical import SkewDetector
 
         if self._classical_detector is None:
@@ -434,11 +437,12 @@ def _rotate_90(image: np.ndarray, angle: int) -> np.ndarray:
     """Rotate image by 90/180/270 degrees.
 
     Args:
-        image (np.ndarray): Input BGR image.
-        angle (int): Rotation angle (0, 90, 180, 270).
+        image: Input BGR image.
+        angle: Rotation angle (0, 90, 180, 270).
 
     Returns:
-        np.ndarray: Rotated image."""
+        Rotated image.
+    """
     if angle == 90:
         return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     if angle == 180:
@@ -456,12 +460,13 @@ def _apply_skew_correction(
     """Apply fine skew correction using OpenCV warpAffine.
 
     Args:
-        image (np.ndarray): Input BGR image.
-        angle (float): Skew angle in degrees (positive = clockwise).
-        border_value (int): Fill value for borders after rotation.
+        image: Input BGR image.
+        angle: Skew angle in degrees (positive = clockwise).
+        border_value: Fill value for borders after rotation.
 
     Returns:
-        np.ndarray: Deskewed image."""
+        Deskewed image.
+    """
     h, w = image.shape[:2]
     center = (w / 2.0, h / 2.0)
 

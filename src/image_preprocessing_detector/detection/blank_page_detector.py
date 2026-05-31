@@ -27,12 +27,12 @@ class BlankPageResult:
     """Result of blank page detection.
 
     Attributes:
-        is_blank: Whether the page is classified as blank.
-        blankness_score: Aggregate score from 0 (full content) to 1 (blank).
-        content_ratio: Ratio of non-background pixels (0-1).
-        edge_density: Canny edge pixel density (0-1).
-        pixel_variance: Variance of grayscale pixel intensities.
-        confidence: Confidence in the classification (0-1).
+        is_blank (bool): Whether the page is classified as blank.
+        blankness_score (float): Aggregate score from 0 (full content) to 1 (blank).
+        content_ratio (float): Ratio of non-background pixels (0-1).
+        edge_density (float): Canny edge pixel density (0-1).
+        pixel_variance (float): Variance of grayscale pixel intensities.
+        confidence (float): Confidence in the classification (0-1).
     """
 
     is_blank: bool
@@ -97,6 +97,14 @@ class BlankPageDetector:
 
     Each signal is independently mapped to a 0-1 blankness indicator, then
     fused via weighted average to produce the final ``blankness_score``.
+
+    Args:
+        variance_threshold (float): Pixel variance below which the image is likely
+            blank (default: 100).
+        edge_density_threshold (float): Edge density below which the image is
+            likely blank (default: 0.01).
+        content_ratio_threshold (float): Content ratio below which the image is
+            likely blank (default: 0.02).
     """
 
     def __init__(
@@ -105,12 +113,6 @@ class BlankPageDetector:
         edge_density_threshold: float = _DEFAULT_EDGE_DENSITY_THRESHOLD,
         content_ratio_threshold: float = _DEFAULT_CONTENT_RATIO_THRESHOLD,
     ) -> None:
-        """Initialise blank page detector.
-
-        Args:
-            variance_threshold (float): Pixel variance below which the image is likely blank (default: 100).
-            edge_density_threshold (float): Edge density below which the image is likely blank (default: 0.01).
-            content_ratio_threshold (float): Content ratio below which the image is likely blank (default: 0.02)."""
         self.variance_threshold = variance_threshold
         self.edge_density_threshold = edge_density_threshold
         self.content_ratio_threshold = content_ratio_threshold
@@ -130,13 +132,10 @@ class BlankPageDetector:
         """Analyse an image and determine whether it is blank.
 
         Args:
-            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+            image: Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            BlankPageResult: BlankPageResult with classification, score, and raw signals.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
+            BlankPageResult with classification, score, and raw signals.
         """
         gray, binary, height, width = _validate_and_preprocess(image)
         total_pixels = height * width
@@ -213,11 +212,12 @@ class BlankPageDetector:
         disagree the confidence is reduced, reflecting ambiguity.
 
         Args:
-            blank_votes (int): Number of signals that voted "blank" (0-3).
-            blankness_score (float): Fused blankness score (0-1).
+            blank_votes: Number of signals that voted "blank" (0-3).
+            blankness_score: Fused blankness score (0-1).
 
         Returns:
-            float: Confidence value between 0 and 1."""
+            Confidence value between 0 and 1.
+        """
         if blank_votes == 3:
             return min(1.0, 0.85 + 0.15 * blankness_score)
         if blank_votes == 0:
@@ -239,13 +239,10 @@ def detect_blank_page(image: np.ndarray) -> BlankPageResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+        image: Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        BlankPageResult: BlankPageResult with classification, score, and raw signals.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
+        BlankPageResult with classification, score, and raw signals.
     """
     global _default_detector
     if _default_detector is None:

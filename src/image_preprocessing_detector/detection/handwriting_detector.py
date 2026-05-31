@@ -56,13 +56,13 @@ class HandwritingDetectionResult:
     """Result of handwriting detection analysis.
 
     Attributes:
-        has_handwriting: Whether the page contains handwriting.
-        handwriting_score: Aggregate handwriting likelihood (0-1).
-        stroke_width_variance: Normalised stroke-width variance signal (0-1).
-        baseline_irregularity: Normalised baseline irregularity signal (0-1).
-        spacing_variance: Normalised inter-component spacing variance (0-1).
-        form_factor_score: Normalised component complexity signal (0-1).
-        confidence: Confidence in the detection result (0-1).
+        has_handwriting (bool): Whether the page contains handwriting.
+        handwriting_score (float): Aggregate handwriting likelihood (0-1).
+        stroke_width_variance (float): Normalised stroke-width variance signal (0-1).
+        baseline_irregularity (float): Normalised baseline irregularity signal (0-1).
+        spacing_variance (float): Normalised inter-component spacing variance (0-1).
+        form_factor_score (float): Normalised component complexity signal (0-1).
+        confidence (float): Confidence in the detection result (0-1).
     """
 
     has_handwriting: bool
@@ -92,7 +92,8 @@ class HandwritingDetectionResult:
         alone and are set to NOT_APPLICABLE.
 
         Returns:
-            HandwritingAssessment: HandwritingAssessment with presence, scores, and confidence."""
+            HandwritingAssessment with presence, scores, and confidence.
+        """
         if self.handwriting_score < 0.2:
             presence = HandwritingPresence.NONE
         elif self.handwriting_score < 0.4:
@@ -157,10 +158,11 @@ def _compute_stroke_width_variance(binary: np.ndarray) -> float:
     stroke-width irregularity.
 
     Args:
-        binary (np.ndarray): Binary image (ink=255, background=0).
+        binary: Binary image (ink=255, background=0).
 
     Returns:
-        float: Normalised stroke-width variance in [0, 1]."""
+        Normalised stroke-width variance in [0, 1].
+    """
     dist = cv2.distanceTransform(binary, cv2.DIST_L2, 3)
     foreground = dist[dist > 0]
 
@@ -186,12 +188,13 @@ def _group_components_into_rows(
     tolerance proportional to image height.
 
     Args:
-        components (list[dict[str, Any]]): Filtered CC dictionaries (must contain ``centroid``).
-        image_height (int): Image height in pixels.
+        components: Filtered CC dictionaries (must contain ``centroid``).
+        image_height: Image height in pixels.
 
     Returns:
-        list[list[dict[str, Any]]]: List of rows, where each row is a list of component dicts sorted
-        by X-centroid."""
+        List of rows, where each row is a list of component dicts sorted
+        by X-centroid.
+    """
     if not components:
         return []
 
@@ -228,11 +231,12 @@ def _compute_baseline_irregularity(
     image height, serves as the irregularity signal.
 
     Args:
-        rows (list[list[dict[str, Any]]]): Grouped component rows.
-        image_height (int): Image height in pixels.
+        rows: Grouped component rows.
+        image_height: Image height in pixels.
 
     Returns:
-        float: Normalised baseline irregularity in [0, 1]."""
+        Normalised baseline irregularity in [0, 1].
+    """
     if image_height < 1:
         return 0.0
 
@@ -258,10 +262,11 @@ def _compute_spacing_variance(rows: list[list[dict[str, Any]]]) -> float:
     all rows captures spacing irregularity.
 
     Args:
-        rows (list[list[dict[str, Any]]]): Grouped component rows (each sorted by X-centroid).
+        rows: Grouped component rows (each sorted by X-centroid).
 
     Returns:
-        float: Normalised spacing variance in [0, 1]."""
+        Normalised spacing variance in [0, 1].
+    """
     all_gaps: list[float] = []
 
     for row in rows:
@@ -295,10 +300,11 @@ def _compute_form_factor_score(
     form-factor).  A circle has form-factor = 4*pi ~= 12.57.
 
     Args:
-        binary (np.ndarray): Binary image.
+        binary: Binary image.
 
     Returns:
-        float: Normalised form-factor score in [0, 1]."""
+        Normalised form-factor score in [0, 1].
+    """
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
@@ -343,15 +349,16 @@ def _compute_confidence(
     the number of analysed components provides adequate statistical basis.
 
     Args:
-        handwriting_score (float): Fused handwriting score (0-1).
-        stroke_var (float): Normalised stroke-width variance (0-1).
-        baseline_irreg (float): Normalised baseline irregularity (0-1).
-        spacing_var (float): Normalised spacing variance (0-1).
-        form_factor (float): Normalised form-factor score (0-1).
-        num_components (int): Number of filtered connected components.
+        handwriting_score: Fused handwriting score (0-1).
+        stroke_var: Normalised stroke-width variance (0-1).
+        baseline_irreg: Normalised baseline irregularity (0-1).
+        spacing_var: Normalised spacing variance (0-1).
+        form_factor: Normalised form-factor score (0-1).
+        num_components: Number of filtered connected components.
 
     Returns:
-        float: Confidence value in [0, 1]."""
+        Confidence value in [0, 1].
+    """
     signals = [stroke_var, baseline_irreg, spacing_var, form_factor]
     mean_sig = sum(signals) / len(signals)
 
@@ -395,6 +402,16 @@ class HandwritingDetector:
            distinguishes complex handwriting glyphs from simpler typeset.
 
     Signals are fused via weighted average into ``handwriting_score`` (0-1).
+
+    Args:
+        threshold (float): Score threshold for binary has_handwriting decision
+            (default: 0.4).
+        min_components (int): Minimum CCs required for reliable analysis
+            (default: 5).
+
+    Raises:
+        ValueError: If threshold is not between 0.0 and 1.0, or if
+            min_components is less than 1.
     """
 
     def __init__(
@@ -402,11 +419,6 @@ class HandwritingDetector:
         threshold: float = _DEFAULT_THRESHOLD,
         min_components: int = _MIN_COMPONENTS,
     ) -> None:
-        """Initialise handwriting detector.
-
-        Args:
-            threshold (float): Score threshold for binary has_handwriting decision (default: 0.4).
-            min_components (int): Minimum CCs required for reliable analysis (default: 5)."""
         if not 0.0 <= threshold <= 1.0:
             msg = f"threshold must be between 0.0 and 1.0, got {threshold}"
             raise ValueError(msg)
@@ -431,14 +443,11 @@ class HandwritingDetector:
         """Analyse an image for handwriting presence.
 
         Args:
-            image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+            image: Input image (BGR, BGRA, or grayscale numpy array).
 
         Returns:
-            HandwritingDetectionResult: HandwritingDetectionResult with score, per-signal breakdown,
+            HandwritingDetectionResult with score, per-signal breakdown,
             and confidence.
-
-        Raises:
-            ValueError: If the image is *None* or empty.
         """
         _gray, binary, height, width = _validate_and_preprocess(image)
 
@@ -532,14 +541,11 @@ def detect_handwriting(image: np.ndarray) -> HandwritingDetectionResult:
     Uses a lazily-initialised module-level detector instance.
 
     Args:
-        image (np.ndarray): Input image (BGR, BGRA, or grayscale numpy array).
+        image: Input image (BGR, BGRA, or grayscale numpy array).
 
     Returns:
-        HandwritingDetectionResult: HandwritingDetectionResult with score, signal breakdown, and
+        HandwritingDetectionResult with score, signal breakdown, and
         confidence.
-
-    Raises:
-        ValueError: If the image is *None* or empty.
     """
     global _default_detector
     if _default_detector is None:
