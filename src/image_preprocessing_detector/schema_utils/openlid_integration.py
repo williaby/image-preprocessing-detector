@@ -529,10 +529,8 @@ class OpenLIDDetector:
         """Initialize the OpenLID detector.
 
         Args:
-            model_path: Path to openlid_v2.bin model file.
-                       If None, uses default path.
-            auto_download: If True and model not found, download from HuggingFace.
-        """
+            model_path (Path | str | None): Path to openlid_v2.bin model file. If None, uses default path.
+            auto_download (bool): If True and model not found, download from HuggingFace."""
         if model_path is None:
             model_path = DEFAULT_MODEL_DIR / OPENLID_MODEL_FILENAME
         else:
@@ -613,12 +611,11 @@ class OpenLIDDetector:
         """Detect language of text.
 
         Args:
-            text: Text to analyze.
-            threshold: Minimum confidence threshold. Returns 'und' if below.
+            text (str): Text to analyze.
+            threshold (float): Minimum confidence threshold. Returns 'und' if below.
 
         Returns:
-            OpenLIDResult with language, script, and confidence.
-        """
+            OpenLIDResult: OpenLIDResult with language, script, and confidence."""
         self._ensure_model()
         assert self._model is not None
 
@@ -653,12 +650,11 @@ class OpenLIDDetector:
         """Detect top-k language predictions.
 
         Args:
-            text: Text to analyze.
-            k: Number of top predictions to return.
+            text (str): Text to analyze.
+            k (int): Number of top predictions to return.
 
         Returns:
-            List of OpenLIDResult, sorted by confidence (descending).
-        """
+            list[OpenLIDResult]: List of OpenLIDResult, sorted by confidence (descending)."""
         self._ensure_model()
         assert self._model is not None
 
@@ -678,12 +674,11 @@ class OpenLIDDetector:
         """Parse OpenLID label into structured result.
 
         Args:
-            raw_label: Raw model label like "__label__eng_Latn"
-            confidence: Model confidence score
+            raw_label (str): Raw model label like "__label__eng_Latn"
+            confidence (float): Model confidence score
 
         Returns:
-            OpenLIDResult with parsed components
-        """
+            OpenLIDResult: OpenLIDResult with parsed components"""
         # Parse format: __label__<lang>_<script>
         label_content = raw_label.replace("__label__", "")
         parts = label_content.split("_")
@@ -739,11 +734,11 @@ def detect_language_openlid(
     Convenience function using global detector instance.
 
     Args:
-        text: Text to analyze.
-        threshold: Minimum confidence threshold.
+        text (str): Text to analyze.
+        threshold (float): Minimum confidence threshold.
 
     Returns:
-        OpenLIDResult with language and script information.
+        OpenLIDResult: OpenLIDResult with language and script information.
 
     Example:
         >>> result = detect_language_openlid("Bonjour le monde!")
@@ -757,12 +752,11 @@ def detect_top_k_openlid(text: str, k: int = 5) -> list[OpenLIDResult]:
     """Get top-k language predictions using OpenLID-v2.
 
     Args:
-        text: Text to analyze.
-        k: Number of predictions to return.
+        text (str): Text to analyze.
+        k (int): Number of predictions to return.
 
     Returns:
-        List of OpenLIDResult sorted by confidence.
-    """
+        list[OpenLIDResult]: List of OpenLIDResult sorted by confidence."""
     return get_detector().detect_top_k(text, k)
 
 

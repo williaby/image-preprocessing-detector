@@ -49,9 +49,7 @@ class ScriptMLMapping:
         """Initialize mapping from config file.
 
         Args:
-            config_path: Path to config YAML. If None, uses default path.
-                        Searches relative to package, then project root.
-        """
+            config_path (Path | str | None): Path to config YAML. If None, uses default path. Searches relative to package, then project root."""
         self.config_path = self._resolve_config_path(config_path)
         self._load_config()
 
@@ -149,59 +147,54 @@ class ScriptMLMapping:
         """Map ISO 15924 code to ML training class.
 
         Args:
-            iso15924_code: 4-letter ISO 15924 script code (e.g., "Latn", "Deva")
+            iso15924_code (str): 4-letter ISO 15924 script code (e.g., "Latn", "Deva")
 
         Returns:
-            ML class string (e.g., "LATN", "INDIC_OTHER", "UNKNOWN")
-        """
+            str: ML class string (e.g., "LATN", "INDIC_OTHER", "UNKNOWN")"""
         return self._get_cached_ml_class(iso15924_code)
 
     def get_all_codes_for_class(self, ml_class: str) -> list[str]:
         """Get all ISO 15924 codes that map to an ML class.
 
         Args:
-            ml_class: ML class name (e.g., "LATN", "INDIC_OTHER")
+            ml_class (str): ML class name (e.g., "LATN", "INDIC_OTHER")
 
         Returns:
-            List of ISO 15924 codes mapping to this class
-        """
+            list[str]: List of ISO 15924 codes mapping to this class"""
         return [k for k, v in self.mapping.items() if v == ml_class]
 
     def get_class_weight(self, ml_class: str) -> float:
         """Get training weight for ML class.
 
         Args:
-            ml_class: ML class name
+            ml_class (str): ML class name
 
         Returns:
-            Weight for training (default 1.0)
-        """
+            float: Weight for training (default 1.0)"""
         return self.class_weights.get(ml_class, 1.0)
 
     def get_all_ml_classes(self) -> list[str]:
         """Get list of all ML classes in order.
 
         Returns:
-            List of ML class names
-        """
+            list[str]: List of ML class names"""
         return list(self.ml_classes)
 
     def get_num_classes(self) -> int:
         """Get number of ML classes for model output dimension.
 
         Returns:
-            Number of ML classes
-        """
+            int: Number of ML classes"""
         return len(self.ml_classes)
 
     def ml_class_to_index(self, ml_class: str) -> int:
         """Convert ML class to integer index.
 
         Args:
-            ml_class: ML class name
+            ml_class (str): ML class name
 
         Returns:
-            Integer index for model output
+            int: Integer index for model output
 
         Raises:
             ValueError: If ml_class is not valid
@@ -215,10 +208,10 @@ class ScriptMLMapping:
         """Convert integer index to ML class name.
 
         Args:
-            index: Integer index from model output
+            index (int): Integer index from model output
 
         Returns:
-            ML class name
+            str: ML class name
 
         Raises:
             IndexError: If index is out of range
@@ -238,11 +231,10 @@ class ScriptMLMapping:
         """Check if code is a known ISO 15924 script.
 
         Args:
-            code: Potential ISO 15924 code
+            code (str): Potential ISO 15924 code
 
         Returns:
-            True if code is in mapping (directly known)
-        """
+            bool: True if code is in mapping (directly known)"""
         return code in self.mapping
 
     def __repr__(self) -> str:
@@ -262,8 +254,7 @@ def get_default_mapping() -> ScriptMLMapping:
     """Get default ScriptMLMapping singleton.
 
     Returns:
-        ScriptMLMapping instance with default config
-    """
+        ScriptMLMapping: ScriptMLMapping instance with default config"""
     global _default_mapping
     if _default_mapping is None:
         _default_mapping = ScriptMLMapping()

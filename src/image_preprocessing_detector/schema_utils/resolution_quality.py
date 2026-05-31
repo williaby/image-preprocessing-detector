@@ -103,7 +103,7 @@ def resolve_script_family(iso15924_code: str) -> str:
     """Map ISO 15924 script code to measurement family.
 
     Args:
-        iso15924_code: ISO 15924 4-letter script code (e.g., "Latn", "Hans").
+        iso15924_code (str): ISO 15924 4-letter script code (e.g., "Latn", "Hans").
 
     Returns:
         Script family string: "cjk", "arabic", "devanagari", or "latin" (default).
@@ -124,12 +124,11 @@ def get_script_measurement_config(
     """Get measurement config for a script, falling back to 'mixed' if uncertain.
 
     Args:
-        iso15924_code: ISO 15924 script code, or None for unknown script.
-        script_confidence: Confidence of script detection (0-1), or None.
+        iso15924_code (str | None): ISO 15924 script code, or None for unknown script.
+        script_confidence (float | None): Confidence of script detection (0-1), or None.
 
     Returns:
-        ScriptAwareMeasurementConfig for the appropriate script family.
-    """
+        ScriptAwareMeasurementConfig: ScriptAwareMeasurementConfig for the appropriate script family."""
     if iso15924_code is None:
         return SCRIPT_MEASUREMENT_CONFIGS["mixed"]
 
@@ -243,11 +242,10 @@ def piecewise_quality_score(char_height_px: float) -> float:
     - Above 96px text is oversized with diminishing returns (score > 0.95).
 
     Args:
-        char_height_px: Median character height in pixels.
+        char_height_px (float): Median character height in pixels.
 
     Returns:
-        Quality score between 0.0 and 1.0.
-    """
+        float: Quality score between 0.0 and 1.0."""
     if char_height_px < 0:
         return 0.0
     if char_height_px < 16:
@@ -269,11 +267,10 @@ def classify_coarse_bucket(char_height_px: float) -> str:
     """Classify character height into a coarse resolution bucket.
 
     Args:
-        char_height_px: Median character height in pixels.
+        char_height_px (float): Median character height in pixels.
 
     Returns:
-        CoarseBucket value string.
-    """
+        str: CoarseBucket value string."""
     for bucket, (low, high) in BUCKET_THRESHOLDS.items():
         if low <= char_height_px < high:
             return bucket.value
@@ -299,16 +296,15 @@ def measure_char_height_in_region(
     handling uneven lighting and shadow gradients within the text line.
 
     Args:
-        region_gray: Grayscale numpy array of a cropped text region.
-        min_components: Minimum valid CCs required (default 3).
-        aspect_ratio_range: Valid component height/width ratio range.
-        min_area_frac: Minimum component area as fraction of region.
-        max_area_frac: Maximum component area as fraction of region.
+        region_gray (NDArray[np.uint8]): Grayscale numpy array of a cropped text region.
+        min_components (int): Minimum valid CCs required (default 3).
+        aspect_ratio_range (tuple[float, float]): Valid component height/width ratio range.
+        min_area_frac (float): Minimum component area as fraction of region.
+        max_area_frac (float): Maximum component area as fraction of region.
 
     Returns:
-        Tuple of (median_height, list of all valid component heights).
-        Returns (None, []) if measurement fails.
-    """
+        tuple[float | None, list[float]]: Tuple of (median_height, list of all valid component heights).
+        Returns (None, []) if measurement fails."""
     import cv2
     import numpy as np
 
@@ -366,14 +362,13 @@ def compute_confidence(
     """Compute measurement confidence from signal quality indicators.
 
     Args:
-        num_text_regions: Total text regions detected by DBNet.
-        _num_valid_cc_regions: Regions where CC analysis succeeded.
-        height_cv: Coefficient of variation of per-region heights.
-        method: 'stage_1_2' or 'stage_1_only'.
+        num_text_regions (int): Total text regions detected by DBNet.
+        _num_valid_cc_regions (int): Regions where CC analysis succeeded.
+        height_cv (float): Coefficient of variation of per-region heights.
+        method (str): 'stage_1_2' or 'stage_1_only'.
 
     Returns:
-        Confidence score between 0.0 and 1.0.
-    """
+        float: Confidence score between 0.0 and 1.0."""
     region_factor = min(1.0, num_text_regions / 10.0)
     uniformity_factor = max(0.0, 1.0 - height_cv)
     method_factor = 1.0 if method == "stage_1_2" else 0.8
@@ -392,14 +387,13 @@ def aggregate_measurements(
     otherwise falls back to the DBNet bbox height (Stage 1 only).
 
     Args:
-        region_heights: Per-region character heights (CC median or bbox height).
-        _bbox_heights: Per-region DBNet bounding box heights (Stage 1).
-        cc_success_flags: Whether CC analysis succeeded per region.
-        region_areas: Per-region areas in pixels (for weighting).
+        region_heights (list[float]): Per-region character heights (CC median or bbox height).
+        _bbox_heights (list[float]): Per-region DBNet bounding box heights (Stage 1).
+        cc_success_flags (list[bool]): Whether CC analysis succeeded per region.
+        region_areas (list[float]): Per-region areas in pixels (for weighting).
 
     Returns:
-        ResolutionQualityResult with all fields populated.
-    """
+        ResolutionQualityResult: ResolutionQualityResult with all fields populated."""
     import numpy as np
 
     num_regions = len(region_heights)
@@ -489,11 +483,10 @@ def extract_line_height_from_polygon(
     For CJK text, this measures the short side of the text line (= char height).
 
     Args:
-        polygon: 4-point polygon as [[x,y], ...].
+        polygon (list[list[float]]): 4-point polygon as [[x,y], ...].
 
     Returns:
-        Line height in pixels.
-    """
+        float: Line height in pixels."""
     import numpy as np
 
     pts = np.array(polygon, dtype=np.float64)
@@ -519,13 +512,12 @@ def crop_polygon_region(
     """Crop and mask a text region from a grayscale image using a polygon.
 
     Args:
-        image_gray: Full grayscale image.
-        polygon: 4-point polygon [[x,y], ...].
-        padding: Pixels of padding around the bounding rect.
+        image_gray (NDArray[np.uint8]): Full grayscale image.
+        polygon (list[list[float]]): 4-point polygon [[x,y], ...].
+        padding (int): Pixels of padding around the bounding rect.
 
     Returns:
-        Cropped grayscale region, or None if too small.
-    """
+        NDArray[np.uint8] | None: Cropped grayscale region, or None if too small."""
     import cv2
     import numpy as np
 
@@ -564,18 +556,14 @@ def measure_char_height_v2(
     morphological closing and CC aspect ratio filtering.
 
     Args:
-        image_gray: Grayscale image (uint8, single channel).
-        script_family: Script family for measurement parameters.
-            One of: "cjk", "latin", "arabic", "devanagari", "mixed".
-        use_sauvola: If True, attempt Sauvola binarization via
-            cv2.ximgproc.niBlackThreshold. Falls back to adaptive
-            threshold if opencv-contrib-python is not available.
+        image_gray (NDArray[np.uint8]): Grayscale image (uint8, single channel).
+        script_family (str): Script family for measurement parameters. One of: "cjk", "latin", "arabic", "devanagari", "mixed".
+        use_sauvola (bool): If True, attempt Sauvola binarization via cv2.ximgproc.niBlackThreshold. Falls back to adaptive threshold if opencv-contrib-python is not available.
 
     Returns:
-        Tuple of (char_height_px, quality_score) where quality_score is
+        tuple[float | None, float | None]: Tuple of (char_height_px, quality_score) where quality_score is
         the piecewise mapping from height to 0-1 score. Returns
-        (None, None) if measurement fails (e.g., no text detected).
-    """
+        (None, None) if measurement fails (e.g., no text detected)."""
     import cv2
     import numpy as np
 

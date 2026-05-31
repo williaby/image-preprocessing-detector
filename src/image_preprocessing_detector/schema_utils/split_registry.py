@@ -49,8 +49,8 @@ def _hash_to_split(
     to assign a split according to the given ratios.
 
     Args:
-        sha256_hex: Hex-encoded SHA256 hash of the source image
-        ratios: (train, val, test) ratios summing to 1.0
+        sha256_hex (str): Hex-encoded SHA256 hash of the source image
+        ratios (tuple[float, float, float]): (train, val, test) ratios summing to 1.0
 
     Returns:
         Split name: "train", "val", or "test"
@@ -74,11 +74,10 @@ def compute_image_hash(image_path: str | Path) -> str:
     """Compute SHA256 hash of an image file.
 
     Args:
-        image_path: Path to the image file
+        image_path (str | Path): Path to the image file
 
     Returns:
-        Hex-encoded SHA256 hash string
-    """
+        str: Hex-encoded SHA256 hash string"""
     sha256 = hashlib.sha256()
     with open(image_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -106,8 +105,7 @@ class SplitRegistry:
         """Initialize the split registry.
 
         Args:
-            registry_path: Path to the JSONL file (created if not exists)
-        """
+            registry_path (str | Path): Path to the JSONL file (created if not exists)"""
         self.registry_path = Path(registry_path)
         self._entries: dict[str, dict[str, Any]] = {}
         if self.registry_path.exists():
@@ -139,11 +137,10 @@ class SplitRegistry:
         """Look up the split assignment for an image hash.
 
         Args:
-            sha256_hex: SHA256 hex digest of the source image
+            sha256_hex (str): SHA256 hex digest of the source image
 
         Returns:
-            Split name ("train", "val", "test") or None if not registered
-        """
+            str | None: Split name ("train", "val", "test") or None if not registered"""
         entry = self._entries.get(sha256_hex)
         if entry:
             return entry.get("split")
@@ -162,14 +159,13 @@ class SplitRegistry:
         Otherwise, deterministically assigns a split based on the hash.
 
         Args:
-            sha256_hex: SHA256 hex digest of the source image
-            ratios: (train, val, test) split ratios
-            source_dataset: Optional dataset name for provenance
-            source_path: Optional original file path for provenance
+            sha256_hex (str): SHA256 hex digest of the source image
+            ratios (tuple[float, float, float]): (train, val, test) split ratios
+            source_dataset (str | None): Optional dataset name for provenance
+            source_path (str | None): Optional original file path for provenance
 
         Returns:
-            Assigned split name ("train", "val", "test")
-        """
+            str: Assigned split name ("train", "val", "test")"""
         existing = self.lookup(sha256_hex)
         if existing is not None:
             return existing
@@ -204,14 +200,13 @@ class SplitRegistry:
         """Verify no cross-split contamination between two hash sets.
 
         Args:
-            dataset_a_hashes: Hashes assigned to split_a
-            dataset_b_hashes: Hashes assigned to split_b
-            split_a: Expected split for dataset A
-            split_b: Expected split for dataset B
+            dataset_a_hashes (set[str]): Hashes assigned to split_a
+            dataset_b_hashes (set[str]): Hashes assigned to split_b
+            split_a (str): Expected split for dataset A
+            split_b (str): Expected split for dataset B
 
         Returns:
-            List of SHA256 hashes that appear in both splits (should be empty)
-        """
+            list[str]: List of SHA256 hashes that appear in both splits (should be empty)"""
         violations = []
         overlap = dataset_a_hashes & dataset_b_hashes
         for sha256 in overlap:
@@ -227,8 +222,7 @@ class SplitRegistry:
         """Get split distribution statistics.
 
         Returns:
-            Dict mapping split name to count
-        """
+            dict[str, int]: Dict mapping split name to count"""
         counts: dict[str, int] = {"train": 0, "val": 0, "test": 0}
         for entry in self._entries.values():
             split = entry.get("split", "unknown")

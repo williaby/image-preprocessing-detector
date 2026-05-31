@@ -306,11 +306,10 @@ def get_script_family(script_code: str) -> str:
     Centralised lookup used by integration scripts and validators.
 
     Args:
-        script_code: ISO 15924 4-letter script code (e.g. "Latn", "Grek").
+        script_code (str): ISO 15924 4-letter script code (e.g. "Latn", "Grek").
 
     Returns:
-        Script family name as a lowercase string (e.g. "latin", "greek").
-    """
+        str: Script family name as a lowercase string (e.g. "latin", "greek")."""
     return SCRIPT_TO_FAMILY.get(script_code, ScriptFamily.OTHER).value
 
 
@@ -348,11 +347,10 @@ class LanguageScriptTag:
         """Parse a BCP 47 language tag.
 
         Args:
-            tag: Language tag like "en", "zh-Hans", "sr-Cyrl-RS"
+            tag (str): Language tag like "en", "zh-Hans", "sr-Cyrl-RS"
 
         Returns:
-            LanguageScriptTag instance
-        """
+            LanguageScriptTag: LanguageScriptTag instance"""
         parts = tag.split("-")
         language = parts[0].lower()
         script = None
@@ -430,15 +428,14 @@ def create_language_script_info(
     """Create a schema-compliant language/script info dict.
 
     Args:
-        language: ISO 639-1/3 language code
-        script: ISO 15924 script code (optional, will use default)
-        confidence: Detection confidence 0-1
-        detection_method: How language was detected
-        is_primary: Whether this is the primary language
+        language (str): ISO 639-1/3 language code
+        script (str | None): ISO 15924 script code (optional, will use default)
+        confidence (float): Detection confidence 0-1
+        detection_method (str): How language was detected
+        is_primary (bool): Whether this is the primary language
 
     Returns:
-        ISOLanguageScriptInfo dictionary
-    """
+        ISOLanguageScriptInfo: ISOLanguageScriptInfo dictionary"""
     tag = LanguageScriptTag(language=language, script=script)
 
     return ISOLanguageScriptInfo(
@@ -459,11 +456,10 @@ def normalize_legacy_script(legacy_script: str) -> str:
     """Convert legacy script names to ISO 15924 codes.
 
     Args:
-        legacy_script: Old-style script name (e.g., "Latin", "CJK", "Arabic")
+        legacy_script (str): Old-style script name (e.g., "Latin", "CJK", "Arabic")
 
     Returns:
-        ISO 15924 code
-    """
+        str: ISO 15924 code"""
     mapping = {
         # Common legacy names
         "latin": "Latn",
@@ -504,10 +500,10 @@ def is_valid_iso15924_code(code: str) -> bool:
     Validates against the ISO15924Script enum values.
 
     Args:
-        code: 4-letter script code to validate (e.g., "Latn", "Arab")
+        code (str): 4-letter script code to validate (e.g., "Latn", "Arab")
 
     Returns:
-        True if code is a valid ISO 15924 script code
+        bool: True if code is a valid ISO 15924 script code
 
     Example:
         >>> is_valid_iso15924_code("Latn")
@@ -525,10 +521,10 @@ def get_iso15924_script(code: str) -> ISO15924Script | None:
     """Convert a string code to ISO15924Script enum.
 
     Args:
-        code: 4-letter script code (e.g., "Latn", "Arab")
+        code (str): 4-letter script code (e.g., "Latn", "Arab")
 
     Returns:
-        ISO15924Script enum member if valid, None otherwise
+        ISO15924Script | None: ISO15924Script enum member if valid, None otherwise
 
     Example:
         >>> get_iso15924_script("Latn")
@@ -549,10 +545,10 @@ def validate_script_code_for_ml(code: str) -> tuple[bool, str | None]:
     suggestions for corrections if not.
 
     Args:
-        code: Script code to validate
+        code (str): Script code to validate
 
     Returns:
-        Tuple of (is_valid, suggested_correction_or_error_message)
+        tuple[bool, str | None]: Tuple of (is_valid, suggested_correction_or_error_message)
 
     Example:
         >>> validate_script_code_for_ml("Latn")
