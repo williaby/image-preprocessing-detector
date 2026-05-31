@@ -785,8 +785,8 @@ arg-type-hints-in-docstring = true
 arg-type-hints-in-signature = true
 skip-checking-raises = false
 require-return-section-when-returning-nothing = false
-require-return-section-when-returning-values = false
-require-yield-section-when-yielding-values = false
+allow-init-docstring = true
+baseline = ".pydoclint-baseline.txt"
 
 [tool.uv.sources]
 byronwilliamscpa-gemini-image = { git = "https://github.com/ByronWilliamsCPA/python-libs.git", subdirectory = "packages/gemini-image" }

@@ -151,7 +151,7 @@ repos:
         args: ["--config=pyproject.toml"]
         types: [python]
         stages: [pre-commit]
-        exclude: ^(tests|scripts|benchmarks|tools)/
+        exclude: ^(tests|scripts|benchmarks|tools|fuzz)/
 
   # Security scanning with Bandit
   - repo: https://github.com/PyCQA/bandit
@@ -161,6 +161,25 @@ repos:
         args: ['-c', 'pyproject.toml']
         additional_dependencies: ['bandit[toml]']
         exclude: 'tests/.*'
+        stages: [pre-commit]
+
+  # ============================================================================
+  # Secret Detection - TruffleHog
+  # ============================================================================
+  # Advanced secret detection beyond detect-private-key.
+  # Detects API keys, tokens, credentials, and other secrets.
+  - repo: local
+    hooks:
+      - id: trufflehog
+        name: TruffleHog Secret Scanner
+        description: Detect secrets in your data before committing
+        # Scan staged files only. The git-history mode (--since-commit HEAD) also
+        # traverses fetched remote branches in the local object store, producing
+        # false positives from unmerged branches. Staged-file scanning is the
+        # correct scope for a pre-commit hook; git history scanning belongs in CI.
+        entry: bash -c 'command -v trufflehog >/dev/null 2>&1 && (git diff --cached -z --diff-filter=d --name-only 2>/dev/null | xargs -0 -r trufflehog filesystem --fail --no-update --results=verified,unknown) || echo "TruffleHog not installed - skipping secret scan"'  # yamllint disable-line rule:line-length
+        language: system
+        pass_filenames: false
         stages: [pre-commit]
 
 # Exclude patterns (don't run hooks on these)
@@ -183,22 +202,3 @@ exclude: |
       scripts/.*|
       .*\.pyc
   )$
-
-  # ============================================================================
-  # Secret Detection - TruffleHog
-  # ============================================================================
-  # Advanced secret detection beyond detect-private-key.
-  # Detects API keys, tokens, credentials, and other secrets.
-  - repo: local
-    hooks:
-      - id: trufflehog
-        name: TruffleHog Secret Scanner
-        description: Detect secrets in your data before committing
-        # Scan staged files only. The git-history mode (--since-commit HEAD) also
-        # traverses fetched remote branches in the local object store, producing
-        # false positives from unmerged branches. Staged-file scanning is the
-        # correct scope for a pre-commit hook; git history scanning belongs in CI.
-        entry: bash -c 'command -v trufflehog >/dev/null 2>&1 && (git diff --cached -z --diff-filter=d --name-only 2>/dev/null | xargs -0 -r trufflehog filesystem --fail --no-update --results=verified,unknown) || echo "TruffleHog not installed - skipping secret scan"'
-        language: system
-        pass_filenames: false
-        stages: [pre-commit]
