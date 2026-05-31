@@ -45,7 +45,7 @@ except ImportError:
         """Stub Counter metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize stub Counter (no-op)."""
+            pass  # no-op stub
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Counter":
             """Return self for method chaining (no-op)."""
@@ -58,7 +58,7 @@ except ImportError:
         """Stub Gauge metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize stub Gauge (no-op)."""
+            pass  # no-op stub
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Gauge":
             """Return self for method chaining (no-op)."""
@@ -77,7 +77,7 @@ except ImportError:
         """Stub Histogram metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize stub Histogram (no-op)."""
+            pass  # no-op stub
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Histogram":
             """Return self for method chaining (no-op)."""
@@ -90,7 +90,7 @@ except ImportError:
         """Stub Info metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            """Initialize stub Info (no-op)."""
+            pass  # no-op stub
 
         def info(self, _val: dict[str, str]) -> None:
             """Set info labels (no-op)."""
@@ -165,13 +165,13 @@ class MetricsConfig:
 
 
 class CardinalityGuard:
-    """Guards against label cardinality explosion."""
+    """Guards against label cardinality explosion.
+
+    Args:
+        max_unique_values (int): Maximum unique values to track.
+    """
 
     def __init__(self, max_unique_values: int = 100) -> None:
-        """Initialize the guard.
-
-        Args:
-            max_unique_values (int): Maximum unique values to track."""
         self._max_values = max_unique_values
         self._seen_values: set[str] = set()
         self._overflow_value = "__other__"
@@ -183,7 +183,8 @@ class CardinalityGuard:
             value (str): The label value to sanitize.
 
         Returns:
-            str: Sanitized value or overflow bucket."""
+            str: Sanitized value or overflow bucket.
+        """
         if value in self._seen_values:
             return value
 
@@ -204,7 +205,11 @@ class CardinalityGuard:
 
 
 class MetricsCollector:
-    """Singleton metrics collector for the application."""
+    """Singleton metrics collector for the application.
+
+    Initializes Prometheus metrics on first construction and returns the
+    same instance on subsequent calls (singleton pattern).
+    """
 
     _instance: "MetricsCollector | None" = None
     _initialized: bool = False
@@ -216,7 +221,6 @@ class MetricsCollector:
         return cls._instance
 
     def __init__(self) -> None:
-        """Initialize metrics collector singleton with configuration and Prometheus metrics."""
         if MetricsCollector._initialized:
             return
 
@@ -474,7 +478,8 @@ class MetricsCollector:
         Args:
             version (str): Application version.
             git_commit (str): Git commit hash.
-            build_time (str): Build timestamp."""
+            build_time (str): Build timestamp.
+        """
         self.build_info.info(
             {
                 "version": version,
@@ -502,7 +507,8 @@ class MetricsCollector:
             gate_result (str): Gate decision (text_detected, no_text).
             duration_seconds (float): Processing duration.
             device (str): Device used (cpu, gpu, modal).
-            model (str): Model used (student, teacher)."""
+            model (str): Model used (student, teacher).
+        """
         self.pages_processed.labels(status=status, gate_result=gate_result).inc()
         self.processing_latency.labels(
             operation="page", device=device, model=model
@@ -513,7 +519,8 @@ class MetricsCollector:
 
         Args:
             error_code (str): Error code (e.g., E2001).
-            category (str): Error category (e.g., processing)."""
+            category (str): Error category (e.g., processing).
+        """
         sanitized_code = self._error_guard.sanitize(error_code)
         self.errors.labels(error_code=sanitized_code, category=category).inc()
 
@@ -532,7 +539,8 @@ class MetricsCollector:
             device (str): Device used.
             duration_seconds (float): Processing duration.
             blocked (bool): Whether invocation was blocked.
-            blocked_reason (str): Reason for blocking."""
+            blocked_reason (str): Reason for blocking.
+        """
         if blocked:
             self.teacher_blocked.labels(reason=blocked_reason).inc()
         else:
@@ -552,7 +560,8 @@ class MetricsCollector:
 
         Args:
             correction_type (str): Type of correction (deskew, contrast, etc).
-            duration_seconds (float): Processing duration."""
+            duration_seconds (float): Processing duration.
+        """
         self.corrections_applied.labels(correction_type=correction_type).inc()
         self.correction_latency.labels(correction_type=correction_type).observe(
             duration_seconds
@@ -563,7 +572,8 @@ class MetricsCollector:
 
         Args:
             score (float): Quality score (0-1).
-            gate_result (str): Gate decision."""
+            gate_result (str): Gate decision.
+        """
         self.quality_score.labels(gate_result=gate_result).observe(score)
 
     def set_queue_depth(self, queue_name: str, depth: int) -> None:
@@ -571,7 +581,8 @@ class MetricsCollector:
 
         Args:
             queue_name (str): Name of the queue.
-            depth (int): Current depth."""
+            depth (int): Current depth.
+        """
         self.queue_depth.labels(queue_name=queue_name).set(depth)
 
     def set_active_workers(self, worker_type: str, count: int) -> None:
@@ -579,7 +590,8 @@ class MetricsCollector:
 
         Args:
             worker_type (str): Type of worker.
-            count (int): Number of active workers."""
+            count (int): Number of active workers.
+        """
         self.active_workers.labels(worker_type=worker_type).set(count)
 
     def record_drift_result(
@@ -595,7 +607,8 @@ class MetricsCollector:
             feature (str): Feature name (e.g., quality_score, blur_score).
             kl_divergence (float): KL divergence value.
             psi (float): PSI value.
-            severity (int): Severity level (0=none, 1=warning, 2=critical)."""
+            severity (int): Severity level (0=none, 1=warning, 2=critical).
+        """
         self.drift_kl_divergence.labels(feature=feature).set(kl_divergence)
         self.drift_psi.labels(feature=feature).set(psi)
         self.drift_severity.labels(feature=feature).set(severity)
@@ -618,7 +631,8 @@ class MetricsCollector:
             map_score (float): Mean Average Precision.
             f1_score (float): F1 score.
             precision (float | None): Precision score (optional).
-            recall (float | None): Recall score (optional)."""
+            recall (float | None): Recall score (optional).
+        """
         self.model_map.labels(model_name=model_name, dataset=dataset).set(map_score)
         self.model_f1.labels(model_name=model_name, dataset=dataset).set(f1_score)
         if precision is not None:
@@ -643,7 +657,7 @@ class MetricsCollector:
             model (str): Model used.
 
         Yields:
-            None
+            None: Yields control to the wrapped block.
         """
         start = time.perf_counter()
         try:
@@ -658,7 +672,8 @@ class MetricsCollector:
         """Get metrics in Prometheus format.
 
         Returns:
-            bytes: Metrics as bytes."""
+            bytes: Metrics as bytes.
+        """
         if not PROMETHEUS_AVAILABLE:
             return b"# prometheus_client not installed\n"
         result = generate_latest(self._registry)  # type: ignore[arg-type, unused-ignore]
@@ -668,7 +683,8 @@ class MetricsCollector:
         """Start the metrics HTTP server.
 
         Args:
-            port (int | None): Port to listen on."""
+            port (int | None): Port to listen on.
+        """
         if not PROMETHEUS_AVAILABLE:
             return
 
@@ -689,7 +705,8 @@ def get_metrics() -> MetricsCollector:
     """Get the global metrics collector instance.
 
     Returns:
-        MetricsCollector: MetricsCollector instance."""
+        MetricsCollector: MetricsCollector instance.
+    """
     global _metrics
     if _metrics is None:
         _metrics = MetricsCollector()
@@ -749,7 +766,8 @@ def record_drift_result(
         feature (str): Feature name.
         kl_divergence (float): KL divergence value.
         psi (float): PSI value.
-        severity (int): Severity level (0=none, 1=warning, 2=critical)."""
+        severity (int): Severity level (0=none, 1=warning, 2=critical).
+    """
     get_metrics().record_drift_result(feature, kl_divergence, psi, severity)
 
 
@@ -769,7 +787,8 @@ def record_model_performance(
         map_score (float): Mean Average Precision.
         f1_score (float): F1 score.
         precision (float | None): Precision score (optional).
-        recall (float | None): Recall score (optional)."""
+        recall (float | None): Recall score (optional).
+    """
     get_metrics().record_model_performance(
         model_name, dataset, map_score, f1_score, precision, recall
     )
@@ -791,7 +810,8 @@ def timed(
         model (str): Model used.
 
     Returns:
-        Callable[[Callable[..., T]], Callable[..., T]]: Decorated function."""
+        Callable[[Callable[..., T]], Callable[..., T]]: Decorated function.
+    """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
@@ -813,7 +833,8 @@ def metrics_endpoint() -> tuple[bytes, str]:
     """Generate metrics response for HTTP endpoint.
 
     Returns:
-        tuple[bytes, str]: Tuple of (content, content_type)."""
+        tuple[bytes, str]: Tuple of (content, content_type).
+    """
     content = get_metrics().get_metrics()
     content_type = "text/plain; version=0.0.4; charset=utf-8"
     return content, content_type

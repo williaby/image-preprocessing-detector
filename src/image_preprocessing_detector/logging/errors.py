@@ -227,7 +227,8 @@ class StructuredError:
             include_traceback (bool): Include traceback in output (for debugging).
 
         Returns:
-            dict[str, Any]: Dictionary representation."""
+            dict[str, Any]: Dictionary representation.
+        """
         result = {
             "error_code": self.code.value,
             "error_name": self.code.name,
@@ -248,7 +249,8 @@ class StructuredError:
         """Convert to API error response format.
 
         Returns:
-            dict[str, Any]: API-friendly error response."""
+            dict[str, Any]: API-friendly error response.
+        """
         return {
             "error": self.code.name.lower(),
             "error_code": self.code.value,
@@ -264,7 +266,13 @@ class StructuredError:
 
 
 class AppError(Exception):
-    """Base application error with error code."""
+    """Base application error with error code.
+
+    Args:
+        code (ErrorCode): Error code.
+        message (str): Human-readable message.
+        details (dict[str, Any] | None): Additional details.
+    """
 
     def __init__(
         self,
@@ -272,12 +280,6 @@ class AppError(Exception):
         message: str,
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize application error.
-
-        Args:
-            code (ErrorCode): Error code.
-            message (str): Human-readable message.
-            details (dict[str, Any] | None): Additional details."""
         super().__init__(message)
         self.code = code
         self.message = message
@@ -294,7 +296,13 @@ class AppError(Exception):
 
 
 class ValidationError(AppError):
-    """Validation error (400)."""
+    """Validation error (400).
+
+    Args:
+        code (ErrorCode): Error code identifying the validation failure type.
+        message (str): Human-readable error message.
+        details (dict[str, Any] | None): Additional context about the validation failure.
+    """
 
     def __init__(
         self,
@@ -302,17 +310,17 @@ class ValidationError(AppError):
         message: str = "Validation failed",
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize validation error.
-
-        Args:
-            code (ErrorCode): Error code identifying the validation failure type.
-            message (str): Human-readable error message.
-            details (dict[str, Any] | None): Additional context about the validation failure."""
         super().__init__(code, message, details)
 
 
 class ProcessingError(AppError):
-    """Processing error (422)."""
+    """Processing error (422).
+
+    Args:
+        code (ErrorCode): Error code identifying the processing failure type.
+        message (str): Human-readable error message.
+        details (dict[str, Any] | None): Additional context about the processing failure.
+    """
 
     def __init__(
         self,
@@ -320,17 +328,17 @@ class ProcessingError(AppError):
         message: str = "Processing failed",
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize processing error.
-
-        Args:
-            code (ErrorCode): Error code identifying the processing failure type.
-            message (str): Human-readable error message.
-            details (dict[str, Any] | None): Additional context about the processing failure."""
         super().__init__(code, message, details)
 
 
 class InfrastructureError(AppError):
-    """Infrastructure error (500)."""
+    """Infrastructure error (500).
+
+    Args:
+        code (ErrorCode): Error code identifying the infrastructure failure type.
+        message (str): Human-readable error message.
+        details (dict[str, Any] | None): Additional context about the infrastructure failure.
+    """
 
     def __init__(
         self,
@@ -338,17 +346,17 @@ class InfrastructureError(AppError):
         message: str = "Infrastructure error",
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize infrastructure error.
-
-        Args:
-            code (ErrorCode): Error code identifying the infrastructure failure type.
-            message (str): Human-readable error message.
-            details (dict[str, Any] | None): Additional context about the infrastructure failure."""
         super().__init__(code, message, details)
 
 
 class AuthenticationError(AppError):
-    """Authentication error (401/403)."""
+    """Authentication error (401/403).
+
+    Args:
+        code (ErrorCode): Error code identifying the authentication failure type.
+        message (str): Human-readable error message.
+        details (dict[str, Any] | None): Additional context about the authentication failure.
+    """
 
     def __init__(
         self,
@@ -356,17 +364,17 @@ class AuthenticationError(AppError):
         message: str = "Authentication required",
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize authentication error.
-
-        Args:
-            code (ErrorCode): Error code identifying the authentication failure type.
-            message (str): Human-readable error message.
-            details (dict[str, Any] | None): Additional context about the authentication failure."""
         super().__init__(code, message, details)
 
 
 class RateLimitError(AppError):
-    """Rate limit error (429)."""
+    """Rate limit error (429).
+
+    Args:
+        code (ErrorCode): Error code identifying the rate limit failure type.
+        message (str): Human-readable error message.
+        details (dict[str, Any] | None): Additional context about the rate limit failure.
+    """
 
     def __init__(
         self,
@@ -374,12 +382,6 @@ class RateLimitError(AppError):
         message: str = "Rate limit exceeded",
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize rate limit error.
-
-        Args:
-            code (ErrorCode): Error code identifying the rate limit failure type.
-            message (str): Human-readable error message.
-            details (dict[str, Any] | None): Additional context about the rate limit failure."""
         super().__init__(code, message, details)
 
 
@@ -409,7 +411,8 @@ def map_exception_to_error(exception: Exception) -> StructuredError:
         exception (Exception): The exception to map.
 
     Returns:
-        StructuredError: StructuredError with appropriate code."""
+        StructuredError: StructuredError with appropriate code.
+    """
     # Check if it's already an AppError
     if isinstance(exception, AppError):
         return exception.to_structured_error()
@@ -462,7 +465,8 @@ class SentryIntegration:
             traces_sample_rate (float): Transaction sampling rate.
 
         Returns:
-            bool: True if initialization succeeded."""
+            bool: True if initialization succeeded.
+        """
         # Check if enabled
         enabled = os.environ.get("IMGPREP_SENTRY_ENABLED", "false").lower() == "true"
         if not enabled:
@@ -521,7 +525,8 @@ class SentryIntegration:
             extra (dict[str, Any] | None): Additional context.
 
         Returns:
-            str | None: Sentry event ID if captured, None otherwise."""
+            str | None: Sentry event ID if captured, None otherwise.
+        """
         if not cls.is_enabled():
             return None
 
@@ -572,7 +577,8 @@ class SentryIntegration:
             message (str): Breadcrumb message.
             category (str): Category name.
             level (str): Log level.
-            data (dict[str, Any] | None): Additional data."""
+            data (dict[str, Any] | None): Additional data.
+        """
         if not cls.is_enabled():
             return
 
@@ -594,7 +600,9 @@ class SentryIntegration:
         """Set user context for Sentry.
 
         Args:
-            user_id (str): User identifier."""
+            user_id (str): User identifier.
+            **extra (Any): Additional user data.
+        """
         if not cls.is_enabled():
             return
 
@@ -613,13 +621,13 @@ class SentryIntegration:
 
 
 class ErrorLogger:
-    """Centralized error logging with Sentry integration."""
+    """Centralized error logging with Sentry integration.
+
+    Args:
+        logger (Any | None): Structlog logger instance.
+    """
 
     def __init__(self, logger: Any | None = None) -> None:
-        """Initialize error logger.
-
-        Args:
-            logger (Any | None): Structlog logger instance."""
         self.logger = logger or get_logger(__name__)
 
     def log_error(
@@ -636,7 +644,8 @@ class ErrorLogger:
             capture_to_sentry (bool): Whether to capture to Sentry.
 
         Returns:
-            StructuredError: StructuredError representation."""
+            StructuredError: StructuredError representation.
+        """
         if isinstance(error, StructuredError):
             structured = error
         else:
@@ -672,7 +681,8 @@ class ErrorLogger:
         Args:
             message (str): Warning message.
             code (ErrorCode | None): Optional error code.
-            context (dict[str, Any] | None): Additional context."""
+            context (dict[str, Any] | None): Additional context.
+        """
         self.logger.warning(
             "warning_occurred",
             message=message,
@@ -706,7 +716,8 @@ def create_error(
         exception (Exception | None): Original exception.
 
     Returns:
-        StructuredError: StructuredError instance."""
+        StructuredError: StructuredError instance.
+    """
     return StructuredError(
         code=code,
         message=message,

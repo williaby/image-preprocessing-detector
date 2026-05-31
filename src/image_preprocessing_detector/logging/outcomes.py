@@ -113,7 +113,15 @@ class TeacherUsageContext:
 
 
 class OutcomeLogger:
-    """Logs processing outcomes with sampling support."""
+    """Logs processing outcomes with sampling support.
+
+    Args:
+        logger (Any | None): Structlog logger instance.
+        sample_rate (float): Sampling rate for single document mode (0.0-1.0).
+        batch_sample_rate (float): Sampling rate for batch mode (typically lower).
+        always_log_errors (bool): Always log errors regardless of sampling.
+        always_log_teacher (bool): Always log teacher usage regardless of sampling.
+    """
 
     def __init__(
         self,
@@ -123,14 +131,6 @@ class OutcomeLogger:
         always_log_errors: bool = True,
         always_log_teacher: bool = True,
     ) -> None:
-        """Initialize outcome logger.
-
-        Args:
-            logger (Any | None): Structlog logger instance.
-            sample_rate (float): Sampling rate for single document mode (0.0-1.0).
-            batch_sample_rate (float): Sampling rate for batch mode (typically lower).
-            always_log_errors (bool): Always log errors regardless of sampling.
-            always_log_teacher (bool): Always log teacher usage regardless of sampling."""
         self.logger = logger or get_logger(__name__)
         self.sample_rate = sample_rate
         self.batch_sample_rate = batch_sample_rate
@@ -156,7 +156,8 @@ class OutcomeLogger:
         """Log a page processing outcome.
 
         Args:
-            outcome (PageOutcome): Page outcome data."""
+            outcome (PageOutcome): Page outcome data.
+        """
         is_error = outcome.error is not None
         is_teacher = outcome.model_selection != ModelSelection.STUDENT_ONLY
 
@@ -198,7 +199,8 @@ class OutcomeLogger:
         """Log teacher model usage context.
 
         Args:
-            context (TeacherUsageContext): Teacher usage context."""
+            context (TeacherUsageContext): Teacher usage context.
+        """
         if context.blocked:
             log_method = self.logger.warning
             event = "teacher_blocked"
@@ -244,7 +246,8 @@ class OutcomeLogger:
             decision (GateDecision): Gate decision.
             confidence (float): Decision confidence.
             metrics (dict[str, float]): Gate metrics (stroke density, edge density, etc.).
-            processing_time_ms (float): Processing time."""
+            processing_time_ms (float): Processing time.
+        """
         if not self._should_log():
             return
 
@@ -279,7 +282,8 @@ class OutcomeLogger:
             reason (str): Reason for decision.
             before_score (float | None): Quality score before correction.
             after_score (float | None): Quality score after correction.
-            processing_time_ms (float | None): Processing time."""
+            processing_time_ms (float | None): Processing time.
+        """
         if not self._should_log():
             return
 
@@ -313,7 +317,7 @@ class OutcomeLogger:
             total_files (int): Total number of files in batch.
 
         Yields:
-            Self with batch mode enabled.
+            OutcomeLogger: Self with batch mode enabled.
         """
         self._batch_mode = True
         self._batch_id = batch_id
@@ -418,7 +422,8 @@ def get_outcome_logger(
         batch_sample_rate (float | None): Override sample rate for batches.
 
     Returns:
-        OutcomeLogger: Configured OutcomeLogger."""
+        OutcomeLogger: Configured OutcomeLogger.
+    """
     config = get_logging_config()
 
     return OutcomeLogger(
@@ -455,9 +460,13 @@ def timed_operation(
         operation_name (str): Name of the operation.
         logger (Any | None): Logger instance.
         log_on_complete (bool): Log when operation completes.
+        **context (Any): Additional context for logging.
 
     Yields:
-        TimingResult that will be populated on exit.
+        TimingResult: TimingResult that will be populated on exit.
+
+    Raises:
+        Exception: Re-raises any exception from the wrapped block.
     """
     result = TimingResult(duration_ms=0.0, success=False)
     start_time = time.perf_counter()

@@ -46,11 +46,11 @@ class BinZone:
     """One contiguous zone of uniform-width bins.
 
     Attributes:
-        name: Human-readable zone name.
-        start: Left edge of the zone in degrees.
-        end: Right edge of the zone in degrees.
-        width: Width of each bin in degrees.
-        count: Number of bins in this zone.
+        name (str): Human-readable zone name.
+        start (float): Left edge of the zone in degrees.
+        end (float): Right edge of the zone in degrees.
+        width (float): Width of each bin in degrees.
+        count (int): Number of bins in this zone.
     """
 
     name: str
@@ -68,11 +68,11 @@ class BinConfig:
         extreme_neg | moderate_neg | critical | moderate_pos | extreme_pos
 
     Attributes:
-        zones: Ordered list of bin zones (neg-to-pos).
-        total_bins: Sum of all zone counts (must equal 42 by default).
-        centers: Precomputed center of every bin, indexed 0..total_bins-1.
-        half_widths: Per-bin half-widths for residual clamping.
-        max_residual: Legacy global max residual (use half_widths instead).
+        zones (tuple[BinZone, ...]): Ordered list of bin zones (neg-to-pos).
+        total_bins (int): Sum of all zone counts (must equal 42 by default).
+        centers (tuple[float, ...]): Precomputed center of every bin, indexed 0..total_bins-1.
+        half_widths (tuple[float, ...]): Per-bin half-widths for residual clamping.
+        max_residual (float): Legacy global max residual (use half_widths instead).
     """
 
     zones: tuple[BinZone, ...]
@@ -89,7 +89,8 @@ class BinConfig:
             config_path (str | Path | None): Path to config YAML. If None, uses default location.
 
         Returns:
-            BinConfig: Populated BinConfig with precomputed bin centers."""
+            BinConfig: Populated BinConfig with precomputed bin centers.
+        """
         if config_path is None:
             config_path = (
                 Path(__file__).resolve().parents[3] / "config" / "skew_estimation.yaml"
@@ -143,7 +144,8 @@ class BinConfig:
             angle (float): Skew angle in degrees.
 
         Returns:
-            int: Bin index (0-based)."""
+            int: Bin index (0-based).
+        """
         best_idx = 0
         best_dist = float("inf")
         for i, c in enumerate(self.centers):
@@ -165,7 +167,8 @@ class BinConfig:
             residual (float): Regression residual in degrees, clamped per-bin.
 
         Returns:
-            float: Final angle in degrees."""
+            float: Final angle in degrees.
+        """
         hw = self.half_widths[bin_idx]
         clamped = max(-hw, min(hw, residual))
         return self.centers[bin_idx] + clamped
@@ -181,13 +184,13 @@ class SkewEstimation:
     """Output of the SkewNet model for a single image.
 
     Attributes:
-        orientation_class: Predicted orientation (0, 90, 180, 270 degrees).
-        orientation_confidence: Softmax confidence for orientation.
-        skew_bin: Predicted bin index (0..41).
-        skew_bin_confidence: Softmax max probability for bin classification.
-        skew_residual: Fine regression residual in degrees.
-        skew_uncertainty: Predicted variance (sigma_sq) from GaussianNLL.
-        final_angle: Combined angle = bin_center + residual.
+        orientation_class (int): Predicted orientation (0, 90, 180, 270 degrees).
+        orientation_confidence (float): Softmax confidence for orientation.
+        skew_bin (int): Predicted bin index (0..41).
+        skew_bin_confidence (float): Softmax max probability for bin classification.
+        skew_residual (float): Fine regression residual in degrees.
+        skew_uncertainty (float): Predicted variance (sigma_sq) from GaussianNLL.
+        final_angle (float): Combined angle = bin_center + residual.
     """
 
     orientation_class: int
@@ -224,7 +227,8 @@ def _build_skew_estimator(
         predict_uncertainty (bool): If True, regression head outputs (mu, sigma_sq).
 
     Returns:
-        nn.Module: nn.Module with 3 output heads."""
+        nn.Module: nn.Module with 3 output heads.
+    """
     import timm
     import torch.nn as nn
 
@@ -280,7 +284,8 @@ def _build_skew_estimator(
 
             Returns:
                 dict[str, torch.Tensor]: Dict with orientation_logits, skew_bin_logits,
-                skew_regression tensors."""
+                skew_regression tensors.
+            """
             features = self.backbone(x)
 
             orientation_logits = self.orientation_head(features)
@@ -312,13 +317,18 @@ def compute_skew_loss(
 
     Args:
         outputs (dict[str, torch.Tensor]): Model outputs dict from forward pass.
-        targets (dict[str, torch.Tensor]): Dict with keys: orientation_labels: [B] long tensor (0-3) skew_bin_labels: [B] long tensor (0-41) skew_angle_labels: [B] float tensor (ground truth angle)
+        targets (dict[str, torch.Tensor]): Dict with keys:
+            orientation_labels: [B] long tensor (0-3)
+            skew_bin_labels: [B] long tensor (0-41)
+            skew_angle_labels: [B] float tensor (ground truth angle)
         bin_config (BinConfig): Non-uniform bin configuration.
-        loss_weights (dict[str, float] | None): Dict with orientation, skew_classification, skew_regression weights. Defaults to plan values.
+        loss_weights (dict[str, float] | None): Dict with orientation, skew_classification,
+            skew_regression weights. Defaults to plan values.
         critical_zone_weight (float): Extra weight for samples in |angle| < 2 deg.
 
     Returns:
-        torch.Tensor: Weighted total loss scalar."""
+        torch.Tensor: Weighted total loss scalar.
+    """
     import torch
     import torch.nn.functional as functional
 
@@ -407,7 +417,8 @@ def export_to_onnx(
         opset_version (int): ONNX opset version (default 17).
 
     Returns:
-        Path: Path to the exported ONNX file."""
+        Path: Path to the exported ONNX file.
+    """
     import torch
 
     output_path = Path(output_path)
@@ -451,10 +462,11 @@ class SkewEstimatorInference:
     Uses ONNXModelRunner for the actual ONNX Runtime session and adds
     pre/post-processing (resize, normalize, softmax, bin→angle decode).
 
-    Args:
-        model_path: Path to the ONNX model file.
-        bin_config: Non-uniform bin configuration.
-        orientation_classes: Orientation angle values (default: [0, 90, 180, 270]).
+    Attributes:
+        model_path (Path): Path to the ONNX model file.
+        bin_config (BinConfig): Non-uniform bin configuration.
+        input_size (int): Input spatial dimension (default 384).
+        orientation_classes (tuple[int, ...]): Orientation angle values (default: [0, 90, 180, 270]).
     """
 
     model_path: Path
@@ -467,7 +479,8 @@ class SkewEstimatorInference:
         """Lazily initialize the ONNX model runner.
 
         Returns:
-            ONNXModelRunner: Active ONNXModelRunner instance."""
+            ONNXModelRunner: Active ONNXModelRunner instance.
+        """
         if self._runner is not None:
             return self._runner
 
@@ -487,7 +500,8 @@ class SkewEstimatorInference:
             image (np.ndarray): Input image (BGR uint8 from OpenCV, any size).
 
         Returns:
-            SkewEstimation: SkewEstimation with orientation, skew angle, and uncertainty."""
+            SkewEstimation: SkewEstimation with orientation, skew angle, and uncertainty.
+        """
         import numpy as np
 
         input_tensor = self._preprocess(image)
@@ -535,7 +549,8 @@ class SkewEstimatorInference:
             image (np.ndarray): BGR uint8 image of any size.
 
         Returns:
-            np.ndarray: Float32 tensor [1, 3, H, W] normalized with ImageNet stats."""
+            np.ndarray: Float32 tensor [1, 3, H, W] normalized with ImageNet stats.
+        """
         import cv2
         import numpy as np
 
@@ -568,7 +583,8 @@ def _softmax(logits: np.ndarray) -> np.ndarray:
         logits (np.ndarray): Raw logit values.
 
     Returns:
-        np.ndarray: Probability distribution summing to 1."""
+        np.ndarray: Probability distribution summing to 1.
+    """
     import numpy as np
 
     shifted = logits - np.max(logits)

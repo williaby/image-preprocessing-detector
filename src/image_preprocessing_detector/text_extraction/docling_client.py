@@ -54,15 +54,15 @@ class DoclingResult:
     """Result from Docling document conversion.
 
     Attributes:
-        text: Extracted plain text content.
-        markdown: Markdown-formatted content (if available).
-        json_content: Raw JSON response from Docling.
-        page_count: Number of pages detected.
-        tables_found: Number of tables extracted.
-        processing_time_ms: Server-side processing time in milliseconds.
-        success: Whether the conversion succeeded.
-        error: Error message if conversion failed.
-        source_path: Path to the source document.
+        text (str): Extracted plain text content.
+        markdown (str): Markdown-formatted content (if available).
+        json_content (dict[str, Any]): Raw JSON response from Docling.
+        page_count (int): Number of pages detected.
+        tables_found (int): Number of tables extracted.
+        processing_time_ms (float): Server-side processing time in milliseconds.
+        success (bool): Whether the conversion succeeded.
+        error (str | None): Error message if conversion failed.
+        source_path (str): Path to the source document.
     """
 
     text: str
@@ -85,7 +85,8 @@ def _routing_params_to_form_data(
         params (DoclingRoutingParams | None): Routing params from the routing engine, or None for defaults.
 
     Returns:
-        dict[str, str]: Dictionary of form field names to string values."""
+        dict[str, str]: Dictionary of form field names to string values.
+    """
     data: dict[str, str] = {"output_format": "json"}
 
     if params is None:
@@ -125,9 +126,9 @@ class DoclingClient:
     """HTTP client for the Docling REST API.
 
     Attributes:
-        host: Docling server hostname or IP.
-        port: Docling server port.
-        timeout: Request timeout in seconds.
+        host (str): Docling server hostname or IP.
+        port (int): Docling server port.
+        timeout (float): Request timeout in seconds.
     """
 
     host: str = DEFAULT_HOST
@@ -164,7 +165,8 @@ class DoclingClient:
         """Check if the Docling server is reachable.
 
         Returns:
-            bool: True if the server responds to health check."""
+            bool: True if the server responds to health check.
+        """
         try:
             client = self._get_client()
             response = client.get("/health", timeout=5.0)
@@ -245,7 +247,8 @@ class DoclingClient:
             elapsed_ms (float): Client-side elapsed time.
 
         Returns:
-            DoclingResult: Structured DoclingResult."""
+            DoclingResult: Structured DoclingResult.
+        """
         doc = result.get("document", {})
 
         # Extract text content

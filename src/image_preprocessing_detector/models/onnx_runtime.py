@@ -30,11 +30,11 @@ logger = logging.getLogger(__name__)
 class ONNXSessionConfig:
     """Configuration for ONNX Runtime inference session.
 
-    Args:
-        provider: Execution provider name (default: CPUExecutionProvider).
-        num_threads: Intra-op thread count. 0 means auto-detect.
-        graph_optimization: Optimization level (none/basic/extended/all).
-        log_severity: ONNX Runtime log severity (0=verbose, 4=fatal).
+    Attributes:
+        provider (str): Execution provider name (default: CPUExecutionProvider).
+        num_threads (int): Intra-op thread count. 0 means auto-detect.
+        graph_optimization (str): Optimization level (none/basic/extended/all).
+        log_severity (int): ONNX Runtime log severity (0=verbose, 4=fatal).
     """
 
     provider: str = "CPUExecutionProvider"
@@ -46,7 +46,8 @@ class ONNXSessionConfig:
         """Convert to ONNX Runtime SessionOptions.
 
         Returns:
-            ort.SessionOptions: Configured SessionOptions instance."""
+            ort.SessionOptions: Configured SessionOptions instance.
+        """
         import onnxruntime as ort
 
         options = ort.SessionOptions()
@@ -77,9 +78,9 @@ class ONNXModelRunner:
     Lazily loads the ONNX model on first inference call.
     Thread-safe for concurrent reads (ONNX Runtime sessions are thread-safe).
 
-    Args:
-        model_path: Path to the ONNX model file.
-        config: Session configuration.
+    Attributes:
+        model_path (Path): Path to the ONNX model file.
+        config (ONNXSessionConfig): Session configuration.
     """
 
     model_path: Path
@@ -146,7 +147,8 @@ class ONNXModelRunner:
             input_name (str | None): Name of the input node. If None, uses first input.
 
         Returns:
-            list[NDArray[np.float32]]: List of output arrays, one per model output head."""
+            list[NDArray[np.float32]]: List of output arrays, one per model output head.
+        """
         session = self._ensure_session()
 
         if input_name is None:
@@ -165,7 +167,8 @@ class ONNXModelRunner:
         """Get the expected input shape from the model.
 
         Returns:
-            list[int | str]: Input shape as list (may contain string dims for dynamic axes)."""
+            list[int | str]: Input shape as list (may contain string dims for dynamic axes).
+        """
         session = self._ensure_session()
         return list(session.get_inputs()[0].shape)
 
@@ -173,7 +176,8 @@ class ONNXModelRunner:
         """Get names of all output tensors.
 
         Returns:
-            list[str]: List of output tensor names."""
+            list[str]: List of output tensor names.
+        """
         session = self._ensure_session()
         return [out.name for out in session.get_outputs()]
 

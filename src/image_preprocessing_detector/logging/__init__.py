@@ -167,13 +167,13 @@ def set_logging_config(config: LoggingConfig) -> None:
 
 
 class PIIRedactor:
-    """Redacts PII from log data."""
+    """Redacts PII from log data.
+
+    Args:
+        config (LoggingConfig): Logging configuration with redaction patterns.
+    """
 
     def __init__(self, config: LoggingConfig) -> None:
-        """Initialize the redactor.
-
-        Args:
-            config (LoggingConfig): Logging configuration with redaction patterns."""
         self.enabled = config.redact_pii
         self.patterns = [re.compile(p, re.IGNORECASE) for p in config.redact_patterns]
         self.fields = {f.lower() for f in config.redact_fields}
@@ -186,7 +186,8 @@ class PIIRedactor:
             data (Any): Data to redact (dict, list, or string).
 
         Returns:
-            Any: Data with PII redacted."""
+            Any: Data with PII redacted.
+        """
         if not self.enabled:
             return data
 
@@ -296,7 +297,8 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
     """Configure the logging framework.
 
     Args:
-        config (LoggingConfig | None): Logging configuration. If None, uses defaults."""
+        config (LoggingConfig | None): Logging configuration. If None, uses defaults.
+    """
     if config is None:
         config = LoggingConfig(
             json_logs=os.environ.get("IMGPREP_JSON_LOGS", "false").lower() == "true",
@@ -420,7 +422,8 @@ def get_logger(name: str) -> Any:
         name (str): Logger name (typically __name__).
 
     Returns:
-        Any: Configured structlog logger."""
+        Any: Configured structlog logger.
+    """
     return structlog.get_logger(name)
 
 
@@ -442,7 +445,9 @@ def log_performance(
         logger (Any): Structlog logger instance.
         operation (str): Name of the operation.
         duration_ms (float): Duration in milliseconds.
-        success (bool): Whether the operation succeeded."""
+        success (bool): Whether the operation succeeded.
+        **context (Any): Additional context to include.
+    """
     logger.info(
         "performance",
         operation=operation,
@@ -475,7 +480,9 @@ def log_processing_outcome(
         processing_time_ms (float): Processing time in ms.
         corrections_applied (list[str] | None): List of corrections applied.
         gate_reason (str | None): Reason for gate decision.
-        quality_score (float | None): Final quality score."""
+        quality_score (float | None): Final quality score.
+        **context (Any): Additional context.
+    """
     logger.info(
         "processing_outcome",
         document_id=document_id,
@@ -510,7 +517,8 @@ def log_teacher_usage(
         student_confidence (float): Student model confidence.
         teacher_confidence (float | None): Teacher model confidence (if available).
         device_used (str): Device used for teacher inference.
-        processing_time_ms (float | None): Processing time."""
+        processing_time_ms (float | None): Processing time.
+    """
     logger.info(
         "teacher_usage",
         document_id=document_id,
@@ -529,17 +537,18 @@ def log_teacher_usage(
 
 
 class LoggingContext:
-    """Context manager for setting logging context."""
+    """Context manager for setting logging context.
+
+    Args:
+        correlation_id (str | None): Correlation ID for the context.
+        **context (Any): Additional context fields.
+    """
 
     def __init__(
         self,
         correlation_id: str | None = None,
         **context: Any,
     ) -> None:
-        """Initialize logging context.
-
-        Args:
-            correlation_id (str | None): Correlation ID for the context."""
         import uuid
 
         self.correlation_id = correlation_id or str(uuid.uuid4())
