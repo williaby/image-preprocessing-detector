@@ -59,11 +59,8 @@ path = [
     "mkdocs.yml",
     "poetry.lock",  # Dependency lockfile for reproducible builds
     "uv.lock",  # UV dependency lockfile for nox testing
-    "requirements/**/*.txt",  # Generated from poetry export
-    "requirements.txt",  # Generated from uv export
-    "requirements-dev.txt",  # Generated from uv export
-    "requirements-ml.txt",  # Generated from uv export
-    "requirements-api.txt",  # Generated from uv export
+    "requirements.txt",  # Generated from uv export (CI-regenerated, sync-enforced)
+    "requirements-dev.txt",  # Generated from uv export (CI-regenerated, sync-enforced)
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
     "configs/**/*.yaml",  # Configuration files (modal, monitoring, etc.)
     "configs/**/*.json",  # Configuration files (Grafana dashboards, etc.)
