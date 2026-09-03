@@ -117,6 +117,8 @@ dev = [
     "uv>=0.5.0",  # Fast package manager for nox venv backend
     # Mutation testing
     "mutmut>=3.3.1",
+    # Docstring linting (replaces darglint)
+    "pydoclint>=0.8.4",
     # Type stubs
     "types-pyyaml>=6.0.12",
     # ONNX for model export validation
@@ -773,6 +775,18 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
+
+# Pydoclint Configuration (Docstring Linting)
+# Replaces darglint (TOOL-007/PC-006/TOOL-013)
+[tool.pydoclint]
+style = "google"
+exclude = '\.git|tests/|scripts/|benchmarks/|tools/|noxfile\.py|\.claude/'
+arg-type-hints-in-docstring = true
+arg-type-hints-in-signature = true
+skip-checking-raises = false
+require-return-section-when-returning-nothing = false
+allow-init-docstring = true
+baseline = ".pydoclint-baseline.txt"
 
 [tool.uv.sources]
 byronwilliamscpa-gemini-image = { git = "https://github.com/ByronWilliamsCPA/python-libs.git", subdirectory = "packages/gemini-image" }
