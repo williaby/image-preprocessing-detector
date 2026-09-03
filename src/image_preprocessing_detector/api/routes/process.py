@@ -11,6 +11,7 @@ import asyncio
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -31,6 +32,11 @@ from image_preprocessing_detector.api.models import (
     ProcessingStatus,
     ProcessResponse,
 )
+from image_preprocessing_detector.utils.file_validation import (
+    MIN_VALIDATION_BYTES,
+    FileTypeMismatchError,
+    validate_file_content,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -43,17 +49,30 @@ SUPPORTED_MIME_TYPES = {
     "image/jpeg",
     "image/tiff",
     "image/webp",
+    "image/bmp",
 }
 
-SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tiff",
+    ".tif",
+    ".webp",
+    ".bmp",
+}
 
 
-def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
-    """Validate uploaded file.
+def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
+    """Validate uploaded file metadata (name, extension, advertised size).
+
+    Magic-byte content validation is performed separately by the caller
+    after bytes are read.
 
     Args:
         file: The uploaded file.
-        _max_size_mb: Maximum allowed file size in MB (reserved for future use).
+        max_size_mb: Maximum allowed file size in MB.
 
     Returns:
         ErrorResponse if validation fails, None if valid.
@@ -74,6 +93,17 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
             details={"supported_extensions": list(SUPPORTED_EXTENSIONS)},
         )
 
+    # Reject early if the multipart Content-Length advertises an oversize
+    # payload, before allocating memory for the read. This is advisory - # clients can lie, so the post-read size check below is still required.
+    if file.size is not None and file.size > max_size_mb * 1024 * 1024:
+        return ErrorResponse(
+            error=ErrorCode.FILE_TOO_LARGE,
+            message=(
+                f"File size {file.size / (1024 * 1024):.1f}MB "
+                f"exceeds limit of {max_size_mb}MB"
+            ),
+        )
+
     # Check MIME type if available
     if file.content_type and file.content_type not in SUPPORTED_MIME_TYPES:
         # Allow if extension is valid (MIME type detection can be unreliable)
@@ -84,6 +114,160 @@ def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
         )
 
     return None
+
+
+def make_content_validator(ext: str) -> Callable[[bytes], None]:
+    """Return a single-arg callback that magic-byte-validates against `ext`.
+
+    Centralised so route handlers don't have to reach for the
+    `lambda first_chunk, _ext=ext: ...` default-argument idiom to
+    capture `ext` correctly inside a loop. Callers just pass
+    `make_content_validator(ext)` to `read_with_size_limit`'s
+    `early_validate` parameter.
+
+    `ext` must be a supported extension; this is the caller's
+    responsibility (`validate_file()` rejects empty/unsupported
+    extensions upstream, and `validate_file_content` will raise
+    `FileTypeMismatchError("Unsupported file extension: ...")` if a
+    stray empty string ever reaches it). No extra guard here so the
+    error code surfaced to the client matches the actual fault
+    (`INVALID_FILE_TYPE`) rather than being relabeled as
+    `FILE_TOO_LARGE` by the `except ValueError` branch below.
+    """
+
+    def _validate(first_chunk: bytes) -> None:
+        validate_file_content(first_chunk, ext)
+
+    return _validate
+
+
+async def read_with_size_limit(
+    file: UploadFile,
+    max_size_mb: int,
+    *,
+    chunk_size: int = 1024 * 1024,
+    early_validate: Callable[[bytes], None] | None = None,
+    extra_byte_limit: int | None = None,
+) -> bytes:
+    """Read file content in chunks, aborting early if the size cap is exceeded.
+
+    This avoids loading a multi-GB upload into memory before the post-read
+    size check would catch it. Streaming aborts as soon as the cumulative
+    byte count crosses the effective limit.
+
+    Args:
+        file: The uploaded file.
+        max_size_mb: Maximum allowed total size in MB.
+        chunk_size: Chunk size in bytes for incremental reads.
+        early_validate: Optional callback invoked with the first chunk's
+            bytes before any further reads. Use this to enforce
+            magic-byte content validation on the first
+            ``MIN_VALIDATION_BYTES`` of the upload so spoofed uploads
+            are rejected without paying the full memory cost. Any
+            exception raised by the callback aborts the read and
+            propagates to the caller. The callback is **not** invoked
+            when the upload is zero bytes (the loop exits immediately
+            on an empty first chunk); callers that care about empty
+            uploads must check `len(content)` after this returns.
+            Note that when `extra_byte_limit` clamps the first read
+            below ``MIN_VALIDATION_BYTES`` the callback receives too
+            few bytes and `validate_file_content` will raise
+            ``FileTypeMismatchError("...too small...")``, surfacing
+            as ``INVALID_FILE_TYPE`` to the client. The batch route
+            avoids this by pre-rejecting requests whose remaining
+            budget is below ``MIN_VALIDATION_BYTES`` with a clearer
+            ``FILE_TOO_LARGE`` (batch-cap) error; other callers
+            should apply the same guard before invoking this helper.
+        extra_byte_limit: Optional secondary byte cap, applied as
+            `min(max_size_mb_in_bytes, extra_byte_limit)`. Used by
+            batch endpoints to pass the *remaining* batch budget so a
+            file cannot exceed the cumulative cap mid-stream. Pass
+            `None` (the default) for single-file uploads.
+
+    Returns:
+        The file content bytes.
+
+    Raises:
+        ValueError: If the file exceeds the effective size limit.
+    """
+    file_max_bytes = max_size_mb * 1024 * 1024
+    if extra_byte_limit is not None and extra_byte_limit < file_max_bytes:
+        max_bytes = max(extra_byte_limit, 0)
+        # Use byte/KB-aware formatting so a near-empty budget (e.g.
+        # 100 KB) doesn't render as a misleading "0.0MB". Operators
+        # reading this error need to recognise the batch cap as the
+        # cause, not the file itself.
+        if max_bytes >= 1024 * 1024:
+            budget_str = f"{max_bytes / (1024 * 1024):.1f}MB"
+        elif max_bytes >= 1024:
+            budget_str = f"{max_bytes / 1024:.1f}KB"
+        else:
+            budget_str = f"{max_bytes} bytes"
+        limit_label = f"remaining batch budget ({budget_str})"
+    else:
+        max_bytes = file_max_bytes
+        limit_label = f"{max_size_mb}MB"
+
+    chunks: list[bytes] = []
+    total = 0
+    validated = False
+    while True:
+        # Clamp each read to (remaining_budget + 1) so we ask for at
+        # most one byte past the limit. This bounds the peak memory
+        # overshoot on a single oversize file to ~1 byte instead of
+        # up to a full chunk_size (1 MiB by default) - important
+        # when the helper is reused for the cumulative batch cap,
+        # where many medium-size files share the same allowance.
+        # `remaining` is always >= 0 here: the size-check below
+        # raises before the next iteration can run with a deficit.
+        #
+        # When an `early_validate` callback is provided, narrow only
+        # the *first* read to MIN_VALIDATION_BYTES so spoofed uploads
+        # are rejected after ~18 bytes of I/O instead of a full
+        # chunk_size. Subsequent reads use chunk_size even before
+        # validation completes - that bounds the worst case at one
+        # extra chunk if the very first read returns short (rather
+        # than potentially thousands of 18-byte syscalls under a
+        # pathological reader that always returns <MIN_VALIDATION_BYTES
+        # at a time).
+        remaining = max_bytes - total
+        is_first_read = not chunks
+        narrow_first = early_validate is not None and is_first_read
+        head_cap = MIN_VALIDATION_BYTES if narrow_first else chunk_size
+        read_size = min(head_cap, remaining + 1)
+        chunk = await file.read(read_size)
+        if not chunk:
+            # EOF. If we never accumulated enough bytes to invoke the
+            # validator, run it now on the partial content - it will
+            # correctly raise FileTypeMismatchError for a
+            # too-short-to-be-valid upload, or return None for an
+            # empty one (which the caller surfaces as EMPTY_FILE).
+            if early_validate is not None and not validated and chunks:
+                early_validate(b"".join(chunks))
+            break
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > max_bytes:
+            msg = (
+                f"File size exceeds limit of {limit_label} "
+                f"(read >{total / (1024 * 1024):.1f}MB)"
+            )
+            raise ValueError(msg)
+        # `file.read(n)` is only guaranteed to return up to n bytes
+        # (FastAPI's SpooledTemporaryFile-backed reader can return
+        # fewer). Defer the validator call until we have at least
+        # MIN_VALIDATION_BYTES accumulated, otherwise a short first
+        # read would falsely trip `FileTypeMismatchError("too
+        # small")` on a well-formed upload. Once invoked, mark
+        # validated=True so we don't re-run it.
+        if (
+            early_validate is not None
+            and not validated
+            and total >= MIN_VALIDATION_BYTES
+        ):
+            early_validate(b"".join(chunks))
+            validated = True
+    return b"".join(chunks)
 
 
 async def process_document(  # nosonar  # async required: callers use await
@@ -109,6 +293,7 @@ async def process_document(  # nosonar  # async required: callers use await
     dqs: DQSSummary | None = None
     pdf_type: str | None = None
     ocr_recommendation: str | None = None
+    pages_truncated = 0
 
     try:
         # Import processing modules
@@ -146,17 +331,42 @@ async def process_document(  # nosonar  # async required: callers use await
             )
             from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 
-            pdf_loader = PDFLoader()
+            # The API caps page rendering at `max_pdf_pages_per_request`
+            # (configurable via APISettings). PDFLoader is the
+            # authoritative limit: its own iteration is bounded by
+            # `range(min(page_count, self.max_pages))`, so passing
+            # `max_pages=api_pdf_page_cap` is sufficient. No need for
+            # an in-handler `break`.
+            api_pdf_page_cap = get_api_settings().max_pdf_pages_per_request
+            pdf_loader = PDFLoader(max_pages=api_pdf_page_cap, allow_truncation=True)
 
             # Classify PDF type
             pdf_type_result = classify_pdf_type(file_path)
             pdf_type = pdf_type_result.value if pdf_type_result else None
 
-            # Load pages - PDFLoader.load() returns PageImage objects
-            for page_obj in pdf_loader.load(file_path):
-                page_data.append((page_obj.image, page_obj.width, page_obj.height))
-                if len(page_data) >= 100:
-                    break
+            # Load pages - PDFLoader.load() returns PageImage objects.
+            # The loader records the truncated-page count in
+            # `last_pages_truncated` after iteration, which we read
+            # below to surface truncation in the response. This avoids
+            # re-opening the PDF just to peek at the page count.
+            page_data.extend(
+                (page_obj.image, page_obj.width, page_obj.height)
+                for page_obj in pdf_loader.load(file_path)
+            )
+
+            # Derive pages_truncated from the actual rendered count
+            # (len(page_data)) rather than reading pdf_loader's
+            # planned figure directly. This stays correct even if a
+            # future _render_page swallows per-page errors or yields
+            # fewer than max_pages pages for any other reason.
+            if pdf_loader.last_total_pages > len(page_data):
+                pages_truncated = pdf_loader.last_total_pages - len(page_data)
+                logger.warning(
+                    "api_pdf_truncation",
+                    total_pages=pdf_loader.last_total_pages,
+                    rendered_pages=len(page_data),
+                    pages_truncated=pages_truncated,
+                )
         else:
             # Single image processing
             # ImageLoader.load() returns (np.ndarray, ImageMetadata)
@@ -242,6 +452,7 @@ async def process_document(  # nosonar  # async required: callers use await
         document_id=document_id,
         file_name=file_name,
         num_pages=len(pages),
+        pages_truncated=pages_truncated,
         pdf_type=pdf_type,
         dqs=dqs,
         ocr_routing_recommendation=ocr_recommendation,
@@ -321,15 +532,43 @@ async def process_single_document(
 
     # Save file to temp location and process
     try:
-        # Read file content
-        content = await file.read()
-
-        # Check file size
-        file_size_mb = len(content) / (1024 * 1024)
-        if file_size_mb > settings.max_file_size_mb:
+        # Read file content with a streaming size cap and magic-byte
+        # validation on the first chunk. This rejects spoofed types
+        # (e.g. a .exe renamed .pdf) without buffering the full payload,
+        # and aborts oversize uploads early instead of trusting
+        # Content-Length.
+        ext = Path(file.filename or "document").suffix.lower()
+        try:
+            content = await read_with_size_limit(
+                file,
+                settings.max_file_size_mb,
+                early_validate=make_content_validator(ext),
+            )
+        except FileTypeMismatchError as exc:
+            # Must precede the `except ValueError` below: this subclass
+            # would otherwise be subsumed by the broader handler.
+            logger.warning(
+                "file_content_mismatch",
+                filename=file.filename,
+                declared_extension=ext,
+                error=str(exc),
+            )
+            error = ErrorResponse(
+                error=ErrorCode.INVALID_FILE_TYPE,
+                message=str(exc),
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ProcessResponse(
+                    status=ProcessingStatus.FAILED,
+                    error=error,
+                ).model_dump(),
+            )
+        except ValueError as exc:
             error = ErrorResponse(
                 error=ErrorCode.FILE_TOO_LARGE,
-                message=f"File size {file_size_mb:.1f}MB exceeds limit of {settings.max_file_size_mb}MB",
+                message=str(exc),
                 correlation_id=correlation_id,
             )
             return JSONResponse(

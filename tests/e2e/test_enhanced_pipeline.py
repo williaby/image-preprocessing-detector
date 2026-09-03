@@ -102,7 +102,7 @@ def document_with_border() -> np.ndarray:
     """
     img = np.zeros((800, 600, 3), dtype=np.uint8)  # Black background
 
-    # White document area — narrow border to keep area_ratio >= 0.70
+    # White document area - narrow border to keep area_ratio >= 0.70
     margin_x, margin_y = 30, 40
     img[margin_y : 800 - margin_y, margin_x : 600 - margin_x] = 255
 
@@ -206,7 +206,7 @@ class TestBorderRemoval:
         """Crop below 70% area threshold is rejected."""
         # Create image where "content" is only a tiny area
         img = np.ones((800, 600, 3), dtype=np.uint8) * 255
-        # Small black dot — contour will be tiny
+        # Small black dot - contour will be tiny
         cv2.circle(img, (300, 400), 20, (0, 0, 0), -1)
         result = remove_borders(img)
         # Either not applied, or applied with area >= 70%

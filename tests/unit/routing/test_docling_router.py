@@ -37,7 +37,7 @@ from image_preprocessing_detector.schema import (
 )
 
 # =============================================================================
-# Test helpers — minimal valid fixtures
+# Test helpers - minimal valid fixtures
 # =============================================================================
 
 

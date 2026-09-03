@@ -10,8 +10,40 @@ import pytest
 from image_preprocessing_detector.ingestion.pdf_loader import (
     PageImage,
     PDFLoader,
+    PDFPageTooLargeError,
+    PDFTooManyPagesError,
     load_pdf,
 )
+
+
+def _make_pdf_mock(
+    page_count: int = 1,
+    mediabox_w: float = 612.0,
+    mediabox_h: float = 792.0,
+    pix_w: int = 16,
+    pix_h: int = 16,
+) -> MagicMock:
+    """Build a mock fitz document for PDFLoader tests.
+
+    ``mediabox_w``/``mediabox_h`` set the page rect (which drives the
+    pixel-bomb projection guard), while ``pix_w``/``pix_h`` size the
+    rendered pixmap with a matching ``samples`` buffer so
+    ``_render_page``'s reshape succeeds.
+    """
+    mock_doc = MagicMock()
+    mock_doc.__len__.return_value = page_count
+    mock_page = MagicMock()
+    mock_page.rect.width = float(mediabox_w)
+    mock_page.rect.height = float(mediabox_h)
+    mock_page.get_images.return_value = []
+    mock_pix = MagicMock()
+    mock_pix.width = pix_w
+    mock_pix.height = pix_h
+    mock_pix.n = 3
+    mock_pix.samples = (np.zeros((pix_h, pix_w, 3), dtype=np.uint8)).tobytes()
+    mock_page.get_pixmap.return_value = mock_pix
+    mock_doc.__getitem__.return_value = mock_page
+    return mock_doc
 
 
 class TestPageImage:
@@ -316,3 +348,155 @@ class TestLoadPDFConvenience:
         # Verify load was called
         assert len(pages) == 1
         assert pages[0].page_number == 0
+
+
+class TestPDFTooManyPages:
+    """Verify the max_pages safety guard behaviour."""
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_raises_when_page_count_exceeds_limit(self, mock_fitz: Mock) -> None:
+        """By default, exceeding max_pages raises PDFTooManyPagesError."""
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=10)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            with pytest.raises(PDFTooManyPagesError) as exc_info:
+                list(loader.load(tmp.name))
+
+        assert exc_info.value.page_count == 10
+        assert exc_info.value.max_pages == 5
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_truncates_when_allow_truncation_true(self, mock_fitz: Mock) -> None:
+        """allow_truncation=True restores the previous silent-truncate behavior."""
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=10)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5, allow_truncation=True)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 5
+        # last_pages_truncated / last_total_pages let callers detect the
+        # partial result without re-opening the PDF.
+        assert loader.last_total_pages == 10
+        assert loader.last_pages_truncated == 5
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_under_limit_loads_normally(self, mock_fitz: Mock) -> None:
+        """Documents under max_pages load all pages without raising."""
+        mock_fitz.open.return_value = _make_pdf_mock(page_count=3)
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pages=5)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 3
+
+    @pytest.mark.parametrize("bad_value", [0, -1, -1000])
+    def test_invalid_max_pages_raises_value_error(self, bad_value: int) -> None:
+        """Non-positive max_pages must be rejected at construction time."""
+        with pytest.raises(ValueError, match="max_pages must be > 0"):
+            PDFLoader(max_pages=bad_value)
+
+    @pytest.mark.parametrize(
+        "bad_value",
+        [10.5, "100", True, False, [100], object()],
+    )
+    def test_non_int_max_pages_raises_type_error(self, bad_value: object) -> None:
+        """Non-int (or bool) max_pages must be rejected with TypeError.
+
+        Note: `None` itself is NOT tested here because the constructor
+        treats `None` as a sentinel for "use DEFAULT_MAX_PAGES" - that
+        path is exercised by `test_init_default_params`.
+        """
+        with pytest.raises(TypeError, match="max_pages must be a positive int"):
+            PDFLoader(max_pages=bad_value)  # type: ignore[arg-type]
+
+    def test_none_max_pages_uses_default(self) -> None:
+        """`None` is treated as a sentinel for DEFAULT_MAX_PAGES."""
+        loader = PDFLoader(max_pages=None)
+        assert loader.max_pages == PDFLoader.DEFAULT_MAX_PAGES
+
+
+class TestPDFPixelBomb:
+    """Verify the per-page pixel-bomb guard."""
+
+    def _build_mock_doc(self, width: int, height: int) -> MagicMock:
+        # `width`/`height` set the page MediaBox, which drives the
+        # pixel-bomb projection guard. The rendered pixmap is kept small
+        # (16x16) with a matching `samples` buffer so _render_page's
+        # reshape succeeds when the page is under the limit (the
+        # projection math is independent of the returned pixmap size).
+        mock_doc = MagicMock()
+        mock_doc.__len__.return_value = 1
+        mock_page = MagicMock()
+        mock_page.rect.width = float(width)
+        mock_page.rect.height = float(height)
+        mock_page.get_images.return_value = []
+        mock_pix = MagicMock()
+        pix_w, pix_h = 16, 16
+        mock_pix.width = pix_w
+        mock_pix.height = pix_h
+        mock_pix.n = 3
+        mock_pix.samples = (np.zeros((pix_h, pix_w, 3), dtype=np.uint8)).tobytes()
+        mock_page.get_pixmap.return_value = mock_pix
+        mock_doc.__getitem__.return_value = mock_page
+        return mock_doc
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_raises_when_projected_pixels_exceed_limit(self, mock_fitz: Mock) -> None:
+        """A page whose MediaBox*zoom exceeds max_pixels is rejected
+        before get_pixmap allocates the buffer."""
+        # 10000pt x 10000pt at 300 DPI -> zoom ~4.17 -> ~41667^2 pixels.
+        mock_doc = _make_pdf_mock(mediabox_w=10000, mediabox_h=10000)
+        mock_fitz.open.return_value = mock_doc
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pixels=1_000_000)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            with pytest.raises(PDFPageTooLargeError):
+                list(loader.load(tmp.name))
+
+        # get_pixmap must NOT have been called - the guard fires first.
+        mock_doc.__getitem__.return_value.get_pixmap.assert_not_called()
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
+    def test_normal_page_under_pixel_limit_renders(self, mock_fitz: Mock) -> None:
+        """A normal page well under the limit renders without raising."""
+        mock_doc = _make_pdf_mock(mediabox_w=612, mediabox_h=792)
+        mock_fitz.open.return_value = mock_doc
+        mock_fitz.Matrix = lambda x, y: MagicMock()
+
+        loader = PDFLoader(max_pixels=200_000_000)
+
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+            pages = list(loader.load(tmp.name))
+
+        assert len(pages) == 1
+
+    @pytest.mark.parametrize("bad_value", [0, -1])
+    def test_invalid_max_pixels_raises_value_error(self, bad_value: int) -> None:
+        with pytest.raises(ValueError, match="max_pixels must be > 0"):
+            PDFLoader(max_pixels=bad_value)
+
+    @pytest.mark.parametrize("bad_value", [10.5, "100", True])
+    def test_non_int_max_pixels_raises_type_error(self, bad_value: object) -> None:
+        with pytest.raises(TypeError, match="max_pixels must be a positive int"):
+            PDFLoader(max_pixels=bad_value)  # type: ignore[arg-type]

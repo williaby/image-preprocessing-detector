@@ -28,6 +28,7 @@ from image_preprocessing_detector.labeling.arena.schemas import (
     DIQAPrediction,
     ProvenanceInfo,
 )
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -80,11 +81,19 @@ class LocalBackend(InferenceBackend):
             ModelLoadError: If model cannot be loaded.
         """
         try:
-            artifact_path = Path(spec.id)
-
-            if not artifact_path.exists():
-                msg = f"Artifact path does not exist: {artifact_path}"
-                raise ModelLoadError(msg)  # noqa: TRY301
+            # Validate spec.id rejects path-traversal patterns (".." etc.)
+            # and that the resolved file exists. NOTE: this does NOT
+            # constrain the path to a model-registry root - operators
+            # are trusted to supply paths in this Arena tooling, and a
+            # registry-scoped helper would need a configurable base.
+            # If callers ever start supplying spec.id from an
+            # untrusted boundary (HTTP API, public CLI flag), pass
+            # `allowed_base=<models_root>` here.
+            try:
+                artifact_path = validate_safe_path(spec.id, must_exist=True)
+            except (ValueError, FileNotFoundError) as exc:
+                msg = f"Invalid or missing artifact path: {spec.id}"
+                raise ModelLoadError(msg) from exc
 
             logger.info(
                 "loading_local_artifact",

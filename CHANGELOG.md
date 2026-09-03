@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `image_preprocessing_detector.utils.file_validation` module: stdlib
+  magic-byte validation (`validate_file_content`, `detect_file_type`,
+  `FileTypeMismatchError`, `MIN_VALIDATION_BYTES`) to block file
+  extension spoofing before bytes reach PyMuPDF/OpenCV/PIL (#183)
+- `ProcessingResult.pages_truncated` field reporting how many PDF pages
+  the API dropped when a document exceeds the page cap (#183)
+- `APISettings.max_batch_total_size_mb` (default 500MB) and
+  `APISettings.max_pdf_pages_per_request` (default 100) settings (#183)
+- `PDFLoader.max_pixels` / `ImageLoader.max_pixels` pixel-dimension-bomb
+  guards, plus `PDFTooManyPagesError` and `PDFPageTooLargeError` (#183)
+
+### Security
+
+- `torch.load` calls switched to `weights_only=True` in production
+  inference and Modal training to prevent pickle-based RCE
+  (CVE-2025-32434 class; mitigation requires the pinned torch>=2.10.0) (#183)
+- Streaming, size-capped upload reads with first-chunk magic-byte
+  validation on `/process` and `/batch`; cumulative batch size cap (#183)
+- Model artifact paths in the Arena inference backends validated against
+  path traversal (#183)
+- `PDFLoader` now raises `PDFTooManyPagesError` by default when a
+  document exceeds `max_pages` (set `allow_truncation=True` to restore
+  the previous silent-truncate behavior; the API routes opt in) (#183)
+- Pin `actions/github-script` and `astral-sh/setup-uv` to commit SHAs (#183)
+
 ### Changed
 
 - **BREAKING**: Project license changed from MIT to CC-BY-SA-4.0.

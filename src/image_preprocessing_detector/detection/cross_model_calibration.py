@@ -4,7 +4,7 @@ Maps validator outputs (categorical VLM ratings, continuous IQA scores) to
 expected MOS distributions, enabling z-score computation for agreement detection.
 
 Calibrated against ground-truth MOS (not SigLIP2 scores) to avoid reference-model
-bias — the system detects when SigLIP2 is wrong, not just when others disagree.
+bias - the system detects when SigLIP2 is wrong, not just when others disagree.
 
 Usage:
     >>> calibrator = CrossModelCalibrator()

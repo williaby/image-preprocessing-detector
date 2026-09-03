@@ -1,4 +1,4 @@
-"""Border Removal — Crop scanner/camera borders from document images.
+"""Border Removal - Crop scanner/camera borders from document images.
 
 Uses Otsu thresholding + morphological closing to find the document region,
 then crops to the largest contour's bounding rectangle.

@@ -15,6 +15,35 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _validate_positive_int(value: int | None, name: str, default: int) -> int:
+    """Return a validated positive int, applying ``default`` when ``value`` is None.
+
+    Rejects ``bool`` (which ``isinstance(_, int)`` accepts) and non-int
+    types so a misconfigured caller fails fast at construction rather
+    than deep inside ``range(...)`` or arithmetic later.
+
+    Args:
+        value: Caller-supplied value, or None to use the default.
+        name: Parameter name, used in error messages.
+        default: Value to use when ``value`` is None.
+
+    Returns:
+        The validated positive integer.
+
+    Raises:
+        TypeError: If the resolved value is a bool or not an int.
+        ValueError: If the resolved value is not greater than zero.
+    """
+    resolved = default if value is None else value
+    if isinstance(resolved, bool) or not isinstance(resolved, int):
+        msg = f"{name} must be a positive int, got {resolved!r}"
+        raise TypeError(msg)
+    if resolved <= 0:
+        msg = f"{name} must be > 0, got {resolved}"
+        raise ValueError(msg)
+    return resolved
+
+
 @dataclass
 class PageImage:
     """Represents a single page converted to an image.
@@ -38,17 +67,81 @@ class PageImage:
     needs_upscaling: bool
 
 
+class PDFTooManyPagesError(ValueError):
+    """Raised when a PDF exceeds the configured `max_pages` limit.
+
+    Carries `page_count` and `max_pages` so callers can either propagate
+    a structured error to the client or fall back to opening the loader
+    with `allow_truncation=True`.
+    """
+
+    def __init__(self, page_count: int, max_pages: int, pdf_path: str) -> None:
+        """Record the offending page count, cap, and source path."""
+        self.page_count = page_count
+        self.max_pages = max_pages
+        self.pdf_path = pdf_path
+        super().__init__(
+            f"PDF has {page_count} pages, exceeds max_pages={max_pages}: {pdf_path}"
+        )
+
+
+class PDFPageTooLargeError(ValueError):
+    """Raised when a single page would rasterize beyond `max_pixels`.
+
+    Defends against pixel-dimension bombs: a PDF with a tiny byte size
+    but a huge MediaBox renders, at the target DPI, into a pixmap large
+    enough to exhaust memory at ``page.get_pixmap()``. The projected
+    output size is checked *before* rasterization so the allocation
+    never happens.
+    """
+
+    def __init__(self, page_num: int, projected_pixels: int, max_pixels: int) -> None:
+        """Record the offending page index, projected pixel count, and cap."""
+        self.page_num = page_num
+        self.projected_pixels = projected_pixels
+        self.max_pixels = max_pixels
+        super().__init__(
+            f"PDF page {page_num} would rasterize to {projected_pixels} pixels, "
+            f"exceeds max_pixels={max_pixels}"
+        )
+
+
 class PDFLoader:
     """Loads PDF files and converts pages to images.
 
     Uses PyMuPDF (fitz) for efficient PDF parsing and rendering.
+
+    .. warning::
+        Not safe for concurrent use. ``last_total_pages`` and
+        ``last_pages_truncated`` are mutable per-call state on the
+        instance; two threads/tasks calling ``load()`` on the same
+        loader will clobber each other's truncation bookkeeping.
+        Construct one ``PDFLoader`` per request instead of sharing
+        a singleton.
     """
+
+    # Hard upper bound on page count to prevent CPU/memory exhaustion
+    # from adversarial PDFs (e.g. thousands of pages or pages with huge
+    # rendered dimensions). Override via the constructor when a legitimate
+    # use case requires it.
+    DEFAULT_MAX_PAGES: int = 500
+
+    # Hard upper bound on the rasterized pixel count of a single page.
+    # Defends against pixel-dimension bombs (a small PDF whose MediaBox
+    # is enormous renders into a multi-gigabyte pixmap at target DPI).
+    # 200 MP blocks the billions-of-pixels bombs (65535x65535 ~= 4.29e9)
+    # while still allowing large legitimate pages. Tune down for
+    # stricter tenants.
+    DEFAULT_MAX_PIXELS: int = 200_000_000
 
     def __init__(
         self,
         target_dpi: int = 300,
         color_space: str = "RGB",
         alpha: bool = False,
+        max_pages: int | None = None,
+        allow_truncation: bool = False,
+        max_pixels: int | None = None,
     ) -> None:
         """Initialize PDF loader.
 
@@ -56,15 +149,45 @@ class PDFLoader:
             target_dpi: Target DPI for rendering (default: 300)
             color_space: Color space for rendering (RGB or GRAY)
             alpha: Whether to include alpha channel
+            max_pages: Maximum number of pages to render. Defaults to
+                DEFAULT_MAX_PAGES; pass a smaller value for stricter
+                tenants or untrusted uploads.
+            allow_truncation: If True, silently truncate documents that
+                exceed `max_pages` (the previous behavior). If False
+                (the default) the loader raises PDFTooManyPagesError so
+                callers cannot accidentally analyse a partial document
+                and surface incomplete results to users. Set True only
+                when downstream code is explicitly designed to handle
+                a partial page sequence - and read
+                `last_pages_truncated` after iteration to detect it.
+            max_pixels: Maximum rasterized pixel count for a single
+                page. Pages whose projected output (MediaBox scaled to
+                target DPI) exceeds this raise PDFPageTooLargeError
+                *before* the pixmap is allocated. Defaults to
+                DEFAULT_MAX_PIXELS.
         """
         self.target_dpi = target_dpi
         self.color_space = color_space
         self.alpha = alpha
+        self.max_pages = _validate_positive_int(
+            max_pages, "max_pages", self.DEFAULT_MAX_PAGES
+        )
+        self.max_pixels = _validate_positive_int(
+            max_pixels, "max_pixels", self.DEFAULT_MAX_PIXELS
+        )
+        self.allow_truncation = allow_truncation
+        # Truncation state from the most recent `load()` call. Reset on
+        # each call. Callers in `allow_truncation=True` mode should
+        # check this after iterating to detect partial results.
+        self.last_total_pages: int = 0
+        self.last_pages_truncated: int = 0
 
         logger.info(
             "PDF loader initialized",
             target_dpi=target_dpi,
             color_space=color_space,
+            max_pages=self.max_pages,
+            allow_truncation=self.allow_truncation,
         )
 
     def load(self, pdf_path: str | Path) -> Iterator[PageImage]:
@@ -79,8 +202,14 @@ class PDFLoader:
         Raises:
             FileNotFoundError: If PDF file doesn't exist
             ValueError: If file is not a valid PDF
+            PDFTooManyPagesError: If page count exceeds `max_pages` and
+                `allow_truncation=False` (the default).
         """
         pdf_path = Path(pdf_path)
+
+        # Reset truncation state for this call.
+        self.last_total_pages = 0
+        self.last_pages_truncated = 0
 
         if not pdf_path.exists():
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
@@ -92,10 +221,29 @@ class PDFLoader:
         except Exception as e:
             raise ValueError(f"Invalid PDF file: {pdf_path}") from e
 
-        logger.info("PDF loaded", pages=len(doc), path=str(pdf_path))
-
+        # Single try/finally enclosing ALL post-open logic so the
+        # fitz.Document is released even if page-count inspection,
+        # the max_pages check, or the render loop raises.
         try:
-            for page_num in range(len(doc)):
+            page_count = len(doc)
+            self.last_total_pages = page_count
+            logger.info("PDF loaded", pages=page_count, path=str(pdf_path))
+
+            if page_count > self.max_pages:
+                if not self.allow_truncation:
+                    raise PDFTooManyPagesError(
+                        page_count, self.max_pages, str(pdf_path)
+                    )
+                self.last_pages_truncated = page_count - self.max_pages
+                logger.warning(
+                    "pdf_page_limit_exceeded_truncating",
+                    path=str(pdf_path),
+                    page_count=page_count,
+                    max_pages=self.max_pages,
+                    pages_truncated=self.last_pages_truncated,
+                )
+
+            for page_num in range(min(page_count, self.max_pages)):
                 yield self._render_page(doc, page_num)
         finally:
             doc.close()
@@ -117,6 +265,16 @@ class PDFLoader:
 
         # Calculate zoom factor to achieve target DPI
         zoom = self.target_dpi / 72.0  # PDF default is 72 DPI
+
+        # Pixel-bomb guard: project the rasterized output size from the
+        # page MediaBox scaled by zoom and reject before allocating the
+        # pixmap. A tiny PDF with a huge MediaBox would otherwise OOM
+        # the worker inside page.get_pixmap().
+        projected_w = int(page.rect.width * zoom)
+        projected_h = int(page.rect.height * zoom)
+        projected_pixels = projected_w * projected_h
+        if projected_pixels > self.max_pixels:
+            raise PDFPageTooLargeError(page_num, projected_pixels, self.max_pixels)
 
         # Render page to pixmap
         mat = fitz.Matrix(zoom, zoom)
