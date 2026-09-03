@@ -1,0 +1,1279 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Image Preprocessing Detector API",
+    "description": "Front door for the RAG document pipeline. Accepts raw documents (PDF, PNG, JPEG, TIFF, WebP), assesses image quality, applies geometric and quality corrections, and returns structured `DocumentMetadata` plus OCR routing recommendations.\n\n## Features\n\n- **IQA pipeline**: 9 classical detectors + ResNet teacher/student ML IQA\n- **Document Quality Score (DQS)**: degradation + structural complexity\n- **PDF classification**: image_only / born_digital / hybrid\n- **Routing**: 4-strategy recommendation for downstream OCR\n- **Async batch**: submit-and-poll jobs for high-throughput ingestion\n\nSee [docs/api/rest-api.md](https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api/rest-api.md) for detailed contracts and examples.",
+    "contact": {
+      "name": "Image Preprocessing Detector Maintainers",
+      "url": "https://github.com/williaby/image-preprocessing-detector"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness check",
+        "description": "Basic liveness probe for load balancers and orchestrators. Returns `healthy` whenever the process is responding, along with a server timestamp and (if startup completed) uptime in seconds. Does not perform dependency checks \u2014 use `/ready` for that.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2025-01-15T10:30:00Z",
+                  "uptime_seconds": 3600.5
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Server is unhealthy"
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness check",
+        "description": "Readiness probe that validates dependencies required to serve requests:\n\n- Device capability probe (GPU/CPU detection)\n- Classical IQA detector imports\n- Pydantic schema imports\n- Configuration loading\n\nReturns HTTP 200 with `status=ready` when all checks pass, or HTTP 503 with `status=not_ready` and per-check details when any fail. Use this for Kubernetes readiness probes \u2014 failing readiness removes the pod from the service load balancer.",
+        "operationId": "readiness_check_ready_get",
+        "responses": {
+          "200": {
+            "description": "Server is ready to accept requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                },
+                "example": {
+                  "status": "ready",
+                  "timestamp": "2025-01-15T10:30:00Z",
+                  "checks": {
+                    "device_probe": true,
+                    "iqa_detectors": true,
+                    "schema": true,
+                    "configuration": true
+                  },
+                  "device": {
+                    "has_local_gpu": false,
+                    "cpu_count": 8,
+                    "modal_available": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Server is not ready (one or more checks failed)"
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Version information",
+        "description": "Return the running API version, Python runtime version, processing pipeline version, and the resolved on-disk filenames for any currently-installed ONNX models (teacher / student / layout). Useful for diagnostics, support requests, and verifying model rollouts in production.",
+        "operationId": "version_info_version_get",
+        "responses": {
+          "200": {
+            "description": "Version metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                },
+                "example": {
+                  "api_version": "0.1.0",
+                  "python_version": "3.11.6",
+                  "pipeline_version": "1.0.0",
+                  "models": {
+                    "teacher_model": "resnet50_teacher_50epoch",
+                    "student_model": "resnet18_student"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process": {
+      "post": {
+        "tags": [
+          "process"
+        ],
+        "summary": "Process a single document",
+        "description": "Upload a single document (PDF or image) and run the full Project A preprocessing pipeline: ingestion, PDF type classification, classical IQA, optional ML IQA (teacher/student), correction decisions, DQS calculation, and OCR routing recommendation.\n\n**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, `.tif`, `.webp`.\n\n**Request shape**: `multipart/form-data` with a single `file` field. Pipeline behavior is tuned via query parameters (`prefer_gpu`, `enable_corrections`, `enable_teacher`).\n\n**Response shape**: a `ProcessResponse` envelope. On success `status=completed` and `result` is populated with the document summary (per-page IQA scores, DQS, routing). On validation or processing errors, the envelope carries `status=failed` and a structured `error` (see error codes in `/docs/api/rest-api.md`).",
+        "operationId": "process_single_document_process_post",
+        "parameters": [
+          {
+            "name": "prefer_gpu",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to prefer GPU",
+              "default": true,
+              "title": "Prefer Gpu"
+            },
+            "description": "Whether to prefer GPU"
+          },
+          {
+            "name": "enable_corrections",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to enable corrections",
+              "default": true,
+              "title": "Enable Corrections"
+            },
+            "description": "Whether to enable corrections"
+          },
+          {
+            "name": "enable_teacher",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to enable teacher model",
+              "default": false,
+              "title": "Enable Teacher"
+            },
+            "description": "Whether to enable teacher model"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_process_single_document_process_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessResponse"
+                },
+                "example": {
+                  "status": "completed",
+                  "result": {
+                    "document_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "file_name": "document.pdf",
+                    "num_pages": 1,
+                    "pdf_type": "image_only",
+                    "dqs": {
+                      "degradation_score": 0.25,
+                      "structural_complexity_score": 0.3
+                    },
+                    "ocr_routing_recommendation": "ocr_fast",
+                    "pages": [
+                      {
+                        "page_index": 0,
+                        "width_px": 2550,
+                        "height_px": 3300,
+                        "issues_detected": 1,
+                        "corrections_applied": 0,
+                        "iqa_scores": {
+                          "blur_score": 0.85,
+                          "noise_score": 0.92,
+                          "contrast_score": 0.78
+                        }
+                      }
+                    ],
+                    "processing_time_ms": 1250.5,
+                    "device_used": "cpu"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (invalid file type, oversized, empty filename).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API key (auth enabled).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key (auth enabled).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Processing failed (corrupt file, pipeline error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch": {
+      "post": {
+        "tags": [
+          "batch"
+        ],
+        "summary": "Submit batch processing job",
+        "description": "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for asynchronous processing. Each file is validated up-front (extension allowlist, non-empty); if any fails validation the entire batch is rejected with HTTP 400 and no job is created. On success a job is enqueued via FastAPI background tasks and the response carries a `job_id` clients should poll on `/batch/{job_id}/status` until `status` reaches `completed` or `failed`.",
+        "operationId": "submit_batch_job_batch_post",
+        "parameters": [
+          {
+            "name": "prefer_gpu",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to prefer GPU",
+              "default": true,
+              "title": "Prefer Gpu"
+            },
+            "description": "Whether to prefer GPU"
+          },
+          {
+            "name": "enable_corrections",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to enable corrections",
+              "default": true,
+              "title": "Enable Corrections"
+            },
+            "description": "Whether to enable corrections"
+          },
+          {
+            "name": "enable_teacher",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to enable teacher model",
+              "default": false,
+              "title": "Enable Teacher"
+            },
+            "description": "Whether to enable teacher model"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_submit_batch_job_batch_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch job submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchJobStatus"
+                },
+                "example": {
+                  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "status": "processing",
+                  "total_files": 4,
+                  "processed_files": 0,
+                  "failed_files": 0,
+                  "created_at": "2025-01-15T10:30:00Z",
+                  "updated_at": "2025-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid batch (size limit exceeded, no files, validation failure).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API key (auth enabled).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key (auth enabled).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch/{job_id}/status": {
+      "get": {
+        "tags": [
+          "batch"
+        ],
+        "summary": "Get batch job status",
+        "description": "Poll the current state of a batch job by `job_id`. Returns progress counters (`processed_files`, `failed_files`) and the overall `status` (`pending`, `processing`, `completed`, `failed`). When `status` reaches a terminal state (`completed` or `failed`), the `completed_at` timestamp is populated and full results can be fetched via `/batch/{job_id}/result`.",
+        "operationId": "get_batch_status_batch__job_id__status_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchJobStatus"
+                },
+                "example": {
+                  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "status": "processing",
+                  "total_files": 4,
+                  "processed_files": 2,
+                  "failed_files": 0,
+                  "created_at": "2025-01-15T10:30:00Z",
+                  "updated_at": "2025-01-15T10:32:00Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch/{job_id}/result": {
+      "get": {
+        "tags": [
+          "batch"
+        ],
+        "summary": "Get batch job results",
+        "description": "Fetch the results of a completed (or failed) batch job. Results are paginated via `offset` and `limit` query parameters. If the job is still running, returns HTTP 425 (Too Early) with the current progress so the client can back off and retry. Errors that occurred during individual file processing are returned in the `errors` array alongside the successful `results`.",
+        "operationId": "get_batch_result_batch__job_id__result_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job results retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchJobResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          },
+          "425": {
+            "description": "Job not yet completed; retry once status reaches a terminal state."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch/{job_id}": {
+      "delete": {
+        "tags": [
+          "batch"
+        ],
+        "summary": "Delete batch job",
+        "description": "Permanently remove a batch job and its stored results from the in-memory job store. Useful for explicit cleanup once a client has fetched and persisted the results downstream. The operation is idempotent for active jobs (returns 404 if `job_id` has already been removed).",
+        "operationId": "delete_batch_job_batch__job_id__delete",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Batch Job Batch  Job Id  Delete"
+                },
+                "example": {
+                  "message": "Job 550e8400-e29b-41d4-a716-446655440000 deleted"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BatchJobResult": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique job identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProcessingStatus",
+            "description": "Job status"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Processing results"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "type": "array",
+            "title": "Errors",
+            "description": "Processing errors"
+          },
+          "total_processing_time_ms": {
+            "type": "number",
+            "title": "Total Processing Time Ms",
+            "description": "Total processing time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "total_processing_time_ms"
+        ],
+        "title": "BatchJobResult",
+        "description": "Result of a batch processing job."
+      },
+      "BatchJobStatus": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique job identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProcessingStatus",
+            "description": "Job status"
+          },
+          "total_files": {
+            "type": "integer",
+            "title": "Total Files",
+            "description": "Total files in batch"
+          },
+          "processed_files": {
+            "type": "integer",
+            "title": "Processed Files",
+            "description": "Files processed so far",
+            "default": 0
+          },
+          "failed_files": {
+            "type": "integer",
+            "title": "Failed Files",
+            "description": "Files that failed processing",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Job creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Completion timestamp"
+          },
+          "estimated_completion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Completion",
+            "description": "Estimated completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "total_files",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BatchJobStatus",
+        "description": "Status of a batch processing job."
+      },
+      "Body_process_single_document_process_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Document to process (PDF or image)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_process_single_document_process_post"
+      },
+      "Body_submit_batch_job_batch_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Documents to process"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
+        ],
+        "title": "Body_submit_batch_job_batch_post"
+      },
+      "DQSSummary": {
+        "properties": {
+          "degradation_score": {
+            "type": "number",
+            "title": "Degradation Score",
+            "description": "Overall degradation score (0-1)"
+          },
+          "structural_complexity_score": {
+            "type": "number",
+            "title": "Structural Complexity Score",
+            "description": "Structural complexity score (0-1)"
+          },
+          "pre_ocr_risk": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Ocr Risk",
+            "description": "Pre-OCR risk score (0-1)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "degradation_score",
+          "structural_complexity_score"
+        ],
+        "title": "DQSSummary",
+        "description": "Summary of Document Quality Score."
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "invalid_file_type",
+          "file_too_large",
+          "invalid_parameters",
+          "empty_file",
+          "processing_failed",
+          "corrupt_file",
+          "unsupported_format",
+          "internal_error",
+          "gpu_unavailable",
+          "model_load_failed",
+          "rate_limit_exceeded",
+          "unauthorized",
+          "forbidden"
+        ],
+        "title": "ErrorCode",
+        "description": "Structured error codes for API responses."
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorCode",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details",
+            "description": "Additional error details"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id",
+            "description": "Request correlation ID for debugging"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standard error response model."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Health status: healthy or unhealthy"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Current server timestamp"
+          },
+          "uptime_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uptime Seconds",
+            "description": "Server uptime in seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Response model for health check."
+      },
+      "IQAScoreSummary": {
+        "properties": {
+          "blur_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blur Score",
+            "description": "Blur quality score"
+          },
+          "noise_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Noise Score",
+            "description": "Noise quality score"
+          },
+          "contrast_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrast Score",
+            "description": "Contrast quality score"
+          },
+          "skew_angle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skew Angle",
+            "description": "Detected skew angle"
+          }
+        },
+        "type": "object",
+        "title": "IQAScoreSummary",
+        "description": "Summary of IQA scores."
+      },
+      "PageSummary": {
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "title": "Page Index",
+            "description": "Page index (0-based)"
+          },
+          "width_px": {
+            "type": "integer",
+            "title": "Width Px",
+            "description": "Page width in pixels"
+          },
+          "height_px": {
+            "type": "integer",
+            "title": "Height Px",
+            "description": "Page height in pixels"
+          },
+          "issues_detected": {
+            "type": "integer",
+            "title": "Issues Detected",
+            "description": "Number of issues detected",
+            "default": 0
+          },
+          "corrections_applied": {
+            "type": "integer",
+            "title": "Corrections Applied",
+            "description": "Number of corrections applied",
+            "default": 0
+          },
+          "iqa_scores": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IQAScoreSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "IQA score summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_index",
+          "width_px",
+          "height_px"
+        ],
+        "title": "PageSummary",
+        "description": "Summary of a single page analysis."
+      },
+      "ProcessResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ProcessingStatus",
+            "description": "Processing status"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Processing result (if completed)"
+          },
+          "metadata_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Url",
+            "description": "URL to full metadata JSON"
+          },
+          "corrected_images_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Images Url",
+            "description": "URL to corrected images"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Error details (if failed)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ProcessResponse",
+        "description": "Response for single document processing."
+      },
+      "ProcessingResult": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Unique document identifier"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name",
+            "description": "Original file name"
+          },
+          "num_pages": {
+            "type": "integer",
+            "title": "Num Pages",
+            "description": "Number of pages processed"
+          },
+          "pdf_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Type",
+            "description": "Detected PDF type (image_only, born_digital, hybrid)"
+          },
+          "dqs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DQSSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Document Quality Score"
+          },
+          "ocr_routing_recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Routing Recommendation",
+            "description": "Recommended OCR routing strategy"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageSummary"
+            },
+            "type": "array",
+            "title": "Pages",
+            "description": "Per-page summaries"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Total processing time in ms"
+          },
+          "device_used": {
+            "type": "string",
+            "title": "Device Used",
+            "description": "Device used for processing (cpu/gpu)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "file_name",
+          "num_pages",
+          "processing_time_ms",
+          "device_used"
+        ],
+        "title": "ProcessingResult",
+        "description": "Result of document processing."
+      },
+      "ProcessingStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "processing",
+          "completed",
+          "failed"
+        ],
+        "title": "ProcessingStatus",
+        "description": "Status of a processing job."
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Ready status: ready or not_ready"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Current server timestamp"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Checks",
+            "description": "Individual readiness check results"
+          },
+          "device": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Device",
+            "description": "Available compute device information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp",
+          "checks",
+          "device"
+        ],
+        "title": "ReadyResponse",
+        "description": "Response model for readiness check."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VersionResponse": {
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "title": "Api Version",
+            "description": "API version string"
+          },
+          "python_version": {
+            "type": "string",
+            "title": "Python Version",
+            "description": "Python runtime version"
+          },
+          "pipeline_version": {
+            "type": "string",
+            "title": "Pipeline Version",
+            "description": "Processing pipeline version"
+          },
+          "models": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Models",
+            "description": "Model version information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_version",
+          "python_version",
+          "pipeline_version",
+          "models"
+        ],
+        "title": "VersionResponse",
+        "description": "Response model for version endpoint."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health and readiness endpoints"
+    },
+    {
+      "name": "process",
+      "description": "Document processing endpoints"
+    },
+    {
+      "name": "batch",
+      "description": "Batch processing endpoints"
+    }
+  ]
+}

@@ -175,11 +175,44 @@ async def process_batch_job(
 @router.post(
     "",
     response_model=BatchJobStatus,
+    status_code=status.HTTP_200_OK,
     summary="Submit batch processing job",
-    description="Upload multiple files for batch processing. Returns a job ID for tracking.",
+    description=(
+        "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for "
+        "asynchronous processing. Each file is validated up-front (extension "
+        "allowlist, non-empty); if any fails validation the entire batch is "
+        "rejected with HTTP 400 and no job is created. On success a job is "
+        "enqueued via FastAPI background tasks and the response carries a "
+        "`job_id` clients should poll on `/batch/{job_id}/status` until "
+        "`status` reaches `completed` or `failed`."
+    ),
+    response_description="Initial batch job state with `job_id` for polling.",
     responses={
-        200: {"description": "Batch job submitted successfully"},
-        400: {"description": "Invalid request"},
+        200: {
+            "description": "Batch job submitted successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "status": "processing",
+                        "total_files": 4,
+                        "processed_files": 0,
+                        "failed_files": 0,
+                        "created_at": "2025-01-15T10:30:00Z",
+                        "updated_at": "2025-01-15T10:30:00Z",
+                        "completed_at": None,
+                        "estimated_completion": None,
+                    }
+                }
+            },
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Invalid batch (size limit exceeded, no files, validation failure).",
+        },
+        401: {"model": ErrorResponse, "description": "Missing API key (auth enabled)."},
+        403: {"model": ErrorResponse, "description": "Invalid API key (auth enabled)."},
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded."},
     },
 )
 async def submit_batch_job(
@@ -308,21 +341,55 @@ async def submit_batch_job(
 
 @router.get(
     "/{job_id}/status",
+    response_model=BatchJobStatus,
+    status_code=status.HTTP_200_OK,
     summary="Get batch job status",
-    description="Get the current status of a batch processing job.",
+    description=(
+        "Poll the current state of a batch job by `job_id`. Returns progress "
+        "counters (`processed_files`, `failed_files`) and the overall "
+        "`status` (`pending`, `processing`, `completed`, `failed`). When "
+        "`status` reaches a terminal state (`completed` or `failed`), the "
+        "`completed_at` timestamp is populated and full results can be "
+        "fetched via `/batch/{job_id}/result`."
+    ),
+    response_description="Latest known job progress and lifecycle timestamps.",
     responses={
-        200: {"description": "Job status retrieved"},
+        200: {
+            "description": "Job status retrieved",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "status": "processing",
+                        "total_files": 4,
+                        "processed_files": 2,
+                        "failed_files": 0,
+                        "created_at": "2025-01-15T10:30:00Z",
+                        "updated_at": "2025-01-15T10:32:00Z",
+                        "completed_at": None,
+                        "estimated_completion": None,
+                    }
+                }
+            },
+        },
         404: {"description": "Job not found"},
     },
 )
 async def get_batch_status(job_id: str) -> BatchJobStatus:
-    """Get the status of a batch job.
+    """Return the current lifecycle state of a batch job.
+
+    Looks up the in-memory job store; jobs older than ~24h may have been
+    reclaimed. Used by clients to poll progress between submission and
+    result retrieval.
 
     Args:
-        job_id: The job ID.
+        job_id: UUID returned by `POST /batch`.
 
     Returns:
-        BatchJobStatus with current progress.
+        BatchJobStatus snapshot of progress counters and timestamps.
+
+    Raises:
+        HTTPException: 404 when `job_id` is unknown or has expired.
     """
     job = _get_job(job_id)
     if not job:
@@ -346,12 +413,23 @@ async def get_batch_status(job_id: str) -> BatchJobStatus:
 @router.get(
     "/{job_id}/result",
     response_model=BatchJobResult,
+    status_code=status.HTTP_200_OK,
     summary="Get batch job results",
-    description="Get the results of a completed batch processing job.",
+    description=(
+        "Fetch the results of a completed (or failed) batch job. Results are "
+        "paginated via `offset` and `limit` query parameters. If the job is "
+        "still running, returns HTTP 425 (Too Early) with the current "
+        "progress so the client can back off and retry. Errors that "
+        "occurred during individual file processing are returned in the "
+        "`errors` array alongside the successful `results`."
+    ),
+    response_description="Paginated processing results plus any per-file errors.",
     responses={
         200: {"description": "Job results retrieved"},
         404: {"description": "Job not found"},
-        425: {"description": "Job not yet completed"},
+        425: {
+            "description": "Job not yet completed; retry once status reaches a terminal state."
+        },
     },
 )
 async def get_batch_result(
@@ -359,15 +437,19 @@ async def get_batch_result(
     offset: int = 0,
     limit: int = 100,
 ) -> BatchJobResult | JSONResponse:
-    """Get the results of a batch job.
+    """Return the (possibly paginated) results of a batch job.
 
     Args:
-        job_id: The job ID.
-        offset: Pagination offset.
-        limit: Maximum results to return.
+        job_id: UUID returned by `POST /batch`.
+        offset: Zero-based index of the first result to return.
+        limit: Maximum number of results in the response page.
 
     Returns:
-        BatchJobResult with processing results.
+        BatchJobResult (HTTP 200) when the job has reached a terminal state,
+        otherwise a JSONResponse with HTTP 425 carrying the current progress.
+
+    Raises:
+        HTTPException: 404 when `job_id` is unknown.
     """
     job = _get_job(job_id)
     if not job:
@@ -401,21 +483,41 @@ async def get_batch_result(
 
 @router.delete(
     "/{job_id}",
+    status_code=status.HTTP_200_OK,
     summary="Delete batch job",
-    description="Delete a batch job and its results.",
+    description=(
+        "Permanently remove a batch job and its stored results from the "
+        "in-memory job store. Useful for explicit cleanup once a client has "
+        "fetched and persisted the results downstream. The operation is "
+        "idempotent for active jobs (returns 404 if `job_id` has already "
+        "been removed)."
+    ),
+    response_description="Single-field confirmation message.",
     responses={
-        200: {"description": "Job deleted"},
+        200: {
+            "description": "Job deleted",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Job 550e8400-e29b-41d4-a716-446655440000 deleted"
+                    }
+                }
+            },
+        },
         404: {"description": "Job not found"},
     },
 )
 async def delete_batch_job(job_id: str) -> dict[str, str]:
-    """Delete a batch job.
+    """Delete a batch job from the in-memory store.
 
     Args:
-        job_id: The job ID.
+        job_id: UUID returned by `POST /batch`.
 
     Returns:
-        Confirmation message.
+        Single-key dict with a human-readable confirmation `message`.
+
+    Raises:
+        HTTPException: 404 when `job_id` is unknown.
     """
     if job_id not in _job_store:
         raise HTTPException(

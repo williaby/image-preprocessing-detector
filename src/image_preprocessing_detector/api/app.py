@@ -147,16 +147,37 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
     if settings is None:
         settings = get_api_settings()
 
-    app = FastAPI(
-        title=settings.title,
-        description=settings.description,
-        version=settings.version,
-        lifespan=lifespan,
-        openapi_tags=settings.get_openapi_tags(),
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
-    )
+    contact: dict[str, str] = {}
+    if settings.contact_name:
+        contact["name"] = settings.contact_name
+    if settings.contact_url:
+        contact["url"] = settings.contact_url
+    if settings.contact_email:
+        contact["email"] = settings.contact_email
+
+    fastapi_kwargs: dict[str, Any] = {
+        "title": settings.title,
+        "description": settings.description,
+        "version": settings.version,
+        "lifespan": lifespan,
+        "openapi_tags": settings.get_openapi_tags(),
+        "docs_url": "/docs",
+        "redoc_url": "/redoc",
+        "openapi_url": "/openapi.json",
+        "license_info": {
+            "name": settings.license_name,
+            "url": settings.license_url,
+        },
+        "servers": [
+            {"url": "http://localhost:8000", "description": "Local development server"},
+        ],
+    }
+    if contact:
+        fastapi_kwargs["contact"] = contact
+    if settings.terms_of_service:
+        fastapi_kwargs["terms_of_service"] = settings.terms_of_service
+
+    app = FastAPI(**fastapi_kwargs)
 
     # Add request logging middleware
     app.add_middleware(

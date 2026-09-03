@@ -30,12 +30,56 @@ class APISettings(BaseSettings):
         description="API title for OpenAPI docs",
     )
     description: str = Field(
-        default="Intelligent image preprocessing detection for RAG document pipelines",
+        default=(
+            "Front door for the RAG document pipeline. Accepts raw documents "
+            "(PDF, PNG, JPEG, TIFF, WebP), assesses image quality, applies "
+            "geometric and quality corrections, and returns structured "
+            "`DocumentMetadata` plus OCR routing recommendations.\n\n"
+            "## Features\n\n"
+            "- **IQA pipeline**: 9 classical detectors + ResNet teacher/student ML IQA\n"
+            "- **Document Quality Score (DQS)**: degradation + structural complexity\n"
+            "- **PDF classification**: image_only / born_digital / hybrid\n"
+            "- **Routing**: 4-strategy recommendation for downstream OCR\n"
+            "- **Async batch**: submit-and-poll jobs for high-throughput ingestion\n\n"
+            "See [docs/api/rest-api.md](https://github.com/williaby/image-preprocessing-detector/"
+            "blob/main/docs/api/rest-api.md) for detailed contracts and examples."
+        ),
         description="API description for OpenAPI docs",
     )
     version: str = Field(
         default="0.1.0",
         description="API version",
+    )
+    contact_name: str = Field(
+        default="Image Preprocessing Detector Maintainers",
+        description="OpenAPI contact name",
+    )
+    contact_url: str = Field(
+        default="https://github.com/williaby/image-preprocessing-detector",
+        description="OpenAPI contact URL",
+    )
+    contact_email: str = Field(
+        default="",
+        description=(
+            "OpenAPI contact email. Leave empty to omit `email` from the "
+            "published `info.contact` object — preferred over a placeholder."
+        ),
+    )
+    license_name: str = Field(
+        default="Apache-2.0",
+        description="OpenAPI license name",
+    )
+    license_url: str = Field(
+        default="https://www.apache.org/licenses/LICENSE-2.0",
+        description="OpenAPI license URL",
+    )
+    terms_of_service: str = Field(
+        default="",
+        description=(
+            "OpenAPI terms-of-service URL. Leave empty to omit "
+            "`info.termsOfService` from the published schema; do not point "
+            "this at the project LICENSE."
+        ),
     )
 
     # CORS settings
