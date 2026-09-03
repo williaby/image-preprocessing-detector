@@ -47,7 +47,7 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 **Key Resources**:
 
 - [LEVEL_2_DOCUMENTATION_TEMPLATE.md](docs/architecture/LEVEL_2_DOCUMENTATION_TEMPLATE.md) - "Level 2.5" standard
-- [FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md](docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md) - 1,292 files mapped
+- [FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md](docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md) - file-to-workstream mapping (regenerate via scripts/extract_workstream_loc.sh)
 - [scripts/extract_workstream_loc.sh](scripts/extract_workstream_loc.sh) - Automated LOC counting
 - [scripts/validate_architecture_links.sh](scripts/validate_architecture_links.sh) - Link validation
 
@@ -328,7 +328,7 @@ uv run safety check
 
 ```bash
 # Run standalone validation scripts (not part of test suite)
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/validate_*.py
+PYTHONPATH=$(pwd):$PYTHONPATH uv run python validation/validate_*.py
 ```text
 
 ### Modal & Training (Phase 2+)
@@ -1019,7 +1019,7 @@ uv run basedpyright src/image_preprocessing_detector/schema.py
 
 ```bash
 # Validation scripts need PYTHONPATH set
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/script.py
+PYTHONPATH=$(pwd):$PYTHONPATH uv run python validation/script.py
 ```text
 
 ### Database Connection Issues

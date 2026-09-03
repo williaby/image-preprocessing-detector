@@ -33,17 +33,17 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 git clone https://github.com/williaby/image-preprocessing-detector.git
 cd image-preprocessing-detector
 
-# Install dependencies with Poetry
-poetry install --with dev
+# Install dependencies with uv
+uv sync --extra dev
 
 # Setup pre-commit hooks (REQUIRED)
-poetry run pre-commit install
+uv run pre-commit install
 
 # Verify installation
-poetry run pytest -v
-poetry run black --check src tests
-poetry run ruff check src tests
-poetry run mypy src
+uv run pytest -v
+uv run ruff format --check src tests
+uv run ruff check src tests
+uv run basedpyright src
 ```text
 
 ### Project Structure
@@ -51,9 +51,17 @@ poetry run mypy src
 ```text
 image_detection/
 ├── src/image_preprocessing_detector/  # Main package
-│   ├── ingestion/                     # PDF/image loading
-│   ├── detection/                     # IQA and layout detection
+│   ├── ingestion/                     # PDF/image loading, DPI upscaling
+│   ├── detection/                     # IQA and layout-lite detection
+│   ├── classification/                # PDF type classification
 │   ├── correction/                    # Image corrections
+│   ├── metrics/                       # Document Quality Score
+│   ├── routing/                       # OCR routing recommendations
+│   ├── annotation/                    # Dataset annotation pipeline (largest subpackage)
+│   ├── labeling/                      # Labeling and model arena
+│   ├── synthetic/                     # Synthetic data generation
+│   ├── drift/                         # Drift detection and monitoring
+│   ├── api/                           # FastAPI service
 │   ├── output/                        # JSON generation
 │   └── utils/                         # Logging and utilities
 ├── tests/                             # Test suite
@@ -102,19 +110,19 @@ Before committing, ensure all quality checks pass:
 
 ```bash
 # Format code
-poetry run black src tests
+uv run ruff format src tests
 
 # Lint code
-poetry run ruff check --fix src tests
+uv run ruff check --fix src tests
 
 # Type checking
-poetry run mypy src
+uv run basedpyright src
 
 # Run tests with coverage
-poetry run pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src --cov-report=term-missing
 
 # Run all pre-commit hooks manually
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```text
 
 ## Code Quality Standards
@@ -123,37 +131,37 @@ All contributions MUST meet these requirements:
 
 ### Formatting
 
-- **Tool**: Black (88 character line length)
+- **Tool**: Ruff formatter (Black-compatible, 88 character line length)
 - **Indentation**: 4 spaces (no tabs)
-- **Imports**: Sorted with isort (integrated into Black)
+- **Imports**: Sorted with Ruff isort rule (`I`)
 - **Quotes**: Double quotes for strings
-- **Verification**: `poetry run black src tests`
+- **Verification**: `uv run ruff format --check src tests`
 
 ### Linting
 
 - **Tool**: Ruff with project configuration
-- **Rules**: Comprehensive rule set (see `pyproject.toml`)
-- **Auto-fix**: `poetry run ruff check --fix src tests`
-- **Verification**: `poetry run ruff check src tests`
+- **Rules**: See `pyproject.toml` `[tool.ruff.lint]`
+- **Auto-fix**: `uv run ruff check --fix src tests`
+- **Verification**: `uv run ruff check src tests`
 
 ### Type Checking
 
-- **Tool**: MyPy strict mode for `src/`
+- **Tool**: BasedPyright strict mode for `src/`
 - **Coverage**: All public functions must have type hints
-- **Verification**: `poetry run mypy src`
+- **Verification**: `uv run basedpyright src`
 
 ### Security
 
 - **Tool**: Bandit security scanner
 - **Scope**: All production code in `src/`
-- **Verification**: `poetry run bandit -r src`
+- **Verification**: `uv run bandit -r src`
 
 ### Pre-Commit Hooks
 
 Run before EVERY commit (automatically enforced):
 
 ```bash
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```text
 
 See `pyproject.toml` for complete configuration.

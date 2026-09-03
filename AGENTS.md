@@ -4,21 +4,21 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 
 ## Project Structure & Module Organization
 
-- `src/image_preprocessing_detector/`: Core package; ingestion, detection (IQA + layout-lite), correction, routing/output, utils.
+- `src/image_preprocessing_detector/`: Core package; ingestion, detection (IQA + layout-lite), classification, correction, metrics, routing/output, plus the larger subpackages annotation, labeling, synthetic, drift, api, and utils.
 - `tests/`: Unit tests in `tests/unit/`, integration in `tests/integration/`, security and benchmarks under `tests/security/` and `tests/test_benchmarks/`.
 - `configs/`: Training/inference configs (Modal/Colab YAMLs).
-- `scripts/`: Data prep, training, benchmarking, and validation utilities; prefer `poetry run python ...` to execute.
+- `scripts/`: Data prep, training, benchmarking, and validation utilities; prefer `uv run python ...` to execute.
 - `docs/`: MkDocs content (guides, ADRs, API reference); `overrides/` for theming.
 - `data/`: DVC-tracked training sets (large, not committed) and `data/test_fixtures/` used in CI.
 
 ## Build, Test, and Development Commands
 
-- Install: `poetry install --with dev` (Python 3.12+).
-- Lint/format: `poetry run ruff format .` then `poetry run ruff check .`.
-- Type check: `poetry run mypy src`.
-- Tests (fast CI set): `poetry run pytest tests/unit -v` and `poetry run pytest tests/integration -v -m "not requires_full_dataset"`.
-- Full suite: `poetry run nox -s tests-3.12 lint type_check` (mirrors CI).
-- Docs: `poetry run nox -s docs` (strict MkDocs build).
+- Install: `uv sync --extra dev` (Python 3.10+, CI targets 3.12).
+- Lint/format: `uv run ruff format .` then `uv run ruff check .`.
+- Type check: `uv run basedpyright src`.
+- Tests (fast CI set): `uv run pytest tests/unit -v` and `uv run pytest tests/integration -v -m "not requires_full_dataset"`.
+- Full suite: `uv run nox -s tests-3.12 lint type_check` (mirrors CI).
+- Docs: `uv run nox -s docs` (strict MkDocs build).
 
 ## Coding Style & Naming Conventions
 
@@ -37,6 +37,6 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 ## Commit & Pull Request Guidelines
 
 - Conventional Commits with scope: `feat(detection): ...`; sign commits (GPG) and keep messages imperative.
-- Before pushing: format, lint, mypy, tests, and ensure coverage threshold; run `poetry run pre-commit run --all-files` if hooks are installed.
+- Before pushing: format, lint, type check, tests, and ensure coverage threshold; run `uv run pre-commit run --all-files` if hooks are installed.
 - PRs should link issues (`Fixes #123`), describe changes and testing steps, and add screenshots for visual diffs.
 - Update docs/CHANGELOG when user-facing behavior shifts; note breaking changes explicitly in the PR body.

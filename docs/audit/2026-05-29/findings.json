@@ -1,0 +1,667 @@
+{
+  "repo": "williaby/image-preprocessing-detector",
+  "generated_at": "2026-05-29T22:11:24Z",
+  "commit": "9f83f0d",
+  "findings": [
+    {
+      "id": "CQ-01",
+      "title": "Coverage gate set to 60%, not the documented 80%",
+      "domain": "code-quality",
+      "severity": "High",
+      "effort": "S",
+      "files": [
+        "pyproject.toml"
+      ],
+      "evidence": "pyproject.toml '--cov-fail-under=60'; CLAUDE.md repeatedly states 80%",
+      "recommendation": "Reconcile gate with docs: raise gate to 80 or correct docs to 60.",
+      "cve": ""
+    },
+    {
+      "id": "DOC-05",
+      "title": "CONTRIBUTING tells new devs to use Poetry; project is uv",
+      "domain": "docs",
+      "severity": "High",
+      "effort": "S",
+      "files": [
+        "CONTRIBUTING.md"
+      ],
+      "evidence": "CONTRIBUTING.md:36-40 'poetry install --with dev'; pyproject build-backend hatchling, uv.lock present, no [tool.poetry]",
+      "recommendation": "Replace Poetry block with 'uv sync --extra dev' and 'uv run pre-commit install'.",
+      "cve": ""
+    },
+    {
+      "id": "DEP-01",
+      "title": "Dockerfiles build via Poetry against a missing poetry.lock",
+      "domain": "dependencies",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "Dockerfile",
+        "Dockerfile.gpu"
+      ],
+      "evidence": "Dockerfile:26 copies 'poetry.lock*' (no poetry.lock exists), :34 'poetry export'; build resolves fresh from PyPI, bypasses uv.lock",
+      "recommendation": "Switch Docker build to uv (uv export / uv pip install against uv.lock) for reproducible builds.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-02",
+      "title": "Multiple config systems, no single source of truth",
+      "domain": "architecture",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/core/config.py",
+        "src/image_preprocessing_detector/api/config.py"
+      ],
+      "evidence": "Hand-rolled Settings in core/config.py:14 vs pydantic APISettings in api/config.py:17; 8 config modules plus ~15 inline *Config dataclasses",
+      "recommendation": "Standardize on pydantic-settings BaseSettings; core owns root config, subpackage configs are nested models.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-03",
+      "title": "Two logging setups; dedicated logging/ package near-dead",
+      "domain": "architecture",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/logging/__init__.py",
+        "src/image_preprocessing_detector/utils/log_config.py"
+      ],
+      "evidence": "setup_logging/get_logger defined in both logging/__init__.py:297,419 and utils/log_config.py:33,119; utils version has 57 importers, logging package ~2",
+      "recommendation": "Merge logging/ setup into utils/log_config.py; keep logging/ for errors/outcomes types only.",
+      "cve": ""
+    },
+    {
+      "id": "SEC-01",
+      "title": "Vulnerable transformers 4.37.2 pinned transitively via pyiqa",
+      "domain": "security",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "uv.lock"
+      ],
+      "evidence": "uv.lock pins transformers 4.57.3 (project) and 4.37.2 (forced by pyiqa 0.1.14.1); transformers <4.48 has deserialization/ReDoS RCE",
+      "recommendation": "Pin pyiqa to a release allowing transformers>=4.48 or drop pyiqa from production extras; confirm iqa extra is not in any runtime image.",
+      "cve": "CVE-2024-11392"
+    },
+    {
+      "id": "CI-01",
+      "title": "basedpyright (house type checker) run in neither CI nor pre-commit",
+      "domain": "cicd",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        ".github/workflows/ci.yml",
+        ".pre-commit-config.yaml"
+      ],
+      "evidence": "pyproject.toml:87 declares basedpyright as modern checker, :86 marks mypy legacy; ci.yml:316 runs mypy, pre-commit runs mypy v1.8.0; basedpyright runs nowhere",
+      "recommendation": "Add 'uv run basedpyright src' to quality-checks and a pre-commit hook, or formally demote basedpyright in docs. Pick one gate.",
+      "cve": ""
+    },
+    {
+      "id": "DOC-01",
+      "title": "README architecture/phase contradicts CLAUDE.md",
+      "domain": "docs",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "README.md",
+        "CLAUDE.md"
+      ],
+      "evidence": "README.md:130,398,553 Phase 0 week 2-3, ResNet IQA PLANNED; CLAUDE.md:644 Phases 0-6 COMPLETE, :511 ResNet student val_loss=0.14",
+      "recommendation": "Pick one status source (CLAUDE.md is newer); rewrite README status/roadmap or link to MASTER_PROJECT_PLAN.md.",
+      "cve": ""
+    },
+    {
+      "id": "DOC-02",
+      "title": "CLAUDE.md header model (SigLIP/MobileNetV4) contradicts its own body (ResNet)",
+      "domain": "docs",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "CLAUDE.md"
+      ],
+      "evidence": "CLAUDE.md:146-148 current = MobileNetV4 + SigLIP 2; :358,511,561 describe ResNet-50/18 as implemented; :644 says SigLIP 2 PENDING",
+      "recommendation": "Add current-vs-target note: ResNet shipped, SigLIP/MobileNetV4 target; tag the SigLIP block forward-looking.",
+      "cve": ""
+    },
+    {
+      "id": "DOC-03",
+      "title": "SigLIP and docling shifts have no ADR; duplicate ADR numbers 0028/0030",
+      "domain": "docs",
+      "severity": "High",
+      "effort": "M",
+      "files": [
+        "docs/ADRs/"
+      ],
+      "evidence": "No ADR mentions SigLIP; layout ADR is 0015-yolov8 while CLAUDE.md:148 says docling replaced YOLOv10; duplicate 0028 and 0030 files; 0034 missing",
+      "recommendation": "Add ADRs for SigLIP-2 teacher and docling-layout adoption; renumber duplicate 0028/0030 pairs.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-01",
+      "title": "Detectors ignore central Settings; 210 hardcoded thresholds",
+      "domain": "architecture",
+      "severity": "High",
+      "effort": "L",
+      "files": [
+        "src/image_preprocessing_detector/detection/",
+        "src/image_preprocessing_detector/core/config.py"
+      ],
+      "evidence": "core/config.py imported by 4 files, none in detection/; 210 hardcoded float literals across detection/*.py (e.g. blank_page_detector.py:49, discrepancy.py:170)",
+      "recommendation": "Route detector thresholds through core.Settings or per-detector config loaded from it; centralize tuning.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-02",
+      "title": "Oversized modules; iqa_classical.py is 2,845 lines",
+      "domain": "code-quality",
+      "severity": "High",
+      "effort": "L",
+      "files": [
+        "src/image_preprocessing_detector/detection/iqa_classical.py",
+        "src/image_preprocessing_detector/synthetic/generator.py"
+      ],
+      "evidence": "iqa_classical.py 2845 lines / 67 functions; generator.py 1735, iqa_ml.py 1520, dqs_calculator.py 1507, schema.py 1411; top-20 src files all >800 lines",
+      "recommendation": "Split iqa_classical.py one module per detector; extract long methods.",
+      "cve": ""
+    },
+    {
+      "id": "DEP-02",
+      "title": "Two divergent copies of the autogenerated requirements files",
+      "domain": "dependencies",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "requirements.txt",
+        "requirements/"
+      ],
+      "evidence": "Both root and requirements/ carry the same uv-export header but drift: gitpython 3.1.46 vs 3.1.49; root copies last changed 2026-03-07, requirements/ on 2026-05-07",
+      "recommendation": "Keep one canonical location, delete the other, add a CI check that fails if uv export differs from the committed file.",
+      "cve": ""
+    },
+    {
+      "id": "DEP-04",
+      "title": "Unpinned doclayout-yolo and abandoned fasttext",
+      "domain": "dependencies",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "pyproject.toml"
+      ],
+      "evidence": "doclayout-yolo declared bare (no version), resolves 0.0.4; fasttext>=0.9.3 resolves 0.9.3, no PyPI release since Apr 2024 (18+ months)",
+      "recommendation": "Add version floor and upper bound for doclayout-yolo; document fasttext as frozen or evaluate lingua/fasttext-wheel.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-04",
+      "title": "59 type/pyright-ignores, 14 clustered in monitoring/__init__.py",
+      "domain": "code-quality",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/monitoring/__init__.py"
+      ],
+      "evidence": "grep type:/pyright: ignore = 59 in src; monitoring/__init__.py holds 14 (24%)",
+      "recommendation": "Audit the 14 ignores in monitoring/__init__.py; clusters usually mean one untyped import a stub/cast fixes.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-09",
+      "title": "Zero-assert security test file; 138 runtime skips",
+      "domain": "code-quality",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "tests/security/test_codeql_validation.py",
+        "tests/conftest.py"
+      ],
+      "evidence": "test_codeql_validation.py has no assert/raises (bodies are try/except pass CodeQL bait); 138 pytest.skip() runtime guards mostly fixture-availability",
+      "recommendation": "Mark the file as a static-analysis fixture not a pytest test; audit how many fixture-skips fire in CI.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-05",
+      "title": "Three model lineages coexist in detection/; production path unmarked",
+      "domain": "architecture",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/detection/",
+        "CLAUDE.md"
+      ],
+      "evidence": "detection/ contains siglip2_multitask.py, iqa_ml.py (ResNet), doclayout_yolo.py simultaneously; CLAUDE.md presents conflicting current models",
+      "recommendation": "Mark production vs retired model modules in detection/__init__.py; pick authoritative pipeline in CLAUDE.md.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-07",
+      "title": "AGENTS/CONTRIBUTING prescribe Poetry/Black/isort/mypy; module map stale",
+      "domain": "architecture",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "CONTRIBUTING.md",
+        "AGENTS.md"
+      ],
+      "evidence": "CONTRIBUTING.md:44-46,105-134 and AGENTS.md:11-19 say poetry/black/isort/mypy; reality uv+ruff+basedpyright; AGENTS.md:7 omits annotation/labeling/synthetic/drift",
+      "recommendation": "Update both docs to uv+ruff+basedpyright; expand module map to list the largest subpackages.",
+      "cve": ""
+    },
+    {
+      "id": "SEC-03",
+      "title": "torch.load(weights_only=False) on config-driven checkpoints",
+      "domain": "security",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/detection/siglip2_multitask.py",
+        "scripts/run_model_benchmark.py"
+      ],
+      "evidence": "siglip2_multitask.py:236-239 and run_model_benchmark.py:331,542,825,931 use weights_only=False; regression.py:171 already uses weights_only=True (inconsistent)",
+      "recommendation": "Use weights_only=True for plain state_dicts or prefer safetensors; document trust boundary for remaining calls.",
+      "cve": ""
+    },
+    {
+      "id": "CI-02",
+      "title": "mypy config drifts between pre-commit and CI",
+      "domain": "cicd",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        ".pre-commit-config.yaml",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence": "pre-commit (:66) runs mypy v1.8.0 with --ignore-missing-imports and ~9 excluded files; ci.yml:316 runs mypy src --config-file=pyproject.toml full scope",
+      "recommendation": "Point pre-commit mypy at the same config and scope as CI; align pinned version with uv-resolved one.",
+      "cve": ""
+    },
+    {
+      "id": "CI-03",
+      "title": ".semgrep.yaml ruleset executed by no workflow",
+      "domain": "cicd",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        ".semgrep.yaml",
+        ".github/workflows/security-analysis.yml"
+      ],
+      "evidence": "grep semgrep in workflows matches only sonarcloud.yml nosemgrep comments; security-analysis.yml:257-258 delegates semgrep to Cloud App; local ruleset never run",
+      "recommendation": "Add 'semgrep --config .semgrep.yaml' to security-analysis.yml, document the cloud app consumes it, or delete the file.",
+      "cve": ""
+    },
+    {
+      "id": "CI-04",
+      "title": "bandit scan is non-blocking, contradicting stated policy",
+      "domain": "cicd",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        ".github/workflows/security-analysis.yml"
+      ],
+      "evidence": "security-analysis.yml:250-255 runs 'bandit -r src ... || true' twice; CLAUDE.md says fail on HIGH/CRITICAL",
+      "recommendation": "Drop '|| true' or gate on severity (bandit -r src -ll), keep JSON artifact upload under if: always().",
+      "cve": ""
+    },
+    {
+      "id": "DOC-06",
+      "title": "Hardcoded foreign path /home/byron in CLAUDE.md setup commands",
+      "domain": "docs",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "CLAUDE.md"
+      ],
+      "evidence": "CLAUDE.md:331,1022 PYTHONPATH=/home/byron/dev/image_detection (does not exist on clone); 949 /home/byron + /mnt/e hits across docs",
+      "recommendation": "Replace with PYTHONPATH=$(pwd) or repo root; sweep the doc-wide hits.",
+      "cve": ""
+    },
+    {
+      "id": "DOC-07",
+      "title": "Stale '1,292 files mapped' count; inventory self-flagged STALE",
+      "domain": "docs",
+      "severity": "Medium",
+      "effort": "S",
+      "files": [
+        "CLAUDE.md",
+        "docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md"
+      ],
+      "evidence": "CLAUDE.md:50 '1,292 files mapped'; target file header flags STALE (Jan 2025); repo now 3,834 tracked files, 971 .py",
+      "recommendation": "Drop the count from CLAUDE.md or replace with a regenerate-via-script pointer.",
+      "cve": ""
+    },
+    {
+      "id": "DEP-03",
+      "title": "Base runtime still targets Python 3.10 (EOL ~Oct 2026)",
+      "domain": "dependencies",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        "pyproject.toml",
+        "uv.lock"
+      ],
+      "evidence": "pyproject.toml:9 requires-python >=3.10,<3.15; CPython 3.10 end of security support Oct 2026 (~5 months from audit)",
+      "recommendation": "Plan to raise floor to >=3.11 before Oct 2026; verify no dep needs 3.10 resolution. Crosses to High inside the 6-month window.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-03",
+      "title": "815 Any annotations weaken strict typing on src",
+      "domain": "code-quality",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/logging/__init__.py",
+        "src/image_preprocessing_detector/cli.py"
+      ],
+      "evidence": "grep Any in src = 815; worst logging/__init__.py 26, cli.py 20, synthetic/validation.py 18; basedpyright is strict on src",
+      "recommendation": "Replace boundary Any with TypedDict/pydantic models where shape is known; keep Any only at dynamic edges with a comment.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-04",
+      "title": "Layering inversion: top-level schema.py imports annotation subpackage",
+      "domain": "architecture",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/schema.py",
+        "src/image_preprocessing_detector/annotation/schemas/enums.py"
+      ],
+      "evidence": "schema.py:19 imports annotation.schemas.enums.CaptureMethod; schema.py imported by 17 files yet depends down into annotation/ (latent inversion, no cycle yet)",
+      "recommendation": "Move shared enums to schema_utils/ or a new core/enums.py so base schema does not depend on annotation.",
+      "cve": ""
+    },
+    {
+      "id": "SEC-02",
+      "title": "trust_remote_code=True on caller-supplied model ids (17 occurrences)",
+      "domain": "security",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/labeling/arena/inference/regression.py",
+        "src/image_preprocessing_detector/annotation/enrichment/providers/siglip.py"
+      ],
+      "evidence": "regression.py:189,209,215 and siglip.py:278,282 pass trust_remote_code=True on caller-supplied model_path/spec.id; 17 total in src/scripts/modal",
+      "recommendation": "Set trust_remote_code=False for first-party checkpoints; gate True behind an allowlist and pin revision to a full SHA.",
+      "cve": ""
+    },
+    {
+      "id": "CI-06",
+      "title": "sonarcloud re-runs full pytest on every PR, duplicating ci.yml",
+      "domain": "cicd",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        ".github/workflows/sonarcloud.yml",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence": "sonarcloud.yml:25-26 triggers on every PR, :103 runs pytest --cov; ci.yml:173,236 already runs pytest with coverage across 5 versions",
+      "recommendation": "Have sonarcloud consume ci.yml coverage artifact via workflow_run + download-artifact (same pattern as codecov.yml).",
+      "cve": ""
+    },
+    {
+      "id": "DOC-04",
+      "title": "18 broken relative links in README",
+      "domain": "docs",
+      "severity": "Medium",
+      "effort": "M",
+      "files": [
+        "README.md"
+      ],
+      "evidence": "18 MISSING link targets incl. docs/planning/PROJECT_PLAN.md (the '114-page plan', linked twice at :250,:347), docs/architecture/ARCHITECTURE_SUMMARY.md, docs/api-reference.md",
+      "recommendation": "Repoint to current paths (e.g. docs/planning/MASTER_PROJECT_PLAN.md) or remove dead entries.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-06",
+      "title": "annotation/ god-package: 33% of LOC, own CLI/logging/config/metrics",
+      "domain": "architecture",
+      "severity": "Medium",
+      "effort": "L",
+      "files": [
+        "src/image_preprocessing_detector/annotation/"
+      ],
+      "evidence": "annotation/ = 130 .py files, 34,787 LOC (33% of package); has own cli.py (annotate entry point), monitoring/logging.py, config/settings.py, metrics",
+      "recommendation": "Treat annotation/ as a candidate for extraction into its own package or document it as a distinct application boundary.",
+      "cve": ""
+    },
+    {
+      "id": "DEP-05",
+      "title": "SBOM excludes the iqa extra (pyiqa) by design",
+      "domain": "dependencies",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        ".github/workflows/sbom.yml"
+      ],
+      "evidence": "sbom.yml:55-70 omits --extra iqa due to conflicting transformers pins; comment states 'only package missed is pyiqa'",
+      "recommendation": "Generate a separate SBOM for the iqa extra and merge, or note the gap in SBOM metadata.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-02",
+      "title": "Unreferenced deprecated datetime compat shims (0 call sites)",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/utils/datetime_compat.py"
+      ],
+      "evidence": "utcnow_compat() :305 and utcfromtimestamp_compat() :317 self-documented deprecated; zero call sites outside the file",
+      "recommendation": "Delete the two *_compat() shims; no consumers.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-03",
+      "title": "Unreferenced deprecated alias ValidationResult",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/annotation/integrity/checkpointing.py"
+      ],
+      "evidence": "checkpointing.py:463 ValidationResult = CheckpointValidationResult tagged deprecated; no usages of the alias name elsewhere",
+      "recommendation": "Remove the alias; nothing imports it.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-04",
+      "title": "Deprecated schema field handwriting_detected retained",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/schema.py"
+      ],
+      "evidence": "schema.py:1084 field description 'DEPRECATED: use handwriting_assessment.presence_score'; name appears once in src",
+      "recommendation": "Confirm no Project B handoff consumer depends on it, then drop on next schema version bump.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-05",
+      "title": "Commented-out parser code block in template",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/annotation/parsers/template.py"
+      ],
+      "evidence": "template.py:244-290 ~12-line commented-out CSV reading stub; accounts for most of the 12 commented-code lines in src",
+      "recommendation": "Replace the commented stub with a docstring example or raise NotImplementedError.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-06",
+      "title": "os.path in one file vs stated pathlib standard",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/utils/metadata_generator.py"
+      ],
+      "evidence": "All 5 os.path.join calls in src are in metadata_generator.py (:133,170,281,315,347); CONTRIBUTING.md:166 sets pathlib as standard",
+      "recommendation": "Convert this one file to pathlib.Path; rest of codebase already complies.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-07",
+      "title": "Stray % / .format() string formatting outside logging",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/annotation/schemas/migrations.py"
+      ],
+      "evidence": "218 %-style literals but 138 are correct lazy-logging; only ~2 stray manual % plus migrations.py:751,782 .format() worth converting",
+      "recommendation": "Convert the stray manual % strings and migrations.py .format() to f-strings; leave logging placeholders.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-05",
+      "title": "62 ruff errors, 60 are str-Enum modernization (UP042)",
+      "domain": "code-quality",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/synthetic/config.py"
+      ],
+      "evidence": "ruff --statistics: 60 UP042 replace-str-enum, 1 ASYNC240, 1 FURB171; 61 of 62 auto-fixable",
+      "recommendation": "Migrate class X(str, Enum) to enum.StrEnum; investigate the single ASYNC240 blocking-IO-in-async by hand.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-08",
+      "title": "Orphan CLI module cli_layout.py wired to no entry point",
+      "domain": "architecture",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/cli_layout.py"
+      ],
+      "evidence": "pyproject [project.scripts] declares only imgprep and annotate; cli_layout.py (361 LOC) referenced by no entry point or module",
+      "recommendation": "Register cli_layout as a subcommand under imgprep or remove it.",
+      "cve": ""
+    },
+    {
+      "id": "ARCH-09",
+      "title": "Ad-hoc torch.cuda.is_available() bypasses device_probe (6-10 sites)",
+      "domain": "architecture",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/annotation/enrichment/providers/",
+        "src/image_preprocessing_detector/labeling/arena/inference/"
+      ],
+      "evidence": "device_probe.py and orchestration/device_orchestrator.py exist, yet docling_layout.py:127,161, yolo.py:103,142, arena/inference/local.py:208,234 use raw torch.cuda.is_available() (merges CQ-07)",
+      "recommendation": "Request devices through DeviceOrchestrator/device_probe so GPU-priority and budget policy apply uniformly.",
+      "cve": ""
+    },
+    {
+      "id": "SEC-04",
+      "title": "Expired .snyk ignore for ONNX CVE-2025-51480",
+      "domain": "security",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        ".snyk"
+      ],
+      "evidence": ".snyk ignore expires 2025-02-22, ~3 months before the 2026-05-29 audit; onnx 1.20.1 in uv.lock",
+      "recommendation": "Re-review and re-date the ignore (or remove if a fixed onnx exists); verify save_external_data still unused.",
+      "cve": "CVE-2025-51480"
+    },
+    {
+      "id": "SEC-06",
+      "title": "API key check is not constant-time",
+      "domain": "security",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        "src/image_preprocessing_detector/api/middleware.py"
+      ],
+      "evidence": "middleware.py:257 'if api_key not in self.api_keys' set-membership, not timing-safe",
+      "recommendation": "Compare with hmac.compare_digest against hashed candidates, or accept as low-risk given high-entropy keys behind TLS.",
+      "cve": ""
+    },
+    {
+      "id": "CI-05",
+      "title": "setup-uv pinned to 4 different versions across workflows",
+      "domain": "cicd",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        ".github/workflows/"
+      ],
+      "evidence": "setup-uv@ uses v5 (12), v5.4.2 (3), v4.2.0 (1, codeql.yml:52), v7.6 (1, slsa-provenance.yml:59)",
+      "recommendation": "Standardize all workflows on one SHA-pinned setup-uv version (v7.x line); update codeql.yml off v4.2.0.",
+      "cve": ""
+    },
+    {
+      "id": "CI-07",
+      "title": "python-compatibility re-runs pytest overlapping ci.yml matrix",
+      "domain": "cicd",
+      "severity": "Low",
+      "effort": "S",
+      "files": [
+        ".github/workflows/python-compatibility.yml"
+      ],
+      "evidence": "python-compatibility.yml:40 tests 3.10-3.13 and :45 runs full pytest; ci.yml:173 matrix already covers 3.10-3.14",
+      "recommendation": "Narrow python-compatibility to versions ci.yml does not cover, or run an import/smoke check.",
+      "cve": ""
+    },
+    {
+      "id": "LEG-01",
+      "title": "typing.Optional instead of X | None (123 uses, 56 files)",
+      "domain": "legacy-code",
+      "severity": "Low",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/"
+      ],
+      "evidence": "123 Optional occurrences across 56 of 299 src files (19%); List/Dict/Tuple/Union already at 0; requires-python >=3.10",
+      "recommendation": "Migrate Optional[X] to X | None; enable Ruff UP045/UP007 to auto-fix and prevent regression.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-06",
+      "title": "77 TODO/FIXME/XXX markers, oldest dated 2026-02-22",
+      "domain": "code-quality",
+      "severity": "Low",
+      "effort": "M",
+      "files": [
+        "src/",
+        "tests/",
+        "scripts/"
+      ],
+      "evidence": "63 TODO, 13 XXX, 1 FIXME; git blame dates oldest to 2026-02-22 (annotation/cli.py:91, ingestion/document_processor.py:88); no HACK",
+      "recommendation": "Triage the 13 XXX markers first; convert actionable TODOs to tracked issues.",
+      "cve": ""
+    },
+    {
+      "id": "CQ-08",
+      "title": "58 hand-written to_dict and 15 inline 0-1 clamps; missing helpers",
+      "domain": "code-quality",
+      "severity": "Low",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/"
+      ],
+      "evidence": "58 to_dict defs, 15 from_dict, 15 inline max(0,min(1,...)) clamps, 10 normalize helpers; pydantic v2 already provides model_dump",
+      "recommendation": "Add one clamp01() util; audit to_dict methods on pydantic models for redundancy with model_dump().",
+      "cve": ""
+    },
+    {
+      "id": "SEC-05",
+      "title": "API upload buffers full body before size check (memory-DoS)",
+      "domain": "security",
+      "severity": "Low",
+      "effort": "M",
+      "files": [
+        "src/image_preprocessing_detector/api/routes/process.py"
+      ],
+      "evidence": "process.py:323-341 'content = await file.read()' reads full upload before size check; validate_file ignores max-size arg; MIME mismatch only logged",
+      "recommendation": "Enforce a Content-Length cap before reading the body and stream to temp file in bounded chunks.",
+      "cve": ""
+    }
+  ]
+}
