@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
           # Allow scorecard to make necessary API calls
@@ -66,7 +66,7 @@ jobs:
           # repo_token: ${{ secrets.SCORECARD_TOKEN }}
 
       - name: Upload Scorecard results to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3.37.4
+        uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
         with:
           sarif_file: scorecard-results.sarif
 
