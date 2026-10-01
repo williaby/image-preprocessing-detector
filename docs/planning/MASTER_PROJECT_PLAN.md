@@ -494,7 +494,7 @@ following sprint. No new features; no new datasets beyond what's needed.
 
 | # | Item | Why now | Effort | Done when |
 | --- | --- | --- | --- | --- |
-| 1 | **Decisions**: deployment model (SaaS vs distributed); doc3d warping severity formula; send sd7k/wsrd license emails | Cheap, calendar-bound (2–4 wk legal/author latency), gate dataset scope | 1–2 days | Decisions recorded in this plan; emails sent |
+| 1 | **Decisions**: deployment model (SaaS vs distributed); warping severity method for doc3d (note: depth maps not downloaded; `bm` maps are); wsrd (NC) and warpdoc (unspecified) license handling | Cheap, calendar-bound (2–4 wk legal/author latency), gate dataset scope | 1–2 days | Decisions recorded in this plan; emails sent |
 | 2 | **Label-writer audit** for Defects 1–2 (all parsers emit `-1.0` N_A, `code_cls` 0/1) | Fixed in trainer only; corrupted labels are unrecoverable | 0.5 day | Unit test per parser; grep clean |
 | 3 | **Run the 4 synthetic view scripts** (shadow 8K, warping 5K, v3 orientation 20K, real orientation 11K) | Scripts exist since Feb, never run; Tier 0 blocker (shadow labels) is gone | 2–3 days incl. GPU | Outputs on disk with counts matching spec |
 | 4 | **Run `prepare_multitask_datasets.py`** sub-commands `orientation`, `source`, `shadow`, `warping`, `script` (script: v3 for now, swap to v4 later) | Primary remaining implementation deliverable; produces the artifacts training needs | 3–4 days | 5 flat-list manifests; `_validate_manifest_no_ood()` passes; mixing caps verified |
@@ -544,7 +544,11 @@ permanently corrupted. Full context in Section 5a.
 - **Effort**: 1 day (decision) + 2 weeks (legal review if distributed model chosen)
 - **Unblocks**: License strategy for T3 datasets; all 55+ dataset scope decisions
 
-#### Initiate sd7k/wsrd license resolution
+#### sd7k/wsrd license resolution — ⚠️ PREMISE STALE (see LICENSE_IMPACT_REPORT rev 3, 2026-02-24)
+
+> **Corrected 2026-10-01**: sd7k is **MIT** (confirmed; no action). wsrd is **CC-BY-NC-SA-4.0**
+> (known, not unknown) — it is non-commercial, so the only open question is whether to request
+> commercial permission or exclude it. warpdoc remains genuinely unspecified.
 
 - **What**: sd7k (7,239 images) and wsrd (4,500 images) have unconfirmed licenses. Email dataset
   authors to request formal permission. Treat as all-rights-reserved for model card disclosure
