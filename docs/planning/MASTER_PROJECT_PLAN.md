@@ -524,8 +524,14 @@ Release 1 evaluation.
 
 #### Fix three architectural defects — ✅ DONE in training script/config (verified 2026-10-01)
 
-> Remaining: confirm every label **parser/manifest writer** emits `-1.0` (not `0.0`) for
-> N_A handwriting values and `code_cls` as 0/1 before running any labeling job.
+> **Audit 2026-10-01**: no script in `scripts/` writes handwriting or code training labels
+> (`prepare_multitask_datasets.py` covers script/source/orientation/shadow/warping only; the
+> OOD builder writes eval-only labels, with mixed types for `handwriting_presence`: bool vs
+> `"NONE"/"PRESENT"`). The trainer's reader was the only place defects could bite, and it had
+> two bugs, now fixed with tests (`tests/unit/test_multitask_label_parsing.py`): `code_cls` used
+> `int(float(code_confidence))` (truncated 0.7–0.99 to class 0); HW scores accepted values > 1.0.
+> Ambiguous `code_confidence` (0.3–0.7) is now masked. **Any future HW/code label writer must
+> emit `-1.0` for N_A and normalise `handwriting_presence` to a single type.**
 
 Must be fixed before any training labels are generated. Labels created with these defects are
 permanently corrupted. Full context in Section 5a.

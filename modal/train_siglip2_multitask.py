@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -1061,6 +1062,54 @@ def _create_shadow_warping_dataset(
     )
 
 
+# ============================================================================
+# Label parsing helpers (pure functions; unit-tested without Modal/torch)
+# ============================================================================
+
+# code_cls: code_confidence in the ambiguous band (mixed prose + code, see
+# build_ood_dataset.py recipe "boundary 0.3-0.7") is excluded rather than
+# truncated into a class, which would silently mislabel it as "no code".
+CODE_LABEL_POSITIVE_MIN = 0.7
+CODE_LABEL_NEGATIVE_MAX = 0.3
+
+# Handwriting regression heads: -1.0 is the N_A sentinel (masked loss).
+HW_NA_SENTINEL = -1.0
+
+
+def _parse_code_label(raw: Any) -> int | None:
+    """Return the binary code_cls label, or None to mask the sample.
+
+    >= 0.7 -> 1, <= 0.3 -> 0; ambiguous, non-finite, out-of-range or
+    unparseable values return None (never truncated with ``int()``).
+    """
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        return None
+    if value >= CODE_LABEL_POSITIVE_MIN:
+        return 1
+    if value <= CODE_LABEL_NEGATIVE_MAX:
+        return 0
+    return None
+
+
+def _parse_hw_score(raw: Any) -> float | None:
+    """Return a valid handwriting score in [0, 1], or None to mask the sample.
+
+    The N_A sentinel (-1.0), NaN/inf, unparseable and out-of-range values all
+    return None so they are skipped by the masked loss.
+    """
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        return None
+    return value
+
+
 def _validate_manifest_no_ood(samples: list[dict[str, Any]]) -> None:
     """Reject any manifest that contains OOD-reserved samples.
 
@@ -1288,19 +1337,21 @@ def _create_multitask_dataset(
 
                 # Defect 2 fix: code_cls (SIG-G5-4) — binary 0/1 from code_confidence
                 if "code_confidence" in entry:
-                    sample["labels"]["code_cls"] = int(float(entry["code_confidence"]))
-                    sample["task_masks"]["code_cls"] = 1
+                    code_label = _parse_code_label(entry["code_confidence"])
+                    if code_label is not None:
+                        sample["labels"]["code_cls"] = code_label
+                        sample["task_masks"]["code_cls"] = 1
 
                 # Defect 1 fix: handwriting regression heads (SIG-G4-4, SIG-G4-5)
                 # N_A sentinel = -1.0 → mask=0 (MultiTaskLoss skips these samples).
                 # Valid labels are in [0.0, 1.0] and always include a mask=1 entry.
                 for hw_reg in ("presence_score", "legibility_score"):
                     if hw_reg in entry:
-                        val = float(entry[hw_reg])
-                        if val >= 0.0:
-                            sample["labels"][hw_reg] = val
+                        hw_val = _parse_hw_score(entry[hw_reg])
+                        if hw_val is not None:
+                            sample["labels"][hw_reg] = hw_val
                             sample["task_masks"][hw_reg] = 1
-                        # val == -1.0: N_A sentinel, no mask entry → loss skipped
+                        # None (N_A sentinel/invalid): no mask entry → loss skipped
 
                 # Only keep samples with at least one label
                 if sample["task_masks"]:
