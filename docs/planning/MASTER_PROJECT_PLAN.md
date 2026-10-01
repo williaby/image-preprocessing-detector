@@ -15,7 +15,7 @@ tags:
 > **Supersedes**: [PROJECT_PLAN.md](PROJECT_PLAN.md) and
 > [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md)
 >
-> **Last Updated**: 2026-02-27
+> **Last Updated**: 2026-10-01 (repo audit; see §4a and §6a)
 >
 > **For system narrative** (what the system does and why its design is sound), see
 > [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md).
@@ -316,6 +316,40 @@ The table below reflects **accurate current state**. Items marked ⚠️ have pr
 
 ---
 
+## 4a. Status Reconciliation (2026-10-01 audit)
+
+The plan was last substantively updated in late Feb/Mar 2026. Every commit since 2026-03-15
+(~45) is CI, dependency, security-scanning or docs hygiene; **no model, dataset-assembly or
+pipeline code has changed**. The audit compared plan claims with the code and found:
+
+| Plan claim | Actual state | Evidence |
+| --- | --- | --- |
+| Defect 1 (N_A sentinel `0.0`) open | ✅ Fixed in training script (`-1.0` sentinel, masked loss). Label **parsers** not re-audited | `modal/train_siglip2_multitask.py:225,1295` |
+| Defect 2 (`code_reg` MSE) open | ✅ Fixed — renamed `code_cls`, binary | `modal/train_siglip2_multitask.py:139,205` |
+| Defect 3 (skew signed/unsigned) open | ✅ Fixed — signed degrees, positive = clockwise | `config/siglip2_multitask.yaml:65-73` |
+| Docling P0 bug: `paddleocr` engine key | ✅ Fixed (`rapidocr`; notes left in schema/yaml) | `schema.py:778`, `config/script_routing.yaml:209` |
+| Docling P0 bug: `--no-tables` not emitted | ✅ Fixed | `schema.py:832` |
+| Docling P0 bug: VLM default undocumented | ⚠️ Not verified closed — no `granite_docling` default found in `docling_router.py` | grep |
+| Shadow severity labeling "~3h GPU remaining" | ✅ Done 2026-02-21 (sd7k 7,238; wsrd 2,200 shadow pairs; warpdoc 1,020) | `HANDOFF_GPU_WORK.md` |
+| DDRs #9 / #10 blocked | ✅ Re-run complete (both 46.1/100) | `HANDOFF_GPU_WORK.md` |
+| OOD registry 9,170 entries | 9,650 entries (john11 manuscript additions) — 80% of 12K target | `metadata_registry/ood_registry.jsonl` |
+| Stream 4D MobileNetV4 "not integrated" | ⚠️ Partial: `models/skew_estimator.py` (ONNX) and `detection/deskew_pipeline.py` (ML-first, classical fallback, orientation + skew) exist with unit tests, but are only reachable from the CLI (`cli.py:912`), **not** the main pipeline, and no `.onnx` artifact is in `models/` | grep |
+| Stage 0 Document Type Router "planned" | ❌ Confirmed not started (no `document_type_router.py`) | `routing/` |
+| JPEG quality-factor detector "to add" | ❌ Confirmed not implemented (`CLAUDE.md` claims 9 detectors incl. JPEG QF — **incorrect**; there are 8) | `detection/iqa_classical.py` |
+| SigLIP 2 training not run | ❌ Unchanged; no manifests assembled, no GCS upload | — |
+
+**Consequence**: the true critical path is unchanged from February — *dataset assembly →
+GCS upload → SigLIP 2 training*. Tier 0 is much smaller than §6 describes (see annotations
+there). Seven months without progress on the critical path is itself the main risk; the
+blockers that remain are execution and decisions, not code.
+
+**Doc drift to fix alongside this update**: `CLAUDE.md` still describes Phase 3 ResNet as
+current, YOLOv10-doc as replaced, "9 detectors", and "Last synchronized 2026-02-21";
+`IMPLEMENTATION_STATUS_MATRIX.md` and `TECH_DEBT.md` (TD-1 describes `models/` as empty, but
+`models/` now has `skew_estimator.py`) were last updated Feb 2026.
+
+---
+
 ## 5. Key Design Decisions (Locked)
 
 These architectural choices are settled. Changes require explicit consensus and version increment.
@@ -452,9 +486,46 @@ sum across 11 dataset views) to ~420–440K actual unique images — see
 
 ## 6. Remaining Work
 
+### 6a. Recommended Next Sprint — "Unblock the Critical Path" (2 weeks)
+
+**Goal**: end the sprint with all five task manifests assembled and validated (OOD-leak check
+passing), so GCS upload and the SigLIP 2 Phase-1 (frozen backbone) smoke run can start the
+following sprint. No new features; no new datasets beyond what's needed.
+
+| # | Item | Why now | Effort | Done when |
+| --- | --- | --- | --- | --- |
+| 1 | **Decisions**: deployment model (SaaS vs distributed); doc3d warping severity formula; send sd7k/wsrd license emails | Cheap, calendar-bound (2–4 wk legal/author latency), gate dataset scope | 1–2 days | Decisions recorded in this plan; emails sent |
+| 2 | **Label-writer audit** for Defects 1–2 (all parsers emit `-1.0` N_A, `code_cls` 0/1) | Fixed in trainer only; corrupted labels are unrecoverable | 0.5 day | Unit test per parser; grep clean |
+| 3 | **Run the 4 synthetic view scripts** (shadow 8K, warping 5K, v3 orientation 20K, real orientation 11K) | Scripts exist since Feb, never run; Tier 0 blocker (shadow labels) is gone | 2–3 days incl. GPU | Outputs on disk with counts matching spec |
+| 4 | **Run `prepare_multitask_datasets.py`** sub-commands `orientation`, `source`, `shadow`, `warping`, `script` (script: v3 for now, swap to v4 later) | Primary remaining implementation deliverable; produces the artifacts training needs | 3–4 days | 5 flat-list manifests; `_validate_manifest_no_ood()` passes; mixing caps verified |
+| 5 | **JPEG→PNG remediation** for rvl-cdip (16K) and khatt (1.6K) | Must precede any manifest referencing them (do first, ahead of item 4 for those sources) | 0.5 day | Integrity check + docs updated |
+| 6 | **OOD metric corrections** (Energy Score for ILLEGIBLE + MNV4-H1) | Cheap; must precede any evaluation | 0.5 day | Eval code + test updated |
+| 7 | **Plan/doc hygiene**: fix `CLAUDE.md` drift, refresh `IMPLEMENTATION_STATUS_MATRIX.md` + `TECH_DEBT.md`, close VLM-default doc item | Stale docs misled the plan itself | 0.5 day | Dates and claims match §4a |
+
+**Explicitly deferred this sprint** (do not let these displace the critical path): Stage 0
+router (2–3 wk), full v4 PNG regeneration (~800 GB, long GPU run — **start it in the
+background only if GPU is idle**), NIST contact sheets, ADF scanner sourcing, compound-distortion
+augmentation, JPEG-QF detector, FastAPI endpoints.
+
+**Sprint after next**: DeQA-Doc corpus pseudo-labeling (~15 h T4) in parallel with GCS upload
+→ SigLIP 2 Phase-1 heads-only run (~2–3 h A10G) as the first real end-to-end proof, then
+Stream 4D finish (export the `.onnx`, wire `DeskewPipeline` into the main pipeline before
+SigLIP 2) as a small, independent win.
+
+**Risks**: (1) the v3→v4 script dataset swap forces a script-manifest rebuild — build the
+`script` sub-command to be re-runnable; (2) the OOD leak check keys on `sha256`/`phash` in
+`ood_registry.jsonl` — confirm it covers the 480 john11 entries added since the plan's
+9,170 count; (3) five heads still have 0 OOD labels — acceptable for a smoke run, not for
+Release 1 evaluation.
+
+---
+
 ### Tier 0 — Prerequisites (in flight, blocks everything)
 
-#### Fix three architectural defects (~3–5h total, blocks all label generation)
+#### Fix three architectural defects — ✅ DONE in training script/config (verified 2026-10-01)
+
+> Remaining: confirm every label **parser/manifest writer** emits `-1.0` (not `0.0`) for
+> N_A handwriting values and `code_cls` as 0/1 before running any labeling job.
 
 Must be fixed before any training labels are generated. Labels created with these defects are
 permanently corrupted. Full context in Section 5a.
@@ -489,7 +560,7 @@ permanently corrupted. Full context in Section 5a.
   Once defined, doc3d (102K images, MIT-confirmed) unlocks SIG-G5-3 at T4+T6 score 68 (near-ready).
 - **Effort**: 0.5 days (domain decision) + 3–4 days (implementation and labeling on GPU VM)
 
-#### Shadow severity labeling (~3h GPU remaining)
+#### Shadow severity labeling — ✅ DONE 2026-02-21 (only wsrd warping labels for the 2,300 warping-only pairs remain)
 
 - **What**: Run `scripts/label_shadow_severity.py` on sd7k (7,239 images) and wsrd (4,500
   images) on the Vultr A100 GPU instance
@@ -761,7 +832,7 @@ router that correctly classifies all 17 docling-supported format types.
 - **New schema fields**: `document_class`, `file_format`, `router_confidence`, `page_type_map`
 - **Effort**: 2–3 weeks; builds on existing `classification/pdf_type_classifier.py`
 
-#### Stream 4D: MobileNetV4 pipeline integration (new stream)
+#### Stream 4D: MobileNetV4 pipeline integration (new stream) — ⚠️ PARTIAL (see §4a)
 
 MobileNetV4 training is complete (val MAE=0.837°, orient_acc=99.5%). The model has not been
 wired into the production pipeline — it does not run on any document today.
@@ -774,7 +845,7 @@ wired into the production pipeline — it does not run on any document today.
   |angle| > 0.3°
 - **Effort**: 1–2 weeks
 
-#### Docling P0 bug fixes (before any integration testing with Unify)
+#### Docling P0 bug fixes (before any integration testing with Unify) — 2 of 3 ✅ fixed; VLM default doc still open
 
 Three bugs must be fixed before Prepare-Doc is integrated with Unify:
 
@@ -1154,10 +1225,10 @@ handoff documents. Priority: P0 = blocking, P1 = before Unify integration, P2 = 
 | 1 | [docs/PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) | Full service-name update (7 occurrences of "Prepare-Doc"); add audio track + Stage 0 context | P0 |
 | 2 | [docs/PROJECT_OVERVIEW_DETAILED.md](../PROJECT_OVERVIEW_DETAILED.md) | Full service-name update (7 occurrences); fix `docling_parameters` → `docling_params` (line ~362) | P0 |
 | 3 | [docs/planning/PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md](PREPARE_DOC_TO_UNIFY_HANDOFF_SPECIFICATION.md) | Full v2 rewrite — v1 (Jan 2026) predates SigLIP 2 architecture, architectural boundary decision, 19 heads, `DoclingRoutingParams`, handwriting assessment | P0 |
-| 4 | `src/image_preprocessing_detector/schema.py:766` | Replace `paddleocr` with `rapidocr` in `ocr_engine` field description | P0 |
-| 5 | `src/image_preprocessing_detector/routing/script_router.py:173` | Replace `paddleocr` with `rapidocr` in `get_engine()` docstring | P0 |
-| 6 | `config/script_routing.yaml` (12 entries) | Replace all `engine: "paddleocr"` with `engine: "rapidocr"` | P0 |
-| 7 | `src/image_preprocessing_detector/schema.py:794-829` | Add `--no-tables` emission in `to_cli_args()` when `tables_enabled=False` | P0 |
+| 4 | `src/image_preprocessing_detector/schema.py:766` | ✅ Done — Replace `paddleocr` with `rapidocr` in `ocr_engine` field description | P0 |
+| 5 | `src/image_preprocessing_detector/routing/script_router.py:173` | ✅ Done — Replace `paddleocr` with `rapidocr` in `get_engine()` docstring | P0 |
+| 6 | `config/script_routing.yaml` (12 entries) | ✅ Done — Replace all `engine: "paddleocr"` with `engine: "rapidocr"` | P0 |
+| 7 | `src/image_preprocessing_detector/schema.py:794-829` | ✅ Done — Add `--no-tables` emission in `to_cli_args()` when `tables_enabled=False` | P0 |
 | 8 | [docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml](../architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Redraw or archive — current diagram shows wrong OCR engines (YOLOv8, Marker/Llama, DeepSeek-OCR) instead of actual docling engines (RapidOCR, EasyOCR, Tesseract) | P1 |
 | 9 | [docs/planning/DOCLING_INTEGRATION_GAP_REPORT.md](DOCLING_INTEGRATION_GAP_REPORT.md) | Replace "Prepare-Doc" → "Prepare-Doc", "Unify" → "Unify" (26 occurrences) | P1 |
 | 10 | `CLAUDE.md` (project-level) | Verify previously applied P0 audit corrections are committed; service-name update throughout | P1 |
