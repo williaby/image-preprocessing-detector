@@ -494,7 +494,7 @@ following sprint. No new features; no new datasets beyond what's needed.
 
 | # | Item | Why now | Effort | Done when |
 | --- | --- | --- | --- | --- |
-| 1 | **Decisions**: deployment model (SaaS vs distributed); warping severity method for doc3d (note: depth maps not downloaded; `bm` maps are); wsrd (NC) and warpdoc (unspecified) license handling | Cheap, calendar-bound (2–4 wk legal/author latency), gate dataset scope | 1–2 days | Decisions recorded in this plan; emails sent |
+| 1 | ✅ **Decisions made 2026-10-01** (see Tier 0); remaining: model-card/REUSE entry for weights, `license` field in manifests, send wsrd/warpdoc emails. Was: deployment model (SaaS vs distributed); warping severity method for doc3d (note: depth maps not downloaded; `bm` maps are); wsrd (NC) and warpdoc (unspecified) license handling | Cheap, calendar-bound (2–4 wk legal/author latency), gate dataset scope | 1–2 days | Decisions recorded in this plan; emails sent |
 | 2 | **Label-writer audit** for Defects 1–2 (all parsers emit `-1.0` N_A, `code_cls` 0/1) | Fixed in trainer only; corrupted labels are unrecoverable | 0.5 day | Unit test per parser; grep clean |
 | 3 | **Run the 4 synthetic view scripts** (shadow 8K, warping 5K, v3 orientation 20K, real orientation 11K) | Scripts exist since Feb, never run; Tier 0 blocker (shadow labels) is gone | 2–3 days incl. GPU | Outputs on disk with counts matching spec |
 | 4 | **Run `prepare_multitask_datasets.py`** sub-commands `orientation`, `source`, `shadow`, `warping`, `script` (script: v3 for now, swap to v4 later) | Primary remaining implementation deliverable; produces the artifacts training needs | 3–4 days | 5 flat-list manifests; `_validate_manifest_no_ood()` passes; mixing caps verified |
@@ -536,7 +536,18 @@ permanently corrupted. Full context in Section 5a.
 | `code_reg` configured with MSE loss | Head registry, training script, inference | Rename `code_cls`; switch BCE + AUC/F1 | 1–2h |
 | SIG-G3-2 skew signed/unsigned ambiguity | Skew derivation logic | Document semantics; align implementation | 1.5h |
 
-#### Decide deployment model (SaaS vs. distributed)
+#### Decide deployment model (SaaS vs. distributed) — ✅ DECIDED 2026-10-01: model weights released CC-BY-SA-4.0
+
+> Project license is already CC-BY-SA-4.0 (migrated from MIT in #148; `LICENSE`, `REUSE.toml`,
+> `pyproject.toml`). Trained weights follow the same license (Scenario 2a of
+> LICENSE_IMPACT_REPORT). Deployment mode (SaaS/distributed) no longer affects data eligibility.
+> kuzushiji, hiertext, midv2020 are **in scope**. Still excluded: GPL (anyphotodoc6300),
+> NC (wsrd, financebench, omnidocbench, muharaf), unspecified (warpdoc, docalign12k, drccbi) —
+> except evaluation-only use. Follow-ups: model card + `REUSE.toml` entry for `models/**`,
+> record per-sample `license` in manifests, verify DeQA-Doc / mPLUG-Owl2 output terms allow
+> use as pseudo-labels in a CC-BY-SA model (not yet checked).
+
+<!-- original text retained below -->
 
 - **What**: Determines whether CC-BY-SA-4.0 datasets (e.g., kuzushiji, hiertext) can be used.
   CC-BY-SA-4.0 is potentially incompatible with distributed model distribution but not with
@@ -544,7 +555,7 @@ permanently corrupted. Full context in Section 5a.
 - **Effort**: 1 day (decision) + 2 weeks (legal review if distributed model chosen)
 - **Unblocks**: License strategy for T3 datasets; all 55+ dataset scope decisions
 
-#### sd7k/wsrd license resolution — ⚠️ PREMISE STALE (see LICENSE_IMPACT_REPORT rev 3, 2026-02-24)
+#### sd7k/wsrd license resolution — ✅ DECIDED 2026-10-01: exclude wsrd/warpdoc from production training; use for eval/calibration only (send commercial-permission emails, non-blocking). ⚠️ PREMISE STALE (see LICENSE_IMPACT_REPORT rev 3, 2026-02-24)
 
 > **Corrected 2026-10-01**: sd7k is **MIT** (confirmed; no action). wsrd is **CC-BY-NC-SA-4.0**
 > (known, not unknown) — it is non-commercial, so the only open question is whether to request
@@ -556,7 +567,12 @@ permanently corrupted. Full context in Section 5a.
   from v3 (8K images) + doc3d (MIT, for warping).
 - **Effort**: 1 day (email drafting + send); resolution timeline: 2–4 weeks
 
-#### Define warping severity formula for doc3d
+#### Define warping severity formula for doc3d — ✅ DECIDED 2026-10-01: backward-map residual, calibrated to warpdoc SSIM
+
+> Depth maps are not downloaded (only images + `bm_*` backward maps). Severity = deviation of
+> the backward map from its best-fit affine/homography, mapped by isotonic regression onto the
+> warpdoc `1 − SSIM` scale using a shared calibration sample; validate on held-out mesh IDs and
+> check the 0–1 spread. Split by mesh ID. Fallback: download depth maps and use std(Z).
 
 - **What**: `label_warping_severity.py` cannot be implemented without a defined formula for
   converting doc3d's 3D mesh displacement to a scalar severity score. Decision needed:
