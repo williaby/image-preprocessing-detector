@@ -749,6 +749,7 @@ packaging==26.2
     #   safety-schemas
     #   scikit-image
     #   streamlit
+    #   virtualenv
 paginate==0.5.7
     # via mkdocs-material
 pandas==2.3.3 ; python_full_version < '3.11'
@@ -787,7 +788,6 @@ platformdirs==4.10.0
     #   jupyter-core
     #   mkdocs-get-deps
     #   properdocs
-    #   python-discovery
     #   textual
     #   virtualenv
 pluggy==1.6.0
@@ -921,7 +921,7 @@ python-dateutil==2.9.0.post0
     #   kaggle
     #   matplotlib
     #   pandas
-python-discovery==1.4.3
+python-discovery==1.6.1
     # via virtualenv
 python-dotenv==1.2.2
     # via
@@ -1283,7 +1283,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.5.1
+virtualenv==21.14.5
     # via
     #   nox
     #   pre-commit
