@@ -3,7 +3,7 @@
 -e .
 aiohappyeyeballs==2.7.1
     # via aiohttp
-aiohttp==3.14.1
+aiohttp==3.14.3
     # via modal
 aiosignal==1.4.0
     # via aiohttp
@@ -51,7 +51,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   mkdocs
     #   properdocs
     #   tqdm
-cryptography==49.0.0
+cryptography==50.0.2
     # via google-auth
 defusedxml==0.7.1
     # via
@@ -85,7 +85,7 @@ ghp-import==2.1.0
     #   properdocs
 gitdb==4.0.12
     # via gitpython
-gitpython==3.1.50
+gitpython==3.2.0
     # via image-preprocessing-detector
 google-auth==2.55.1
     # via google-genai
@@ -95,7 +95,7 @@ grpclib==0.4.9
     # via modal
 h11==0.16.0
     # via httpcore
-h2==4.3.0
+h2==4.4.1
     # via grpclib
 hf-xet==1.5.1 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
@@ -191,7 +191,7 @@ onnxruntime==1.24.3 ; python_full_version < '3.11'
     # via image-preprocessing-detector
 onnxruntime==1.27.0 ; python_full_version >= '3.11'
     # via image-preprocessing-detector
-opencv-python-headless==4.13.0.92
+opencv-python-headless==4.14.0.94
     # via image-preprocessing-detector
 openpyxl==3.1.5
     # via image-preprocessing-detector
@@ -231,7 +231,7 @@ protobuf==6.33.6
     #   kagglesdk
     #   modal
     #   onnxruntime
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via
     #   image-preprocessing-detector
     #   pyasn1-modules
@@ -358,7 +358,7 @@ typing-inspection==0.4.2
     # via
     #   pydantic
     #   pydantic-settings
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   image-preprocessing-detector
     #   kaggle
