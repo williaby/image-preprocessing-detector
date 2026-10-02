@@ -6,8 +6,10 @@ Provides:
 - /version - API and model version information
 """
 
+import asyncio
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import structlog
@@ -183,6 +185,35 @@ async def readiness_check(response: Response) -> ReadyResponse:
     )
 
 
+def _detect_model_versions() -> dict[str, str | None]:
+    """Detect deployed model versions from the local filesystem.
+
+    Returns:
+        Mapping of model role to detected model name, or None when absent.
+    """
+    models: dict[str, str | None] = {
+        "teacher_model": None,
+        "student_model": None,
+        "layout_model": None,
+    }
+
+    # Try to detect model versions from filesystem
+    try:
+        model_dir = Path("models/iqa/onnx")
+        if model_dir.exists():
+            teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
+            student_path = model_dir / "resnet18_student.onnx"
+
+            if teacher_path.exists():
+                models["teacher_model"] = "resnet50_teacher_50epoch"
+            if student_path.exists():
+                models["student_model"] = "resnet18_student"
+    except Exception as e:
+        logger.debug("model_version_detection_failed", error=str(e))
+
+    return models
+
+
 @router.get(
     "/version",
     summary="Version information",
@@ -198,28 +229,9 @@ async def version_info() -> VersionResponse:
 
     settings = get_api_settings()
 
-    # Get model versions (check if ONNX models exist)
-    models: dict[str, str | None] = {
-        "teacher_model": None,
-        "student_model": None,
-        "layout_model": None,
-    }
-
-    # Try to detect model versions from filesystem
-    try:
-        from pathlib import Path
-
-        model_dir = Path("models/iqa/onnx")
-        if model_dir.exists():  # Trivially fast exists check
-            teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-            student_path = model_dir / "resnet18_student.onnx"
-
-            if teacher_path.exists():  # Trivially fast exists check
-                models["teacher_model"] = "resnet50_teacher_50epoch"
-            if student_path.exists():  # Trivially fast exists check
-                models["student_model"] = "resnet18_student"
-    except Exception as e:
-        logger.debug("model_version_detection_failed", error=str(e))
+    # Get model versions (check if ONNX models exist); filesystem probes run in a
+    # worker thread so the event loop is never blocked on disk I/O.
+    models = await asyncio.to_thread(_detect_model_versions)
 
     return VersionResponse(
         api_version=settings.version,

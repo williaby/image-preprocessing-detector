@@ -333,7 +333,7 @@ class HwLegibilityScorer:
 
         try:
             with PILImage.open(sheet_path) as img:
-                if img.mode not in ("RGB",):
+                if img.mode != "RGB":
                     img = img.convert("RGB")  # type: ignore[assignment]
 
                 max_px = self._config.image_max_pixels
