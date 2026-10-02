@@ -219,6 +219,14 @@ uv run python scripts/prepare_multitask_datasets.py merge \
 - OOD leak check runs on non-dry-run and reads `metadata_registry/ood_registry.jsonl`
   relative to the current directory — **run from the repo root**. **STOP IF** it reports a
   leak. **VERIFY** it also covers the ~480 john11 entries added since the plan's 9,170 count.
+- **Read the "hashed N of M samples" line.** All five sub-commands call the leak check
+  without an `image_root`, so a relative `image_path` is resolved against the *current
+  directory*. Run from the repo root, dataset images on the data drive are not found and are
+  skipped, which previously made the check pass having hashed nothing. It now prints a
+  `WARNING ... hashed 0 of M` when that happens. **STOP IF N is far below M**: the leak check
+  did not actually run on those samples. Fix by running from a directory where the manifest's
+  relative paths resolve, or (proper fix, not yet done) add an `--image-root` option to the
+  sub-commands and pass it through. Paths containing `..` are rejected rather than hashed.
 - doc3d split is by mesh ID; confirm no mesh appears in both train and val.
 - Shadow and warping `severity` distributions: check for 0–1 spread, not a spike at 0 or 1.
 

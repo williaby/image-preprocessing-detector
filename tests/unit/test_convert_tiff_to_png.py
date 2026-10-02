@@ -41,7 +41,8 @@ def khatt_like(tmp_path: Path) -> tuple[Path, Path]:
 @pytest.mark.unit
 def test_roundtrip_is_pixel_exact_and_rejects_nothing_for_gray(tmp_path: Path) -> None:
     tif = _make(tmp_path, "x.tif", (32, 16))
-    assert tiff_bytes_to_png(tif.read_bytes(), tmp_path / "x.png") == (32, 16)
+    size = tiff_bytes_to_png(tif.read_bytes(), tmp_path / "x.png")
+    assert size == (32, 16)
 
 
 @pytest.mark.unit
@@ -50,7 +51,9 @@ def test_cmyk_converted_to_rgb(tmp_path: Path) -> None:
     tif = tmp_path / "c.tif"
     img.save(tif)
     tiff_bytes_to_png(tif.read_bytes(), tmp_path / "c.png")
-    assert Image.open(tmp_path / "c.png").mode == "RGB"
+    with Image.open(tmp_path / "c.png") as converted:
+        mode = converted.mode
+    assert mode == "RGB"
 
 
 @pytest.mark.unit
@@ -157,7 +160,8 @@ def test_symlinked_jpeg_is_not_followed_or_deleted(tmp_path: Path) -> None:
     jdir.mkdir()
     (jdir / "link.jpg").symlink_to(outside)
     _make(pdir, "link.png", (8, 8))
-    assert verify_pngs(pdir, jdir)["jpeg_count"] == 0  # symlink ignored
+    report = verify_pngs(pdir, jdir)
+    assert report["jpeg_count"] == 0  # symlink ignored
     result = CliRunner().invoke(
         cli, ["retire-jpeg", "--png-dir", str(pdir), "--jpeg-dir", str(jdir), "--yes"]
     )

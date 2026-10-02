@@ -249,16 +249,33 @@ def _check_ood_leakage(
         return
 
     leakage: list[str] = []
+    hashed = missing = unsafe = 0
     for sample in samples:
         img_path_str = sample.get("image_path", "")
         img_path = Path(img_path_str)
+        if ".." in img_path.parts:
+            unsafe += 1  # never hash a file reached by traversal
+            continue
         if image_root and not img_path.is_absolute():
             img_path = image_root / img_path
         if not img_path.exists():
+            missing += 1
             continue
+        hashed += 1
         sha256 = _compute_sha256(img_path)
         if sha256 in ood_hashes:
             leakage.append(img_path_str)
+
+    # A check that hashed nothing proves nothing. Relative image_path values resolve
+    # against image_root (or the current directory), so a wrong working directory
+    # makes every file "missing" and the check would otherwise pass vacuously.
+    if samples and (hashed == 0 or missing or unsafe):
+        click.echo(
+            f"WARNING: OOD leakage check hashed {hashed} of {len(samples)} samples "
+            f"({missing} files not found, {unsafe} rejected as unsafe paths). "
+            f"Unhashed samples were NOT checked.",
+            err=True,
+        )
 
     if leakage:
         click.echo(
@@ -271,7 +288,8 @@ def _check_ood_leakage(
         raise SystemExit(2)
 
     click.echo(
-        f"OOD leakage check passed ({len(samples)} samples, {len(ood_hashes)} OOD hashes checked)"
+        f"OOD leakage check passed ({hashed} of {len(samples)} samples hashed, "
+        f"{len(ood_hashes)} OOD hashes checked)"
     )
 
 
