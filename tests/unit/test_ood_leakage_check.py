@@ -63,13 +63,14 @@ def test_vacuous_pass_is_now_loudly_flagged(
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("rel", ["../secret.bin", "..\\secret.bin"])
 def test_traversal_paths_are_never_hashed(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], rel: str
 ) -> None:
     secret = tmp_path / "secret.bin"
     digest = _image(secret, b"secret")
     registry = _registry(tmp_path, digest)  # would raise if the file were hashed
     root = tmp_path / "data"
     root.mkdir()
-    _check_ood_leakage([{"image_path": "../secret.bin"}], registry, image_root=root)
+    _check_ood_leakage([{"image_path": rel}], registry, image_root=root)
     assert "1 rejected as unsafe" in capsys.readouterr().err

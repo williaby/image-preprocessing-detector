@@ -34,7 +34,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 PERMISSIVE = "permissive"
 PUBLIC_DOMAIN = "public_domain"
@@ -76,7 +76,6 @@ _PERMISSIVE_FORMS = (
 _RULES: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
     (cls, re.compile(pattern))
     for cls, pattern in (
-        (GENERATED, r"^generated"),
         (MIXED, r"^mixed"),
         (UNSPECIFIED, r"^(?:unknown|unspecified|none|null)"),
         (NON_COMMERCIAL, r"(?:^|[^a-z])nc(?:[^a-z]|$)|non-?commercial"),
@@ -84,6 +83,7 @@ _RULES: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
         (COPYLEFT_GPL, r"(?<!l)gpl"),
         (RESEARCH_ONLY, r"research|academic"),
         (SHARE_ALIKE, r"(?:^|[^a-z])sa(?:[^a-z]|$)|sharing|odbl"),
+        (GENERATED, r"^generated"),  # after restrictions: "generated, NC only" is NC
         (PUBLIC_DOMAIN, r"^(?:cc0(?:-1\.0)?|public-domain|pd)$"),
         (PERMISSIVE, rf"^(?:{_PERMISSIVE_FORMS})$"),
     )
@@ -121,13 +121,24 @@ def _front_matter_lines(text: str) -> list[str]:
 def _front_matter_license(text: str) -> str:
     """The top-level ``license:`` value from the leading YAML front matter only.
 
-    Parsed line by line (linear time, no backtracking) and never from the body.
+    Parsed with ``yaml.safe_load`` so inline comments, quoting and folded scalars
+    resolve as YAML defines them. Anything that is not a string value (missing
+    key, null, list, malformed YAML) yields "", which classifies as unspecified.
     """
-    for line in _front_matter_lines(text):
-        key, _, value = line.partition(":")
-        if key == "license":  # top-level key only: an indented line is not one
-            return value.strip().strip("\"'")
-    return ""
+    lines = _front_matter_lines(text)
+    if not lines:
+        return ""
+    import yaml  # data-tooling dependency (ml/colab extras); not needed at inference
+
+    try:
+        data = yaml.safe_load("\n".join(lines))
+    except yaml.YAMLError:
+        return ""
+    value: object = None
+    if isinstance(data, dict):
+        mapping = cast("dict[str, object]", data)
+        value = mapping.get("license")
+    return " ".join(value.split()) if isinstance(value, str) else ""
 
 
 def load_dataset_licenses(source_dir: Path) -> dict[str, str]:

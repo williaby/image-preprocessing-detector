@@ -136,7 +136,7 @@ def test_front_matter_parser_edge_cases(tmp_path: Path) -> None:
         ),  # nested key is not top-level
         "unterminated": ("---\nlicense: MIT\nno closing delimiter\n", ""),
         "colonvalue": (
-            "---\nlicense: CC-BY-4.0 (see: terms)\n---\n",
+            '---\nlicense: "CC-BY-4.0 (see: terms)"\n---\n',
             "CC-BY-4.0 (see: terms)",
         ),
         "empty": ("", ""),
@@ -146,3 +146,25 @@ def test_front_matter_parser_edge_cases(tmp_path: Path) -> None:
     licenses = dl.load_dataset_licenses(tmp_path)
     for name, (_, expected) in cases.items():
         assert licenses[name] == expected, name
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("---\nlicense: MIT  # upstream\n---\n", "MIT"),
+        ('---\nlicense: "CC-BY-4.0"\n---\n', "CC-BY-4.0"),
+        ("---\nlicense: >-\n  CC-BY-NC\n  4.0\n---\n", "CC-BY-NC 4.0"),
+        ("---\nlicense: [MIT]\n---\n", ""),
+        ("---\nlicense: : bad: [\n---\n", ""),
+        ("---\ntitle: x\n---\nlicense: MIT\n", ""),
+    ],
+)
+def test_front_matter_license_is_yaml_parsed(text: str, expected: str) -> None:
+    assert dl._front_matter_license(text) == expected
+
+
+@pytest.mark.unit
+def test_generated_does_not_override_restrictions() -> None:
+    assert dl.classify_license("generated, noncommercial use only") == "non_commercial"
+    assert dl.classify_license("generated (synth-multiscript-v3)") == "generated"

@@ -1084,6 +1084,8 @@ CODE_LABEL_NEGATIVE_MAX = 0.3  # legacy probability form
 
 def _unit_float(raw: Any) -> float | None:
     """``raw`` as a finite float in [0, 1], else None."""
+    if isinstance(raw, bool):  # True/False are not scores
+        return None
     try:
         value = float(raw)
     except (TypeError, ValueError):
@@ -1095,13 +1097,16 @@ def _parse_code_label(entry: dict[str, Any]) -> int | None:
     """Return the binary code_cls label for a manifest entry, or None to mask it.
 
     With ``has_code`` (a real bool): that is the class, and a present but
-    low/invalid ``code_confidence`` masks the sample. Without it: legacy
+    low/invalid/null ``code_confidence`` masks the sample. A present non-bool
+    ``has_code`` is malformed and masks the sample. Without the key: legacy
     probability form (>= 0.7 -> 1, <= 0.3 -> 0, ambiguous band masked).
     """
     confidence = entry.get("code_confidence")
-    has_code = entry.get("has_code")
-    if isinstance(has_code, bool):
-        if confidence is not None:
+    if "has_code" in entry:
+        has_code = entry["has_code"]
+        if not isinstance(has_code, bool):
+            return None
+        if "code_confidence" in entry:
             value = _unit_float(confidence)
             if value is None or value < CODE_LABEL_MIN_CONFIDENCE:
                 return None

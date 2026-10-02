@@ -141,7 +141,7 @@ OUTPUT:              DocumentMetadata.json               OCRDocument.json    RAG
 
 **Prepare-Doc Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Unify should use.
 
-**Current Architecture** (two-model pipeline):
+**Target Architecture** (two-model pipeline; SigLIP 2 training not yet run, the ResNet Phase 3 path below is legacy and being superseded):
 
 - **MobileNetV4-Conv-S** (~3ms GPU): Pre-correction gate — orientation, skew, resolution
 - **SigLIP 2 NAFlex** (~50ms GPU): Multi-task teacher — 16 Release-1 heads across IQA (3-dim), Script, Orientation/Skew, Page Attributes; handwriting heads deferred to Release 2. **Training not yet run.**
@@ -482,7 +482,7 @@ PDF/Image Input
 Classical IQA  Layout-Lite Classifier → Coarse page attributes (Phase 2)
 (Phase 1C)         ↓
     ↓              ↓
-ML IQA         ML IQA (Teacher-Student ResNet, Phase 3)
+ML IQA         ML IQA (legacy ResNet Phase 3; being superseded)
 (Student)      (Student + selective Teacher)
     ↓              ↓
 [Correction] (src/correction/) - Deskew, CLAHE, sharpening, denoising (Phase 1)

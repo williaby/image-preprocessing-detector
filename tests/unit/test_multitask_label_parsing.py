@@ -84,16 +84,29 @@ class TestParseCodeLabel:
         )
 
     @pytest.mark.parametrize("has_code", [1, 0, "true", None])
-    def test_non_bool_has_code_falls_back_to_legacy_probability(
+    def test_non_bool_has_code_is_masked(
         self, trainer: ModuleType, has_code: object
     ) -> None:
+        for confidence in (0.9, 0.1):
+            entry = {"has_code": has_code, "code_confidence": confidence}
+            assert trainer._parse_code_label(entry) is None
+
+    def test_present_null_confidence_masks_a_has_code_row(
+        self, trainer: ModuleType
+    ) -> None:
         assert (
-            trainer._parse_code_label({"has_code": has_code, "code_confidence": 0.9})
-            == 1
+            trainer._parse_code_label({"has_code": True, "code_confidence": None})
+            is None
         )
+
+    @pytest.mark.parametrize("flag", [True, False])
+    def test_boolean_confidence_is_not_a_score(
+        self, trainer: ModuleType, flag: bool
+    ) -> None:
+        assert trainer._parse_code_label({"code_confidence": flag}) is None
         assert (
-            trainer._parse_code_label({"has_code": has_code, "code_confidence": 0.1})
-            == 0
+            trainer._parse_code_label({"has_code": True, "code_confidence": flag})
+            is None
         )
 
     @pytest.mark.parametrize(
@@ -134,6 +147,8 @@ class TestParseHwScore:
         """Defect 1: 0.0 (no handwriting) must stay a valid label."""
         assert trainer._parse_hw_score(0.0) == 0.0
 
-    @pytest.mark.parametrize("raw", [-1.0, -0.5, 1.2, float("nan"), None, "n/a"])
+    @pytest.mark.parametrize(
+        "raw", [-1.0, -0.5, 1.2, float("nan"), None, "n/a", True, False]
+    )
     def test_na_and_invalid_are_masked(self, trainer: ModuleType, raw: object) -> None:
         assert trainer._parse_hw_score(raw) is None

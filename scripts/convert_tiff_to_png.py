@@ -183,7 +183,7 @@ def verify_pngs(
     pngs, dup_png = _index_by_stem(png_dir.rglob("*.png"))
     ambiguous = sorted(set(dup_jpeg) | set(dup_png))
     missing = sorted(set(jpegs) - set(pngs) - set(ambiguous))
-    extra = sorted(set(pngs) - set(jpegs))
+    extra = sorted(set(pngs) - set(jpegs) - set(ambiguous))
     bad: list[str] = []
     verified: list[str] = []
     for stem in sorted(set(jpegs) & set(pngs)):
@@ -264,6 +264,10 @@ def convert(
         if rename and key not in rename:
             continue
         out_stem = Path(rename[key] if rename else Path(name).stem).stem
+        if not out_stem:
+            failed += 1
+            click.echo(f"FAILED {name}: empty output name", err=True)
+            continue
         if out_stem in planned:
             failed += 1
             click.echo(

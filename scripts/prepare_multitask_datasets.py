@@ -253,7 +253,7 @@ def _check_ood_leakage(
     for sample in samples:
         img_path_str = sample.get("image_path", "")
         img_path = Path(img_path_str)
-        if ".." in img_path.parts:
+        if ".." in PurePosixPath(str(img_path_str).replace("\\", "/")).parts:
             unsafe += 1  # never hash a file reached by traversal
             continue
         if image_root and not img_path.is_absolute():

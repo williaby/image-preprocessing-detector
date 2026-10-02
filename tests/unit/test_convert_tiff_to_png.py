@@ -224,3 +224,15 @@ def test_mapping_renames_output_to_jpeg_stem(tmp_path: Path) -> None:
     result = _run("convert", "--src", tiffs, "--dest", out, "--mapping", mapping)
     assert result.exit_code == 0, result.output
     assert [p.name for p in out.glob("*.png")] == ["rvl_letter_0001.png"]
+
+
+@pytest.mark.unit
+def test_empty_mapped_name_is_a_failure_not_a_dotfile(tmp_path: Path) -> None:
+    tiffs = tmp_path / "t"
+    _make(tiffs / "a.tif", 1, (32, 32))
+    mapping = tmp_path / "m.csv"
+    mapping.write_text(",a.tif\n")
+    out = tmp_path / "out"
+    result = _run("convert", "--src", tiffs, "--dest", out, "--mapping", mapping)
+    assert result.exit_code != 0
+    assert not list(out.glob("*.png"))
