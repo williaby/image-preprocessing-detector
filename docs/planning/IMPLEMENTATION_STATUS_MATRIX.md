@@ -12,7 +12,8 @@ tags:
 
 # Planning Document Implementation Status Matrix
 
-> **Last Updated**: 2026-02-21
+> **Last Updated**: 2026-10-02 (SigLIP2/MobileNetV4 section corrected; other sections not re-audited — see
+> [MASTER_PROJECT_PLAN.md §4a](MASTER_PROJECT_PLAN.md) for the current reconciliation)
 > **Documents Tracked**: 21
 > **Purpose**: Map each planning document to its implementation status and source code modules
 
@@ -78,35 +79,35 @@ tags:
 
 ### SIGLIP2_MULTITASK_REQUIREMENTS.md
 
-**Status**: 📋 Design-Only (0%)
+**Status**: ⚠️ Partial — training script + inference wrapper exist; no trained model (corrected 2026-10-02)
 
 **Description**: Multi-task training plan for SigLIP 2 with 19 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attributes). Two-model pipeline with MobileNetV4-Conv-S pre-correction check.
 
 **Implementation Status**:
 
-- ❌ No SigLIP 2 inference wrapper exists
-- ❌ No MobileNetV4 integration
+- ✅ SigLIP 2 inference wrapper exists (`detection/siglip2_multitask.py`, 8 tasks: IQA x3, script, source, orientation, shadow, warping). **It does not yet expose the trainer's newer heads** (`code_cls`, `skew_reg`, handwriting scores) — reconcile before first release
+- ⚠️ MobileNetV4: trained (epoch 47); inference code (`models/skew_estimator.py`, `detection/deskew_pipeline.py`) reachable from CLI only; not in the main pipeline; no `.onnx` committed
 - ✅ SigLIPProvider exists but uses older SigLIP Base 86M model (single-task IQA only)
-- ❌ Multi-head architecture not implemented
+- ✅ Multi-head architecture implemented in `modal/train_siglip2_multitask.py` (training not yet run)
 - ❌ Character-height-aware resolution not implemented
 
 **Related Code**:
 
 - `annotation/enrichment/providers/siglip.py` - Single-task IQA provider (existing)
-- No multi-task code exists yet
+- `modal/train_siglip2_multitask.py`, `config/siglip2_multitask.yaml`, `detection/siglip2_multitask.py`
 
 **Dependencies**:
 
 - Training datasets: orientation (50K ready), skew/resolution/handwriting (pending)
 - SigLIP 2 model training (not started)
-- MobileNetV4 model training (not started)
+- MobileNetV4 model training (orientation + skew complete; resolution head pending)
 
 **Next Steps**:
 
 1. Complete dataset generation (DATASET_DIVERSITY_REQUIREMENTS.md)
 2. Train SigLIP 2 multi-task model
 3. Implement multi-head inference wrapper
-4. Integrate MobileNetV4 pre-correction model
+4. Export MobileNetV4 `.onnx` and wire `DeskewPipeline` into the main pipeline (Stream 4D)
 
 ---
 
