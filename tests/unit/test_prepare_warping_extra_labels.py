@@ -69,3 +69,35 @@ def test_max_extra_real_caps_records(tmp_path: Path) -> None:
     labels = tmp_path / "labels.jsonl"
     _write_labels(labels)
     assert len(_run(tmp_path, labels, "--max-extra-real", "30")) == 30
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "bad_path",
+    [
+        "/etc/passwd",
+        "../../secret.png",
+        "doc3d/../../x.png",
+        "C:\\Windows\\x.png",
+        "",
+        "a\x00b.png",
+    ],
+)
+def test_unsafe_image_paths_are_rejected(tmp_path: Path, bad_path: str) -> None:
+    labels = tmp_path / "labels.jsonl"
+    good = {"image_path": "doc3d/img/1/ok.png", "mesh_id": "1", "warping_severity": 0.2}
+    bad = {"image_path": bad_path, "mesh_id": "2", "warping_severity": 0.9}
+    labels.write_text(json.dumps(good) + "\n" + json.dumps(bad) + "\n")
+    manifest = _run(tmp_path, labels)
+    assert [r["image_path"] for r in manifest] == ["doc3d/img/1/ok.png"]
+
+
+@pytest.mark.unit
+def test_cap_selection_is_independent_of_input_order(tmp_path: Path) -> None:
+    labels = tmp_path / "labels.jsonl"
+    _write_labels(labels)
+    first = {r["image_path"] for r in _run(tmp_path, labels, "--max-extra-real", "25")}
+    lines = labels.read_text().splitlines()
+    labels.write_text("\n".join(reversed(lines)) + "\n")
+    second = {r["image_path"] for r in _run(tmp_path, labels, "--max-extra-real", "25")}
+    assert first == second

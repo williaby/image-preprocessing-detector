@@ -5,11 +5,12 @@ remediation"). JPEG artifacts corrupt IQA labels, so the TIFF originals are
 converted to PNG, verified, and only then may the JPEGs be retired.
 
 Three explicit steps; nothing is deleted unless ``retire-jpeg --yes`` is given
-and the verification report is clean:
+and a fresh verification of the directories is clean. ``retire-jpeg`` never reads
+paths from the report file, so a tampered report cannot delete files:
 
     convert      TIFF (dir or .zip) -> PNG, pixel-exact check on every file
     verify       every JPEG has a decodable PNG of identical dimensions
-    retire-jpeg  delete JPEGs listed as verified in the report
+    retire-jpeg  re-verify, then delete the JPEGs found under --jpeg-dir
 
 Naming: a PNG takes the TIFF's stem. If the TIFF names differ from the JPEG
 names (true for the rvl-cdip subset), pass ``--mapping`` with a two-column CSV
@@ -20,6 +21,8 @@ Example:
         --src data/train.zip --src data/validation.zip --dest out/khatt_png
     uv run python scripts/convert_tiff_to_png.py verify \\
         --png-dir out/khatt_png --jpeg-dir 01_base_data/khatt --report out/report.json
+    uv run python scripts/convert_tiff_to_png.py retire-jpeg \\
+        --png-dir out/khatt_png --jpeg-dir 01_base_data/khatt   # dry run; add --yes
 """
 
 from __future__ import annotations
@@ -76,8 +79,14 @@ def tiff_bytes_to_png(data: bytes, dest: Path) -> tuple[int, int]:
 
 def verify_pngs(png_dir: Path, jpeg_dir: Path) -> dict[str, Any]:
     """Compare JPEG set against PNG set by stem; return a report dict."""
+    jpeg_root = jpeg_dir.resolve()
     jpegs = {
-        p.stem: p for p in jpeg_dir.rglob("*") if p.suffix.lower() in _JPEG_SUFFIXES
+        p.stem: p
+        for p in jpeg_root.rglob("*")
+        if p.suffix.lower() in _JPEG_SUFFIXES
+        and p.is_file()
+        and not p.is_symlink()
+        and p.resolve().is_relative_to(jpeg_root)  # never act outside the JPEG tree
     }
     pngs = {p.stem: p for p in png_dir.rglob("*.png")}
     missing = sorted(set(jpegs) - set(pngs))
@@ -169,14 +178,22 @@ def verify(png_dir: Path, jpeg_dir: Path, report: Path) -> None:
 
 
 @cli.command("retire-jpeg")
-@click.option("--report", type=click.Path(exists=True, path_type=Path), required=True)
+@click.option("--png-dir", type=click.Path(exists=True, path_type=Path), required=True)
+@click.option("--jpeg-dir", type=click.Path(exists=True, path_type=Path), required=True)
 @click.option("--yes", is_flag=True, help="Actually delete (default is a dry run).")
-def retire_jpeg(report: Path, yes: bool) -> None:
-    """Delete JPEGs only if the verification report is fully clean."""
-    data = json.loads(report.read_text(encoding="utf-8"))
-    if not data.get("ok"):
-        raise click.ClickException("report is not clean; refusing to delete anything")
-    paths = [Path(p) for p in data["verified_jpegs"]]
+def retire_jpeg(png_dir: Path, jpeg_dir: Path, yes: bool) -> None:
+    """Re-verify, then delete the JPEGs under --jpeg-dir that have a matching PNG.
+
+    Deletion targets are recomputed here from the directory contents (regular,
+    non-symlink files inside --jpeg-dir only); no path is read from a report.
+    """
+    result = verify_pngs(png_dir, jpeg_dir)
+    if not result["ok"]:
+        raise click.ClickException(
+            f"verification failed (missing={len(result['missing_png'])} "
+            f"bad={len(result['bad'])}); refusing to delete anything"
+        )
+    paths = [Path(p) for p in result["verified_jpegs"]]
     if not yes:
         click.echo(f"dry run: would delete {len(paths)} JPEGs (re-run with --yes)")
         return

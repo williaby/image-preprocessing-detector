@@ -61,7 +61,7 @@ import logging
 import math
 import random
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import click
@@ -306,6 +306,39 @@ def _deterministic_split(document_id: str) -> str:
 # ---------------------------------------------------------------------------
 # Mixing ratio validation
 # ---------------------------------------------------------------------------
+
+
+def _is_safe_relative_path(value: object) -> bool:
+    """True for a plain relative path with no ``..``, drive letter or NUL.
+
+    Manifest ``image_path`` values are resolved under a dataset root later, and the
+    OOD leakage check hashes whatever file they name, so untrusted label files must
+    not be able to point outside that root.
+    """
+    if not isinstance(value, str) or not value or "\x00" in value:
+        return False
+    normalised = value.replace("\\", "/")
+    if len(normalised) > 1 and normalised[1] == ":":
+        return False  # Windows drive path
+    path = PurePosixPath(normalised)
+    return not path.is_absolute() and ".." not in path.parts
+
+
+def _stable_pick(
+    records: list[dict[str, Any]], limit: int, seed: int
+) -> list[dict[str, Any]]:
+    """Pick up to ``limit`` records in a reproducible, input-order-independent way.
+
+    Orders by SHA-256 of ``seed:image_path`` (deterministic data selection, not a
+    security use of randomness).
+    """
+    if len(records) <= limit:
+        return records
+
+    def key(rec: dict[str, Any]) -> str:
+        return hashlib.sha256(f"{seed}:{rec['image_path']}".encode()).hexdigest()
+
+    return sorted(records, key=key)[:limit]
 
 
 def _check_mixing_ratio(
@@ -1584,7 +1617,7 @@ def shadow(
     type=int,
     default=15_000,
     show_default=True,
-    help="Cap on records taken from --extra-real-labels (random, seeded).",
+    help="Cap on records taken from --extra-real-labels (stable hash order, seeded).",
 )
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
@@ -1641,14 +1674,18 @@ def warping(
     for label_file in extra_real_labels:
         with open(label_file, encoding="utf-8") as fh:
             extra.extend(json.loads(line) for line in fh if line.strip())
-    usable = [r for r in extra if "image_path" in r and "warping_severity" in r]
+    usable = [
+        r
+        for r in extra
+        if "warping_severity" in r and _is_safe_relative_path(r.get("image_path"))
+    ]
     if len(usable) < len(extra):
         logger.warning(
-            "Skipped %d extra-label rows without image_path/warping_severity",
+            "Skipped %d extra-label rows without warping_severity or with a missing/"
+            "absolute/'..' image_path",
             len(extra) - len(usable),
         )
-    if len(usable) > max_extra_real:
-        usable = rng.sample(usable, max_extra_real)
+    usable = _stable_pick(usable, max_extra_real, seed)
     for extra_rec in usable:
         rec = dict(extra_rec)
         rec["warping"] = rec["warping_severity"]

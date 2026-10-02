@@ -83,14 +83,12 @@ def test_convert_verify_retire_flow(
         == 0
     )
 
-    dry = runner.invoke(cli, ["retire-jpeg", "--report", str(report)])
+    args = ["retire-jpeg", "--png-dir", str(out), "--jpeg-dir", str(jpegs)]
+    dry = runner.invoke(cli, args)
     assert "dry run" in dry.output
     assert len(list(jpegs.glob("*.jpg"))) == 2  # nothing deleted without --yes
 
-    assert (
-        runner.invoke(cli, ["retire-jpeg", "--report", str(report), "--yes"]).exit_code
-        == 0
-    )
+    assert runner.invoke(cli, [*args, "--yes"]).exit_code == 0
     assert list(jpegs.glob("*.jpg")) == []
 
 
@@ -107,13 +105,67 @@ def test_verify_flags_missing_and_size_mismatch(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_retire_refuses_unclean_report(tmp_path: Path) -> None:
+def test_retire_refuses_when_verification_fails(tmp_path: Path) -> None:
     jpeg = _make(tmp_path / "j", "a.jpg", (8, 8))
-    report = tmp_path / "r.json"
-    report.write_text(json.dumps({"ok": False, "verified_jpegs": [str(jpeg)]}))
-    result = CliRunner().invoke(cli, ["retire-jpeg", "--report", str(report), "--yes"])
+    (tmp_path / "p").mkdir()  # no PNGs: verification must fail
+    result = CliRunner().invoke(
+        cli,
+        [
+            "retire-jpeg",
+            "--png-dir",
+            str(tmp_path / "p"),
+            "--jpeg-dir",
+            str(tmp_path / "j"),
+            "--yes",
+        ],
+    )
     assert result.exit_code != 0
     assert jpeg.exists()
+
+
+@pytest.mark.unit
+def test_retire_ignores_tampered_report_and_never_deletes_outside_jpeg_dir(
+    tmp_path: Path,
+) -> None:
+    """A report listing an outside file must have no effect: paths are not read from it."""
+    victim = tmp_path / "precious.txt"
+    victim.write_text("keep me")
+    jpeg = _make(tmp_path / "j", "a.jpg", (8, 8))
+    png_dir = tmp_path / "p"
+    _make(png_dir, "a.png", (8, 8))
+    (tmp_path / "r.json").write_text(
+        json.dumps({"ok": True, "verified_jpegs": [str(victim)]})
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "retire-jpeg",
+            "--png-dir",
+            str(png_dir),
+            "--jpeg-dir",
+            str(tmp_path / "j"),
+            "--yes",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert victim.exists()
+    assert not jpeg.exists()
+
+
+@pytest.mark.unit
+def test_symlinked_jpeg_is_not_followed_or_deleted(tmp_path: Path) -> None:
+    outside = _make(tmp_path / "outside", "secret.jpg", (8, 8))
+    jdir, pdir = tmp_path / "j", tmp_path / "p"
+    jdir.mkdir()
+    (jdir / "link.jpg").symlink_to(outside)
+    _make(pdir, "link.png", (8, 8))
+    assert verify_pngs(pdir, jdir)["jpeg_count"] == 0  # symlink ignored
+    result = CliRunner().invoke(
+        cli, ["retire-jpeg", "--png-dir", str(pdir), "--jpeg-dir", str(jdir), "--yes"]
+    )
+    assert result.exit_code == 0
+    assert outside.exists()
 
 
 @pytest.mark.unit

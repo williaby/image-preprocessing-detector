@@ -658,7 +658,7 @@ Critical implementation contract (must match `train_siglip2_multitask.py`):
 
 #### Dataset format remediation: JPEG → PNG lossless conversion — ⚠️ TOOLING READY 2026-10-02, data run pending
 
-> `scripts/convert_tiff_to_png.py` (`convert` → `verify` → `retire-jpeg --yes`; pixel-exact
+> `scripts/convert_tiff_to_png.py` (`convert` → `verify` → `retire-jpeg --png-dir … --jpeg-dir … --yes`, which re-verifies and ignores the report; pixel-exact
 > round-trip check; JPEGs are never deleted without a clean report). Tested on synthetic data.
 > **Open**: rvl-cdip needs a `jpeg_stem,tiff_relative_path` mapping CSV (TIFF names differ
 > from `rvl_{doctype}_{n}.jpg`) and the TIFF re-download; L2 metadata/doc updates (steps 5–6)

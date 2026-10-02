@@ -94,7 +94,8 @@ uv run python scripts/convert_tiff_to_png.py verify \
 **VERIFY**: TIFF stems equal the existing JPEG stems (`missing` > 0 means they do not;
 then a `--mapping` CSV is needed). **Do not** run `retire-jpeg --yes` yet — first move the
 PNGs into place and update L2 metadata/docs (plan "Dataset format remediation" steps 3–6).
-`retire-jpeg` without `--yes` is a safe dry run.
+`retire-jpeg --png-dir <png> --jpeg-dir <jpeg>` without `--yes` is a safe dry run; it re-verifies
+the directories itself and never reads paths from the report file.
 
 **rvl-cdip**: blocked on the TIFF re-download and a `jpeg_stem,tiff_relative_path` CSV. Skip
 for this session unless the source mapping is already known.
