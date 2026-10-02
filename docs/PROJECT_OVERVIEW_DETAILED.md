@@ -147,12 +147,9 @@ Runs on the corrected image. A single forward pass drives all 16 prediction head
 
 | Group | Head | Type | Classes / Range | Feeds |
 | ----- | ---- | ---- | --------------- | ----- |
-| **1: IQA** | Blur severity | Regression | 0–1 | DQS |
-| | Noise severity | Regression | 0–1 | DQS |
-| | Contrast severity | Regression | 0–1 | DQS |
-| | Skew severity | Regression | 0–1 (see note ①) | DQS |
-| | Compression artifacts | Regression | 0–1 | DQS |
-| | Overall quality | Regression | 0–1 | DQS, routing |
+| **1: IQA** | Overall quality | Regression | 0–1 | DQS, routing |
+| | Sharpness | Regression | 0–1 | DQS |
+| | Color fidelity | Regression | 0–1 | DQS |
 | **2: Script** | Script class | Classification | 27 trainable scripts (30 total; Mong/Syrc/Geor OOD-reserved) Phase 1: 10 grouped ML classes | OCR engine selection |
 | **3: Orientation** | Coarse orientation | Classification | 4 classes | See note ② |
 | | Fine skew | Regression | ±10° (see note ①) | See note ② |
@@ -167,15 +164,10 @@ Runs on the corrected image. A single forward pass drives all 16 prediction head
 | | Code content ratio | Regression | 0–1 | Code-aware OCR routing |
 | | Resolution quality | Regression | 0–1 (see note ③) | Resolution validation |
 
-> **① Skew head disambiguation** — Two heads measure skew but serve different purposes:
->
-> - **Group 1 "Skew severity"** is a *quality degradation signal* (0–1, where 1 = severely skewed).
->   It answers "how bad is the skew problem?" and feeds the DQS degradation score.
-> - **Group 3 "Fine skew"** predicts the *actual rotation angle in degrees* (±10°).
->   It answers "how many degrees to rotate to fix it?" and feeds the correction step.
->
-> Both are necessary: Group 1 tells the DQS that a problem exists; Group 3 tells the correction
-> pipeline how to solve it.
+> **① Skew head disambiguation** — Release 1 has one SigLIP 2 skew head. **Group 3 "Fine skew"**
+> predicts the *actual rotation angle in degrees* (±10°) and feeds the correction step. A separate
+> skew-severity quality signal comes from the classical detectors; a Group 1 skew-severity head is
+> deferred to a later phase (see `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`).
 >
 > **② Why SigLIP 2 has redundant orientation, skew, and resolution heads** — Group 3 duplicates
 > MobileNetV4's orientation and skew outputs, and Group 5 duplicates its resolution_quality output.
@@ -531,8 +523,8 @@ singleton + `lru_cache` for performance.
 > **Diagram**: [monitoring-drift/monitoring-drift-architecture.puml](architecture/diagrams/level-2/monitoring-drift/monitoring-drift-architecture.puml)
 > — per-head prediction distribution monitoring, PLCC-drop alerting, and active learning harvest.
 
-Six IQA regression heads produce 0–1 scores for blur, noise, contrast, skew severity,
-compression artifacts, and an overall quality composite. Combined with the eight classical
+Three DIQA-aligned IQA regression heads produce 0–1 scores for overall quality, sharpness, and
+color fidelity (individual degradation heads are deferred to a later phase). Combined with the eight classical
 detectors in `iqa_classical.py`, these feed the Document Quality Score (`metrics/dqs_calculator.py`):
 
 ```text

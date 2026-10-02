@@ -43,7 +43,7 @@ purpose: Architecture documentation for project a functional and non-functional 
 
 ### 1.1 Purpose
 
-Prepare-Doc is the **front-door** for all documents entering the four-project OCR/RAG pipeline. Its mission:
+Prepare-Doc is the **front-door** for all documents entering the Foundry RAG pipeline (see [pipeline-level-0.md](../../architecture/pipeline-level-0.md)). Its mission:
 
 **"Identify, Assess, Correct, Route"**
 
@@ -90,7 +90,7 @@ Prepare-Doc must be good enough that if OCR fails later, no one can blame prepro
 - **Device-priority execution:**
   - Local GPU → Local CPU → Modal GPU (in that order)
 
-**Out of Scope (Unify/C/D Responsibilities)**
+**Out of Scope (Unify/Chunk Responsibilities)**
 
 - Full OCR text extraction (Unify)
 - Reading order prediction (Unify)
@@ -98,7 +98,7 @@ Prepare-Doc must be good enough that if OCR fails later, no one can blame prepro
 - Footnote reference linking (Unify)
 - Figure-caption semantic linking (Unify)
 - Table structure reconstruction (rows/columns/cells) (Unify)
-- Multi-engine OCR fusion (Chunk)
+- Multi-engine OCR fusion (Unify, later phases B3/B4; not part of Chunk)
 - Trust scoring (Chunk)
 - RAG-optimized chunking (Chunk)
 - Vector embeddings and DB ingestion (Embed)
@@ -836,7 +836,7 @@ The system SHALL detect parasitic content (headers, footers, watermarks) that sh
 - Detect and flag parasitic regions
 - Calculate parasitic content ratio for DQS
 
-**Unify/C Responsibility:**
+**Unify/Chunk Responsibility:**
 
 - Filter parasitic content from OCR output
 - Exclude from RAG chunks

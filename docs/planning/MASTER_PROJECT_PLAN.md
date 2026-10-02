@@ -43,7 +43,7 @@ Ingest                                                                        (r
                                   FFmpeg + Deepgram Nova-2 + diarization     + metadata ┘ │  │
                                                                                           ▼  ▼
                                                           Unify (Unify) ◄──────────────
-                                                          Multi-engine OCR + Docling DOM
+                                                          OCR via docling-serve + Docling DOM
                                                                     │
                                                                     ▼
                                                           Chunk (data_ingestor)
@@ -63,9 +63,9 @@ backwards compatibility for readers of older documents.
 | Legacy ID | Service Name | Repository | Primary Function |
 | --- | --- | --- | --- |
 | ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) |
-| ~~Project B~~ | **Unify** | `Unify` | Multi-engine OCR, Docling DOM unification |
-| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring |
-| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service |
+| ~~Project B~~ | **Unify** | `Unify` | OCR via docling-serve (specialist engines and fusion in later phases), Docling DOM unification |
+| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring (`RAGChunkSet.json`) |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding, outside the pipeline (not a shared foundry service) |
 | ~~Project E~~ | **Prepare-Audio** | `audio-processor` | Audio transcription, speaker diarization |
 | ~~Project F~~ | **Ingest** | `rag-processor` | Web UI, file upload, Cloud Workflows triggering |
 

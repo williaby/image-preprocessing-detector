@@ -120,9 +120,9 @@ Total pipeline latency is approximately 55–65ms GPU across both stages.
 All 16 prediction heads are organized into five task groups, each feeding a specific downstream
 decision in Unify.
 
-**Image Quality Assessment** (6 heads). Five regression heads score blur, noise, contrast, skew
-severity, and compression artifacts on a 0–1 scale; a sixth produces an overall quality
-composite. These combine with the eight classical detector outputs to produce the Document
+**Image Quality Assessment** (3 heads). Three DIQA-aligned regression heads score overall quality,
+sharpness, and color fidelity on a 0–1 scale (individual degradation heads are deferred to a later
+phase). These combine with the eight classical detector outputs to produce the Document
 Quality Score, which drives the four-strategy OCR routing decision: `ocr_fast` for high-quality
 documents, `ocr_advanced` for moderate quality with complex layout, `vision_simple` for
 image-dominant pages, and `vision_structured` for documents with tables and figures that need
@@ -141,7 +141,7 @@ Stage 2 orientation reading conflicts with Stage 1, a correction escalation is t
 
 **Handwriting** (5 heads). Three classification heads assess presence (none/partial/dominant),
 legibility (unreadable through excellent), and content type (printed/cursive/mixed/annotation/
-diagram label). Two regression heads score density and script family. Together these determine
+diagram label). Two regression heads score presence and legibility on a 0–1 scale. Together these determine
 whether Unify should route to a handwriting-specialized OCR engine and at what priority.
 
 **Page Attributes** (5 heads). A 7-class capture method classifier distinguishes born-digital,

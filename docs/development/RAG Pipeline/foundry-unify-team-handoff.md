@@ -450,6 +450,8 @@ From the functional and non-functional requirements doc:
 - Integrate Docling with DocLayNet-style layout classes (11 minimum)
 - Per-page layout detection from corrected images
 - Per-region OCR using base engine
+  (Phase B1 is docling-serve only; multi-engine fusion and specialist engines arrive in B3/B4 per
+  [the design spec](../../superpowers/specs/2026-05-05-foundry-unify-design.md))
 - Simple reading order (column-aware)
 - Read `DoclingRoutingParams` from `DocumentMetadata.json` and apply to Docling config
 - Write `DoclingDOM.json` to GCS `03-docling-dom/`
@@ -531,7 +533,7 @@ From the contract doc — use to gate Phase B1 completion:
 | [`docs/known_issues/KI-002-docling-table-multicolumn.md`](../../known_issues/KI-002-docling-table-multicolumn.md) | Table misclassification — HIGH severity |
 | [`docs/known_issues/KI-003-docling-picture-dense-text.md`](../../known_issues/KI-003-docling-picture-dense-text.md) | Picture misclassification — MEDIUM severity |
 | [`docs/known_issues/KI-008-docling-multicolumn-text-extraction.md`](../../known_issues/KI-008-docling-multicolumn-text-extraction.md) | Reading order corruption — HIGH severity, OPEN |
-| [`docs/_archived/cross-project/unify-f-nf.md`](../../_archived/cross-project/unify-f-nf.md) | Functional and non-functional requirements (Project B / Unify) |
+| [`docs/_archived/cross-project/unify-f-nf.md`](../../_archived/cross-project/unify-f-nf.md) | Functional and non-functional requirements (legacy name Project B; now Unify) |
 | [`docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml`](../../architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify internal workflow diagram |
 | [`deployment/docker-compose.docling.yml`](../../../deployment/docker-compose.docling.yml) | Reference docling-serve deployment config |
 | [`deployment/docker-compose.docling-vlm.yml`](../../../deployment/docker-compose.docling-vlm.yml) | Reference VLM-mode deployment config |

@@ -18,6 +18,9 @@ purpose: "Establish explicit scope boundaries to prevent Prepare-Doc from overla
 ---
 
 **Status**: Accepted
+
+> **Note (2026-10-02)**: Project B/C/D naming in this ADR is retired; see
+> [pipeline-level-0.md](../architecture/pipeline-level-0.md).
 **Date**: 2025-11-15
 **Deciders**: Byron Williams
 **Related**:

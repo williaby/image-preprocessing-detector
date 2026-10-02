@@ -45,7 +45,7 @@ source: project-a
 
 ### Old System (Pre-December 2025)
 
-**"RAG Pipeline" Numbering** - Used gaps to align with four-project RAG pipeline architecture:
+**"RAG Pipeline" Numbering** - Used gaps to align with four-project RAG pipeline architecture (legacy name; now the five-repository Foundry pipeline, see [pipeline-level-0.md](../architecture/pipeline-level-0.md)):
 
 - Phase 4, 6, 8, 10 (skipped 0-3, 5, 7, 9)
 - Rationale: Aligned phase numbers with project milestones across A-B-C-D pipeline
@@ -405,7 +405,7 @@ feat(phase-2): add DocLayout-YOLO detector with 11 classes
 
 ### Q1: Why did the phase numbering change?
 
-**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the four-project RAG pipeline architecture but caused confusion within Prepare-Doc. Sequential numbering (0-9) is clearer for Prepare-Doc developers.
+**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the legacy four-project RAG pipeline architecture (now the Foundry pipeline) but caused confusion within Prepare-Doc. Sequential numbering (0-9) is clearer for Prepare-Doc developers.
 
 ---
 
