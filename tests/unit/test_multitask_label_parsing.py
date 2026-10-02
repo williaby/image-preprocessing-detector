@@ -45,24 +45,79 @@ def trainer() -> ModuleType:
 
 @pytest.mark.unit
 class TestParseCodeLabel:
+    """``has_code`` selects the class; ``code_confidence`` only masks (enrichment rows)."""
+
     @pytest.mark.parametrize(
-        ("raw", "expected"),
+        ("entry", "expected"),
+        [
+            (
+                {"has_code": False, "code_confidence": 1.0},
+                0,
+            ),  # confident NEGATIVE stays 0
+            ({"has_code": False, "code_confidence": 0.8}, 0),
+            ({"has_code": True, "code_confidence": 0.8}, 1),
+            ({"has_code": True, "code_confidence": 1.0}, 1),
+            ({"has_code": True}, 1),
+            ({"has_code": False}, 0),
+        ],
+    )
+    def test_has_code_selects_class(
+        self, trainer: ModuleType, entry: dict[str, object], expected: int
+    ) -> None:
+        assert trainer._parse_code_label(entry) == expected
+
+    @pytest.mark.parametrize(
+        "confidence", [0.3, 0.5, 0.69, -1.0, 1.5, float("nan"), "x"]
+    )
+    def test_low_or_invalid_confidence_masks_a_has_code_row(
+        self, trainer: ModuleType, confidence: object
+    ) -> None:
+        assert (
+            trainer._parse_code_label({"has_code": True, "code_confidence": confidence})
+            is None
+        )
+        assert (
+            trainer._parse_code_label(
+                {"has_code": False, "code_confidence": confidence}
+            )
+            is None
+        )
+
+    @pytest.mark.parametrize("has_code", [1, 0, "true", None])
+    def test_non_bool_has_code_falls_back_to_legacy_probability(
+        self, trainer: ModuleType, has_code: object
+    ) -> None:
+        assert (
+            trainer._parse_code_label({"has_code": has_code, "code_confidence": 0.9})
+            == 1
+        )
+        assert (
+            trainer._parse_code_label({"has_code": has_code, "code_confidence": 0.1})
+            == 0
+        )
+
+    @pytest.mark.parametrize(
+        ("confidence", "expected"),
         [(1.0, 1), (0.999, 1), (0.7, 1), (0.0, 0), (0.1, 0), (0.3, 0), ("1", 1)],
     )
-    def test_confident_values(
-        self, trainer: ModuleType, raw: object, expected: int
+    def test_legacy_probability_form(
+        self, trainer: ModuleType, confidence: object, expected: int
     ) -> None:
-        assert trainer._parse_code_label(raw) == expected
+        assert trainer._parse_code_label({"code_confidence": confidence}) == expected
 
-    @pytest.mark.parametrize("raw", [0.31, 0.5, 0.69])
-    def test_ambiguous_band_is_masked_not_truncated(
-        self, trainer: ModuleType, raw: float
+    @pytest.mark.parametrize("confidence", [0.31, 0.5, 0.69])
+    def test_legacy_ambiguous_band_is_masked_not_truncated(
+        self, trainer: ModuleType, confidence: float
     ) -> None:
-        assert trainer._parse_code_label(raw) is None
+        assert trainer._parse_code_label({"code_confidence": confidence}) is None
 
-    @pytest.mark.parametrize("raw", [-1.0, 1.5, float("nan"), float("inf"), None, "x"])
-    def test_invalid_is_masked(self, trainer: ModuleType, raw: object) -> None:
-        assert trainer._parse_code_label(raw) is None
+    @pytest.mark.parametrize(
+        "confidence", [-1.0, 1.5, float("nan"), float("inf"), None, "x"]
+    )
+    def test_legacy_invalid_is_masked(
+        self, trainer: ModuleType, confidence: object
+    ) -> None:
+        assert trainer._parse_code_label({"code_confidence": confidence}) is None
 
 
 @pytest.mark.unit

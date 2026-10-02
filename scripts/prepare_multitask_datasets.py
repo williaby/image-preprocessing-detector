@@ -342,6 +342,34 @@ def _is_safe_relative_path(value: object) -> bool:
     return not path.is_absolute() and ".." not in path.parts
 
 
+def _read_label_rows(files: tuple[Path, ...]) -> list[Any]:
+    """Parse JSONL files into rows; undecodable lines are kept as ``None`` (then skipped)."""
+    rows: list[Any] = []
+    for label_file in files:
+        with open(label_file, encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    rows.append(None)
+    return rows
+
+
+def _is_usable_label_row(row: object) -> bool:
+    """A JSON object with a safe relative ``image_path`` and a finite numeric severity."""
+    if not isinstance(row, dict) or not _is_safe_relative_path(row.get("image_path")):
+        return False
+    severity = row.get("warping_severity")
+    if isinstance(severity, bool) or not isinstance(severity, (int, float, str)):
+        return False
+    try:
+        return math.isfinite(float(severity))
+    except ValueError:
+        return False
+
+
 def _stable_pick(
     records: list[dict[str, Any]], limit: int, seed: int
 ) -> list[dict[str, Any]]:
@@ -1688,25 +1716,18 @@ def warping(
         )
 
     # Extra real labels (doc3d). Split by mesh_id so one mesh never spans splits.
-    extra: list[dict[str, Any]] = []
-    for label_file in extra_real_labels:
-        with open(label_file, encoding="utf-8") as fh:
-            extra.extend(json.loads(line) for line in fh if line.strip())
-    usable = [
-        r
-        for r in extra
-        if "warping_severity" in r and _is_safe_relative_path(r.get("image_path"))
-    ]
+    extra = _read_label_rows(extra_real_labels)
+    usable = [r for r in extra if _is_usable_label_row(r)]
     if len(usable) < len(extra):
         logger.warning(
-            "Skipped %d extra-label rows without warping_severity or with a missing/"
-            "absolute/'..' image_path",
+            "Skipped %d extra-label rows that are not objects, lack a finite numeric "
+            "warping_severity, or have a missing/absolute/'..' image_path",
             len(extra) - len(usable),
         )
     usable = _stable_pick(usable, max_extra_real, seed)
     for extra_rec in usable:
         rec = dict(extra_rec)
-        rec["warping"] = rec["warping_severity"]
+        rec["warping"] = float(rec["warping_severity"])
         rec["split"] = _deterministic_split(
             str(rec.get("mesh_id") or rec["image_path"])
         )

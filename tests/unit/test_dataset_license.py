@@ -39,6 +39,15 @@ REPO_SOURCE_DIR = Path(__file__).resolve().parents[2] / "docs" / "datasets" / "s
         ("", dl.UNSPECIFIED),
         (None, dl.UNSPECIFIED),
         ("Some Bespoke Terms", dl.UNSPECIFIED),
+        # restrictions must never be approved by a permissive substring match
+        ("CC-BY-ND-4.0", dl.UNSPECIFIED),
+        ("CC-BY-NC-ND-4.0", dl.NON_COMMERCIAL),
+        ("CC-BY-4.0; noncommercial use only", dl.NON_COMMERCIAL),
+        ("CC-BY-4.0 with extra conditions", dl.UNSPECIFIED),
+        ("MIT (code only)", dl.UNSPECIFIED),
+        ("AGPL-3.0", dl.COPYLEFT_GPL),
+        ("LGPL-3.0", dl.UNSPECIFIED),
+        ("generated (synth-multiscript-v3)", dl.GENERATED),
     ],
 )
 def test_classify_license(raw: str | None, expected: str) -> None:
@@ -91,3 +100,26 @@ def test_repo_decisions_are_reflected_in_real_source_docs() -> None:
     excluded = {name: dl.classify_license(licenses.get(dl._collapse(name))) for name in
                 ("wsrd", "anyphotodoc6300", "warpdoc", "docalign12k")}  # fmt: skip
     assert all(c in dl.PRODUCTION_EXCLUDED for c in excluded.values()), excluded
+
+
+@pytest.mark.unit
+def test_license_key_in_body_is_ignored(tmp_path: Path) -> None:
+    (tmp_path / "front.md").write_text("---\nlicense: MIT\n---\nbody\n")
+    (tmp_path / "bodyonly.md").write_text("---\ntitle: x\n---\nlicense: MIT\n")
+    (tmp_path / "nofront.md").write_text("license: MIT\nno front matter\n")
+    licenses = dl.load_dataset_licenses(tmp_path)
+    assert licenses["front"] == "MIT"
+    assert licenses["bodyonly"] == ""
+    assert licenses["nofront"] == ""
+    assert dl.classify_license(licenses["bodyonly"]) == dl.UNSPECIFIED
+
+
+@pytest.mark.unit
+def test_synthetic_provenance_does_not_launder_a_restricted_license() -> None:
+    records = [
+        {"provenance": "synthetic_v3", "license": "CC-BY-NC-4.0"},
+        {"provenance": "synthetic_v3"},
+    ]
+    dl.annotate_license(records, {})
+    assert records[0]["license_class"] == dl.NON_COMMERCIAL
+    assert records[1]["license_class"] == dl.GENERATED

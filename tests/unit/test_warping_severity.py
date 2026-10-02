@@ -126,6 +126,16 @@ class TestCalibration:
         raw[0] = np.nan
         assert len(fit_calibration(raw, ref).xs) == 29
 
+    def test_tied_raw_scores_collapse_to_strictly_increasing_xs(self) -> None:
+        raw = np.array([0.01] * 6 + [0.02] * 6 + [0.05] * 6)
+        ref = np.array([0.1, 0.3, 0.2, 0.4, 0.2, 0.3] + [0.5] * 6 + [0.9] * 6)
+        cal = fit_calibration(raw, ref)
+        assert list(cal.xs) == sorted(set(cal.xs)) == [0.01, 0.02, 0.05]
+        assert np.all(np.diff(cal.ys) >= 0)
+        assert apply_calibration(0.01, cal) == pytest.approx(
+            0.25, abs=1e-9
+        )  # mean of tied block
+
     def test_roundtrip_dict(self) -> None:
         cal = fit_calibration(np.linspace(0, 0.1, 20), np.linspace(0, 0.5, 20))
         assert Calibration.from_dict(cal.to_dict()) == cal

@@ -141,7 +141,14 @@ def fit_calibration(
     order = np.argsort(raw[keep], kind="stable")
     xs = raw[keep][order]
     ys = _pool_adjacent_violators(reference[keep][order])
-    return Calibration(xs=tuple(xs.tolist()), ys=tuple(np.clip(ys, 0.0, 1.0).tolist()))
+    # np.interp needs strictly increasing xs; tied raw scores collapse to one point
+    # carrying the mean of their isotonic values (group means stay non-decreasing).
+    unique_xs, inverse, counts = np.unique(xs, return_inverse=True, return_counts=True)
+    unique_ys = np.bincount(inverse, weights=ys) / counts
+    return Calibration(
+        xs=tuple(unique_xs.tolist()),
+        ys=tuple(np.clip(unique_ys, 0.0, 1.0).tolist()),
+    )
 
 
 def apply_calibration(raw: float, calibration: Calibration) -> float:

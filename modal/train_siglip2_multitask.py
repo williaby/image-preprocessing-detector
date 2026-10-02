@@ -1066,33 +1066,52 @@ def _create_shadow_warping_dataset(
 # Label parsing helpers (pure functions; unit-tested without Modal/torch)
 # ============================================================================
 
-# code_cls: code_confidence in the ambiguous band (mixed prose + code, see
-# build_ood_dataset.py recipe "boundary 0.3-0.7") is excluded rather than
-# truncated into a class, which would silently mislabel it as "no code".
-CODE_LABEL_POSITIVE_MIN = 0.7
-CODE_LABEL_NEGATIVE_MAX = 0.3
+# code_cls label semantics. Two manifest conventions exist in this repo:
+#   * enrichment metadata: ``has_code`` is the label and ``code_confidence`` is the
+#     confidence IN that label (a confident negative is has_code=False, 1.0);
+#   * OOD builder / legacy manifests: no ``has_code``, and ``code_confidence`` is
+#     itself the code probability (boundary band 0.3-0.7 for mixed prose + code).
+# ``has_code`` therefore selects the class whenever present, and confidence only
+# decides whether to mask. Reading confidence as a probability for enrichment rows
+# would label confident negatives as "has code".
+CODE_LABEL_MIN_CONFIDENCE = 0.7
+CODE_LABEL_POSITIVE_MIN = 0.7  # legacy probability form
+CODE_LABEL_NEGATIVE_MAX = 0.3  # legacy probability form
 
 # Handwriting regression heads: -1.0 is the N_A sentinel (masked loss); any value
 # outside [0, 1], including the sentinel, is rejected by _parse_hw_score.
 
 
-def _parse_code_label(raw: Any) -> int | None:
-    """Return the binary code_cls label, or None to mask the sample.
-
-    >= 0.7 -> 1, <= 0.3 -> 0; ambiguous, non-finite, out-of-range or
-    unparseable values return None (never truncated with ``int()``).
-    """
+def _unit_float(raw: Any) -> float | None:
+    """``raw`` as a finite float in [0, 1], else None."""
     try:
         value = float(raw)
     except (TypeError, ValueError):
         return None
-    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+    return value if math.isfinite(value) and 0.0 <= value <= 1.0 else None
+
+
+def _parse_code_label(entry: dict[str, Any]) -> int | None:
+    """Return the binary code_cls label for a manifest entry, or None to mask it.
+
+    With ``has_code`` (a real bool): that is the class, and a present but
+    low/invalid ``code_confidence`` masks the sample. Without it: legacy
+    probability form (>= 0.7 -> 1, <= 0.3 -> 0, ambiguous band masked).
+    """
+    confidence = entry.get("code_confidence")
+    has_code = entry.get("has_code")
+    if isinstance(has_code, bool):
+        if confidence is not None:
+            value = _unit_float(confidence)
+            if value is None or value < CODE_LABEL_MIN_CONFIDENCE:
+                return None
+        return int(has_code)
+    value = _unit_float(confidence)
+    if value is None:
         return None
     if value >= CODE_LABEL_POSITIVE_MIN:
         return 1
-    if value <= CODE_LABEL_NEGATIVE_MAX:
-        return 0
-    return None
+    return 0 if value <= CODE_LABEL_NEGATIVE_MAX else None
 
 
 def _parse_hw_score(raw: Any) -> float | None:
@@ -1101,13 +1120,7 @@ def _parse_hw_score(raw: Any) -> float | None:
     The N_A sentinel (-1.0), NaN/inf, unparseable and out-of-range values all
     return None so they are skipped by the masked loss.
     """
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return None
-    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
-        return None
-    return value
+    return _unit_float(raw)
 
 
 def _validate_manifest_no_ood(samples: list[dict[str, Any]]) -> None:
@@ -1336,8 +1349,8 @@ def _create_multitask_dataset(
                     sample["task_masks"]["skew_reg"] = 1
 
                 # Defect 2 fix: code_cls (SIG-G5-4) — binary 0/1 from code_confidence
-                if "code_confidence" in entry:
-                    code_label = _parse_code_label(entry["code_confidence"])
+                if "code_confidence" in entry or "has_code" in entry:
+                    code_label = _parse_code_label(entry)
                     if code_label is not None:
                         sample["labels"]["code_cls"] = code_label
                         sample["task_masks"]["code_cls"] = 1

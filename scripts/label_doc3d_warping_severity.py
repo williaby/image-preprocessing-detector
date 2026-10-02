@@ -203,14 +203,19 @@ def calibrate(
             continue
         raws.append(raw_by_id[stem])
         refs.append(ssim_severity(warped, flat))
-    calibration = fit_calibration(np.array(raws), np.array(refs))
+    try:
+        calibration = fit_calibration(np.array(raws), np.array(refs))
+    except ValueError as exc:  # e.g. no image produced a usable unwarp
+        raise click.ClickException(f"calibration failed: {exc}") from exc
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(calibration.to_dict()), encoding="utf-8")
     corr = float(np.corrcoef(raws, refs)[0, 1]) if len(raws) > 2 else float("nan")
     click.echo(
         f"calibrated on {len(raws)} pairs; Pearson r(raw, ssim_severity)={corr:.3f} -> {out}"
     )
-    if corr < 0.5:
+    if (
+        not np.isfinite(corr) or corr < 0.5
+    ):  # NaN (too few / constant pairs) is a failure too
         click.echo(
             "WARNING: weak correlation; check bm units/stem pairing, or fall back to "
             "depth-map std(Z) (see plan).",
@@ -256,6 +261,11 @@ def apply(raw_path: Path, calibration: Path, out: Path, image_dir: Path | None) 
             row["license"] = "MIT"
             row["source_dataset"] = "doc3d"
         rows.append(row)
+    if not rows:
+        raise click.ClickException(
+            "no rows written: no raw score matched an image under --image-dir "
+            "(check the stem pairing)"
+        )
     _write_jsonl(out, rows)
     sev = np.array([r["warping_severity"] for r in rows])
     click.echo(

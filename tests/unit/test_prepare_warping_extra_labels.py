@@ -101,3 +101,27 @@ def test_cap_selection_is_independent_of_input_order(tmp_path: Path) -> None:
     labels.write_text("\n".join(reversed(lines)) + "\n")
     second = {r["image_path"] for r in _run(tmp_path, labels, "--max-extra-real", "25")}
     assert first == second
+
+
+@pytest.mark.unit
+def test_malformed_rows_are_skipped_not_fatal(tmp_path: Path) -> None:
+    good = {
+        "image_path": "doc3d/img/1/ok.png",
+        "mesh_id": "1",
+        "warping_severity": "0.25",
+    }
+    lines = [
+        json.dumps(good),
+        json.dumps([1, 2, 3]),  # valid JSON, not an object
+        json.dumps("a string"),
+        "{this is not json",
+        json.dumps({"image_path": "doc3d/a.png", "warping_severity": None}),
+        json.dumps({"image_path": "doc3d/b.png", "warping_severity": "high"}),
+        json.dumps({"image_path": "doc3d/c.png", "warping_severity": float("nan")}),
+        json.dumps({"image_path": "doc3d/d.png", "warping_severity": True}),
+    ]
+    labels = tmp_path / "labels.jsonl"
+    labels.write_text("\n".join(lines) + "\n")
+    manifest = _run(tmp_path, labels)
+    assert [r["image_path"] for r in manifest] == ["doc3d/img/1/ok.png"]
+    assert manifest[0]["warping"] == 0.25  # numeric string coerced to float

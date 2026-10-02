@@ -30,11 +30,11 @@ This document tracks known technical debt in the Prepare-Doc (Image Preprocessin
 
 ### Description
 
-Three modules under `src/image_preprocessing_detector/` are empty placeholder directories containing only `__pycache__` directories. Their code was removed in commit `f67c8d4` (Feb 9, 2026) as part of the SigLIP 2 architecture pivot:
+Two modules under `src/image_preprocessing_detector/` (`augmentation/` and `training/`) are empty placeholder directories containing only `__pycache__` directories; a third, `models/`, was also emptied but has since been repopulated (see its entry below). Their code was removed in commit `f67c8d4` (Feb 9, 2026) as part of the SigLIP 2 architecture pivot:
 
 - **augmentation/** (644 LOC removed): Genalog-based document degradation framework. Replaced by `synthetic/` module (`augmentation.py`, `augmentation_fast.py`, `augmentation_hybrid.py`)
 - **training/** (2,647 LOC removed): Teacher-student knowledge distillation (ResNet). Replaced by `modal/train_siglip2.py`
-- **models/** (3,517 LOC removed): ResNet-50/18 architectures, loss functions, model optimizer. **Update 2026-10-02**: `models/` is no longer empty — it now holds `model_loader.py`, `onnx_runtime.py` and `skew_estimator.py` (MobileNetV4 ONNX inference); remove `models/` from the Option A deletion list. `augmentation/` and `training/` remain empty.
+- **models/** (3,517 LOC removed): ResNet-50/18 architectures, loss functions, model optimizer. **Update 2026-10-02**: `models/` is no longer empty — it now holds `model_loader.py` (ResNet IQA model loading), `onnx_runtime.py` (generic ONNX Runtime sessions) and `skew_estimator.py` (MobileNetV4-Conv-S skew inference); remove `models/` from the Option A deletion list. `augmentation/` and `training/` remain empty.
 
 **Total**: 6,808 LOC removed.
 

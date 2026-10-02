@@ -63,40 +63,47 @@ PRODUCTION_ELIGIBLE = frozenset({PERMISSIVE, PUBLIC_DOMAIN, SHARE_ALIKE, GENERAT
 #: Classes excluded from production training (evaluation/calibration use only).
 PRODUCTION_EXCLUDED = frozenset({NON_COMMERCIAL, COPYLEFT_GPL, UNSPECIFIED})
 
-_FRONTMATTER_LICENSE = re.compile(r"^license:\s*(.+?)\s*$", re.MULTILINE)
+_FRONT_MATTER = re.compile(
+    r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.DOTALL
+)
+_LICENSE_KEY = re.compile(r"^license:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
+
+# Approved permissive forms must match in full. A string that merely contains an
+# approved name (a NoDerivatives variant, or a grant followed by a noncommercial
+# rider) is not approved and falls through to unspecified, pending a decision.
+_PERMISSIVE_FORMS = (
+    r"mit|apache-2\.0|bsd-[23]-clause|isc|ofl-1\.1|unlicense"
+    r"|cc-by-(?:2\.0|2\.5|3\.0|4\.0)|cdla-permissive-[12]\.0"
+)
+
+# Ordered: the first matching rule wins, so restrictions are tested before grants
+# (CC-BY-NC-SA contains both "nc" and "sa"; CC-BY-ND is a restriction, not a grant).
+_RULES: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
+    (cls, re.compile(pattern))
+    for cls, pattern in (
+        (GENERATED, r"^generated"),
+        (MIXED, r"^mixed"),
+        (UNSPECIFIED, r"^(?:unknown|unspecified|none|null)"),
+        (NON_COMMERCIAL, r"(?:^|[^a-z])nc(?:[^a-z]|$)|non-?commercial"),
+        (UNSPECIFIED, r"(?:^|[^a-z])nd(?:[^a-z]|$)|no-?deriv"),
+        (COPYLEFT_GPL, r"(?<!l)gpl"),
+        (RESEARCH_ONLY, r"research|academic"),
+        (SHARE_ALIKE, r"(?:^|[^a-z])sa(?:[^a-z]|$)|sharing|odbl"),
+        (PUBLIC_DOMAIN, r"^(?:cc0(?:-1\.0)?|public-domain|pd)$"),
+        (PERMISSIVE, rf"^(?:{_PERMISSIVE_FORMS})$"),
+    )
+)
 
 
 def classify_license(raw: str | None) -> str:
-    """Map a free-text license string to a license class.
+    """Map a free-text license string to a license class (fail closed).
 
-    Order matters: non-commercial is checked before share-alike because
-    ``CC-BY-NC-SA`` contains both.
+    Unrecognised or ambiguous strings are ``unspecified``, never permissive.
     """
-    if raw is None:
-        return UNSPECIFIED
-    text = raw.strip().lower()
-    if not text or text in {"none", "null"}:
-        return UNSPECIFIED
-    if text.startswith("mixed"):
-        return MIXED
-    if text.startswith(("unknown", "unspecified")):
-        return UNSPECIFIED
-    if re.search(r"(^|[^a-z])nc([^a-z]|$)", text) or "non-commercial" in text:
-        return NON_COMMERCIAL
-    if "gpl" in text and "lgpl" not in text:
-        return COPYLEFT_GPL
-    if "research" in text or "academic" in text:
-        return RESEARCH_ONLY
-    if (
-        re.search(r"(^|[^a-z])sa([^a-z]|$)", text)
-        or "sharing" in text
-        or "odbl" in text
-    ):
-        return SHARE_ALIKE
-    if text in {"cc0", "cc0-1.0"} or "public domain" in text:
-        return PUBLIC_DOMAIN
-    if re.search(r"mit|apache|bsd|cc-by|cdla-permissive|ofl|isc", text):
-        return PERMISSIVE
+    text = re.sub(r"\s+", "-", (raw or "").strip().lower())
+    for cls, pattern in _RULES:
+        if pattern.search(text):
+            return cls
     return UNSPECIFIED
 
 
@@ -105,20 +112,28 @@ def _collapse(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def _front_matter_license(text: str) -> str:
+    """The ``license:`` value from the leading YAML front matter only (never the body)."""
+    block = _FRONT_MATTER.match(text)
+    found = _LICENSE_KEY.search(block.group(1)) if block else None
+    return found.group(1).strip("\"'") if found else ""
+
+
 def load_dataset_licenses(source_dir: Path) -> dict[str, str]:
     """Read ``{collapsed-name: raw license}`` from dataset source docs.
+
+    Only the YAML front matter is consulted, so a ``license:`` line in a document
+    body cannot grant a license.
 
     Args:
         source_dir: Directory of ``<canonical-name>.md`` files (``docs/datasets/source``).
     """
-    licenses: dict[str, str] = {}
     if not source_dir.is_dir():
-        return licenses
-    for path in sorted(source_dir.glob("*.md")):
-        head = path.read_text(encoding="utf-8")[:2000]
-        match = _FRONTMATTER_LICENSE.search(head)
-        licenses[_collapse(path.stem)] = match.group(1).strip("\"'") if match else ""
-    return licenses
+        return {}
+    return {
+        _collapse(path.stem): _front_matter_license(path.read_text(encoding="utf-8"))
+        for path in sorted(source_dir.glob("*.md"))
+    }
 
 
 def annotate_license(
@@ -127,24 +142,25 @@ def annotate_license(
 ) -> dict[str, int]:
     """Add ``license`` and ``license_class`` to records in place.
 
-    Existing ``license`` values are kept (their class is still computed). Records
-    with ``provenance == "synthetic_v3"`` are class ``generated``. Records whose
-    dataset is unknown get ``unspecified`` so they cannot slip into production.
+    A license already on the record is kept and classified (so a restricted
+    license is never relabelled ``generated`` because of synthetic provenance).
+    Records with ``provenance == "synthetic_v3"`` and no license default to
+    ``generated``. Records whose dataset is unknown get ``unspecified`` so they
+    cannot slip into production.
 
     Returns:
         Count of records per license class.
     """
     counts: dict[str, int] = {}
     for rec in records:
-        if rec.get("provenance") == "synthetic_v3":
-            rec.setdefault("license", "generated (synth-multiscript-v3)")
-            rec["license_class"] = GENERATED
-        else:
-            raw = rec.get("license")
-            if raw is None:
+        raw = rec.get("license")
+        if raw is None:
+            if rec.get("provenance") == "synthetic_v3":
+                raw = "generated (synth-multiscript-v3)"
+            else:
                 dataset = rec.get("source_dataset") or rec.get("dataset") or ""
-                raw = licenses.get(_collapse(str(dataset)))
-                rec["license"] = raw if raw else "unspecified"
-            rec["license_class"] = classify_license(str(rec["license"]))
+                raw = licenses.get(_collapse(str(dataset))) or "unspecified"
+            rec["license"] = raw
+        rec["license_class"] = classify_license(str(raw))
         counts[rec["license_class"]] = counts.get(rec["license_class"], 0) + 1
     return counts

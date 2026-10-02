@@ -153,3 +153,47 @@ def test_apply_with_image_dir_emits_training_fields(
     assert row["image_path"].startswith("doc3d/img/1/s")
     assert row["mesh_id"] == "1"
     assert row["license"] == "MIT"
+
+
+@pytest.mark.unit
+def test_apply_with_no_matching_images_fails_instead_of_reporting_success(
+    dataset: tuple[Path, Path], tmp_path: Path
+) -> None:
+    bm_dir, _ = dataset
+    raw, cal, final = (
+        tmp_path / "raw.jsonl",
+        tmp_path / "cal.json",
+        tmp_path / "sev.jsonl",
+    )
+    empty_images = tmp_path / "empty_img"
+    empty_images.mkdir()
+    runner = CliRunner()
+    runner.invoke(cli, ["score", "--bm-dir", str(bm_dir), "--out", str(raw)])
+    cal.write_text(json.dumps({"xs": [0.0, 1.0], "ys": [0.0, 1.0]}))
+    result = runner.invoke(
+        cli,
+        ["apply", "--raw", str(raw), "--calibration", str(cal), "--out", str(final),
+         "--image-dir", str(empty_images)],
+    )  # fmt: skip
+    assert result.exit_code != 0
+    assert "no rows written" in result.output
+
+
+@pytest.mark.unit
+def test_calibrate_with_no_usable_pairs_is_a_clean_error(
+    dataset: tuple[Path, Path], tmp_path: Path
+) -> None:
+    bm_dir, img_dir = dataset
+    raw = tmp_path / "raw.jsonl"
+    runner = CliRunner()
+    runner.invoke(cli, ["score", "--bm-dir", str(bm_dir), "--out", str(raw)])
+    for png in img_dir.rglob("*.png"):
+        png.write_bytes(b"not a png")  # every image fails to load
+    result = runner.invoke(
+        cli,
+        ["calibrate", "--raw", str(raw), "--bm-dir", str(bm_dir), "--image-dir", str(img_dir),
+         "--out", str(tmp_path / "cal.json"), "--sample", str(N)],
+    )  # fmt: skip
+    assert result.exit_code != 0
+    assert "calibration failed" in result.output
+    assert "Traceback" not in result.output
