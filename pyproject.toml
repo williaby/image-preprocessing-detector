@@ -267,7 +267,16 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 
 [tool.uv]
 # Ensure compatibility with Linux systems by resolving to compatible wheels
-constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
+# Keep every OpenCV wheel on 4.x: the project pins opencv-python-headless<5.0.0,
+# but ultralytics/paddleocr/augraphy pull unbounded opencv-python(-contrib), which
+# resolved to 5.x. All of them install the same `cv2` module, so mixed majors make
+# the active build install-order dependent (5.x changes cv2.HoughLinesP's return
+# shape and breaks line-angle code).
+constraint-dependencies = [
+    "av<16.0.0; sys_platform == 'linux'",
+    "opencv-python<5.0.0",
+    "opencv-contrib-python<5.0.0",
+]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
 # These extras are mutually exclusive (different labeling pipelines).
 conflicts = [
