@@ -66,6 +66,7 @@ path = [
     "configs/**/*.json",  # Configuration files (Grafana dashboards, etc.)
     "scripts/omnidocbench_baseline/model_registry.yaml",  # Model registry config
     ".zenodo.json",  # Zenodo metadata for DOI
+    ".mcp.json",  # Claude Code project-scoped MCP server configuration
     ".dvc/**",  # DVC configuration and metadata files
     ".dvcignore",  # DVC ignore patterns
 ]
