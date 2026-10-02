@@ -95,7 +95,7 @@ All fields listed here are REQUIRED unless explicitly marked `(optional)`.
 | `document_id` | UUID | Stable document identifier (from Ingest) |
 | `trace_id` | UUID | Pipeline execution trace ID |
 | `source_track` | String | `"document"` or `"audio"` |
-| `chunk_strategy` | String | `"by_title"`, `"token"`, or `"semantic"` |
+| `chunk_strategy` | String | `"by_title"`, `"token"`, `"semantic"`, or `"hybrid"` (docling-core structure-aware chunking) |
 | `total_chunks` | Integer | Total count of chunks in this set |
 | `chunks` | Array | See Section 3.2 |
 
