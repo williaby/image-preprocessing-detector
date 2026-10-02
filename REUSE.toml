@@ -59,11 +59,8 @@ path = [
     "mkdocs.yml",
     "poetry.lock",  # Dependency lockfile for reproducible builds
     "uv.lock",  # UV dependency lockfile for nox testing
-    "requirements/**/*.txt",  # Generated from poetry export
-    "requirements.txt",  # Generated from uv export
-    "requirements-dev.txt",  # Generated from uv export
-    "requirements-ml.txt",  # Generated from uv export
-    "requirements-api.txt",  # Generated from uv export
+    "requirements.txt",  # Generated from uv export (CI-regenerated, sync-enforced)
+    "requirements-dev.txt",  # Generated from uv export (CI-regenerated, sync-enforced)
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
     "configs/**/*.yaml",  # Configuration files (modal, monitoring, etc.)
     "configs/**/*.json",  # Configuration files (Grafana dashboards, etc.)
@@ -75,13 +72,26 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Data files and models - ODbL-1.0 (Open Database License)
+# Data files - ODbL-1.0 (Open Database License)
 [[annotations]]
 path = [
     "data/**",
-    "models/**",
 ]
 SPDX-License-Identifier = "ODbL-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Trained model weights and exported models - CC-BY-SA-4.0
+# Decision 2026-10-01 (docs/planning/MASTER_PROJECT_PLAN.md, Tier 0): released
+# weights carry the same license as the project. This satisfies the share-alike
+# terms of CC-BY-SA training data (kuzushiji, hiertext, midv2020). Non-commercial,
+# GPL and unspecified-license datasets are excluded from production training; see
+# the license fields on training manifests and docs/model-cards/.
+[[annotations]]
+path = [
+    "models/**",
+]
+precedence = "override"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Build artifacts and generated files - excluded from licensing
