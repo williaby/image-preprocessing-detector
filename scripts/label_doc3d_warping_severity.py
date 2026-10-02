@@ -254,6 +254,7 @@ def apply(raw_path: Path, calibration: Path, out: Path, image_dir: Path | None) 
             row["mesh_id"] = rel.parts[0] if len(rel.parts) > 1 else rel.stem
             row["provenance"] = "real_render_doc3d"
             row["license"] = "MIT"
+            row["source_dataset"] = "doc3d"
         rows.append(row)
     _write_jsonl(out, rows)
     sev = np.array([r["warping_severity"] for r in rows])

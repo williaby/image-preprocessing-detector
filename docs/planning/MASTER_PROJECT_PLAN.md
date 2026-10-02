@@ -334,6 +334,7 @@ pipeline code has changed**. The audit compared plan claims with the code and fo
 | DDRs #9 / #10 blocked | ✅ Re-run complete (both 46.1/100) | `HANDOFF_GPU_WORK.md` |
 | OOD registry 9,170 entries | 9,650 entries (john11 manuscript additions) — 80% of 12K target | `metadata_registry/ood_registry.jsonl` |
 | Stream 4D MobileNetV4 "not integrated" | ⚠️ Partial: `models/skew_estimator.py` (ONNX) and `detection/deskew_pipeline.py` (ML-first, classical fallback, orientation + skew) exist with unit tests, but are only reachable from the CLI (`cli.py:912`), **not** the main pipeline, and no `.onnx` artifact is in `models/` | grep |
+| `IMPLEMENTATION_STATUS_MATRIX.md` says "no SigLIP 2 inference wrapper" | ⚠️ Wrapper exists (`detection/siglip2_multitask.py`, 8 tasks) but lags the trainer (`code_cls`, `skew_reg`, handwriting heads missing); matrix corrected 2026-10-02 | `detection/siglip2_multitask.py` |
 | Stage 0 Document Type Router "planned" | ❌ Confirmed not started (no `document_type_router.py`) | `routing/` |
 | JPEG quality-factor detector "to add" | ❌ Confirmed not implemented (`CLAUDE.md` claims 9 detectors incl. JPEG QF — **incorrect**; there are 8) | `detection/iqa_classical.py` |
 | SigLIP 2 training not run | ❌ Unchanged; no manifests assembled, no GCS upload | — |
@@ -345,8 +346,10 @@ blockers that remain are execution and decisions, not code.
 
 **Doc drift to fix alongside this update**: `CLAUDE.md` still describes Phase 3 ResNet as
 current, YOLOv10-doc as replaced, "9 detectors", and "Last synchronized 2026-02-21";
-`IMPLEMENTATION_STATUS_MATRIX.md` and `TECH_DEBT.md` (TD-1 describes `models/` as empty, but
-`models/` now has `skew_estimator.py`) were last updated Feb 2026.
+`IMPLEMENTATION_STATUS_MATRIX.md` and `TECH_DEBT.md` were last updated Feb 2026 — **corrected
+2026-10-02** (SigLIP2/MobileNetV4 section; TD-1). The matrix's other sections were not re-audited.
+`CLAUDE.md` drift (detector count, head count, YOLOv10 wording, nonexistent
+`train_phase2_iqa.py`, sync date) was **fixed 2026-10-02**.
 
 ---
 
@@ -560,6 +563,13 @@ permanently corrupted. Full context in Section 5a.
 > except evaluation-only use. Follow-ups: model card + `REUSE.toml` entry for `models/**`,
 > record per-sample `license` in manifests, verify DeQA-Doc / mPLUG-Owl2 output terms allow
 > use as pseudo-labels in a CC-BY-SA model (not yet checked).
+>
+> **Done 2026-10-02**: `REUSE.toml` now licenses `models/**` CC-BY-SA-4.0 (was ODbL-1.0 — a
+> contradiction of this decision); model cards for the SigLIP 2 teacher and MobileNetV4 gate
+> (`docs/model-cards/planned/`, registry §1b); per-record `license`/`license_class` in
+> manifests + `merge --exclude-license-class` (`schema_utils/dataset_license.py`).
+> **Still open**: research-terms-only datasets (rvl-cdip, mdiw13, smartdoc-qa, realdae, …);
+> DeQA-Doc output terms; `reuse lint` not run (tool unavailable in the cloud session).
 
 <!-- original text retained below -->
 

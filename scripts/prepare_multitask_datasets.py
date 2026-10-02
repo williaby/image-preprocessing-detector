@@ -66,6 +66,40 @@ from typing import Any
 
 import click
 
+from image_preprocessing_detector.schema_utils import dataset_license as _dl
+
+_DATASET_SOURCE_DIR = (
+    Path(__file__).resolve().parents[1] / "docs" / "datasets" / "source"
+)
+
+
+def _annotate_and_report_licenses(
+    records: list[dict[str, Any]], task_name: str
+) -> None:
+    """Add license/license_class to records and warn about non-eligible classes."""
+    counts = _dl.annotate_license(
+        records, _dl.load_dataset_licenses(_DATASET_SOURCE_DIR)
+    )
+    logger.info("[%s] license classes: %s", task_name, dict(sorted(counts.items())))
+    for cls in sorted(counts):
+        if cls in _dl.PRODUCTION_EXCLUDED:
+            logger.warning(
+                "[%s] %d records are %r - EXCLUDED from production training "
+                "(use --exclude-license-class at merge).",
+                task_name,
+                counts[cls],
+                cls,
+            )
+        elif cls in (_dl.RESEARCH_ONLY, _dl.MIXED):
+            logger.warning(
+                "[%s] %d records are %r - OPEN license decision "
+                "(see docs/planning/RUNSHEET_DATA_ASSEMBLY.md section 0).",
+                task_name,
+                counts[cls],
+                cls,
+            )
+
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -771,6 +805,7 @@ def _write_task_manifest(
         Path to the written manifest file (or would-be path in dry-run).
     """
     manifest_path = output_dir / f"{task_name}_manifest.json"
+    _annotate_and_report_licenses(records, task_name)
     if not dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(manifest_path, "w") as f:
@@ -1718,6 +1753,14 @@ def _remap_image_paths(
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.option(
+    "--exclude-license-class",
+    "exclude_license_classes",
+    multiple=True,
+    type=click.Choice(_dl.ALL_CLASSES),
+    help="Drop records of this license class from the merged manifests "
+    "(repeatable), e.g. non_commercial copyleft_gpl unspecified research_only.",
+)
+@click.option(
     "--skip-image-upload",
     is_flag=True,
     help="Skip image upload; only upload manifests.",
@@ -1734,6 +1777,7 @@ def merge(
     output_dir: Path,
     seed: int,
     dry_run: bool,
+    exclude_license_classes: tuple[str, ...],
     skip_image_upload: bool,
 ) -> None:
     """Merge all task manifests into unified train/val manifests and upload to GCS.
@@ -1770,6 +1814,20 @@ def merge(
     if not all_records:
         click.echo("ERROR: No records found across all tasks.", err=True)
         raise SystemExit(1)
+
+    _annotate_and_report_licenses(all_records, "merge")
+    if exclude_license_classes:
+        before = len(all_records)
+        all_records = [
+            r for r in all_records if r["license_class"] not in exclude_license_classes
+        ]
+        click.echo(
+            f"  Excluded {before - len(all_records)} records by license class "
+            f"{sorted(exclude_license_classes)}"
+        )
+        if not all_records:
+            click.echo("ERROR: all records excluded by license class.", err=True)
+            raise SystemExit(1)
 
     # Assign splits for any records without one
     for rec in all_records:

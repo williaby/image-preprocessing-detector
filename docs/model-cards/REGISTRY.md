@@ -72,6 +72,18 @@ Models that are trained and ready for production deployment.
 
 ---
 
+## 1b. Current Architecture (SigLIP 2 / MobileNetV4)
+
+> Added 2026-10-02. Sections 1 and 4–5 below predate the SigLIP 2 architecture and are
+> retained for history. Released weights are **CC-BY-SA-4.0**.
+
+| Model ID | Architecture | Status | Priority | Role | Card |
+|----------|--------------|--------|----------|------|------|
+| `mobilenetv4-pre-correction-gate` | MobileNetV4-Conv-S | ⚠️ Trained, not integrated (stream 4D) | P0 | Orientation / skew / resolution gate before SigLIP 2 | [Link](planned/mobilenetv4_pre_correction_gate.md) |
+| `siglip2-multitask-teacher` | SigLIP 2 NAFlex 88M, 16 heads | ❌ Planned (training not run) | P0 | Multi-task teacher: IQA, script, orientation, page attributes | [Link](planned/siglip2_multitask_teacher.md) |
+
+---
+
 ## 2. Classical Detectors
 
 Rule-based and heuristic detectors (no ML training required).

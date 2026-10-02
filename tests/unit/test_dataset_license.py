@@ -1,0 +1,93 @@
+"""Tests for dataset license classification and manifest annotation."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from image_preprocessing_detector.schema_utils import dataset_license as dl
+
+REPO_SOURCE_DIR = Path(__file__).resolve().parents[2] / "docs" / "datasets" / "source"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("MIT", dl.PERMISSIVE),
+        ("Apache-2.0", dl.PERMISSIVE),
+        ("CC-BY-4.0", dl.PERMISSIVE),
+        ("CDLA-Permissive-1.0", dl.PERMISSIVE),
+        ("CC0", dl.PUBLIC_DOMAIN),
+        ("CC0-1.0", dl.PUBLIC_DOMAIN),
+        ("Public Domain", dl.PUBLIC_DOMAIN),
+        ("CC-BY-SA-4.0", dl.SHARE_ALIKE),
+        ("CC-BY-SA-2.5", dl.SHARE_ALIKE),
+        ("CDLA-Sharing-1.0", dl.SHARE_ALIKE),
+        ("ODbL-1.0", dl.SHARE_ALIKE),
+        ("CC-BY-NC-4.0", dl.NON_COMMERCIAL),
+        ("CC-BY-NC-SA-4.0", dl.NON_COMMERCIAL),  # NC wins over SA
+        ("GPL-3.0", dl.COPYLEFT_GPL),
+        ("Research Only", dl.RESEARCH_ONLY),
+        ("Academic", dl.RESEARCH_ONLY),
+        ("academic", dl.RESEARCH_ONLY),
+        ("Mixed (CC0, PD, CC-BY-4.0, CC-BY-SA)", dl.MIXED),
+        ("Unknown", dl.UNSPECIFIED),
+        ("Unknown (verify with authors before production use)", dl.UNSPECIFIED),
+        ("Unspecified", dl.UNSPECIFIED),
+        ("", dl.UNSPECIFIED),
+        (None, dl.UNSPECIFIED),
+        ("Some Bespoke Terms", dl.UNSPECIFIED),
+    ],
+)
+def test_classify_license(raw: str | None, expected: str) -> None:
+    assert dl.classify_license(raw) == expected
+
+
+@pytest.mark.unit
+def test_every_class_is_partitioned_by_policy() -> None:
+    open_decision = {dl.RESEARCH_ONLY, dl.MIXED}
+    assert (
+        set(dl.ALL_CLASSES)
+        == dl.PRODUCTION_ELIGIBLE | dl.PRODUCTION_EXCLUDED | open_decision
+    )
+    assert not dl.PRODUCTION_ELIGIBLE & dl.PRODUCTION_EXCLUDED
+
+
+@pytest.mark.unit
+def test_annotate_resolves_aliases_and_marks_unknown(tmp_path: Path) -> None:
+    (tmp_path / "rvl-cdip.md").write_text("---\nlicense: Research Only\n---\n")
+    (tmp_path / "sd7k.md").write_text("---\nlicense: MIT\n---\n")
+    licenses = dl.load_dataset_licenses(tmp_path)
+    records = [
+        {"source_dataset": "rvlcdip"},  # alias without hyphen
+        {"source_dataset": "sd7k"},
+        {"source_dataset": "never-heard-of-it"},
+        {"provenance": "synthetic_v3"},
+        {"source_dataset": "doc3d", "license": "MIT"},  # pre-set license kept
+    ]
+    counts = dl.annotate_license(records, licenses)
+    assert [r["license_class"] for r in records] == [
+        dl.RESEARCH_ONLY,
+        dl.PERMISSIVE,
+        dl.UNSPECIFIED,
+        dl.GENERATED,
+        dl.PERMISSIVE,
+    ]
+    assert records[2]["license"] == "unspecified"
+    assert counts[dl.PERMISSIVE] == 2
+
+
+@pytest.mark.unit
+def test_repo_decisions_are_reflected_in_real_source_docs() -> None:
+    """Guard the 2026-10-01 decisions against the real dataset docs."""
+    licenses = dl.load_dataset_licenses(REPO_SOURCE_DIR)
+    if not licenses:
+        pytest.skip("dataset source docs not available")
+    cls = {name: dl.classify_license(licenses.get(dl._collapse(name))) for name in
+           ("sd7k", "docreal", "doc3d", "doclaynet", "midv500")}  # fmt: skip
+    assert all(c in dl.PRODUCTION_ELIGIBLE for c in cls.values()), cls
+    excluded = {name: dl.classify_license(licenses.get(dl._collapse(name))) for name in
+                ("wsrd", "anyphotodoc6300", "warpdoc", "docalign12k")}  # fmt: skip
+    assert all(c in dl.PRODUCTION_EXCLUDED for c in excluded.values()), excluded

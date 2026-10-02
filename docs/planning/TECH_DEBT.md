@@ -2,7 +2,7 @@
 title: Technical Debt Tracker
 category: planning
 status: published
-last_updated: 2026-02-10
+last_updated: 2026-10-02
 ---
 
 # Technical Debt Tracker
@@ -34,7 +34,7 @@ Three modules under `src/image_preprocessing_detector/` are empty placeholder di
 
 - **augmentation/** (644 LOC removed): Genalog-based document degradation framework. Replaced by `synthetic/` module (`augmentation.py`, `augmentation_fast.py`, `augmentation_hybrid.py`)
 - **training/** (2,647 LOC removed): Teacher-student knowledge distillation (ResNet). Replaced by `modal/train_siglip2.py`
-- **models/** (3,517 LOC removed): ResNet-50/18 architectures, loss functions, model optimizer. Model inference now via ONNX artifacts in `models/iqa/onnx/`
+- **models/** (3,517 LOC removed): ResNet-50/18 architectures, loss functions, model optimizer. **Update 2026-10-02**: `models/` is no longer empty — it now holds `model_loader.py`, `onnx_runtime.py` and `skew_estimator.py` (MobileNetV4 ONNX inference); remove `models/` from the Option A deletion list. `augmentation/` and `training/` remain empty.
 
 **Total**: 6,808 LOC removed.
 
@@ -55,7 +55,7 @@ These modules are currently excluded from coverage (`pyproject.toml`), mypy, and
 ```bash
 rm -rf src/image_preprocessing_detector/augmentation/
 rm -rf src/image_preprocessing_detector/training/
-rm -rf src/image_preprocessing_detector/models/
+# models/ is now in use — do NOT delete
 ```
 
 **Option B**: Keep as placeholders for future SigLIP 2 implementation

@@ -46,8 +46,15 @@ for evaluation/smoke runs only, (c) run smoke now, decide before the production 
 **Recommendation: (c).** Nothing in the smoke run is irreversible; the manifests carry
 dataset provenance so they can be filtered. Whichever you choose, record it in the plan.
 
-Also note: **no manifest record currently carries a `license` field** (the plan's Decision 1
-follow-up). Until added, filtering by license means filtering by dataset name.
+**License fields (added 2026-10-02)**: every manifest record now carries `license` and
+`license_class` (`permissive`, `public_domain`, `share_alike`, `generated`, `research_only`,
+`mixed`, `non_commercial`, `copyleft_gpl`, `unspecified`), resolved from the `license:`
+frontmatter of `docs/datasets/source/*.md`. Each manifest build logs counts per class and
+warns on excluded/open classes. At merge, drop classes without rebuilding, e.g.
+`--exclude-license-class non_commercial --exclude-license-class copyleft_gpl
+--exclude-license-class unspecified` (add `--exclude-license-class research_only` if the open
+decision goes that way). Records from a dataset with no source doc are `unspecified`, so they
+fail closed. The `--l2-datasets` overrides above remain the first line of defence.
 
 ---
 
@@ -218,7 +225,7 @@ uv run python scripts/prepare_multitask_datasets.py merge \
 
 ## 6. Do not run yet
 
-- `merge` without `--dry-run` / GCS upload — wait for the research-terms decision (section 0).
+- `merge` without `--dry-run` / GCS upload — wait for the research-terms decision (section 0), then merge with the matching `--exclude-license-class` flags.
 - `retire-jpeg --yes` — wait until PNGs are in place and L2 metadata/docs are updated.
 - DeQA-Doc pseudo-labeling — first verify mPLUG-Owl2 / DeQA-Doc output terms are compatible
   with CC-BY-SA weights (plan, Decision 1 follow-ups).
