@@ -204,6 +204,7 @@ nav:
       - System Architecture: development/architecture.md
       - Architecture Diagrams:
           - Overview: architecture/diagrams/README.md
+          - Pipeline Level 0 (canonical): architecture/pipeline-level-0.md
           - Level 0 - Pipeline Context: architecture/diagrams/level-0/index.md
           - Level 1 - Project A Architecture: architecture/diagrams/level-1/index.md
           - Level 2 - Workstreams:

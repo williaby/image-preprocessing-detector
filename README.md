@@ -1,6 +1,7 @@
-# Project A - Document Preprocessing & IQA Gateway
+# Prepare-Doc - Document Preprocessing & IQA Gateway
 
-**Part of the Four-Project RAG Document Pipeline**
+**Stage 1 of the Foundry RAG pipeline** (formerly "Project A"). See the
+[Pipeline Level 0 architecture](docs/architecture/pipeline-level-0.md).
 
 ## Security & Quality
 
@@ -79,27 +80,25 @@ Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
 
 ## Architecture Overview
 
-### Four-Project RAG Pipeline
+### Foundry Pipeline
 
 ```text
-┌───────────────────────────────────────────────────────────────────┐
-│                    RAG DOCUMENT PIPELINE                           │
-└───────────────────────────────────────────────────────────────────┘
+Ingest -> Prepare-Doc (THIS REPO) -> Unify -> Chunk -> [applications: embed, store, search]
+       -> Prepare-Audio -----------^
+```
 
-Project A (THIS REPO)     →    Project B          →    Project C         →    Project D
-Preprocessing & IQA              OCR Orchestration       Fusion & Trust         Vector Indexing
-─────────────────────           ─────────────────       ──────────────         ───────────────
-• IQA & Corrections             • Full Layout           • Multi-Engine         • Embeddings
-• Text Gate                     • Reading Order           Fusion               • Vector DB
-• DQS Calculation               • Table Structure       • Trust Scoring        • Retrieval
-• Routing Metadata              • Multi-Engine OCR      • RAG Chunking         • Search
+| Stage | Repository | Output |
+| --- | --- | --- |
+| Ingest | `rag-processor` | `00-source/` |
+| Prepare-Doc (THIS REPO) | `image-preprocessing-detector` | `DocumentMetadata.json` + corrected images |
+| Prepare-Audio | `audio-processor` | `TranscriptMetadata.json` |
+| Unify | `Unify` | `DoclingDOM.json` |
+| Chunk | `data_ingestor` | `RAGChunkSet.json` |
 
-OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
-DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
-+ Corrected Images
-```text
+The pipeline ends at chunks. Embedding and search belong to each consuming application. Full explanation:
+[Pipeline Level 0 architecture](docs/architecture/pipeline-level-0.md).
 
-### Project A Internal Pipeline
+### Prepare-Doc Internal Pipeline
 
 ```text
 PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → Text Gate
@@ -120,7 +119,7 @@ PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → 
                                                            ↓
                                                     JSON Output + Images
                                                            ↓
-                                                    HANDOFF TO PROJECT B
+                                                    HANDOFF TO UNIFY
 ```text
 
 See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md) for complete architecture and [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md) for detailed implementation plan.
