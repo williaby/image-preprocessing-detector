@@ -198,7 +198,7 @@ class SkewDetector:
             # Calculate angles for all lines
             angles = []
             for line in lines:
-                x1, y1, x2, y2 = line[0]  # type: ignore[index]
+                x1, y1, x2, y2 = line[0]
                 # Skip vertical lines (infinite slope)
                 if x2 - x1 == 0:
                     continue
