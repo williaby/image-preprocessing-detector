@@ -83,11 +83,12 @@ docs/architecture/diagrams/
 | **Level 1** | Prepare-Doc system architecture | `level-1/` | 2 |
 | **Level 2** | Workstream implementation details | `level-2/{workstream}/` | 28 |
 | **Level 3** | Module implementation with LOC | `level-3/{workstream}/` | 6 |
+| **Level 4** | Instance registries (Markdown tables) | `level-4/` | 0 (tables) |
 | **Deprecated** | Superseded diagrams | `deprecated/{workstream}/` | 1 |
 
 ### Level 0: Pipeline Context
 
-The RAG document pipeline spans multiple repositories:
+The Foundry pipeline spans five repositories (Ingest, Prepare-Doc, Prepare-Audio, Unify, Chunk) and ends at chunks. Embedding belongs to the consuming applications. See the canonical page [pipeline-level-0.md](../pipeline-level-0.md).
 
 | Diagram | Purpose |
 |---------|---------|

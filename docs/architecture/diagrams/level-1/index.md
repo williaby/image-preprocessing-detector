@@ -32,7 +32,7 @@ Prepare-Doc receives all non-audio files directly from Ingest. Its first interna
 
 - **Stage 0 — Document Type Router** (first step): MIME detection, PDF sub-classification, text-layer quality validation; assigns each file to one of six tracks: `native_text`, `image_only`, `born_digital`, `born_digital_degraded`, `scanned`, `hybrid`. PDFs with a text layer that fail quality validation (word recognition rate, character entropy, text/image layer overlap) are reclassified as `born_digital_degraded` and routed to the image pipeline rather than the fast path.
 - **Pre-Correction Pipeline** (Steps 1–4): Rasterization (PDFs only, 300 DPI fallback), lossless PNG conversion, MobileNetV4-Conv-S pre-correction gate (3 heads: orientation, skew, resolution quality), geometric corrections + border removal, adaptive resolution
-- **Image Quality Assessment** (IQA) using classical CV (8 detectors) and SigLIP 2 NAFlex multi-task model (19 heads) — runs on corrected, lossless images
+- **Image Quality Assessment** (IQA) using classical CV (8 detectors) and SigLIP 2 NAFlex multi-task model (16 heads) — runs on corrected, lossless images
 - **Layout detection** with Docling layout models (egret-xlarge / heron, 11+ DocLayNet classes) — conditional on text gate result
 - **Quality Corrections** (CLAHE, sharpening, denoising) — applied *after* IQA measurement to preserve original quality scores for DQS/routing decisions
 - **Document Quality Score** calculation and routing recommendations
@@ -61,7 +61,7 @@ The live processing pipeline that handles incoming documents end-to-end, from do
 | 4 | Adaptive Resolution | Use resolution quality score from Step 2 to upscale if below target (32-48px character height); safety rails: 150 DPI floor, 600 DPI ceiling |
 | 5 | Text Gate | Fast ensemble heuristics (<10ms) on corrected, lossless image; blank page → early exit |
 | 6a | Classical IQA | 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew); measures original quality |
-| 6b | SigLIP 2 NAFlex Multi-Task | ~50ms GPU; 19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs. Group 3 (Orientation+Skew) and Group 5 (Resolution quality) duplicate MobileNetV4 outputs intentionally — for teacher-signal distillation back to MobileNetV4, prediction validation/discrepancy flagging, CPU-only single-pass fallback, and self-consistency checking. |
+| 6b | SigLIP 2 NAFlex Multi-Task | ~50ms GPU; 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs. Group 3 (Orientation+Skew) and Group 5 (Resolution quality) duplicate MobileNetV4 outputs intentionally — for teacher-signal distillation back to MobileNetV4, prediction validation/discrepancy flagging, CPU-only single-pass fallback, and self-consistency checking. |
 | 6c | Layout Analysis | Docling layout models: egret-xlarge (accuracy) / heron (speed), 11+ DocLayNet classes; conditional on text gate |
 | 7 | Quality Corrections | CLAHE, sharpening, denoising — applied *after* IQA measurement so scores reflect original quality |
 | 8 | DQS + Routing | Document Quality Score (degradation + structural complexity) and OCR routing recommendation |
@@ -73,7 +73,7 @@ Training and optimization of models used in Production Runtime (Workstream 1). I
 | Model | Architecture | Purpose |
 |-------|--------------|---------|
 | Pre-Correction | MobileNetV4-Conv-S (~3ms, 3 heads) | Fast orientation (4-class), skew angle, resolution quality — runs before SigLIP 2 so corrections apply first |
-| Multi-Task Analysis | SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups) | Full document analysis: IQA, script (refinement), orientation+skew (verification), handwriting, page attrs |
+| Multi-Task Analysis | SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups) | Full document analysis: IQA, script (refinement), orientation+skew (verification), handwriting, page attrs |
 | Layout (Accuracy) | docling-layout-egret-xlarge | Layout detection (11+ DocLayNet classes, accuracy-optimized) |
 | Layout (Speed) | docling-layout-heron | Layout detection (11+ DocLayNet classes, speed-optimized) |
 
@@ -269,13 +269,13 @@ Each Level 2 diagram drills down into component boxes that map to Level 3 module
 
 ## Downstream Projects Context
 
-Prepare-Doc (Prepare-Doc) outputs are consumed by three downstream projects in the RAG pipeline:
+Prepare-Doc outputs are consumed by the downstream stages of the Foundry pipeline (Unify and, through it, Chunk). Embedding belongs to the consuming applications and is outside the pipeline:
 
-| Project | Consumes from Prepare-Doc | Purpose | Contract Document |
+| Stage | Consumes from Prepare-Doc | Purpose | Contract Document |
 |---------|------------------------|---------|-------------------|
-| **Unify (Unify)** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | Multi-engine OCR orchestration, Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
-| **Chunk (Chunk)** | Docling DOM (via Unify) | Trust scoring, semantic RAG chunking | TBD |
-| **Embed (Embed)** | Text chunks (via Chunk) | Vector embeddings, retrieval API | TBD |
+| **Unify** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | OCR through docling-serve (specialist engines later), Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
+| **Chunk** | `DoclingDOM.json` (via Unify) | Trust scoring, semantic RAG chunking, `RAGChunkSet.json` | [chunk-embed-contract.md](../../development/RAG%20Pipeline/chunk-embed-contract.md) |
+| **Applications (not a pipeline stage)** | `RAGChunkSet.json` (from Chunk) | Embedding, vector storage, search, owned by each application | [chunk-embed-contract.md](../../development/RAG%20Pipeline/chunk-embed-contract.md) |
 
 **Key Handoff Artifacts**:
 
@@ -285,7 +285,7 @@ Prepare-Doc (Prepare-Doc) outputs are consumed by three downstream projects in t
 - **Document Quality Score (DQS)**: 0-1 composite score (degradation + structural complexity)
 - **Pre-OCR Risk**: 0-1 risk score for OCR failure likelihood
 
-See [Downstream Context](../level-2/downstream-context/index.md) for detailed workflow diagrams showing how Projects B, C, and D consume Prepare-Doc outputs.
+See [Downstream Context](../level-2/downstream-context/index.md) for detailed workflow diagrams showing how Unify, Chunk and the consuming applications use Prepare-Doc outputs.
 
 ---
 

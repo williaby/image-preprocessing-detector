@@ -165,7 +165,7 @@ docs/architecture/diagrams/
 
 **Location**: `level-0/`
 
-**Purpose**: Multi-track RAG pipeline architecture showing parallel document and audio processing tracks converging to unified Docling DOM.
+**Purpose**: Multi-track RAG pipeline architecture showing parallel document and audio processing tracks converging to unified Docling DOM. The short canonical explanation is [pipeline-level-0.md](../pipeline-level-0.md), identical in all five pipeline repositories.
 
 | Component | Repository | Key Documentation |
 |-----------|------------|-------------------|
@@ -174,12 +174,12 @@ docs/architecture/diagrams/
 | Web UI / Content Routing | rag-processor | - |
 | **Track 1: Document Processing** |||
 | Prepare-Doc | image-detection (this repo) | CLAUDE.md, PROJECT_PLAN.md |
-| Unify | (Not yet started) | project-b-f-nf.md |
+| Unify | github.com/ByronWilliamsCPA/Unify (scaffolding) | unify-f-nf.md |
 | **Track 2: Audio/Video Processing** |||
 | Audio Processor | github.com/ByronWilliamsCPA/audio-processor | PIPELINE-INTEGRATION-SUMMARY.md |
 | **Downstream Processing** |||
-| Chunk | (Not yet started) | chunk-f-nf.md |
-| Embed | (Not yet started) | - |
+| Chunk | github.com/williaby/data_ingestor (refactor pending) | chunk-f-nf.md |
+| Application embedding | Outside the pipeline (each application) | chunk-embed-contract.md |
 
 **Content Sources**:
 
@@ -425,7 +425,7 @@ docs/architecture/diagrams/
 
 **Location**: `level-2/model-training/`
 
-**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 19 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
+**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
 
 | Component | Source Files | Scripts | Documentation |
 |-----------|--------------|---------|---------------|
@@ -442,7 +442,7 @@ docs/architecture/diagrams/
 | ONNX Export | src/.../models/model_optimizer.py | modal/export_phase7_onnx.py | - |
 | GCS Upload | src/.../utils/gcs_uploader.py | - | MODEL_STORAGE.md |
 
-> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (19 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
+> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (16 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
 
 ### prepare-doc-training-workflow-high-level.puml
 
@@ -601,19 +601,19 @@ docs/architecture/diagrams/
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Unify OCR orchestration context.
+**Purpose**: Unify context (OCR through docling-serve; specialist engines and fusion are later phases).
 
 ### chunk-fusion-chunking-workflow.puml
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Chunk fusion and chunking context.
+**Purpose**: Chunk trust scoring and chunking context.
 
 ### embed-vectorstore-workflow.puml
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Embed vector store context.
+**Purpose**: Application-side embedding contract context (outside the pipeline; the pipeline ends at `RAGChunkSet.json`).
 
 ---
 

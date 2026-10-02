@@ -19,7 +19,7 @@ tags:
 >
 > - [docs/PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) — concise narrative introduction (start here)
 > - [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md) — project status and remaining work
-> - [docs/architecture/](architecture/) — implementation diagrams at all four levels
+> - [docs/architecture/](architecture/) — implementation diagrams at all five levels (Level 0-4)
 > - [docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md](architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md) — when and how to update diagrams
 
 ---
@@ -32,7 +32,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
+Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for the Foundry RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs for Unify (OCR
 Orchestration): a corrected page image and a `DocumentMetadata.json` record containing
@@ -48,7 +48,7 @@ Raw Documents (PDF, image, any condition)
 │                                        │
 │  • Orientation / skew correction       │
 │  • Resolution normalization            │
-│  • Image quality assessment (19 heads) │
+│  • Image quality assessment (16 heads) │
 │  • Script & language detection         │
 │  • Handwriting analysis               │
 │  • Page attribute classification       │
@@ -59,11 +59,11 @@ Raw Documents (PDF, image, any condition)
                  │  + Corrected page images
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│      UNIFY          │ ─▶ │     CHUNK           │ ─▶ │     EMBED           │
-│  (Unify)            │    │  (data_ingestor)    │    │  (per-application)  │
-│  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
-│  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
-│  Reading Order      │    │  RAG Chunking       │    │  Semantic Search    │
+│      UNIFY          │ ─▶ │     CHUNK           │ ─▶ │    APPLICATIONS     │
+│  (Unify)            │    │  (data_ingestor)    │    │  (outside pipeline) │
+│  OCR (docling-serve)│    │  Trust Scoring      │    │  Embeddings         │
+│  Full Layout        │    │  RAG Chunking       │    │  Vector Storage     │
+│  Reading Order      │    │  RAGChunkSet.json   │    │  Semantic Search    │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
@@ -135,14 +135,14 @@ Physical corrections applied based on Stage 1 predictions:
 > **Diagram**: [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml)
 > — SigLIP 2 inference section, fallback rules, and confidence thresholds.
 > **Schema population**: [schema-field-population/schema-field-population-workflow.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml)
-> — maps each of the 19 heads to `DocumentMetadata` fields.
+> — maps each of the 16 heads to `DocumentMetadata` fields.
 
 **Model**: SigLIP 2 NAFlex (88M params) | **Latency**: ~50ms GPU
 **Implementation**: `src/image_preprocessing_detector/detection/siglip2_multitask.py`
 **Training script**: `modal/train_siglip2_multitask.py` (2,652 LOC)
 **Config**: `config/siglip2_multitask.yaml`
 
-Runs on the corrected image. A single forward pass drives all 19 prediction heads across
+Runs on the corrected image. A single forward pass drives all 16 prediction heads across
 5 task groups:
 
 | Group | Head | Type | Classes / Range | Feeds |
@@ -272,7 +272,7 @@ PDF/Image Input
 │                                                    │
 │  [siglip2_multitask.py]   [iqa_classical.py]      │
 │   ~50ms GPU                ~25ms CPU               │
-│   19 heads / 5 groups      8 detectors             │
+│   16 heads / 5 groups      8 detectors             │
 │                                                    │
 │  [doclayout_yolo.py]      [layout_lite/]           │
 │   Layout detection         Coarse page attrs       │
@@ -304,7 +304,7 @@ All modules live under `src/image_preprocessing_detector/`. Key canonical files:
 | `text_gate.py` | Fast text presence gate < 10ms (stroke density + CC + edge density) |
 | `iqa_classical.py` | 8 classical IQA detectors, all < 25ms combined |
 | `iqa_ml.py` | ResNet-50 teacher / ResNet-18 student IQA (Phase 3, stable) |
-| `siglip2_multitask.py` | SigLIP 2 multi-task inference (19 heads, 5 groups) |
+| `siglip2_multitask.py` | SigLIP 2 multi-task inference (16 heads, 5 groups) |
 | `orientation_detector.py` | 4-class orientation detection |
 | `script_detector.py` | ISO 15924 script classification heuristics |
 | `handwriting_detector.py` | Handwriting presence detection (stroke analysis) |
@@ -798,14 +798,15 @@ prediction quality at lower compute.
 
 ## 10. Architecture Documentation
 
-The architecture uses a 4-level hierarchy with automated link validation:
+The architecture uses a 5-level hierarchy (Level 0-4) with automated link validation:
 
 | Level | Description | Location |
 | ----- | ----------- | -------- |
-| 0 | Multi-project RAG pipeline (six-service context) | `docs/architecture/diagrams/level-0/` |
+| 0 | Multi-project RAG pipeline (Foundry pipeline context) | `docs/architecture/diagrams/level-0/` |
 | 1 | Prepare-Doc architecture and 8-workstream overview | `docs/architecture/diagrams/level-1/` |
 | 2 | Workstream details ("Level 2.5" standard with code examples) | `docs/architecture/diagrams/level-2/` |
 | 3 | Module implementation swimlanes with LOC annotations | `docs/architecture/diagrams/level-3/` |
+| 4 | Per-dataset adapter instance registries (Markdown tables) | `docs/architecture/diagrams/level-4/` |
 
 **Maintenance guide**: `docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md`
 **File inventory**: `docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md`
@@ -816,7 +817,7 @@ The architecture uses a 4-level hierarchy with automated link validation:
 
 | Diagram | Description |
 | ------- | ----------- |
-| [rag-pipeline-overview.puml](architecture/diagrams/level-0/rag-pipeline-overview.puml) | Six-service pipeline: Ingest → Prepare-Doc → Prepare-Audio → Unify → Chunk → Embed |
+| [rag-pipeline-overview.puml](architecture/diagrams/level-0/rag-pipeline-overview.puml) | Foundry pipeline: Ingest → Prepare-Doc / Prepare-Audio → Unify → Chunk (applications embed downstream) |
 
 ### Level 1 — Prepare-Doc System Overview
 
@@ -903,9 +904,9 @@ The architecture uses a 4-level hierarchy with automated link validation:
 
 | Diagram | Description |
 | ------- | ----------- |
-| [downstream-context/unify-ocr-layout-workflow.puml](architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify (OCR orchestration): how it consumes `DocumentMetadata.json` |
-| [downstream-context/chunk-fusion-chunking-workflow.puml](architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml) | Chunk service: multi-engine fusion and RAG chunking |
-| [downstream-context/embed-vectorstore-workflow.puml](architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml) | Embed service: vector indexing pipeline |
+| [downstream-context/unify-ocr-layout-workflow.puml](architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify (OCR through docling-serve): how it consumes `DocumentMetadata.json` |
+| [downstream-context/chunk-fusion-chunking-workflow.puml](architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml) | Chunk service: trust scoring and RAG chunking (fusion shown in the diagram is a later phase) |
+| [downstream-context/embed-vectorstore-workflow.puml](architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml) | Application-side embedding contract (outside the pipeline) |
 | [downstream-context/prepare-audio-transcription-workflow.puml](architecture/diagrams/level-2/downstream-context/prepare-audio-transcription-workflow.puml) | Prepare-Audio: FFmpeg + Deepgram, diarization, TranscriptMetadata |
 
 ### Level 3 — Module Implementation Swimlanes
@@ -932,7 +933,7 @@ java -jar ~/.vscode-server/extensions/jebbs.plantuml-2.18.1/plantuml.jar -tsvg <
 | Component | Technology | File | Design Rationale |
 | --------- | ---------- | ---- | ---------------- |
 | Pre-correction gate | MobileNetV4-Conv-S | `models/skew_estimator.py` | ~3ms GPU; orientation/resolution before SigLIP |
-| Multi-task teacher | SigLIP 2 NAFlex (88M) | `detection/siglip2_multitask.py` | Vision-language pretraining; 19 heads one pass |
+| Multi-task teacher | SigLIP 2 NAFlex (88M) | `detection/siglip2_multitask.py` | Vision-language pretraining; 16 heads one pass |
 | IQA legacy models | ResNet-50/18 teacher-student | `detection/iqa_ml.py` | Stable Phase 3 models; superseded by SigLIP for new tasks |
 | Layout detection | docling-layout (egret-large / heron) | `detection/doclayout_yolo.py` (transitional) | Validated over YOLOv10-doc in Stream 3 |
 | Classical IQA | OpenCV (8 detectors) | `detection/iqa_classical.py` | Sub-25ms combined; interpretable; stream-3-validated baseline |
@@ -956,5 +957,5 @@ java -jar ~/.vscode-server/extensions/jebbs.plantuml-2.18.1/plantuml.jar -tsvg <
 *For dataset inventory and training recipes, see
 [docs/datasets/DATASET_QUICK_REFERENCE.md](datasets/DATASET_QUICK_REFERENCE.md).*
 
-*For architecture diagrams at all four levels, see
+*For architecture diagrams at all five levels, see
 [docs/architecture/](architecture/).*

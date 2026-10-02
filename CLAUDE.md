@@ -35,12 +35,13 @@ See [.claude/README.md](.claude/README.md) for full documentation.
 
 ### Architecture Documentation System
 
-This project uses a **4-level architecture documentation hierarchy** with automated validation and traceability:
+This project uses a **5-level (Level 0-4) architecture documentation hierarchy** with automated validation and traceability:
 
 - **Level 0**: Foundry pipeline context (5 pipeline repositories; identical page in each: [docs/architecture/pipeline-level-0.md](docs/architecture/pipeline-level-0.md))
 - **Level 1**: Prepare-Doc architecture (8 workstreams overview)
 - **Level 2**: Workstream details ("Level 2.5" standard with code examples)
 - **Level 3**: Module implementation (state machines, detailed swimlanes with LOC annotations)
+- **Level 4**: Instance registries (per-dataset adapter tables; Markdown, not PlantUML)
 
 **📖 Complete Maintenance Guide**: [docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md](docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)
 
@@ -127,7 +128,7 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 > [docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md](docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md)
 > for the full decision record.
 
-### Six-Service RAG Pipeline Architecture
+### Foundry RAG Pipeline Architecture (five stages)
 
 ```text
 Ingest            →  Prepare-Doc / Prepare-Audio  →  Unify  →  Chunk  →  [Applications: embed, store, search]

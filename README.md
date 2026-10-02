@@ -29,23 +29,23 @@
 
 ## What Does This Do?
 
-**Project A** is the **front door** for the four-project RAG document pipeline. It prepares raw documents (PDFs, images) for intelligent OCR processing by:
+**Prepare-Doc** is the **front door** for the document track of the Foundry RAG pipeline (formerly "Project A"). It prepares raw documents (PDFs, images) for OCR in Unify by:
 
 1. **Assessing Quality**: Classical + ML-based image quality assessment (IQA)
 2. **Applying Corrections**: Deskew, denoise, enhance (with safety guardrails)
 3. **Calculating DQS**: Document Quality Score for routing decisions
 4. **Classifying Layout**: Coarse page-level attributes (not full semantic layout)
-5. **Routing Recommendations**: Tells Project B which OCR strategy to use
+5. **Routing Recommendations**: Tells Unify which OCR strategy to use
 
-**Four-Project RAG Pipeline**:
+**Foundry pipeline** (see [docs/architecture/pipeline-level-0.md](docs/architecture/pipeline-level-0.md)):
 
 ```text
-Project A (This) → Project B (OCR) → Project C (Fusion) → Project D (Vector Search)
-Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
-& IQA Gateway      Order Detection    Fusion & Trust      Retrieval
-```text
+Ingest -> Prepare-Doc (This) / Prepare-Audio -> Unify -> Chunk -> [applications embed, store, search]
+```
 
-**Problem it solves**: Poor-quality scans break OCR. Project A detects and fixes quality issues, then provides routing intelligence so downstream projects can optimize processing strategies.
+The pipeline ends at chunks (`RAGChunkSet.json`). Embedding, vector storage and search belong to each consuming application.
+
+**Problem it solves**: Poor-quality scans break OCR. Prepare-Doc detects and fixes quality issues, then provides routing intelligence so Unify can optimize processing strategies.
 
 ## Features
 
@@ -66,7 +66,7 @@ Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
   - Page types: single/multi/three_column/complex
   - Attributes: has_tables, has_figures, has_dense_math, has_handwriting
   - Page quality: fuzzy_scan, watermark, colorful_background
-  - **NOT full semantic layout** (Project B responsibility)
+  - **NOT full semantic layout** (Unify responsibility)
 - **Document Quality Score** (Phase 8): Holistic quality assessment
   - Degradation score (0-1) from IQA metrics
   - Structural complexity score (0-1) from layout-lite
@@ -279,7 +279,7 @@ poetry run modal token new
 
 See [PHASE2_QUICKSTART.md](docs/PHASE2_QUICKSTART.md) for complete training guide.
 
-**Note**: This trains IQA models only (Project A scope). Layout detection (YOLOv8) is handled by Project B (ocr-orchestrator) per RAG Pipeline architecture.
+**Note**: This trains IQA models only (Prepare-Doc scope). Full layout detection is handled by Unify per the RAG Pipeline architecture.
 
 ## Testing
 
@@ -422,7 +422,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Handwriting presence classifier
 - Structural complexity scorer
 - OmniDocBench-style page attributes
-- **NOT full DocLayNet-style semantic layout** (Project B responsibility)
+- **NOT full DocLayNet-style semantic layout** (Unify responsibility)
 
 ### Phase 8: DQS & Routing (Week 9) 🚧 **PLANNED**
 
@@ -439,14 +439,14 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Stress testing (large batches, cost tracking)
 - Documentation updates, PlantUML diagrams
 
-**REMOVED PHASES** (out of Project A scope):
+**REMOVED PHASES** (out of Prepare-Doc scope):
 
 - ~~Phase 1/1B (old numbering)~~ → Absorbed into Phases 0 and 4
-- ~~Table Structure Extraction (PubTables-1M)~~ → Project B responsibility
-- ~~Reading Order Prediction (ReadingBank)~~ → Project B responsibility
-- ~~Full DocLayNet-style layout detection~~ → Project B responsibility
+- ~~Table Structure Extraction (PubTables-1M)~~ → Unify responsibility
+- ~~Reading Order Prediction (ReadingBank)~~ → Unify responsibility
+- ~~Full DocLayNet-style layout detection~~ → Unify responsibility
 - ~~DocRes Unified Preprocessing (dewarping, etc.)~~ → Out of scope
-- ~~DLAFormer Research~~ → Project B responsibility
+- ~~DLAFormer Research~~ → Unify responsibility
 
 ## Performance Targets
 
@@ -474,12 +474,12 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **IQA**: OHR-Bench (document-specific), DIQA-5000 (fallback)
 - **Layout-Lite**: OmniDocBench (page attributes)
 
-**REMOVED METRICS** (out of Project A scope):
+**REMOVED METRICS** (out of Prepare-Doc scope):
 
-- ~~Layout mAP@.50~~ → Project B (full layout detection)
-- ~~Table Structure TEDS~~ → Project B (table structure extraction)
+- ~~Layout mAP@.50~~ → Unify (full layout detection)
+- ~~Table Structure TEDS~~ → Unify (table structure extraction)
 - ~~Dewarping ED@10~~ → Out of scope (DocRes removed)
-- ~~Reading Order Accuracy~~ → Project B (reading order prediction)
+- ~~Reading Order Accuracy~~ → Unify (reading order prediction)
 
 ## Contributing
 

@@ -1,6 +1,16 @@
 ---
+schema_type: common
+title: "Foundry Pipeline: Level 0 Architecture"
 description: "How the five Foundry pipeline repositories link together, and where the pipeline ends."
-status: active
+tags:
+- architecture
+- pipeline
+- level_0
+status: published
+owner: "core-maintainer"
+authors:
+- name: "Byron Williams"
+purpose: "Canonical short Level 0 page, identical in all five Foundry pipeline repositories except the This repository line."
 ---
 
 # Foundry Pipeline: Level 0 Architecture

@@ -105,7 +105,7 @@ Prepare-Doc is the document preprocessing and quality assurance gateway. It rece
 | `scanned` | Scanned PDF | Full IQA + OCR routing for all pages |
 | `hybrid` | Hybrid PDF | Mixed per-page routing |
 
-After track assignment, Prepare-Doc performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 19 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
+After track assignment, Prepare-Doc performs comprehensive multi-task ML analysis using a two-model pipeline: MobileNetV4-Conv-S (~3ms, 3 heads for orientation, skew, resolution quality) for pre-correction decisions, followed by SigLIP 2 NAFlex (~50ms, 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attributes) for full analysis. Classical CV detectors for skew, blur, contrast, noise, and other degradations provide confidence-based fallback. Based on quality scores, it applies automatic corrections including deskewing, CLAHE enhancement, sharpening, and denoising.
 
 Beyond quality, Prepare-Doc performs layout-lite detection to identify coarse page attributes (tables, figures, dense math, handwriting) and classifies PDF type (born-digital, image-only, hybrid). These signals feed into the Document Quality Score (DQS) calculator, which produces routing recommendations (`OCR_FAST`, `OCR_ADVANCED`, `VISION_SIMPLE`, `VISION_STRUCTURED`) that tell Unify which OCR strategy to use. Output includes corrected 300 DPI page images and `DocumentMetadata.json` containing all quality metrics and routing decisions.
 
@@ -153,12 +153,15 @@ This Level 0 diagram establishes the pipeline context. Each box on this diagram 
 
 | Level 0 Box | Level 1 Location | Repository |
 |-------------|------------------|------------|
-| **Ingest** | `rag-processor/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
+| **Ingest** | [rag-processor Level 1](https://github.com/ByronWilliamsCPA/rag-processor/blob/main/docs/architecture/diagrams/level-1/index.md) | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
 | **Prepare-Doc** | [level-1/index.md](../level-1/index.md) | [williaby/image-preprocessing-detector](https://github.com/williaby/image-preprocessing-detector) (THIS REPO) |
-| **Prepare-Audio** | `audio-processor/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
-| **Unify** | `Unify/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/Unify](https://github.com/ByronWilliamsCPA/Unify) (scaffolding) |
-| **Chunk** | `data_ingestor/docs/architecture/diagrams/level-1/index.md` | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) |
+| **Prepare-Audio** | [audio-processor Level 1](https://github.com/ByronWilliamsCPA/audio-processor/blob/main/docs/architecture/diagrams/level-1/index.md) | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
+| **Unify** | [Unify Level 1](https://github.com/ByronWilliamsCPA/Unify/blob/main/docs/architecture/diagrams/level-1/index.md) | [ByronWilliamsCPA/Unify](https://github.com/ByronWilliamsCPA/Unify) (scaffolding) |
+| **Chunk** | [data_ingestor Level 1](https://github.com/williaby/data_ingestor/blob/main/docs/architecture/diagrams/level-1/index.md) | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) |
 | **Embed** | *(per-application — no shared service)* | N/A — each AI app implements per `chunk-embed-contract.md` |
+
+> **Note**: The Level 1 pages for Ingest, Prepare-Audio, Unify and Chunk are links to `main` in those repositories. They
+> exist on each repository's `docs/pipeline-level-0` branch and resolve once the matching pull requests merge.
 
 Each Level 1 diagram then drills down into component boxes that map to Level 2 index files within that project.
 

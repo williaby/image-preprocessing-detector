@@ -18,7 +18,7 @@ tags:
 >
 > - [docs/PROJECT_OVERVIEW_DETAILED.md](PROJECT_OVERVIEW_DETAILED.md) — complete module map, canonical files, schema contract, config reference
 > - [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md) — project status and remaining work
-> - [docs/architecture/](architecture/) — implementation diagrams at all four levels
+> - [docs/architecture/](architecture/) — implementation diagrams at all five levels (Level 0-4)
 
 ---
 
@@ -30,7 +30,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
+Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for the Foundry RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs: a corrected page image and
 a `DocumentMetadata.json` record containing everything the downstream OCR system needs to
@@ -58,12 +58,12 @@ Raw Documents (PDF, image, any condition)
                  │  + Corrected page images
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │       EMBED         │
-│  (Unify)            │    │  (data_ingestor)    │    │  (per-application)  │
-│  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
-│  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
-│  Reading Order      │    │  Trust Scoring      │    │  Semantic Search    │
-│  Table Structure    │    │  RAG Chunking       │    │                     │
+│       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │    APPLICATIONS     │
+│  (Unify)            │    │  (data_ingestor)    │    │  (outside pipeline) │
+│  OCR (docling-serve)│    │  Trust Scoring      │    │  Embeddings         │
+│  Full Layout        │    │  RAG Chunking       │    │  Vector Storage     │
+│  Reading Order      │    │  RAGChunkSet.json   │    │  Semantic Search    │
+│  Table Structure    │    │                     │    │                     │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
@@ -232,7 +232,7 @@ versioned; breaking changes require an explicit contract negotiation with the Un
 | Component | Technology | Design Rationale |
 | --------- | ---------- | ---------------- |
 | Pre-correction gate | MobileNetV4-Conv-S (~3ms GPU) | Fast enough to run before any other analysis; orientation/resolution must be known first |
-| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 19 heads in one pass |
+| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 16 heads in one pass |
 | Classical IQA baseline | OpenCV — 8 detectors (~25ms CPU) | Interpretable; sub-25ms; validated anchor for each ML head; no GPU dependency |
 | Layout detection | docling-layout (egret-large / heron) | Validated over YOLOv10-doc in Stream 3 benchmarking |
 | PDF ingestion | PyMuPDF | DPI-aware extraction; 100% accuracy on DPI metadata |
@@ -252,5 +252,5 @@ versioned; breaking changes require an explicit contract negotiation with the Un
 *For implementation progress and remaining work, see
 [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md).*
 
-*For architecture diagrams at all four levels, see
+*For architecture diagrams at all five levels, see
 [docs/architecture/](architecture/).*
