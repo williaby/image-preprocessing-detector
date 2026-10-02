@@ -357,6 +357,22 @@ def _read_label_rows(files: tuple[Path, ...]) -> list[Any]:
     return rows
 
 
+def _exclude_license_classes(
+    records: list[dict[str, Any]], classes: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    """Drop records whose ``license_class`` is in ``classes``; exit 1 if none remain."""
+    if not classes:
+        return records
+    kept = [r for r in records if r["license_class"] not in classes]
+    click.echo(
+        f"  Excluded {len(records) - len(kept)} records by license class {sorted(classes)}"
+    )
+    if not kept:
+        click.echo("ERROR: all records excluded by license class.", err=True)
+        raise SystemExit(1)
+    return kept
+
+
 def _is_usable_label_row(row: object) -> bool:
     """A JSON object with a safe relative ``image_path`` and a finite numeric severity."""
     if not isinstance(row, dict) or not _is_safe_relative_path(row.get("image_path")):
@@ -1892,18 +1908,7 @@ def merge(
         raise SystemExit(1)
 
     _annotate_and_report_licenses(all_records, "merge")
-    if exclude_license_classes:
-        before = len(all_records)
-        all_records = [
-            r for r in all_records if r["license_class"] not in exclude_license_classes
-        ]
-        click.echo(
-            f"  Excluded {before - len(all_records)} records by license class "
-            f"{sorted(exclude_license_classes)}"
-        )
-        if not all_records:
-            click.echo("ERROR: all records excluded by license class.", err=True)
-            raise SystemExit(1)
+    all_records = _exclude_license_classes(all_records, exclude_license_classes)
 
     # Assign splits for any records without one
     for rec in all_records:

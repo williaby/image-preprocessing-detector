@@ -54,25 +54,32 @@ logger = logging.getLogger(__name__)
 _MAP_SUFFIXES = (".npy", ".mat")
 
 
+def _iter_zip_maps(zip_path: Path) -> Iterator[tuple[str, NDArray[np.float64]]]:
+    """Backward maps stored inside one ``bm_*.zip`` (read in place, no extraction)."""
+    with zipfile.ZipFile(zip_path) as archive:
+        for name in archive.namelist():
+            if Path(name).suffix not in _MAP_SUFFIXES:
+                continue
+            with tempfile.TemporaryDirectory() as tmp:
+                target = Path(tmp) / Path(name).name
+                target.write_bytes(archive.read(name))
+                arr = load_backward_map(target)
+            if arr is not None:
+                yield Path(name).stem, arr
+
+
+def _is_loose_map(path: Path, root: Path) -> bool:
+    """A map file living under a directory whose name starts with ``bm``."""
+    in_bm_dir = any(part.startswith("bm") for part in path.relative_to(root).parts[:-1])
+    return in_bm_dir and path.suffix in _MAP_SUFFIXES
+
+
 def iter_backward_maps(bm_dir: Path) -> Iterator[tuple[str, NDArray[np.float64]]]:
     """Yield ``(stem, array)`` for every backward map in ``bm_*.zip`` or loose files."""
     for zip_path in sorted(bm_dir.glob("bm_*.zip")):
-        with zipfile.ZipFile(zip_path) as archive:
-            for name in archive.namelist():
-                suffix = Path(name).suffix
-                if suffix not in _MAP_SUFFIXES:
-                    continue
-                with tempfile.TemporaryDirectory() as tmp:
-                    target = Path(tmp) / Path(name).name
-                    target.write_bytes(archive.read(name))
-                    arr = load_backward_map(target)
-                if arr is not None:
-                    yield Path(name).stem, arr
+        yield from _iter_zip_maps(zip_path)
     for path in sorted(bm_dir.rglob("*")):
-        in_bm_dir = any(
-            part.startswith("bm") for part in path.relative_to(bm_dir).parts[:-1]
-        )
-        if path.suffix in _MAP_SUFFIXES and in_bm_dir:
+        if _is_loose_map(path, bm_dir):
             arr = load_backward_map(path)
             if arr is not None:
                 yield path.stem, arr

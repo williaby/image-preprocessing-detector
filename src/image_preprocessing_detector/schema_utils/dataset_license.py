@@ -63,11 +63,6 @@ PRODUCTION_ELIGIBLE = frozenset({PERMISSIVE, PUBLIC_DOMAIN, SHARE_ALIKE, GENERAT
 #: Classes excluded from production training (evaluation/calibration use only).
 PRODUCTION_EXCLUDED = frozenset({NON_COMMERCIAL, COPYLEFT_GPL, UNSPECIFIED})
 
-_FRONT_MATTER = re.compile(
-    r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.DOTALL
-)
-_LICENSE_KEY = re.compile(r"^license:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
-
 # Approved permissive forms must match in full. A string that merely contains an
 # approved name (a NoDerivatives variant, or a grant followed by a noncommercial
 # rider) is not approved and falls through to unspecified, pending a decision.
@@ -112,11 +107,27 @@ def _collapse(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def _front_matter_lines(text: str) -> list[str]:
+    """Lines of the leading ``---`` delimited YAML block, or [] if there is none."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return []
+    for end, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            return lines[1:end]
+    return []
+
+
 def _front_matter_license(text: str) -> str:
-    """The ``license:`` value from the leading YAML front matter only (never the body)."""
-    block = _FRONT_MATTER.match(text)
-    found = _LICENSE_KEY.search(block.group(1)) if block else None
-    return found.group(1).strip("\"'") if found else ""
+    """The top-level ``license:`` value from the leading YAML front matter only.
+
+    Parsed line by line (linear time, no backtracking) and never from the body.
+    """
+    for line in _front_matter_lines(text):
+        key, _, value = line.partition(":")
+        if key == "license":  # top-level key only: an indented line is not one
+            return value.strip().strip("\"'")
+    return ""
 
 
 def load_dataset_licenses(source_dir: Path) -> dict[str, str]:

@@ -65,8 +65,9 @@ def test_modes_png_cannot_hold_losslessly_are_rejected(
     """Converting these to RGB would lose data yet still pass a round-trip check."""
     tif = tmp_path / "m.tif"
     Image.new(mode, (8, 8)).save(tif)
+    data = tif.read_bytes()
     with pytest.raises(ValueError, match="cannot be stored in PNG"):
-        tiff_bytes_to_png(tif.read_bytes(), tmp_path / "m.png")
+        tiff_bytes_to_png(data, tmp_path / "m.png")
     assert not (tmp_path / "m.png").exists()
 
 

@@ -123,3 +123,26 @@ def test_synthetic_provenance_does_not_launder_a_restricted_license() -> None:
     dl.annotate_license(records, {})
     assert records[0]["license_class"] == dl.NON_COMMERCIAL
     assert records[1]["license_class"] == dl.GENERATED
+
+
+@pytest.mark.unit
+def test_front_matter_parser_edge_cases(tmp_path: Path) -> None:
+    cases = {
+        "quoted": ('---\nlicense: "MIT"\n---\n', "MIT"),
+        "crlf": ("---\r\nlicense: Apache-2.0\r\n---\r\nbody\r\n", "Apache-2.0"),
+        "indented": (
+            "---\nmeta:\n  license: MIT\n---\n",
+            "",
+        ),  # nested key is not top-level
+        "unterminated": ("---\nlicense: MIT\nno closing delimiter\n", ""),
+        "colonvalue": (
+            "---\nlicense: CC-BY-4.0 (see: terms)\n---\n",
+            "CC-BY-4.0 (see: terms)",
+        ),
+        "empty": ("", ""),
+    }
+    for name, (text, expected) in cases.items():
+        (tmp_path / f"{name}.md").write_text(text)
+    licenses = dl.load_dataset_licenses(tmp_path)
+    for name, (_, expected) in cases.items():
+        assert licenses[name] == expected, name

@@ -58,6 +58,23 @@ def _check_size(name: str, size: int, max_bytes: int) -> None:
         raise ValueError(msg)
 
 
+def _iter_zip_tiffs(
+    source: Path, max_bytes: int
+) -> Iterator[tuple[str, Callable[[], bytes]]]:
+    with zipfile.ZipFile(source) as archive:
+        for info in archive.infolist():
+            if Path(info.filename).suffix.lower() in _TIFF_SUFFIXES:
+                yield info.filename, _zip_loader(archive, info, max_bytes)
+
+
+def _iter_dir_tiffs(
+    source: Path, max_bytes: int
+) -> Iterator[tuple[str, Callable[[], bytes]]]:
+    for path in sorted(source.rglob("*")):
+        if path.suffix.lower() in _TIFF_SUFFIXES:
+            yield str(path.relative_to(source)), _file_loader(path, max_bytes)
+
+
 def iter_tiffs(
     sources: tuple[Path, ...], max_bytes: int
 ) -> Iterator[tuple[str, Callable[[], bytes]]]:
@@ -68,14 +85,9 @@ def iter_tiffs(
     """
     for source in sources:
         if source.is_file() and source.suffix == ".zip":
-            with zipfile.ZipFile(source) as archive:
-                for info in archive.infolist():
-                    if Path(info.filename).suffix.lower() in _TIFF_SUFFIXES:
-                        yield info.filename, _zip_loader(archive, info, max_bytes)
+            yield from _iter_zip_tiffs(source, max_bytes)
         else:
-            for path in sorted(source.rglob("*")):
-                if path.suffix.lower() in _TIFF_SUFFIXES:
-                    yield str(path.relative_to(source)), _file_loader(path, max_bytes)
+            yield from _iter_dir_tiffs(source, max_bytes)
 
 
 def _zip_loader(
