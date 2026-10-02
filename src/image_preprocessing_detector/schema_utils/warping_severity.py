@@ -79,12 +79,12 @@ def homography_residual_score(bm: NDArray[np.float64]) -> float | None:
     src = np.stack([xs / max(width - 1, 1), ys / max(height - 1, 1)], axis=-1)
     dst = arr[::_FIT_GRID_STRIDE, ::_FIT_GRID_STRIDE]
 
-    src_pts = src.reshape(-1, 2)
-    dst_pts = dst.reshape(-1, 2)
-    valid = np.isfinite(dst_pts).all(axis=1)
+    all_src = src.reshape(-1, 2)
+    all_dst = dst.reshape(-1, 2)
+    valid = np.isfinite(all_dst).all(axis=1)
     if int(valid.sum()) < _MIN_VALID_POINTS:
         return None
-    src_pts, dst_pts = src_pts[valid], dst_pts[valid]
+    src_pts, dst_pts = all_src[valid], all_dst[valid]
 
     extent = np.ptp(dst_pts, axis=0)
     diagonal = float(np.hypot(extent[0], extent[1]))
