@@ -125,3 +125,33 @@ def test_malformed_rows_are_skipped_not_fatal(tmp_path: Path) -> None:
     manifest = _run(tmp_path, labels)
     assert [r["image_path"] for r in manifest] == ["doc3d/img/1/ok.png"]
     assert manifest[0]["warping"] == 0.25  # numeric string coerced to float
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("severity", [-0.1, 1.5, 10**400, float("inf")])
+def test_out_of_range_or_overflowing_severity_is_unusable(severity: object) -> None:
+    from scripts.prepare_multitask_datasets import _is_usable_label_row
+
+    row = {"image_path": "doc3d/img/1/a.png", "warping_severity": severity}
+    assert _is_usable_label_row(row) is False
+    assert _is_usable_label_row({**row, "warping_severity": 0.5}) is True
+
+
+@pytest.mark.unit
+def test_stable_pick_is_input_order_independent_with_duplicate_paths() -> None:
+    from scripts.prepare_multitask_datasets import _stable_pick
+
+    recs = [
+        {"image_path": "a.png", "warping_severity": 0.1, "mesh_id": "m1"},
+        {"image_path": "a.png", "warping_severity": 0.9, "mesh_id": "m2"},
+    ]
+    assert _stable_pick(recs, 1, 7) == _stable_pick(recs[::-1], 1, 7)
+
+
+@pytest.mark.unit
+def test_negative_max_extra_real_is_rejected(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        cli, ["warping", "--max-extra-real", "-1", "--output-dir", str(tmp_path)]
+    )
+    assert result.exit_code != 0
+    assert "max-extra-real" in result.output

@@ -381,9 +381,10 @@ def _is_usable_label_row(row: object) -> bool:
     if isinstance(severity, bool) or not isinstance(severity, (int, float, str)):
         return False
     try:
-        return math.isfinite(float(severity))
-    except ValueError:
+        value = float(severity)
+    except (OverflowError, ValueError):  # OverflowError: absurdly large JSON integer
         return False
+    return math.isfinite(value) and 0.0 <= value <= 1.0  # calibrated severity range
 
 
 def _stable_pick(
@@ -397,8 +398,10 @@ def _stable_pick(
     if len(records) <= limit:
         return records
 
-    def key(rec: dict[str, Any]) -> str:
-        return hashlib.sha256(f"{seed}:{rec['image_path']}".encode()).hexdigest()
+    def key(rec: dict[str, Any]) -> tuple[str, str]:
+        digest = hashlib.sha256(f"{seed}:{rec['image_path']}".encode()).hexdigest()
+        # Tie-break duplicate paths on the record itself so input order never matters.
+        return digest, json.dumps(rec, sort_keys=True, default=str)
 
     return sorted(records, key=key)[:limit]
 
@@ -1676,7 +1679,7 @@ def shadow(
 )
 @click.option(
     "--max-extra-real",
-    type=int,
+    type=click.IntRange(min=0),
     default=15_000,
     show_default=True,
     help="Cap on records taken from --extra-real-labels (stable hash order, seeded).",
