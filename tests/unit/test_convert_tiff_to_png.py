@@ -61,34 +61,31 @@ def test_convert_verify_retire_flow(
     out, report = tmp_path / "png", tmp_path / "report.json"
     runner = CliRunner()
 
-    assert (
-        runner.invoke(
-            cli, ["convert", "--src", str(zip_path), "--dest", str(out)]
-        ).exit_code
-        == 0
+    converted = runner.invoke(
+        cli, ["convert", "--src", str(zip_path), "--dest", str(out)]
     )
-    assert (
-        runner.invoke(
-            cli,
-            [
-                "verify",
-                "--png-dir",
-                str(out),
-                "--jpeg-dir",
-                str(jpegs),
-                "--report",
-                str(report),
-            ],
-        ).exit_code
-        == 0
+    assert converted.exit_code == 0, converted.output
+    verified = runner.invoke(
+        cli,
+        [
+            "verify",
+            "--png-dir",
+            str(out),
+            "--jpeg-dir",
+            str(jpegs),
+            "--report",
+            str(report),
+        ],
     )
+    assert verified.exit_code == 0, verified.output
 
     args = ["retire-jpeg", "--png-dir", str(out), "--jpeg-dir", str(jpegs)]
     dry = runner.invoke(cli, args)
     assert "dry run" in dry.output
     assert len(list(jpegs.glob("*.jpg"))) == 2  # nothing deleted without --yes
 
-    assert runner.invoke(cli, [*args, "--yes"]).exit_code == 0
+    retired = runner.invoke(cli, [*args, "--yes"])
+    assert retired.exit_code == 0, retired.output
     assert list(jpegs.glob("*.jpg")) == []
 
 

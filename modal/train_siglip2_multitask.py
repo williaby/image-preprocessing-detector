@@ -1072,8 +1072,8 @@ def _create_shadow_warping_dataset(
 CODE_LABEL_POSITIVE_MIN = 0.7
 CODE_LABEL_NEGATIVE_MAX = 0.3
 
-# Handwriting regression heads: -1.0 is the N_A sentinel (masked loss).
-HW_NA_SENTINEL = -1.0
+# Handwriting regression heads: -1.0 is the N_A sentinel (masked loss); any value
+# outside [0, 1], including the sentinel, is rejected by _parse_hw_score.
 
 
 def _parse_code_label(raw: Any) -> int | None:

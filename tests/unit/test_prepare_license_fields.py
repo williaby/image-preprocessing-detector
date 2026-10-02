@@ -10,7 +10,6 @@ import pytest
 from click.testing import CliRunner
 
 import scripts.prepare_multitask_datasets as pmd
-from scripts.prepare_multitask_datasets import cli
 
 
 def _rec(path: str, dataset: str | None, **extra: Any) -> dict[str, Any]:
@@ -49,7 +48,7 @@ def test_task_manifest_records_carry_license_fields(tmp_path: Path) -> None:
     )
     out = tmp_path / "out"
     result = CliRunner().invoke(
-        cli,
+        pmd.cli,
         ["warping", "--synthetic-metadata", str(tmp_path / "none.json"),
          "--l2-metadata-dir", str(tmp_path / "no_l2"), "--output-dir", str(out),
          "--extra-real-labels", str(labels)],
@@ -75,7 +74,7 @@ def test_merge_excludes_license_classes(tmp_path: Path, stubbed_gcs: list[str]) 
     (task_dir / "warping_manifest.json").write_text(json.dumps(records))
     out = tmp_path / "merged"
     result = CliRunner().invoke(
-        cli,
+        pmd.cli,
         ["merge", "--warping-dir", str(task_dir), "--output-dir", str(out),
          "--gcs-output-prefix", "gs://bucket/prefix",
          "--exclude-license-class", "non_commercial",
@@ -98,7 +97,7 @@ def test_merge_refuses_when_everything_is_excluded(
     task_dir.mkdir()
     (task_dir / "warping_manifest.json").write_text(json.dumps([_rec("b.png", "wsrd")]))
     result = CliRunner().invoke(
-        cli,
+        pmd.cli,
         ["merge", "--warping-dir", str(task_dir), "--output-dir", str(tmp_path / "m"),
          "--gcs-output-prefix", "gs://bucket/prefix", "--exclude-license-class", "non_commercial"],
     )  # fmt: skip
