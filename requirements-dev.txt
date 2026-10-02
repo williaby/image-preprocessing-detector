@@ -26,7 +26,7 @@ antlr4-python3-runtime==4.9.3
     # via
     #   hydra-core
     #   omegaconf
-anyio==4.14.1
+anyio==4.15.1
     # via
     #   google-genai
     #   httpx
