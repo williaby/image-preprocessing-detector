@@ -4,7 +4,7 @@ title: "Stale Naming Backlog"
 description: "Architecture files that still use retired Foundry pipeline names and need diagram tooling or history-aware edits."
 tags:
 - architecture
-- backlog
+- documentation
 status: draft
 owner: "core-maintainer"
 purpose: "Track files deliberately left unchanged when entry points were aligned with the shared Level 0 naming."
