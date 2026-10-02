@@ -124,3 +124,32 @@ class TestUnwarp:
 
     def test_bad_shape_returns_none(self) -> None:
         assert unwarp(_texture(3), np.zeros((SIZE, SIZE, 3))) is None
+
+
+@pytest.mark.unit
+def test_apply_with_image_dir_emits_training_fields(
+    dataset: tuple[Path, Path], tmp_path: Path
+) -> None:
+    bm_dir, img_dir = dataset
+    raw, cal, final = (
+        tmp_path / "raw.jsonl",
+        tmp_path / "cal.json",
+        tmp_path / "sev.jsonl",
+    )
+    runner = CliRunner()
+    runner.invoke(cli, ["score", "--bm-dir", str(bm_dir), "--out", str(raw)])
+    runner.invoke(
+        cli,
+        ["calibrate", "--raw", str(raw), "--bm-dir", str(bm_dir), "--image-dir", str(img_dir),
+         "--out", str(cal), "--sample", str(N)],
+    )  # fmt: skip
+    result = runner.invoke(
+        cli,
+        ["apply", "--raw", str(raw), "--calibration", str(cal), "--out", str(final),
+         "--image-dir", str(img_dir)],
+    )  # fmt: skip
+    assert result.exit_code == 0, result.output
+    row = json.loads(final.read_text().splitlines()[0])
+    assert row["image_path"].startswith("doc3d/img/1/s")
+    assert row["mesh_id"] == "1"
+    assert row["license"] == "MIT"

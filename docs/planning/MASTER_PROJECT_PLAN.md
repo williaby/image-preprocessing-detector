@@ -502,6 +502,14 @@ following sprint. No new features; no new datasets beyond what's needed.
 | 6 | **OOD metric corrections** (Energy Score for ILLEGIBLE + MNV4-H1) | Cheap; must precede any evaluation | 0.5 day | Eval code + test updated |
 | 7 | **Plan/doc hygiene**: fix `CLAUDE.md` drift, refresh `IMPLEMENTATION_STATUS_MATRIX.md` + `TECH_DEBT.md`, close VLM-default doc item | Stale docs misled the plan itself | 0.5 day | Dates and claims match §4a |
 
+**Execution guide**: [RUNSHEET_DATA_ASSEMBLY.md](RUNSHEET_DATA_ASSEMBLY.md) — ordered commands,
+expected outputs, stop conditions. **Open decision it surfaces**: ~22 research-terms-only datasets
+(rvl-cdip, mdiw13, smartdoc-qa, realdae, …) are pulled by script defaults and are high-TOU-risk
+for a public CC-BY-SA release (LICENSE_IMPACT_REPORT); recommended: allow for smoke run, decide
+before the production run. Also: prepare-script mixing caps only *warn* (not enforced), and the
+`shadow`/`warping` defaults include wsrd/anyphotodoc6300/docalign12k/warpdoc, which must be
+overridden per the 2026-10-01 decisions.
+
 **Explicitly deferred this sprint** (do not let these displace the critical path): Stage 0
 router (2–3 wk), full v4 PNG regeneration (~800 GB, long GPU run — **start it in the
 background only if GPU is idle**), NIST contact sheets, ADF scanner sourcing, compound-distortion

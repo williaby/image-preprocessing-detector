@@ -1536,6 +1536,21 @@ def shadow(
     required=True,
     help="Output directory for warping_manifest.json.",
 )
+@click.option(
+    "--extra-real-labels",
+    "extra_real_labels",
+    multiple=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="JSONL with image_path + warping_severity (e.g. doc3d from "
+    "label_doc3d_warping_severity.py apply --image-dir). Repeatable.",
+)
+@click.option(
+    "--max-extra-real",
+    type=int,
+    default=15_000,
+    show_default=True,
+    help="Cap on records taken from --extra-real-labels (random, seeded).",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -1545,6 +1560,8 @@ def warping(
     l2_metadata_dir: Path,
     l2_datasets: tuple[str, ...],
     output_dir: Path,
+    extra_real_labels: tuple[Path, ...],
+    max_extra_real: int,
     seed: int,
     dry_run: bool,
 ) -> None:
@@ -1583,6 +1600,29 @@ def warping(
             "L2 metadata dir not found: %s — no real warping data loaded.",
             l2_metadata_dir,
         )
+
+    # Extra real labels (doc3d). Split by mesh_id so one mesh never spans splits.
+    extra: list[dict[str, Any]] = []
+    for label_file in extra_real_labels:
+        with open(label_file, encoding="utf-8") as fh:
+            extra.extend(json.loads(line) for line in fh if line.strip())
+    usable = [r for r in extra if "image_path" in r and "warping_severity" in r]
+    if len(usable) < len(extra):
+        logger.warning(
+            "Skipped %d extra-label rows without image_path/warping_severity",
+            len(extra) - len(usable),
+        )
+    if len(usable) > max_extra_real:
+        usable = rng.sample(usable, max_extra_real)
+    for extra_rec in usable:
+        rec = dict(extra_rec)
+        rec["warping"] = rec["warping_severity"]
+        rec["split"] = _deterministic_split(
+            str(rec.get("mesh_id") or rec["image_path"])
+        )
+        records.append(rec)
+    if extra_real_labels:
+        logger.info("Loaded %d extra real warping records", len(usable))
 
     if not records:
         click.echo(

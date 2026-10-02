@@ -226,17 +226,35 @@ def calibrate(
     "--calibration", type=click.Path(exists=True, path_type=Path), required=True
 )
 @click.option("--out", type=click.Path(path_type=Path), required=True)
-def apply(raw_path: Path, calibration: Path, out: Path) -> None:
+@click.option(
+    "--image-dir",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="doc3d ``img`` directory. If given, rows also carry image_path "
+    "(``doc3d/img/<mesh>/<file>.png``, relative to the doc3d data root) and mesh_id "
+    "so `prepare_multitask_datasets.py warping --extra-real-labels` can ingest them.",
+)
+def apply(raw_path: Path, calibration: Path, out: Path, image_dir: Path | None) -> None:
     """Write calibrated severities (0-1) per image id."""
     cal = Calibration.from_dict(json.loads(calibration.read_text(encoding="utf-8")))
-    rows = [
-        {
+    images = {p.stem: p for p in image_dir.rglob("*.png")} if image_dir else {}
+    rows: list[dict[str, Any]] = []
+    for r in _read_jsonl(raw_path):
+        row: dict[str, Any] = {
             "id": r["id"],
             "warping_severity": round(apply_calibration(r["raw"], cal), 4),
             "label_source": "doc3d_bm_homography_calibrated",
         }
-        for r in _read_jsonl(raw_path)
-    ]
+        if image_dir is not None:
+            image = images.get(r["id"])
+            if image is None:
+                continue  # no image for this map: unusable for training
+            rel = image.relative_to(image_dir)
+            row["image_path"] = f"doc3d/img/{rel.as_posix()}"
+            row["mesh_id"] = rel.parts[0] if len(rel.parts) > 1 else rel.stem
+            row["provenance"] = "real_render_doc3d"
+            row["license"] = "MIT"
+        rows.append(row)
     _write_jsonl(out, rows)
     sev = np.array([r["warping_severity"] for r in rows])
     click.echo(
