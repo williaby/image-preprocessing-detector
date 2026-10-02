@@ -6,8 +6,8 @@ owner: core-maintainer
 purpose: "Ordered, copy-pasteable steps for the first dataset-assembly session on the machine with the data drive and GPU VM."
 tags:
 - planning
-- runbook
 - datasets
+- training_data
 ---
 
 # Data Assembly Run-Sheet

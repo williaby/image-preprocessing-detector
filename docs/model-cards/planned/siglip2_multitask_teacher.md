@@ -3,12 +3,12 @@ owner: core-maintainer
 purpose: 'Model card for the SigLIP 2 NAFlex multi-task teacher (training not yet run).'
 schema_type: common
 status: draft
-license: CC-BY-SA-4.0
 tags:
-- siglip2
-- multi-task
+- machine_learning
+- multi_task
 - iqa
-- document-processing
+- model_registry
+- licensing
 title: 'Model Card: SigLIP 2 NAFlex Multi-Task Teacher'
 ---
 

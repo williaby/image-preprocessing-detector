@@ -3,12 +3,11 @@ owner: core-maintainer
 purpose: 'Model card for the MobileNetV4-Conv-S pre-correction gate (trained, not yet integrated).'
 schema_type: common
 status: draft
-license: CC-BY-SA-4.0
 tags:
-- mobilenetv4
-- orientation
-- skew
-- resolution
+- machine_learning
+- skew_detection
+- model_registry
+- licensing
 title: 'Model Card: MobileNetV4-Conv-S Pre-Correction Gate'
 ---
 
