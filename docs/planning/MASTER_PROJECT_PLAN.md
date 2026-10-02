@@ -575,6 +575,11 @@ permanently corrupted. Full context in Section 5a.
 
 #### Define warping severity formula for doc3d — ✅ DECIDED 2026-10-01: backward-map residual, calibrated to warpdoc SSIM
 
+> **Tooling built 2026-10-02**: `schema_utils/warping_severity.py` + `scripts/label_doc3d_warping_severity.py`
+> (`score` → `calibrate` → `apply`; reads `bm_*.zip` directly). Verified on synthetic data only;
+> **first real run must be `score --spot-check 200`** — bm member format (npy/mat), coordinate
+> units and bm↔image stem pairing are unverified. `calibrate` warns if Pearson r < 0.5 (then fall
+> back to depth-map std(Z)).
 > Depth maps are not downloaded (only images + `bm_*` backward maps). Severity = deviation of
 > the backward map from its best-fit affine/homography, mapped by isotonic regression onto the
 > warpdoc `1 − SSIM` scale using a shared calibration sample; validate on held-out mesh IDs and
@@ -633,7 +638,13 @@ Critical implementation contract (must match `train_siglip2_multitask.py`):
 - `split_type` must be one of: `train` / `val` / `test` / `ood`
 - OOD leakage check: `_validate_manifest_no_ood()` must pass before any manifest is written
 
-#### Dataset format remediation: JPEG → PNG lossless conversion
+#### Dataset format remediation: JPEG → PNG lossless conversion — ⚠️ TOOLING READY 2026-10-02, data run pending
+
+> `scripts/convert_tiff_to_png.py` (`convert` → `verify` → `retire-jpeg --yes`; pixel-exact
+> round-trip check; JPEGs are never deleted without a clean report). Tested on synthetic data.
+> **Open**: rvl-cdip needs a `jpeg_stem,tiff_relative_path` mapping CSV (TIFF names differ
+> from `rvl_{doctype}_{n}.jpg`) and the TIFF re-download; L2 metadata/doc updates (steps 5–6)
+> not done. khatt can run today from `data/train.zip` + `data/validation.zip`.
 
 A format audit (2026-02-26) identified two source datasets that were converted from lossless
 originals to JPEG during initial data preparation. JPEG compression introduces artifacts that
