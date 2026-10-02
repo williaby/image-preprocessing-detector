@@ -495,7 +495,7 @@ ML IQA         ML IQA (Teacher-Student ResNet, Phase 3)
     ↓              ↓
 [JSON Output] (src/output/) - DocumentMetadata.json + corrected images
     ↓
-HANDOFF TO PROJECT B (OCR Orchestration)
+HANDOFF TO UNIFY (OCR via docling-serve)
 ```text
 
 **Phase 1B: DPI Upscaling** ✅ COMPLETE
