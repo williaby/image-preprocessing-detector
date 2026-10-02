@@ -42,7 +42,12 @@ jobs:
       include-macos: true
       include-windows: true
       source-directory: 'src'
-      test-command: 'pytest tests/ -v --tb=short -x --ignore=tests/integration --ignore=tests/load -m "not slow and not integration"'
+      # Builds are required: this project uses hatchling and depends on a git
+      # source (byronwilliamscpa-gemini-image) plus sdist-only packages (fasttext).
+      no-build: false
+      # An explicit -m replaces pyproject's default `not (slow or benchmark)`, so
+      # benchmark (wall-clock latency) tests must be excluded here too.
+      test-command: 'pytest tests/ -v --tb=short -x --ignore=tests/integration --ignore=tests/load -m "not slow and not integration and not benchmark"'
       coverage-report: false
       fail-fast: false
       timeout-minutes: 30

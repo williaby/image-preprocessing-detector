@@ -217,16 +217,6 @@ ocr-labeling = [
     "paddlepaddle>=2.5.0",
 ]
 
-iqa = [
-    # IQA pseudo-labeling pipeline (MUSIQ + TOPIQ-NR ensemble)
-    # Used by scripts/label_iqa_pseudo.py for corpus-wide quality scoring
-    "pyiqa>=0.1.12",
-    "torch>=2.10.0",
-    "torchvision>=0.25.0",
-    "timm>=0.9.0",
-    "scipy>=1.14.0",
-]
-
 synthetic = [
     # Synthetic Document Generator Dependencies
     # Generates multi-script training data from OpenLID-v2 for SigLIP training
@@ -269,10 +259,12 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 # Ensure compatibility with Linux systems by resolving to compatible wheels
 constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
-# These extras are mutually exclusive (different labeling pipelines).
+# The iqa group and labeling extra are mutually exclusive (different labeling
+# pipelines). iqa is a dependency group, not an extra, so `uv sync --all-extras`
+# (used by the org python-compatibility workflow) stays resolvable.
 conflicts = [
     [
-        { extra = "iqa" },
+        { group = "iqa" },
         { extra = "labeling" },
     ],
 ]
@@ -782,4 +774,14 @@ dev = [
     "byronwilliamscpa-gemini-image",
     "kaggle>=1.7.4.5",
     "mkdocs-kroki-plugin>=1.1.0",
+]
+iqa = [
+    # IQA pseudo-labeling pipeline (MUSIQ + TOPIQ-NR ensemble)
+    # Used by scripts/label_iqa_pseudo.py for corpus-wide quality scoring
+    # Install: uv sync --group iqa  (conflicts with the labeling extra)
+    "pyiqa>=0.1.12",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "timm>=0.9.0",
+    "scipy>=1.14.0",
 ]

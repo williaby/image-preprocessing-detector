@@ -54,11 +54,11 @@ jobs:
           uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 
           # Export all dependencies (including optional groups)
-          # NOTE: Cannot use --all-extras because `iqa` and `labeling` extras
-          # declare conflicting `transformers` versions (==4.37.2 vs >=4.40.0)
-          # in [tool.uv.conflicts]. uv pip compile does not honour conflict
-          # declarations, so we enumerate extras explicitly, excluding `iqa`.
-          # The only package missed is `pyiqa` itself (research-only tool).
+          # NOTE: The `iqa` dependency group (pyiqa) conflicts with the
+          # `labeling` extra on `transformers` (==4.37.2 vs >=4.40.0) via
+          # [tool.uv.conflicts]. It is a group, not an extra, so it is not
+          # listed here; the only package missed is `pyiqa` itself
+          # (research-only tool).
           uv pip compile pyproject.toml \
             --extra dev --extra ml --extra fuzz --extra api --extra colab \
             --extra workers --extra labeling --extra language-detection \
