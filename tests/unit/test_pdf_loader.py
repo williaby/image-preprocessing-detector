@@ -343,11 +343,37 @@ class TestLoadPDFConvenience:
             pages = load_pdf("test.pdf", target_dpi=600)
 
         # Verify loader was created with correct DPI
-        mock_loader_class.assert_called_once_with(target_dpi=600)
+        mock_loader_class.assert_called_once_with(
+            target_dpi=600,
+            max_pages=None,
+            allow_truncation=False,
+            max_pixels=None,
+        )
 
         # Verify load was called
         assert len(pages) == 1
         assert pages[0].page_number == 0
+
+    @patch("image_preprocessing_detector.ingestion.pdf_loader.PDFLoader")
+    def test_load_pdf_forwards_limit_overrides(self, mock_loader_class: Mock) -> None:
+        """load_pdf lets CLI and library callers raise or relax the limits."""
+        mock_loader = MagicMock()
+        mock_loader.load.return_value = iter([])
+        mock_loader_class.return_value = mock_loader
+
+        load_pdf(
+            "big.pdf",
+            max_pages=2000,
+            allow_truncation=True,
+            max_pixels=400_000_000,
+        )
+
+        mock_loader_class.assert_called_once_with(
+            target_dpi=300,
+            max_pages=2000,
+            allow_truncation=True,
+            max_pixels=400_000_000,
+        )
 
 
 class TestPDFTooManyPages:

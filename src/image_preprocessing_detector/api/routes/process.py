@@ -94,7 +94,8 @@ def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
         )
 
     # Reject early if the multipart Content-Length advertises an oversize
-    # payload, before allocating memory for the read. This is advisory - # clients can lie, so the post-read size check below is still required.
+    # payload, before allocating memory for the read. This is advisory only:
+    # clients can lie, so the post-read size check below is still required.
     if file.size is not None and file.size > max_size_mb * 1024 * 1024:
         return ErrorResponse(
             error=ErrorCode.FILE_TOO_LARGE,

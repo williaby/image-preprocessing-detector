@@ -497,3 +497,17 @@ class TestImageLoaderPixelBomb:
         assert metadata.width == 800
         assert metadata.height == 600
         mock_cv2_imread.assert_called_once()
+
+    def test_pillow_decompression_bomb_reports_clear_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pillow's own bomb limit fires first for huge images; the error says so."""
+        from PIL import Image as PILImage
+
+        image_path = tmp_path / "bomb.png"
+        PILImage.new("RGB", (50, 50), color="white").save(image_path)
+        # 2 * 100 = 200 pixels is far below the 2500 declared pixels.
+        monkeypatch.setattr(PILImage, "MAX_IMAGE_PIXELS", 100)
+
+        with pytest.raises(ValueError, match="decompression-bomb"):
+            ImageLoader().load(image_path)

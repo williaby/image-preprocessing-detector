@@ -15,7 +15,7 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
-def _validate_positive_int(value: int | None, name: str, default: int) -> int:
+def _validate_positive_int(value: object, name: str, default: int) -> int:
     """Return a validated positive int, applying ``default`` when ``value`` is None.
 
     Rejects ``bool`` (which ``isinstance(_, int)`` accepts) and non-int
@@ -34,7 +34,7 @@ def _validate_positive_int(value: int | None, name: str, default: int) -> int:
         TypeError: If the resolved value is a bool or not an int.
         ValueError: If the resolved value is not greater than zero.
     """
-    resolved = default if value is None else value
+    resolved: object = default if value is None else value
     if isinstance(resolved, bool) or not isinstance(resolved, int):
         msg = f"{name} must be a positive int, got {resolved!r}"
         raise TypeError(msg)
@@ -380,12 +380,22 @@ class PDFLoader:
 def load_pdf(
     pdf_path: str | Path,
     target_dpi: int = 300,
+    *,
+    max_pages: int | None = None,
+    allow_truncation: bool = False,
+    max_pixels: int | None = None,
 ) -> list[PageImage]:
     """Convenience function to load a PDF and return all pages as a list.
 
     Args:
         pdf_path: Path to PDF file
         target_dpi: Target DPI for rendering (default: 300)
+        max_pages: Page cap override (default: PDFLoader.DEFAULT_MAX_PAGES).
+            Raise it for legitimate large documents.
+        allow_truncation: Truncate instead of raising PDFTooManyPagesError
+            when the document exceeds ``max_pages``.
+        max_pixels: Per-page rasterized pixel cap override (default:
+            PDFLoader.DEFAULT_MAX_PIXELS).
 
     Returns:
         List of PageImage objects, one per page
@@ -395,7 +405,12 @@ def load_pdf(
         >>> for page in pages:
         ...     print(f"Page {page.page_number}: {page.width}x{page.height}")
     """
-    loader = PDFLoader(target_dpi=target_dpi)
+    loader = PDFLoader(
+        target_dpi=target_dpi,
+        max_pages=max_pages,
+        allow_truncation=allow_truncation,
+        max_pixels=max_pixels,
+    )
     return list(loader.load(pdf_path))
 
 
