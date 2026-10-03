@@ -34,7 +34,7 @@ Read-only audit. No live secrets found in tracked code. Main real risks: a trans
 - Severity: Low
 - Effort: S
 - Affected: `.snyk` (SNYK-PYTHON-ONNX-10877916 block), `onnx 1.20.1` in `uv.lock`
-- Evidence: ignore `expires: '2025-02-22T00:00:00.000Z'` - expired ~3 months before audit date (2026-05-29). The justification (inference-only, `save_external_data` unused) is reasonable, but the expiry has lapsed so Snyk will now re-flag it.
+- Evidence: ignore `expires: '2025-02-22T00:00:00.000Z'` - expired about 15 months before audit date (2026-05-29). The justification (inference-only, `save_external_data` unused) is reasonable, but the expiry has lapsed so Snyk will now re-flag it.
 - Recommendation: Re-review and re-date the ignore (or remove if a fixed onnx is available). Verify `save_external_data` is still unused.
 - cve: CVE-2025-51480
 

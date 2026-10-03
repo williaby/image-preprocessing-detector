@@ -1,6 +1,6 @@
 # CI/CD & Tooling Audit (06-cicd)
 
-Summary: 23 workflows, all actions SHA-pinned on current majors with no deprecated runtimes; main gaps are config drift (basedpyright is the stated type checker but neither CI nor pre-commit runs it; mypy runs instead with divergent args), an unused semgrep ruleset, a non-blocking bandit scan, setup-uv version spread, and duplicate full-pytest runs in sonarcloud and python-compatibility.
+Summary: 23 workflows, all actions SHA-pinned on current majors (one reusable-workflow call, `mutation-testing.yml:35`, uses a 7-character abbreviated SHA `@74323d9` rather than a full 40-character SHA) with no deprecated runtimes; main gaps are config drift (basedpyright is the stated type checker but neither CI nor pre-commit runs it; mypy runs instead with divergent args), an unused semgrep ruleset, a non-blocking bandit scan, setup-uv version spread, and duplicate full-pytest runs in sonarcloud and python-compatibility.
 
 ## Findings
 
@@ -37,7 +37,7 @@ Summary: 23 workflows, all actions SHA-pinned on current majors with no deprecat
 - Severity: Low | Effort: S
 - Files: .github/workflows/*.yml
 - Evidence: `grep setup-uv@` shows v5 (12 uses), v5.4.2 (3 uses: security-analysis), v4.2.0 (1 use: codeql.yml:52), v7.6 (1 use: slsa-provenance.yml:59). Four versions of the same action installer cause inconsistent uv/cache behavior and make pin-bump review noisy. codeql.yml on v4.2.0 is the oldest.
-- Recommendation: Standardize all workflows on one SHA-pinned setup-uv version (the v7.x line is current); update codeql.yml off v4.2.0.
+- Recommendation: Standardize all workflows on one SHA-pinned setup-uv version (the v7.x line is current); update codeql.yml off v4.2.0. As of 2026-10-02 the open Renovate PR #180 moves every `setup-uv` pin, including codeql.yml, to v10.2.0, which supersedes the manual bump that PR #199 first attempted (dropped from #199 to avoid a same-line conflict).
 
 ### CI-06 sonarcloud re-runs the full pytest suite on every PR (duplicates ci.yml test job)
 
@@ -55,4 +55,4 @@ Summary: 23 workflows, all actions SHA-pinned on current majors with no deprecat
 
 ## Healthy areas
 
-All actions SHA-pinned on current majors (checkout v4.3.1, setup-python v6.2.0, upload/download-artifact v7.0.1/v4.3.0, codeql v3.36.0); zero `::set-output`/`save-state`/`set-env` and zero node12/16 runtimes; a real blocking ci-gate (`ci.yml:481` needs all jobs and exits 1 on failure); the 9 `continue-on-error` uses are scoped to non-gating cases (Python 3.14 experimental, optional apt deps, coverage/docs/fuzz reporters); uv caching present in setup-uv and actions/cache; coverage reporters (codecov/qlty/coverage) reuse ci.yml artifacts via workflow_run instead of re-testing; harden-runner on security-sensitive jobs.
+All actions SHA-pinned on current majors, except the abbreviated 7-character SHA at `mutation-testing.yml:35` (checkout v4.3.1, setup-python v6.2.0, upload/download-artifact v7.0.1/v4.3.0, codeql v3.36.0); zero `::set-output`/`save-state`/`set-env` and zero node12/16 runtimes; a real blocking ci-gate (`ci.yml:481` needs all jobs and exits 1 on failure); the 9 `continue-on-error` uses are scoped to non-gating cases (Python 3.14 experimental, optional apt deps, coverage/docs/fuzz reporters); uv caching present in setup-uv and actions/cache; coverage reporters (codecov/qlty/coverage) reuse ci.yml artifacts via workflow_run instead of re-testing; harden-runner on security-sensitive jobs.

@@ -77,12 +77,13 @@ Affected: CONTRIBUTING.md, AGENTS.md.
 Evidence: CONTRIBUTING.md:44-46,105-134 prescribe `poetry run black`, isort, and mypy; pyproject + CLAUDE.md use `uv`, `ruff format`/`ruff check` (isort via ruff rule `I`, pyproject:324) and `basedpyright` (pyproject:87). AGENTS.md:11-19 also says `poetry install` / `poetry run`. AGENTS.md:7 describes the package as only "ingestion, detection (IQA + layout-lite), correction, routing/output, utils" omitting the largest subpackages (`annotation`, `labeling`, `synthetic`, `drift`, `api`, `monitoring`).
 Recommendation: Update both docs to `uv` + ruff + basedpyright and expand the module map to list `annotation`, `labeling`, `synthetic`, `drift`.
 
-### ARCH-08 - Orphan CLI module `cli_layout.py`
+### ARCH-08 - Orphan CLI module `cli_layout.py` (FALSE POSITIVE, corrected 2026-10-02)
 
-Severity: Low. Effort: S.
+Severity: Low. Effort: S. Status: false positive.
 Affected: `cli_layout.py`.
-Evidence: pyproject `[project.scripts]` declares only `imgprep = ...cli:cli` (line 264) and `annotate = ...annotation.cli:cli` (line 266). `cli_layout.py` (361 LOC) is referenced by no entry point and by no other module (1 self-referential import only); it is a third, unwired CLI surface parallel to `cli.py` (1,163 LOC).
-Recommendation: Either register `cli_layout` as a subcommand group under `imgprep` or remove it; an unreachable 361-LOC CLI invites drift.
+Original claim: `cli_layout.py` (361 LOC) is referenced by no entry point and by no other module, so it is a third, unwired CLI surface that should be registered or removed.
+Correction: the module is live. `src/image_preprocessing_detector/cli.py:1145` does `from image_preprocessing_detector.cli_layout import layout` and registers it as the `imgprep layout` subcommand group (via `cli.add_command(layout)`, guarded by `try/except ImportError`). The group defines `imgprep layout list` (`cli_layout.py:64`) and a second command at `:286`. It is reached through the `imgprep` entry point (`pyproject.toml` `[project.scripts]`), so it needs no entry point of its own. The original scan counted only `[project.scripts]` entries and missed this guarded module-level import in `cli.py`.
+Recommendation: None. Do not remove `cli_layout.py`; doing so would delete a working `imgprep layout` subcommand.
 
 ### ARCH-09 - Ad-hoc device probing alongside the dedicated `device_probe`/`DeviceOrchestrator`
 
