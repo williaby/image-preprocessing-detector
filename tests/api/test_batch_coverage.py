@@ -298,8 +298,10 @@ class TestBatchProcessingErrors:
         img.save(buffer, format="PNG")
         valid_png = buffer.getvalue()
 
-        # Create corrupt PNG
-        corrupt_png = b"\x89PNG\r\n\x1a\ncorrupt"
+        # Create corrupt PNG: valid signature (passes magic-byte validation)
+        # followed by garbage, and long enough to clear MIN_VALIDATION_BYTES.
+        # Payloads shorter than that are rejected up front with HTTP 400.
+        corrupt_png = b"\x89PNG\r\n\x1a\n" + b"corrupt-image-data" * 4
 
         files = [
             ("files", ("valid.png", valid_png, "image/png")),

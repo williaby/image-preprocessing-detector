@@ -170,6 +170,13 @@ def _make_mock_model() -> MagicMock:
     return model
 
 
+def _make_fake_transformers_module() -> MagicMock:
+    """Stand-in for ``transformers`` so tests need no HuggingFace install."""
+    module = MagicMock()
+    module.AutoProcessor.from_pretrained.return_value = _make_mock_processor()
+    return module
+
+
 def _make_mock_processor() -> MagicMock:
     """Create a mock processor that returns tensors."""
     processor = MagicMock()
@@ -474,31 +481,89 @@ class TestSigLIP2MultiTaskDetector:
         assert len(results) == 2
         assert all(isinstance(r, MultiTaskPrediction) for r in results)
 
-    def test_ensure_initialized_loads_checkpoint(
+    def test_ensure_initialized_loads_trainer_checkpoint(
         self,
         tmp_path: Any,
     ) -> None:
-        """_ensure_initialized loads checkpoint when file exists."""
-        mock_model = _make_mock_model()
+        """_ensure_initialized loads a trainer-style checkpoint.
 
-        # Create a fake checkpoint
+        The trainers store numpy scalar metrics (spearmanr output); the loader
+        must accept them under weights_only=True. Calls the real
+        _ensure_initialized so the test fails if the loader regresses.
+        """
+        mock_model = _make_mock_model()
+        mock_model.load_state_dict.return_value = ([], [])
+        mock_model.to.return_value = mock_model
+
         ckpt_path = tmp_path / "best_model.pt"
-        torch.save({"model_state_dict": {}}, ckpt_path)
+        torch.save(
+            {
+                "model_state_dict": {"w": torch.ones(2)},
+                "epoch": 3,
+                "metrics": {"iqa_srcc_overall": np.float64(0.83)},
+                "composite_score": np.float64(0.77),
+            },
+            ckpt_path,
+        )
 
         detector = SigLIP2MultiTaskDetector(
             checkpoint_path=ckpt_path,
             config=SigLIP2MultiTaskConfig(device="cpu"),
         )
-        # Directly set up internal state to test checkpoint loading path
-        detector._device = torch.device("cpu")
-        detector._processor = _make_mock_processor()
-        detector._model = mock_model
-        # Simulate the checkpoint loading portion of _ensure_initialized
-        ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-        state_dict = ckpt.get("model_state_dict", ckpt)
-        mock_model.load_state_dict(state_dict, strict=False)
+        with (
+            patch.dict(
+                "sys.modules",
+                {"transformers": _make_fake_transformers_module()},
+            ),
+            patch.object(
+                SigLIP2MultiTaskDetector,
+                "_build_model",
+                return_value=mock_model,
+            ),
+        ):
+            detector._ensure_initialized()
 
+        assert detector._initialized
         mock_model.load_state_dict.assert_called_once()
+        loaded_state = mock_model.load_state_dict.call_args.args[0]
+        assert torch.equal(loaded_state["w"], torch.ones(2))
+
+    def test_ensure_initialized_rejects_malicious_checkpoint(
+        self,
+        tmp_path: Any,
+    ) -> None:
+        """A checkpoint carrying a code-execution pickle payload is rejected."""
+        sentinel = tmp_path / "pwned.txt"
+
+        class _Payload:
+            def __reduce__(self) -> tuple[Any, tuple[Any, ...]]:
+                return (type(sentinel).write_text, (sentinel, "pwned"))
+
+        ckpt_path = tmp_path / "evil.pt"
+        torch.save({"model_state_dict": {}, "payload": _Payload()}, ckpt_path)
+
+        mock_model = _make_mock_model()
+        detector = SigLIP2MultiTaskDetector(
+            checkpoint_path=ckpt_path,
+            config=SigLIP2MultiTaskConfig(device="cpu"),
+        )
+        with (
+            patch.dict(
+                "sys.modules",
+                {"transformers": _make_fake_transformers_module()},
+            ),
+            patch.object(
+                SigLIP2MultiTaskDetector,
+                "_build_model",
+                return_value=mock_model,
+            ),
+            pytest.raises(ValueError, match="weights_only=True"),
+        ):
+            detector._ensure_initialized()
+
+        assert not sentinel.exists()
+        assert not detector._initialized
+        mock_model.load_state_dict.assert_not_called()
 
     def test_ensure_initialized_missing_checkpoint_skips_load(
         self,
@@ -519,7 +584,7 @@ class TestSigLIP2MultiTaskDetector:
     def test_idempotent_initialization(self) -> None:
         """Calling _ensure_initialized twice doesn't reload."""
         detector = self._make_pre_initialized_detector()
-        # Already initialized — second call should be a no-op
+        # Already initialized - second call should be a no-op
         assert detector._initialized
         detector._ensure_initialized()
         assert detector._initialized

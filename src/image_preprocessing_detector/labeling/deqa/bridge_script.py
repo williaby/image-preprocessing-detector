@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DeQA-Doc bridge script — runs inside the DeQA-Doc venv.
+"""DeQA-Doc bridge script - runs inside the DeQA-Doc venv.
 
 This is a STANDALONE script with NO image_detection dependencies.
 It loads a per-dimension mPLUG-Owl2 model and scores images read

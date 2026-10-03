@@ -78,15 +78,37 @@ class ImageLoader:
         ".webp",
     }
 
-    def __init__(self, target_dpi: int = 300, ensure_bgr: bool = True) -> None:
+    # Hard upper bound on the decoded pixel count. Defends against
+    # pixel-dimension bombs: a PNG/TIFF header can declare enormous
+    # dimensions (e.g. 65535x65535) in a tiny file that OOMs the worker
+    # at cv2.imread. PIL reports the declared size cheaply (without
+    # decoding), so we check it before handing the file to OpenCV.
+    # Layering: Pillow itself warns above ~89MP and raises
+    # DecompressionBombError above ~179MP (2x Image.MAX_IMAGE_PIXELS)
+    # while opening the file, before this guard runs. This limit is the
+    # configurable bound for callers that want a stricter cap than
+    # Pillow's, and a backstop if Pillow's limit is raised or disabled.
+    DEFAULT_MAX_PIXELS: int = 200_000_000
+
+    def __init__(
+        self,
+        target_dpi: int = 300,
+        ensure_bgr: bool = True,
+        max_pixels: int | None = None,
+    ) -> None:
         """Initialize image loader.
 
         Args:
             target_dpi: Target DPI for quality assessment (default: 300)
             ensure_bgr: Convert images to BGR format for OpenCV (default: True)
+            max_pixels: Maximum decoded pixel count. Images whose
+                declared dimensions exceed this raise ValueError before
+                cv2.imread allocates the buffer. Defaults to
+                DEFAULT_MAX_PIXELS.
         """
         self.target_dpi = target_dpi
         self.ensure_bgr = ensure_bgr
+        self.max_pixels = self.DEFAULT_MAX_PIXELS if max_pixels is None else max_pixels
 
         logger.info("Image loader initialized", target_dpi=target_dpi)
 
@@ -103,7 +125,8 @@ class ImageLoader:
 
         Raises:
             FileNotFoundError: If image file doesn't exist
-            ValueError: If file format is not supported or image is invalid
+            ValueError: If file format is not supported, the declared
+                dimensions exceed `max_pixels`, or the image is invalid.
         """
         image_path = Path(image_path)
 
@@ -120,6 +143,16 @@ class ImageLoader:
 
         # Extract metadata using PIL
         metadata = self._extract_metadata(image_path)
+
+        # Pixel-bomb guard: PIL reports declared dimensions without
+        # decoding pixel data, so reject oversize images before
+        # cv2.imread allocates a potentially multi-gigabyte buffer.
+        declared_pixels = metadata.width * metadata.height
+        if declared_pixels > self.max_pixels:
+            raise ValueError(
+                f"Image dimensions {metadata.width}x{metadata.height} "
+                f"({declared_pixels} pixels) exceed max_pixels={self.max_pixels}"
+            )
 
         # Load image using OpenCV
         img = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
@@ -206,6 +239,14 @@ class ImageLoader:
 
                 return metadata
 
+        except Image.DecompressionBombError as e:
+            # Pillow raises this at Image.open() once the declared size
+            # exceeds 2x Image.MAX_IMAGE_PIXELS (~179MP by default), which
+            # is before our max_pixels guard in load() can run. Keep the
+            # reason visible instead of the generic metadata failure.
+            raise ValueError(
+                f"Image {image_path} exceeds Pillow's decompression-bomb limit"
+            ) from e
         except Exception as e:
             raise ValueError(f"Failed to extract metadata from {image_path}") from e
 

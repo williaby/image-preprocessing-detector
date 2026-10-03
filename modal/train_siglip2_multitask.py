@@ -383,6 +383,46 @@ class MultiTaskTrainingConfig:
 # ============================================================================
 
 
+def _numpy_scalar_safe_globals() -> list[Any]:
+    """Pickle globals needed to load numeric numpy scalars with weights_only.
+
+    The scalar reconstructor is read off a scalar's ``__reduce__`` so it matches
+    the installed numpy (``numpy.core`` on 1.x, ``numpy._core`` on 2.x). Object,
+    string and structured dtypes are deliberately not allowlisted.
+    """
+    import numpy as np
+
+    scalar_types = (
+        np.bool_,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.float16,
+        np.float32,
+        np.float64,
+    )
+    reconstructor: Any = np.float64(0).__reduce__()[0]
+    dtype_classes = {type(np.dtype(t)) for t in scalar_types}
+    return [reconstructor, np.dtype, *sorted(dtype_classes, key=repr)]
+
+
+def _plain_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
+    """Convert numpy scalar metric values to plain Python numbers.
+
+    Keeps new checkpoints loadable under ``weights_only=True`` without any
+    numpy globals.
+    """
+    return {
+        key: value.item() if hasattr(value, "item") else value
+        for key, value in metrics.items()
+    }
+
+
 def _create_multitask_model(
     model_id: str,
     head_configs: dict[str, dict[str, Any]] | None = None,
@@ -492,8 +532,23 @@ def _create_multitask_model(
             Args:
                 path: Path to v2 IQA checkpoint file.
             """
-            ckpt = torch.load(path, map_location="cpu", weights_only=False)
-            state_dict = ckpt.get("model_state_dict", ckpt)
+            # weights_only=True limits pickle deserialization to tensors and
+            # primitives. v2 IQA checkpoints also hold numpy scalar metrics
+            # (spearmanr output), so only numeric numpy scalar globals are
+            # allowlisted (mirrors utils/safe_checkpoint.py in the package;
+            # this script cannot import it inside the Modal image).
+            # #ASSUME: this image pins torch==2.5.1, inside the
+            # CVE-2025-32434 range where weights_only=True is bypassable, so
+            # the flag is defense in depth here, not a full mitigation. The
+            # checkpoint comes from our own trainer on a private Modal volume.
+            # #VERIFY: bump the image pins to torch>=2.6.0 (tracked in
+            # SECURITY-FINDINGS.md follow-ups) before loading any checkpoint
+            # from an untrusted source.
+            with torch.serialization.safe_globals(_numpy_scalar_safe_globals()):
+                ckpt = torch.load(path, map_location="cpu", weights_only=True)
+            state_dict = (
+                ckpt.get("model_state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
+            )
             missing, unexpected = self.load_state_dict(state_dict, strict=False)
 
             loaded_backbone = sum(1 for k in state_dict if k.startswith("backbone."))
@@ -2244,8 +2299,8 @@ def _update_best_checkpoint(
         "phase": phase,
         "model_state_dict": model_state,
         "config": config.to_dict(),
-        "metrics": val_metrics,
-        "composite_score": composite,
+        "metrics": _plain_metrics(val_metrics),
+        "composite_score": float(composite),
     }
     if ema_active:
         state.best_checkpoint["ema_active"] = True
