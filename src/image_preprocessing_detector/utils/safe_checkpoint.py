@@ -76,9 +76,9 @@ def load_checkpoint_weights_only(
 ) -> Any:
     """Load a trainer checkpoint with ``weights_only=True`` plus numpy scalars.
 
-    #CRITICAL: Never relax this to ``weights_only=False``. Deserializing an
+    Security invariant: never relax this to ``weights_only=False``. Deserializing an
     untrusted checkpoint with full pickle executes arbitrary code.
-    #ASSUME: weights_only=True is a complete mitigation only on torch>=2.6.0
+    Assumption: weights_only=True is a complete mitigation only on torch>=2.6.0
     (CVE-2025-32434); pyproject.toml pins torch>=2.10.0 for this reason.
     #VERIFY: ``uv run python -c "import torch; print(torch.__version__)"``
     reports >=2.6.0 in every environment that calls this function.
