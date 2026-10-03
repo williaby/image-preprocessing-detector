@@ -100,7 +100,6 @@ jobs:
         with:
           path: |
             .venv
-            ~/.cache/uv
           key: cv-deps-uv-${{ runner.os }}-${{ steps.cache-key.outputs.uv-hash }}
           restore-keys: |
             cv-deps-uv-${{ runner.os }}-
@@ -206,7 +205,6 @@ jobs:
         with:
           path: |
             .venv
-            ~/.cache/uv
           key: cv-deps-uv-${{ runner.os }}-${{ needs.setup-optimized.outputs.uv-hash }}
           restore-keys: |
             cv-deps-uv-${{ runner.os }}-
@@ -300,7 +298,6 @@ jobs:
         with:
           path: |
             .venv
-            ~/.cache/uv
           key: cv-deps-uv-${{ runner.os }}-${{ needs.setup-optimized.outputs.uv-hash }}
           restore-keys: |
             cv-deps-uv-${{ runner.os }}-

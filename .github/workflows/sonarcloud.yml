@@ -88,7 +88,6 @@ jobs:
         with:
           path: |
             .venv
-            ~/.cache/uv
           key: uv-${{ runner.os }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-
