@@ -1,4 +1,4 @@
-"""Docling Routing Engine — Generate Docling CLI parameters from analysis.
+"""Docling Routing Engine - Generate Docling CLI parameters from analysis.
 
 Maps Project A document analysis results to Docling CLI parameters for
 Project B handoff. Implements 6 routing rules evaluated in priority order:
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
-# Thresholds — single source of truth for tuning
+# Thresholds - single source of truth for tuning
 # ---------------------------------------------------------------------------
 _TEXT_LAYER_QUALITY_THRESHOLD = 0.90
 _DQS_LOW_THRESHOLD = 0.4
@@ -532,7 +532,7 @@ def route_document(
     metadata: DocumentMetadata,
     page_summary: PageLayoutSummary | None = None,
 ) -> RoutingDecision:
-    """Convenience function — route a document using the default engine.
+    """Convenience function - route a document using the default engine.
 
     Args:
         metadata: Document-level analysis results.

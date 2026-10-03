@@ -113,6 +113,32 @@ class APISettings(BaseSettings):
         default=50,
         description="Maximum file size in MB",
     )
+    max_batch_total_size_mb: int = Field(
+        default=500,
+        gt=0,
+        description=(
+            "Maximum cumulative size in MB across all files in a batch "
+            "request. Defaults to 500MB so a worst-case batch cannot "
+            "consume the full max_batch_size * max_file_size_mb (= 5GB "
+            "with default settings) of memory. Tune up for trusted "
+            "internal callers, down for hostile environments."
+        ),
+    )
+    max_pdf_pages_per_request: int = Field(
+        default=100,
+        gt=0,
+        description=(
+            "Maximum number of PDF pages the /process and /batch routes "
+            "will render per request. Pages beyond this limit are "
+            "silently truncated by the API but the response surfaces "
+            "the count via ProcessingResult.pages_truncated so callers "
+            "can detect partial results. Note the underlying PDFLoader "
+            "raises PDFTooManyPagesError by default for non-API callers "
+            "(CLI / Celery / Modal); only the HTTP routes opt into "
+            "allow_truncation=True. Lower this for stricter tenants; "
+            "raise it for trusted callers."
+        ),
+    )
 
     # Processing options
     default_prefer_gpu: bool = Field(

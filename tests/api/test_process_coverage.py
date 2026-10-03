@@ -50,6 +50,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = "document.doc"
         mock_file.content_type = "application/msword"
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         assert error is not None
@@ -61,6 +62,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = "image.png"
         mock_file.content_type = "image/png"
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         assert error is None
@@ -70,6 +72,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = "document.pdf"
         mock_file.content_type = "application/pdf"
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         assert error is None
@@ -79,6 +82,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = "image.png"
         mock_file.content_type = "application/octet-stream"
+        mock_file.size = None  # UploadFile.size is int | None
 
         # Should still pass because extension is valid
         error = validate_file(mock_file, 50)
@@ -89,6 +93,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = "image.jpeg"
         mock_file.content_type = None
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         assert error is None
@@ -371,6 +376,7 @@ class TestFileSizeValidation:
         mock_file = MagicMock()
         mock_file.filename = "large.png"
         mock_file.content_type = "image/png"
+        mock_file.size = None  # UploadFile.size is int | None
 
         # Test with 1MB limit
         error = validate_file(mock_file, 1)

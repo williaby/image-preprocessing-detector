@@ -113,6 +113,7 @@ uv run python scripts/label_doc3d_warping_severity.py score \
 
 **Expect**: `scored≈200 skipped≈0`, a percentile line, and `example shape: [448, 448, 2]`.
 **VERIFY / STOP IF**:
+
 - error "No usable backward maps found" → open one `bm_*.zip`; the member format or key is
   not `.npy`/`.mat` with key `bm`. Fix `load_backward_map` before continuing.
 - raw percentiles all ~0 or all identical → map units/orientation differ from assumption.
@@ -207,6 +208,7 @@ uv run python scripts/prepare_multitask_datasets.py merge \
 ```
 
 **Checks (each manifest)**:
+
 - Flat JSON list (merged: `train_manifest.json`, `val_manifest.json`), not `{"samples": …}`
   (the `script` manifest is a dict with `samples`; `merge` unwraps it).
 - **Mixing caps are warnings, not enforcement.** Grep the output for `MIXING CAP EXCEEDED`.
