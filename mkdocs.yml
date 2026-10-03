@@ -204,8 +204,9 @@ nav:
       - System Architecture: development/architecture.md
       - Architecture Diagrams:
           - Overview: architecture/diagrams/README.md
+          - Pipeline Level 0 (canonical): architecture/pipeline-level-0.md
           - Level 0 - Pipeline Context: architecture/diagrams/level-0/index.md
-          - Level 1 - Project A Architecture: architecture/diagrams/level-1/index.md
+          - Level 1 - Prepare-Doc Architecture: architecture/diagrams/level-1/index.md
           - Level 2 - Workstreams:
               - Production Runtime: architecture/diagrams/level-2/production-runtime/index.md
               - Model Training: architecture/diagrams/level-2/model-training/index.md
@@ -217,9 +218,9 @@ nav:
           - Overview: development/RAG Pipeline/RAG-pipeline-project-overview.md
           - Contracts:
               - RAG Processor → Project A: development/RAG Pipeline/rag-processor-project-a-contract.md
-              - Project A → Project B: development/RAG Pipeline/prepare-doc-unify-contract.md
+              - Prepare-Doc → Unify: development/RAG Pipeline/prepare-doc-unify-contract.md
           - Project A (This Project): development/RAG Pipeline/project-a-project-plan.md
-          - Project A F/NF Requirements: development/RAG Pipeline/prepare-doc-f-nf.md
+          - Prepare-Doc F/NF Requirements: development/RAG Pipeline/prepare-doc-f-nf.md
           - Project B (OCR): development/RAG Pipeline/unify-f-nf.md
           - Project C (Fusion): development/RAG Pipeline/chunk-f-nf.md
           - Models Reference: development/RAG Pipeline/MODELS.md

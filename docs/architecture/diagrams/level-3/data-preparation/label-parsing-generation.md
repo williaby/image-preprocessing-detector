@@ -554,7 +554,10 @@ DEGRADATION_INDEX = {
 
 Beyond the 45-dimensional IQA degradation vector, the training label system produces labels for all heads of the two-model inference pipeline.
 
-#### SigLIP 2 NAFlex Heads (19 heads, 5 groups)
+#### SigLIP 2 NAFlex Heads (16 heads, 5 groups)
+
+> Note: the per-head names below predate the Release 1 head set (head counts under revision; see
+> [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md)).
 
 | Group | Head | Type | Dataset Sources | Provenance Tier |
 |-------|------|------|-----------------|-----------------|
@@ -700,7 +703,7 @@ def compute_anchor_score(
 
 ### Multi-Head Anchor Concept
 
-With the SigLIP 2 multi-task architecture (19 heads), the anchor score system extends to a **per-head anchor priority**. Each SigLIP 2 head has its own anchor selection based on which datasets provide ground truth for that specific task:
+With the SigLIP 2 multi-task architecture (16 heads), the anchor score system extends to a **per-head anchor priority**. Each SigLIP 2 head has its own anchor selection based on which datasets provide ground truth for that specific task:
 
 | Head Group | Primary Anchor Source | Fallback Source | Weight Strategy |
 |------------|----------------------|-----------------|-----------------|

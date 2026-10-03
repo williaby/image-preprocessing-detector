@@ -1,6 +1,6 @@
 ---
-description: Comprehensive guide for maintaining the 4-level architecture documentation
-  system
+description: Comprehensive guide for maintaining the 5-level architecture documentation
+  (Level 0-4) system
 owner: docs-team
 purpose: Guidance for architecture documentation maintenance.
 schema_type: common
@@ -38,7 +38,7 @@ title: Architecture Documentation Maintenance Guide
 ### The 5-Level Architecture System
 
 ```text
-Level 0: Multi-Project Pipeline (6 projects)
+Level 0: Foundry Pipeline (5 repositories; see ../pipeline-level-0.md)
     ↓
 Level 1: Prepare-Doc Architecture (8 workstreams)
     ↓
@@ -71,7 +71,7 @@ Level 4: Instance Registries (per-dataset adapter tables)
 - `rag-pipeline-overview.puml` - Multi-project architecture diagram
 - `rag-pipeline-overview.svg` - Generated SVG (auto-generated)
 
-**Scope**: 6 projects (Ingest, Prepare-Doc, Prepare-Audio, Unify, Chunk, Embed)
+**Scope**: 5 pipeline stages (Ingest, Prepare-Doc, Prepare-Audio, Unify, Chunk). Embedding belongs to downstream applications and is outside the pipeline (see [chunk-embed-contract.md](../development/RAG%20Pipeline/chunk-embed-contract.md)). The canonical short page is [pipeline-level-0.md](pipeline-level-0.md), identical in all five repositories.
 
 **Update Frequency**: Only when inter-project contracts or architecture changes
 
@@ -866,7 +866,7 @@ end note
    note right
      **Note**: SigLIP 2 NAFlex handles variable
      resolution natively via NAFlex packing.
-     19 heads across 5 groups.
+     16 heads across 5 groups.
      See: level-2/model-training/index.md
    end note
    ```
@@ -1423,6 +1423,6 @@ graph TD
 
 ---
 
-*Complete maintenance guide for 4-level architecture documentation system*
+*Complete maintenance guide for the 5-level (Level 0-4) architecture documentation system*
 *All tools, standards, and procedures documented*
 *Ready for long-term sustainable maintenance*

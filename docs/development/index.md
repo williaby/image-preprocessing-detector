@@ -86,12 +86,16 @@ See [Architecture Documentation](../architecture/) for detailed system design.
 
 ### RAG Pipeline Context
 
-This project is **Prepare-Doc** in a four-project RAG pipeline:
+This project is **Prepare-Doc** in the five-stage Foundry RAG pipeline (see
+[pipeline-level-0.md](../architecture/pipeline-level-0.md)):
 
-- **Prepare-Doc** (This): Preprocessing & IQA
-- **Unify**: OCR Orchestration
-- **Chunk**: Fusion & Trust
-- **Embed**: Vector Indexing
+- **Ingest**: Upload and routing
+- **Prepare-Doc** (This): Preprocessing, IQA and coarse layout
+- **Prepare-Audio**: Transcription and diarization
+- **Unify**: OCR through docling-serve, Docling DOM unification
+- **Chunk**: Trust scoring and RAG chunking (the pipeline ends at `RAGChunkSet.json`)
+
+Embedding and vector search belong to the consuming applications, not the pipeline.
 
 See [RAG Pipeline Overview](RAG%20Pipeline/RAG-pipeline-project-overview.md) for the complete architecture.
 

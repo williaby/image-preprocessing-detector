@@ -57,7 +57,7 @@ PDF/Image Input → DPI Detection & Upscaling → Ingestion (300 DPI)
 
 - **[Guides](guides/deployment.md)**: Deployment and operational guides
 - **[API Reference](api/index.md)**: Complete API documentation
-- **[Architecture](architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)**: System architecture (4-level hierarchy)
+- **[Architecture](architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)**: System architecture (5-level hierarchy, Level 0-4)
 - **[Planning](planning/PROJECT_PLAN.md)**: Project plan and active planning documents
 - **[Development](development/index.md)**: Contributing guidelines and dev setup
 - **[Datasets](datasets/DATASET_QUICK_REFERENCE.md)**: Dataset inventory (51 source datasets)

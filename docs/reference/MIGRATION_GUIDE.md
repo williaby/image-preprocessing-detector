@@ -45,7 +45,7 @@ source: project-a
 
 ### Old System (Pre-December 2025)
 
-**"RAG Pipeline" Numbering** - Used gaps to align with four-project RAG pipeline architecture:
+**"RAG Pipeline" Numbering** - Used gaps to align with four-project RAG pipeline architecture (legacy name; now the five-repository Foundry pipeline, see [pipeline-level-0.md](../architecture/pipeline-level-0.md)):
 
 - Phase 4, 6, 8, 10 (skipped 0-3, 5, 7, 9)
 - Rationale: Aligned phase numbers with project milestones across A-B-C-D pipeline
@@ -321,9 +321,9 @@ When encountering old phase references in code, comments, or documentation:
 
 **Wrong**: "Prepare-Doc Phase 6 corresponds to Unify Phase 6"
 
-**Right**: Phase numbers are **independent per project**. Use the **Prepare-Doc/B contract** to understand handoffs, not phase numbers.
+**Right**: Phase numbers are **independent per project**. Use the **Prepare-Doc to Unify contract** to understand handoffs, not phase numbers.
 
-**Reference**: `docs/development/RAG Pipeline/project-ab-contract.md`
+**Reference**: `docs/development/RAG Pipeline/prepare-doc-unify-contract.md`
 
 ---
 
@@ -405,7 +405,7 @@ feat(phase-2): add DocLayout-YOLO detector with 11 classes
 
 ### Q1: Why did the phase numbering change?
 
-**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the four-project RAG pipeline architecture but caused confusion within Prepare-Doc. Sequential numbering (0-9) is clearer for Prepare-Doc developers.
+**A**: The old "RAG Pipeline" numbering (4, 6, 8, 10) was designed to align with the legacy four-project RAG pipeline architecture (now the Foundry pipeline) but caused confusion within Prepare-Doc. Sequential numbering (0-9) is clearer for Prepare-Doc developers.
 
 ---
 
@@ -449,7 +449,7 @@ Keeping them in separate phases created artificial boundaries.
 
 - **Current Planning**: `docs/planning/PROJECT_PLAN.md` (authoritative source)
 - **Deprecated Docs**: `docs/DEPRECATED_DOCS.md` (list of deleted files)
-- **Prepare-Doc/B Contract**: `docs/development/RAG Pipeline/project-ab-contract.md`
+- **Prepare-Doc to Unify Contract**: `docs/development/RAG Pipeline/prepare-doc-unify-contract.md`
 - **Phase Comparison**: `tmp_cleanup/.tmp-planning-docs-comparison-20250201.md` (detailed analysis)
 
 ---
