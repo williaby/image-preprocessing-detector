@@ -15,7 +15,7 @@ branch; **OPEN** findings require operator action documented below.
 | # | Severity | Area | Title | Status |
 |---|----------|------|-------|--------|
 | 1 | High | ML | `torch.load(weights_only=False)` in production inference path | **FIXED** |
-| 2 | High | ML | `torch.load(weights_only=False)` in Modal training script | **FIXED** |
+| 2 | High | ML | `torch.load(weights_only=False)` in Modal training script | **FIXED** (Modal image still pins torch 2.5.1; see finding 2) |
 | 3 | Medium | ML | Unvalidated model path in Arena `LocalBackend` | **FIXED** |
 | 4 | Medium | ML | Unvalidated model path in Arena `RegressionBackend` | **FIXED** |
 | 5 | High | API | No magic-byte content validation on uploads | **FIXED** |
@@ -25,7 +25,7 @@ branch; **OPEN** findings require operator action documented below.
 | 9 | Medium | Ingestion | PDF loader has no `max_pages` limit (DoS risk) | **FIXED** |
 | 10 | High | CI | `actions/github-script@v7` not SHA-pinned | **Resolved on `main` (#191)** |
 | 11 | High | CI | `astral-sh/setup-uv@v5` not SHA-pinned (3 locations) | **Resolved on `main` (#191)** |
-| 12 | Medium | CI | Org-reusable workflows pinned to `@main` (3 files) | **OPEN** |
+| 12 | Medium | CI | Org-reusable workflows track `main` by SHA; stale-pin risk (3 files) | **OPEN** |
 | 13 | Low | CI | 13 workflows lack `step-security/harden-runner` | **OPEN** |
 | 14 | Low | Deps | `transformers` constraint in `iqa` extra (`==4.37.2`) | **OPEN** |
 | 15 | Low | Metadata | EXIF DPI extraction lacks bounds checking | **Accepted** |
@@ -62,22 +62,41 @@ state_dict = ckpt.get("model_state_dict", ckpt)
 `isinstance(ckpt, dict)` guard so the downstream `.get()` call is safe
 when the checkpoint is a raw state dict.
 
+The trainers store `scipy.stats.spearmanr` output (`numpy.float64`) in the
+checkpoint's `metrics` and `composite_score`, which a plain
+`weights_only=True` load rejects. The loader therefore goes through
+`utils/safe_checkpoint.load_checkpoint_weights_only`, which allowlists only
+the pickle globals needed for *numeric* numpy scalars via
+`torch.serialization.safe_globals`. Arrays, object dtypes and arbitrary
+callables are still rejected; `tests/unit/utils/test_safe_checkpoint.py`
+covers a trainer-style round trip and a code-execution payload that must
+not run.
+
 **Risk if exploited**: An attacker who can write to the configured
 `checkpoint_path` (filesystem, mounted volume, or shared model
 registry) could execute arbitrary code in the inference process - including credential exfiltration and lateral movement.
 
 ---
 
-### 2. `torch.load(weights_only=False)` in Modal training script - **FIXED**
+### 2. `torch.load(weights_only=False)` in Modal training script - **FIXED** (with caveat)
 
 **Severity**: High (same mechanism, training context)
 
-**Location**: `modal/train_siglip2_multitask.py:494`
+**Location**: `modal/train_siglip2_multitask.py` (`load_iqa_checkpoint`)
 
 The v2 IQA checkpoint loader used pickle deserialization. Even in a
 training context, this is unsafe when checkpoints originate from
 shared storage. Applied the same `weights_only=True` fix with a
-defensive `isinstance` guard.
+defensive `isinstance` guard and the same numpy scalar allowlist (inlined,
+because the Modal image cannot import the package). The trainer now also
+saves plain Python floats for `metrics` and `composite_score`.
+
+**Caveat**: the Modal training images (`modal/train_siglip2_multitask.py`
+and four sibling scripts) still pin `torch==2.5.1`, inside the
+CVE-2025-32434 range where `weights_only=True` is bypassable. In that runtime
+the flag is defense in depth, not a complete mitigation; checkpoints come
+from our own trainer on a private Modal volume. Bumping the image pins to
+torch>=2.6.0 needs a training smoke test and is listed under follow-up work.
 
 ---
 
@@ -248,6 +267,22 @@ flag (default `False`). Behaviour is now asymmetric by caller:
   truncation state in `last_total_pages` / `last_pages_truncated`
   so callers can detect partial results without re-opening the PDF.
 
+**Limits of this fix** (not covered, tracked as follow-up):
+
+- The cap bounds *rendering* through `PDFLoader` only. `classify_pdf_type`
+  (text extraction and image detection) still walks every page of the
+  upload, and in the API it runs before the loader, so it is not bounded by
+  the page cap. Other direct PyMuPDF callers are likewise uncapped.
+- `max_pixels` is per page. There is no cumulative pixel or byte budget
+  across pages, so `max_pages` x `max_pixels` is the theoretical worst case.
+- The pixel guard runs lazily per page, so pages before an oversized one
+  are rendered first.
+- The API returns HTTP 200 with a truncated page set, flagged only by
+  `pages_truncated`; clients must check that field.
+- Defaults are breaking for non-API callers (see `CHANGELOG.md`); `load_pdf()`
+  accepts `max_pages`, `max_pixels` and `allow_truncation` overrides, but the
+  CLI has no override flag yet.
+
 ---
 
 ## Metadata Handling
@@ -294,7 +329,10 @@ files are well-maintained. Highlights:
 
 **Severity**: Low (track upstream)
 
-The `iqa` optional extra pins `transformers==4.37.2`. Newer
+The `iqa` dependency group resolves `transformers==4.37.2` transitively
+through `pyiqa` (it is not a direct pin in `pyproject.toml`; the `labeling`
+extra requires `>=4.40.0`, which is why the two are declared as conflicting).
+Newer
 `transformers` releases have addressed several deserialization issues
 in `trust_remote_code` paths. Project code does pass
 `trust_remote_code=True` to `AutoProcessor.from_pretrained()` in
@@ -326,29 +364,30 @@ needed here.
 
 Audit confirmed all other third-party `uses:` lines in this repo are pinned to 40-char SHAs.
 
-### 12. Org-reusable workflows pinned to `@main` - **OPEN**
+### 12. Org-reusable workflows tracking `main` - **OPEN**
 
-These reference workflows in repositories outside this audit's scope:
+These reference workflows in repositories outside this audit's scope. After
+merging `main`, all three are already pinned to a full 40-character commit
+SHA, but each line still carries a trailing `# main` comment and the pin is
+a moving snapshot of the shared repository's `main` rather than a reviewed
+release:
 
 | File | Line | Reference |
 |---|---|---|
-| `.github/workflows/coverage.yml` | 26 | `ByronWilliamsCPA/.github/.github/workflows/python-qlty-coverage.yml@main` |
-| `.github/workflows/container-security.yml` | 40 | `williaby/.github/.github/workflows/python-container-security.yml@main` |
-| `.github/workflows/slsa-provenance.yml` | 103 | `ByronWilliamsCPA/.github/.github/workflows/python-slsa.yml@main` |
+| `.github/workflows/coverage.yml` | 26 | `ByronWilliamsCPA/.github/.github/workflows/python-qlty-coverage.yml@c75ea078...` |
+| `.github/workflows/container-security.yml` | 40 | `williaby/.github/.github/workflows/python-container-security.yml@c75ea078...` |
+| `.github/workflows/slsa-provenance.yml` | 103 | `ByronWilliamsCPA/.github/.github/workflows/python-slsa.yml@c75ea078...` |
 
-These are the user's own org-shared workflows, so the threat model is
-"are we OK with a force-push to `main` in the shared `.github` repo
-silently changing what runs in this repo's CI?". The answer is no for
-release-bearing workflows: `slsa-provenance.yml` produces signed
-attestations and runs with `id-token: write`, so `@main` allows a
-compromised shared repo to forge provenance.
+`slsa-provenance.yml` produces signed attestations and runs with
+`id-token: write`, so the shared repository is part of this repo's trust
+base for provenance. A full-SHA pin means a force-push to `main` in the
+shared repo cannot silently change what runs here; the residual risk is
+stale pins.
 
-**Recommendation**: Pin all three to specific SHAs from
-`ByronWilliamsCPA/.github` and `williaby/.github`. Already done for
-`mutation-testing.yml` (pinned to `@74323d9`) and `release.yml`
-(pinned to `@3bf8bf5d88a71b91949ee88382284cb6b292d6e0`), so the
-pattern is established - this is just applying it to the remaining
-three.
+**Remaining work**: keep these pins current deliberately (for example via
+Dependabot's `github-actions` ecosystem) and replace the 7-character
+`@74323d9` pin in `mutation-testing.yml` with the full 40-character SHA.
+`release.yml` is already pinned to a full SHA.
 
 ### 13. `harden-runner` missing from 13 workflows - **OPEN**
 
@@ -359,21 +398,23 @@ three.
 would surface unexpected outbound traffic during CI, which is the
 intended OpenSSF Scorecard hardening posture.
 
-**Recommendation**: Add the following step at the top of each missing
-workflow's main job:
+**Recommendation**: Add the following step (same pin as
+`slsa-provenance.yml`) at the top of each missing workflow's main job:
 
 ```yaml
 - name: Harden runner
-  uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+  uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
   with:
     egress-policy: audit
 ```
 
-Workflows missing it: `benchmark-results.yml`, `container-security.yml`,
-`coverage.yml`, `dependency-review.yml`, `docs.yml`,
-`fips-compatibility.yml`, `mutation-testing.yml`,
+Workflows missing it (verify with
+`git grep -L harden-runner -- '.github/workflows/*.yml'`):
+`benchmark-results.yml`, `container-security.yml`, `coverage.yml`,
+`dependency-review.yml`, `docs.yml`, `mutation-testing.yml`,
 `performance-regression.yml`, `pr-validation.yml`,
-`python-compatibility.yml`, `reuse.yml`, `sbom.yml`, `sonarcloud.yml`.
+`python-compatibility.yml`, `release.yml`, `reuse.yml`, `sbom.yml`,
+`sonarcloud.yml`.
 
 Not fixed in this PR because adding a step to 13 unrelated workflows
 introduces broad CI surface area better validated incrementally.
@@ -406,15 +447,20 @@ To reproduce the fixes locally:
 # Unit tests for the new magic-byte validator
 PYTHONPATH=src python -m pytest tests/unit/utils/test_file_validation.py -v
 
-# Confirm no remaining unpinned third-party actions
-grep -rn "uses:" .github/workflows/*.yml | \
-  grep -vE "uses:.*@[a-f0-9]{40}" | \
-  grep -v "ByronWilliamsCPA\|williaby"
-# Expect: no output
+# Round-trip a trainer-style checkpoint and confirm a malicious pickle is rejected
+uv run --extra dev python -m pytest tests/unit/utils/test_safe_checkpoint.py \
+  tests/unit/detection/test_siglip2_multitask.py --override-ini="addopts=" -q
 
-# Confirm no torch.load with weights_only=False in our code
+# API regression tests need the api extra, and cv2 must be imported before the
+# first request, so run them after another module that imports it
+uv run --extra dev --extra api python -m pytest tests/unit/test_image_loader.py \
+  tests/api --override-ini="addopts=" -q
+
+# Confirm no executable torch.load(weights_only=False) in src/ or modal/
 grep -rn "weights_only=False" src/ modal/
-# Expect: no output
+# Expect: comment and docstring mentions only (safe_checkpoint.py,
+# siglip2_multitask.py). scripts/run_model_benchmark.py still uses
+# weights_only=False; see follow-up work.
 ```
 
 ---
@@ -428,5 +474,13 @@ grep -rn "weights_only=False" src/ modal/
    13).
 3. Bump the `iqa` extra's `transformers` pin when upstream `iqa`
    dependencies allow `>=4.48` (finding 14).
-4. Consider migrating any new ML checkpoints to safetensors format - even with `weights_only=True`, safetensors gives a stricter
+4. Bump the `torch==2.5.1` pins in the Modal training images
+   (`modal/train_siglip2_multitask.py`, `train_siglip2_iqa.py`,
+   `train_siglip2_iqa_v2.py`, `train_skew_estimator.py`,
+   `extract_siglip2_diqa5000.py`) to torch>=2.6.0 after a training smoke test
+   (finding 2), and replace `weights_only=False` in
+   `scripts/run_model_benchmark.py`.
+5. Bound PDF classification and add a cumulative pixel budget (finding 9
+   limits), and add a CLI override for the PDF page and pixel caps.
+6. Consider migrating any new ML checkpoints to safetensors format - even with `weights_only=True`, safetensors gives a stricter
    parser and explicit metadata separation.
