@@ -35,19 +35,20 @@ See [.claude/README.md](.claude/README.md) for full documentation.
 
 ### Architecture Documentation System
 
-This project uses a **4-level architecture documentation hierarchy** with automated validation and traceability:
+This project uses a **5-level (Level 0-4) architecture documentation hierarchy** with automated validation and traceability:
 
-- **Level 0**: Multi-project RAG pipeline context (6 projects)
-- **Level 1**: Project A architecture (8 workstreams overview)
+- **Level 0**: Foundry pipeline context (5 pipeline repositories; identical page in each: [docs/architecture/pipeline-level-0.md](docs/architecture/pipeline-level-0.md))
+- **Level 1**: Prepare-Doc architecture (8 workstreams overview)
 - **Level 2**: Workstream details ("Level 2.5" standard with code examples)
 - **Level 3**: Module implementation (state machines, detailed swimlanes with LOC annotations)
+- **Level 4**: Instance registries (per-dataset adapter tables; Markdown, not PlantUML)
 
 **📖 Complete Maintenance Guide**: [docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md](docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)
 
 **Key Resources**:
 
 - [LEVEL_2_DOCUMENTATION_TEMPLATE.md](docs/architecture/LEVEL_2_DOCUMENTATION_TEMPLATE.md) - "Level 2.5" standard
-- [FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md](docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md) - 1,292 files mapped
+- [FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md](docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md) - file-to-workstream mapping (regenerate via scripts/extract_workstream_loc.sh)
 - [scripts/extract_workstream_loc.sh](scripts/extract_workstream_loc.sh) - Automated LOC counting
 - [scripts/validate_architecture_links.sh](scripts/validate_architecture_links.sh) - Link validation
 
@@ -106,8 +107,12 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 
 ## Project Overview
 
-**Project A - Preprocessing, IQA & Coarse Layout Gateway** - Front door for the four-project RAG document pipeline. Accepts raw documents in any condition, assesses quality along multiple dimensions, applies geometric and quality corrections, and delivers `DocumentMetadata.json` + corrected images to Project B.
+**Prepare-Doc (formerly Project A) - Preprocessing, IQA & Coarse Layout Gateway** - Document track of the Foundry RAG pipeline (Ingest routes documents here). Accepts raw documents in any condition, assesses quality along multiple dimensions, applies geometric and quality corrections, and delivers `DocumentMetadata.json` + corrected images to Unify.
 
+> **Pipeline context**: [docs/architecture/pipeline-level-0.md](docs/architecture/pipeline-level-0.md) is the
+> canonical Level 0 page, identical in all five pipeline repositories. The pipeline ends at chunks; embedding and
+> search belong to the consuming application.
+>
 > **Full system narrative**: [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)
 > — explains what the system does, how the two-model pipeline works, and why the design is sound.
 >
@@ -123,20 +128,20 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 > [docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md](docs/planning/LOCAL_CHECKOUT_CONSOLIDATION_HANDOFF.md)
 > for the full decision record.
 
-### Six-Service RAG Pipeline Architecture
+### Foundry RAG Pipeline Architecture (five stages)
 
 ```text
-Ingest            →  Prepare-Doc / Prepare-Audio  →  Unify  →  Chunk  →  App Embedding
-(foundry-ingest)     (foundry-prepare-doc)            (foundry-unify)  (foundry-chunk)  (per-app)
+Ingest            →  Prepare-Doc / Prepare-Audio  →  Unify  →  Chunk  →  [Applications: embed, store, search]
+(foundry-ingest)     (foundry-prepare-doc)            (foundry-unify)  (foundry-chunk)  (outside the pipeline)
 ──────────────────   (foundry-prepare-audio)          ───────────────  ───────────────  ─────────
-• Web UI upload      Document track: IQA, corrections,   Multi-engine OCR    Trust scoring
-• File routing         layout, routing metadata           Docling DOM         RAG chunking
-• Job status         Audio track: FFmpeg + Deepgram,    unification
-• Cloud Workflows      diarization, TranscriptMetadata
+• Web UI upload      Document track: IQA, corrections,   OCR via            Trust scoring
+• File routing         layout, routing metadata           docling-serve,      RAG chunking
+• Job status         Audio track: FFmpeg + Deepgram,    Docling DOM
+• Cloud Workflows      diarization, TranscriptMetadata    unification
 
-OUTPUT:              DocumentMetadata.json               OCRDocument.json    RAGChunkSet.json
-                     + Corrected Images                                      (each app embeds
-                     TranscriptMetadata.json                                  per its own needs)
+OUTPUT:              DocumentMetadata.json               DoclingDOM.json     RAGChunkSet.json
+                     + Corrected Images                                      (apps embed per
+                     TranscriptMetadata.json                                  chunk-embed-contract)
 ```text
 
 **Prepare-Doc Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Unify should use.
@@ -328,7 +333,7 @@ uv run safety check
 
 ```bash
 # Run standalone validation scripts (not part of test suite)
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/validate_*.py
+PYTHONPATH=$(pwd):$PYTHONPATH uv run python validation/validate_*.py
 ```text
 
 ### Modal & Training (Phase 2+)
@@ -462,7 +467,7 @@ osv-scanner --lockfile=uv.lock --format=json --output=osv-local-results.json
 
 ## Architecture - Big Picture
 
-### Pipeline Flow (Project A Only)
+### Pipeline Flow (Prepare-Doc Only)
 
 The system uses a **text detection gate** to route documents to specialized processing, with **automatic DPI upscaling** (Phase 1B) for low-resolution inputs:
 
@@ -493,7 +498,7 @@ ML IQA         ML IQA (legacy ResNet Phase 3; being superseded)
     ↓              ↓
 [JSON Output] (src/output/) - DocumentMetadata.json + corrected images
     ↓
-HANDOFF TO PROJECT B (OCR Orchestration)
+HANDOFF TO UNIFY (OCR via docling-serve)
 ```text
 
 **Phase 1B: DPI Upscaling** ✅ COMPLETE
@@ -529,7 +534,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - **Pre-OCR Risk**: Single 0-1 score combining quality and layout signals
 - **Routing Recommendations**: 4 strategies based on DQS, pdf_type, and complexity
 - **Tests**: 21/21 integration tests passing, 100% PDF classification accuracy
-- **NOT DocLayNet-style full semantic layout** (that's Project B)
+- **NOT DocLayNet-style full semantic layout** (that's Unify)
 
 **Why Text Detection Gate?**
 
@@ -586,7 +591,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 
 - JSON generation with updated schema including routing metadata
 - DocumentMetadata.json with pdf_type, DQS, pre_ocr_risk, ocr_routing_recommendation
-- Corrected image output to filesystem for Project B handoff
+- Corrected image output to filesystem for Unify handoff
 
 **[utils/](src/image_preprocessing_detector/utils/)**
 
@@ -605,7 +610,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
    - Text: Layout-lite classification (Phase 2) + Student ML IQA (Phase 3) + selective Teacher inference
 6. **Correction** (Phase 1): Apply OpenCV transforms with confidence-based thresholds
 7. **DQS & Routing** (Phase 2): Calculate quality scores + generate routing recommendations
-8. **Output** (Phase 2): Serialize DocumentMetadata.json + write corrected images → handoff to Project B
+8. **Output** (Phase 2): Serialize DocumentMetadata.json + write corrected images → handoff to Unify
 
 ## Project-Specific Standards
 
@@ -731,7 +736,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - Table/figure classifiers
   - Handwriting detection refinement
 
-**Out of Scope** (Project B responsibility):
+**Out of Scope** (Unify responsibility):
 - Full semantic layout detection (DocLayNet-style)
 - Table structure extraction (PubTables-1M)
 - Reading order prediction (ReadingBank)
@@ -786,7 +791,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - Pydantic v2: JSON schema and validation
 - Structlog + Rich: Structured logging with console output
 
-**OUT OF SCOPE** (Project B):
+**OUT OF SCOPE** (Unify):
 
 - Table structure extraction (PubTables-1M)
 - Reading order prediction (ReadingBank)
@@ -1021,7 +1026,7 @@ uv run basedpyright src/image_preprocessing_detector/schema.py
 
 ```bash
 # Validation scripts need PYTHONPATH set
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/script.py
+PYTHONPATH=$(pwd):$PYTHONPATH uv run python validation/script.py
 ```text
 
 ### Database Connection Issues
