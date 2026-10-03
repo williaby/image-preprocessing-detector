@@ -21,8 +21,8 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Python 3.12 or higher
-- Poetry 1.7+ for dependency management
+- Python 3.10 or higher (CI tests 3.10 to 3.14; 3.12 is the primary development version)
+- [uv](https://docs.astral.sh/uv/) for dependency management
 - Git with GPG signing configured
 - (Optional) GPU with CUDA for ML model development (Phase 2+)
 
@@ -43,7 +43,7 @@ uv run pre-commit install
 uv run pytest -v
 uv run ruff format --check src tests
 uv run ruff check src tests
-uv run basedpyright src
+uv run mypy src
 ```text
 
 ### Project Structure
@@ -115,7 +115,8 @@ uv run ruff format src tests
 # Lint code
 uv run ruff check --fix src tests
 
-# Type checking
+# Type checking (MyPy is the CI gate; BasedPyright is the stricter local check)
+uv run mypy src
 uv run basedpyright src
 
 # Run tests with coverage
@@ -146,9 +147,9 @@ All contributions MUST meet these requirements:
 
 ### Type Checking
 
-- **Tool**: BasedPyright strict mode for `src/`
+- **Tool**: MyPy strict mode for `src/` is the gate enforced by CI, pre-commit, and `nox -s type_check`; BasedPyright strict mode (`uv run basedpyright src`) is the preferred stricter local check
 - **Coverage**: All public functions must have type hints
-- **Verification**: `uv run basedpyright src`
+- **Verification**: `uv run mypy src` (CI gate) and `uv run basedpyright src` (local)
 
 ### Security
 
@@ -206,7 +207,7 @@ def process_image(
 - **No Hardcoded Secrets**: Use environment variables or secure vaults
 - **Input Validation**: Validate all user inputs and file paths
 - **Path Sanitization**: Use `pathlib.Path.resolve()` to prevent directory traversal
-- **Dependency Security**: Run `poetry run safety check` before submitting PRs
+- **Dependency Security**: Run `uv run safety check` before submitting PRs
 
 ## Testing Requirements
 
@@ -216,7 +217,7 @@ All new functionality MUST include corresponding tests:
 
 - **Unit tests**: Required for all new functions/classes
 - **Integration tests**: Required for new modules/workflows
-- **Coverage**: Must maintain ≥80% overall coverage
+- **Coverage**: Aim to maintain ≥80% overall coverage (CI currently enforces 60%)
 - **Test types**: Use pytest markers (`@pytest.mark.unit`, `@pytest.mark.integration`)
 
 ### Test Guidelines
@@ -229,7 +230,7 @@ All new functionality MUST include corresponding tests:
 
 ### Minimum Coverage
 
-- **Overall Coverage**: 80% minimum (enforced by CI)
+- **Overall Coverage**: 80% target (the CI gate in `pyproject.toml` currently enforces `--cov-fail-under=60`; see audit finding CQ-01)
 - **New Code**: 90% coverage for new features
 - **Critical Paths**: 100% coverage for security-sensitive code
 
@@ -237,20 +238,20 @@ All new functionality MUST include corresponding tests:
 
 ```bash
 # Run all tests
-poetry run pytest -v
+uv run pytest -v
 
 # Run only unit tests
-poetry run pytest -v -m unit
+uv run pytest -v -m unit
 
 # Run only integration tests
-poetry run pytest -v -m integration
+uv run pytest -v -m integration
 
 # Run tests with coverage report
-poetry run pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 # Open htmlcov/index.html to view coverage report
 
 # Run specific test file
-poetry run pytest tests/unit/test_schema.py -v
+uv run pytest tests/unit/test_schema.py -v
 ```text
 
 ### Writing Tests
