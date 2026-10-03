@@ -300,6 +300,10 @@ packages = ["src/image_preprocessing_detector"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+# Ruff 0.16 also formats fenced code blocks in Markdown by default ("*.md" in the
+# default include). The docs hold intentionally illustrative snippets, so keep
+# ruff scoped to Python sources (the previous default set, minus Markdown).
+include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
 exclude = [
     ".git",
     ".claude",

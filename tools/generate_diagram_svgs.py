@@ -23,11 +23,11 @@ Output:
 """
 
 import argparse
-import ssl
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
+
+import requests
 
 # Configuration
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -45,19 +45,13 @@ def download_plantuml() -> bool:
 
     print(f"Downloading PlantUML to {PLANTUML_JAR}...")
     try:
-        # Create SSL context with certificate verification and TLS 1.2 minimum
-        ssl_context = ssl.create_default_context()
-        ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         # Security: PLANTUML_URL is a module-level constant pointing to the official
-        # PlantUML GitHub releases. It cannot be modified by user input.
-        with (
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
-            urllib.request.urlopen(  # noqa: S310  # nosec B310
-                PLANTUML_URL, context=ssl_context
-            ) as response,
-            open(PLANTUML_JAR, "wb") as out_file,
-        ):
-            out_file.write(response.read())
+        # PlantUML GitHub releases. It cannot be modified by user input. requests
+        # verifies TLS certificates by default and only speaks http(s), unlike
+        # urllib.request.urlopen which also accepts file: and custom schemes.
+        response = requests.get(PLANTUML_URL, timeout=60)
+        response.raise_for_status()
+        PLANTUML_JAR.write_bytes(response.content)
         print("Download complete.")
         return True
     except Exception as e:

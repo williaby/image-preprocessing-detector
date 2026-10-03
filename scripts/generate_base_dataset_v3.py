@@ -306,7 +306,7 @@ def _save_sample(
     Returns:
         Path to saved image file.
     """
-    primary_script = sorted(sample.scripts)[0]
+    primary_script = min(sample.scripts)
     script_dir = output / primary_script
     script_dir.mkdir(parents=True, exist_ok=True)
 
