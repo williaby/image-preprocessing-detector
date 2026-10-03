@@ -48,7 +48,6 @@ concurrency:
 
 env:
   CI_ENVIRONMENT: true
-  UV_CACHE_DIR: ~/.cache/uv
   MYPY_CACHE_DIR: ~/.cache/mypy
 
 jobs:
