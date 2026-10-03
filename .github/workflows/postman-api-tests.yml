@@ -1,49 +1,74 @@
-# Postman / Newman API smoke tests against the FastAPI app.
+# Postman / Newman API smoke tests and OpenAPI drift check for the FastAPI app.
+#
+# Schedule: weekly (Sundays 08:00 UTC) and on manual dispatch only. This
+# workflow does not run on pull requests or pushes, to keep PR CI fast and
+# cheap. It follows the same pattern as the other weekly jobs (mutation testing
+# at 02:00, multi-version test matrix at 05:00, compatibility matrix at 06:00,
+# fuzzing at 07:00); this one runs an hour after fuzzing so the jobs do not
+# compete for runners. Run it manually (Actions tab, "Run workflow") before a
+# release or after changing the API under src/image_preprocessing_detector/api/.
+#
+# Scheduled runs always execute against the default branch (main) and run the
+# entire collection (docs/api/postman-collection.json). A manual run uses the
+# branch selected in the dispatch dialog.
+#
+# Because the weekly cadence leaves a gap, an early step regenerates
+# docs/api/openapi.json with scripts/export_openapi.py and fails if the
+# committed file differs, so a stale OpenAPI snapshot is caught within a week.
 #
 # Required env vars (configured in the job below):
-#   IMGPREP_API_AUTH_ENABLED        – disable auth for the test run (default: false)
-#   IMGPREP_API_RATE_LIMIT_ENABLED  – disable rate limits for the test run
-#   PYTHONPATH                      – `src` (so the in-tree package is importable)
+#   IMGPREP_API_AUTH_ENABLED        : disable auth for the test run
+#   IMGPREP_API_RATE_LIMIT_ENABLED  : disable rate limits for the test run
+#   PYTHONPATH                      : `src` (so the in-tree package is importable)
 #
-# Model loading: the FastAPI lifespan already falls back gracefully when the
-# ONNX model files are absent (it logs `model_preload_failed` and continues),
-# so no explicit skip flag is required to run the smoke tests without models.
+# Model loading: the FastAPI lifespan falls back gracefully when the ONNX model
+# files are absent (it logs `model_preload_failed` and continues), so the smoke
+# tests run without models. They therefore do not exercise ML inference.
 #
 # Required secrets:
 #   None for the default (auth-disabled) run. If you flip
 #   IMGPREP_API_AUTH_ENABLED=true, also provide:
-#     IMGPREP_POSTMAN_API_KEY – an API key accepted by the running server;
+#     IMGPREP_POSTMAN_API_KEY : an API key accepted by the running server;
 #                               passed to Newman as the `apiKey` collection
 #                               variable.
 #
+# Action pins follow docs/ADRs/0004-github-actions-security-hardening.md: every
+# third-party action is pinned to a full commit SHA with a version comment, and
+# Newman is installed at an explicit version (6.2.2, the current stable
+# release as of 2026-10-03).
+#
 # Local repro:
 #   uv sync --extra dev --extra api
+#   mkdir -p tests/fixtures && printf 'not an image\n' > tests/fixtures/not-an-image.txt
+#   (generate tests/fixtures/sample.png, see the "Generate test fixtures" step)
 #   uv run uvicorn image_preprocessing_detector.api.app:app --port 8000 &
 #   curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8000/health
 #   npx newman run docs/api/postman-collection.json \
-#       --env-var baseUrl=http://localhost:8000
+#       --env-var baseUrl=http://localhost:8000 \
+#       --env-var "sampleImagePath=$(pwd)/tests/fixtures/sample.png"
+#   (re-export the spec with: uv run python scripts/export_openapi.py)
 
 name: Postman API Tests
 
 on:
-  pull_request:
-    paths:
-      - "src/image_preprocessing_detector/api/**"
-      - "docs/api/openapi.json"
-      - "docs/api/postman-collection.json"
-      - "scripts/export_openapi.py"
-      - ".github/workflows/postman-api-tests.yml"
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 8 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: postman-api-tests-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
   newman:
+    name: Newman API tests and OpenAPI drift check
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     env:
       PYTHONPATH: src
@@ -51,29 +76,46 @@ jobs:
       IMGPREP_API_RATE_LIMIT_ENABLED: "false"
 
     steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: uv sync (api + dev extras)
-        run: uv sync --extra dev --extra api
+        run: uv sync --locked --extra dev --extra api
+
+      - name: Check OpenAPI export is up to date
+        run: |
+          uv run python scripts/export_openapi.py
+          if ! git diff --exit-code -- docs/api/openapi.json; then
+            echo "::error file=docs/api/openapi.json::OpenAPI snapshot is stale." \
+              "Run 'uv run python scripts/export_openapi.py' and commit the result."
+            exit 1
+          fi
 
       - name: Set up Node.js for Newman
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install Newman
-        run: npm install --global newman
+        run: npm install --global newman@6.2.2
 
       - name: Generate test fixtures
         run: |
@@ -97,7 +139,9 @@ jobs:
 
       - name: Start FastAPI app
         run: |
-          uv run uvicorn image_preprocessing_detector.api.app:app \
+          # Invoke the venv interpreter directly (not `uv run`) so $! is the
+          # PID of uvicorn itself and the teardown step kills the right process.
+          .venv/bin/python -m uvicorn image_preprocessing_detector.api.app:app \
             --host 127.0.0.1 --port 8000 \
             > uvicorn.log 2>&1 &
           echo "UVICORN_PID=$!" >> "$GITHUB_ENV"
@@ -105,6 +149,11 @@ jobs:
       - name: Wait for /health to be ready
         run: |
           for i in $(seq 1 60); do
+            if ! kill -0 "${UVICORN_PID}" 2> /dev/null; then
+              echo "::error::uvicorn exited before becoming ready"
+              cat uvicorn.log || true
+              exit 1
+            fi
             if curl -fsS http://127.0.0.1:8000/health > /dev/null; then
               echo "API ready after ${i}s"
               exit 0
@@ -129,19 +178,21 @@ jobs:
 
       - name: Upload Newman JUnit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: newman-report
           path: newman-report.xml
           if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload uvicorn logs
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: uvicorn-log
           path: uvicorn.log
           if-no-files-found: warn
+          retention-days: 7
 
       - name: Stop FastAPI app
         if: always()

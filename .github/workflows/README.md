@@ -215,6 +215,7 @@ Dedicated Codecov coverage upload:
 - **OpenSSF Scorecard** (`scorecard.yml`): Supply chain security assessment
 - **REUSE** (`reuse.yml`): License compliance checking
 - **CIFuzzy** (`cifuzzy.yml`): Fuzzing with ClusterFuzzLite
+- **Postman API Tests** (`postman-api-tests.yml`): Newman smoke tests against the FastAPI app and OpenAPI drift check; weekly (Sunday 08:00 UTC) and manual dispatch only, not per PR
 - **SonarCloud** (`sonarcloud.yml`): Code quality analysis
 
 ---
