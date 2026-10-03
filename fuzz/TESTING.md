@@ -2,7 +2,7 @@
 
 ## Overview
 
-ClusterFuzzLite runs fuzzing automatically in GitHub Actions CI/CD. No local testing required! The fuzzing workflow runs on every push to main/develop branches and on pull requests.
+ClusterFuzzLite runs fuzzing automatically in GitHub Actions CI/CD. No local testing required! The fuzzing workflow runs weekly (Sundays, 07:00 UTC) and on manual dispatch. It does not run on pull requests or pushes.
 
 ## Automatic CI/CD Fuzzing
 
@@ -14,7 +14,7 @@ The `.github/workflows/cifuzzy.yml` workflow:
 - Uploads crash artifacts if found
 - Submits SARIF reports to GitHub Security tab
 
-**Trigger**: Runs automatically on push/PR, or manually via workflow_dispatch
+**Trigger**: Runs weekly on a schedule, or manually via workflow_dispatch
 
 ## Local Testing (Optional)
 
@@ -110,7 +110,7 @@ The fuzzer will save a reproducer file (e.g., `crash-abc123`). This should be:
 
 1. **No Local Setup**: Runs in GitHub Actions, no Clang/LLVM installation needed
 2. **Sanitizers Enabled**: Address sanitizer detects memory issues
-3. **Automatic Execution**: Runs on every push and PR
+3. **Automatic Execution**: Runs weekly (Sundays, 07:00 UTC); trigger it manually before merging risky parser changes
 4. **SARIF Integration**: Results appear in GitHub Security tab
 5. **Crash Artifacts**: Reproducer files saved as GitHub artifacts
 

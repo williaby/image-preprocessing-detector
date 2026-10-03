@@ -53,12 +53,13 @@ jobs:
           # Export dev dependencies
           uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 
-          # Export all dependencies (including optional groups)
-          # NOTE: Cannot use --all-extras because `iqa` and `labeling` extras
-          # declare conflicting `transformers` versions (==4.37.2 vs >=4.40.0)
-          # in [tool.uv.conflicts]. uv pip compile does not honour conflict
-          # declarations, so we enumerate extras explicitly, excluding `iqa`.
-          # The only package missed is `pyiqa` itself (research-only tool).
+          # Export all optional extras (dependency groups are not included)
+          # NOTE: The `iqa` dependency group (pyiqa) conflicts with the
+          # `labeling` extra on `transformers` (==4.37.2 vs >=4.40.0) via
+          # [tool.uv.conflicts]. It is a group, not an extra, and
+          # `uv pip compile` never selects groups, so `pyiqa` and IQA-only
+          # dependencies such as `openai-clip` and `lmdb` are omitted from
+          # this SBOM (research-only, offline pseudo-labeling tooling).
           uv pip compile pyproject.toml \
             --extra dev --extra ml --extra fuzz --extra api --extra colab \
             --extra workers --extra labeling --extra language-detection \
@@ -128,7 +129,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3.37.4
+        uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
         with:
           sarif_file: trivy-runtime-results.sarif
           category: trivy-runtime-deps
@@ -166,7 +167,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3.37.4
+        uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
         with:
           sarif_file: trivy-dev-results.sarif
           category: trivy-dev-deps
