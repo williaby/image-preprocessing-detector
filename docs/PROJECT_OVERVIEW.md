@@ -18,7 +18,7 @@ tags:
 >
 > - [docs/PROJECT_OVERVIEW_DETAILED.md](PROJECT_OVERVIEW_DETAILED.md) — complete module map, canonical files, schema contract, config reference
 > - [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md) — project status and remaining work
-> - [docs/architecture/](architecture/) — implementation diagrams at all four levels
+> - [docs/architecture/](architecture/): implementation diagrams at all five levels (Level 0-4)
 
 ---
 
@@ -30,7 +30,7 @@ Some documents are born-digital PDFs; others are camera photographs of physical 
 decades ago. Downstream OCR pipelines — which operate on the assumption of clean, upright,
 legible input — fail silently or produce garbled output when these conditions are violated.
 
-Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for a six-service RAG
+Prepare-Doc (image-preprocessing-detector) is the **preprocessing, IQA, and coarse layout gateway** for the Foundry RAG
 document pipeline. It accepts raw documents in any condition, assesses quality along multiple
 dimensions, applies physical corrections, and produces two outputs: a corrected page image and
 a `DocumentMetadata.json` record containing everything the downstream OCR system needs to
@@ -58,12 +58,12 @@ Raw Documents (PDF, image, any condition)
                  │  + Corrected page images
                  ▼
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │       EMBED         │
-│  (Unify)            │    │  (data_ingestor)    │    │  (per-application)  │
-│  OCR Orchestration  │    │  Fusion & Trust     │    │  Vector Indexing    │
-│  Full Layout        │    │  Multi-Engine       │    │  Embeddings         │
-│  Reading Order      │    │  Trust Scoring      │    │  Semantic Search    │
-│  Table Structure    │    │  RAG Chunking       │    │                     │
+│       UNIFY         │ ─▶ │       CHUNK         │ ─▶ │    APPLICATIONS     │
+│  (Unify)            │    │  (data_ingestor)    │    │  (outside pipeline) │
+│  OCR (docling-serve)│    │  Trust Scoring      │    │  Embeddings         │
+│  Full Layout        │    │  RAG Chunking       │    │  Vector Storage     │
+│  Reading Order      │    │  RAGChunkSet.json   │    │  Semantic Search    │
+│  Table Structure    │    │                     │    │                     │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
@@ -120,9 +120,14 @@ Total pipeline latency is approximately 55–65ms GPU across both stages.
 All 16 prediction heads are organized into five task groups, each feeding a specific downstream
 decision in Unify.
 
-**Image Quality Assessment** (6 heads). Five regression heads score blur, noise, contrast, skew
-severity, and compression artifacts on a 0–1 scale; a sixth produces an overall quality
-composite. These combine with the eight classical detector outputs to produce the Document
+> **Scope of "16 heads"**: this is the full design in `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`
+> (3+1+2+5+5), including the five handwriting heads. It is not the Release 1 scope: section 5a of
+> `docs/planning/MASTER_PROJECT_PLAN.md` defers the handwriting group and the fine-skew head to Release 2. The
+> current inference wrapper implements 8 tasks, and SigLIP 2 training has not yet run.
+
+**Image Quality Assessment** (3 heads). Three DIQA-aligned regression heads score overall quality,
+sharpness, and color fidelity on a 0–1 scale (individual degradation heads are deferred to a later
+phase). These combine with the eight classical detector outputs to produce the Document
 Quality Score, which drives the four-strategy OCR routing decision: `ocr_fast` for high-quality
 documents, `ocr_advanced` for moderate quality with complex layout, `vision_simple` for
 image-dominant pages, and `vision_structured` for documents with tables and figures that need
@@ -139,9 +144,9 @@ data change.
 regression head run in Stage 2 as a validation pass over the Stage 1 pre-correction. If the
 Stage 2 orientation reading conflicts with Stage 1, a correction escalation is triggered.
 
-**Handwriting** (5 heads). Three classification heads assess presence (none/partial/dominant),
+**Handwriting** (5 heads). Three classification heads assess presence (none/sparse/moderate/substantial/dominant),
 legibility (unreadable through excellent), and content type (printed/cursive/mixed/annotation/
-diagram label). Two regression heads score density and script family. Together these determine
+diagram label). Two regression heads score presence and legibility on a 0–1 scale. Together these determine
 whether Unify should route to a handwriting-specialized OCR engine and at what priority.
 
 **Page Attributes** (5 heads). A 7-class capture method classifier distinguishes born-digital,
@@ -232,7 +237,7 @@ versioned; breaking changes require an explicit contract negotiation with the Un
 | Component | Technology | Design Rationale |
 | --------- | ---------- | ---------------- |
 | Pre-correction gate | MobileNetV4-Conv-S (~3ms GPU) | Fast enough to run before any other analysis; orientation/resolution must be known first |
-| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 19 heads in one pass |
+| Multi-task teacher | SigLIP 2 NAFlex, 88M params (~50ms GPU) | Vision-language pretraining handles multi-script naturally; 16 heads in one pass |
 | Classical IQA baseline | OpenCV — 8 detectors (~25ms CPU) | Interpretable; sub-25ms; validated anchor for each ML head; no GPU dependency |
 | Layout detection | docling-layout (egret-large / heron) | Validated over YOLOv10-doc in Stream 3 benchmarking |
 | PDF ingestion | PyMuPDF | DPI-aware extraction; 100% accuracy on DPI metadata |
@@ -252,5 +257,5 @@ versioned; breaking changes require an explicit contract negotiation with the Un
 *For implementation progress and remaining work, see
 [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md).*
 
-*For architecture diagrams at all four levels, see
+*For architecture diagrams at all five levels, see
 [docs/architecture/](architecture/).*

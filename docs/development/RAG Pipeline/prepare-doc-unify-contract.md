@@ -57,7 +57,7 @@ The contract covers three handoff types:
 │                                                                         │
 │  Processing: Docling → Element Routing → Specialists → VLM Validation  │
 │                                                                         │
-│  OUTPUT: OCRDocument.json → Chunk                                  │
+│  OUTPUT: DoclingDOM.json → Chunk                                   │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
