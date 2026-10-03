@@ -321,9 +321,9 @@ When encountering old phase references in code, comments, or documentation:
 
 **Wrong**: "Prepare-Doc Phase 6 corresponds to Unify Phase 6"
 
-**Right**: Phase numbers are **independent per project**. Use the **Prepare-Doc/B contract** to understand handoffs, not phase numbers.
+**Right**: Phase numbers are **independent per project**. Use the **Prepare-Doc to Unify contract** to understand handoffs, not phase numbers.
 
-**Reference**: `docs/development/RAG Pipeline/project-ab-contract.md`
+**Reference**: `docs/development/RAG Pipeline/prepare-doc-unify-contract.md`
 
 ---
 
@@ -449,7 +449,7 @@ Keeping them in separate phases created artificial boundaries.
 
 - **Current Planning**: `docs/planning/PROJECT_PLAN.md` (authoritative source)
 - **Deprecated Docs**: `docs/DEPRECATED_DOCS.md` (list of deleted files)
-- **Prepare-Doc/B Contract**: `docs/development/RAG Pipeline/project-ab-contract.md`
+- **Prepare-Doc to Unify Contract**: `docs/development/RAG Pipeline/prepare-doc-unify-contract.md`
 - **Phase Comparison**: `tmp_cleanup/.tmp-planning-docs-comparison-20250201.md` (detailed analysis)
 
 ---

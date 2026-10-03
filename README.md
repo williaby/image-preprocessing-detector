@@ -1,6 +1,6 @@
 # Prepare-Doc - Document Preprocessing & IQA Gateway
 
-**Stage 1 of the Foundry RAG pipeline** (formerly "Project A"). See the
+**The document-preparation stage of the Foundry RAG pipeline** (formerly "Project A"). See the
 [Pipeline Level 0 architecture](docs/architecture/pipeline-level-0.md).
 
 ## Security & Quality
@@ -122,7 +122,7 @@ PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → 
                                                     HANDOFF TO UNIFY
 ```text
 
-See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md) for complete architecture and [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md) for detailed implementation plan.
+See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md) for complete architecture and [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md) for the current plan and status.
 
 ## Project Status
 

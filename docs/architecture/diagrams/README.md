@@ -118,7 +118,7 @@ Detailed implementation diagrams organized by workstream:
 | **WS7: Monitoring & Drift** | Monitoring architecture | Yes |
 | **WS8: Synthetic Generation** | Synthetic generation architecture | Yes |
 | **Schema Field Population** | Schema field population (summary + full reference) | - |
-| **Downstream Context** | Projects B, C, D context diagrams | - |
+| **Downstream Context** | Unify, Chunk and application-embedding context diagrams | - |
 
 ---
 

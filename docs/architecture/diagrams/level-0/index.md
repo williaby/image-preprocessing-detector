@@ -78,9 +78,9 @@ All others:  Ingest -[others]-> Prepare-Doc (Stage 0 → track assignment → ML
 
 ---
 
-## Level 1: Project Descriptions
+## Level 1: Stage Descriptions
 
-Each Level 0 box represents a distinct project with its own repository, architecture, and team. Detailed descriptions below define the boundaries and responsibilities.
+Each Level 0 box represents a distinct stage with its own repository, architecture, and team. Detailed descriptions below define the boundaries and responsibilities.
 
 ### Ingest (rag-processor)
 
@@ -117,7 +117,7 @@ The output is `TranscriptMetadata.json` containing the full transcript with word
 
 ### Unify (Unify)
 
-Unify is the convergence point for both document and audio tracks, and its primary purpose is creating a unified Docling DOM representation regardless of input source. For the document track, Unify runs OCR through docling-serve, using Prepare-Doc's routing recommendations to set parameters. Specialist engines and fusing results from multiple OCR passes are later phases (Unify design spec, phases B3 and B4). For the audio track, Unify transforms the transcript into the same DOM schema without performing OCR.
+Unify is the convergence point for both document and audio tracks, and its primary purpose is creating a unified Docling DOM representation regardless of input source. For the document track, Unify runs OCR through docling-serve, using Prepare-Doc's routing recommendations to set parameters. Specialist engines are a later phase (Unify design spec, phases B3 and B4); fusing multi-engine output remains Chunk's job per [ADR-0029](../../../ADRs/0029-prepare-doc-scope-boundaries.md). For the audio track, Unify transforms the transcript into the same DOM schema without performing OCR.
 
 The Docling DOM is the critical data structure that enables consistent downstream processing. It provides a unified schema for text content, tables, figures, and metadata with reading order annotations and source attribution (page numbers, bounding boxes, timestamps). By routing both tracks through Unify, the pipeline guarantees that Chunk receives identically-structured input whether the source was a scanned PDF or a podcast recording. This architectural decision eliminates the need for Chunk to handle multiple input formats.
 
@@ -125,13 +125,13 @@ The Docling DOM is the critical data structure that enables consistent downstrea
 
 Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics from Prepare-Doc, and structural coherence signals from Unify. Low-trust content can be flagged for human review or processed with reduced retrieval weight.
 
-The chunking algorithm produces semantically coherent text segments that respect document structure — avoiding splits mid-sentence or mid-paragraph — while maintaining consistent token counts. Each chunk carries full source traceability: document → page → element → chunk, enabling precise citation in RAG responses. Output is `RAGChunkSet.json` containing all chunks with trust scores, `ocr_engine_provenance`, source attribution, and semantic boundaries. See [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md) for the mandatory contract all downstream embedding implementations must satisfy.
+The chunking algorithm produces semantically coherent text segments that respect document structure, avoiding splits mid-sentence or mid-paragraph, while maintaining consistent token counts. Each chunk carries full source traceability: document → page → element → chunk, enabling precise citation in RAG responses. Output is `RAGChunkSet.json` containing all chunks with trust scores, `ocr_engine_provenance`, source attribution, and semantic boundaries. See [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md) for the mandatory contract all downstream embedding implementations must satisfy.
 
 **Repository**: [`williaby/data_ingestor`](https://github.com/williaby/data_ingestor) — working implementations of TokenChunker, ByTitleChunker, DocumentRouter, and DocLayNet evaluation harness. Internal refactor to align with the foundry pipeline contract is planned after Prepare-Doc SigLIP 2 training stabilizes (Tier 3 dependency). Trust scoring and GCS artifact I/O are new work not yet built.
 
 ### Application Embedding (outside the pipeline)
 
-Embedding is **not a shared foundry service** — each AI application that uses this pipeline implements its own embedding component, tailored to its retrieval needs. However, all embedding implementations MUST conform to the mandatory contract defined in [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md).
+Embedding is **not a shared foundry service**: each AI application that uses this pipeline implements its own embedding component, tailored to its retrieval needs. However, all embedding implementations MUST conform to the mandatory contract defined in [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md).
 
 The contract requires that every embedding implementation:
 
@@ -184,7 +184,7 @@ Core design decisions that govern all projects in the pipeline:
 
 | Principle | Decision | Rationale |
 |-----------|----------|-----------|
-| **Canonical Store** | Google Cloud Storage (GCS) | Durable, scalable, native GCP integration |
+| **Canonical Store** | Google Cloud Storage (GCS) | Durable, scalable, native GCP integration (the `{trace_id}/NN-stage/` layout is store-agnostic) |
 | **Artifact Structure** | `gs://bucket/{trace_id}/{stage}/` | Clear separation by processing stage |
 | **Vector Storage** | Application-owned Vector DB | Each downstream application owns its vector database; the pipeline has none |
 
@@ -193,7 +193,7 @@ Core design decisions that govern all projects in the pipeline:
 | Principle | Decision | Rationale |
 |-----------|----------|-----------|
 | **Stateless Services** | Required | Enables horizontal scaling, simplifies recovery |
-| **Observability** | Structured logging + trace_id | End-to-end request tracing across 6 projects |
+| **Observability** | Structured logging + trace_id | End-to-end request tracing across the 5 pipeline repositories |
 | **Error Handling** | Cloud Workflows retry policies | Exponential backoff, dead-letter patterns |
 
 ---
@@ -267,7 +267,7 @@ Standardized naming across documentation, repositories, and code:
 | ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) | [Level 1](../level-1/index.md) |
 | ~~Project B~~ | **Unify** | `Unify` | OCR through docling-serve, Docling DOM unification | TBD |
 | ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring | TBD |
-| ~~Project D~~ | **Embed** | *(outside the pipeline)* | Per-app embedding — not a shared service | TBD |
+| ~~Project D~~ | **Embed** | *(outside the pipeline)* | Per-app embedding (not a shared service) | TBD |
 | ~~Project E~~ | **Prepare-Audio** | `audio-processor` | Audio transcription, speaker diarization | TBD |
 | ~~Project F~~ | **Ingest** | `rag-processor` | Web UI, file upload, Cloud Workflows triggering | TBD |
 
@@ -291,7 +291,7 @@ The pipeline uses **polling** for completion notification due to long-running pr
 | **Status Endpoint** | `GET /status/{trace_id}` exposed by Ingest |
 | **Polling Frequency** | 5s initially, exponential backoff to 30s maximum |
 | **Status Values** | `pending`, `processing`, `completed`, `failed` |
-| **Completion Data** | `{status: "completed", collection_id: "...", artifacts: [...]}` |
+| **Completion Data** | `{status: "completed", artifacts: [...]}` (an application may report its own collection identifier separately; the pipeline does not require one) |
 
 **Why Polling (Not Push):**
 
@@ -302,7 +302,7 @@ The pipeline uses **polling** for completion notification due to long-running pr
 
 **Optional Enhancement (Future):**
 
-- Embed can POST completion webhook to `Ingest /webhook/completion` for immediate notification
+- Chunk can POST a completion webhook to `Ingest /webhook/completion` for immediate notification
 - Fire-and-forget pattern: If webhook fails, Ingest still discovers completion via polling
 - Reduces user-perceived latency for fast-path documents (<1 minute processing)
 
@@ -327,9 +327,9 @@ Understanding how the pipeline degrades under stress or partial failures:
 | **Prepare-Doc compute budget exhausted** | CPU-only mode: 2-5x latency increase, lower IQA accuracy | Budget alerts, metrics | Auto-scaling, budget increase, queue prioritization |
 | **Prepare-Doc Modal GPU unavailable** | Circuit breaker triggers CPU fallback | Health checks, error rates | Automatic fallback, alert on sustained outage |
 | **Unify layout detection failure** | Spatial fallback chunking (lower quality) | Low `layout_confidence` scores | Trust scores reflect degradation, flag for review |
-| **Unify OCR engine timeout** | Fallback to secondary engine | Engine-specific latency metrics | Engine rotation, deadline extension |
-| **Chunk OCR fusion high divergence** | Low-confidence chunks flagged | `fusion_divergence_score` > 0.5 | Embed weights retrieval accordingly |
-| **Embed vector DB overload** | Query latency increase, ingestion backpressure | P95 latency, queue depth | Read replicas, auto-scaling, rate limiting |
+| **Unify OCR (docling-serve) timeout** | Job retried, then marked failed; specialist-engine fallback is a later phase | Engine-specific latency metrics | Retry with backoff, deadline extension |
+| **Chunk OCR fusion high divergence** | Low-confidence chunks flagged | `fusion_divergence_score` > 0.5 | Consuming applications weight retrieval by `trust_score` |
+| **Application vector DB overload** | Query latency increase, ingestion backpressure (application-owned, outside the pipeline) | P95 latency, queue depth | Read replicas, auto-scaling, rate limiting |
 | **GCS regional outage** | Pipeline halts for affected trace_ids | GCP status, error rates | Multi-region bucket replication (future) |
 
 **Degradation Principles:**
@@ -386,9 +386,9 @@ Each project boundary has formal contract documentation defining inputs, outputs
 | Service | Document | Description |
 |---------|----------|-------------|
 | **Prepare-Doc** | [prepare-doc-f-nf.md](../../../development/RAG%20Pipeline/prepare-doc-f-nf.md) | Preprocessing, IQA, layout requirements |
-| **Unify** | [unify-f-nf.md](../../../development/RAG%20Pipeline/unify-f-nf.md) | OCR orchestration, DOM unification requirements |
-| **Chunk** | [chunk-f-nf.md](../../../development/RAG%20Pipeline/chunk-f-nf.md) | Trust scoring and chunking requirements |
-| **Embed** | TBD | Embedding and vector store requirements |
+| **Unify** | [unify-f-nf.md](../../../_archived/cross-project/unify-f-nf.md) (archived) | OCR orchestration, DOM unification requirements |
+| **Chunk** | [chunk-f-nf.md](../../../_archived/cross-project/chunk-f-nf.md) (archived) | Trust scoring and chunking requirements |
+| **Applications** | [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md) | Embedding and vector store are application-owned; the contract defines the fields applications must preserve |
 
 ### Inter-Project Contracts
 

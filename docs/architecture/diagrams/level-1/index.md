@@ -32,7 +32,7 @@ Prepare-Doc receives all non-audio files directly from Ingest. Its first interna
 
 - **Stage 0 — Document Type Router** (first step): MIME detection, PDF sub-classification, text-layer quality validation; assigns each file to one of six tracks: `native_text`, `image_only`, `born_digital`, `born_digital_degraded`, `scanned`, `hybrid`. PDFs with a text layer that fail quality validation (word recognition rate, character entropy, text/image layer overlap) are reclassified as `born_digital_degraded` and routed to the image pipeline rather than the fast path.
 - **Pre-Correction Pipeline** (Steps 1–4): Rasterization (PDFs only, 300 DPI fallback), lossless PNG conversion, MobileNetV4-Conv-S pre-correction gate (3 heads: orientation, skew, resolution quality), geometric corrections + border removal, adaptive resolution
-- **Image Quality Assessment** (IQA) using classical CV (8 detectors) and SigLIP 2 NAFlex multi-task model (16 heads) — runs on corrected, lossless images
+- **Image Quality Assessment** (IQA) using classical CV (8 detectors) and SigLIP 2 NAFlex multi-task model (16 heads); runs on corrected, lossless images
 - **Layout detection** with Docling layout models (egret-xlarge / heron, 11+ DocLayNet classes) — conditional on text gate result
 - **Quality Corrections** (CLAHE, sharpening, denoising) — applied *after* IQA measurement to preserve original quality scores for DQS/routing decisions
 - **Document Quality Score** calculation and routing recommendations
@@ -61,7 +61,7 @@ The live processing pipeline that handles incoming documents end-to-end, from do
 | 4 | Adaptive Resolution | Use resolution quality score from Step 2 to upscale if below target (32-48px character height); safety rails: 150 DPI floor, 600 DPI ceiling |
 | 5 | Text Gate | Fast ensemble heuristics (<10ms) on corrected, lossless image; blank page → early exit |
 | 6a | Classical IQA | 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew); measures original quality |
-| 6b | SigLIP 2 NAFlex Multi-Task | ~50ms GPU; 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs. Group 3 (Orientation+Skew) and Group 5 (Resolution quality) duplicate MobileNetV4 outputs intentionally — for teacher-signal distillation back to MobileNetV4, prediction validation/discrepancy flagging, CPU-only single-pass fallback, and self-consistency checking. |
+| 6b | SigLIP 2 NAFlex Multi-Task | ~50ms GPU; 16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs. Group 3 (Orientation+Skew) and Group 5 (Resolution quality) duplicate MobileNetV4 outputs intentionally, for teacher-signal distillation back to MobileNetV4, prediction validation/discrepancy flagging, CPU-only single-pass fallback, and self-consistency checking. |
 | 6c | Layout Analysis | Docling layout models: egret-xlarge (accuracy) / heron (speed), 11+ DocLayNet classes; conditional on text gate |
 | 7 | Quality Corrections | CLAHE, sharpening, denoising — applied *after* IQA measurement so scores reflect original quality |
 | 8 | DQS + Routing | Document Quality Score (degradation + structural complexity) and OCR routing recommendation |
@@ -267,15 +267,15 @@ Each Level 2 diagram drills down into component boxes that map to Level 3 module
 
 ---
 
-## Downstream Projects Context
+## Downstream Stages Context
 
 Prepare-Doc outputs are consumed by the downstream stages of the Foundry pipeline (Unify and, through it, Chunk). Embedding belongs to the consuming applications and is outside the pipeline:
 
-| Stage | Consumes from Prepare-Doc | Purpose | Contract Document |
+| Stage | Input | Purpose | Contract Document |
 |---------|------------------------|---------|-------------------|
-| **Unify** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | OCR through docling-serve (specialist engines later), Docling DOM creation | [prepare-doc-unify-contract.md](../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
-| **Chunk** | `DoclingDOM.json` (via Unify) | Trust scoring, semantic RAG chunking, `RAGChunkSet.json` | [chunk-embed-contract.md](../../development/RAG%20Pipeline/chunk-embed-contract.md) |
-| **Applications (not a pipeline stage)** | `RAGChunkSet.json` (from Chunk) | Embedding, vector storage, search, owned by each application | [chunk-embed-contract.md](../../development/RAG%20Pipeline/chunk-embed-contract.md) |
+| **Unify** | `DocumentMetadata.json`, corrected page images (300 DPI PNG) | OCR through docling-serve (specialist engines later), Docling DOM creation | [prepare-doc-unify-contract.md](../../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) |
+| **Chunk** | `DoclingDOM.json` (via Unify) | Trust scoring, semantic RAG chunking, `RAGChunkSet.json` | [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md) |
+| **Applications (not a pipeline stage)** | `RAGChunkSet.json` (from Chunk) | Embedding, vector storage, search, owned by each application | [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md) |
 
 **Key Handoff Artifacts**:
 

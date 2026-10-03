@@ -173,12 +173,12 @@ docs/architecture/diagrams/
 | rag-processor | github.com/ByronWilliamsCPA/rag-processor | PROJECT_A_INTEGRATION_GUIDE.md |
 | Web UI / Content Routing | rag-processor | - |
 | **Track 1: Document Processing** |||
-| Prepare-Doc | image-detection (this repo) | CLAUDE.md, PROJECT_PLAN.md |
-| Unify | github.com/ByronWilliamsCPA/Unify (scaffolding) | unify-f-nf.md |
+| Prepare-Doc | image-preprocessing-detector (this repo) | CLAUDE.md, MASTER_PROJECT_PLAN.md |
+| Unify | github.com/ByronWilliamsCPA/Unify (scaffolding) | unify-f-nf.md (archived under docs/_archived/cross-project) |
 | **Track 2: Audio/Video Processing** |||
 | Audio Processor | github.com/ByronWilliamsCPA/audio-processor | PIPELINE-INTEGRATION-SUMMARY.md |
 | **Downstream Processing** |||
-| Chunk | github.com/williaby/data_ingestor (refactor pending) | chunk-f-nf.md |
+| Chunk | github.com/williaby/data_ingestor (refactor pending) | chunk-f-nf.md (archived under docs/_archived/cross-project) |
 | Application embedding | Outside the pipeline (each application) | chunk-embed-contract.md |
 
 **Content Sources**:
@@ -202,7 +202,7 @@ docs/architecture/diagrams/
 **Integration Points**:
 
 - **Unify DOM Unification**: Single Docling instance handles all preprocessed inputs (document + audio)
-- **Downstream Transparency**: Unified Docling DOM consumed identically by Projects C & D
+- **Downstream Transparency**: Unified Docling DOM consumed identically by Chunk and, through it, consuming applications
 - **Performance**: 10-page doc <30s, 100-page <2min; audio <1min/hour
 
 **Related Repositories**:
@@ -425,7 +425,7 @@ docs/architecture/diagrams/
 
 **Location**: `level-2/model-training/`
 
-**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
+**Purpose**: ~~Knowledge distillation from ResNet-50 teacher to ResNet-18 student~~ (LEGACY). Superseded by two-model pipeline: MobileNetV4-Conv-S (~3ms, pre-correction) + SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md).
 
 | Component | Source Files | Scripts | Documentation |
 |-----------|--------------|---------|---------------|
@@ -442,7 +442,7 @@ docs/architecture/diagrams/
 | ONNX Export | src/.../models/model_optimizer.py | modal/export_phase7_onnx.py | - |
 | GCS Upload | src/.../utils/gcs_uploader.py | - | MODEL_STORAGE.md |
 
-> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (16 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
+> **NOTE**: ResNet teacher/student training files above are legacy. New SigLIP 2 multi-task (16 heads) and MobileNetV4-Conv-S (3 heads) training scripts are planned. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) and [DATASET_DIVERSITY_REQUIREMENTS.md](../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for the new architecture and 10 purpose-built datasets (~503K total images).
 
 ### prepare-doc-training-workflow-high-level.puml
 
@@ -601,7 +601,7 @@ docs/architecture/diagrams/
 
 **Location**: `level-2/downstream-context/`
 
-**Purpose**: Unify context (OCR through docling-serve; specialist engines and fusion are later phases).
+**Purpose**: Unify context (OCR through docling-serve; specialist engines are a later phase).
 
 ### chunk-fusion-chunking-workflow.puml
 
