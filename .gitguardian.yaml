@@ -7,8 +7,6 @@ version: 2
 # Paths to exclude from secret scanning
 secret:
   ignored_paths:
-    # Test fixtures with intentional fake credentials for CodeQL validation
-    - "tests/security/test_codeql_validation.py"
     # Test API keys in test fixtures
     - "tests/api/test_auth_ratelimit.py"
     - "tests/api/test_app_coverage.py"

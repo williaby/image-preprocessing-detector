@@ -5,7 +5,7 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 ## Project Structure & Module Organization
 
 - `src/image_preprocessing_detector/`: Core package; ingestion, detection (IQA + layout-lite), classification, correction, metrics, routing/output, plus the larger subpackages annotation, labeling, synthetic, drift, api, and utils.
-- `tests/`: Unit tests in `tests/unit/`, integration in `tests/integration/`, security and benchmarks under `tests/security/` and `tests/test_benchmarks/`.
+- `tests/`: Unit tests in `tests/unit/`, integration in `tests/integration/`, benchmarks under `tests/test_benchmarks/`.
 - `configs/`: Training/inference configs (Modal/Colab YAMLs).
 - `scripts/`: Data prep, training, benchmarking, and validation utilities; prefer `uv run python ...` to execute.
 - `docs/`: MkDocs content (guides, ADRs, API reference); `overrides/` for theming.
