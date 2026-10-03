@@ -61,10 +61,44 @@ import logging
 import math
 import random
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import click
+
+from image_preprocessing_detector.schema_utils import dataset_license as _dl
+
+_DATASET_SOURCE_DIR = (
+    Path(__file__).resolve().parents[1] / "docs" / "datasets" / "source"
+)
+
+
+def _annotate_and_report_licenses(
+    records: list[dict[str, Any]], task_name: str
+) -> None:
+    """Add license/license_class to records and warn about non-eligible classes."""
+    counts = _dl.annotate_license(
+        records, _dl.load_dataset_licenses(_DATASET_SOURCE_DIR)
+    )
+    logger.info("[%s] license classes: %s", task_name, dict(sorted(counts.items())))
+    for cls in sorted(counts):
+        if cls in _dl.PRODUCTION_EXCLUDED:
+            logger.warning(
+                "[%s] %d records are %r - EXCLUDED from production training "
+                "(use --exclude-license-class at merge).",
+                task_name,
+                counts[cls],
+                cls,
+            )
+        elif cls in (_dl.RESEARCH_ONLY, _dl.MIXED):
+            logger.warning(
+                "[%s] %d records are %r - OPEN license decision "
+                "(see docs/planning/RUNSHEET_DATA_ASSEMBLY.md section 0).",
+                task_name,
+                counts[cls],
+                cls,
+            )
+
 
 logger = logging.getLogger(__name__)
 
@@ -215,16 +249,33 @@ def _check_ood_leakage(
         return
 
     leakage: list[str] = []
+    hashed = missing = unsafe = 0
     for sample in samples:
         img_path_str = sample.get("image_path", "")
         img_path = Path(img_path_str)
+        if ".." in PurePosixPath(str(img_path_str).replace("\\", "/")).parts:
+            unsafe += 1  # never hash a file reached by traversal
+            continue
         if image_root and not img_path.is_absolute():
             img_path = image_root / img_path
         if not img_path.exists():
+            missing += 1
             continue
+        hashed += 1
         sha256 = _compute_sha256(img_path)
         if sha256 in ood_hashes:
             leakage.append(img_path_str)
+
+    # A check that hashed nothing proves nothing. Relative image_path values resolve
+    # against image_root (or the current directory), so a wrong working directory
+    # makes every file "missing" and the check would otherwise pass vacuously.
+    if samples and (hashed == 0 or missing or unsafe):
+        click.echo(
+            f"WARNING: OOD leakage check hashed {hashed} of {len(samples)} samples "
+            f"({missing} files not found, {unsafe} rejected as unsafe paths). "
+            f"Unhashed samples were NOT checked.",
+            err=True,
+        )
 
     if leakage:
         click.echo(
@@ -237,7 +288,8 @@ def _check_ood_leakage(
         raise SystemExit(2)
 
     click.echo(
-        f"OOD leakage check passed ({len(samples)} samples, {len(ood_hashes)} OOD hashes checked)"
+        f"OOD leakage check passed ({hashed} of {len(samples)} samples hashed, "
+        f"{len(ood_hashes)} OOD hashes checked)"
     )
 
 
@@ -272,6 +324,86 @@ def _deterministic_split(document_id: str) -> str:
 # ---------------------------------------------------------------------------
 # Mixing ratio validation
 # ---------------------------------------------------------------------------
+
+
+def _is_safe_relative_path(value: object) -> bool:
+    """True for a plain relative path with no ``..``, drive letter or NUL.
+
+    Manifest ``image_path`` values are resolved under a dataset root later, and the
+    OOD leakage check hashes whatever file they name, so untrusted label files must
+    not be able to point outside that root.
+    """
+    if not isinstance(value, str) or not value or "\x00" in value:
+        return False
+    normalised = value.replace("\\", "/")
+    if len(normalised) > 1 and normalised[1] == ":":
+        return False  # Windows drive path
+    path = PurePosixPath(normalised)
+    return not path.is_absolute() and ".." not in path.parts
+
+
+def _read_label_rows(files: tuple[Path, ...]) -> list[Any]:
+    """Parse JSONL files into rows; undecodable lines are kept as ``None`` (then skipped)."""
+    rows: list[Any] = []
+    for label_file in files:
+        with open(label_file, encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    rows.append(None)
+    return rows
+
+
+def _exclude_license_classes(
+    records: list[dict[str, Any]], classes: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    """Drop records whose ``license_class`` is in ``classes``; exit 1 if none remain."""
+    if not classes:
+        return records
+    kept = [r for r in records if r["license_class"] not in classes]
+    click.echo(
+        f"  Excluded {len(records) - len(kept)} records by license class {sorted(classes)}"
+    )
+    if not kept:
+        click.echo("ERROR: all records excluded by license class.", err=True)
+        raise SystemExit(1)
+    return kept
+
+
+def _is_usable_label_row(row: object) -> bool:
+    """A JSON object with a safe relative ``image_path`` and a finite numeric severity."""
+    if not isinstance(row, dict) or not _is_safe_relative_path(row.get("image_path")):
+        return False
+    severity = row.get("warping_severity")
+    if isinstance(severity, bool) or not isinstance(severity, (int, float, str)):
+        return False
+    try:
+        value = float(severity)
+    except (OverflowError, ValueError):  # OverflowError: absurdly large JSON integer
+        return False
+    return math.isfinite(value) and 0.0 <= value <= 1.0  # calibrated severity range
+
+
+def _stable_pick(
+    records: list[dict[str, Any]], limit: int, seed: int
+) -> list[dict[str, Any]]:
+    """Pick up to ``limit`` records in a reproducible, input-order-independent way.
+
+    Orders by SHA-256 of ``seed:image_path`` (deterministic data selection, not a
+    security use of randomness).
+    """
+    if len(records) <= limit:
+        return records
+
+    def key(rec: dict[str, Any]) -> tuple[str, str]:
+        digest = hashlib.sha256(f"{seed}:{rec['image_path']}".encode()).hexdigest()
+        # Tie-break duplicate paths on the record itself so input order never matters.
+        return digest, json.dumps(rec, sort_keys=True, default=str)
+
+    return sorted(records, key=key)[:limit]
 
 
 def _check_mixing_ratio(
@@ -771,6 +903,7 @@ def _write_task_manifest(
         Path to the written manifest file (or would-be path in dry-run).
     """
     manifest_path = output_dir / f"{task_name}_manifest.json"
+    _annotate_and_report_licenses(records, task_name)
     if not dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(manifest_path, "w") as f:
@@ -1536,6 +1669,21 @@ def shadow(
     required=True,
     help="Output directory for warping_manifest.json.",
 )
+@click.option(
+    "--extra-real-labels",
+    "extra_real_labels",
+    multiple=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="JSONL with image_path + warping_severity (e.g. doc3d from "
+    "label_doc3d_warping_severity.py apply --image-dir). Repeatable.",
+)
+@click.option(
+    "--max-extra-real",
+    type=click.IntRange(min=0),
+    default=15_000,
+    show_default=True,
+    help="Cap on records taken from --extra-real-labels (stable hash order, seeded).",
+)
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.pass_context
@@ -1545,6 +1693,8 @@ def warping(
     l2_metadata_dir: Path,
     l2_datasets: tuple[str, ...],
     output_dir: Path,
+    extra_real_labels: tuple[Path, ...],
+    max_extra_real: int,
     seed: int,
     dry_run: bool,
 ) -> None:
@@ -1583,6 +1733,26 @@ def warping(
             "L2 metadata dir not found: %s — no real warping data loaded.",
             l2_metadata_dir,
         )
+
+    # Extra real labels (doc3d). Split by mesh_id so one mesh never spans splits.
+    extra = _read_label_rows(extra_real_labels)
+    usable = [r for r in extra if _is_usable_label_row(r)]
+    if len(usable) < len(extra):
+        logger.warning(
+            "Skipped %d extra-label rows that are not objects, lack a finite numeric "
+            "warping_severity, or have a missing/absolute/'..' image_path",
+            len(extra) - len(usable),
+        )
+    usable = _stable_pick(usable, max_extra_real, seed)
+    for extra_rec in usable:
+        rec = dict(extra_rec)
+        rec["warping"] = float(rec["warping_severity"])
+        rec["split"] = _deterministic_split(
+            str(rec.get("mesh_id") or rec["image_path"])
+        )
+        records.append(rec)
+    if extra_real_labels:
+        logger.info("Loaded %d extra real warping records", len(usable))
 
     if not records:
         click.echo(
@@ -1678,6 +1848,14 @@ def _remap_image_paths(
 @click.option("--seed", type=int, default=42)
 @click.option("--dry-run", is_flag=True)
 @click.option(
+    "--exclude-license-class",
+    "exclude_license_classes",
+    multiple=True,
+    type=click.Choice(_dl.ALL_CLASSES),
+    help="Drop records of this license class from the merged manifests "
+    "(repeatable), e.g. non_commercial copyleft_gpl unspecified research_only.",
+)
+@click.option(
     "--skip-image-upload",
     is_flag=True,
     help="Skip image upload; only upload manifests.",
@@ -1694,6 +1872,7 @@ def merge(
     output_dir: Path,
     seed: int,
     dry_run: bool,
+    exclude_license_classes: tuple[str, ...],
     skip_image_upload: bool,
 ) -> None:
     """Merge all task manifests into unified train/val manifests and upload to GCS.
@@ -1730,6 +1909,9 @@ def merge(
     if not all_records:
         click.echo("ERROR: No records found across all tasks.", err=True)
         raise SystemExit(1)
+
+    _annotate_and_report_licenses(all_records, "merge")
+    all_records = _exclude_license_classes(all_records, exclude_license_classes)
 
     # Assign splits for any records without one
     for rec in all_records:

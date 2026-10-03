@@ -179,16 +179,23 @@
       ]
     },
     {
-      "description": "Track org workflow floating v1 tag for SHA pin updates",
+      "description": "Advance org reusable-workflow SHA pins to the latest semver release tag. No followTag: the org tag-protection ruleset makes every vX.Y.Z tag immutable and no floating major tag exists, so a followed tag would freeze pins permanently.",
       "matchManagers": [
         "github-actions"
       ],
-      "matchPackagePatterns": [
+      "matchPackageNames": [
         "ByronWilliamsCPA/.github",
         "williaby/.github"
       ],
-      "versioning": "semver",
-      "followTag": "v1"
+      "versioning": "semver"
+    },
+    {
+      "description": "Lock file maintenance has no release timestamp, so the global minimumReleaseAge would hold it on stability-days forever (timestamp-required since Renovate 42).",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "minimumReleaseAge": null,
+      "prBodyNotes": [
+        "Renovate cannot validate Minimum Release Age for lock file maintenance; the package manager resolves the new versions. Review the lock diff before merging."
+      ]
     }
   ],
   "python": {
@@ -199,7 +206,6 @@
     "schedule": [
       "before 5am on monday"
     ],
-    "commitMessageAction": "Update",
     "automerge": false,
     "labels": [
       "dependencies",
