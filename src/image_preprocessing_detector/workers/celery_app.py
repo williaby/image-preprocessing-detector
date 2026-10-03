@@ -172,10 +172,11 @@ def on_task_postrun(
 @task_failure.connect
 def on_task_failure(task_id: str, exception: Exception, **_kwargs: Any) -> None:
     """Handle task failure."""
-    logger.exception(
+    logger.error(
         "Task failed",
         task_id=task_id,
         error=str(exception),
+        exc_info=exception,
     )
 
 

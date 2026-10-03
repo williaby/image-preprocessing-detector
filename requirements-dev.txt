@@ -998,7 +998,7 @@ pywavelets==1.10.0 ; python_full_version >= '3.12'
     # via image-preprocessing-detector
 pywin32==312 ; sys_platform == 'win32'
     # via dvc-task
-pywinpty==3.0.5 ; os_name == 'nt' and sys_platform != 'darwin'
+pywinpty==3.0.5 ; os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'
     # via
     #   jupyter-server
     #   jupyter-server-terminals

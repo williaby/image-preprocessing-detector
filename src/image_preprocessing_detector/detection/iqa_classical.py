@@ -2335,7 +2335,7 @@ class BinarizationQualityDetector:
         """
         # Compute Laplacian
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        lap_var = laplacian.var()
+        lap_var = float(laplacian.var())
 
         # Very high variance suggests noise or complex textures
         # Very low variance suggests blur (also bad for binarization)

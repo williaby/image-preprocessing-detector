@@ -77,7 +77,7 @@ def create_stratified_splits(
     by_script: dict[str, list[GeneratedSample]] = defaultdict(list)
     for sample in samples:
         # Use first (primary) script for stratification
-        primary_script = sorted(sample.scripts)[0] if sample.scripts else "unknown"
+        primary_script = min(sample.scripts) if sample.scripts else "unknown"
         by_script[primary_script].append(sample)
 
     train: list[GeneratedSample] = []
@@ -363,7 +363,7 @@ def compute_dataset_statistics(
         stats["densities"][sample.text_density.value] += 1
 
         # Languages per script
-        primary_script = sorted(sample.scripts)[0] if sample.scripts else "unknown"
+        primary_script = min(sample.scripts) if sample.scripts else "unknown"
         for lang in sample.language_codes:
             stats["languages_per_script"][primary_script].add(lang)
 
@@ -446,7 +446,7 @@ def _validate_layout_coverage(
 
     script_layout_counts: dict[tuple[str, str], int] = Counter()
     for sample in samples:
-        primary_script = sorted(sample.scripts)[0] if sample.scripts else "unknown"
+        primary_script = min(sample.scripts) if sample.scripts else "unknown"
         layout = sample.layout_type.value
         script_layout_counts[(primary_script, layout)] += 1
 
@@ -543,7 +543,7 @@ def _validate_language_diversity(
     # Count unique languages per script
     languages_per_script: dict[str, set[str]] = defaultdict(set)
     for sample in samples:
-        primary_script = sorted(sample.scripts)[0] if sample.scripts else "unknown"
+        primary_script = min(sample.scripts) if sample.scripts else "unknown"
         for lang in sample.language_codes:
             languages_per_script[primary_script].add(lang)
 
