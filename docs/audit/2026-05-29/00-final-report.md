@@ -128,7 +128,7 @@ Drifting, not at-risk. The running code is sound: clean dependency direction, mo
 
 Three changes move it most:
 
-1. Reconcile the architecture narrative. Pick the live model (ResNet teacher-student per the code), mark SigLIP/MobileNetV4 as target, fix README vs CLAUDE.md, and add the two missing ADRs (DOC-01, DOC-02, DOC-03, ARCH-05). This is the single most damaging contradiction in the repo.
+1. Reconcile the architecture narrative. As of 2026-10-02 this is partly done: PR #209 fixed the CLAUDE.md side (DOC-02, ARCH-05 docs) and made SigLIP 2 / MobileNetV4 the documented target with ResNet historical. What remains is README.md versus CLAUDE.md (DOC-01), the two missing ADRs (DOC-03), and marking the three model lineages in `detection/` (ARCH-05 code side). This is still the most damaging contradiction in the repo.
 
 2. Finish the Poetry to uv migration into the places CI does not lint: Dockerfiles (DEP-01), CONTRIBUTING/AGENTS (DOC-05, ARCH-07), and the type-check gate (CI-01). DEP-01 in particular makes container builds non-reproducible today.
 
