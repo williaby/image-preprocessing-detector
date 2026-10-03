@@ -30,12 +30,73 @@ class APISettings(BaseSettings):
         description="API title for OpenAPI docs",
     )
     description: str = Field(
-        default="Intelligent image preprocessing detection for RAG document pipelines",
+        default=(
+            "Front door for the RAG document pipeline. Accepts raw documents "
+            "(PDF, PNG, JPEG, TIFF, WebP), assesses image quality, and returns "
+            "a per-page quality summary plus an OCR routing recommendation.\n\n"
+            "## Features\n\n"
+            "- **Classical IQA**: blur, noise, and contrast detectors per page\n"
+            "- **Document Quality Score (DQS)**: degradation score (the "
+            "structural complexity component is currently a fixed placeholder)\n"
+            "- **PDF classification**: image_only / born_digital / hybrid\n"
+            "- **Routing**: `ocr_fast`, `ocr_advanced` or `vision_structured`, "
+            "chosen from the degradation score\n"
+            "- **Async batch**: submit-and-poll jobs for multi-file ingestion\n\n"
+            "The HTTP API exposes a subset of the full preprocessing pipeline: "
+            "geometric and quality corrections and the ML teacher/student IQA "
+            "models are not yet applied by these endpoints.\n\n"
+            "See the project repository (`docs/api/`) for further reference "
+            "material."
+        ),
         description="API description for OpenAPI docs",
     )
     version: str = Field(
         default="0.1.0",
         description="API version",
+    )
+    contact_name: str = Field(
+        default="Image Preprocessing Detector Maintainers",
+        description="OpenAPI contact name",
+    )
+    contact_url: str = Field(
+        default="https://github.com/williaby/image-preprocessing-detector",
+        description="OpenAPI contact URL",
+    )
+    contact_email: str = Field(
+        default="",
+        description=(
+            "OpenAPI contact email. Leave empty to omit `email` from the "
+            "published `info.contact` object; preferred over a placeholder."
+        ),
+    )
+    license_name: str = Field(
+        default="CC-BY-SA-4.0",
+        description="OpenAPI license name (SPDX identifier of the project license)",
+    )
+    license_url: str = Field(
+        default="https://creativecommons.org/licenses/by-sa/4.0/",
+        description="OpenAPI license URL",
+    )
+    server_url: str = Field(
+        default="http://localhost:8000",
+        description=(
+            "Base URL advertised in the OpenAPI `servers` list (used by "
+            "Swagger UI Try-it-out). Set this to the public URL of the "
+            "deployment. Leave empty to omit `servers`, in which case "
+            "OpenAPI clients default to the host serving the document."
+        ),
+    )
+    server_description: str = Field(
+        default="Local development server",
+        description="Description of the OpenAPI `servers` entry",
+    )
+    terms_of_service: str = Field(
+        default="",
+        description=(
+            "OpenAPI terms-of-service URL. Leave empty to omit "
+            "`info.termsOfService` from the published schema; do not point "
+            "this at the project LICENSE."
+        ),
     )
 
     # CORS settings

@@ -254,35 +254,146 @@ async def process_document(  # nosonar  # async required: callers use await
 @router.post(
     "",
     response_model=ProcessResponse,
+    status_code=status.HTTP_200_OK,
     summary="Process a single document",
-    description="Upload and process a single PDF or image file for IQA analysis.",
+    description=(
+        "Upload a single document (PDF or image) and run the HTTP-exposed "
+        "subset of the Project A pipeline: ingestion, PDF type classification "
+        "(PDF uploads only), classical IQA (blur, noise, contrast), DQS "
+        "degradation scoring, and an OCR routing recommendation.\n\n"
+        "**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, "
+        "`.tif`, `.webp`.\n\n"
+        "**Request shape**: `multipart/form-data` with a single `file` field "
+        "and optional query parameters (`prefer_gpu`, `enable_corrections`, "
+        "`enable_teacher`).\n\n"
+        "**Current limitations**: `enable_corrections` and `enable_teacher` "
+        "are accepted but not yet acted on. No corrections are applied "
+        "(`corrections_applied` is always 0), the ML teacher model is not "
+        "invoked, and `dqs.structural_complexity_score` is a fixed "
+        "placeholder (0.3). Routing is one of `ocr_fast`, `ocr_advanced` or "
+        "`vision_structured`, chosen from the degradation score alone. PDFs "
+        "are processed up to the first 100 pages.\n\n"
+        "**Response shape**: a `ProcessResponse` envelope. On success "
+        "`status=completed` and `result` is populated with the document "
+        "summary (per-page IQA scores, DQS, routing). On validation or "
+        "processing errors, the envelope carries `status=failed` and a "
+        "structured `error` (see error codes in `docs/api/rest-api.md` in "
+        "the repository)."
+    ),
+    response_description="Processing envelope with per-page IQA summary, DQS, and OCR routing recommendation.",
     responses={
-        200: {"description": "Document processed successfully"},
-        400: {"description": "Invalid request (file type, size, etc.)"},
-        422: {"description": "Processing failed"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document processed successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "completed",
+                        "result": {
+                            "document_id": "550e8400-e29b-41d4-a716-446655440000",
+                            "file_name": "document.pdf",
+                            "num_pages": 1,
+                            "pdf_type": "image_only",
+                            "dqs": {
+                                "degradation_score": 0.25,
+                                "structural_complexity_score": 0.3,
+                                "pre_ocr_risk": None,
+                            },
+                            "ocr_routing_recommendation": "ocr_fast",
+                            "pages": [
+                                {
+                                    "page_index": 0,
+                                    "width_px": 2550,
+                                    "height_px": 3300,
+                                    "issues_detected": 1,
+                                    "corrections_applied": 0,
+                                    "iqa_scores": {
+                                        "blur_score": 0.85,
+                                        "noise_score": 0.92,
+                                        "contrast_score": 0.78,
+                                        "skew_angle": None,
+                                    },
+                                }
+                            ],
+                            "processing_time_ms": 1250.5,
+                            "device_used": "cpu",
+                        },
+                        "metadata_url": None,
+                        "corrected_images_url": None,
+                        "error": None,
+                    }
+                }
+            },
+        },
+        400: {
+            "model": ProcessResponse,
+            "description": "Validation error (invalid file type, oversized, empty filename).",
+        },
+        401: {"model": ErrorResponse, "description": "Missing API key (auth enabled)."},
+        403: {"model": ErrorResponse, "description": "Invalid API key (auth enabled)."},
+        422: {
+            "model": ProcessResponse,
+            "description": (
+                "Processing failed (corrupt file, pipeline error). A request "
+                "that FastAPI rejects before the handler runs (for example a "
+                "missing `file` part or a malformed query parameter) also "
+                'returns 422, with FastAPI\'s standard `{"detail": [...]}` '
+                "validation body instead of this envelope."
+            ),
+        },
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded."},
+        500: {
+            "description": (
+                "Unexpected internal server error (framework-generated "
+                "response; the body is not an `ErrorResponse`)."
+            ),
+        },
     },
 )
 async def process_single_document(
     file: Annotated[UploadFile, File(description="Document to process (PDF or image)")],
     prefer_gpu: Annotated[bool, Query(description="Whether to prefer GPU")] = True,
     enable_corrections: Annotated[
-        bool, Query(description="Whether to enable corrections")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (no corrections are applied)."
+            )
+        ),
     ] = True,
     enable_teacher: Annotated[
-        bool, Query(description="Whether to enable teacher model")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (the teacher model is not invoked)."
+            )
+        ),
     ] = False,
 ) -> ProcessResponse | JSONResponse:
-    """Process a single document.
+    """Analyze a single uploaded document and return its quality summary.
+
+    The handler validates the upload (extension allowlist, non-empty, and the
+    configured maximum size, which is checked after the body has been read
+    into memory), persists it to a temp file, then invokes
+    :func:`process_document`, which performs ingestion, classical IQA (blur,
+    noise, contrast), DQS scoring, and an OCR routing recommendation. Temp
+    files are cleaned up in the `finally` block.
 
     Args:
-        file: The uploaded document file.
-        prefer_gpu: Whether to prefer GPU for processing.
-        enable_corrections: Whether to apply automatic corrections.
-        enable_teacher: Whether to enable teacher model inference.
+        file: Uploaded document (PDF / PNG / JPEG / TIFF / WebP).
+        prefer_gpu: When true, prefer a local CUDA device when selecting the
+            reported processing device; falls back to CPU if no GPU is
+            available.
+        enable_corrections: Reserved for future use. Accepted but not read by
+            the handler; no corrections are applied.
+        enable_teacher: Reserved for future use. Accepted but not read by the
+            handler; the teacher model is not invoked.
 
     Returns:
-        ProcessResponse with processing results.
+        ``ProcessResponse`` (HTTP 200) on success, or ``JSONResponse``
+        carrying a ``ProcessResponse`` envelope with HTTP 400 (validation)
+        or 422 (processing failure).
     """
     settings = get_api_settings()
     correlation_id = get_correlation_id()
