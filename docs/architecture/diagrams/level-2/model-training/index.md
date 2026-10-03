@@ -71,7 +71,7 @@ Coverage status matrix across all 5 SigLIP 2 head groups (overall 3% of 60 condi
 
 | Component | Source Files | Purpose |
 |-----------|--------------|---------|
-| SigLIP 2 NAFlex | `modal/train_siglip2_multitask.py` | Multi-task model (19 heads, 5 groups) |
+| SigLIP 2 NAFlex | `modal/train_siglip2_multitask.py` | Multi-task model (16 heads, 5 groups) |
 | MobileNetV4-Conv-S | `modal/train_mobilenetv4.py` | Fast pre-correction gate (3 heads) |
 | Docling Layout | Pre-trained (egret-xlarge / heron) | Layout detection (no additional training) |
 | ONNX Export | `modal/export_onnx.py` | Production model export (multi-head) |
@@ -83,7 +83,7 @@ Coverage status matrix across all 5 SigLIP 2 head groups (overall 3% of 60 condi
 
 | Model | Architecture | Parameters | Purpose |
 |-------|--------------|------------|---------|
-| SigLIP 2 NAFlex | ViT-B/16 (NAFlex packing) | ~88M | Multi-task model: 19 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
+| SigLIP 2 NAFlex | ViT-B/16 (NAFlex packing) | ~88M | Multi-task model: 16 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
 | MobileNetV4-Conv-S | MobileNetV4-Conv-Small | ~4M | Fast pre-correction gate: 3 heads (orientation, skew, resolution quality), ~3ms GPU |
 | Docling Layout (accuracy) | docling-layout-egret-xlarge | ~55M | Layout detection (primary, high accuracy) |
 | Docling Layout (speed) | docling-layout-heron | ~14M | Layout detection (fast path) |
@@ -146,6 +146,11 @@ def mobilenetv4_bootstrap_loss(predictions, targets):
 **Purpose**: Train all 16 task heads on frozen SigLIP 2 backbone across 5 head groups.
 
 **Head Groups**:
+
+> The per-group head names below predate the 3+1+2+5+5 breakdown in
+> [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md), which is canonical for
+> the 16-head design (IQA is 3 DIQA-aligned heads, handwriting is 5 heads). The ONNX output names later on this page
+> need the same rewrite.
 
 | Group | Heads | Task Type | Dataset Sources |
 |-------|-------|-----------|-----------------|
@@ -326,7 +331,7 @@ MultiTaskDataset (PyTorch DataLoader)
     ↓
 Workstream 2: Production Model Training (3-Step Virtuous Cycle)
     ├─→ Step 1: MobileNetV4-Conv-S bootstrap (orientation, skew, resolution)
-    ├─→ Step 2: SigLIP 2 multi-task (frozen backbone + 19 heads)
+    ├─→ Step 2: SigLIP 2 multi-task (frozen backbone + 16 heads)
     └─→ Step 3: MobileNetV4-Conv-S distillation (SigLIP 2 soft labels)
     ↓
 Model Registry (GCS)
@@ -452,7 +457,7 @@ Workstream 1: Production Runtime (deployment)
 
 | Format | Model | Use Case | Approx Size | Inference Backend |
 |--------|-------|----------|-------------|-------------------|
-| **ONNX (.onnx)** | SigLIP 2 NAFlex | Production runtime (primary, 19 heads) | ~340 MB | ONNX Runtime (GPU/CPU) |
+| **ONNX (.onnx)** | SigLIP 2 NAFlex | Production runtime (primary, 16 heads) | ~340 MB | ONNX Runtime (GPU/CPU) |
 | **ONNX (.onnx)** | MobileNetV4-Conv-S | Fast pre-correction gate (3 heads) | ~16 MB | ONNX Runtime (GPU/CPU) |
 | **TorchScript (.pt)** | Both | Fallback if ONNX fails | ~350 / ~18 MB | PyTorch (GPU/CPU) |
 | **PyTorch Checkpoint (.pth)** | Both | Fine-tuning, experimentation | ~360 / ~20 MB | PyTorch training |
@@ -750,7 +755,7 @@ def train_siglip2_multitask(config: dict):
 ```text
 gs://image-detection-models/candidates/
 ├── siglip2_naflex/
-│   ├── siglip2_naflex_v1.0.0.pth          # PyTorch checkpoint (19 heads)
+│   ├── siglip2_naflex_v1.0.0.pth          # PyTorch checkpoint (16 heads)
 │   ├── siglip2_naflex_v1.0.0.onnx         # ONNX export (16 outputs)
 │   └── siglip2_naflex_v1.0.0_metadata.json
 ├── mobilenetv4/
@@ -767,7 +772,7 @@ gs://image-detection-models/candidates/
 ```text
 gs://image-detection-models/production/
 ├── siglip2_naflex/
-│   ├── siglip2_naflex_v1.0.0.onnx         # Primary (19 heads, ~50ms GPU)
+│   ├── siglip2_naflex_v1.0.0.onnx         # Primary (16 heads, ~50ms GPU)
 │   ├── siglip2_naflex_v1.0.0.pt           # Fallback (TorchScript)
 │   └── siglip2_naflex_v1.0.0_metadata.json
 ├── mobilenetv4/
@@ -789,7 +794,7 @@ gs://image-detection-models/production/
 
 **Examples**:
 
-- `siglip2_naflex_v1.0.0`: Initial multi-task model (19 heads)
+- `siglip2_naflex_v1.0.0`: Initial multi-task model (16 heads)
 - `siglip2_naflex_v1.1.0`: Re-trained with additional handwriting data
 - `siglip2_naflex_v1.1.1`: Loss weight adjustment for script head
 - `mobilenetv4_v1.0.0`: Initial pre-correction gate (Step 1 bootstrap)
@@ -895,7 +900,7 @@ Deploy to Production (Workstream 1)
 | Metric | SigLIP 2 NAFlex (~88M) | MobileNetV4-Conv-S (~4M) | Notes |
 |--------|------------------------|--------------------------|-------|
 | **Training Time** | ~17.5 hours (Step 2, 30 epochs) | ~4.2 hours (Step 1 + Step 3) | A10 GPU on Modal |
-| **Task Heads** | 19 heads across 5 groups | 3 heads (orientation, skew, resolution) | SigLIP 2 covers all tasks |
+| **Task Heads** | 16 heads across 5 groups | 3 heads (orientation, skew, resolution) | SigLIP 2 covers all tasks |
 | **Inference Latency (GPU)** | ~50ms/image | ~3ms/image | MobileNetV4 is ~17x faster |
 | **Inference Latency (CPU)** | ~200ms/image | ~12ms/image | MobileNetV4 for pre-correction |
 | **Model Size** | ~340 MB (ONNX) | ~16 MB (ONNX) | 21x smaller MobileNetV4 |
@@ -905,7 +910,7 @@ Deploy to Production (Workstream 1)
 **Two-Model Pipeline Rationale**:
 
 - **MobileNetV4 pre-correction**: Corrects orientation, skew, and resolution BEFORE SigLIP 2 sees the image
-- **SigLIP 2 benefits**: All 19 heads produce more accurate results on corrected images
+- **SigLIP 2 benefits**: All 16 heads produce more accurate results on corrected images
 - **Redundancy**: SigLIP 2 also has orientation/skew/resolution heads (Groups 3+5) for validation and teacher capability
 - **Step 3 virtuous cycle**: SigLIP 2 soft labels improve MobileNetV4 accuracy (orientation 95% -> 98%)
 
@@ -954,7 +959,7 @@ This section maps training pipeline stages to implementation files with LOC coun
 **Key Components** (planned):
 
 1. **Modal Training Scripts**:
-   - `train_siglip2_multitask.py`: SigLIP 2 multi-task training (Step 2, frozen backbone + 19 heads)
+   - `train_siglip2_multitask.py`: SigLIP 2 multi-task training (Step 2, frozen backbone + 16 heads)
    - `train_mobilenetv4.py`: MobileNetV4 bootstrap (Step 1) + distillation (Step 3)
    - `export_onnx.py`: Multi-head ONNX export for both models
 

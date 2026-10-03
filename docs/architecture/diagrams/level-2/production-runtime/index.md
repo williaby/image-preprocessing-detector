@@ -84,6 +84,10 @@ The production runtime processes documents through a series of well-defined stat
 
 ### Processing States
 
+> **Head count**: "16 heads" in this page is the target design in
+> [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). The current
+> `SigLIP2MultiTaskDetector` wrapper exposes 8 task predictions, and SigLIP 2 training has not yet run.
+
 | State | Entry Condition | Exit Condition | Timeout | Fallback |
 |-------|----------------|----------------|---------|----------|
 | **INGESTION** | PDF/image received | Pages extracted to 300 DPI | 30s | Abort document |
@@ -95,7 +99,7 @@ The production runtime processes documents through a series of well-defined stat
 | **MOBILENET_PRECORRECTION** | IQA route determined | MobileNetV4-Conv-S inference complete (3 heads: orientation, skew, resolution quality) | 15s | Fallback to classical only |
 | **PRE_CORRECTION** | MobileNetV4 inference complete | Orientation/skew/resolution corrections applied | 20s | Skip pre-corrections, flag in metadata |
 | **CONFIDENCE_CHECK** | Pre-correction complete | Per-head confidence evaluated across all model heads | 5s | Skip SigLIP 2, use classical fallback |
-| **SIGLIP2_ANALYSIS** | Low confidence on any head | SigLIP 2 NAFlex multi-task inference complete (19 heads, 5 groups) | 200s | Use classical fallback for low-confidence heads |
+| **SIGLIP2_ANALYSIS** | Low confidence on any head | SigLIP 2 NAFlex multi-task inference complete (16 heads, 5 groups) | 200s | Use classical fallback for low-confidence heads |
 | **CLASSICAL_FALLBACK** | Head confidence below threshold | Head-specific classical fallback applied (6 rules) | 30s | Use default values for failed heads |
 | **CORRECTION** | IQA complete (classical + ML) | Corrections applied (deskew, CLAHE, etc.) | 50s | Skip corrections, flag in metadata |
 | **DQS_CALCULATION** | Corrections complete | Document Quality Score computed | 10s | Default DQS = 0.5 |
@@ -337,7 +341,7 @@ BudgetConfig(
 
 | Workstream | Provided Artifacts | Purpose |
 |------------|-------------------|---------|
-| **Unify (Unify)** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
+| **Unify** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
 | **Workstream 7 (Monitoring & Drift)** | Predictions, quality scores, latency metrics | Drift detection, active learning sample harvesting |
 
 ### External Dependencies
@@ -660,7 +664,7 @@ mobilenet = load_production_model(
     device="cuda"
 )
 
-# Load multi-task analysis model (19 heads, 5 groups)
+# Load multi-task analysis model (16 heads, 5 groups)
 siglip2 = load_production_model(
     model_type="siglip2",
     backend="onnx",

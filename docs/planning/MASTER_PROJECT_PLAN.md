@@ -24,9 +24,10 @@ tags:
 
 ## 1. Service Identity and Mission
 
-**Prepare-Doc** (`image_detection`) is the **preprocessing, IQA, and coarse layout gateway**
-in a six-service RAG document pipeline. It accepts raw documents in any condition — rotated,
-blurred, shadowed, photographed — and delivers corrected page images plus a
+**Prepare-Doc** (`image-preprocessing-detector`) is the **preprocessing, IQA, and coarse layout gateway**
+in the five-repository Foundry RAG document pipeline (see
+[pipeline-level-0.md](../architecture/pipeline-level-0.md)). It accepts raw documents in any condition: rotated,
+blurred, shadowed, photographed. It delivers corrected page images plus a
 `DocumentMetadata.json` record to Unify. Every downstream service depends on the accuracy of
 this output.
 
@@ -43,7 +44,7 @@ Ingest                                                                        (r
                                   FFmpeg + Deepgram Nova-2 + diarization     + metadata ┘ │  │
                                                                                           ▼  ▼
                                                           Unify (Unify) ◄──────────────
-                                                          Multi-engine OCR + Docling DOM
+                                                          OCR via docling-serve + Docling DOM
                                                                     │
                                                                     ▼
                                                           Chunk (data_ingestor)
@@ -63,9 +64,9 @@ backwards compatibility for readers of older documents.
 | Legacy ID | Service Name | Repository | Primary Function |
 | --- | --- | --- | --- |
 | ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) |
-| ~~Project B~~ | **Unify** | `Unify` | Multi-engine OCR, Docling DOM unification |
-| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring |
-| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service |
+| ~~Project B~~ | **Unify** | `Unify` | OCR via docling-serve (specialist engines in later phases), Docling DOM unification |
+| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring (`RAGChunkSet.json`) |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding, outside the pipeline (not a shared foundry service) |
 | ~~Project E~~ | **Prepare-Audio** | `audio-processor` | Audio transcription, speaker diarization |
 | ~~Project F~~ | **Ingest** | `rag-processor` | Web UI, file upload, Cloud Workflows triggering |
 
@@ -1339,7 +1340,7 @@ color_fidelity). This checklist tracks all propagation changes.
 | D4 | `docs/datasets/DATASET_HEAD_COVERAGE.md` | Replace 6 IQA column headers with 3 DIQA dimensions |
 | D5 | `docs/planning/TRAINING_DATA_STRATEGIC_ANALYSIS.md` | Update G1 coverage analysis for 3-dim scheme |
 | D6 | `docs/planning/DATASET_DIVERSITY_REQUIREMENTS.md` | §6 IQA dimension update |
-| D7 | `CLAUDE.md` (project-level) | Update "19 heads" references to "16 heads"; update IQA description |
+| D7 | `CLAUDE.md` (project-level) | Update "19 heads" references to "16 heads"; update IQA description (done: CLAUDE.md now says 16 Release-1 heads) |
 
 ### Documentation Changes (LOW Priority — Deprecation Banners)
 
@@ -1505,6 +1506,6 @@ P2 = monitor and improve.
 | 9-model peer review panel (CONDITIONAL GO, per-head sample analysis) | [../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md](../../tmp_cleanup/.tmp-siglip2-peer-review-final-20260226.md) |
 | Resolution quality labeling strategy (V1 two-stage pipeline) | [RESOLUTION_QUALITY_LABELING_STRATEGY.md](RESOLUTION_QUALITY_LABELING_STRATEGY.md) |
 | Resolution quality V2 strategy (Sauvola, projection profiles, calibration) | [RESOLUTION_QUALITY_V2_STRATEGY.md](RESOLUTION_QUALITY_V2_STRATEGY.md) |
-| Architecture diagrams (all four levels) | [docs/architecture/](../architecture/) |
+| Architecture diagrams (all five levels, 0-4) | [docs/architecture/](../architecture/) |
 | Historical plan (Phases 0–9, superseded) | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | Value-stream plan (Streams 1–8, superseded) | [PHASE_10_11_RESTRUCTURED_PLAN.md](PHASE_10_11_RESTRUCTURED_PLAN.md) |
