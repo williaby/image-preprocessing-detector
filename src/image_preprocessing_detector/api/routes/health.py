@@ -186,7 +186,9 @@ async def readiness_check(response: Response) -> ReadyResponse:
 
 
 def _detect_model_versions() -> dict[str, str | None]:
-    """Detect deployed model versions from the local filesystem.
+    """Detect which ONNX IQA models are present on disk.
+
+    Blocking filesystem checks; call via ``asyncio.to_thread`` from async code.
 
     Returns:
         Mapping of model role to detected model name, or None when absent.
@@ -196,8 +198,6 @@ def _detect_model_versions() -> dict[str, str | None]:
         "student_model": None,
         "layout_model": None,
     }
-
-    # Try to detect model versions from filesystem
     try:
         model_dir = Path("models/iqa/onnx")
         if model_dir.exists():
@@ -210,7 +210,6 @@ def _detect_model_versions() -> dict[str, str | None]:
                 models["student_model"] = "resnet18_student"
     except Exception as e:
         logger.debug("model_version_detection_failed", error=str(e))
-
     return models
 
 
@@ -229,8 +228,7 @@ async def version_info() -> VersionResponse:
 
     settings = get_api_settings()
 
-    # Get model versions (check if ONNX models exist); filesystem probes run in a
-    # worker thread so the event loop is never blocked on disk I/O.
+    # Detect model versions from the filesystem off the event loop
     models = await asyncio.to_thread(_detect_model_versions)
 
     return VersionResponse(
