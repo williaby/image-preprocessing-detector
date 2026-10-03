@@ -71,7 +71,6 @@ class DocumentProcessor:
 
         Note:
             Currently implements placeholder logic. Full implementation requires:
-            - PDF type classification (Sprint 2.6.2+)
             - Layout detection integration (Phase 3)
             - IQA metric collection from detection modules
         """
@@ -84,8 +83,6 @@ class DocumentProcessor:
         # Determine MIME type
         source_mime = self._get_mime_type(file_path)
 
-        # Placeholder: Detect PDF type
-        # TODO: Implement PDF type classification in Sprint 2.6.2+
         pdf_type = (
             self._classify_pdf_type(file_path)
             if file_path.suffix.lower() == ".pdf"
