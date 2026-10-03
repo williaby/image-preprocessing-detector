@@ -95,7 +95,8 @@ Embedding is not a pipeline service and there is no shared embedding repository.
 `RAGChunkSet.json`, then chooses its own embedding model, vector database, similarity metric, filters, and search
 interface. It must keep the fields the chunk contract requires (`chunk_id`, `document_id`, `trace_id`, `trust_score`,
 `ocr_engine_provenance`, `page_range`, `section_hierarchy`, `hallucination_risk`) so quality and provenance survive
-into retrieval, and it must not recompute `trust_score`. See
+into retrieval, and it must not recompute `trust_score`. The three scoring fields are nullable: `null` means "not
+scored", never zero or one (contract section 3.4). See
 [chunk-embed-contract.md](https://github.com/williaby/image-preprocessing-detector/blob/main/docs/development/RAG%20Pipeline/chunk-embed-contract.md).
 
 Things that belong to an application, not to the pipeline: embedding endpoints and models, vector stores, search APIs,
