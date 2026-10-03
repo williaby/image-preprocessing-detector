@@ -147,6 +147,11 @@ def mobilenetv4_bootstrap_loss(predictions, targets):
 
 **Head Groups**:
 
+> The per-group head names below predate the 3+1+2+5+5 breakdown in
+> [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md), which is canonical for
+> the 16-head design (IQA is 3 DIQA-aligned heads, handwriting is 5 heads). The ONNX output names later on this page
+> need the same rewrite.
+
 | Group | Heads | Task Type | Dataset Sources |
 |-------|-------|-----------|-----------------|
 | **G1: IQA** | blur, noise, contrast, compression, illumination, overall | Regression (0-1) | IQA (16K+100K) |

@@ -15,17 +15,19 @@ purpose: "Track files deliberately left unchanged when entry points were aligned
 Entry points were aligned with the canonical names in [pipeline-level-0.md](pipeline-level-0.md). The files below still
 carry retired framing and were not edited: they are PlantUML sources (regenerate SVG and PNG with the diagram tooling),
 generated images, schema descriptions, or planning history. Canonical names: `DoclingDOM.json` (not `OCRDocument.json`),
-`RAGChunkSet.json`, Unify runs OCR through docling-serve first (specialist engines and fusion come later), no
-embedding stage in the pipeline, no Project A-F names.
+`RAGChunkSet.json`, Unify runs OCR through docling-serve first (specialist engines come later; fusion of multi-engine
+output stays with Chunk per ADR-0029), no embedding stage in the pipeline, no Project A-F names.
 
 ## Diagram sources (edit the puml, then regenerate images)
 
 - `docs/architecture/diagrams/level-0/rag-pipeline-overview.puml`: Unify box says "Multi-engine OCR"; should say OCR
-  through docling-serve. Regenerate `rag-pipeline-overview.svg` and PNG.
+  through docling-serve. Regenerate `rag-pipeline-overview.svg`; the PNG beside it is `RAG_Pipeline_Overview.png`. The
+  diagram also still shows Engine Selection and Result Fusion boxes inside Unify, which contradict ADR-0029.
 - `docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml`: `OCRDocument` (3 places)
   should be `DoclingDOM`; the multi-engine flow is a later phase.
 - `docs/architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml`: `OCRDocument` input
-  should be `DoclingDOM`; fusion in Chunk is not the current plan.
+  should be `DoclingDOM`. Fusion stays in Chunk per ADR-0029 and applies once specialist OCR engines produce
+  multi-engine output.
 - `docs/architecture/diagrams/level-2/downstream-context/data_ingestor-migration.puml`: `OCRDocument` (2 places)
   should be `DoclingDOM`.
 - `docs/architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml`: file name and title still
@@ -34,15 +36,39 @@ embedding stage in the pipeline, no Project A-F names.
 
 ## SigLIP head count
 
-Markdown pages now say 16 heads across 5 groups (Release 1). Remaining follow-ups:
+Three head-count definitions coexist and are not yet reconciled:
 
-- `docs/architecture/diagrams/level-3/data-preparation/label-parsing-generation.md`: the per-head table still lists
-  the pre-Release-1 head names (for example five IQA heads, `script_family`); it carries an inline "under revision"
-  note and needs a rewrite against `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`.
-- `docs/architecture/diagrams/level-2/model-arena/index.md`: graduation and benchmark tables still list IQA heads such
-  as "noise" and "etc."; align with the three DIQA-aligned IQA heads.
-- Diagram sources (`.puml`) and generated `.svg`/`.png` files under `docs/architecture/diagrams/` may still say 19 heads
-  (not checked; see the diagram section above).
+- **16 heads** (3+1+2+5+5, including the five handwriting heads): the design in
+  `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`. This is the number the Markdown pages edited here now use. It is the
+  full design, not the Release 1 scope.
+- **16 heads, Release 1** in `docs/planning/MASTER_PROJECT_PLAN.md` section 5a: a different subset, taken from 22 heads
+  with the handwriting group and the fine-skew head deferred to Release 2.
+- **8 tasks** implemented today in `siglip2_multitask.py` (3 IQA, script, source, orientation, shadow, warping).
+
+Follow-ups, none of them done here:
+
+- Reconcile the three definitions in one place (likely the requirements doc, whose line 47 still says "IQA (6
+  regression heads)" against its own 3+1+2+5+5 breakdown) and then align the pages below.
+- Many files outside this PR still say 19 heads (some "19" matches are script-class counts, so review each hit):
+  planning docs (`docs/planning/`), dataset docs (`docs/datasets/`), handoff docs,
+  `docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md`, `LEVEL_2_DOCUMENTATION_TEMPLATE.md`, and roughly 14
+  PlantUML sources with generated SVGs under `docs/architecture/diagrams/` do. Re-run
+  `grep -rnE '19[ -]heads?|19 task heads|19 prediction' docs` to list them.
+- `docs/architecture/diagrams/INDEX.md` (Per-Head Views row) still says "25 heads (22 SigLIP 2 + 3 MobileNetV4)".
+- Head tables that still list older head names (each page carries an inline note):
+  - `docs/architecture/diagrams/level-3/data-preparation/label-parsing-generation.md`: five IQA heads, `script_family`.
+  - `docs/architecture/diagrams/level-2/model-training/index.md`: group table (six IQA heads, three handwriting heads)
+    and the ONNX output names.
+  - `docs/architecture/diagrams/level-2/model-arena/index.md`: graduation and benchmark tables still list IQA heads such
+    as "noise".
+
+## Navigation
+
+- `mkdocs.yml` nav (around lines 220-239): entries "RAG Processor → Project A", "Project A (This Project)", "Project B
+  (OCR)", "Project C (Fusion)" and "ADR-029 Project A Scope" keep retired labels, and their targets
+  (`rag-processor-project-a-contract.md`, `project-a-project-plan.md`, `unify-f-nf.md`, `chunk-f-nf.md`,
+  `0029-project-a-scope-boundaries.md`) do not exist, so the non-strict build warns and skips them. Fix the labels and
+  targets together.
 
 ## Needs schema release (JSON, out of scope for Markdown passes)
 

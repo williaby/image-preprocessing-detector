@@ -18,7 +18,7 @@ tags:
 >
 > - [docs/PROJECT_OVERVIEW_DETAILED.md](PROJECT_OVERVIEW_DETAILED.md) — complete module map, canonical files, schema contract, config reference
 > - [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md) — project status and remaining work
-> - [docs/architecture/](architecture/) — implementation diagrams at all five levels (Level 0-4)
+> - [docs/architecture/](architecture/): implementation diagrams at all five levels (Level 0-4)
 
 ---
 
@@ -120,6 +120,11 @@ Total pipeline latency is approximately 55–65ms GPU across both stages.
 All 16 prediction heads are organized into five task groups, each feeding a specific downstream
 decision in Unify.
 
+> **Scope of "16 heads"**: this is the full design in `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`
+> (3+1+2+5+5), including the five handwriting heads. It is not the Release 1 scope: section 5a of
+> `docs/planning/MASTER_PROJECT_PLAN.md` defers the handwriting group and the fine-skew head to Release 2. The
+> current inference wrapper implements 8 tasks, and SigLIP 2 training has not yet run.
+
 **Image Quality Assessment** (3 heads). Three DIQA-aligned regression heads score overall quality,
 sharpness, and color fidelity on a 0–1 scale (individual degradation heads are deferred to a later
 phase). These combine with the eight classical detector outputs to produce the Document
@@ -139,7 +144,7 @@ data change.
 regression head run in Stage 2 as a validation pass over the Stage 1 pre-correction. If the
 Stage 2 orientation reading conflicts with Stage 1, a correction escalation is triggered.
 
-**Handwriting** (5 heads). Three classification heads assess presence (none/partial/dominant),
+**Handwriting** (5 heads). Three classification heads assess presence (none/sparse/moderate/substantial/dominant),
 legibility (unreadable through excellent), and content type (printed/cursive/mixed/annotation/
 diagram label). Two regression heads score presence and legibility on a 0–1 scale. Together these determine
 whether Unify should route to a handwriting-specialized OCR engine and at what priority.

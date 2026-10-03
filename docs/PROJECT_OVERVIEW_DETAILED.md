@@ -19,7 +19,7 @@ tags:
 >
 > - [docs/PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) — concise narrative introduction (start here)
 > - [docs/planning/MASTER_PROJECT_PLAN.md](planning/MASTER_PROJECT_PLAN.md) — project status and remaining work
-> - [docs/architecture/](architecture/) — implementation diagrams at all five levels (Level 0-4)
+> - [docs/architecture/](architecture/): implementation diagrams at all five levels (Level 0-4)
 > - [docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md](architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md) — when and how to update diagrams
 
 ---
@@ -48,7 +48,7 @@ Raw Documents (PDF, image, any condition)
 │                                        │
 │  • Orientation / skew correction       │
 │  • Resolution normalization            │
-│  • Image quality assessment (16 heads) │
+│  • Image quality assessment (3 heads)  │
 │  • Script & language detection         │
 │  • Handwriting analysis               │
 │  • Page attribute classification       │
@@ -135,7 +135,7 @@ Physical corrections applied based on Stage 1 predictions:
 > **Diagram**: [production-runtime/prepare-doc-primary-workflow-detailed.puml](architecture/diagrams/level-2/production-runtime/prepare-doc-primary-workflow-detailed.puml)
 > — SigLIP 2 inference section, fallback rules, and confidence thresholds.
 > **Schema population**: [schema-field-population/schema-field-population-workflow.puml](architecture/diagrams/level-2/schema-field-population/schema-field-population-workflow.puml)
-> — maps each of the 16 heads to `DocumentMetadata` fields.
+> Maps each of the 16 heads to `DocumentMetadata` fields.
 
 **Model**: SigLIP 2 NAFlex (88M params) | **Latency**: ~50ms GPU
 **Implementation**: `src/image_preprocessing_detector/detection/siglip2_multitask.py`
@@ -164,7 +164,13 @@ Runs on the corrected image. A single forward pass drives all 16 prediction head
 | | Code content ratio | Regression | 0–1 | Code-aware OCR routing |
 | | Resolution quality | Regression | 0–1 (see note ③) | Resolution validation |
 
-> **① Skew head disambiguation** — Release 1 has one SigLIP 2 skew head. **Group 3 "Fine skew"**
+> **Scope of "16 heads"**: this table is the full design in `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`
+> (3+1+2+5+5), including the five handwriting heads. It is not the Release 1 scope: section 5a of
+> `docs/planning/MASTER_PROJECT_PLAN.md` defers the handwriting group and the fine-skew head to Release 2. The current
+> `siglip2_multitask.py` wrapper implements 8 tasks (3 IQA, script, source, orientation, shadow, warping), and SigLIP 2
+> training has not yet run.
+>
+> **① Skew head disambiguation**: The design has one SigLIP 2 skew head. **Group 3 "Fine skew"**
 > predicts the *actual rotation angle in degrees* (±10°) and feeds the correction step. A separate
 > skew-severity quality signal comes from the classical detectors; a Group 1 skew-severity head is
 > deferred to a later phase (see `docs/planning/SIGLIP2_MULTITASK_REQUIREMENTS.md`).
@@ -897,7 +903,7 @@ The architecture uses a 5-level hierarchy (Level 0-4) with automated link valida
 | Diagram | Description |
 | ------- | ----------- |
 | [downstream-context/unify-ocr-layout-workflow.puml](architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml) | Unify (OCR through docling-serve): how it consumes `DocumentMetadata.json` |
-| [downstream-context/chunk-fusion-chunking-workflow.puml](architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml) | Chunk service: trust scoring and RAG chunking (fusion shown in the diagram is a later phase) |
+| [downstream-context/chunk-fusion-chunking-workflow.puml](architecture/diagrams/level-2/downstream-context/chunk-fusion-chunking-workflow.puml) | Chunk service: trust scoring and RAG chunking (the diagram shows multi-engine fusion in Chunk per ADR-0029; it applies once specialist OCR engines exist) |
 | [downstream-context/embed-vectorstore-workflow.puml](architecture/diagrams/level-2/downstream-context/embed-vectorstore-workflow.puml) | Application-side embedding contract (outside the pipeline) |
 | [downstream-context/prepare-audio-transcription-workflow.puml](architecture/diagrams/level-2/downstream-context/prepare-audio-transcription-workflow.puml) | Prepare-Audio: FFmpeg + Deepgram, diarization, TranscriptMetadata |
 

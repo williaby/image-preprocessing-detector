@@ -866,7 +866,7 @@ end note
    note right
      **Note**: SigLIP 2 NAFlex handles variable
      resolution natively via NAFlex packing.
-     19 heads across 5 groups.
+     16 heads across 5 groups.
      See: level-2/model-training/index.md
    end note
    ```

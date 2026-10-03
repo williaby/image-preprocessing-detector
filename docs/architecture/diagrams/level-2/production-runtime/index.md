@@ -84,6 +84,10 @@ The production runtime processes documents through a series of well-defined stat
 
 ### Processing States
 
+> **Head count**: "16 heads" in this page is the target design in
+> [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). The current
+> `SigLIP2MultiTaskDetector` wrapper exposes 8 task predictions, and SigLIP 2 training has not yet run.
+
 | State | Entry Condition | Exit Condition | Timeout | Fallback |
 |-------|----------------|----------------|---------|----------|
 | **INGESTION** | PDF/image received | Pages extracted to 300 DPI | 30s | Abort document |
@@ -337,7 +341,7 @@ BudgetConfig(
 
 | Workstream | Provided Artifacts | Purpose |
 |------------|-------------------|---------|
-| **Unify (Unify)** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
+| **Unify** | `DocumentMetadata.json`, corrected page images (PNG) | OCR orchestration input |
 | **Workstream 7 (Monitoring & Drift)** | Predictions, quality scores, latency metrics | Drift detection, active learning sample harvesting |
 
 ### External Dependencies
