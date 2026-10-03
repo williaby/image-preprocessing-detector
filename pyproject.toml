@@ -117,6 +117,8 @@ dev = [
     "uv>=0.5.0",  # Fast package manager for nox venv backend
     # Mutation testing
     "mutmut>=3.3.1",
+    # Docstring linting (Google-style signature/docstring consistency)
+    "pydoclint==0.8.4",  # exact pin: must match the pre-commit hook rev (baseline contents are version-specific)
     # Type stubs
     "types-pyyaml>=6.0.12",
     # ONNX for model export validation
@@ -763,6 +765,21 @@ exclude = ["tests", "docs", "build", "dist", "validation", "tmp_cleanup"]
 ignore-init-method = true
 ignore-init-module = true
 color = true
+
+# Pydoclint Configuration (docstring/signature consistency)
+# Google style, matching [tool.ruff.lint.pydocstyle] convention. Existing
+# violations are tolerated via the baseline file; only new violations fail.
+# Regenerate (never hand-edit) after burning down violations:
+#   uv run pydoclint --config=pyproject.toml --generate-baseline=True src
+[tool.pydoclint]
+style = "google"
+exclude = '\.git|tests/|scripts/|benchmarks/|tools/|noxfile\.py|\.claude/|\.worktrees/'
+arg-type-hints-in-docstring = true
+arg-type-hints-in-signature = true
+skip-checking-raises = false
+require-return-section-when-returning-nothing = false
+allow-init-docstring = true
+baseline = ".pydoclint-baseline.txt"
 
 # Mutation Testing Configuration (mutmut)
 [tool.mutmut]
