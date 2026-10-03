@@ -63,17 +63,19 @@ whether the source was a scanned PDF or a recording.
 | Prepare-Doc | `image-preprocessing-detector` | Document type routing, image quality assessment, corrections, routing metadata | `00-source/` | `01-preprocessed/` |
 | Prepare-Audio | `audio-processor` | Transcription and speaker diarization | `00-source/` | `02-transcribed/` |
 | Unify | `Unify` | Document track: OCR through docling-serve, assembled into one DOM. Audio track: normalize the transcript to the same DOM, with no OCR | `01-preprocessed/`, `02-transcribed/` | `03-docling-dom/` |
-| Chunk | `data_ingestor` | Chunking, trust scoring, source citations (page, section, timestamp) | `03-docling-dom/` | `04-chunks/` |
+| Chunk | `data_ingestor` | OCR fusion (once multi-engine output exists), trust scoring, chunking, source citations (page, section, timestamp) | `03-docling-dom/` | `04-chunks/` |
 
-Unify starts with a single docling-serve engine. Specialist OCR engines and fusion are later phases. Until Unify
-exists, Chunk may call docling-serve directly, behind a converter interface, so Unify can replace that call without
-changing Chunk's output.
+Unify starts with a single docling-serve engine; specialist OCR engines are a later phase. Fusion of multi-engine OCR
+output and trust scoring stay with Chunk, as recorded in
+[ADR-0029](https://github.com/williaby/image-preprocessing-detector/blob/main/docs/ADRs/0029-prepare-doc-scope-boundaries.md)
+(Accepted); moving fusion elsewhere would need a superseding ADR. How Chunk obtains `DoclingDOM.json` until Unify exists
+is tracked in the Chunk repository.
 
 ## Artifacts and storage
 
 Each stage writes to a numbered prefix under one key per processing run (`{trace_id}`). The prefix layout is the
-contract between stages. The store is S3-compatible object storage; some older code and documents still say Google
-Cloud Storage, and the layout is the same.
+contract between stages. The documented store is Google Cloud Storage (see the Level 0 index in
+image-preprocessing-detector); the prefix layout does not depend on which object store holds it.
 
 ```text
 {trace_id}/
@@ -124,8 +126,7 @@ older documents:
 | Project A, B, C, D, E, F | Prepare-Doc, Unify, Chunk, (application embedding), Prepare-Audio, Ingest |
 | `OCRDocument.json` | `DoclingDOM.json` |
 | `ChunkSet.json` | `RAGChunkSet.json` |
-| Unify as "multi-engine OCR and fusion" | Unify as docling-serve orchestration first; fusion is a later phase |
-| `image_detection` (local folder name) | `image-preprocessing-detector` |
+| Unify as "multi-engine OCR and fusion" | Unify as docling-serve orchestration first; specialist engines are a later phase; fusion stays with Chunk (ADR-0029) |
 
 ## Where this page stands
 

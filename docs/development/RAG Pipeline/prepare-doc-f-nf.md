@@ -98,11 +98,11 @@ Prepare-Doc must be good enough that if OCR fails later, no one can blame prepro
 - Footnote reference linking (Unify)
 - Figure-caption semantic linking (Unify)
 - Table structure reconstruction (rows/columns/cells) (Unify)
-- Multi-engine OCR fusion (Unify, later phases B3/B4; not part of Chunk)
+- Multi-engine OCR fusion (Chunk, per ADR-0029; needs multi-engine output, which arrives with specialist engines in Unify phases B3/B4)
 - Trust scoring (Chunk)
 - RAG-optimized chunking (Chunk)
-- Vector embeddings and DB ingestion (Embed)
-- Semantic search and retrieval (Embed)
+- Vector embeddings and DB ingestion (consuming applications, outside the pipeline)
+- Semantic search and retrieval (consuming applications, outside the pipeline)
 
 ### 1.3 Prepare-Doc Philosophy
 

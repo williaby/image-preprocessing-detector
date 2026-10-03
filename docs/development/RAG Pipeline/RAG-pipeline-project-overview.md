@@ -13,8 +13,11 @@ purpose: "Define the Foundry RAG pipeline stages (Prepare-Doc, Unify, Chunk) wit
 **Version:** 2.0
 **Scope:** Applies to Prepare-Doc, Unify, and Chunk. Embedding is not a pipeline stage: each consuming application owns it, per [chunk-embed-contract.md](chunk-embed-contract.md). Canonical pipeline page: [pipeline-level-0.md](../../architecture/pipeline-level-0.md).
 
-> **Note**: Sections below that describe multi-engine fusion in Chunk predate the current plan. Unify runs OCR through
-> docling-serve first; specialist engines and fusion are later phases (Unify design spec). Treat fusion as future work.
+> **Note**: Unify runs OCR through docling-serve first and specialist engines are a later phase, so no multi-engine
+> output exists yet. The Chunk sections below still own fusion, as recorded in
+> [ADR-0029](../../ADRs/0029-prepare-doc-scope-boundaries.md) (Accepted); treat fusion as dormant until multi-engine
+> output exists. Moving fusion to Unify would need a superseding ADR.
+
 **Purpose:** Ensure project teams understand what they own, what they consume, and what they must not duplicate.
 
 ## 2. Prepare-Doc — Preprocessing, IQA & Coarse Layout

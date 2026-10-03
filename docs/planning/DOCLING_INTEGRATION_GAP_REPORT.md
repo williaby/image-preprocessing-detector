@@ -364,7 +364,7 @@ system. Specific gaps:
 
 **File**: [docs/architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml](../architecture/diagrams/level-2/downstream-context/unify-ocr-layout-workflow.puml)
 
-The diagram describes a custom multi-engine OCR architecture (the retired earlier Unify design; current Unify runs OCR through docling-serve first) that does not match what
+The diagram describes a custom multi-engine OCR architecture that does not match what
 docling provides. Specific inconsistencies:
 
 | Diagram Shows | Docling Reality |

@@ -23,7 +23,7 @@ purpose: "Give the Unify team everything they need to understand scope, locate
 
 ## 1. Pipeline Position
 
-Unify is the third stage in the six-service Foundry RAG pipeline. It sits between
+Unify is the third stage in the five-repository Foundry RAG pipeline. It sits between
 two upstream preprocessing services and one downstream chunking service:
 
 ```text
@@ -450,8 +450,9 @@ From the functional and non-functional requirements doc:
 - Integrate Docling with DocLayNet-style layout classes (11 minimum)
 - Per-page layout detection from corrected images
 - Per-region OCR using base engine
-  (Phase B1 is docling-serve only; multi-engine fusion and specialist engines arrive in B3/B4 per
-  [the design spec](../../superpowers/specs/2026-05-05-foundry-unify-design.md))
+  (Phase B1 is docling-serve only; specialist engines arrive in B3/B4 per
+  [the design spec](../../superpowers/specs/2026-05-05-foundry-unify-design.md);
+  fusion of multi-engine output stays with Chunk per ADR-0029)
 - Simple reading order (column-aware)
 - Read `DoclingRoutingParams` from `DocumentMetadata.json` and apply to Docling config
 - Write `DoclingDOM.json` to GCS `03-docling-dom/`
