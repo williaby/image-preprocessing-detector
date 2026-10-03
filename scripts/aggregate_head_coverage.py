@@ -252,7 +252,7 @@ def main():
     for ds in DATASETS:
         role = all_data[ds][1]
         print(f"\n### {ds}\n")
-        print(role if role else "_No corpus role summary found._")
+        print(role or "_No corpus role summary found._")
 
     print("\n--- COVERAGE STATS ---")
     head_names = {

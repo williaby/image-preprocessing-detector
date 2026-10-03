@@ -270,9 +270,7 @@ def integrate_sample(
     # -------------------------------------------------------------------
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = (
-            content_type if content_type else "identity_document"
-        )
+        data["text_scope_content_type"] = content_type or "identity_document"
     else:
         data["text_scope_content_type"] = v1_data.get(
             "text_scope_content_type", "identity_document"
