@@ -5,20 +5,9 @@
 name: Python Compatibility
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - 'src/**/*.py'
-      - 'tests/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'src/**/*.py'
-      - 'tests/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
+  # Weekly only, not per PR or push: the core suite (ci.yml, Python 3.12) gates
+  # PRs. Run manually with workflow_dispatch before a release or a dependency
+  # change that could affect other Python versions or operating systems.
   schedule:
     # Weekly compatibility check on Sundays at 6 AM UTC
     - cron: '0 6 * * 0'
