@@ -7,8 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `image_preprocessing_detector.utils.file_validation` module: stdlib
+  magic-byte validation (`validate_file_content`, `detect_file_type`,
+  `FileTypeMismatchError`, `MIN_VALIDATION_BYTES`) to block file
+  extension spoofing before bytes reach PyMuPDF/OpenCV/PIL (#183)
+- `ProcessingResult.pages_truncated` field reporting how many PDF pages
+  the API dropped when a document exceeds the page cap (#183)
+- `APISettings.max_batch_total_size_mb` (default 500MB) and
+  `APISettings.max_pdf_pages_per_request` (default 100) settings (#183)
+- `PDFLoader.max_pixels` / `ImageLoader.max_pixels` pixel-dimension-bomb
+  guards, plus `PDFTooManyPagesError` and `PDFPageTooLargeError` (#183)
+- `load_pdf()` keyword-only `max_pages`, `allow_truncation` and `max_pixels`
+  overrides for callers that need to exceed the new defaults (#183)
+- `image_preprocessing_detector.utils.safe_checkpoint`:
+  `load_checkpoint_weights_only` and `numpy_scalar_safe_globals` (#183)
+
+### Security
+
+- `torch.load` calls switched to `weights_only=True` in production
+  inference and the Modal multitask trainer to prevent pickle-based RCE
+  (CVE-2025-32434 class; the package environment pins torch>=2.10.0, but the
+  Modal training images still pin torch==2.5.1, so there the flag is defense
+  in depth only). Only numeric numpy scalar globals are allowlisted so the
+  trainers' own checkpoints still load (#183)
+- Streaming, size-capped upload reads with first-chunk magic-byte
+  validation on `/process` and `/batch`; cumulative batch size cap (#183)
+- Model artifact paths in the Arena inference backends validated against
+  path traversal (#183)
+
 ### Changed
 
+- **BREAKING**: `PDFLoader` (and therefore `load_pdf()`, the CLI and
+  `DocumentProcessor`) now raises `PDFTooManyPagesError` for documents over
+  500 pages and `PDFPageTooLargeError` for pages over 200 megapixels. Library
+  callers can pass `max_pages`, `max_pixels` or `allow_truncation=True` (to
+  `PDFLoader` or `load_pdf()`) to restore the previous behavior; the CLI has no
+  override flag yet. The API routes opt in to truncation and report it
+  through `ProcessingResult.pages_truncated` (#183)
+- **BREAKING**: `/process` and `/batch` now reject uploads whose leading bytes do
+  not match their extension, and uploads shorter than `MIN_VALIDATION_BYTES`
+  (18 bytes), with HTTP 400. In `/batch` one such file rejects the whole
+  request (#183)
 - CI: pull requests and pushes now run the core suite (Python 3.12) only. The
   multi-version test matrix (3.10 to 3.14, `ci.yml`), the Python Compatibility
   matrix and ClusterFuzzLite fuzzing run weekly (Sundays) and on manual dispatch.

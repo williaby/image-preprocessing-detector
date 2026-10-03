@@ -916,7 +916,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "HANDWRITING": ["Chilanka"],  # SMC handwriting font
         "ADVERSARIAL": [],
     },
-    # Odia (most underserved — no NotoSerif exists)
+    # Odia (most underserved - no NotoSerif exists)
     "Orya": {
         "SYSTEM": ["NotoSansOriya"],
         "REGIONAL": ["BalooBhaina2", "AnekOdia"],  # Display + variable sans
@@ -996,7 +996,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["NotoSerifSC"],
         "STYLISTIC": ["NotoSansSC"],
         "HANDWRITING": ["ARKaiti", "MaShanZheng"],  # Brush/Kaiti styles
-        "ADVERSARIAL": ["LiuJianMaoCao"],  # Grass script (caoshu) — radical destruction
+        "ADVERSARIAL": ["LiuJianMaoCao"],  # Grass script (caoshu) - radical destruction
     },
     # CJK - Traditional Chinese
     "Hant": {
@@ -1067,7 +1067,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "REGIONAL": ["Abyssinica", "Brana"],  # SIL + raeytype
         "STYLISTIC": ["GeezManuscriptZemen"],  # COLR manuscript style
     },
-    # Cherokee — limited OFL ecosystem
+    # Cherokee - limited OFL ecosystem
     "Cher": {
         "SYSTEM": ["NotoSansCherokee"],
         "REGIONAL": [

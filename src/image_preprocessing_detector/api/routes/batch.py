@@ -38,10 +38,16 @@ from image_preprocessing_detector.api.models import (
     ProcessingStatus,
 )
 from image_preprocessing_detector.api.routes.process import (
+    make_content_validator,
     process_document,
+    read_with_size_limit,
     validate_file,
 )
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.file_validation import (
+    MIN_VALIDATION_BYTES,
+    FileTypeMismatchError,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -237,8 +243,16 @@ async def submit_batch_job(
             content=error.model_dump(),
         )
 
-    # Validate each file and read content
+    # Validate each file and read content. Read with a streaming size cap
+    # so a single oversize file (or a batch of them) cannot exhaust memory
+    # before the size check fires. The cumulative cap
+    # (`max_batch_total_size_mb`) is deliberately smaller than
+    # `max_batch_size * max_file_size_mb` so the batch endpoint cannot
+    # be used as a memory-amplification vector with many medium-size
+    # files.
     files_data: list[tuple[str, bytes]] = []
+    total_bytes = 0
+    max_total_bytes = settings.max_batch_total_size_mb * 1024 * 1024
     for file in files:
         validation_error = validate_file(file, settings.max_file_size_mb)
         if validation_error:
@@ -248,7 +262,60 @@ async def submit_batch_job(
                 content=validation_error.model_dump(),
             )
 
-        content = await file.read()
+        ext = Path(file.filename or "document").suffix.lower()
+        # Pass the remaining batch budget so the streaming read aborts
+        # the moment a single file would push the batch over the
+        # cumulative cap, instead of waiting until after the whole file
+        # has been buffered into memory.
+        remaining_batch_bytes = max_total_bytes - total_bytes
+        if remaining_batch_bytes < MIN_VALIDATION_BYTES:
+            # Reject upstream rather than letting the file's clamped
+            # first chunk trip a confusing INVALID_FILE_TYPE (when
+            # validation can't see enough bytes to render a verdict)
+            # or "remaining batch budget (0.0MB)" - the actual fault
+            # is the batch as a whole, not this file.
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=(
+                    f"Batch total size limit of "
+                    f"{settings.max_batch_total_size_mb}MB reached "
+                    f"before file {file.filename}; subsequent files "
+                    f"rejected."
+                ),
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+        try:
+            content = await read_with_size_limit(
+                file,
+                settings.max_file_size_mb,
+                early_validate=make_content_validator(ext),
+                extra_byte_limit=remaining_batch_bytes,
+            )
+        except FileTypeMismatchError as exc:
+            error = ErrorResponse(
+                error=ErrorCode.INVALID_FILE_TYPE,
+                message=f"File {file.filename}: {exc}",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+        except ValueError as exc:
+            error = ErrorResponse(
+                error=ErrorCode.FILE_TOO_LARGE,
+                message=f"File {file.filename}: {exc}",
+                correlation_id=correlation_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=error.model_dump(),
+            )
+
         if len(content) == 0:
             error = ErrorResponse(
                 error=ErrorCode.EMPTY_FILE,
@@ -260,6 +327,10 @@ async def submit_batch_job(
                 content=error.model_dump(),
             )
 
+        # Update the cumulative cursor. `extra_byte_limit` already
+        # capped the per-file read to `remaining_batch_bytes`, so
+        # `total_bytes` can never exceed `max_total_bytes` here - # a redundant post-read check would be dead code.
+        total_bytes += len(content)
         files_data.append((file.filename or "document", content))
 
     # Create job

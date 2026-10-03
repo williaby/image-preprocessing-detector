@@ -867,6 +867,7 @@ class TestEdgeCases:
         mock_file = MagicMock()
         mock_file.filename = "TEST.PNG"
         mock_file.content_type = "image/png"
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         # Should pass - extension is converted to lowercase
@@ -879,6 +880,7 @@ class TestEdgeCases:
         mock_file = MagicMock()
         mock_file.filename = "test.png"
         mock_file.content_type = None  # No content type
+        mock_file.size = None  # UploadFile.size is int | None
 
         error = validate_file(mock_file, 50)
         # Should pass based on extension alone

@@ -206,7 +206,7 @@ class CrossModelValidator:
 
         # Decide whether to invoke Tier 2.
         # Skip Tier 2 entirely when the image is in-distribution and the caller
-        # did not explicitly request it — even when external scores were supplied.
+        # did not explicitly request it - even when external scores were supplied.
         run_tier2 = ood_result.is_ood or force_tier2
         if not run_tier2:
             return ReliabilityResult(
@@ -259,7 +259,7 @@ class CrossModelValidator:
         Only dimensions listed in the module-level ``DIMENSIONS`` constant are
         scored.  VLM ratings use DIMENSIONS as the iteration source (ignoring
         extra keys in *vlm_ratings*), while CLIP scores iterate over the
-        caller-supplied dict and filter against DIMENSIONS — both approaches
+        caller-supplied dict and filter against DIMENSIONS - both approaches
         silently skip unknown dimension keys.
 
         Args:

@@ -539,7 +539,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_signature=False,
         parser_name="salami",
         # Multi-language: Armenian, Georgian, German, Gothic, Greek, Latin,
-        # Ottoman, Slavonic — per-image language in images.json
+        # Ottoman, Slavonic - per-image language in images.json
     ),
     "gnhk": DatasetConfig(
         name="gnhk",
@@ -1169,7 +1169,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     # =========================================================================
     # WARNING: doc3d lives under 01_base_data/camera_captured/ due to a
     # historical download-path error. Every one of its 102,064 images is a
-    # Blender-rendered 3D mesh projection — NOT a camera capture. The folder
+    # Blender-rendered 3D mesh projection - NOT a camera capture. The folder
     # path MUST NOT be used to infer capture_method. capture_method is
     # therefore set explicitly to CaptureMethod.SYNTHETIC here, and a
     # companion test in test_datasets.py enforces it cannot regress.
@@ -1178,14 +1178,14 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         name="doc3d",
         path_suffix="01_base_data/camera_captured/doc3d/data/doc3d/img",
         pattern="*/*.png",  # 21 mesh-ID subdirs, ~5K PNG each (448x448, RGBA)
-        capture_method=CaptureMethod.SYNTHETIC,  # 3D Blender renders — NOT camera
+        capture_method=CaptureMethod.SYNTHETIC,  # 3D Blender renders - NOT camera
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
         has_paired_gt=True,  # backward mapping + depth maps in sibling ZIPs
         has_handwriting=False,
         has_table=False,
         has_formula=False,
-        parser_name=None,  # No parser yet — P3 priority, warping_reg focus
+        parser_name=None,  # No parser yet - P3 priority, warping_reg focus
     ),
 }
 
@@ -1246,7 +1246,7 @@ def validate_dataset_configs() -> list[str]:
 
         # Guard: datasets under camera_captured/ must have an explicit
         # (non-UNKNOWN) capture_method so no consumer can infer the method
-        # from the folder name.  doc3d is the canonical example — it lives
+        # from the folder name.  doc3d is the canonical example - it lives
         # under camera_captured/ but is CaptureMethod.SYNTHETIC.
         if (
             "camera_captured" in config.path_suffix
@@ -1254,7 +1254,7 @@ def validate_dataset_configs() -> list[str]:
         ):
             issues.append(
                 f"{config.name}: path is under 'camera_captured/' but "
-                f"capture_method is UNKNOWN — set it explicitly "
+                f"capture_method is UNKNOWN - set it explicitly "
                 f"(CAMERA_SMARTPHONE, CAMERA_PROFESSIONAL, or SYNTHETIC)"
             )
 

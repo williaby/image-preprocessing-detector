@@ -81,7 +81,7 @@ class KHATTParser(BaseParser):
     """Parser for KHATT Arabic Handwritten Text dataset.
 
     Extracts annotations from:
-    1. ``khatt_groundtruth.tsv`` — TSV with Arabic Unicode transcriptions per image
+    1. ``khatt_groundtruth.tsv`` - TSV with Arabic Unicode transcriptions per image
     2. Companion ``.txt`` file (fallback, only present in original ZIP structure)
     3. Filename parsing for writer_id and paragraph metadata
     """
@@ -158,7 +158,7 @@ class KHATTParser(BaseParser):
                     "encoding": "utf-8",
                 }
         else:
-            # Fallback: companion .txt file (if present — original ZIP structure)
+            # Fallback: companion .txt file (if present - original ZIP structure)
             fallback_text = self._load_companion_txt(dataset_path, image_path)
             if fallback_text:
                 labels.transcription = fallback_text

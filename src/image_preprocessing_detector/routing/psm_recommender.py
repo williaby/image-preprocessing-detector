@@ -1,4 +1,4 @@
-"""PSM Recommender — Tesseract Page Segmentation Mode selection.
+"""PSM Recommender - Tesseract Page Segmentation Mode selection.
 
 Maps document layout characteristics to Tesseract PSM values (0-13) using a
 priority-ordered lookup table. Rules are evaluated top-to-bottom; the first
@@ -210,7 +210,7 @@ def _get_default_recommender() -> PSMRecommender:
 
 
 def recommend_psm(inp: PSMInput) -> PSMRecommendation:
-    """Convenience function — recommend a PSM using the default recommender.
+    """Convenience function - recommend a PSM using the default recommender.
 
     Args:
         inp: Layout characteristics for the page.

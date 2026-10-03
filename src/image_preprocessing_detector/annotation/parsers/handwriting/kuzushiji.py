@@ -69,7 +69,7 @@ Resolution Warning:
 
 Example:
     >>> parser = KuzushijiParser()
-    >>> # K-Kanji — character inferred from parent directory
+    >>> # K-Kanji - character inferred from parent directory
     >>> labels = parser.parse(
     ...     dataset_path=Path("/mnt/e/.../kuzushiji"),
     ...     image_path=Path("/mnt/e/.../kuzushiji/kkanji/kkanji2/亡/001.png"),
@@ -77,7 +77,7 @@ Example:
     ... )
     >>> print(labels.transcription)
     '亡'
-    >>> # K-49 — character from sidecar JSONL
+    >>> # K-49 - character from sidecar JSONL
     >>> labels = parser.parse(
     ...     dataset_path=Path("/mnt/e/.../kuzushiji"),
     ...     image_path=Path("/mnt/e/.../kuzushiji/k49/images/train/00000001.png"),
@@ -241,7 +241,7 @@ class KuzushijiParser(BaseParser):
         entry = _lookup_entry(sub_root, sub_dataset, split, image_path.name)
         if entry is None:
             logger.debug(
-                "No sidecar entry for %s in %s/%s — run materialize_kuzushiji.py",
+                "No sidecar entry for %s in %s/%s - run materialize_kuzushiji.py",
                 image_path.name,
                 sub_dataset,
                 split,
@@ -336,7 +336,7 @@ def _load_sidecar_index(
 ) -> dict[str, dict[str, Any]] | None:
     """Load and cache a Kuzushiji sidecar JSONL index.
 
-    Cached per (sub_root, sub_dataset, split) — loaded once per process.
+    Cached per (sub_root, sub_dataset, split) - loaded once per process.
 
     The sidecar JSONL format is:
     ``{"filename": "00000001.png", "label_int": 0, "char_unicode": "お"}``
@@ -353,7 +353,7 @@ def _load_sidecar_index(
 
     if not index_path.exists():
         logger.warning(
-            "Kuzushiji %s/%s sidecar index not found: %s — "
+            "Kuzushiji %s/%s sidecar index not found: %s - "
             "run scripts/materialize_kuzushiji.py first",
             sub_dataset,
             split,
