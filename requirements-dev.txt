@@ -221,7 +221,7 @@ dulwich==0.25.1
     #   dvc
     #   dvc-studio-client
     #   scmrepo
-dvc==3.66.1
+dvc==3.67.1
     # via
     #   dvc-ssh
     #   image-preprocessing-detector
@@ -258,12 +258,13 @@ executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
-filelock==3.20.3
+filelock==3.32.7
     # via
     #   datasets
     #   huggingface-hub
     #   image-preprocessing-detector
     #   iterative-telemetry
+    #   python-discovery
     #   safety
     #   virtualenv
 flatbuffers==25.12.19
@@ -707,7 +708,7 @@ pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.5
     # via jedi
-pathspec==0.12.1
+pathspec==1.1.1
     # via
     #   black
     #   dvc
@@ -861,6 +862,8 @@ python-dateutil==2.9.0.post0
     #   kaggle
     #   matplotlib
     #   pandas
+python-discovery==1.6.1
+    # via virtualenv
 python-dotenv==1.2.1
     # via
     #   image-preprocessing-detector
@@ -871,7 +874,7 @@ python-json-logger==4.0.0
     # via jupyter-events
 python-slugify==8.0.4
     # via kaggle
-pytokens==0.3.0 ; python_full_version >= '3.11'
+pytokens==0.4.1 ; python_full_version >= '3.11'
     # via black
 pytz==2025.2
     # via pandas
