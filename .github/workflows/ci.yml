@@ -22,7 +22,6 @@
 # SECURITY SCANS (See security-analysis.yml):
 #   - Bandit: Python static security analysis
 #   - Safety: Python dependency CVE scanning
-#   - CodeQL: Advanced security analysis
 #   - Dependency Review: PR-based vulnerability detection
 #
 # This separation improves CI performance by ~10-12 minutes per PR

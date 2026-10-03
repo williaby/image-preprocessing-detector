@@ -379,7 +379,6 @@ git config --get commit.gpgsign  # Should output: true
 
 2. **Wait for CI checks**:
    - All GitHub Actions workflows must pass
-   - CodeQL security analysis must pass
    - Test coverage must meet requirements
 
 3. **Address review feedback**:

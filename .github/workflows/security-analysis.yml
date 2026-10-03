@@ -5,7 +5,6 @@
 # This workflow provides centralized security scanning, eliminating duplications:
 #
 # WORKFLOW SCANS (Centralized Here):
-#   - CodeQL: Python security-extended and quality queries
 #   - Dependency Review: PR-based dependency vulnerability detection
 #   - Bandit: Python static security analysis
 #   - Image Processing Security: Custom validation for file handling
@@ -18,7 +17,6 @@
 # REMOVED DUPLICATIONS:
 #   - Semgrep workflow step (now using Semgrep App)
 #   - Bandit from ci.yml (consolidated here)
-#   - CodeQL standalone check (using workflow version with custom queries)
 #
 # BENEFITS:
 #   - Saves ~10-12 minutes per PR
@@ -65,82 +63,6 @@ jobs:
               - '.github/workflows/security-analysis.yml'
               - 'pyproject.toml'
               - 'uv.lock'
-
-  # CodeQL Analysis for Image Processing Systems
-  # Note: Always runs (even for docs-only changes) to satisfy repository rule requirements
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    # Removed conditional: if: needs.detect-changes.outputs.security_files == 'true'
-    # Repository rules require CodeQL results for all PRs
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      security-events: write  # Required for SARIF upload
-      actions: read
-    steps:
-      - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Setup Python for Image Processing Dependencies
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: '3.12'
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5.4.2
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      # Install only main dependencies for CodeQL analysis
-      - name: Install Image Processing Dependencies
-        run: |
-          echo "📦 Installing image processing dependencies for security analysis..."
-          uv sync --no-dev
-
-          # Verify critical security-sensitive packages
-          uv run python -c "
-          import sys
-          critical_deps = ['cv2', 'numpy', 'PIL', 'pymupdf', 'pydantic']
-          for dep in critical_deps:
-              try:
-                  __import__(dep.replace('-', '_'))
-                  print(f'✅ Security-critical dependency {dep}: Available')
-              except ImportError:
-                  print(f'⚠️ Security-critical dependency {dep}: Not found (may be optional)')
-          "
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-        with:
-          languages: python
-          queries: security-extended,security-and-quality
-          config: |
-            paths:
-              - src
-            paths-ignore:
-              - tests
-              - validation
-              - scripts
-            queries:
-              - uses: security-extended
-              - uses: security-and-quality
-
-      - name: Build CodeQL Database
-        uses: github/codeql-action/autobuild@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-        with:
-          category: "/language:python"
-          upload: true
 
   # Dependency vulnerability scanning
   dependency-security:
@@ -554,7 +476,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - detect-changes
-      - codeql-analysis
       - dependency-security
       - security-scanning
       - osv-scanner
@@ -566,7 +487,6 @@ jobs:
           echo "🔒 Image Preprocessing Detector Security Analysis Results:"
           echo "Event Type: ${{ github.event_name }}"
           echo "Security Files Changed: ${{ needs.detect-changes.outputs.security_files }}"
-          echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
           echo "Dependency Security: ${{ needs.dependency-security.result }}"
           echo "Security Scanning: ${{ needs.security-scanning.result }}"
           echo "OSV Scanner: ${{ needs.osv-scanner.result }}"
@@ -579,8 +499,7 @@ jobs:
           }
 
           # All jobs must be either success or skipped (not failed or cancelled)
-          if is_acceptable "${{ needs.codeql-analysis.result }}" && \
-             is_acceptable "${{ needs.dependency-security.result }}" && \
+          if is_acceptable "${{ needs.dependency-security.result }}" && \
              is_acceptable "${{ needs.security-scanning.result }}" && \
              is_acceptable "${{ needs.osv-scanner.result }}" && \
              is_acceptable "${{ needs.image-processing-security.result }}"; then

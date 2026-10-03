@@ -130,7 +130,7 @@ OpenSSF Scorecard identified security issues in GitHub Actions workflows:
 permissions: read-all  # Top-level covers all read-only jobs
 ```
 
-**SARIF Upload** (CodeQL, Scorecard, Trivy):
+**SARIF Upload** (Scorecard, Trivy, SBOM; CodeQL analysis is not enabled, disabled for cost):
 
 ```yaml
 permissions:

@@ -271,7 +271,6 @@ nav:
 
   # OPERATIONAL & SECURITY
   - Security:
-      - CodeQL Scanning: security/codeql-python-scanning-guide.md
       - Fuzzing Implementation: security/fuzzing-implementation-guide.md
 
   - Tools & Runbooks:

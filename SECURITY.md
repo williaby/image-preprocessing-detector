@@ -126,7 +126,6 @@ This project uses the following automated security tools:
 | **MyPy** | Static type checking (prevents type-related bugs) | Pre-commit hook + CI/CD |
 | **Pydantic v2** | Runtime data validation and type safety | Core dependency |
 | **Poetry** | Dependency lock file with cryptographic hashes | Build system |
-| **CodeQL** | Semantic code analysis for vulnerabilities | GitHub Actions CI/CD |
 | **OSV-Scanner** | Multi-ecosystem vulnerability detection (OpenSSF) | CI/CD + optional local |
 | **Dependabot** | Automated dependency update PRs | GitHub native |
 
