@@ -320,7 +320,7 @@ class UnifiedProcessor:
 
                             # Include text snippet for non-picture elements
                             item_text = getattr(item, "text", "")
-                            if item_text and label not in ("picture",):
+                            if item_text and label != "picture":
                                 annotation["text"] = item_text[:200]
 
                             annotations.append(annotation)

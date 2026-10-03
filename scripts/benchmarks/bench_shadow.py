@@ -241,7 +241,7 @@ def run_benchmark(
 
     # Go/No-Go based on SD7K (primary)
     threshold = THRESHOLDS["shadow"]
-    primary = sd7k_result if sd7k_result else wsrd_result
+    primary = sd7k_result or wsrd_result
     metric_value = primary["metrics"][threshold.metric] if primary else 0.0
     threshold_met = metric_value >= threshold.target
     go_nogo = "PASS" if threshold_met else "UPGRADE_ML"

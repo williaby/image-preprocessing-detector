@@ -4527,7 +4527,7 @@ def download_script_reserved(
     rng = random.Random(17)
     today = date.today().isoformat()
 
-    out_script_dir = output_dir if output_dir else (ood_root / "ood_script")
+    out_script_dir = output_dir or (ood_root / "ood_script")
 
     def _try_reg_script(
         img_pil: Any,
@@ -4835,7 +4835,7 @@ def download_geometry_public(
     _warpdoc_default = Path(
         "/mnt/e/image_detection/01_base_data/correction/warpdoc/WarpDoc/image"
     )
-    wd_root = warpdoc_dir if warpdoc_dir else _warpdoc_default
+    wd_root = warpdoc_dir or _warpdoc_default
 
     # WarpDoc layout: WarpDoc/{image,digital}/perspective/ OR WarpDoc/perspective/
     perspective_dir = wd_root / "image" / "perspective"
@@ -4879,7 +4879,7 @@ def download_geometry_public(
     _docalign_default = Path(
         "/mnt/e/image_detection/01_base_data/correction/docalign12k/distorted_hard"
     )
-    da_root = docalign12k_dir if docalign12k_dir else _docalign_default
+    da_root = docalign12k_dir or _docalign_default
 
     if not da_root.exists():
         logger.warning("docalign12k distorted_hard dir not found at %s", da_root)
@@ -5152,7 +5152,7 @@ def download_capture_public(
     _warpdoc_default = Path(
         "/mnt/e/image_detection/01_base_data/correction/warpdoc/WarpDoc/image"
     )
-    wd_root = warpdoc_dir if warpdoc_dir else _warpdoc_default
+    wd_root = warpdoc_dir or _warpdoc_default
 
     _CURL_TYPES = ["fold", "curved", "rotate"]
     wd_curl_candidates: list[Path] = []
@@ -5194,7 +5194,7 @@ def download_capture_public(
     _docalign_default = Path(
         "/mnt/e/image_detection/01_base_data/correction/docalign12k/distorted_hard"
     )
-    da_root = docalign12k_dir if docalign12k_dir else _docalign_default
+    da_root = docalign12k_dir or _docalign_default
 
     da_candidates: list[Path] = []
     if da_root.exists():

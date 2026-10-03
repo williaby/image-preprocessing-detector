@@ -1199,7 +1199,7 @@ def _extract_gt_language(
         best_lang = max(lang_count, key=lambda k, lc=lang_count: lc[k])
 
         result = LanguageResult(
-            language=best_lang if best_lang else "und",
+            language=best_lang or "und",
             script=None,
             confidence=1.0,
             method="ground_truth",
