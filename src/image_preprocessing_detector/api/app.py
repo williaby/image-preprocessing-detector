@@ -164,14 +164,17 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         "docs_url": "/docs",
         "redoc_url": "/redoc",
         "openapi_url": "/openapi.json",
-        "license_info": {
-            "name": settings.license_name,
-            "url": settings.license_url,
-        },
-        "servers": [
-            {"url": "http://localhost:8000", "description": "Local development server"},
-        ],
     }
+    if settings.license_name:
+        license_info: dict[str, str] = {"name": settings.license_name}
+        if settings.license_url:
+            license_info["url"] = settings.license_url
+        fastapi_kwargs["license_info"] = license_info
+    if settings.server_url:
+        server: dict[str, str] = {"url": settings.server_url}
+        if settings.server_description:
+            server["description"] = settings.server_description
+        fastapi_kwargs["servers"] = [server]
     if contact:
         fastapi_kwargs["contact"] = contact
     if settings.terms_of_service:

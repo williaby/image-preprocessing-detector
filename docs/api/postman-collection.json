@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Image Preprocessing Detector API",
-    "description": "Postman collection for the Image Preprocessing Detector REST API. Variables:\n\n- `baseUrl` — root URL of the API (default: `http://localhost:8000`).\n- `apiKey` — value sent in the `X-API-Key` header on protected folders (Detection / Process and Correction / Batch). Required only when `IMGPREP_API_AUTH_ENABLED=true`; leave empty otherwise. Public health endpoints use `noauth` and never send the header.\n- `sampleImagePath` — absolute path to a small test PDF or image on the machine running Newman/Postman. CI workflows generate one at runtime and override this variable.\n- `jobId` — captured automatically by the `Batch / Submit` request's test script.\n\nDerived from `docs/api/openapi.json`. Re-generate after API changes via `scripts/export_openapi.py` then keep this file in sync.",
+    "description": "Postman collection for the Image Preprocessing Detector REST API. Variables:\n\n- `baseUrl`: root URL of the API (default: `http://localhost:8000`).\n- `apiKey`: value sent in the `X-API-Key` header on protected folders (Detection / Process and Batch). Required only when `IMGPREP_API_AUTH_ENABLED=true`; leave empty otherwise. Public health endpoints use `noauth` and never send the header.\n- `sampleImagePath`: absolute path to a small test PDF or image on the machine running Newman/Postman. CI workflows generate one at runtime and override this variable.\n- `jobId`: captured automatically by the `Submit batch` request's test script.\n\nDerived from `docs/api/openapi.json`. Re-generate after API changes via `scripts/export_openapi.py` then keep this file in sync.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_postman_id": "ipd-api-collection-v1"
   },
@@ -195,7 +195,7 @@
           ]
         },
         {
-          "name": "Process — invalid file type (negative test)",
+          "name": "Process: invalid file type (negative test)",
           "request": {
             "method": "POST",
             "header": [],
@@ -215,7 +215,7 @@
                 }
               ]
             },
-            "description": "Negative test: posting a non-image file should be rejected with HTTP 400 and `error=invalid_file_type`. Skip in Newman if the fixture is not present."
+            "description": "Negative test: posting a non-image file should be rejected with HTTP 400 and `error=invalid_file_type`. Requires the `tests/fixtures/not-an-image.txt` fixture, which the CI workflow generates."
           },
           "event": [
             {
@@ -240,8 +240,8 @@
       ]
     },
     {
-      "name": "Correction / Batch",
-      "description": "The batch endpoints orchestrate the same correction pipeline applied by `/process` over multiple files asynchronously.",
+      "name": "Batch",
+      "description": "Asynchronous multi-file analysis: submit a batch, poll its status, fetch results, and delete the job. Uses the same per-file analysis as `/process`.",
       "auth": {
         "type": "apikey",
         "apikey": [
@@ -252,7 +252,7 @@
       },
       "item": [
         {
-          "name": "Submit batch (correction pipeline)",
+          "name": "Submit batch",
           "request": {
             "method": "POST",
             "header": [],
@@ -272,7 +272,7 @@
                   "key": "files",
                   "type": "file",
                   "src": "{{sampleImagePath}}",
-                  "description": "One or more files; corrections (deskew, CLAHE, sharpening, denoising) are applied per page when enabled."
+                  "description": "One or more files; each is analyzed with the same IQA and DQS logic as `/process`."
                 }
               ]
             },

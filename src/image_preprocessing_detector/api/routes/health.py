@@ -82,7 +82,7 @@ def get_uptime_seconds() -> float | None:
         "Basic liveness probe for load balancers and orchestrators. "
         "Returns `healthy` whenever the process is responding, along with a "
         "server timestamp and (if startup completed) uptime in seconds. Does "
-        "not perform dependency checks — use `/ready` for that."
+        "not perform dependency checks; use `/ready` for that."
     ),
     response_description="Server is alive; returns liveness status, timestamp, and uptime.",
     responses={
@@ -98,7 +98,6 @@ def get_uptime_seconds() -> float | None:
                 }
             },
         },
-        503: {"description": "Server is unhealthy"},
     },
 )
 async def health_check() -> HealthResponse:
@@ -130,12 +129,12 @@ async def health_check() -> HealthResponse:
         "Readiness probe that validates dependencies required to serve "
         "requests:\n\n"
         "- Device capability probe (GPU/CPU detection)\n"
-        "- Classical IQA detector imports\n"
+        "- Classical IQA detector construction (`BlurDetector`)\n"
         "- Pydantic schema imports\n"
         "- Configuration loading\n\n"
         "Returns HTTP 200 with `status=ready` when all checks pass, or HTTP "
         "503 with `status=not_ready` and per-check details when any fail. "
-        "Use this for Kubernetes readiness probes — failing readiness "
+        "Use this for Kubernetes readiness probes: failing readiness "
         "removes the pod from the service load balancer."
     ),
     response_description="Per-component readiness checks and detected device information.",
@@ -280,11 +279,13 @@ def _detect_model_versions() -> dict[str, str | None]:
     status_code=status.HTTP_200_OK,
     summary="Version information",
     description=(
-        "Return the running API version, Python runtime version, processing "
-        "pipeline version, and the resolved on-disk filenames for any "
-        "currently-installed ONNX models (teacher / student / layout). "
-        "Useful for diagnostics, support requests, and verifying model "
-        "rollouts in production."
+        "Return the running API version, Python runtime version, the "
+        "processing pipeline version (a fixed constant), and the names of "
+        "any ONNX models found under `models/iqa/onnx`, resolved relative "
+        "to the server working directory (teacher / student; `layout_model` "
+        "is currently always `null`). Names are returned without the "
+        "`.onnx` extension. Useful for diagnostics, support requests, and "
+        "verifying model rollouts."
     ),
     response_description="Version metadata for API, runtime, pipeline, and ML models.",
     responses={

@@ -257,20 +257,28 @@ async def process_document(  # nosonar  # async required: callers use await
     status_code=status.HTTP_200_OK,
     summary="Process a single document",
     description=(
-        "Upload a single document (PDF or image) and run the full Project A "
-        "preprocessing pipeline: ingestion, PDF type classification, "
-        "classical IQA, optional ML IQA (teacher/student), correction "
-        "decisions, DQS calculation, and OCR routing recommendation.\n\n"
+        "Upload a single document (PDF or image) and run the HTTP-exposed "
+        "subset of the Project A pipeline: ingestion, PDF type classification "
+        "(PDF uploads only), classical IQA (blur, noise, contrast), DQS "
+        "degradation scoring, and an OCR routing recommendation.\n\n"
         "**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, "
         "`.tif`, `.webp`.\n\n"
-        "**Request shape**: `multipart/form-data` with a single `file` field. "
-        "Pipeline behavior is tuned via query parameters "
-        "(`prefer_gpu`, `enable_corrections`, `enable_teacher`).\n\n"
+        "**Request shape**: `multipart/form-data` with a single `file` field "
+        "and optional query parameters (`prefer_gpu`, `enable_corrections`, "
+        "`enable_teacher`).\n\n"
+        "**Current limitations**: `enable_corrections` and `enable_teacher` "
+        "are accepted but not yet acted on. No corrections are applied "
+        "(`corrections_applied` is always 0), the ML teacher model is not "
+        "invoked, and `dqs.structural_complexity_score` is a fixed "
+        "placeholder (0.3). Routing is one of `ocr_fast`, `ocr_advanced` or "
+        "`vision_structured`, chosen from the degradation score alone. PDFs "
+        "are processed up to the first 100 pages.\n\n"
         "**Response shape**: a `ProcessResponse` envelope. On success "
         "`status=completed` and `result` is populated with the document "
         "summary (per-page IQA scores, DQS, routing). On validation or "
         "processing errors, the envelope carries `status=failed` and a "
-        "structured `error` (see error codes in `/docs/api/rest-api.md`)."
+        "structured `error` (see error codes in `docs/api/rest-api.md` in "
+        "the repository)."
     ),
     response_description="Processing envelope with per-page IQA summary, DQS, and OCR routing recommendation.",
     responses={
@@ -324,39 +332,63 @@ async def process_document(  # nosonar  # async required: callers use await
         403: {"model": ErrorResponse, "description": "Invalid API key (auth enabled)."},
         422: {
             "model": ProcessResponse,
-            "description": "Processing failed (corrupt file, pipeline error).",
+            "description": (
+                "Processing failed (corrupt file, pipeline error). A request "
+                "that FastAPI rejects before the handler runs (for example a "
+                "missing `file` part or a malformed query parameter) also "
+                'returns 422, with FastAPI\'s standard `{"detail": [...]}` '
+                "validation body instead of this envelope."
+            ),
         },
         429: {"model": ErrorResponse, "description": "Rate limit exceeded."},
-        500: {"model": ErrorResponse, "description": "Internal server error."},
+        500: {
+            "description": (
+                "Unexpected internal server error (framework-generated "
+                "response; the body is not an `ErrorResponse`)."
+            ),
+        },
     },
 )
 async def process_single_document(
     file: Annotated[UploadFile, File(description="Document to process (PDF or image)")],
     prefer_gpu: Annotated[bool, Query(description="Whether to prefer GPU")] = True,
     enable_corrections: Annotated[
-        bool, Query(description="Whether to enable corrections")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (no corrections are applied)."
+            )
+        ),
     ] = True,
     enable_teacher: Annotated[
-        bool, Query(description="Whether to enable teacher model")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (the teacher model is not invoked)."
+            )
+        ),
     ] = False,
 ) -> ProcessResponse | JSONResponse:
-    """Run the full preprocessing pipeline on a single uploaded document.
+    """Analyze a single uploaded document and return its quality summary.
 
-    The handler validates the upload (extension allowlist, max size, non-empty),
-    persists it to a temp file, then invokes :func:`process_document` which
-    performs ingestion, classical IQA, DQS scoring, and OCR routing
-    recommendation. Temp files are cleaned up in the `finally` block.
+    The handler validates the upload (extension allowlist, non-empty, and the
+    configured maximum size, which is checked after the body has been read
+    into memory), persists it to a temp file, then invokes
+    :func:`process_document`, which performs ingestion, classical IQA (blur,
+    noise, contrast), DQS scoring, and an OCR routing recommendation. Temp
+    files are cleaned up in the `finally` block.
 
     Args:
         file: Uploaded document (PDF / PNG / JPEG / TIFF / WebP).
-        prefer_gpu: When true, prefer a local CUDA device for ML inference;
-            falls back to CPU if no GPU is available.
-        enable_corrections: When true, allow the pipeline to apply geometric
-            and quality corrections (deskew, CLAHE, sharpening, denoising)
-            after IQA assessment.
-        enable_teacher: When true, run the higher-capacity ResNet-50 teacher
-            model in addition to the student. The teacher is otherwise
-            invoked only on uncertain or high-risk pages.
+        prefer_gpu: When true, prefer a local CUDA device when selecting the
+            reported processing device; falls back to CPU if no GPU is
+            available.
+        enable_corrections: Reserved for future use. Accepted but not read by
+            the handler; no corrections are applied.
+        enable_teacher: Reserved for future use. Accepted but not read by the
+            handler; the teacher model is not invoked.
 
     Returns:
         ``ProcessResponse`` (HTTP 200) on success, or ``JSONResponse``

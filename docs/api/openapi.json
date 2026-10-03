@@ -2,14 +2,14 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Image Preprocessing Detector API",
-    "description": "Front door for the RAG document pipeline. Accepts raw documents (PDF, PNG, JPEG, TIFF, WebP), assesses image quality, applies geometric and quality corrections, and returns structured `DocumentMetadata` plus OCR routing recommendations.\n\n## Features\n\n- **IQA pipeline**: 9 classical detectors + ResNet teacher/student ML IQA\n- **Document Quality Score (DQS)**: degradation + structural complexity\n- **PDF classification**: image_only / born_digital / hybrid\n- **Routing**: 4-strategy recommendation for downstream OCR\n- **Async batch**: submit-and-poll jobs for high-throughput ingestion\n\nSee [docs/api/rest-api.md](https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api/rest-api.md) for detailed contracts and examples.",
+    "description": "Front door for the RAG document pipeline. Accepts raw documents (PDF, PNG, JPEG, TIFF, WebP), assesses image quality, and returns a per-page quality summary plus an OCR routing recommendation.\n\n## Features\n\n- **Classical IQA**: blur, noise, and contrast detectors per page\n- **Document Quality Score (DQS)**: degradation score (the structural complexity component is currently a fixed placeholder)\n- **PDF classification**: image_only / born_digital / hybrid\n- **Routing**: `ocr_fast`, `ocr_advanced` or `vision_structured`, chosen from the degradation score\n- **Async batch**: submit-and-poll jobs for multi-file ingestion\n\nThe HTTP API exposes a subset of the full preprocessing pipeline: geometric and quality corrections and the ML teacher/student IQA models are not yet applied by these endpoints.\n\nSee the project repository (`docs/api/`) for further reference material.",
     "contact": {
       "name": "Image Preprocessing Detector Maintainers",
       "url": "https://github.com/williaby/image-preprocessing-detector"
     },
     "license": {
-      "name": "Apache-2.0",
-      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      "name": "CC-BY-SA-4.0",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/"
     },
     "version": "0.1.0"
   },
@@ -26,7 +26,7 @@
           "health"
         ],
         "summary": "Liveness check",
-        "description": "Basic liveness probe for load balancers and orchestrators. Returns `healthy` whenever the process is responding, along with a server timestamp and (if startup completed) uptime in seconds. Does not perform dependency checks \u2014 use `/ready` for that.",
+        "description": "Basic liveness probe for load balancers and orchestrators. Returns `healthy` whenever the process is responding, along with a server timestamp and (if startup completed) uptime in seconds. Does not perform dependency checks; use `/ready` for that.",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
@@ -43,9 +43,6 @@
                 }
               }
             }
-          },
-          "503": {
-            "description": "Server is unhealthy"
           }
         }
       }
@@ -56,7 +53,7 @@
           "health"
         ],
         "summary": "Readiness check",
-        "description": "Readiness probe that validates dependencies required to serve requests:\n\n- Device capability probe (GPU/CPU detection)\n- Classical IQA detector imports\n- Pydantic schema imports\n- Configuration loading\n\nReturns HTTP 200 with `status=ready` when all checks pass, or HTTP 503 with `status=not_ready` and per-check details when any fail. Use this for Kubernetes readiness probes \u2014 failing readiness removes the pod from the service load balancer.",
+        "description": "Readiness probe that validates dependencies required to serve requests:\n\n- Device capability probe (GPU/CPU detection)\n- Classical IQA detector construction (`BlurDetector`)\n- Pydantic schema imports\n- Configuration loading\n\nReturns HTTP 200 with `status=ready` when all checks pass, or HTTP 503 with `status=not_ready` and per-check details when any fail. Use this for Kubernetes readiness probes: failing readiness removes the pod from the service load balancer.",
         "operationId": "readiness_check_ready_get",
         "responses": {
           "200": {
@@ -96,7 +93,7 @@
           "health"
         ],
         "summary": "Version information",
-        "description": "Return the running API version, Python runtime version, processing pipeline version, and the resolved on-disk filenames for any currently-installed ONNX models (teacher / student / layout). Useful for diagnostics, support requests, and verifying model rollouts in production.",
+        "description": "Return the running API version, Python runtime version, the processing pipeline version (a fixed constant), and the names of any ONNX models found under `models/iqa/onnx`, resolved relative to the server working directory (teacher / student; `layout_model` is currently always `null`). Names are returned without the `.onnx` extension. Useful for diagnostics, support requests, and verifying model rollouts.",
         "operationId": "version_info_version_get",
         "responses": {
           "200": {
@@ -127,7 +124,7 @@
           "process"
         ],
         "summary": "Process a single document",
-        "description": "Upload a single document (PDF or image) and run the full Project A preprocessing pipeline: ingestion, PDF type classification, classical IQA, optional ML IQA (teacher/student), correction decisions, DQS calculation, and OCR routing recommendation.\n\n**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, `.tif`, `.webp`.\n\n**Request shape**: `multipart/form-data` with a single `file` field. Pipeline behavior is tuned via query parameters (`prefer_gpu`, `enable_corrections`, `enable_teacher`).\n\n**Response shape**: a `ProcessResponse` envelope. On success `status=completed` and `result` is populated with the document summary (per-page IQA scores, DQS, routing). On validation or processing errors, the envelope carries `status=failed` and a structured `error` (see error codes in `/docs/api/rest-api.md`).",
+        "description": "Upload a single document (PDF or image) and run the HTTP-exposed subset of the Project A pipeline: ingestion, PDF type classification (PDF uploads only), classical IQA (blur, noise, contrast), DQS degradation scoring, and an OCR routing recommendation.\n\n**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, `.tif`, `.webp`.\n\n**Request shape**: `multipart/form-data` with a single `file` field and optional query parameters (`prefer_gpu`, `enable_corrections`, `enable_teacher`).\n\n**Current limitations**: `enable_corrections` and `enable_teacher` are accepted but not yet acted on. No corrections are applied (`corrections_applied` is always 0), the ML teacher model is not invoked, and `dqs.structural_complexity_score` is a fixed placeholder (0.3). Routing is one of `ocr_fast`, `ocr_advanced` or `vision_structured`, chosen from the degradation score alone. PDFs are processed up to the first 100 pages.\n\n**Response shape**: a `ProcessResponse` envelope. On success `status=completed` and `result` is populated with the document summary (per-page IQA scores, DQS, routing). On validation or processing errors, the envelope carries `status=failed` and a structured `error` (see error codes in `docs/api/rest-api.md` in the repository).",
         "operationId": "process_single_document_process_post",
         "parameters": [
           {
@@ -148,11 +145,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to enable corrections",
+              "description": "Reserved for future use: accepted but not currently acted on (no corrections are applied).",
               "default": true,
               "title": "Enable Corrections"
             },
-            "description": "Whether to enable corrections"
+            "description": "Reserved for future use: accepted but not currently acted on (no corrections are applied)."
           },
           {
             "name": "enable_teacher",
@@ -160,11 +157,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to enable teacher model",
+              "description": "Reserved for future use: accepted but not currently acted on (the teacher model is not invoked).",
               "default": false,
               "title": "Enable Teacher"
             },
-            "description": "Whether to enable teacher model"
+            "description": "Reserved for future use: accepted but not currently acted on (the teacher model is not invoked)."
           }
         ],
         "requestBody": {
@@ -249,7 +246,7 @@
             }
           },
           "422": {
-            "description": "Processing failed (corrupt file, pipeline error).",
+            "description": "Processing failed (corrupt file, pipeline error). A request that FastAPI rejects before the handler runs (for example a missing `file` part or a malformed query parameter) also returns 422, with FastAPI's standard `{\"detail\": [...]}` validation body instead of this envelope.",
             "content": {
               "application/json": {
                 "schema": {
@@ -269,14 +266,7 @@
             }
           },
           "500": {
-            "description": "Internal server error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unexpected internal server error (framework-generated response; the body is not an `ErrorResponse`)."
           }
         }
       }
@@ -287,7 +277,7 @@
           "batch"
         ],
         "summary": "Submit batch processing job",
-        "description": "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for asynchronous processing. Each file is validated up-front (extension allowlist, non-empty); if any fails validation the entire batch is rejected with HTTP 400 and no job is created. On success a job is enqueued via FastAPI background tasks and the response carries a `job_id` clients should poll on `/batch/{job_id}/status` until `status` reaches `completed` or `failed`.",
+        "description": "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for asynchronous processing. Each file is validated up-front (extension allowlist, non-empty); if any fails validation the entire batch is rejected with HTTP 400 and no job is created. On success a job is enqueued via FastAPI background tasks and the response carries a `job_id` clients should poll on `/batch/{job_id}/status` until `status` reaches `completed`. Per-file processing failures are reported in the `errors` array of the result and counted in `failed_files`; the job itself still finishes as `completed`.\n\nFiles are read fully into memory at submission, and the per-file size limit that applies to `/process` is not enforced here. `enable_corrections` and `enable_teacher` are accepted but not yet acted on.",
         "operationId": "submit_batch_job_batch_post",
         "parameters": [
           {
@@ -308,11 +298,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to enable corrections",
+              "description": "Reserved for future use: accepted but not currently acted on (no corrections are applied).",
               "default": true,
               "title": "Enable Corrections"
             },
-            "description": "Whether to enable corrections"
+            "description": "Reserved for future use: accepted but not currently acted on (no corrections are applied)."
           },
           {
             "name": "enable_teacher",
@@ -320,11 +310,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to enable teacher model",
+              "description": "Reserved for future use: accepted but not currently acted on (the teacher model is not invoked).",
               "default": false,
               "title": "Enable Teacher"
             },
-            "description": "Whether to enable teacher model"
+            "description": "Reserved for future use: accepted but not currently acted on (the teacher model is not invoked)."
           }
         ],
         "requestBody": {
@@ -416,7 +406,7 @@
           "batch"
         ],
         "summary": "Get batch job status",
-        "description": "Poll the current state of a batch job by `job_id`. Returns progress counters (`processed_files`, `failed_files`) and the overall `status` (`pending`, `processing`, `completed`, `failed`). When `status` reaches a terminal state (`completed` or `failed`), the `completed_at` timestamp is populated and full results can be fetched via `/batch/{job_id}/result`.",
+        "description": "Poll the current state of a batch job by `job_id`. Returns progress counters (`processed_files`, `failed_files`) and the overall `status` (`pending`, `processing`, `completed`). The current implementation only ever ends a job as `completed`, even when every file failed; inspect `failed_files` and the `errors` array of the result for per-file failures. Once `completed`, the `completed_at` timestamp is populated and full results can be fetched via `/batch/{job_id}/result`. Jobs live in process memory and are never expired automatically; remove them with `DELETE /batch/{job_id}`.",
         "operationId": "get_batch_status_batch__job_id__status_get",
         "parameters": [
           {
@@ -471,7 +461,7 @@
           "batch"
         ],
         "summary": "Get batch job results",
-        "description": "Fetch the results of a completed (or failed) batch job. Results are paginated via `offset` and `limit` query parameters. If the job is still running, returns HTTP 425 (Too Early) with the current progress so the client can back off and retry. Errors that occurred during individual file processing are returned in the `errors` array alongside the successful `results`.",
+        "description": "Fetch the results of a completed batch job. Results are paginated via `offset` and `limit` query parameters. If the job is still running, returns HTTP 425 (Too Early) with the current progress so the client can back off and retry. Errors that occurred during individual file processing are returned in the `errors` array alongside the successful `results`.",
         "operationId": "get_batch_result_batch__job_id__result_get",
         "parameters": [
           {
@@ -540,7 +530,7 @@
           "batch"
         ],
         "summary": "Delete batch job",
-        "description": "Permanently remove a batch job and its stored results from the in-memory job store. Useful for explicit cleanup once a client has fetched and persisted the results downstream. The operation is idempotent for active jobs (returns 404 if `job_id` has already been removed).",
+        "description": "Permanently remove a batch job and its stored results from the in-memory job store. Useful for explicit cleanup once a client has fetched and persisted the results downstream. The operation is not idempotent: it returns 404 if `job_id` has already been removed. Deleting a job that is still processing removes its record but does not cancel the background task.",
         "operationId": "delete_batch_job_batch__job_id__delete",
         "parameters": [
           {

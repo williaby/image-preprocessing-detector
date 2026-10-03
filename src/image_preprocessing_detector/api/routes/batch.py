@@ -184,7 +184,13 @@ async def process_batch_job(
         "rejected with HTTP 400 and no job is created. On success a job is "
         "enqueued via FastAPI background tasks and the response carries a "
         "`job_id` clients should poll on `/batch/{job_id}/status` until "
-        "`status` reaches `completed` or `failed`."
+        "`status` reaches `completed`. Per-file processing failures are "
+        "reported in the `errors` array of the result and counted in "
+        "`failed_files`; the job itself still finishes as `completed`.\n\n"
+        "Files are read fully into memory at submission, and the per-file "
+        "size limit that applies to `/process` is not enforced here. "
+        "`enable_corrections` and `enable_teacher` are accepted but not yet "
+        "acted on."
     ),
     response_description="Initial batch job state with `job_id` for polling.",
     responses={
@@ -220,10 +226,22 @@ async def submit_batch_job(
     files: Annotated[list[UploadFile], File(description="Documents to process")],
     prefer_gpu: Annotated[bool, Query(description="Whether to prefer GPU")] = True,
     enable_corrections: Annotated[
-        bool, Query(description="Whether to enable corrections")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (no corrections are applied)."
+            )
+        ),
     ] = True,
     enable_teacher: Annotated[
-        bool, Query(description="Whether to enable teacher model")
+        bool,
+        Query(
+            description=(
+                "Reserved for future use: accepted but not currently acted "
+                "on (the teacher model is not invoked)."
+            )
+        ),
     ] = False,
 ) -> BatchJobStatus | JSONResponse:
     """Submit a batch processing job.
@@ -232,8 +250,8 @@ async def submit_batch_job(
         background_tasks: FastAPI background tasks.
         files: List of files to process.
         prefer_gpu: Whether to prefer GPU.
-        enable_corrections: Whether to enable corrections.
-        enable_teacher: Whether to enable teacher model.
+        enable_corrections: Reserved for future use; accepted but not read.
+        enable_teacher: Reserved for future use; accepted but not read.
 
     Returns:
         BatchJobStatus with job ID and initial status.
@@ -347,10 +365,14 @@ async def submit_batch_job(
     description=(
         "Poll the current state of a batch job by `job_id`. Returns progress "
         "counters (`processed_files`, `failed_files`) and the overall "
-        "`status` (`pending`, `processing`, `completed`, `failed`). When "
-        "`status` reaches a terminal state (`completed` or `failed`), the "
+        "`status` (`pending`, `processing`, `completed`). The current "
+        "implementation only ever ends a job as `completed`, even when "
+        "every file failed; inspect `failed_files` and the `errors` array "
+        "of the result for per-file failures. Once `completed`, the "
         "`completed_at` timestamp is populated and full results can be "
-        "fetched via `/batch/{job_id}/result`."
+        "fetched via `/batch/{job_id}/result`. Jobs live in process memory "
+        "and are never expired automatically; remove them with "
+        "`DELETE /batch/{job_id}`."
     ),
     response_description="Latest known job progress and lifecycle timestamps.",
     responses={
@@ -378,9 +400,10 @@ async def submit_batch_job(
 async def get_batch_status(job_id: str) -> BatchJobStatus:
     """Return the current lifecycle state of a batch job.
 
-    Looks up the in-memory job store; jobs older than ~24h may have been
-    reclaimed. Used by clients to poll progress between submission and
-    result retrieval.
+    Looks up the in-memory job store. Jobs are not expired automatically
+    (the age-based cleanup helper is not wired to any trigger), so a job
+    remains visible until it is deleted or the process restarts. Used by
+    clients to poll progress between submission and result retrieval.
 
     Args:
         job_id: UUID returned by `POST /batch`.
@@ -389,7 +412,8 @@ async def get_batch_status(job_id: str) -> BatchJobStatus:
         BatchJobStatus snapshot of progress counters and timestamps.
 
     Raises:
-        HTTPException: 404 when `job_id` is unknown or has expired.
+        HTTPException: 404 when `job_id` is unknown (never submitted,
+            deleted, or lost on process restart).
     """
     job = _get_job(job_id)
     if not job:
@@ -416,7 +440,7 @@ async def get_batch_status(job_id: str) -> BatchJobStatus:
     status_code=status.HTTP_200_OK,
     summary="Get batch job results",
     description=(
-        "Fetch the results of a completed (or failed) batch job. Results are "
+        "Fetch the results of a completed batch job. Results are "
         "paginated via `offset` and `limit` query parameters. If the job is "
         "still running, returns HTTP 425 (Too Early) with the current "
         "progress so the client can back off and retry. Errors that "
@@ -488,9 +512,10 @@ async def get_batch_result(
     description=(
         "Permanently remove a batch job and its stored results from the "
         "in-memory job store. Useful for explicit cleanup once a client has "
-        "fetched and persisted the results downstream. The operation is "
-        "idempotent for active jobs (returns 404 if `job_id` has already "
-        "been removed)."
+        "fetched and persisted the results downstream. The operation is not "
+        "idempotent: it returns 404 if `job_id` has already been removed. "
+        "Deleting a job that is still processing removes its record but does "
+        "not cancel the background task."
     ),
     response_description="Single-field confirmation message.",
     responses={
