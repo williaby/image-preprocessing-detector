@@ -270,7 +270,7 @@ def run_benchmark(
 
     # Go/No-Go based on AnyPhotoDoc6300 (primary)
     threshold = THRESHOLDS["warping"]
-    primary = apd_result if apd_result else warpdoc_aggregate
+    primary = apd_result or warpdoc_aggregate
     metric_value = primary["metrics"][threshold.metric] if primary else 0.0
     threshold_met = metric_value >= threshold.target
     go_nogo = "PASS" if threshold_met else "UPGRADE_ML"

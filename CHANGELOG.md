@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CI: pull requests and pushes now run the core suite (Python 3.12) only. The
+  multi-version test matrix (3.10 to 3.14, `ci.yml`), the Python Compatibility
+  matrix and ClusterFuzzLite fuzzing run weekly (Sundays) and on manual dispatch.
+  Mutation testing was already weekly.
 - **BREAKING**: Project license changed from MIT to CC-BY-SA-4.0.
   Derivatives must be shared under CC-BY-SA-4.0 or compatible license.
   Attribution required. Commercial use permitted.

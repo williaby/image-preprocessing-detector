@@ -4,14 +4,11 @@
 name: ClusterFuzzLite
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  # Fuzzing and mutation testing run weekly, not per PR, to keep PR CI fast and
+  # cheap. Mutation testing is already weekly (mutation-testing.yml, Sunday 02:00
+  # UTC); this runs five hours later so the two do not compete for runners.
+  schedule:
+    - cron: "0 7 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -27,7 +24,7 @@ jobs:
       security-events: write  # Required for SARIF upload
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -46,6 +43,7 @@ jobs:
         if: steps.build.outcome == 'success'
         with:
           fuzz-seconds: 600
+          mode: batch  # scheduled runs have no PR diff, so fuzz the whole project
           language: python
           output-sarif: true
           sanitizer: address

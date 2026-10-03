@@ -315,7 +315,7 @@ def _build_defects_section(
         d_field = defect.get("field", "?")
         severity = defect.get("severity", "?")
         status = defect.get("status", "open").upper()
-        if status in ("FIXED",):
+        if status == "FIXED":
             status = "RESOLVED"
         title = defect.get("title", defect.get("description", "")[:80])
         # Escape pipe characters in title
