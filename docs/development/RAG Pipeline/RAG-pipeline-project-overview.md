@@ -1,17 +1,23 @@
 ---
 schema_type: common
 title: "RAG Pipeline Project Overview"
-description: "Four-project architecture overview for document processing RAG pipeline"
+description: "Stage responsibilities overview for the Foundry document processing RAG pipeline"
 tags: [architecture, documentation, rag, pipeline]
 status: published
 owner: "docs-team"
-purpose: "Define the complete four-project RAG pipeline architecture with clear responsibility boundaries."
+purpose: "Define the Foundry RAG pipeline stages (Prepare-Doc, Unify, Chunk) with clear responsibility boundaries."
 ---
 
 ## Updated Project Structure & Division of Responsibilities
 
 **Version:** 2.0
-**Scope:** Applies to Prepare-Doc, Unify, Chunk, and Embed
+**Scope:** Applies to Prepare-Doc, Unify, and Chunk. Embedding is not a pipeline stage: each consuming application owns it, per [chunk-embed-contract.md](chunk-embed-contract.md). Canonical pipeline page: [pipeline-level-0.md](../../architecture/pipeline-level-0.md).
+
+> **Note**: Unify runs OCR through docling-serve first and specialist engines are a later phase, so no multi-engine
+> output exists yet. The Chunk sections below still own fusion, as recorded in
+> [ADR-0029](../../ADRs/0029-prepare-doc-scope-boundaries.md) (Accepted); treat fusion as dormant until multi-engine
+> output exists. Moving fusion to Unify would need a superseding ADR.
+
 **Purpose:** Ensure project teams understand what they own, what they consume, and what they must not duplicate.
 
 ## 2. Prepare-Doc — Preprocessing, IQA & Coarse Layout
@@ -65,7 +71,7 @@ Determine the “ground-truth” text via multi-engine fusion, suppress noise, c
 
 ### Inputs
 
-* OCRDocument.json from Unify
+* DoclingDOM.json from Unify
 * Paragraph structure from Marker
 * Multi-engine text (Marker + DeepSeek-OCR)
 
@@ -127,11 +133,11 @@ Marker + DeepSeek-OCR comparisons are normalized in Chunk rather than buried ups
 
 ### 4. Trust & Noise Are First-Class Signals
 
-Every chunk entering D has validated, comparable trust metrics.
+Every chunk handed to a consuming application has validated, comparable trust metrics.
 
 ### 5. Hierarchical Metadata
 
-Section/heading paths flow from B → C → D, giving RAG hierarchical retrieval power.
+Section/heading paths flow from Unify → Chunk → applications, giving RAG hierarchical retrieval power.
 
 ### 6. Evaluation With OmniDocBench & OHR-Bench
 

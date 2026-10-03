@@ -21,8 +21,8 @@ These 135 files are fully covered by Level 4 instance registries instead.
 
 | Level | Format | Scope | Location |
 |-------|--------|-------|----------|
-| 0 | PUML diagram | Multi-project RAG pipeline context | `level-0/` |
-| 1 | PUML diagram | Project A — 8 workstreams overview | `level-1/` |
+| 0 | PUML diagram | Foundry pipeline context | `level-0/` |
+| 1 | PUML diagram | Prepare-Doc: 8 workstreams overview | `level-1/` |
 | 2 | PUML + code blocks | Workstream component workflows | `level-2/` |
 | 3 | PUML + LOC annotations | Module state machines, swimlanes | `level-3/` |
 | **4** | **Markdown tables** | **Per-dataset adapter instances** | **`level-4/`** |
