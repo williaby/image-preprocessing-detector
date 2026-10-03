@@ -1215,7 +1215,7 @@ class MultiScriptDocumentGenerator:
                     # scripts that have reached their individual target.  Using the
                     # sorted-first script as the primary credit mirrors _save_sample's
                     # directory assignment logic so the counter stays consistent.
-                    primary_script = sorted(sample.scripts)[0]
+                    primary_script = min(sample.scripts)
                     if primary_script in per_script_counts:
                         per_script_counts[primary_script] += 1
                         if per_script_counts[primary_script] >= script_target:
@@ -1253,8 +1253,8 @@ class MultiScriptDocumentGenerator:
         if not self.config.output_dir:
             return
 
-        # Create script subdirectory - use sorted() for deterministic ordering (FIX BUG #4)
-        script_code = sorted(sample.scripts)[0]
+        # Create script subdirectory - use min() for deterministic ordering (FIX BUG #4)
+        script_code = min(sample.scripts)
         script_dir = self.config.output_dir / script_code
         script_dir.mkdir(exist_ok=True)
 

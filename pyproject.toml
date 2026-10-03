@@ -56,20 +56,20 @@ dependencies = [
     "huggingface-hub[cli]>=0.20.0,<1.0.0",  # <1.0 for transformers compatibility
     # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
     # "pytesseract (>=0.3.13,<0.4.0)",
-    "gitpython (>=3.1.45,<4.0.0)",
+    "gitpython (>=3.1.62,<4.0.0)",
     "pywavelets (>=1.4.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
     "werkzeug>=3.1.6",
     "requests>=2.31.0",  # Secure HTTP client (replaces urllib for file:// attack mitigation)
-    "urllib3>=2.6.3",
+    "urllib3>=2.8.0",
     "filelock>=3.20.1",
     # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
     # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
     "openpyxl>=3.1.5",
     # Transitive dependency CVE fixes
     "protobuf>=6.33.5",  # GHSA-7gcm-g887-7qv7: JSON recursion depth bypass
-    "pyasn1>=0.6.2",  # GHSA-63vm-454h-vhhq: DoS in decoder
+    "pyasn1>=0.6.4",  # GHSA-63vm-454h-vhhq: DoS in decoder; 0.6.4 clears later OSV advisories
 ]
 
 [project.optional-dependencies]
@@ -263,7 +263,16 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 
 [tool.uv]
 # Ensure compatibility with Linux systems by resolving to compatible wheels
-constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
+# Keep every OpenCV wheel on 4.x: the project pins opencv-python-headless<5.0.0,
+# but ultralytics/paddleocr/augraphy pull unbounded opencv-python(-contrib), which
+# resolved to 5.x. All of them install the same `cv2` module, so mixed majors make
+# the active build install-order dependent (5.x changes cv2.HoughLinesP's return
+# shape and breaks line-angle code).
+constraint-dependencies = [
+    "av<16.0.0; sys_platform == 'linux'",
+    "opencv-python<5.0.0",
+    "opencv-contrib-python<5.0.0",
+]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
 # The iqa group and labeling extra are mutually exclusive (different labeling
 # pipelines). iqa is a dependency group, not an extra, so `uv sync --all-extras`
@@ -291,6 +300,10 @@ packages = ["src/image_preprocessing_detector"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+# Ruff 0.16 also formats fenced code blocks in Markdown by default ("*.md" in the
+# default include). The docs hold intentionally illustrative snippets, so keep
+# ruff scoped to Python sources (the previous default set, minus Markdown).
+include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
 exclude = [
     ".git",
     ".claude",

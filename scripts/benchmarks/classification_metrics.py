@@ -293,8 +293,9 @@ def _compute_roc_auc(
         tpr_points.append(tp_count / num_positive)
         fpr_points.append(fp_count / num_negative)
 
-    # numpy <2.0 uses np.trapz; np.trapezoid was added in 2.0
-    _trapz = getattr(np, "trapezoid", np.trapz)
+    # numpy <2.0 uses np.trapz; np.trapezoid was added in 2.0 and np.trapz was
+    # removed in 2.4. Use a lazy fallback so np.trapz is only touched on old numpy.
+    _trapz = getattr(np, "trapezoid", None) or np.trapz
     tpr_arr = np.array(tpr_points)
     fpr_arr = np.array(fpr_points)
     auc = float(_trapz(tpr_arr, fpr_arr))
