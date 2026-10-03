@@ -134,3 +134,15 @@ def test_allowlist_contains_no_object_dtype() -> None:
     }
     assert "ObjectDType" not in names
     assert "dtype" in names
+
+
+def test_vulnerable_torch_version_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Fail closed on torch releases where weights_only=True is bypassable."""
+    path = tmp_path / "plain.pt"
+    torch.save({"model_state_dict": {}}, path)
+    monkeypatch.setattr(torch, "__version__", "2.5.1+cu121")
+
+    with pytest.raises(RuntimeError, match="CVE-2025-32434"):
+        load_checkpoint_weights_only(path)

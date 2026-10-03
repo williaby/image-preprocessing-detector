@@ -2,6 +2,7 @@
 Unit tests for PDF loading and image conversion.
 """
 
+from typing import cast
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -448,7 +449,7 @@ class TestPDFTooManyPages:
         path is exercised by `test_init_default_params`.
         """
         with pytest.raises(TypeError, match="max_pages must be a positive int"):
-            PDFLoader(max_pages=bad_value)  # type: ignore[arg-type]
+            PDFLoader(max_pages=cast("int", bad_value))
 
     def test_none_max_pages_uses_default(self) -> None:
         """`None` is treated as a sentinel for DEFAULT_MAX_PAGES."""
@@ -525,4 +526,4 @@ class TestPDFPixelBomb:
     @pytest.mark.parametrize("bad_value", [10.5, "100", True])
     def test_non_int_max_pixels_raises_type_error(self, bad_value: object) -> None:
         with pytest.raises(TypeError, match="max_pixels must be a positive int"):
-            PDFLoader(max_pixels=bad_value)  # type: ignore[arg-type]
+            PDFLoader(max_pixels=cast("int", bad_value))

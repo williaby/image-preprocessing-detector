@@ -111,7 +111,8 @@ _SIGNATURES: dict[str, _Signature] = {
     # between are a little-endian length field). Both parts required.
     "webp": [[(0, b"RIFF"), (8, b"WEBP")]],
     # BMP requires "BM" at offset 0 AND a recognised DIB header size
-    # at offset 14, both must match. The BM-only check was too weak - # many random binary blobs start with the ASCII "BM" pair.
+    # at offset 14, both must match. The BM-only check was too weak:
+    # many random binary blobs start with the ASCII "BM" pair.
     "bmp": [[(0, b"BM"), (14, dib_size)] for dib_size in _BMP_DIB_HEADER_SIZES],
 }
 

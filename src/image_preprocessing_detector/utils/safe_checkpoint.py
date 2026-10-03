@@ -15,10 +15,15 @@ classes, is still rejected by the weights-only unpickler.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+# First PyTorch release where weights_only=True is a complete mitigation for
+# pickle code execution (CVE-2025-32434 was bypassable through 2.5.1).
+MIN_SAFE_TORCH_VERSION: tuple[int, int] = (2, 6)
 
 # Numeric and boolean scalar types the trainers can emit in metric dicts.
 # Object, string and structured dtypes are deliberately excluded.
@@ -36,6 +41,15 @@ _NUMERIC_SCALAR_TYPES: tuple[type, ...] = (
     np.float32,
     np.float64,
 )
+
+
+def _torch_major_minor(version: str) -> tuple[int, int]:
+    """Parse ``(major, minor)`` from a torch version string like ``2.5.1+cu121``."""
+    match = re.match(r"(\d+)\.(\d+)", version)
+    if match is None:
+        # Unparseable version: treat as unsafe rather than assuming it is new.
+        return (0, 0)
+    return (int(match.group(1)), int(match.group(2)))
 
 
 def numpy_scalar_safe_globals() -> list[Any]:
@@ -77,11 +91,24 @@ def load_checkpoint_weights_only(
         The deserialized checkpoint object.
 
     Raises:
+        RuntimeError: If the installed torch is older than 2.6.0, where
+            ``weights_only=True`` can be bypassed (CVE-2025-32434).
         Exception: Whatever ``torch.load`` raises (typically
             ``pickle.UnpicklingError``) when the file contains a global that
             is not allowlisted.
     """
     import torch
+
+    # pyproject pins are advisory in many install flows (constraint files,
+    # preinstalled torch), so fail closed at the call site.
+    if _torch_major_minor(str(torch.__version__)) < MIN_SAFE_TORCH_VERSION:
+        required = ".".join(str(part) for part in MIN_SAFE_TORCH_VERSION)
+        msg = (
+            f"torch {torch.__version__} is older than {required}; "
+            "weights_only=True is bypassable there (CVE-2025-32434). "
+            "Upgrade torch before loading checkpoints."
+        )
+        raise RuntimeError(msg)
 
     with torch.serialization.safe_globals(numpy_scalar_safe_globals()):
         return torch.load(path, map_location=map_location, weights_only=True)
