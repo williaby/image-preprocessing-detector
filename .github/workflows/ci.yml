@@ -1,13 +1,15 @@
 # Image Preprocessing Detection System CI Pipeline
 # Optimized for computer vision and image quality assessment
 #
-# CI FOCUS: Code Quality & Multi-Version Testing
-# This workflow focuses on code quality, formatting, and comprehensive testing
-# across multiple Python versions (3.10, 3.11, 3.12, 3.13, 3.14) using nox + uv.
+# CI FOCUS: Code Quality & Core Testing (multi-version testing runs weekly)
+# This workflow focuses on code quality, formatting, and testing. Pull requests
+# and pushes run the core suite on Python 3.12 only. The full multi-version
+# matrix (3.10, 3.11, 3.12, 3.13, 3.14) runs weekly (Sunday 05:00 UTC) and on
+# manual dispatch, matching the other ByronWilliamsCPA repos.
 # Security scanning has been consolidated in security-analysis.yml workflow.
 #
-# MULTI-VERSION TESTING (This Workflow):
-#   - Python 3.10, 3.11, 3.12, 3.13 support via nox (required to pass)
+# MULTI-VERSION TESTING (weekly schedule and workflow_dispatch only):
+#   - Python 3.10, 3.11, 3.12, 3.13 support (required to pass)
 #   - Python 3.14 experimental (allowed to fail - onnxruntime/pyarrow lack 3.14 wheels)
 #   - uv backend for 10-100x faster package installation
 #   - Isolated test environments per Python version
@@ -28,7 +30,11 @@
 name: CI
 
 on:
-  workflow_dispatch:  # Manual trigger for testing
+  workflow_dispatch:  # Manual trigger; runs the full multi-version matrix
+  schedule:
+    # Weekly full multi-version matrix, Sundays at 05:00 UTC (after mutation
+    # testing at 02:00, before the compatibility matrix at 06:00 and fuzzing at 07:00)
+    - cron: "0 5 * * 0"
   pull_request:
     branches:
       - main
@@ -62,11 +68,11 @@ jobs:
       pyproject-hash: ${{ steps.cache-key.outputs.pyproject-hash }}
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Free up disk space early
         run: |
@@ -85,7 +91,7 @@ jobs:
           echo "pyproject-hash=${{ hashFiles('**/pyproject.toml') }}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.12'
 
@@ -170,19 +176,24 @@ jobs:
     continue-on-error: ${{ matrix.python-version == '3.14' }}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # Core per PR/push: 3.12 only (its test-results-3.12 artifact feeds the
+        # codecov and qlty workflows). Full matrix on schedule and dispatch.
+        python-version: >-
+          ${{ fromJSON((github.event_name == 'schedule' ||
+          github.event_name == 'workflow_dispatch') &&
+          '["3.10", "3.11", "3.12", "3.13", "3.14"]' || '["3.12"]') }}
       fail-fast: false
 
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -269,14 +280,14 @@ jobs:
     needs: setup-optimized
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.12'
 
@@ -370,12 +381,12 @@ jobs:
 
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 

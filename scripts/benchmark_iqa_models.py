@@ -281,7 +281,7 @@ def benchmark_pyiqa_model(
     try:
         import pyiqa
     except ImportError:
-        log.error("pyiqa not installed. Run: uv add pyiqa")
+        log.error("pyiqa not installed. Run: uv sync --group iqa")
         raise
 
     log.info("Benchmarking %s on %s (%d images)", model_name, dataset_name, len(images))

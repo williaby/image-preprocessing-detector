@@ -47,7 +47,7 @@ Image preprocessing detector processes untrusted input (PDFs, images) and is vul
 
 1. **Coverage-guided fuzzing**: Prioritize inputs that explore new code paths
 2. **Target critical modules**: PDF loading, image decoding, format detection
-3. **Continuous integration**: Run on every commit via CIFuzz
+3. **Scheduled integration**: Run weekly via ClusterFuzzLite batch mode (see `.github/workflows/cifuzzy.yml`)
 4. **Long-term fuzzing**: OSS-Fuzz runs 24/7 on Google infrastructure
 
 ---

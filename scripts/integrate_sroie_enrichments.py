@@ -246,7 +246,7 @@ def get_color_mode_from_image(image_path: Path) -> str:
 
         with Image.open(image_path) as img:
             mode = img.mode
-            if mode in ("1",):
+            if mode == "1":
                 return "binarized"
             if mode in ("L", "LA"):
                 return "grayscale"

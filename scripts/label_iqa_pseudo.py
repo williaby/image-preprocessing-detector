@@ -61,7 +61,8 @@ Usage
 
 Dependencies
 ------------
-Install: ``uv sync --extra iqa``
+Install: ``uv sync --group iqa`` (conflicts with ``--extra labeling``; add
+``--inexact`` to keep extras that are already installed in the venv)
 """
 
 from __future__ import annotations
@@ -236,7 +237,7 @@ def _load_models(
         import pyiqa
     except ImportError:
         click.echo(
-            "ERROR: pyiqa not installed. Run: uv sync --extra iqa",
+            "ERROR: pyiqa not installed. Run: uv sync --group iqa",
             err=True,
         )
         raise

@@ -123,7 +123,7 @@ If a crash is found, the fuzzer will save a reproducer file (e.g., `crash-abc123
 
 ## ClusterFuzzLite CI/CD Integration
 
-These harnesses run automatically via GitHub Actions on every push and PR:
+These harnesses run automatically via GitHub Actions on a weekly schedule (Sundays, 07:00 UTC) and on manual dispatch, not on every push or PR:
 
 1. **Automatic Fuzzing**: Runs in `.github/workflows/cifuzzy.yml` workflow
 2. **Crash Artifacts**: Reproducer files uploaded as GitHub artifacts

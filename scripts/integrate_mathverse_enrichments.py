@@ -181,7 +181,7 @@ def integrate_sample(sample: dict[str, Any]) -> dict[str, Any]:
 
     # SPLIT
     src_split = sample.get("source", {}).get("split")
-    data["split"] = src_split if src_split else "test"
+    data["split"] = src_split or "test"
 
     # TEXT SCOPE
     data["text_scope_content_type"] = "printed"

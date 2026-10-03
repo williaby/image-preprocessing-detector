@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -1066,6 +1067,72 @@ def _create_shadow_warping_dataset(
     )
 
 
+# ============================================================================
+# Label parsing helpers (pure functions; unit-tested without Modal/torch)
+# ============================================================================
+
+# code_cls label semantics. Two manifest conventions exist in this repo:
+#   * enrichment metadata: ``has_code`` is the label and ``code_confidence`` is the
+#     confidence IN that label (a confident negative is has_code=False, 1.0);
+#   * OOD builder / legacy manifests: no ``has_code``, and ``code_confidence`` is
+#     itself the code probability (boundary band 0.3-0.7 for mixed prose + code).
+# ``has_code`` therefore selects the class whenever present, and confidence only
+# decides whether to mask. Reading confidence as a probability for enrichment rows
+# would label confident negatives as "has code".
+CODE_LABEL_MIN_CONFIDENCE = 0.7
+CODE_LABEL_POSITIVE_MIN = 0.7  # legacy probability form
+CODE_LABEL_NEGATIVE_MAX = 0.3  # legacy probability form
+
+# Handwriting regression heads: -1.0 is the N_A sentinel (masked loss); any value
+# outside [0, 1], including the sentinel, is rejected by _parse_hw_score.
+
+
+def _unit_float(raw: Any) -> float | None:
+    """``raw`` as a finite float in [0, 1], else None."""
+    if isinstance(raw, bool):  # True/False are not scores
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) and 0.0 <= value <= 1.0 else None
+
+
+def _parse_code_label(entry: dict[str, Any]) -> int | None:
+    """Return the binary code_cls label for a manifest entry, or None to mask it.
+
+    With ``has_code`` (a real bool): that is the class, and a present but
+    low/invalid/null ``code_confidence`` masks the sample. A present non-bool
+    ``has_code`` is malformed and masks the sample. Without the key: legacy
+    probability form (>= 0.7 -> 1, <= 0.3 -> 0, ambiguous band masked).
+    """
+    confidence = entry.get("code_confidence")
+    if "has_code" in entry:
+        has_code = entry["has_code"]
+        if not isinstance(has_code, bool):
+            return None
+        if "code_confidence" in entry:
+            value = _unit_float(confidence)
+            if value is None or value < CODE_LABEL_MIN_CONFIDENCE:
+                return None
+        return int(has_code)
+    value = _unit_float(confidence)
+    if value is None:
+        return None
+    if value >= CODE_LABEL_POSITIVE_MIN:
+        return 1
+    return 0 if value <= CODE_LABEL_NEGATIVE_MAX else None
+
+
+def _parse_hw_score(raw: Any) -> float | None:
+    """Return a valid handwriting score in [0, 1], or None to mask the sample.
+
+    The N_A sentinel (-1.0), NaN/inf, unparseable and out-of-range values all
+    return None so they are skipped by the masked loss.
+    """
+    return _unit_float(raw)
+
+
 def _validate_manifest_no_ood(samples: list[dict[str, Any]]) -> None:
     """Reject any manifest that contains OOD-reserved samples.
 
@@ -1292,20 +1359,22 @@ def _create_multitask_dataset(
                     sample["task_masks"]["skew_reg"] = 1
 
                 # Defect 2 fix: code_cls (SIG-G5-4) — binary 0/1 from code_confidence
-                if "code_confidence" in entry:
-                    sample["labels"]["code_cls"] = int(float(entry["code_confidence"]))
-                    sample["task_masks"]["code_cls"] = 1
+                if "code_confidence" in entry or "has_code" in entry:
+                    code_label = _parse_code_label(entry)
+                    if code_label is not None:
+                        sample["labels"]["code_cls"] = code_label
+                        sample["task_masks"]["code_cls"] = 1
 
                 # Defect 1 fix: handwriting regression heads (SIG-G4-4, SIG-G4-5)
                 # N_A sentinel = -1.0 → mask=0 (MultiTaskLoss skips these samples).
                 # Valid labels are in [0.0, 1.0] and always include a mask=1 entry.
                 for hw_reg in ("presence_score", "legibility_score"):
                     if hw_reg in entry:
-                        val = float(entry[hw_reg])
-                        if val >= 0.0:
-                            sample["labels"][hw_reg] = val
+                        hw_val = _parse_hw_score(entry[hw_reg])
+                        if hw_val is not None:
+                            sample["labels"][hw_reg] = hw_val
                             sample["task_masks"][hw_reg] = 1
-                        # val == -1.0: N_A sentinel, no mask entry → loss skipped
+                        # None (N_A sentinel/invalid): no mask entry → loss skipped
 
                 # Only keep samples with at least one label
                 if sample["task_masks"]:
