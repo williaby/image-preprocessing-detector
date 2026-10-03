@@ -177,7 +177,7 @@ def generate_contact_sheet(
         img_path = Path(entry["path"])
         try:
             img = Image.open(img_path)
-            if img.mode not in ("RGB",):
+            if img.mode != "RGB":
                 img = img.convert("RGB")
 
             img.thumbnail((THUMB_WIDTH, THUMB_HEIGHT), Image.LANCZOS)

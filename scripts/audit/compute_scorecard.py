@@ -830,7 +830,7 @@ def _load_content_flag_fp_rates(
 
             if rate_pct is not None:
                 fp_rates[flag_name] = rate_pct
-    return fp_rates if fp_rates else None
+    return fp_rates or None
 
 
 # -------------------------------------------------------------------

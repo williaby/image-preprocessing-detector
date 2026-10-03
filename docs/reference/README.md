@@ -30,6 +30,7 @@ This folder contains technical reference materials and operational guides for th
 - [**MIGRATION_GUIDE.md**](MIGRATION_GUIDE.md) - Phase renumbering and migration procedures
 - [**CITATIONS.md**](CITATIONS.md) - Academic citations and references
 - [**REPOSITORY_STRUCTURE.md**](REPOSITORY_STRUCTURE.md) - Repository directory structure
+- [**REVIEW_AND_MERGE_POLICY.md**](REVIEW_AND_MERGE_POLICY.md) - Automated review and branch-merge policy (CodeRabbit advisory, ruleset gates)
 
 ### Testing References
 

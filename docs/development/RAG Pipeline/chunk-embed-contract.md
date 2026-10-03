@@ -11,22 +11,22 @@ tags:
 - rag_pipeline
 status: active
 owner: core-maintainer
-purpose: "Define the complete interface contract between Chunk (foundry-chunk) and all
+purpose: "Define the complete interface contract between Chunk (data_ingestor) and all
   per-application embedding implementations. Embedding is not a shared service, but the
   input interface is standardized across all AI applications."
 ---
 
-**Version:** 1.0.0 | **Status:** Active | **Last Updated:** 2026-02
+**Version:** 1.1.0 | **Status:** Active | **Last Updated:** 2026-10
 
 ## Executive Summary
 
 This document defines the interface contract between:
 
-- **Chunk** (`foundry-chunk`, Upstream): Trust scoring, semantic chunking, RAGChunkSet assembly
+- **Chunk** (`data_ingestor`, Upstream): Trust scoring, semantic chunking, RAGChunkSet assembly
 - **Application Embedding** (Downstream): Per-application — each AI application implements
   its own embedding component
 
-**Embedding is NOT a shared foundry service.** There is no `foundry-embed` repository. Instead,
+**Embedding is NOT a shared pipeline service.** There is no shared embedding repository. Instead,
 each AI application that requires retrieval implements its own embedding component. However, ALL
 such implementations MUST conform to this contract — they must accept the `RAGChunkSet` artifact
 from Chunk and preserve the required metadata fields in their vector store entries.
@@ -39,7 +39,7 @@ from Chunk and preserve the required metadata fields in their vector store entri
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│                    CHUNK (foundry-chunk)                      │
+│                    CHUNK (data_ingestor)                      │
 │              Trust scoring + RAG chunking                     │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
@@ -91,11 +91,11 @@ All fields listed here are REQUIRED unless explicitly marked `(optional)`.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `schema_version` | String | `"1.0"` — bump if schema changes |
+| `schema_version` | String | `"1.1"` — bump if schema changes (`"1.0"` sets never contain null scores) |
 | `document_id` | UUID | Stable document identifier (from Ingest) |
 | `trace_id` | UUID | Pipeline execution trace ID |
 | `source_track` | String | `"document"` or `"audio"` |
-| `chunk_strategy` | String | `"by_title"`, `"token"`, or `"semantic"` |
+| `chunk_strategy` | String | `"by_title"`, `"token"`, `"semantic"`, or `"hybrid"` (docling-core structure-aware chunking) |
 | `total_chunks` | Integer | Total count of chunks in this set |
 | `chunks` | Array | See Section 3.2 |
 
@@ -109,12 +109,12 @@ All fields listed here are REQUIRED unless explicitly marked `(optional)`.
 | `text` | String | **REQUIRED** | Chunk text content |
 | `page_range` | `[int, int]` | **REQUIRED** | `[start_page, end_page]` (1-indexed) |
 | `section_hierarchy` | Array\<String\> | **REQUIRED** | Heading path, e.g., `["Chapter 2", "Section 2.1"]` |
-| `trust_score` | Float 0-1 | **REQUIRED** | Derived from Prepare-Doc IQA metrics + Unify OCR confidence |
-| `ocr_engine_provenance` | String | **REQUIRED** | OCR engine used (e.g., `"docling"`, `"tesseract"`), rooted in Prepare-Doc routing decision |
+| `trust_score` | Float 0-1 or `null` | **REQUIRED** (nullable) | Derived from Prepare-Doc IQA metrics + Unify OCR confidence. `null` means not scored (Section 3.4) |
+| `ocr_engine_provenance` | String or `null` | **REQUIRED** (nullable) | OCR engine used (e.g., `"docling"`, `"tesseract"`), rooted in Prepare-Doc routing decision. `null` means not scored (Section 3.4) |
 | `chunk_strategy` | String | **REQUIRED** | Strategy used for this specific chunk |
 | `token_count` | Integer | **REQUIRED** | Token count (cl100k_base tokenizer) |
 | `source_track` | String | **REQUIRED** | `"document"` or `"audio"` |
-| `hallucination_risk` | Float 0-1 | **REQUIRED** | Estimated risk of OCR hallucination |
+| `hallucination_risk` | Float 0-1 or `null` | **REQUIRED** (nullable) | Estimated risk of OCR hallucination. `null` means not scored (Section 3.4) |
 | `audio_fields` | Object | conditional | Present only when `source_track == "audio"` |
 
 ### 3.3 Audio Fields (when `source_track == "audio"`)
@@ -125,6 +125,17 @@ All fields listed here are REQUIRED unless explicitly marked `(optional)`.
 | `end_ms` | Integer | End timestamp in milliseconds |
 | `speaker_id` | String | Speaker identifier from Prepare-Audio diarization |
 | `confidence` | Float 0-1 | Deepgram transcription confidence for this segment |
+
+### 3.4 Unscored chunks
+
+Trust scoring and OCR fusion are not available in every deployment (for example,
+when Chunk runs before Unify exists). In that case Chunk MUST write `null` for
+`trust_score`, `ocr_engine_provenance`, and `hallucination_risk` on every chunk.
+The keys stay present; only the values are null. A chunk set is either scored or
+unscored for these three fields, never partly filled with placeholder numbers.
+
+`null` means "not scored". It never means zero (untrustworthy) or one
+(fully trusted). Chunk MUST NOT write a default such as `1.0` or `"unknown"`.
 
 ---
 
@@ -179,6 +190,9 @@ Prepare-Doc IQA assessment
 ```
 
 Applications MUST NOT recompute or override `trust_score`. It is a pipeline artifact.
+A `null` value is stored as null. An application's quality or safety filters (for
+example, exclude chunks below 0.5) MUST NOT drop or promote a chunk because its
+score is null; it decides explicitly how to treat unscored chunks.
 
 ---
 
@@ -186,7 +200,8 @@ Applications MUST NOT recompute or override `trust_score`. It is a pipeline arti
 
 | Scenario | Required Behavior |
 |----------|-------------------|
-| Missing `trust_score` in RAGChunkSet | Application MUST reject chunk and log ERROR |
+| `trust_score` key missing from a chunk | Application MUST reject chunk and log ERROR |
+| `trust_score` is `null` | Valid (unscored). Application MUST store it as null and MUST NOT treat it as 0 or 1 |
 | `trust_score` below application threshold | Application MAY skip embedding for that chunk (log WARN) |
 | Missing `chunk_id` | Application MUST reject entire RAGChunkSet and alert |
 | `source_track == "audio"` but `audio_fields` absent | Application MUST reject chunk and log ERROR |

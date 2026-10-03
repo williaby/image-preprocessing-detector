@@ -469,7 +469,7 @@ note right
   chunk-fusion-chunking-workflow.puml (Unify → Chunk)
   embed-vectorstore-workflow.puml (Chunk → Embed)
   prepare-audio-transcription-workflow.puml (Prepare-Audio track)
-  foundry-chunk-migration.puml (Chunk service migration)
+  data_ingestor-migration.puml (Chunk service migration)
 
   **Unify Focus:**
   OCR orchestration only

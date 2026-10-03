@@ -120,9 +120,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH / DOCLAYNET_DIR,
                 "pattern": PNG_GLOB,
-                "filter_fn": lambda p: (
-                    "law" in str(p).lower() or _rng.random() < 0.15
-                ),
+                "filter_fn": lambda p: "law" in str(p).lower() or _rng.random() < 0.15,
             }
         ],
         "doc_type": "legal",

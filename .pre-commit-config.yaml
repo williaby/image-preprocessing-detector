@@ -153,6 +153,45 @@ repos:
         exclude: 'tests/.*'
         stages: [pre-commit]
 
+  # ============================================================================
+  # Secret Detection - TruffleHog
+  # ============================================================================
+  # Advanced secret detection beyond detect-private-key.
+  # Detects API keys, tokens, credentials, and other secrets.
+  - repo: local
+    hooks:
+      - id: trufflehog
+        name: TruffleHog Secret Scanner
+        description: Detect secrets in your data before committing
+        # Scan staged files only. The git-history mode (--since-commit HEAD) also
+        # traverses fetched remote branches in the local object store, producing
+        # false positives from unmerged branches. Staged-file scanning is the
+        # correct scope for a pre-commit hook; git history scanning belongs in CI.
+        #
+        # The install check must early-exit, NOT use a trailing `|| echo`. In the
+        # `command -v trufflehog && (scan) || echo` form, bash evaluates
+        # `(A && B) || C`: when the scan (B) exits non-zero on a real detection,
+        # control falls through to `|| echo`, which prints and returns 0 -- silently
+        # disabling the hook. Guard first, then let trufflehog's --fail exit stand.
+        #
+        # The scan reads a snapshot of the INDEX (git checkout-index into a temp
+        # dir), not the working tree, so a staged secret cannot be hidden by an
+        # unstaged edit. Paths are piped NUL-delimited into checkout-index rather
+        # than through `xargs -r`, which BSD/macOS xargs does not support.
+        # `unverified` is included so secrets that cannot be live-verified still
+        # block the commit.
+        entry: >-
+          bash -c 'if ! command -v trufflehog >/dev/null 2>&1; then
+          echo "TruffleHog not installed - skipping secret scan"; exit 0; fi;
+          snap=$(mktemp -d) || exit 1; trap "rm -rf $snap" EXIT;
+          git diff --cached -z --diff-filter=d --name-only |
+          git checkout-index -z --stdin --prefix="$snap/" || exit 1;
+          trufflehog filesystem --fail --no-update
+          --results=verified,unknown,unverified "$snap"'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
 # Exclude patterns (don't run hooks on these)
 exclude: |
   (?x)^(

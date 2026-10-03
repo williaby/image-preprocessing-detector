@@ -5,20 +5,9 @@
 name: Python Compatibility
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - 'src/**/*.py'
-      - 'tests/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-  pull_request:
-    branches: [main, master, develop]
-    paths:
-      - 'src/**/*.py'
-      - 'tests/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
+  # Weekly only, not per PR or push: the core suite (ci.yml, Python 3.12) gates
+  # PRs. Run manually with workflow_dispatch before a release or a dependency
+  # change that could affect other Python versions or operating systems.
   schedule:
     # Weekly compatibility check on Sundays at 6 AM UTC
     - cron: '0 6 * * 0'
@@ -35,14 +24,32 @@ permissions:
 jobs:
   compatibility:
     name: Python Compatibility Matrix
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@c22009ccaab0d3234819d30d9d7a03d53c531cb9  # main
+    # The trailing `# main` comment is Renovate's version marker for this SHA pin
+    # (a bare SHA is skipped by Renovate), and it pushes the line past 120 chars.
+    # yamllint disable-line rule:line-length
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@c75ea0780b8731a00a0b6ff46b68d69b45fb08b6  # main
     with:
       python-versions: '["3.10", "3.11", "3.12", "3.13"]'
       operating-systems: '["ubuntu-latest"]'
       include-macos: true
       include-windows: true
       source-directory: 'src'
-      test-command: 'pytest tests/ -v --tb=short -x --ignore=tests/integration --ignore=tests/load -m "not slow and not integration"'
+      # Builds are required: this project uses hatchling and depends on a git
+      # source (byronwilliamscpa-gemini-image) plus sdist-only packages
+      # (fasttext; atheris on Python 3.10). The reusable workflow installs with
+      # `uv sync --all-extras`, so packages without wheels for a runner OS carry
+      # PEP 508 platform markers in pyproject.toml (onnxruntime-gpu: not macOS;
+      # atheris: Linux only; fasttext: not Windows).
+      no-build: false
+      # The reusable workflow expands $TEST_COMMAND unquoted, so bash word-splits
+      # it and passes quote characters through literally. The -m expression must
+      # therefore contain no whitespace; parentheses keep it one argument.
+      # An explicit -m replaces pyproject's default `not (slow or benchmark)`, so
+      # benchmark (wall-clock latency) tests must be excluded here too.
+      test-command: >-
+        pytest tests/ -v --tb=short -x
+        --ignore=tests/integration --ignore=tests/load
+        -m not(slow)and(not(integration))and(not(benchmark))
       coverage-report: false
       fail-fast: false
       timeout-minutes: 30

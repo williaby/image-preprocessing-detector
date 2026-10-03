@@ -387,14 +387,15 @@ docling-based implementation.
 
 | Diagram Label | Project Docs Label | Issue |
 |---------------|--------------------|-------|
-| "Unify (foundry-unify)" | "Unify (OCR Orchestration)" | Different names for same component |
+| "Unify (Unify)" | "Unify (OCR Orchestration)" | Different names for same component |
 | "Docling DOM" | — | Mentioned only as data store, not as OCR orchestration |
-| "foundry-prepare-doc" | "Prepare-Doc" | Service name vs project name inconsistency |
+| "image_detection" | "Prepare-Doc" | Service name vs project name inconsistency |
 
-The level-0 diagram uses service/microservice names (`foundry-*`) that differ from the project
-names used in all other documentation. **Recommendation**: Align naming — either adopt
-`foundry-*` names throughout or use `Prepare-Doc/B/C/D` throughout. Document the canonical
-naming convention in CLAUDE.md.
+**RESOLVED (2026-05-19)**: The level-0 diagram now uses actual repository names
+(`rag-processor`, `image_detection`, `audio-processor`, `Unify`, `data_ingestor`)
+in place of the aspirational `foundry-*` naming. Service names (`Prepare-Doc`, `Unify`,
+etc.) remain the canonical reference in prose documentation per the Project Name Mapping
+in `docs/architecture/diagrams/level-0/index.md`.
 
 ---
 
@@ -481,7 +482,7 @@ enrichment based on Prepare-Doc's `has_figures` signal. Failure mode: silent ski
 |----|--------|------|
 | P2-1 | Add `domain_hints` field to `DocumentMetadata` for Unify chart/enrichment decisions | `schema.py` |
 | P2-2 | Ensure `pages[].overall_quality` is present at page level for Unify quality gating | `schema.py` |
-| P2-3 | Align level-0 diagram naming (`foundry-*` vs `Prepare-Doc/B/C/D`) | `rag-pipeline-overview.puml` |
+| P2-3 | ✅ DONE (2026-05-19) Align level-0 diagram naming with actual repo names | `rag-pipeline-overview.puml` |
 | P2-4 | Reassess VLM warping trigger (use post-correction state from `transform_history`) | `docling_router.py:325` |
 | P2-5 | Migrate `DoclingRoutingEngine` and `to_cli_args()` to Unify codebase | Unify integration work |
 

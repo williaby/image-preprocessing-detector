@@ -1,5 +1,5 @@
-@startuml foundry-chunk-migration
-title Chunk Service Migration: data_ingestor -> foundry-chunk
+@startuml data_ingestor-migration
+title Chunk Service Refactoring: data_ingestor repo → data_ingestor service
 
 skinparam shadowing false
 skinparam monochrome true
@@ -92,7 +92,7 @@ stop
 note right
   **CONTEXT DIAGRAM**
   This migration is in the downstream
-  foundry-chunk service.
+  data_ingestor service (formerly foundry-chunk).
   NOT part of the Prepare-Doc codebase.
   Shown here because Prepare-Doc SigLIP 2
   validation is the trigger condition.

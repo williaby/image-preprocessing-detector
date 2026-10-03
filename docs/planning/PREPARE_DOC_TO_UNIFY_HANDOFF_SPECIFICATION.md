@@ -10,7 +10,7 @@ tags:
   - iqa
   - pipeline
   - integration
-purpose: Complete specification of what Prepare-Doc delivers to Unify (foundry-unify), including signal-to-docling-parameter coverage matrix and architectural boundary definition.
+purpose: Complete specification of what Prepare-Doc delivers to Unify (Unify), including signal-to-docling-parameter coverage matrix and architectural boundary definition.
 ---
 
 **Date**: 2026-02-22 | **Version**: 2.0
@@ -32,7 +32,7 @@ purpose: Complete specification of what Prepare-Doc delivers to Unify (foundry-u
 **Prepare-Doc is an analysis oracle. Unify is the docling configuration authority.**
 
 ```text
-PREPARE-DOC (foundry-prepare-doc)          UNIFY (foundry-unify)
+PREPARE-DOC (image_detection)          UNIFY (Unify)
 ────────────────────────────────          ───────────────────────
 Detects, scores, measures → signals        Reads signals → configures docling
 Applies physical corrections               Does NOT apply corrections

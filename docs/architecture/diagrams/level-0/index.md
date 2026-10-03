@@ -42,12 +42,12 @@ The RAG document pipeline is a multi-track architecture supporting both document
 
 | Short Name | Repository | Status | Purpose |
 |------------|------------|--------|---------|
-| **Ingest** | `foundry-ingest` | Active | Web UI frontend, file upload; routes audio/video directly to Prepare-Audio and all other types to Prepare-Doc |
-| **Prepare-Doc** | `foundry-prepare-doc` | Active | Stage 0 document type routing, track assignment, IQA, corrections, layout, routing metadata |
-| **Prepare-Audio** | `foundry-prepare-audio` | Active | Transcription, diarization |
-| **Unify** | `foundry-unify` | Not Started | Multi-engine OCR, Docling DOM unification |
-| **Chunk** | `foundry-chunk` | Not Started | Trust scoring, RAG chunking |
-| **Embed** | `foundry-embed` | Not Started | Embeddings, vector store |
+| **Ingest** | [`rag-processor`](https://github.com/ByronWilliamsCPA/rag-processor) | Active | Web UI frontend, file upload; routes audio/video directly to Prepare-Audio and all other types to Prepare-Doc |
+| **Prepare-Doc** | [`image-preprocessing-detector`](https://github.com/williaby/image-preprocessing-detector) | Active | Stage 0 document type routing, track assignment, IQA, corrections, layout, routing metadata (THIS REPO) |
+| **Prepare-Audio** | [`audio-processor`](https://github.com/ByronWilliamsCPA/audio-processor) | Active | Transcription, diarization |
+| **Unify** | [`Unify`](https://github.com/ByronWilliamsCPA/Unify) | Scaffolding (CI/CD ready, domain logic pending) | Multi-engine OCR, Docling DOM unification |
+| **Chunk** | [`data_ingestor`](https://github.com/williaby/data_ingestor) | Active (refactor pending) | Trust scoring, RAG chunking |
+| **Embed** | *(per-application)* | N/A | Each AI app implements its own per [chunk-embed-contract.md](../../../development/RAG%20Pipeline/chunk-embed-contract.md) |
 
 ### Data Flow
 
@@ -78,7 +78,7 @@ All others:  Ingest -[others]-> Prepare-Doc (Stage 0 → track assignment → ML
 
 Each Level 0 box represents a distinct project with its own repository, architecture, and team. Detailed descriptions below define the boundaries and responsibilities.
 
-### Ingest (foundry-ingest)
+### Ingest (rag-processor)
 
 The Ingest service is the user-facing entry point for the entire RAG pipeline. It provides a web UI for file upload supporting any file type — documents (PDF, Office, Images), audio, and video. When a file is uploaded, Ingest uploads the source file to GCS raw storage and performs a simple file type check to route to the correct processing service:
 
@@ -89,7 +89,7 @@ The Ingest service is the user-facing entry point for the entire RAG pipeline. I
 
 The service exposes REST endpoints (`POST /process`, `GET /status/{trace_id}`) and maintains a job queue that can handle 1000+ files per hour. Cloud Workflows generates a unique `trace_id` that follows the file through every downstream service. Ingest is the only service with direct user interaction — all other services are internal processing components.
 
-### Prepare-Doc (foundry-prepare-doc)
+### Prepare-Doc (image_detection)
 
 Prepare-Doc is the document preprocessing and quality assurance gateway. It receives all non-audio files from Ingest. Its first internal step is **Stage 0 — the Document Type Router** — which detects the file format and classifies the file into one of five processing tracks:
 
@@ -105,25 +105,25 @@ After track assignment, Prepare-Doc performs comprehensive multi-task ML analysi
 
 Beyond quality, Prepare-Doc performs layout-lite detection to identify coarse page attributes (tables, figures, dense math, handwriting) and classifies PDF type (born-digital, image-only, hybrid). These signals feed into the Document Quality Score (DQS) calculator, which produces routing recommendations (`OCR_FAST`, `OCR_ADVANCED`, `VISION_SIMPLE`, `VISION_STRUCTURED`) that tell Unify which OCR strategy to use. Output includes corrected 300 DPI page images and `DocumentMetadata.json` containing all quality metrics and routing decisions.
 
-### Prepare-Audio (foundry-prepare-audio)
+### Prepare-Audio (audio-processor)
 
 Prepare-Audio handles all audio and video content, extracting speech and converting it to structured text. The service uses FFmpeg for audio extraction from video containers, then sends audio to Deepgram Nova-2 for high-accuracy transcription. Speaker diarization identifies and labels different speakers throughout the recording, producing timestamped segments with speaker attribution.
 
 The output is `TranscriptMetadata.json` containing the full transcript with word-level timestamps, speaker labels, confidence scores, and audio quality metrics. This structured transcript then flows to Unify - not for OCR (there's no text to recognize in images) but for DOM unification. This ensures that audio-derived content gets the same Docling DOM schema treatment as document-derived content, enabling consistent downstream processing.
 
-### Unify (foundry-unify)
+### Unify (Unify)
 
 Unify is the convergence point for both document and audio tracks, and its primary purpose is creating a unified Docling DOM representation regardless of input source. For the document track, Unify performs multi-engine OCR orchestration - selecting engines based on Prepare-Doc's routing recommendations and fusing results from multiple OCR passes. For the audio track, Unify transforms the transcript into the same DOM schema without performing OCR.
 
 The Docling DOM is the critical data structure that enables consistent downstream processing. It provides a unified schema for text content, tables, figures, and metadata with reading order annotations and source attribution (page numbers, bounding boxes, timestamps). By routing both tracks through Unify, the pipeline guarantees that Chunk receives identically-structured input whether the source was a scanned PDF or a podcast recording. This architectural decision eliminates the need for Chunk to handle multiple input formats.
 
-### Chunk (foundry-chunk)
+### Chunk (data_ingestor)
 
 Chunk transforms the unified Docling DOM into RAG-optimized text segments ready for embedding. It applies trust scoring to evaluate content reliability based on OCR confidence, source quality metrics from Prepare-Doc, and structural coherence signals from Unify. Low-trust content can be flagged for human review or processed with reduced retrieval weight.
 
 The chunking algorithm produces semantically coherent text segments that respect document structure — avoiding splits mid-sentence or mid-paragraph — while maintaining consistent token counts. Each chunk carries full source traceability: document → page → element → chunk, enabling precise citation in RAG responses. Output is `RAGChunkSet.json` containing all chunks with trust scores, `ocr_engine_provenance`, source attribution, and semantic boundaries. See [chunk-embed-contract.md](../../../../development/RAG%20Pipeline/chunk-embed-contract.md) for the mandatory contract all downstream embedding implementations must satisfy.
 
-**Source codebase**: `williaby/data_ingestor` — working implementations of TokenChunker, ByTitleChunker, DocumentRouter, and DocLayNet evaluation harness. Transition to `foundry-chunk` is planned after Prepare-Doc SigLIP 2 training stabilizes (Tier 3 dependency). Trust scoring and GCS artifact I/O are new work not yet built.
+**Repository**: [`williaby/data_ingestor`](https://github.com/williaby/data_ingestor) — working implementations of TokenChunker, ByTitleChunker, DocumentRouter, and DocLayNet evaluation harness. Internal refactor to align with the foundry pipeline contract is planned after Prepare-Doc SigLIP 2 training stabilizes (Tier 3 dependency). Trust scoring and GCS artifact I/O are new work not yet built.
 
 ### Application Embedding (per-application)
 
@@ -149,12 +149,12 @@ This Level 0 diagram establishes the pipeline context. Each box on this diagram 
 
 | Level 0 Box | Level 1 Location | Repository |
 |-------------|------------------|------------|
-| **Ingest** | `foundry-ingest/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
-| **Prepare-Doc** | [level-1/index.md](../level-1/index.md) | This repo (`image_detection`) |
-| **Prepare-Audio** | `foundry-prepare-audio/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
-| **Unify** | `foundry-unify/docs/architecture/diagrams/level-1/index.md` | TBD |
-| **Chunk** | `foundry-chunk/docs/architecture/diagrams/level-1/index.md` | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) (planned refactor → `foundry-chunk`) |
-| **Embed** | *(per-application — no shared foundry service)* | N/A — each AI app implements per `chunk-embed-contract.md` |
+| **Ingest** | `rag-processor/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/rag-processor](https://github.com/ByronWilliamsCPA/rag-processor) |
+| **Prepare-Doc** | [level-1/index.md](../level-1/index.md) | [williaby/image-preprocessing-detector](https://github.com/williaby/image-preprocessing-detector) (THIS REPO) |
+| **Prepare-Audio** | `audio-processor/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/audio-processor](https://github.com/ByronWilliamsCPA/audio-processor) |
+| **Unify** | `Unify/docs/architecture/diagrams/level-1/index.md` | [ByronWilliamsCPA/Unify](https://github.com/ByronWilliamsCPA/Unify) (scaffolding) |
+| **Chunk** | `data_ingestor/docs/architecture/diagrams/level-1/index.md` | [williaby/data_ingestor](https://github.com/williaby/data_ingestor) |
+| **Embed** | *(per-application — no shared service)* | N/A — each AI app implements per `chunk-embed-contract.md` |
 
 Each Level 1 diagram then drills down into component boxes that map to Level 2 index files within that project.
 
@@ -223,7 +223,7 @@ JSON artifact schemas follow semantic versioning with explicit version fields:
 
 **Schema vs Package Versioning:**
 
-- **Python Package** (e.g., `foundry-prepare-doc==0.3.5`): Versioned automatically by [semantic-release workflow](../../../.github/workflows/release.yml) using Conventional Commits
+- **Python Package** (e.g., `image-preprocessing-detector==0.3.5`): Versioned automatically by [semantic-release workflow](../../../.github/workflows/release.yml) using Conventional Commits
   - `feat:` commits -> MINOR bump (0.X.0)
   - `fix:` commits -> PATCH bump (0.0.X)
   - `feat!:` or `fix!:` -> MAJOR bump (X.0.0)
@@ -257,17 +257,17 @@ Standardized naming across documentation, repositories, and code:
 
 | Legacy ID | Service Name | Repository | Primary Function | Level 1 Diagram |
 |-----------|--------------|------------|------------------|-----------------|
-| ~~Project A~~ | **Prepare-Doc** | `foundry-prepare-doc` | Visual quality, corrections, routing metadata (THIS REPO) | [Level 1](../level-1/index.md) |
-| ~~Project B~~ | **Unify** | `foundry-unify` | Multi-engine OCR, Docling DOM unification | TBD |
-| ~~Project C~~ | **Chunk** | `foundry-chunk` | Semantic chunking, trust scoring (source: `data_ingestor`) | TBD |
-| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared foundry service | TBD |
-| ~~Project E~~ | **Prepare-Audio** | `foundry-prepare-audio` | Audio transcription, speaker diarization | TBD |
-| ~~Project F~~ | **Ingest** | `foundry-ingest` | Web UI, file upload, Cloud Workflows triggering | TBD |
+| ~~Project A~~ | **Prepare-Doc** | `image-preprocessing-detector` | Visual quality, corrections, routing metadata (THIS REPO) | [Level 1](../level-1/index.md) |
+| ~~Project B~~ | **Unify** | `Unify` | Multi-engine OCR, Docling DOM unification | TBD |
+| ~~Project C~~ | **Chunk** | `data_ingestor` | Semantic chunking, trust scoring | TBD |
+| ~~Project D~~ | **Embed** | *(application-specific)* | Per-app embedding — not a shared service | TBD |
+| ~~Project E~~ | **Prepare-Audio** | `audio-processor` | Audio transcription, speaker diarization | TBD |
+| ~~Project F~~ | **Ingest** | `rag-processor` | Web UI, file upload, Cloud Workflows triggering | TBD |
 
 **Naming Conventions:**
 
 - **Use in Documentation**: Service names (`Prepare-Doc`, `Unify`) - NOT legacy IDs
-- **Use in Code**: Repository names (`foundry-prepare-doc`) or snake_case modules
+- **Use in Code**: Repository names (`image-preprocessing-detector`, `rag-processor`) or snake_case modules
 - **Legacy IDs**: Retained in historical planning docs only (~~strikethrough~~ to indicate deprecated)
 - **GCS Paths**: Use stage numbers (`01-preprocessed`) not service names for clarity
 

@@ -909,7 +909,7 @@ The corpus boundary is as important as its contents. The following are explicitl
 
 **Statistical and model-level problems:** Language model mismatch (OCR vocabulary gaps for rare languages), confidence drift from production distribution shift, and ensemble disagreement calibration are monitoring concerns, not training data problems. These are addressed by the monitoring and drift detection system (Phase 6), not by adding training samples.
 
-**Semantic and layout problems requiring discourse understanding:** Reading order prediction, cross-page reference resolution, document section coherence, and table-of-contents mapping are out of scope for Project A and are the responsibility of the Unify (foundry-unify) and Chunk (foundry-chunk) projects in the RAG pipeline.
+**Semantic and layout problems requiring discourse understanding:** Reading order prediction, cross-page reference resolution, document section coherence, and table-of-contents mapping are out of scope for Project A and are the responsibility of the Unify (Unify) and Chunk (data_ingestor) projects in the RAG pipeline.
 
 **Pipeline self-inflicted artifacts:** Double JPEG compression from intermediate processing steps, border padding from incorrect image resizing, and color space conversion artifacts from incorrect channel handling are engineering bugs, not training data gaps. These must be fixed in the pipeline rather than trained around.
 
