@@ -21,6 +21,9 @@ from typing import Any
 import numpy as np
 
 from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.safe_checkpoint import (
+    load_checkpoint_weights_only,
+)
 
 logger = get_logger(__name__)
 
@@ -239,14 +242,14 @@ class SigLIP2MultiTaskDetector:
             # it is only a complete mitigation in PyTorch >= 2.6.0.
             # pyproject.toml pins torch>=2.10.0 specifically for this
             # reason - do not relax that bound without also migrating
-            # checkpoints to safetensors. The checkpoint is expected to
-            # contain only tensors plus a small set of safe primitives;
-            # if loading fails, the file is untrusted or malformed.
+            # checkpoints to safetensors. The trainers store numpy scalar
+            # metrics (e.g. spearmanr output), so only numeric numpy scalar
+            # globals are allowlisted; see utils/safe_checkpoint.py. Any
+            # other pickled object still fails the load.
             try:
-                ckpt = torch.load(
+                ckpt = load_checkpoint_weights_only(
                     self.checkpoint_path,
                     map_location=self._device,
-                    weights_only=True,
                 )
             except Exception as exc:
                 # A legacy checkpoint that pickled non-tensor objects will
