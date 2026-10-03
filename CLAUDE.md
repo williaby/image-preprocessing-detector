@@ -114,7 +114,7 @@ This project uses a **4-level architecture documentation hierarchy** with automa
 > **Current roadmap and status**: [docs/planning/MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md)
 > — consolidated plan replacing PROJECT_PLAN.md and PHASE_10_11_RESTRUCTURED_PLAN.md.
 >
-> **Last synchronized**: 2026-02-21
+> **Last synchronized**: 2026-10-02 (repo audit; see docs/planning/MASTER_PROJECT_PLAN.md §4a)
 >
 > **Local folder naming**: The canonical local checkout is `~/dev/image_detection/`. This name
 > matches the Python module path convention and is intentional. The GitHub repository name
@@ -141,12 +141,12 @@ OUTPUT:              DocumentMetadata.json               OCRDocument.json    RAG
 
 **Prepare-Doc Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Unify should use.
 
-**Current Architecture** (two-model pipeline):
+**Target Architecture** (two-model pipeline; SigLIP 2 training not yet run, the ResNet Phase 3 path below is legacy and being superseded):
 
 - **MobileNetV4-Conv-S** (~3ms GPU): Pre-correction gate — orientation, skew, resolution
-- **SigLIP 2 NAFlex** (~50ms GPU): Multi-task teacher — 16 heads across IQA, Script, Orientation, Handwriting, Page Attributes
-- **docling-layout** (egret-large / heron): Layout detection (replaced YOLOv10-doc)
-- **Classical IQA layer**: 9 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew, JPEG quality factor)
+- **SigLIP 2 NAFlex** (~50ms GPU): Multi-task teacher — 16 Release-1 heads across IQA (3-dim), Script, Orientation/Skew, Page Attributes; handwriting heads deferred to Release 2. **Training not yet run.**
+- **docling-layout** (egret-large / heron): Layout detection (replaces YOLOv10-doc; YOLOv10-doc stays deployed until Stream 5)
+- **Classical IQA layer**: 8 detectors (blur, noise, contrast, JPEG blockiness, illumination, binarization, bleed-through, skew); a JPEG quality-factor detector is planned, not implemented
 
 **Scope Boundaries**:
 
@@ -338,8 +338,10 @@ PYTHONPATH=$(pwd):$PYTHONPATH uv run python validation/validate_*.py
 **Quick Reference**: [docs/reference/MODAL_QUICK_REFERENCE.md](docs/reference/MODAL_QUICK_REFERENCE.md)
 
 ```bash
-# Start training (ready to use)
-uv run modal run modal/train_phase2_iqa.py      # Phase 2: ResNet IQA
+# Training entry points (current architecture)
+uv run modal run modal/train_siglip2_multitask.py --test   # SigLIP 2 teacher (run only after manifests are assembled)
+uv run modal run modal/train_skew_estimator.py              # MobileNetV4 orientation/skew gate
+# (the Phase 2 ResNet script train_phase2_iqa.py no longer exists)
 
 # Monitor training
 uv run modal app logs image-detection --follow  # Stream logs
@@ -353,7 +355,7 @@ uv run modal token current                      # Check authentication
 uv run modal secret list | grep gcs-credentials # Check GCS credentials
 ```text
 
-**Key Training Details:**
+**Key Training Details (historical, Phase 3 ResNet IQA — superseded by SigLIP 2; see docs/planning/MASTER_PROJECT_PLAN.md §2):**
 
 - **Model Architecture**: ResNet-50 teacher → ResNet-18 student (NOT MobileNetV3/EfficientNet)
 - **Dataset**: OHR-Bench via GCS (~18 GB)
@@ -480,7 +482,7 @@ PDF/Image Input
 Classical IQA  Layout-Lite Classifier → Coarse page attributes (Phase 2)
 (Phase 1C)         ↓
     ↓              ↓
-ML IQA         ML IQA (Teacher-Student ResNet, Phase 3)
+ML IQA         ML IQA (legacy ResNet Phase 3; being superseded)
 (Student)      (Student + selective Teacher)
     ↓              ↓
 [Correction] (src/correction/) - Deskew, CLAHE, sharpening, denoising (Phase 1)
@@ -506,7 +508,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - **Configuration**: 5 settings (enable_pdf_upscaling, pdf_min_dpi, pdf_target_dpi, pdf_upscale_algorithm, pdf_preserve_original_on_error)
 - **Tests**: 61 tests (38 unit + 23 integration), 100% passing
 
-**Phase 3: Teacher-Student ML IQA** ✅ COMPLETE
+**Phase 3: Teacher-Student ML IQA** ✅ COMPLETE (historical; superseded by the SigLIP 2 teacher for new work)
 
 - **Student Model** (ResNet-18): Default production inference, val_loss=0.14
 - **Teacher Model** (ResNet-50): High-capacity model for difficult cases, val_loss=0.27
@@ -557,7 +559,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 **[detection/](src/image_preprocessing_detector/detection/)** (Phase 1, 1C, 2, 3)
 
 - [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (Phase 1: ensemble stroke density, connected components, edge density)
-- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 1C: 9 detectors - Hough skew, Laplacian blur, histogram contrast, noise, illumination, JPEG blockiness, binarization, bleed-through, JPEG quality factor)
+- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 1C: 8 detectors - Hough skew, Laplacian blur, histogram contrast, noise, illumination, JPEG blockiness, binarization, bleed-through; JPEG quality factor is planned, not implemented)
 - [iqa_ml.py](src/image_preprocessing_detector/detection/iqa_ml.py): Teacher-student ML IQA (Phase 3: ResNet-50 teacher, ResNet-18 student, selective inference)
 - [layout_lite.py](src/image_preprocessing_detector/detection/layout_lite.py): Coarse layout classification (Phase 2: page attributes, complexity scoring, 11 DocLayNet classes)
 
@@ -756,7 +758,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - OpenCV 4.8+: Hough transform, Laplacian, histogram analysis, DPI upscaling
 - PyMuPDF: PDF extraction and DPI detection
 - Pillow: Image I/O and preprocessing
-- 9 classical IQA detectors: skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through, JPEG quality factor (DCT coefficient analysis)
+- 8 classical IQA detectors: skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through (a JPEG quality-factor detector is planned)
 
 **Deep Learning** (Phase 2, 3):
 
