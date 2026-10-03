@@ -271,7 +271,7 @@ def write_markdown_report(
         # Sort by line number
         file_issues.sort(key=lambda x: x.get("line") or 0)
         for fi in file_issues:
-            line_num = fi["line"] if fi["line"] else "-"
+            line_num = fi["line"] or "-"
             msg = fi["message"].replace("|", "\\|")[:100]
             lines.append(
                 f"| {line_num} | {fi['severity']} | `{fi['rule']}` | {msg} | {fi['effort']} |"

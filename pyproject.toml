@@ -145,20 +145,26 @@ ml = [
     "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
     "timm>=0.9.0",
     "albumentations>=1.3.0",
-    "onnxruntime-gpu>=1.23.2,<2.0.0",  # GPU-accelerated inference (moved from base)
+    # GPU-accelerated inference (moved from base). No macOS wheels exist; macOS
+    # falls back to the CPU onnxruntime already in the base dependencies.
+    "onnxruntime-gpu>=1.23.2,<2.0.0; sys_platform != 'darwin'",
     "tensorboard>=2.12.0",  # Training monitoring
     # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
     # Model artifact storage and versioning
     "google-cloud-storage>=2.10.0",
     "huggingface-hub>=0.20.0",
     "pyyaml>=6.0",
-    "fasttext>=0.9.3",
+    # fasttext is sdist-only and its C++17 source (std::string_view) does not
+    # compile under MSVC's default /std:c++14 flags; callers guard the import.
+    "fasttext>=0.9.3; sys_platform != 'win32'",
 ]
 
 fuzz = [
     # Minimal dependencies for ClusterFuzzLite fuzzing
     # Excludes PyTorch/CUDA to fit in disk space constraints (~4GB saved)
-    "atheris>=2.3.0",
+    # Linux only: atheris ships Linux wheels only and its sdist needs a
+    # libFuzzer-capable clang, so it cannot build on macOS or Windows runners.
+    "atheris>=2.3.0; sys_platform == 'linux'",
     # Core deps already in base: pillow, numpy, pymupdf, opencv-python-headless
 ]
 
@@ -207,7 +213,7 @@ labeling = [
 ]
 language-detection = [
     "easyocr>=1.7.2",
-    "fasttext>=0.9.3",
+    "fasttext>=0.9.3; sys_platform != 'win32'",  # no MSVC build; see ml extra
     "lingua-language-detector>=2.1.1",
 ]
 ocr-labeling = [
@@ -215,16 +221,6 @@ ocr-labeling = [
     # For GPU: pip install paddlepaddle-gpu instead of paddlepaddle
     "paddleocr>=2.7.0",
     "paddlepaddle>=2.5.0",
-]
-
-iqa = [
-    # IQA pseudo-labeling pipeline (MUSIQ + TOPIQ-NR ensemble)
-    # Used by scripts/label_iqa_pseudo.py for corpus-wide quality scoring
-    "pyiqa>=0.1.12",
-    "torch>=2.10.0",
-    "torchvision>=0.25.0",
-    "timm>=0.9.0",
-    "scipy>=1.14.0",
 ]
 
 synthetic = [
@@ -269,10 +265,15 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 # Ensure compatibility with Linux systems by resolving to compatible wheels
 constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
-# These extras are mutually exclusive (different labeling pipelines).
+# The iqa group and labeling extra are mutually exclusive (different labeling
+# pipelines). iqa is a dependency group, not an extra, so `uv sync --all-extras`
+# (used by the org python-compatibility workflow) stays resolvable. The
+# conflict still applies to groups: `--all-groups` combined with
+# `--all-extras` or `--extra labeling`, and `--group iqa --extra labeling`,
+# fail to resolve by design.
 conflicts = [
     [
-        { extra = "iqa" },
+        { group = "iqa" },
         { extra = "labeling" },
     ],
 ]
@@ -378,6 +379,7 @@ ignore = [
     "FBT002", # Boolean default arg (OK for config)
     "TRY003", # Long exception messages (OK for detailed errors)
     "UP017",  # datetime.UTC requires Python 3.11+
+    "UP042",  # enum.StrEnum requires Python 3.11+ (requires-python >=3.10)
 ]
 
 # Pydocstyle configuration
@@ -782,4 +784,15 @@ dev = [
     "byronwilliamscpa-gemini-image",
     "kaggle>=1.7.4.5",
     "mkdocs-kroki-plugin>=1.1.0",
+]
+iqa = [
+    # IQA pseudo-labeling pipeline (MUSIQ + TOPIQ-NR ensemble)
+    # Used by scripts/label_iqa_pseudo.py for corpus-wide quality scoring
+    # Install: uv sync --group iqa  (conflicts with the labeling extra; add
+    # --inexact to keep extras that are already installed in the venv)
+    "pyiqa>=0.1.12",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "timm>=0.9.0",
+    "scipy>=1.14.0",
 ]

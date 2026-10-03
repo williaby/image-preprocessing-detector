@@ -3165,7 +3165,7 @@ def normalize_degradations(raw: list[str]) -> list[str]:
             if mapped is not None and mapped not in seen:
                 seen.add(mapped)
                 result.append(mapped)
-    return result if result else ["none"]
+    return result or ["none"]
 
 
 def normalize_capture_method(raw: str) -> str:

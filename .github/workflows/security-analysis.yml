@@ -172,9 +172,10 @@ jobs:
           license-check: true
           comment-summary-in-pr: always
           deny-licenses: GPL-2.0, GPL-3.0
-          # Allow transformers@4.37.2 ReDoS advisories — pinned by openai-clip
-          # (pyiqa dependency) in the isolated [iqa] extra. This extra is
-          # mutually exclusive with [labeling] via [tool.uv.conflicts] and is
+          # Allow transformers@4.37.2 ReDoS advisories: pinned by openai-clip
+          # (pyiqa dependency) in the isolated `iqa` dependency group. The
+          # group is mutually exclusive with the `labeling` extra via
+          # [tool.uv.conflicts] and is
           # only used offline for pseudo-label generation, never in production.
           # Upstream fix requires openai-clip to drop its transformers pin.
           allow-ghsas: >-
