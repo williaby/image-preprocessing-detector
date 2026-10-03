@@ -379,6 +379,7 @@ ignore = [
     "FBT002", # Boolean default arg (OK for config)
     "TRY003", # Long exception messages (OK for detailed errors)
     "UP017",  # datetime.UTC requires Python 3.11+
+    "UP042",  # enum.StrEnum requires Python 3.11+ (requires-python >=3.10)
 ]
 
 # Pydocstyle configuration

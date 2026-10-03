@@ -262,7 +262,7 @@ def _extract_docname_from_filename(filename: str) -> str | None:
         return match.group(1)
     # Single-page documents: use the stem directly as the docname
     stem = Path(filename).stem
-    return stem if stem else None
+    return stem or None
 
 
 # ===================================================================
