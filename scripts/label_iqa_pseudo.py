@@ -61,7 +61,8 @@ Usage
 
 Dependencies
 ------------
-Install: ``uv sync --group iqa``
+Install: ``uv sync --group iqa`` (conflicts with ``--extra labeling``; add
+``--inexact`` to keep extras that are already installed in the venv)
 """
 
 from __future__ import annotations
