@@ -37,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model artifact paths in the Arena inference backends validated against
   path traversal (#183)
 
+### Removed
+
+- CI: CodeQL analysis (`codeql.yml` and the `codeql-analysis` job in
+  `security-analysis.yml`) was disabled for cost reasons; the repository ruleset
+  no longer requires it. The CodeQL validation tests (`tests/security/`), the
+  CodeQL scanning guide, and related config entries were removed. SARIF uploads
+  from other scanners (Scorecard, SBOM, ClusterFuzzLite) are unchanged, and the
+  `Security Gate Validation` check no longer depends on a CodeQL job.
+
 ### Changed
 
 - **BREAKING**: `PDFLoader` (and therefore `load_pdf()`, the CLI and
