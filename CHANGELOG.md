@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Docstring linting with pydoclint 0.8.4 (Google style, pre-commit hook and
+  `dev` extra). Existing violations are recorded in `.pydoclint-baseline.txt`
+  and tolerated; only new violations fail the hook. Regenerate the baseline
+  after burning down violations (see `[tool.pydoclint]` in `pyproject.toml`).
 - New `annotation` package extracted from monolithic `annotate_base_metadata.py`
   - `schemas/` subpackage with enums, immutable layer, enrichment layer, sample aggregate
   - `integrity/` subpackage with full-file hashing and atomic file operations

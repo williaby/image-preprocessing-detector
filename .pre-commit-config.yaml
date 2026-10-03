@@ -143,6 +143,18 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+  # Docstring/signature consistency with pydoclint (Google style).
+  # Existing violations are tolerated via .pydoclint-baseline.txt (set in
+  # [tool.pydoclint]); only new violations fail the hook.
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 88d83c94156c5e51a09938e77019f2c58e92ab58  # 0.8.4
+    hooks:
+      - id: pydoclint
+        args: ["--config=pyproject.toml"]
+        types: [python]
+        stages: [pre-commit]
+        exclude: ^(tests|scripts|benchmarks|tools|fuzz)/
+
   # Security scanning with Bandit
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.6
