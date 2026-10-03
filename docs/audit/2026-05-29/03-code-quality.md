@@ -1,10 +1,14 @@
 # Code Quality & Maintainability Audit - 2026-05-29
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 Summary: src is 107K LOC across 631 classes / 2452 functions; coverage gate is 60% (docs claim 80%), 815 `Any` usages, 59 type-ignores, 77 TODO/FIXME/XXX markers, 62 ruff errors, longest file 2845 lines.
 
 ## Findings
 
 ### CQ-01: Coverage gate set to 60%, not the 80% the docs assert
+
+- Status (2026-10-02): OPEN. `pyproject.toml` still enforces `--cov-fail-under=60`; CONTRIBUTING.md now distinguishes the 80% target from the 60% CI gate.
 
 - Severity: High | Effort: S
 - Affected: `pyproject.toml`

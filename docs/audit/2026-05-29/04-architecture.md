@@ -1,5 +1,7 @@
 # 04 - Architecture & Structure Audit
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 One-line summary: Subpackage boundaries are mostly clean (no cross-subpackage cycles among the big three), but the package has scattered config with zero detector wiring to the central Settings, duplicated logging/device-probe implementations, a layering inversion in top-level `schema.py`, an `annotation/` god-package (33% of LOC), and docs that describe three contradictory model lineages plus a wrong toolchain.
 
 Method note: pydeps/import-linter not available in this environment. Coupling derived from `grep` over `from/import image_preprocessing_detector.<pkg>` statements across `src/`. Counts are import-statement occurrences, not unique-module edges.

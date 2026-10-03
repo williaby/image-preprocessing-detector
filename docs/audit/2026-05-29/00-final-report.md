@@ -10,7 +10,7 @@ This audit is a point-in-time snapshot of 9f83f0d (2026-05-29). The backlog was 
 - Fixed on main: DEP-02 (PR #202 removed the duplicate requirements copies) and DOC-02 (PR #209 relabelled the CLAUDE.md header as the target architecture and marked ResNet historical).
 - Partly fixed on main: ARCH-05 (PR #209 marks ResNet legacy in docs; the three model lineages in `detection/` are unchanged).
 - Still open and re-verified: DOC-01 (`README.md:398` and `:553` are unchanged; PR #209 did not touch README.md), DEP-01 (Dockerfile still uses Poetry), SEC-01 (`uv.lock` still resolves transformers 4.37.2), CQ-01 (coverage gate still 60).
-- Applied by PR #199: DOC-05 (partial: README.md and ADR-0018 still reference Poetry), ARCH-07, DOC-06 (partial), DOC-07, DOC-04 (partial), LEG-06.
+- Applied by PR #199: DOC-05 (partial: ADR-0018 still records Poetry as accepted; README.md's Poetry references are tracked separately), ARCH-07, DOC-06 (partial), DOC-07, DOC-04 (partial), LEG-06.
 - Reclassified as false positives: LEG-02, LEG-05, LEG-07, and ARCH-08 (`cli_layout.py` is imported at `cli.py:1145` and serves `imgprep layout`).
 - The recommendation in section 6 to "pick the live model" is partly overtaken: PR #209 made the SigLIP 2 / MobileNetV4 pipeline the documented target and ResNet historical. README.md is the remaining place that still contradicts it (DOC-01).
 - Findings without a status note were not re-verified against main and are carried as open.

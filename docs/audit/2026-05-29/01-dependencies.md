@@ -1,5 +1,7 @@
 # Dependencies & Supply Chain Audit (2026-05-29)
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 Domain summary: uv-managed Python project (requires-python >=3.10,<3.15) with a healthy uv.lock and uv-export requirements files, but the Docker build path still uses Poetry against a non-existent poetry.lock, two divergent copies of the requirements files exist, and the base install still targets Python 3.10 which is near end of upstream security support.
 
 ## Findings

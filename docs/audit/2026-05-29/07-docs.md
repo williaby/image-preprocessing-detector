@@ -1,5 +1,7 @@
 # Docs & Developer Experience Audit - 2026-05-29
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 README and CLAUDE.md disagree on the project's architecture, model, and phase status; README has 18 broken links; CONTRIBUTING tells new devs to use Poetry while the project runs on uv.
 
 ## Findings
@@ -35,21 +37,25 @@ README and CLAUDE.md disagree on the project's architecture, model, and phase st
 - Two duplicate ADR numbers: `0028-document-quality-score-routing.md` + `0028-resnet-teacher-student-architecture.md`; `0030-document-quality-score-design.md` + `0030-gcs-colab-training-workflow.md`. Missing `0034`.
 **Recommendation**: Add ADRs for SigLIP-2 teacher selection and docling-layout adoption; renumber the duplicate 0028/0030 pairs.
 
-### DOC-04: 20 broken relative link targets in README (originally reported as 18) - Medium - M
+### DOC-04: 20 broken relative link targets in README (originally reported as 18)
+
+- Severity: Medium
+- Effort: M
 
 **Affected**: `README.md`
-**Evidence** (MISSING targets; recounted 2026-10-02 at the merge base: 20 unique missing targets across 21 link occurrences, so the original title count of 18 was low. After PR #199 repointed 3 targets, 17 unique targets remain missing):
-`docs/development/RAG Pipeline/project-a-project-plan.md`, `docs/PHASE2_QUICKSTART.md`, `docs/planning/PROJECT_PLAN.md` (linked twice, `:250`, `:347`), `docs/DATASET_METHODOLOGY.md`, `docs/architecture/ARCHITECTURE_SUMMARY.md`, `docs/architecture/ARCHITECTURE_CORRECTION.md`, `docs/DETECTION_TAXONOMY.md`, `docs/DOCUMENT_TYPE_COVERAGE_MATRIX.md`, `docs/architecture/AUDIT.md`, `docs/ADRs/0029-phase2-dataset-selection-strategy.md`, `docs/MODEL_STORAGE.md`, `docs/PUBLIC_DATASET_COVERAGE.md`, `docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md`, `docs/TESTING_STRATEGY.md`, `docs/WTD-Runbook.md`, `docs/api-reference.md`, `docs/references/CITATIONS.md` (twice), `docs/research/image_reference_sets.md`.
-Includes `PROJECT_PLAN.md` referenced as "Complete 114-page implementation plan" (`README.md:347`) - the marquee planning doc link is dead.
-**Recommendation**: Repoint to current paths (e.g. `docs/planning/MASTER_PROJECT_PLAN.md`) or remove the dead entries.
+**Counting unit and dates**: unique relative link targets in `README.md` whose file does not exist in the tree. Measured 2026-10-02 against the merge base 9f83f0d: 20 targets (21 link occurrences). The original audit title said 18 because its list omitted the two `.puml` diagram targets below and counted differently. PR #199 repointed 3 targets (`docs/development/RAG Pipeline/project-a-project-plan.md`, `docs/planning/PROJECT_PLAN.md`, `docs/references/CITATIONS.md`), leaving 17 targets (17 occurrences) at the head of PR #199.
+**Evidence** (the 17 targets still missing after PR #199):
+`docs/PHASE2_QUICKSTART.md`, `docs/DATASET_METHODOLOGY.md`, `docs/architecture/ARCHITECTURE_SUMMARY.md`, `docs/architecture/ARCHITECTURE_CORRECTION.md`, `docs/DETECTION_TAXONOMY.md`, `docs/DOCUMENT_TYPE_COVERAGE_MATRIX.md`, `docs/architecture/diagrams/PROJECT_A_ARCHITECTURE_OVERVIEW.puml`, `docs/architecture/diagrams/PROJECT_A_WORKFLOW_HIERARCHY.puml`, `docs/architecture/AUDIT.md`, `docs/ADRs/0029-phase2-dataset-selection-strategy.md`, `docs/MODEL_STORAGE.md`, `docs/PUBLIC_DATASET_COVERAGE.md`, `docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md`, `docs/TESTING_STRATEGY.md`, `docs/WTD-Runbook.md`, `docs/api-reference.md`, `docs/research/image_reference_sets.md`.
+The marquee dead link in the original audit was `PROJECT_PLAN.md` ("Complete 114-page implementation plan", `README.md:347`); PR #199 repointed it to `docs/planning/MASTER_PROJECT_PLAN.md`.
+**Recommendation**: Repoint the remaining targets to current paths or remove the dead entries (a maintainer content decision).
 
 ### DOC-05: CONTRIBUTING tells new devs to use Poetry; project uses uv - High - S
 
-**Affected**: `CONTRIBUTING.md`
+**Affected**: `CONTRIBUTING.md`, `docs/ADRs/0018-poetry-dependency-management.md`
 **Evidence**:
 
 - `CONTRIBUTING.md:36-40` "Install dependencies with Poetry / `poetry install --with dev` / `poetry run pre-commit install`".
-- `pyproject.toml:281-282` build-backend = hatchling; no `[tool.poetry]` table; `uv.lock` present (no `poetry.lock`). CLAUDE.md and README both use `uv sync` / `uv run`.
+- `pyproject.toml:281-282` build-backend = hatchling; no `[tool.poetry]` table; `uv.lock` present (no `poetry.lock`). CLAUDE.md uses `uv sync` / `uv run`; README.md still documents `poetry` commands and is tracked separately from DOC-05.
 - A fresh clone following CONTRIBUTING runs `poetry install` against a uv project.
 - `docs/ADRs/0018-poetry-dependency-management.md` still records Poetry as the accepted dependency tool (status: published), which contradicts the uv migration; it needs a superseding ADR.
 **Recommendation**: Replace the Poetry block with `uv sync --extra dev` and `uv run pre-commit install`; supersede ADR-0018.

@@ -25,13 +25,14 @@
       "severity": "High",
       "effort": "S",
       "files": [
-        "CONTRIBUTING.md"
+        "CONTRIBUTING.md",
+        "docs/ADRs/0018-poetry-dependency-management.md"
       ],
       "evidence": "CONTRIBUTING.md:36-40 'poetry install --with dev'; pyproject build-backend hatchling, uv.lock present, no [tool.poetry]",
       "recommendation": "Replace Poetry block with 'uv sync --extra dev' and 'uv run pre-commit install'.",
       "cve": "",
       "status": "partially-fixed",
-      "status_note": "PR #199 converted CONTRIBUTING.md and AGENTS.md to uv. README.md still documents many poetry commands and ADR-0018 still records Poetry as accepted."
+      "status_note": "PR #199 converted CONTRIBUTING.md and AGENTS.md to uv. ADR-0018 still records Poetry as accepted, so DOC-05 remains partially fixed. README.md's Poetry references are tracked separately."
     },
     {
       "id": "DEP-01",
@@ -453,7 +454,7 @@
       "recommendation": "Repoint to current paths (e.g. docs/planning/MASTER_PROJECT_PLAN.md) or remove dead entries.",
       "cve": "",
       "status": "partially-fixed",
-      "status_note": "PR #199 repointed 3 targets; 17 unique missing README link targets remain (20 at the merge base)."
+      "status_note": "PR #199 repointed 3 targets; 17 unique missing README link targets remain (20 at the merge base, measured 2026-10-02)."
     },
     {
       "id": "ARCH-06",

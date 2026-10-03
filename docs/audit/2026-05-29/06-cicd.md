@@ -1,5 +1,7 @@
 # CI/CD & Tooling Audit (06-cicd)
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 Summary: 23 workflows, all actions SHA-pinned on current majors (one reusable-workflow call, `mutation-testing.yml:35`, uses a 7-character abbreviated SHA `@74323d9` rather than a full 40-character SHA) with no deprecated runtimes; main gaps are config drift (basedpyright is the stated type checker but neither CI nor pre-commit runs it; mypy runs instead with divergent args), an unused semgrep ruleset, a non-blocking bandit scan, setup-uv version spread, and duplicate full-pytest runs in sonarcloud and python-compatibility.
 
 ## Findings

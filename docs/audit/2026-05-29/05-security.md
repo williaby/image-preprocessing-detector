@@ -1,5 +1,7 @@
 # Security & Secrets Audit (2026-05-29)
 
+> Point-in-time report of 2026-05-29 (HEAD 9f83f0d). Findings below are preserved as originally written; current dispositions are in the `status` and `status_note` fields of `findings.json` and `findings.csv` and in `08-remediation-log.md`.
+
 Read-only audit. No live secrets found in tracked code. Main real risks: a transitively pinned old `transformers 4.37.2` (known RCE CVEs) and broad use of `trust_remote_code=True` / `torch.load(weights_only=False)` on model loading paths. Several scanner tools (bandit, safety, osv-scanner, snyk) were not runnable offline; findings rely on config and lockfile inspection plus grep.
 
 ## Findings
