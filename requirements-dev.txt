@@ -698,6 +698,7 @@ packaging==25.0
     #   safety-schemas
     #   scikit-image
     #   streamlit
+    #   virtualenv
 paginate==0.5.7
     # via mkdocs-material
 pandas==2.3.3
@@ -1211,7 +1212,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.3.0
+virtualenv==21.14.5
     # via
     #   nox
     #   pre-commit
