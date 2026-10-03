@@ -18,6 +18,11 @@ purpose: "Establish explicit scope boundaries to prevent Prepare-Doc from overla
 ---
 
 **Status**: Accepted
+
+> **Note (2026-10-02)**: Project B/C/D naming in this ADR is retired; see
+> [pipeline-level-0.md](../architecture/pipeline-level-0.md). The ownership decisions below, including OCR fusion
+> and trust scoring in Chunk, are unchanged.
+
 **Date**: 2025-11-15
 **Deciders**: Byron Williams
 **Related**:
@@ -26,7 +31,7 @@ purpose: "Establish explicit scope boundaries to prevent Prepare-Doc from overla
 - [ADR-008: Multi-Stage Pipeline Architecture](0008-multi-stage-pipeline-architecture.md)
 - [ADR-015: YOLOv8 Layout Detection](0015-yolov8-layout-detection.md)
 - [Project Alignment Analysis](../development/RAG%20Pipeline/PROJECT_ALIGNMENT_ANALYSIS.md)
-- [Prepare-Doc F&NF Requirements](../development/RAG%20Pipeline/Project_A_F_NF.md)
+- [Prepare-Doc F&NF Requirements](../development/RAG%20Pipeline/prepare-doc-f-nf.md)
 
 ## Context
 

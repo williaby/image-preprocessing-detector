@@ -13,7 +13,7 @@ You are conducting a comprehensive Layer 2 metadata enrichment audit for the **{
 
 ### Project Context
 
-This is Prepare-Doc of a four-project RAG document pipeline. Prepare-Doc handles preprocessing, IQA, and coarse layout detection. Layer 2 metadata enrichment adds derived annotations (domain classification, content flags, layout detections, language/script, capture method, quality scores, etc.) to each document image. These annotations drive downstream training pipelines and routing decisions.
+This is Prepare-Doc, the document-track preprocessing stage of the Foundry RAG pipeline (see docs/architecture/pipeline-level-0.md). Prepare-Doc handles preprocessing, IQA, and coarse layout detection. Layer 2 metadata enrichment adds derived annotations (domain classification, content flags, layout detections, language/script, capture method, quality scores, etc.) to each document image. These annotations drive downstream training pipelines and routing decisions.
 
 The metadata follows a three-layer architecture:
 
