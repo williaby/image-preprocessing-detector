@@ -198,7 +198,10 @@ async def process_batch_job(
         "Files are read into memory at submission with a streaming size "
         "cap: each file must not exceed `IMGPREP_API_MAX_FILE_SIZE_MB` and "
         "the batch total must not exceed `IMGPREP_API_MAX_BATCH_TOTAL_SIZE_MB`; "
-        "violations are rejected with HTTP 400. "
+        "violations are rejected with HTTP 400. The cap bounds the handler's "
+        "read only; the multipart body may already be spooled to temporary "
+        "storage by the server, so enforce a request-size limit at the "
+        "ingress or reverse proxy as well. "
         "`enable_corrections` and `enable_teacher` are accepted but not yet "
         "acted on."
     ),

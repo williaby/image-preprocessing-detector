@@ -587,12 +587,15 @@ async def process_single_document(
     """Analyze a single uploaded document and return its quality summary.
 
     The handler validates the upload metadata (extension allowlist and the
-    advertised size against the configured maximum), then streams the body
+    advertised size against the configured maximum), then reads the body
     with a size cap that aborts as soon as the cumulative byte count crosses
-    the limit, so an oversize upload is never fully buffered. The first chunk
-    is checked against the file type's magic bytes; a mismatch is rejected
-    with ``INVALID_FILE_TYPE`` (HTTP 400). The content is then persisted to
-    a temp file and passed to
+    the limit, which bounds the handler's in-memory read. The cap does not
+    stop Starlette from spooling the multipart body to temporary storage
+    before this handler runs, so deployments should also enforce a
+    request-size limit at the ingress or reverse proxy. The first chunk is
+    checked against the file type's magic bytes; a mismatch is rejected with
+    ``INVALID_FILE_TYPE`` (HTTP 400). The content is then persisted to a
+    temp file and passed to
     :func:`process_document`, which performs ingestion, classical IQA (blur,
     noise, contrast), DQS scoring, and an OCR routing recommendation. Temp
     files are cleaned up in the `finally` block.
