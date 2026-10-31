@@ -263,7 +263,15 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 
 [tool.uv]
 # Ensure compatibility with Linux systems by resolving to compatible wheels
-constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
+# OpenCV 5.x changes cv2.HoughLinesP's return shape; all builds share one `cv2`
+# package, so every opencv distribution (pulled in transitively by the ml extra)
+# must stay on 4.x to match the opencv-python-headless (<5.0.0) pin.
+constraint-dependencies = [
+    "av<16.0.0; sys_platform == 'linux'",
+    "opencv-python<5.0.0",
+    "opencv-contrib-python<5.0.0",
+    "opencv-contrib-python-headless<5.0.0",
+]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
 # The iqa group and labeling extra are mutually exclusive (different labeling
 # pipelines). iqa is a dependency group, not an extra, so `uv sync --all-extras`
