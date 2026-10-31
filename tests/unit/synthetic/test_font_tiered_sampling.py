@@ -99,7 +99,7 @@ class TestTieredFontSampling:
         # (even 2 families proves it's not stuck on the default)
         assert len(families_seen) >= 2, (
             f"Script {script_code}: only {len(families_seen)} distinct fonts "
-            f"after 50 calls — tiered sampling may not be working"
+            f"after 50 calls - tiered sampling may not be working"
         )
 
     def test_nastaliq_selection_for_urdu(
@@ -283,7 +283,7 @@ class TestAdversarialTierPopulation:
     ) -> None:
         """get_mimicry_font should return a valid font or graceful None."""
         font, family = font_manager.get_mimicry_font(target_script, size=24)
-        # Mimicry fonts are rare/specialty — not all may be installed.
+        # Mimicry fonts are rare/specialty - not all may be installed.
         # The API must not crash regardless of availability.
         if font is not None:
             assert family != "", (

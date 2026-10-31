@@ -28,6 +28,7 @@ from image_preprocessing_detector.labeling.arena.schemas import (
     DIQAPrediction,
     ProvenanceInfo,
 )
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -158,13 +159,41 @@ class RegressionBackend(InferenceBackend):
         """
         import torch
 
-        model_path = Path(spec.id)
+        # Reject traversal patterns (".." etc.) in spec.id and use the
+        # resolved absolute path for the literal-path check below.
+        # NOTE: like LocalBackend, this literal-path branch does NOT
+        # constrain to a model-registry root - operators are trusted
+        # to supply explicit absolute paths in this Arena tooling.
+        # The `checkpoints/` fallback further down IS constrained via
+        # `allowed_base=checkpoints_base`. If callers ever start
+        # supplying spec.id from an untrusted boundary (HTTP API,
+        # public CLI flag), pass `allowed_base=<models_root>` here.
+        #
+        # We intentionally do NOT pass `must_exist=True` here (unlike
+        # LocalBackend.load): a non-existent literal path is the
+        # signal that triggers the `checkpoints/` fallback below.
+        try:
+            model_path = validate_safe_path(spec.id)
+        except (ValueError, TypeError) as exc:
+            # TypeError defends against a non-str spec.id (e.g.
+            # accidentally None or a Path that Pydantic didn't
+            # coerce); ValueError catches traversal-pattern rejects.
+            msg = f"Invalid model path: {spec.id!r}"
+            raise ModelLoadError(msg) from exc
+
         if not model_path.exists():
-            # Try as relative to checkpoints directory
-            model_path = Path("checkpoints") / spec.id
-            if not model_path.exists():
+            # Try as relative to checkpoints directory; constrain the
+            # resolved path to stay within ./checkpoints to prevent escape.
+            checkpoints_base = Path("checkpoints").resolve()
+            try:
+                model_path = validate_safe_path(
+                    checkpoints_base / spec.id,
+                    allowed_base=checkpoints_base,
+                    must_exist=True,
+                )
+            except (ValueError, FileNotFoundError) as exc:
                 msg = f"Model path not found: {spec.id}"
-                raise ModelLoadError(msg)
+                raise ModelLoadError(msg) from exc
 
         # Load the complete model (base + regression head)
         if (model_path / "pytorch_model.bin").exists():

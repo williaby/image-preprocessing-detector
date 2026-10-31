@@ -83,7 +83,7 @@ class ScriptAwareMeasurementConfig:
     min_script_confidence: float = 0.8
 
 
-# Conservative starting defaults. Arabic CC aspect ratios are uncertain — standard CC
+# Conservative starting defaults. Arabic CC aspect ratios are uncertain - standard CC
 # detects whole words in cursive Arabic, not individual characters. For Arabic, vertical
 # projection profiling (V2 Phase B) will be needed for accurate per-character measurement.
 SCRIPT_MEASUREMENT_CONFIGS: dict[str, ScriptAwareMeasurementConfig] = {

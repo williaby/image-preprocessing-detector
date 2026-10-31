@@ -306,7 +306,7 @@ class MultiScriptDocumentGenerator:
 
         if loaded == 0:
             raise RuntimeError(
-                "Corpus empty — cannot generate diverse text. "
+                "Corpus empty - cannot generate diverse text. "
                 "Run corpus download or set use_sample_fallback=True to proceed "
                 "with built-in sample texts (low diversity)."
             )
@@ -756,7 +756,7 @@ class MultiScriptDocumentGenerator:
         """
         image = sample.image
 
-        # 1. Color mode conversion (after augmentation is fine — changes color space)
+        # 1. Color mode conversion (after augmentation is fine - changes color space)
         if self.config.color_mode_enabled:
             image, color_mode = self._apply_color_mode(image)
             sample.color_mode = color_mode
@@ -838,7 +838,7 @@ class MultiScriptDocumentGenerator:
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
-        # noise is added — so we must transform geometry on the clean image first.
+        # noise is added - so we must transform geometry on the clean image first.
         image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
 
         # Apply augmentation (noise, blur, degradation on geometrically-correct image)
@@ -1406,7 +1406,7 @@ class MultiScriptDocumentGenerator:
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
-        # noise is added — so we must transform geometry on the clean image first.
+        # noise is added - so we must transform geometry on the clean image first.
         image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
 
         # Apply augmentation (noise, blur, degradation on geometrically-correct image)

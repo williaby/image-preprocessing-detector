@@ -23,16 +23,16 @@ Document types and scripts::
     svk_id             Slovakia ID card      Latin
 
 Camera capture conditions (photo.tar image numbering):
-    00-09 iPhone / 10-19 Samsung — projective distortions
-    20-24 iPhone / 25-29 Samsung — text documents background
-    30-34 iPhone / 35-39 Samsung — keyboard background
-    40-44 iPhone / 45-49 Samsung — outdoors natural lighting
-    50-54 iPhone / 55-59 Samsung — table background
-    60-64 iPhone / 65-69 Samsung — highlight present
-    70-79 iPhone / 80-89 Samsung — low lighting
-    90-94 iPhone / 95-99 Samsung — cloth background
+    00-09 iPhone / 10-19 Samsung - projective distortions
+    20-24 iPhone / 25-29 Samsung - text documents background
+    30-34 iPhone / 35-39 Samsung - keyboard background
+    40-44 iPhone / 45-49 Samsung - outdoors natural lighting
+    50-54 iPhone / 55-59 Samsung - table background
+    60-64 iPhone / 65-69 Samsung - highlight present
+    70-79 iPhone / 80-89 Samsung - low lighting
+    90-94 iPhone / 95-99 Samsung - cloth background
 
-Annotation format (VIA — VGG Image Annotator v2):
+Annotation format (VIA - VGG Image Annotator v2):
     Each annotations/<CODE>.json file covers all 100 images for that doc type.
     Structure::
 
@@ -254,7 +254,7 @@ class Midv2020Parser(BaseParser):
         doc_code: str | None = None
         capture_mode: str | None = None
 
-        # Detect doc type code — must be in _DOC_TYPE_META
+        # Detect doc type code - must be in _DOC_TYPE_META
         for part in parts:
             if part in _DOC_TYPE_META:
                 doc_code = part

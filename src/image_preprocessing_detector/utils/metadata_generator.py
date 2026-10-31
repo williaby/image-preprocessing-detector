@@ -22,7 +22,6 @@ Usage:
 """
 
 import json
-import os
 import platform
 import subprocess  # nosec B404 - subprocess used only with hardcoded commands
 import sys
@@ -130,7 +129,7 @@ status: {status}
 timestamp: {timestamp}
 """
 
-    file_path = os.path.join(output_dir, "commit_hash.txt")
+    file_path = str(Path(output_dir) / "commit_hash.txt")
     with open(file_path, "w") as f:
         f.write(content)
 
@@ -167,7 +166,7 @@ def generate_dataset_version_file(
                 value = json.dumps(value)
             content += f"{key}: {value}\n"
 
-    file_path = os.path.join(output_dir, "dataset_version.txt")
+    file_path = str(Path(output_dir) / "dataset_version.txt")
     with open(file_path, "w") as f:
         f.write(content)
 
@@ -278,7 +277,7 @@ cuda: {cuda_version}
     for package, version in packages.items():
         content += f"{package}: {version}\n"
 
-    file_path = os.path.join(output_dir, "env_info.txt")
+    file_path = str(Path(output_dir) / "env_info.txt")
     with open(file_path, "w") as f:
         f.write(content)
 
@@ -312,7 +311,7 @@ def generate_training_config_file(
             }
         }
     """
-    file_path = os.path.join(output_dir, "training_config.yaml")
+    file_path = str(Path(output_dir) / "training_config.yaml")
     with open(file_path, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
@@ -344,7 +343,7 @@ def generate_metrics_file(
             "inference_latency_ms": 12.5
         }
     """
-    file_path = os.path.join(output_dir, "metrics.json")
+    file_path = str(Path(output_dir) / "metrics.json")
     with open(file_path, "w") as f:
         json.dump(metrics, f, indent=2)
 

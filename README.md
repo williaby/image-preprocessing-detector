@@ -343,7 +343,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ### Core Documentation
 
-- **[PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)**: Complete 114-page implementation plan with phased roadmap (Phases 1-5)
+- **[MASTER_PROJECT_PLAN.md](docs/planning/MASTER_PROJECT_PLAN.md)**: Consolidated implementation plan with phased roadmap and current status
 - **[DATASET_METHODOLOGY.md](docs/DATASET_METHODOLOGY.md)**: IQA training dataset methodology with reproducibility instructions and validation criteria
 - **[ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
 - **[ARCHITECTURE_CORRECTION.md](docs/architecture/ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
@@ -380,7 +380,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ### Research & References
 
-- **[docs/references/CITATIONS.md](docs/references/CITATIONS.md)**: Complete dataset and paper citations
+- **[docs/reference/CITATIONS.md](docs/reference/CITATIONS.md)**: Complete dataset and paper citations
 - **[docs/research/image_reference_sets.md](docs/research/image_reference_sets.md)**: Validation framework for pre-conversion document analysis
 
 ## Roadmap
@@ -532,7 +532,7 @@ This project uses the following datasets:
 - **Genalog** (Microsoft, 2021) - Synthetic document degradation
   [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/microsoft/genalog)
 
-Full citations and dataset attributions available in [CITATIONS.md](docs/references/CITATIONS.md).
+Full citations and dataset attributions available in [CITATIONS.md](docs/reference/CITATIONS.md).
 
 ## Acknowledgments
 

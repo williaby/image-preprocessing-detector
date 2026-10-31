@@ -128,7 +128,6 @@ Comprehensive CI with CV/ML dependencies:
 
 Comprehensive security scanning:
 
-- CodeQL with CV-specific queries
 - Image processing security validation
 - PDF path traversal protection
 - Memory limit checks for large images

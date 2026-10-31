@@ -10,17 +10,16 @@ These tests verify the Phase 3 dataset download script correctly:
 # Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-# Mock huggingface_hub before importing
-sys.modules["huggingface_hub"] = MagicMock()
-
-# Scripts directory added to sys.path via tests/conftest.py
-
+# Scripts directory added to sys.path via tests/conftest.py. The script imports
+# huggingface_hub lazily inside its functions, so import it directly here.
+# (A previous module-level sys.modules["huggingface_hub"] = MagicMock() leaked
+# into collection of other test modules and broke datasets' huggingface_hub
+# import.)
 from download_phase3_datasets import (
     DATASETS,
     download_dataset,

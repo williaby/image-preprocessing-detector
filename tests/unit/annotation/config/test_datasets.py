@@ -547,7 +547,7 @@ class TestCameraCaptureFolderSyntheticGuard:
     """
 
     def test_doc3d_capture_method_is_synthetic(self) -> None:
-        """doc3d must be SYNTHETIC — never CAMERA_SMARTPHONE or UNKNOWN.
+        """doc3d must be SYNTHETIC - never CAMERA_SMARTPHONE or UNKNOWN.
 
         doc3d lives under 01_base_data/camera_captured/ due to a historical
         download path error. Every image is a Blender 3D mesh render, not a
@@ -557,7 +557,7 @@ class TestCameraCaptureFolderSyntheticGuard:
         config = DATASET_CONFIGS["doc3d"]
         assert config.capture_method == CaptureMethod.SYNTHETIC, (
             "doc3d capture_method regressed from SYNTHETIC. "
-            "doc3d is a 3D-rendered synthetic dataset (Blender) — it is stored "
+            "doc3d is a 3D-rendered synthetic dataset (Blender) - it is stored "
             "under camera_captured/ due to a historical naming error but no real "
             "camera was ever involved. See docs/datasets/source/doc3d.md §10.5."
         )
@@ -577,7 +577,7 @@ class TestCameraCaptureFolderSyntheticGuard:
         capture_method so its metadata is correct regardless of folder path.
 
         Allowed values: CAMERA_SMARTPHONE, CAMERA_PROFESSIONAL, SYNTHETIC.
-        UNKNOWN is rejected — it means 'we haven't decided yet', which is
+        UNKNOWN is rejected - it means 'we haven't decided yet', which is
         exactly the footgun this guard exists to prevent.
         """
         camera_folder_datasets = {
@@ -586,7 +586,7 @@ class TestCameraCaptureFolderSyntheticGuard:
             if "camera_captured" in config.path_suffix
         }
         assert camera_folder_datasets, (
-            "No datasets found under camera_captured/ — update this test if "
+            "No datasets found under camera_captured/ - update this test if "
             "the folder was intentionally removed."
         )
         for name, config in camera_folder_datasets.items():

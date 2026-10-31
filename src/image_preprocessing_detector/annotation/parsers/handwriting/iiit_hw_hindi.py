@@ -82,7 +82,7 @@ class IIITHWHindiParser(BaseParser):
     """Parser for IIIT-HW-Hindi word-level Devanagari handwriting dataset.
 
     Extracts annotations from:
-    1. ``iiit_hw_hindi_groundtruth.tsv`` — TSV with Hindi Unicode transcriptions
+    1. ``iiit_hw_hindi_groundtruth.tsv`` - TSV with Hindi Unicode transcriptions
     2. Filename parsing for split assignment and index
 
     The full dataset is available via HuggingFace streaming; only a subset

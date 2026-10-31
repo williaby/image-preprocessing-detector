@@ -102,7 +102,7 @@ class FontCache:
 # (after stripping NotoSans/NotoSerif/Noto prefixes and style suffixes).
 # More specific patterns must come before generic ones to avoid false matches.
 FONT_NAME_TO_SCRIPT: dict[str, str] = {
-    # CJK — Simplified Chinese
+    # CJK - Simplified Chinese
     "SC": "Hans",
     "SimplifiedChinese": "Hans",
     "ZCOOL": "Hans",  # ZCOOLXiaoWei, ZCOOLKuaiLe
@@ -110,75 +110,75 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "LiuJian": "Hans",  # LiuJianMaoCao (Chinese handwriting)
     "LongCang": "Hans",  # LongCang (Chinese handwriting)
     "ZhiMang": "Hans",  # ZhiMangXing (Chinese handwriting)
-    # CJK — Traditional Chinese
+    # CJK - Traditional Chinese
     "TC": "Hant",
     "TraditionalChinese": "Hant",
-    # CJK — Japanese
+    # CJK - Japanese
     "JP": "Jpan",
     "Japanese": "Jpan",
-    # CJK — Korean Hangul (ISO 15924 "Hang"; ML class "KORE")
+    # CJK - Korean Hangul (ISO 15924 "Hang"; ML class "KORE")
     "KR": "Hang",
     "Korean": "Hang",
     "Hangul": "Hang",
     "Nanum": "Hang",  # NanumGothic, NanumBrushScript, NanumPenScript, NanumMyeongjo
     "Gothic": "Hang",  # GothicA1
-    # Indic — Devanagari
+    # Indic - Devanagari
     "Devanagari": "Deva",
     "Kalam": "Deva",  # Hindi handwriting Google Font
     "Lohit": "Deva",  # Lohit-Devanagari
-    # Indic — Bengali
+    # Indic - Bengali
     "Bengali": "Beng",
     "Galada": "Beng",  # Galada (Bengali decorative)
     "Atma": "Beng",  # Atma (Bengali)
     "Kalpurush": "Beng",  # Kalpurush
     "SolaimanLipi": "Beng",  # SolaimanLipi
-    # Indic — Devanagari (additional fonts)
+    # Indic - Devanagari (additional fonts)
     "Hind-": "Deva",  # Hind (Devanagari sans-serif, distinct from HindMadurai etc.)
     "Mukta-": "Deva",  # Mukta (Devanagari sans-serif)
     "Baloo2": "Deva",  # Baloo 2 (Devanagari display)
     "TiroDevanagari": "Deva",  # Tiro Devanagari Hindi (serif)
-    # Indic — Tamil
+    # Indic - Tamil
     "Tamil": "Taml",
     "Catamaran": "Taml",  # Catamaran (Tamil sans-serif)
     "MuktaMalar": "Taml",  # Mukta Malar (Tamil sans-serif)
     "HindMadurai": "Taml",  # Hind Madurai (Tamil sans-serif)
     "ArimaMadurai": "Taml",  # Arima Madurai (Tamil serif)
     "Kavivanar": "Taml",  # Kavivanar (Tamil handwriting)
-    # Indic — Telugu
+    # Indic - Telugu
     "Telugu": "Telu",
     "Ramabhadra": "Telu",  # Ramabhadra (Telugu sans-serif)
     "Mandali": "Telu",  # Mandali (Telugu sans-serif)
     "NTR": "Telu",  # NTR (Telugu sans-serif)
     "HindGuntur": "Telu",  # Hind Guntur (Telugu sans-serif)
-    # Indic — Gujarati
+    # Indic - Gujarati
     "Gujarati": "Gujr",
     "HindVadodara": "Gujr",  # Hind Vadodara (Gujarati sans-serif)
     "MuktaVaani": "Gujr",  # Mukta Vaani (Gujarati sans-serif)
     "Rasa": "Gujr",  # Rasa (Gujarati serif)
     "BalooBhai": "Gujr",  # Baloo Bhai (Gujarati display)
-    # Indic — Kannada
+    # Indic - Kannada
     "Kannada": "Knda",
     "HindMysuru": "Knda",  # Hind Mysuru (Kannada sans-serif)
     "Timmana": "Knda",  # Timmana (Kannada sans-serif)
     "BalooTamma": "Knda",  # Baloo Tamma (Kannada display)
     "Benne": "Knda",  # Benne (Kannada serif)
-    # Indic — Malayalam
+    # Indic - Malayalam
     "Malayalam": "Mlym",
     "Rachana": "Mlym",  # Rachana (Malayalam traditional)
     "Meera": "Mlym",  # Meera (Malayalam sans-serif)
     "AnjaliOldLipi": "Mlym",  # AnjaliOldLipi (Malayalam historical)
     "Karumbi": "Mlym",  # Karumbi (Malayalam display)
     "Chilanka": "Mlym",  # Chilanka (Malayalam handwriting)
-    # Indic — Odia
+    # Indic - Odia
     "Oriya": "Orya",
     "BalooBhaina": "Orya",  # Baloo Bhaina (Odia display)
     "AnekOdia": "Orya",  # Anek Odia (variable, SIL OFL)
     "Alkatra": "Orya",  # Alkatra (multi-script display, SIL OFL)
-    # Indic — Sinhala
+    # Indic - Sinhala
     "Sinhala": "Sinh",
     "AbhayaLibre": "Sinh",  # Abhaya Libre (Sinhala serif)
     "Yaldevi": "Sinh",  # Yaldevi (Sinhala sans-serif)
-    # Indic — Gurmukhi
+    # Indic - Gurmukhi
     "Gurmukhi": "Guru",
     "MuktaMahee": "Guru",  # Mukta Mahee (Gurmukhi sans-serif)
     "BalooPaaji": "Guru",  # Baloo Paaji (Gurmukhi display)
@@ -207,7 +207,7 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Jomolhari": "Tibt",  # Jomolhari (Tibetan)
     "Uchen": "Tibt",  # Uchen (Dzongkha/Tibetan, SIL OFL)
     "DDC_Uchen": "Tibt",  # DDC Uchen (Chris Fynn, SIL OFL)
-    # Middle Eastern — Arabic
+    # Middle Eastern - Arabic
     "Arabic": "Arab",
     "NaskhArabic": "Arab",
     "NastaliqUrdu": "Arab",
@@ -222,20 +222,20 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "Mada": "Arab",  # Mada (Arabic sans-serif)
     "Tajawal": "Arab",  # Tajawal (Arabic web font)
     "ElMessiri": "Arab",  # El Messiri (Arabic display)
-    # Middle Eastern — Hebrew
+    # Middle Eastern - Hebrew
     "Hebrew": "Hebr",
     "Heebo": "Hebr",  # Heebo (Hebrew sans-serif)
     "FrankRuhl": "Hebr",  # Frank Ruhl Libre (Hebrew serif)
     "SuezOne": "Hebr",  # Suez One (Hebrew display)
-    # Middle Eastern — Syriac (OOD anchor script)
+    # Middle Eastern - Syriac (OOD anchor script)
     "Syriac": "Syrc",
-    # European — Armenian
+    # European - Armenian
     "Armenian": "Armn",
-    # European — Georgian (OOD anchor script)
+    # European - Georgian (OOD anchor script)
     "Georgian": "Geor",
-    # European — Mongolian (OOD anchor script)
+    # European - Mongolian (OOD anchor script)
     "Mongolian": "Mong",
-    # European — Ethiopic
+    # European - Ethiopic
     "Ethiopic": "Ethi",
     "Abyssinica": "Ethi",  # AbyssinicaSIL
     "Brana": "Ethi",  # Brana (historical Ethiopic, raeytype, SIL OFL)
@@ -249,7 +249,7 @@ FONT_NAME_TO_SCRIPT: dict[str, str] = {
     "BJCree": "Cans",  # BJCree (SIL International, Cree syllabics, SIL OFL)
     "AboriginalSans": "Cans",  # Aboriginal Sans (Chris Harvey, covers Cans+Cher)
     "AboriginalSerif": "Cans",  # Aboriginal Serif (Chris Harvey, covers Cans+Cher)
-    # European — Greek
+    # European - Greek
     "Greek": "Grek",
     "GFSDidot": "Grek",  # GFS Didot (Greek academic font)
     # Latin / generic (scripts that fall back to Latin font shapes)
