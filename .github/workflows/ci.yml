@@ -4,12 +4,12 @@
 # CI FOCUS: Code Quality & Core Testing (multi-version testing runs weekly)
 # This workflow focuses on code quality, formatting, and testing. Pull requests
 # and pushes run the core suite on Python 3.12 only. The full multi-version
-# matrix (3.10, 3.11, 3.12, 3.13, 3.14) runs weekly (Sunday 05:00 UTC) and on
+# matrix (3.11, 3.12, 3.13, 3.14) runs weekly (Sunday 05:00 UTC) and on
 # manual dispatch, matching the other ByronWilliamsCPA repos.
 # Security scanning has been consolidated in security-analysis.yml workflow.
 #
 # MULTI-VERSION TESTING (weekly schedule and workflow_dispatch only):
-#   - Python 3.10, 3.11, 3.12, 3.13 support (required to pass)
+#   - Python 3.11, 3.12, 3.13 support (required to pass)
 #   - Python 3.14 experimental (allowed to fail - onnxruntime/pyarrow lack 3.14 wheels)
 #   - uv backend for 10-100x faster package installation
 #   - Isolated test environments per Python version
@@ -178,7 +178,7 @@ jobs:
         python-version: >-
           ${{ fromJSON((github.event_name == 'schedule' ||
           github.event_name == 'workflow_dispatch') &&
-          '["3.10", "3.11", "3.12", "3.13", "3.14"]' || '["3.12"]') }}
+          '["3.11", "3.12", "3.13", "3.14"]' || '["3.12"]') }}
       fail-fast: false
 
     steps:

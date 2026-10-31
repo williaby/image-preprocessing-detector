@@ -21,7 +21,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Python 3.10 or higher (CI tests 3.10 to 3.14; 3.12 is the primary development version)
+- Python 3.11 or higher (CI tests 3.11 to 3.14; 3.12 is the primary development version)
 - [uv](https://docs.astral.sh/uv/) for dependency management
 - Git with GPG signing configured
 - (Optional) GPU with CUDA for ML model development (Phase 2+)

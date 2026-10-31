@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Dropped Python 3.10 support**: `requires-python` is now `>=3.11,<3.15`.
+  Pillow 13.0.0 (fixes 28 advisories, including critical heap overflows in image
+  decoding) requires Python 3.11+, so 3.10 could not receive the fix. 3.10 is also
+  removed from `noxfile.py` and the CI/compatibility matrices.
+- Capped `opencv-python*` below 5.0 (5.x changes `cv2.HoughLinesP` output shape)
+  and `ruff` below 0.16 (wider default scope; adopt in a dedicated PR).
 - CI: CodeQL analysis (`codeql.yml` and the `codeql-analysis` job in
   `security-analysis.yml`) was disabled for cost reasons; the repository ruleset
   no longer requires it. The CodeQL validation tests (`tests/security/`), the
