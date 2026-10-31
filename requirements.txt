@@ -224,7 +224,9 @@ pathspec==1.1.1
     #   properdocs
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.3.0
+pillow==12.3.0 ; python_full_version < '3.11'
+    # via image-preprocessing-detector
+pillow==13.0.0 ; python_full_version >= '3.11'
     # via image-preprocessing-detector
 platformdirs==4.12.4 ; python_full_version < '3.11'
     # via

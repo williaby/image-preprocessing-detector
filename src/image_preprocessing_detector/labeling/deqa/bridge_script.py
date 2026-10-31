@@ -82,8 +82,8 @@ def _load_model(
     # PyTorch's default reset_parameters() for Linear/LayerNorm, which wastes time
     # reinitializing weights that will immediately be overwritten by the checkpoint.
     # This is safe because the pretrained weights are loaded right after construction.
-    torch.nn.Linear.reset_parameters = lambda _self: None
-    torch.nn.LayerNorm.reset_parameters = lambda _self: None
+    torch.nn.Linear.reset_parameters = lambda _self: None  # type: ignore[assignment]
+    torch.nn.LayerNorm.reset_parameters = lambda _self: None  # type: ignore[assignment]
 
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, _ = load_pretrained_model(

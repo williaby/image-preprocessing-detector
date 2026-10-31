@@ -838,7 +838,14 @@ pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
     # via ipython
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.3.0
+pillow==12.3.0 ; python_full_version < '3.11'
+    # via
+    #   image-preprocessing-detector
+    #   imageio
+    #   matplotlib
+    #   scikit-image
+    #   streamlit
+pillow==13.0.0 ; python_full_version >= '3.11'
     # via
     #   image-preprocessing-detector
     #   imageio
@@ -1210,7 +1217,7 @@ starlette==1.8.0 ; python_full_version >= '3.11'
     # via streamlit
 streamlit==1.65.0 ; python_full_version < '3.11'
     # via image-preprocessing-detector
-streamlit==1.66.0 ; python_full_version >= '3.11'
+streamlit==1.66.1 ; python_full_version >= '3.11'
     # via image-preprocessing-detector
 structlog==26.1.0
     # via image-preprocessing-detector
