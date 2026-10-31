@@ -136,6 +136,7 @@ click==8.3.1
     #   modal
     #   mutmut
     #   nltk
+    #   pydoclint
     #   safety
     #   streamlit
     #   typer
@@ -210,6 +211,8 @@ distro==1.9.0
     #   dvc
     #   google-genai
     #   iterative-telemetry
+docstring-parser-fork==0.0.16
+    # via pydoclint
 dparse==0.6.4
     # via
     #   safety
@@ -805,6 +808,8 @@ pydantic-settings==2.12.0
     #   image-preprocessing-detector
 pydeck==0.9.1
     # via streamlit
+pydoclint==0.8.4
+    # via image-preprocessing-detector
 pydot==4.0.1
     # via dvc
 pygit2==1.18.2 ; python_full_version < '3.11'
@@ -1089,6 +1094,7 @@ tomli==2.3.0 ; python_full_version <= '3.11'
     #   jupyterlab
     #   mypy
     #   nox
+    #   pydoclint
     #   pytest
     #   safety
     #   vulture
