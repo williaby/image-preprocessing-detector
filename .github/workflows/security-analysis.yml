@@ -79,7 +79,7 @@ jobs:
       pull-requests: write  # Required for PR comments
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -145,7 +145,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -157,7 +157,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -183,7 +183,7 @@ jobs:
       # Upload security scan artifacts
       - name: Upload Security Reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: security-scan-reports
           path: |
@@ -198,7 +198,7 @@ jobs:
     if: needs.detect-changes.outputs.security_files == 'true'
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -210,7 +210,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -293,7 +293,7 @@ jobs:
     if: needs.detect-changes.outputs.security_files == 'true'
     steps:
       - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -302,7 +302,7 @@ jobs:
 
       - name: Run OSV Scanner
         id: osv-scan
-        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
         with:
           scan-args: |-
             --lockfile=uv.lock
@@ -464,7 +464,7 @@ jobs:
 
       - name: Upload OSV Scanner Report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: osv-scanner-results
           path: osv-results.json
