@@ -217,7 +217,7 @@ protobuf==7.36.2
     #   kagglesdk
     #   modal
     #   onnxruntime
-pyasn1==0.6.4
+pyasn1==0.6.5
     # via
     #   image-preprocessing-detector
     #   pyasn1-modules
