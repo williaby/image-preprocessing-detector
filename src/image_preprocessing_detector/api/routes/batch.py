@@ -186,7 +186,9 @@ async def process_batch_job(
     description=(
         "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for "
         "asynchronous processing. Each file is validated up-front (extension "
-        "allowlist, non-empty); if any fails validation the entire batch is "
+        "allowlist, non-empty, at least the minimum number of bytes needed "
+        "to identify its type, and magic bytes matching the declared "
+        "extension); if any fails validation the entire batch is "
         "rejected with HTTP 400 and no job is created. On success a job is "
         "enqueued via FastAPI background tasks and the response carries a "
         "`job_id` clients should poll on `/batch/{job_id}/status` until "

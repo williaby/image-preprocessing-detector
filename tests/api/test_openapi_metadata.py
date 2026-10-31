@@ -23,9 +23,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _settings(**overrides: object) -> APISettings:
-    """Build settings with auth and rate limiting off for schema tests."""
-    return APISettings.model_validate(
-        {"auth_enabled": False, "rate_limit_enabled": False, **overrides}
+    """Build settings from field defaults only, with auth and rate limiting off.
+
+    ``model_construct`` does not read ``IMGPREP_API_*`` environment variables
+    or ``.env``, so the default-value assertions cannot depend on the caller's
+    environment.
+    """
+    return APISettings.model_construct(
+        auth_enabled=False, rate_limit_enabled=False, **overrides
     )
 
 
@@ -89,8 +94,9 @@ class TestServersMetadata:
         assert "servers" not in schema
 
 
-def test_export_openapi_rejects_output_outside_repo(tmp_path: Path) -> None:
-    """The export script must refuse to write outside the repository."""
+@pytest.fixture
+def export_module():
+    """Load ``scripts/export_openapi.py`` as a module."""
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(
@@ -100,8 +106,40 @@ def test_export_openapi_rejects_output_outside_repo(tmp_path: Path) -> None:
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return module
 
-    outside = tmp_path / "openapi.json"
+
+def test_export_openapi_rejects_output_outside_repo(
+    export_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The export script must refuse to write outside the repository."""
+    # Patch the boundary to a sibling directory so the test does not depend
+    # on where pytest places ``tmp_path`` (e.g. a repo-local ``--basetemp``).
+    fake_repo = tmp_path / "repo"
+    fake_repo.mkdir()
+    monkeypatch.setattr(export_module, "REPO_ROOT", fake_repo)
+
+    outside = tmp_path / "outside" / "openapi.json"
     with pytest.raises(ValueError, match="outside the repository"):
-        module.export_openapi(outside)
+        export_module.export_openapi(outside)
     assert not outside.exists()
+
+
+def test_export_openapi_rejects_symlink_escape(
+    export_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A path inside the repo that symlinks outside must also be refused."""
+    fake_repo = tmp_path / "repo"
+    fake_repo.mkdir()
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    link = fake_repo / "docs"
+    try:
+        link.symlink_to(outside_dir, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not supported on this platform")
+    monkeypatch.setattr(export_module, "REPO_ROOT", fake_repo)
+
+    with pytest.raises(ValueError, match="outside the repository"):
+        export_module.export_openapi(link / "openapi.json")
+    assert not (outside_dir / "openapi.json").exists()

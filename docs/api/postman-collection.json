@@ -84,12 +84,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 200 or 503', function () {",
-                  "  pm.expect([200, 503]).to.include(pm.response.code);",
+                  "pm.test('status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
                   "});",
                   "pm.test('body has checks and device', function () {",
                   "  const body = pm.response.json();",
-                  "  pm.expect(body).to.have.property('status');",
+                  "  pm.expect(body).to.have.property('status', 'ready');",
                   "  pm.expect(body).to.have.property('checks');",
                   "  pm.expect(body).to.have.property('device');",
                   "});"
@@ -293,6 +293,7 @@
                   "  pm.expect(body).to.have.property('status');",
                   "  pm.expect(body).to.have.property('total_files');",
                   "  pm.collectionVariables.set('jobId', body.job_id);",
+                  "  pm.collectionVariables.set('batchPollAttempt', '0');",
                   "});"
                 ]
               }
@@ -317,16 +318,29 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "const MAX_POLLS = 30;",
+                  "const POLL_DELAY_MS = 500;",
                   "pm.test('status is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
+                  "const body = pm.response.json();",
                   "pm.test('body has progress counters', function () {",
-                  "  const body = pm.response.json();",
                   "  pm.expect(body).to.have.property('job_id');",
                   "  pm.expect(body).to.have.property('status');",
                   "  pm.expect(body).to.have.property('total_files');",
                   "  pm.expect(body).to.have.property('processed_files');",
-                  "});"
+                  "});",
+                  "// Poll (bounded) until the job completes so the result and delete requests",
+                  "// never race the background task; deleting a running job drops its result.",
+                  "const attempt = parseInt(pm.collectionVariables.get('batchPollAttempt') || '0', 10);",
+                  "if (body.status !== 'completed' && attempt < MAX_POLLS) {",
+                  "  pm.collectionVariables.set('batchPollAttempt', String(attempt + 1));",
+                  "  setTimeout(function () { postman.setNextRequest('Batch status'); }, POLL_DELAY_MS);",
+                  "} else {",
+                  "  pm.test('batch job completed within the polling budget', function () {",
+                  "    pm.expect(body.status).to.eql('completed');",
+                  "  });",
+                  "}"
                 ]
               }
             }
@@ -354,16 +368,17 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 200 or 425', function () {",
-                  "  pm.expect([200, 425]).to.include(pm.response.code);",
+                  "// The status request polls until the job is completed, so 425 is a failure here.",
+                  "pm.test('status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
                   "});",
                   "if (pm.response.code === 200) {",
-                  "  pm.test('body shape', function () {",
+                  "  pm.test('completed with exactly one result and no errors', function () {",
                   "    const body = pm.response.json();",
                   "    pm.expect(body).to.have.property('job_id');",
-                  "    pm.expect(body).to.have.property('status');",
-                  "    pm.expect(body).to.have.property('results');",
-                  "    pm.expect(body).to.have.property('errors');",
+                  "    pm.expect(body.status).to.eql('completed');",
+                  "    pm.expect(body.results).to.have.lengthOf(1);",
+                  "    pm.expect(body.errors).to.have.lengthOf(0);",
                   "  });",
                   "}"
                 ]

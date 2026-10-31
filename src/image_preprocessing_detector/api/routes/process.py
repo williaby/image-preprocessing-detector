@@ -474,7 +474,7 @@ async def process_document(  # nosonar  # async required: callers use await
         "(PDF uploads only), classical IQA (blur, noise, contrast), DQS "
         "degradation scoring, and an OCR routing recommendation.\n\n"
         "**Supported extensions**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.tiff`, "
-        "`.tif`, `.webp`.\n\n"
+        "`.tif`, `.webp`, `.bmp`.\n\n"
         "**Request shape**: `multipart/form-data` with a single `file` field "
         "and optional query parameters (`prefer_gpu`, `enable_corrections`, "
         "`enable_teacher`).\n\n"
@@ -484,7 +484,8 @@ async def process_document(  # nosonar  # async required: callers use await
         "invoked, and `dqs.structural_complexity_score` is a fixed "
         "placeholder (0.3). Routing is one of `ocr_fast`, `ocr_advanced` or "
         "`vision_structured`, chosen from the degradation score alone. PDFs "
-        "are processed up to the first 100 pages.\n\n"
+        "are processed up to the first `IMGPREP_API_MAX_PDF_PAGES_PER_REQUEST` "
+        "pages (default 100).\n\n"
         "**Response shape**: a `ProcessResponse` envelope. On success "
         "`status=completed` and `result` is populated with the document "
         "summary (per-page IQA scores, DQS, routing). On validation or "
@@ -585,15 +586,19 @@ async def process_single_document(
 ) -> ProcessResponse | JSONResponse:
     """Analyze a single uploaded document and return its quality summary.
 
-    The handler validates the upload (extension allowlist, non-empty, and the
-    configured maximum size, which is checked after the body has been read
-    into memory), persists it to a temp file, then invokes
+    The handler validates the upload metadata (extension allowlist and the
+    advertised size against the configured maximum), then streams the body
+    with a size cap that aborts as soon as the cumulative byte count crosses
+    the limit, so an oversize upload is never fully buffered. The first chunk
+    is checked against the file type's magic bytes; a mismatch is rejected
+    with ``INVALID_FILE_TYPE`` (HTTP 400). The content is then persisted to
+    a temp file and passed to
     :func:`process_document`, which performs ingestion, classical IQA (blur,
     noise, contrast), DQS scoring, and an OCR routing recommendation. Temp
     files are cleaned up in the `finally` block.
 
     Args:
-        file: Uploaded document (PDF / PNG / JPEG / TIFF / WebP).
+        file: Uploaded document (PDF / PNG / JPEG / TIFF / WebP / BMP).
         prefer_gpu: When true, prefer a local CUDA device when selecting the
             reported processing device; falls back to CPU if no GPU is
             available.
