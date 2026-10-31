@@ -2069,8 +2069,12 @@ src/image_preprocessing_detector/api/routes/health.py
 src/image_preprocessing_detector/api/routes/process.py
     DOC109: Function `validate_file`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Function `validate_file`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
-    DOC105: Function `validate_file`: Argument names match, but type hints in these args do not match: file, _max_size_mb
+    DOC105: Function `validate_file`: Argument names match, but type hints in these args do not match: file, max_size_mb
     DOC203: Function `validate_file` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['ErrorResponse | None']; docstring return section types: ['']
+    DOC109: Function `read_with_size_limit`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
+    DOC110: Function `read_with_size_limit`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
+    DOC105: Function `read_with_size_limit`: Argument names match, but type hints in these args do not match: file, max_size_mb, chunk_size, early_validate, extra_byte_limit
+    DOC203: Function `read_with_size_limit` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['bytes']; docstring return section types: ['']
     DOC109: Function `process_document`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Function `process_document`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Function `process_document`: Argument names match, but type hints in these args do not match: file_path, file_name, options
@@ -4029,7 +4033,7 @@ src/image_preprocessing_detector/ingestion/image_loader.py
     DOC603: Class `ImageMetadata`: Class docstring attributes are different from actual class attributes. (Or could be other formatting issues: https://jsh9.github.io/pydoclint/violation_codes.html#notes-on-doc103 ). Arguments in the docstring but not in the actual class attributes: [color_mode: , dpi_x: , dpi_y: , format: , has_exif: , height: , width: ]. (Please read https://jsh9.github.io/pydoclint/checking_class_attributes.html on how to correctly document class attributes.)
     DOC109: Method `ImageLoader.__init__`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Method `ImageLoader.__init__`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
-    DOC105: Method `ImageLoader.__init__`: Argument names match, but type hints in these args do not match: target_dpi, ensure_bgr
+    DOC105: Method `ImageLoader.__init__`: Argument names match, but type hints in these args do not match: target_dpi, ensure_bgr, max_pixels
     DOC109: Method `ImageLoader.load`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Method `ImageLoader.load`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Method `ImageLoader.load`: Argument names match, but type hints in these args do not match: image_path
@@ -4114,10 +4118,14 @@ src/image_preprocessing_detector/ingestion/pdf_analyzer.py
     DOC203: Method `PDFDocumentAnalyzer.quick_check` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['bool']; docstring return section types: ['']
 --------------------
 src/image_preprocessing_detector/ingestion/pdf_loader.py
+    DOC109: Function `_validate_positive_int`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
+    DOC110: Function `_validate_positive_int`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
+    DOC105: Function `_validate_positive_int`: Argument names match, but type hints in these args do not match: value, name, default
+    DOC203: Function `_validate_positive_int` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['int']; docstring return section types: ['']
     DOC605: Class `PageImage`: Attribute names match, but type hints in these attributes do not match: page_number, image, width, height, dpi_input, dpi_effective, needs_upscaling  (Please read https://jsh9.github.io/pydoclint/checking_class_attributes.html on how to correctly document class attributes.)
     DOC109: Method `PDFLoader.__init__`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Method `PDFLoader.__init__`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
-    DOC105: Method `PDFLoader.__init__`: Argument names match, but type hints in these args do not match: target_dpi, color_space, alpha
+    DOC105: Method `PDFLoader.__init__`: Argument names match, but type hints in these args do not match: target_dpi, color_space, alpha, max_pages, allow_truncation, max_pixels
     DOC109: Method `PDFLoader.load`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Method `PDFLoader.load`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Method `PDFLoader.load`: Argument names match, but type hints in these args do not match: pdf_path
@@ -4126,13 +4134,15 @@ src/image_preprocessing_detector/ingestion/pdf_loader.py
     DOC110: Method `PDFLoader._render_page`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Method `PDFLoader._render_page`: Argument names match, but type hints in these args do not match: doc, page_num
     DOC203: Method `PDFLoader._render_page` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['PageImage']; docstring return section types: ['']
+    DOC501: Method `PDFLoader._render_page` has raise statements, but the docstring does not have a "Raises" section
+    DOC503: Method `PDFLoader._render_page` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['PDFPageTooLargeError'].
     DOC109: Method `PDFLoader._detect_page_dpi`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Method `PDFLoader._detect_page_dpi`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Method `PDFLoader._detect_page_dpi`: Argument names match, but type hints in these args do not match: page
     DOC203: Method `PDFLoader._detect_page_dpi` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['float']; docstring return section types: ['']
     DOC109: Function `load_pdf`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Function `load_pdf`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
-    DOC105: Function `load_pdf`: Argument names match, but type hints in these args do not match: pdf_path, target_dpi
+    DOC105: Function `load_pdf`: Argument names match, but type hints in these args do not match: pdf_path, target_dpi, max_pages, allow_truncation, max_pixels
     DOC203: Function `load_pdf` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['list[PageImage]']; docstring return section types: ['']
 --------------------
 src/image_preprocessing_detector/ingestion/pdf_resolution.py
@@ -6381,6 +6391,16 @@ src/image_preprocessing_detector/utils/device_probe.py
     DOC105: Function `get_recommended_device`: Argument names match, but type hints in these args do not match: prefer_gpu, allow_cpu_fallback
     DOC203: Function `get_recommended_device` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['str']; docstring return section types: ['Device string']
 --------------------
+src/image_preprocessing_detector/utils/file_validation.py
+    DOC109: Function `detect_file_type`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
+    DOC110: Function `detect_file_type`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
+    DOC105: Function `detect_file_type`: Argument names match, but type hints in these args do not match: content
+    DOC203: Function `detect_file_type` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['str | None']; docstring return section types: ['']
+    DOC109: Function `validate_file_content`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
+    DOC110: Function `validate_file_content`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
+    DOC105: Function `validate_file_content`: Argument names match, but type hints in these args do not match: content, declared_extension, min_bytes
+    DOC203: Function `validate_file_content` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['str | None']; docstring return section types: ['']
+--------------------
 src/image_preprocessing_detector/utils/gcs_uploader.py
     DOC605: Class `GCSRunConfig`: Attribute names match, but type hints in these attributes do not match: bucket_name, project_name, model_name  (Please read https://jsh9.github.io/pydoclint/checking_class_attributes.html on how to correctly document class attributes.)
     DOC109: Function `upload_dir_to_gcs`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
@@ -6478,6 +6498,14 @@ src/image_preprocessing_detector/utils/path_security.py
     DOC110: Function `validate_safe_path`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Function `validate_safe_path`: Argument names match, but type hints in these args do not match: file_path, allowed_base, must_exist
     DOC203: Function `validate_safe_path` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['Path']; docstring return section types: ['']
+--------------------
+src/image_preprocessing_detector/utils/safe_checkpoint.py
+    DOC203: Function `numpy_scalar_safe_globals` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['list[Any]']; docstring return section types: ['']
+    DOC109: Function `load_checkpoint_weights_only`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
+    DOC110: Function `load_checkpoint_weights_only`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
+    DOC105: Function `load_checkpoint_weights_only`: Argument names match, but type hints in these args do not match: path, map_location
+    DOC203: Function `load_checkpoint_weights_only` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['Any']; docstring return section types: ['']
+    DOC503: Function `load_checkpoint_weights_only` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: ['Exception', 'RuntimeError']. Raised exceptions in the body: ['RuntimeError'].
 --------------------
 src/image_preprocessing_detector/utils/tensor_cache.py
     DOC605: Class `CacheMetrics`: Attribute names match, but type hints in these attributes do not match: hits, misses, evictions, current_size_bytes, max_size_bytes, total_items  (Please read https://jsh9.github.io/pydoclint/checking_class_attributes.html on how to correctly document class attributes.)

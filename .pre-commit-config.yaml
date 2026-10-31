@@ -153,6 +153,9 @@ repos:
         args: ["--config=pyproject.toml"]
         types: [python]
         stages: [pre-commit]
+        # Baseline only covers src/; restrict the hook to the same scope so
+        # edits elsewhere (deployment/, modal/, ...) do not trip unbaselined findings.
+        files: ^src/
         exclude: ^(tests|scripts|benchmarks|tools|fuzz)/
 
   # Security scanning with Bandit
