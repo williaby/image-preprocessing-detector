@@ -251,7 +251,9 @@ def _build_skew_estimator(
                 num_classes=0,  # Remove default classifier
                 global_pool="avg",
             )
-            feature_dim: int = int(self.backbone.num_features)  # type: ignore[arg-type]  # timm stubs type as Tensor|Module but is int at runtime
+            feature_dim: int = int(
+                self.backbone.num_features
+            )  # timm stubs type as Tensor|Module but is int at runtime
 
             # Head 1: Orientation classification
             self.orientation_head = nn.Sequential(
