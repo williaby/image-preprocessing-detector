@@ -193,8 +193,10 @@ async def process_batch_job(
         "`status` reaches `completed`. Per-file processing failures are "
         "reported in the `errors` array of the result and counted in "
         "`failed_files`; the job itself still finishes as `completed`.\n\n"
-        "Files are read fully into memory at submission, and the per-file "
-        "size limit that applies to `/process` is not enforced here. "
+        "Files are read into memory at submission with a streaming size "
+        "cap: each file must not exceed `IMGPREP_API_MAX_FILE_SIZE_MB` and "
+        "the batch total must not exceed `IMGPREP_API_MAX_BATCH_TOTAL_SIZE_MB`; "
+        "violations are rejected with HTTP 400. "
         "`enable_corrections` and `enable_teacher` are accepted but not yet "
         "acted on."
     ),

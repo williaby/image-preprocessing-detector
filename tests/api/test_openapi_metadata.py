@@ -4,10 +4,14 @@ Covers the license and servers entries of the published schema, including the
 requirement that the default license matches the project license.
 """
 
-import tomllib
 from pathlib import Path
 
 import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 has no stdlib tomllib
+    tomllib = pytest.importorskip("tomli", reason="tomli required on Python 3.10")
 
 # Skip all tests if FastAPI is not installed
 fastapi = pytest.importorskip("fastapi", reason="FastAPI required for API tests")

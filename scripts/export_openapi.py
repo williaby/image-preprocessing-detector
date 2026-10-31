@@ -35,8 +35,11 @@ def export_openapi(output_path: Path) -> Path:
 
     # Imported lazily so ``sys.path`` is configured first.
     from image_preprocessing_detector.api.app import create_app
+    from image_preprocessing_detector.api.config import APISettings
 
-    app = create_app()
+    # Use field defaults only (no environment variables or .env) so the
+    # committed snapshot is reproducible on every machine and in CI.
+    app = create_app(settings=APISettings.model_construct())
     schema = app.openapi()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -277,7 +277,7 @@
           "batch"
         ],
         "summary": "Submit batch processing job",
-        "description": "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for asynchronous processing. Each file is validated up-front (extension allowlist, non-empty); if any fails validation the entire batch is rejected with HTTP 400 and no job is created. On success a job is enqueued via FastAPI background tasks and the response carries a `job_id` clients should poll on `/batch/{job_id}/status` until `status` reaches `completed`. Per-file processing failures are reported in the `errors` array of the result and counted in `failed_files`; the job itself still finishes as `completed`.\n\nFiles are read fully into memory at submission, and the per-file size limit that applies to `/process` is not enforced here. `enable_corrections` and `enable_teacher` are accepted but not yet acted on.",
+        "description": "Upload up to `IMGPREP_API_MAX_BATCH_SIZE` files (default 100) for asynchronous processing. Each file is validated up-front (extension allowlist, non-empty); if any fails validation the entire batch is rejected with HTTP 400 and no job is created. On success a job is enqueued via FastAPI background tasks and the response carries a `job_id` clients should poll on `/batch/{job_id}/status` until `status` reaches `completed`. Per-file processing failures are reported in the `errors` array of the result and counted in `failed_files`; the job itself still finishes as `completed`.\n\nFiles are read into memory at submission with a streaming size cap: each file must not exceed `IMGPREP_API_MAX_FILE_SIZE_MB` and the batch total must not exceed `IMGPREP_API_MAX_BATCH_TOTAL_SIZE_MB`; violations are rejected with HTTP 400. `enable_corrections` and `enable_teacher` are accepted but not yet acted on.",
         "operationId": "submit_batch_job_batch_post",
         "parameters": [
           {
@@ -1059,6 +1059,12 @@
             "type": "integer",
             "title": "Num Pages",
             "description": "Number of pages processed"
+          },
+          "pages_truncated": {
+            "type": "integer",
+            "title": "Pages Truncated",
+            "description": "Number of pages dropped because the document exceeded the API's max_pdf_pages_per_request cap. Zero means the result covers the full document. Non-zero means analysis is partial - re-submit with smaller documents or contact the operator to raise the cap.",
+            "default": 0
           },
           "pdf_type": {
             "anyOf": [
