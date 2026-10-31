@@ -72,6 +72,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- API documentation: enriched FastAPI route metadata (summaries, descriptions,
+  response models and examples), a committed OpenAPI export
+  (`docs/api/openapi.json`, regenerated with `scripts/export_openapi.py`), a
+  Postman collection (`docs/api/postman-collection.json`), and configurable
+  OpenAPI `license_info` and `servers` via `IMGPREP_API_LICENSE_NAME`,
+  `IMGPREP_API_LICENSE_URL`, `IMGPREP_API_SERVER_URL` and
+  `IMGPREP_API_SERVER_DESCRIPTION`. The API license metadata now matches the
+  project license (CC-BY-SA-4.0).
+- CI: the Postman/Newman API test workflow (`postman-api-tests.yml`) runs
+  weekly (Sundays 08:00 UTC) and on manual dispatch, not on pull requests. It
+  also fails if `docs/api/openapi.json` has drifted from the app.
 - Docstring linting with pydoclint 0.8.4 (Google style, pre-commit hook and
   `dev` extra). Existing violations are recorded in `.pydoclint-baseline.txt`
   and tolerated; only new violations fail the hook. Regenerate the baseline

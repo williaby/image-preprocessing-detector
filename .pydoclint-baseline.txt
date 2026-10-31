@@ -2042,20 +2042,14 @@ src/image_preprocessing_detector/api/routes/batch.py
     DOC110: Function `get_batch_status`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Function `get_batch_status`: Argument names match, but type hints in these args do not match: job_id
     DOC203: Function `get_batch_status` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['BatchJobStatus']; docstring return section types: ['']
-    DOC501: Function `get_batch_status` has raise statements, but the docstring does not have a "Raises" section
-    DOC503: Function `get_batch_status` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['HTTPException'].
     DOC109: Function `get_batch_result`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Function `get_batch_result`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Function `get_batch_result`: Argument names match, but type hints in these args do not match: job_id, offset, limit
     DOC203: Function `get_batch_result` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['BatchJobResult | JSONResponse']; docstring return section types: ['']
-    DOC501: Function `get_batch_result` has raise statements, but the docstring does not have a "Raises" section
-    DOC503: Function `get_batch_result` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['HTTPException'].
     DOC109: Function `delete_batch_job`: The option `--arg-type-hints-in-docstring` is `True` but there are no type hints in the docstring arg list
     DOC110: Function `delete_batch_job`: The option `--arg-type-hints-in-docstring` is `True` but not all args in the docstring arg list have type hints
     DOC105: Function `delete_batch_job`: Argument names match, but type hints in these args do not match: job_id
     DOC203: Function `delete_batch_job` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['dict[str, str]']; docstring return section types: ['']
-    DOC501: Function `delete_batch_job` has raise statements, but the docstring does not have a "Raises" section
-    DOC503: Function `delete_batch_job` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['HTTPException'].
 --------------------
 src/image_preprocessing_detector/api/routes/health.py
     DOC203: Function `health_check` return type(s) in docstring not consistent with the return annotation. Return annotation types: ['HealthResponse']; docstring return section types: ['']
