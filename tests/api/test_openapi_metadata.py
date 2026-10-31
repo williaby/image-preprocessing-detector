@@ -87,3 +87,21 @@ class TestServersMetadata:
         schema = create_app(settings=_settings(server_url="")).openapi()
 
         assert "servers" not in schema
+
+
+def test_export_openapi_rejects_output_outside_repo(tmp_path: Path) -> None:
+    """The export script must refuse to write outside the repository."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "export_openapi", REPO_ROOT / "scripts" / "export_openapi.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    outside = tmp_path / "openapi.json"
+    with pytest.raises(ValueError, match="outside the repository"):
+        module.export_openapi(outside)
+    assert not outside.exists()

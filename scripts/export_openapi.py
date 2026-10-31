@@ -31,6 +31,13 @@ def export_openapi(output_path: Path) -> Path:
 
     Returns the resolved output path for convenience.
     """
+    # Refuse to write outside the repository (guards against path traversal
+    # through a crafted --output argument).
+    output_path = output_path.resolve()
+    if not output_path.is_relative_to(REPO_ROOT.resolve()):
+        msg = f"Refusing to write outside the repository: {output_path}"
+        raise ValueError(msg)
+
     _ensure_src_on_path()
 
     # Imported lazily so ``sys.path`` is configured first.

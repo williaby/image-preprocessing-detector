@@ -97,12 +97,18 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
-      - name: uv sync (api + dev extras)
-        run: uv sync --locked --extra dev --extra api
+      # Wheels only, dependencies only: no build backend or setup script runs.
+      # The in-tree package is imported through PYTHONPATH=src instead of being
+      # installed, and the git-source gemini-image helper (sdist only, not used
+      # by the API) is skipped.
+      - name: uv sync (api extra, wheels only)
+        run: >-
+          uv sync --locked --no-build --no-install-project
+          --no-install-package byronwilliamscpa-gemini-image --extra api
 
       - name: Check OpenAPI export is up to date
         run: |
-          uv run python scripts/export_openapi.py
+          .venv/bin/python scripts/export_openapi.py
           if ! git diff --exit-code -- docs/api/openapi.json; then
             echo "::error file=docs/api/openapi.json::OpenAPI snapshot is stale." \
               "Run 'uv run python scripts/export_openapi.py' and commit the result."
@@ -115,12 +121,12 @@ jobs:
           node-version: "22"
 
       - name: Install Newman
-        run: npm install --global newman@6.2.2
+        run: npm install --global --ignore-scripts newman@6.2.2
 
       - name: Generate test fixtures
         run: |
           mkdir -p tests/fixtures
-          uv run python - <<'PY'
+          .venv/bin/python - <<'PY'
           from pathlib import Path
           import numpy as np
           from PIL import Image
