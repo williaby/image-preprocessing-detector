@@ -198,7 +198,7 @@ class SkewDetector:
             # Calculate angles for all lines
             angles = []
             for line in lines:
-                x1, y1, x2, y2 = line[0]  # type: ignore[index]
+                x1, y1, x2, y2 = line[0]
                 # Skip vertical lines (infinite slope)
                 if x2 - x1 == 0:
                     continue
@@ -2335,7 +2335,7 @@ class BinarizationQualityDetector:
         """
         # Compute Laplacian
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        lap_var = laplacian.var()
+        lap_var = float(laplacian.var())
 
         # Very high variance suggests noise or complex textures
         # Very low variance suggests blur (also bad for binarization)
