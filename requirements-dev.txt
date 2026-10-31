@@ -1138,7 +1138,7 @@ ruamel-yaml==0.19.1
     #   image-preprocessing-detector
     #   safety
     #   safety-schemas
-ruff==0.17.1
+ruff==0.15.22
     # via image-preprocessing-detector
 safety==3.8.1
     # via image-preprocessing-detector
