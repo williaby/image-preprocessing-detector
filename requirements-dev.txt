@@ -340,7 +340,7 @@ huggingface-hub==0.36.2
     #   image-preprocessing-detector
 humanize==4.16.0
     # via nox
-hydra-core==1.3.7
+hydra-core==1.3.8
     # via dvc
 hyperframe==6.1.0
     # via h2
@@ -403,7 +403,7 @@ joblib==1.6.0
     # via
     #   nltk
     #   scikit-learn
-joserfc==1.7.5
+joserfc==1.7.7
     # via authlib
 json5==0.17.3
     # via jupyterlab-server
@@ -613,7 +613,7 @@ networkx==3.7 ; python_full_version >= '3.12'
     # via
     #   dvc
     #   scikit-image
-nltk==3.10.3
+nltk==3.10.4
     # via safety
 nodeenv==1.11.0
     # via pre-commit
@@ -801,7 +801,7 @@ pyarrow==26.0.0
     #   datasets
     #   image-preprocessing-detector
     #   streamlit
-pyasn1==0.6.4
+pyasn1==0.6.5
     # via
     #   image-preprocessing-detector
     #   pyasn1-modules
@@ -1019,7 +1019,7 @@ send2trash==2.1.0
     # via jupyter-server
 setproctitle==1.3.8
     # via mutmut
-setuptools==84.0.0
+setuptools==84.2.1
     # via zc-lockfile
 shellingham==1.5.4
     # via typer
@@ -1186,7 +1186,7 @@ urllib3==2.8.0
     #   image-preprocessing-detector
     #   kaggle
     #   requests
-uv==0.13.1
+uv==0.13.6
     # via image-preprocessing-detector
 uvicorn==0.54.0
     # via streamlit
@@ -1195,7 +1195,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.14.9
+virtualenv==21.15.2
     # via
     #   nox
     #   pre-commit
