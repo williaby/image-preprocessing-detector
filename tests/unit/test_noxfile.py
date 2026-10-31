@@ -944,8 +944,8 @@ class TestPythonVersionsConstant:
 
     def test_python_versions_includes_expected_versions(self):
         """Test that PYTHON_VERSIONS includes expected Python versions."""
-        # According to noxfile, should support 3.10-3.14
-        expected_versions = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # According to noxfile, should support 3.11-3.14
+        expected_versions = ["3.11", "3.12", "3.13", "3.14"]
         assert expected_versions == noxfile.PYTHON_VERSIONS
 
 
