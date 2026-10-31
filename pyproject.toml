@@ -274,6 +274,10 @@ constraint-dependencies = [
     # check) and adds lint findings; adopt it in a dedicated PR rather than
     # via lock maintenance.
     "ruff<0.16.0",
+    # transformers 4.57.4+ is not available as a fixed release for the open HIGH
+    # advisories (fixes are 5.x-only); hold at main's 4.57.3 so lock maintenance
+    # does not change it. Track the 5.x upgrade separately.
+    "transformers<4.57.4",
 ]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
 # The iqa group and labeling extra are mutually exclusive (different labeling
