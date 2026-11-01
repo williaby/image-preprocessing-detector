@@ -27,7 +27,7 @@ jobs:
     # The trailing `# main` comment is Renovate's version marker for this SHA pin
     # (a bare SHA is skipped by Renovate), and it pushes the line past 120 chars.
     # yamllint disable-line rule:line-length
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@82ce497cae146787ea65bf892aedfe3262a4638e  # main
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@be444673dde58fec4d3941f9bed03e897f8bcec5  # main
     with:
       python-versions: '["3.10", "3.11", "3.12", "3.13"]'
       operating-systems: '["ubuntu-latest"]'
