@@ -1091,7 +1091,7 @@ tomlkit==0.15.2
     # via
     #   dvc
     #   safety
-tornado==6.5.10
+tornado==6.6
     # via
     #   ipykernel
     #   jupyter-client
