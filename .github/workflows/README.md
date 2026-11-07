@@ -59,7 +59,7 @@ This project uses a **hybrid approach** combining org-level reusable workflows w
 
 **Calls**: `ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@main`
 
-Multi-version Python testing (3.10-3.14):
+Multi-version Python testing (3.11-3.14):
 
 - Matrix testing across Python versions
 - Pre-release support (Python 3.14)
@@ -109,7 +109,7 @@ Automated release with semantic versioning:
 
 Comprehensive CI with CV/ML dependencies:
 
-- Python 3.10-3.14 multi-version testing
+- Python 3.11-3.14 multi-version testing
 - OpenCV, PyMuPDF, PyTorch installation
 - Disk space management for CV libraries
 - LLM governance (assumption tag verification)
@@ -246,7 +246,7 @@ Caller workflows are configured via `with:` parameters. Examples:
 ```yaml
 uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@main
 with:
-  python-versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+  python-versions: '["3.11", "3.12", "3.13", "3.14"]'
   allow-prereleases: true  # For Python 3.14 experimental
   coverage-threshold: 80
 ```

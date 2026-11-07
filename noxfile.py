@@ -31,8 +31,8 @@ Usage:
 
 import nox
 
-# Supported Python versions (aligned with pyproject.toml: >=3.10,<3.15)
-PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+# Supported Python versions (aligned with pyproject.toml: >=3.11,<3.15)
+PYTHON_VERSIONS = ["3.11", "3.12", "3.13", "3.14"]
 
 # Package install specifiers
 DEV_EXTRAS = ".[dev]"

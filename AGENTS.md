@@ -13,7 +13,7 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 
 ## Build, Test, and Development Commands
 
-- Install: `uv sync --extra dev` (Python 3.10+; CI tests 3.10 to 3.14, with 3.12 as the primary version).
+- Install: `uv sync --extra dev` (Python 3.11+; CI tests 3.11 to 3.14, with 3.12 as the primary version).
 - Lint/format: `uv run ruff format .` then `uv run ruff check .`.
 - Type check: `uv run mypy src` (the CI gate, also run by pre-commit and nox); `uv run basedpyright src` is the stricter local check.
 - Tests (fast CI set): `uv run pytest tests/unit -v` and `uv run pytest tests/integration -v -m "not requires_full_dataset"`.
