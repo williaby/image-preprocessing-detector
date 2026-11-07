@@ -144,10 +144,9 @@ ml = [
     "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
     "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
-    # ultralytics pulls opencv-python; keep every cv2 distribution on 4.x for
-    # non-uv installs too (5.x changes the cv2.HoughLinesP return shape).
+    # ultralytics pulls opencv-python; keep it on 4.x for non-uv installs too
+    # (5.x changes the cv2.HoughLinesP return shape).
     "opencv-python<5.0.0",
-    "opencv-contrib-python<5.0.0",
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     # GPU-accelerated inference (moved from base). No macOS wheels exist; macOS
