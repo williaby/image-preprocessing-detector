@@ -29,14 +29,14 @@ jobs:
     # yamllint disable-line rule:line-length
     uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@79bf84c73af866a34f968262f2631f938c659d77  # main
     with:
-      python-versions: '["3.10", "3.11", "3.12", "3.13"]'
+      python-versions: '["3.11", "3.12", "3.13"]'
       operating-systems: '["ubuntu-latest"]'
       include-macos: true
       include-windows: true
       source-directory: 'src'
       # Builds are required: this project uses hatchling and depends on a git
       # source (byronwilliamscpa-gemini-image) plus sdist-only packages
-      # (fasttext; atheris on Python 3.10). The reusable workflow installs with
+      # (fasttext). The reusable workflow installs with
       # `uv sync --all-extras`, so packages without wheels for a runner OS carry
       # PEP 508 platform markers in pyproject.toml (onnxruntime-gpu: not macOS;
       # atheris: Linux only; fasttext: not Windows).

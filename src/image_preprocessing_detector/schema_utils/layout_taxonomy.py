@@ -275,7 +275,7 @@ class LayoutTaxonomy:
                 break
             parent_labels = reverse_map.get(parent)
             if parent_labels:
-                target_label = sorted(parent_labels)[0]
+                target_label = min(parent_labels)
                 return ConversionResult(
                     canonical_class=canonical,
                     target_label=target_label,

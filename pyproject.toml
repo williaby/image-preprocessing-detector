@@ -6,14 +6,13 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11,<3.15"
 license = {text = "CC-BY-SA-4.0"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: Other/Proprietary License",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -56,20 +55,20 @@ dependencies = [
     "huggingface-hub[cli]>=0.20.0,<1.0.0",  # <1.0 for transformers compatibility
     # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
     # "pytesseract (>=0.3.13,<0.4.0)",
-    "gitpython (>=3.1.45,<4.0.0)",
+    "gitpython (>=3.2.1,<4.0.0)",
     "pywavelets (>=1.4.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
     "werkzeug>=3.1.6",
     "requests>=2.31.0",  # Secure HTTP client (replaces urllib for file:// attack mitigation)
-    "urllib3>=2.6.3",
+    "urllib3>=2.8.0",
     "filelock>=3.20.1",
     # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
     # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
     "openpyxl>=3.1.5",
     # Transitive dependency CVE fixes
     "protobuf>=6.33.5",  # GHSA-7gcm-g887-7qv7: JSON recursion depth bypass
-    "pyasn1>=0.6.2",  # GHSA-63vm-454h-vhhq: DoS in decoder
+    "pyasn1>=0.6.5",  # GHSA-63vm-454h-vhhq: DoS in decoder
 ]
 
 [project.optional-dependencies]
@@ -145,6 +144,9 @@ ml = [
     "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
     "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
+    # ultralytics pulls opencv-python; keep it on 4.x for non-uv installs too
+    # (5.x changes the cv2.HoughLinesP return shape).
+    "opencv-python<5.0.0",
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     # GPU-accelerated inference (moved from base). No macOS wheels exist; macOS
@@ -184,6 +186,7 @@ colab = [
     "torchvision>=0.25.0",  # Compatible with torch 2.10.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
     "ultralytics>=8.0.0",  # YOLOv8 for Phase 6 layout-lite (lightweight)
+    "opencv-python<5.0.0",  # cv2.HoughLinesP return shape changes in 5.x
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
@@ -265,7 +268,23 @@ annotate = "image_preprocessing_detector.annotation.cli:cli"
 
 [tool.uv]
 # Ensure compatibility with Linux systems by resolving to compatible wheels
-constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
+# OpenCV 5.x changes cv2.HoughLinesP's return shape; all builds share one `cv2`
+# package, so every opencv distribution (pulled in transitively by the ml extra)
+# must stay on 4.x to match the opencv-python-headless (<5.0.0) pin.
+constraint-dependencies = [
+    "av<16.0.0; sys_platform == 'linux'",
+    "opencv-python<5.0.0",
+    "opencv-contrib-python<5.0.0",
+    "opencv-contrib-python-headless<5.0.0",
+    # ruff 0.16 widens the default file scope (164 more files fail the format
+    # check) and adds lint findings; adopt it in a dedicated PR rather than
+    # via lock maintenance.
+    "ruff<0.16.0",
+    # transformers 4.57.4+ is not available as a fixed release for the open HIGH
+    # advisories (fixes are 5.x-only); hold at main's 4.57.3 so lock maintenance
+    # does not change it. Track the 5.x upgrade separately.
+    "transformers<4.57.4",
+]
 # pyiqa pins transformers==4.37.2; labeling requires transformers>=4.40.0
 # The iqa group and labeling extra are mutually exclusive (different labeling
 # pipelines). iqa is a dependency group, not an extra, so `uv sync --all-extras`
@@ -381,7 +400,7 @@ ignore = [
     "FBT002", # Boolean default arg (OK for config)
     "TRY003", # Long exception messages (OK for detailed errors)
     "UP017",  # datetime.UTC requires Python 3.11+
-    "UP042",  # enum.StrEnum requires Python 3.11+ (requires-python >=3.10)
+    "UP042",  # enum.StrEnum requires Python 3.11+ (requires-python >=3.11)
 ]
 
 # Pydocstyle configuration
